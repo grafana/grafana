@@ -3,9 +3,7 @@ import { Subscription } from 'rxjs';
 import { SceneGridLayout, SceneObjectStateChangedEvent, VizPanel } from '@grafana/scenes';
 import { createWorker } from 'app/features/dashboard-scene/saving/createDetectChangesWorker';
 
-import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
-import { VizPanelLinks } from '../scene/PanelLinks';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { isSceneVariableInstance } from '../settings/variables/utils';
 
@@ -27,10 +25,6 @@ export class DashboardSceneChangeTracker {
       return;
     }
 
-    // if (payload.changedObject instanceof SceneQueryRunner) {
-    //   return;
-    // }
-
     // if (payload.changedObject instanceof SceneTimeRange) {
     //   return this.runDirtyCheck();
     // }
@@ -38,17 +32,9 @@ export class DashboardSceneChangeTracker {
     // Intercept state changes for some core scene objects
     if (
       payload.changedObject instanceof VizPanel ||
-      payload.changedObject instanceof DashboardGridItem ||
-      payload.changedObject instanceof VizPanelLinks
+      payload.changedObject instanceof SceneGridLayout ||
+      isSceneVariableInstance(payload.changedObject)
     ) {
-      return this.runDirtyCheck();
-    }
-
-    if (payload.changedObject instanceof SceneGridLayout) {
-      return this.runDirtyCheck();
-    }
-
-    if (isSceneVariableInstance(payload.changedObject)) {
       return this.runDirtyCheck();
     }
   }

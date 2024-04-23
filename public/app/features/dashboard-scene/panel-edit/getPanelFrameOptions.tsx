@@ -11,12 +11,13 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
+import { PersistedStateChangedEvent } from '../saving/PersistedStateChangedEvent';
 import { VizPanelLinks } from '../scene/PanelLinks';
 import { vizPanelToPanel, transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../utils/utils';
 
-import { VizPanelManager, VizPanelManagerState } from './VizPanelManager';
+import { VizPanelManager } from './VizPanelManager';
 
 export function getPanelFrameCategory2(
   vizManager: VizPanelManager,
@@ -93,7 +94,13 @@ export function getPanelFrameCategory2(
       }).addItem(
         new OptionsPaneItemDescriptor({
           title: 'Panel links',
-          render: () => <ScenePanelLinksEditor panelLinks={panelLinksObject ?? undefined} />,
+          render: () => {
+            if (!panelLinksObject) {
+              return <div />;
+            }
+
+            return <ScenePanelLinksEditor panelLinks={panelLinksObject} />;
+          },
         })
       )
     )
@@ -114,13 +121,7 @@ export function getPanelFrameCategory2(
                   id="repeat-by-variable-select"
                   parent={panel}
                   repeat={repeat}
-                  onChange={(value?: string) => {
-                    const stateUpdate: Partial<VizPanelManagerState> = { repeat: value };
-                    if (value && !vizManager.state.repeatDirection) {
-                      stateUpdate.repeatDirection = 'h';
-                    }
-                    vizManager.setState(stateUpdate);
-                  }}
+                  onChange={(value?: string) => vizManager.setRepeat(value)}
                 />
               );
             },
@@ -140,7 +141,7 @@ export function getPanelFrameCategory2(
                 <RadioButtonGroup
                   options={directionOptions}
                   value={vizManager.state.repeatDirection ?? 'h'}
-                  onChange={(value) => vizManager.setState({ repeatDirection: value })}
+                  onChange={(value) => vizManager.setRepeatDirection(value)}
                 />
               );
             },
@@ -166,16 +167,19 @@ export function getPanelFrameCategory2(
 }
 
 interface ScenePanelLinksEditorProps {
-  panelLinks?: VizPanelLinks;
+  panelLinks: VizPanelLinks;
 }
 
 function ScenePanelLinksEditor({ panelLinks }: ScenePanelLinksEditorProps) {
-  const { rawLinks: links } = panelLinks ? panelLinks.useState() : { rawLinks: [] };
+  const { rawLinks: links } = panelLinks.useState();
 
   return (
     <DataLinksInlineEditor
       links={links}
-      onChange={(links) => panelLinks?.setState({ rawLinks: links })}
+      onChange={(links) => {
+        panelLinks.setState({ rawLinks: links });
+        panelLinks.publishEvent(new PersistedStateChangedEvent(), true);
+      }}
       getSuggestions={getPanelLinksVariableSuggestions}
       data={[]}
     />

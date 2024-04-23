@@ -232,6 +232,8 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     }
 
     this.setState({ panel: newPanel });
+    this.publishEvent(new PersistedStateChangedEvent(), true);
+
     this.loadDataSource();
   }
 
@@ -250,13 +252,9 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     // We need to pass in newSettings.uid as well here as that can be a variable expression and we want to store that in the query model not the current ds variable value
     const queries = defaultQueries || (await updateQueries(nextDS, newSettings.uid, currentQueries, currentDS));
 
-    queryRunner.setState({
-      datasource: {
-        type: newSettings.type,
-        uid: newSettings.uid,
-      },
-      queries,
-    });
+    queryRunner.setState({ datasource: { type: newSettings.type, uid: newSettings.uid }, queries });
+    this.publishEvent(new PersistedStateChangedEvent(), true);
+
     if (defaultQueries) {
       queryRunner.runQueries();
     }
@@ -459,6 +457,21 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
 
   public setPanelTitle(newTitle: string) {
     this.state.panel.setState({ title: newTitle, hoverHeader: newTitle === '' });
+  }
+
+  public setRepeat(repeat: string | undefined) {
+    const stateUpdate: Partial<VizPanelManagerState> = {
+      repeat,
+      repeatDirection: repeat ? this.state.repeatDirection ?? 'h' : undefined,
+    };
+
+    this.setState(stateUpdate);
+    this.publishEvent(new PersistedStateChangedEvent(), true);
+  }
+
+  public setRepeatDirection(direction: RepeatDirection) {
+    this.setState({ repeatDirection: direction });
+    this.publishEvent(new PersistedStateChangedEvent(), true);
   }
 
   public static Component = ({ model }: SceneComponentProps<VizPanelManager>) => {
