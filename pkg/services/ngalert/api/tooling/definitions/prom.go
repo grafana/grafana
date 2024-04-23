@@ -3,6 +3,7 @@ package definitions
 import (
 	"container/heap"
 	"fmt"
+	"net/http"
 	"sort"
 	"strings"
 	"time"
@@ -96,6 +97,23 @@ type RuleGroup struct {
 	Interval       float64   `json:"interval"`
 	LastEvaluation time.Time `json:"lastEvaluation"`
 	EvaluationTime float64   `json:"evaluationTime"`
+}
+
+// HTTPStatusCode returns the HTTP status code for a given Prometheus style error.
+func (d DiscoveryBase) HTTPStatusCode() int {
+	if d.Status == "success" {
+		return http.StatusOK
+	}
+
+	// Mapping taken from prometheus/web/api/v1/api.go
+	// Note this is not exhaustive as our API does not return
+	// the same spectrum of errors as Prometheus does.
+	switch d.ErrorType {
+	case v1.ErrBadData:
+		return http.StatusBadRequest
+	default:
+		return http.StatusInternalServerError
+	}
 }
 
 // RuleGroupsBy is a function that defines the ordering of Rule Groups.
@@ -231,6 +249,11 @@ func (by AlertsBy) TopK(alerts []Alert, k int) []Alert {
 	// for each element. This vastly reduces the number of comparisons needed,
 	// which is important for sorting alerts, as the comparison function is
 	// very expensive.
+
+	// If k is zero or less, return nothing.
+	if k < 1 {
+		return []Alert{}
+	}
 
 	// The heap must be in ascending order, so that the root of the heap is
 	// the current smallest element.

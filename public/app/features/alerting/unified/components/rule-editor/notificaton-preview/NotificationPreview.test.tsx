@@ -42,8 +42,8 @@ const ui = {
   routeMatchingInstances: byTestId('route-matching-instance'),
   loadingIndicator: byText(/Loading/),
   previewButton: byRole('button', { name: /preview routing/i }),
-  grafanaAlertManagerLabel: byText(/alert manager:grafana/i),
-  otherAlertManagerLabel: byText(/alert manager:other_am/i),
+  grafanaAlertManagerLabel: byText(/alertmanager:grafana/i),
+  otherAlertManagerLabel: byText(/alertmanager:other_am/i),
   seeDetails: byText(/see details/i),
   details: {
     title: byRole('heading', { name: /routing details/i }),
