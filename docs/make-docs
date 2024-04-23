@@ -6,6 +6,22 @@
 # [Semantic versioning](https://semver.org/) is used to help the reader identify the significance of changes.
 # Changes are relevant to this script and the support docs.mk GNU Make interface.
 #
+# ## 6.1.0 (2024-04-22)
+#
+# ### Changed
+#
+# - Mount volumes with SELinux labels.
+#
+#   https://docs.docker.com/storage/bind-mounts/#configure-the-selinux-label
+#
+# ## 6.1.0 (2024-04-22)
+#
+# ### Added
+#
+# - Pseudo project for including only website resources and no website content.
+#
+#   Facilitates testing shortcodes and layout changes with a small documentation set instead of Grafana Cloud or the entire website.
+#
 # ## 6.0.1 (2024-02-28)
 #
 # ### Added
@@ -300,6 +316,7 @@ SOURCES_helm_charts_tempo_distributed='tempo'
 SOURCES_opentelemetry='opentelemetry-docs'
 SOURCES_plugins_grafana_datadog_datasource='datadog-datasource'
 SOURCES_plugins_grafana_oracle_datasource='oracle-datasource'
+SOURCES_resources='website'
 
 VERSIONS_as_code='UNVERSIONED'
 VERSIONS_grafana_cloud='UNVERSIONED'
@@ -311,6 +328,7 @@ VERSIONS_grafana_cloud_frontend_observability_faro_web_sdk='UNVERSIONED'
 VERSIONS_opentelemetry='UNVERSIONED'
 VERSIONS_plugins_grafana_datadog_datasource='latest'
 VERSIONS_plugins_grafana_oracle_datasource='latest'
+VERSIONS_resources='UNVERSIONED'
 VERSIONS_technical_documentation='UNVERSIONED'
 VERSIONS_website='UNVERSIONED'
 VERSIONS_writers_toolkit='UNVERSIONED'
@@ -321,6 +339,7 @@ PATHS_helm_charts_tempo_distributed='docs/sources/helm-charts/tempo-distributed'
 PATHS_mimir='docs/sources/mimir'
 PATHS_plugins_grafana_datadog_datasource='docs/sources'
 PATHS_plugins_grafana_oracle_datasource='docs/sources'
+PATHS_resources='content'
 PATHS_tempo='docs/sources/tempo'
 PATHS_website='content'
 
@@ -584,6 +603,11 @@ POSIX_HERESTRING
         proj_to_url_src_dst_ver "$(new_proj helm-charts/mimir-distributed "${_version}")"
         proj_to_url_src_dst_ver "$(new_proj enterprise-metrics "${_version}")"
         ;;
+      resources)
+        _repo="$(repo_path website)"
+        echo "arbitrary^${_repo}/config^/hugo/config" "arbitrary^${_repo}/layouts^/hugo/layouts" "arbitrary^${_repo}/scripts^/hugo/scripts"
+        unset _repo
+        ;;
       traces)
         proj_to_url_src_dst_ver "$(new_proj tempo "${_version}")"
         proj_to_url_src_dst_ver "$(new_proj enterprise-traces "${_version}")"
@@ -617,7 +641,7 @@ $x
 POSIX_HERESTRING
 
         if [ -n "${url}" ]; then
-          if [ "${_url}" != "arbitrary" ]; then
+          if [ "${url}" != arbitrary ]; then
             printf '\r  %s\r\n' "${url}"
           fi
         fi
@@ -670,9 +694,9 @@ POSIX_HERESTRING
     fi
 
     _repo="$(repo_path website)"
-    volumes="--volume=${_repo}/config:/hugo/config"
-    volumes="${volumes} --volume=${_repo}/layouts:/hugo/layouts"
-    volumes="${volumes} --volume=${_repo}/scripts:/hugo/scripts"
+    volumes="--volume=${_repo}/config:/hugo/config:z"
+    volumes="${volumes} --volume=${_repo}/layouts:/hugo/layouts:z"
+    volumes="${volumes} --volume=${_repo}/scripts:/hugo/scripts:z"
   fi
   unset _project _repo
 done
@@ -682,7 +706,7 @@ for x in ${url_src_dst_vers}; do
 $x
 POSIX_HERESTRING
 
-  if [ "${_url}" != "arbitrary" ]; then
+  if [ "${_url}" != arbitrary ]; then
     if [ ! -f "${_src}/_index.md" ]; then
       errr "Index file '${_src}/_index.md' does not exist."
       note "Is '${_src}' the correct source directory?"
@@ -693,9 +717,9 @@ POSIX_HERESTRING
   debg "Mounting '${_src}' at container path '${_dst}'"
 
   if [ -z "${volumes}" ]; then
-    volumes="--volume=${_src}:${_dst}"
+    volumes="--volume=${_src}:${_dst}:z"
   else
-    volumes="${volumes} --volume=${_src}:${_dst}"
+    volumes="${volumes} --volume=${_src}:${_dst}:z"
   fi
 
   if [ -n "${_ver}" ] && [ "${_ver}" != 'UNVERSIONED' ]; then
@@ -789,7 +813,7 @@ fi
 ${WEBSITE_EXEC}
 EOF
     chmod +x "${tempfile}"
-    volumes="${volumes} --volume=${tempfile}:/entrypoint"
+    volumes="${volumes} --volume=${tempfile}:/entrypoint:z"
     readonly volumes
 
     IFS='' read -r cmd <<EOF
