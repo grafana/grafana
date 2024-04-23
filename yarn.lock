@@ -18911,7 +18911,7 @@ __metadata:
     webpack-merge: "npm:5.10.0"
     webpackbar: "npm:^6.0.0"
     whatwg-fetch: "npm:3.6.20"
-    xlsx: "https://cdn.sheetjs.com/xlsx-0.19.1/xlsx-0.19.1.tgz"
+    xlsx: "https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz"
     yaml: "npm:^2.0.0"
     yargs: "npm:^17.5.1"
   dependenciesMeta:
@@ -32146,12 +32146,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"xlsx@https://cdn.sheetjs.com/xlsx-0.19.1/xlsx-0.19.1.tgz":
-  version: 0.19.1
-  resolution: "xlsx@https://cdn.sheetjs.com/xlsx-0.19.1/xlsx-0.19.1.tgz"
+"xlsx@https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz":
+  version: 0.20.2
+  resolution: "xlsx@https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz"
   bin:
     xlsx: ./bin/xlsx.njs
-  checksum: 10/d84f81bec6501f26728764c207a88a3676c8979e801d5be4d60500859bf4d799256dc07823e6fb3fa404f583aa11c55071483c1f76372416588a643a92ab06cf
+  checksum: 10/2d8e0644888f90fa9145ea74ed90b844154ce89c4f0e4f92fcce3f224fa71654da99aa48d99d65ba86eb0632a4858ba2dea7eef8b54fd8bd23954a09d1884aa1
   languageName: node
   linkType: hard
 
