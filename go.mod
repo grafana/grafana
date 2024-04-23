@@ -109,7 +109,7 @@ require (
 	gopkg.in/mail.v2 v2.3.1 // @grafana/grafana-backend-group
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // @grafana/alerting-squad-backend
-	xorm.io/builder v0.3.6 // indirect; @grafana/grafana-backend-group
+	xorm.io/builder v0.3.6 // @grafana/grafana-backend-group
 	xorm.io/core v0.7.3 // @grafana/grafana-backend-group
 	xorm.io/xorm v0.8.2 // @grafana/alerting-squad-backend
 )
@@ -158,7 +158,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.12.0 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/grafana/grafana-google-sdk-go v0.1.0 // @grafana/partner-datasources
-	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.1-0.20191002090509-6af20e3a5340 // indirect; @grafana/plugins-platform-backend
+	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.1-0.20191002090509-6af20e3a5340 // @grafana/plugins-platform-backend
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-msgpack v0.5.5 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // @grafana/alerting-squad
@@ -506,11 +506,6 @@ require (
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20231025143828-a6c0e9b86a4c
 
 // replace github.com/google/cel-go => github.com/google/cel-go v0.16.1
-
-// Thema's thema CLI requires cobra, which eventually works its way down to go-hclog@v1.0.0.
-// Upgrading affects backend plugins: https://github.com/grafana/grafana/pull/47653#discussion_r850508593
-// No harm to Thema because it's only a dependency in its main package.
-replace github.com/hashicorp/go-hclog => github.com/hashicorp/go-hclog v0.16.1
 
 // Use our fork of the upstream alertmanagers.
 // This is required in order to get notification delivery errors from the receivers API.
