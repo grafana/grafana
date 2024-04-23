@@ -81,8 +81,9 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
       }
     });
 
+    let respondingToTimeChange = false;
     trail.subscribeToEvent(SceneObjectStateChangedEvent, (evt) => {
-      if (evt.payload.changedObject instanceof SceneTimeRange) {
+      if (evt.payload.changedObject instanceof SceneTimeRange && !respondingToTimeChange) {
         const { prevState, newState } = evt.payload;
 
         if (isSceneTimeRangeState(prevState) && isSceneTimeRangeState(newState)) {
@@ -91,7 +92,19 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
           }
         }
 
+        respondingToTimeChange = true;
+        const previousStep = this.state.currentStep;
         this.addTrailStep(trail, 'time');
+        const newStep = this.state.currentStep;
+
+        // Ensure the previous trail step keeps the previous state
+        this.state.steps[previousStep].trailState.$timeRange?.setState(prevState);
+
+        // Stepping back and forth ensures that the time range will change properly the next time the user manually switches to previousStep
+        this.goBackToStep(previousStep);
+        this.goBackToStep(newStep);
+
+        respondingToTimeChange = false;
       }
     });
   }
