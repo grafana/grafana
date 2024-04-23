@@ -1,0 +1,32 @@
+name: Run e2e for dashboards with scenes
+on:
+  pull-request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  cypress-run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: yarn install --immutable
+      - name: Build grafana
+        run: yarn dev
+      - name: Run dashboard scenes e2e
+        run: yarn e2e:scenes
+      - name: "Send Slack notification"
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: >
+            {
+              "icon_emoji": ":this-is-fine-fire:",
+              "username": "TEST - Scenes e2e tests failed",
+              "text": "TEST - Link to run: https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}",
+              "channel": "#grafana-dashboards-squad"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
