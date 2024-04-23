@@ -102,7 +102,7 @@ An alert's label set can contain three types of labels:
 
 - Some are automatically added by Grafana (i.e. alertname and grafana_folder). These are Grafana reserved labels.
 
-- Others you can define yourself to help filter data in your alert rules. They act as a unique identifier of an alert. In addition, labels allow searching, silencing, or routing alerts. 
+- Labels that you define yourself to help filter data in your alert rules. 
 And, you can also template them. For example in your alert, you could add a label that uses templating to create more dynamic and customizable alerting. E.g. `environment` `=` `{{ your text/template }}`.
 
 {{<admonition type="note">}}
