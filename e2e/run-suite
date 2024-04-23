@@ -16,7 +16,7 @@ echo -e "Starting Cypress scenarios"
 
 args=("$@")
 
-CMD="cypress run --browser=chrome"
+CMD="cypress run --browser=chrome --disable-gpu"
 PARAMS=""
 CLEANUP=""
 
@@ -126,7 +126,7 @@ function join() {
 
 export TZ="Pacific/Honolulu"
 
-yarn run $CMD --env "$(join env)" --disable-gpu \
+yarn run $CMD --env "$(join env)" \
   --config "$(join cypressConfig)" \
   $PARAMS
 
