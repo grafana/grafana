@@ -230,8 +230,8 @@ export function useGetEssentialsConfiguration() {
             },
           },
           {
-            title: 'Create OnCall integration to receive Alerts',
-            description: 'tbd',
+            title: 'Integrate Alerting with OnCall',
+            description: 'Boost your alert notification capabilities and unlock on-call tools.',
             button: {
               type: 'openLink',
               url: '/a/grafana-oncall-app/integrations?tab=monitoring-systems&p=1',
@@ -240,8 +240,8 @@ export function useGetEssentialsConfiguration() {
             },
           },
           {
-            title: 'Create your ChatOps workspace to OnCall',
-            description: 'tbd',
+            title: 'Connect your ChatOps Workspace to OnCall',
+            description: 'Receive alerts and oncall notifications within your chat environment.',
             button: {
               type: 'openLink',
               url: '/alerting/notifications',
@@ -251,7 +251,8 @@ export function useGetEssentialsConfiguration() {
           },
           {
             title: 'Connect your ChatOps Workspace to Incident',
-            description: 'Automatically create an incident channel and manage incidents directly within your chat environment.',
+            description:
+              'Automatically create an incident channel and manage incidents directly within your chat environment.',
             button: {
               type: 'openLink',
               url: '/a/grafana-incident-app/integrations/grate.slack',
@@ -260,8 +261,8 @@ export function useGetEssentialsConfiguration() {
             },
           },
           {
-            title: 'Add ChatOps to your integration',
-            description: 'tbd',
+            title: 'Configure channels to receive alert notifications',
+            description: 'Select ChatOps channels to route notifications',
             button: {
               type: 'openLink',
               url: '/a/grafana-oncall-app/integrations/',
