@@ -569,7 +569,7 @@ This section outlines general instructions for provisioning Grafana resources wi
    kubectl cp alerting my-grafana/<pod_name>:/etc/grafana/provisioning/
    ```
 
-   You can follow the same process to provision additional Grafana resources by suplying the following folders:
+   You can follow the same process to provision additional Grafana resources by supplying the following folders:
 
    - `provisioning/dashboards`
    - `provisioning/datasources`
