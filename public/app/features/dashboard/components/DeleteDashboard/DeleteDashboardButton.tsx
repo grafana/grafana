@@ -20,9 +20,9 @@ export const DeleteDashboardButton = () => {
               hideModal,
             });
           }}
-          aria-label="Dashboard settings page delete dashboard button"
+          data-testid={selectors.pages.Dashboard.Settings.General.deleteDashBoard}
         >
-          <Trans i18nKey="dashboard-settings.dashboard-delete-button">Delete Dashboard</Trans>
+          <Trans i18nKey="dashboard-settings.dashboard-delete-button">Delete dashboard</Trans>
         </Button>
       )}
     </ModalsController>
