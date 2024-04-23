@@ -61,10 +61,6 @@ describe('DataTrail', () => {
         expect(trail.state.history.state.steps[1].type).toBe('metric');
       });
 
-      it('Should set history current step to 1', () => {
-        expect(trail.state.history.state.currentStep).toBe(1);
-      });
-
       it('Should set history currentStep to 1', () => {
         expect(trail.state.history.state.currentStep).toBe(1);
       });
@@ -73,12 +69,120 @@ describe('DataTrail', () => {
         expect(trail.state.history.state.steps[1].parentIndex).toBe(0);
       });
 
+      it('Should have time range `from` be default "now-6h"', () => {
+        expect(trail.state.$timeRange?.state.from).toBe('now-6h');
+      });
+
       describe('And browser back button is pressed', () => {
         locationService.getHistory().goBack();
 
         it('Should return to original URL', () => {
           const { pathname } = locationService.getLocation();
           expect(pathname).toEqual(preTrailUrl);
+        });
+      });
+
+      describe('And when changing the time range `from` to "now-1h"', () => {
+        beforeEach(() => {
+          trail.state.$timeRange?.setState({ from: 'now-1h' });
+        });
+
+        it('should sync state with url', () => {
+          expect(locationService.getSearchObject().from).toBe('now-1h');
+        });
+
+        it('should add history step', () => {
+          expect(trail.state.history.state.steps[2].type).toBe('time');
+        });
+
+        it('Should set history currentStep to 2', () => {
+          expect(trail.state.history.state.currentStep).toBe(2);
+        });
+
+        it('Should set history step 1 parentIndex to 0', () => {
+          expect(trail.state.history.state.steps[2].parentIndex).toBe(1);
+        });
+
+        it('Should have time range `from` be updated "now-1h"', () => {
+          expect(trail.state.$timeRange?.state.from).toBe('now-1h');
+        });
+
+        it('Previous history step should have previous default `from` of "now-6h"', () => {
+          expect(trail.state.history.state.steps[1].trailState.$timeRange?.state.from).toBe('now-6h');
+        });
+
+        it('Current history step should have new `from` of "now-1h"', () => {
+          expect(trail.state.history.state.steps[2].trailState.$timeRange?.state.from).toBe('now-1h');
+        });
+
+        describe('And when traversing back to step 1', () => {
+          beforeEach(() => {
+            trail.state.history.goBackToStep(1);
+          });
+
+          it('Should set history currentStep to 1', () => {
+            expect(trail.state.history.state.currentStep).toBe(1);
+          });
+
+          it('should sync state with url', () => {
+            expect(locationService.getSearchObject().from).toBe('now-6h');
+          });
+
+          it('Should have time range `from` be set back to "now-6h"', () => {
+            expect(trail.state.$timeRange?.state.from).toBe('now-6h');
+          });
+
+          describe('And then when changing the time range `from` to "now-15m"', () => {
+            beforeEach(() => {
+              trail.state.$timeRange?.setState({ from: 'now-15m' });
+            });
+
+            it('should sync state with url', () => {
+              expect(locationService.getSearchObject().from).toBe('now-15m');
+            });
+
+            it('should add history step', () => {
+              expect(trail.state.history.state.steps[3].type).toBe('time');
+            });
+
+            it('Should set history currentStep to 3', () => {
+              expect(trail.state.history.state.currentStep).toBe(3);
+            });
+
+            it('Should set history step 3 parentIndex to 1', () => {
+              expect(trail.state.history.state.steps[3].parentIndex).toBe(1);
+            });
+
+            it('Should have time range `from` be updated "now-15m"', () => {
+              expect(trail.state.$timeRange?.state.from).toBe('now-15m');
+            });
+
+            it('History step 1 (parent) should have previous default `from` of "now-6h"', () => {
+              expect(trail.state.history.state.steps[1].trailState.$timeRange?.state.from).toBe('now-6h');
+            });
+
+            it('History step 2 should stil have `from` of "now-1h"', () => {
+              expect(trail.state.history.state.steps[2].trailState.$timeRange?.state.from).toBe('now-1h');
+            });
+
+            describe('And then when returning again to step 1', () => {
+              beforeEach(() => {
+                trail.state.history.goBackToStep(1);
+              });
+
+              it('Should set history currentStep to 1', () => {
+                expect(trail.state.history.state.currentStep).toBe(1);
+              });
+
+              it('should sync state with url', () => {
+                expect(locationService.getSearchObject().from).toBe('now-6h');
+              });
+
+              it('Should have time range `from` be set back to "now-6h"', () => {
+                expect(trail.state.$timeRange?.state.from).toBe('now-6h');
+              });
+            });
+          });
         });
       });
     });
@@ -145,4 +249,6 @@ describe('DataTrail', () => {
       });
     });
   });
+
+  describe('Given starting non-embedded trail with url sync and no url state', () => {});
 });
