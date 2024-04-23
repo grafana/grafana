@@ -234,7 +234,7 @@ func (srv RulerSrv) RouteGetRulesConfig(c *contextmodel.ReqContext) response.Res
 	}
 
 	dashboardUID := c.Query("dashboard_uid")
-	panelID, err := getPanelIDFromRequest(c.Req)
+	panelID, err := getPanelIDFromQuery(c.Req.URL.Query())
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "invalid panel_id")
 	}
