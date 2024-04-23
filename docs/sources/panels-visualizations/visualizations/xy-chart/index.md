@@ -138,9 +138,9 @@ Tooltip options control the information overlay that appears when you hover over
 
 ## Legend options
 
-Legend options control the series names and statistics that appear under or to the right of the graph.
+Legend options control the series names and statistics that appear under or to the right of the graph. For more information about the legend, refer to [Configure a legend](../configure-legend/).
 
-{{< docs/shared lookup="visualizations/legend-options-2.md" source="grafana" version="<GRAFANA VERSION>" >}}
+{{< docs/shared lookup="visualizations/legend-options-1.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 ## Axis options
 

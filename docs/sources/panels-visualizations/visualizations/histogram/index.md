@@ -121,11 +121,11 @@ Transparency of the gradient is calculated based on the values on the Y-axis. Th
 
 Gradient color is generated based on the hue of the line color.
 
-{{< docs/shared lookup="visualizations/legend-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
+## Legend options
 
-### Legend calculations
+Legend options control the series names and statistics that appear under or to the right of the graph. For more information about the legend, refer to [Configure a legend](../configure-legend/).
 
-Choose a [standard calculations][] to show in the legend. You can select more than one.
+{{< docs/shared lookup="visualizations/legend-options-1.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 {{% docs/reference %}}
 [color scheme]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#color-scheme"

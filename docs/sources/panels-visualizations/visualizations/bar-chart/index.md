@@ -131,13 +131,11 @@ Gradient color is generated based on the hue of the line color.
 
 {{< docs/shared lookup="visualizations/tooltip-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
-{{< docs/shared lookup="visualizations/legend-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
+## Legend options
 
-### Legend calculations
+Legend options control the series names and statistics that appear under or to the right of the graph. For more information about the legend, refer to [Configure a legend](../configure-legend/).
 
-Choose which of the [standard calculations][] to show in the legend. You can have more than one.
-
-For more information about the legend, refer to [Configure a legend](../configure-legend/).
+{{< docs/shared lookup="visualizations/legend-options-1.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 ## Text size
 

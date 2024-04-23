@@ -114,6 +114,12 @@ If your data can't be mapped to these dimensions for some reason (for example, b
 
 The candlestick visualization is based on the time series visualization. It can visualize additional data dimensions beyond open, high, low, close, and volume The **Include** and **Ignore** options allow it to visualize other included data such as simple moving averages, Bollinger bands and more, using the same styles and configurations available in the [time series][time series visualization] visualization.
 
+## Legend options
+
+Legend options control the series names and statistics that appear under or to the right of the graph. For more information about the legend, refer to [Configure a legend](../configure-legend/).
+
+{{< docs/shared lookup="visualizations/legend-options-1.md" source="grafana" version="<GRAFANA VERSION>" >}}
+
 {{% docs/reference %}}
 [time series visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series"
 [time series visualization]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series"

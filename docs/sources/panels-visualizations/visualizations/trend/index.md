@@ -38,6 +38,12 @@ For example, you could represent engine power and torque versus speed where spee
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-0-trend-panel-new-colors.png" max-width="750px" caption="Trend engine power and torque curves" >}}
 
+## Legend options
+
+Legend options control the series names and statistics that appear under or to the right of the graph. For more information about the legend, refer to [Configure a legend](../configure-legend/).
+
+{{< docs/shared lookup="visualizations/legend-options-1.md" source="grafana" version="<GRAFANA VERSION>" >}}
+
 {{% docs/reference %}}
 [Time series visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series"
 [Time series visualization]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series"
