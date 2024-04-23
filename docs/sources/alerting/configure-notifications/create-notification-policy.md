@@ -99,7 +99,7 @@ An example of a valid matchers search input is:
 
 ## Caveat
 
-Mute timings are not inherited from a parent notification policy, it has to be configured in full on each level
+Mute timings are not inherited from a parent notification policy, they have to be configured in full on each level.
 
 ## Example
 
