@@ -92,7 +92,7 @@ case "$1" in
       env[SCENES]=true
       cypressConfig[specPattern]=$rootForScenesSuite/*/$testFilesForSingleSuite
       cypressConfig[video]=false
-      CMD="cypress open"
+      # CMD="cypress open"
       ;;
 
     "oldDash")
