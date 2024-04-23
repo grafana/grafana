@@ -34,6 +34,8 @@ func (fam *RemotePrimaryForkedAlertmanager) ApplyConfig(ctx context.Context, con
 	}
 
 	if err := fam.internal.ApplyConfig(ctx, config); err != nil {
+		// An error in the internal Alertmanager shouldn't make the whole operation fail.
+		// We're replicating writes in the internal Alertmanager just for comparing and in case we need to roll back.
 		fam.log.Error("Error applying config to the internal Alertmanager", "err", err)
 	}
 	return nil
@@ -45,6 +47,8 @@ func (fam *RemotePrimaryForkedAlertmanager) SaveAndApplyConfig(ctx context.Conte
 	}
 
 	if err := fam.internal.SaveAndApplyConfig(ctx, config); err != nil {
+		// An error in the internal Alertmanager shouldn't make the whole operation fail.
+		// We're replicating writes in the internal Alertmanager just for comparing and in case we need to roll back.
 		fam.log.Error("Error applying config to the internal Alertmanager", "err", err)
 	}
 	return nil
@@ -56,6 +60,8 @@ func (fam *RemotePrimaryForkedAlertmanager) SaveAndApplyDefaultConfig(ctx contex
 	}
 
 	if err := fam.internal.SaveAndApplyDefaultConfig(ctx); err != nil {
+		// An error in the internal Alertmanager shouldn't make the whole operation fail.
+		// We're replicating writes in the internal Alertmanager just for comparing and in case we need to roll back.
 		fam.log.Error("Error applying the default configuration to the internal Alertmanager", "err", err)
 	}
 	return nil
