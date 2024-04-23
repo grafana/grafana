@@ -471,7 +471,7 @@ require github.com/getkin/kin-openapi v0.124.0 // @grafana/grafana-as-code
 
 require github.com/grafana/authlib v0.0.0-20240328140636-a7388d0bac72 // @grafana/identity-access-team
 
-require github.com/deepmap/oapi-codegen/v2 v2.1.0
+require github.com/deepmap/oapi-codegen/v2 v2.1.0 // @grafana/grafana-as-code
 
 require (
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
