@@ -3367,7 +3367,7 @@ __metadata:
     react-dom: "npm:18.2.0"
     react-use: "npm:17.5.0"
     rxjs: "npm:7.8.1"
-    style-loader: "npm:3.3.4"
+    style-loader: "npm:4.0.0"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.2"
     typescript: "npm:5.4.5"
@@ -4091,7 +4091,7 @@ __metadata:
     sass: "npm:1.75.0"
     sass-loader: "npm:14.2.1"
     semver: "npm:7.6.0"
-    style-loader: "npm:3.3.4"
+    style-loader: "npm:4.0.0"
     testing-library-selector: "npm:0.3.1"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.2"
@@ -4403,7 +4403,7 @@ __metadata:
     storybook: "npm:7.4.5"
     storybook-addon-turbo-build: "npm:2.0.1"
     storybook-dark-mode: "npm:3.0.1"
-    style-loader: "npm:3.3.4"
+    style-loader: "npm:4.0.0"
     tinycolor2: "npm:1.6.0"
     tslib: "npm:2.6.2"
     typescript: "npm:5.4.5"
@@ -18873,7 +18873,7 @@ __metadata:
     slate: "npm:0.47.9"
     slate-plain-serializer: "npm:0.7.13"
     slate-react: "npm:0.22.10"
-    style-loader: "npm:3.3.4"
+    style-loader: "npm:4.0.0"
     stylelint: "npm:16.3.1"
     stylelint-config-sass-guidelines: "npm:11.1.0"
     symbol-observable: "npm:4.0.0"
@@ -29602,7 +29602,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"style-loader@npm:3.3.4, style-loader@npm:^3.3.1":
+"style-loader@npm:4.0.0":
+  version: 4.0.0
+  resolution: "style-loader@npm:4.0.0"
+  peerDependencies:
+    webpack: ^5.27.0
+  checksum: 10/93f25b7e70cfca9d1d8427170384262b59a5b0e84e7191a5a26636a77799caeed46d9a3e45ee7b9afa0f69176e3b98d5a6c5e81593ff1fd0946f1c5682fd2a68
+  languageName: node
+  linkType: hard
+
+"style-loader@npm:^3.3.1":
   version: 3.3.4
   resolution: "style-loader@npm:3.3.4"
   peerDependencies:
