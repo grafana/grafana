@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
 	"net/url"
 	"sort"
 	"strconv"
@@ -126,16 +125,16 @@ func formatValues(alertState *state.State) string {
 	return fv
 }
 
-func getPanelIDFromRequest(r *http.Request) (int64, error) {
-	if s := strings.TrimSpace(r.URL.Query().Get("panel_id")); s != "" {
+func getPanelIDFromQuery(v url.Values) (int64, error) {
+	if s := strings.TrimSpace(v.Get("panel_id")); s != "" {
 		return strconv.ParseInt(s, 10, 64)
 	}
 	return 0, nil
 }
 
-func getMatchersFromRequest(r *http.Request) (labels.Matchers, error) {
+func getMatchersFromQuery(v url.Values) (labels.Matchers, error) {
 	var matchers labels.Matchers
-	for _, s := range r.URL.Query()["matcher"] {
+	for _, s := range v["matcher"] {
 		var m labels.Matcher
 		if err := json.Unmarshal([]byte(s), &m); err != nil {
 			return nil, err
@@ -148,9 +147,9 @@ func getMatchersFromRequest(r *http.Request) (labels.Matchers, error) {
 	return matchers, nil
 }
 
-func getStatesFromRequest(r *http.Request) ([]eval.State, error) {
+func getStatesFromQuery(v url.Values) ([]eval.State, error) {
 	var states []eval.State
-	for _, s := range r.URL.Query()["state"] {
+	for _, s := range v["state"] {
 		s = strings.ToLower(s)
 		switch s {
 		case "normal", "inactive":
@@ -184,8 +183,8 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		},
 	}
 
-	dashboardUID := c.Query("dashboard_uid")
-	panelID, err := getPanelIDFromRequest(c.Req)
+	dashboardUID := c.Req.Form.Get("dashboard_uid")
+	panelID, err := getPanelIDFromQuery(c.Req.Form)
 	if err != nil {
 		ruleResponse.DiscoveryBase.Status = "error"
 		ruleResponse.DiscoveryBase.Error = fmt.Sprintf("invalid panel_id: %s", err.Error())
@@ -202,14 +201,14 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 	limitGroups := getInt64WithDefault(c.Req.Form, "limit", -1)
 	limitRulesPerGroup := getInt64WithDefault(c.Req.Form, "limit_rules", -1)
 	limitAlertsPerRule := getInt64WithDefault(c.Req.Form, "limit_alerts", -1)
-	matchers, err := getMatchersFromRequest(c.Req)
+	matchers, err := getMatchersFromQuery(c.Req.Form)
 	if err != nil {
 		ruleResponse.DiscoveryBase.Status = "error"
 		ruleResponse.DiscoveryBase.Error = err.Error()
 		ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrBadData
 		return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
 	}
-	withStates, err := getStatesFromRequest(c.Req)
+	withStates, err := getStatesFromQuery(c.Req.Form)
 	if err != nil {
 		ruleResponse.DiscoveryBase.Status = "error"
 		ruleResponse.DiscoveryBase.Error = err.Error()
