@@ -65,21 +65,21 @@ describe('AnnotationSettingsEdit', () => {
 
   it('should render with empty list message', async () => {
     const {
-      renderer: { getByTestId },
+      renderer: { getByRole },
     } = await setup(true);
 
-    const emptyListBtn = getByTestId(selectors.components.CallToActionCard.buttonV2(BUTTON_TITLE));
+    const emptyListBtn = getByRole('button', { name: BUTTON_TITLE });
 
     expect(emptyListBtn).toBeInTheDocument();
   });
 
   it('should create new annotation when empty list button is pressed', async () => {
     const {
-      renderer: { getByTestId },
+      renderer: { getByRole },
       user,
     } = await setup(true);
 
-    const emptyListBtn = getByTestId(selectors.components.CallToActionCard.buttonV2(BUTTON_TITLE));
+    const emptyListBtn = getByRole('button', { name: BUTTON_TITLE });
 
     await user.click(emptyListBtn);
 
