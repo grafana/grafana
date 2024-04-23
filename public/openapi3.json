@@ -12374,12 +12374,19 @@
     },
     "/access-control/roles": {
       "get": {
-        "description": "Gets all existing roles. The response contains all global and organization local roles, for the organization which user is signed in.\n\nYou need to have a permission with action `roles:read` and scope `roles:*`.",
+        "description": "Gets all existing roles. The response contains all global and organization local roles, for the organization which user is signed in.\n\nYou need to have a permission with action `roles:read` and scope `roles:*`.\n\nThe `delegatable` flag reduces the set of roles to only those for which the signed-in user has permissions to assign.",
         "operationId": "listRoles",
         "parameters": [
           {
             "in": "query",
             "name": "delegatable",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "includeHidden",
             "schema": {
               "type": "boolean"
             }

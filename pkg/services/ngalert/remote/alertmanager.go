@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/go-openapi/strfmt"
@@ -16,6 +17,9 @@ import (
 	amreceiver "github.com/prometheus/alertmanager/api/v2/client/receiver"
 	amsilence "github.com/prometheus/alertmanager/api/v2/client/silence"
 
+	alertingClusterPB "github.com/grafana/alerting/cluster/clusterpb"
+	alertingNotify "github.com/grafana/alerting/notify"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -23,10 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	remoteClient "github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
-
-	alertingClusterPB "github.com/grafana/alerting/cluster/clusterpb"
-	amgeneral "github.com/prometheus/alertmanager/api/v2/client/general"
-	"gopkg.in/yaml.v3"
 )
 
 type stateStore interface {
@@ -182,7 +182,6 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertCon
 		am.log.Error("Unable to upload the state to the remote Alertmanager", "err", err)
 	}
 	am.log.Debug("Completed state upload to remote Alertmanager", "url", am.url)
-
 	return nil
 }
 
@@ -216,20 +215,39 @@ func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config 
 		return err
 	}
 
+	// Send the configuration only if we need to.
 	if !am.shouldSendConfig(ctx, decrypted) {
 		return nil
 	}
-	return am.sendConfiguration(ctx, string(decrypted), config.ConfigurationHash, config.CreatedAt, config.Default)
+	return am.sendConfiguration(ctx, decrypted, config.ConfigurationHash, config.CreatedAt, config.Default)
 }
 
-func (am *Alertmanager) SendConfiguration(ctx context.Context, config *models.AlertConfiguration) error {
-	return am.mimirClient.CreateGrafanaAlertmanagerConfig(
+func (am *Alertmanager) decryptConfiguration(ctx context.Context, cfg *apimodels.PostableUserConfig) (*apimodels.PostableUserConfig, error) {
+	fn := func(payload []byte) ([]byte, error) {
+		return am.decrypt(ctx, payload)
+	}
+	decrypted, err := cfg.Decrypt(fn)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decrypt the configuration: %w", err)
+	}
+
+	return &decrypted, nil
+}
+
+func (am *Alertmanager) sendConfiguration(ctx context.Context, decrypted *apimodels.PostableUserConfig, hash string, createdAt int64, isDefault bool) error {
+	am.metrics.ConfigSyncsTotal.Inc()
+	if err := am.mimirClient.CreateGrafanaAlertmanagerConfig(
 		ctx,
-		config.AlertmanagerConfiguration,
-		config.ConfigurationHash,
-		config.CreatedAt,
-		config.Default,
-	)
+		decrypted,
+		hash,
+		createdAt,
+		isDefault,
+	); err != nil {
+		am.metrics.ConfigSyncErrorsTotal.Inc()
+		return err
+	}
+	am.metrics.LastConfigSync.SetToCurrentTime()
+	return nil
 }
 
 // CompareAndSendState gets the Alertmanager's internal state and compares it with the remote Alertmanager's one.
@@ -301,20 +319,20 @@ func (am *Alertmanager) sendConfiguration(ctx context.Context, rawConfig, hash s
 
 // SaveAndApplyDefaultConfig sends the default Grafana Alertmanager configuration to the remote Alertmanager.
 func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
-	fmt.Println("SaveAndApplyDefaultConfig with default config:", am.decrypt)
 	c, err := notifier.Load([]byte(am.defaultConfig))
+	if err != nil {
+		return fmt.Errorf("unable to parse the default configuration: %w", err)
+	}
+
+	// Decrypt before sending.
+	decrypted, err := am.decryptConfiguration(ctx, c)
 	if err != nil {
 		return err
 	}
 
-	rawDecrypted, err := am.decryptConfiguration(ctx, c)
-	if err != nil {
-		return fmt.Errorf("unable to decrypt default configuration: %w", err)
-	}
-
 	return am.sendConfiguration(
 		ctx,
-		string(rawDecrypted),
+		decrypted,
 		am.defaultConfigHash,
 		time.Now().Unix(),
 		true,
@@ -491,15 +509,30 @@ func (am *Alertmanager) Ready() bool {
 	return am.ready
 }
 
+// SilenceState returns the Alertmanager's silence state as a SilenceState. Currently, does not retrieve the state
+// remotely and instead uses the value from the state store.
+func (am *Alertmanager) SilenceState(ctx context.Context) (alertingNotify.SilenceState, error) {
+	silences, err := am.state.GetSilences(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error getting silences: %w", err)
+	}
+
+	return alertingNotify.DecodeState(strings.NewReader(silences))
+}
+
 // getFullState returns a base64-encoded protobuf message representing the Alertmanager's internal state.
 func (am *Alertmanager) getFullState(ctx context.Context) (string, error) {
 	var parts []alertingClusterPB.Part
 
-	silences, err := am.state.GetSilences(ctx)
+	state, err := am.SilenceState(ctx)
 	if err != nil {
 		return "", fmt.Errorf("error getting silences: %w", err)
 	}
-	parts = append(parts, alertingClusterPB.Part{Key: notifier.SilencesFilename, Data: []byte(silences)})
+	b, err := state.MarshalBinary()
+	if err != nil {
+		return "", fmt.Errorf("error marshalling silences: %w", err)
+	}
+	parts = append(parts, alertingClusterPB.Part{Key: notifier.SilencesFilename, Data: b})
 
 	notificationLog, err := am.state.GetNotificationLog(ctx)
 	if err != nil {
@@ -510,7 +543,7 @@ func (am *Alertmanager) getFullState(ctx context.Context) (string, error) {
 	fs := alertingClusterPB.FullState{
 		Parts: parts,
 	}
-	b, err := fs.Marshal()
+	b, err = fs.Marshal()
 	if err != nil {
 		return "", fmt.Errorf("error marshaling full state: %w", err)
 	}
@@ -520,15 +553,25 @@ func (am *Alertmanager) getFullState(ctx context.Context) (string, error) {
 
 // shouldSendConfig compares the remote Alertmanager configuration with our local one.
 // It returns true if the configurations are different.
-func (am *Alertmanager) shouldSendConfig(ctx context.Context, rawConfig []byte) bool {
+func (am *Alertmanager) shouldSendConfig(ctx context.Context, config *apimodels.PostableUserConfig) bool {
 	rc, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
 	if err != nil {
 		// Log the error and return true so we try to upload our config anyway.
-		am.log.Error("Unable to get the remote Alertmanager Configuration for comparison", "err", err)
+		am.log.Error("Unable to get the remote Alertmanager configuration for comparison", "err", err)
 		return true
 	}
 
-	return md5.Sum([]byte(rc.GrafanaAlertmanagerConfig)) != md5.Sum(rawConfig)
+	rawRemote, err := json.Marshal(rc.GrafanaAlertmanagerConfig)
+	if err != nil {
+		am.log.Error("Unable to marshal the remote Alertmanager configuration for comparison", "err", err)
+		return true
+	}
+	rawInternal, err := json.Marshal(config)
+	if err != nil {
+		am.log.Error("Unable to marshal the internal Alertmanager configuration for comparison", "err", err)
+		return true
+	}
+	return md5.Sum(rawRemote) != md5.Sum(rawInternal)
 }
 
 // shouldSendState compares the remote Alertmanager state with our local one.

@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -39,9 +38,21 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Valid Grafana Alertmanager configurations.
-const testGrafanaConfig = `{"template_files":{},"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"templates":null,"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"some other name","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"},"secureSettings":null}]}]}}`
-const testGrafanaConfigWithSecret = `{"template_files":{},"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"templates":null,"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"dde6ntuob69dtf","name":"WH","type":"webhook","disableResolveMessage":false,"settings":{"url":"http://localhost:8080","username":"test"},"secureSettings":{"password":"test"}}]}]}}`
+const (
+	// Valid Grafana Alertmanager configurations.
+	testGrafanaConfig           = `{"template_files":{},"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"templates":null,"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"some other name","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"},"secureSettings":null}]}]}}`
+	testGrafanaConfigWithSecret = `{"template_files":{},"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"templates":null,"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"dde6ntuob69dtf","name":"WH","type":"webhook","disableResolveMessage":false,"settings":{"url":"http://localhost:8080","username":"test"},"secureSettings":{"password":"test"}}]}]}}`
+
+	// Valid Alertmanager state base64 encoded.
+	testSilence1 = "lwEKhgEKATESFxIJYWxlcnRuYW1lGgp0ZXN0X2FsZXJ0EiMSDmdyYWZhbmFfZm9sZGVyGhF0ZXN0X2FsZXJ0X2ZvbGRlchoMCN2CkbAGEJbKrMsDIgwI7Z6RsAYQlsqsywMqCwiAkrjDmP7///8BQgxHcmFmYW5hIFRlc3RKDFRlc3QgU2lsZW5jZRIMCO2ekbAGEJbKrMsD"
+	testSilence2 = "lwEKhgEKATISFxIJYWxlcnRuYW1lGgp0ZXN0X2FsZXJ0EiMSDmdyYWZhbmFfZm9sZGVyGhF0ZXN0X2FsZXJ0X2ZvbGRlchoMCN2CkbAGEJbKrMsDIgwI7Z6RsAYQlsqsywMqCwiAkrjDmP7///8BQgxHcmFmYW5hIFRlc3RKDFRlc3QgU2lsZW5jZRIMCO2ekbAGEJbKrMsDlwEKhgEKATESFxIJYWxlcnRuYW1lGgp0ZXN0X2FsZXJ0EiMSDmdyYWZhbmFfZm9sZGVyGhF0ZXN0X2FsZXJ0X2ZvbGRlchoMCN2CkbAGEJbKrMsDIgwI7Z6RsAYQlsqsywMqCwiAkrjDmP7///8BQgxHcmFmYW5hIFRlc3RKDFRlc3QgU2lsZW5jZRIMCO2ekbAGEJbKrMsD"
+	testNflog1   = "OgoqCgZncm91cDESEgoJcmVjZWl2ZXIxEgV0ZXN0MyoMCIzm1bAGEPqx5uEBEgwInILWsAYQ+rHm4QE="
+	testNflog2   = "OgoqCgZncm91cDISEgoJcmVjZWl2ZXIyEgV0ZXN0MyoMCLSDkbAGEMvaofYCEgwIxJ+RsAYQy9qh9gI6CioKBmdyb3VwMRISCglyZWNlaXZlcjESBXRlc3QzKgwItIORsAYQy9qh9gISDAjEn5GwBhDL2qH2Ag=="
+)
+
+var (
+	defaultGrafanaConfig = setting.GetAlertmanagerDefaultConfiguration()
+)
 
 var (
 	defaultGrafanaConfig = setting.GetAlertmanagerDefaultConfiguration()
@@ -120,7 +131,9 @@ func TestApplyConfig(t *testing.T) {
 		if r.Method == http.MethodPost && strings.Contains(r.URL.Path, "/config") {
 			var c client.UserGrafanaConfig
 			require.NoError(t, json.NewDecoder(r.Body).Decode(&c))
-			configSent = c.GrafanaAlertmanagerConfig
+			amCfg, err := json.Marshal(c.GrafanaAlertmanagerConfig)
+			require.NoError(t, err)
+			configSent = string(amCfg)
 		}
 
 		w.WriteHeader(http.StatusOK)
@@ -152,8 +165,8 @@ func TestApplyConfig(t *testing.T) {
 	ctx := context.Background()
 	store := ngfakes.NewFakeKVStore(t)
 	fstore := notifier.NewFileStore(1, store)
-	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.SilencesFilename, "test"))
-	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.NotificationLogFilename, "test"))
+	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.SilencesFilename, testSilence1))
+	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.NotificationLogFilename, testNflog1))
 
 	// An error response from the remote Alertmanager should result in the readiness check failing.
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
@@ -181,6 +194,8 @@ func TestApplyConfig(t *testing.T) {
 }
 
 func TestCompareAndSendConfiguration(t *testing.T) {
+	cfgWithSecret, err := notifier.Load([]byte(testGrafanaConfigWithSecret))
+	require.NoError(t, err)
 	testValue := []byte("test")
 	testErr := errors.New("test error")
 	decryptFn := func(_ context.Context, payload []byte) ([]byte, error) {
@@ -234,19 +249,19 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 			"invalid base-64 in key",
 			strings.Replace(testGrafanaConfigWithSecret, `"password":"test"`, `"password":"!"`, 1),
 			nil,
-			"failed to decode value for key 'password': illegal base64 data at input byte 0",
+			"unable to decrypt the configuration: failed to decode value for key 'password': illegal base64 data at input byte 0",
 		},
 		{
 			"decrypt error",
 			testGrafanaConfigWithSecret,
 			nil,
-			fmt.Sprintf("failed to decrypt value for key 'password': %s", testErr.Error()),
+			fmt.Sprintf("unable to decrypt the configuration: failed to decrypt value for key 'password': %s", testErr.Error()),
 		},
 		{
 			"no error",
 			strings.Replace(testGrafanaConfigWithSecret, `"password":"test"`, fmt.Sprintf("%q:%q", "password", base64.StdEncoding.EncodeToString(testValue)), 1),
 			&client.UserGrafanaConfig{
-				GrafanaAlertmanagerConfig: testGrafanaConfigWithSecret,
+				GrafanaAlertmanagerConfig: cfgWithSecret,
 			},
 			"",
 		},
@@ -300,22 +315,16 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 		OrgID:                     1,
 	}
 
-	silences := []byte("test-silences")
-	nflog := []byte("test-notifications")
 	store := ngfakes.NewFakeKVStore(t)
 	fstore := notifier.NewFileStore(cfg.OrgID, store)
 
 	ctx := context.Background()
-	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.SilencesFilename, base64.StdEncoding.EncodeToString(silences)))
-	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.NotificationLogFilename, base64.StdEncoding.EncodeToString(nflog)))
+	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.SilencesFilename, testSilence1))
+	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.NotificationLogFilename, testNflog1))
 
-	fs := clusterpb.FullState{
-		Parts: []clusterpb.Part{
-			{Key: "silences", Data: silences},
-			{Key: "notifications", Data: nflog},
-		},
-	}
-	fullState, err := fs.Marshal()
+	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
+	am, err := NewAlertmanager(cfg, fstore, secretsService.Decrypt, defaultGrafanaConfig, m)
 	require.NoError(t, err)
 	encodedFullState := base64.StdEncoding.EncodeToString(fullState)
 
@@ -346,7 +355,10 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 		// Next, we need to verify that Mimir received both the configuration and state.
 		config, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
 		require.NoError(t, err)
-		require.Equal(t, testGrafanaConfig, config.GrafanaAlertmanagerConfig)
+
+		rawCfg, err := json.Marshal(config.GrafanaAlertmanagerConfig)
+		require.NoError(t, err)
+		require.JSONEq(t, testGrafanaConfig, string(rawCfg))
 		require.Equal(t, testConfigHash, config.Hash)
 		require.Equal(t, testConfigCreatedAt, config.CreatedAt)
 		require.Equal(t, testConfig.Default, config.Default)
@@ -358,9 +370,9 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 
 	// Calling `ApplyConfig` again with a changed configuration and state yields no effect.
 	{
-		require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", "silences", base64.StdEncoding.EncodeToString([]byte("abc123"))))
-		require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", "notifications", base64.StdEncoding.EncodeToString([]byte("abc123"))))
-		testConfig.AlertmanagerConfiguration = testGrafanaConfigWithSecret
+		require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", "silences", testSilence2))
+		require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", "notifications", testNflog2))
+		testConfig.CreatedAt = time.Now().Unix()
 		require.NoError(t, am.ApplyConfig(ctx, testConfig))
 
 		// The remote Alertmanager continues to be ready.
@@ -369,7 +381,10 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 		// Next, we need to verify that the config that was uploaded remains the same.
 		config, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
 		require.NoError(t, err)
-		require.Equal(t, testGrafanaConfig, config.GrafanaAlertmanagerConfig)
+
+		rawCfg, err := json.Marshal(config.GrafanaAlertmanagerConfig)
+		require.NoError(t, err)
+		require.JSONEq(t, testGrafanaConfig, string(rawCfg))
 		require.Equal(t, testConfigHash, config.Hash)
 		require.Equal(t, testConfigCreatedAt, config.CreatedAt)
 		require.False(t, config.Default)
@@ -380,31 +395,26 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 		require.Equal(t, encodedFullState, state.State)
 	}
 
-	// `SaveAndApplyConfig` is called whenever a user manually changes the Alertmanager configuration.
-	// Calling this method should decrypt and send a configuration to the remote Alertmanager.
+	// `SaveAndApplyDefaultConfig` should send the default Alertmanager configuration to the remote Alertmanager.
 	{
-		postableCfg, err := notifier.Load([]byte(testGrafanaConfigWithSecret))
-		require.NoError(t, err)
-		err = notifier.EncryptReceiverConfigs(postableCfg.AlertmanagerConfig.Receivers, func(ctx context.Context, payload []byte) ([]byte, error) {
-			return secretsService.Encrypt(ctx, payload, secrets.WithoutScope())
-		})
-		require.NoError(t, err)
-
-		// The encrypted configuration should be different than the one we will send.
-		encryptedConfig, err := json.Marshal(postableCfg)
-		require.NoError(t, err)
-		require.NotEqual(t, testGrafanaConfigWithSecret, encryptedConfig)
-
-		// Call `SaveAndApplyConfig` with the encrypted configuration.
-		require.NoError(t, err)
-		require.NoError(t, am.SaveAndApplyConfig(ctx, postableCfg))
+		require.NoError(t, am.SaveAndApplyDefaultConfig(ctx))
 
 		// Check that the default configuration was uploaded.
 		config, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
 		require.NoError(t, err)
-		require.Equal(t, testGrafanaConfigWithSecret, config.GrafanaAlertmanagerConfig)
-		require.Equal(t, fmt.Sprintf("%x", md5.Sum(encryptedConfig)), config.Hash)
-		require.False(t, config.Default)
+
+		pCfg, err := notifier.Load([]byte(defaultGrafanaConfig))
+		require.NoError(t, err)
+
+		want, err := json.Marshal(pCfg)
+		require.NoError(t, err)
+
+		got, err := json.Marshal(config.GrafanaAlertmanagerConfig)
+		require.NoError(t, err)
+
+		require.JSONEq(t, string(want), string(got))
+		require.Equal(t, fmt.Sprintf("%x", md5.Sum(want)), config.Hash)
+		require.True(t, config.Default)
 	}
 
 	// TODO: Now, shutdown the Alertmanager and we expect the latest configuration to be uploaded.
@@ -475,8 +485,8 @@ func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 	require.Equal(t, 0, len(silences))
 
 	// Creating a silence should succeed.
-	testSilence := genSilence("test")
-	id, err := am.CreateSilence(context.Background(), &testSilence)
+	testSilence := notifier.GenSilence("test")
+	id, err := am.CreateSilence(context.Background(), testSilence)
 	require.NoError(t, err)
 	require.NotEmpty(t, id)
 	testSilence.ID = id
@@ -491,8 +501,8 @@ func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 	require.Error(t, err)
 
 	// After creating another silence, the total amount should be 2.
-	testSilence2 := genSilence("test")
-	id, err = am.CreateSilence(context.Background(), &testSilence2)
+	testSilence2 := notifier.GenSilence("test")
+	id, err = am.CreateSilence(context.Background(), testSilence2)
 	require.NoError(t, err)
 	require.NotEmpty(t, id)
 	testSilence2.ID = id
@@ -624,27 +634,6 @@ func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {
 	rcvs, err := am.GetReceivers(context.Background())
 	require.NoError(t, err)
 	require.Equal(t, "empty-receiver", *rcvs[0].Name)
-}
-
-func genSilence(createdBy string) apimodels.PostableSilence {
-	starts := strfmt.DateTime(time.Now().Add(time.Duration(rand.Int63n(9)+1) * time.Second))
-	ends := strfmt.DateTime(time.Now().Add(time.Duration(rand.Int63n(9)+10) * time.Second))
-	comment := "test comment"
-	isEqual := true
-	name := "test"
-	value := "test"
-	isRegex := false
-	matchers := amv2.Matchers{&amv2.Matcher{IsEqual: &isEqual, Name: &name, Value: &value, IsRegex: &isRegex}}
-
-	return apimodels.PostableSilence{
-		Silence: amv2.Silence{
-			Comment:   &comment,
-			CreatedBy: &createdBy,
-			Matchers:  matchers,
-			StartsAt:  &starts,
-			EndsAt:    &ends,
-		},
-	}
 }
 
 func genAlert(active bool, labels map[string]string) amv2.PostableAlert {

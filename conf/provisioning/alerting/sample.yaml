@@ -69,7 +69,99 @@ policies:
     routes:
       - receiver: cp_1
 
-templates:
-  - orgID: 1
-    name: my_first_template
-    template: Alerting with a custome text template
+# # List of receivers that should be deleted
+# deleteContactPoints:
+# - orgId: 1
+#   uid: first_uid
+
+# # List of notification policies to import or update
+# policies:
+#     # <int> organization ID, default = 1
+#   - orgId: 1
+#     # <string> name of the receiver that should be used for this route
+#     receiver: grafana-default-email
+#     # <list<string>> The labels by which incoming alerts are grouped together. For example,
+#     #        multiple alerts coming in for cluster=A and alertname=LatencyHigh would
+#     #        be batched into a single group.
+#     #
+#     #        To aggregate by all possible labels, use the special value '...' as
+#     #        the sole label name, for example:
+#     #        group_by: ['...']
+#     #        This effectively disables aggregation entirely, passing through all
+#     #        alerts as-is. This is unlikely to be what you want, unless you have
+#     #        a very low alert volume or your upstream notification system performs
+#     #        its own grouping.
+#     group_by:
+#     - grafana_folder
+#     - alertname
+#     # <list> a list of matchers that an alert has to fulfill to match the node
+#     matchers:
+#     - alertname = Watchdog
+#     - severity =~ "warning|critical"
+#     # <list> Times when the route should be muted. These must match the name of a
+#     #        mute time interval.
+#     #        Additionally, the root node cannot have any mute times.
+#     #        When a route is muted it will not send any notifications, but
+#     #        otherwise acts normally (including ending the route-matching process
+#     #        if the `continue` option is not set)
+#     mute_time_intervals:
+#     - abc
+#     # <duration> How long to initially wait to send a notification for a group
+#     #            of alerts. Allows to collect more initial alerts for the same group.
+#     #            (Usually ~0s to few minutes), default = 30s
+#     group_wait: 30s
+#     # <duration> How long to wait before sending a notification about new alerts that
+#     #            are added to a group of alerts for which an initial notification has
+#     #            already been sent. (Usually ~5m or more), default = 5m
+#     group_interval: 5m
+#     # <duration>  How long to wait before sending a notification again if it has already
+#     #             been sent successfully for an alert. (Usually ~3h or more), default = 4h
+#     repeat_interval: 4h
+#     # <list> Zero or more child routes
+#     routes:
+#     ...
+
+# # List of orgIds that should be reset to the default policy
+# resetPolicies:
+# - 1
+
+# # List of templates to import or update
+# templates:
+#     # <int> organization ID, default = 1
+#   - orgID: 1
+#     # <string, required> name of the template, must be unique
+#     name: my_first_template
+#     # <string, required> content of the template
+#     template: Alerting with a custome text template
+
+# # List of templates that should be deleted
+# deleteTemplates:
+#    # <int> organization ID, default = 1
+#  - orgId: 1
+#    # <string, required> name of the template, must be unique
+#    name: my_first_template
+
+
+# # List of mute time intervals to import or update
+# muteTimes:
+#   # <int> organization ID, default = 1
+# - orgId: 1
+#   # <string, required> name of the mute time interval, must be unique
+#   name: mti_1
+#   # <list> time intervals that should trigger the muting
+#            refer to https://prometheus.io/docs/alerting/latest/configuration/#time_interval-0
+#   time_intervals:
+#    - times:
+#      - start_time: '06:00'
+#        end_time: '23:59'
+#      weekdays: ['monday:wednesday','saturday', 'sunday']
+#      months: ['1:3', 'may:august', 'december']
+#      years: ['2020:2022', '2030']
+#      days_of_month: ['1:5', '-3:-1']
+
+# # List of mute time intervals that should be deleted
+# deleteMuteTimes:
+#   # <int> organization ID, default = 1
+# - orgId: 1
+#   # <string, required> name of the mute time interval, must be unique
+#   name: mti_1
