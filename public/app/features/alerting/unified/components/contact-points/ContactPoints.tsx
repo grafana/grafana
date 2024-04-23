@@ -388,7 +388,6 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
   const [ExportDrawer, openExportDrawer] = useExportContactPoint();
 
   const normalPolicyReferences = reject(policies, (ref) => ref.route.type === 'auto-generated');
-  debugger;
   const isReferencedByNormalPolicies = normalPolicyReferences.length > 0;
   const canEdit = editSupported && editAllowed && !provisioned;
   const canDelete = deleteSupported && deleteAllowed && !provisioned && !isReferencedByNormalPolicies;
