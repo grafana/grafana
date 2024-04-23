@@ -438,6 +438,10 @@ func (s *Service) DecryptedPassword(ctx context.Context, ds *datasources.DataSou
 	return "", err
 }
 
+func (s *Service) HTTPClientOptions(ctx context.Context, ds *datasources.DataSource) (*sdkhttpclient.Options, error) {
+	return s.httpClientOptions(ctx, ds)
+}
+
 func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSource) (*sdkhttpclient.Options, error) {
 	tlsOptions, err := s.dsTLSOptions(ctx, ds)
 	if err != nil {
@@ -747,13 +751,4 @@ func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 	limits.Set(globalQuotaTag, cfg.Quota.Global.DataSource)
 	limits.Set(orgQuotaTag, cfg.Quota.Org.DataSource)
 	return limits, nil
-}
-
-// CustomerHeaders returns the custom headers specified in the datasource. The context is used for the decryption operation that might use the store, so consider setting an acceptable timeout for your use case.
-func (s *Service) CustomHeaders(ctx context.Context, ds *datasources.DataSource) (http.Header, error) {
-	values, err := s.SecretsService.DecryptJsonData(ctx, ds.SecureJsonData)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get custom headers: %w", err)
-	}
-	return s.getCustomHeaders(ds.JsonData, values), nil
 }

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"path"
 	"strings"
 	"time"
 
@@ -85,6 +86,7 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn Decrypt
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse remote Alertmanager URL: %w", err)
 	}
+
 	logger := log.New("ngalert.remote.alertmanager")
 
 	mcCfg := &remoteClient.Config{
@@ -116,7 +118,16 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn Decrypt
 	}
 	s := sender.NewExternalAlertmanagerSender(sender.WithDoFunc(doFunc))
 	s.Run()
-	err = s.ApplyConfig(cfg.OrgID, 0, []sender.ExternalAMcfg{{URL: cfg.URL + "/alertmanager"}})
+
+	// Prepend /alertmanager to the URL, but just for the sender.
+	// We don't want to use senderURL in &Alertmanager{}.
+	senderURL, err := url.Parse(cfg.URL)
+	if err != nil {
+		return nil, err
+	}
+	senderURL.Path = path.Join(u.Path, "/alertmanager")
+
+	err = s.ApplyConfig(cfg.OrgID, 0, []sender.ExternalAlertmanagerConfig{{URL: senderURL}})
 	if err != nil {
 		return nil, err
 	}

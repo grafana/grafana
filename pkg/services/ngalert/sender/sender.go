@@ -3,6 +3,7 @@ package sender
 import (
 	"context"
 	"crypto/md5"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"net/http"
@@ -15,10 +16,8 @@ import (
 
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/client_golang/prometheus"
-	common_config "github.com/prometheus/common/config"
-	"github.com/prometheus/common/model"
-	"github.com/prometheus/prometheus/config"
-	"github.com/prometheus/prometheus/discovery"
+	prom_config "github.com/prometheus/prometheus/config"
+	prom_disco "github.com/prometheus/prometheus/discovery"
 	"github.com/prometheus/prometheus/model/labels"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -30,40 +29,15 @@ const (
 	defaultTimeout          = 10 * time.Second
 )
 
-// ExternalAlertmanager is responsible for dispatching alert notifications to an external Alertmanager service.
-type ExternalAlertmanager struct {
-	logger log.Logger
-	wg     sync.WaitGroup
-
-	manager *Manager
-
-	sdCancel  context.CancelFunc
-	sdManager *discovery.Manager
-}
-
-type ExternalAMcfg struct {
-	URL     string
+type ExternalAlertmanagerConfig struct {
+	prom_config.AlertmanagerConfig
 	Headers http.Header
-}
-
-type Option func(*ExternalAlertmanager)
-
-type doFunc func(context.Context, *http.Client, *http.Request) (*http.Response, error)
-
-// WithDoFunc receives a function to use when making HTTP requests from the Manager.
-func WithDoFunc(doFunc doFunc) Option {
-	return func(s *ExternalAlertmanager) {
-		s.manager.opts.Do = doFunc
-	}
-}
-
-func (cfg *ExternalAMcfg) SHA256() string {
-	return asSHA256([]string{cfg.headerString(), cfg.URL})
+	URL     *url.URL
 }
 
 // headersString transforms all the headers in a sorted way as a
 // single string so it can be used for hashing and comparing.
-func (cfg *ExternalAMcfg) headerString() string {
+func (cfg *ExternalAlertmanagerConfig) headerString() string {
 	var result strings.Builder
 
 	headerKeys := make([]string, 0, len(cfg.Headers))
@@ -78,6 +52,39 @@ func (cfg *ExternalAMcfg) headerString() string {
 	}
 
 	return result.String()
+}
+
+func (cfg *ExternalAlertmanagerConfig) SHA256() string {
+	return asSHA256([]string{cfg.headerString(), cfg.URL.String()})
+}
+
+func asSHA256(strings []string) string {
+	h := sha256.New()
+	sort.Strings(strings)
+	_, _ = h.Write([]byte(fmt.Sprintf("%v", strings)))
+	return fmt.Sprintf("%x", h.Sum(nil))
+}
+
+// ExternalAlertmanager is responsible for dispatching alert notifications to an external Alertmanager service.
+type ExternalAlertmanager struct {
+	logger log.Logger
+	wg     sync.WaitGroup
+
+	manager *Manager
+
+	sdCancel  context.CancelFunc
+	sdManager *prom_disco.Manager
+}
+
+type Option func(*ExternalAlertmanager)
+
+type doFunc func(context.Context, *http.Client, *http.Request) (*http.Response, error)
+
+// WithDoFunc receives a function to use when making HTTP requests from the Manager.
+func WithDoFunc(doFunc doFunc) Option {
+	return func(s *ExternalAlertmanager) {
+		s.manager.opts.Do = doFunc
+	}
 }
 
 func NewExternalAlertmanagerSender(opts ...Option) *ExternalAlertmanager {
@@ -95,7 +102,7 @@ func NewExternalAlertmanagerSender(opts ...Option) *ExternalAlertmanager {
 		s.logger,
 	)
 
-	s.sdManager = discovery.NewManager(sdCtx, s.logger)
+	s.sdManager = prom_disco.NewManager(sdCtx, s.logger)
 
 	for _, opt := range opts {
 		opt(s)
@@ -105,7 +112,7 @@ func NewExternalAlertmanagerSender(opts ...Option) *ExternalAlertmanager {
 }
 
 // ApplyConfig syncs a configuration with the sender.
-func (s *ExternalAlertmanager) ApplyConfig(orgId, id int64, alertmanagers []ExternalAMcfg) error {
+func (s *ExternalAlertmanager) ApplyConfig(orgId, id int64, alertmanagers []ExternalAlertmanagerConfig) error {
 	notifierCfg, headers, err := buildNotifierConfig(alertmanagers)
 	if err != nil {
 		return err
@@ -118,7 +125,7 @@ func (s *ExternalAlertmanager) ApplyConfig(orgId, id int64, alertmanagers []Exte
 		return err
 	}
 
-	sdCfgs := make(map[string]discovery.Configs)
+	sdCfgs := make(map[string]prom_disco.Configs)
 	for k, v := range notifierCfg.AlertingConfig.AlertmanagerConfigs.ToMap() {
 		sdCfgs[k] = v.ServiceDiscoveryConfigs
 	}
@@ -177,52 +184,19 @@ func (s *ExternalAlertmanager) DroppedAlertmanagers() []*url.URL {
 	return s.manager.DroppedAlertmanagers()
 }
 
-func buildNotifierConfig(alertmanagers []ExternalAMcfg) (*config.Config, map[string]http.Header, error) {
-	amConfigs := make([]*config.AlertmanagerConfig, 0, len(alertmanagers))
+// TODO: I think we can remove this.
+func buildNotifierConfig(alertmanagers []ExternalAlertmanagerConfig) (*prom_config.Config, map[string]http.Header, error) {
+	amConfigs := make([]*prom_config.AlertmanagerConfig, 0, len(alertmanagers))
 	headers := map[string]http.Header{}
 	for i, am := range alertmanagers {
-		u, err := url.Parse(am.URL)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		sdConfig := discovery.Configs{
-			discovery.StaticConfig{
-				{
-					Targets: []model.LabelSet{{model.AddressLabel: model.LabelValue(u.Host)}},
-				},
-			},
-		}
-
-		amConfig := &config.AlertmanagerConfig{
-			APIVersion:              config.AlertmanagerAPIVersionV2,
-			Scheme:                  u.Scheme,
-			PathPrefix:              u.Path,
-			Timeout:                 model.Duration(defaultTimeout),
-			ServiceDiscoveryConfigs: sdConfig,
-		}
-
-		if am.Headers != nil {
-			// The key has the same format as the AlertmanagerConfigs.ToMap() would generate
-			// so we can use it later on when working with the alertmanager config map.
-			headers[fmt.Sprintf("config-%d", i)] = am.Headers
-		}
-
-		// Check the URL for basic authentication information first
-		if u.User != nil {
-			amConfig.HTTPClientConfig.BasicAuth = &common_config.BasicAuth{
-				Username: u.User.Username(),
-			}
-
-			if password, isSet := u.User.Password(); isSet {
-				amConfig.HTTPClientConfig.BasicAuth.Password = common_config.Secret(password)
-			}
-		}
-		amConfigs = append(amConfigs, amConfig)
+		// The key has the same format as the AlertmanagerConfigs.ToMap() would generate
+		// so we can use it later on when working with the alertmanager config map.
+		headers[fmt.Sprintf("config-%d", i)] = am.Headers
+		amConfigs = append(amConfigs, &am.AlertmanagerConfig)
 	}
 
-	notifierConfig := &config.Config{
-		AlertingConfig: config.AlertingConfig{
+	notifierConfig := &prom_config.Config{
+		AlertingConfig: prom_config.AlertingConfig{
 			AlertmanagerConfigs: amConfigs,
 		},
 	}

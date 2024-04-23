@@ -2,16 +2,18 @@ package sender
 
 import (
 	"context"
-	"crypto/sha256"
 	"errors"
 	"fmt"
 	"net/url"
 	"path"
-	"sort"
 	"sync"
 	"time"
 
 	"github.com/benbjohnson/clock"
+	common_config "github.com/prometheus/common/config"
+	prom_model "github.com/prometheus/common/model"
+	prom_config "github.com/prometheus/prometheus/config"
+	prom_disco "github.com/prometheus/prometheus/discovery"
 
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -106,7 +108,8 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 			continue
 		}
 
-		alertmanagers, err := d.alertmanagersFromDatasources(cfg.OrgID)
+		// TODO: Should pass a context here.
+		alertmanagers, err := d.alertmanagersFromDatasources(context.TODO(), cfg.OrgID)
 		if err != nil {
 			d.logger.Error("Failed to get alertmanagers from datasources", "org", cfg.OrgID, "error", err)
 			continue
@@ -189,47 +192,39 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 	return nil
 }
 
-func buildRedactedAMs(l log.Logger, alertmanagers []ExternalAMcfg, ordId int64) []string {
+func buildRedactedAMs(l log.Logger, alertmanagers []ExternalAlertmanagerConfig, ordId int64) []string {
 	var redactedAMs []string
 	for _, am := range alertmanagers {
-		parsedAM, err := url.Parse(am.URL)
-		if err != nil {
-			l.Error("Failed to parse alertmanager string", "org", ordId, "error", err)
-			continue
-		}
-		redactedAMs = append(redactedAMs, parsedAM.Redacted())
+		redactedAMs = append(redactedAMs, am.URL.Redacted())
 	}
 	return redactedAMs
 }
 
-func asSHA256(strings []string) string {
-	h := sha256.New()
-	sort.Strings(strings)
-	_, _ = h.Write([]byte(fmt.Sprintf("%v", strings)))
-	return fmt.Sprintf("%x", h.Sum(nil))
-}
+func (d *AlertsRouter) alertmanagersFromDatasources(ctx context.Context, orgID int64) ([]ExternalAlertmanagerConfig, error) {
+	var cfgs []ExternalAlertmanagerConfig
 
-func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]ExternalAMcfg, error) {
-	var (
-		alertmanagers []ExternalAMcfg
-	)
-	// We might have alertmanager datasources that are acting as external
-	// alertmanager, let's fetch them.
-	query := &datasources.GetDataSourcesByTypeQuery{
+	ctx, cancelFunc := context.WithTimeout(ctx, 15*time.Second)
+	defer cancelFunc()
+
+	// Get all Alertmanager datasources for the org. We will later ignore datasources
+	// that should not receive alerts from Grafana.
+	q := &datasources.GetDataSourcesByTypeQuery{
 		OrgID: orgID,
 		Type:  datasources.DS_ALERTMANAGER,
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancel()
-	dataSources, err := d.datasourceService.GetDataSourcesByType(ctx, query)
+	datasources, err := d.datasourceService.GetDataSourcesByType(ctx, q)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch datasources for org: %w", err)
 	}
-	for _, ds := range dataSources {
-		if !ds.JsonData.Get(definitions.HandleGrafanaManagedAlerts).MustBool(false) {
+
+	for _, ds := range datasources {
+		// Ignore datasources that should not receive alerts from Grafana.
+		receivesAlerts := ds.JsonData.Get(definitions.HandleGrafanaManagedAlerts).MustBool(false)
+		if !receivesAlerts {
 			continue
 		}
-		amURL, err := d.buildExternalURL(ds)
+
+		u, err := d.buildExternalURL(ds)
 		if err != nil {
 			d.logger.Error("Failed to build external alertmanager URL",
 				"org", ds.OrgID,
@@ -237,30 +232,68 @@ func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]ExternalAMcf
 				"error", err)
 			continue
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-		headers, err := d.datasourceService.CustomHeaders(ctx, ds)
-		cancel()
+
+		httpClientOpts, err := d.datasourceService.HTTPClientOptions(ctx, ds)
 		if err != nil {
-			d.logger.Error("Failed to get headers for external alertmanager",
+			d.logger.Error("Failed to get http client options for external alertmanager",
 				"org", ds.OrgID,
 				"uid", ds.UID,
 				"error", err)
 			continue
 		}
-		alertmanagers = append(alertmanagers, ExternalAMcfg{
-			URL:     amURL,
-			Headers: headers,
-		})
+
+		sdCfgs := prom_disco.Configs{prom_disco.StaticConfig{{
+			Targets: []prom_model.LabelSet{{prom_model.AddressLabel: prom_model.LabelValue(u.Host)}},
+		}}}
+
+		cfg := ExternalAlertmanagerConfig{
+			AlertmanagerConfig: prom_config.AlertmanagerConfig{
+				APIVersion:              prom_config.AlertmanagerAPIVersionV2,
+				Scheme:                  u.Scheme,
+				PathPrefix:              u.Path,
+				Timeout:                 prom_model.Duration(defaultTimeout),
+				ServiceDiscoveryConfigs: sdCfgs,
+			},
+			Headers: httpClientOpts.Header,
+			URL:     u,
+		}
+
+		if basicAuth := httpClientOpts.BasicAuth; basicAuth != nil {
+			cfg.HTTPClientConfig.BasicAuth = &common_config.BasicAuth{
+				Username: basicAuth.User,
+				Password: common_config.Secret(basicAuth.Password),
+			}
+		}
+
+		if tlsOpts := httpClientOpts.TLS; tlsOpts != nil {
+			tlsCfg := cfg.HTTPClientConfig.TLSConfig
+			// Set the certificate for server authentication.
+			tlsCfg.CA = tlsOpts.CACertificate
+			// Set the certificate and key for client authentication.
+			tlsCfg.Cert = tlsOpts.ClientCertificate
+			tlsCfg.Key = common_config.Secret(tlsOpts.ClientKey)
+			// Set the server name.
+			tlsCfg.ServerName = tlsOpts.ServerName
+			// Disables validation for server authentication.
+			tlsCfg.InsecureSkipVerify = tlsOpts.InsecureSkipVerify
+			// Set the min and max TLS version.
+			tlsCfg.MinVersion = common_config.TLSVersion(tlsOpts.MinVersion)
+			tlsCfg.MaxVersion = common_config.TLSVersion(tlsOpts.MaxVersion)
+			cfg.HTTPClientConfig.TLSConfig = tlsCfg
+		}
+
+		cfgs = append(cfgs, cfg)
 	}
-	return alertmanagers, nil
+
+	return cfgs, nil
 }
 
-func (d *AlertsRouter) buildExternalURL(ds *datasources.DataSource) (string, error) {
+func (d *AlertsRouter) buildExternalURL(ds *datasources.DataSource) (*url.URL, error) {
 	// We re-use the same parsing logic as the datasource to make sure it matches whatever output the user received
 	// when doing the healthcheck.
 	parsed, err := datasource.ValidateURL(datasources.DS_ALERTMANAGER, ds.URL)
 	if err != nil {
-		return "", fmt.Errorf("failed to parse alertmanager datasource url: %w", err)
+		return nil, fmt.Errorf("failed to parse alertmanager datasource url: %w", err)
 	}
 
 	// If this is a Mimir or Cortex implementation, the Alert API is under a different path than config API
@@ -283,12 +316,12 @@ func (d *AlertsRouter) buildExternalURL(ds *datasources.DataSource) (string, err
 	if ds.BasicAuth {
 		password := d.secretService.GetDecryptedValue(context.Background(), ds.SecureJsonData, "basicAuthPassword", "")
 		if password == "" {
-			return "", fmt.Errorf("basic auth enabled but no password set")
+			return nil, fmt.Errorf("basic auth enabled but no password set")
 		}
 		parsed.User = url.UserPassword(ds.BasicAuthUser, password)
 	}
 
-	return parsed.String(), nil
+	return parsed, nil
 }
 
 func (d *AlertsRouter) Send(ctx context.Context, key models.AlertRuleKey, alerts definitions.PostableAlerts) {

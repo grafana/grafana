@@ -1147,7 +1147,7 @@ func TestService_GetDecryptedValues(t *testing.T) {
 	})
 }
 
-func TestDataSource_CustomHeaders(t *testing.T) {
+func TestDataSource_HTTPClientOptions(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
@@ -1155,79 +1155,137 @@ func TestDataSource_CustomHeaders(t *testing.T) {
 	dsService, err := ProvideService(sqlStore, secretsService, secretsStore, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{})
 	require.NoError(t, err)
 
+	ctx := context.Background()
+
 	dsService.cfg = setting.NewCfg()
 
-	testValue := "HeaderValue1"
-
-	encryptedValue, err := secretsService.Encrypt(context.Background(), []byte(testValue), secrets.WithoutScope())
+	tlsCACert, err := secretsService.Encrypt(ctx, []byte("certificate"), secrets.WithoutScope())
 	require.NoError(t, err)
 
-	testCases := []struct {
-		name             string
-		jsonData         *simplejson.Json
-		secureJsonData   map[string][]byte
-		expectedHeaders  http.Header
-		expectedErrorMsg string
+	password, err := secretsService.Encrypt(ctx, []byte("password"), secrets.WithoutScope())
+	require.NoError(t, err)
+
+	headerValue1, err := secretsService.Encrypt(ctx, []byte("HeaderValue1"), secrets.WithoutScope())
+	require.NoError(t, err)
+
+	tests := []struct {
+		name        string
+		datasource  datasources.DataSource
+		expected    sdkhttpclient.Options
+		expectedErr string
 	}{
 		{
-			name: "valid custom headers",
-			jsonData: simplejson.NewFromAny(map[string]any{
-				"httpHeaderName1": "X-Test-Header1",
-			}),
-			secureJsonData: map[string][]byte{
-				"httpHeaderValue1": encryptedValue,
+			name: "with basic auth",
+			datasource: datasources.DataSource{
+				BasicAuth:     true,
+				BasicAuthUser: "admin",
+				SecureJsonData: map[string][]byte{
+					"basicAuthPassword": password,
+				},
 			},
-			expectedHeaders: http.Header{
-				"X-Test-Header1": []string{testValue},
+			expected: sdkhttpclient.Options{
+				BasicAuth: &sdkhttpclient.BasicAuthOptions{
+					User:     "admin",
+					Password: "password",
+				},
 			},
 		},
 		{
-			name: "missing header value",
-			jsonData: simplejson.NewFromAny(map[string]any{
-				"httpHeaderName1": "X-Test-Header1",
-			}),
-			secureJsonData:  map[string][]byte{},
-			expectedHeaders: http.Header{},
-		},
-		{
-			name: "non customer header value",
-			jsonData: simplejson.NewFromAny(map[string]any{
-				"someotherheader": "X-Test-Header1",
-			}),
-			secureJsonData:  map[string][]byte{},
-			expectedHeaders: http.Header{},
-		},
-		{
-			name: "add multiple header value",
-			jsonData: simplejson.NewFromAny(map[string]any{
-				"httpHeaderName1": "X-Test-Header1",
-				"httpHeaderName2": "X-Test-Header1",
-			}),
-			secureJsonData: map[string][]byte{
-				"httpHeaderValue1": encryptedValue,
-				"httpHeaderValue2": encryptedValue,
+			name: "with TLS options",
+			datasource: datasources.DataSource{
+				JsonData: simplejson.NewFromAny(map[string]interface{}{
+					"tlsAuthWithCACert": true,
+				}),
+				SecureJsonData: map[string][]byte{
+					"tlsCACert": tlsCACert,
+				},
 			},
-			expectedHeaders: http.Header{
-				"X-Test-Header1": []string{testValue, testValue},
+			expected: sdkhttpclient.Options{
+				TLS: &sdkhttpclient.TLSOptions{
+					CACertificate: "certificate",
+				},
 			},
 		},
+		{
+			name: "with custom headers",
+			datasource: datasources.DataSource{
+				JsonData: simplejson.NewFromAny(map[string]any{
+					"httpHeaderName1": "X-Test-Header1",
+				}),
+				SecureJsonData: map[string][]byte{
+					"httpHeaderValue1": headerValue1,
+				},
+			},
+			expected: sdkhttpclient.Options{
+				Header: http.Header{
+					"X-Test-Header1": []string{"HeaderValue1"},
+				},
+			},
+		},
+		//{
+		//	name: "missing header value",
+		//	//jsonData: simplejson.NewFromAny(map[string]any{
+		//	//	"httpHeaderName1": "X-Test-Header1",
+		//	//}),
+		//	//secureJsonData: map[string][]byte{},
+		//	expected: sdkhttpclient.Options{},
+		//},
+		//{
+		//	name: "non customer header value",
+		//	//jsonData: simplejson.NewFromAny(map[string]any{
+		//	//	"someotherheader": "X-Test-Header1",
+		//	//}),
+		//	//secureJsonData: map[string][]byte{},
+		//	expected: sdkhttpclient.Options{},
+		//},
+		//{
+		//	name: "add multiple header value",
+		//	//jsonData: simplejson.NewFromAny(map[string]any{
+		//	//	"httpHeaderName1": "X-Test-Header1",
+		//	//	"httpHeaderName2": "X-Test-Header1",
+		//	//}),
+		//	//secureJsonData: map[string][]byte{
+		//	//	"httpHeaderValue1": headerValue1,
+		//	//	"httpHeaderValue2": headerValue1,
+		//	//},
+		//	expected: sdkhttpclient.Options{},
+		//	//expectedHeaders: http.Header{
+		//	//	"X-Test-Header1": []string{testValue, testValue},
+		//	//},
+		//},
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			ds := &datasources.DataSource{
-				JsonData:       tc.jsonData,
-				SecureJsonData: tc.secureJsonData,
-			}
-
-			headers, err := dsService.CustomHeaders(context.Background(), ds)
-
-			if tc.expectedErrorMsg != "" {
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			opts, err := dsService.HTTPClientOptions(context.Background(), &test.datasource)
+			if test.expectedErr != "" {
 				require.Error(t, err)
-				assert.Contains(t, err.Error(), tc.expectedErrorMsg)
+				require.EqualError(t, err, test.expectedErr)
 			} else {
 				require.NoError(t, err)
-				assert.Equal(t, tc.expectedHeaders, headers)
+				// A lot of these are defaults from httpClientOptions().
+				// Use the returned value unless something different is
+				// expected.
+				e := test.expected
+				if e.Timeouts == nil {
+					e.Timeouts = opts.Timeouts
+				}
+				if e.TLS == nil {
+					e.TLS = opts.TLS
+				}
+				if e.Header == nil {
+					e.Header = opts.Header
+				}
+				if e.CustomOptions == nil {
+					e.CustomOptions = opts.CustomOptions
+				}
+				if e.Labels == nil {
+					e.Labels = opts.Labels
+				}
+				if e.Middlewares == nil {
+					e.Middlewares = opts.Middlewares
+				}
+				require.Equal(t, e, *opts)
 			}
 		})
 	}

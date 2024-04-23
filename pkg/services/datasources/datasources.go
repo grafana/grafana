@@ -55,10 +55,8 @@ type DataSourceService interface {
 	// decrypted value.
 	DecryptedPassword(ctx context.Context, ds *DataSource) (string, error)
 
-	// CustomHeaders returns a map of custom headers the user might have
-	// configured for this Datasource. Not every datasource can has the option
-	// to configure those.
-	CustomHeaders(ctx context.Context, ds *DataSource) (http.Header, error)
+	// HTTPClientOptions returns the HTTP client options for the datasource.
+	HTTPClientOptions(ctx context.Context, ds *DataSource) (*sdkhttpclient.Options, error)
 }
 
 // CacheService interface for retrieving a cached datasource.
