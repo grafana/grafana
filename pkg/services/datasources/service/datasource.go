@@ -595,7 +595,6 @@ func (s *Service) dsTLSOptions(ctx context.Context, ds *datasources.DataSource) 
 
 		if tlsClientAuth {
 			if val, exists, err := s.DecryptedValue(ctx, ds, "tlsClientCert"); err == nil {
-				fmt.Print("\n\n\n\n", val, exists, err, "\n\n\n\n")
 				if exists && len(val) > 0 {
 					opts.ClientCertificate = val
 				}
