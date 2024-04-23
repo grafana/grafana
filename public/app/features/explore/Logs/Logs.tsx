@@ -48,7 +48,7 @@ import { mapMouseEventToMode } from '@grafana/ui/src/components/VizLegend/utils'
 import store from 'app/core/store';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
-import { getLogLevelFromKey } from 'app/features/logs/utils';
+import { getLogLevelFromKey, getLogLevelInfo } from 'app/features/logs/utils';
 import { dispatch, getState } from 'app/store/store';
 
 import { ExploreItemState } from '../../../types';
@@ -216,21 +216,23 @@ class UnthemedLogs extends PureComponent<Props, State> {
   }
 
   registerLogLevelsWithContentOutline = () => {
-    const logLevels = new Set(this.props.logsVolumeData?.data);
+    const logVolumeDataFrames = new Set(this.props.logsVolumeData?.data);
 
-    if (logLevels.size > 1 && this.props.logsVolumeEnabled) {
-      logLevels.forEach((level) => {
+    if (logVolumeDataFrames.size > 1 && this.props.logsVolumeEnabled) {
+      logVolumeDataFrames.forEach((dataFrame) => {
+        const { level } = getLogLevelInfo(dataFrame);
         const allLevelsSelected = this.state.hiddenLogLevels.length === 0;
-        const currentLevelSelected = !this.state.hiddenLogLevels.includes(level.name);
+        const currentLevelSelected = !this.state.hiddenLogLevels.find((hiddenLevel) => hiddenLevel === level);
+
         this.context?.register({
-          title: level.name,
+          title: level,
           icon: 'gf-logs',
           panelId: 'Logs',
           level: 'child',
           type: 'filter',
           highlight: currentLevelSelected || allLevelsSelected,
           onClick: (e: React.MouseEvent) => {
-            this.toggleLegendRef.current?.(level.name, mapMouseEventToMode(e));
+            this.toggleLegendRef.current?.(level, mapMouseEventToMode(e));
           },
           ref: null,
         });
