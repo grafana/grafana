@@ -3,9 +3,8 @@ import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Dropdown, LinkButton, useStyles2, Stack, Menu } from '@grafana/ui';
-import MoreButton from 'app/features/alerting/unified/components/MoreButton';
-import { useAlertRuleMenuItems } from 'app/features/alerting/unified/components/rule-viewer/Actions';
+import { LinkButton, useStyles2, Stack } from '@grafana/ui';
+import AlertRuleMenu from 'app/features/alerting/unified/components/rule-viewer/AlertRuleMenu';
 import { useDeleteModal } from 'app/features/alerting/unified/components/rule-viewer/DeleteModal';
 import { INSTANCES_DISPLAY_LIMIT } from 'app/features/alerting/unified/components/rules/RuleDetails';
 import { useRulesFilter } from 'app/features/alerting/unified/hooks/useFilteredRules';
@@ -69,23 +68,6 @@ export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton
 
   const identifier = ruleId.fromCombinedRule(sourceName, rule);
 
-  const menuItems = useAlertRuleMenuItems({
-    rule,
-    identifier,
-    showCopyLinkButton,
-    handleDelete: () => showDeleteModal(rule),
-    handleDuplicateRule: () => setRedirectToClone({ identifier, isProvisioned }),
-    onPauseChange: () => {
-      // Uses INSTANCES_DISPLAY_LIMIT + 1 here as exporting LIMIT_ALERTS from RuleList has the side effect
-      // of breaking some unrelated tests in Policy.test.tsx due to mocking approach
-      const limitAlerts = hasActiveFilters ? undefined : INSTANCES_DISPLAY_LIMIT + 1;
-      // Trigger a re-fetch of the rules table
-      // TODO: Migrate rules table functionality to RTK Query, so we instead rely
-      // on tag invalidation (or optimistic cache updates) for this
-      dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts }));
-    },
-  });
-
   if (showViewButton) {
     buttons.push(
       <LinkButton
@@ -128,30 +110,36 @@ export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton
     );
   }
 
-  if (buttons.length || menuItems.length) {
-    return (
-      <>
-        <Stack gap={1}>
-          {buttons}
-          {menuItems.length > 0 && (
-            <Dropdown overlay={<Menu>{menuItems}</Menu>}>
-              <MoreButton size={buttonSize} />
-            </Dropdown>
-          )}
-        </Stack>
-        {deleteModal}
-        {redirectToClone?.identifier && (
-          <RedirectToCloneRule
-            identifier={redirectToClone.identifier}
-            isProvisioned={redirectToClone.isProvisioned}
-            onDismiss={() => setRedirectToClone(undefined)}
-          />
-        )}
-      </>
-    );
-  }
-
-  return null;
+  return (
+    <Stack gap={1}>
+      {buttons}
+      <AlertRuleMenu
+        buttonSize={buttonSize}
+        rule={rule}
+        identifier={identifier}
+        showCopyLinkButton={showCopyLinkButton}
+        handleDelete={() => showDeleteModal(rule)}
+        handleDuplicateRule={() => setRedirectToClone({ identifier, isProvisioned })}
+        onPauseChange={() => {
+          // Uses INSTANCES_DISPLAY_LIMIT + 1 here as exporting LIMIT_ALERTS from RuleList has the side effect
+          // of breaking some unrelated tests in Policy.test.tsx due to mocking approach
+          const limitAlerts = hasActiveFilters ? undefined : INSTANCES_DISPLAY_LIMIT + 1;
+          // Trigger a re-fetch of the rules table
+          // TODO: Migrate rules table functionality to RTK Query, so we instead rely
+          // on tag invalidation (or optimistic cache updates) for this
+          dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts }));
+        }}
+      />
+      {deleteModal}
+      {redirectToClone?.identifier && (
+        <RedirectToCloneRule
+          identifier={redirectToClone.identifier}
+          isProvisioned={redirectToClone.isProvisioned}
+          onDismiss={() => setRedirectToClone(undefined)}
+        />
+      )}
+    </Stack>
+  );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({

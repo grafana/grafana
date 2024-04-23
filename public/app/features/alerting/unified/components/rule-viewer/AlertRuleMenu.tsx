@@ -1,9 +1,10 @@
-import React, { Fragment } from 'react';
+import React from 'react';
 
 import { AppEvents } from '@grafana/data';
-import { ComponentSize, Menu } from '@grafana/ui';
+import { ComponentSize, Dropdown, Menu } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import MenuItemPauseRule from 'app/features/alerting/unified/components/MenuItemPauseRule';
+import MoreButton from 'app/features/alerting/unified/components/MoreButton';
 import { isAlertingRule } from 'app/features/alerting/unified/utils/rules';
 import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
@@ -29,18 +30,16 @@ interface Props {
  * Get a list of menu items + divider elements for rendering in an alert rule's
  * dropdown menu
  */
-export const AlertRuleMenu = ({
+const AlertRuleMenu = ({
   rule,
   identifier,
   showCopyLinkButton,
   handleDelete,
   handleDuplicateRule,
   onPauseChange,
+  buttonSize,
 }: Props) => {
   // check all abilities and permissions
-  const [editSupported, editAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Update);
-  const canEdit = editSupported && editAllowed;
-
   const [pauseSupported, pauseAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Pause);
   const canPause = pauseSupported && pauseAllowed;
 
@@ -67,42 +66,44 @@ export const AlertRuleMenu = ({
   const shareUrl = createShareLink(rule.namespace.rulesSource, rule);
 
   const showDivider =
-    [canEdit, canSilence, shouldShowDeclareIncidentButton, canDuplicate].some(Boolean) &&
+    [canSilence, shouldShowDeclareIncidentButton, canDuplicate].some(Boolean) &&
     [showCopyLinkButton, canExport].some(Boolean);
 
-  return [
-    canPause && <MenuItemPauseRule key="pause" rule={rule} onPauseChange={onPauseChange} />,
-    canSilence && (
-      <Menu.Item
-        key="silence"
-        label="Silence notifications"
-        icon="bell-slash"
-        url={makeRuleBasedSilenceLink(identifier.ruleSourceName, rule)}
-      />
-    ),
-    shouldShowDeclareIncidentButton && <DeclareIncidentMenuItem key="declare-incident" title={rule.name} url={''} />,
-    canDuplicate && (
-      <Menu.Item key="duplicate" label="Duplicate" icon="copy" onClick={() => handleDuplicateRule(identifier)} />
-    ),
-    showDivider && <Menu.Divider key="divider" />,
-    showCopyLinkButton && (
-      <Menu.Item key="copy" label="Copy link" icon="share-alt" onClick={() => copyToClipboard(shareUrl)} />
-    ),
-    canExport && (
-      <Menu.Item
-        key="export"
-        label="Export"
-        icon="download-alt"
-        childItems={[<ExportMenuItem key="export-with-modifications" identifier={identifier} />]}
-      />
-    ),
-    canDelete && (
-      <Fragment key="delete">
-        <Menu.Divider />
-        <Menu.Item label="Delete" icon="trash-alt" destructive onClick={() => handleDelete(rule)} />
-      </Fragment>
-    ),
-  ].filter(Boolean);
+  const menuItems = (
+    <>
+      {canPause && <MenuItemPauseRule rule={rule} onPauseChange={onPauseChange} />}
+      {canSilence && (
+        <Menu.Item
+          label="Silence notifications"
+          icon="bell-slash"
+          url={makeRuleBasedSilenceLink(identifier.ruleSourceName, rule)}
+        />
+      )}
+      {shouldShowDeclareIncidentButton && <DeclareIncidentMenuItem title={rule.name} url={''} />}
+      {canDuplicate && <Menu.Item label="Duplicate" icon="copy" onClick={() => handleDuplicateRule(identifier)} />}
+      {showDivider && <Menu.Divider />}
+      {showCopyLinkButton && <Menu.Item label="Copy link" icon="share-alt" onClick={() => copyToClipboard(shareUrl)} />}
+      {canExport && (
+        <Menu.Item
+          label="Export"
+          icon="download-alt"
+          childItems={[<ExportMenuItem key="export-with-modifications" identifier={identifier} />]}
+        />
+      )}
+      {canDelete && (
+        <>
+          <Menu.Divider />
+          <Menu.Item label="Delete" icon="trash-alt" destructive onClick={() => handleDelete(rule)} />
+        </>
+      )}
+    </>
+  );
+
+  return (
+    <Dropdown overlay={<Menu>{menuItems}</Menu>}>
+      <MoreButton size={buttonSize} />
+    </Dropdown>
+  );
 };
 
 function copyToClipboard(text: string) {
@@ -121,3 +122,5 @@ const ExportMenuItem = ({ identifier }: PropsWithIdentifier) => {
 
   return <Menu.Item key="with-modifications" label="With modifications" icon="file-edit-alt" url={url} />;
 };
+
+export default AlertRuleMenu;
