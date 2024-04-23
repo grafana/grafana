@@ -512,7 +512,7 @@ This section outlines general instructions for provisioning Grafana resources wi
    apiVersion: v1
    kind: PersistentVolumeClaim
    metadata:
-     name: provisioning-pvc
+     name: grafana-provisioning-pvc
    spec:
      accessModes:
        - ReadWriteOnce
@@ -527,12 +527,12 @@ This section outlines general instructions for provisioning Grafana resources wi
    ...
        volumeMounts:
          - mountPath: /etc/grafana/provisioning
-           name: provisioning-pv
+           name: grafana-provisioning-pv
          ...
    volumes:
-     - name: provisioning-pv
+     - name: grafana-provisioning-pv
        persistentVolumeClaim:
-         claimName: provisioning-pvc
+         claimName: grafana-provisioning-pvc
    ...
    ```
 
