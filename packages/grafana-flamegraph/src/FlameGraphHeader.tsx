@@ -46,7 +46,7 @@ const FlameGraphHeader = ({
   vertical,
   isDiffMode,
 }: Props) => {
-  const styles = useStyles2(getStyles, stickyHeader);
+  const styles = useStyles2(getStyles);
   const [localSearch, setLocalSearch] = useSearchInput(search, setSearch);
 
   const suffix =
@@ -66,7 +66,7 @@ const FlameGraphHeader = ({
     ) : null;
 
   return (
-    <div className={styles.header}>
+    <div className={cx(styles.header, { [styles.stickyHeader]: stickyHeader })}>
       <div className={styles.inputContainer}>
         <Input
           value={localSearch || ''}
@@ -121,7 +121,7 @@ type ColorSchemeButtonProps = {
 };
 function ColorSchemeButton(props: ColorSchemeButtonProps) {
   // TODO: probably create separate getStyles
-  const styles = useStyles2(getStyles, false);
+  const styles = useStyles2(getStyles);
   let menu = (
     <Menu>
       <Menu.Item label="By package name" onClick={() => props.onChange(ColorScheme.PackageBased)} />
@@ -213,79 +213,77 @@ function useSearchInput(
   return [localSearchState, setLocalSearchState];
 }
 
-const getStyles = (theme: GrafanaTheme2, sticky?: boolean) => ({
-  header: css`
-    label: header;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    width: 100%;
-    top: 0;
-    ${sticky
-      ? css`
-          z-index: ${theme.zIndex.navbarFixed};
-          position: sticky;
-          padding-bottom: ${theme.spacing(1)};
-          padding-top: ${theme.spacing(1)};
-          background: ${theme.colors.background.primary};
-        `
-      : ''};
-  `,
-  inputContainer: css`
-    label: inputContainer;
-    margin-right: 20px;
-    flex-grow: 1;
-    min-width: 150px;
-    max-width: 350px;
-  `,
-  rightContainer: css`
-    label: rightContainer;
-    display: flex;
-    align-items: flex-start;
-    flex-wrap: wrap;
-  `,
-  buttonSpacing: css`
-    label: buttonSpacing;
-    margin-right: ${theme.spacing(1)};
-  `,
-
-  resetButton: css`
-    label: resetButton;
-    display: flex;
-    margin-right: ${theme.spacing(2)};
-  `,
-  resetButtonIconWrapper: css`
-    label: resetButtonIcon;
-    padding: 0 5px;
-    color: ${theme.colors.text.disabled};
-  `,
-  colorDot: css`
-    label: colorDot;
-    display: inline-block;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-  `,
-  colorDotByValue: css`
-    label: colorDotByValue;
-    background: ${byValueGradient};
-  `,
-  colorDotByPackage: css`
-    label: colorDotByPackage;
-    background: ${byPackageGradient};
-  `,
-  colorDotDiffDefault: css`
-    label: colorDotDiffDefault;
-    background: ${diffDefaultGradient};
-  `,
-  colorDotDiffColorBlind: css`
-    label: colorDotDiffColorBlind;
-    background: ${diffColorBlindGradient};
-  `,
-  extraElements: css`
-    label: extraElements;
-    margin-left: ${theme.spacing(1)};
-  `,
+const getStyles = (theme: GrafanaTheme2) => ({
+  header: css({
+    label: 'header',
+    display: 'flex',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    width: '100%',
+    top: 0,
+  }),
+  stickyHeader: css({
+    zIndex: theme.zIndex.navbarFixed,
+    position: 'sticky',
+    paddingBottom: theme.spacing(1),
+    paddingTop: theme.spacing(1),
+    background: theme.colors.background.primary,
+  }),
+  inputContainer: css({
+    label: 'inputContainer',
+    marginRight: '20px',
+    flexGrow: 1,
+    minWidth: '150px',
+    maxWidth: '350px',
+  }),
+  rightContainer: css({
+    label: 'rightContainer',
+    display: 'flex',
+    alignItems: 'flex-start',
+    flexWrap: 'wrap',
+  }),
+  buttonSpacing: css({
+    label: 'buttonSpacing',
+    marginRight: theme.spacing(1),
+  }),
+  resetButton: css({
+    label: 'resetButton',
+    display: 'flex',
+    marginRight: theme.spacing(2),
+  }),
+  resetButtonIconWrapper: css({
+    label: 'resetButtonIcon',
+    padding: '0 5px',
+    color: theme.colors.text.disabled,
+  }),
+  colorDot: css({
+    label: 'colorDot',
+    display: 'inline-block',
+    width: '10px',
+    height: '10px',
+    // eslint-disable-next-line @grafana/no-border-radius-literal
+    borderRadius: '50%',
+  }),
+  colorDotByValue: css({
+    label: 'colorDotByValue',
+    background: byValueGradient,
+  }),
+  colorDotByPackage: css({
+    label: 'colorDotByPackage',
+    background: byPackageGradient,
+  }),
+  colorDotDiffDefault: css({
+    label: 'colorDotDiffDefault',
+    background: diffDefaultGradient,
+  }),
+  colorDotDiffColorBlind: css({
+    label: 'colorDotDiffColorBlind',
+    background: diffColorBlindGradient,
+  }),
+  extraElements: css({
+    label: 'extraElements',
+    marginLeft: theme.spacing(1),
+  }),
 });
 
 export default FlameGraphHeader;
