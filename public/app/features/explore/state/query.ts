@@ -501,6 +501,7 @@ async function handleHistory(
       }
     })
   );
+
   const filteredQueries = filteredQueriesRes.filter((query): query is DataQuery => !!query);
 
   if (filteredQueries.length > 0) {
