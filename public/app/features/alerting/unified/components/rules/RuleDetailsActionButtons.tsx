@@ -24,7 +24,7 @@ interface Props {
  *
  * Shouldn't include *actions* for the alert rule, just navigation items
  */
-export const RuleDetailsActionButtons = ({ rule, rulesSource }: Props) => {
+const RuleDetailsButtons = ({ rule, rulesSource }: Props) => {
   const { group } = rule;
   const { StateHistoryModal, showStateHistoryModal } = useStateHistoryModal();
 
@@ -123,3 +123,5 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource }: Props) => {
 
   return buttons.length ? <Stack>{buttons}</Stack> : null;
 };
+
+export default RuleDetailsButtons;

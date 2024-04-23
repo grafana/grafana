@@ -12,7 +12,7 @@ import { isNullDate } from '../../utils/time';
 import { AlertLabels } from '../AlertLabels';
 import { DetailsField } from '../DetailsField';
 
-import { RuleDetailsActionButtons } from './RuleDetailsActionButtons';
+import RuleDetailsButtons from './RuleDetailsActionButtons';
 import { RuleDetailsAnnotations } from './RuleDetailsAnnotations';
 import { RuleDetailsDataSources } from './RuleDetailsDataSources';
 import { RuleDetailsExpression } from './RuleDetailsExpression';
@@ -37,7 +37,7 @@ export const RuleDetails = ({ rule }: Props) => {
 
   return (
     <div>
-      <RuleDetailsActionButtons rule={rule} rulesSource={rulesSource} />
+      <RuleDetailsButtons rule={rule} rulesSource={rulesSource} />
       <div className={styles.wrapper}>
         <div className={styles.leftSide}>
           {<EvaluationBehaviorSummary rule={rule} />}
