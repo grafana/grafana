@@ -235,18 +235,9 @@ describe('contact points', () => {
         },
       ];
 
-      render(
-        <ContactPoint
-          name={'my-contact-point'}
-          provisioned={true}
-          receivers={[]}
-          policies={policies}
-          onDelete={noop}
-        />,
-        {
-          wrapper,
-        }
-      );
+      render(<ContactPoint name={'my-contact-point'} receivers={[]} policies={policies} onDelete={noop} />, {
+        wrapper,
+      });
 
       expect(screen.getByRole('link', { name: 'is used by 1 notification policy' })).toBeInTheDocument();
 
@@ -255,6 +246,29 @@ describe('contact points', () => {
 
       const deleteButton = screen.getByRole('menuitem', { name: /delete/i });
       expect(deleteButton).toBeDisabled();
+    });
+
+    it('should not disable delete when contact point is linked only to auto-generated notification policy', async () => {
+      const policies: RouteReference[] = [
+        {
+          receiver: 'my-contact-point',
+          route: {
+            type: 'auto-generated',
+          },
+        },
+      ];
+
+      render(<ContactPoint name={'my-contact-point'} receivers={[]} policies={policies} onDelete={noop} />, {
+        wrapper,
+      });
+
+      expect(screen.getByLabelText('unused')).toBeInTheDocument();
+
+      const moreActions = screen.getByRole('button', { name: 'more-actions' });
+      await userEvent.click(moreActions);
+
+      const deleteButton = screen.getByRole('menuitem', { name: /delete/i });
+      expect(deleteButton).not.toBeDisabled();
     });
 
     it('should be able to search', async () => {
