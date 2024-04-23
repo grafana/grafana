@@ -163,6 +163,13 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
           datasource,
           dsSettings,
         });
+
+        this.queryRunner.setState({
+          datasource: {
+            uid: dsSettings.uid,
+            type: dsSettings.type,
+          },
+        });
       }
 
       console.error(err);
