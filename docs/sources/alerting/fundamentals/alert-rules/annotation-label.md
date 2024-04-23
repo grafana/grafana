@@ -30,7 +30,7 @@ When creating alert rules, you can also template labels and annotations to optim
 
 ## Labels
 
-**Labels** serve as unique identifiers of an alert. And, beyond their labeling function, they also offer practical functionalities such as searchability, silencing, routing notifications, and they can be templated.
+**Labels** are unique identifiers of an alert. You can use them for searching, silencing, and routing notifications.
 
 Labels contain information that identifies an alert. An example of a label might be `server=server1` or `team=backend`. Each alert can have more than one label, and the complete set of labels for an alert is called its label set. It is this label set that identifies the alert.
 
