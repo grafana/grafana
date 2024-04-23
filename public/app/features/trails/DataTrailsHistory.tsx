@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { clone } from 'lodash';
 import React, { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -10,8 +11,10 @@ import {
   SceneObjectStateChangedEvent,
   SceneTimeRange,
   sceneUtils,
+  AdHocFiltersVariable,
+  SceneVariableSet,
 } from '@grafana/scenes';
-import { useStyles2, Tooltip, Stack } from '@grafana/ui';
+import { useStyles2, Tooltip, Stack, AdHocFilterItem } from '@grafana/ui';
 
 import { DataTrail, DataTrailState, getTopSceneFor } from './DataTrail';
 import { reportExploreMetrics } from './interactions';
@@ -75,12 +78,7 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
       }
     });
 
-    trail.subscribeToEvent(SceneVariableValueChangedEvent, (evt) => {
-      if (evt.payload.state.name === VAR_FILTERS) {
-        this.addTrailStep(trail, 'filters');
-      }
-    });
-
+    let respondingToFilterChange = false;
     let respondingToTimeChange = false;
     trail.subscribeToEvent(SceneObjectStateChangedEvent, (evt) => {
       if (evt.payload.changedObject instanceof SceneTimeRange && !respondingToTimeChange) {
@@ -105,6 +103,48 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
         }
 
         respondingToTimeChange = false;
+      } else {
+        if (
+          evt.payload.changedObject instanceof AdHocFiltersVariable &&
+          evt.payload.changedObject.state.name === VAR_FILTERS &&
+          !respondingToFilterChange
+        ) {
+          const { prevState, newState } = evt.payload;
+
+          if (hasFilters(prevState) && hasFilters(newState)) {
+            if (prevState.filterExpression === newState.filterExpression) {
+              return;
+            }
+          }
+
+          respondingToFilterChange = true;
+          const previousStep = this.state.currentStep;
+          this.addTrailStep(trail, 'filters');
+
+          if (hasFilters(prevState)) {
+            this.state.steps[previousStep].trailState.initialFilters = clone(prevState.filters);
+          }
+
+          // // Ensure the previous trail step keeps the previous filter state
+          const $variablesPrevious = this.state.steps[previousStep].trailState.$variables;
+          if ($variablesPrevious) {
+            const $variablesPreviousClone = $variablesPrevious.clone();
+
+            const index = $variablesPreviousClone.state.variables.findIndex(
+              (variable) => variable.state.name === VAR_FILTERS
+            );
+
+            const variables = [...$variablesPreviousClone.state.variables];
+            variables[index] = new AdHocFiltersVariable(sceneUtils.cloneSceneObjectState(prevState));
+
+            $variablesPreviousClone.setState({ variables });
+            this.state.steps[previousStep].trailState.$variables = new SceneVariableSet(
+              sceneUtils.cloneSceneObjectState($variablesPreviousClone.state)
+            );
+          }
+
+          respondingToFilterChange = false;
+        }
       }
     });
   }
@@ -335,4 +375,13 @@ function createAlternatePredecessorStyle(index: number, parent: number) {
       background: 'none',
     },
   });
+}
+
+type StateWithFilterExpression = SceneObjectState & { filters: AdHocFilterItem[]; filterExpression: string };
+
+function hasFilters(state: SceneObjectState): state is StateWithFilterExpression {
+  if ('filterExpression' in state && typeof state.filterExpression === 'string') {
+    return true;
+  }
+  return false;
 }

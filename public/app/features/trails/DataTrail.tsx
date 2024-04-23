@@ -178,6 +178,14 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     this.setState(step.trailState);
     this.syncTrailToUrl();
     this.state.controls.forEach((control) => control.forceRender());
+
+    // Forces a reconstruction of VariableValueSelectors so that it always renders the variables correctly (e.g., filters) after all step changes
+    // Otherwise, the state values that we test against would be correct, but the rendering on screen would be incorrect
+    this.setState({
+      controls: this.state.controls.map((control) =>
+        control instanceof VariableValueSelectors ? control.clone() : control
+      ),
+    });
   }
 
   private syncTrailToUrl() {

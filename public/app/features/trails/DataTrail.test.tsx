@@ -1,4 +1,5 @@
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { AdHocFiltersVariable, sceneGraph } from '@grafana/scenes';
 
 import { MockDataSourceSrv, mockDataSource } from '../alerting/unified/mocks';
 import { DataSourceType } from '../alerting/unified/utils/datasource';
@@ -7,7 +8,7 @@ import { activateFullSceneTree } from '../dashboard-scene/utils/test-utils';
 import { DataTrail } from './DataTrail';
 import { MetricScene } from './MetricScene';
 import { MetricSelectScene } from './MetricSelectScene';
-import { MetricSelectedEvent } from './shared';
+import { MetricSelectedEvent, VAR_FILTERS } from './shared';
 
 describe('DataTrail', () => {
   beforeAll(() => {
@@ -99,7 +100,7 @@ describe('DataTrail', () => {
           expect(trail.state.history.state.currentStep).toBe(2);
         });
 
-        it('Should set history step 1 parentIndex to 0', () => {
+        it('Should set history step 2 parentIndex to 1', () => {
           expect(trail.state.history.state.steps[2].parentIndex).toBe(1);
         });
 
@@ -192,6 +193,155 @@ describe('DataTrail', () => {
 
               it('Should have time range `from` be set back to "now-6h"', () => {
                 expect(trail.state.$timeRange?.state.from).toBe('now-6h');
+              });
+            });
+          });
+        });
+      });
+
+      function getFilterVar() {
+        const variable = sceneGraph.lookupVariable(VAR_FILTERS, trail);
+        if (variable instanceof AdHocFiltersVariable) {
+          return variable;
+        }
+        throw new Error('getFilterVar failed');
+      }
+
+      function getStepFilterVar(step: number) {
+        const variable = trail.state.history.state.steps[step].trailState.$variables?.getByName(VAR_FILTERS);
+        if (variable instanceof AdHocFiltersVariable) {
+          return variable;
+        }
+        throw new Error(`getStepFilterVar failed for step ${step}`);
+      }
+
+      it('Should have default empty filter', () => {
+        expect(getFilterVar().state.filters.length).toBe(0);
+      });
+
+      describe('And when changing the filter to zone=a', () => {
+        beforeEach(() => {
+          getFilterVar().setState({ filters: [{ key: 'zone', operator: '=', value: 'a' }] });
+        });
+
+        it('should sync state with url', () => {
+          expect(decodeURIComponent(locationService.getSearchObject()['var-filters']?.toString()!)).toBe('zone|=|a');
+        });
+
+        it('should add history step', () => {
+          expect(trail.state.history.state.steps[2].type).toBe('filters');
+        });
+
+        it('Should set history currentStep to 2', () => {
+          expect(trail.state.history.state.currentStep).toBe(2);
+        });
+
+        it('Should set history step 2 parentIndex to 1', () => {
+          expect(trail.state.history.state.steps[2].parentIndex).toBe(1);
+        });
+
+        it('Should have filter be updated to "zone=a"', () => {
+          expect(getFilterVar().state.filters[0].key).toBe('zone');
+          expect(getFilterVar().state.filters[0].value).toBe('a');
+        });
+
+        it('Previous history step should have empty filter', () => {
+          expect(getStepFilterVar(1).state.filters.length).toBe(0);
+        });
+
+        it('Current history step should have new filter zone=a', () => {
+          expect(getStepFilterVar(2).state.filters[0].key).toBe('zone');
+          expect(getStepFilterVar(2).state.filters[0].value).toBe('a');
+        });
+
+        describe('And when traversing back to step 1', () => {
+          beforeEach(() => {
+            trail.state.history.goBackToStep(1);
+          });
+
+          it('Should set history currentStep to 1', () => {
+            expect(trail.state.history.state.currentStep).toBe(1);
+          });
+
+          it('should sync state with url', () => {
+            expect(locationService.getSearchObject()['var-filters']).toBe('');
+          });
+
+          it('Should have filters set back to empty', () => {
+            expect(getFilterVar().state.filters.length).toBe(0);
+          });
+
+          describe('And when changing the filter to zone=b', () => {
+            beforeEach(() => {
+              getFilterVar().setState({ filters: [{ key: 'zone', operator: '=', value: 'b' }] });
+            });
+
+            it('should sync state with url', () => {
+              expect(decodeURIComponent(locationService.getSearchObject()['var-filters']?.toString()!)).toBe(
+                'zone|=|b'
+              );
+            });
+
+            it('should add history step', () => {
+              expect(trail.state.history.state.steps[3].type).toBe('filters');
+            });
+
+            it('Should set history currentStep to 3', () => {
+              expect(trail.state.history.state.currentStep).toBe(3);
+            });
+
+            it('Should set history step 3 parentIndex to 1', () => {
+              expect(trail.state.history.state.steps[3].parentIndex).toBe(1);
+            });
+
+            it('Should have filter be updated to "zone=b"', () => {
+              expect(getFilterVar().state.filters[0].key).toBe('zone');
+              expect(getFilterVar().state.filters[0].value).toBe('b');
+            });
+
+            it('Parent history step 1 should still have empty filter', () => {
+              expect(getStepFilterVar(1).state.filters.length).toBe(0);
+            });
+
+            it('History step 2 should still have old filter zone=a', () => {
+              expect(getStepFilterVar(2).state.filters[0].key).toBe('zone');
+              expect(getStepFilterVar(2).state.filters[0].value).toBe('a');
+            });
+
+            it('Current history step 3 should have new filter zone=b', () => {
+              expect(getStepFilterVar(3).state.filters[0].key).toBe('zone');
+              expect(getStepFilterVar(3).state.filters[0].value).toBe('b');
+            });
+
+            describe('And then when returning again to step 1', () => {
+              beforeEach(() => {
+                trail.state.history.goBackToStep(1);
+              });
+
+              it('Should set history currentStep to 1', () => {
+                expect(trail.state.history.state.currentStep).toBe(1);
+              });
+
+              it('should sync state with url', () => {
+                expect(locationService.getSearchObject()['var-filters']).toBe('');
+              });
+
+              it('Should have filters set back to empty', () => {
+                expect(getFilterVar().state.filters.length).toBe(0);
+              });
+
+              it('History step 1 should still have empty filter', () => {
+                expect(getStepFilterVar(1).state.filters.length).toBe(0);
+              });
+
+              it('History step 2 should still have old filter zone=a', () => {
+                expect(getStepFilterVar(2).state.filters[0].key).toBe('zone');
+                expect(getStepFilterVar(2).state.filters[0].value).toBe('a');
+              });
+
+              it('History step 3 should have new filter zone=b', () => {
+                expect(getStepFilterVar(3).state.filters[0].key).toBe('zone');
+                expect(getStepFilterVar(3).state.filters[0].value).toBe('b');
               });
             });
           });
