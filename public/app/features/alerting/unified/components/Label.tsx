@@ -3,7 +3,7 @@ import React, { ReactNode } from 'react';
 import tinycolor2 from 'tinycolor2';
 
 import { GrafanaTheme2, IconName } from '@grafana/data';
-import { Icon, useStyles2, Stack } from '@grafana/ui';
+import { Icon, Stack, useStyles2 } from '@grafana/ui';
 
 export type LabelSize = 'md' | 'sm';
 
@@ -21,14 +21,23 @@ const Label = ({ label, value, icon, color, size = 'md' }: Props) => {
   const ariaLabel = `${label}: ${value}`;
 
   return (
-    <div className={styles.wrapper} role="listitem" aria-label={ariaLabel}>
+    <div className={styles.wrapper} role="listitem" aria-label={ariaLabel} data-testid="label-value">
       <Stack direction="row" gap={0} alignItems="stretch">
         <div className={styles.label}>
           <Stack direction="row" gap={0.5} alignItems="center">
-            {icon && <Icon name={icon} />} {label ?? ''}
+            {icon && <Icon name={icon} />}
+            {label && (
+              <span className={styles.labelText} title={label.toString()}>
+                {label ?? ''}
+              </span>
+            )}
           </Stack>
         </div>
-        <div className={styles.value}>{value}</div>
+        {value && (
+          <div className={styles.value} title={value.toString()}>
+            {value}
+          </div>
+        )}
       </Stack>
     </div>
   );
@@ -59,6 +68,12 @@ const getStyles = (theme: GrafanaTheme2, color?: string, size?: string) => {
 
       border-radius: ${theme.shape.borderRadius(2)};
     `,
+    labelText: css({
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      maxWidth: '300px',
+    }),
     label: css`
       display: flex;
       align-items: center;
@@ -80,6 +95,11 @@ const getStyles = (theme: GrafanaTheme2, color?: string, size?: string) => {
       border-left: none;
       border-top-right-radius: ${theme.shape.borderRadius(2)};
       border-bottom-right-radius: ${theme.shape.borderRadius(2)};
+
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 300px;
     `,
   };
 };

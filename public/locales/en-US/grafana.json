@@ -276,7 +276,7 @@
       "add-widget-body": "Create lists, markdowns and other widgets",
       "add-widget-button": "Add widget",
       "add-widget-header": "Add a widget",
-      "import-a-dashboard-body": "Import dashboards from files or<1>grafana.com</1>.",
+      "import-a-dashboard-body": "Import dashboards from files or <1>grafana.com</1>.",
       "import-a-dashboard-header": "Import a dashboard",
       "import-dashboard-button": "Import dashboard"
     },
@@ -385,7 +385,7 @@
     "annotations": {
       "title": "Annotations"
     },
-    "dashboard-delete-button": "Delete Dashboard",
+    "dashboard-delete-button": "Delete dashboard",
     "general": {
       "auto-refresh-description": "Define the auto refresh intervals that should be available in the auto refresh list. Use the format '5s' for seconds, '1m' for minutes, '1h' for hours, and '1d' for days (e.g.: '5s,10s,30s,1m,5m,15m,30m,1h,2h,1d').",
       "auto-refresh-label": "Auto refresh",
@@ -1524,7 +1524,7 @@
       "info-text": "Create a direct link to this dashboard or panel, customized with the options below.",
       "link-url": "Link URL",
       "render-alert": "Image renderer plugin not installed",
-      "render-instructions": "To render a panel image, you must install the<1>Grafana image renderer plugin</1>. Please contact your Grafana administrator to install the plugin.",
+      "render-instructions": "To render a panel image, you must install the <2>Grafana image renderer plugin</2>. Please contact your Grafana administrator to install the plugin.",
       "rendered-image": "Direct link rendered image",
       "save-alert": "Dashboard is not saved",
       "save-dashboard": "To render a panel image, you must save the dashboard first.",
