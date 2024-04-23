@@ -135,6 +135,7 @@ func TestUserService(t *testing.T) {
 			Login:   "ac2",
 			OrgName: "ac1@test.com",
 		}
+		userStore.ExpectedError = nil
 		queryResult, err := userService.GetSignedInUser(context.Background(), &query)
 
 		require.NoError(t, err)
@@ -170,7 +171,6 @@ func TestService_Update(t *testing.T) {
 	})
 
 	t.Run("should return error new password is not valid", func(t *testing.T) {
-
 		service := setup(func(svc *Service) {
 			stored, err := user.Password("test").Hash("salt")
 			require.NoError(t, err)

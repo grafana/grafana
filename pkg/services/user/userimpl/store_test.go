@@ -437,6 +437,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		})
 		require.NoError(t, err)
 		original, err := userStore.GetByID(context.Background(), id)
+		require.NoError(t, err)
 
 		helpflags := user.HelpFlags1(1)
 		err = userStore.Update(context.Background(), &user.UpdateUserCommand{UserID: id, HelpFlags1: &helpflags})

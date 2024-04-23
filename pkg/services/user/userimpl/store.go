@@ -269,7 +269,6 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) err
 		setOptional(cmd.IsGrafanaAdmin, func(v bool) {
 			q = q.UseBool("is_admin")
 			usr.IsAdmin = v
-
 		})
 		setOptional(cmd.HelpFlags1, func(v user.HelpFlags1) { usr.HelpFlags1 = *cmd.HelpFlags1 })
 
