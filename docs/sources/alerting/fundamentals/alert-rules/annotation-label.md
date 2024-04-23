@@ -32,7 +32,7 @@ When creating alert rules, you can also template labels and annotations to optim
 
 **Labels** are unique identifiers of an alert. You can use them for searching, silencing, and routing notifications.
 
-Labels contain information that identifies an alert. An example of a label might be `server=server1` or `team=backend`. Each alert can have more than one label, and the complete set of labels for an alert is called its label set. It is this label set that identifies the alert.
+Examples of labels are `server=server1` or `team=backend`. Each alert rule can have more than one label and the complete set of labels for an alert rule is called its label set. It is this label set that identifies the alert.
 
 For example, an alert might have the label set `{alertname="High CPU usage",server="server1"}` while another alert might have the label set `{alertname="High CPU usage",server="server2"}`. These are two separate alerts because although their `alertname` labels are the same, their `server` labels are different.
 
