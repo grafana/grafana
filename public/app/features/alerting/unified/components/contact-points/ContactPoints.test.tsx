@@ -21,6 +21,7 @@ import setupMimirFlavoredServer, { MIMIR_DATASOURCE_UID } from './__mocks__/mimi
 import setupVanillaAlertmanagerFlavoredServer, {
   VANILLA_ALERTMANAGER_DATASOURCE_UID,
 } from './__mocks__/vanillaAlertmanagerServer';
+import { RouteReference } from './utils';
 
 /**
  * There are lots of ways in which we test our pages and components. Here's my opinionated approach to testing them.
@@ -224,9 +225,24 @@ describe('contact points', () => {
       expect(deleteButton).toBeDisabled();
     });
 
-    it('should disable delete when contact point is linked to at least one notification policy', async () => {
+    it('should disable delete when contact point is linked to at least one normal notification policy', async () => {
+      const policies: RouteReference[] = [
+        {
+          receiver: 'my-contact-point',
+          route: {
+            type: 'normal',
+          },
+        },
+      ];
+
       render(
-        <ContactPoint name={'my-contact-point'} provisioned={true} receivers={[]} policies={1} onDelete={noop} />,
+        <ContactPoint
+          name={'my-contact-point'}
+          provisioned={true}
+          receivers={[]}
+          policies={policies}
+          onDelete={noop}
+        />,
         {
           wrapper,
         }

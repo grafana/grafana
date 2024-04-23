@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import uFuzzy from '@leeoniya/ufuzzy';
 import { SerializedError } from '@reduxjs/toolkit';
-import { groupBy, size, uniq, upperFirst } from 'lodash';
+import { groupBy, reject, size, uniq, upperFirst } from 'lodash';
 import pluralize from 'pluralize';
 import React, { Fragment, ReactNode, useCallback, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -60,7 +60,13 @@ import {
   useContactPointsWithStatus,
   useDeleteContactPoint,
 } from './useContactPoints';
-import { ContactPointWithMetadata, getReceiverDescription, isProvisioned, ReceiverConfigWithMetadata } from './utils';
+import {
+  ContactPointWithMetadata,
+  getReceiverDescription,
+  isProvisioned,
+  ReceiverConfigWithMetadata,
+  RouteReference,
+} from './utils';
 
 export enum ActiveTab {
   ContactPoints = 'contact_points',
@@ -243,7 +249,7 @@ const ContactPointsList = ({
     <>
       {pageItems.map((contactPoint, index) => {
         const provisioned = isProvisioned(contactPoint);
-        const policies = contactPoint.numberOfPolicies;
+        const policies = contactPoint.policies ?? [];
         const key = `${contactPoint.name}-${index}`;
 
         return (
@@ -304,7 +310,7 @@ interface ContactPointProps {
   disabled?: boolean;
   provisioned?: boolean;
   receivers: ReceiverConfigWithMetadata[];
-  policies?: number;
+  policies?: RouteReference[];
   onDelete: (name: string) => void;
 }
 
@@ -313,7 +319,7 @@ export const ContactPoint = ({
   disabled = false,
   provisioned = false,
   receivers,
-  policies = 0,
+  policies = [],
   onDelete,
 }: ContactPointProps) => {
   const styles = useStyles2(getStyles);
@@ -367,12 +373,12 @@ interface ContactPointHeaderProps {
   name: string;
   disabled?: boolean;
   provisioned?: boolean;
-  policies?: number;
+  policies?: RouteReference[];
   onDelete: (name: string) => void;
 }
 
 const ContactPointHeader = (props: ContactPointHeaderProps) => {
-  const { name, disabled = false, provisioned = false, policies = 0, onDelete } = props;
+  const { name, disabled = false, provisioned = false, policies = [], onDelete } = props;
   const styles = useStyles2(getStyles);
 
   const [exportSupported, exportAllowed] = useAlertmanagerAbility(AlertmanagerAction.ExportContactPoint);
@@ -381,9 +387,11 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
 
   const [ExportDrawer, openExportDrawer] = useExportContactPoint();
 
-  const isReferencedByPolicies = policies > 0;
+  const normalPolicyReferences = reject(policies, (ref) => ref.route.type === 'auto-generated');
+  debugger;
+  const isReferencedByNormalPolicies = normalPolicyReferences.length > 0;
   const canEdit = editSupported && editAllowed && !provisioned;
-  const canDelete = deleteSupported && deleteAllowed && !provisioned && policies === 0;
+  const canDelete = deleteSupported && deleteAllowed && !provisioned && !isReferencedByNormalPolicies;
 
   const menuActions: JSX.Element[] = [];
 
@@ -407,7 +415,7 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
     menuActions.push(
       <ConditionalWrap
         key="delete-contact-point"
-        shouldWrap={isReferencedByPolicies}
+        shouldWrap={!canDelete}
         wrap={(children) => (
           <Tooltip content="Contact point is currently in use by one or more notification policies" placement="top">
             <span>{children}</span>
@@ -434,15 +442,16 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
             {name}
           </Text>
         </Stack>
-        {isReferencedByPolicies && (
+        {isReferencedByNormalPolicies && (
           <MetaText>
             <Link to={createUrl('/alerting/routes', { contactPoint: name })}>
-              is used by <Strong>{policies}</Strong> {pluralize('notification policy', policies)}
+              is used by <Strong>{normalPolicyReferences.length}</Strong>{' '}
+              {pluralize('notification policy', normalPolicyReferences.length)}
             </Link>
           </MetaText>
         )}
         {provisioned && <ProvisioningBadge />}
-        {!isReferencedByPolicies && <UnusedContactPointBadge />}
+        {!isReferencedByNormalPolicies && <UnusedContactPointBadge />}
         <Spacer />
         <LinkButton
           tooltipPlacement="top"
