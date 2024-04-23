@@ -24,6 +24,7 @@ import store from 'app/core/store';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
+import { deleteDashboard } from 'app/features/manage-dashboards/state/actions';
 import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardDTO, DashboardMeta, SaveDashboardResponseDTO } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
@@ -831,6 +832,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   /** Hacky temp function until we refactor transformSaveModelToScene a bit */
   public setInitialSaveModel(saveModel: Dashboard) {
     this._initialSaveModel = saveModel;
+  }
+
+  public async deleteDashboard() {
+    await deleteDashboard(this.state.uid!, true);
+    // Need to mark it non dirty to navigate away without unsaved changes warning
+    this.setState({ isDirty: false });
+    locationService.replace('/');
   }
 }
 

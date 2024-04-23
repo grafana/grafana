@@ -1,4 +1,5 @@
 import { CoreApp, LoadingState, getDefaultTimeRange } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import {
   sceneGraph,
   SceneGridLayout,
@@ -71,6 +72,12 @@ jest.mock('app/features/playlist/PlaylistSrv', () => ({
     stop: jest.fn(),
   },
 }));
+
+jest.mock('app/features/manage-dashboards/state/actions', () => ({
+  ...jest.requireActual('app/features/manage-dashboards/state/actions'),
+  deleteDashboard: jest.fn().mockResolvedValue({}),
+}));
+
 const worker = createWorker();
 mockResultsOfDetectChangesWorker({ hasChanges: true, hasTimeChanges: false, hasVariableValueChanges: false });
 
@@ -881,6 +888,18 @@ describe('DashboardScene', () => {
         expect(body.state.children.length).toBe(1);
         expect(gridItem.state.body).toBeInstanceOf(VizPanel);
       });
+    });
+  });
+
+  describe('Deleting dashboard', () => {
+    it('Should mark it non dirty before navigating to root', async () => {
+      const scene = buildTestScene();
+      scene.setState({ isDirty: true });
+
+      locationService.push('/d/adsdas');
+      await scene.deleteDashboard();
+
+      expect(scene.state.isDirty).toBe(false);
     });
   });
 
