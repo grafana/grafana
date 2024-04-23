@@ -178,6 +178,18 @@ describe('DataTrail', () => {
                 expect(locationService.getSearchObject().from).toBe('now-6h');
               });
 
+              it('History step 1 (parent) should have previous default `from` of "now-6h"', () => {
+                expect(trail.state.history.state.steps[1].trailState.$timeRange?.state.from).toBe('now-6h');
+              });
+
+              it('History step 2 should still have `from` of "now-1h"', () => {
+                expect(trail.state.history.state.steps[2].trailState.$timeRange?.state.from).toBe('now-1h');
+              });
+
+              it('History step 3 should still have `from` of "now-15m"', () => {
+                expect(trail.state.history.state.steps[3].trailState.$timeRange?.state.from).toBe('now-15m');
+              });
+
               it('Should have time range `from` be set back to "now-6h"', () => {
                 expect(trail.state.$timeRange?.state.from).toBe('now-6h');
               });

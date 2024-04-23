@@ -95,14 +95,14 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
         respondingToTimeChange = true;
         const previousStep = this.state.currentStep;
         this.addTrailStep(trail, 'time');
-        const newStep = this.state.currentStep;
 
-        // Ensure the previous trail step keeps the previous state
-        this.state.steps[previousStep].trailState.$timeRange?.setState(prevState);
-
-        // Stepping back and forth ensures that the time range will change properly the next time the user manually switches to previousStep
-        this.goBackToStep(previousStep);
-        this.goBackToStep(newStep);
+        // Ensure the previous trail step keeps the previous state, using a clone of the previous time range
+        const $timeRangePrevious = this.state.steps[previousStep].trailState.$timeRange;
+        if ($timeRangePrevious) {
+          this.state.steps[previousStep].trailState.$timeRange = new SceneTimeRange(
+            sceneUtils.cloneSceneObjectState($timeRangePrevious.state, prevState)
+          );
+        }
 
         respondingToTimeChange = false;
       }
