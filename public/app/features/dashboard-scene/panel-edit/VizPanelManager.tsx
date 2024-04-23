@@ -88,12 +88,9 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     repeatOptions = { repeat, repeatDirection, maxPerRow };
 
     return new VizPanelManager({
-      panel: sourcePanel.clone({
-        $data: undefined,
-        $timeRange: undefined,
-      }),
-      $data: sourcePanel.state.$data?.clone(),
-      $timeRange: sourcePanel.state.$timeRange,
+      panel: sourcePanel.clone(),
+      //      $data: sourcePanel.state.$data?.clone(),
+      //     $timeRange: sourcePanel.state.$timeRange,
       sourcePanel: sourcePanel.getRef(),
       ...repeatOptions,
     });
@@ -104,7 +101,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
   }
 
   private async loadDataSource() {
-    const dataObj = this.state.$data;
+    const dataObj = this.state.panel.state.$data;
 
     if (!dataObj) {
       return;
@@ -270,7 +267,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
   public changeQueryOptions(options: QueryGroupOptions) {
     const panelObj = this.state.panel;
     const dataObj = this.queryRunner;
-    let timeRangeObj = sceneGraph.getTimeRange(panelObj);
+    const timeRangeObj = panelObj.state.$timeRange;
 
     const dataObjStateUpdate: Partial<SceneQueryRunner['state']> = {};
     const timeRangeObjStateUpdate: Partial<PanelTimeRangeState> = {};
@@ -295,11 +292,11 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
         timeRangeObj.setState(timeRangeObjStateUpdate);
       } else {
         // remove time override
-        this.setState({ $timeRange: undefined });
+        panelObj.setState({ $timeRange: undefined });
       }
     } else {
       // no time override present on the panel, let's create one first
-      this.setState({ $timeRange: new PanelTimeRange(timeRangeObjStateUpdate) });
+      panelObj.setState({ $timeRange: new PanelTimeRange(timeRangeObjStateUpdate) });
     }
 
     if (options.cacheTimeout !== dataObj?.state.cacheTimeout) {
@@ -337,7 +334,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
 
   get queryRunner(): SceneQueryRunner {
     // Panel data object is always SceneQueryRunner wrapped in a SceneDataTransformer
-    const runner = getQueryRunnerFor(this);
+    const runner = getQueryRunnerFor(this.state.panel);
 
     if (!runner) {
       throw new Error('Query runner not found');
@@ -347,7 +344,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
   }
 
   get dataTransformer(): SceneDataTransformer {
-    const provider = this.state.$data;
+    const provider = this.state.panel.state.$data;
     if (!provider || !(provider instanceof SceneDataTransformer)) {
       throw new Error('Could not find SceneDataTransformer for panel');
     }
