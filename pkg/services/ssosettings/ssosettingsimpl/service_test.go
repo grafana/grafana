@@ -979,6 +979,29 @@ func TestService_Upsert(t *testing.T) {
 		require.Error(t, err)
 	})
 
+	t.Run("returns error if a secret does not have the type string", func(t *testing.T) {
+		t.Parallel()
+
+		env := setupTestEnv(t, false, false, nil)
+
+		provider := social.OktaProviderName
+		settings := models.SSOSettings{
+			Provider: provider,
+			Settings: map[string]any{
+				"client_id":     "client-id",
+				"client_secret": 123,
+				"enabled":       true,
+			},
+			IsDeleted: false,
+		}
+
+		reloadable := ssosettingstests.NewMockReloadable(t)
+		env.reloadables[provider] = reloadable
+
+		err := env.service.Upsert(context.Background(), &settings, &user.SignedInUser{})
+		require.Error(t, err)
+	})
+
 	t.Run("returns error if secrets encryption failed", func(t *testing.T) {
 		t.Parallel()
 
@@ -1027,8 +1050,15 @@ func TestService_Upsert(t *testing.T) {
 			},
 		}
 
+		expected := settings
+		expected.Settings = make(map[string]any)
+		for key, value := range settings.Settings {
+			expected.Settings[key] = value
+		}
+		expected.Settings["client_secret"] = "encrypted-client-secret"
+
 		reloadable := ssosettingstests.NewMockReloadable(t)
-		reloadable.On("Validate", mock.Anything, settings, mock.Anything).Return(nil)
+		reloadable.On("Validate", mock.Anything, expected, mock.Anything).Return(nil)
 		reloadable.On("Reload", mock.Anything, mock.Anything).Return(nil).Maybe()
 		env.reloadables[provider] = reloadable
 		env.secrets.On("Decrypt", mock.Anything, []byte("current-client-secret"), mock.Anything).Return([]byte("encrypted-client-secret"), nil).Once()
@@ -1037,8 +1067,61 @@ func TestService_Upsert(t *testing.T) {
 		err := env.service.Upsert(context.Background(), &settings, &user.SignedInUser{})
 		require.NoError(t, err)
 
-		settings.Settings["client_secret"] = base64.RawStdEncoding.EncodeToString([]byte("current-client-secret"))
-		require.EqualValues(t, settings, env.store.ActualSSOSettings)
+		expected.Settings["client_secret"] = base64.RawStdEncoding.EncodeToString([]byte("current-client-secret"))
+		require.EqualValues(t, expected, env.store.ActualSSOSettings)
+	})
+
+	t.Run("run validation with all new and current secrets available in settings", func(t *testing.T) {
+		t.Parallel()
+
+		env := setupTestEnv(t, false, false, nil)
+
+		provider := social.AzureADProviderName
+		settings := models.SSOSettings{
+			Provider: provider,
+			Settings: map[string]any{
+				"client_secret": setting.RedactedPassword,
+				"private_key":   setting.RedactedPassword,
+				"certificate":   "new-certificate",
+			},
+			IsDeleted: false,
+		}
+
+		env.store.ExpectedSSOSetting = &models.SSOSettings{
+			Provider: provider,
+			Settings: map[string]any{
+				"client_secret": base64.RawStdEncoding.EncodeToString([]byte("encrypted-current-client-secret")),
+				"private_key":   base64.RawStdEncoding.EncodeToString([]byte("encrypted-current-private-key")),
+				"certificate":   base64.RawStdEncoding.EncodeToString([]byte("encrypted-current-certificate")),
+			},
+		}
+
+		expected := settings
+		expected.Settings = make(map[string]any)
+		for key, value := range settings.Settings {
+			expected.Settings[key] = value
+		}
+		expected.Settings["client_secret"] = "current-client-secret"
+		expected.Settings["private_key"] = "current-private-key"
+
+		reloadable := ssosettingstests.NewMockReloadable(t)
+		reloadable.On("Validate", mock.Anything, expected, mock.Anything).Return(nil)
+		reloadable.On("Reload", mock.Anything, mock.Anything).Return(nil).Maybe()
+		env.reloadables[provider] = reloadable
+		env.secrets.On("Decrypt", mock.Anything, []byte("encrypted-current-client-secret"), mock.Anything).Return([]byte("current-client-secret"), nil).Once()
+		env.secrets.On("Decrypt", mock.Anything, []byte("encrypted-current-private-key"), mock.Anything).Return([]byte("current-private-key"), nil).Once()
+		env.secrets.On("Decrypt", mock.Anything, []byte("encrypted-current-certificate"), mock.Anything).Return([]byte("current-certificate"), nil).Once()
+		env.secrets.On("Encrypt", mock.Anything, []byte("current-client-secret"), mock.Anything).Return([]byte("encrypted-current-client-secret"), nil).Once()
+		env.secrets.On("Encrypt", mock.Anything, []byte("current-private-key"), mock.Anything).Return([]byte("encrypted-current-private-key"), nil).Once()
+		env.secrets.On("Encrypt", mock.Anything, []byte("new-certificate"), mock.Anything).Return([]byte("encrypted-new-certificate"), nil).Once()
+
+		err := env.service.Upsert(context.Background(), &settings, &user.SignedInUser{})
+		require.NoError(t, err)
+
+		expected.Settings["client_secret"] = base64.RawStdEncoding.EncodeToString([]byte("encrypted-current-client-secret"))
+		expected.Settings["private_key"] = base64.RawStdEncoding.EncodeToString([]byte("encrypted-current-private-key"))
+		expected.Settings["certificate"] = base64.RawStdEncoding.EncodeToString([]byte("encrypted-new-certificate"))
+		require.EqualValues(t, expected, env.store.ActualSSOSettings)
 	})
 
 	t.Run("returns error if store failed to upsert settings", func(t *testing.T) {
