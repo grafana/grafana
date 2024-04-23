@@ -129,7 +129,7 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 		}
 
 		// Avoid logging sensitive data
-		redactedAMs := buildRedactedAMs(d.logger, alertmanagers, cfg.OrgID)
+		redactedAMs := buildRedactedAMs(alertmanagers, cfg.OrgID)
 		d.logger.Debug("Alertmanagers found in the configuration", "alertmanagers", redactedAMs)
 
 		var hashes []string
@@ -192,7 +192,7 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 	return nil
 }
 
-func buildRedactedAMs(l log.Logger, alertmanagers []ExternalAlertmanagerConfig, ordId int64) []string {
+func buildRedactedAMs(alertmanagers []ExternalAlertmanagerConfig, ordId int64) []string {
 	var redactedAMs []string
 	for _, am := range alertmanagers {
 		redactedAMs = append(redactedAMs, am.URL.Redacted())
