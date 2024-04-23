@@ -27,6 +27,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	remoteClient "github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
+	amgeneral "github.com/prometheus/alertmanager/api/v2/client/general"
+	"gopkg.in/yaml.v3"
 )
 
 type stateStore interface {
