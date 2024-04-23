@@ -16,7 +16,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fake_ds "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -607,8 +606,6 @@ func TestAlertManegers_asSHA256(t *testing.T) {
 }
 
 func TestAlertManagers_buildRedactedAMs(t *testing.T) {
-	fakeLogger := logtest.Fake{}
-
 	tc := []struct {
 		name     string
 		orgId    int64
@@ -638,15 +635,15 @@ func TestAlertManagers_buildRedactedAMs(t *testing.T) {
 
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
-			var cfgs []ExternalAMcfg
-			for _, url := range tt.amUrls {
-				cfgs = append(cfgs, ExternalAMcfg{
-					URL: url,
+			var cfgs []ExternalAlertmanagerConfig
+			for _, s := range tt.amUrls {
+				u, err := url.Parse(s)
+				require.NoError(t, err)
+				cfgs = append(cfgs, ExternalAlertmanagerConfig{
+					URL: u,
 				})
 			}
-			require.Equal(t, tt.expected, buildRedactedAMs(&fakeLogger, cfgs, tt.orgId))
-			require.Equal(t, tt.errCalls, fakeLogger.ErrorLogs.Calls)
-			require.Equal(t, tt.errLog, fakeLogger.ErrorLogs.Message)
+			require.Equal(t, tt.expected, buildRedactedAMs(cfgs, tt.orgId))
 		})
 	}
 }
