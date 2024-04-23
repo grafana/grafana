@@ -185,7 +185,6 @@ export const cloudItem: CanvasElementItem = {
       });
   },
 
-  // TODO: Fix these anchors to actually match the cloud svg
   customConnectionAnchors: [
     { x: -0.58, y: 0.63 }, // Top Left
     { x: -0.22, y: 0.99 }, // Top Middle
