@@ -6,6 +6,9 @@ import { generatedAPI } from './endpoints.gen';
 export const cloudMigrationAPI = generatedAPI.enhanceEndpoints({
   addTagTypes: ['cloud-migration-config', 'cloud-migration-run', 'cloud-migration-run-list'],
   endpoints: {
+    // Cloud-side - create token
+    createCloudMigrationToken: suppressErrorsOnQuery,
+
     // List Cloud Configs
     getMigrationList: {
       providesTags: ['cloud-migration-config'] /* should this be a -list? */,

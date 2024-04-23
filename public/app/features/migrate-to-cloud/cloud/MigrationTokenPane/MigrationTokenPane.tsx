@@ -20,8 +20,10 @@ export const MigrationTokenPane = () => {
   const isLoading = isFetchingStatus || createTokenResponse.isLoading; /* || deleteTokenResponse.isLoading */
 
   const handleGenerateToken = useCallback(async () => {
-    await createTokenMutation();
-    setShowModal(true);
+    const resp = await createTokenMutation();
+    if (!('error' in resp)) {
+      setShowModal(true);
+    }
   }, [createTokenMutation]);
 
   return (
