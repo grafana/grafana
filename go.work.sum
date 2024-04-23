@@ -774,8 +774,8 @@ github.com/open-telemetry/opentelemetry-collector-contrib/receiver/jaegerreceive
 github.com/open-telemetry/opentelemetry-collector-contrib/receiver/kafkareceiver v0.74.0/go.mod h1:anSbwGOousKpnNAVMNP5YieA4KOFuEzHkvya0vvtsaI=
 github.com/open-telemetry/opentelemetry-collector-contrib/receiver/opencensusreceiver v0.74.0/go.mod h1:uiW3V9EX8A5DOoxqDLuSh++ewHr+owtonCSiqMcpy3w=
 github.com/open-telemetry/opentelemetry-collector-contrib/receiver/zipkinreceiver v0.74.0/go.mod h1:qoGuayD7cAtshnKosIQHd6dobcn6/sqgUn0v/Cg2UB8=
-github.com/openfga/go-sdk v0.3.5 h1:KQXhMREh+g/K7HNuZ/YmXuHkREkq0VMKteua4bYr3Uw=
-github.com/openfga/go-sdk v0.3.5/go.mod h1:u1iErzj5E9/bhe+8nsMv0gigcYbJtImcdgcE5DmpbBg=
+github.com/openfga/language/pkg/go v0.0.0-20240415101832-dc43b60dcca8 h1:blfezb4R/kOtcbc47gut7QrxGdYdslkoC+jPjRrOyHo=
+github.com/openfga/language/pkg/go v0.0.0-20240415101832-dc43b60dcca8/go.mod h1:wkI4GcY3yNNuFMU2ncHPWqBaF7XylQTkJYfBi2pIpK8=
 github.com/openfga/openfga v1.5.3 h1:Uynmlsx3iz/eiP7wW9n2dbwxDh/kiS/27W6C24Y7oyY=
 github.com/opentracing-contrib/go-grpc v0.0.0-20210225150812-73cb765af46e/go.mod h1:DYR5Eij8rJl8h7gblRrOZ8g0kW1umSpKqYIBTgeDtLo=
 github.com/openzipkin/zipkin-go v0.4.1/go.mod h1:qY0VqDSN1pOBN94dBc6w2GJlWLiovAyg7Qt6/I9HecM=

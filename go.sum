@@ -2210,6 +2210,14 @@ github.com/grafana/tempo v1.5.1-0.20230524121406-1dc1bfe7085b h1:mDlkqgTEJuK7vjP
 github.com/grafana/tempo v1.5.1-0.20230524121406-1dc1bfe7085b/go.mod h1:UK7kTP5llPeRcGBOe5mm4QTNTd0k/mAqTVSOFdDH6AU=
 github.com/grafana/zanzana v0.0.0-20240423083925-b97d4f70a837 h1:wuYC04Ux+Via0nV8hFPoIwDdO/PMO6hwt1JW8kFlxoM=
 github.com/grafana/zanzana v0.0.0-20240423083925-b97d4f70a837/go.mod h1:XED9Of4qteGko+J0jMkHHJuxaeEfYV+y67c6rmIRQyE=
+github.com/grafana/zanzana v0.0.0-20240423093054-bdffc6575f6c h1:EEhtEaKJM2xY6BKXbLBfPB864clhaA6MKaeC/YFkKrk=
+github.com/grafana/zanzana v0.0.0-20240423093054-bdffc6575f6c/go.mod h1:NAffoErK0UKh5BM6JKHzY3zGp8PFmHj91T6AccwphLo=
+github.com/grafana/zanzana v0.0.0-20240423124852-e2c372f2c968 h1:JQoBgO5HHLrPgSYgrqZJK//HOk9kQRt1XlMJYkKHhUo=
+github.com/grafana/zanzana v0.0.0-20240423124852-e2c372f2c968/go.mod h1:NAffoErK0UKh5BM6JKHzY3zGp8PFmHj91T6AccwphLo=
+github.com/grafana/zanzana v0.0.0-20240423125722-f84e57d1e900 h1:hBdEVMSNfbs2AjzsVyGcHAgp0QIEt6IuElP8XR/YANw=
+github.com/grafana/zanzana v0.0.0-20240423125722-f84e57d1e900/go.mod h1:NAffoErK0UKh5BM6JKHzY3zGp8PFmHj91T6AccwphLo=
+github.com/grafana/zanzana v0.0.0-20240423130633-caeeb21c8588 h1:FKhKyJgdQxJ/XKQ768MgWokZnymVQKcokDNos9AAk2g=
+github.com/grafana/zanzana v0.0.0-20240423130633-caeeb21c8588/go.mod h1:NAffoErK0UKh5BM6JKHzY3zGp8PFmHj91T6AccwphLo=
 github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7/go.mod h1:FecbI9+v66THATjSRHfNgh1IVFe/9kFxbXtjV0ctIMA=
 github.com/grpc-ecosystem/go-grpc-middleware v1.3.0/go.mod h1:z0ButlSOZa5vEBq9m2m2hlwIgKw+rp3sdCBRoJY+30Y=
 github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 h1:UH//fgunKIs4JdUbpDl1VZCDaL56wXCB/5+wF6uHfaI=

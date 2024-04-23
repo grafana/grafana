@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	zService "github.com/grafana/zanzana/pkg/service"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -20,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/api"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/embedserver"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/migrator"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
@@ -44,8 +46,8 @@ var SharedWithMeFolderPermission = accesscontrol.Permission{
 var OSSRolesPrefixes = []string{accesscontrol.ManagedRolePrefix, accesscontrol.ExternalServiceRolePrefix}
 
 func ProvideService(cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
-	accessControl accesscontrol.AccessControl, features featuremgmt.FeatureToggles) (*Service, error) {
-	service := ProvideOSSService(cfg, database.ProvideService(db), cache, features)
+	accessControl accesscontrol.AccessControl, features featuremgmt.FeatureToggles, zanzanaService *embedserver.Service) (*Service, error) {
+	service := ProvideOSSService(cfg, database.ProvideService(db), cache, features, zanzanaService)
 
 	api.NewAccessControlAPI(routeRegister, accessControl, service, features).RegisterAPIEndpoints()
 	if err := accesscontrol.DeclareFixedRoles(service, cfg); err != nil {
@@ -63,7 +65,8 @@ func ProvideService(cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegis
 	return service, nil
 }
 
-func ProvideOSSService(cfg *setting.Cfg, store accesscontrol.Store, cache *localcache.CacheService, features featuremgmt.FeatureToggles) *Service {
+func ProvideOSSService(cfg *setting.Cfg, store accesscontrol.Store,
+	cache *localcache.CacheService, features featuremgmt.FeatureToggles, zanzanaService *embedserver.Service) *Service {
 	s := &Service{
 		cache:    cache,
 		cfg:      cfg,
@@ -71,6 +74,7 @@ func ProvideOSSService(cfg *setting.Cfg, store accesscontrol.Store, cache *local
 		log:      log.New("accesscontrol.service"),
 		roles:    accesscontrol.BuildBasicRoleDefinitions(),
 		store:    store,
+		zanzana:  zanzanaService,
 	}
 
 	return s
@@ -85,6 +89,7 @@ type Service struct {
 	registrations accesscontrol.RegistrationList
 	roles         map[string]*accesscontrol.RoleDTO
 	store         accesscontrol.Store
+	zanzana       *embedserver.Service
 }
 
 func (s *Service) GetUsageStats(_ context.Context) map[string]any {
@@ -194,7 +199,25 @@ func (s *Service) DeclareFixedRoles(registrations ...accesscontrol.RoleRegistrat
 
 // RegisterFixedRoles registers all declared roles in RAM
 func (s *Service) RegisterFixedRoles(ctx context.Context) error {
+	roles := []zService.RoleRegistration{}
 	s.registrations.Range(func(registration accesscontrol.RoleRegistration) bool {
+		role := zService.RoleDTO{
+			Name:        registration.Role.Name,
+			UID:         registration.Role.UID,
+			DisplayName: registration.Role.DisplayName,
+			Description: registration.Role.Description,
+		}
+
+		permissions := make([]zService.Permission, 0)
+		for _, permission := range registration.Role.Permissions {
+			permissions = append(permissions, zService.Permission(permission))
+		}
+		role.Permissions = permissions
+		roles = append(roles, zService.RoleRegistration{
+			Role:   role,
+			Grants: registration.Grants,
+		})
+
 		for br := range accesscontrol.BuiltInRolesWithParents(registration.Grants) {
 			if basicRole, ok := s.roles[br]; ok {
 				basicRole.Permissions = append(basicRole.Permissions, registration.Role.Permissions...)
@@ -204,6 +227,14 @@ func (s *Service) RegisterFixedRoles(ctx context.Context) error {
 		}
 		return true
 	})
+
+	// FIXME: Fetch orgIDs
+	err := s.zanzana.SeedRoles(ctx, roles, []int{1})
+	if err != nil {
+		s.log.Error("Failed to seed roles", "error", err)
+		return err
+	}
+
 	return nil
 }
 
