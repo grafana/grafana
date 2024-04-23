@@ -960,7 +960,9 @@ steps:
     webhook:
       from_secret: slack_webhook
   when:
-    status: failure
+    status:
+    - success
+    - failure
 trigger:
   event:
   - pull_request
