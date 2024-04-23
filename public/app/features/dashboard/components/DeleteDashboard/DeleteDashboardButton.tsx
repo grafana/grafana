@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { Button, ModalsController } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
