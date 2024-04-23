@@ -145,7 +145,7 @@ func TestApplyConfig(t *testing.T) {
 	// The encrypted configuration should be different than the one we will send.
 	encryptedConfig, err := json.Marshal(c)
 	require.NoError(t, err)
-	require.NotEqual(t, testGrafanaConfig, encryptedConfig)
+	require.NotEqual(t, testGrafanaConfigWithSecret, encryptedConfig)
 
 	// ApplyConfig performs a readiness check at startup.
 	// A non-200 response should result in an error.
@@ -316,7 +316,7 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.SilencesFilename, testSilence1))
 	require.NoError(t, store.Set(ctx, cfg.OrgID, "alertmanager", notifier.NotificationLogFilename, testNflog1))
 
-	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
 	am, err := NewAlertmanager(cfg, fstore, secretsService.Decrypt, defaultGrafanaConfig, m)
 	require.NoError(t, err)
@@ -384,6 +384,36 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 		state, err := am.mimirClient.GetGrafanaAlertmanagerState(ctx)
 		require.NoError(t, err)
 		require.Equal(t, encodedFullState, state.State)
+	}
+
+	// `SaveAndApplyConfig` is called whenever a user manually changes the Alertmanager configuration.
+	// Calling this method should decrypt and send a configuration to the remote Alertmanager.
+	{
+		postableCfg, err := notifier.Load([]byte(testGrafanaConfigWithSecret))
+		require.NoError(t, err)
+		err = notifier.EncryptReceiverConfigs(postableCfg.AlertmanagerConfig.Receivers, func(ctx context.Context, payload []byte) ([]byte, error) {
+			return secretsService.Encrypt(ctx, payload, secrets.WithoutScope())
+		})
+		require.NoError(t, err)
+
+		// The encrypted configuration should be different than the one we will send.
+		encryptedConfig, err := json.Marshal(postableCfg)
+		require.NoError(t, err)
+		require.NotEqual(t, testGrafanaConfigWithSecret, encryptedConfig)
+
+		// Call `SaveAndApplyConfig` with the encrypted configuration.
+		require.NoError(t, err)
+		require.NoError(t, am.SaveAndApplyConfig(ctx, postableCfg))
+
+		// Check that the configuration was uploaded to the remote Alertmanager.
+		config, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
+		require.NoError(t, err)
+		got, err := json.Marshal(config.GrafanaAlertmanagerConfig)
+		require.NoError(t, err)
+
+		require.JSONEq(t, testGrafanaConfigWithSecret, string(got))
+		require.Equal(t, fmt.Sprintf("%x", md5.Sum(encryptedConfig)), config.Hash)
+		require.False(t, config.Default)
 	}
 
 	// `SaveAndApplyDefaultConfig` should send the default Alertmanager configuration to the remote Alertmanager.
