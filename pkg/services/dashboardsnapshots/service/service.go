@@ -4,25 +4,37 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/secrets"
 )
 
 type ServiceImpl struct {
-	store          dashboardsnapshots.Store
-	secretsService secrets.Service
+	store            dashboardsnapshots.Store
+	secretsService   secrets.Service
+	dashboardService dashboards.DashboardService
 }
 
 // ServiceImpl implements the dashboardsnapshots Service interface
 var _ dashboardsnapshots.Service = (*ServiceImpl)(nil)
 
-func ProvideService(store dashboardsnapshots.Store, secretsService secrets.Service) *ServiceImpl {
+func ProvideService(store dashboardsnapshots.Store, secretsService secrets.Service, dashboardService dashboards.DashboardService) *ServiceImpl {
 	s := &ServiceImpl{
-		store:          store,
-		secretsService: secretsService,
+		store:            store,
+		secretsService:   secretsService,
+		dashboardService: dashboardService,
 	}
 
 	return s
+}
+
+func (s *ServiceImpl) FindDashboard(ctx context.Context, orgId int64, dashboardId int64) (*dashboards.Dashboard, error) {
+	dash, err := s.dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{ID: dashboardId, OrgID: orgId})
+	if err != nil {
+		return nil, err
+	}
+
+	return dash, nil
 }
 
 func (s *ServiceImpl) CreateDashboardSnapshot(ctx context.Context, cmd *dashboardsnapshots.CreateDashboardSnapshotCommand) (*dashboardsnapshots.DashboardSnapshot, error) {
