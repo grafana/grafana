@@ -30,11 +30,11 @@ When creating alert rules, you can also template labels and annotations to optim
 
 ## Labels
 
-**Labels** serve as unique identifiers of an alert. And, beyond their labeling function, they also offer practical functionalities such as searchability, silencing, routing notifications, and they can be templated.
+**Labels** are unique identifiers of an alert. You can use them for searching, silencing, and routing notifications.
 
-Labels contain information that identifies an alert. An example of a label might be `server=server1` or `team=backend`. Each alert can have more than one label, and the complete set of labels for an alert is called its label set. It is this label set that identifies the alert.
+Examples of labels are `server=server1` or `team=backend`. Each alert rule can have more than one label and the complete set of labels for an alert rule is called its label set. It is this label set that identifies the alert.
 
-For example, an alert might have the label set `{alertname="High CPU usage",server="server1"}` while another alert might have the label set `{alertname="High CPU usage",server="server2"}`. These are two separate alerts because although their `alertname` labels are the same, their `server` labels are different.
+For example, an alert rule might have the label set `{alertname="High CPU usage",server="server1"}` while another alert rule might have the label set `{alertname="High CPU usage",server="server2"}`. These are two separate alert rules because although their `alertname` labels are the same, their `server` labels are different.
 
 Labels are a fundamental component of alerting:
 
@@ -98,15 +98,15 @@ Here is an example that shows how to exclude the label `Team`. You can choose be
 
 An alert's label set can contain three types of labels:
 
-- The data source query. For example, if you were monitoring temperature readings and each time series for these readings would have a sensor_id, and a location label. Those labels are used to provide additional context or dimensions to the metric data, helping to differentiate between different time series.
+- Data source query labels. For example, if you are monitoring temperature readings and each time series for these readings has a sensor_id, and a location label. These labels are used to provide additional context or dimensions to the metric data, helping to differentiate between different time series.
 
-- Some are automatically added by Grafana (i.e. alertname and grafana_folder). These are Grafana reserved labels.
+- Labels that are automatically added by Grafana (i.e. alertname and grafana_folder). These are Grafana reserved labels.
 
-- Others you can define yourself to help filter data in your alert rules. They act as a unique identifier of an alert. In addition, labels allow searching, silencing, or routing alerts.
-  And, you can also template them. For example in your alert, you could add a label that uses templating to create more dynamic and customizable alerting. E.g. `environment` `=` `{{ your text/template }}`.
+- Labels that you define yourself to help filter data in your alert rules.
+  You can also template labels. For example in your alert rule, you could add a label that uses templating to create more dynamic and customizable alerting. E.g. `environment` `=` `{{ your text/template }}`.
 
 {{<admonition type="note">}}
-Ensure the label set for an alert does not have two or more labels with the same name. If a label has the same name as a label from the datasource then it will replace that label. However, should a label have the same name as a reserved label then the label will be omitted from the alert.
+Ensure the label set for an alert does not have two or more labels with the same name. If a label has the same name as a label from the data source then it will replace that label. However, should a label have the same name as a reserved label then the label will be omitted from the alert.
 {{</admonition>}}
 
 {{< collapse title="Key format" >}}
