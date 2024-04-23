@@ -20,6 +20,10 @@ Choose where to display the legend.
 - **Bottom -** Below the graph.
 - **Right -** To the right of the graph.
 
+#### Width
+
+This option is displayed if you set the legend placement to **Right**. Control how wide the legend is in the panel.
+
 ### Values
 
 Choose which of the [standard calculations]({{< relref "../../panels-visualizations/query-transform-data/calculation-types/" >}}) to show in the legend. You can have more than one.
