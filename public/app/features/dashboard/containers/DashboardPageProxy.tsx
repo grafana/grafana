@@ -60,7 +60,7 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
 
   if (
     dashboard.value &&
-    !(dashboard.value.meta.canEdit || dashboard.value.meta.canMakeEditable) &&
+    !(dashboard.value.meta?.canEdit || dashboard.value.meta?.canMakeEditable) &&
     isScenesSupportedRoute
   ) {
     return <DashboardScenePage {...props} />;
