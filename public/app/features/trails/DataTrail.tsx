@@ -177,15 +177,22 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
 
     this.setState(step.trailState);
     this.syncTrailToUrl();
+
+    // Begin re-render of controls
+    //
+    // Ensure that the trail renders the current state values for the time range controls and the adhoc filter control.
+    // Otherwise, the state values that we test against would be correct, but the rendering on screen would be incorrect
+
+    // Forces a rerender of the controls
     this.state.controls.forEach((control) => control.forceRender());
 
-    // Forces a reconstruction of VariableValueSelectors so that it always renders the variables correctly (e.g., filters) after all step changes
-    // Otherwise, the state values that we test against would be correct, but the rendering on screen would be incorrect
+    // Force reconstruction of VariableValueSelectors so that it always renders the filter variables correctly
     this.setState({
       controls: this.state.controls.map((control) =>
         control instanceof VariableValueSelectors ? control.clone() : control
       ),
     });
+    // End re-render of controls
   }
 
   private syncTrailToUrl() {
