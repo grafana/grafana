@@ -170,7 +170,7 @@ export function getLibraryVizPanelOptionsCategory(libraryPanel: LibraryVizPanel)
               id="LibraryPanelFrameName"
               data-testid="library panel name input"
               defaultValue={libraryPanel.state.name}
-              onBlur={(e) => libraryPanel.setState({ name: e.currentTarget.value })}
+              onBlur={(e) => libraryPanel.setName(e.currentTarget.value)}
             />
           );
         },

@@ -4,6 +4,7 @@ import { NavModel, NavModelItem, PageLayoutType } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, SceneVariable, SceneVariables, sceneGraph } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 
+import { PersistedStateChangedEvent } from '../saving/PersistedStateChangedEvent';
 import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -37,15 +38,20 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
   }
 
   public getVariableSet(): SceneVariables {
-    return sceneGraph.getVariables(this.getDashboard());
+    return sceneGraph.getVariables(this);
   }
 
-  private getVariableIndex = (identifier: string) => {
+  private getVariableIndex(identifier: string) {
     const variables = this.getVariables();
     return variables.findIndex((variable) => variable.state.name === identifier);
-  };
+  }
 
-  private replaceEditVariable = (newVariable: SceneVariable) => {
+  private updateVariableSet(variables: SceneVariable[]) {
+    this.getVariableSet().setState({ variables });
+    this.publishEvent(new PersistedStateChangedEvent(), true);
+  }
+
+  private replaceEditVariable(newVariable: SceneVariable) {
     // Find the index of the variable to be deleted
     const variableIndex = this.state.editIndex ?? -1;
     const { variables } = this.getVariableSet().state;
@@ -60,13 +66,14 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     const updatedVariables = [...variables.slice(0, variableIndex), newVariable, ...variables.slice(variableIndex + 1)];
 
     // Update the state or the variables array
-    this.getVariableSet().setState({ variables: updatedVariables });
-  };
+    this.updateVariableSet(updatedVariables);
+  }
 
   public onDelete = (identifier: string) => {
     // Find the index of the variable to be deleted
     const variableIndex = this.getVariableIndex(identifier);
     const { variables } = this.getVariableSet().state;
+
     if (variableIndex === -1) {
       // Handle the case where the variable is not found
       console.error('Variable not found');
@@ -77,7 +84,7 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     const updatedVariables = [...variables.slice(0, variableIndex), ...variables.slice(variableIndex + 1)];
 
     // Update the state or the variables array
-    this.getVariableSet().setState({ variables: updatedVariables });
+    this.updateVariableSet(updatedVariables);
     // Remove editIndex otherwise switches to next variable in list
     this.setState({ editIndex: undefined });
   };
@@ -116,7 +123,7 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
       ...variables.slice(variableIndex + 1),
     ];
 
-    this.getVariableSet().setState({ variables: updatedVariables });
+    this.updateVariableSet(updatedVariables);
   };
 
   public onOrderChanged = (fromIndex: number, toIndex: number) => {
@@ -133,8 +140,8 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     // Remove the variable from the array
     const movedItem = updatedVariables.splice(fromIndex, 1);
     updatedVariables.splice(toIndex, 0, movedItem[0]);
-    const variablesScene = this.getVariableSet();
-    variablesScene.setState({ variables: updatedVariables });
+
+    this.updateVariableSet(updatedVariables);
   };
 
   public onEdit = (identifier: string) => {
@@ -149,10 +156,10 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
   public onAdd = () => {
     const variables = this.getVariables();
     const variableIndex = variables.length;
-    //add the new variable to the end of the array
     const defaultNewVariable = getVariableDefault(variables);
 
-    this.getVariableSet().setState({ variables: [...this.getVariables(), defaultNewVariable] });
+    //add the new variable to the end of the array
+    this.updateVariableSet([...this.getVariables(), defaultNewVariable]);
     this.setState({ editIndex: variableIndex });
   };
 
@@ -169,6 +176,7 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     }
 
     const { name, label } = variable.state;
+
     const newVariable = getVariableScene(type, { name, label });
     this.replaceEditVariable(newVariable);
   };

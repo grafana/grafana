@@ -67,8 +67,6 @@ import { ScopesScene } from './ScopesScene';
 import { ViewPanelScene } from './ViewPanelScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 
-export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta'];
-
 export interface DashboardSceneState extends SceneObjectState {
   /** The title */
   title: string;

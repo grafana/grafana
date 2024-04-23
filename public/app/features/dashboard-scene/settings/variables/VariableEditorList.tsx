@@ -135,7 +135,7 @@ function EmptyVariablesList({ onAdd }: { onAdd: () => void }): ReactElement {
 
 const getStyles = () => ({
   tableContainer: css({
-    overflow: 'scroll',
+    overflow: 'auto',
     width: '100%',
   }),
 });

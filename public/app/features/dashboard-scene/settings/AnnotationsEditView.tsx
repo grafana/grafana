@@ -5,6 +5,7 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, VizPanel, dataLayers } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 
+import { PersistedStateChangedEvent } from '../saving/PersistedStateChangedEvent';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
@@ -70,7 +71,8 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
 
     const data = dashboardSceneGraph.getDataLayers(this._dashboard);
 
-    data.addAnnotationLayer(newAnnotation);
+    data.setState({ annotationLayers: [...data.state.annotationLayers, newAnnotation] });
+    this.publishEvent(new PersistedStateChangedEvent(), true);
 
     this.setState({ editIndex: data.state.annotationLayers.length - 1 });
   };
@@ -91,15 +93,16 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
     layers.splice(idx + direction, 0, layer);
 
     data.setState({ annotationLayers: layers });
+    this.publishEvent(new PersistedStateChangedEvent(), true);
   };
 
   public onDelete = (idx: number) => {
     const data = dashboardSceneGraph.getDataLayers(this._dashboard);
     const layers = [...data.state.annotationLayers];
-
     layers.splice(idx, 1);
 
     data.setState({ annotationLayers: layers });
+    this.publishEvent(new PersistedStateChangedEvent(), true);
   };
 
   public onUpdate = (annotation: AnnotationQuery, editIndex: number) => {
@@ -111,6 +114,8 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
       isHidden: Boolean(annotation.hide),
       query: annotation,
     });
+
+    this.publishEvent(new PersistedStateChangedEvent(), true);
 
     //need to rerun the layer to update the query and
     //see the annotation on the panel

@@ -45,10 +45,6 @@ export class DashboardDataLayerSet
     };
   }
 
-  public addAnnotationLayer(layer: SceneDataLayerProvider) {
-    this.setState({ annotationLayers: [...this.state.annotationLayers, layer] });
-  }
-
   private getAllLayers() {
     const layers = [...this.state.annotationLayers];
 

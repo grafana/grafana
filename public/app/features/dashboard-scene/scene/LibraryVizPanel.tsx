@@ -12,6 +12,7 @@ import { LibraryPanel } from '@grafana/schema';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
+import { PersistedStateChangedEvent } from '../saving/PersistedStateChangedEvent';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 
 import { DashboardGridItem } from './DashboardGridItem';
@@ -48,6 +49,11 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
       this.loadLibraryPanelFromPanelModel();
     }
   };
+
+  public setName(name: string) {
+    this.setState({ name });
+    this.publishEvent(new PersistedStateChangedEvent(), true);
+  }
 
   public setPanelFromLibPanel(libPanel: LibraryPanel) {
     if (this.state._loadedPanel?.version === libPanel.version) {

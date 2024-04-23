@@ -35,6 +35,7 @@ import { updateQueries } from 'app/features/query/state/updateQueries';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupOptions } from 'app/types';
 
+import { PersistedStateChangedEvent } from '../saving/PersistedStateChangedEvent';
 import { DashboardGridItem, RepeatDirection } from '../scene/DashboardGridItem';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelTimeRange, PanelTimeRangeState } from '../scene/PanelTimeRange';
@@ -308,17 +309,21 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
 
     dataObj.setState(dataObjStateUpdate);
     dataObj.runQueries();
+
+    this.publishEvent(new PersistedStateChangedEvent(), true);
   }
 
   public changeQueries<T extends DataQuery>(queries: T[]) {
-    const runner = this.queryRunner;
-    runner.setState({ queries });
+    this.queryRunner.setState({ queries });
+    this.publishEvent(new PersistedStateChangedEvent(), true);
   }
 
   public changeTransformations(transformations: DataTransformerConfig[]) {
     const dataprovider = this.dataTransformer;
     dataprovider.setState({ transformations });
     dataprovider.reprocessTransformations();
+
+    this.publishEvent(new PersistedStateChangedEvent(), true);
   }
 
   public inspectPanel() {

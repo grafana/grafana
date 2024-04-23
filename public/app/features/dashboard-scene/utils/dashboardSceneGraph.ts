@@ -1,5 +1,6 @@
-import { VizPanel, SceneGridRow, sceneGraph, SceneGridLayout, behaviors } from '@grafana/scenes';
+import { VizPanel, SceneGridRow, sceneGraph, SceneGridLayout, behaviors, SceneObject } from '@grafana/scenes';
 
+import { PersistedStateChangedEvent } from '../saving/PersistedStateChangedEvent';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -129,7 +130,7 @@ export function getNextPanelId(dashboard: DashboardScene): number {
 }
 
 // Returns the LibraryVizPanel that corresponds to the given VizPanel if it exists
-export const getLibraryVizPanelFromVizPanel = (vizPanel: VizPanel): LibraryVizPanel | null => {
+export function getLibraryVizPanelFromVizPanel(vizPanel: VizPanel): LibraryVizPanel | null {
   if (vizPanel.parent instanceof LibraryVizPanel) {
     return vizPanel.parent;
   }
@@ -139,7 +140,11 @@ export const getLibraryVizPanelFromVizPanel = (vizPanel: VizPanel): LibraryVizPa
   }
 
   return null;
-};
+}
+
+export function publishPersistedStateChangeEvent(context: SceneObject) {
+  context.publishEvent(new PersistedStateChangedEvent(), true);
+}
 
 export const dashboardSceneGraph = {
   getTimePicker,
@@ -149,4 +154,5 @@ export const dashboardSceneGraph = {
   getDataLayers,
   getNextPanelId,
   getCursorSync,
+  publishPersistedStateChangeEvent,
 };

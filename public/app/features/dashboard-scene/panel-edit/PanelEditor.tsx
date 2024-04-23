@@ -4,6 +4,7 @@ import { NavIndex } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 
+import { PersistedStateChangedEvent } from '../saving/PersistedStateChangedEvent';
 import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
@@ -143,6 +144,8 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       width,
       height,
     });
+
+    this.publishEvent(new PersistedStateChangedEvent(), true);
   }
 
   public onSaveLibraryPanel = () => {

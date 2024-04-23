@@ -24,6 +24,7 @@ import { GenAIDashDescriptionButton } from 'app/features/dashboard/components/Ge
 import { GenAIDashTitleButton } from 'app/features/dashboard/components/GenAI/GenAIDashTitleButton';
 
 import { updateNavModel } from '../pages/utils';
+import { PersistedStateChangedEvent } from '../saving/PersistedStateChangedEvent';
 import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
@@ -72,6 +73,10 @@ export class GeneralSettingsEditView
     return dashboardSceneGraph.getCursorSync(this._dashboard);
   }
 
+  public notifyChangeTracker() {
+    this.publishEvent(new PersistedStateChangedEvent(), true);
+  }
+
   public getLiveNowTimer(): behaviors.LiveNowTimer {
     const liveNowTimer = sceneGraph.findObject(this._dashboard, (s) => s instanceof behaviors.LiveNowTimer);
     if (liveNowTimer instanceof behaviors.LiveNowTimer) {
@@ -87,14 +92,17 @@ export class GeneralSettingsEditView
 
   public onTitleChange = (value: string) => {
     this._dashboard.setState({ title: value });
+    this.notifyChangeTracker();
   };
 
   public onDescriptionChange = (value: string) => {
     this._dashboard.setState({ description: value });
+    this.notifyChangeTracker();
   };
 
   public onTagsChange = (value: string[]) => {
     this._dashboard.setState({ tags: value });
+    this.notifyChangeTracker();
   };
 
   public onFolderChange = async (newUID: string | undefined, newTitle: string | undefined) => {
@@ -109,49 +117,46 @@ export class GeneralSettingsEditView
     }
 
     this._dashboard.setState({ meta: newMeta });
+    this.notifyChangeTracker();
   };
 
   public onEditableChange = (value: boolean) => {
     this._dashboard.setState({ editable: value });
+    this.notifyChangeTracker();
   };
 
   public onTimeZoneChange = (value: TimeZone) => {
-    this.getTimeRange().setState({
-      timeZone: value,
-    });
+    this.getTimeRange().setState({ timeZone: value });
+    this.notifyChangeTracker();
   };
 
   public onWeekStartChange = (value: string) => {
-    this.getTimeRange().setState({
-      weekStart: value,
-    });
+    this.getTimeRange().setState({ weekStart: value });
+    this.notifyChangeTracker();
   };
 
   public onRefreshIntervalChange = (value: string[]) => {
     const control = this.getRefreshPicker();
-    control?.setState({
-      intervals: value,
-    });
+    control?.setState({ intervals: value });
+    this.notifyChangeTracker();
   };
 
   public onNowDelayChange = (value: string) => {
     const timeRange = this.getTimeRange();
-
-    timeRange?.setState({
-      UNSAFE_nowDelay: value,
-    });
+    timeRange?.setState({ UNSAFE_nowDelay: value });
+    this.notifyChangeTracker();
   };
 
   public onHideTimePickerChange = (value: boolean) => {
-    this.getDashboardControls()?.setState({
-      hideTimeControls: value,
-    });
+    this.getDashboardControls()?.setState({ hideTimeControls: value });
+    this.notifyChangeTracker();
   };
 
   public onLiveNowChange = (enable: boolean) => {
     try {
       const liveNow = this.getLiveNowTimer();
       enable ? liveNow.enable() : liveNow.disable();
+      this.notifyChangeTracker();
     } catch (err) {
       console.error(err);
     }
@@ -159,6 +164,7 @@ export class GeneralSettingsEditView
 
   public onTooltipChange = (value: number) => {
     this.getCursorSync()?.setState({ sync: value });
+    this.notifyChangeTracker();
   };
 
   static Component = ({ model }: SceneComponentProps<GeneralSettingsEditView>) => {
