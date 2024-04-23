@@ -435,7 +435,7 @@ func TestIntegrationRemoteAlertmanagerGetStatus(t *testing.T) {
 
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, "", m)
+	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, defaultGrafanaConfig, m)
 	require.NoError(t, err)
 
 	// We should get the default Cloud Alertmanager configuration.
