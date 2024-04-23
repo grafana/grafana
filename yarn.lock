@@ -3357,7 +3357,7 @@ __metadata:
     "@types/react": "npm:18.2.79"
     "@types/react-dom": "npm:18.2.25"
     "@types/testing-library__jest-dom": "npm:5.14.9"
-    css-loader: "npm:6.10.0"
+    css-loader: "npm:7.1.1"
     fast-deep-equal: "npm:^3.1.3"
     jest: "npm:29.7.0"
     lodash: "npm:4.17.21"
@@ -4043,7 +4043,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": "npm:6.21.0"
     "@typescript-eslint/parser": "npm:6.21.0"
     copy-webpack-plugin: "npm:12.0.2"
-    css-loader: "npm:6.10.0"
+    css-loader: "npm:7.1.1"
     d3: "npm:7.9.0"
     date-fns: "npm:3.6.0"
     debounce-promise: "npm:3.1.2"
@@ -4343,7 +4343,7 @@ __metadata:
     classnames: "npm:2.5.1"
     common-tags: "npm:1.8.2"
     core-js: "npm:3.37.0"
-    css-loader: "npm:6.10.0"
+    css-loader: "npm:7.1.1"
     csstype: "npm:3.1.3"
     d3: "npm:7.9.0"
     date-fns: "npm:3.6.0"
@@ -14270,7 +14270,31 @@ __metadata:
   languageName: node
   linkType: hard
 
-"css-loader@npm:6.10.0, css-loader@npm:^6.7.1":
+"css-loader@npm:7.1.1":
+  version: 7.1.1
+  resolution: "css-loader@npm:7.1.1"
+  dependencies:
+    icss-utils: "npm:^5.1.0"
+    postcss: "npm:^8.4.33"
+    postcss-modules-extract-imports: "npm:^3.1.0"
+    postcss-modules-local-by-default: "npm:^4.0.5"
+    postcss-modules-scope: "npm:^3.2.0"
+    postcss-modules-values: "npm:^4.0.0"
+    postcss-value-parser: "npm:^4.2.0"
+    semver: "npm:^7.5.4"
+  peerDependencies:
+    "@rspack/core": 0.x || 1.x
+    webpack: ^5.27.0
+  peerDependenciesMeta:
+    "@rspack/core":
+      optional: true
+    webpack:
+      optional: true
+  checksum: 10/435a21f19594f89e4d5da51f4d6d2de4d25d6f882117890875f6529e99fbe931ea258662fb680b70e7ccab2fd723084f2c3fff022c76d45c38893ae50ab6f08e
+  languageName: node
+  linkType: hard
+
+"css-loader@npm:^6.7.1":
   version: 6.10.0
   resolution: "css-loader@npm:6.10.0"
   dependencies:
@@ -18760,7 +18784,7 @@ __metadata:
     common-tags: "npm:1.8.2"
     copy-webpack-plugin: "npm:12.0.2"
     core-js: "npm:3.37.0"
-    css-loader: "npm:6.10.0"
+    css-loader: "npm:7.1.1"
     css-minimizer-webpack-plugin: "npm:6.0.0"
     cypress: "npm:13.1.0"
     cypress-file-upload: "npm:5.0.8"
@@ -25250,36 +25274,36 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss-modules-extract-imports@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "postcss-modules-extract-imports@npm:3.0.0"
+"postcss-modules-extract-imports@npm:^3.0.0, postcss-modules-extract-imports@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "postcss-modules-extract-imports@npm:3.1.0"
   peerDependencies:
     postcss: ^8.1.0
-  checksum: 10/8d68bb735cef4d43f9cdc1053581e6c1c864860b77fcfb670372b39c5feeee018dc5ddb2be4b07fef9bcd601edded4262418bbaeaf1bd4af744446300cebe358
+  checksum: 10/00bfd3aff045fc13ded8e3bbfd8dfc73eff9a9708db1b2a132266aef6544c8d2aee7a5d7e021885f6f9bbd5565a9a9ab52990316e21ad9468a2534f87df8e849
   languageName: node
   linkType: hard
 
-"postcss-modules-local-by-default@npm:^4.0.4":
-  version: 4.0.4
-  resolution: "postcss-modules-local-by-default@npm:4.0.4"
+"postcss-modules-local-by-default@npm:^4.0.4, postcss-modules-local-by-default@npm:^4.0.5":
+  version: 4.0.5
+  resolution: "postcss-modules-local-by-default@npm:4.0.5"
   dependencies:
     icss-utils: "npm:^5.0.0"
     postcss-selector-parser: "npm:^6.0.2"
     postcss-value-parser: "npm:^4.1.0"
   peerDependencies:
     postcss: ^8.1.0
-  checksum: 10/45790af417b2ed6ed26e9922724cf3502569995833a2489abcfc2bb44166096762825cc02f6132cc6a2fb235165e76b859f9d90e8a057bc188a1b2c17f2d7af0
+  checksum: 10/b08b01aa7f3d1a80bb1a5508ba3a208578fdd2fb6e54e5613fac244a4e014aa7ca639a614859fec93b399e5a6f86938f7690ca60f7e57c4e35b75621d3c07734
   languageName: node
   linkType: hard
 
-"postcss-modules-scope@npm:^3.1.1":
-  version: 3.1.1
-  resolution: "postcss-modules-scope@npm:3.1.1"
+"postcss-modules-scope@npm:^3.1.1, postcss-modules-scope@npm:^3.2.0":
+  version: 3.2.0
+  resolution: "postcss-modules-scope@npm:3.2.0"
   dependencies:
     postcss-selector-parser: "npm:^6.0.4"
   peerDependencies:
     postcss: ^8.1.0
-  checksum: 10/ca035969eba62cf126864b10d7722e49c0d4f050cbd4618b6e9714d81b879cf4c53a5682501e00f9622e8f4ea6d7d7d53af295ae935fa833e0cc0bda416a287b
+  checksum: 10/17c293ad13355ba456498aa5815ddb7a4a736f7b781d89b294e1602a53b8d0e336131175f82460e290a0d672642f9039540042edc361d9000b682c44e766925b
   languageName: node
   linkType: hard
 
