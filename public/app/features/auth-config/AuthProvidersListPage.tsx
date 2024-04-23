@@ -53,7 +53,7 @@ export const AuthConfigPageUnconnected = ({
   };
 
   // filter out saml from sso providers because it is already included in availableProviders
-  providers = providers.filter((p) => p.provider != 'saml');
+  providers = providers.filter((p) => p.provider !== 'saml');
 
   const providerList = availableProviders.length
     ? [
