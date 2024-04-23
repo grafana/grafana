@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/embedserver"
 )
 
 const (
@@ -17,7 +18,7 @@ const (
 
 	// teamAssignsSQL is a query to select all users' team assignments.
 	teamAssignsSQL = `SELECT tm.user_id, tr.org_id, tr.role_id
-	FROM team_role AS tr 
+	FROM team_role AS tr
 	INNER JOIN team_member AS tm ON tm.team_id = tr.team_id`
 
 	// basicRoleAssignsSQL is a query to select all users basic role (Admin, Editor, Viewer, None) assignments.
@@ -347,4 +348,7 @@ func (s *AccessControlStore) DeleteTeamPermissions(ctx context.Context, orgID, t
 		return nil
 	})
 	return err
+}
+
+func (s *AccessControlStore) SynchronizeUserData(zanzanaService *embedserver.Service) {
 }

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	zService "github.com/grafana/zanzana/pkg/service"
+	zclient "github.com/grafana/zanzana/pkg/service/client"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -199,21 +199,21 @@ func (s *Service) DeclareFixedRoles(registrations ...accesscontrol.RoleRegistrat
 
 // RegisterFixedRoles registers all declared roles in RAM
 func (s *Service) RegisterFixedRoles(ctx context.Context) error {
-	roles := []zService.RoleRegistration{}
+	roles := []zclient.RoleRegistration{}
 	s.registrations.Range(func(registration accesscontrol.RoleRegistration) bool {
-		role := zService.RoleDTO{
+		role := zclient.RoleDTO{
 			Name:        registration.Role.Name,
 			UID:         registration.Role.UID,
 			DisplayName: registration.Role.DisplayName,
 			Description: registration.Role.Description,
 		}
 
-		permissions := make([]zService.Permission, 0)
+		permissions := make([]zclient.Permission, 0)
 		for _, permission := range registration.Role.Permissions {
-			permissions = append(permissions, zService.Permission(permission))
+			permissions = append(permissions, zclient.Permission(permission))
 		}
 		role.Permissions = permissions
-		roles = append(roles, zService.RoleRegistration{
+		roles = append(roles, zclient.RoleRegistration{
 			Role:   role,
 			Grants: registration.Grants,
 		})
@@ -229,7 +229,13 @@ func (s *Service) RegisterFixedRoles(ctx context.Context) error {
 	})
 
 	// FIXME: Fetch orgIDs
-	err := s.zanzana.SeedRoles(ctx, roles, []int{1})
+	cl, err := s.zanzana.GetClient(ctx, "1")
+	if err != nil {
+		s.log.Error("Failed to get client", "error", err)
+		return err
+	}
+
+	err = cl.SeedRoles(ctx, roles, []int{1})
 	if err != nil {
 		s.log.Error("Failed to seed roles", "error", err)
 		return err

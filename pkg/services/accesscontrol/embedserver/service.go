@@ -49,12 +49,17 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*Ser
 		return nil, err
 	}
 
-	err = srv.LoadModel(ctx, model, "1")
+	cl, err := srv.GetClient(ctx, "1")
 	if err != nil {
 		return nil, err
 	}
 
-	storeID, err := srv.GetOrCreateStoreID(ctx, "1")
+	storeID, err := cl.GetOrCreateStoreID(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = cl.LoadModel(ctx, model)
 	if err != nil {
 		return nil, err
 	}
