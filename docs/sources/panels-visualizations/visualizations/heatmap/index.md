@@ -156,7 +156,7 @@ Use these settings to refine your visualization.
 
 ### Legend
 
-Choose whether you want to display the heatmap legend on the visualization.
+Choose whether you want to display the heatmap legend on the visualization by toggling the **Show legend** switch.
 
 ### Exemplars
 
