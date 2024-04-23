@@ -1,6 +1,6 @@
 export function withFocusedPanel(fn: (panelId: number) => void) {
   return () => {
-    const elements = Array.from(document.querySelectorAll(':hover'));
+    const elements = document.querySelectorAll(':hover');
 
     // Handle keyboard focus first
     const focusedElement = document.activeElement;
