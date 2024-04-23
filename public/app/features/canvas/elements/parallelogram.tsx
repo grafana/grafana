@@ -177,6 +177,25 @@ export const parallelogramItem: CanvasElementItem = {
         },
       });
   },
+
+  customConnectionAnchors: [
+    { x: -0.6, y: 1 }, // Angled Top Left
+    { x: -0.1, y: 1 }, // Top Middle
+    { x: 0.5, y: 1 }, // Angled Top Right
+    { x: 1, y: 1 }, // Top Right
+    { x: 0.925, y: 0.6 }, // Angled Right Top
+    { x: 0.84, y: 0.2 }, // Right Middle
+    { x: 0.76, y: -0.2 }, // Angled Right Bottom
+    { x: 0.675, y: -0.6 }, // Bottom Right
+    { x: -0.5, y: -1 }, // Angled Bottom Right
+    { x: 0.1, y: -1 }, // Bottom Middle
+    { x: 0.6, y: -1 }, // Angled Bottom Left
+    { x: -1, y: -1 }, // Bottom Left
+    { x: -0.925, y: -0.6 }, // Angled Left Bottom
+    { x: -0.84, y: -0.2 }, // Left Middle
+    { x: -0.76, y: 0.2 }, // Angled Left Top
+    { x: -0.675, y: 0.6 }, // Top Left 2
+  ],
 };
 
 const getStyles = (theme: GrafanaTheme2, data: CanvasElementData | undefined) => {

@@ -177,6 +177,24 @@ export const cloudItem: CanvasElementItem = {
         },
       });
   },
+
+  customConnectionAnchors: [
+    { x: -0.58, y: 0.63 }, // Top Left
+    { x: -0.22, y: 0.99 }, // Top Middle
+    { x: 0.235, y: 0.75 }, // Top Right
+
+    { x: 0.8, y: 0.6 }, // Right Top
+    { x: 0.785, y: 0.06 }, // Right Middle
+    { x: 0.91, y: -0.51 }, // Right Bottom
+
+    { x: 0.62, y: -0.635 }, // Bottom Right
+    { x: 0.05, y: -0.98 }, // Bottom Middle
+    { x: -0.45, y: -0.635 }, // Bottom Left
+
+    { x: -0.8, y: -0.58 }, // Left Bottom
+    { x: -0.78, y: -0.06 }, // Left Middle
+    { x: -0.9, y: 0.48 }, // Left Top
+  ],
 };
 
 const getStyles = (theme: GrafanaTheme2, data: CanvasElementData | undefined) => {
