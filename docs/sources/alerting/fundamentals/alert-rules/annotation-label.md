@@ -103,7 +103,7 @@ An alert's label set can contain three types of labels:
 - Labels that are automatically added by Grafana (i.e. alertname and grafana_folder). These are Grafana reserved labels.
 
 - Labels that you define yourself to help filter data in your alert rules. 
-And, you can also template them. For example in your alert, you could add a label that uses templating to create more dynamic and customizable alerting. E.g. `environment` `=` `{{ your text/template }}`.
+You can also template labels. For example in your alert rule, you could add a label that uses templating to create more dynamic and customizable alerting. E.g. `environment` `=` `{{ your text/template }}`.
 
 {{<admonition type="note">}}
 Ensure the label set for an alert does not have two or more labels with the same name. If a label has the same name as a label from the datasource then it will replace that label. However, should a label have the same name as a reserved label then the label will be omitted from the alert.
