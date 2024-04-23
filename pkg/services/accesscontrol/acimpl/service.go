@@ -241,6 +241,9 @@ func (s *Service) RegisterFixedRoles(ctx context.Context) error {
 		return err
 	}
 
+	// move somewhere else
+	s.synchronizeUserData(ctx)
+
 	return nil
 }
 
