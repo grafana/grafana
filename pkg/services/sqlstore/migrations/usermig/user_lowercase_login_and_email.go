@@ -37,34 +37,46 @@ func (p *UsersLowerCaseLoginAndEmail) Exec(sess *xorm.Session, mg *migrator.Migr
 		return err
 	}
 
-	// Iterate over users
+	// Map to track processed logins
+	processedLogins := make(map[string]bool)
+
 	for _, usr := range users {
-		// Check if lower case login exists
-		existingUser := &user.User{}
-		has, err := sess.Table("user").Where("login = ?", strings.ToLower(usr.Login)).Get(existingUser)
+		// If login has been processed before, skip this user
+		if processedLogins[usr.Login] {
+			continue
+		}
+		lowerLogin := strings.ToLower(usr.Login)
+
+		// Check if lower login exists
+		existingLowerCasedUserLogin := &user.User{}
+
+		// lowercaseexists in database
+		hasLowerCasedLogin, err := sess.Table("user").Where("login = ?", lowerLogin).Get(existingLowerCasedUserLogin)
 		if err != nil {
 			return err
 		}
-		// If lower case login does not exist, update the user's login to be in lower case
-		if !has {
+
+		// If exact login does not exist and lower case login does not exist, update the user's login to be in lower case
+		if !hasLowerCasedLogin {
+			fmt.Printf("updating user login %s: %s\n", usr.Login, err)
 			uLogin := user.User{
 				Name:  usr.Name,
-				Login: strings.ToLower(usr.Login),
+				Login: lowerLogin,
 			}
 			_, err := sess.ID(usr.ID).Update(&uLogin)
 			if err != nil {
-				fmt.Printf("Error updating login for user login %s: %s\n", usr.Login, err)
 				return err
 			}
 		}
+
 		// Check if lower case email exists
 		existingUserEmail := &user.User{}
-		has, err = sess.Table("user").Where("email = ?", strings.ToLower(usr.Email)).Get(existingUserEmail)
+		hasLowerCasedEmail, err := sess.Table("user").Where("email = ?", strings.ToLower(usr.Email)).Get(existingUserEmail)
 		if err != nil {
 			return err
 		}
 		// If lower case email does not exist, update the user's email to be in lower case
-		if !has {
+		if !hasLowerCasedEmail {
 			uEmail := user.User{
 				Name:  usr.Name,
 				Email: strings.ToLower(usr.Email),
@@ -75,6 +87,9 @@ func (p *UsersLowerCaseLoginAndEmail) Exec(sess *xorm.Session, mg *migrator.Migr
 				return err
 			}
 		}
+
+		// Mark this login as processed
+		processedLogins[usr.Login] = true
 	}
 	return nil
 }
