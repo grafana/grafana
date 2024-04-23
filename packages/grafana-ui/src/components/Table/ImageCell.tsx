@@ -32,7 +32,21 @@ export const ImageCell = (props: TableCellProps) => {
               />
             );
             if (api.openMenu) {
-              return <a onClick={api.openMenu}>{img}</a>;
+              return (
+                <div
+                  onClick={api.openMenu}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e: React.KeyboardEvent) => {
+                    if (e.key === 'Enter' && api.openMenu) {
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
+                      api.openMenu(e as any);
+                    }
+                  }}
+                >
+                  {img}
+                </div>
+              );
             } else {
               return img;
             }
