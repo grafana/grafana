@@ -19,7 +19,7 @@ import {
 } from '@grafana/data';
 import { PromQuery } from '@grafana/prometheus';
 import { RefreshEvent, TimeRangeUpdatedEvent, config } from '@grafana/runtime';
-import { Dashboard, DashboardLink } from '@grafana/schema';
+import { Dashboard, DashboardLink, VariableOption } from '@grafana/schema';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -353,6 +353,15 @@ export class DashboardModel implements TimeModel {
 
         if (variable.type === 'adhoc') {
           variableSaveModel.filters = original.filters;
+        } else if (variable.type === 'custom') {
+          // Even if we're not updating the currently selected variable in the
+          // dashboard model, we want to save the options
+          variableSaveModel.current = original.current;
+          const originalOptions: VariableOption[] = original.options;
+          const oldSelectedOptions = new Set(originalOptions.filter((o) => o.selected).map((o) => o.value));
+          for (const option of variableSaveModel.options) {
+            option.selected = oldSelectedOptions.has(option.value);
+          }
         } else {
           variableSaveModel.current = original.current;
           variableSaveModel.options = original.options;
