@@ -20,7 +20,7 @@ import { getModalStyles } from '../../Modal/getModalStyles';
 import { Portal } from '../../Portal/Portal';
 import { POPUP_CLASS_NAME, TimeOfDayPicker } from '../TimeOfDayPicker';
 import { getBodyStyles } from '../TimeRangePicker/CalendarBody';
-import { useGetFormattedDate } from '../hooks';
+import { useDateTimeFormat, useGetFormattedDate } from '../hooks';
 import { isValid } from '../utils';
 
 export interface Props {
@@ -199,7 +199,9 @@ interface InputProps {
 
 const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
   ({ date, label, onChange, onOpen, showSeconds = true }, ref) => {
+    const format = useDateTimeFormat(showSeconds);
     const getFormattedDate = useGetFormattedDate(showSeconds);
+
     const [value, setValue] = useState<string>(getFormattedDate(date ?? dateTime()));
     const [isInvalid, setIsInvalid] = useState<boolean>(!isValid(value));
 
@@ -208,8 +210,11 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
     }, [date, getFormattedDate]);
 
     useEffect(() => {
-      setIsInvalid(!isValid(value));
-    }, [value]);
+      // Need to pass format to `dateTime` to ensure that the date is parsed correctly and that moment doesn't
+      // fall back to using `Date` (with an accompanying warning).
+      const newDate = dateTime(value, format);
+      setIsInvalid(!newDate.isValid());
+    }, [format, value]);
 
     const handleOnChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
       const { value } = event.currentTarget;
@@ -222,7 +227,7 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
       }
 
       onChange(dateTimeForTimeZone(getTimeZone(), value));
-    }, [onChange, value, isInvalid]);
+    }, [isInvalid, onChange, value]);
 
     const calendarButton = useMemo(
       () => <Button aria-label="Time picker" icon="calendar-alt" variant="secondary" onClick={onOpen} />,
@@ -276,7 +281,7 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
 
     // To simply the handing of `DateTime` and `Date` objects, we will use store them into separate states
     // and as strings. This way, we can easily convert them to `DateTime` objects when needed (see `value`).
-    const [timeValue, setTimeValue] = useState<string>(getFormattedDate(date));
+    const [timeValue, setTimeValue] = useState<string>(getFormattedDate(date && date.isValid() ? date : dateTime()));
     const [dateValue, setDateValue] = useState<string>(timeValue);
 
     useEffect(() => {
