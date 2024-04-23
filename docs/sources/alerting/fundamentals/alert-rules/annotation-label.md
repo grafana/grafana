@@ -98,7 +98,7 @@ Here is an example that shows how to exclude the label `Team`. You can choose be
 
 An alert's label set can contain three types of labels:
 
-- The data source query. For example, if you were monitoring temperature readings and each time series for these readings would have a sensor_id, and a location label. Those labels are used to provide additional context or dimensions to the metric data, helping to differentiate between different time series.
+- Data source query labels. For example, if you are monitoring temperature readings and each time series for these readings has a sensor_id, and a location label. These labels are used to provide additional context or dimensions to the metric data, helping to differentiate between different time series.
 
 - Some are automatically added by Grafana (i.e. alertname and grafana_folder). These are Grafana reserved labels.
 
