@@ -221,7 +221,7 @@ export function useGetEssentialsConfiguration() {
         steps: [
           {
             title: 'Initialize Incident plugin',
-            description: 'tbd',
+            description: 'Initialize the Incident plugin to declare and manage incidents.',
             button: {
               type: 'openLink',
               url: '/a/grafana-incident-app/walkthrough/generate-key',
@@ -250,8 +250,8 @@ export function useGetEssentialsConfiguration() {
             },
           },
           {
-            title: 'Create your ChatOps workspace to Incident',
-            description: 'tbd',
+            title: 'Connect your ChatOps Workspace to Incident',
+            description: 'Automatically create an incident channel and manage incidents directly within your chat environment.',
             button: {
               type: 'openLink',
               url: '/a/grafana-incident-app/integrations/grate.slack',
