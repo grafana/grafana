@@ -283,38 +283,7 @@ func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 	if err != nil {
 		return err
 	}
-	return am.sendConfiguration(ctx, string(decrypted), hash, time.Now().Unix(), false)
-}
-
-// decryptConfiguration decrypts secure settings in receivers.
-func (am *Alertmanager) decryptConfiguration(ctx context.Context, cfg *apimodels.PostableUserConfig) ([]byte, error) {
-	fn := func(payload []byte) ([]byte, error) {
-		return am.decrypt(ctx, payload)
-	}
-	decrypted, err := cfg.Decrypt(fn)
-	if err != nil {
-		return nil, err
-	}
-
-	return json.Marshal(decrypted)
-}
-
-// sendConfiguration forwards a configuration to the remote Alertmanager and updates metrics.
-// The configuration should be decrypted, but the hash should correspond to the encrypted configuration.
-func (am *Alertmanager) sendConfiguration(ctx context.Context, rawConfig, hash string, createdAt int64, isDefault bool) error {
-	am.metrics.ConfigSyncsTotal.Inc()
-	if err := am.mimirClient.CreateGrafanaAlertmanagerConfig(
-		ctx,
-		rawConfig,
-		hash,
-		createdAt,
-		isDefault,
-	); err != nil {
-		am.metrics.ConfigSyncErrorsTotal.Inc()
-		return err
-	}
-	am.metrics.LastConfigSync.SetToCurrentTime()
-	return nil
+	return am.sendConfiguration(ctx, decrypted, hash, time.Now().Unix(), false)
 }
 
 // SaveAndApplyDefaultConfig sends the default Grafana Alertmanager configuration to the remote Alertmanager.
