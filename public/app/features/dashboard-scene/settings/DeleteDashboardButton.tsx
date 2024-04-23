@@ -1,10 +1,8 @@
 import React from 'react';
 import { useAsyncFn, useToggle } from 'react-use';
 
-import { locationService } from '@grafana/runtime';
 import { Button, ConfirmModal, Modal } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
-import { deleteDashboard } from 'app/features/manage-dashboards/state/actions';
 
 import { DashboardScene } from '../scene/DashboardScene';
 
@@ -33,10 +31,8 @@ interface ModalProps {
 
 function DeleteDashboardModal({ dashboard, onClose }: ModalProps) {
   const [, onConfirm] = useAsyncFn(async () => {
-    dashboard.setState({ isDirty: false });
-    await deleteDashboard(dashboard.state.uid!, true);
     onClose();
-    locationService.replace('/');
+    await dashboard.deleteDashboard();
   }, [dashboard, onClose]);
 
   if (dashboard.state.meta.provisioned) {
