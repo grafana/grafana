@@ -953,7 +953,7 @@ steps:
   image: cypress/included:13.1.0
   name: end-to-end-tests-scenes
 - image: plugins/slack
-name: slack-notify-failure
+name: slack-notify-scenes-failure
 settings:
   channel: grafana-dashboards-squad
   template: 'TEST: Scenes tests failed {{build.link}}'
