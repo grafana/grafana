@@ -7,7 +7,7 @@ import { DataQuery } from '@grafana/schema';
 import store from 'app/core/store';
 
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
-import * as wat from '../../../core/history/RichHistoryLocalStorage';
+import * as localStorage from '../../../core/history/RichHistoryLocalStorage';
 
 import {
   assertDataSourceFilterVisibility,
@@ -87,7 +87,7 @@ describe('Explore: Query History', () => {
   const USER_INPUT = 'my query';
   const RAW_QUERY = `{"expr":"${USER_INPUT}"}`;
 
-  // silenceConsoleOutput();
+  silenceConsoleOutput();
 
   afterEach(() => {
     config.queryHistoryEnabled = false;
@@ -95,7 +95,7 @@ describe('Explore: Query History', () => {
     tearDown();
   });
 
-  it.skip('adds new query history items after the query is run.', async () => {
+  it('adds new query history items after the query is run.', async () => {
     // when Explore is opened
     const { datasources, unmount } = setupExplore();
     jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
@@ -125,7 +125,7 @@ describe('Explore: Query History', () => {
     });
   });
 
-  it.skip('adds recently added query if the query history panel is already open', async () => {
+  it('adds recently added query if the query history panel is already open', async () => {
     const urlParams = {
       left: serializeStateToUrlParam({
         datasource: 'loki',
@@ -158,7 +158,7 @@ describe('Explore: Query History', () => {
     await waitForExplore();
     await openQueryHistory();
 
-    jest.spyOn(store, 'setObject').mockImplementation(() => {
+    const storeSpy = jest.spyOn(store, 'setObject').mockImplementation(() => {
       const error = new Error('QuotaExceededError');
       error.name = 'QuotaExceededError';
       throw error;
@@ -167,7 +167,7 @@ describe('Explore: Query History', () => {
     await inputQuery('query #2');
     await runQuery();
     await assertQueryHistory(['{"expr":"query #1"}']);
-    jest.clearAllMocks();
+    storeSpy.mockRestore();
   });
 
   it('does add query if limit exceeded error is reached', async () => {
@@ -184,7 +184,7 @@ describe('Explore: Query History', () => {
     await waitForExplore();
     await openQueryHistory();
 
-    jest.spyOn(wat, 'checkLimits').mockImplementationOnce((queries) => {
+    jest.spyOn(localStorage, 'checkLimits').mockImplementationOnce((queries) => {
       return { queriesToKeep: queries, limitExceeded: true };
     });
 
@@ -193,7 +193,7 @@ describe('Explore: Query History', () => {
     await assertQueryHistory(['{"expr":"query #2"}', '{"expr":"query #1"}']);
   });
 
-  it.skip('add comments to query history', async () => {
+  it('add comments to query history', async () => {
     const urlParams = {
       left: serializeStateToUrlParam({
         datasource: 'loki',
@@ -211,7 +211,7 @@ describe('Explore: Query History', () => {
     await assertQueryHistoryComment(['test comment']);
   });
 
-  it.skip('removes the query item from the history panel when user deletes a regular query', async () => {
+  it('removes the query item from the history panel when user deletes a regular query', async () => {
     const urlParams = {
       left: serializeStateToUrlParam({
         datasource: 'loki',
@@ -236,7 +236,7 @@ describe('Explore: Query History', () => {
     await assertQueryHistoryIsEmpty();
   });
 
-  it.skip('updates query history settings', async () => {
+  it('updates query history settings', async () => {
     // open settings page
     setupExplore();
     await waitForExplore();
@@ -258,7 +258,7 @@ describe('Explore: Query History', () => {
     assertDataSourceFilterVisibility(false);
   });
 
-  it.skip('pagination', async () => {
+  it('pagination', async () => {
     config.queryHistoryEnabled = true;
 
     const mockQuery: MockQuery = { refId: 'A', expr: 'query' };

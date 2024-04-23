@@ -51,7 +51,6 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
   }
 
   async addToRichHistory(newRichHistoryQuery: Omit<RichHistoryQuery, 'id' | 'createdAt'>) {
-    console.log('local storage add to rich history');
     const ts = Date.now();
     const richHistoryQuery = {
       id: ts.toString(),
