@@ -7,7 +7,7 @@ import { ConnectionCoordinates } from 'app/features/canvas';
 
 type Props = {
   setRef: (anchorElement: HTMLDivElement) => void;
-  setAnchorsRef: (anchorslement: HTMLDivElement) => void;
+  setAnchorsRef: (anchorsElement: HTMLDivElement) => void;
   handleMouseLeave: (
     event: React.MouseEvent<Element, MouseEvent> | React.FocusEvent<HTMLDivElement, Element>
   ) => boolean;
