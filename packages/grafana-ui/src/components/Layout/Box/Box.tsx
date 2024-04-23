@@ -60,8 +60,13 @@ interface BoxProps extends FlexProps, Omit<React.HTMLAttributes<HTMLElement>, 'c
   gap?: ResponsiveProp<ThemeSpacingTokens>;
 
   // Size props
-  minWidth?: ResponsiveProp<Property.MinWidth>;
-  maxWidth?: ResponsiveProp<Property.MaxWidth>;
+  minWidth?: ResponsiveProp<Property.MinWidth<number>>;
+  maxWidth?: ResponsiveProp<Property.MaxWidth<number>>;
+  width?: ResponsiveProp<Property.Width<number>>;
+
+  minHeight?: ResponsiveProp<Property.MinHeight<number>>;
+  maxHeight?: ResponsiveProp<Property.MaxHeight<number>>;
+  height?: ResponsiveProp<Property.Height<number>>;
 
   // Other props
   backgroundColor?: ResponsiveProp<BackgroundColor>;
@@ -103,8 +108,12 @@ export const Box = forwardRef<HTMLElement, PropsWithChildren<BoxProps>>((props, 
     boxShadow,
     element,
     gap,
+    width,
     minWidth,
     maxWidth,
+    height,
+    minHeight,
+    maxHeight,
     ...rest
   } = props;
   const styles = useStyles2(
@@ -137,8 +146,12 @@ export const Box = forwardRef<HTMLElement, PropsWithChildren<BoxProps>>((props, 
     alignItems,
     boxShadow,
     gap,
+    width,
     minWidth,
-    maxWidth
+    maxWidth,
+    height,
+    minHeight,
+    maxHeight
   );
   const Element = element ?? 'div';
 
@@ -205,8 +218,12 @@ const getStyles = (
   alignItems: BoxProps['alignItems'],
   boxShadow: BoxProps['boxShadow'],
   gap: BoxProps['gap'],
+  width: BoxProps['width'],
   minWidth: BoxProps['minWidth'],
-  maxWidth: BoxProps['maxWidth']
+  maxWidth: BoxProps['maxWidth'],
+  height: BoxProps['height'],
+  minHeight: BoxProps['minHeight'],
+  maxHeight: BoxProps['maxHeight']
 ) => {
   return {
     root: css([
@@ -301,11 +318,23 @@ const getStyles = (
       getResponsiveStyle(theme, gap, (val) => ({
         gap: theme.spacing(val),
       })),
+      getResponsiveStyle(theme, width, (val) => ({
+        width: theme.spacing(val),
+      })),
       getResponsiveStyle(theme, minWidth, (val) => ({
-        minWidth: val,
+        minWidth: theme.spacing(val),
       })),
       getResponsiveStyle(theme, maxWidth, (val) => ({
-        maxWidth: val,
+        maxWidth: theme.spacing(val),
+      })),
+      getResponsiveStyle(theme, height, (val) => ({
+        height: theme.spacing(val),
+      })),
+      getResponsiveStyle(theme, minHeight, (val) => ({
+        minHeight: theme.spacing(val),
+      })),
+      getResponsiveStyle(theme, maxHeight, (val) => ({
+        maxHeight: theme.spacing(val),
       })),
     ]),
   };
