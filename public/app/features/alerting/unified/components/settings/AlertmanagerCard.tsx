@@ -64,7 +64,7 @@ export function AlertmanagerCard({
         ) : (
           <>
             {status === 'pending' && <Badge text="Activation in progress" color="orange" />}
-            {status === 'active' && <Badge text="Receiving Grafana managed alerts" color="green" />}
+            {status === 'active' && <Badge text="Receiving Grafana-managed alerts" color="green" />}
             {status === 'dropped' && <Badge text="Failed to adopt Alertmanager" color="red" />}
             {status === 'inconclusive' && <Badge text="Inconclusive" color="orange" />}
           </>
