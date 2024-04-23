@@ -119,7 +119,7 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn Decrypt
 	s := sender.NewExternalAlertmanagerSender(sender.WithDoFunc(doFunc))
 	s.Run()
 
-	// Prepend /alertmanager to the URL, but just for the sender.
+	// Append /alertmanager to the URL, but just for the sender.
 	// We don't want to use senderURL in &Alertmanager{}.
 	senderURL, err := url.Parse(cfg.URL)
 	if err != nil {
