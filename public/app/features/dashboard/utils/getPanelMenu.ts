@@ -168,10 +168,6 @@ export function getPanelMenu(
     });
   }
 
-  if (config.featureToggles.exploreMetrics) {
-    //addDataTrailPanelAction(dashboard, panel, menu);
-  }
-
   const inspectMenu: PanelMenuItem[] = [];
 
   // Only show these inspect actions for data plugins
