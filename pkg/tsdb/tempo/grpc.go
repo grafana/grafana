@@ -81,9 +81,11 @@ func getDialOpts(settings backend.DataSourceInstanceSettings, opts httpclient.Op
 // to the CustomHeadersMiddleware in the HTTP client provider.
 func CustomHeadersStreamInterceptor(httpOpts httpclient.Options) grpc.StreamClientInterceptor {
 	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
-		if len(httpOpts.Headers) != 0 {
-			for key, value := range httpOpts.Headers {
-				ctx = metadata.AppendToOutgoingContext(ctx, key, value)
+		if len(httpOpts.Header) != 0 {
+			for key, value := range httpOpts.Header {
+				for _, v := range value {
+					ctx = metadata.AppendToOutgoingContext(ctx, key, v)
+				}
 			}
 		}
 

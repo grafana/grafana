@@ -6,7 +6,7 @@ import { Labels } from '../../../types/unified-alerting-dto';
 
 import { logError, logInfo } from './Analytics';
 import { createWorker } from './createRouteGroupsMatcherWorker';
-import type { RouteGroupsMatcher } from './routeGroupsMatcher';
+import type { MatchOptions, RouteGroupsMatcher } from './routeGroupsMatcher';
 
 let routeMatcher: comlink.Remote<RouteGroupsMatcher> | undefined;
 
@@ -51,47 +51,51 @@ export function useRouteGroupsMatcher() {
   useEffect(() => {
     const { disposeWorker } = loadWorker();
     return disposeWorker;
-
-    return () => null;
   }, []);
 
-  const getRouteGroupsMap = useCallback(async (rootRoute: RouteWithID, alertGroups: AlertmanagerGroup[]) => {
-    validateWorker(routeMatcher);
+  const getRouteGroupsMap = useCallback(
+    async (rootRoute: RouteWithID, alertGroups: AlertmanagerGroup[], options?: MatchOptions) => {
+      validateWorker(routeMatcher);
 
-    const startTime = performance.now();
+      const startTime = performance.now();
 
-    const result = await routeMatcher.getRouteGroupsMap(rootRoute, alertGroups);
+      const result = await routeMatcher.getRouteGroupsMap(rootRoute, alertGroups, options);
 
-    const timeSpent = performance.now() - startTime;
+      const timeSpent = performance.now() - startTime;
 
-    logInfo(`Route Groups Matched in  ${timeSpent} ms`, {
-      matchingTime: timeSpent.toString(),
-      alertGroupsCount: alertGroups.length.toString(),
-      // Counting all nested routes might be too time-consuming, so we only count the first level
-      topLevelRoutesCount: rootRoute.routes?.length.toString() ?? '0',
-    });
+      logInfo(`Route Groups Matched in  ${timeSpent} ms`, {
+        matchingTime: timeSpent.toString(),
+        alertGroupsCount: alertGroups.length.toString(),
+        // Counting all nested routes might be too time-consuming, so we only count the first level
+        topLevelRoutesCount: rootRoute.routes?.length.toString() ?? '0',
+      });
 
-    return result;
-  }, []);
+      return result;
+    },
+    []
+  );
 
-  const matchInstancesToRoute = useCallback(async (rootRoute: RouteWithID, instancesToMatch: Labels[]) => {
-    validateWorker(routeMatcher);
+  const matchInstancesToRoute = useCallback(
+    async (rootRoute: RouteWithID, instancesToMatch: Labels[], options?: MatchOptions) => {
+      validateWorker(routeMatcher);
 
-    const startTime = performance.now();
+      const startTime = performance.now();
 
-    const result = await routeMatcher.matchInstancesToRoute(rootRoute, instancesToMatch);
+      const result = await routeMatcher.matchInstancesToRoute(rootRoute, instancesToMatch, options);
 
-    const timeSpent = performance.now() - startTime;
+      const timeSpent = performance.now() - startTime;
 
-    logInfo(`Instances Matched in  ${timeSpent} ms`, {
-      matchingTime: timeSpent.toString(),
-      instancesToMatchCount: instancesToMatch.length.toString(),
-      // Counting all nested routes might be too time-consuming, so we only count the first level
-      topLevelRoutesCount: rootRoute.routes?.length.toString() ?? '0',
-    });
+      logInfo(`Instances Matched in  ${timeSpent} ms`, {
+        matchingTime: timeSpent.toString(),
+        instancesToMatchCount: instancesToMatch.length.toString(),
+        // Counting all nested routes might be too time-consuming, so we only count the first level
+        topLevelRoutesCount: rootRoute.routes?.length.toString() ?? '0',
+      });
 
-    return result;
-  }, []);
+      return result;
+    },
+    []
+  );
 
   return { getRouteGroupsMap, matchInstancesToRoute };
 }

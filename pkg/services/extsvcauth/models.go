@@ -7,11 +7,11 @@ import (
 )
 
 const (
-	OAuth2Server    AuthProvider = "OAuth2Server"
 	ServiceAccounts AuthProvider = "ServiceAccounts"
 
 	// TmpOrgID is the orgID we use while global service accounts are not supported.
-	TmpOrgID int64 = 1
+	TmpOrgIDStr string = "1"
+	TmpOrgID    int64  = 1
 )
 
 type AuthProvider string
@@ -40,23 +40,9 @@ type SelfCfg struct {
 	Permissions []accesscontrol.Permission
 }
 
-type ImpersonationCfg struct {
-	// Enabled allows the service to request access tokens to impersonate users
-	Enabled bool
-	// Groups allows the service to list the impersonated user's teams
-	Groups bool
-	// Permissions are the permissions that the external service needs when impersonating a user.
-	// The intersection of this set with the impersonated user's permission guarantees that the client will not
-	// gain more privileges than the impersonated user has and vice versa.
-	Permissions []accesscontrol.Permission
-}
-
 // ExternalServiceRegistration represents the registration form to save new client.
 type ExternalServiceRegistration struct {
 	Name string
-	// Impersonation access configuration
-	// (this is not available on all auth providers)
-	Impersonation ImpersonationCfg
 	// Self access configuration
 	Self SelfCfg
 	// Auth Provider that the client will use to connect to Grafana

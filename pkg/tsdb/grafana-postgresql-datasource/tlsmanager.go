@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/grafana/pkg/tsdb/sqleng"
+	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/sqleng"
 )
 
 var validateCertFunc = validateCertFilePaths
@@ -198,6 +198,19 @@ func (m *tlsManager) writeCertFiles(dsInfo sqleng.DataSourceInfo, tlsconfig *tls
 	}
 	if err = writeCertFileFunc(m.logger, tlsClientKey, tlsconfig.CertKeyFile); err != nil {
 		return err
+	}
+
+	// we do not want to point to cert-files that do not exist
+	if tlsRootCert == "" {
+		tlsconfig.RootCertFile = ""
+	}
+
+	if tlsClientCert == "" {
+		tlsconfig.CertFile = ""
+	}
+
+	if tlsClientKey == "" {
+		tlsconfig.CertKeyFile = ""
 	}
 
 	// Update datasource cache

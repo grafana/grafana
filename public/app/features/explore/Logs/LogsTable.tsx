@@ -9,6 +9,7 @@ import {
   DataTransformerConfig,
   Field,
   FieldType,
+  guessFieldTypeForField,
   LogsSortOrder,
   sortDataFrame,
   SplitOpen,
@@ -80,11 +81,15 @@ export function LogsTable(props: Props) {
           custom: {
             inspect: true,
             filterable: true, // This sets the columns to be filterable
+            width: getInitialFieldWidth(field),
             ...field.config.custom,
           },
           // This sets the individual field value as filterable
           filterable: isFieldFilterable(field, logsFrame?.bodyField.name ?? '', logsFrame?.timeField.name ?? ''),
         };
+
+        // If it's a string, then try to guess for a better type for numeric support in viz
+        field.type = field.type === FieldType.string ? guessFieldTypeForField(field) ?? FieldType.string : field.type;
       }
 
       return frameWithOverrides;
@@ -100,7 +105,7 @@ export function LogsTable(props: Props) {
       }
 
       // create extract JSON transformation for every field that is `json.RawMessage`
-      const transformations: Array<DataTransformerConfig | CustomTransformOperator> = extractFields(dataFrame);
+      const transformations: Array<DataTransformerConfig | CustomTransformOperator> = getLogsExtractFields(dataFrame);
 
       let labelFilters = buildLabelFilters(columnsWithMeta);
 
@@ -192,7 +197,7 @@ const isFieldFilterable = (field: Field, bodyName: string, timeName: string) => 
 
 // TODO: explore if `logsFrame.ts` can help us with getting the right fields
 // TODO Why is typeInfo not defined on the Field interface?
-function extractFields(dataFrame: DataFrame) {
+export function getLogsExtractFields(dataFrame: DataFrame) {
   return dataFrame.fields
     .filter((field: Field & { typeInfo?: { frame: string } }) => {
       const isFieldLokiLabels =
@@ -251,4 +256,11 @@ function getLabelFiltersTransform(labelFilters: Record<string, number>) {
     };
   }
   return null;
+}
+
+function getInitialFieldWidth(field: Field): number | undefined {
+  if (field.type === FieldType.time) {
+    return 200;
+  }
+  return undefined;
 }

@@ -42,3 +42,7 @@ func (f *FakeCommand) Execute(from, to time.Time, executor func(method string, p
 	}
 	return f.Response, f.Error
 }
+
+func (f *FakeCommand) Type() string {
+	return "fake"
+}

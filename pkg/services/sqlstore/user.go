@@ -50,12 +50,9 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args user.C
 		args.Email = args.Login
 	}
 
-	where := "email=? OR login=?"
-	if ss.Cfg.CaseInsensitiveLogin {
-		where = "LOWER(email)=LOWER(?) OR LOWER(login)=LOWER(?)"
-		args.Login = strings.ToLower(args.Login)
-		args.Email = strings.ToLower(args.Email)
-	}
+	where := "LOWER(email)=LOWER(?) OR LOWER(login)=LOWER(?)"
+	args.Login = strings.ToLower(args.Login)
+	args.Email = strings.ToLower(args.Email)
 
 	exists, err := sess.Where(where, args.Email, args.Login).Get(&user.User{})
 	if err != nil {
@@ -88,11 +85,11 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args user.C
 	usr.Rands = rands
 
 	if len(args.Password) > 0 {
-		encodedPassword, err := util.EncodePassword(args.Password, usr.Salt)
+		encodedPassword, err := util.EncodePassword(string(args.Password), usr.Salt)
 		if err != nil {
 			return usr, err
 		}
-		usr.Password = encodedPassword
+		usr.Password = user.Password(encodedPassword)
 	}
 
 	sess.UseBool("is_admin")

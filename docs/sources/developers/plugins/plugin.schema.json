@@ -505,32 +505,6 @@
               }
             }
           }
-        },
-        "impersonation": {
-          "type": "object",
-          "description": "Impersonation describes the permissions that the plugin will be restricted to when acting on behalf of the user.",
-          "properties": {
-            "groups": {
-              "type": "boolean",
-              "description": "Groups allows the service to list the impersonated user's teams."
-            },
-            "permissions": {
-              "type": "array",
-              "description": "Permissions are the permissions that the plugin needs when impersonating a user. The intersection of this set with the impersonated user's permission guarantees that the client will not gain more privileges than the impersonated user has.",
-              "items": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "action": {
-                    "type": "string"
-                  },
-                  "scope": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
         }
       }
     },

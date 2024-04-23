@@ -13,33 +13,59 @@ describe('Prometheus config', () => {
     e2e.pages.AddDataSource.dataSourcePluginsV2(DATASOURCE_ID)
       .scrollIntoView()
       .should('be.visible') // prevents flakiness
-      .click();
+      .click({ force: true });
   });
 
-  it('should have a connection settings component', () => {
+  it(`should have the following components:
+        connection settings
+        managed alerts
+        scrape interval
+        query timeout
+        default editor
+        disable metric lookup
+        prometheus type
+        cache level
+        incremental querying
+        disable recording rules
+        custom query parameters
+        http method
+      `, () => {
+    // connection settings
     e2e.components.DataSource.Prometheus.configPage.connectionSettings().should('be.visible');
-  });
-
-  it('should have a managed alerts component', () => {
+    // managed alerts
     cy.get(`#${selectors.components.DataSource.Prometheus.configPage.manageAlerts}`).scrollIntoView().should('exist');
-  });
-
-  it('should have a scrape interval component', () => {
+    // scrape interval
     e2e.components.DataSource.Prometheus.configPage.scrapeInterval().scrollIntoView().should('exist');
-  });
-
-  it('should have a query timeout component', () => {
+    // query timeout
     e2e.components.DataSource.Prometheus.configPage.queryTimeout().scrollIntoView().should('exist');
-  });
-
-  it('should have a default editor component', () => {
+    // default editor
     e2e.components.DataSource.Prometheus.configPage.defaultEditor().scrollIntoView().should('exist');
+    // disable metric lookup
+    cy.get(`#${selectors.components.DataSource.Prometheus.configPage.disableMetricLookup}`)
+      .scrollIntoView()
+      .should('exist');
+    // prometheus type
+    e2e.components.DataSource.Prometheus.configPage.prometheusType().scrollIntoView().should('exist');
+    // cache level
+    e2e.components.DataSource.Prometheus.configPage.cacheLevel().scrollIntoView().should('exist');
+    // incremental querying
+    cy.get(`#${selectors.components.DataSource.Prometheus.configPage.incrementalQuerying}`)
+      .scrollIntoView()
+      .should('exist');
+    // disable recording rules
+    cy.get(`#${selectors.components.DataSource.Prometheus.configPage.disableRecordingRules}`)
+      .scrollIntoView()
+      .should('exist');
+    // custom query parameters
+    e2e.components.DataSource.Prometheus.configPage.customQueryParameters().scrollIntoView().should('exist');
+    // http method
+    e2e.components.DataSource.Prometheus.configPage.httpMethod().scrollIntoView().should('exist');
   });
 
   it('should save the default editor when navigating to explore', () => {
     e2e.components.DataSource.Prometheus.configPage.defaultEditor().scrollIntoView().should('exist').click();
 
-    selectOption('Code');
+    selectOption('Builder');
 
     e2e.components.DataSource.Prometheus.configPage.connectionSettings().type('http://prom-url:9090');
 
@@ -50,21 +76,10 @@ describe('Prometheus config', () => {
     e2e.pages.Explore.visit();
 
     e2e.components.DataSourcePicker.container().should('be.visible').click();
-    cy.contains(DATASOURCE_TYPED_NAME).scrollIntoView().should('be.visible').click();
 
-    const monacoLoadingText = 'Loading...';
-    e2e.components.QueryField.container().should('be.visible').should('have.text', monacoLoadingText);
-    e2e.components.QueryField.container().should('be.visible').should('not.have.text', monacoLoadingText);
-  });
+    e2e.components.DataSourcePicker.container().type(`${DATASOURCE_TYPED_NAME}{enter}`);
 
-  it('should have a disable metric lookup component', () => {
-    cy.get(`#${selectors.components.DataSource.Prometheus.configPage.disableMetricLookup}`)
-      .scrollIntoView()
-      .should('exist');
-  });
-
-  it('should have a prometheus type component', () => {
-    e2e.components.DataSource.Prometheus.configPage.prometheusType().scrollIntoView().should('exist');
+    e2e.components.DataSource.Prometheus.queryEditor.builder.metricSelect().should('exist');
   });
 
   it('should allow a user to add the version when the Prom type is selected', () => {
@@ -79,12 +94,6 @@ describe('Prometheus config', () => {
     e2e.components.DataSource.Prometheus.configPage.cacheLevel().scrollIntoView().should('exist');
   });
 
-  it('should have an incremental querying component', () => {
-    cy.get(`#${selectors.components.DataSource.Prometheus.configPage.incrementalQuerying}`)
-      .scrollIntoView()
-      .should('exist');
-  });
-
   it('should allow a user to select a query overlap window when incremental querying is selected', () => {
     cy.get(`#${selectors.components.DataSource.Prometheus.configPage.incrementalQuerying}`)
       .scrollIntoView()
@@ -92,20 +101,6 @@ describe('Prometheus config', () => {
       .check({ force: true });
 
     e2e.components.DataSource.Prometheus.configPage.queryOverlapWindow().scrollIntoView().should('exist');
-  });
-
-  it('should have a disable recording rules component', () => {
-    cy.get(`#${selectors.components.DataSource.Prometheus.configPage.disableRecordingRules}`)
-      .scrollIntoView()
-      .should('exist');
-  });
-
-  it('should have a custom query parameters component', () => {
-    e2e.components.DataSource.Prometheus.configPage.customQueryParameters().scrollIntoView().should('exist');
-  });
-
-  it('should have an http method component', () => {
-    e2e.components.DataSource.Prometheus.configPage.httpMethod().scrollIntoView().should('exist');
   });
 
   // exemplars tested in exemplar.spec

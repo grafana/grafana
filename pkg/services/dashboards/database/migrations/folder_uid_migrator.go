@@ -39,11 +39,14 @@ func (m *FolderUIDMigration) Exec(sess *xorm.Session, mgrtr *migrator.Migrator) 
 	}
 
 	// for folders the source of truth is the folder table
+	// covered by UQE_folder_org_id_uid
 	q = `UPDATE dashboard
 	SET folder_uid = folder.parent_uid
 	FROM folder
 	WHERE dashboard.uid = folder.uid AND dashboard.org_id = folder.org_id
 	AND dashboard.is_folder = ?`
+
+	// covered by UQE_folder_org_id_uid
 	if mgrtr.Dialect.DriverName() == migrator.MySQL {
 		q = `UPDATE dashboard
 		SET folder_uid = (

@@ -383,12 +383,12 @@ Content-Type: application/json
 
 #### Status codes
 
-| Code | Description                                                                           |
-| ---- | ------------------------------------------------------------------------------------- |
-| 200  | Role is updated.                                                                      |
-| 400  | Bad request (invalid json, missing content-type, missing or invalid fields, etc.).    |
-| 403  | Access denied (one of the specified permissions is not assigned to the the requester) |
-| 500  | Unexpected error. Refer to body and/or server logs for more details.                  |
+| Code | Description                                                                        |
+| ---- | ---------------------------------------------------------------------------------- |
+| 200  | Role is updated.                                                                   |
+| 400  | Bad request (invalid json, missing content-type, missing or invalid fields, etc.). |
+| 403  | Access denied (one of the specified permissions is not assigned to the requester)  |
+| 500  | Unexpected error. Refer to body and/or server logs for more details.               |
 
 ### Update a role
 
@@ -498,13 +498,13 @@ For more information, refer to [Create role validation errors]({{< ref "#create-
 
 #### Status codes
 
-| Code | Description                                                                           |
-| ---- | ------------------------------------------------------------------------------------- |
-| 200  | Role is updated.                                                                      |
-| 400  | Bad request (invalid json, missing content-type, missing or invalid fields, etc.).    |
-| 403  | Access denied (one of the specified permissions is not assigned to the the requester) |
-| 404  | Role was not found to update.                                                         |
-| 500  | Unexpected error. Refer to body and/or server logs for more details.                  |
+| Code | Description                                                                        |
+| ---- | ---------------------------------------------------------------------------------- |
+| 200  | Role is updated.                                                                   |
+| 400  | Bad request (invalid json, missing content-type, missing or invalid fields, etc.). |
+| 403  | Access denied (one of the specified permissions is not assigned to the requester)  |
+| 404  | Role was not found to update.                                                      |
+| 500  | Unexpected error. Refer to body and/or server logs for more details.               |
 
 ### Delete a custom role
 
@@ -532,7 +532,7 @@ Accept: application/json
 
 | Param  | Type    | Required | Description                                                                                                                                                                                                                                                                             |
 | ------ | ------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| force  | boolean | No       | When set to `true`, the role will be deleted with all it's assignments.                                                                                                                                                                                                                 |
+| force  | boolean | No       | When set to `true`, the role will be deleted with all its assignments.                                                                                                                                                                                                                  |
 | global | boolean | No       | A flag indicating if the role is global or not. If set to false, the default org ID of the authenticated user will be used from the request. Refer to the [About RBAC]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control" >}}) for more information. |
 
 #### Example response

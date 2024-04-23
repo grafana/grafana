@@ -72,9 +72,12 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     let queries: QueryGroupOptions['queries'] = queryRunner.state.queries;
 
     return {
-      // TODO
-      // cacheTimeout: dsSettings?.meta.queryOptions?.cacheTimeout ? panel.cacheTimeout : undefined,
-      // queryCachingTTL: dsSettings?.cachingConfig?.enabled ? panel.queryCachingTTL : undefined,
+      cacheTimeout: panelManager.state.dsSettings?.meta.queryOptions?.cacheTimeout
+        ? queryRunner.state.cacheTimeout
+        : undefined,
+      queryCachingTTL: panelManager.state.dsSettings?.cachingConfig?.enabled
+        ? queryRunner.state.queryCachingTTL
+        : undefined,
       dataSource: {
         default: panelManager.state.dsSettings?.isDefault,
         type: panelManager.state.dsSettings?.type,

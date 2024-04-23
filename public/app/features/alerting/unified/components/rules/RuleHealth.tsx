@@ -5,6 +5,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { Rule } from 'app/types/unified-alerting';
 
+import { isErrorHealth } from '../rule-viewer/RuleViewer';
+
 interface Prom {
   rule: Rule;
 }
@@ -12,7 +14,7 @@ interface Prom {
 export const RuleHealth = ({ rule }: Prom) => {
   const style = useStyles2(getStyle);
 
-  if (rule.health === 'err' || rule.health === 'error') {
+  if (isErrorHealth(rule.health)) {
     return (
       <Tooltip theme="error" content={rule.lastError || 'No error message provided.'}>
         <div className={style.warn}>

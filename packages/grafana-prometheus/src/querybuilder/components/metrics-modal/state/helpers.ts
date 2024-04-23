@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/metrics-modal/state/helpers.ts
 import { AnyAction } from '@reduxjs/toolkit';
 
 import { reportInteraction } from '@grafana/runtime';
@@ -7,11 +8,12 @@ import { getMetadataHelp, getMetadataType } from '../../../../language_provider'
 import { regexifyLabelValuesQueryString } from '../../../parsingUtils';
 import { QueryBuilderLabelFilter } from '../../../shared/types';
 import { PromVisualQuery } from '../../../types';
+import { setFilteredMetricCount } from '../MetricsModal';
 import { HaystackDictionary, MetricData, MetricsData, PromFilterOption } from '../types';
 
-import { MetricsModalMetadata, MetricsModalState, stateSlice } from './state';
+import { MetricsModalMetadata, MetricsModalState } from './state';
 
-const { setFilteredMetricCount } = stateSlice.actions;
+// const { setFilteredMetricCount } = stateSlice.actions;
 
 export async function setMetrics(
   datasource: PrometheusDatasource,

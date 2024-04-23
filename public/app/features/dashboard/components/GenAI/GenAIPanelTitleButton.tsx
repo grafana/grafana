@@ -1,7 +1,6 @@
 import React from 'react';
 
-import { getDashboardSrv } from '../../services/DashboardSrv';
-import { PanelModel } from '../../state';
+import { Dashboard, Panel } from '@grafana/schema';
 
 import { GenAIButton } from './GenAIButton';
 import { EventTrackingSrc } from './tracking';
@@ -9,7 +8,8 @@ import { Message, Role, getFilteredPanelString } from './utils';
 
 interface GenAIPanelTitleButtonProps {
   onGenerate: (title: string) => void;
-  panel: PanelModel;
+  panel: Panel;
+  dashboard: Dashboard;
 }
 
 const PANEL_TITLE_CHAR_LIMIT = 50;
@@ -19,12 +19,10 @@ const TITLE_GENERATION_STANDARD_PROMPT =
   'Your goal is to write short, descriptive, and concise panel title.' +
   `The title should be shorter than ${PANEL_TITLE_CHAR_LIMIT} characters.`;
 
-export const GenAIPanelTitleButton = ({ onGenerate, panel }: GenAIPanelTitleButtonProps) => {
-  const messages = React.useMemo(() => getMessages(panel), [panel]);
-
+export const GenAIPanelTitleButton = ({ onGenerate, panel, dashboard }: GenAIPanelTitleButtonProps) => {
   return (
     <GenAIButton
-      messages={messages}
+      messages={() => getMessages(panel, dashboard)}
       onGenerate={onGenerate}
       eventTrackingSrc={EventTrackingSrc.panelTitle}
       toggleTipTitle={'Improve your panel title'}
@@ -32,8 +30,7 @@ export const GenAIPanelTitleButton = ({ onGenerate, panel }: GenAIPanelTitleButt
   );
 };
 
-function getMessages(panel: PanelModel): Message[] {
-  const dashboard = getDashboardSrv().getCurrent()!;
+function getMessages(panel: Panel, dashboard: Dashboard): Message[] {
   const panelString = getFilteredPanelString(panel);
 
   return [

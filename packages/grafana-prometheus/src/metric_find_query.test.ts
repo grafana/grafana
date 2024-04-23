@@ -1,12 +1,12 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/metric_find_query.test.ts
 import { Observable, of } from 'rxjs';
 
-import 'whatwg-fetch'; // fetch polyfill needed backendSrv
 import { DataSourceInstanceSettings, TimeRange, toUtc } from '@grafana/data';
 import { BackendDataSourceResponse, BackendSrvRequest, FetchResponse, TemplateSrv } from '@grafana/runtime';
 
 import { PrometheusDatasource } from './datasource';
 import { getPrometheusTime } from './language_utils';
-import PrometheusMetricFindQuery from './metric_find_query';
+import { PrometheusMetricFindQuery } from './metric_find_query';
 import { PromApplication, PromOptions } from './types';
 
 const fetchMock = jest.fn((options: BackendSrvRequest): Observable<FetchResponse<BackendDataSourceResponse>> => {
@@ -28,7 +28,11 @@ const instanceSettings = {
   uid: 'ABCDEF',
   user: 'test',
   password: 'mupp',
-  jsonData: { httpMethod: 'GET' },
+  jsonData: {
+    httpMethod: 'GET',
+    prometheusVersion: '2.20.0',
+    prometheusType: PromApplication.Prometheus,
+  },
 } as Partial<DataSourceInstanceSettings<PromOptions>> as DataSourceInstanceSettings<PromOptions>;
 const raw: TimeRange = {
   from: toUtc('2018-04-25 10:00'),

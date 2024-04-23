@@ -40,11 +40,12 @@ This mechanism allows Grafana to remove an existing synchronized user from a tea
 
 If you have already grouped some users into a team, then you can synchronize that team with an external group.
 
-{{< figure src="/static/img/docs/enterprise/team_add_external_group.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" >}}
-
 1. In Grafana, navigate to **Administration > Users and access > Teams**.
 1. Select a team.
 1. Go to the External group sync tab, and click **Add group**.
+
+   ![External group sync](/static/img/docs/enterprise/team_add_external_group.png)
+
 1. Insert the value of the group you want to sync with. This becomes the Grafana `GroupID`.
    Examples:
 

@@ -8,6 +8,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/correlations/correlationstest"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -19,7 +22,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestIntegrationStatsDataAccess(t *testing.T) {
 	if testing.Short() {
@@ -27,7 +35,7 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 	}
 	db := sqlstore.InitTestDB(t)
 	statsService := &sqlStatsService{db: db}
-	populateDB(t, db)
+	populateDB(t, db, db.Cfg)
 
 	t.Run("Get system stats should not results in error", func(t *testing.T) {
 		query := stats.GetSystemStatsQuery{}
@@ -76,13 +84,14 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 	})
 }
 
-func populateDB(t *testing.T, sqlStore *sqlstore.SQLStore) {
+func populateDB(t *testing.T, db db.DB, cfg *setting.Cfg) {
 	t.Helper()
 
-	orgService, _ := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotatest.New(false, nil))
-	userSvc, _ := userimpl.ProvideService(sqlStore, orgService, sqlStore.Cfg, nil, nil, &quotatest.FakeQuotaService{}, supportbundlestest.NewFakeBundleService())
+	orgService, _ := orgimpl.ProvideService(db, cfg, quotatest.New(false, nil))
+	userSvc, _ := userimpl.ProvideService(db, orgService, cfg, nil, nil, &quotatest.FakeQuotaService{}, supportbundlestest.NewFakeBundleService())
 
-	correlationsSvc := correlationstest.New(sqlStore)
+	bus := bus.ProvideBus(tracing.InitializeTracerForTest())
+	correlationsSvc := correlationstest.New(db, cfg, bus)
 
 	c := make([]correlations.Correlation, 2)
 	for i := range c {

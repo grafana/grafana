@@ -106,3 +106,53 @@ export const unsupportedVersionMessage =
 export const isTimeSeriesQuery = (query: ElasticsearchQuery): boolean => {
   return query?.bucketAggs?.slice(-1)[0]?.type === 'date_histogram';
 };
+
+/*
+ * This regex matches 3 types of variable reference with an optional format specifier
+ * There are 6 capture groups that replace will return
+ * \$(\w+)                                    $var1
+ * \[\[(\w+?)(?::(\w+))?\]\]                  [[var2]] or [[var2:fmt2]]
+ * \${(\w+)(?:\.([^:^\}]+))?(?::([^\}]+))?}   ${var3} or ${var3.fieldPath} or ${var3:fmt3} (or ${var3.fieldPath:fmt3} but that is not a separate capture group)
+ */
+export const variableRegex = /\$(\w+)|\[\[(\w+?)(?::(\w+))?\]\]|\${(\w+)(?:\.([^:^\}]+))?(?::([^\}]+))?}/g;
+
+// Copyright (c) 2014, Hugh Kennedy
+// Based on code from https://github.com/hughsk/flat/blob/master/index.js
+//
+export function flattenObject(
+  target: Record<string, unknown>,
+  opts?: { delimiter?: string; maxDepth?: number; safe?: boolean }
+): Record<string, unknown> {
+  opts = opts || {};
+
+  const delimiter = opts.delimiter || '.';
+  let maxDepth = opts.maxDepth || 3;
+  let currentDepth = 1;
+  const output: Record<string, unknown> = {};
+
+  function step(object: Record<string, unknown>, prev: string | null) {
+    Object.keys(object).forEach((key) => {
+      const value = object[key];
+      const isarray = opts?.safe && Array.isArray(value);
+      const type = Object.prototype.toString.call(value);
+      const isobject = type === '[object Object]';
+
+      const newKey = prev ? prev + delimiter + key : key;
+
+      if (!opts?.maxDepth) {
+        maxDepth = currentDepth + 1;
+      }
+
+      if (!isarray && isobject && value && Object.keys(value).length && currentDepth < maxDepth) {
+        ++currentDepth;
+        return step({ ...value }, newKey);
+      }
+
+      output[newKey] = value;
+    });
+  }
+
+  step(target, null);
+
+  return output;
+}

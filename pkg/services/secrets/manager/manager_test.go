@@ -20,8 +20,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestSecretsService_EnvelopeEncryption(t *testing.T) {
 	testDB := db.InitTestDB(t)
@@ -433,13 +438,13 @@ func TestIntegration_SecretsService(t *testing.T) {
 	ctx := context.Background()
 	someData := []byte(`some-data`)
 
-	tcs := map[string]func(*testing.T, *sqlstore.SQLStore, *SecretsService){
-		"regular": func(t *testing.T, _ *sqlstore.SQLStore, svc *SecretsService) {
+	tcs := map[string]func(*testing.T, db.DB, *SecretsService){
+		"regular": func(t *testing.T, _ db.DB, svc *SecretsService) {
 			// We encrypt some data normally, no transactions implied.
 			_, err := svc.Encrypt(ctx, someData, secrets.WithoutScope())
 			require.NoError(t, err)
 		},
-		"within successful InTransaction": func(t *testing.T, store *sqlstore.SQLStore, svc *SecretsService) {
+		"within successful InTransaction": func(t *testing.T, store db.DB, svc *SecretsService) {
 			require.NoError(t, store.InTransaction(ctx, func(ctx context.Context) error {
 				// We encrypt some data within a transaction that shares the db session.
 				_, err := svc.Encrypt(ctx, someData, secrets.WithoutScope())
@@ -449,7 +454,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 				return nil
 			}))
 		},
-		"within unsuccessful InTransaction": func(t *testing.T, store *sqlstore.SQLStore, svc *SecretsService) {
+		"within unsuccessful InTransaction": func(t *testing.T, store db.DB, svc *SecretsService) {
 			require.NotNil(t, store.InTransaction(ctx, func(ctx context.Context) error {
 				// We encrypt some data within a transaction that shares the db session.
 				_, err := svc.Encrypt(ctx, someData, secrets.WithoutScope())
@@ -459,7 +464,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 				return errors.New("error")
 			}))
 		},
-		"within unsuccessful InTransaction (plus forced db fetch)": func(t *testing.T, store *sqlstore.SQLStore, svc *SecretsService) {
+		"within unsuccessful InTransaction (plus forced db fetch)": func(t *testing.T, store db.DB, svc *SecretsService) {
 			require.NotNil(t, store.InTransaction(ctx, func(ctx context.Context) error {
 				// We encrypt some data within a transaction that shares the db session.
 				encrypted, err := svc.Encrypt(ctx, someData, secrets.WithoutScope())
@@ -478,7 +483,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 				return errors.New("error")
 			}))
 		},
-		"within successful WithTransactionalDbSession": func(t *testing.T, store *sqlstore.SQLStore, svc *SecretsService) {
+		"within successful WithTransactionalDbSession": func(t *testing.T, store db.DB, svc *SecretsService) {
 			require.NoError(t, store.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 				// We encrypt some data within a transaction that does not share the db session.
 				_, err := svc.Encrypt(ctx, someData, secrets.WithoutScope())
@@ -488,7 +493,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 				return nil
 			}))
 		},
-		"within unsuccessful WithTransactionalDbSession": func(t *testing.T, store *sqlstore.SQLStore, svc *SecretsService) {
+		"within unsuccessful WithTransactionalDbSession": func(t *testing.T, store db.DB, svc *SecretsService) {
 			require.NotNil(t, store.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 				// We encrypt some data within a transaction that does not share the db session.
 				_, err := svc.Encrypt(ctx, someData, secrets.WithoutScope())
@@ -498,7 +503,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 				return errors.New("error")
 			}))
 		},
-		"within unsuccessful WithTransactionalDbSession (plus forced db fetch)": func(t *testing.T, store *sqlstore.SQLStore, svc *SecretsService) {
+		"within unsuccessful WithTransactionalDbSession (plus forced db fetch)": func(t *testing.T, store db.DB, svc *SecretsService) {
 			require.NotNil(t, store.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 				// We encrypt some data within a transaction that does not share the db session.
 				encrypted, err := svc.Encrypt(ctx, someData, secrets.WithoutScope())

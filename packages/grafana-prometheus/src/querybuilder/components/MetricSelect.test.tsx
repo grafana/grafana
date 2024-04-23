@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/MetricSelect.test.tsx
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
@@ -11,7 +12,7 @@ import {
   formatPrometheusLabelFilters,
   formatPrometheusLabelFiltersToString,
   MetricSelect,
-  Props,
+  MetricSelectProps,
 } from './MetricSelect';
 
 const instanceSettings = {
@@ -48,7 +49,7 @@ dataSourceMock.metricFindQuery = jest.fn((query: string) => {
   );
 });
 
-const props: Props = {
+const props: MetricSelectProps = {
   labelsFilters: [],
   datasource: dataSourceMock,
   query: {

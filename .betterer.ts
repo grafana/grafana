@@ -5,11 +5,12 @@ import path from 'path';
 import { glob } from 'glob';
 
 // Why are we ignoring these?
-// They're all deprecated/being removed soon so doesn't make sense to fix types
+// They're all deprecated/being removed so doesn't make sense to fix types
 const eslintPathsToIgnore = [
   'packages/grafana-e2e', // deprecated.
   'public/app/angular', // will be removed in Grafana 11
   'public/app/plugins/panel/graph', // will be removed alongside angular
+  'public/app/plugins/panel/table-old', // will be removed alongside angular
 ];
 
 // Avoid using functions that report the position of the issues, as this causes a lot of merge conflicts
@@ -31,9 +32,16 @@ function countUndocumentedStories() {
     await Promise.all(
       filePaths.map(async (filePath) => {
         // look for .mdx import in the story file
-        const regex = new RegExp("^import.*.mdx';$", 'gm');
+        const mdxImportRegex = new RegExp("^import.*\\.mdx';$", 'gm');
+        // Looks for the "autodocs" string in the file
+        const autodocsStringRegex = /autodocs/;
+
         const fileText = await fs.readFile(filePath, 'utf8');
-        if (!regex.test(fileText)) {
+
+        const hasMdxImport = mdxImportRegex.test(fileText);
+        const hasAutodocsString = autodocsStringRegex.test(fileText);
+        // If both .mdx import and autodocs string are missing, add an issue
+        if (!hasMdxImport && !hasAutodocsString) {
           // In this case the file contents don't matter:
           const file = fileTestResult.addFile(filePath, '');
           // Add the issue to the first character of the file:
@@ -78,11 +86,33 @@ function countEslintErrors() {
       '@emotion/syntax-preference': [2, 'object'],
       '@typescript-eslint/no-explicit-any': 'error',
       '@grafana/no-aria-label-selectors': 'error',
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@grafana/ui*', '*/Layout/*'],
+              importNames: ['Layout', 'HorizontalGroup', 'VerticalGroup'],
+              message: 'Use Stack component instead.',
+            },
+          ],
+        },
+      ],
     };
 
     const nonTestFilesRules: Partial<Linter.RulesRecord> = {
       ...baseRules,
       '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'never' }],
+    };
+
+    const grafanaRules: Partial<Linter.RulesRecord> = {
+      ...nonTestFilesRules,
+      'no-barrel-files/no-barrel-files': 'error',
+    };
+
+    const testFilesAndGrafanaRules: Partial<Linter.RulesRecord> = {
+      ...baseRules,
+      'no-barrel-files/no-barrel-files': 'error',
     };
 
     // group files by eslint config file
@@ -97,10 +127,16 @@ function countEslintErrors() {
         filePath.endsWith('.test.ts') ||
         filePath.includes('__mocks__') ||
         filePath.includes('public/test/');
+      const isGrafanaFile = filePath.includes('public/app/');
 
-      if (isTestFile) {
+      if (isGrafanaFile && isTestFile) {
+        configPath += '-test-grafana';
+      } else if (isGrafanaFile) {
+        configPath += '-grafana';
+      } else if (isTestFile) {
         configPath += '-test';
       }
+
       if (!fileGroups[configPath]) {
         fileGroups[configPath] = [];
       }
@@ -108,7 +144,16 @@ function countEslintErrors() {
     }
 
     for (const configPath of Object.keys(fileGroups)) {
-      const rules = configPath.endsWith('-test') ? baseRules : nonTestFilesRules;
+      let rules;
+      if (configPath.endsWith('-test-grafana')) {
+        rules = testFilesAndGrafanaRules;
+      } else if (configPath.endsWith('-test')) {
+        rules = baseRules;
+      } else if (configPath.endsWith('-grafana')) {
+        rules = grafanaRules;
+      } else {
+        rules = nonTestFilesRules;
+      }
       // this is by far the slowest part of this code. It takes eslint about 2 seconds just to find the config
       const linterOptions = (await cli.calculateConfigForFile(fileGroups[configPath][0])) as Linter.Config;
       const runner = new ESLint({

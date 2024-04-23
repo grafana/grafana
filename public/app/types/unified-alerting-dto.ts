@@ -178,7 +178,7 @@ export interface RulerAlertingRuleDTO extends RulerRuleBaseDTO {
 export enum GrafanaAlertStateDecision {
   Alerting = 'Alerting',
   NoData = 'NoData',
-  KeepLastState = 'KeepLastState',
+  KeepLast = 'KeepLast',
   OK = 'OK',
   Error = 'Error',
 }
@@ -203,7 +203,7 @@ export interface GrafanaNotificationSettings {
   group_wait?: string;
   group_interval?: string;
   repeat_interval?: string;
-  mute_timings?: string[];
+  mute_time_intervals?: string[];
 }
 export interface PostableGrafanaRuleDefinition {
   uid?: string;

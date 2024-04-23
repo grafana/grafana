@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/MetricSelect.tsx
 import { css } from '@emotion/css';
 import debounce from 'debounce-promise';
 import React, { RefCallback, useCallback, useState } from 'react';
@@ -33,7 +34,7 @@ import { tracking } from './metrics-modal/state/helpers';
 // We are matching words split with space
 const splitSeparator = ' ';
 
-export interface Props {
+export interface MetricSelectProps {
   metricLookupDisabled: boolean;
   query: PromVisualQuery;
   onChange: (query: PromVisualQuery) => void;
@@ -55,10 +56,10 @@ export function MetricSelect({
   metricLookupDisabled,
   onBlur,
   variableEditor,
-}: Props) {
+}: MetricSelectProps) {
   const styles = useStyles2(getStyles);
   const [state, setState] = useState<{
-    metrics?: Array<SelectableValue<any>>;
+    metrics?: SelectableValue[];
     isLoading?: boolean;
     metricsModalOpen?: boolean;
     initialMetrics?: string[];
@@ -76,7 +77,7 @@ export function MetricSelect({
   ];
 
   const customFilterOption = useCallback(
-    (option: SelectableValue<any>, searchQuery: string) => {
+    (option: SelectableValue, searchQuery: string) => {
       const label = option.label ?? option.value;
       if (!label) {
         return false;
@@ -104,7 +105,7 @@ export function MetricSelect({
   );
 
   const formatOptionLabel = useCallback(
-    (option: SelectableValue<any>, meta: FormatOptionLabelMeta<any>) => {
+    (option: SelectableValue, meta: FormatOptionLabelMeta<any>) => {
       // For newly created custom value we don't want to add highlight
       if (option['__isNew__']) {
         return option.label;

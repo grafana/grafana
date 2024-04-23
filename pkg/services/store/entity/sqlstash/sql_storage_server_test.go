@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -11,7 +12,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/store/entity/db/dbimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestCreate(t *testing.T) {
 	s := setUpTestServer(t)
@@ -29,8 +35,9 @@ func TestCreate(t *testing.T) {
 				Resource:  "playlists",
 				Namespace: "default",
 				Name:      "set-minimum-uid",
-				Key:       "/playlist.grafana.app/playlists/default/set-minimum-uid",
+				Key:       "/playlist.grafana.app/playlists/namespaces/default/set-minimum-uid",
 				CreatedBy: "set-minimum-creator",
+				Origin:    &entity.EntityOriginInfo{},
 			},
 			false,
 			true,
@@ -38,7 +45,7 @@ func TestCreate(t *testing.T) {
 		{
 			"request with no entity creator",
 			&entity.Entity{
-				Key: "/playlist.grafana.app/playlists/default/set-only-key",
+				Key: "/playlist.grafana.app/playlists/namespaces/default/set-only-key",
 			},
 			true,
 			false,
@@ -103,7 +110,7 @@ func TestCreate(t *testing.T) {
 			require.Equal(t, tc.ent.Status, read.Status)
 			require.Equal(t, tc.ent.Title, read.Title)
 			require.Equal(t, tc.ent.Size, read.Size)
-			require.Equal(t, tc.ent.CreatedAt, read.CreatedAt)
+			require.Greater(t, read.CreatedAt, int64(0))
 			require.Equal(t, tc.ent.CreatedBy, read.CreatedBy)
 			require.Equal(t, tc.ent.UpdatedAt, read.UpdatedAt)
 			require.Equal(t, tc.ent.UpdatedBy, read.UpdatedBy)
@@ -126,7 +133,12 @@ func setUpTestServer(t *testing.T) entity.EntityStoreServer {
 		featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorage))
 	require.NoError(t, err)
 
-	s, err := ProvideSQLEntityServer(entityDB)
+	traceConfig, err := tracing.ParseTracingConfig(sqlStore.Cfg)
+	require.NoError(t, err)
+	tracer, err := tracing.ProvideService(traceConfig)
+	require.NoError(t, err)
+
+	s, err := ProvideSQLEntityServer(entityDB, tracer)
 	require.NoError(t, err)
 	return s
 }

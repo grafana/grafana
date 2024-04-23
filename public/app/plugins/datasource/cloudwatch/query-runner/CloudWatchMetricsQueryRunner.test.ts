@@ -3,7 +3,6 @@ import { of } from 'rxjs';
 import { CustomVariableModel, getFrameDisplayName, VariableHide } from '@grafana/data';
 import { dateTime } from '@grafana/data/src/datetime/moment_wrapper';
 import { toDataQueryResponse } from '@grafana/runtime';
-import * as redux from 'app/store/store';
 
 import {
   namespaceVariable,
@@ -18,6 +17,13 @@ import { initialVariableModelState } from '../__mocks__/CloudWatchVariables';
 import { setupMockedMetricsQueryRunner } from '../__mocks__/MetricsQueryRunner';
 import { validMetricSearchBuilderQuery, validMetricSearchCodeQuery } from '../__mocks__/queries';
 import { MetricQueryType, MetricEditorMode, CloudWatchMetricsQuery } from '../types';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getAppEvents: () => ({
+    publish: jest.fn(),
+  }),
+}));
 
 describe('CloudWatchMetricsQueryRunner', () => {
   describe('performTimeSeriesQuery', () => {
@@ -89,6 +95,68 @@ describe('CloudWatchMetricsQueryRunner', () => {
         const response = received[0];
         expect(response.data[0].fields[0].config.interval).toEqual(60000);
         expect(response.data[1].fields[0].config.interval).toEqual(120000);
+      });
+    });
+
+    it('should enrich the error message for throttling errors', async () => {
+      const partialQuery: CloudWatchMetricsQuery = {
+        metricQueryType: MetricQueryType.Search,
+        metricEditorMode: MetricEditorMode.Builder,
+        queryMode: 'Metrics',
+        namespace: 'AWS/EC2',
+        metricName: 'CPUUtilization',
+        dimensions: {
+          InstanceId: 'i-12345678',
+        },
+        statistic: 'Average',
+        period: '300',
+        expression: '',
+        id: '',
+        region: '',
+        refId: '',
+      };
+
+      const queries: CloudWatchMetricsQuery[] = [
+        { ...partialQuery, refId: 'A', region: 'us-east-1' },
+        { ...partialQuery, refId: 'B', region: 'us-east-2' },
+      ];
+
+      const dataWithThrottlingError = {
+        data: {
+          message: 'Throttling: exception',
+          results: {
+            A: {
+              frames: [],
+              series: [],
+              tables: [],
+              error: 'Throttling: exception',
+              refId: 'A',
+              meta: {},
+            },
+            B: {
+              frames: [],
+              series: [],
+              tables: [],
+              error: 'Throttling: exception',
+              refId: 'B',
+              meta: {},
+            },
+          },
+        },
+      };
+      const expectedUsEast1Message =
+        'Please visit the AWS Service Quotas console at https://us-east-1.console.aws.amazon.com/servicequotas/home?region=us-east-1#!/services/monitoring/quotas/L-5E141212 to request a quota increase or see our documentation at https://grafana.com/docs/grafana/latest/datasources/cloudwatch/#manage-service-quotas to learn more. Throttling: exception';
+      const expectedUsEast2Message =
+        'Please visit the AWS Service Quotas console at https://us-east-2.console.aws.amazon.com/servicequotas/home?region=us-east-2#!/services/monitoring/quotas/L-5E141212 to request a quota increase or see our documentation at https://grafana.com/docs/grafana/latest/datasources/cloudwatch/#manage-service-quotas to learn more. Throttling: exception';
+
+      const { runner, request, queryMock } = setupMockedMetricsQueryRunner({
+        response: toDataQueryResponse(dataWithThrottlingError),
+      });
+
+      await expect(runner.handleMetricQueries(queries, request, queryMock)).toEmitValuesWith((received) => {
+        expect(received[0].errors).toHaveLength(2);
+        expect(received[0]?.errors?.[0].message).toEqual(expectedUsEast1Message);
+        expect(received[0]?.errors?.[1].message).toEqual(expectedUsEast2Message);
       });
     });
 
@@ -274,13 +342,6 @@ describe('CloudWatchMetricsQueryRunner', () => {
           },
         },
       };
-
-      beforeEach(() => {
-        redux.setStore({
-          ...redux.store,
-          dispatch: jest.fn(),
-        });
-      });
 
       it('should display one alert error message per region+datasource combination', async () => {
         const { runner, request, queryMock } = setupMockedMetricsQueryRunner({
@@ -712,8 +773,28 @@ describe('CloudWatchMetricsQueryRunner', () => {
     beforeEach(() => {
       const { runner, request, queryMock } = setupMockedMetricsQueryRunner({
         variables: [
-          { ...namespaceVariable, multi: true },
-          { ...metricVariable, multi: true },
+          {
+            ...namespaceVariable,
+            current: {
+              value: ['AWS/Redshift', 'AWS/EC2'],
+              text: ['AWS/Redshift', 'AWS/EC2'].toString(),
+              selected: true,
+            },
+            multi: true,
+          },
+          {
+            ...metricVariable,
+            current: {
+              value: ['CPUUtilization', 'DroppedBytes'],
+              text: ['CPUUtilization', 'DroppedBytes'].toString(),
+              selected: true,
+            },
+            multi: true,
+          },
+          {
+            ...dimensionVariable,
+            multi: true,
+          },
         ],
       });
       runner.debouncedCustomAlert = debouncedAlert;
@@ -728,7 +809,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
             metricName: '$' + metricVariable.name,
             period: '',
             alias: '',
-            dimensions: {},
+            dimensions: { [`$${dimensionVariable.name}`]: '' },
             matchExact: true,
             statistic: '',
             refId: '',
@@ -741,7 +822,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
         queryMock
       );
     });
-    it('should show debounced alert for namespace and metric name', async () => {
+    it('should show debounced alert for namespace and metric name when multiple options are selected', async () => {
       expect(debouncedAlert).toHaveBeenCalledWith(
         'CloudWatch templating error',
         'Multi template variables are not supported for namespace'
@@ -749,6 +830,13 @@ describe('CloudWatchMetricsQueryRunner', () => {
       expect(debouncedAlert).toHaveBeenCalledWith(
         'CloudWatch templating error',
         'Multi template variables are not supported for metric name'
+      );
+    });
+
+    it('should not show debounced alert for a multi-variable if it only has one option selected', async () => {
+      expect(debouncedAlert).not.toHaveBeenCalledWith(
+        'CloudWatch templating error',
+        `Multi template variables are not supported for dimension keys`
       );
     });
 

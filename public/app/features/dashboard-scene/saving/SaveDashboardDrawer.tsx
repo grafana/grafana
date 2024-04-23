@@ -9,14 +9,16 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { SaveDashboardAsForm } from './SaveDashboardAsForm';
 import { SaveDashboardForm } from './SaveDashboardForm';
 import { SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
-import { getSaveDashboardChange } from './getSaveDashboardChange';
+import { getDashboardChangesFromScene } from './getDashboardChangesFromScene';
 
 interface SaveDashboardDrawerState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;
   showDiff?: boolean;
   saveTimeRange?: boolean;
   saveVariables?: boolean;
+  saveRefresh?: boolean;
   saveAsCopy?: boolean;
+  onSaveSuccess?: () => void;
 }
 
 export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerState> {
@@ -32,22 +34,33 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
     this.setState({ saveVariables: !this.state.saveVariables });
   };
 
+  public onToggleSaveRefresh = () => {
+    this.setState({ saveRefresh: !this.state.saveRefresh });
+  };
+
   static Component = ({ model }: SceneComponentProps<SaveDashboardDrawer>) => {
-    const { showDiff, saveAsCopy, saveTimeRange, saveVariables } = model.useState();
-    const changeInfo = getSaveDashboardChange(model.state.dashboardRef.resolve(), saveTimeRange, saveVariables);
-    const { changedSaveModel, initialSaveModel, diffs, diffCount } = changeInfo;
+    const { showDiff, saveAsCopy, saveTimeRange, saveVariables, saveRefresh } = model.useState();
+    const changeInfo = getDashboardChangesFromScene(
+      model.state.dashboardRef.resolve(),
+      saveTimeRange,
+      saveVariables,
+      saveRefresh
+    );
+    const { changedSaveModel, initialSaveModel, diffs, diffCount, hasFolderChanges } = changeInfo;
+    const changesCount = diffCount + (hasFolderChanges ? 1 : 0);
     const dashboard = model.state.dashboardRef.resolve();
-    const isProvisioned = dashboard.state.meta.provisioned;
+    const { meta } = dashboard.useState();
+    const { provisioned: isProvisioned, folderTitle } = meta;
 
     const tabs = (
       <TabsBar>
         <Tab label={'Details'} active={!showDiff} onChangeTab={() => model.setState({ showDiff: false })} />
-        {diffCount > 0 && (
+        {changesCount > 0 && (
           <Tab
             label={'Changes'}
             active={showDiff}
             onChangeTab={() => model.setState({ showDiff: true })}
-            counter={diffCount}
+            counter={changesCount}
           />
         )}
       </TabsBar>
@@ -62,11 +75,20 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
 
     const renderBody = () => {
       if (showDiff) {
-        return <SaveDashboardDiff diff={diffs} oldValue={initialSaveModel} newValue={changedSaveModel} />;
+        return (
+          <SaveDashboardDiff
+            diff={diffs}
+            oldValue={initialSaveModel}
+            newValue={changedSaveModel}
+            hasFolderChanges={hasFolderChanges}
+            oldFolder={dashboard.getInitialState()?.meta.folderTitle}
+            newFolder={folderTitle}
+          />
+        );
       }
 
       if (saveAsCopy || changeInfo.isNew) {
-        return <SaveDashboardAsForm dashboard={dashboard} changeInfo={changeInfo} drawer={model} />;
+        return <SaveDashboardAsForm dashboard={dashboard} changeInfo={changeInfo} />;
       }
 
       if (isProvisioned) {

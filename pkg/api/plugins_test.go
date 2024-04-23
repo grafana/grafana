@@ -12,12 +12,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
@@ -27,15 +27,18 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/filestore"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
-	"github.com/grafana/grafana/pkg/plugins/plugindef"
+	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
@@ -49,6 +52,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 	canInstall := []ac.Permission{{Action: pluginaccesscontrol.ActionInstall}}
 	cannotInstall := []ac.Permission{{Action: "plugins:cannotinstall"}}
 
+	pluginID := "grafana-test-datasource"
 	localOrg := int64(1)
 	globalOrg := int64(ac.GlobalOrgID)
 
@@ -88,11 +92,27 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 
 			hs.pluginInstaller = NewFakePluginInstaller()
 			hs.pluginFileStore = &fakes.FakePluginFileStore{}
+			hs.pluginStore = pluginstore.NewFakePluginStore(pluginstore.Plugin{
+				JSONData: plugins.JSONData{
+					ID: pluginID,
+				},
+			})
+
+			expectedIdentity := &authn.Identity{
+				OrgID:       tc.permissionOrg,
+				Permissions: map[int64]map[string][]string{},
+				OrgRoles:    map[int64]org.RoleType{},
+			}
+			expectedIdentity.Permissions[tc.permissionOrg] = ac.GroupScopesByAction(tc.permissions)
+			hs.authnService = &authntest.FakeService{
+				ExpectedIdentity: expectedIdentity,
+			}
 		})
 
 		t.Run(testName("Install", tc), func(t *testing.T) {
 			input := strings.NewReader(`{"version": "1.0.2"}`)
-			req := webtest.RequestWithSignedInUser(server.NewPostRequest("/api/plugins/test/install", input), userWithPermissions(tc.permissionOrg, tc.permissions))
+			endpoint := fmt.Sprintf("/api/plugins/%s/install", pluginID)
+			req := webtest.RequestWithSignedInUser(server.NewPostRequest(endpoint, input), userWithPermissions(tc.permissionOrg, tc.permissions))
 			res, err := server.SendJSON(req)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedCode, res.StatusCode)
@@ -101,7 +121,8 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 
 		t.Run(testName("Uninstall", tc), func(t *testing.T) {
 			input := strings.NewReader("{ }")
-			req := webtest.RequestWithSignedInUser(server.NewPostRequest("/api/plugins/test/uninstall", input), userWithPermissions(tc.permissionOrg, tc.permissions))
+			endpoint := fmt.Sprintf("/api/plugins/%s/uninstall", pluginID)
+			req := webtest.RequestWithSignedInUser(server.NewPostRequest(endpoint, input), userWithPermissions(tc.permissionOrg, tc.permissions))
 			res, err := server.SendJSON(req)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedCode, res.StatusCode)
@@ -401,14 +422,14 @@ func TestMakePluginResourceRequestContentTypeEmpty(t *testing.T) {
 func TestPluginMarkdown(t *testing.T) {
 	t.Run("Plugin not installed returns error", func(t *testing.T) {
 		pluginFileStore := &fakes.FakePluginFileStore{
-			FileFunc: func(ctx context.Context, pluginID, filename string) (*plugins.File, error) {
+			FileFunc: func(ctx context.Context, pluginID, pluginVersion, filename string) (*plugins.File, error) {
 				return nil, plugins.ErrPluginNotInstalled
 			},
 		}
 		hs := HTTPServer{pluginFileStore: pluginFileStore}
 
 		pluginID := "test-datasource"
-		md, err := hs.pluginMarkdown(context.Background(), pluginID, "test")
+		md, err := hs.pluginMarkdown(context.Background(), pluginID, "", "test")
 		require.ErrorAs(t, err, &plugins.NotFoundError{PluginID: pluginID})
 		require.Equal(t, []byte{}, md)
 	})
@@ -416,7 +437,7 @@ func TestPluginMarkdown(t *testing.T) {
 	t.Run("File fetch will be retried using different casing if error occurs", func(t *testing.T) {
 		var requestedFiles []string
 		pluginFileStore := &fakes.FakePluginFileStore{
-			FileFunc: func(ctx context.Context, pluginID, filename string) (*plugins.File, error) {
+			FileFunc: func(ctx context.Context, pluginID, pluginVersion, filename string) (*plugins.File, error) {
 				requestedFiles = append(requestedFiles, filename)
 				return nil, errors.New("some error")
 			},
@@ -424,7 +445,7 @@ func TestPluginMarkdown(t *testing.T) {
 
 		hs := HTTPServer{pluginFileStore: pluginFileStore}
 
-		md, err := hs.pluginMarkdown(context.Background(), "", "reAdMe")
+		md, err := hs.pluginMarkdown(context.Background(), "", "", "reAdMe")
 		require.NoError(t, err)
 		require.Equal(t, []byte{}, md)
 		require.Equal(t, []string{"README.md", "readme.md"}, requestedFiles)
@@ -453,7 +474,7 @@ func TestPluginMarkdown(t *testing.T) {
 			data := []byte{123}
 			var requestedFiles []string
 			pluginFileStore := &fakes.FakePluginFileStore{
-				FileFunc: func(ctx context.Context, pluginID, filename string) (*plugins.File, error) {
+				FileFunc: func(ctx context.Context, pluginID, pluginVersion, filename string) (*plugins.File, error) {
 					requestedFiles = append(requestedFiles, filename)
 					return &plugins.File{Content: data}, nil
 				},
@@ -461,7 +482,7 @@ func TestPluginMarkdown(t *testing.T) {
 
 			hs := HTTPServer{pluginFileStore: pluginFileStore}
 
-			md, err := hs.pluginMarkdown(context.Background(), "test-datasource", tc.filePath)
+			md, err := hs.pluginMarkdown(context.Background(), "test-datasource", "", tc.filePath)
 			require.NoError(t, err)
 			require.Equal(t, data, md)
 			require.Equal(t, tc.expected, requestedFiles)
@@ -471,7 +492,7 @@ func TestPluginMarkdown(t *testing.T) {
 	t.Run("Non markdown file request returns an error", func(t *testing.T) {
 		hs := HTTPServer{pluginFileStore: &fakes.FakePluginFileStore{}}
 
-		md, err := hs.pluginMarkdown(context.Background(), "", "test.json")
+		md, err := hs.pluginMarkdown(context.Background(), "", "", "test.json")
 		require.ErrorIs(t, err, ErrUnexpectedFileExtension)
 		require.Equal(t, []byte{}, md)
 	})
@@ -480,14 +501,14 @@ func TestPluginMarkdown(t *testing.T) {
 		data := []byte{1, 2, 3}
 
 		pluginFileStore := &fakes.FakePluginFileStore{
-			FileFunc: func(ctx context.Context, pluginID, filename string) (*plugins.File, error) {
+			FileFunc: func(ctx context.Context, pluginID, pluginVersion, filename string) (*plugins.File, error) {
 				return &plugins.File{Content: data}, nil
 			},
 		}
 
 		hs := HTTPServer{pluginFileStore: pluginFileStore}
 
-		md, err := hs.pluginMarkdown(context.Background(), "", "someFile")
+		md, err := hs.pluginMarkdown(context.Background(), "", "", "someFile")
 		require.NoError(t, err)
 		require.Equal(t, data, md)
 	})
@@ -505,7 +526,7 @@ func pluginAssetScenario(t *testing.T, desc string, url string, urlPattern strin
 			pluginStore:     pluginstore.New(pluginRegistry, &fakes.FakeLoader{}),
 			pluginFileStore: filestore.ProvideService(pluginRegistry),
 			log:             log.NewNopLogger(),
-			pluginsCDNService: pluginscdn.ProvideService(&config.Cfg{
+			pluginsCDNService: pluginscdn.ProvideService(&config.PluginManagementCfg{
 				PluginsCDNURLTemplate: cfg.PluginsCDNURLTemplate,
 				PluginSettings:        cfg.PluginSettings,
 			}),
@@ -650,8 +671,8 @@ func TestHTTPServer_hasPluginRequestedPermissions(t *testing.T) {
 	pluginReg := pluginstore.Plugin{
 		JSONData: plugins.JSONData{
 			ID: "grafana-test-app",
-			IAM: &plugindef.IAM{
-				Permissions: []plugindef.Permission{{Action: ac.ActionUsersRead, Scope: newStr(ac.ScopeUsersAll)}, {Action: ac.ActionUsersCreate}},
+			IAM: &pfs.IAM{
+				Permissions: []pfs.Permission{{Action: ac.ActionUsersRead, Scope: newStr(ac.ScopeUsersAll)}, {Action: ac.ActionUsersCreate}},
 			},
 		},
 	}
@@ -726,6 +747,14 @@ func TestHTTPServer_hasPluginRequestedPermissions(t *testing.T) {
 			hs.accesscontrolService = actest.FakeService{}
 			hs.AccessControl = acimpl.ProvideAccessControl(hs.Cfg)
 
+			expectedIdentity := &authn.Identity{
+				OrgID:       tt.orgID,
+				Permissions: tt.permissions,
+			}
+			hs.authnService = &authntest.FakeService{
+				ExpectedIdentity: expectedIdentity,
+			}
+
 			c := &contextmodel.ReqContext{
 				Context:      &web.Context{Req: httpReq},
 				SignedInUser: &user.SignedInUser{OrgID: tt.orgID, Permissions: tt.permissions},
@@ -733,6 +762,91 @@ func TestHTTPServer_hasPluginRequestedPermissions(t *testing.T) {
 			hs.hasPluginRequestedPermissions(c, "grafana-test-app")
 
 			assert.Equal(t, tt.warnCount, logger.WarnLogs.Calls)
+		})
+	}
+}
+
+func Test_PluginsSettings(t *testing.T) {
+	pID := "test-datasource"
+	p1 := createPlugin(plugins.JSONData{
+		ID: pID, Type: "datasource", Name: pID,
+		Info: plugins.Info{
+			Version: "1.0.0",
+		}}, plugins.ClassExternal, plugins.NewFakeFS())
+
+	pluginRegistry := &fakes.FakePluginRegistry{
+		Store: map[string]*plugins.Plugin{
+			p1.ID: p1,
+		},
+	}
+
+	pluginSettings := pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
+		pID: {ID: 0, OrgID: 1, PluginID: pID, PluginVersion: "1.0.0"},
+	}}
+
+	type testCase struct {
+		desc             string
+		expectedCode     int
+		errCode          plugins.ErrorCode
+		expectedSettings dtos.PluginSetting
+		expectedError    string
+	}
+	tcs := []testCase{
+		{
+			desc:         "should only be able to get plugin settings",
+			expectedCode: http.StatusOK,
+			expectedSettings: dtos.PluginSetting{
+				Id:   pID,
+				Name: pID,
+				Type: "datasource",
+				Info: plugins.Info{
+					Version: "1.0.0",
+				},
+				SecureJsonFields: map[string]bool{},
+			},
+		},
+		{
+			desc:          "should return a plugin error",
+			expectedCode:  http.StatusInternalServerError,
+			errCode:       plugins.ErrorCodeFailedBackendStart,
+			expectedError: "Plugin failed to start",
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.desc, func(t *testing.T) {
+			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+				hs.Cfg = setting.NewCfg()
+				hs.PluginSettings = &pluginSettings
+				hs.pluginStore = pluginstore.New(pluginRegistry, &fakes.FakeLoader{})
+				hs.pluginFileStore = filestore.ProvideService(pluginRegistry)
+				errTracker := pluginerrs.ProvideErrorTracker()
+				if tc.errCode != "" {
+					errTracker.Record(context.Background(), &plugins.Error{
+						PluginID:  pID,
+						ErrorCode: tc.errCode,
+					})
+				}
+				hs.pluginErrorResolver = pluginerrs.ProvideStore(errTracker)
+				var err error
+				hs.pluginsUpdateChecker, err = updatechecker.ProvidePluginsService(hs.Cfg, nil, tracing.InitializeTracerForTest())
+				require.NoError(t, err)
+			})
+
+			res, err := server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest("/api/plugins/"+pID+"/settings"), userWithPermissions(1, []ac.Permission{})))
+			require.NoError(t, err)
+			assert.Equal(t, tc.expectedCode, res.StatusCode)
+			if tc.expectedCode == http.StatusOK {
+				var result dtos.PluginSetting
+				require.NoError(t, json.NewDecoder(res.Body).Decode(&result))
+				require.NoError(t, res.Body.Close())
+				assert.Equal(t, tc.expectedSettings, result)
+			} else {
+				var respJson map[string]any
+				err := json.NewDecoder(res.Body).Decode(&respJson)
+				require.NoError(t, err)
+				require.Equal(t, tc.expectedError, respJson["message"])
+			}
 		})
 	}
 }

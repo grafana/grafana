@@ -3,6 +3,7 @@ import pluralize from 'pluralize';
 import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Badge, ConfirmModal, HorizontalGroup, Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
@@ -205,9 +206,9 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
 
   // ungrouped rules are rules that are in the "default" group name
   const groupName = isListView ? (
-    <RuleLocation namespace={decodeGrafanaNamespace(namespace)} />
+    <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} />
   ) : (
-    <RuleLocation namespace={decodeGrafanaNamespace(namespace)} group={group.name} />
+    <RuleLocation namespace={decodeGrafanaNamespace(namespace).name} group={group.name} />
   );
 
   const closeEditModal = (saved = false) => {
@@ -225,7 +226,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
           className={styles.collapseToggle}
           isCollapsed={isCollapsed}
           onToggle={setIsCollapsed}
-          data-testid="group-collapse-toggle"
+          data-testid={selectors.components.AlertRules.groupToggle}
         />
         <Icon name={isCollapsed ? 'folder' : 'folder-open'} />
         {isCloudRulesSource(rulesSource) && (
@@ -278,7 +279,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
           namespace={namespace}
           group={group}
           onClose={() => closeEditModal()}
-          folderUrl={folder?.canEdit ? makeFolderSettingsLink(folder) : undefined}
+          folderUrl={folder?.canEdit ? makeFolderSettingsLink(folder.uid) : undefined}
           folderUid={folderUID}
         />
       )}

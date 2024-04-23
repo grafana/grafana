@@ -1,4 +1,3 @@
-import { config } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
 
 // Maps the ID of the nav item to a translated phrase to later pass to <Trans />
@@ -119,6 +118,8 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.server-settings.title', 'Settings');
     case 'storage':
       return t('nav.storage.title', 'Storage');
+    case 'migrate-to-cloud':
+      return t('nav.migrate-to-cloud.title', 'Migrate to Grafana Cloud');
     case 'upgrading':
       return t('nav.upgrading.title', 'Stats and license');
     case 'monitoring':
@@ -140,9 +141,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'plugin-page-grafana-slo-app':
       return t('nav.slo.title', 'SLO');
     case 'plugin-page-k6-app':
-      return config.featureToggles.dockedMegaMenu
-        ? t('nav.k6.title', 'Performance')
-        : t('nav.performance-testing.title', 'Performance testing');
+      return t('nav.k6.title', 'Performance');
     case 'monitoring':
       return t('nav.observability.title', 'Observability');
     case 'plugin-page-grafana-k8s-app':
@@ -251,6 +250,11 @@ export function getNavSubTitle(navId: string | undefined) {
       return t('nav.server-settings.subtitle', 'View the settings defined in your Grafana config');
     case 'storage':
       return t('nav.storage.subtitle', 'Manage file storage');
+    case 'migrate-to-cloud':
+      return t(
+        'nav.migrate-to-cloud.subtitle',
+        'Copy configuration from your self-managed installation to a cloud stack'
+      );
     case 'support-bundles':
       return t('nav.support-bundles.subtitle', 'Download support bundles');
     case 'admin':

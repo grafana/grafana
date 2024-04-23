@@ -105,14 +105,11 @@ const (
 	QueryEditorPropertyTypeString QueryEditorPropertyType = "string"
 )
 
-// CloudWatchAnnotationQuery defines model for CloudWatchAnnotationQuery.
+// Shape of a CloudWatch Annotation query
+//
+// TS type is CloudWatchDefaultQuery = Omit<CloudWatchLogsQuery, 'queryMode'> & CloudWatchMetricsQuery, declared in veneer
+// #CloudWatchDefaultQuery: #CloudWatchLogsQuery & #CloudWatchMetricsQuery @cuetsy(kind="type")
 type CloudWatchAnnotationQuery struct {
-	// DataQuery These are the common properties available to all queries in all datasources.
-	// Specific implementations will *extend* this interface, adding the required
-	// properties for the given context.
-	DataQuery
-	MetricStat
-
 	// The ID of the AWS account to query for the metric, specifying `all` will query all accounts that the monitoring account is permitted to query.
 	AccountId *string `json:"accountId,omitempty"`
 
@@ -137,9 +134,7 @@ type CloudWatchAnnotationQuery struct {
 	// A name/value pair that is part of the identity of a metric. For example, you can get statistics for a specific EC2 instance by specifying the InstanceId dimension when you search for metrics.
 	Dimensions *Dimensions `json:"dimensions,omitempty"`
 
-	// Hide true if query is disabled (ie should not be returned to the dashboard)
-	// Note this does not always imply that the query should not be executed since
-	// the results from a hidden query may be used as the input to other queries (SSE etc)
+	// If hide is set to true, Grafana will filter out the response(s) associated with this query before returning it to the panel.
 	Hide *bool `json:"hide,omitempty"`
 
 	// Only show metrics that exactly match all defined dimension names.
@@ -149,14 +144,14 @@ type CloudWatchAnnotationQuery struct {
 	MetricName *string `json:"metricName,omitempty"`
 
 	// A namespace is a container for CloudWatch metrics. Metrics in different namespaces are isolated from each other, so that metrics from different applications are not mistakenly aggregated into the same statistics. For example, Amazon EC2 uses the AWS/EC2 namespace.
-	Namespace string `json:"namespace"`
+	Namespace *string `json:"namespace,omitempty"`
 
 	// The length of time associated with a specific Amazon CloudWatch statistic. Can be specified by a number of seconds, 'auto', or as a duration string e.g. '15m' being 15 minutes
 	Period *string `json:"period,omitempty"`
 
 	// Enable matching on the prefix of the action name or alarm name, specify the prefixes with actionPrefix and/or alarmNamePrefix
-	PrefixMatching *bool               `json:"prefixMatching,omitempty"`
-	QueryMode      CloudWatchQueryMode `json:"queryMode"`
+	PrefixMatching *bool                `json:"prefixMatching,omitempty"`
+	QueryMode      *CloudWatchQueryMode `json:"queryMode,omitempty"`
 
 	// Specify the query flavor
 	// TODO make this required and give it a default
@@ -165,10 +160,10 @@ type CloudWatchAnnotationQuery struct {
 	// A unique identifier for the query within the list of targets.
 	// In server side expressions, the refId is used as a variable name to identify results.
 	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
-	RefId string `json:"refId"`
+	RefId *string `json:"refId,omitempty"`
 
 	// AWS region to query for the metric
-	Region string `json:"region"`
+	Region *string `json:"region,omitempty"`
 
 	// Metric data aggregations over specified periods of time. For detailed definitions of the statistics supported by CloudWatch, see https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Statistics-definitions.html.
 	Statistic *string `json:"statistic,omitempty"`
@@ -180,13 +175,8 @@ type CloudWatchAnnotationQuery struct {
 // CloudWatchDataQuery defines model for CloudWatchDataQuery.
 type CloudWatchDataQuery = map[string]any
 
-// CloudWatchLogsQuery defines model for CloudWatchLogsQuery.
+// Shape of a CloudWatch Logs query
 type CloudWatchLogsQuery struct {
-	// DataQuery These are the common properties available to all queries in all datasources.
-	// Specific implementations will *extend* this interface, adding the required
-	// properties for the given context.
-	DataQuery
-
 	// For mixed data sources the selected datasource is on the query level.
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
@@ -196,18 +186,16 @@ type CloudWatchLogsQuery struct {
 	// The CloudWatch Logs Insights query to execute
 	Expression *string `json:"expression,omitempty"`
 
-	// Hide true if query is disabled (ie should not be returned to the dashboard)
-	// Note this does not always imply that the query should not be executed since
-	// the results from a hidden query may be used as the input to other queries (SSE etc)
-	Hide *bool  `json:"hide,omitempty"`
-	Id   string `json:"id"`
+	// If hide is set to true, Grafana will filter out the response(s) associated with this query before returning it to the panel.
+	Hide *bool   `json:"hide,omitempty"`
+	Id   *string `json:"id,omitempty"`
 
 	// @deprecated use logGroups
 	LogGroupNames []string `json:"logGroupNames,omitempty"`
 
 	// Log groups to query
-	LogGroups []LogGroup          `json:"logGroups,omitempty"`
-	QueryMode CloudWatchQueryMode `json:"queryMode"`
+	LogGroups []LogGroup           `json:"logGroups,omitempty"`
+	QueryMode *CloudWatchQueryMode `json:"queryMode,omitempty"`
 
 	// Specify the query flavor
 	// TODO make this required and give it a default
@@ -216,23 +204,17 @@ type CloudWatchLogsQuery struct {
 	// A unique identifier for the query within the list of targets.
 	// In server side expressions, the refId is used as a variable name to identify results.
 	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
-	RefId string `json:"refId"`
+	RefId *string `json:"refId,omitempty"`
 
 	// AWS region to query for the logs
-	Region string `json:"region"`
+	Region *string `json:"region,omitempty"`
 
 	// Fields to group the results by, this field is automatically populated whenever the query is updated
 	StatsGroups []string `json:"statsGroups,omitempty"`
 }
 
-// CloudWatchMetricsQuery defines model for CloudWatchMetricsQuery.
+// Shape of a CloudWatch Metrics query
 type CloudWatchMetricsQuery struct {
-	// DataQuery These are the common properties available to all queries in all datasources.
-	// Specific implementations will *extend* this interface, adding the required
-	// properties for the given context.
-	DataQuery
-	MetricStat
-
 	// The ID of the AWS account to query for the metric, specifying `all` will query all accounts that the monitoring account is permitted to query.
 	AccountId *string `json:"accountId,omitempty"`
 
@@ -252,13 +234,11 @@ type CloudWatchMetricsQuery struct {
 	// Math expression query
 	Expression *string `json:"expression,omitempty"`
 
-	// Hide true if query is disabled (ie should not be returned to the dashboard)
-	// Note this does not always imply that the query should not be executed since
-	// the results from a hidden query may be used as the input to other queries (SSE etc)
+	// If hide is set to true, Grafana will filter out the response(s) associated with this query before returning it to the panel.
 	Hide *bool `json:"hide,omitempty"`
 
 	// ID can be used to reference other queries in math expressions. The ID can include numbers, letters, and underscore, and must start with a lowercase letter.
-	Id string `json:"id"`
+	Id *string `json:"id,omitempty"`
 
 	// Change the time series legend names using dynamic labels. See https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/graph-dynamic-labels.html for more details.
 	Label *string `json:"label,omitempty"`
@@ -272,7 +252,7 @@ type CloudWatchMetricsQuery struct {
 	MetricQueryType *MetricQueryType `json:"metricQueryType,omitempty"`
 
 	// A namespace is a container for CloudWatch metrics. Metrics in different namespaces are isolated from each other, so that metrics from different applications are not mistakenly aggregated into the same statistics. For example, Amazon EC2 uses the AWS/EC2 namespace.
-	Namespace string `json:"namespace"`
+	Namespace *string `json:"namespace,omitempty"`
 
 	// The length of time associated with a specific Amazon CloudWatch statistic. Can be specified by a number of seconds, 'auto', or as a duration string e.g. '15m' being 15 minutes
 	Period    *string              `json:"period,omitempty"`
@@ -285,10 +265,10 @@ type CloudWatchMetricsQuery struct {
 	// A unique identifier for the query within the list of targets.
 	// In server side expressions, the refId is used as a variable name to identify results.
 	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
-	RefId string `json:"refId"`
+	RefId *string `json:"refId,omitempty"`
 
 	// AWS region to query for the metric
-	Region string         `json:"region"`
+	Region *string        `json:"region,omitempty"`
 	Sql    *SQLExpression `json:"sql,omitempty"`
 
 	// When the metric query type is `metricQueryType` is set to `Query`, this field is used to specify the query string.
@@ -314,9 +294,7 @@ type DataQuery struct {
 	// TODO this shouldn't be unknown but DataSourceRef | null
 	Datasource *any `json:"datasource,omitempty"`
 
-	// Hide true if query is disabled (ie should not be returned to the dashboard)
-	// Note this does not always imply that the query should not be executed since
-	// the results from a hidden query may be used as the input to other queries (SSE etc)
+	// If hide is set to true, Grafana will filter out the response(s) associated with this query before returning it to the panel.
 	Hide *bool `json:"hide,omitempty"`
 
 	// Specify the query flavor

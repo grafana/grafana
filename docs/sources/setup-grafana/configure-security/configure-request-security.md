@@ -8,7 +8,6 @@ labels:
   products:
     - cloud
     - enterprise
-    - oss
 title: Configure request security
 weight: 1100
 ---

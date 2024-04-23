@@ -3,10 +3,12 @@ import userEvent from '@testing-library/user-event';
 import saveAs from 'file-saver';
 import React, { ComponentProps } from 'react';
 
-import { FieldType, LogLevel, LogsDedupStrategy, toDataFrame } from '@grafana/data';
+import { FieldType, LogLevel, LogsDedupStrategy, standardTransformersRegistry, toDataFrame } from '@grafana/data';
+import { organizeFieldsTransformer } from '@grafana/data/src/transformations/transformers/organize';
 
 import { MAX_CHARACTERS } from '../../logs/components/LogRowMessage';
 import { logRowsToReadableJson } from '../../logs/utils';
+import { extractFieldsTransformer } from '../../transformers/extractFields/extractFields';
 
 import { LogsMetaRow } from './LogsMetaRow';
 
@@ -199,5 +201,113 @@ describe('LogsMetaRow', () => {
     expect(blob.type).toBe('application/json;charset=utf-8');
     const text = await blob.text();
     expect(text).toBe(JSON.stringify(logRowsToReadableJson(rows)));
+  });
+
+  it('renders a button to download CSV', async () => {
+    const transformers = [extractFieldsTransformer, organizeFieldsTransformer];
+    standardTransformersRegistry.setInit(() => {
+      return transformers.map((t) => {
+        return {
+          id: t.id,
+          aliasIds: t.aliasIds,
+          name: t.name,
+          transformation: t,
+          description: t.description,
+          editor: () => null,
+        };
+      });
+    });
+
+    const rows = [
+      {
+        rowIndex: 1,
+        entryFieldIndex: 0,
+        dataFrame: toDataFrame({
+          name: 'logs',
+          refId: 'A',
+          fields: [
+            {
+              name: 'time',
+              type: FieldType.time,
+              values: ['1970-01-01T00:00:00Z'],
+            },
+            {
+              name: 'message',
+              type: FieldType.string,
+              values: ['INFO 1'],
+              labels: {
+                foo: 'bar',
+              },
+            },
+          ],
+        }),
+        entry: 'test entry',
+        hasAnsi: false,
+        hasUnescapedContent: false,
+        labels: {
+          foo: 'bar',
+        },
+        logLevel: LogLevel.info,
+        raw: '',
+        timeEpochMs: 10,
+        timeEpochNs: '123456789',
+        timeFromNow: '',
+        timeLocal: '',
+        timeUtc: '',
+        uid: '2',
+      },
+      {
+        rowIndex: 2,
+        entryFieldIndex: 1,
+        dataFrame: toDataFrame({
+          name: 'logs',
+          refId: 'B',
+          fields: [
+            {
+              name: 'time',
+              type: FieldType.time,
+              values: ['1970-01-02T00:00:00Z'],
+            },
+            {
+              name: 'message',
+              type: FieldType.string,
+              values: ['INFO 1'],
+              labels: {
+                foo: 'bar',
+              },
+            },
+          ],
+        }),
+        entry: 'test entry',
+        hasAnsi: false,
+        hasUnescapedContent: false,
+        labels: {
+          foo: 'bar',
+        },
+        logLevel: LogLevel.info,
+        raw: '',
+        timeEpochMs: 10,
+        timeEpochNs: '123456789',
+        timeFromNow: '',
+        timeLocal: '',
+        timeUtc: '',
+        uid: '2',
+      },
+    ];
+    setup({ logRows: rows });
+
+    await userEvent.click(screen.getByText('Download').closest('button')!);
+
+    await userEvent.click(
+      screen.getByRole('menuitem', {
+        name: 'csv',
+      })
+    );
+    expect(saveAs).toBeCalled();
+
+    const blob = (saveAs as unknown as jest.Mock).mock.lastCall[0];
+    expect(blob.type).toBe('text/csv;charset=utf-8');
+    const text = await blob.text();
+    expect(text).toBe(`"time","message bar"\r\n1970-01-02T00:00:00Z,INFO 1`);
   });
 });

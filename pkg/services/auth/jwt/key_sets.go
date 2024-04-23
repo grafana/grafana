@@ -49,13 +49,13 @@ type keySetHTTP struct {
 
 func (s *AuthService) checkKeySetConfiguration() error {
 	var count int
-	if s.Cfg.JWTAuthKeyFile != "" {
+	if s.Cfg.JWTAuth.KeyFile != "" {
 		count++
 	}
-	if s.Cfg.JWTAuthJWKSetFile != "" {
+	if s.Cfg.JWTAuth.JWKSetFile != "" {
 		count++
 	}
-	if s.Cfg.JWTAuthJWKSetURL != "" {
+	if s.Cfg.JWTAuth.JWKSetURL != "" {
 		count++
 	}
 
@@ -75,7 +75,7 @@ func (s *AuthService) initKeySet() error {
 		return err
 	}
 
-	if keyFilePath := s.Cfg.JWTAuthKeyFile; keyFilePath != "" {
+	if keyFilePath := s.Cfg.JWTAuth.KeyFile; keyFilePath != "" {
 		// nolint:gosec
 		// We can ignore the gosec G304 warning on this one because `fileName` comes from grafana configuration file
 		file, err := os.Open(keyFilePath)
@@ -125,10 +125,10 @@ func (s *AuthService) initKeySet() error {
 
 		s.keySet = &keySetJWKS{
 			jose.JSONWebKeySet{
-				Keys: []jose.JSONWebKey{{Key: key, KeyID: s.Cfg.JWTAuthKeyID}},
+				Keys: []jose.JSONWebKey{{Key: key, KeyID: s.Cfg.JWTAuth.KeyID}},
 			},
 		}
-	} else if keyFilePath := s.Cfg.JWTAuthJWKSetFile; keyFilePath != "" {
+	} else if keyFilePath := s.Cfg.JWTAuth.JWKSetFile; keyFilePath != "" {
 		// nolint:gosec
 		// We can ignore the gosec G304 warning on this one because `fileName` comes from grafana configuration file
 		file, err := os.Open(keyFilePath)
@@ -147,7 +147,7 @@ func (s *AuthService) initKeySet() error {
 		}
 
 		s.keySet = &keySetJWKS{jwks}
-	} else if urlStr := s.Cfg.JWTAuthJWKSetURL; urlStr != "" {
+	} else if urlStr := s.Cfg.JWTAuth.JWKSetURL; urlStr != "" {
 		urlParsed, err := url.Parse(urlStr)
 		if err != nil {
 			return err
@@ -176,7 +176,7 @@ func (s *AuthService) initKeySet() error {
 				Timeout: time.Second * 30,
 			},
 			cacheKey:        fmt.Sprintf("auth-jwt:jwk-%s", urlStr),
-			cacheExpiration: s.Cfg.JWTAuthCacheTTL,
+			cacheExpiration: s.Cfg.JWTAuth.CacheTTL,
 			cache:           s.RemoteCache,
 		}
 	}

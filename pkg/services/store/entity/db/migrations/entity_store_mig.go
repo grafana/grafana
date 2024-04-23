@@ -7,7 +7,7 @@ import (
 )
 
 func initEntityTables(mg *migrator.Migrator) string {
-	marker := "Initialize entity tables (v12)" // changing this key wipe+rewrite everything
+	marker := "Initialize entity tables (v15)" // changing this key wipe+rewrite everything
 	mg.AddMigration(marker, &migrator.RawSQLMigration{})
 
 	tables := []migrator.Table{}
@@ -59,6 +59,8 @@ func initEntityTables(mg *migrator.Migrator) string {
 			{Name: "labels", Type: migrator.DB_Text, Nullable: true},   // JSON object
 			{Name: "fields", Type: migrator.DB_Text, Nullable: true},   // JSON object
 			{Name: "errors", Type: migrator.DB_Text, Nullable: true},   // JSON object
+
+			{Name: "action", Type: migrator.DB_Int, Nullable: false}, // 1: create, 2: update, 3: delete
 		},
 		Indices: []*migrator.Index{
 			// The keys are ordered for efficiency in mysql queries, not URL consistency
@@ -117,10 +119,18 @@ func initEntityTables(mg *migrator.Migrator) string {
 			{Name: "labels", Type: migrator.DB_Text, Nullable: true},   // JSON object
 			{Name: "fields", Type: migrator.DB_Text, Nullable: true},   // JSON object
 			{Name: "errors", Type: migrator.DB_Text, Nullable: true},   // JSON object
+
+			{Name: "action", Type: migrator.DB_Int, Nullable: false}, // 1: create, 2: update, 3: delete
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"guid", "resource_version"}, Type: migrator.UniqueIndex},
-			{Cols: []string{"namespace", "group", "resource", "name", "resource_version"}, Type: migrator.UniqueIndex},
+			{
+				Cols: []string{"namespace", "group", "resource", "name", "resource_version"},
+				Type: migrator.UniqueIndex,
+				Name: "UQE_entity_history_namespace_group_name_version",
+			},
+			// index to support watch poller
+			{Cols: []string{"resource_version"}, Type: migrator.IndexType},
 		},
 	})
 

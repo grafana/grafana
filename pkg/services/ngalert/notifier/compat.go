@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	alertingNotify "github.com/grafana/alerting/notify"
+	alertingTemplates "github.com/grafana/alerting/templates"
 	"github.com/prometheus/alertmanager/config"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -46,47 +47,48 @@ func PostableApiAlertingConfigToApiReceivers(c apimodels.PostableApiAlertingConf
 
 type DecryptFn = func(value string) string
 
-func PostableToGettableGrafanaReceiver(r *apimodels.PostableGrafanaReceiver, provenance *models.Provenance, decryptFn DecryptFn) (apimodels.GettableGrafanaReceiver, error) {
+func PostableToGettableGrafanaReceiver(r *apimodels.PostableGrafanaReceiver, provenance *models.Provenance, decryptFn DecryptFn, listOnly bool) (apimodels.GettableGrafanaReceiver, error) {
 	out := apimodels.GettableGrafanaReceiver{
-		UID:                   r.UID,
-		Name:                  r.Name,
-		Type:                  r.Type,
-		DisableResolveMessage: r.DisableResolveMessage,
-		SecureFields:          make(map[string]bool, len(r.SecureSettings)),
+		UID:  r.UID,
+		Name: r.Name,
+		Type: r.Type,
 	}
-
 	if provenance != nil {
 		out.Provenance = apimodels.Provenance(*provenance)
 	}
 
-	settings, err := simplejson.NewJson([]byte(r.Settings))
-	if err != nil {
-		return apimodels.GettableGrafanaReceiver{}, err
-	}
-
-	for k, v := range r.SecureSettings {
-		decryptedValue := decryptFn(v)
+	// if we aren't only listing, include the settings in the output
+	if !listOnly {
+		secureFields := make(map[string]bool, len(r.SecureSettings))
+		settings, err := simplejson.NewJson([]byte(r.Settings))
 		if err != nil {
 			return apimodels.GettableGrafanaReceiver{}, err
 		}
-		if decryptedValue == "" {
-			continue
-		} else {
-			settings.Set(k, decryptedValue)
-		}
-		out.SecureFields[k] = true
-	}
 
-	jsonBytes, err := settings.MarshalJSON()
-	if err != nil {
-		return apimodels.GettableGrafanaReceiver{}, err
+		for k, v := range r.SecureSettings {
+			decryptedValue := decryptFn(v)
+			if decryptedValue == "" {
+				continue
+			} else {
+				settings.Set(k, decryptedValue)
+			}
+			secureFields[k] = true
+		}
+
+		jsonBytes, err := settings.MarshalJSON()
+		if err != nil {
+			return apimodels.GettableGrafanaReceiver{}, err
+		}
+
+		out.Settings = jsonBytes
+		out.SecureFields = secureFields
+		out.DisableResolveMessage = r.DisableResolveMessage
 	}
-	out.Settings = jsonBytes
 
 	return out, nil
 }
 
-func PostableToGettableApiReceiver(r *apimodels.PostableApiReceiver, provenances map[string]models.Provenance, decryptFn DecryptFn) (apimodels.GettableApiReceiver, error) {
+func PostableToGettableApiReceiver(r *apimodels.PostableApiReceiver, provenances map[string]models.Provenance, decryptFn DecryptFn, listOnly bool) (apimodels.GettableApiReceiver, error) {
 	out := apimodels.GettableApiReceiver{
 		Receiver: config.Receiver{
 			Name: r.Receiver.Name,
@@ -99,7 +101,7 @@ func PostableToGettableApiReceiver(r *apimodels.PostableApiReceiver, provenances
 			prov = &p
 		}
 
-		gettable, err := PostableToGettableGrafanaReceiver(gr, prov, decryptFn)
+		gettable, err := PostableToGettableGrafanaReceiver(gr, prov, decryptFn, listOnly)
 		if err != nil {
 			return apimodels.GettableApiReceiver{}, err
 		}
@@ -107,4 +109,16 @@ func PostableToGettableApiReceiver(r *apimodels.PostableApiReceiver, provenances
 	}
 
 	return out, nil
+}
+
+// ToTemplateDefinitions converts the given PostableUserConfig's TemplateFiles to a slice of TemplateDefinitions.
+func ToTemplateDefinitions(cfg *apimodels.PostableUserConfig) []alertingTemplates.TemplateDefinition {
+	out := make([]alertingTemplates.TemplateDefinition, 0, len(cfg.TemplateFiles))
+	for name, tmpl := range cfg.TemplateFiles {
+		out = append(out, alertingTemplates.TemplateDefinition{
+			Name:     name,
+			Template: tmpl,
+		})
+	}
+	return out
 }

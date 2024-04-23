@@ -2,6 +2,8 @@ import { config } from '@grafana/runtime';
 import { SceneDataProvider, SceneDataTransformer, SceneQueryRunner } from '@grafana/scenes';
 import { PanelModel } from 'app/features/dashboard/state';
 
+import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
+
 export function createPanelDataProvider(panel: PanelModel): SceneDataProvider | undefined {
   // Skip setting query runner for panels without queries
   if (!panel.targets?.length) {
@@ -20,9 +22,12 @@ export function createPanelDataProvider(panel: PanelModel): SceneDataProvider | 
     queries: panel.targets,
     maxDataPoints: panel.maxDataPoints ?? undefined,
     maxDataPointsFromWidth: true,
+    cacheTimeout: panel.cacheTimeout,
+    queryCachingTTL: panel.queryCachingTTL,
     dataLayerFilter: {
       panelId: panel.id,
     },
+    $behaviors: [new DashboardDatasourceBehaviour({})],
   });
 
   // Wrap inner data provider in a data transformer

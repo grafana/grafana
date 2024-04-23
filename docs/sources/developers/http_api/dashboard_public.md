@@ -207,7 +207,7 @@ See note in the [introduction](#public-dashboard-api) for an explanation.
 **Example Request**:
 
 ```http
-GET /api/dashboards/uid/xCpsVuc4z HTTP/1.1
+GET /api/dashboards/uid/xCpsVuc4z/public-dashboards/ HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk

@@ -16,9 +16,9 @@ type FakeUserService struct {
 	ExpectedUserProfileDTOs  []*user.UserProfileDTO
 	ExpectedUsageStats       map[string]any
 
+	UpdateFn            func(ctx context.Context, cmd *user.UpdateUserCommand) error
 	GetSignedInUserFn   func(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error)
 	CreateFn            func(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error)
-	DisableFn           func(ctx context.Context, cmd *user.DisableUserCommand) error
 	BatchDisableUsersFn func(ctx context.Context, cmd *user.BatchDisableUsersCommand) error
 
 	counter int
@@ -61,10 +61,9 @@ func (f *FakeUserService) GetByEmail(ctx context.Context, query *user.GetUserByE
 }
 
 func (f *FakeUserService) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
-	return f.ExpectedError
-}
-
-func (f *FakeUserService) ChangePassword(ctx context.Context, cmd *user.ChangeUserPasswordCommand) error {
+	if f.UpdateFn != nil {
+		return f.UpdateFn(ctx, cmd)
+	}
 	return f.ExpectedError
 }
 
@@ -98,21 +97,10 @@ func (f *FakeUserService) Search(ctx context.Context, query *user.SearchUsersQue
 	return &f.ExpectedSearchUsers, f.ExpectedError
 }
 
-func (f *FakeUserService) Disable(ctx context.Context, cmd *user.DisableUserCommand) error {
-	if f.DisableFn != nil {
-		return f.DisableFn(ctx, cmd)
-	}
-	return f.ExpectedError
-}
-
 func (f *FakeUserService) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisableUsersCommand) error {
 	if f.BatchDisableUsersFn != nil {
 		return f.BatchDisableUsersFn(ctx, cmd)
 	}
-	return f.ExpectedError
-}
-
-func (f *FakeUserService) UpdatePermissions(ctx context.Context, userID int64, isAdmin bool) error {
 	return f.ExpectedError
 }
 

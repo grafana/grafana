@@ -152,12 +152,15 @@ describe('VariableEditor', () => {
         select(keySelect, 'v4', {
           container: document.body,
         });
-        expect(ds.datasource.resources.getDimensionKeys).toHaveBeenCalledWith({
-          namespace: 'z2',
-          region: 'a1',
-          metricName: 'i3',
-          dimensionFilters: undefined,
-        });
+        expect(ds.datasource.resources.getDimensionKeys).toHaveBeenCalledWith(
+          {
+            namespace: 'z2',
+            region: 'a1',
+            metricName: 'i3',
+            dimensionFilters: undefined,
+          },
+          false
+        );
         await waitFor(() => {
           expect(onChange).toHaveBeenCalledWith({
             ...defaultQuery,

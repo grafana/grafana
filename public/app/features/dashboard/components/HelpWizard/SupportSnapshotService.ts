@@ -4,13 +4,13 @@ import { dateTimeFormat, formattedValueToString, getValueFormat, SelectableValue
 import { config } from '@grafana/runtime';
 import { SceneObject } from '@grafana/scenes';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
+import { Randomize } from 'app/features/dashboard-scene/inspect/HelpWizard/randomizer';
 import { createDashboardSceneFromDashboardModel } from 'app/features/dashboard-scene/serialization/transformSaveModelToScene';
 
 import { getTimeSrv } from '../../services/TimeSrv';
 import { DashboardModel, PanelModel } from '../../state';
 import { setDashboardToFetchFromLocalStorage } from '../../state/initDashboard';
 
-import { Randomize } from './randomizer';
 import { getDebugDashboard, getGithubMarkdown } from './utils';
 
 interface SupportSnapshotState {

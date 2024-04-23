@@ -1,38 +1,24 @@
 import React from 'react';
 
 import { NavModelItem } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { isFetchError } from '@grafana/runtime';
 import { Alert, withErrorBoundary } from '@grafana/ui';
-import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
+import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
-import { AlertRuleProvider } from './components/rule-viewer/v2/RuleContext';
+import { AlertRuleProvider } from './components/rule-viewer/RuleContext';
+import DetailView from './components/rule-viewer/RuleViewer';
 import { useCombinedRule } from './hooks/useCombinedRule';
+import { stringifyErrorLike } from './utils/misc';
 import { getRuleIdFromPathname, parse as parseRuleId } from './utils/rule-id';
-
-const DetailViewV1 = SafeDynamicImport(() => import('./components/rule-viewer/RuleViewer.v1'));
-const DetailViewV2 = React.lazy(() => import('./components/rule-viewer/v2/RuleViewer.v2'));
 
 type RuleViewerProps = GrafanaRouteComponentProps<{
   id: string;
   sourceName: string;
 }>;
 
-const newAlertDetailView = Boolean(config.featureToggles.alertingDetailsViewV2) === true;
-
 const RuleViewer = (props: RuleViewerProps): JSX.Element => {
-  return newAlertDetailView ? <RuleViewerV2Wrapper {...props} /> : <RuleViewerV1Wrapper {...props} />;
-};
-
-export const defaultPageNav: NavModelItem = {
-  id: 'alert-rule-view',
-  text: '',
-};
-
-const RuleViewerV1Wrapper = (props: RuleViewerProps) => <DetailViewV1 {...props} />;
-
-const RuleViewerV2Wrapper = (props: RuleViewerProps) => {
   const id = getRuleIdFromPathname(props.match.params);
 
   // we convert the stringified ID to a rule identifier object which contains additional
@@ -48,13 +34,12 @@ const RuleViewerV2Wrapper = (props: RuleViewerProps) => {
   // we then fetch the rule from the correct API endpoint(s)
   const { loading, error, result: rule } = useCombinedRule({ ruleIdentifier: identifier });
 
-  // TODO improve error handling here
   if (error) {
-    if (typeof error === 'string') {
-      return error;
-    }
-
-    return <Alert title={'Uh-oh'}>Something went wrong loading the rule</Alert>;
+    return (
+      <AlertingPageWrapper pageNav={defaultPageNav} navId="alert-list">
+        <ErrorMessage error={error} />
+      </AlertingPageWrapper>
+    );
   }
 
   if (loading) {
@@ -68,12 +53,34 @@ const RuleViewerV2Wrapper = (props: RuleViewerProps) => {
   if (rule) {
     return (
       <AlertRuleProvider identifier={identifier} rule={rule}>
-        <DetailViewV2 />
+        <DetailView />
       </AlertRuleProvider>
     );
   }
 
-  return null;
+  // if we get here assume we can't find the rule
+  return (
+    <AlertingPageWrapper pageNav={defaultPageNav} navId="alert-list">
+      <EntityNotFound entity="Rule" />
+    </AlertingPageWrapper>
+  );
 };
+
+export const defaultPageNav: NavModelItem = {
+  id: 'alert-rule-view',
+  text: '',
+};
+
+interface ErrorMessageProps {
+  error: unknown;
+}
+
+function ErrorMessage({ error }: ErrorMessageProps) {
+  if (isFetchError(error) && error.status === 404) {
+    return <EntityNotFound entity="Rule" />;
+  }
+
+  return <Alert title={'Something went wrong loading the rule'}>{stringifyErrorLike(error)}</Alert>;
+}
 
 export default withErrorBoundary(RuleViewer, { style: 'page' });

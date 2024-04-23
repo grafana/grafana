@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -17,16 +18,18 @@ export interface ReturnToPreviousProps {
 export const ReturnToPrevious = ({ href, title }: ReturnToPreviousProps) => {
   const styles = useStyles2(getStyles);
   const { chrome } = useGrafana();
-  const handleOnClick = () => {
+
+  const handleOnClick = useCallback(() => {
     locationService.push(href);
-    chrome.clearReturnToPrevious();
-  };
-  const handleOnDismiss = () => {
-    chrome.clearReturnToPrevious();
-  };
+    chrome.clearReturnToPrevious('clicked');
+  }, [href, chrome]);
+
+  const handleOnDismiss = useCallback(() => {
+    chrome.clearReturnToPrevious('dismissed');
+  }, [chrome]);
 
   return (
-    <div className={styles.returnToPrevious}>
+    <div className={styles.returnToPrevious} data-testid={selectors.components.ReturnToPrevious.buttonGroup}>
       <DismissableButton
         label={t('return-to-previous.button.label', 'Back to {{title}}', { title })}
         onClick={handleOnClick}
@@ -42,7 +45,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justifyContent: 'center',
     left: '50%',
     transform: 'translateX(-50%)',
-    zIndex: theme.zIndex.portal,
+    zIndex: theme.zIndex.tooltip,
     position: 'fixed',
     bottom: theme.spacing.x4,
     boxShadow: theme.shadows.z3,

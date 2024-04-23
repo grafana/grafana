@@ -29,13 +29,40 @@ We value clean and readable code, that is loosely coupled and covered by unit te
 
 Tests must use the standard library, `testing`. For assertions, prefer using [testify](https://github.com/stretchr/testify).
 
+### Test Suite and Database Tests
+
+We have a [testsuite](https://github.com/grafana/grafana/tree/main/pkg/tests/testsuite) package which provides utilities for package-level setup and teardown.
+
+Currently, this is just used to ensure that test databases are correctly set up and torn down, but it also provides a place we can attach future tasks.
+
+Each package SHOULD include a [TestMain](https://pkg.go.dev/testing#hdr-Main) function that calls `testsuite.Run(m)`:
+
+```go
+package mypkg
+
+import (
+	"testing"
+
+	"github.com/grafana/grafana/pkg/tests/testsuite"
+)
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
+```
+
+You only need to define `TestMain` in one `_test.go` file within each package.
+
+> Warning
+> For tests that use the database, you MUST define `TestMain` so that the test databases can be cleaned up properly.
+
 ### Integration Tests
 
 We run unit and integration tests separately, to help keep our CI pipeline running smoothly and provide a better developer experience.
 
 To properly mark a test as being an integration test, you must format your test function definition as follows, with the function name starting with `TestIntegration` and the check for `testing.Short()`:
 
-```
+```go
 func TestIntegrationFoo(t *testing.T) {
     if testing.Short() {
         t.Skip("skipping integration test")
@@ -51,7 +78,7 @@ func TestIntegrationFoo(t *testing.T) {
 
 Use respectively [`assert.*`](https://github.com/stretchr/testify#assert-package) functions to make assertions that
 should _not_ halt the test ("soft checks") and [`require.*`](https://github.com/stretchr/testify#require-package)
-functions to make assertions that _should_ halt the test ("hard checks"). Typically you want to use the latter type of
+functions to make assertions that _should_ halt the test ("hard checks"). Typically, you want to use the latter type of
 check to assert that errors have or have not happened, since continuing the test after such an assertion fails is
 chaotic (the system under test will be in an undefined state) and you'll often have segfaults in practice.
 

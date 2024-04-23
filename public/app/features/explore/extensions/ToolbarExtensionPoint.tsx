@@ -19,11 +19,10 @@ const AddToDashboard = lazy(() =>
 type Props = {
   exploreId: string;
   timeZone: TimeZone;
-  splitted: boolean;
 };
 
 export function ToolbarExtensionPoint(props: Props): ReactElement | null {
-  const { exploreId, splitted } = props;
+  const { exploreId } = props;
   const [selectedExtension, setSelectedExtension] = useState<PluginExtensionLink | undefined>();
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const context = useExtensionPointContext(props);
@@ -54,14 +53,8 @@ export function ToolbarExtensionPoint(props: Props): ReactElement | null {
   return (
     <>
       <Dropdown onVisibleChange={setIsOpen} placement="bottom-start" overlay={menu}>
-        <ToolbarButton
-          aria-label="Add"
-          icon="plus"
-          disabled={!Boolean(noQueriesInPane)}
-          variant="canvas"
-          isOpen={isOpen}
-        >
-          {splitted ? ' ' : 'Add'}
+        <ToolbarButton aria-label="Add" disabled={!Boolean(noQueriesInPane)} variant="canvas" isOpen={isOpen}>
+          Add
         </ToolbarButton>
       </Dropdown>
       {!!selectedExtension && !!selectedExtension.path && (

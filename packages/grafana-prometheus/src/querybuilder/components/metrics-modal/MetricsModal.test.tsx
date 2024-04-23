@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/metrics-modal/MetricsModal.test.tsx
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
@@ -10,7 +11,7 @@ import { EmptyLanguageProviderMock } from '../../../language_provider.mock';
 import { PromOptions } from '../../../types';
 import { PromVisualQuery } from '../../types';
 
-import { MetricsModal, testIds } from './MetricsModal';
+import { MetricsModal, metricsModaltestIds } from './MetricsModal';
 
 // don't care about interaction tracking in our unit tests
 jest.mock('@grafana/runtime', () => ({
@@ -117,7 +118,7 @@ describe('MetricsModal', () => {
 
   it('shows results metrics per page chosen by the user', async () => {
     setup(defaultQuery, listOfMetrics);
-    const resultsPerPageInput = screen.getByTestId(testIds.resultsPerPage);
+    const resultsPerPageInput = screen.getByTestId(metricsModaltestIds.resultsPerPage);
     await userEvent.type(resultsPerPageInput, '12');
     const metricInsideRange = screen.getByText('j');
     expect(metricInsideRange).toBeInTheDocument();
@@ -130,7 +131,7 @@ describe('MetricsModal', () => {
       // doesn't break on loading
       expect(screen.getByText('0')).toBeInTheDocument();
     });
-    const resultsPerPageInput = screen.getByTestId(testIds.resultsPerPage);
+    const resultsPerPageInput = screen.getByTestId(metricsModaltestIds.resultsPerPage);
     // doesn't break on changing results per page
     await userEvent.type(resultsPerPageInput, '11');
     const metricInsideRange = screen.getByText('9');
@@ -149,7 +150,7 @@ describe('MetricsModal', () => {
       expect(metricAll).toBeInTheDocument();
       expect(metricABucket).toBeInTheDocument();
     });
-    const searchMetric = screen.getByTestId(testIds.searchMetric);
+    const searchMetric = screen.getByTestId(metricsModaltestIds.searchMetric);
     expect(searchMetric).toBeInTheDocument();
     await userEvent.type(searchMetric, 'a_buck');
 
@@ -169,15 +170,15 @@ describe('MetricsModal', () => {
       expect(metricABucket).toBeInTheDocument();
     });
 
-    const showSettingsButton = screen.getByTestId(testIds.showAdditionalSettings);
+    const showSettingsButton = screen.getByTestId(metricsModaltestIds.showAdditionalSettings);
     expect(showSettingsButton).toBeInTheDocument();
     await userEvent.click(showSettingsButton);
 
-    const metadataSwitch = screen.getByTestId(testIds.searchWithMetadata);
+    const metadataSwitch = screen.getByTestId(metricsModaltestIds.searchWithMetadata);
     expect(metadataSwitch).toBeInTheDocument();
     await userEvent.click(metadataSwitch);
 
-    const searchMetric = screen.getByTestId(testIds.searchMetric);
+    const searchMetric = screen.getByTestId(metricsModaltestIds.searchMetric);
     expect(searchMetric).toBeInTheDocument();
     await userEvent.type(searchMetric, 'functions');
 

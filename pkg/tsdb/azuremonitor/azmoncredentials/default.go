@@ -1,8 +1,8 @@
 package azmoncredentials
 
 import (
-	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
-	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azcredentials"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 )
 
 func GetDefaultCredentials(settings *azsettings.AzureSettings) azcredentials.AzureCredentials {

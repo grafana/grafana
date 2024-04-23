@@ -4,7 +4,7 @@ import { AutoQueryDef, AutoQueryInfo } from '../../types';
 import { generateQueries, getGeneralBaseQuery } from './queries';
 
 describe('generateQueries', () => {
-  const agg = 'mockagg';
+  const agg = 'sum';
   const unit = 'mockunit';
 
   type QueryInfoKey = keyof AutoQueryInfo;
@@ -28,14 +28,32 @@ describe('generateQueries', () => {
     });
   }
 
-  function testRateSpecificAssertions(queryDef: AutoQueryDef, rate: boolean) {
+  function testRateSpecificAssertions(queryDef: AutoQueryDef, rate: boolean, key: QueryInfoKey) {
     const query = queryDef.queries[0];
     const firstParen = query.expr.indexOf('(');
     const expectedBaseQuery = getGeneralBaseQuery(rate);
     const detectedBaseQuery = query.expr.substring(firstParen + 1, firstParen + 1 + expectedBaseQuery.length);
 
+    const inParentheses = rate ? 'overall per-second rate' : 'overall';
+    const description = `\${metric} (${inParentheses})`;
+
     describe(`since rate is ${rate}`, () => {
       test(`base query must be "${expectedBaseQuery}"`, () => expect(detectedBaseQuery).toBe(expectedBaseQuery));
+      if (key === 'main') {
+        test(`main panel title contains expected description "${description}"`, () =>
+          expect(queryDef.title).toContain(description));
+      } else {
+        test(`${key} panel title is just "\${metric}"`, () => expect(queryDef.title).toBe('${metric}'));
+        test(`${key} panel title does not contain description "${description}"`, () =>
+          expect(queryDef.title).not.toContain(description));
+      }
+
+      if (key === 'breakdown') {
+        test(`breakdown query uses "{{\${groupby}}}" as legend`, () =>
+          expect(query.legendFormat).toBe('{{${groupby}}}'));
+      } else {
+        test(`preview query uses "${description}" as legend`, () => expect(query.legendFormat).toBe(description));
+      }
     });
   }
 
@@ -48,13 +66,13 @@ describe('generateQueries', () => {
         if (key !== 'variants') {
           const queryDef = queryInfo[key];
           describe(`queryInfo.${key}`, () => testRateIndependentAssertions(queryDef, key));
-          describe(`queryInfo.${key}`, () => testRateSpecificAssertions(queryDef, rate));
+          describe(`queryInfo.${key}`, () => testRateSpecificAssertions(queryDef, rate, key));
           continue;
         }
 
         queryInfo[key].forEach((queryDef, index) => {
           describe(`queryInfo.${key}[${index}]`, () => testRateIndependentAssertions(queryDef, key));
-          describe(`queryInfo.${key}[${index}]`, () => testRateSpecificAssertions(queryDef, rate));
+          describe(`queryInfo.${key}[${index}]`, () => testRateSpecificAssertions(queryDef, rate, key));
         });
       }
     });

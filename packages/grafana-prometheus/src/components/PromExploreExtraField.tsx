@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/PromExploreExtraField.tsx
 import { css, cx } from '@emotion/css';
 import { isEqual } from 'lodash';
 import React, { memo, useCallback } from 'react';
@@ -49,10 +50,14 @@ export const PromExploreExtraField = memo(({ query, datasource, onChange, onRunQ
   const onQueryTypeChange = getQueryTypeChangeHandler(query, onChange);
 
   return (
-    <div aria-label="Prometheus extra field" className="gf-form-inline" data-testid={testIds.extraFieldEditor}>
+    <div
+      aria-label="Prometheus extra field"
+      className="gf-form-inline"
+      data-testid={promExploreExtraFieldTestIds.extraFieldEditor}
+    >
       {/*Query type field*/}
       <div
-        data-testid={testIds.queryTypeField}
+        data-testid={promExploreExtraFieldTestIds.queryTypeField}
         className={cx(
           'gf-form explore-input-margin',
           css`
@@ -71,7 +76,7 @@ export const PromExploreExtraField = memo(({ query, datasource, onChange, onRunQ
       </div>
       {/*Step field*/}
       <div
-        data-testid={testIds.stepField}
+        data-testid={promExploreExtraFieldTestIds.stepField}
         className={cx(
           'gf-form',
           css`
@@ -134,7 +139,7 @@ export function getQueryTypeChangeHandler(query: PromQuery, onChange: (update: P
   };
 }
 
-export const testIds = {
+export const promExploreExtraFieldTestIds = {
   extraFieldEditor: 'prom-editor-extra-field',
   stepField: 'prom-editor-extra-field-step',
   queryTypeField: 'prom-editor-extra-field-query-type',

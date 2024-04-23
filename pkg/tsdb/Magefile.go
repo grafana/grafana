@@ -75,11 +75,7 @@ func findRootDir(pluginID string) (string, error) {
 	if pluginDir == "" {
 		return "", nil
 	}
-	absolutePath, err := filepath.Abs(pluginDir)
-	if err != nil {
-		return "", err
-	}
-	return filepath.Dir(absolutePath), nil
+	return filepath.Abs(pluginDir)
 }
 
 func buildPlugin(rootDir, pluginJSONDir string) {

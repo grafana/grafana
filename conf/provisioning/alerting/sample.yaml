@@ -67,6 +67,45 @@ apiVersion: 1
 #       labels:
 #         team: sre_team_1
 #       isPaused: false
+#       # optional settings that let configure notification settings applied to alerts created by this rule
+#       notification_settings:
+#          # <string> name of the receiver (contact-point) that should be used for this route
+#          receiver: grafana-default-email
+#          # <list<string>> The labels by which incoming alerts are grouped together. For example,
+#          #        multiple alerts coming in for cluster=A and alertname=LatencyHigh would
+#          #        be batched into a single group.
+#          #
+#          #        To aggregate by all possible labels, use the special value '...' as
+#          #        the sole label name, for example:
+#          #        group_by: ['...']
+#          #        This effectively disables aggregation entirely, passing through all
+#          #        alerts as-is. This is unlikely to be what you want, unless you have
+#          #        a very low alert volume or your upstream notification system performs
+#          #        its own grouping.
+#          # If defined, must contain the labels 'alertname' and 'grafana_folder', except when contains '...'
+#          group_by: ["alertname", "grafana_folder", "region"]
+#          # <list> Times when the route should be muted. These must match the name of a
+#          #        mute time interval.
+#          #        Additionally, the root node cannot have any mute times.
+#          #        When a route is muted it will not send any notifications, but
+#          #        otherwise acts normally (including ending the route-matching process
+#          #        if the `continue` option is not set)
+#          mute_time_intervals:
+#          - abc
+#          # <duration> How long to initially wait to send a notification for a group
+#          #            of alerts. Allows to collect more initial alerts for the same group.
+#          #            (Usually ~0s to few minutes).
+#          #            If not specified, the corresponding setting of the default policy is used.
+#          group_wait: 30s
+#          # <duration> How long to wait before sending a notification about new alerts that
+#          #            are added to a group of alerts for which an initial notification has
+#          #            already been sent. (Usually ~5m or more).
+#          #            If not specified, the corresponding setting of the default policy is used.
+#          group_interval: 5m
+#          # <duration>  How long to wait before sending a notification again if it has already
+#          #             been sent successfully for an alert. (Usually ~3h or more)
+#          #             If not specified, the corresponding setting of the default policy is used.
+#          repeat_interval: 4h
 
 # # List of alert rule UIDs that should be deleted
 # deleteRules:
@@ -152,7 +191,7 @@ apiVersion: 1
 #   - orgID: 1
 #     # <string, required> name of the template, must be unique
 #     name: my_first_template
-#     # <string, required> content of the the template
+#     # <string, required> content of the template
 #     template: Alerting with a custome text template
 
 # # List of templates that should be deleted

@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -93,27 +92,6 @@ func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetS
 		sb.Write(`(SELECT MAX(LENGTH(data)) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS dashboard_bytes_max,`, dialect.BooleanStr(false))
 		sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS folders,`, dialect.BooleanStr(true))
 
-		sb.Write(`(
-		SELECT COUNT(acl.id)
-		FROM `+dialect.Quote("dashboard_acl")+` AS acl
-			INNER JOIN `+dialect.Quote("dashboard")+` AS d
-			ON d.id = acl.dashboard_id
-		WHERE d.is_folder = ?
-	) AS dashboard_permissions,`, dialect.BooleanStr(false))
-
-		sb.Write(`(
-		SELECT COUNT(acl.id)
-		FROM `+dialect.Quote("dashboard_acl")+` AS acl
-			INNER JOIN `+dialect.Quote("dashboard")+` AS d
-			ON d.id = acl.dashboard_id
-		WHERE d.is_folder = ?
-	) AS folder_permissions,`, dialect.BooleanStr(true))
-
-		sb.Write(viewersPermissionsCounterSQL(ss.db, "dashboards_viewers_can_edit", false, dashboardaccess.PERMISSION_EDIT))
-		sb.Write(viewersPermissionsCounterSQL(ss.db, "dashboards_viewers_can_admin", false, dashboardaccess.PERMISSION_ADMIN))
-		sb.Write(viewersPermissionsCounterSQL(ss.db, "folders_viewers_can_edit", true, dashboardaccess.PERMISSION_EDIT))
-		sb.Write(viewersPermissionsCounterSQL(ss.db, "folders_viewers_can_admin", true, dashboardaccess.PERMISSION_ADMIN))
-
 		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_provisioning") + `) AS provisioned_dashboards,`)
 		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_snapshot") + `) AS snapshots,`)
 		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_version") + `) AS dashboard_versions,`)
@@ -167,19 +145,6 @@ func (ss *sqlStatsService) roleCounterSQL(ctx context.Context) string {
 			strconv.FormatInt(userStatsCache.dailyActive.Viewers, 10) + ` AS daily_active_viewers`
 
 	return sqlQuery
-}
-
-func viewersPermissionsCounterSQL(db db.DB, statName string, isFolder bool, permission dashboardaccess.PermissionType) string {
-	dialect := db.GetDialect()
-	return `(
-		SELECT COUNT(*)
-		FROM ` + dialect.Quote("dashboard_acl") + ` AS acl
-			INNER JOIN ` + dialect.Quote("dashboard") + ` AS d
-			ON d.id = acl.dashboard_id
-		WHERE acl.role = '` + string(org.RoleViewer) + `'
-			AND d.is_folder = ` + dialect.BooleanStr(isFolder) + `
-			AND acl.permission = ` + strconv.FormatInt(int64(permission), 10) + `
-	) AS ` + statName + `, `
 }
 
 func (ss *sqlStatsService) GetAdminStats(ctx context.Context, query *stats.GetAdminStatsQuery) (result *stats.AdminStats, err error) {

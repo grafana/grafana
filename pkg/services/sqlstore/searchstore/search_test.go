@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -25,6 +26,10 @@ const (
 	limit int64 = 15
 	page  int64 = 1
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestBuilder_EqualResults_Basic(t *testing.T) {
 	user := &user.SignedInUser{
@@ -177,6 +182,7 @@ func TestBuilder_RBAC(t *testing.T) {
 			expectedParams: []any{
 				int64(1),
 				int64(1),
+				int64(1),
 				0,
 				"Viewer",
 				int64(1),
@@ -184,6 +190,7 @@ func TestBuilder_RBAC(t *testing.T) {
 				"dashboards:read",
 				"dashboards:write",
 				2,
+				int64(1),
 				int64(1),
 				int64(1),
 				0,
@@ -252,6 +259,7 @@ func TestBuilder_RBAC(t *testing.T) {
 			expectedParams: []any{
 				int64(1),
 				int64(1),
+				int64(1),
 				0,
 				"Viewer",
 				int64(1),
@@ -259,6 +267,7 @@ func TestBuilder_RBAC(t *testing.T) {
 				"dashboards:read",
 				"dashboards:write",
 				2,
+				int64(1),
 				int64(1),
 				int64(1),
 				0,

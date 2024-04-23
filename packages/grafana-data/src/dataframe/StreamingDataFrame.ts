@@ -115,7 +115,7 @@ export class StreamingDataFrame implements DataFrame {
     const dataFrameDTO = toFilteredDataFrameDTO(this, fieldPredicate);
 
     const numberOfItemsToRemove = getNumberOfItemsToRemove(
-      dataFrameDTO.fields.map((f) => f.values) as unknown[][],
+      dataFrameDTO.fields.map((f) => f.values ?? []),
       typeof trimValues?.maxLength === 'number' ? Math.min(trimValues.maxLength, options.maxLength) : options.maxLength,
       this.timeFieldIndex,
       options.maxDelta

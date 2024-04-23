@@ -1,5 +1,17 @@
-import { createTheme, FieldType, ThresholdsMode, TimeRange, toDataFrame, dateTime, DataFrame } from '@grafana/data';
+import {
+  createTheme,
+  FieldType,
+  ThresholdsMode,
+  TimeRange,
+  toDataFrame,
+  dateTime,
+  DataFrame,
+  fieldMatchers,
+  FieldMatcherID,
+} from '@grafana/data';
 import { LegendDisplayMode, VizLegendOptions } from '@grafana/schema';
+
+import { preparePlotFrame } from '../GraphNG/utils';
 
 import {
   findNextStateIndex,
@@ -86,6 +98,173 @@ describe('prepare timeline graph', () => {
     ];
     const result = prepareTimelineFields(frames, true, timeRange, theme);
     expect(result.frames?.[0].fields[0].values).toEqual([1, 2, 3, 4]);
+  });
+
+  it('join multiple frames with NULL_RETAIN rather than NULL_EXPAND', () => {
+    const timeRange2: TimeRange = {
+      from: dateTime('2023-10-20T05:04:00.000Z'),
+      to: dateTime('2023-10-20T07:22:00.000Z'),
+      raw: {
+        from: dateTime('2023-10-20T05:04:00.000Z'),
+        to: dateTime('2023-10-20T07:22:00.000Z'),
+      },
+    };
+
+    const frames = [
+      toDataFrame({
+        name: 'Mix',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1697778291972, 1697778393992, 1697778986994, 1697786485890] },
+          { name: 'state', type: FieldType.string, values: ['RUN', null, 'RUN', null] },
+        ],
+      }),
+      toDataFrame({
+        name: 'Cook',
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: [
+              1697779163986, 1697779921045, 1697780221094, 1697780521111, 1697781186192, 1697781786291, 1697783332361,
+              1697783784395, 1697783790397, 1697784146478, 1697784517471, 1697784523487, 1697784949480, 1697785369505,
+            ],
+          },
+          {
+            name: 'state',
+            type: FieldType.string,
+            values: [
+              'Heat',
+              'Stage',
+              null,
+              'Heat',
+              'Stage',
+              null,
+              'Heat',
+              'Stage',
+              null,
+              'Heat',
+              'Stage',
+              null,
+              'CCP',
+              null,
+            ],
+          },
+        ],
+      }),
+    ];
+
+    const info = prepareTimelineFields(frames, true, timeRange2, theme);
+
+    let joined = preparePlotFrame(
+      info.frames!,
+      {
+        x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
+        y: fieldMatchers.get(FieldMatcherID.byType).get('string'),
+      },
+      timeRange2
+    );
+
+    let vals = joined!.fields.map((f) => f.values);
+
+    expect(vals).toEqual([
+      [
+        1697778291972, 1697778393992, 1697778986994, 1697779163986, 1697779921045, 1697780221094, 1697780521111,
+        1697781186192, 1697781786291, 1697783332361, 1697783784395, 1697783790397, 1697784146478, 1697784517471,
+        1697784523487, 1697784949480, 1697785369505, 1697786485890,
+      ],
+      [
+        'RUN',
+        null,
+        'RUN',
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        null,
+      ],
+      [
+        undefined,
+        undefined,
+        undefined,
+        'Heat',
+        'Stage',
+        null,
+        'Heat',
+        'Stage',
+        null,
+        'Heat',
+        'Stage',
+        null,
+        'Heat',
+        'Stage',
+        null,
+        'CCP',
+        null,
+        undefined,
+      ],
+    ]);
+  });
+
+  it('join multiple frames with start and end time fields', () => {
+    const timeRange2: TimeRange = {
+      from: dateTime('2024-02-28T07:47:21.428Z'),
+      to: dateTime('2024-02-28T14:12:43.391Z'),
+      raw: {
+        from: dateTime('2024-02-28T07:47:21.428Z'),
+        to: dateTime('2024-02-28T14:12:43.391Z'),
+      },
+    };
+
+    const frames = [
+      toDataFrame({
+        name: 'Channel 1',
+        fields: [
+          { name: 'starttime', type: FieldType.time, values: [1709107200000, 1709118000000] },
+          { name: 'endtime', type: FieldType.time, values: [1709114400000, 1709128800000] },
+          { name: 'state', type: FieldType.string, values: ['OK', 'NO_DATA'] },
+        ],
+      }),
+      toDataFrame({
+        name: 'Channel 2',
+        fields: [
+          { name: 'starttime', type: FieldType.time, values: [1709110800000, 1709123400000] },
+          { name: 'endtime', type: FieldType.time, values: [1709116200000, 1709127000000] },
+          { name: 'state', type: FieldType.string, values: ['ERROR', 'WARNING'] },
+        ],
+      }),
+    ];
+
+    const info = prepareTimelineFields(frames, true, timeRange2, theme);
+
+    let joined = preparePlotFrame(
+      info.frames!,
+      {
+        x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
+        y: fieldMatchers.get(FieldMatcherID.byType).get('string'),
+      },
+      timeRange2
+    );
+
+    let vals = joined!.fields.map((f) => f.values);
+
+    expect(vals).toEqual([
+      [
+        1709107200000, 1709110800000, 1709114400000, 1709116200000, 1709118000000, 1709123400000, 1709127000000,
+        1709128800000,
+      ],
+      ['OK', undefined, null, undefined, 'NO_DATA', undefined, undefined, null],
+      [undefined, 'ERROR', undefined, null, undefined, 'WARNING', null, undefined],
+    ]);
   });
 });
 

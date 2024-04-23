@@ -62,6 +62,8 @@ export interface CatalogPlugin extends WithAccessControlMetadata {
   // instance plugins may not be fully installed, which means a new instance
   // running the plugin didn't started yet
   isFullyInstalled?: boolean;
+  isUninstallingFromInstance?: boolean;
+  isUpdatingFromInstance?: boolean;
   iam?: IdentityAccessManagement;
 }
 
@@ -83,6 +85,7 @@ export interface CatalogPluginInfo {
     large: string;
     small: string;
   };
+  keywords: string[];
 }
 
 export type RemotePlugin = {
@@ -93,6 +96,7 @@ export type RemotePlugin = {
   featured: number;
   id: number;
   internal: boolean;
+  keywords: string[];
   json?: {
     dependencies: PluginDependencies;
     iam?: IdentityAccessManagement;
@@ -161,6 +165,7 @@ export type LocalPlugin = WithAccessControlMetadata & {
       small: string;
       large: string;
     };
+    keywords: string[];
     build: Build;
     screenshots?: Array<{
       path: string;
@@ -315,4 +320,9 @@ export type PluginVersion = {
 
 export type InstancePlugin = {
   pluginSlug: string;
+  version: string;
+};
+
+export type ProvisionedPlugin = {
+  slug: string;
 };

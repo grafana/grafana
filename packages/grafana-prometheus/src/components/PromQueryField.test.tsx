@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/PromQueryField.test.tsx
 import { getByTestId, render, screen, waitFor } from '@testing-library/react';
 // @ts-ignore
 import userEvent from '@testing-library/user-event';
@@ -8,7 +9,7 @@ import { CoreApp, DataFrame, LoadingState, PanelData } from '@grafana/data';
 import { PrometheusDatasource } from '../datasource';
 import PromQlLanguageProvider from '../language_provider';
 
-import PromQueryField from './PromQueryField';
+import { PromQueryField } from './PromQueryField';
 import { Props } from './monaco-query-field/MonacoQueryFieldProps';
 
 // the monaco-based editor uses lazy-loading and that does not work

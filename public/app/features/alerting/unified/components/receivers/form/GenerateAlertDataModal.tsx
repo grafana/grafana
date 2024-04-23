@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { addDays, subDays } from 'date-fns';
+import { uniqueId } from 'lodash';
 import React, { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
@@ -53,6 +54,8 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
         }, {}),
       startsAt: '2023-04-01T00:00:00Z',
       endsAt: status === 'firing' ? addDays(new Date(), 1).toISOString() : subDays(new Date(), 1).toISOString(),
+      status,
+      fingerprint: uniqueId('fingerprint_'),
     };
     setAlerts((alerts) => [...alerts, alert]);
     formMethods.reset();

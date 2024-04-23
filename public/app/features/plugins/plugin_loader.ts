@@ -6,21 +6,24 @@ import {
   DataSourcePluginMeta,
   PluginMeta,
 } from '@grafana/data';
-import { SystemJS } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 
 import { GenericDataSourcePlugin } from '../datasources/types';
 
 import builtInPlugins from './built_in_plugins';
 import { registerPluginInCache } from './loader/cache';
+// SystemJS has to be imported before the sharedDependenciesMap
+import { SystemJS } from './loader/systemjs';
+// eslint-disable-next-line import/order
 import { sharedDependenciesMap } from './loader/sharedDependencies';
 import { decorateSystemJSFetch, decorateSystemJSResolve, decorateSystemJsOnload } from './loader/systemjsHooks';
 import { SystemJSWithLoaderHooks } from './loader/types';
-import { buildImportMap } from './loader/utils';
+import { buildImportMap, resolveModulePath } from './loader/utils';
 import { importPluginModuleInSandbox } from './sandbox/sandbox_plugin_loader';
 import { isFrontendSandboxSupported } from './sandbox/utils';
 
 const imports = buildImportMap(sharedDependenciesMap);
+
 SystemJS.addImportMap({ imports });
 
 const systemJSPrototype: SystemJSWithLoaderHooks = SystemJS.constructor.prototype;
@@ -28,6 +31,17 @@ const systemJSPrototype: SystemJSWithLoaderHooks = SystemJS.constructor.prototyp
 // Monaco Editors reliance on RequireJS means we need to transform
 // the content of the plugin code at runtime which can only be done with fetch/eval.
 systemJSPrototype.shouldFetch = () => true;
+
+const originalImport = systemJSPrototype.import;
+// Hook Systemjs import to support plugins that only have a default export.
+systemJSPrototype.import = function (...args: Parameters<typeof originalImport>) {
+  return originalImport.apply(this, args).then((module) => {
+    if (module && module.__useDefault) {
+      return module.default;
+    }
+    return module;
+  });
+};
 
 const systemJSFetch = systemJSPrototype.fetch;
 systemJSPrototype.fetch = function (url: string, options?: Record<string, unknown>) {
@@ -67,12 +81,14 @@ export async function importPluginModule({
     }
   }
 
+  let modulePath = resolveModulePath(path);
+
   // the sandboxing environment code cannot work in nodejs and requires a real browser
   if (await isFrontendSandboxSupported({ isAngular, pluginId })) {
     return importPluginModuleInSandbox({ pluginId });
   }
 
-  return SystemJS.import(path);
+  return SystemJS.import(modulePath);
 }
 
 export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<GenericDataSourcePlugin> {

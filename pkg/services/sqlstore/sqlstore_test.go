@@ -2,6 +2,7 @@ package sqlstore
 
 import (
 	"context"
+	"os"
 	"testing"
 	"time"
 
@@ -10,6 +11,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/org"
 )
+
+func TestMain(m *testing.M) {
+	SetupTestDB()
+	code := m.Run()
+	CleanupTestDB()
+	os.Exit(code)
+}
 
 func TestIntegrationIsUniqueConstraintViolation(t *testing.T) {
 	store := InitTestDB(t)

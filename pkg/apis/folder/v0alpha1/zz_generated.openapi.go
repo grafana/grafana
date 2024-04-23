@@ -16,11 +16,55 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/pkg/apis/folder/v0alpha1.Folder":         schema_pkg_apis_folder_v0alpha1_Folder(ref),
-		"github.com/grafana/grafana/pkg/apis/folder/v0alpha1.FolderInfo":     schema_pkg_apis_folder_v0alpha1_FolderInfo(ref),
-		"github.com/grafana/grafana/pkg/apis/folder/v0alpha1.FolderInfoList": schema_pkg_apis_folder_v0alpha1_FolderInfoList(ref),
-		"github.com/grafana/grafana/pkg/apis/folder/v0alpha1.FolderList":     schema_pkg_apis_folder_v0alpha1_FolderList(ref),
-		"github.com/grafana/grafana/pkg/apis/folder/v0alpha1.Spec":           schema_pkg_apis_folder_v0alpha1_Spec(ref),
+		"github.com/grafana/grafana/pkg/apis/folder/v0alpha1.DescendantCounts": schema_pkg_apis_folder_v0alpha1_DescendantCounts(ref),
+		"github.com/grafana/grafana/pkg/apis/folder/v0alpha1.Folder":           schema_pkg_apis_folder_v0alpha1_Folder(ref),
+		"github.com/grafana/grafana/pkg/apis/folder/v0alpha1.FolderAccessInfo": schema_pkg_apis_folder_v0alpha1_FolderAccessInfo(ref),
+		"github.com/grafana/grafana/pkg/apis/folder/v0alpha1.FolderInfo":       schema_pkg_apis_folder_v0alpha1_FolderInfo(ref),
+		"github.com/grafana/grafana/pkg/apis/folder/v0alpha1.FolderInfoList":   schema_pkg_apis_folder_v0alpha1_FolderInfoList(ref),
+		"github.com/grafana/grafana/pkg/apis/folder/v0alpha1.FolderList":       schema_pkg_apis_folder_v0alpha1_FolderList(ref),
+		"github.com/grafana/grafana/pkg/apis/folder/v0alpha1.Spec":             schema_pkg_apis_folder_v0alpha1_Spec(ref),
+	}
+}
+
+func schema_pkg_apis_folder_v0alpha1_DescendantCounts(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"counts": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: 0,
+										Type:    []string{"integer"},
+										Format:  "int64",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"counts"},
+			},
+		},
 	}
 }
 
@@ -61,6 +105,62 @@ func schema_pkg_apis_folder_v0alpha1_Folder(ref common.ReferenceCallback) common
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apis/folder/v0alpha1.Spec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_pkg_apis_folder_v0alpha1_FolderAccessInfo(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Access control information for the current user",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"canSave": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
+					"canEdit": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
+					"canAdmin": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
+					"canDelete": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"canSave", "canEdit", "canAdmin", "canDelete"},
+			},
+		},
 	}
 }
 

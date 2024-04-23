@@ -395,7 +395,7 @@ function setup(value: string, offset: number, tagsV1?: string[], tagsV2?: Scope[
   } else if (tagsV2) {
     lp.setV2Tags(tagsV2);
   }
-  const provider = new CompletionProvider({ languageProvider: lp });
+  const provider = new CompletionProvider({ languageProvider: lp, setAlertText: () => {} });
   const model = makeModel(value, offset);
   provider.monaco = {
     Range: {

@@ -8,7 +8,7 @@ import {
   VisibilityMode,
   ScaleOrientation,
   ScaleDirection,
-  GraphTresholdsStyleMode,
+  GraphThresholdsStyleMode,
   ScaleDistribution,
 } from '@grafana/schema';
 
@@ -811,7 +811,7 @@ describe('UPlotConfigBuilder', () => {
           steps: [],
         },
         config: {
-          mode: GraphTresholdsStyleMode.Area,
+          mode: GraphThresholdsStyleMode.Area,
         },
         theme: darkTheme,
       });
@@ -822,7 +822,7 @@ describe('UPlotConfigBuilder', () => {
           steps: [],
         },
         config: {
-          mode: GraphTresholdsStyleMode.Area,
+          mode: GraphThresholdsStyleMode.Area,
         },
         theme: darkTheme,
       });

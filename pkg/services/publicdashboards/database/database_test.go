@@ -20,10 +20,10 @@ import (
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/service"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -32,6 +32,11 @@ var DefaultTimeSettings = &TimeSettings{}
 
 // Default time to pass in with seconds rounded
 var DefaultTime = time.Now().UTC().Round(time.Second)
+
+// run tests with cleanup
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestLogPrefix(t *testing.T) {
 	assert.Equal(t, LogPrefix, "publicdashboards.store")
@@ -42,7 +47,7 @@ func TestIntegrationListPublicDashboard(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	var sqlStore *sqlstore.SQLStore
+	var sqlStore db.DB
 	var cfg *setting.Cfg
 
 	var aDash *dashboards.Dashboard
@@ -62,7 +67,7 @@ func TestIntegrationListPublicDashboard(t *testing.T) {
 		quotaService := quotatest.New(false, nil)
 		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotaService)
 		require.NoError(t, err)
-		publicdashboardStore = ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
+		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
 
 		bDash = insertTestDashboard(t, dashboardStore, "b", orgId, "", false)
 		aDash = insertTestDashboard(t, dashboardStore, "a", orgId, "", false)

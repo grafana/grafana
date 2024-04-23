@@ -14,7 +14,7 @@ import (
 )
 
 // DefaultValidateFuncs are the default ValidateFunc used for the Validate step of the Validation stage.
-func DefaultValidateFuncs(cfg *config.Cfg) []ValidateFunc {
+func DefaultValidateFuncs(cfg *config.PluginManagementCfg) []ValidateFunc {
 	return []ValidateFunc{
 		SignatureValidationStep(signature.NewValidator(signature.NewUnsignedAuthorizer(cfg))),
 		ModuleJSValidationStep(),
@@ -74,16 +74,16 @@ func (v *ModuleJSValidator) Validate(_ context.Context, p *plugins.Plugin) error
 }
 
 type AngularDetector struct {
-	cfg              *config.Cfg
+	cfg              *config.PluginManagementCfg
 	angularInspector angularinspector.Inspector
 	log              log.Logger
 }
 
-func AngularDetectionStep(cfg *config.Cfg, angularInspector angularinspector.Inspector) ValidateFunc {
+func AngularDetectionStep(cfg *config.PluginManagementCfg, angularInspector angularinspector.Inspector) ValidateFunc {
 	return newAngularDetector(cfg, angularInspector).Validate
 }
 
-func newAngularDetector(cfg *config.Cfg, angularInspector angularinspector.Inspector) *AngularDetector {
+func newAngularDetector(cfg *config.PluginManagementCfg, angularInspector angularinspector.Inspector) *AngularDetector {
 	return &AngularDetector{
 		cfg:              cfg,
 		angularInspector: angularInspector,
@@ -106,7 +106,10 @@ func (a *AngularDetector) Validate(ctx context.Context, p *plugins.Plugin) error
 		// Do not initialize plugins if they're using Angular and Angular support is disabled
 		if p.Angular.Detected && !a.cfg.AngularSupportEnabled {
 			a.log.Error("Refusing to initialize plugin because it's using Angular, which has been disabled", "pluginId", p.ID)
-			return errors.New("angular plugins are not supported")
+			return (&plugins.Error{
+				PluginID:  p.ID,
+				ErrorCode: plugins.ErrorAngular,
+			}).WithMessage("angular plugins are not supported")
 		}
 	}
 	p.Angular.HideDeprecation = slices.Contains(a.cfg.HideAngularDeprecation, p.ID)

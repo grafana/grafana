@@ -1,11 +1,21 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { DashboardLink } from '@grafana/schema';
-import { DeleteButton, HorizontalGroup, Icon, IconButton, TagList, useStyles2 } from '@grafana/ui';
-import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-
-import { ListNewButton } from '../../../dashboard/components/DashboardSettings/ListNewButton';
+import {
+  Button,
+  DeleteButton,
+  EmptyState,
+  HorizontalGroup,
+  Icon,
+  IconButton,
+  Stack,
+  TagList,
+  TextLink,
+  useStyles2,
+} from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
 interface DashboardLinkListProps {
   links: DashboardLink[];
@@ -29,19 +39,28 @@ export function DashboardLinkList({
 
   if (isEmptyList) {
     return (
-      <div>
-        <EmptyListCTA
-          onClick={onNew}
-          title="There are no dashboard links added yet"
-          buttonIcon="link"
-          buttonTitle="Add dashboard link"
-          infoBoxTitle="What are dashboard links?"
-          infoBox={{
-            __html:
-              '<p>Dashboard Links allow you to place links to other dashboards and web sites directly below the dashboard header.</p>',
-          }}
-        />
-      </div>
+      <Stack direction="column">
+        <EmptyState
+          variant="call-to-action"
+          button={
+            <Button onClick={onNew} size="lg">
+              <Trans i18nKey="dashboard-links.empty-state.button-title">Add dashboard link</Trans>
+            </Button>
+          }
+          message={t('dashboard-links.empty-state.title', 'There are no dashboard links added yet')}
+        >
+          <Trans i18nKey="dashboard-links.empty-state.info-box-content">
+            Dashboard links allow you to place links to other dashboards and web sites directly below the dashboard
+            header.{' '}
+            <TextLink
+              external
+              href="https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/manage-dashboard-links/"
+            >
+              Learn more
+            </TextLink>
+          </Trans>
+        </EmptyState>
+      </Stack>
     );
   }
 
@@ -92,12 +111,14 @@ export function DashboardLinkList({
           ))}
         </tbody>
       </table>
-      <ListNewButton onClick={onNew}>New link</ListNewButton>
+      <Button className={styles.newLinkButton} icon="plus" onClick={onNew}>
+        New link
+      </Button>
     </>
   );
 }
 
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   titleWrapper: css({
     width: '20vw',
     textOverflow: 'ellipsis',
@@ -107,5 +128,8 @@ const getStyles = () => ({
     width: '40vw',
     textOverflow: 'ellipsis',
     overflow: 'hidden',
+  }),
+  newLinkButton: css({
+    marginTop: theme.spacing(3),
   }),
 });

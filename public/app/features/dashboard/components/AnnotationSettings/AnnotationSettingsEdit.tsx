@@ -27,11 +27,10 @@ import {
 import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
 import config from 'app/core/config';
 import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
+import { AngularEditorLoader } from 'app/features/dashboard-scene/settings/annotations/AngularEditorLoader';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { DashboardModel } from '../../state/DashboardModel';
-
-import { AngularEditorLoader } from './AngularEditorLoader';
 
 type Props = {
   editIdx: number;

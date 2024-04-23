@@ -22,7 +22,7 @@ Welcome to Grafana 10.3! Read on to learn about changes to navigation, visualiza
 
 We've also included here features released in Grafana 10.2.3, as well as breaking changes from that release. Features that were included in the 10.2.3 release are marked with an asterisk.
 
-For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md). For the specific steps we recommend when you upgrade to v10.3, check out our [Upgrade Guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v10.3/).
+For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v10.3, check out our [Upgrade Guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v10.3/).
 
 ## Breaking changes
 
@@ -163,25 +163,15 @@ You can now view percent change in stat visualizations. This makes it easier to 
 
 [Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/stat/#show-percent-change)
 
-### Data visualization quality of life improvements
+#### Apply data transformations to annotations
 
 <!--Nathan Marrs-->
 
 _Generally available in all editions of Grafana_
 
-We’ve made a few smaller improvements to the data visualization experience in Grafana.
-
-#### Apply data transformations to annotations
-
 You can now apply data transformations to annotation data. For example, you can now configure how exemplar data is displayed in tooltips.
 
 {{< video-embed src="/media/docs/grafana/screen-recording-10-3-data-transformations-annotation-support.mp4" caption="Configure how exemplar data appears in tooltip" >}}
-
-#### Disable auto scaling units
-
-By default, Grafana automatically scales the unit based on the magnitude of the value. For example, if you have a value of 0.14 kW, Grafana will display it as 140 W. You can now disable unit auto scaling. This is helpful in cases where you want to ensure that the same unit is shown in your visualization regardless of the magnitude of the data. See [the standard options documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#scale-units) for more information.
-
-{{< video-embed src="/media/docs/grafana/screen-recording-10-3-disable-unit-auto-scaling.mp4" caption="Disable auto scaling units" >}}
 
 ### New Transformations UI experience and documentation upgrades
 
@@ -375,7 +365,7 @@ Derived fields or data links are a concept to add correlations based on your log
 
 The following example would add the derived field `traceID regex` based on a regular expression and another `app label` field based on the `app` label.
 
-{{< figure src="/media/docs/grafana/2024-01-05_loki-derived-fields.png" >}}
+{{< figure src="/media/docs/grafana/2024-01-05_loki-derived-fields.png" alt="Derived fields added based on a regular expression and an app label">}}
 
 ### InfluxDB native SQL support
 

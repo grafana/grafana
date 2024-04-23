@@ -18,8 +18,11 @@ type Scheduler struct {
 	EvalTotal                           *prometheus.CounterVec
 	EvalFailures                        *prometheus.CounterVec
 	EvalDuration                        *prometheus.HistogramVec
+	EvalAttemptTotal                    *prometheus.CounterVec
+	EvalAttemptFailures                 *prometheus.CounterVec
 	ProcessDuration                     *prometheus.HistogramVec
 	SendDuration                        *prometheus.HistogramVec
+	SimpleNotificationRules             *prometheus.GaugeVec
 	GroupRules                          *prometheus.GaugeVec
 	Groups                              *prometheus.GaugeVec
 	SchedulePeriodicDuration            prometheus.Histogram
@@ -71,6 +74,24 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 			},
 			[]string{"org"},
 		),
+		EvalAttemptTotal: promauto.With(r).NewCounterVec(
+			prometheus.CounterOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "rule_evaluation_attempts_total",
+				Help:      "The total number of rule evaluation attempts.",
+			},
+			[]string{"org"},
+		),
+		EvalAttemptFailures: promauto.With(r).NewCounterVec(
+			prometheus.CounterOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "rule_evaluation_attempt_failures_total",
+				Help:      "The total number of rule evaluation attempt failures.",
+			},
+			[]string{"org"},
+		),
 		ProcessDuration: promauto.With(r).NewHistogramVec(
 			prometheus.HistogramOpts{
 				Namespace: Namespace,
@@ -88,6 +109,15 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Name:      "rule_send_alerts_duration_seconds",
 				Help:      "The time to send the alerts to Alertmanager.",
 				Buckets:   []float64{.01, .1, .5, 1, 5, 10, 15, 30, 60, 120, 180, 240, 300},
+			},
+			[]string{"org"},
+		),
+		SimpleNotificationRules: promauto.With(r).NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "simple_routing_rules",
+				Help:      "The number of alert rules using simplified routing.",
 			},
 			[]string{"org"},
 		),

@@ -70,7 +70,8 @@ export const getCardContainerStyles = (
   theme: GrafanaTheme2,
   disabled = false,
   disableHover = false,
-  isSelected?: boolean
+  isSelected?: boolean,
+  isCompact?: boolean
 ) => {
   const isSelectable = isSelected !== undefined;
 
@@ -88,7 +89,7 @@ export const getCardContainerStyles = (
         "Figure Description Tags"
         "Figure Actions Secondary"`,
       width: '100%',
-      padding: theme.spacing(2),
+      padding: theme.spacing(isCompact ? 1 : 2),
       background: theme.colors.background.secondary,
       borderRadius: theme.shape.radius.default,
       marginBottom: '8px',

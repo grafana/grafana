@@ -13,7 +13,6 @@ import {
   dateTimeForTimeZone,
   hasQueryExportSupport,
   hasQueryImportSupport,
-  HistoryItem,
   LoadingState,
   LogsVolumeType,
   PanelEvents,
@@ -35,11 +34,11 @@ import {
   getTimeRange,
   hasNonEmptyQuery,
   stopQueryState,
-  updateHistory,
 } from 'app/core/utils/explore';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { getCorrelationsBySourceUIDs } from 'app/features/correlations/utils';
 import { infiniteScrollRefId } from 'app/features/logs/logsModel';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { SupportingQueryType } from 'app/plugins/datasource/loki/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
@@ -67,7 +66,7 @@ import {
 
 import { getCorrelations } from './correlations';
 import { saveCorrelationsAction } from './explorePane';
-import { addHistoryItem, historyUpdatedAction, loadRichHistory } from './history';
+import { addHistoryItem, loadRichHistory } from './history';
 import { changeCorrelationEditorDetails } from './main';
 import { updateTime } from './time';
 import {
@@ -478,25 +477,47 @@ export function modifyQueries(
   };
 }
 
+function filterQuery(datasource: DataSourceApi, query: DataQuery) {
+  if (datasource.filterQuery && !datasource.filterQuery(query)) {
+    return undefined; // if filterQuery is implemented and returns false, do not use query
+  } else {
+    return query; // if filterQuery is not implemented or it is and returns true, use it
+  }
+}
+
 async function handleHistory(
   dispatch: ThunkDispatch,
   state: ExploreState,
-  history: Array<HistoryItem<DataQuery>>,
   datasource: DataSourceApi,
-  queries: DataQuery[],
-  exploreId: string
+  queries: DataQuery[]
 ) {
-  const datasourceId = datasource.meta.id;
-  const nextHistory = updateHistory(history, datasourceId, queries);
-  dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
+  const filteredQueriesRes = await Promise.all(
+    queries.map(async (query) => {
+      if (query.datasource?.uid === datasource.uid) {
+        return filterQuery(datasource, query);
+      } else {
+        const queryDS = await getDatasourceSrv().get(query.datasource);
+        return filterQuery(queryDS, query);
+      }
+    })
+  );
 
-  dispatch(addHistoryItem(datasource.uid, datasource.name, queries));
+  const filteredQueries = filteredQueriesRes.filter((query): query is DataQuery => !!query);
 
-  // Because filtering happens in the backend we cannot add a new entry without checking if it matches currently
-  // used filters. Instead, we refresh the query history list.
-  // TODO: run only if Query History list is opened (#47252)
-  for (const exploreId in state.panes) {
-    await dispatch(loadRichHistory(exploreId));
+  if (filteredQueries.length > 0) {
+    /*
+  Always write to local storage. If query history is enabled, we will use local storage for autocomplete only (and want to hide errors)
+  If query history is disabled, we will use local storage for query history as well, and will want to show errors
+  */
+    dispatch(addHistoryItem(true, datasource.uid, datasource.name, filteredQueries, config.queryHistoryEnabled));
+    if (config.queryHistoryEnabled) {
+      // write to remote if flag enabled
+      dispatch(addHistoryItem(false, datasource.uid, datasource.name, filteredQueries, false));
+    }
+
+    // Because filtering happens in the backend we cannot add a new entry without checking if it matches currently
+    // used filters. Instead, we refresh the query history list.
+    await dispatch(loadRichHistory());
   }
 }
 
@@ -550,7 +571,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
     }));
 
     if (datasourceInstance != null) {
-      handleHistory(dispatch, getState().explore, exploreItemState.history, datasourceInstance, queries, exploreId);
+      handleHistory(dispatch, getState().explore, datasourceInstance, queries);
     }
 
     const cachedValue = getResultsFromCache(cache, absoluteRange);

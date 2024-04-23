@@ -3,7 +3,17 @@ import userEvent from '@testing-library/user-event';
 import React, { ComponentProps } from 'react';
 import { DatasourceSrvMock, MockDataSourceApi } from 'test/mocks/datasource_srv';
 
-import { LoadingState, createDataFrame, FieldType, LogsSortOrder, CoreApp } from '@grafana/data';
+import {
+  LoadingState,
+  createDataFrame,
+  FieldType,
+  LogsSortOrder,
+  CoreApp,
+  getDefaultTimeRange,
+  LogsDedupStrategy,
+  EventBusSrv,
+} from '@grafana/data';
+import * as styles from 'app/features/logs/components/getLogRowStyles';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
 
 import { LogsPanel } from './LogsPanel';
@@ -77,7 +87,7 @@ describe('LogsPanel', () => {
         options: { showCommonLabels: true, sortOrder: LogsSortOrder.Descending },
       });
       expect(await screen.findByText(/common labels:/i)).toBeInTheDocument();
-      expect(container.firstChild?.childNodes[0].textContent).toMatch(/^Common labels:common_appcommon_job/);
+      expect(container.firstChild?.childNodes[0].textContent).toMatch(/^Common labels:app=common_appjob=common_job/);
     });
     it('shows common labels on bottom when ascending sort order', async () => {
       const { container } = setup({
@@ -85,7 +95,7 @@ describe('LogsPanel', () => {
         options: { showCommonLabels: true, sortOrder: LogsSortOrder.Ascending },
       });
       expect(await screen.findByText(/common labels:/i)).toBeInTheDocument();
-      expect(container.firstChild?.childNodes[0].textContent).toMatch(/Common labels:common_appcommon_job$/);
+      expect(container.firstChild?.childNodes[0].textContent).toMatch(/Common labels:app=common_appjob=common_job$/);
     });
     it('does not show common labels when showCommonLabels is set to false', async () => {
       setup({ data: { series: seriesWithCommonLabels }, options: { showCommonLabels: false } });
@@ -252,15 +262,76 @@ describe('LogsPanel', () => {
       });
     });
   });
+
+  describe('Performance regressions', () => {
+    const series = [
+      createDataFrame({
+        refId: 'A',
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: ['2019-04-26T09:28:11.352440161Z'],
+          },
+          {
+            name: 'message',
+            type: FieldType.string,
+            values: ['logline text'],
+            labels: {
+              app: 'common_app',
+              job: 'common_job',
+            },
+          },
+        ],
+      }),
+    ];
+
+    beforeEach(() => {
+      /**
+       * For the lack of a better option, we spy on getLogRowStyles calls to count re-renders.
+       */
+      jest.spyOn(styles, 'getLogRowStyles');
+      jest.mocked(styles.getLogRowStyles).mockClear();
+    });
+
+    it('does not rerender without changes', async () => {
+      const { rerender, props } = setup({
+        data: {
+          series,
+        },
+      });
+
+      expect(await screen.findByRole('row')).toBeInTheDocument();
+
+      rerender(<LogsPanel {...props} />);
+
+      expect(await screen.findByRole('row')).toBeInTheDocument();
+      expect(styles.getLogRowStyles).toHaveBeenCalledTimes(3);
+    });
+
+    it('rerenders when prop changes', async () => {
+      const { rerender, props } = setup({
+        data: {
+          series,
+        },
+      });
+
+      expect(await screen.findByRole('row')).toBeInTheDocument();
+
+      rerender(<LogsPanel {...props} data={{ ...props.data, series: [...series] }} />);
+
+      expect(await screen.findByRole('row')).toBeInTheDocument();
+      expect(jest.mocked(styles.getLogRowStyles).mock.calls.length).toBeGreaterThan(3);
+    });
+  });
 });
 
 const setup = (propsOverrides?: {}) => {
-  const props = {
+  const props: LogsPanelProps = {
     data: {
       error: undefined,
       request: {
         panelId: 4,
-        dashboardId: 123,
         app: 'dashboard',
         requestId: 'A',
         timezone: 'browser',
@@ -268,17 +339,44 @@ const setup = (propsOverrides?: {}) => {
         intervalMs: 30000,
         maxDataPoints: 823,
         targets: [],
-        range: {},
+        range: getDefaultTimeRange(),
+        scopedVars: {},
+        startTime: 1,
       },
       series: [],
       state: LoadingState.Done,
+      timeRange: getDefaultTimeRange(),
     },
     timeZone: 'utc',
-    options: {},
+    timeRange: getDefaultTimeRange(),
+    options: {
+      showLabels: false,
+      showTime: false,
+      wrapLogMessage: false,
+      showCommonLabels: false,
+      prettifyLogMessage: false,
+      sortOrder: LogsSortOrder.Descending,
+      dedupStrategy: LogsDedupStrategy.none,
+      enableLogDetails: false,
+      showLogContextToggle: false,
+    },
     title: 'Logs panel',
     id: 1,
+    transparent: false,
+    width: 400,
+    height: 100,
+    renderCounter: 0,
+    fieldConfig: {
+      defaults: {},
+      overrides: [],
+    },
+    eventBus: new EventBusSrv(),
+    onOptionsChange: jest.fn(),
+    onFieldConfigChange: jest.fn(),
+    replaceVariables: jest.fn(),
+    onChangeTimeRange: jest.fn(),
     ...propsOverrides,
-  } as unknown as LogsPanelProps;
+  };
 
-  return render(<LogsPanel {...props} />);
+  return { ...render(<LogsPanel {...props} />), props };
 };

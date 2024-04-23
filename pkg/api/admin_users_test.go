@@ -320,9 +320,9 @@ func Test_AdminUpdateUserPermissions(t *testing.T) {
 			case login.GenericOAuthModule:
 				socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{AllowAssignGrafanaAdmin: tc.allowAssignGrafanaAdmin, Enabled: tc.authEnabled, SkipOrgRoleSync: tc.skipOrgRoleSync}
 			case login.JWTModule:
-				cfg.JWTAuthEnabled = tc.authEnabled
-				cfg.JWTAuthSkipOrgRoleSync = tc.skipOrgRoleSync
-				cfg.JWTAuthAllowAssignGrafanaAdmin = tc.allowAssignGrafanaAdmin
+				cfg.JWTAuth.Enabled = tc.authEnabled
+				cfg.JWTAuth.SkipOrgRoleSync = tc.skipOrgRoleSync
+				cfg.JWTAuth.AllowAssignGrafanaAdmin = tc.allowAssignGrafanaAdmin
 			}
 
 			hs := &HTTPServer{
@@ -355,8 +355,9 @@ func putAdminScenario(t *testing.T, desc string, url string, routePattern string
 		hs := &HTTPServer{
 			Cfg:             setting.NewCfg(),
 			SQLStore:        sqlStore,
-			authInfoService: &authinfotest.FakeService{},
+			authInfoService: &authinfotest.FakeService{ExpectedError: user.ErrUserNotFound},
 			userService:     userSvc,
+			SocialService:   &mockSocialService{},
 		}
 
 		sc := setupScenarioContext(t, url)

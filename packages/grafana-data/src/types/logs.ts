@@ -55,7 +55,7 @@ export interface LogRowModel {
   // the same as rows final index when rendered.
   rowIndex: number;
 
-  // The value of the the dataframe's id field, if it exists
+  // The value of the dataframe's id field, if it exists
   rowId?: string;
 
   // Full DataFrame from which we parsed this log.
@@ -185,6 +185,7 @@ export type SupplementaryQueryOptions = LogsVolumeOption | LogsSampleOptions;
  */
 export type LogsVolumeOption = {
   type: SupplementaryQueryType.LogsVolume;
+  field?: string;
 };
 
 /**
@@ -237,7 +238,8 @@ export interface DataSourceWithSupplementaryQueriesSupport<TQuery extends DataQu
    */
   getSupplementaryRequest?(
     type: SupplementaryQueryType,
-    request: DataQueryRequest<TQuery>
+    request: DataQueryRequest<TQuery>,
+    options?: SupplementaryQueryOptions
   ): DataQueryRequest<TQuery> | undefined;
   /**
    * Returns supplementary query types that data source supports.

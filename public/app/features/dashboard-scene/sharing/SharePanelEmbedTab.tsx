@@ -15,7 +15,6 @@ import { SceneShareTabState } from './types';
 
 export interface SharePanelEmbedTabState extends SceneShareTabState {
   panelRef: SceneObjectRef<VizPanel>;
-  dashboardRef: SceneObjectRef<DashboardScene>;
 }
 
 export class SharePanelEmbedTab extends SceneObjectBase<SharePanelEmbedTabState> {
@@ -69,6 +68,7 @@ const getIframeBuilder =
     params.set('panelId', panelId);
     params.delete('editPanel');
     params.delete('viewPanel');
+    params.set('__feature.dashboardSceneSolo', 'true');
 
     const soloUrl = getDashboardUrl({
       absolute: true,

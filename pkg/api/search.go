@@ -31,7 +31,7 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 	permission := dashboardaccess.PERMISSION_VIEW
 
 	if limit > 5000 {
-		return response.Error(422, "Limit is above maximum allowed (5000), use page parameter to access hits beyond limit", nil)
+		return response.Error(http.StatusUnprocessableEntity, "Limit is above maximum allowed (5000), use page parameter to access hits beyond limit", nil)
 	}
 
 	if c.Query("permission") == "Edit" {
@@ -67,7 +67,7 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 	bothFolderIds := len(folderIDs) > 0 && len(folderUIDs) > 0
 
 	if bothDashboardIds || bothFolderIds {
-		return response.Error(400, "search supports UIDs or IDs, not both", nil)
+		return response.Error(http.StatusBadRequest, "search supports UIDs or IDs, not both", nil)
 	}
 
 	searchQuery := search.Query{
@@ -89,7 +89,7 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 
 	hits, err := hs.SearchService.SearchHandler(c.Req.Context(), &searchQuery)
 	if err != nil {
-		return response.Error(500, "Search failed", err)
+		return response.Error(http.StatusInternalServerError, "Search failed", err)
 	}
 
 	defer c.TimeRequest(metrics.MApiDashboardSearch)

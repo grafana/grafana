@@ -7,6 +7,7 @@ import { Monaco } from '@grafana/ui';
 
 import { loadScriptIntoSandbox } from './code_loader';
 import { forbiddenElements } from './constants';
+import { recursivePatchObjectAsLiveTarget } from './document_sandbox';
 import { SandboxEnvironment } from './types';
 import { logWarning, unboxRegexesFromMembraneProxy } from './utils';
 
@@ -85,6 +86,7 @@ export function getGeneralSandboxDistortionMap() {
     distortDocument(generalDistortionMap);
     distortMonacoEditor(generalDistortionMap);
     distortPostMessage(generalDistortionMap);
+    distortLodash(generalDistortionMap);
   }
   return generalDistortionMap;
 }
@@ -526,7 +528,32 @@ async function distortPostMessage(distortions: DistortionMap) {
  * or because the libraries we want to patch are lazy-loaded and we don't have access to their definitions.
  * We put here only distortions that can't be static because they are dynamicly loaded
  */
-export function distortLiveApis(originalValue: ProxyTarget): ProxyTarget | undefined {
+export function distortLiveApis(_originalValue: ProxyTarget): ProxyTarget | undefined {
   distortMonacoEditor(generalDistortionMap);
   return;
+}
+
+export function distortLodash(distortions: DistortionMap) {
+  /**
+   * This is a distortion for lodash clone Deep function
+   * because lodash deep clones execute in the blue realm
+   * it returns objects that plugins can't modify because they are not
+   * lived tracked.
+   *
+   * We need to patch it so that plugins can modify the cloned object
+   * in places such as query editors.
+   *
+   */
+  function cloneDeepDistortion(originalValue: unknown) {
+    // here to please typescript, this if is never true
+    if (!isFunction(originalValue)) {
+      return originalValue;
+    }
+    return function (this: unknown, ...args: unknown[]) {
+      const cloned = originalValue.apply(this, args);
+      recursivePatchObjectAsLiveTarget(cloned);
+      return cloned;
+    };
+  }
+  distortions.set(cloneDeep, cloneDeepDistortion);
 }

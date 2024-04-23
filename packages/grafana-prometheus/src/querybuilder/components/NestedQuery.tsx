@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/NestedQuery.tsx
 import { css } from '@emotion/css';
 import React from 'react';
 
@@ -11,7 +12,7 @@ import { PromVisualQueryBinary } from '../types';
 
 import { PromQueryBuilder } from './PromQueryBuilder';
 
-export interface Props {
+export interface NestedQueryProps {
   nestedQuery: PromVisualQueryBinary;
   datasource: PrometheusDatasource;
   index: number;
@@ -21,7 +22,7 @@ export interface Props {
   showExplain: boolean;
 }
 
-export const NestedQuery = React.memo<Props>((props) => {
+export const NestedQuery = React.memo<NestedQueryProps>((props) => {
   const { nestedQuery, index, datasource, onChange, onRemove, onRunQuery, showExplain } = props;
   const styles = useStyles2(getStyles);
 

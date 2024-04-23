@@ -7,6 +7,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { CodeEditor, Monaco, monacoTypes, useTheme2 } from '@grafana/ui';
 
 import { TempoDatasource } from '../datasource';
+import { TempoQuery } from '../types';
 
 import { CompletionProvider, CompletionType } from './autocomplete';
 import { getErrorNodes, setMarkers } from './highlighting';
@@ -14,20 +15,31 @@ import { languageDefinition } from './traceql';
 
 interface Props {
   placeholder: string;
-  value: string;
-  onChange: (val: string) => void;
+  query: TempoQuery;
+  onChange: (val: TempoQuery) => void;
   onRunQuery: () => void;
   datasource: TempoDatasource;
   readOnly?: boolean;
 }
 
 export function TraceQLEditor(props: Props) {
-  const [alertText, setAlertText] = useState('');
+  const [alertText, setAlertText] = useState<string>();
 
-  const { onChange, onRunQuery, placeholder } = props;
+  const { query, onChange, onRunQuery, placeholder } = props;
   const setupAutocompleteFn = useAutocomplete(props.datasource, setAlertText);
   const theme = useTheme2();
   const styles = getStyles(theme, placeholder);
+
+  // The Monaco Editor uses the first version of props.onChange in handleOnMount i.e. always has the initial
+  // value of query because underlying Monaco editor is passed `query` below in the onEditorChange callback.
+  // handleOnMount is called only once when the editor is mounted and does not get updates to query.
+  // So we need useRef to get the latest version of query in the onEditorChange callback.
+  const queryRef = useRef(query);
+  queryRef.current = query;
+  const onEditorChange = (value: string) => {
+    onChange({ ...queryRef.current, query: value });
+  };
+
   // work around the problem that `onEditorDidMount` is called once
   // and wouldn't get new version of onRunQuery
   const onRunQueryRef = useRef(onRunQuery);
@@ -38,10 +50,10 @@ export function TraceQLEditor(props: Props) {
   return (
     <>
       <CodeEditor
-        value={props.value}
+        value={query.query || ''}
         language={langId}
-        onBlur={onChange}
-        onChange={onChange}
+        onBlur={onEditorChange}
+        onChange={onEditorChange}
         containerStyles={styles.queryField}
         readOnly={props.readOnly}
         monacoOptions={{
@@ -104,7 +116,7 @@ export function TraceQLEditor(props: Props) {
           });
         }}
       />
-      {alertText && <TemporaryAlert severity={'error'} text={alertText} />}
+      {alertText && <TemporaryAlert severity="error" text={alertText} />}
     </>
   );
 }
@@ -181,23 +193,23 @@ function setupAutoSize(editor: monacoTypes.editor.IStandaloneCodeEditor) {
  * @param datasource the Tempo datasource instance
  * @param setAlertText setter for alert's text
  */
-function useAutocomplete(datasource: TempoDatasource, setAlertText: (text: string) => void) {
+function useAutocomplete(datasource: TempoDatasource, setAlertText: (text?: string) => void) {
   // We need the provider ref so we can pass it the label/values data later. This is because we run the call for the
   // values here but there is additional setup needed for the provider later on. We could run the getSeries() in the
   // returned function but that is run after the monaco is mounted so would delay the request a bit when it does not
   // need to.
   const providerRef = useRef<CompletionProvider>(
-    new CompletionProvider({ languageProvider: datasource.languageProvider })
+    new CompletionProvider({ languageProvider: datasource.languageProvider, setAlertText })
   );
 
   useEffect(() => {
     const fetchTags = async () => {
       try {
         await datasource.languageProvider.start();
+        setAlertText(undefined);
       } catch (error) {
         if (error instanceof Error) {
-          console.error(error);
-          setAlertText(error.message);
+          setAlertText(`Error: ${error.message}`);
         }
       }
     };

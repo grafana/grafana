@@ -3,10 +3,11 @@ import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event'
 import React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
-import { byRole, byText } from 'testing-library-selector';
+import { byText } from 'testing-library-selector';
 
 import { setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
+import { mockApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { AccessControlAction } from 'app/types';
 import { PromApplication } from 'app/types/unified-alerting-dto';
 
@@ -72,6 +73,7 @@ jest.mock('@grafana/runtime', () => ({
   getDataSourceSrv: jest.fn(() => ({
     getInstanceSettings: () => dataSources.default,
     get: () => dataSources.default,
+    getList: () => Object.values(dataSources),
   })),
 }));
 
@@ -92,8 +94,11 @@ const mocks = {
 
 const getLabelInput = (selector: HTMLElement) => within(selector).getByRole('combobox');
 
+const server = setupMswServer();
+
 describe('RuleEditor recording rules', () => {
   beforeEach(() => {
+    mockApi(server).eval({ results: {} });
     jest.clearAllMocks();
     contextSrv.isEditor = true;
     contextSrv.hasEditPermissionInFolders = true;
@@ -149,9 +154,9 @@ describe('RuleEditor recording rules', () => {
     await userEvent.type(await ui.inputs.name.find(), 'my great new recording rule');
 
     const dataSourceSelect = ui.inputs.dataSource.get();
-    await userEvent.click(byRole('combobox').get(dataSourceSelect));
+    await userEvent.click(dataSourceSelect);
 
-    await clickSelectOption(dataSourceSelect, 'Prom (default)');
+    await userEvent.click(screen.getByText('Prom'));
     await clickSelectOption(ui.inputs.namespace.get(), 'namespace2');
     await clickSelectOption(ui.inputs.group.get(), 'group2');
 

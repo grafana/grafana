@@ -67,15 +67,16 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 	}
 
 	parentUID := ""
-	fieldRequirements, fieldSelector, err := entity.ReadFieldRequirements(options.FieldSelector)
+	// translate grafana.app/* label selectors into field requirements
+	requirements, newSelector, err := entity.ReadLabelSelectors(options.LabelSelector)
 	if err != nil {
 		return nil, err
 	}
-	if fieldRequirements.Folder != nil {
-		parentUID = *fieldRequirements.Folder
+	if requirements.Folder != nil {
+		parentUID = *requirements.Folder
 	}
-	// Update the field selector to remove the unneeded selectors
-	options.FieldSelector = fieldSelector
+	// Update the selector to remove the unneeded requirements
+	options.LabelSelector = newSelector
 
 	paging, err := readContinueToken(options)
 	if err != nil {

@@ -15,7 +15,7 @@ type MockOauthTokenService struct {
 	IsOAuthPassThruEnabledFunc func(ds *datasources.DataSource) bool
 	HasOAuthEntryFunc          func(ctx context.Context, usr identity.Requester) (*login.UserAuth, bool, error)
 	InvalidateOAuthTokensFunc  func(ctx context.Context, usr *login.UserAuth) error
-	TryTokenRefreshFunc        func(ctx context.Context, usr *login.UserAuth) error
+	TryTokenRefreshFunc        func(ctx context.Context, usr identity.Requester) error
 }
 
 func (m *MockOauthTokenService) GetCurrentOAuthToken(ctx context.Context, usr identity.Requester) *oauth2.Token {
@@ -46,7 +46,7 @@ func (m *MockOauthTokenService) InvalidateOAuthTokens(ctx context.Context, usr *
 	return nil
 }
 
-func (m *MockOauthTokenService) TryTokenRefresh(ctx context.Context, usr *login.UserAuth) error {
+func (m *MockOauthTokenService) TryTokenRefresh(ctx context.Context, usr identity.Requester) error {
 	if m.TryTokenRefreshFunc != nil {
 		return m.TryTokenRefreshFunc(ctx, usr)
 	}

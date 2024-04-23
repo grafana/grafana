@@ -6,7 +6,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 	"github.com/stretchr/testify/assert"
@@ -31,7 +30,7 @@ func TestMetricsClient(t *testing.T) {
 	t.Run("List Metrics and page limit is reached", func(t *testing.T) {
 		pageLimit := 3
 		fakeApi := &mocks.FakeMetricsAPI{Metrics: metrics, MetricsPerPage: 2}
-		client := NewMetricsClient(fakeApi, &setting.Cfg{AWSListMetricsPageLimit: pageLimit})
+		client := NewMetricsClient(fakeApi, pageLimit)
 		response, err := client.ListMetricsWithPageLimit(ctx, &cloudwatch.ListMetricsInput{})
 		require.NoError(t, err)
 
@@ -42,7 +41,7 @@ func TestMetricsClient(t *testing.T) {
 	t.Run("List Metrics and page limit is not reached", func(t *testing.T) {
 		pageLimit := 2
 		fakeApi := &mocks.FakeMetricsAPI{Metrics: metrics}
-		client := NewMetricsClient(fakeApi, &setting.Cfg{AWSListMetricsPageLimit: pageLimit})
+		client := NewMetricsClient(fakeApi, pageLimit)
 
 		response, err := client.ListMetricsWithPageLimit(ctx, &cloudwatch.ListMetricsInput{})
 		require.NoError(t, err)
@@ -56,7 +55,7 @@ func TestMetricsClient(t *testing.T) {
 			{MetricName: aws.String("Test_MetricName2")},
 			{MetricName: aws.String("Test_MetricName3")},
 		}, OwningAccounts: []*string{aws.String("1234567890"), aws.String("1234567890"), aws.String("1234567895")}}
-		client := NewMetricsClient(fakeApi, &setting.Cfg{AWSListMetricsPageLimit: 100})
+		client := NewMetricsClient(fakeApi, 100)
 
 		response, err := client.ListMetricsWithPageLimit(ctx, &cloudwatch.ListMetricsInput{IncludeLinkedAccounts: aws.Bool(true)})
 		require.NoError(t, err)
@@ -70,7 +69,7 @@ func TestMetricsClient(t *testing.T) {
 
 	t.Run("Should not return account id in case IncludeLinkedAccounts is set to false", func(t *testing.T) {
 		fakeApi := &mocks.FakeMetricsAPI{Metrics: []*cloudwatch.Metric{{MetricName: aws.String("Test_MetricName1")}}, OwningAccounts: []*string{aws.String("1234567890")}}
-		client := NewMetricsClient(fakeApi, &setting.Cfg{AWSListMetricsPageLimit: 100})
+		client := NewMetricsClient(fakeApi, 100)
 
 		response, err := client.ListMetricsWithPageLimit(ctx, &cloudwatch.ListMetricsInput{IncludeLinkedAccounts: aws.Bool(false)})
 		require.NoError(t, err)

@@ -13,8 +13,13 @@ type Service struct {
 	store store
 }
 
-func ProvideService(db db.DB, cfg *setting.Cfg) team.Service {
-	return &Service{store: &xormStore{db: db, cfg: cfg, deletes: []string{}}}
+func ProvideService(db db.DB, cfg *setting.Cfg) (team.Service, error) {
+	store := &xormStore{db: db, cfg: cfg, deletes: []string{}}
+
+	if err := store.uidMigration(); err != nil {
+		return nil, err
+	}
+	return &Service{store: &xormStore{db: db, cfg: cfg, deletes: []string{}}}, nil
 }
 
 func (s *Service) CreateTeam(name, email string, orgID int64) (team.Team, error) {
@@ -45,8 +50,8 @@ func (s *Service) GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsBy
 	return s.store.GetIDsByUser(ctx, query)
 }
 
-func (s *Service) AddTeamMember(userID, orgID, teamID int64, isExternal bool, permission dashboardaccess.PermissionType) error {
-	return s.store.AddMember(userID, orgID, teamID, isExternal, permission)
+func (s *Service) AddTeamMember(ctx context.Context, userID, orgID, teamID int64, isExternal bool, permission dashboardaccess.PermissionType) error {
+	return s.store.AddMember(ctx, userID, orgID, teamID, isExternal, permission)
 }
 
 func (s *Service) UpdateTeamMember(ctx context.Context, cmd *team.UpdateTeamMemberCommand) error {

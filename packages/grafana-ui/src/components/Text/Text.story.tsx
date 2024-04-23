@@ -2,7 +2,7 @@ import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
 import { StoryExample } from '../../utils/storybook/StoryExample';
-import { VerticalGroup } from '../Layout/Layout';
+import { Stack } from '../Layout/Stack/Stack';
 
 import { Text } from './Text';
 import mdx from './Text.mdx';
@@ -16,7 +16,10 @@ const meta: Meta = {
     },
   },
   argTypes: {
-    variant: { control: 'select', options: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'body', 'bodySmall', undefined] },
+    variant: {
+      control: 'select',
+      options: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'body', 'bodySmall', 'code', undefined],
+    },
     weight: {
       control: 'select',
       options: ['bold', 'medium', 'light', 'regular', undefined],
@@ -57,7 +60,7 @@ const meta: Meta = {
 
 export const Example: StoryFn = (args) => {
   return (
-    <VerticalGroup>
+    <Stack direction="column">
       <StoryExample name="Header, paragraph and span">
         <Text {...args} element="h1">
           This is a header
@@ -81,7 +84,7 @@ export const Example: StoryFn = (args) => {
           but has truncate set to true
         </Text>
       </StoryExample>
-    </VerticalGroup>
+    </Stack>
   );
 };
 

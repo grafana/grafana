@@ -28,9 +28,9 @@ Legends are supported for the following visualizations:
 - [Status history][status history]
 - [Time series][time series]
 - [Trend][trend]
-<!-- - xy chart -->
+- [XY chart][xy chart]
 
-[Geomaps][] and [heatmaps][] also have legends, but they only provide the the choice to display or not display a legend and don't support other legend options.
+[Geomaps][] and [heatmaps][] also have legends, but they only provide the choice to display or not display a legend and don't support other legend options.
 
 ## Legend options
 
@@ -151,4 +151,7 @@ This feature is only supported for the following visualizations: bar chart, hist
 
 [heatmaps]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/heatmap"
 [heatmaps]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/heatmap"
+
+[xy chart]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/xy-chart"
+[xy chart]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/xy-chart"
 {{% /docs/reference %}}
