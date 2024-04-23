@@ -1,7 +1,7 @@
 ---
 aliases:
   - 
-description: Learn more about Grafana Mimir’s microservices-based architecture.
+description: Learn how to administer Grafana Teams.
 labels:
   products:
     - enterprise
@@ -33,16 +33,24 @@ To view a list of teams:
 
 ### Organization administrator view
 
-The following example shows a list as it appears to an organization administrator.
+The following example shows a list as it appears to an `organization` administrator.
+
+![Team list view for org admin](/media/docs/grafana/screenshot-org-admin-team-list.png)
 
 ### Team administrator view
 
-The following example shows a list as it appears to a team administrator.
- 
+The following example shows a list as it appears to a `team` administrator.
+
+![Team list view for team admin](/media/docs/grafana/screenshot-team-admin-team-list.png)
+
 
 ## Teams best practices
 
 Grafana recommends you use Teams to organize and manage access to Grafana’s core resources, such as dashboards and alerts. Teams is an easy organizational tool to manage, and allows flexible sharing between teams.  
 
-Grafana recommends that you use Instances or Stacks to separate Teams if you want true isolation — to make sure that no information leaks between teams. You can synchronize some resources between instances using provisioning.
+Grafana recommends that you use Instances or Stacks to separate Teams if you want true isolation, to ensure that no information leaks between Teams. You can synchronize some resources between instances using provisioning.
+
+## Securing Grafana Teams
+
+The most important thing to consider for securing Teams is to only grant team admin rights to the users you trust to administer the Team.
 

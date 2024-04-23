@@ -28,11 +28,11 @@ Before you begin creating and working with Grafana Teams:
 
 - Ensure that you have either the `Organization Administrator` role or team administrator permissions. Refer to [Organization roles](https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/#organization-roles) and [RBAC permissions, actions, and scopes](https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/#rbac-permissions-actions-and-scopes) for a list of Grafana roles and role-based access control actions.
 - Decide which users belong to which teams and what permissions team members receive.
-- Configure the default basic role for users to join Grafana. This role is applied to users where no role is set by the identity provider (IDP)
-  - No basic role - by default cannot view any resources - recommended for isolated teams
-  - Viewer role - by default can view all resources - recommended for collaborative teams
+- Configure the default basic role for users to join Grafana. This role applies to users where no role is set by the identity provider (IDP).
+  - No basic role - by default cannot view any resources. Recommended for `isolated` teams.
+  - Viewer role - by default can view all resources. Recommended for `collaborative` teams.
 - Ensure team sync is turned on if you plan to manage team members through team sync. Refer to [Configure Team Sync](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-team-sync/)  for  a list of providers and instructions on how to turn on team sync for each provider.
-<!-- - Turn on nested folders.  __This is a new feature.__ -->
+<!-- - Turn on nested folders.  __This is a new feature, add when it goes live.__ -->
 
 {{< admonition type="note" >}}
 [Grafana Organizations](https://grafana.com/docs/grafana/latest/administration/organization-management/) do not exist in Grafana Cloud. Grafana Cloud uses the term “organization” to refer to accounts in grafana.com, or GCOM. In Grafana Enterprise and OSS, Teams belong to Grafana Organizations. Refer to [About organizations](/docs/grafana/latest/administration/organization-management/#about-organizations) for more information.
@@ -43,11 +43,14 @@ Before you begin creating and working with Grafana Teams:
 A team is a group of users within a Grafana instance that have common permissions needs. Teams to help make user-permission management more efficient. A user can belong to multiple Teams.
 Grafana Teams includes common access to the following:
 
-- Dashboards
-- Data sources
-- Folders
-- Alerts
-- Reports
+- dashboards
+- data sources
+- folders
+- alerts
+- reports
+- cloud access policies
+- annotations
+- playlists
 
 To create a Team, complete the following steps:
 
@@ -104,3 +107,107 @@ Delete a team when you no longer need it. This action permanently deletes the te
 1. Click the **red X** on the right side of the name of the team.
 1. Click **Delete**.
 
+## Create isolated or collaborative teams
+
+Grafana Teams can either be `isolated` or `collaborative`. Isolated teams can only see their own resources. They cannot see other team’s dashboards, data, alerts, etc. Collaborative teams have access to other team’s resources. Grafana Cloud users must contact Support.
+
+To create an isolated team add the following to the Grafana configuration file:
+
+```
+auto_assign_org_role = None
+role_attribute_path = contains(groups[*], 'admin') && 'Admin' || 'None'
+```
+
+To create a collaborative team add the following to the Grafana configuration file:
+
+```
+auto_assign_org_role = Viewer
+role_attribute_path = contains(groups[*], 'admin') && 'Admin' || 'None'
+```
+You can also use a terraform script as shown in the following example:
+
+```terraform
+terraform {  
+  required_providers {  
+    grafana = {  
+      source = "grafana/grafana"  
+    }  
+  }  
+}  
+  
+provider "grafana" {  
+  url  = "http://localhost:3000/"  
+  auth = "admin:admin"  
+}  
+
+resource "grafana_folder" "awesome_folder" {
+  title = "Awesome Team Folder"
+}
+
+
+resource "grafana_team" "awesome-team" {
+  name  = "Awesome Team"
+}
+
+resource "grafana_team_external_group" "awesome-team-group" {
+  team_id = grafana_team.awesome-team.id
+  groups = [
+    "Awesome_group"
+  ]
+}
+
+resource "grafana_role" "team_role" {
+  name  = "team_role"
+  uid = "team_role"
+  version = 4
+  global = true
+
+  permissions {
+    action = "datasources:create"
+  }
+
+  permissions {
+    action = "serviceaccounts:create"
+  }
+
+  # below should be deleted after bug fix to view service accounts
+  permissions {
+    action = "users.roles:read"
+    scope = "users:id:*"
+  }
+
+}  
+
+resource "grafana_role_assignment" "assign_role" {
+  role_uid         = grafana_role.team_role.uid
+  teams            = [grafana_team.awesome-team.id]
+}
+
+resource "grafana_service_account" "awesome_service_account" {
+  name        = "awesome_service_account"
+  role        = "None"
+  is_disabled = false
+}
+
+resource "grafana_service_account_permission" "awesome_service_account_permissions" {
+  service_account_id = grafana_service_account.awesome_service_account.id
+
+  permissions {
+    team_id    = grafana_team.awesome-team.id
+    permission = "Admin"
+  }
+}
+
+resource "grafana_folder_permission" "awesome_folder_permission" {
+  folder_uid = grafana_folder.awesome_folder.uid
+  permissions {
+    team_id    = grafana_team.awesome-team.id
+    permission = "Admin"
+  }
+
+  permissions {
+    user_id = grafana_service_account.awesome_service_account.id
+    permission = "Admin"
+  }
+}
+```
