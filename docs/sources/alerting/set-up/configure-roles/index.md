@@ -42,14 +42,9 @@ To assign roles, admins need to complete the following steps.
 
 ## Manage access using folder permissions
 
-You can further customize access for alert rules, simplified alert routing, and provisioning by assigning permissions to individual folders.
+You can further customize access for alert rules by assigning permissions to individual folders.
 
 This prevents every user from having access to modify all alert rules and gives them access to the folders with the alert rules they're working on.
-
-For example, if you are using simplified alert routing and adding contact points to your alert rules, it also helps you avoid the scenario where someone from another team accidentally removes the wrong notification policy or adds a competing one, and all of a sudden you stop getting your notifications.
-
-In this case, you would assign the **Viewer** role and then add **Editor** permission to the folder.
-Adding the **Editor** permission to the folder doesn't overwrite the **Viewer** role.
 
 Details on the adding folder permissions as well as roles and the access that provides for Grafana Alerting is below.
 
@@ -69,8 +64,5 @@ To manage folder permissions, complete the following steps.
 
 1. In the left-side menu, click **Dashboards**.
 1. Hover your mouse cursor over a folder and click **Go to folder**.
-1. Click the **Permissions** tab.
-1. Click **Add a permission**.
-1. Select the user, service account, team, or role.
-1. Select **Viewer, Editor or Admin**.
-1. Click **Save**.
+1. Click **Manage permissions** from the Folder actions menu.
+1. Update or add permissions as required.
