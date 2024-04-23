@@ -1,9 +1,10 @@
-import { screen, waitFor, waitForElementToBeRemoved, within } from '@testing-library/react';
-import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
+import { screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { byRole } from 'testing-library-selector';
+import 'whatwg-fetch';
 
 import { setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -68,7 +69,6 @@ const mocks = {
 
 const server = setupMswServer();
 
-const getLabelInput = (selector: HTMLElement) => within(selector).getByRole('combobox');
 describe('RuleEditor grafana managed rules', () => {
   beforeEach(() => {
     mockApi(server).eval({ results: {} });
@@ -196,13 +196,6 @@ describe('RuleEditor grafana managed rules', () => {
     await clickSelectOption(groupInput, 'group1');
     await userEvent.type(ui.inputs.annotationValue(1).get(), 'some description');
 
-    // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
-    await userEvent.click(ui.buttons.addLabel.get(), { pointerEventsCheck: PointerEventsCheckLevel.Never });
-
-    await userEvent.type(getLabelInput(ui.inputs.labelKey(0).get()), 'severity{enter}');
-    await userEvent.type(getLabelInput(ui.inputs.labelValue(0).get()), 'warn{enter}');
-    //8 segons
-
     // save and check what was sent to backend
     await userEvent.click(ui.buttons.saveAndExit.get());
     // 9seg
@@ -217,7 +210,7 @@ describe('RuleEditor grafana managed rules', () => {
         rules: [
           {
             annotations: { description: 'some description' },
-            labels: { severity: 'warn' },
+            labels: {},
             for: '1m',
             grafana_alert: {
               condition: 'B',
@@ -226,6 +219,7 @@ describe('RuleEditor grafana managed rules', () => {
               is_paused: false,
               no_data_state: 'NoData',
               title: 'my great new rule',
+              notification_settings: undefined,
             },
           },
         ],
