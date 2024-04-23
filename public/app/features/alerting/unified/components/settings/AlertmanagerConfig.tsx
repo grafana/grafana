@@ -28,6 +28,7 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss, onSave
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
 
   const readOnly = alertmanagerName ? isVanillaPrometheusAlertManagerDataSource(alertmanagerName) : false;
+  const isGrafanaManagedAlertmanager = alertmanagerName === GRAFANA_RULES_SOURCE_NAME;
   const styles = useStyles2(getStyles);
 
   const {
@@ -91,7 +92,7 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss, onSave
   if (loadingError) {
     return (
       <Alert severity="error" title="Failed to load Alertmanager configuration">
-        {loadingError.message ?? 'An unkown error occurred.'}
+        {loadingError.message ?? 'An unknown error occurred.'}
       </Alert>
     );
   }
@@ -100,10 +101,14 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss, onSave
   if (isDeleting) {
     return (
       <Alert severity="info" title="Resetting Alertmanager configuration">
-        It might take a while...
+        Resetting configuration, this might take a while.
       </Alert>
     );
   }
+
+  const confirmationText = isGrafanaManagedAlertmanager
+    ? `Are you sure you want to reset configuration for the Grafana Alertmanager? Contact points and notification policies will be reset to their defaults.`
+    : `Are you sure you want to reset configuration for "${alertmanagerName}"? Contact points and notification policies will be reset to their defaults.`;
 
   return (
     <div className={styles.container}>
@@ -118,22 +123,20 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss, onSave
         <div className={styles.content}>
           <AutoSizer>
             {({ height, width }) => (
-              <>
-                <CodeEditor
-                  language="json"
-                  width={width}
-                  height={height}
-                  showLineNumbers={true}
-                  monacoOptions={{
-                    scrollBeyondLastLine: false,
-                  }}
-                  value={defaultValues.configJSON}
-                  showMiniMap={false}
-                  onSave={(value) => setValue('configJSON', value)}
-                  onBlur={(value) => setValue('configJSON', value)}
-                  readOnly={isOperating}
-                />
-              </>
+              <CodeEditor
+                language="json"
+                width={width}
+                height={height}
+                showLineNumbers={true}
+                monacoOptions={{
+                  scrollBeyondLastLine: false,
+                }}
+                value={defaultValues.configJSON}
+                showMiniMap={false}
+                onSave={(value) => setValue('configJSON', value)}
+                onBlur={(value) => setValue('configJSON', value)}
+                readOnly={isOperating}
+              />
             )}
           </AutoSizer>
         </div>
@@ -141,7 +144,7 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss, onSave
 
       {!readOnly && (
         <Stack justifyContent="flex-end">
-          <Button variant="destructive" disabled={isOperating} onClick={() => setShowResetConfirmation(true)}>
+          <Button variant="destructive" onClick={() => setShowResetConfirmation(true)} disabled={isOperating}>
             Reset
           </Button>
           <Spacer />
@@ -156,9 +159,7 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss, onSave
       <ConfirmModal
         isOpen={showResetConfirmation}
         title="Reset Alertmanager configuration"
-        body={`Are you sure you want to reset configuration ${
-          alertmanagerName === GRAFANA_RULES_SOURCE_NAME ? 'for the Grafana Alertmanager' : `for "${alertmanagerName}"`
-        }? Contact points and notification policies will be reset to their defaults.`}
+        body={confirmationText}
         confirmText="Yes, reset configuration"
         onConfirm={() => {
           onReset(alertmanagerName);

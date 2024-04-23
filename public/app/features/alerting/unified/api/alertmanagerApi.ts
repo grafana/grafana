@@ -120,9 +120,10 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
     getValidAlertManagersConfig: build.query<AlertManagerCortexConfig[], void>({
       //this is only available for the "grafana" alert manager
       query: () => ({
-        url: `/api/alertmanager/${getDatasourceAPIUid(
-          GRAFANA_RULES_SOURCE_NAME
-        )}/config/history?limit=${ALERTMANAGER_CONFIGURATION_CONFIGURATION_HISTORY_LIMIT}`,
+        url: `/api/alertmanager/${getDatasourceAPIUid(GRAFANA_RULES_SOURCE_NAME)}/config/history`,
+        params: {
+          limit: ALERTMANAGER_CONFIGURATION_CONFIGURATION_HISTORY_LIMIT,
+        },
       }),
     }),
 

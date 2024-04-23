@@ -5,7 +5,7 @@ import { alertmanagerApi } from '../api/alertmanagerApi';
 import { dataSourcesApi } from '../api/dataSourcesApi';
 import { isAlertmanagerDataSource } from '../utils/datasource';
 
-type ConnectionStatus = 'active' | 'pending' | 'dropped' | 'inconclusive' | 'uninterested' | 'unknown';
+export type ConnectionStatus = 'active' | 'pending' | 'dropped' | 'inconclusive' | 'uninterested' | 'unknown';
 
 export interface ExternalAlertmanagerDataSourceWithStatus {
   dataSourceSettings: DataSourceSettings<AlertManagerDataSourceJsonData>;
@@ -113,5 +113,5 @@ export function normalizeDataSourceURL(url: string) {
   const urlWithProtocol = hasProtocol ? url : `http://${url}`;
 
   // replace trailing slashes
-  return urlWithProtocol.replace(/\/$/, '');
+  return urlWithProtocol.replace(/\/+$/, '');
 }

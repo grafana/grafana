@@ -214,6 +214,18 @@ describe('normalizeDataSourceURL', () => {
     const normalizedURL = normalizeDataSourceURL(url);
     expect(normalizedURL).toBe('http://example.com');
   });
+
+  it('should remove multiple trailing slashes from the URL', () => {
+    const url = 'http://example.com///';
+    const normalizedURL = normalizeDataSourceURL(url);
+    expect(normalizedURL).toBe('http://example.com');
+  });
+
+  it('should keep paths from the URL', () => {
+    const url = 'http://example.com/foo//';
+    const normalizedURL = normalizeDataSourceURL(url);
+    expect(normalizedURL).toBe('http://example.com/foo');
+  });
 });
 
 function setupAlertmanagerDataSource(
