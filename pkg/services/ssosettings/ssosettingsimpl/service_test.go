@@ -982,7 +982,7 @@ func TestService_Upsert(t *testing.T) {
 	t.Run("returns error if a secret does not have the type string", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, nil)
+		env := setupTestEnv(t, false, false, false)
 
 		provider := social.OktaProviderName
 		settings := models.SSOSettings{
@@ -1074,7 +1074,7 @@ func TestService_Upsert(t *testing.T) {
 	t.Run("run validation with all new and current secrets available in settings", func(t *testing.T) {
 		t.Parallel()
 
-		env := setupTestEnv(t, false, false, nil)
+		env := setupTestEnv(t, false, false, false)
 
 		provider := social.AzureADProviderName
 		settings := models.SSOSettings{
