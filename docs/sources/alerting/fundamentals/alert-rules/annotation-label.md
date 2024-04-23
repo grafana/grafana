@@ -106,7 +106,7 @@ An alert's label set can contain three types of labels:
 You can also template labels. For example in your alert rule, you could add a label that uses templating to create more dynamic and customizable alerting. E.g. `environment` `=` `{{ your text/template }}`.
 
 {{<admonition type="note">}}
-Ensure the label set for an alert does not have two or more labels with the same name. If a label has the same name as a label from the datasource then it will replace that label. However, should a label have the same name as a reserved label then the label will be omitted from the alert.
+Ensure the label set for an alert does not have two or more labels with the same name. If a label has the same name as a label from the data source then it will replace that label. However, should a label have the same name as a reserved label then the label will be omitted from the alert.
 {{</admonition>}}
 
 {{< collapse title="Key format" >}}
