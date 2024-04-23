@@ -3,6 +3,21 @@ import { renderHook } from '@testing-library/react';
 import { useGetFormattedDate } from './hooks';
 
 describe('useGetFormattedDate', () => {
+  beforeAll(() => {
+    // Moment will console.warn about invalid dates
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    // @ts-expect-error
+    console.warn.mockClear();
+  });
+
+  afterAll(() => {
+    // @ts-expect-error
+    console.warn.mockRestore();
+  });
+
   it('should handle invalid date with seconds', () => {
     const { result } = renderHook(() => useGetFormattedDate(true));
     const formattedDate = result.current('invalid date');
@@ -10,6 +25,7 @@ describe('useGetFormattedDate', () => {
   });
 
   it('should handle invalid date without seconds', () => {
+    // jest.spyOn(console, 'warn').mockImplementation();
     const { result } = renderHook(() => useGetFormattedDate(false));
     const formattedDate = result.current('invalid date');
     expect(formattedDate).toMatch(/(\d){4}-(\d){2}-(\d){2} (\d){2}:(\d){2}/);
