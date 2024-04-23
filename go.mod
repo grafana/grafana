@@ -95,7 +95,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.24.0 // @grafana/grafana-backend-group
 	golang.org/x/crypto v0.21.0 // @grafana/grafana-backend-group
 	golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb // @grafana/alerting-squad-backend
-	golang.org/x/net v0.22.0 // @grafana/oss-big-tent @grafana/partner-datasources
+	golang.org/x/net v0.23.0 // @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/oauth2 v0.18.0 // @grafana/identity-access-team
 	golang.org/x/sync v0.6.0 // @grafana/alerting-squad-backend
 	golang.org/x/time v0.5.0 // @grafana/grafana-backend-group
@@ -469,11 +469,11 @@ require (
 	github.com/xwb1989/sqlparser v0.0.0-20180606152119-120387863bf2 // @grafana/grafana-app-platform-squad
 )
 
-require github.com/getkin/kin-openapi v0.120.0 // @grafana/grafana-as-code
+require github.com/getkin/kin-openapi v0.122.0 // @grafana/grafana-as-code
 
 require github.com/grafana/authlib v0.0.0-20240328140636-a7388d0bac72 // @grafana/identity-access-team
 
-require github.com/deepmap/oapi-codegen/v2 v2.0.0
+require github.com/deepmap/oapi-codegen/v2 v2.1.0
 
 require (
 	github.com/CloudyKit/fastprinter v0.0.0-20200109182630-33d98a066a53 // indirect
@@ -542,3 +542,5 @@ exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
 
 // Use our fork xorm. go.work currently overrides this and points to the local ./pkg/util/xorm directory.
 replace xorm.io/xorm => github.com/grafana/grafana/pkg/util/xorm v0.0.1
+
+replace github.com/grafana/grafana-plugin-sdk-go => github.com/grafana/grafana-plugin-sdk-go v0.225.1-0.20240423103403-6826badd6176
