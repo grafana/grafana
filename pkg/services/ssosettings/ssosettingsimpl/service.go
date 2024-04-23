@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -24,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/strategies"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 var _ ssosettings.Service = (*Service)(nil)
@@ -37,9 +38,10 @@ type Service struct {
 	secrets secrets.Service
 	metrics *metrics
 
-	fbStrategies  []ssosettings.FallbackStrategy
-	providersList []string
-	reloadables   map[string]ssosettings.Reloadable
+	fbStrategies          []ssosettings.FallbackStrategy
+	providersList         []string
+	configurableProviders map[string]bool
+	reloadables           map[string]ssosettings.Reloadable
 }
 
 func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
@@ -50,27 +52,34 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 		strategies.NewOAuthStrategy(cfg),
 	}
 
+	configurableProviders := make(map[string]bool)
+	for provider, enabled := range cfg.SSOSettingsConfigurableProviders {
+		configurableProviders[provider] = enabled
+	}
+
 	providersList := ssosettings.AllOAuthProviders
 	if licensing.FeatureEnabled(social.SAMLProviderName) {
 		fbStrategies = append(fbStrategies, strategies.NewSAMLStrategy(settingsProvider))
 
-		if cfg.SSOSettingsConfigurableProviders[social.SAMLProviderName] {
+		if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsSAML) {
 			providersList = append(providersList, social.SAMLProviderName)
+			configurableProviders[social.SAMLProviderName] = true
 		}
 	}
 
 	store := database.ProvideStore(sqlStore)
 
 	svc := &Service{
-		logger:        log.New("ssosettings.service"),
-		cfg:           cfg,
-		store:         store,
-		ac:            ac,
-		fbStrategies:  fbStrategies,
-		secrets:       secrets,
-		metrics:       newMetrics(registerer),
-		providersList: providersList,
-		reloadables:   make(map[string]ssosettings.Reloadable),
+		logger:                log.New("ssosettings.service"),
+		cfg:                   cfg,
+		store:                 store,
+		ac:                    ac,
+		fbStrategies:          fbStrategies,
+		secrets:               secrets,
+		metrics:               newMetrics(registerer),
+		providersList:         providersList,
+		configurableProviders: configurableProviders,
+		reloadables:           make(map[string]ssosettings.Reloadable),
 	}
 
 	usageStats.RegisterMetricsFunc(svc.getUsageStats)
@@ -160,7 +169,7 @@ func (s *Service) ListWithRedactedSecrets(ctx context.Context) ([]*models.SSOSet
 		return nil, err
 	}
 
-	configurableSettings := make([]*models.SSOSettings, 0, len(s.cfg.SSOSettingsConfigurableProviders))
+	configurableSettings := make([]*models.SSOSettings, 0, len(s.configurableProviders))
 	for _, provider := range storeSettings {
 		if s.isProviderConfigurable(provider.Provider) {
 			configurableSettings = append(configurableSettings, provider)
@@ -431,8 +440,8 @@ func (s *Service) decryptSecrets(ctx context.Context, settings map[string]any) (
 }
 
 func (s *Service) isProviderConfigurable(provider string) bool {
-	_, ok := s.cfg.SSOSettingsConfigurableProviders[provider]
-	return ok
+	enabled, ok := s.configurableProviders[provider]
+	return ok && enabled
 }
 
 // removeSecrets removes all the secrets from the map and replaces them with a redacted password
