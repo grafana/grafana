@@ -5,22 +5,19 @@ import { PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { getRuleOrigin } from '../utils/rules';
 
-interface AlertingRuleExtensionContext {
+interface BaseRuleExtensionContext {
   name: string;
   namespace: string;
   group: string;
   expression: string;
   labels: Record<string, string>;
+}
+
+interface AlertingRuleExtensionContext extends BaseRuleExtensionContext {
   annotations: Record<string, string>;
 }
 
-interface RecordingRuleExtensionContext {
-  name: string;
-  namespace: string;
-  group: string;
-  expression: string;
-  labels: Record<string, string>;
-}
+interface RecordingRuleExtensionContext extends BaseRuleExtensionContext {}
 
 export function useRulePluginLinkExtension(rule: CombinedRule) {
   const ruleOrigin = getRuleOrigin(rule);

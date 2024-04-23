@@ -18,11 +18,14 @@ export function setupPlugins(...plugins: PluginMeta[]): { apiHandlers: RequestHa
   });
 
   return {
-    apiHandlers: plugins.map((plugin) =>
-      http.get(`/api/plugins/${plugin.id}/settings`, () => {
-        return HttpResponse.json<PluginMeta>(plugin);
-      })
-    ),
+    apiHandlers: [
+      http.get<{ pluginId: string }>(`/api/plugins/:pluginId/settings`, ({ params: { pluginId } }) => {
+        if (pluginsRegistry.has(pluginId)) {
+          return HttpResponse.json<PluginMeta>(pluginsRegistry.get(pluginId)!);
+        }
+        return HttpResponse.json({ message: 'Plugin not found, no installed plugin with that id' }, { status: 404 });
+      }),
+    ],
   };
 }
 

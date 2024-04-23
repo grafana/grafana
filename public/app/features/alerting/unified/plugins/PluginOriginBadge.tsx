@@ -24,5 +24,9 @@ export function PluginOriginBadge({ pluginId }: PluginOriginBadgeProps) {
     ? `This rule is managed by the ${pluginMeta?.name} plugin`
     : `This rule is managed by a plugin`;
 
-  return <Tooltip content={tooltipContent}>{badgeIcon}</Tooltip>;
+  return (
+    <Tooltip content={tooltipContent}>
+      <div>{badgeIcon}</div>
+    </Tooltip>
+  );
 }
