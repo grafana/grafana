@@ -177,6 +177,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
 
     this.setState(step.trailState);
     this.syncTrailToUrl();
+    this.state.controls.forEach((control) => control.forceRender());
   }
 
   private syncTrailToUrl() {
