@@ -114,8 +114,21 @@ func (f *accessControlDashboardPermissionFilter) Where() (string, []any) {
 	return f.where.string, f.where.params
 }
 
+func (f *accessControlDashboardPermissionFilter) isEmptyPermissions() bool {
+	permissions := f.user.GetPermissions()
+	if len(permissions) == 1 {
+		sharedWithMeScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.SharedWithMeFolderUID)
+		if p, ok := permissions[dashboards.ActionFoldersRead]; ok {
+			if len(p) == 1 && p[0] == sharedWithMeScope {
+				return true
+			}
+		}
+	}
+	return len(permissions) == 0
+}
+
 func (f *accessControlDashboardPermissionFilter) buildClauses() {
-	if f.user == nil || f.user.IsNil() || len(f.user.GetPermissions()) == 0 {
+	if f.user == nil || f.user.IsNil() || f.isEmptyPermissions() {
 		f.where = clause{string: "(1 = 0)"}
 		return
 	}
