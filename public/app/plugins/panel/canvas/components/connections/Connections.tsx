@@ -143,16 +143,18 @@ export class Connections {
     }
 
     const customElementAnchors = element?.item.customConnectionAnchors || ANCHORS;
+    // This type cast is necessary as TS doesn't understand that `Element` is an `HTMLElement`
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const anchors = Array.from(this.anchorsDiv?.children as HTMLCollectionOf<HTMLElement>);
     const anchorsAmount = customElementAnchors.length;
+
     // re-calculate the position of the existing anchors on hover
     // and hide the rest of the anchors if there are more than the custom ones
     anchors.forEach((anchor, index) => {
       if (index >= anchorsAmount) {
         anchor.style.display = 'none';
       } else {
-        const { x, y } = customElementAnchors![index];
+        const { x, y } = customElementAnchors[index];
         anchor.style.top = `calc(${-y * 50 + 50}% - ${HALF_SIZE}px - ${ANCHOR_PADDING}px)`;
         anchor.style.left = `calc(${x * 50 + 50}% - ${HALF_SIZE}px - ${ANCHOR_PADDING}px)`;
         anchor.style.display = 'block';
