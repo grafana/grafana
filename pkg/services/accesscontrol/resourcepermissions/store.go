@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
@@ -727,6 +728,8 @@ Stores actionsets IN MEMORY
 // An example of an action set is "folders:edit" which represents the set of RBAC actions that are granted by edit access to a folder.
 
 type ActionSetService interface {
+	accesscontrol.ActionResolver
+
 	GetActionSet(actionName string) []string
 	GetActionSetName(resource, permission string) string
 	StoreActionSet(resource, permission string, actions []string)
@@ -739,21 +742,41 @@ type ActionSet struct {
 
 // InMemoryActionSets is an in-memory implementation of the ActionSetService.
 type InMemoryActionSets struct {
-	log        log.Logger
-	actionSets map[string][]string
+	log                 log.Logger
+	actionSetsToActions map[string][]string
+	actionsToActionSets map[string][]string
 }
 
 // NewActionSetService returns a new instance of InMemoryActionSetService.
-func NewActionSetService() ActionSetService {
-	return &InMemoryActionSets{
-		actionSets: make(map[string][]string),
-		log:        log.New("resourcepermissions.actionsets"),
+func NewActionSetService(a *acimpl.AccessControl) ActionSetService {
+	actionSets := &InMemoryActionSets{
+		log:                 log.New("resourcepermissions.actionsets"),
+		actionSetsToActions: make(map[string][]string),
+		actionsToActionSets: make(map[string][]string),
 	}
+	a.RegisterActionResolver(actionSets)
+	return actionSets
+}
+
+func (s *InMemoryActionSets) Resolve(action string) []string {
+	actionSets := s.actionsToActionSets[action]
+	sets := make([]string, 0, len(actionSets))
+
+	for _, actionSet := range actionSets {
+		prefix := strings.Split(actionSet, ":")[0]
+		// Only use action sets for folders for now
+		// We need to verify that action sets for other resources do not share names with actions (eg, `datasources:query`)
+		if prefix != "folders" {
+			continue
+		}
+	}
+
+	return sets
 }
 
 // GetActionSet returns the action set for the given action.
 func (s *InMemoryActionSets) GetActionSet(actionName string) []string {
-	actionSet, ok := s.actionSets[actionName]
+	actionSet, ok := s.actionSetsToActions[actionName]
 	if !ok {
 		return nil
 	}
@@ -767,7 +790,15 @@ func (s *InMemoryActionSets) StoreActionSet(resource, permission string, actions
 		Action:  name,
 		Actions: actions,
 	}
-	s.actionSets[actionSet.Action] = actions
+	s.actionSetsToActions[actionSet.Action] = actions
+
+	for _, action := range actions {
+		if _, ok := s.actionsToActionSets[action]; !ok {
+			s.actionsToActionSets[action] = []string{}
+		}
+		s.actionsToActionSets[action] = append(s.actionsToActionSets[action], actionSet.Action)
+	}
+
 	s.log.Debug("stored action set actionname \n", actionSet.Action)
 }
 
