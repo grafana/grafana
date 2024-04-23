@@ -2047,11 +2047,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
-    "public/app/features/alerting/unified/components/rules/RuleDetails.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"]
-    ],
     "public/app/features/alerting/unified/components/rules/RuleDetailsAnnotations.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
