@@ -18,7 +18,7 @@ type FakeDataSourceService struct {
 
 var _ datasources.DataSourceService = &FakeDataSourceService{}
 
-func (s *FakeDataSourceService) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
+func (s *FakeDataSourceService) GetDataSource(_ context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
 	for _, dataSource := range s.DataSources {
 		idMatch := query.ID != 0 && query.ID == dataSource.ID
 		uidMatch := query.UID != "" && query.UID == dataSource.UID
@@ -30,7 +30,7 @@ func (s *FakeDataSourceService) GetDataSource(ctx context.Context, query *dataso
 	return nil, datasources.ErrDataSourceNotFound
 }
 
-func (s *FakeDataSourceService) GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) ([]*datasources.DataSource, error) {
+func (s *FakeDataSourceService) GetDataSources(_ context.Context, query *datasources.GetDataSourcesQuery) ([]*datasources.DataSource, error) {
 	var dataSources []*datasources.DataSource
 	for _, datasource := range s.DataSources {
 		orgMatch := query.OrgID != 0 && query.OrgID == datasource.OrgID
@@ -41,7 +41,7 @@ func (s *FakeDataSourceService) GetDataSources(ctx context.Context, query *datas
 	return dataSources, nil
 }
 
-func (s *FakeDataSourceService) GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) (res []*datasources.DataSource, err error) {
+func (s *FakeDataSourceService) GetAllDataSources(_ context.Context, _ *datasources.GetAllDataSourcesQuery) (res []*datasources.DataSource, err error) {
 	return s.DataSources, nil
 }
 
@@ -55,7 +55,7 @@ func (s *FakeDataSourceService) GetPrunableProvisionedDataSources(ctx context.Co
 	return dataSources, nil
 }
 
-func (s *FakeDataSourceService) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) ([]*datasources.DataSource, error) {
+func (s *FakeDataSourceService) GetDataSourcesByType(_ context.Context, query *datasources.GetDataSourcesByTypeQuery) ([]*datasources.DataSource, error) {
 	var dataSources []*datasources.DataSource
 	for _, datasource := range s.DataSources {
 		if query.OrgID > 0 && datasource.OrgID != query.OrgID {
@@ -69,7 +69,7 @@ func (s *FakeDataSourceService) GetDataSourcesByType(ctx context.Context, query 
 	return dataSources, nil
 }
 
-func (s *FakeDataSourceService) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error) {
+func (s *FakeDataSourceService) AddDataSource(_ context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error) {
 	if s.lastID == 0 {
 		s.lastID = int64(len(s.DataSources) - 1)
 	}
@@ -84,7 +84,7 @@ func (s *FakeDataSourceService) AddDataSource(ctx context.Context, cmd *datasour
 	return dataSource, nil
 }
 
-func (s *FakeDataSourceService) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {
+func (s *FakeDataSourceService) DeleteDataSource(_ context.Context, cmd *datasources.DeleteDataSourceCommand) error {
 	for i, datasource := range s.DataSources {
 		idMatch := cmd.ID != 0 && cmd.ID == datasource.ID
 		uidMatch := cmd.UID != "" && cmd.UID == datasource.UID
@@ -97,7 +97,7 @@ func (s *FakeDataSourceService) DeleteDataSource(ctx context.Context, cmd *datas
 	return datasources.ErrDataSourceNotFound
 }
 
-func (s *FakeDataSourceService) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error) {
+func (s *FakeDataSourceService) UpdateDataSource(_ context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error) {
 	for _, datasource := range s.DataSources {
 		idMatch := cmd.ID != 0 && cmd.ID == datasource.ID
 		uidMatch := cmd.UID != "" && cmd.UID == datasource.UID
@@ -112,7 +112,7 @@ func (s *FakeDataSourceService) UpdateDataSource(ctx context.Context, cmd *datas
 	return nil, datasources.ErrDataSourceNotFound
 }
 
-func (s *FakeDataSourceService) GetHTTPTransport(ctx context.Context, ds *datasources.DataSource, provider httpclient.Provider, customMiddlewares ...sdkhttpclient.Middleware) (http.RoundTripper, error) {
+func (s *FakeDataSourceService) GetHTTPTransport(_ context.Context, _ *datasources.DataSource, provider httpclient.Provider, customMiddlewares ...sdkhttpclient.Middleware) (http.RoundTripper, error) {
 	rt, err := provider.GetTransport(sdkhttpclient.Options{})
 	if err != nil {
 		return nil, err
@@ -120,7 +120,7 @@ func (s *FakeDataSourceService) GetHTTPTransport(ctx context.Context, ds *dataso
 	return rt, nil
 }
 
-func (s *FakeDataSourceService) DecryptedValues(ctx context.Context, ds *datasources.DataSource) (map[string]string, error) {
+func (s *FakeDataSourceService) DecryptedValues(_ context.Context, _ *datasources.DataSource) (map[string]string, error) {
 	if s.SimulatePluginFailure {
 		return nil, datasources.ErrDatasourceSecretsPluginUserFriendly{Err: "unknown error"}
 	}
@@ -128,18 +128,18 @@ func (s *FakeDataSourceService) DecryptedValues(ctx context.Context, ds *datasou
 	return values, nil
 }
 
-func (s *FakeDataSourceService) DecryptedValue(ctx context.Context, ds *datasources.DataSource, key string) (string, bool, error) {
+func (s *FakeDataSourceService) DecryptedValue(_ context.Context, _ *datasources.DataSource, key string) (string, bool, error) {
 	return "", false, nil
 }
 
-func (s *FakeDataSourceService) DecryptedBasicAuthPassword(ctx context.Context, ds *datasources.DataSource) (string, error) {
+func (s *FakeDataSourceService) DecryptedBasicAuthPassword(_ context.Context, _ *datasources.DataSource) (string, error) {
 	return "", nil
 }
 
-func (s *FakeDataSourceService) DecryptedPassword(ctx context.Context, ds *datasources.DataSource) (string, error) {
+func (s *FakeDataSourceService) DecryptedPassword(_ context.Context, _ *datasources.DataSource) (string, error) {
 	return "", nil
 }
 
-func (s *FakeDataSourceService) CustomHeaders(ctx context.Context, ds *datasources.DataSource) (http.Header, error) {
+func (s *FakeDataSourceService) CustomHeaders(_ context.Context, _ *datasources.DataSource) (http.Header, error) {
 	return nil, nil
 }
