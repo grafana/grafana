@@ -1,5 +1,3 @@
-// bit of setup to mock HTTP request responses
-import 'whatwg-fetch';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 

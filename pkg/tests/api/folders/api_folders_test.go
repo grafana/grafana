@@ -65,7 +65,8 @@ func TestGetFolders(t *testing.T) {
 	viewerClient := tests.GetClient(grafanaListedAddr, "viewer", "viewer")
 
 	// access control permissions store
-	permissionsStore := resourcepermissions.NewStore(store, featuremgmt.WithFeatures())
+	actionSetService := resourcepermissions.NewActionSetService()
+	permissionsStore := resourcepermissions.NewStore(store, featuremgmt.WithFeatures(), &actionSetService)
 
 	numberOfFolders := 5
 	indexWithoutPermission := 3

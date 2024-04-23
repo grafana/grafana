@@ -392,9 +392,20 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       hide: variable.hide,
     });
   } else if (variable.type === 'textbox') {
+    let val;
+    if (!variable?.current?.value) {
+      val = variable.query;
+    } else {
+      if (typeof variable.current.value === 'string') {
+        val = variable.current.value;
+      } else {
+        val = variable.current.value[0];
+      }
+    }
+
     return new TextBoxVariable({
       ...commonProperties,
-      value: variable?.current?.value?.[0] ?? variable.query,
+      value: val,
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
     });
