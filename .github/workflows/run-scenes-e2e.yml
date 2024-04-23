@@ -1,7 +1,11 @@
 name: Run e2e for dashboards with scenes
+
 on:
-  pull-request:
-    types: [opened, synchronize, reopened]
+  pull_request:
+    types:
+      - opened 
+      - synchronize
+      - reopened
 
 jobs:
   cypress-run:
