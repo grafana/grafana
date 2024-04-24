@@ -441,7 +441,8 @@ message EntityExternalReference {
 // Storage interface
 //-----------------------------------------------
 
-// The entity store provides a basic CRUD (+watch eventually) interface for generic entitys
+// The entity store provides a basic CRUD (+watch eventually) interface for generic entities
+// TODO(drclau)
 service EntityStore {
   rpc Read(ReadEntityRequest) returns (Entity);
   rpc Create(CreateEntityRequest) returns (CreateEntityResponse);
