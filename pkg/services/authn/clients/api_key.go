@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apikey"
-	authidentity "github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -189,9 +188,7 @@ func (s *APIKey) Hook(ctx context.Context, identity *authn.Identity, r *authn.Re
 }
 
 func (s *APIKey) getAPIKeyID(ctx context.Context, identity *authn.Identity, r *authn.Request) (apiKeyID int64, exists bool) {
-	namespace, identifier := identity.GetNamespacedID()
-
-	id, err := authidentity.IntIdentifier(namespace, identifier)
+	id, err := identity.ID.ParseInt()
 	if err != nil {
 		s.log.Warn("Failed to parse ID from identifier", "err", err)
 		return -1, false
