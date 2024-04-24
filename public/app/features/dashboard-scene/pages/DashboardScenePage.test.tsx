@@ -124,7 +124,7 @@ describe('DashboardScenePage', () => {
     locationService.push('/');
     getDashboardScenePageStateManager().clearDashboardCache();
     loadDashboardMock.mockClear();
-    loadDashboardMock.mockResolvedValue({ dashboard: simpleDashboard, meta: {} });
+    loadDashboardMock.mockResolvedValue({ dashboard: simpleDashboard, meta: { slug: '123' } });
     // hacky way because mocking autosizer does not work
     Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, value: 1000 });
     Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, value: 1000 });
@@ -241,7 +241,7 @@ describe('DashboardScenePage', () => {
   });
 
   it('is in edit mode when coming from explore to an existing dashboard', async () => {
-    store.setObject(DASHBOARD_FROM_LS_KEY, { dashboard: simpleDashboard });
+    store.setObject(DASHBOARD_FROM_LS_KEY, { dashboard: simpleDashboard, meta: { slug: '123' } });
 
     setup();
 

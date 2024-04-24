@@ -4180,7 +4180,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:^4.10.0":
+"@grafana/scenes@npm:^4.12.0":
   version: 4.12.0
   resolution: "@grafana/scenes@npm:4.12.0"
   dependencies:
@@ -18599,7 +18599,7 @@ __metadata:
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/saga-icons": "workspace:*"
-    "@grafana/scenes": "npm:^4.10.0"
+    "@grafana/scenes": "npm:^4.12.0"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/tsconfig": "npm:^1.3.0-rc1"
@@ -18911,7 +18911,7 @@ __metadata:
     webpack-merge: "npm:5.10.0"
     webpackbar: "npm:^6.0.0"
     whatwg-fetch: "npm:3.6.20"
-    xlsx: "https://cdn.sheetjs.com/xlsx-0.19.1/xlsx-0.19.1.tgz"
+    xlsx: "https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz"
     yaml: "npm:^2.0.0"
     yargs: "npm:^17.5.1"
   dependenciesMeta:
@@ -26208,7 +26208,20 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-util@npm:^5.15.0, rc-util@npm:^5.16.1, rc-util@npm:^5.21.0, rc-util@npm:^5.24.4, rc-util@npm:^5.27.0, rc-util@npm:^5.36.0, rc-util@npm:^5.37.0, rc-util@npm:^5.38.0, rc-util@npm:^5.38.1":
+"rc-util@npm:^5.15.0, rc-util@npm:^5.16.1, rc-util@npm:^5.21.0, rc-util@npm:^5.24.4, rc-util@npm:^5.27.0, rc-util@npm:^5.37.0, rc-util@npm:^5.38.0, rc-util@npm:^5.38.1":
+  version: 5.38.2
+  resolution: "rc-util@npm:5.38.2"
+  dependencies:
+    "@babel/runtime": "npm:^7.18.3"
+    react-is: "npm:^18.2.0"
+  peerDependencies:
+    react: ">=16.9.0"
+    react-dom: ">=16.9.0"
+  checksum: 10/f8d8b21d0ed09de6fcf6c24dc19bf82f8f1fd089a625d35fd399626280ed33e73b9a703aa78f1a09ccd40b83f50e73bbc993adf892355a01857d3a1bb83e0958
+  languageName: node
+  linkType: hard
+
+"rc-util@npm:^5.36.0":
   version: 5.39.1
   resolution: "rc-util@npm:5.39.1"
   dependencies:
@@ -32133,12 +32146,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"xlsx@https://cdn.sheetjs.com/xlsx-0.19.1/xlsx-0.19.1.tgz":
-  version: 0.19.1
-  resolution: "xlsx@https://cdn.sheetjs.com/xlsx-0.19.1/xlsx-0.19.1.tgz"
+"xlsx@https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz":
+  version: 0.20.2
+  resolution: "xlsx@https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz"
   bin:
     xlsx: ./bin/xlsx.njs
-  checksum: 10/d84f81bec6501f26728764c207a88a3676c8979e801d5be4d60500859bf4d799256dc07823e6fb3fa404f583aa11c55071483c1f76372416588a643a92ab06cf
+  checksum: 10/2d8e0644888f90fa9145ea74ed90b844154ce89c4f0e4f92fcce3f224fa71654da99aa48d99d65ba86eb0632a4858ba2dea7eef8b54fd8bd23954a09d1884aa1
   languageName: node
   linkType: hard
 
