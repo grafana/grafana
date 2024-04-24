@@ -14,11 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-// SilenceStore contains silence-specific methods for the RuleStore.
-type SilenceStore interface {
-	GetNamespacesByRuleUID(ctx context.Context, orgID int64, uids ...string) (map[string]string, error)
-}
-
 // SilenceService is the service for managing and authenticating silences access in Grafana AM.
 type SilenceService interface {
 	GetSilence(ctx context.Context, user identity.Requester, silenceID string) (*models.Silence, error)
