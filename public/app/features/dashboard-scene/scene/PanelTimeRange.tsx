@@ -123,22 +123,3 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
-
-export class PanelTimeRangeTitleItem extends SceneObjectBase {
-  public static Component = ({ model }: SceneComponentProps<PanelTimeRangeTitleItem>) => {
-    const timeRange = sceneGraph.getTimeRange(model);
-
-    // If it's a dashboard time range we do not need to show it in the panel header
-    if (!(timeRange instanceof PanelTimeRange)) {
-      return null;
-    }
-
-    // If the time range is attached to the VizPanel we do not need to render it as the VizPanel renderer does that for us.
-    // It is only in panel edit where the PanelTimeRange is on the VizPanelManager where we need to render it here
-    if (timeRange.parent instanceof VizPanel) {
-      return null;
-    }
-
-    return <PanelTimeRange.Component model={timeRange} />;
-  };
-}
