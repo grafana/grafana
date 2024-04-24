@@ -16,7 +16,9 @@ import (
 
 const GlobalOrgID = int64(0)
 
-var _ identity.Requester = (*Identity)(nil)
+type Requester = identity.Requester
+
+var _ Requester = (*Identity)(nil)
 
 type Identity struct {
 	// ID is the unique identifier for the entity in the Grafana database.
