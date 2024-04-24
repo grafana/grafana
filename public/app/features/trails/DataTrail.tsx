@@ -18,6 +18,7 @@ import {
   SceneRefreshPicker,
   SceneTimePicker,
   SceneTimeRange,
+  sceneUtils,
   SceneVariable,
   SceneVariableSet,
   VariableDependencyConfig,
@@ -26,7 +27,7 @@ import {
 import { useStyles2 } from '@grafana/ui';
 
 import { DataTrailSettings } from './DataTrailSettings';
-import { DataTrailHistory, DataTrailHistoryStep } from './DataTrailsHistory';
+import { DataTrailHistory } from './DataTrailsHistory';
 import { MetricScene } from './MetricScene';
 import { MetricSelectScene } from './MetricSelectScene';
 import { MetricsHeader } from './MetricsHeader';
@@ -81,59 +82,43 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     // Some scene elements publish this
     this.subscribeToEvent(MetricSelectedEvent, this._handleMetricSelectedEvent.bind(this));
 
-    // Pay attention to changes in history (i.e., changing the step)
-    this.state.history.subscribeToState((newState, oldState) => {
-      const oldNumberOfSteps = oldState.steps.length;
-      const newNumberOfSteps = newState.steps.length;
-
-      const newStepWasAppended = newNumberOfSteps > oldNumberOfSteps;
-
-      if (newStepWasAppended) {
-        // A new step is a significant change. Update the URL to match the new state.
-        this.syncTrailToUrl();
-        // In order for the `useBookmarkState` to re-evaluate after a new step was made:
-        this.forceRender();
-        // Do nothing else because the step state is already up to date -- it created a new step!
-        return;
-      }
-
-      if (oldState.currentStep === newState.currentStep) {
-        // The same step was clicked on -- no need to change anything.
-        return;
-      }
-
-      // History changed because a different node was selected
-      const step = newState.steps[newState.currentStep];
-
-      if (!step) {
-        return;
-      }
-
-      this.goBackToStep(step);
-    });
-
     const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, this);
-    const stateSubscription =
-      filtersVariable instanceof AdHocFiltersVariable &&
-      filtersVariable?.subscribeToState((newState, prevState) => {
-        if (!this._addingFilterWithoutReportingInteraction) {
-          reportChangeInLabelFilters(newState.filters, prevState.filters);
-        }
-      });
+    if (filtersVariable instanceof AdHocFiltersVariable) {
+      this._subs.add(
+        filtersVariable?.subscribeToState((newState, prevState) => {
+          if (!this._addingFilterWithoutReportingInteraction) {
+            reportChangeInLabelFilters(newState.filters, prevState.filters);
+          }
+        })
+      );
+    }
+
+    this.enableUrlSync();
 
     return () => {
+      this.disableUrlSync();
+
       if (!this.state.embedded) {
         getTrailStore().setRecentTrail(this);
-      }
-      if (stateSubscription) {
-        stateSubscription?.unsubscribe();
       }
     };
   }
 
+  private enableUrlSync() {
+    if (!this.state.embedded) {
+      getUrlSyncManager().initSync(this);
+    }
+  }
+
+  private disableUrlSync() {
+    if (!this.state.embedded) {
+      getUrlSyncManager().cleanUp(this);
+    }
+  }
+
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: [VAR_DATASOURCE],
-    onReferencedVariableValueChanged: async (variable: SceneVariable) => {
+    onReferencedVariableValueChanged: (variable: SceneVariable) => {
       const { name } = variable.state;
       if (name === VAR_DATASOURCE) {
         this.datasourceHelper.reset();
@@ -153,13 +138,13 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     }
 
     this._addingFilterWithoutReportingInteraction = true;
-    variable.setState({
-      filters: [...variable.state.filters, filter],
-    });
+
+    variable.setState({ filters: [...variable.state.filters, filter] });
+
     this._addingFilterWithoutReportingInteraction = false;
   }
-  private _addingFilterWithoutReportingInteraction = false;
 
+  private _addingFilterWithoutReportingInteraction = false;
   private datasourceHelper = new MetricDatasourceHelper(this);
 
   public getMetricMetadata(metric?: string) {
@@ -170,25 +155,21 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     return this.getMetricMetadata(this.state.metric);
   }
 
-  private goBackToStep(step: DataTrailHistoryStep) {
-    if (!step.trailState.metric) {
-      step.trailState.metric = undefined;
-    }
+  public restoreFromHistoryStep(state: DataTrailState) {
+    this.disableUrlSync();
 
-    this.setState(step.trailState);
-    this.syncTrailToUrl();
-  }
-
-  private syncTrailToUrl() {
-    if (this.state.embedded) {
-      // Embedded trails should not be altering the URL
-      return;
-    }
+    this.setState(
+      sceneUtils.cloneSceneObjectState(state, {
+        history: this.state.history,
+        metric: !state.metric ? undefined : state.metric,
+      })
+    );
 
     const urlState = getUrlSyncManager().getUrlState(this);
     const fullUrl = urlUtil.renderUrl(locationService.getLocation().pathname, urlState);
+    locationService.replace(fullUrl);
 
-    locationService.replace(encodeURI(fullUrl));
+    this.enableUrlSync();
   }
 
   private _handleMetricSelectedEvent(evt: MetricSelectedEvent) {
