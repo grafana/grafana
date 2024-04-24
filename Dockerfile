@@ -26,7 +26,6 @@ RUN apk add --no-cache make build-base python3
 RUN yarn install --immutable
 
 COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js ./
-COPY public public
 COPY scripts scripts
 COPY emails emails
 
@@ -179,7 +178,7 @@ RUN if [ ! $(getent group "$GF_GID") ]; then \
 
 COPY --from=go-src /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
 COPY --from=js-src /tmp/grafana/public ./public
-COPY --from=go-src /tmp/grafana/LICENSE ./
+COPY --from=js-src /tmp/grafana/LICENSE ./
 
 EXPOSE 3000
 
