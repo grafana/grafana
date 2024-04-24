@@ -1,6 +1,8 @@
-import React, { useRef } from 'react';
+import { css } from '@emotion/css';
+import React from 'react';
 
 import { Button, ButtonGroup, Dropdown, Menu, ToolbarButton } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/';
 
 import { Tabs, useQueriesDrawerContext } from './QueriesDrawerContext';
 import { i18n } from './utils';
@@ -13,7 +15,7 @@ export function QueriesDrawerDropdown({ variant }: Props) {
   const { selectedTab, setSelectedTab, queryLibraryAvailable, drawerOpened, setDrawerOpened } =
     useQueriesDrawerContext();
 
-  const mainButton = useRef<HTMLButtonElement>(null);
+  const styles = useStyles2(getStyles);
 
   if (!queryLibraryAvailable) {
     return undefined;
@@ -32,30 +34,33 @@ export function QueriesDrawerDropdown({ variant }: Props) {
     </Menu>
   );
 
-  let toolbarButton;
-  if (variant === 'compact') {
-    toolbarButton = <ToolbarButton variant={drawerOpened ? 'active' : 'canvas'} icon="book" />;
-  } else {
-    toolbarButton = <ToolbarButton variant="canvas" icon="angle-down" />;
-  }
-
   return (
     <ButtonGroup>
-      {variant === 'full' && (
-        <ToolbarButton
-          icon="book"
-          ref={mainButton}
-          variant={drawerOpened ? 'active' : 'canvas'}
-          onClick={() => setDrawerOpened(!drawerOpened)}
-        >
-          {selectedTab}
-        </ToolbarButton>
-      )}
+      <ToolbarButton
+        icon="book"
+        variant={drawerOpened ? 'active' : 'canvas'}
+        onClick={() => setDrawerOpened(!drawerOpened)}
+      >
+        {variant === 'full' ? selectedTab : undefined}
+      </ToolbarButton>
       {drawerOpened ? (
-        <Button variant="secondary" icon="times" onClick={() => setDrawerOpened(false)}></Button>
+        <Button
+          className={styles.close}
+          variant="secondary"
+          icon="times"
+          onClick={() => setDrawerOpened(false)}
+        ></Button>
       ) : (
-        <Dropdown overlay={menu}>{toolbarButton}</Dropdown>
+        <Dropdown overlay={menu}>
+          <ToolbarButton className={styles.toggle} variant="canvas" icon="angle-down" />
+        </Dropdown>
       )}
     </ButtonGroup>
   );
 }
+
+const getStyles = () => ({
+  toggle: css({ width: '36px' }),
+  // tweaking icon position so it's nicely aligned when dropdown turns into a close button
+  close: css({ width: '36px', '> svg': { position: 'relative', left: 2 } }),
+});

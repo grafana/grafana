@@ -25,7 +25,7 @@ scenes,experimental,@grafana/dashboards-squad,false,false,true
 disableSecretsCompatibility,experimental,@grafana/hosted-grafana-team,false,true,false
 logRequestsInstrumentedAsUnknown,experimental,@grafana/hosted-grafana-team,false,false,false
 topnav,deprecated,@grafana/grafana-frontend-platform,false,false,false
-returnToPrevious,preview,@grafana/grafana-frontend-platform,false,false,true
+returnToPrevious,GA,@grafana/grafana-frontend-platform,false,false,true
 grpcServer,preview,@grafana/grafana-app-platform-squad,false,false,false
 unifiedStorage,experimental,@grafana/grafana-app-platform-squad,true,true,false
 cloudWatchCrossAccountQuerying,GA,@grafana/aws-datasources,false,false,false

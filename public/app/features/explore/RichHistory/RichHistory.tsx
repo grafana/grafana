@@ -11,6 +11,8 @@ import { RichHistoryQuery } from 'app/types/explore';
 import { supportedFeatures } from '../../../core/history/richHistoryStorageProvider';
 import { Tabs, useQueriesDrawerContext } from '../QueriesDrawer/QueriesDrawerContext';
 import { i18n } from '../QueriesDrawer/utils';
+import { Tabs, useQueriesDrawerContext } from '../QueriesDrawer/QueriesDrawerContext';
+import { i18n } from '../QueriesDrawer/utils';
 import { QueryLibrary } from '../QueryLibrary/QueryLibrary';
 
 import { RichHistoryQueriesTab } from './RichHistoryQueriesTab';
