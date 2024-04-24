@@ -41,7 +41,7 @@ There are two ways to template your alert notification messages:  labels and ann
 
 The below diagram illustrates the entire process of templating, from the creation of labels and annotations in alert rules or notification templates in contact points, and how they are when exported and applied to your alert notification messages.
 
-{{< figure src="/media/docs/alerting/{{templating-diagram.png" max-width="1200px" max-height="900px" caption="How Templating works" >}}
+{{< figure src="/media/docs/alerting/{{templating-diagram.png" max-width="1200px" caption="How Templating works" >}}
 
 In this diagram:
 
