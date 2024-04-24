@@ -11,14 +11,14 @@ import { DataQuery } from '@grafana/schema';
 import { GenericDataSourcePlugin } from '../datasources/types';
 
 import builtInPlugins from './built_in_plugins';
-import { registerPluginInCache } from './loader/cache';
+import { getPluginFromCache, registerPluginInCache } from './loader/cache';
 // SystemJS has to be imported before the sharedDependenciesMap
 import { SystemJS } from './loader/systemjs';
 // eslint-disable-next-line import/order
 import { sharedDependenciesMap } from './loader/sharedDependencies';
 import { decorateSystemJSFetch, decorateSystemJSResolve, decorateSystemJsOnload } from './loader/systemjsHooks';
 import { SystemJSWithLoaderHooks } from './loader/types';
-import { buildImportMap, resolveModulePath } from './loader/utils';
+import { buildImportMap, isHostedOnCDN, resolveModulePath } from './loader/utils';
 import { importPluginModuleInSandbox } from './sandbox/sandbox_plugin_loader';
 import { isFrontendSandboxSupported } from './sandbox/utils';
 
@@ -28,9 +28,13 @@ SystemJS.addImportMap({ imports });
 
 const systemJSPrototype: SystemJSWithLoaderHooks = SystemJS.constructor.prototype;
 
-// Monaco Editors reliance on RequireJS means we need to transform
-// the content of the plugin code at runtime which can only be done with fetch/eval.
-systemJSPrototype.shouldFetch = () => true;
+// This instructs SystemJS to load a plugin using fetch and eval if it returns a truthy value, otherwise it will load the plugin using a script tag.
+// We only want to fetch and eval plugins that are hosted on a CDN or are Angular plugins.
+systemJSPrototype.shouldFetch = function (url) {
+  const pluginInfo = getPluginFromCache(url);
+
+  return isHostedOnCDN(url) || Boolean(pluginInfo?.isAngular);
+};
 
 const originalImport = systemJSPrototype.import;
 // Hook Systemjs import to support plugins that only have a default export.
@@ -68,7 +72,7 @@ export async function importPluginModule({
   isAngular?: boolean;
 }): Promise<System.Module> {
   if (version) {
-    registerPluginInCache({ path, version });
+    registerPluginInCache({ path, version, isAngular });
   }
 
   const builtIn = builtInPlugins[path];
