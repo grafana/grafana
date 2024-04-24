@@ -105,6 +105,16 @@ func (s *Service) GetUserPermissions(ctx context.Context, user identity.Requeste
 	return s.getCachedUserPermissions(ctx, user, options)
 }
 
+func (s *Service) getBasicRolesPermissions(ctx context.Context, basicRoles []string) ([]accesscontrol.Permission, error) {
+	permissions := make([]accesscontrol.Permission, 0)
+	for _, builtin := range basicRoles {
+		if basicRole, ok := s.roles[builtin]; ok {
+			permissions = append(permissions, basicRole.Permissions...)
+		}
+	}
+	return permissions, nil
+}
+
 func (s *Service) getUserPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
 	permissions := make([]accesscontrol.Permission, 0)
 	for _, builtin := range accesscontrol.GetOrgRoles(user) {

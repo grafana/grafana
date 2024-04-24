@@ -17,7 +17,7 @@ const (
 
 	// teamAssignsSQL is a query to select all users' team assignments.
 	teamAssignsSQL = `SELECT tm.user_id, tr.org_id, tr.role_id
-	FROM team_role AS tr 
+	FROM team_role AS tr
 	INNER JOIN team_member AS tm ON tm.team_id = tr.team_id`
 
 	// basicRoleAssignsSQL is a query to select all users basic role (Admin, Editor, Viewer, None) assignments.
@@ -77,6 +77,42 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 		return nil
 	})
 
+	return result, err
+}
+
+func (s *AccessControlStore) GetBasicRolesPermissions(ctx context.Context, roles []string, orgID int64) ([]accesscontrol.Permission, error) {
+	result := make([]accesscontrol.Permission, 0)
+	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+		if len(roles) == 0 {
+			// no permission to fetch
+			return nil
+		}
+
+		q := `
+		SELECT
+			permission.action,
+			permission.scope
+		FROM permission
+		INNER JOIN role ON role.id = permission.role_id
+		INNER JOIN (
+			SELECT br.role_id FROM builtin_role AS br
+			WHERE br.role IN (?` + strings.Repeat(", ?", len(roles)-1) + `)
+			  AND (br.org_id = ? OR br.org_id = ?)
+		) as all_role ON role.id = all_role.role_id;
+		`
+
+		params := make([]any, 0)
+		for _, role := range roles {
+			params = append(params, role)
+		}
+		params = append(params, orgID, accesscontrol.GlobalOrgID)
+
+		if err := sess.SQL(q, params...).Find(&result); err != nil {
+			return err
+		}
+
+		return nil
+	})
 	return result, err
 }
 
