@@ -6,11 +6,17 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/prometheus/alertmanager/config"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/prometheus/alertmanager/config"
+)
+
+var (
+	ErrReceiverDoesNotExist     = errors.New("receiver does not exist")
+	ErrTimeIntervalDoesNotExist = errors.New("time interval does not exist")
 )
 
 // NotificationSettingsValidator validates NotificationSettings against the current Alertmanager configuration
@@ -64,11 +70,11 @@ func (n staticValidator) Validate(settings models.NotificationSettings) error {
 	}
 	var errs []error
 	if _, ok := n.availableReceivers[settings.Receiver]; !ok {
-		errs = append(errs, fmt.Errorf("receiver '%s' does not exist", settings.Receiver))
+		errs = append(errs, fmt.Errorf("%w: %s", ErrReceiverDoesNotExist, settings.Receiver))
 	}
 	for _, interval := range settings.MuteTimeIntervals {
 		if _, ok := n.availableTimeIntervals[interval]; !ok {
-			errs = append(errs, fmt.Errorf("mute time interval '%s' does not exist", interval))
+			errs = append(errs, fmt.Errorf("%w: %s", ErrTimeIntervalDoesNotExist, interval))
 		}
 	}
 	return errors.Join(errs...)
