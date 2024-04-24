@@ -9,8 +9,7 @@ import { useQueryLibraryListStyles } from './styles';
 
 export function TitleCell(props: CellProps<QueryTemplateRow>) {
   const datasource = props.row.original.queryTemplate?.targets[0]?.datasource;
-  const { datasourceApi } = useDatasource(datasource);
-
+  const datasourceApi = useDatasource(datasource);
   const styles = useQueryLibraryListStyles();
 
   if (props.row.original.queryTemplate?.targets.length === 0) {
