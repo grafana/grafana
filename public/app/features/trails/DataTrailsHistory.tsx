@@ -7,7 +7,6 @@ import {
   SceneObjectState,
   SceneObjectBase,
   SceneComponentProps,
-  SceneVariableValueChangedEvent,
   SceneObjectStateChangedEvent,
   SceneTimeRange,
   sceneUtils,
