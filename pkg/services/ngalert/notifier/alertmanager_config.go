@@ -18,9 +18,9 @@ import (
 
 var (
 	// ErrAlertmanagerReceiverInUse is primarily meant for when a receiver is used by a rule and is being deleted.
-	ErrAlertmanagerReceiverInUse = errutil.BadRequest("alerting.notifications.alertmanager.receiverInUse").MustTemplate("receiver [Name: {{ .Public.Receiver }}] is used by rule [UID: {{ .Public.RuleUID }}]: {{ .Error }}",
+	ErrAlertmanagerReceiverInUse = errutil.BadRequest("alerting.notifications.alertmanager.receiverInUse").MustTemplate("receiver [Name: {{ .Public.Receiver }}] is used by rule [UID: {{ .Private.RuleUID }}]: {{ .Error }}",
 		errutil.WithPublic(
-			"receiver [Name: {{ .Public.Receiver }}] is used by rule [UID: {{ .Public.RuleUID }}]",
+			"receiver [Name: {{ .Public.Receiver }}] is used by rule",
 		))
 )
 
@@ -238,7 +238,11 @@ func (moa *MultiOrgAlertmanager) SaveAndApplyAlertmanagerConfiguration(ctx conte
 		moa.logger.Error("Unable to save and apply alertmanager configuration", "error", err)
 		ruleAutogenErr := ErrorRuleAutogenValidation{}
 		if errors.As(err, &ruleAutogenErr) && errors.Is(err, ErrReceiverDoesNotExist) {
-			return ErrAlertmanagerReceiverInUse.Build(errutil.TemplateData{Public: map[string]interface{}{"Receiver": ruleAutogenErr.Receiver, "RuleUID": ruleAutogenErr.RuleUID}, Error: err})
+			return ErrAlertmanagerReceiverInUse.Build(errutil.TemplateData{
+				Public:  map[string]interface{}{"Receiver": ruleAutogenErr.Receiver},
+				Private: map[string]interface{}{"RuleUID": ruleAutogenErr.RuleUID},
+				Error:   err,
+			})
 		}
 		return AlertmanagerConfigRejectedError{err}
 	}
