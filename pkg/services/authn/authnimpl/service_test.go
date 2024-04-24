@@ -9,6 +9,12 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/codes"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models/usertoken"
@@ -19,11 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel/codes"
-	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 )
 
 func TestService_Authenticate(t *testing.T) {
@@ -178,7 +179,7 @@ func TestService_Authenticate(t *testing.T) {
 				for _, attr := range passedAuthnSpan.Attributes() {
 					switch attr.Key {
 					case "identity.ID":
-						assert.Equal(t, tt.expectedIdentity.ID, attr.Value.AsString())
+						assert.Equal(t, tt.expectedIdentity.ID.String(), attr.Value.AsString())
 					case "identity.AuthID":
 						assert.Equal(t, tt.expectedIdentity.AuthID, attr.Value.AsString())
 					case "identity.AuthenticatedBy":
