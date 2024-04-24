@@ -122,7 +122,7 @@ describe('LokiContextUi', () => {
     render(<LokiContextUi {...props} />);
 
     await waitFor(() => {
-      expect(props.logContextProvider.getInitContextFilters).toHaveBeenCalledWith(props.row.labels, props.origQuery, {
+      expect(props.logContextProvider.getInitContextFilters).toHaveBeenCalledWith(props.row, props.origQuery, {
         from: dateTime(props.row.timeEpochMs),
         to: dateTime(props.row.timeEpochMs),
         raw: { from: dateTime(props.row.timeEpochMs), to: dateTime(props.row.timeEpochMs) },
