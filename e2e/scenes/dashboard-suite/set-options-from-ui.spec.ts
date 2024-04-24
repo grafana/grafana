@@ -138,6 +138,7 @@ describe('Variables - Set options from ui', () => {
 
     cy.get('body').click();
 
+    cy.wait(300);
     cy.wait('@query');
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('B')
@@ -168,7 +169,7 @@ describe('Variables - Set options from ui', () => {
       .next()
       .should('have.text', 'BC');
 
-    cy.get('body').click();
+    cy.get('body').click(0, 0);
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('BBB')
       .should('be.visible')
