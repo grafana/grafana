@@ -1,7 +1,8 @@
 import React from 'react';
 
-import { useQueryTemplates } from '@grafana/runtime/src/services/queryLibrary/hooks';
-import { EmptyState } from '@grafana/ui';
+import { QueryTemplate } from '@grafana/data';
+import { useAllQueryTemplatesQuery } from '@grafana/runtime/src/services/queryLibrary';
+import { EmptyState, Spinner } from '@grafana/ui';
 
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 
@@ -9,16 +10,17 @@ import QueryTemplatesTable from './QueryTemplatesTable';
 import { QueryTemplateRow } from './QueryTemplatesTable/types';
 
 export function QueryTemplatesList() {
-  const { queryTemplates } = useQueryTemplates();
+  const { data, isLoading, error } = useAllQueryTemplatesQuery();
 
-  const queryTemplateRows: QueryTemplateRow[] = queryTemplates.map((queryTemplate, index) => ({
-    index: index.toString(),
-    dateAdded: queryTemplate?.formattedDate,
-    datasourceType: getDatasourceSrv().getInstanceSettings(queryTemplate.targets[0]?.datasource)?.meta.name,
-    queryTemplate,
-  }));
+  if (error) {
+    return <EmptyState variant="not-found" message={`Ooops! Something went wrong. Error: ${error.message}`} />;
+  }
 
-  if (!queryTemplateRows.length) {
+  if (isLoading) {
+    return <Spinner />;
+  }
+
+  if (!data) {
     return (
       <EmptyState message={`Query Library`} variant="not-found">
         <p>
@@ -28,7 +30,14 @@ export function QueryTemplatesList() {
         </p>
       </EmptyState>
     );
-  } else {
-    return <QueryTemplatesTable queryTemplateRows={queryTemplateRows} />;
   }
+
+  const queryTemplateRows: QueryTemplateRow[] = data!.map((queryTemplate: QueryTemplate, index: number) => ({
+    index: index.toString(),
+    dateAdded: queryTemplate?.formattedDate,
+    datasourceType: getDatasourceSrv().getInstanceSettings(queryTemplate.targets[0]?.datasource)?.meta.name,
+    queryTemplate,
+  }));
+
+  return <QueryTemplatesTable queryTemplateRows={queryTemplateRows} />;
 }

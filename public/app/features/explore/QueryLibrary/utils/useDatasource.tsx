@@ -24,7 +24,7 @@ export function useDatasource(dataSourceRef?: DataSourceRef | null) {
           }));
         });
     }
-  }, []);
+  }, [apiCache, dataSourceRef]);
 
   return dataSourceRef?.uid ? apiCache[dataSourceRef.uid] : undefined;
 }
