@@ -6,10 +6,14 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/codes"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -45,12 +49,53 @@ func TestService_Authenticate(t *testing.T) {
 			expectedIdentity: &authn.Identity{ID: authn.MustParseNamespaceID("user:1")},
 		},
 		{
+			desc: "should succeed with authentication for configured client for identity with fetch permissions params",
+			clients: []authn.Client{
+				&authntest.FakeClient{
+					ExpectedTest: true,
+					ExpectedIdentity: &authn.Identity{
+						ID: authn.MustParseNamespaceID("user:2"),
+						ClientParams: authn.ClientParams{
+							FetchPermissionsParams: authn.FetchPermissionsParams{
+								ActionsLookup: []string{
+									"datasources:read",
+									"datasources:query",
+								},
+								Roles: []string{
+									"fixed:datasources:reader",
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedIdentity: &authn.Identity{
+				ID: authn.MustParseNamespaceID("user:2"),
+				ClientParams: authn.ClientParams{
+					FetchPermissionsParams: authn.FetchPermissionsParams{
+						ActionsLookup: []string{
+							"datasources:read",
+							"datasources:query",
+						},
+						Roles: []string{
+							"fixed:datasources:reader",
+						},
+					},
+				},
+			},
+		},
+		{
 			desc: "should succeed with authentication for second client when first test fail",
 			clients: []authn.Client{
 				&authntest.FakeClient{ExpectedName: "1", ExpectedPriority: 1, ExpectedTest: false},
-				&authntest.FakeClient{ExpectedName: "2", ExpectedPriority: 2, ExpectedTest: true, ExpectedIdentity: &authn.Identity{ID: authn.MustParseNamespaceID("user:2")}},
+				&authntest.FakeClient{
+					ExpectedName:     "2",
+					ExpectedPriority: 2,
+					ExpectedTest:     true,
+					ExpectedIdentity: &authn.Identity{ID: authn.MustParseNamespaceID("user:2"), AuthID: "service:some-service", AuthenticatedBy: "service_auth"},
+				},
 			},
-			expectedIdentity: &authn.Identity{ID: authn.MustParseNamespaceID("user:2")},
+			expectedIdentity: &authn.Identity{ID: authn.MustParseNamespaceID("user:2"), AuthID: "service:some-service", AuthenticatedBy: "service_auth"},
 		},
 		{
 			desc: "should succeed with authentication for third client when error happened in first",
@@ -90,16 +135,72 @@ func TestService_Authenticate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
+			spanRecorder := tracetest.NewSpanRecorder()
+			tracer := tracing.InitializeTracerForTest(tracing.WithSpanProcessor(spanRecorder))
+
 			svc := setupTests(t, func(svc *Service) {
+				svc.tracer = tracer
+
 				for _, c := range tt.clients {
 					svc.RegisterClient(c)
 				}
 			})
 
 			identity, err := svc.Authenticate(context.Background(), &authn.Request{})
+			spans := spanRecorder.Ended()
 			if len(tt.expectedErrors) == 0 {
 				assert.NoError(t, err)
 				assert.EqualValues(t, tt.expectedIdentity, identity)
+
+				matchedClients := make([]*authntest.FakeClient, 0)
+				for _, client := range tt.clients {
+					fakeClient, _ := client.(*authntest.FakeClient)
+					if fakeClient.ExpectedTest {
+						matchedClients = append(matchedClients, fakeClient)
+					}
+				}
+				require.Len(t, spans, 1+len(matchedClients), "must have spans 1+ number of clients tried")
+
+				spansTested := make([]sdktrace.ReadOnlySpan, 0)
+				for _, span := range spans {
+					if span.Name() != "authn.Authenticate" {
+						spansTested = append(spansTested, span)
+					}
+				}
+
+				assert.Len(t, spansTested, len(matchedClients), "expected spans with name authn.authenticate to match number of clients tested")
+
+				// since this is a success case, at least one span should have all 3 attributes
+				passedAuthnIndex := slices.IndexFunc(spansTested, func(span sdktrace.ReadOnlySpan) bool {
+					return len(span.Attributes()) >= 3 // more than 3 when there are ClientParams in the identity
+				})
+				require.NotEqual(t, -1, passedAuthnIndex, "no spans found all 3 attributes - passed case should have authn attributes set")
+				passedAuthnSpan := spansTested[passedAuthnIndex]
+				for _, attr := range passedAuthnSpan.Attributes() {
+					switch attr.Key {
+					case "identity.ID":
+						assert.Equal(t, tt.expectedIdentity.ID.String(), attr.Value.AsString())
+					case "identity.AuthID":
+						assert.Equal(t, tt.expectedIdentity.AuthID, attr.Value.AsString())
+					case "identity.AuthenticatedBy":
+						assert.Equal(t, tt.expectedIdentity.AuthenticatedBy, attr.Value.AsString())
+					case "identity.ClientParams.FetchPermissionsParams.ActionsLookup":
+						if len(tt.expectedIdentity.ClientParams.FetchPermissionsParams.ActionsLookup) > 0 {
+							assert.Equal(t, tt.expectedIdentity.ClientParams.FetchPermissionsParams.ActionsLookup, attr.Value.AsStringSlice())
+						}
+					case "identity.ClientParams.FetchPermissionsParams.Roles":
+						if len(tt.expectedIdentity.ClientParams.FetchPermissionsParams.Roles) > 0 {
+							assert.Equal(t, tt.expectedIdentity.ClientParams.FetchPermissionsParams.Roles, attr.Value.AsStringSlice())
+						}
+					}
+				}
+
+				if len(matchedClients) > 1 {
+					failedAuthnIndex := slices.IndexFunc(spansTested, func(span sdktrace.ReadOnlySpan) bool {
+						return span.Status().Code == codes.Error
+					})
+					assert.NotEqual(t, -1, failedAuthnIndex, "no spans found for the error case - at least one client in multi client test must have failed")
+				}
 			} else {
 				for _, e := range tt.expectedErrors {
 					assert.ErrorIs(t, err, e)
