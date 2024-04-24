@@ -1,5 +1,7 @@
 ---
 title: Legend mode and legend placement
+comments: |
+  This file is used in the following visualizations: state timeline, status history
 ---
 
 ### Visibility

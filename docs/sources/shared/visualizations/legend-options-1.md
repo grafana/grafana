@@ -1,5 +1,7 @@
 ---
 title: Legend options
+comments: |
+  This file is used in the following visualizations: bar chart, candlestick, histogram, time series, trend, xy chart
 ---
 
 ### Visibility
