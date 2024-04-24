@@ -162,7 +162,7 @@ describe('DataTrail', () => {
               expect(trail.state.history.state.steps[1].trailState.$timeRange?.state.from).toBe('now-6h');
             });
 
-            it('History step 2 should stil have `from` of "now-1h"', () => {
+            it('History step 2 should still have `from` of "now-1h"', () => {
               expect(trail.state.history.state.steps[2].trailState.$timeRange?.state.from).toBe('now-1h');
             });
 
