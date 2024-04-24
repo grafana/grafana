@@ -705,14 +705,12 @@ func TestIntegrationMergeUser(t *testing.T) {
 					return user.ErrUserNotFound
 				}
 				require.NoError(t, err)
-				return nil
+				// this is the user we want to update to another team
+				return teamimpl.AddOrUpdateTeamMemberHook(sess, 1, testOrgID, team1.ID, false, 0)
 			})
 			if err != nil {
 				t.Error(err)
 			}
-			// this is the user we want to update to another team
-			err = teamSvc.AddTeamMember(context.Background(), 1, testOrgID, team1.ID, false, 0)
-			require.NoError(t, err)
 
 			// get users
 			conflictUsers, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
