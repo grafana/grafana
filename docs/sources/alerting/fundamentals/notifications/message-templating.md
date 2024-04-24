@@ -32,7 +32,7 @@ In Grafana, there are two ways to template your alert notification messages:
 - Labels and annotations contain information about an alert. 
 - Labels are used to differentiate an alert from all other alerts, while annotations are used to add additional information to an existing alert.
 
-2. Notification templates
+1. Notification templates
 
 - Add notification templates to contact points for reuse and consistent messaging in your notifications.
 - Use notification templates to change the title, message, and format of the message in your notifications.
