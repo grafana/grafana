@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { Button, ButtonGroup, ClipboardButton, Dropdown } from '@grafana/ui';
+import { createDashboardShortLink } from 'app/core/utils/shortLinks';
 
-import { createDashboardShortLink } from '../../../../core/utils/shortLinks';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { DashboardInteractions } from '../../utils/interactions';
 
 import ShareMenu from './ShareMenu';
 
 export default function ShareButton({ dashboard }: { dashboard: DashboardScene }) {
-  const [isOpen, setOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   const [_, buildUrl] = useAsyncFn(async () => {
     return await createDashboardShortLink(dashboard, { useAbsoluteTimeRange: true, theme: 'current' });
@@ -20,9 +20,13 @@ export default function ShareButton({ dashboard }: { dashboard: DashboardScene }
     return await buildUrl();
   };
 
-  const onMenuClick = () => {
-    DashboardInteractions.toolbarShareClick();
-  };
+  const onMenuClick = useCallback((isOpen: boolean) => {
+    if (isOpen) {
+      DashboardInteractions.toolbarShareClick();
+    }
+
+    setIsOpen(isOpen);
+  }, []);
 
   const MenuActions = () => <ShareMenu dashboard={dashboard} />;
 
@@ -31,8 +35,8 @@ export default function ShareButton({ dashboard }: { dashboard: DashboardScene }
       <ClipboardButton size="sm" getText={getAsyncText} tooltip="Copy shortened URL">
         Share link
       </ClipboardButton>
-      <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={setOpen}>
-        <Button size="sm" icon={isOpen ? 'angle-up' : 'angle-down'} onClick={onMenuClick} />
+      <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={onMenuClick}>
+        <Button size="sm" icon={isOpen ? 'angle-up' : 'angle-down'} />
       </Dropdown>
     </ButtonGroup>
   );

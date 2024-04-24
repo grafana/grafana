@@ -17,14 +17,7 @@ export default function ShareMenu({ dashboard }: { dashboard: DashboardScene }) 
 
   return (
     <Menu>
-      <Menu.Item
-        label="Share internally"
-        description="Copy link"
-        icon="building"
-        onClick={() => {
-          getAsyncText();
-        }}
-      />
+      <Menu.Item label="Share internally" description="Copy link" icon="building" onClick={getAsyncText} />
     </Menu>
   );
 }
