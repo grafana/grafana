@@ -1,15 +1,7 @@
-import {
-  AnyAction,
-  configureStore,
-  EnhancedStore,
-  Reducer,
-  getDefaultMiddleware,
-  CombinedState,
-  PreloadedState,
-} from '@reduxjs/toolkit';
+import { AnyAction, configureStore, EnhancedStore, Reducer, getDefaultMiddleware } from '@reduxjs/toolkit';
 import { NoInfer } from '@reduxjs/toolkit/dist/tsHelpers';
-import { Dispatch, Middleware, MiddlewareAPI } from 'redux';
-import thunk, { ThunkMiddleware } from 'redux-thunk';
+import { Middleware } from 'redux';
+import { thunk, ThunkMiddleware } from 'redux-thunk';
 
 import { setStore } from '../../../app/store/store';
 import { StoreState } from '../../../app/types';
@@ -38,23 +30,23 @@ export interface ReduxTesterThen<State> {
 }
 
 export interface ReduxTesterArguments<State> {
-  preloadedState?: PreloadedState<CombinedState<NoInfer<State>>>;
+  preloadedState?: Partial<NoInfer<State>>;
   debug?: boolean;
 }
 
 export const reduxTester = <State>(args?: ReduxTesterArguments<State>): ReduxTesterGiven<State> => {
   const dispatchedActions: AnyAction[] = [];
-  const logActionsMiddleWare: Middleware<{}, Partial<StoreState>> =
-    (store: MiddlewareAPI<Dispatch, Partial<StoreState>>) => (next: Dispatch) => (action: AnyAction) => {
-      // filter out thunk actions
-      if (action && typeof action !== 'function') {
-        dispatchedActions.push(action);
-      }
+  const logActionsMiddleWare: Middleware<{}, Partial<StoreState>> = (store) => (next) => (action) => {
+    // filter out thunk actions
+    if (action && typeof action !== 'function') {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      dispatchedActions.push(action as AnyAction);
+    }
 
-      return next(action);
-    };
+    return next(action);
+  };
 
-  const preloadedState = args?.preloadedState ?? ({} as unknown as PreloadedState<CombinedState<NoInfer<State>>>);
+  const preloadedState = args?.preloadedState ?? ({} as unknown as Partial<NoInfer<State>>);
   const debug = args?.debug ?? false;
   let store: EnhancedStore<State, AnyAction, []> | null = null;
 

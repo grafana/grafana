@@ -4,7 +4,6 @@ import userEvent from '@testing-library/user-event';
 import React, { ComponentProps, Fragment, PropsWithChildren } from 'react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
-import { PreloadedState } from 'redux';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaContext';
@@ -21,7 +20,7 @@ interface ExtendedRenderOptions extends RenderOptions {
   /**
    * Partial state to use for preloading store when rendering tests
    */
-  preloadedState?: PreloadedState<StoreState>;
+  preloadedState?: Partial<StoreState>;
   /**
    * Should the wrapper be generated with a wrapping Router component?
    * Useful if you're testing something that needs more nuanced routing behaviour
