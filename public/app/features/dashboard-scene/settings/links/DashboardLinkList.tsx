@@ -3,7 +3,6 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { DashboardLink } from '@grafana/schema';
-
 import {
   Button,
   DeleteButton,
@@ -17,7 +16,6 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
-
 
 interface DashboardLinkListProps {
   links: DashboardLink[];
