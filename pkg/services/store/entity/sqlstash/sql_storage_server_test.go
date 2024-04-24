@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/store/entity/db/dbimpl"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -125,15 +124,15 @@ func TestCreate(t *testing.T) {
 }
 
 func setUpTestServer(t *testing.T) entity.EntityStoreServer {
-	sqlStore := db.InitTestDB(t)
+	sqlStore, cfg := db.InitTestDBWithCfg(t)
 
 	entityDB, err := dbimpl.ProvideEntityDB(
 		sqlStore,
-		setting.NewCfg(),
+		cfg,
 		featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorage))
 	require.NoError(t, err)
 
-	traceConfig, err := tracing.ParseTracingConfig(sqlStore.Cfg)
+	traceConfig, err := tracing.ParseTracingConfig(cfg)
 	require.NoError(t, err)
 	tracer, err := tracing.ProvideService(traceConfig)
 	require.NoError(t, err)

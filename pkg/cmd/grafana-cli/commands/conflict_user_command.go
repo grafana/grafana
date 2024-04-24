@@ -771,7 +771,7 @@ ORDER BY
 
 func notServiceAccount(ss *sqlstore.SQLStore) string {
 	return fmt.Sprintf("is_service_account = %s",
-		ss.Dialect.BooleanStr(false))
+		ss.GetDialect().BooleanStr(false))
 }
 
 // confirm function asks for user input

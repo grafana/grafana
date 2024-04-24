@@ -388,7 +388,7 @@ func createUsersAndTeams(t *testing.T, svcs helperServices, orgID int64, users [
 }
 
 func setupTestEnv(t testing.TB) (*AccessControlStore, rs.Store, user.Service, team.Service, org.Service) {
-	sql, cfg := db.InitTestDBwithCfg(t)
+	sql, cfg := db.InitTestDBWithCfg(t)
 	cfg.AutoAssignOrg = true
 	cfg.AutoAssignOrgRole = "Viewer"
 	cfg.AutoAssignOrgId = 1

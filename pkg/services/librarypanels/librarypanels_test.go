@@ -815,7 +815,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 	t.Run(desc, func(t *testing.T) {
 		orgID := int64(1)
 		role := org.RoleAdmin
-		sqlStore, cfg := db.InitTestDBwithCfg(t)
+		sqlStore, cfg := db.InitTestDBWithCfg(t)
 		quotaService := quotatest.New(false, nil)
 
 		ac := actest.FakeAccessControl{ExpectedEvaluate: true}
@@ -870,9 +870,9 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			Login: userInDbName,
 		}
 		ctx := appcontext.WithUser(context.Background(), usr)
-		orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotaService)
+		orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 		require.NoError(t, err)
-		usrSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
+		usrSvc, err := userimpl.ProvideService(sqlStore, orgSvc, cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
 		require.NoError(t, err)
 		_, err = usrSvc.Create(context.Background(), &cmd)
 		require.NoError(t, err)

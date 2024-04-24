@@ -42,8 +42,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	sql := db.InitTestDB(t)
-	cfg := sql.Cfg
+	sql, cfg := db.InitTestDBWithCfg(t)
 
 	dashboard1 := testutil.CreateDashboard(t, sql, cfg, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
 		UserID: 1,

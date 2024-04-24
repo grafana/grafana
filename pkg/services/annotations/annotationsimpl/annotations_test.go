@@ -209,14 +209,14 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 	annotationsTexts := make([]string, 0, folder.MaxNestedFolderDepth+1)
 
 	setupFolderStructure := func() db.DB {
-		sql := db.InitTestDB(t)
+		sql, cfg := db.InitTestDBWithCfg(t)
 
 		// enable nested folders so that the folder table is populated for all the tests
 		features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
 
 		tagService := tagimpl.ProvideService(sql)
 
-		dashStore, err := dashboardstore.ProvideDashboardStore(sql, sql.Cfg, features, tagService, quotatest.New(false, nil))
+		dashStore, err := dashboardstore.ProvideDashboardStore(sql, cfg, features, tagService, quotatest.New(false, nil))
 		require.NoError(t, err)
 
 		origNewGuardian := guardian.New
@@ -225,10 +225,9 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 			guardian.New = origNewGuardian
 		})
 
-		ac := acimpl.ProvideAccessControl(sql.Cfg)
-		folderSvc := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sql.Cfg, dashStore, folderimpl.ProvideDashboardFolderStore(sql), sql, features, supportbundlestest.NewFakeBundleService(), nil)
+		ac := acimpl.ProvideAccessControl(cfg)
+		folderSvc := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashStore, folderimpl.ProvideDashboardFolderStore(sql), sql, features, supportbundlestest.NewFakeBundleService(), nil)
 
-		cfg := setting.NewCfg()
 		cfg.AnnotationMaximumTagsLength = 60
 
 		store := NewXormStore(cfg, log.New("annotation.test"), sql, tagService)
