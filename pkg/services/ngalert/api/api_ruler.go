@@ -54,7 +54,6 @@ type RulerSrv struct {
 	cfg                *setting.UnifiedAlertingSettings
 	conditionValidator ConditionValidator
 	authz              RuleAccessControlService
-	alertRuleService   AlertRuleService
 
 	amConfigStore  AMConfigStore
 	amRefresher    AMRefresher
@@ -267,12 +266,20 @@ func (srv RulerSrv) RouteGetRulesConfig(c *contextmodel.ReqContext) response.Res
 
 // RouteGetRuleByUID returns the alert rule with the given UID
 func (srv RulerSrv) RouteGetRuleByUID(c *contextmodel.ReqContext, ruleUID string) response.Response {
-	rule, provenance, err := srv.alertRuleService.GetAlertRule(c.Req.Context(), c.SignedInUser, ruleUID)
+	ctx := c.Req.Context()
+	orgID := c.SignedInUser.GetOrgID()
+
+	rule, err := srv.getAuthorizedRuleByUid(ctx, c, ruleUID)
 	if err != nil {
 		if errors.Is(err, alerting_models.ErrAlertRuleNotFound) {
 			return response.Empty(http.StatusNotFound)
 		}
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get rule by UID", err)
+	}
+
+	provenance, err := srv.provenanceStore.GetProvenance(ctx, &rule, orgID)
+	if err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get rule provenance", err)
 	}
 
 	result := &apimodels.GettableGrafanaRule{
@@ -293,6 +300,7 @@ func (srv RulerSrv) RouteGetRuleByUID(c *contextmodel.ReqContext, ruleUID string
 		IsPaused:             rule.IsPaused,
 		NotificationSettings: AlertRuleNotificationSettingsFromNotificationSettings(rule.NotificationSettings),
 	}
+
 	return response.JSON(http.StatusOK, result)
 }
 
