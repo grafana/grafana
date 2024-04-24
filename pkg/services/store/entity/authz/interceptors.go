@@ -63,21 +63,26 @@ func extractRequestEntityData(info *grpc.UnaryServerInfo, req any) (*AuthZParams
 	authzParams := &AuthZParams{}
 	switch info.FullMethod {
 	case "/entity.EntityStore/Read":
-		_, ok := req.(*entity.ReadEntityRequest)
+		parsedReq, ok := req.(*entity.ReadEntityRequest)
 		if !ok {
 			return nil, fmt.Errorf("incorrect type for /entity.EntityStore/Read: expected *ReadEntityRequest, got %T", req)
 		}
+
+		key, _ := entity.ParseKey(parsedReq.Key)
+		authzParams.Key = []*entity.Key{key}
+		authzParams.Kind = []string{key.Resource}
+		// TODO: get the containing folder
+		// authzParams.Folder =
 	case "/entity.EntityStore/Create":
-		e, ok := req.(*entity.CreateEntityRequest)
+		parsedReq, ok := req.(*entity.CreateEntityRequest)
 		if !ok {
 			return nil, fmt.Errorf("incorrect type for /entity.EntityStore/Create: expected *CreateEntityRequest, got %T", req)
 		}
 
-		key, _ := entity.ParseKey(e.Entity.Key)
+		key, _ := entity.ParseKey(parsedReq.Entity.Key)
 		authzParams.Key = []*entity.Key{key}
-		authzParams.Kind = []string{e.Entity.Resource}
-		authzParams.Folder = e.Entity.Folder
-
+		authzParams.Kind = []string{parsedReq.Entity.Resource}
+		authzParams.Folder = parsedReq.Entity.Folder
 	case "/entity.EntityStore/Update":
 		_, ok := req.(*entity.UpdateEntityRequest)
 		if !ok {
@@ -94,15 +99,14 @@ func extractRequestEntityData(info *grpc.UnaryServerInfo, req any) (*AuthZParams
 			return nil, fmt.Errorf("incorrect type for /entity.EntityStore/History: expected *EntityHistoryRequest, got %T", req)
 		}
 	case "/entity.EntityStore/List":
-		entity, ok := req.(*entity.EntityListRequest)
+		parsedReq, ok := req.(*entity.EntityListRequest)
 		if !ok {
 			return nil, fmt.Errorf("incorrect type for /entity.EntityStore/List: expected *EntityListRequest, got %T", req)
 		}
 
-		authzParams.Key = keyListToKeys(entity.Key)
-		authzParams.Kind = entity.Resource
-		authzParams.Folder = entity.Folder
-
+		authzParams.Key = keyListToKeys(parsedReq.Key)
+		authzParams.Kind = parsedReq.Resource
+		authzParams.Folder = parsedReq.Folder
 	case "/entity.EntityStore/Watch":
 		_, ok := req.(*entity.EntityWatchRequest)
 		if !ok {
