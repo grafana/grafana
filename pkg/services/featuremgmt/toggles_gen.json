@@ -705,12 +705,15 @@
     {
       "metadata": {
         "name": "returnToPrevious",
-        "resourceVersion": "1712686869842",
-        "creationTimestamp": "2024-04-09T18:21:09Z"
+        "resourceVersion": "1713870623848",
+        "creationTimestamp": "2024-04-19T16:50:44Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-04-23 11:10:23.848446 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the return to previous context functionality",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true
       }
