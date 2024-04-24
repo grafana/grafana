@@ -10,6 +10,14 @@ jobs:
   dashboard-scenes-e2e:
     runs-on: ubuntu-latest
     steps:
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: echo "$GITHUB_CONTEXT"
+      - name: Dump job context
+        env:
+          JOB_CONTEXT: ${{ toJson(job) }}
+        run: echo "$JOB_CONTEXT"
       - name: Checkout
         uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -32,8 +40,8 @@ jobs:
           payload: >
             {
               "icon_emoji": ":this-is-fine-fire:",
-              "username": "TEST - Scenes e2e tests failed",
-              "text": "TEST - Link to run: https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}",
+              "username": "Dashboard scenes e2e tests failed",
+              "text": "Link to run: https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}",
               "channel": "#grafana-dashboards-squad"
             }
         env:

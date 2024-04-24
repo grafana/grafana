@@ -140,7 +140,14 @@ describe('Variables - Set options from ui', () => {
 
     cy.wait('@query');
 
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('B').scrollIntoView().should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('B')
+      .scrollIntoView()
+      .should('be.visible')
+      .within(() => {
+        cy.get('input').click();
+      });
+
+    cy.get('body').click();
 
     e2e.components.LoadingIndicator.icon().should('have.length', 0);
 

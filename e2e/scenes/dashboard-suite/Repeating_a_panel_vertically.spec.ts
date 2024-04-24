@@ -8,7 +8,6 @@ describe('Repeating a panel vertically', () => {
 
   it('should be able to repeat a panel vertically', () => {
     e2e.flows.openDashboard({ uid: PAGE_UNDER_TEST });
-    throw new Error('TEST FORCE FAIL');
 
     let prevTop = Number.NEGATIVE_INFINITY;
     let prevLeft: number | null = null;
