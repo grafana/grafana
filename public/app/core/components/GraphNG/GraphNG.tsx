@@ -222,20 +222,15 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
     return (
       <VizLayout width={width} height={height} legend={renderLegend(config)}>
         {(vizWidth: number, vizHeight: number) => (
-          <>
-            {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- Interactivity set by KeyboardPlugin*/}
-            <div aria-label="Graph" tabIndex={0} role="application">
-              <UPlotChart
-                config={config}
-                data={alignedData!}
-                width={vizWidth}
-                height={vizHeight}
-                plotRef={(u) => ((this.plotInstance as React.MutableRefObject<uPlot>).current = u)}
-              >
-                {children ? children(config, alignedFrame) : null}
-              </UPlotChart>
-            </div>
-          </>
+          <UPlotChart
+            config={config}
+            data={alignedData!}
+            width={vizWidth}
+            height={vizHeight}
+            plotRef={(u) => ((this.plotInstance as React.MutableRefObject<uPlot>).current = u)}
+          >
+            {children ? children(config, alignedFrame) : null}
+          </UPlotChart>
         )}
       </VizLayout>
     );
