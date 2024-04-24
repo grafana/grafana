@@ -10,6 +10,7 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	dashboardsnapshot "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	dashsnapdb "github.com/grafana/grafana/pkg/services/dashboardsnapshots/database"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
@@ -26,8 +27,9 @@ func TestDashboardSnapshotsService(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	dsStore := dashsnapdb.ProvideStore(sqlStore, cfg)
+	fakeDashboardService := &dashboards.FakeDashboardService{}
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
-	s := ProvideService(dsStore, secretsService)
+	s := ProvideService(dsStore, secretsService, fakeDashboardService)
 
 	origSecret := cfg.SecretKey
 	cfg.SecretKey = "dashboard_snapshot_service_test"
