@@ -1,4 +1,4 @@
-# Auto generated binary variables helper managed by https://github.com/bwplotka/bingo v0.8. DO NOT EDIT.
+# Auto generated binary variables helper managed by https://github.com/bwplotka/bingo v0.9. DO NOT EDIT.
 # All tools are designed to be build inside $GOBIN.
 BINGO_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
 GOPATH ?= $(shell go env GOPATH)
@@ -53,9 +53,11 @@ $(LEFTHOOK): $(BINGO_DIR)/lefthook.mod
 	@echo "(re)installing $(GOBIN)/lefthook-v1.4.8"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=lefthook.mod -o=$(GOBIN)/lefthook-v1.4.8 "github.com/evilmartians/lefthook"
 
-SWAGGER := $(GOBIN)/swagger-v0.30.2
+# swagger 0.30.5 isn't compatibile with go 1.22 yet so pinning to a specific commit until there's a new release
+# https://github.com/go-swagger/go-swagger/issues/3070
+SWAGGER := $(GOBIN)/swagger-db51e79a0e37c572d8b59ae0c58bf2bbbbe53285
 $(SWAGGER): $(BINGO_DIR)/swagger.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
-	@echo "(re)installing $(GOBIN)/swagger-v0.30.2"
-	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=swagger.mod -o=$(GOBIN)/swagger-v0.30.2 "github.com/go-swagger/go-swagger/cmd/swagger"
+	@echo "(re)installing $(GOBIN)/swagger-db51e79a0e37c572d8b59ae0c58bf2bbbbe53285"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=swagger.mod -o=$(GOBIN)/swagger-db51e79a0e37c572d8b59ae0c58bf2bbbbe53285 "github.com/go-swagger/go-swagger/cmd/swagger"
 
