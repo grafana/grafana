@@ -16,7 +16,14 @@ import {
   isConnectionTarget,
 } from '../../utils';
 
-import { CONNECTION_ANCHOR_ALT, ConnectionAnchors, CONNECTION_ANCHOR_HIGHLIGHT_OFFSET } from './ConnectionAnchors';
+import {
+  CONNECTION_ANCHOR_ALT,
+  ConnectionAnchors,
+  CONNECTION_ANCHOR_HIGHLIGHT_OFFSET,
+  ANCHORS,
+  ANCHOR_PADDING,
+  HALF_SIZE,
+} from './ConnectionAnchors';
 import { ConnectionSVG } from './ConnectionSVG';
 
 export const CONNECTION_VERTEX_ID = 'vertex';
@@ -27,6 +34,7 @@ const CONNECTION_VERTEX_SNAP_TOLERANCE = (5 / 180) * Math.PI; // Multi-segment s
 export class Connections {
   scene: Scene;
   connectionAnchorDiv?: HTMLDivElement;
+  anchorsDiv?: HTMLDivElement;
   connectionSVG?: SVGElement;
   connectionLine?: SVGLineElement;
   connectionSVGVertex?: SVGElement;
@@ -68,6 +76,10 @@ export class Connections {
 
   setConnectionAnchorRef = (anchorElement: HTMLDivElement) => {
     this.connectionAnchorDiv = anchorElement;
+  };
+
+  setAnchorsRef = (anchorsElement: HTMLDivElement) => {
+    this.anchorsDiv = anchorsElement;
   };
 
   setConnectionSVGRef = (connectionSVG: SVGSVGElement) => {
@@ -129,6 +141,25 @@ export class Connections {
         return;
       }
     }
+
+    const customElementAnchors = element?.item.customConnectionAnchors || ANCHORS;
+    // This type cast is necessary as TS doesn't understand that `Element` is an `HTMLElement`
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const anchors = Array.from(this.anchorsDiv?.children as HTMLCollectionOf<HTMLElement>);
+    const anchorsAmount = customElementAnchors.length;
+
+    // re-calculate the position of the existing anchors on hover
+    // and hide the rest of the anchors if there are more than the custom ones
+    anchors.forEach((anchor, index) => {
+      if (index >= anchorsAmount) {
+        anchor.style.display = 'none';
+      } else {
+        const { x, y } = customElementAnchors[index];
+        anchor.style.top = `calc(${-y * 50 + 50}% - ${HALF_SIZE}px - ${ANCHOR_PADDING}px)`;
+        anchor.style.left = `calc(${x * 50 + 50}% - ${HALF_SIZE}px - ${ANCHOR_PADDING}px)`;
+        anchor.style.display = 'block';
+      }
+    });
 
     const elementBoundingRect = element.div!.getBoundingClientRect();
     const transformScale = this.scene.scale;
@@ -648,7 +679,11 @@ export class Connections {
   render() {
     return (
       <>
-        <ConnectionAnchors setRef={this.setConnectionAnchorRef} handleMouseLeave={this.handleMouseLeave} />
+        <ConnectionAnchors
+          setRef={this.setConnectionAnchorRef}
+          setAnchorsRef={this.setAnchorsRef}
+          handleMouseLeave={this.handleMouseLeave}
+        />
         <ConnectionSVG
           setSVGRef={this.setConnectionSVGRef}
           setLineRef={this.setConnectionLineRef}

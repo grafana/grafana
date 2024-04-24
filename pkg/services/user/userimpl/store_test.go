@@ -64,8 +64,7 @@ func TestIntegrationUserGet(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	ss := db.InitTestDB(t)
-	cfg := ss.Cfg
+	ss, cfg := db.InitTestDBWithCfg(t)
 	userStore := ProvideStore(ss, cfg)
 
 	_, errUser := userStore.Insert(context.Background(),
@@ -108,12 +107,12 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	ss := db.InitTestDB(t)
-	quotaService := quotaimpl.ProvideService(ss, ss.Cfg)
-	orgService, err := orgimpl.ProvideService(ss, ss.Cfg, quotaService)
+	ss, cfg := db.InitTestDBWithCfg(t)
+	quotaService := quotaimpl.ProvideService(ss, cfg)
+	orgService, err := orgimpl.ProvideService(ss, cfg, quotaService)
 	require.NoError(t, err)
 	userStore := ProvideStore(ss, setting.NewCfg())
-	usrSvc, err := ProvideService(ss, orgService, ss.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
+	usrSvc, err := ProvideService(ss, orgService, cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
 	usr := &user.SignedInUser{
 		OrgID:       1,
@@ -183,7 +182,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 	t.Run("Testing DB - creates and loads user", func(t *testing.T) {
 		ss := db.InitTestDB(t)
-		_, usrSvc := createOrgAndUserSvc(t, ss, ss.Cfg)
+		_, usrSvc := createOrgAndUserSvc(t, ss, cfg)
 
 		cmd := user.CreateUserCommand{
 			Email: "usertest@test.com",
@@ -460,7 +459,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 	t.Run("get signed in user", func(t *testing.T) {
 		ss := db.InitTestDB(t)
-		orgService, usrSvc := createOrgAndUserSvc(t, ss, ss.Cfg)
+		orgService, usrSvc := createOrgAndUserSvc(t, ss, cfg)
 		users := createFiveTestUsers(t, usrSvc, func(i int) *user.CreateUserCommand {
 			return &user.CreateUserCommand{
 				Email:      fmt.Sprint("user", i, "@test.com"),
@@ -501,7 +500,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 	t.Run("Testing DB - grafana admin users", func(t *testing.T) {
 		ss := db.InitTestDB(t)
-		_, usrSvc := createOrgAndUserSvc(t, ss, ss.Cfg)
+		_, usrSvc := createOrgAndUserSvc(t, ss, cfg)
 		usr, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{
 			Email:   "admin@test.com",
 			Name:    "admin",
@@ -557,8 +556,8 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 	t.Run("Testing DB - return list users based on their is_disabled flag", func(t *testing.T) {
 		ss = db.InitTestDB(t)
-		_, usrSvc := createOrgAndUserSvc(t, ss, ss.Cfg)
-		userStore := ProvideStore(ss, ss.Cfg)
+		_, usrSvc := createOrgAndUserSvc(t, ss, cfg)
+		userStore := ProvideStore(ss, cfg)
 
 		createFiveTestUsers(t, usrSvc, func(i int) *user.CreateUserCommand {
 			return &user.CreateUserCommand{
@@ -591,7 +590,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 		// Re-init DB
 		ss := db.InitTestDB(t)
-		orgService, usrSvc = createOrgAndUserSvc(t, ss, ss.Cfg)
+		orgService, usrSvc = createOrgAndUserSvc(t, ss, cfg)
 
 		users := createFiveTestUsers(t, usrSvc, func(i int) *user.CreateUserCommand {
 			return &user.CreateUserCommand{
@@ -615,7 +614,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		// A user is an org member and has been assigned permissions
 		// Re-init DB
 		ss = db.InitTestDB(t)
-		orgService, usrSvc = createOrgAndUserSvc(t, ss, ss.Cfg)
+		orgService, usrSvc = createOrgAndUserSvc(t, ss, cfg)
 		users = createFiveTestUsers(t, usrSvc, func(i int) *user.CreateUserCommand {
 			return &user.CreateUserCommand{
 				Email:      fmt.Sprint("user", i, "@test.com"),
@@ -657,9 +656,9 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 	t.Run("Testing DB - return list of users that the SignedInUser has permission to read", func(t *testing.T) {
 		ss := db.InitTestDB(t)
-		orgService, err := orgimpl.ProvideService(ss, ss.Cfg, quotaService)
+		orgService, err := orgimpl.ProvideService(ss, cfg, quotaService)
 		require.NoError(t, err)
-		usrSvc, err := ProvideService(ss, orgService, ss.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
+		usrSvc, err := ProvideService(ss, orgService, cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
 		require.NoError(t, err)
 
 		createFiveTestUsers(t, usrSvc, func(i int) *user.CreateUserCommand {
@@ -934,9 +933,9 @@ func TestIntegrationUserUpdate(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	ss := db.InitTestDB(t)
-	userStore := ProvideStore(ss, setting.NewCfg())
-	_, usrSvc := createOrgAndUserSvc(t, ss, ss.Cfg)
+	ss, cfg := db.InitTestDBWithCfg(t)
+	userStore := ProvideStore(ss, cfg)
+	_, usrSvc := createOrgAndUserSvc(t, ss, cfg)
 
 	users := createFiveTestUsers(t, usrSvc, func(i int) *user.CreateUserCommand {
 		return &user.CreateUserCommand{
@@ -999,13 +998,13 @@ func createFiveTestUsers(t *testing.T, svc user.Service, fn func(i int) *user.Cr
 }
 
 func TestMetricsUsage(t *testing.T) {
-	ss := db.InitTestDB(t)
+	ss, cfg := db.InitTestDBWithCfg(t)
 	userStore := ProvideStore(ss, setting.NewCfg())
-	quotaService := quotaimpl.ProvideService(ss, ss.Cfg)
-	orgService, err := orgimpl.ProvideService(ss, ss.Cfg, quotaService)
+	quotaService := quotaimpl.ProvideService(ss, cfg)
+	orgService, err := orgimpl.ProvideService(ss, cfg, quotaService)
 	require.NoError(t, err)
 
-	_, usrSvc := createOrgAndUserSvc(t, ss, ss.Cfg)
+	_, usrSvc := createOrgAndUserSvc(t, ss, cfg)
 
 	t.Run("Get empty role metrics for an org", func(t *testing.T) {
 		orgId := int64(1)
