@@ -9769,7 +9769,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/hoist-non-react-statics@npm:3.3.5, @types/hoist-non-react-statics@npm:^3.3.0, @types/hoist-non-react-statics@npm:^3.3.1":
+"@types/hoist-non-react-statics@npm:3.3.5, @types/hoist-non-react-statics@npm:^3.3.0":
   version: 3.3.5
   resolution: "@types/hoist-non-react-statics@npm:3.3.5"
   dependencies:
@@ -18848,7 +18848,7 @@ __metadata:
     react-inlinesvg: "npm:3.0.2"
     react-loading-skeleton: "npm:3.4.0"
     react-moveable: "npm:0.56.0"
-    react-redux: "npm:8.1.3"
+    react-redux: "npm:9.1.1"
     react-refresh: "npm:0.14.0"
     react-resizable: "npm:3.0.5"
     react-responsive-carousel: "npm:^3.2.23"
@@ -18868,11 +18868,11 @@ __metadata:
     react-window: "npm:1.8.10"
     react-window-infinite-loader: "npm:1.0.9"
     react-zoom-pan-pinch: "npm:^3.3.0"
-    redux: "npm:4.2.1"
+    redux: "npm:5.0.1"
     redux-mock-store: "npm:1.5.4"
-    redux-thunk: "npm:2.4.2"
+    redux-thunk: "npm:3.1.0"
     regenerator-runtime: "npm:0.14.1"
-    reselect: "npm:4.1.8"
+    reselect: "npm:5.1.0"
     rimraf: "npm:5.0.5"
     rudder-sdk-js: "npm:2.48.6"
     rxjs: "npm:7.8.1"
@@ -26684,35 +26684,25 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-redux@npm:8.1.3":
-  version: 8.1.3
-  resolution: "react-redux@npm:8.1.3"
+"react-redux@npm:9.1.1":
+  version: 9.1.1
+  resolution: "react-redux@npm:9.1.1"
   dependencies:
-    "@babel/runtime": "npm:^7.12.1"
-    "@types/hoist-non-react-statics": "npm:^3.3.1"
     "@types/use-sync-external-store": "npm:^0.0.3"
-    hoist-non-react-statics: "npm:^3.3.2"
-    react-is: "npm:^18.0.0"
     use-sync-external-store: "npm:^1.0.0"
   peerDependencies:
-    "@types/react": ^16.8 || ^17.0 || ^18.0
-    "@types/react-dom": ^16.8 || ^17.0 || ^18.0
-    react: ^16.8 || ^17.0 || ^18.0
-    react-dom: ^16.8 || ^17.0 || ^18.0
-    react-native: ">=0.59"
-    redux: ^4 || ^5.0.0-beta.0
+    "@types/react": ^18.2.25
+    react: ^18.0
+    react-native: ">=0.69"
+    redux: ^5.0.0
   peerDependenciesMeta:
     "@types/react":
-      optional: true
-    "@types/react-dom":
-      optional: true
-    react-dom:
       optional: true
     react-native:
       optional: true
     redux:
       optional: true
-  checksum: 10/c4c7586cff3abeb784e73598d330f5301116a4e9942fd36895f2bccd8990001709c6c3ea1817edb75ee477470d6c67c9113e05a7f86b2b68a3950c9c29fe20cb
+  checksum: 10/eecc5cf0d9f9dec30634b23c912535eb1314d135f426a6108cd1532d52f14f699834f7cb07bcccffa1369ee26f7b43020dc9b41c4486c09bd6f98d7279be07bc
   languageName: node
   linkType: hard
 
@@ -27400,7 +27390,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"redux-thunk@npm:2.4.2, redux-thunk@npm:^2.4.2":
+"redux-thunk@npm:3.1.0":
+  version: 3.1.0
+  resolution: "redux-thunk@npm:3.1.0"
+  peerDependencies:
+    redux: ^5.0.0
+  checksum: 10/38c563db5f0bbec90d2e65cc27f3c870c1b6102e0c071258734fac41cb0e51d31d894125815c2f4133b20aff231f51f028ad99bccc05a7e3249f1a5d5a959ed3
+  languageName: node
+  linkType: hard
+
+"redux-thunk@npm:^2.4.2":
   version: 2.4.2
   resolution: "redux-thunk@npm:2.4.2"
   peerDependencies:
@@ -27409,7 +27408,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"redux@npm:4.2.1, redux@npm:^4.0.0, redux@npm:^4.0.4, redux@npm:^4.0.5, redux@npm:^4.2.0, redux@npm:^4.2.1":
+"redux@npm:5.0.1":
+  version: 5.0.1
+  resolution: "redux@npm:5.0.1"
+  checksum: 10/a373f9ed65693ead58bea5ef61c1d6bef39da9f2706db3be6f84815f3a1283230ecd1184efb1b3daa7f807d8211b0181564ca8f336fc6ee0b1e2fa0ba06737c2
+  languageName: node
+  linkType: hard
+
+"redux@npm:^4.0.0, redux@npm:^4.0.4, redux@npm:^4.0.5, redux@npm:^4.2.0, redux@npm:^4.2.1":
   version: 4.2.1
   resolution: "redux@npm:4.2.1"
   dependencies:
@@ -27670,7 +27676,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"reselect@npm:4.1.8, reselect@npm:^4.1.8":
+"reselect@npm:5.1.0":
+  version: 5.1.0
+  resolution: "reselect@npm:5.1.0"
+  checksum: 10/657c379d9461781b7cb5f0a32133e23b4266886660c94fcc77c102bec8abe484b32bf43a911b99b747ecf7439f157696561d744d40dc920024611beb1a0d921f
+  languageName: node
+  linkType: hard
+
+"reselect@npm:^4.1.8":
   version: 4.1.8
   resolution: "reselect@npm:4.1.8"
   checksum: 10/199984d9872f71cd207f4aa6e6fd2bd48d95154f7aa9b3aee3398335f39f5491059e732f28c12e9031d5d434adab2c458dc8af5afb6564d0ad37e1644445e09c
