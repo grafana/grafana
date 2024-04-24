@@ -173,12 +173,14 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/alerts-and-incidents',
-      component: () => (
-        <NavLandingPage
-          navId="alerts-and-incidents"
-          HeaderComponent={isOpenSourceEdition() && isAdmin() && !isLocalDevEnv() ? undefined : ConfigureIRM}
-        />
-      ),
+      component: () => {
+        return (
+          <NavLandingPage
+            navId="alerts-and-incidents"
+            HeaderComponent={(!isOpenSourceEdition() && isAdmin()) || isLocalDevEnv() ? ConfigureIRM : undefined}
+          />
+        );
+      },
     },
     {
       path: '/testing-and-synthetics',
