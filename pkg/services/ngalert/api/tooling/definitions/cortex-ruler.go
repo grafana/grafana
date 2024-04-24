@@ -218,6 +218,12 @@ type PathGetRulesParams struct {
 	PanelID int64
 }
 
+// swagger:parameters RouteGetRuleByUID
+type PathGetRuleByUIDParams struct {
+	// in: path
+	RuleUID string
+}
+
 // swagger:model
 type RuleGroupConfigResponse struct {
 	GettableRuleGroupConfig
