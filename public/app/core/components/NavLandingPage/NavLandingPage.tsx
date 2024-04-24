@@ -11,10 +11,9 @@ import { NavLandingPageCard } from './NavLandingPageCard';
 interface Props {
   navId: string;
   header?: React.ReactNode;
-  HeaderComponent?: React.ComponentType;
 }
 
-export function NavLandingPage({ navId, header, HeaderComponent }: Props) {
+export function NavLandingPage({ navId, header }: Props) {
   const { node } = useNavModel(navId);
   const styles = useStyles2(getStyles);
   const children = node.children?.filter((child) => !child.hideFromTabs);
@@ -23,7 +22,6 @@ export function NavLandingPage({ navId, header, HeaderComponent }: Props) {
     <Page navId={node.id}>
       <Page.Contents>
         <div className={styles.content}>
-          {HeaderComponent && <HeaderComponent />}
           {header}
           {children && children.length > 0 && (
             <section className={styles.grid}>

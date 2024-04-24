@@ -177,7 +177,7 @@ export function getAppRoutes(): RouteDescriptor[] {
         return (
           <NavLandingPage
             navId="alerts-and-incidents"
-            HeaderComponent={(!isOpenSourceEdition() && isAdmin()) || isLocalDevEnv() ? ConfigureIRM : undefined}
+            header={(!isOpenSourceEdition() && isAdmin()) || isLocalDevEnv() ? <ConfigureIRM /> : undefined}
           />
         );
       },
