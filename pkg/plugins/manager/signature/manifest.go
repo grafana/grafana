@@ -261,7 +261,7 @@ func verifyHash(mlog log.Logger, plugin plugins.FoundPlugin, path, hash string) 
 
 	h := sha256.New()
 	if _, err := io.Copy(h, f); err != nil {
-		return errors.New("could not calculate plugin file checksum")
+		return errors.New("could not calculate plugin file checksum. Error: " + err.Error())
 	}
 	sum := hex.EncodeToString(h.Sum(nil))
 	if sum != hash {
