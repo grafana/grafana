@@ -331,7 +331,7 @@ func TestLoginPostRedirect(t *testing.T) {
 		HooksService: &hooks.HooksService{},
 		License:      &licensing.OSSLicensingService{},
 		authnService: &authntest.FakeService{
-			ExpectedIdentity: &authn.Identity{ID: "user:42", SessionToken: &usertoken.UserToken{}},
+			ExpectedIdentity: &authn.Identity{ID: authn.MustParseNamespaceID("user:42"), SessionToken: &usertoken.UserToken{}},
 		},
 		AuthTokenService: authtest.NewFakeUserAuthTokenService(),
 		Features:         featuremgmt.WithFeatures(),

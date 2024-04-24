@@ -166,7 +166,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			orgID:   1,
 			want: &authn.Identity{OrgID: 1, OrgName: "",
 				OrgRoles: map[int64]roletype.RoleType(nil),
-				ID:       "access-policy:this-uid", Login: "", Name: "", Email: "",
+				ID:       authn.MustParseNamespaceID("access-policy:this-uid"), Login: "", Name: "", Email: "",
 				IsGrafanaAdmin: (*bool)(nil), AuthenticatedBy: "extendedjwt",
 				AuthID: "access-policy:this-uid", IsDisabled: false, HelpFlags1: 0x0,
 				LastSeenAt: time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC),
@@ -196,7 +196,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				}
 			},
 			want: &authn.Identity{OrgID: 1, OrgName: "",
-				OrgRoles: map[int64]roletype.RoleType(nil), ID: "user:2",
+				OrgRoles: map[int64]roletype.RoleType(nil), ID: authn.MustParseNamespaceID("user:2"),
 				Login: "", Name: "", Email: "",
 				IsGrafanaAdmin: (*bool)(nil), AuthenticatedBy: "extendedjwt",
 				AuthID: "access-policy:this-uid", IsDisabled: false, HelpFlags1: 0x0,

@@ -35,7 +35,7 @@ func TestRender_Authenticate(t *testing.T) {
 				},
 			},
 			expectedIdentity: &authn.Identity{
-				ID:              "render:0",
+				ID:              authn.MustParseNamespaceID("render:0"),
 				OrgID:           1,
 				OrgRoles:        map[int64]org.RoleType{1: org.RoleViewer},
 				AuthenticatedBy: login.RenderModule,
@@ -56,7 +56,7 @@ func TestRender_Authenticate(t *testing.T) {
 				},
 			},
 			expectedIdentity: &authn.Identity{
-				ID:              "user:1",
+				ID:              authn.MustParseNamespaceID("user:1"),
 				AuthenticatedBy: login.RenderModule,
 				ClientParams:    authn.ClientParams{FetchSyncedUser: true, SyncPermissions: true},
 			},

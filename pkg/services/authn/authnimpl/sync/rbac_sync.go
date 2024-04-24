@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -98,13 +97,12 @@ func (s *RBACSync) SyncCloudRoles(ctx context.Context, ident *authn.Identity, r 
 		return nil
 	}
 
-	namespace, id := ident.GetNamespacedID()
-	if namespace != authn.NamespaceUser {
+	if !ident.ID.IsNamespace(authn.NamespaceUser) {
 		s.log.FromContext(ctx).Debug("Skip syncing cloud role", "id", ident.ID)
 		return nil
 	}
 
-	userID, err := identity.IntIdentifier(namespace, id)
+	userID, err := ident.ID.ParseInt()
 	if err != nil {
 		return err
 	}

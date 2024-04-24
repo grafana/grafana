@@ -394,7 +394,7 @@ func (s *UserSync) lookupByOneOf(ctx context.Context, params login.UserLookupPar
 // syncUserToIdentity syncs a user to an identity.
 // This is used to update the identity with the latest user information.
 func syncUserToIdentity(usr *user.User, id *authn.Identity) {
-	id.ID = authn.NamespacedID(authn.NamespaceUser, usr.ID)
+	id.ID = authn.NewNamespaceIDUnchecked(authn.NamespaceUser, usr.ID)
 	id.Login = usr.Login
 	id.Email = usr.Email
 	id.Name = usr.Name

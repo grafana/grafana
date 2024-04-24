@@ -186,7 +186,7 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, "/api/endpoint", nil)
 
 			expectedIdentity := &authn.Identity{
-				ID:          fmt.Sprintf("user:%v", tc.ctxSignedInUser.UserID),
+				ID:          authn.MustNewNamespaceID(authn.NamespaceUser, tc.ctxSignedInUser.UserID),
 				OrgID:       tc.targetOrgId,
 				Permissions: map[int64]map[string][]string{},
 			}

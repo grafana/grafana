@@ -256,7 +256,7 @@ func validateApiKey(orgID int64, key *apikey.APIKey) error {
 
 func newAPIKeyIdentity(key *apikey.APIKey) *authn.Identity {
 	return &authn.Identity{
-		ID:              authn.NamespacedID(authn.NamespaceAPIKey, key.ID),
+		ID:              authn.NewNamespaceIDUnchecked(authn.NamespaceAPIKey, key.ID),
 		OrgID:           key.OrgID,
 		OrgRoles:        map[int64]org.RoleType{key.OrgID: key.Role},
 		ClientParams:    authn.ClientParams{SyncPermissions: true},
@@ -266,7 +266,7 @@ func newAPIKeyIdentity(key *apikey.APIKey) *authn.Identity {
 
 func newServiceAccountIdentity(key *apikey.APIKey) *authn.Identity {
 	return &authn.Identity{
-		ID:              authn.NamespacedID(authn.NamespaceServiceAccount, *key.ServiceAccountId),
+		ID:              authn.NewNamespaceIDUnchecked(authn.NamespaceServiceAccount, *key.ServiceAccountId),
 		OrgID:           key.OrgID,
 		AuthenticatedBy: login.APIKeyAuthModule,
 		ClientParams:    authn.ClientParams{FetchSyncedUser: true, SyncPermissions: true},
