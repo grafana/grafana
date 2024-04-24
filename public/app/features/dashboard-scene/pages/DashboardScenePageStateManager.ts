@@ -1,23 +1,23 @@
 import { locationUtil } from '@grafana/data';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
-import { updateNavIndex } from 'app/core/actions';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
-import { backendSrv } from 'app/core/services/backend_srv';
 import { default as localStorageStore } from 'app/core/store';
+import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import {
   DASHBOARD_FROM_LS_KEY,
   removeDashboardToFetchFromLocalStorage,
 } from 'app/features/dashboard/state/initDashboard';
-import { buildNavModel } from 'app/features/folders/state/navModel';
-import { store } from 'app/store/store';
+import { trackDashboardSceneLoaded } from 'app/features/dashboard/utils/tracking';
 import { DashboardDTO, DashboardRoutes } from 'app/types';
 
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
 import { buildNewDashboardSaveModel } from '../serialization/buildNewDashboardSaveModel';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+
+import { updateNavModel } from './utils';
 
 export interface DashboardScenePageState {
   dashboard?: DashboardScene;
@@ -27,6 +27,8 @@ export interface DashboardScenePageState {
 }
 
 export const DASHBOARD_CACHE_TTL = 500;
+
+const LOAD_SCENE_MEASUREMENT = 'loadDashboardScene';
 
 /** Only used by cache in loading home in DashboardPageProxy and initDashboard (Old arch), can remove this after old dashboard arch is gone */
 export const HOME_DASHBOARD_CACHE_KEY = '__grafana_home_uid__';
@@ -127,7 +129,9 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
       }
 
       // Populate nav model in global store according to the folder
-      await this.initNavModel(rsp);
+      if (rsp.meta.folderUid) {
+        await updateNavModel(rsp.meta.folderUid);
+      }
 
       // Do not cache new dashboards
       this.dashboardCache = { dashboard: rsp, ts: Date.now(), cacheKey };
@@ -167,6 +171,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
 
   public async loadDashboard(options: LoadDashboardOptions) {
     try {
+      startMeasure(LOAD_SCENE_MEASUREMENT);
       const dashboard = await this.loadScene(options);
       if (!dashboard) {
         return;
@@ -177,6 +182,8 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
       }
 
       this.setState({ dashboard: dashboard, isLoading: false });
+      const measure = stopMeasure(LOAD_SCENE_MEASUREMENT);
+      trackDashboardSceneLoaded(dashboard, measure?.duration);
     } catch (err) {
       this.setState({ isLoading: false, loadError: String(err) });
     }
@@ -233,20 +240,6 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     }
 
     return null;
-  }
-
-  private async initNavModel(dashboard: DashboardDTO) {
-    // only the folder API has information about ancestors
-    // get parent folder (if it exists) and put it in the store
-    // this will be used to populate the full breadcrumb trail
-    if (dashboard.meta.folderUid) {
-      try {
-        const folder = await backendSrv.getFolderByUid(dashboard.meta.folderUid);
-        store.dispatch(updateNavIndex(buildNavModel(folder)));
-      } catch (err) {
-        console.warn('Error fetching parent folder', dashboard.meta.folderUid, 'for dashboard', err);
-      }
-    }
   }
 
   public clearState() {
