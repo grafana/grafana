@@ -1,5 +1,7 @@
 ---
 title: Tooltip mode
+comments: |
+  This file is used in the following visualizations: bar chart, pie chart, state timeline, status history
 ---
 
 ### Tooltip mode
