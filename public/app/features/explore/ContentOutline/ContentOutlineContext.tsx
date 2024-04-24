@@ -1,7 +1,7 @@
 import { uniqueId } from 'lodash';
 import React, { useState, useContext, createContext, ReactNode, useCallback, useRef, useEffect } from 'react';
 
-import { ContentOutlineItemBaseProps } from './ContentOutlineItem';
+import { ContentOutlineItemBaseProps, ITEM_TYPES } from './ContentOutlineItem';
 
 export interface ContentOutlineItemContextProps extends ContentOutlineItemBaseProps {
   id: string;
@@ -15,6 +15,7 @@ export interface ContentOutlineContextProps {
   outlineItems: ContentOutlineItemContextProps[];
   register: RegisterFunction;
   unregister: (id: string) => void;
+  unregisterAllChildren: (parentId: string, childType: ITEM_TYPES) => void;
   updateOutlineItems: (newItems: ContentOutlineItemContextProps[]) => void;
 }
 
@@ -125,14 +126,14 @@ export function ContentOutlineContextProvider({ children, refreshDependencies }:
             item.title === outlineItem.title && outlineItem.type === 'filter' && outlineItem.panelId === item.panelId
         );
         // check if sibling's highlight property has updated
-        if (siblingWithSameTitle?.highlight !== outlineItem.highlight) {
+        if (siblingWithSameTitle && siblingWithSameTitle.highlight !== outlineItem.highlight) {
           parent.children?.map((child) => {
             if (child.title === siblingWithSameTitle?.title) {
               child.highlight = outlineItem.highlight;
             }
           });
           return [...prevItems];
-        } else {
+        } else if (siblingWithSameTitle) {
           return [...prevItems];
         }
 
@@ -177,6 +178,17 @@ export function ContentOutlineContextProvider({ children, refreshDependencies }:
     setOutlineItems(newItems);
   }, []);
 
+  const unregisterAllChildren = useCallback((parentId: string, childType: ITEM_TYPES) => {
+    setOutlineItems((prevItems) =>
+      prevItems.map((item) => {
+        if (item.id === parentId) {
+          item.children = item.children?.filter((child) => child.type !== childType);
+        }
+        return item;
+      })
+    );
+  }, []);
+
   useEffect(() => {
     setOutlineItems((prevItems) => {
       const newItems = [...prevItems];
@@ -188,7 +200,9 @@ export function ContentOutlineContextProvider({ children, refreshDependencies }:
   }, [refreshDependencies]);
 
   return (
-    <ContentOutlineContext.Provider value={{ outlineItems, register, unregister, updateOutlineItems }}>
+    <ContentOutlineContext.Provider
+      value={{ outlineItems, register, unregister, updateOutlineItems, unregisterAllChildren }}
+    >
       {children}
     </ContentOutlineContext.Provider>
   );

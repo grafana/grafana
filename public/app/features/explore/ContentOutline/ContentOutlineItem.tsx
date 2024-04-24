@@ -4,7 +4,7 @@ import { useContentOutlineContext } from './ContentOutlineContext';
 
 type INDENT_LEVELS = 'root' | 'child';
 
-type ITEM_TYPES = 'scrollIntoView' | 'filter';
+export type ITEM_TYPES = 'scrollIntoView' | 'filter';
 
 export interface ContentOutlineItemBaseProps {
   panelId: string;

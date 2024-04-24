@@ -218,6 +218,12 @@ class UnthemedLogs extends PureComponent<Props, State> {
   registerLogLevelsWithContentOutline = () => {
     const logVolumeDataFrames = new Set(this.props.logsVolumeData?.data);
 
+    // clean up all current log levels
+    const logsParent = this.context?.outlineItems.find((item) => item.panelId === 'Logs' && item.level === 'root');
+    if (logsParent) {
+      this.context?.unregisterAllChildren(logsParent.id, 'filter');
+    }
+
     if (logVolumeDataFrames.size > 1 && this.props.logsVolumeEnabled) {
       logVolumeDataFrames.forEach((dataFrame) => {
         const { level } = getLogLevelInfo(dataFrame);
@@ -276,6 +282,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     }
 
     if (prevProps.logsVolumeData?.data !== this.props.logsVolumeData?.data) {
+      console.log('LogsVolume data changed');
       this.registerLogLevelsWithContentOutline();
     }
 
