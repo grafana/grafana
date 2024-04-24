@@ -67,6 +67,10 @@ Set the hover proximity (in pixels) to control how close the cursor must be to a
 
 ![Adding a hover proximity limit for tooltips](/media/docs/grafana/gif-grafana-10-4-hover-proximity.gif)
 
+### Max height
+
+Set the maximum height of the tooltip box. The default is 600 pixels.
+
 ### Show histogram (Y axis)
 
 For the heatmap visualization only, when you set the **Tooltip mode** to **Single**, the **Show histogram (Y axis)** option is displayed. This option controls whether or not the tooltip includes a histogram representing the y-axis.

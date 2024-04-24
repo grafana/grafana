@@ -129,7 +129,13 @@ Transparency of the gradient is calculated based on the values on the y-axis. Op
 
 Gradient color is generated based on the hue of the line color.
 
-{{< docs/shared lookup="visualizations/tooltip-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
+## Tooltip options
+
+{{< docs/shared lookup="visualizations/tooltip-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Legend options
+
+Legend options control the series names and statistics that appear under or to the right of the graph.
 
 {{< docs/shared lookup="visualizations/legend-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
@@ -191,7 +197,7 @@ Set a **Soft min** or **soft max** option for better control of Y-axis limits. B
 
 You can set standard min/max options to define hard limits of the Y-axis. For more information, refer to [Standard options definitions][].
 
-{{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA VERSION>" leveloffset="+2" >}}
+{{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+2" >}}
 
 {{% docs/reference %}}
 [Add a field override]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-overrides#add-a-field-override"
