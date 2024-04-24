@@ -22,7 +22,6 @@ import {
   SceneObjectState,
   SceneQueryRunner,
   VizPanel,
-  sceneGraph,
   sceneUtils,
 } from '@grafana/scenes';
 import { DataQuery, DataTransformerConfig, Panel } from '@grafana/schema';
@@ -89,8 +88,6 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
 
     return new VizPanelManager({
       panel: sourcePanel.clone(),
-      // $data: sourcePanel.state.$data?.clone(),
-      // $timeRange: sourcePanel.state.$timeRange,
       sourcePanel: sourcePanel.getRef(),
       ...repeatOptions,
     });
@@ -380,6 +377,8 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
         .setTitle('')
         .setOption('showTypeIcons', true)
         .setOption('showHeader', true)
+        // this needs to use same instance as the queries tab is subscribing to it
+        .setData(this.queryRunner)
         .build(),
     });
   }
@@ -419,20 +418,14 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     if (sourcePanel.parent instanceof DashboardGridItem) {
       sourcePanel.parent.setState({
         ...repeatUpdate,
-        body: this.state.panel.clone({
-          $data: this.state.$data?.clone(),
-          $timeRange: this.state.$timeRange?.clone(),
-        }),
+        body: this.state.panel.clone(),
       });
     }
 
     if (sourcePanel.parent instanceof LibraryVizPanel) {
       if (sourcePanel.parent.parent instanceof DashboardGridItem) {
         const newLibPanel = sourcePanel.parent.clone({
-          panel: this.state.panel.clone({
-            $data: this.state.$data?.clone(),
-            $timeRange: this.state.$timeRange?.clone(),
-          }),
+          panel: this.state.panel.clone(),
         });
         sourcePanel.parent.parent.setState({
           body: newLibPanel,
