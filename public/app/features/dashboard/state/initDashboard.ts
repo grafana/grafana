@@ -6,6 +6,7 @@ import { createErrorNotification } from 'app/core/copy/appNotification';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { KeybindingSrv } from 'app/core/services/keybindingSrv';
 import store from 'app/core/store';
+import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardSrv, getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -29,6 +30,8 @@ import { DashboardModel } from './DashboardModel';
 import { PanelModel } from './PanelModel';
 import { emitDashboardViewEvent } from './analyticsProcessor';
 import { dashboardInitCompleted, dashboardInitFailed, dashboardInitFetching, dashboardInitServices } from './reducers';
+
+const INIT_DASHBOARD_MEASUREMENT = 'initDashboard';
 
 export interface InitDashboardArgs {
   urlUid?: string;
@@ -174,7 +177,7 @@ const getQueriesByDatasource = (
  */
 export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
   return async (dispatch, getState) => {
-    const initStart = performance.now();
+    startMeasure(INIT_DASHBOARD_MEASUREMENT);
 
     // set fetching state
     dispatch(dashboardInitFetching());
@@ -287,8 +290,8 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       })
     );
 
-    const duration = performance.now() - initStart;
-    trackDashboardLoaded(dashboard, duration, versionBeforeMigration);
+    const measure = stopMeasure(INIT_DASHBOARD_MEASUREMENT);
+    trackDashboardLoaded(dashboard, measure?.duration, versionBeforeMigration);
 
     // yay we are done
     dispatch(dashboardInitCompleted(dashboard));
