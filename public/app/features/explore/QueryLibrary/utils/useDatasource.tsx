@@ -18,10 +18,10 @@ export function useDatasource(dataSourceRef?: DataSourceRef | null) {
       getDataSourceSrv()
         .get(dataSourceRef)
         .then((api) => {
-          setApiCache({
-            ...apiCache,
+          setApiCache((s) => ({
+            ...s,
             [uid]: api,
-          });
+          }));
         });
     }
   }, []);
