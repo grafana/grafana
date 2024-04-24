@@ -1,7 +1,6 @@
 package usermig
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -37,14 +36,10 @@ func (p *UsersLowerCaseLoginAndEmail) Exec(sess *xorm.Session, mg *migrator.Migr
 		return err
 	}
 
-	// Map to track processed logins
-	processedLogins := make(map[string]bool)
-
 	for _, usr := range users {
-		// If login has been processed before, skip this user
-		if processedLogins[usr.Login] {
-			continue
-		}
+		/*
+			LOGIN
+		*/
 		lowerLogin := strings.ToLower(usr.Login)
 
 		// Check if lower login exists
@@ -58,7 +53,6 @@ func (p *UsersLowerCaseLoginAndEmail) Exec(sess *xorm.Session, mg *migrator.Migr
 
 		// If exact login does not exist and lower case login does not exist, update the user's login to be in lower case
 		if !hasLowerCasedLogin {
-			fmt.Printf("updating user login %s: %s\n", usr.Login, err)
 			uLogin := user.User{
 				Name:  usr.Name,
 				Login: lowerLogin,
@@ -69,9 +63,14 @@ func (p *UsersLowerCaseLoginAndEmail) Exec(sess *xorm.Session, mg *migrator.Migr
 			}
 		}
 
+		/*
+			EMAIL
+		*/
+		lowerEmail := strings.ToLower(usr.Email)
+
 		// Check if lower case email exists
 		existingUserEmail := &user.User{}
-		hasLowerCasedEmail, err := sess.Table("user").Where("email = ?", strings.ToLower(usr.Email)).Get(existingUserEmail)
+		hasLowerCasedEmail, err := sess.Table("user").Where("email = ?", lowerEmail).Get(existingUserEmail)
 		if err != nil {
 			return err
 		}
@@ -79,17 +78,13 @@ func (p *UsersLowerCaseLoginAndEmail) Exec(sess *xorm.Session, mg *migrator.Migr
 		if !hasLowerCasedEmail {
 			uEmail := user.User{
 				Name:  usr.Name,
-				Email: strings.ToLower(usr.Email),
+				Email: lowerEmail,
 			}
 			_, err := sess.ID(usr.ID).Update(&uEmail)
 			if err != nil {
-				fmt.Printf("Error updating email for user email %s: %s\n", usr.Email, err)
 				return err
 			}
 		}
-
-		// Mark this login as processed
-		processedLogins[usr.Login] = true
 	}
 	return nil
 }

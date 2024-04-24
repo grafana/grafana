@@ -15,7 +15,6 @@ import (
 )
 
 func TestLowerCaseMigration(t *testing.T) {
-
 	type migrationTestCase struct {
 		desc      string
 		users     []*user.User
@@ -61,7 +60,7 @@ func TestLowerCaseMigration(t *testing.T) {
 		},
 		// "2 users - same login, one already lowercase"
 		{
-			desc: "2 users with same login one already has lowercase so we keep both where lowercasing comes first in our loop",
+			desc: "2 users with same login one already has lowercase so we keep both",
 			users: []*user.User{
 				{
 					ID:      1,
@@ -99,7 +98,7 @@ func TestLowerCaseMigration(t *testing.T) {
 		},
 		// "2 users - same login, one already lowercase"
 		{
-			desc: "2 users with same login one already has lowercase so we keep both where uppercasing comes first in our loop",
+			desc: "2 users with same login one already has lowercase so we keep both case for uppercasing comes first in our loop",
 			users: []*user.User{
 				{
 					ID:      1,
@@ -135,6 +134,45 @@ func TestLowerCaseMigration(t *testing.T) {
 				},
 			},
 		},
+		// "2 users - same email, one already lowercase"
+		{
+			desc: "2 users with same email one already has lowercase so we keep both",
+			users: []*user.User{
+				{
+					ID:      1,
+					UID:     "u1",
+					Login:   "user1",
+					Email:   "USER1@email.com",
+					Name:    "user1",
+					OrgID:   1,
+					Created: now,
+					Updated: now,
+				},
+				{
+					ID:      2,
+					UID:     "u2",
+					Login:   "user1-new-login",
+					Email:   "user1@email.com",
+					Name:    "user2",
+					OrgID:   1,
+					Created: now,
+					Updated: now,
+				},
+			},
+			wantUsers: []*user.User{
+				{
+					ID:    1,
+					Login: "user1",
+					Email: "USER1@email.com",
+				},
+				{
+					ID:    2,
+					Login: "user1-new-login",
+					Email: "user1@email.com",
+				},
+			},
+		},
+
 		// "2 users - same login, none lowercase"
 		{
 			desc: "2 users with same login noone is lowercased we pick the most recent user to lowercase",
