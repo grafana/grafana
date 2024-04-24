@@ -1,13 +1,12 @@
-import { AnyAction, configureStore, EnhancedStore, Reducer, getDefaultMiddleware } from '@reduxjs/toolkit';
-import { NoInfer } from '@reduxjs/toolkit/dist/tsHelpers';
-import { Middleware } from 'redux';
-import { thunk, ThunkMiddleware } from 'redux-thunk';
+import { AnyAction, configureStore, EnhancedStore, Reducer, Tuple } from '@reduxjs/toolkit';
+import { Middleware, StoreEnhancer, UnknownAction } from 'redux';
+import { thunk, ThunkDispatch, ThunkMiddleware } from 'redux-thunk';
 
 import { setStore } from '../../../app/store/store';
 import { StoreState } from '../../../app/types';
 
 export interface ReduxTesterGiven<State> {
-  givenRootReducer: (rootReducer: Reducer<State>) => ReduxTesterWhen<State>;
+  givenRootReducer: (rootReducer: Reducer<State, UnknownAction, Partial<NoInfer<State>>>) => ReduxTesterWhen<State>;
 }
 
 export interface ReduxTesterWhen<State> {
@@ -50,16 +49,38 @@ export const reduxTester = <State>(args?: ReduxTesterArguments<State>): ReduxTes
   const debug = args?.debug ?? false;
   let store: EnhancedStore<State, AnyAction, []> | null = null;
 
-  const defaultMiddleware = getDefaultMiddleware<State>({
-    thunk: false,
-    serializableCheck: false,
-    immutableCheck: false,
-  } as any);
-
-  const givenRootReducer = (rootReducer: Reducer<State>): ReduxTesterWhen<State> => {
-    store = configureStore<State, AnyAction, Array<Middleware<State>>>({
+  const givenRootReducer = (
+    rootReducer: Reducer<State, UnknownAction, Partial<NoInfer<State>>>
+  ): ReduxTesterWhen<State> => {
+    // store = configureStore({
+    store = configureStore<
+      State,
+      UnknownAction,
+      Tuple<[ThunkMiddleware<State>]>,
+      Tuple<
+        [
+          StoreEnhancer<{
+            dispatch: ThunkDispatch<State, undefined, AnyAction>;
+          }>,
+          StoreEnhancer,
+        ]
+      >,
+      Partial<NoInfer<State>>
+    >({
       reducer: rootReducer,
-      middleware: [...defaultMiddleware, logActionsMiddleWare, thunk] as unknown as [ThunkMiddleware<State>],
+      middleware: (getDefaultMiddleware) =>
+        [
+          ...getDefaultMiddleware({
+            thunk: false,
+            serializableCheck: false,
+            immutableCheck: false,
+          }),
+          logActionsMiddleWare,
+          thunk,
+        ] as unknown as Tuple<[ThunkMiddleware<State>]>,
+      // because we allow for a partial state, we need to cast it to the correct type
+      // test utils, amirite? ¯\_(ツ)_/¯
+      // preloadedState: preloadedState as State,
       preloadedState,
     });
 

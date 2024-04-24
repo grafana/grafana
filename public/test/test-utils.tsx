@@ -1,4 +1,4 @@
-import { ToolkitStore } from '@reduxjs/toolkit/dist/configureStore';
+import { Store } from '@reduxjs/toolkit';
 import { render, RenderOptions } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { ComponentProps, Fragment, PropsWithChildren } from 'react';
@@ -16,7 +16,7 @@ interface ExtendedRenderOptions extends RenderOptions {
    * Optional store to use for rendering. If not provided, a fresh store will be generated
    * via `configureStore` method
    */
-  store?: ToolkitStore;
+  store?: Store<StoreState>;
   /**
    * Partial state to use for preloading store when rendering tests
    */
