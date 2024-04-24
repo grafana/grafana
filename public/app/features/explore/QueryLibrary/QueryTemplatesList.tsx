@@ -47,7 +47,15 @@ export function QueryTemplatesList() {
   }));
 
   if (!queryTemplateRows.length) {
-    return <EmptyState message={`Coming soon! ${queryTemplates.length}`} variant="call-to-action" />;
+    return (
+      <EmptyState message={`Query Library`} variant="not-found">
+        <p>
+          {
+            "You haven't saved any queries to your library yet. Start adding them from Explore or your Query History tab."
+          }
+        </p>
+      </EmptyState>
+    );
   } else {
     return (
       <InteractiveTable
