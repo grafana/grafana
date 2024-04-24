@@ -266,7 +266,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         {panelPane}
         <div
           className={styles.tabsWrapper}
-          aria-label={selectors.components.PanelEditor.DataPane.content}
+          data-testid={selectors.components.PanelEditor.DataPane.content}
           key="panel-editor-tabs"
         >
           <PanelEditorTabs
@@ -309,7 +309,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
               id="table-view"
               value={tableViewEnabled}
               onClick={this.onToggleTableView}
-              aria-label={selectors.components.PanelEditor.toggleTableView}
+              data-testid={selectors.components.PanelEditor.toggleTableView}
             />
             <RadioButtonGroup value={uiState.mode} options={displayModes} onChange={this.onDisplayModeChange} />
             <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={updateTimeZoneForSession} isOnCanvas={true} />
@@ -442,7 +442,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
       <Page
         navModel={sectionNav}
         pageNav={pageNav}
-        aria-label={selectors.components.PanelEditor.General.content}
+        data-testid={selectors.components.PanelEditor.General.content}
         layout={PageLayoutType.Custom}
         className={className}
       >
