@@ -254,7 +254,7 @@
     "@grafana/prometheus": "workspace:*",
     "@grafana/runtime": "workspace:*",
     "@grafana/saga-icons": "workspace:*",
-    "@grafana/scenes": "^4.12.0",
+    "@grafana/scenes": "4.12.3--canary.648.8818501335.0",
     "@grafana/schema": "workspace:*",
     "@grafana/sql": "workspace:*",
     "@grafana/ui": "workspace:*",
