@@ -53,12 +53,13 @@ export function AlertmanagerCard({
         <img alt={`logo for ${name}`} src={logo} />
       </Card.Figure>
 
+      {/* sadly we have to resort to "mimicking" the Card.Description in here because "<div>"s can not be child elements of "<p>" – which is what the description element wrapper is */}
       <Card.Meta>
         <Stack direction="column" gap={1} alignItems="flex-start">
-          <Stack direction="row" gap={0.5}>
+          <Card.Meta>
             {implementation && capitalize(implementation)}
-            {url && <> | {url}</>}
-          </Stack>
+            {url && url}
+          </Card.Meta>
           {!receiving ? (
             <Text variant="bodySmall">Not receiving Grafana managed alerts</Text>
           ) : (
