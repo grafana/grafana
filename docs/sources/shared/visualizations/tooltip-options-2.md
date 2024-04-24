@@ -1,5 +1,7 @@
 ---
 title: Tooltip options
+comments: |
+  This file is used in the following visualizations: candlestick, time series, trend
 ---
 
 ### Tooltip mode
