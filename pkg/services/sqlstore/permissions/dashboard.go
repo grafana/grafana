@@ -114,21 +114,21 @@ func (f *accessControlDashboardPermissionFilter) Where() (string, []any) {
 	return f.where.string, f.where.params
 }
 
-func (f *accessControlDashboardPermissionFilter) isEmptyPermissions() bool {
+// Check if user has no permissions required for search to skip expensive query
+func (f *accessControlDashboardPermissionFilter) hasRequiredActions() bool {
 	permissions := f.user.GetPermissions()
-	if len(permissions) == 1 {
-		sharedWithMeScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.SharedWithMeFolderUID)
-		if p, ok := permissions[dashboards.ActionFoldersRead]; ok {
-			if len(p) == 1 && p[0] == sharedWithMeScope {
-				return true
-			}
+	requiredActions := append(f.folderActions, f.dashboardActions...)
+	for _, action := range requiredActions {
+		if _, ok := permissions[action]; ok {
+			return true
 		}
 	}
-	return len(permissions) == 0
+
+	return false
 }
 
 func (f *accessControlDashboardPermissionFilter) buildClauses() {
-	if f.user == nil || f.user.IsNil() || f.isEmptyPermissions() {
+	if f.user == nil || f.user.IsNil() || !f.hasRequiredActions() {
 		f.where = clause{string: "(1 = 0)"}
 		return
 	}
