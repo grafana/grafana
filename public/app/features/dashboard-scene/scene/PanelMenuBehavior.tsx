@@ -168,7 +168,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
     }
 
     if (config.featureToggles.exploreMetrics) {
-      addDataTrailPanelAction(dashboard, panel, items);
+      await addDataTrailPanelAction(dashboard, panel, items);
     }
 
     if (exploreMenuItem) {
