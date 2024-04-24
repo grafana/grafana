@@ -13,6 +13,7 @@ import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaCont
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { ID_PREFIX } from 'app/core/reducers/navBarTree';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { PanelModel } from 'app/features/dashboard/state';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
@@ -477,7 +478,11 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
       pageNav.parentItem = pageNav.parentItem;
     }
   } else {
-    sectionNav = getNavModel(props.navIndex, 'dashboards/browse');
+    sectionNav = getNavModel(
+      props.navIndex,
+      ID_PREFIX + dashboard.uid,
+      getNavModel(props.navIndex, 'dashboards/browse')
+    );
   }
 
   if (state.editPanel || state.viewPanel) {

@@ -3,7 +3,6 @@ package authn
 import (
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
 
 	"golang.org/x/oauth2"
@@ -21,17 +20,17 @@ const GlobalOrgID = int64(0)
 var _ identity.Requester = (*Identity)(nil)
 
 type Identity struct {
+	// ID is the unique identifier for the entity in the Grafana database.
+	// It is in the format <namespace>:<id> where namespace is one of the
+	// Namespace* constants. For example, "user:1" or "api-key:1".
+	// If the entity is not found in the DB or this entity is non-persistent, this field will be empty.
+	ID NamespaceID
 	// OrgID is the active organization for the entity.
 	OrgID int64
 	// OrgName is the name of the active organization.
 	OrgName string
 	// OrgRoles is the list of organizations the entity is a member of and their roles.
 	OrgRoles map[int64]org.RoleType
-	// ID is the unique identifier for the entity in the Grafana database.
-	// It is in the format <namespace>:<id> where namespace is one of the
-	// Namespace* constants. For example, "user:1" or "api-key:1".
-	// If the entity is not found in the DB or this entity is non-persistent, this field will be empty.
-	ID string
 	// Login is the shorthand identifier of the entity. Should be unique.
 	Login string
 	// Name is the display name of the entity. It is not guaranteed to be unique.
@@ -74,15 +73,11 @@ type Identity struct {
 }
 
 func (i *Identity) GetID() string {
-	return i.ID
+	return i.ID.String()
 }
 
 func (i *Identity) GetNamespacedID() (namespace string, identifier string) {
-	split := strings.Split(i.GetID(), ":")
-	if len(split) != 2 {
-		return "", ""
-	}
-	return split[0], split[1]
+	return i.ID.Namespace(), i.ID.ID()
 }
 
 func (i *Identity) GetAuthID() string {
@@ -224,7 +219,7 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		Teams:           i.Teams,
 		Permissions:     i.Permissions,
 		IDToken:         i.IDToken,
-		NamespacedID:    i.ID,
+		NamespacedID:    i.ID.String(),
 	}
 
 	if namespace == NamespaceAPIKey {
@@ -261,27 +256,5 @@ func (i *Identity) ExternalUserInfo() login.ExternalUserInfo {
 		OrgRoles:       i.OrgRoles,
 		IsGrafanaAdmin: i.IsGrafanaAdmin,
 		IsDisabled:     i.IsDisabled,
-	}
-}
-
-// IdentityFromSignedInUser creates an identity from a SignedInUser.
-func IdentityFromSignedInUser(id string, usr *user.SignedInUser, params ClientParams, authenticatedBy string) *Identity {
-	return &Identity{
-		ID:              id,
-		OrgID:           usr.OrgID,
-		OrgName:         usr.OrgName,
-		OrgRoles:        map[int64]org.RoleType{usr.OrgID: usr.OrgRole},
-		Login:           usr.Login,
-		Name:            usr.Name,
-		Email:           usr.Email,
-		AuthenticatedBy: authenticatedBy,
-		IsGrafanaAdmin:  &usr.IsGrafanaAdmin,
-		IsDisabled:      usr.IsDisabled,
-		HelpFlags1:      usr.HelpFlags1,
-		LastSeenAt:      usr.LastSeenAt,
-		Teams:           usr.Teams,
-		ClientParams:    params,
-		Permissions:     usr.Permissions,
-		IDToken:         usr.IDToken,
 	}
 }

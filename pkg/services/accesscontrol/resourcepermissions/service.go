@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/embedserver"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -16,6 +17,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+
+	zclient "github.com/grafana/zanzana/pkg/service/client"
 )
 
 type Store interface {
@@ -57,7 +60,7 @@ type Store interface {
 func New(cfg *setting.Cfg,
 	options Options, features featuremgmt.FeatureToggles, router routing.RouteRegister, license licensing.Licensing,
 	ac accesscontrol.AccessControl, service accesscontrol.Service, sqlStore db.DB,
-	teamService team.Service, userService user.Service, actionSetService ActionSetService,
+	teamService team.Service, userService user.Service, actionSetService ActionSetService, embedServer *embedserver.Service,
 ) (*Service, error) {
 	permissions := make([]string, 0, len(options.PermissionsToActions))
 	actionSet := make(map[string]struct{})
@@ -79,9 +82,14 @@ func New(cfg *setting.Cfg,
 		actions = append(actions, action)
 	}
 
+	zClient, err := embedServer.GetClient(context.Background(), "1")
+	if err != nil {
+		return nil, err
+	}
+
 	s := &Service{
 		ac:          ac,
-		store:       NewStore(sqlStore, features, &actionSetService),
+		store:       NewStore(sqlStore, features, &actionSetService, embedServer),
 		options:     options,
 		license:     license,
 		permissions: permissions,
@@ -90,6 +98,7 @@ func New(cfg *setting.Cfg,
 		service:     service,
 		teamService: teamService,
 		userService: userService,
+		zClient:     zClient,
 	}
 
 	s.api = newApi(cfg, ac, router, s)
@@ -117,6 +126,7 @@ type Service struct {
 	sqlStore    db.DB
 	teamService team.Service
 	userService user.Service
+	zClient     *zclient.GRPCClient
 }
 
 func (s *Service) GetPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]accesscontrol.ResourcePermission, error) {

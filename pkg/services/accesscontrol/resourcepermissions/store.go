@@ -9,22 +9,28 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/embedserver"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
+
+	zclient "github.com/grafana/zanzana/pkg/service/client"
 )
 
-func NewStore(sql db.DB, features featuremgmt.FeatureToggles, actionsetService *ActionSetService) *store {
-	return &store{sql, features, *actionsetService}
+func NewStore(sql db.DB, features featuremgmt.FeatureToggles, actionsetService *ActionSetService, embedServer *embedserver.Service) *store {
+	zCLient, _ := embedServer.GetClient(context.Background(), "1")
+	return &store{sql, features, *actionsetService, embedServer, zCLient}
 }
 
 type store struct {
 	sql              db.DB
 	features         featuremgmt.FeatureToggles
 	actionSetService ActionSetService
+	zanzanaService   *embedserver.Service
+	zClient          *zclient.GRPCClient
 }
 
 type flatResourcePermission struct {
