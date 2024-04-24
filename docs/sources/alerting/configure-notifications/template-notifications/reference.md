@@ -85,7 +85,6 @@ For example, to print the time that an alert fired in the format `15:04:05 MST`:
 
 You can also use the `tz` function to change the timezone from UTC to a local time. For example:
 
-
 ```
 {{ .StartsAt | tz "Europe/Paris" | date "15:04:05 MST" }}
 ```
