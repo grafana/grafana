@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import React, { CSSProperties, UIEventHandler, useCallback, useEffect, useMemo, useState } from 'react';
-import { Cell, Row, TableState } from 'react-table';
+import { Cell, Row, TableState, HeaderGroup } from 'react-table';
 import { VariableSizeList } from 'react-window';
 import { Subscription, debounceTime } from 'rxjs';
 
@@ -45,6 +45,7 @@ interface RowsListProps {
   timeRange?: TimeRange;
   footerPaginationEnabled: boolean;
   initialRowIndex?: number;
+  headerGroups: HeaderGroup[];
 }
 
 export const RowsList = (props: RowsListProps) => {
@@ -68,12 +69,25 @@ export const RowsList = (props: RowsListProps) => {
     listRef,
     enableSharedCrosshair = false,
     initialRowIndex = undefined,
+    headerGroups
   } = props;
 
   const [rowHighlightIndex, setRowHighlightIndex] = useState<number | undefined>(initialRowIndex);
 
+  console.log(width);
+
   const theme = useTheme2();
   const panelContext = usePanelContext();
+
+  console.log(theme);
+
+  // Create off-screen canbas for measuring rows for virtualized rendering
+  const osCan = new OffscreenCanvas(1024, 1024);
+  const osContext = osCan.getContext("2d");
+
+  // Set font property using theme info
+  // This will make text measurement accurate
+  osContext.font = `${theme.typography.body.fontSize} ${theme.typography.body.fontFamily}`;
 
   const threshold = useMemo(() => {
     const timeField = data.fields.find((f) => f.type === FieldType.time);
@@ -297,6 +311,48 @@ export const RowsList = (props: RowsListProps) => {
   const getItemSize = (index: number): number => {
     const indexForPagination = rowIndexForPagination(index);
     const row = rows[indexForPagination];
+
+    console.log(row);
+    // theme.
+    // const measure = osContext.measureText(row.values[1]);
+    getTextBoundingBox(row.values[1]);
+
+    /**
+     * Calculate an esimated bounding box for a block
+     * of text using an offscreen canvas.
+     */
+    function getTextBoundingBox(text: string) {
+      let width = 300;
+      if (typeof headerGroups[0].headers[1].width === 'number') {
+        width = headerGroups[0].headers[1].width;
+      }
+      else if (typeof headerGroups[0].headers[1].width === 'string') {
+        width = parseInt(headerGroups[0].headers[1].width, 10);
+      }
+
+      // const width: number = parseInt(, 10);
+      const lineHeight = 42;
+      const measure = osContext.measureText(text);
+
+
+      if (measure) {
+        // Retreive an estimated number of lines
+        let lines = Math.ceil(measure.width / width)
+
+
+        // Estimated height would be lines multiplied
+        // by the line height
+        let height = lines * lineHeight;
+        console.log(height);
+      }
+      // const lines = 
+
+
+    }
+
+
+
+
     if (tableState.expanded[row.id] && nestedDataField) {
       return getExpandedRowHeight(nestedDataField, index, tableStyles);
     }
