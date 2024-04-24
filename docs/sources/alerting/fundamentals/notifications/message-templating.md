@@ -1,9 +1,9 @@
 ---
 aliases:
-  - ../../contact-points/templates/ # /docs/grafana/<GRAFANA_VERSION>/alerting/contact-points/templates/
-  - ../../alert-rules/templates/ # /docs/grafana/<GRAFANA_VERSION>/alerting/alert-rules/templates/
-  - ../../unified-alerting/templates/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/templates/
-canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/notifications/templates/
+  - ../../contact-points/message-templating/ # /docs/grafana/<GRAFANA_VERSION>/alerting/contact-points/message-templating/
+  - ../../alert-rules/message-templating/ # /docs/grafana/<GRAFANA_VERSION>/alerting/alert-rules/message-templating/
+  - ../../unified-alerting/message-templating/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/message-templating/
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/notifications/message-templating/
 description: Learn about templates
 keywords:
   - grafana
