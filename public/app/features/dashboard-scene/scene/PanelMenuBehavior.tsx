@@ -177,6 +177,8 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
 
     items.push(getInspectMenuItem(plugin, panel, dashboard));
 
+    // TODO: make sure that this works reliably with the reactive extension registry
+    // (we need to be able to know in advance what extensions should be loaded for this extension point, and make it possible to await for them.)
     const { extensions } = getPluginLinkExtensions({
       extensionPointId: PluginExtensionPoints.DashboardPanelMenu,
       context: createExtensionContext(panel, dashboard),
