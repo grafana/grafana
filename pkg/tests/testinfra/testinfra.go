@@ -376,6 +376,13 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			_, err = unifiedAlertingSection.NewKey("min_interval", o.NGAlertSchedulerBaseInterval.String())
 			require.NoError(t, err)
 		}
+
+		if o.GrafanaComAPIURL != "" {
+			grafanaComSection, err := getOrCreateSection("grafana_com")
+			require.NoError(t, err)
+			_, err = grafanaComSection.NewKey("api_url", o.GrafanaComAPIURL)
+			require.NoError(t, err)
+		}
 	}
 	logSection, err := getOrCreateSection("database")
 	require.NoError(t, err)
@@ -422,6 +429,7 @@ type GrafanaOpts struct {
 	GRPCServerAddress                     string
 	QueryRetries                          int64
 	APIServerStorageType                  string
+	GrafanaComAPIURL                      string
 }
 
 func CreateUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) *user.User {

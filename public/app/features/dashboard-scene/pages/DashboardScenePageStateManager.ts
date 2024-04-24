@@ -1,8 +1,6 @@
 import { locationUtil } from '@grafana/data';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
-import { updateNavIndex } from 'app/core/actions';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
-import { backendSrv } from 'app/core/services/backend_srv';
 import { default as localStorageStore } from 'app/core/store';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
@@ -12,14 +10,14 @@ import {
   removeDashboardToFetchFromLocalStorage,
 } from 'app/features/dashboard/state/initDashboard';
 import { trackDashboardSceneLoaded } from 'app/features/dashboard/utils/tracking';
-import { buildNavModel } from 'app/features/folders/state/navModel';
-import { store } from 'app/store/store';
 import { DashboardDTO, DashboardRoutes } from 'app/types';
 
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
 import { buildNewDashboardSaveModel } from '../serialization/buildNewDashboardSaveModel';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+
+import { updateNavModel } from './utils';
 
 export interface DashboardScenePageState {
   dashboard?: DashboardScene;
@@ -94,11 +92,8 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
         case DashboardRoutes.Home:
           rsp = await getBackendSrv().get('/api/dashboards/home');
 
-          // If user specified a custom home dashboard redirect to that
-          if (rsp?.redirectUri) {
-            const newUrl = locationUtil.stripBaseFromUrl(rsp.redirectUri);
-            locationService.replace(newUrl);
-            return null;
+          if (rsp.redirectUri) {
+            return rsp;
           }
 
           if (rsp?.meta) {
@@ -134,7 +129,9 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
       }
 
       // Populate nav model in global store according to the folder
-      await this.initNavModel(rsp);
+      if (rsp.meta.folderUid) {
+        await updateNavModel(rsp.meta.folderUid);
+      }
 
       // Do not cache new dashboards
       this.dashboardCache = { dashboard: rsp, ts: Date.now(), cacheKey };
@@ -176,6 +173,10 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     try {
       startMeasure(LOAD_SCENE_MEASUREMENT);
       const dashboard = await this.loadScene(options);
+      if (!dashboard) {
+        return;
+      }
+
       if (!(config.publicDashboardAccessToken && dashboard.state.controls?.state.hideTimeControls)) {
         dashboard.startUrlSync();
       }
@@ -188,11 +189,13 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     }
   }
 
-  private async loadScene(options: LoadDashboardOptions): Promise<DashboardScene> {
+  private async loadScene(options: LoadDashboardOptions): Promise<DashboardScene | null> {
     const comingFromExplore = Boolean(
       localStorageStore.getObject<DashboardDTO>(DASHBOARD_FROM_LS_KEY) &&
         options.keepDashboardFromExploreInLocalStorage === false
     );
+
+    this.setState({ isLoading: true });
 
     const rsp = await this.fetchDashboard(options);
 
@@ -205,8 +208,6 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
       }
     }
 
-    this.setState({ isLoading: true });
-
     if (rsp?.dashboard) {
       const scene = transformSaveModelToScene(rsp);
 
@@ -216,6 +217,12 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
       }
 
       return scene;
+    }
+
+    if (rsp?.redirectUri) {
+      const newUrl = locationUtil.stripBaseFromUrl(rsp.redirectUri);
+      locationService.replace(newUrl);
+      return null;
     }
 
     throw new Error('Dashboard not found');
@@ -233,20 +240,6 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     }
 
     return null;
-  }
-
-  private async initNavModel(dashboard: DashboardDTO) {
-    // only the folder API has information about ancestors
-    // get parent folder (if it exists) and put it in the store
-    // this will be used to populate the full breadcrumb trail
-    if (dashboard.meta.folderUid) {
-      try {
-        const folder = await backendSrv.getFolderByUid(dashboard.meta.folderUid);
-        store.dispatch(updateNavIndex(buildNavModel(folder)));
-      } catch (err) {
-        console.warn('Error fetching parent folder', dashboard.meta.folderUid, 'for dashboard', err);
-      }
-    }
   }
 
   public clearState() {

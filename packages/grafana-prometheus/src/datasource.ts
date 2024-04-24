@@ -432,108 +432,6 @@ export class PrometheusDatasource
     );
   }
 
-  createQuery(target: PromQuery, options: DataQueryRequest<PromQuery>, start: number, end: number) {
-    const query: PromQueryRequest = {
-      hinting: target.hinting,
-      instant: target.instant,
-      exemplar: target.exemplar,
-      step: 0,
-      expr: '',
-      refId: target.refId,
-      start: 0,
-      end: 0,
-    };
-    const range = Math.ceil(end - start);
-
-    // options.interval is the dynamically calculated interval
-    let interval: number = rangeUtil.intervalToSeconds(options.interval);
-    // Minimum interval ("Min step"), if specified for the query, or same as interval otherwise.
-    const minInterval = rangeUtil.intervalToSeconds(
-      this.templateSrv.replace(target.interval || options.interval, options.scopedVars)
-    );
-    // Scrape interval as specified for the query ("Min step") or otherwise taken from the datasource.
-    // Min step field can have template variables in it, make sure to replace it.
-    const scrapeInterval = target.interval
-      ? rangeUtil.intervalToSeconds(this.templateSrv.replace(target.interval, options.scopedVars))
-      : rangeUtil.intervalToSeconds(this.interval);
-
-    const intervalFactor = target.intervalFactor || 1;
-    // Adjust the interval to take into account any specified minimum and interval factor plus Prometheus limits
-    const adjustedInterval = this.adjustInterval(interval, minInterval, range, intervalFactor);
-    let scopedVars = {
-      ...options.scopedVars,
-      ...this.getRangeScopedVars(options.range),
-      ...this.getRateIntervalScopedVariable(adjustedInterval, scrapeInterval),
-    };
-    // If the interval was adjusted, make a shallow copy of scopedVars with updated interval vars
-    if (interval !== adjustedInterval) {
-      interval = adjustedInterval;
-      scopedVars = Object.assign({}, options.scopedVars, {
-        __interval: { text: interval + 's', value: interval + 's' },
-        __interval_ms: { text: interval * 1000, value: interval * 1000 },
-        ...this.getRateIntervalScopedVariable(interval, scrapeInterval),
-        ...this.getRangeScopedVars(options.range),
-      });
-    }
-
-    query.step = interval;
-
-    let expr = target.expr;
-
-    if (config.featureToggles.promQLScope) {
-      // Apply scope filters
-      query.adhocFilters = this.generateScopeFilters(options.filters);
-    } else {
-      // Apply adhoc filters
-      expr = this.enhanceExprWithAdHocFilters(options.filters, expr);
-    }
-
-    // Only replace vars in expression after having (possibly) updated interval vars
-    query.expr = this.templateSrv.replace(expr, scopedVars, this.interpolateQueryExpr);
-
-    // Align query interval with step to allow query caching and to ensure
-    // that about-same-time query results look the same.
-    const adjusted = alignRange(start, end, query.step, options.range.to.utcOffset() * 60);
-    query.start = adjusted.start;
-    query.end = adjusted.end;
-    this._addTracingHeaders(query, options);
-
-    return query;
-  }
-
-  /**
-   * This converts the adhocVariableFilter array and converts it to scopeFilter array
-   * @param filters
-   */
-  generateScopeFilters(filters?: AdHocVariableFilter[]): ScopeSpecFilter[] {
-    if (!filters) {
-      return [];
-    }
-
-    return filters.map((f) => ({ ...f, operator: scopeFilterOperatorMap[f.operator] }));
-  }
-
-  getRateIntervalScopedVariable(interval: number, scrapeInterval: number) {
-    // Fall back to the default scrape interval of 15s if scrapeInterval is 0 for some reason.
-    if (scrapeInterval === 0) {
-      scrapeInterval = 15;
-    }
-    const rateInterval = Math.max(interval + scrapeInterval, 4 * scrapeInterval);
-    return { __rate_interval: { text: rateInterval + 's', value: rateInterval + 's' } };
-  }
-
-  adjustInterval(interval: number, minInterval: number, range: number, intervalFactor: number) {
-    // Prometheus will drop queries that might return more than 11000 data points.
-    // Calculate a safe interval as an additional minimum to take into account.
-    // Fractional safeIntervals are allowed, however serve little purpose if the interval is greater than 1
-    // If this is the case take the ceil of the value.
-    let safeInterval = range / 11000;
-    if (safeInterval > 1) {
-      safeInterval = Math.ceil(safeInterval);
-    }
-    return Math.max(interval * intervalFactor, minInterval, safeInterval);
-  }
-
   metricFindQuery(query: string, options?: LegacyMetricFindQueryOptions) {
     if (!query) {
       return Promise.resolve([]);
@@ -729,12 +627,13 @@ export class PrometheusDatasource
     const expr = promQueryModeller.renderLabels(labelFilters);
 
     if (this.hasLabelsMatchAPISupport()) {
-      return (await this.languageProvider.fetchSeriesValuesWithMatch(options.key, expr, options.timeRange)).map(
-        (v) => ({
-          value: v,
-          text: v,
-        })
-      );
+      const requestId = `[${this.uid}][${options.key}]`;
+      return (
+        await this.languageProvider.fetchSeriesValuesWithMatch(options.key, expr, requestId, options.timeRange)
+      ).map((v) => ({
+        value: v,
+        text: v,
+      }));
     }
 
     const params = this.getTimeRangeParams(options.timeRange ?? getDefaultTimeRange());
@@ -751,15 +650,17 @@ export class PrometheusDatasource
     if (queries && queries.length) {
       expandedQueries = queries.map((query) => {
         const interpolatedQuery = this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr);
-        const withAdhocFilters = this.enhanceExprWithAdHocFilters(filters, interpolatedQuery);
 
         const expandedQuery = {
           ...query,
           ...(config.featureToggles.promQLScope ? { adhocFilters: this.generateScopeFilters(filters) } : {}),
           datasource: this.getRef(),
-          expr: withAdhocFilters,
+          expr: config.featureToggles.promQLScope
+            ? interpolatedQuery
+            : this.enhanceExprWithAdHocFilters(filters, interpolatedQuery),
           interval: this.templateSrv.replace(query.interval, scopedVars),
         };
+
         return expandedQuery;
       });
     }
@@ -881,6 +782,18 @@ export class PrometheusDatasource
     return getOriginalMetricName(labelData);
   }
 
+  /**
+   * This converts the adhocVariableFilter array and converts it to scopeFilter array
+   * @param filters
+   */
+  generateScopeFilters(filters?: AdHocVariableFilter[]): ScopeSpecFilter[] {
+    if (!filters) {
+      return [];
+    }
+
+    return filters.map((f) => ({ ...f, operator: scopeFilterOperatorMap[f.operator] }));
+  }
+
   enhanceExprWithAdHocFilters(filters: AdHocVariableFilter[] | undefined, expr: string) {
     if (!filters || filters.length === 0) {
       return expr;
@@ -921,13 +834,10 @@ export class PrometheusDatasource
     // interpolate expression
     const expr = this.templateSrv.replace(target.expr, variables, this.interpolateQueryExpr);
 
-    // Add ad hoc filters
-    const exprWithAdHocFilters = this.enhanceExprWithAdHocFilters(filters, expr);
-
     return {
       ...target,
       ...(config.featureToggles.promQLScope ? { adhocFilters: this.generateScopeFilters(filters) } : {}),
-      expr: exprWithAdHocFilters,
+      expr: config.featureToggles.promQLScope ? expr : this.enhanceExprWithAdHocFilters(filters, expr),
       interval: this.templateSrv.replace(target.interval, variables),
       legendFormat: this.templateSrv.replace(target.legendFormat, variables),
     };

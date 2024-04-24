@@ -109,8 +109,13 @@ func (s *ExtendedJWT) authenticateAsUser(idTokenClaims,
 		return nil, errJWTInvalid.Errorf("Failed to parse sub: %w", err)
 	}
 
+	id, err := authn.ParseNamespaceID(idTokenClaims.Subject)
+	if err != nil {
+		return nil, err
+	}
+
 	return &authn.Identity{
-		ID:              idTokenClaims.Subject,
+		ID:              id,
 		OrgID:           s.getDefaultOrgID(),
 		AuthenticatedBy: login.ExtendedJWTModule,
 		AuthID:          accessTokenClaims.Subject,
@@ -129,8 +134,13 @@ func (s *ExtendedJWT) authenticateAsService(claims *ExtendedJWTClaims) (*authn.I
 		return nil, errJWTInvalid.Errorf("Failed to parse sub: %s", "invalid subject format")
 	}
 
+	id, err := authn.ParseNamespaceID(claims.Subject)
+	if err != nil {
+		return nil, err
+	}
+
 	return &authn.Identity{
-		ID:              claims.Subject,
+		ID:              id,
 		OrgID:           s.getDefaultOrgID(),
 		AuthenticatedBy: login.ExtendedJWTModule,
 		AuthID:          claims.Subject,

@@ -1,4 +1,3 @@
-import 'whatwg-fetch';
 import { render as rtlRender, screen } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { SetupServer, setupServer } from 'msw/node';
