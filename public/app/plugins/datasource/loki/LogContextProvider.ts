@@ -343,7 +343,7 @@ export class LogContextProvider {
         label,
         value: value,
         enabled: allLabels.includes(label),
-        nonIndexed: getLabelTypeFromFrame(label, row.dataFrame, 0) !== LabelType.Indexed,
+        nonIndexed: getLabelTypeFromFrame(label, row.dataFrame, row.rowIndex) !== LabelType.Indexed,
       };
 
       contextFilters.push(filter);
