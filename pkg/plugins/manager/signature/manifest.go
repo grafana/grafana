@@ -169,6 +169,7 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 
 	// Make sure the versions all match
 	if manifest.Plugin != plugin.JSONData.ID || manifest.Version != plugin.JSONData.Info.Version {
+		s.log.Debug("Plugin signature invalid because ID or Version mismatch", "id", plugin.JSONData.ID, "manifest", manifest.Plugin, "version", manifest.Version, "plugin", plugin.JSONData.ID, "version", plugin.JSONData.Info.Version)
 		return plugins.Signature{
 			Status: plugins.SignatureStatusModified,
 		}, nil
@@ -194,6 +195,7 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 	for p, hash := range manifest.Files {
 		err = verifyHash(s.log, plugin, p, hash)
 		if err != nil {
+			s.log.Debug("Plugin signature invalid", "id", plugin.JSONData.ID, "error", err)
 			return plugins.Signature{
 				Status: plugins.SignatureStatusModified,
 			}, nil
