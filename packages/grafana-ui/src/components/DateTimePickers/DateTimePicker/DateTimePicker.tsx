@@ -214,17 +214,16 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
     const format = showSeconds ? 'YYYY-MM-DD HH:mm:ss' : 'YYYY-MM-DD HH:mm';
     const [internalDate, setInternalDate] = useState<InputState>(() => {
       return {
-        value: date ? dateTimeFormat(dateTimeForTimeZone(getTimeZone(), date)) : dateTimeFormat(dateTime()),
+        value: date ? dateTimeFormat(date) : dateTimeFormat(dateTime()),
         invalid: false,
       };
     });
 
     useEffect(() => {
       if (date) {
-        const dateForTimeZone = dateTimeForTimeZone(getTimeZone(), date);
         setInternalDate({
-          invalid: !isValid(dateTimeFormat(dateForTimeZone, { format })),
-          value: isDateTime(dateForTimeZone) ? dateTimeFormat(dateForTimeZone, { format }) : dateForTimeZone,
+          invalid: !isValid(dateTimeFormat(date, { format })),
+          value: isDateTime(date) ? dateTimeFormat(date, { format }) : date,
         });
       }
     }, [date, format]);
@@ -326,7 +325,7 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
         <Calendar
           next2Label={null}
           prev2Label={null}
-          value={dateTimeForTimeZone('browser', internalDate).toDate()}
+          value={internalDate}
           nextLabel={<Icon name="angle-right" />}
           nextAriaLabel="Next month"
           prevLabel={<Icon name="angle-left" />}
