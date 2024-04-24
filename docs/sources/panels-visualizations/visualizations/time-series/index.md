@@ -52,8 +52,6 @@ The following video guides you through the creation steps and common customizati
 
 ## Tooltip options
 
-Tooltip options control the information overlay that appears when you hover over data points in the visualization.
-
 {{< docs/shared lookup="visualizations/tooltip-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Legend options

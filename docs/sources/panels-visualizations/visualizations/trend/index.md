@@ -40,8 +40,6 @@ For example, you could represent engine power and torque versus speed where spee
 
 ## Tooltip options
 
-Tooltip options control the information overlay that appears when you hover over data points in the visualization.
-
 {{< docs/shared lookup="visualizations/tooltip-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 {{% docs/reference %}}

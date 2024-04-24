@@ -132,7 +132,7 @@ Set the width of the lines in pixels.
 
 ## Tooltip options
 
-Tooltip options control the information overlay that appears when you hover over data points in the graph.
+Tooltip options control the information overlay that appears when you hover over data points in the visualization.
 
 ### Tooltip mode
 

@@ -131,8 +131,6 @@ Gradient color is generated based on the hue of the line color.
 
 ## Tooltip options
 
-Tooltip options control the information overlay that appears when you hover over data points in the visualization.
-
 {{< docs/shared lookup="visualizations/tooltip-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Legend options
