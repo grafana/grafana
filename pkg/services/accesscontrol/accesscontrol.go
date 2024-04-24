@@ -56,6 +56,7 @@ type Service interface {
 type Store interface {
 	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]Permission, error)
 	GetBasicRolesPermissions(ctx context.Context, roles []string, orgID int64) ([]Permission, error)
+	GetTeamsPermissions(ctx context.Context, teams []int64, orgID int64) (map[int64][]Permission, error)
 	SearchUsersPermissions(ctx context.Context, orgID int64, options SearchOptions) (map[int64][]Permission, error)
 	GetUsersBasicRoles(ctx context.Context, userFilter []int64, orgID int64) (map[int64][]string, error)
 	DeleteUserPermissions(ctx context.Context, orgID, userID int64) error

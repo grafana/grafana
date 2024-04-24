@@ -98,7 +98,7 @@ func (s *AccessControlStore) GetBasicRolesPermissions(ctx context.Context, roles
 			SELECT br.role_id FROM builtin_role AS br
 			WHERE br.role IN (?` + strings.Repeat(", ?", len(roles)-1) + `)
 			  AND (br.org_id = ? OR br.org_id = ?)
-		) as all_role ON role.id = all_role.role_id;
+		) as all_role ON role.id = all_role.role_id
 		`
 
 		params := make([]any, 0)
@@ -114,6 +114,65 @@ func (s *AccessControlStore) GetBasicRolesPermissions(ctx context.Context, roles
 		return nil
 	})
 	return result, err
+}
+
+type teamPermission struct {
+	TeamID int64 `xorm:"team_id"`
+	Action string
+	Scope  string
+}
+
+func (p teamPermission) Permission() accesscontrol.Permission {
+	return accesscontrol.Permission{
+		Action: p.Action,
+		Scope:  p.Scope,
+	}
+}
+
+func (s *AccessControlStore) GetTeamsPermissions(ctx context.Context, teams []int64, orgID int64) (map[int64][]accesscontrol.Permission, error) {
+	result := make([]teamPermission, 0)
+	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+		if len(teams) == 0 {
+			// no permission to fetch
+			return nil
+		}
+
+		q := `
+		SELECT
+			permission.action,
+			permission.scope,
+			all_role.team_id
+		FROM permission
+		INNER JOIN role ON role.id = permission.role_id
+		INNER JOIN (
+			SELECT tr.role_id, tr.team_id FROM team_role as tr
+			WHERE tr.team_id IN(?` + strings.Repeat(", ?", len(teams)-1) + `)
+			  AND tr.org_id = ?
+		) as all_role ON role.id = all_role.role_id;
+		`
+
+		params := make([]any, 0)
+		for _, team := range teams {
+			params = append(params, team)
+		}
+		params = append(params, orgID)
+
+		if err := sess.SQL(q, params...).Find(&result); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	teamPermissions := make(map[int64][]accesscontrol.Permission)
+	for _, teamPermission := range result {
+		tp := teamPermissions[teamPermission.TeamID]
+		if tp == nil {
+			tp = make([]accesscontrol.Permission, 0)
+		}
+		teamPermissions[teamPermission.TeamID] = append(tp, teamPermission.Permission())
+	}
+	return teamPermissions, err
 }
 
 // SearchUsersPermissions returns the list of user permissions in specific organization indexed by UserID
