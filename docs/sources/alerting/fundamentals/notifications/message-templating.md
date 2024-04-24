@@ -39,7 +39,7 @@ In Grafana, there are two ways to template your alert notification messages:
 
 There are two ways to template your alert notification messages:  labels and annotations and notification templates.
 
-The below diagram illustrates the entire process of templating, from the creation of labels and annotations in alert rules or notification templates in contact points, and how they are when exported and applied to your alert notification messages.
+This diagram illustrates the entire process of templating, from the creation of labels and annotations in alert rules or notification templates in contact points, to what they look like when exported and applied in your alert notification messages.
 
 {{< figure src="/media/docs/alerting/{{templating-diagram.png" max-width="1200px" caption="How Templating works" >}}
 
