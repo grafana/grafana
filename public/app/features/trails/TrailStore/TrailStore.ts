@@ -154,7 +154,8 @@ export class TrailStore {
   }
 
   addBookmark(trail: DataTrail) {
-    this._bookmarks.unshift(trail.getRef());
+    const bookmark = new DataTrail(sceneUtils.cloneSceneObjectState(trail.state));
+    this._bookmarks.unshift(bookmark.getRef());
     this._refreshBookmarkIndexMap();
     this._save();
     dispatch(notifyApp(createBookmarkSavedNotification()));
