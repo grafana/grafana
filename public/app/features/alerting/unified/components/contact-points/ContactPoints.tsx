@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import uFuzzy from '@leeoniya/ufuzzy';
 import { SerializedError } from '@reduxjs/toolkit';
-import { groupBy, reject, size, uniq, upperFirst } from 'lodash';
+import { groupBy, size, uniq, upperFirst } from 'lodash';
 import pluralize from 'pluralize';
 import React, { Fragment, ReactNode, useCallback, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -387,10 +387,12 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
 
   const [ExportDrawer, openExportDrawer] = useExportContactPoint();
 
-  const normalPolicyReferences = reject(policies, (ref) => ref.route.type === 'auto-generated');
-  const isReferencedByNormalPolicies = normalPolicyReferences.length > 0;
+  const numberOfPolicies = policies.length;
+  const isReferencedByAnyPolicy = numberOfPolicies > 0;
+  const isReferencedByRegularPolicies = policies.some((ref) => ref.route.type !== 'auto-generated');
+
   const canEdit = editSupported && editAllowed && !provisioned;
-  const canDelete = deleteSupported && deleteAllowed && !provisioned && !isReferencedByNormalPolicies;
+  const canDelete = deleteSupported && deleteAllowed && !provisioned && !isReferencedByRegularPolicies;
 
   const menuActions: JSX.Element[] = [];
 
@@ -441,16 +443,15 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
             {name}
           </Text>
         </Stack>
-        {isReferencedByNormalPolicies && (
+        {isReferencedByAnyPolicy && (
           <MetaText>
             <Link to={createUrl('/alerting/routes', { contactPoint: name })}>
-              is used by <Strong>{normalPolicyReferences.length}</Strong>{' '}
-              {pluralize('notification policy', normalPolicyReferences.length)}
+              is used by <Strong>{numberOfPolicies}</Strong> {pluralize('notification policy', numberOfPolicies)}
             </Link>
           </MetaText>
         )}
         {provisioned && <ProvisioningBadge />}
-        {!isReferencedByNormalPolicies && <UnusedContactPointBadge />}
+        {!isReferencedByAnyPolicy && <UnusedContactPointBadge />}
         <Spacer />
         <LinkButton
           tooltipPlacement="top"

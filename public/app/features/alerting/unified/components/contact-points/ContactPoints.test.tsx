@@ -262,8 +262,6 @@ describe('contact points', () => {
         wrapper,
       });
 
-      expect(screen.getByLabelText('unused')).toBeInTheDocument();
-
       const moreActions = screen.getByRole('button', { name: 'more-actions' });
       await userEvent.click(moreActions);
 
