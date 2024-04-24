@@ -27,7 +27,7 @@ import {
 import { useStyles2 } from '@grafana/ui';
 
 import { DataTrailSettings } from './DataTrailSettings';
-import { DataTrailHistory, DataTrailHistoryStep } from './DataTrailsHistory';
+import { DataTrailHistory } from './DataTrailsHistory';
 import { MetricScene } from './MetricScene';
 import { MetricSelectScene } from './MetricSelectScene';
 import { MetricsHeader } from './MetricsHeader';
