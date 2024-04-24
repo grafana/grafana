@@ -6,6 +6,8 @@ import React, { useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, getTagColorsFromName, useStyles2 } from '@grafana/ui';
 
+import { GRAFANA_ORIGIN_LABEL } from '../utils/rules';
+
 import { Label, LabelSize } from './Label';
 
 interface Props {
@@ -21,6 +23,7 @@ export const AlertLabels = ({ labels, commonLabels = {}, size }: Props) => {
   const labelsToShow = chain(labels)
     .toPairs()
     .reject(isPrivateKey)
+    .reject(isGrafanaOriginKey)
     .reject(([key]) => (showCommonLabels ? false : key in commonLabels))
     .value();
 
@@ -64,6 +67,7 @@ function getLabelColor(input: string): string {
 }
 
 const isPrivateKey = ([key, _]: [string, string]) => key.startsWith('__') && key.endsWith('__');
+const isGrafanaOriginKey = ([key, _]: [string, string]) => key === GRAFANA_ORIGIN_LABEL;
 
 const getStyles = (theme: GrafanaTheme2, size?: LabelSize) => ({
   wrapper: css`
