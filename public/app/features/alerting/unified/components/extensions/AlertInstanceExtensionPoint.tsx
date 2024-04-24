@@ -1,4 +1,4 @@
-import React, { ReactElement, useState } from 'react';
+import React, { ReactElement, useMemo, useState } from 'react';
 
 import { PluginExtensionLink, PluginExtensionPoints } from '@grafana/data';
 import { usePluginLinkExtensions } from '@grafana/runtime';
@@ -20,7 +20,7 @@ export const AlertInstanceExtensionPoint = ({
   extensionPointId,
 }: AlertInstanceExtensionPointProps): ReactElement | null => {
   const [selectedExtension, setSelectedExtension] = useState<PluginExtensionLink | undefined>();
-  const context = { instance, rule };
+  const context = useMemo(() => ({ instance, rule }), [instance, rule]);
   const { extensions } = usePluginLinkExtensions({ context, extensionPointId, limitPerPlugin: 3 });
 
   if (extensions.length === 0) {
