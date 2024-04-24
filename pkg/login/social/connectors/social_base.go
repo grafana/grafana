@@ -29,31 +29,30 @@ import (
 
 type SocialBase struct {
 	*oauth2.Config
-	orgService    org.Service
 	info          *social.OAuthInfo
 	cfg           *setting.Cfg
 	reloadMutex   sync.RWMutex
 	log           log.Logger
 	features      featuremgmt.FeatureToggles
-	orgRoleMapper *ExternalOrgRoleMapper
+	orgRoleMapper *OrgRoleMapper
 }
 
 func newSocialBase(name string,
-	orgService org.Service,
+	orgRoleMapper *OrgRoleMapper,
 	info *social.OAuthInfo,
 	features featuremgmt.FeatureToggles,
 	cfg *setting.Cfg,
+
 ) *SocialBase {
 	logger := log.New("oauth." + name)
 
 	return &SocialBase{
 		Config:        createOAuthConfig(info, cfg, name),
-		orgService:    orgService,
 		info:          info,
 		log:           logger,
 		features:      features,
 		cfg:           cfg,
-		orgRoleMapper: NewExternalOrgRoleMapper(orgService),
+		orgRoleMapper: orgRoleMapper,
 	}
 }
 
@@ -176,21 +175,16 @@ func (s *SocialBase) searchRole(rawJSON []byte, groups []string) (org.RoleType, 
 	return "", false
 }
 
-func (s *SocialBase) extractOrgRoles(ctx context.Context, rawJSON []byte, groups []string, userRole org.RoleType) (map[int64]org.RoleType, error) {
-	if s.info.OrgMapping != nil && len(s.info.OrgMapping) > 0 && s.info.OrgAttributePath != "" {
-		orgs, err := util.SearchJSONForStringSliceAttr(s.info.OrgAttributePath, rawJSON)
-		if err != nil {
-			return nil, err
-		}
+func (s *SocialBase) extractOrgRoles(ctx context.Context, orgs []string, directlyMappedRole org.RoleType) (map[int64]org.RoleType, error) {
+	return s.orgRoleMapper.MapOrgRoles(ctx, orgs, s.info.OrgMapping, directlyMappedRole)
+}
 
-		if len(orgs) == 0 {
-			orgs = groups
-		}
-
-		return s.orgRoleMapper.MapOrgRoles(orgs, s.info.OrgMapping, userRole)
+func (s *SocialBase) extractOrgs(rawJSON []byte) ([]string, error) {
+	if s.info.OrgAttributePath == "" {
+		return []string{}, nil
 	}
 
-	return nil, nil
+	return util.SearchJSONForStringSliceAttr(s.info.OrgAttributePath, rawJSON)
 }
 
 // defaultRole returns the default role for the user based on the autoAssignOrgRole setting

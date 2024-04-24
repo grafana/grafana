@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
@@ -59,12 +58,12 @@ var (
 			"User is not a member of one of the required organizations. Please contact identity provider administrator."))
 )
 
-func NewGitHubProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgService org.Service, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGithub {
+func NewGitHubProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGithub {
 	teamIdsSplitted := util.SplitString(info.Extra[teamIdsKey])
 	teamIds := mustInts(teamIdsSplitted)
 
 	provider := &SocialGithub{
-		SocialBase:           newSocialBase(social.GitHubProviderName, orgService, info, features, cfg),
+		SocialBase:           newSocialBase(social.GitHubProviderName, orgRoleMapper, info, features, cfg),
 		teamIds:              teamIds,
 		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
 	}
@@ -341,7 +340,18 @@ func (s *SocialGithub) UserInfo(ctx context.Context, client *http.Client, token 
 	}
 
 	if !s.info.SkipOrgRoleSync {
-		orgRoles, err := s.extractOrgRoles(ctx, response.Body, teams, userInfo.Role)
+		externalOrgs, err := s.extractOrgs(response.Body)
+		if err != nil {
+			s.log.Warn("Failed to extract orgs", "err", err)
+			return nil, err
+		}
+
+		// TODO: Consider supporting teams only (org_attribute_path probably doesn't make sense for this provider)
+		if len(externalOrgs) == 0 {
+			externalOrgs = teams
+		}
+
+		orgRoles, err := s.extractOrgRoles(ctx, externalOrgs, userInfo.Role)
 		if err != nil {
 			return nil, err
 		}

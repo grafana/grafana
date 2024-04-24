@@ -267,6 +267,10 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			}))
 			defer server.Close()
 
+			cfg := &setting.Cfg{
+				AutoAssignOrgRole: tt.autoAssignOrgRole,
+			}
+
 			s := NewGitHubProvider(
 				&social.OAuthInfo{
 					ApiUrl:            server.URL + "/user",
@@ -278,10 +282,9 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 						"allowed_organizations": "",
 						"team_ids":              "",
 					},
-				}, &setting.Cfg{
-					AutoAssignOrgRole: tt.autoAssignOrgRole,
-				},
-				&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}},
+				}, cfg,
+				ProvideOrgRoleMapper(cfg,
+					&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
 				&ssosettingstests.MockService{},
 				featuremgmt.WithFeatures())
 

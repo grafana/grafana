@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
@@ -47,9 +46,9 @@ type OktaClaims struct {
 	Name              string `json:"name"`
 }
 
-func NewOktaProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgService org.Service, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialOkta {
+func NewOktaProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialOkta {
 	provider := &SocialOkta{
-		SocialBase: newSocialBase(social.OktaProviderName, orgService, info, features, cfg),
+		SocialBase: newSocialBase(social.OktaProviderName, orgRoleMapper, info, features, cfg),
 	}
 
 	if info.UseRefreshToken {
@@ -154,7 +153,18 @@ func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *o
 			isGrafanaAdmin = &grafanaAdmin
 		}
 
-		orgRoles, err = s.extractOrgRoles(ctx, data.rawJSON, groups, role)
+		externalOrgs, err := s.extractOrgs(data.rawJSON)
+		if err != nil {
+			s.log.Warn("Failed to extract orgs", "err", err)
+			return nil, err
+		}
+
+		// TODO: Consider supporting groups only (org_attribute_path probably doesn't make sense for this provider)
+		if len(externalOrgs) == 0 {
+			externalOrgs = data.Groups
+		}
+
+		orgRoles, err = s.extractOrgRoles(ctx, externalOrgs, role)
 		if err != nil {
 			return nil, err
 		}

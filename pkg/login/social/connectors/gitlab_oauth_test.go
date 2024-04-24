@@ -47,7 +47,7 @@ const (
 func TestSocialGitlab_UserInfo(t *testing.T) {
 	var nilPointer *bool
 
-	provider := NewGitLabProvider(&social.OAuthInfo{SkipOrgRoleSync: false}, &setting.Cfg{}, orgtest.NewOrgServiceFake(), &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+	provider := NewGitLabProvider(&social.OAuthInfo{SkipOrgRoleSync: false}, setting.NewCfg(), ProvideOrgRoleMapper(setting.NewCfg(), orgtest.NewOrgServiceFake()), &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 	type conf struct {
 		AllowAssignGrafanaAdmin bool

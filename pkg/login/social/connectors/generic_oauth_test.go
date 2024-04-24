@@ -29,7 +29,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 	provider := NewGenericOAuthProvider(&social.OAuthInfo{
 		EmailAttributePath: "email",
 	}, &setting.Cfg{},
-		&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "org_dev"}, {ID: 5, Name: "org_engineering"}}},
+		ProvideOrgRoleMapper(&setting.Cfg{}, &orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "org_dev"}, {ID: 5, Name: "org_engineering"}}}),
 		&ssosettingstests.MockService{},
 		featuremgmt.WithFeatures())
 
@@ -257,6 +257,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			RoleAttributePath: "contains(info.roles[*], 'SRE') && 'Admin' || contains(info.roles[*], 'dev') && 'Editor' || 'Viewer'",
 			ExpectedEmail:     "john.doe@example.com",
 			ExpectedRole:      "",
+			ExpectedOrgRoles:  map[int64]org.RoleType{1: org.RoleAdmin},
 		},
 		{
 			Name:                    "Given a valid id_token, a valid advanced JMESPath role path, a valid advanced JMESPath org roles path, a valid API response, prefer ID ken",

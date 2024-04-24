@@ -56,9 +56,9 @@ type userData struct {
 	IsGrafanaAdmin *bool                  `json:"-"`
 }
 
-func NewGitLabProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgService org.Service, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGitlab {
+func NewGitLabProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGitlab {
 	provider := &SocialGitlab{
-		SocialBase: newSocialBase(social.GitlabProviderName, orgService, info, features, cfg),
+		SocialBase: newSocialBase(social.GitlabProviderName, orgRoleMapper, info, features, cfg),
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
@@ -259,7 +259,18 @@ func (s *SocialGitlab) extractFromAPI(ctx context.Context, client *http.Client, 
 
 		idData.Role = role
 
-		orgRoles, err := s.extractOrgRoles(ctx, response.Body, idData.Groups, idData.Role)
+		externalOrgs, err := s.extractOrgs(response.Body)
+		if err != nil {
+			s.log.Warn("Failed to extract orgs", "err", err)
+			return nil, err
+		}
+
+		// TODO: Consider supporting groups only (org_attribute_path probably doesn't make sense for this provider)
+		if len(externalOrgs) == 0 {
+			externalOrgs = idData.Groups
+		}
+
+		orgRoles, err := s.extractOrgRoles(ctx, externalOrgs, idData.Role)
 		if err != nil {
 			return nil, err
 		}
@@ -321,7 +332,13 @@ func (s *SocialGitlab) extractFromToken(ctx context.Context, client *http.Client
 
 		data.Role = role
 
-		orgRoles, err := s.extractOrgRoles(ctx, rawJSON, data.Groups, data.Role)
+		externalOrgs, err := s.extractOrgs(rawJSON)
+		if err != nil {
+			s.log.Warn("Failed to extract orgs", "err", err)
+			return nil, err
+		}
+
+		orgRoles, err := s.extractOrgRoles(ctx, externalOrgs, data.Role)
 		if err != nil {
 			return nil, err
 		}

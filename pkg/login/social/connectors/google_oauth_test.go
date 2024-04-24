@@ -710,8 +710,8 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 					AllowAssignGrafanaAdmin: tt.fields.allowAssignGrafanaAdmin,
 					SkipOrgRoleSync:         tt.fields.skipOrgRoleSync,
 				},
-				&setting.Cfg{},
-				orgService,
+				setting.NewCfg(),
+				ProvideOrgRoleMapper(setting.NewCfg(), orgService),
 				&ssosettingstests.MockService{},
 				featuremgmt.WithFeatures())
 

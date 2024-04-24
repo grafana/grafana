@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
@@ -49,9 +48,9 @@ type googleUserData struct {
 	rawJSON       []byte `json:"-"`
 }
 
-func NewGoogleProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgService org.Service, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGoogle {
+func NewGoogleProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGoogle {
 	provider := &SocialGoogle{
-		SocialBase: newSocialBase(social.GoogleProviderName, orgService, info, features, cfg),
+		SocialBase: newSocialBase(social.GoogleProviderName, orgRoleMapper, info, features, cfg),
 		validateHD: MustBool(info.Extra[validateHDKey], true),
 	}
 
@@ -162,7 +161,18 @@ func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token 
 
 		userInfo.Role = role
 
-		orgRoles, errOrgRoles := s.extractOrgRoles(ctx, data.rawJSON, groups, userInfo.Role)
+		externalOrgs, err := s.extractOrgs(data.rawJSON)
+		if err != nil {
+			s.log.Warn("Failed to extract orgs", "err", err)
+			return nil, err
+		}
+
+		// TODO: Consider supporting groups only (org_attribute_path probably doesn't make sense for this provider)
+		if len(externalOrgs) == 0 {
+			externalOrgs = groups
+		}
+
+		orgRoles, errOrgRoles := s.extractOrgRoles(ctx, externalOrgs, userInfo.Role)
 		if errOrgRoles != nil {
 			return nil, errOrgRoles
 		} else {

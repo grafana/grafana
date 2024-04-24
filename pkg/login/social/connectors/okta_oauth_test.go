@@ -127,6 +127,10 @@ func TestSocialOkta_UserInfo(t *testing.T) {
 			}))
 			defer server.Close()
 
+			cfg := &setting.Cfg{
+				AutoAssignOrgRole: tt.autoAssignOrgRole,
+			}
+
 			provider := NewOktaProvider(
 				&social.OAuthInfo{
 					ApiUrl:                  server.URL + "/user",
@@ -136,10 +140,8 @@ func TestSocialOkta_UserInfo(t *testing.T) {
 					OrgAttributePath:        tt.OrgAttributePath,
 					OrgMapping:              tt.OrgMapping,
 				},
-				&setting.Cfg{
-					AutoAssignOrgRole: tt.autoAssignOrgRole,
-				},
-				orgService,
+				cfg,
+				ProvideOrgRoleMapper(cfg, orgService),
 				&ssosettingstests.MockService{},
 				featuremgmt.WithFeatures())
 
