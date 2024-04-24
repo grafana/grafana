@@ -4,10 +4,12 @@ import { useHistory } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Card, Icon, IconName, Stack, useStyles2 } from '@grafana/ui';
-import { useRulesSourcesWithRuler } from 'app/features/alerting/unified/hooks/useRuleSourcesWithRuler';
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { fetchAllPromBuildInfoAction } from 'app/features/alerting/unified/state/actions';
-import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import {
+  GRAFANA_RULES_SOURCE_NAME,
+  getFirstCompatibleDataSource,
+} from 'app/features/alerting/unified/utils/datasource';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 import { useDispatch } from 'app/types';
 
@@ -34,7 +36,7 @@ export function ConfigureIRM() {
   useEffect(() => {
     dispatchReduxAction(fetchAllPromBuildInfoAction());
   }, [dispatchReduxAction]);
-  const rulesSourcesWithRuler = useRulesSourcesWithRuler();
+  const dataSourceCompatibleWithAlerting = Boolean(getFirstCompatibleDataSource()); // we need at least one datasource compatible with alerting
 
   const [essentialsOpen, setEssentialsOpen] = useState(false);
   const { essentialContent, stepsDone, totalStepsToDo } = useGetEssentialsConfiguration();
@@ -42,11 +44,11 @@ export function ConfigureIRM() {
     return [
       {
         id: 1,
-        title: 'Connect datasource to recieve data',
+        title: 'Connect data source to receive data',
         description: 'Before your start configuration you need to connect at least one datasource.',
         text: 'Configure IRM',
         actionButtonTitle: 'Connect',
-        isDone: rulesSourcesWithRuler.length > 0,
+        isDone: dataSourceCompatibleWithAlerting,
       },
       {
         id: 2,
@@ -59,7 +61,7 @@ export function ConfigureIRM() {
         totalStepsToDo: totalStepsToDo,
       },
     ];
-  }, [rulesSourcesWithRuler, stepsDone, totalStepsToDo]);
+  }, [dataSourceCompatibleWithAlerting, stepsDone, totalStepsToDo]);
 
   const handleActionClick = (configID: number) => {
     switch (configID) {
