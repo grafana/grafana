@@ -154,6 +154,24 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
         );
       }
     } catch (err) {
+      //set default datasource if we fail to load the datasource
+      const datasource = await getDataSourceSrv().get(config.defaultDatasource);
+      const dsSettings = getDataSourceSrv().getInstanceSettings(config.defaultDatasource);
+
+      if (datasource && dsSettings) {
+        this.setState({
+          datasource,
+          dsSettings,
+        });
+
+        this.queryRunner.setState({
+          datasource: {
+            uid: dsSettings.uid,
+            type: dsSettings.type,
+          },
+        });
+      }
+
       console.error(err);
     }
   }

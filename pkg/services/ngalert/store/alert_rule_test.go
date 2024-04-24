@@ -603,6 +603,7 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
+	orgID := int64(1)
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting.BaseInterval = 1 * time.Second
@@ -613,7 +614,7 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		Cfg:           cfg.UnifiedAlerting,
 	}
 
-	rules := models.GenerateAlertRules(5, models.AlertRuleGen(models.WithOrgID(1), withIntervalMatching(store.Cfg.BaseInterval)))
+	rules := models.GenerateAlertRules(5, models.AlertRuleGen(models.WithOrgID(orgID), withIntervalMatching(store.Cfg.BaseInterval)))
 	deref := make([]models.AlertRule, 0, len(rules))
 	for _, rule := range rules {
 		deref = append(deref, *rule)
@@ -641,14 +642,30 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		require.Truef(t, found, "Rule with key %#v was not found in database", keyWithID)
 	}
 
-	_, err = store.InsertAlertRules(context.Background(), []models.AlertRule{deref[0]})
-	require.ErrorIs(t, err, models.ErrAlertRuleUniqueConstraintViolation)
-	require.NotEqual(t, deref[0].UID, "")
-	require.NotEqual(t, deref[0].Title, "")
-	require.NotEqual(t, deref[0].NamespaceUID, "")
-	require.ErrorContains(t, err, deref[0].UID)
-	require.ErrorContains(t, err, deref[0].Title)
-	require.ErrorContains(t, err, deref[0].NamespaceUID)
+	t.Run("fail to insert rules with same ID", func(t *testing.T) {
+		_, err = store.InsertAlertRules(context.Background(), []models.AlertRule{deref[0]})
+		require.ErrorIs(t, err, models.ErrAlertRuleConflictBase)
+	})
+	t.Run("fail insert rules with the same title in a folder", func(t *testing.T) {
+		cp := models.CopyRule(&deref[0])
+		cp.UID = cp.UID + "-new"
+		_, err = store.InsertAlertRules(context.Background(), []models.AlertRule{*cp})
+		require.ErrorIs(t, err, models.ErrAlertRuleConflictBase)
+		require.ErrorIs(t, err, models.ErrAlertRuleUniqueConstraintViolation)
+		require.NotEqual(t, deref[0].UID, "")
+		require.NotEqual(t, deref[0].Title, "")
+		require.NotEqual(t, deref[0].NamespaceUID, "")
+		require.ErrorContains(t, err, deref[0].UID)
+		require.ErrorContains(t, err, deref[0].Title)
+		require.ErrorContains(t, err, deref[0].NamespaceUID)
+	})
+	t.Run("should not let insert rules with the same UID", func(t *testing.T) {
+		cp := models.CopyRule(&deref[0])
+		cp.Title = "unique-test-title"
+		_, err = store.InsertAlertRules(context.Background(), []models.AlertRule{*cp})
+		require.ErrorIs(t, err, models.ErrAlertRuleConflictBase)
+		require.ErrorContains(t, err, "rule UID under the same organisation should be unique")
+	})
 }
 
 func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {

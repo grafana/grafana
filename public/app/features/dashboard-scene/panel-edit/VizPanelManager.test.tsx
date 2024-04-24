@@ -1,7 +1,7 @@
 import { map, of } from 'rxjs';
 
 import { DataQueryRequest, DataSourceApi, DataSourceInstanceSettings, LoadingState, PanelData } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -75,6 +75,18 @@ const ds3Mock: DataSourceApi = {
   },
 } as DataSourceApi<DataQuery, DataSourceJsonData, {}>;
 
+const defaultDsMock: DataSourceApi = {
+  meta: {
+    id: 'grafana-testdata-datasource',
+  },
+  name: 'grafana-testdata-datasource',
+  type: 'grafana-testdata-datasource',
+  uid: 'gdev-testdata',
+  getRef: () => {
+    return { type: 'grafana-testdata-datasource', uid: 'gdev-testdata' };
+  },
+} as DataSourceApi<DataQuery, DataSourceJsonData, {}>;
+
 const instance1SettingsMock = {
   id: 1,
   uid: 'gdev-testdata',
@@ -124,6 +136,7 @@ jest.mock('@grafana/runtime', () => ({
   getDataSourceSrv: () => ({
     get: async (ref: DataSourceRef) => {
       // Mocking the build in Grafana data source to avoid annotations data layer errors.
+
       if (ref.uid === '-- Grafana --') {
         return grafanaDs;
       }
@@ -140,7 +153,8 @@ jest.mock('@grafana/runtime', () => ({
         return ds3Mock;
       }
 
-      return null;
+      // if datasource is not found, return default datasource
+      return defaultDsMock;
     },
     getInstanceSettings: (ref: DataSourceRef) => {
       if (ref.uid === 'gdev-testdata') {
@@ -151,11 +165,16 @@ jest.mock('@grafana/runtime', () => ({
         return instance2SettingsMock;
       }
 
-      return null;
+      // if datasource is not found, return default instance settings
+      return instance1SettingsMock;
     },
   }),
   locationService: {
     partial: jest.fn(),
+  },
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    defaultDatasource: 'gdev-testdata',
   },
 }));
 
@@ -349,6 +368,21 @@ describe('VizPanelManager', () => {
           dashboardUid: 'ffbe00e2-803c-4d49-adb7-41aad336234f',
           datasourceUid: 'gdev-testdata',
         });
+      });
+
+      it('should load default datasource if the datasource passed is not found', async () => {
+        const { vizPanelManager } = setupTest('panel-6');
+        vizPanelManager.activate();
+        await Promise.resolve();
+
+        expect(vizPanelManager.queryRunner.state.datasource).toEqual({
+          uid: 'abc',
+          type: 'datasource',
+        });
+
+        expect(config.defaultDatasource).toBe('gdev-testdata');
+        expect(vizPanelManager.state.datasource).toEqual(defaultDsMock);
+        expect(vizPanelManager.state.dsSettings).toEqual(instance1SettingsMock);
       });
     });
 
