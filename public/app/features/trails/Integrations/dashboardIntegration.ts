@@ -1,4 +1,4 @@
-import { PanelMenuItem, PanelModel } from '@grafana/data';
+import { PanelMenuItem } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { SceneTimeRangeLike, VizPanel } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
@@ -20,11 +20,7 @@ import {
   getTimeRangeFromDashboard,
 } from './utils';
 
-export function addDataTrailPanelAction(
-  dashboard: DashboardScene | DashboardModel,
-  panel: VizPanel | PanelModel,
-  items: PanelMenuItem[]
-) {
+export async function addDataTrailPanelAction(dashboard: DashboardScene, panel: VizPanel, items: PanelMenuItem[]) {
   const panelType = getPanelType(panel);
   if (panelType !== 'timeseries') {
     return;
@@ -41,10 +37,9 @@ export function addDataTrailPanelAction(
     return;
   }
 
-  const interpolated = interpolateVariables(dashboard, dsInstanceSettings, queryRunner.state.queries);
+  const interpolated = await interpolateVariables(panel, dsInstanceSettings, queryRunner.state.queries);
 
   const queries = interpolated.map((q) => q.expr);
-
   const queryMetrics = getQueryMetrics(queries);
 
   const dataSourceRawRef = dsInstanceSettings?.rawRef;

@@ -1,56 +1,31 @@
-import { AdHocVariableFilter, DataSourceInstanceSettings } from '@grafana/data';
-import { PromQuery, PrometheusDatasource } from '@grafana/prometheus';
+import { DataSourceInstanceSettings } from '@grafana/data';
+import { PromQuery } from '@grafana/prometheus';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { AdHocFiltersVariable, SceneVariable } from '@grafana/scenes';
-import { DataQuery, DataSourceRef } from '@grafana/schema';
-import { DashboardModel } from 'app/features/dashboard/state';
-import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { VizPanel } from '@grafana/scenes';
+import { DataQuery } from '@grafana/schema';
+import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/utils';
 
-export function interpolateVariables(
-  dashboard: DashboardModel | DashboardScene,
+export async function interpolateVariables(
+  vizPanel: VizPanel,
   dsInstanceSettings: DataSourceInstanceSettings,
   queries: DataQuery[]
-) {
-  const promDataSourceForUtility = new PrometheusDatasource({ ...dsInstanceSettings, jsonData: {} });
+): Promise<PromQuery[]> {
+  const ds = await getDataSourceSrv().get(dsInstanceSettings.uid);
+  const queryRunner = getQueryRunnerFor(vizPanel);
 
-  return queries.filter(isPromQuery).map((query) => {
-    const queryDataSourceUid = getInterpolatedDataSourceUid(query?.datasource);
-    return promDataSourceForUtility.applyTemplateVariables(query, {}, getAdHocFilters(dashboard, queryDataSourceUid));
-  });
-}
-
-function getAdHocFilters(dashboard: DashboardModel | DashboardScene, queryDataSourceUid: string | undefined) {
-  const adhocFilters: AdHocVariableFilter[] = [];
-  if (dashboard instanceof DashboardModel) {
-    dashboard.getVariables().forEach((variable) => {
-      if (variable.type === 'adhoc') {
-        const variableDataSourceUid = getInterpolatedDataSourceUid(variable.datasource);
-        if (variableDataSourceUid === queryDataSourceUid) {
-          variable.filters.forEach((filter) => adhocFilters.push(filter));
-        }
-      }
-    });
-  } else {
-    dashboard.state.$variables?.state.variables.filter(isAdHocFiltersVariable).forEach((variable) => {
-      const variableDataSourceUid = getInterpolatedDataSourceUid(variable.state.datasource);
-      if (variableDataSourceUid === queryDataSourceUid) {
-        variable.state.filters.forEach((filter) => adhocFilters.push(filter));
-      }
-    });
+  if (!ds.interpolateVariablesInQueries || !queryRunner) {
+    return queries.filter(isPromQuery);
   }
 
-  return adhocFilters;
+  const interpolated = ds.interpolateVariablesInQueries(
+    queries,
+    { __sceneObject: { value: vizPanel } },
+    queryRunner.state.data?.request?.filters
+  );
+
+  return interpolated.filter(isPromQuery);
 }
 
-function isPromQuery(model: DataQuery): model is PromQuery {
+export function isPromQuery(model: DataQuery): model is PromQuery {
   return 'expr' in model;
-}
-
-function isAdHocFiltersVariable(variable: SceneVariable): variable is AdHocFiltersVariable {
-  return variable instanceof AdHocFiltersVariable;
-}
-
-function getInterpolatedDataSourceUid(ref: DataSourceRef | null | undefined) {
-  const dataSourceInstanceSettings = getDataSourceSrv().getInstanceSettings(ref);
-  return dataSourceInstanceSettings?.rawRef?.uid || ref?.uid;
 }
