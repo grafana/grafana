@@ -125,7 +125,7 @@ func (c *Proxy) retrieveIDFromCache(ctx context.Context, cacheKey string, r *aut
 	}
 
 	return &authn.Identity{
-		ID:    authn.NamespacedID(authn.NamespaceUser, uid),
+		ID:    authn.NewNamespaceIDUnchecked(authn.NamespaceUser, uid),
 		OrgID: r.OrgID,
 		// FIXME: This does not match the actual auth module used, but should not have any impact
 		// Maybe caching the auth module used with the user ID would be a good idea
