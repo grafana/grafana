@@ -2103,6 +2103,18 @@
         "stage": "experimental",
         "codeowner": "@grafana/explore-squad"
       }
+    },
+    {
+      "metadata": {
+        "name": "pluginProxyPreserveTrailingSlash",
+        "resourceVersion": "1713963606280",
+        "creationTimestamp": "2024-04-24T13:00:06Z"
+      },
+      "spec": {
+        "description": "Preserve plugin proxy trailing slash.",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend"
+      }
     }
   ]
 }

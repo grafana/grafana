@@ -658,4 +658,8 @@ const (
 	// FlagQueryLibrary
 	// Enables Query Library feature in Explore
 	FlagQueryLibrary = "queryLibrary"
+
+	// FlagPluginProxyPreserveTrailingSlash
+	// Preserve plugin proxy trailing slash.
+	FlagPluginProxyPreserveTrailingSlash = "pluginProxyPreserveTrailingSlash"
 )
