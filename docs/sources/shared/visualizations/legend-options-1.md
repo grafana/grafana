@@ -4,6 +4,8 @@ comments: |
   This file is used in the following visualizations: bar chart, candlestick, histogram, time series, trend, xy chart
 ---
 
+Legend options control the series names and statistics that appear under or to the right of the graph. For more information about the legend, refer to [Configure a legend](../configure-legend/).
+
 ### Visibility
 
 Toggle the switch to turn the legend on or off.
