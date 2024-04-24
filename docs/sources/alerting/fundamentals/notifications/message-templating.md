@@ -50,9 +50,3 @@ In this diagram:
 - **Grafana**: Grafana queries Prometheus to retrieve metrics data. For example, you might create an alert rule to monitor NGINX request rates over time, and template labels or annotations based on the instance label.
 - **Alertmanager**: Part of the Prometheus ecosystem, Alertmanager handles alert notifications. For example, if the request rate exceeds a certain threshold on a particular NGINX server, Alertmanager can send an alert notification to, for example, Slack or email, including the server name and the exceeded threshold (the instance label will be interpolated, and the actual server name will appear in the alert notification).
 - **Alert notification**: When an alert condition is met, Alertmanager sends a notification to various channels such as Slack, Grafana OnCall, etc. These notifications can include information from the labels associated with the alerting rule. For example, if an alert triggers due to high CPU usage on a specific server, the notification message might include details like server name (instance label), disk usage percentage, and the threshold that was exceeded.
-
-## Next steps
-
-Learn about Label and Annotation templates
-
-Learn about Notification templates
