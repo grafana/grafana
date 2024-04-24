@@ -194,7 +194,7 @@ datasources:
         filterByTraceID: false
         filterBySpanID: false
         customQuery: true
-        query: 'method="${__span.tags.method}"'
+        query: 'method="$${__span.tags.method}"'
       tracesToMetrics:
         datasourceUid: 'prom'
         spanStartTimeShift: '1h'
