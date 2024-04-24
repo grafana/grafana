@@ -6,8 +6,6 @@ import { changeTheme } from 'app/core/services/theme';
 import { CommandPaletteAction } from '../types';
 import { ACTIONS_PRIORITY, DEFAULT_PRIORITY, PREFERENCES_PRIORITY } from '../values';
 
-import getExtensionActions from './extensionActions';
-
 // TODO: Clean this once ID is mandatory on nav items
 function idForNavItem(navItem: NavModelItem) {
   return 'navModel.' + navItem.id ?? navItem.url ?? navItem.text ?? navItem.subTitle;
@@ -72,7 +70,7 @@ function navTreeToActions(navTree: NavModelItem[], parents: NavModelItem[] = [])
   return navActions;
 }
 
-export default (navBarTree: NavModelItem[]): CommandPaletteAction[] => {
+export default (navBarTree: NavModelItem[], extensionActions: CommandPaletteAction[]): CommandPaletteAction[] => {
   const globalActions: CommandPaletteAction[] = [
     {
       id: 'preferences/theme',
@@ -99,7 +97,6 @@ export default (navBarTree: NavModelItem[]): CommandPaletteAction[] => {
     },
   ];
 
-  const extensionActions = getExtensionActions();
   const navBarActions = navTreeToActions(navBarTree);
 
   return [...globalActions, ...extensionActions, ...navBarActions];

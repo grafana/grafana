@@ -3,14 +3,14 @@ import React from 'react';
 
 import { PluginExtensionPoints } from '@grafana/data';
 import { GrafanaTheme2 } from '@grafana/data/';
-import { getPluginComponentExtensions } from '@grafana/runtime';
+import { usePluginComponentExtensions } from '@grafana/runtime';
 import { Stack, Text } from '@grafana/ui';
 import { useStyles2 } from '@grafana/ui/';
 
 export function PluginIntegrations() {
   const styles = useStyles2(getStyles);
 
-  const { extensions } = getPluginComponentExtensions({
+  const { extensions } = usePluginComponentExtensions({
     extensionPointId: PluginExtensionPoints.AlertingHomePage,
     limitPerPlugin: 1,
   });
