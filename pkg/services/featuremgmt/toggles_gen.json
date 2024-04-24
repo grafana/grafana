@@ -18,245 +18,6 @@
     },
     {
       "metadata": {
-        "name": "lokiPredefinedOperations",
-        "resourceVersion": "1713545444177",
-        "creationTimestamp": "2024-04-19T16:50:44Z"
-      },
-      "spec": {
-        "description": "Adds predefined query operations to Loki query editor",
-        "stage": "experimental",
-        "codeowner": "@grafana/observability-logs",
-        "frontend": true
-      }
-    },
-    {
-      "metadata": {
-        "name": "addFieldFromCalculationStatFunctions",
-        "resourceVersion": "1713545444177",
-        "creationTimestamp": "2024-04-19T16:50:44Z"
-      },
-      "spec": {
-        "description": "Add cumulative and window functions to the add field from calculation transformation",
-        "stage": "preview",
-        "codeowner": "@grafana/dataviz-squad",
-        "frontend": true
-      }
-    },
-    {
-      "metadata": {
-        "name": "unifiedRequestLog",
-        "resourceVersion": "1713891414041",
-        "creationTimestamp": "2024-04-19T16:50:44Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2024-04-23 16:56:54.041289 +0000 UTC"
-        }
-      },
-      "spec": {
-        "description": "Writes error logs to the request logger",
-        "stage": "experimental",
-        "codeowner": "@grafana/backend-platform"
-      }
-    },
-    {
-      "metadata": {
-        "name": "enableNativeHTTPHistogram",
-        "resourceVersion": "1713545444177",
-        "creationTimestamp": "2024-04-19T16:50:44Z"
-      },
-      "spec": {
-        "description": "Enables native HTTP Histograms",
-        "stage": "experimental",
-        "codeowner": "@grafana/hosted-grafana-team"
-      }
-    },
-    {
-      "metadata": {
-        "name": "ssoSettingsSAML",
-        "resourceVersion": "1713545444177",
-        "creationTimestamp": "2024-04-19T16:50:44Z"
-      },
-      "spec": {
-        "description": "Use the new SSO Settings API to configure the SAML connector",
-        "stage": "experimental",
-        "codeowner": "@grafana/identity-access-team",
-        "hideFromAdminPage": true,
-        "hideFromDocs": true
-      }
-    },
-    {
-      "metadata": {
-        "name": "wargamesTesting",
-        "resourceVersion": "1713545444177",
-        "creationTimestamp": "2024-04-19T16:50:44Z"
-      },
-      "spec": {
-        "description": "Placeholder feature flag for internal testing",
-        "stage": "experimental",
-        "codeowner": "@grafana/hosted-grafana-team"
-      }
-    },
-    {
-      "metadata": {
-        "name": "awsDatasourcesNewFormStyling",
-        "resourceVersion": "1713545444177",
-        "creationTimestamp": "2024-04-19T16:50:44Z"
-      },
-      "spec": {
-        "description": "Applies new form styling for configuration and query editors in AWS plugins",
-        "stage": "preview",
-        "codeowner": "@grafana/aws-datasources",
-        "frontend": true
-      }
-    },
-    {
-      "metadata": {
-        "name": "aiGeneratedDashboardChanges",
-        "resourceVersion": "1713545444177",
-        "creationTimestamp": "2024-04-19T16:50:44Z"
-      },
-      "spec": {
-        "description": "Enable AI powered features for dashboards to auto-summary changes when saving",
-        "stage": "experimental",
-        "codeowner": "@grafana/dashboards-squad",
-        "frontend": true
-      }
-    },
-    {
-      "metadata": {
-        "name": "topnav",
-        "resourceVersion": "1713545444177",
-        "creationTimestamp": "2024-04-19T16:50:44Z"
-      },
-      "spec": {
-        "description": "Enables topnav support in external plugins. The new Grafana navigation cannot be disabled.",
-        "stage": "deprecated",
-        "codeowner": "@grafana/grafana-frontend-platform"
-      }
-    },
-    {
-      "metadata": {
-        "name": "sqlDatasourceDatabaseSelection",
-        "resourceVersion": "1713545444177",
-        "creationTimestamp": "2024-04-19T16:50:44Z"
-      },
-      "spec": {
-        "description": "Enables previous SQL data source dataset dropdown behavior",
-        "stage": "preview",
-        "codeowner": "@grafana/dataviz-squad",
-        "frontend": true,
-        "hideFromAdminPage": true
-      }
-    },
-    {
-      "metadata": {
-        "name": "canvasPanelNesting",
-        "resourceVersion": "1713545444177",
-        "creationTimestamp": "2024-04-19T16:50:44Z"
-      },
-      "spec": {
-        "description": "Allow elements nesting",
-        "stage": "experimental",
-        "codeowner": "@grafana/dataviz-squad",
-        "frontend": true,
-        "hideFromAdminPage": true
-      }
-    },
-    {
-      "metadata": {
-        "name": "returnToPrevious",
-        "resourceVersion": "1713870623848",
-        "creationTimestamp": "2024-04-19T16:50:44Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2024-04-23 11:10:23.848446 +0000 UTC"
-        }
-      },
-      "spec": {
-        "description": "Enables the return to previous context functionality",
-        "stage": "GA",
-        "codeowner": "@grafana/grafana-frontend-platform",
-        "frontend": true
-      }
-    },
-    {
-      "metadata": {
-        "name": "lokiFormatQuery",
-        "resourceVersion": "1713545444177",
-        "creationTimestamp": "2024-04-19T16:50:44Z"
-      },
-      "spec": {
-        "description": "Enables the ability to format Loki queries",
-        "stage": "experimental",
-        "codeowner": "@grafana/observability-logs",
-        "frontend": true
-      }
-    },
-    {
-      "metadata": {
-        "name": "angularDeprecationUI",
-        "resourceVersion": "1713545444177",
-        "creationTimestamp": "2024-04-19T16:50:44Z"
-      },
-      "spec": {
-        "description": "Display Angular warnings in dashboards and panels",
-        "stage": "GA",
-        "codeowner": "@grafana/plugins-platform-backend",
-        "frontend": true
-      }
-    },
-    {
-      "metadata": {
-        "name": "groupToNestedTableTransformation",
-        "resourceVersion": "1713545444177",
-        "creationTimestamp": "2024-04-19T16:50:44Z"
-      },
-      "spec": {
-        "description": "Enables the group to nested table transformation",
-        "stage": "preview",
-        "codeowner": "@grafana/dataviz-squad",
-        "frontend": true
-      }
-    },
-    {
-      "metadata": {
-        "name": "publicDashboards",
-        "resourceVersion": "1713545444177",
-        "creationTimestamp": "2024-04-19T16:50:44Z"
-      },
-      "spec": {
-        "description": "[Deprecated] Public dashboards are now enabled by default; to disable them, use the configuration setting. This feature toggle will be removed in the next major version.",
-        "stage": "GA",
-        "codeowner": "@grafana/sharing-squad",
-        "allowSelfServe": true
-      }
-    },
-    {
-      "metadata": {
-        "name": "storage",
-        "resourceVersion": "1713545444177",
-        "creationTimestamp": "2024-04-19T16:50:44Z"
-      },
-      "spec": {
-        "description": "Configurable storage for dashboards, datasources, and resources",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-app-platform-squad"
-      }
-    },
-    {
-      "metadata": {
-        "name": "prometheusMetricEncyclopedia",
-        "resourceVersion": "1713545444177",
-        "creationTimestamp": "2024-04-19T16:50:44Z"
-      },
-      "spec": {
-        "description": "Adds the metrics explorer component to the Prometheus query builder as an option in metric select",
-        "stage": "GA",
-        "codeowner": "@grafana/observability-metrics",
-        "frontend": true,
-        "allowSelfServe": true
-      }
-    },
-    {
-      "metadata": {
         "name": "grafanaAPIServerEnsureKubectlAccess",
         "resourceVersion": "1712686869842",
         "creationTimestamp": "2024-04-09T18:21:09Z"
@@ -514,8 +275,7 @@
       "metadata": {
         "name": "canvasPanelNesting",
         "resourceVersion": "1712686869842",
-        "creationTimestamp": "2024-04-09T18:21:09Z",
-        "deletionTimestamp": "2024-04-23T16:56:54Z"
+        "creationTimestamp": "2024-04-09T18:21:09Z"
       },
       "spec": {
         "description": "Allow elements nesting",
@@ -606,8 +366,7 @@
       "metadata": {
         "name": "awsDatasourcesNewFormStyling",
         "resourceVersion": "1712686869842",
-        "creationTimestamp": "2024-04-09T18:21:09Z",
-        "deletionTimestamp": "2024-04-23T16:56:54Z"
+        "creationTimestamp": "2024-04-09T18:21:09Z"
       },
       "spec": {
         "description": "Applies new form styling for configuration and query editors in AWS plugins",
@@ -945,6 +704,22 @@
     },
     {
       "metadata": {
+        "name": "returnToPrevious",
+        "resourceVersion": "1713870623848",
+        "creationTimestamp": "2024-04-19T16:50:44Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-04-23 11:10:23.848446 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the return to previous context functionality",
+        "stage": "GA",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "mysqlAnsiQuotes",
         "resourceVersion": "1712686869842",
         "creationTimestamp": "2024-04-09T18:21:09Z"
@@ -1151,8 +926,7 @@
       "metadata": {
         "name": "lokiFormatQuery",
         "resourceVersion": "1712686869842",
-        "creationTimestamp": "2024-04-09T18:21:09Z",
-        "deletionTimestamp": "2024-04-23T16:56:54Z"
+        "creationTimestamp": "2024-04-09T18:21:09Z"
       },
       "spec": {
         "description": "Enables the ability to format Loki queries",
@@ -1178,8 +952,7 @@
       "metadata": {
         "name": "addFieldFromCalculationStatFunctions",
         "resourceVersion": "1712686869842",
-        "creationTimestamp": "2024-04-09T18:21:09Z",
-        "deletionTimestamp": "2024-04-23T16:56:54Z"
+        "creationTimestamp": "2024-04-09T18:21:09Z"
       },
       "spec": {
         "description": "Add cumulative and window functions to the add field from calculation transformation",
@@ -1257,8 +1030,7 @@
       "metadata": {
         "name": "storage",
         "resourceVersion": "1712686869842",
-        "creationTimestamp": "2024-04-09T18:21:09Z",
-        "deletionTimestamp": "2024-04-23T16:56:54Z"
+        "creationTimestamp": "2024-04-09T18:21:09Z"
       },
       "spec": {
         "description": "Configurable storage for dashboards, datasources, and resources",
@@ -1270,8 +1042,7 @@
       "metadata": {
         "name": "topnav",
         "resourceVersion": "1712686869842",
-        "creationTimestamp": "2024-04-09T18:21:09Z",
-        "deletionTimestamp": "2024-04-23T16:56:54Z"
+        "creationTimestamp": "2024-04-09T18:21:09Z"
       },
       "spec": {
         "description": "Enables topnav support in external plugins. The new Grafana navigation cannot be disabled.",
@@ -1295,8 +1066,7 @@
       "metadata": {
         "name": "prometheusMetricEncyclopedia",
         "resourceVersion": "1712686869842",
-        "creationTimestamp": "2024-04-09T18:21:09Z",
-        "deletionTimestamp": "2024-04-23T16:56:54Z"
+        "creationTimestamp": "2024-04-09T18:21:09Z"
       },
       "spec": {
         "description": "Adds the metrics explorer component to the Prometheus query builder as an option in metric select",
@@ -1465,8 +1235,7 @@
       "metadata": {
         "name": "publicDashboards",
         "resourceVersion": "1712686869842",
-        "creationTimestamp": "2024-04-09T18:21:09Z",
-        "deletionTimestamp": "2024-04-23T16:56:54Z"
+        "creationTimestamp": "2024-04-09T18:21:09Z"
       },
       "spec": {
         "description": "[Deprecated] Public dashboards are now enabled by default; to disable them, use the configuration setting. This feature toggle will be removed in the next major version.",
@@ -1505,8 +1274,7 @@
       "metadata": {
         "name": "enableNativeHTTPHistogram",
         "resourceVersion": "1712686869842",
-        "creationTimestamp": "2024-04-09T18:21:09Z",
-        "deletionTimestamp": "2024-04-23T16:56:54Z"
+        "creationTimestamp": "2024-04-09T18:21:09Z"
       },
       "spec": {
         "description": "Enables native HTTP Histograms",
@@ -1682,8 +1450,7 @@
       "metadata": {
         "name": "sqlDatasourceDatabaseSelection",
         "resourceVersion": "1712686869842",
-        "creationTimestamp": "2024-04-09T18:21:09Z",
-        "deletionTimestamp": "2024-04-23T16:56:54Z"
+        "creationTimestamp": "2024-04-09T18:21:09Z"
       },
       "spec": {
         "description": "Enables previous SQL data source dataset dropdown behavior",
@@ -1711,8 +1478,7 @@
       "metadata": {
         "name": "angularDeprecationUI",
         "resourceVersion": "1712686869842",
-        "creationTimestamp": "2024-04-09T18:21:09Z",
-        "deletionTimestamp": "2024-04-23T16:56:54Z"
+        "creationTimestamp": "2024-04-09T18:21:09Z"
       },
       "spec": {
         "description": "Display Angular warnings in dashboards and panels",
@@ -1853,8 +1619,7 @@
       "metadata": {
         "name": "lokiPredefinedOperations",
         "resourceVersion": "1712686869842",
-        "creationTimestamp": "2024-04-09T18:21:09Z",
-        "deletionTimestamp": "2024-04-23T16:56:54Z"
+        "creationTimestamp": "2024-04-09T18:21:09Z"
       },
       "spec": {
         "description": "Adds predefined query operations to Loki query editor",
@@ -1894,8 +1659,7 @@
       "metadata": {
         "name": "ssoSettingsSAML",
         "resourceVersion": "1712686869842",
-        "creationTimestamp": "2024-04-09T18:21:09Z",
-        "deletionTimestamp": "2024-04-23T16:56:54Z"
+        "creationTimestamp": "2024-04-09T18:21:09Z"
       },
       "spec": {
         "description": "Use the new SSO Settings API to configure the SAML connector",
@@ -1947,8 +1711,7 @@
       "metadata": {
         "name": "unifiedRequestLog",
         "resourceVersion": "1712686869842",
-        "creationTimestamp": "2024-04-09T18:21:09Z",
-        "deletionTimestamp": "2024-04-23T16:56:54Z"
+        "creationTimestamp": "2024-04-09T18:21:09Z"
       },
       "spec": {
         "description": "Writes error logs to the request logger",
@@ -2022,8 +1785,7 @@
       "metadata": {
         "name": "groupToNestedTableTransformation",
         "resourceVersion": "1712686869842",
-        "creationTimestamp": "2024-04-09T18:21:09Z",
-        "deletionTimestamp": "2024-04-23T16:56:54Z"
+        "creationTimestamp": "2024-04-09T18:21:09Z"
       },
       "spec": {
         "description": "Enables the group to nested table transformation",
@@ -2048,8 +1810,7 @@
       "metadata": {
         "name": "aiGeneratedDashboardChanges",
         "resourceVersion": "1712686869842",
-        "creationTimestamp": "2024-04-09T18:21:09Z",
-        "deletionTimestamp": "2024-04-23T16:56:54Z"
+        "creationTimestamp": "2024-04-09T18:21:09Z"
       },
       "spec": {
         "description": "Enable AI powered features for dashboards to auto-summary changes when saving",
@@ -2088,8 +1849,7 @@
       "metadata": {
         "name": "wargamesTesting",
         "resourceVersion": "1712686869842",
-        "creationTimestamp": "2024-04-09T18:21:09Z",
-        "deletionTimestamp": "2024-04-23T16:56:54Z"
+        "creationTimestamp": "2024-04-09T18:21:09Z"
       },
       "spec": {
         "description": "Placeholder feature flag for internal testing",
