@@ -12,6 +12,7 @@ import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSel
 import { fetchRulerRulesIfNotFetchedYet } from '../../../state/actions';
 import { SupportedPlugin } from '../../../types/pluginBridges';
 import { RuleFormValues } from '../../../types/rule-form';
+import { GRAFANA_ORIGIN_LABEL } from '../../../utils/rules';
 import AlertLabelDropdown from '../../AlertLabelDropdown';
 import { AlertLabels } from '../../AlertLabels';
 import { NeedHelpInfo } from '../NeedHelpInfo';
@@ -147,7 +148,8 @@ export function LabelsSubForm({ dataSourceName, onClose, initialLabels }: Labels
   );
 }
 
-const restrictedLabelKeys = new Set(['__grafana_origin']);
+const restrictedLabelKeys = new Set([GRAFANA_ORIGIN_LABEL]);
+
 function isKeyAllowed(labelKey: string): boolean {
   return !restrictedLabelKeys.has(labelKey);
 }
@@ -264,6 +266,7 @@ export function useCombinedLabels(
     getValuesForLabel,
   };
 }
+
 /*
   We will suggest labels from two sources: existing alerts and ops labels.
   We only will suggest labels from ops if the grafana-labels-app plugin is installed
@@ -272,6 +275,7 @@ export function useCombinedLabels(
 export interface LabelsWithSuggestionsProps {
   dataSourceName: string;
 }
+
 export function LabelsWithSuggestions({ dataSourceName }: LabelsWithSuggestionsProps) {
   const styles = useStyles2(getStyles);
   const {

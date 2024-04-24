@@ -82,6 +82,7 @@ export const useAlertRulePageActions = ({ handleDelete, handleDuplicateRule }: P
                   label={extension.title}
                   icon={extension.icon}
                   onClick={extension.onClick}
+                  url={extension.path}
                 />
               ))}
             </>

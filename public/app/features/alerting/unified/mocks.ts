@@ -708,8 +708,6 @@ export function mockPluginLinkExtension(extension: Partial<PluginExtensionLink>)
   };
 }
 
-export function mockPluginComponentExtension() {}
-
 export function mockAlertWithState(state: GrafanaAlertState, labels?: {}): Alert {
   return { activeAt: '', annotations: {}, labels: labels || {}, state: state, value: '' };
 }
