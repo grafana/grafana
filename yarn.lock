@@ -18119,7 +18119,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"gesto@npm:^1.19.3, gesto@npm:^1.19.4":
+"gesto@npm:^1.19.1, gesto@npm:^1.19.3, gesto@npm:^1.19.4":
   version: 1.19.4
   resolution: "gesto@npm:1.19.4"
   dependencies:
@@ -18805,6 +18805,7 @@ __metadata:
     i18next-parser: "npm:8.13.0"
     immer: "npm:10.0.4"
     immutable: "npm:4.3.5"
+    infinite-viewer: "npm:^0.29.1"
     jest: "npm:29.7.0"
     jest-canvas-mock: "npm:2.5.2"
     jest-date-mock: "npm:1.0.9"
@@ -19845,6 +19846,20 @@ __metadata:
   version: 1.0.4
   resolution: "infer-owner@npm:1.0.4"
   checksum: 10/181e732764e4a0611576466b4b87dac338972b839920b2a8cde43642e4ed6bd54dc1fb0b40874728f2a2df9a1b097b8ff83b56d5f8f8e3927f837fdcb47d8a89
+  languageName: node
+  linkType: hard
+
+"infinite-viewer@npm:^0.29.1":
+  version: 0.29.1
+  resolution: "infinite-viewer@npm:0.29.1"
+  dependencies:
+    "@daybrush/utils": "npm:^1.13.0"
+    "@egjs/agent": "npm:^2.2.1"
+    "@scena/event-emitter": "npm:^1.0.5"
+    css-styled: "npm:^1.0.8"
+    framework-utils: "npm:^1.1.0"
+    gesto: "npm:^1.19.1"
+  checksum: 10/a3aefd8e3e3ee083e849495e8664cf2b2de4a9039cc3e4d07650ffdb404298b2f30c55b701965c490e4f75cf5d0dfcfa18abe83ff225a8845ebde7e7b91be117
   languageName: node
   linkType: hard
 

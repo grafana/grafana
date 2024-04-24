@@ -1,4 +1,6 @@
 import { css } from '@emotion/css';
+import InfiniteViewer from 'infinite-viewer';
+// import InfiniteViewer from "react-infinite-viewer";
 import Moveable from 'moveable';
 import React, { createRef, CSSProperties, RefObject } from 'react';
 import { ReactZoomPanPinchContentRef } from 'react-zoom-pan-pinch';
@@ -15,7 +17,7 @@ import {
   ScaleDimensionConfig,
   TextDimensionConfig,
 } from '@grafana/schema';
-import { Portal, stylesFactory } from '@grafana/ui';
+import { Portal } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { CanvasFrameOptions, DEFAULT_CANVAS_ELEMENT_CONFIG } from 'app/features/canvas';
 import { DimensionContext } from 'app/features/dimensions';
@@ -41,7 +43,7 @@ import appEvents from '../../../core/app_events';
 import { CanvasPanel } from '../../../plugins/panel/canvas/CanvasPanel';
 import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
 
-import { SceneTransformWrapper } from './SceneTransformWrapper';
+// import { SceneTransformWrapper } from './SceneTransformWrapper';
 import { constraintViewable, dimensionViewable, settingsViewable } from './ables';
 import { ElementState } from './element';
 import { FrameState } from './frame';
@@ -70,6 +72,8 @@ export class Scene {
   selecto?: Selecto;
   moveable?: Moveable;
   div?: HTMLDivElement;
+  viewerDiv?: HTMLDivElement;
+  viewportDiv?: HTMLDivElement;
   connections: Connections;
   currentLayer?: FrameState;
   isEditingEnabled?: boolean;
@@ -344,6 +348,14 @@ export class Scene {
 
   setRef = (sceneContainer: HTMLDivElement) => {
     this.div = sceneContainer;
+  };
+
+  setViewerRef = (viewContainer: HTMLDivElement) => {
+    this.viewerDiv = viewContainer;
+  };
+
+  setViewportRef = (viewportContainer: HTMLDivElement) => {
+    this.viewportDiv = viewportContainer;
   };
 
   select = (selection: SelectionParams) => {
@@ -726,6 +738,19 @@ export class Scene {
       .on('dragEnd', (event) => {
         clearTimeout(event.data.timer);
       });
+
+    const infiniteViewer = new InfiniteViewer(this.viewerDiv!, this.viewportDiv!, {
+      useAutoZoom: true,
+      // margin: 0,
+      // threshold: 0,
+      // zoom: 1,
+      // rangeX: [0, 0],
+      // rangeY: [0, 0],
+    });
+
+    infiniteViewer.on('scroll', () => {
+      console.log(infiniteViewer.getScrollLeft(), infiniteViewer.getScrollTop());
+    });
   };
 
   reorderElements = (src: ElementState, dest: ElementState, dragToGap: boolean, destPosition: number) => {
@@ -822,20 +847,46 @@ export class Scene {
       </div>
     );
 
+    // return (
+    //   <InfiniteViewer
+    //     className="viewer"
+    //     margin={0}
+    //     threshold={0}
+    //     rangeX={[0, 0]}
+    //     rangeY={[0, 0]}
+    //     onScroll={e => {
+    //       console.log(e);
+    //     }}
+    //   >
+    //     <div className="viewport">
+    //       {sceneDiv}
+    //     </div>
+    //   </InfiniteViewer>
+    // )
+
     return config.featureToggles.canvasPanelPanZoom ? (
-      <SceneTransformWrapper scene={this}>{sceneDiv}</SceneTransformWrapper>
+      <div className={this.styles.viewer} ref={this.setViewerRef}>
+        <div className={this.styles.viewport} ref={this.setViewportRef}>
+          {sceneDiv}
+        </div>
+      </div>
     ) : (
       sceneDiv
     );
   }
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
-  wrap: css`
-    overflow: hidden;
-    position: relative;
-  `,
-  selected: css`
-    z-index: 999 !important;
-  `,
-}));
+const getStyles = (theme: GrafanaTheme2) => ({
+  wrap: css({
+    overflow: 'hidden',
+    position: 'relative',
+  }),
+  selected: css({
+    zIndex: '999 !important',
+  }),
+  viewer: css({
+    width: '100%',
+    height: '100%',
+  }),
+  viewport: css({}),
+});

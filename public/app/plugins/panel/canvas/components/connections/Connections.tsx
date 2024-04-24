@@ -130,20 +130,26 @@ export class Connections {
       }
     }
 
-    const elementBoundingRect = element.div!.getBoundingClientRect();
-    const transformScale = this.scene.scale;
-    const parentBoundingRect = getParentBoundingClientRect(this.scene);
+    // const elementBoundingRect = element.div!.getBoundingClientRect();
+    // const transformScale = this.scene.scale;
+    // const parentBoundingRect = getParentBoundingClientRect(this.scene);
 
-    const relativeTop = elementBoundingRect.top - (parentBoundingRect?.top ?? 0);
-    const relativeLeft = elementBoundingRect.left - (parentBoundingRect?.left ?? 0);
+    // const relativeTop = elementBoundingRect.top - (parentBoundingRect?.top ?? 0);
+    // const relativeLeft = elementBoundingRect.left - (parentBoundingRect?.left ?? 0);
+
+    const { top, left, width, height } = element.div!.style;
 
     if (this.connectionAnchorDiv) {
       this.connectionAnchorDiv.style.display = 'none';
       this.connectionAnchorDiv.style.display = 'block';
-      this.connectionAnchorDiv.style.top = `${relativeTop / transformScale}px`;
-      this.connectionAnchorDiv.style.left = `${relativeLeft / transformScale}px`;
-      this.connectionAnchorDiv.style.height = `${elementBoundingRect.height / transformScale}px`;
-      this.connectionAnchorDiv.style.width = `${elementBoundingRect.width / transformScale}px`;
+      // this.connectionAnchorDiv.style.top = `${relativeTop / transformScale}px`;
+      // this.connectionAnchorDiv.style.left = `${relativeLeft / transformScale}px`;
+      // this.connectionAnchorDiv.style.height = `${elementBoundingRect.height / transformScale}px`;
+      // this.connectionAnchorDiv.style.width = `${elementBoundingRect.width / transformScale}px`;
+      this.connectionAnchorDiv.style.top = top;
+      this.connectionAnchorDiv.style.left = left;
+      this.connectionAnchorDiv.style.height = height;
+      this.connectionAnchorDiv.style.width = width;
     }
   };
 
