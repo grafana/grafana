@@ -241,6 +241,7 @@ export const RowsList = (props: RowsListProps) => {
       let additionalProps: React.HTMLAttributes<HTMLDivElement> = {};
       prepareRow(row);
 
+
       const expandedRowStyle = tableState.expanded[row.id] ? css({ '&:hover': { background: 'inherit' } }) : {};
 
       if (rowHighlightIndex !== undefined && row.index === rowHighlightIndex) {
@@ -250,6 +251,7 @@ export const RowsList = (props: RowsListProps) => {
         };
       }
 
+      // Color rows if enabled
       if (rowBg) {
         const { bgColor, textColor } = rowBg(row.index);
         style.background = bgColor;
@@ -312,47 +314,6 @@ export const RowsList = (props: RowsListProps) => {
     const indexForPagination = rowIndexForPagination(index);
     const row = rows[indexForPagination];
 
-    console.log(row);
-    // theme.
-    // const measure = osContext.measureText(row.values[1]);
-    getTextBoundingBox(row.values[1]);
-
-    /**
-     * Calculate an esimated bounding box for a block
-     * of text using an offscreen canvas.
-     */
-    function getTextBoundingBox(text: string) {
-      let width = 300;
-      if (typeof headerGroups[0].headers[1].width === 'number') {
-        width = headerGroups[0].headers[1].width;
-      }
-      else if (typeof headerGroups[0].headers[1].width === 'string') {
-        width = parseInt(headerGroups[0].headers[1].width, 10);
-      }
-
-      // const width: number = parseInt(, 10);
-      const lineHeight = 42;
-      const measure = osContext.measureText(text);
-
-
-      if (measure) {
-        // Retreive an estimated number of lines
-        let lines = Math.ceil(measure.width / width)
-
-
-        // Estimated height would be lines multiplied
-        // by the line height
-        let height = lines * lineHeight;
-        console.log(height);
-      }
-      // const lines = 
-
-
-    }
-
-
-
-
     if (tableState.expanded[row.id] && nestedDataField) {
       return getExpandedRowHeight(nestedDataField, index, tableStyles);
     }
@@ -387,3 +348,33 @@ export const RowsList = (props: RowsListProps) => {
     </>
   );
 };
+
+
+/**
+     * Calculate an esimated bounding box for a block
+     * of text using an offscreen canvas.
+     */
+function getTextBoundingBox(text: string, headerGroups, osContext) {
+  let width = 300;
+  if (typeof headerGroups[0].headers[1].width === 'number') {
+    width = headerGroups[0].headers[1].width;
+  }
+  else if (typeof headerGroups[0].headers[1].width === 'string') {
+    width = parseInt(headerGroups[0].headers[1].width, 10);
+  }
+
+  // const width: number = parseInt(, 10);
+  const lineHeight = 42;
+  const measure = osContext.measureText(text);
+
+
+  if (measure) {
+    // Retreive an estimated number of lines
+    let lines = Math.ceil(measure.width / width)
+
+
+    // Estimated height would be lines multiplied
+    // by the line height
+    let height = lines * lineHeight;
+    console.log(height);
+  }

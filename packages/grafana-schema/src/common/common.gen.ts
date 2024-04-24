@@ -799,6 +799,7 @@ export interface TableColoredBackgroundCellOptions {
  * Height of a table cell
  */
 export enum TableCellHeight {
+  Auto = 'auto',
   Lg = 'lg',
   Md = 'md',
   Sm = 'sm',
