@@ -109,9 +109,9 @@ func TestBuildConflictBlock(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			// Restore after destructive operation
-			sqlStore := db.InitTestDB(t)
+			sqlStore, cfg := db.InitTestDBWithCfg(t)
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
-				userStore := userimpl.ProvideStore(sqlStore, sqlStore.Cfg)
+				userStore := userimpl.ProvideStore(sqlStore, cfg)
 				for _, u := range tc.users {
 					u := user.User{
 						Email:   u.Email,
@@ -217,9 +217,9 @@ conflict: test2
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			// Restore after destructive operation
-			sqlStore := db.InitTestDB(t)
+			sqlStore, cfg := db.InitTestDBWithCfg(t)
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
-				userStore := userimpl.ProvideStore(sqlStore, sqlStore.Cfg)
+				userStore := userimpl.ProvideStore(sqlStore, cfg)
 				for _, u := range tc.users {
 					u := user.User{
 						Email:   u.Email,
@@ -398,9 +398,9 @@ func TestGetConflictingUsers(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			// Restore after destructive operation
-			sqlStore := db.InitTestDB(t)
+			sqlStore, cfg := db.InitTestDBWithCfg(t)
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
-				userStore := userimpl.ProvideStore(sqlStore, sqlStore.Cfg)
+				userStore := userimpl.ProvideStore(sqlStore, cfg)
 				for _, u := range tc.users {
 					u := user.User{
 						Email:            u.Email,
@@ -510,9 +510,9 @@ func TestGenerateConflictingUsersFile(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			// Restore after destructive operation
-			sqlStore := db.InitTestDB(t)
+			sqlStore, cfg := db.InitTestDBWithCfg(t)
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
-				userStore := userimpl.ProvideStore(sqlStore, sqlStore.Cfg)
+				userStore := userimpl.ProvideStore(sqlStore, cfg)
 				for _, u := range tc.users {
 					cmd := user.User{
 						Email:   u.Email,
@@ -580,7 +580,7 @@ func TestRunValidateConflictUserFile(t *testing.T) {
 				rawSQL := fmt.Sprintf(
 					"INSERT INTO %s (email, login, org_id, version, is_admin, created, updated) VALUES (?,?,?,0,%s,\"2024-03-18T15:25:32\",\"2024-03-18T15:25:32\")",
 					sqlStore.Quote("user"),
-					sqlStore.Dialect.BooleanStr(false),
+					sqlStore.GetDialect().BooleanStr(false),
 				)
 				result, err := sess.Exec(rawSQL, dupUserLogincmd.Email, dupUserLogincmd.Login, dupUserLogincmd.OrgID)
 				if err != nil {
@@ -660,7 +660,7 @@ func TestIntegrationMergeUser(t *testing.T) {
 				rawSQL := fmt.Sprintf(
 					"INSERT INTO %s (email, login, org_id, version, is_admin, created, updated) VALUES (?,?,?,0,%s,?,?)",
 					sqlStore.Quote("user"),
-					sqlStore.Dialect.BooleanStr(false),
+					sqlStore.GetDialect().BooleanStr(false),
 				)
 				result, err := sess.Exec(rawSQL, cmd.Email, cmd.Login, cmd.OrgID, cmd.Created, cmd.Updated)
 				if err != nil {
@@ -692,7 +692,7 @@ func TestIntegrationMergeUser(t *testing.T) {
 				rawSQL := fmt.Sprintf(
 					"INSERT INTO %s (email, login, org_id, version, is_admin, created, updated) VALUES (?,?,?,0,%s,?,?)",
 					sqlStore.Quote("user"),
-					sqlStore.Dialect.BooleanStr(false),
+					sqlStore.GetDialect().BooleanStr(false),
 				)
 				result, err := sess.Exec(rawSQL, cmd.Email, cmd.Login, cmd.OrgID, cmd.Created, cmd.Updated)
 				if err != nil {
@@ -860,7 +860,7 @@ conflict: test2
 						rawSQL := fmt.Sprintf(
 							"INSERT INTO %s (email, login, org_id, version, is_admin, created, updated) VALUES (?,?,?,0,%s,?,?)",
 							sqlStore.Quote("user"),
-							sqlStore.Dialect.BooleanStr(false),
+							sqlStore.GetDialect().BooleanStr(false),
 						)
 						result, err := sess.Exec(rawSQL, cmd.Email, cmd.Login, cmd.OrgID, cmd.Created, cmd.Updated)
 						if err != nil {

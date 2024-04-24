@@ -40,26 +40,26 @@ func TestService_Authenticate(t *testing.T) {
 		{
 			desc: "should succeed with authentication for configured client",
 			clients: []authn.Client{
-				&authntest.FakeClient{ExpectedTest: true, ExpectedIdentity: &authn.Identity{ID: "user:1"}},
+				&authntest.FakeClient{ExpectedTest: true, ExpectedIdentity: &authn.Identity{ID: authn.MustParseNamespaceID("user:1")}},
 			},
-			expectedIdentity: &authn.Identity{ID: "user:1"},
+			expectedIdentity: &authn.Identity{ID: authn.MustParseNamespaceID("user:1")},
 		},
 		{
 			desc: "should succeed with authentication for second client when first test fail",
 			clients: []authn.Client{
 				&authntest.FakeClient{ExpectedName: "1", ExpectedPriority: 1, ExpectedTest: false},
-				&authntest.FakeClient{ExpectedName: "2", ExpectedPriority: 2, ExpectedTest: true, ExpectedIdentity: &authn.Identity{ID: "user:2"}},
+				&authntest.FakeClient{ExpectedName: "2", ExpectedPriority: 2, ExpectedTest: true, ExpectedIdentity: &authn.Identity{ID: authn.MustParseNamespaceID("user:2")}},
 			},
-			expectedIdentity: &authn.Identity{ID: "user:2"},
+			expectedIdentity: &authn.Identity{ID: authn.MustParseNamespaceID("user:2")},
 		},
 		{
 			desc: "should succeed with authentication for third client when error happened in first",
 			clients: []authn.Client{
 				&authntest.FakeClient{ExpectedName: "1", ExpectedPriority: 2, ExpectedTest: false},
 				&authntest.FakeClient{ExpectedName: "2", ExpectedPriority: 1, ExpectedTest: true, ExpectedErr: errors.New("some error")},
-				&authntest.FakeClient{ExpectedName: "3", ExpectedPriority: 3, ExpectedTest: true, ExpectedIdentity: &authn.Identity{ID: "user:3"}},
+				&authntest.FakeClient{ExpectedName: "3", ExpectedPriority: 3, ExpectedTest: true, ExpectedIdentity: &authn.Identity{ID: authn.MustParseNamespaceID("user:3")}},
 			},
-			expectedIdentity: &authn.Identity{ID: "user:3"},
+			expectedIdentity: &authn.Identity{ID: authn.MustParseNamespaceID("user:3")},
 		},
 		{
 			desc: "should return error when no client could authenticate the request",
@@ -214,10 +214,10 @@ func TestService_Login(t *testing.T) {
 			client:           "fake",
 			expectedClientOK: true,
 			expectedClientIdentity: &authn.Identity{
-				ID: "user:1",
+				ID: authn.MustParseNamespaceID("user:1"),
 			},
 			expectedIdentity: &authn.Identity{
-				ID:           "user:1",
+				ID:           authn.MustParseNamespaceID("user:1"),
 				SessionToken: &auth.UserToken{UserId: 1},
 			},
 		},
@@ -230,7 +230,7 @@ func TestService_Login(t *testing.T) {
 			desc:                   "should not login non user identity",
 			client:                 "fake",
 			expectedClientOK:       true,
-			expectedClientIdentity: &authn.Identity{ID: "apikey:1"},
+			expectedClientIdentity: &authn.Identity{ID: authn.MustParseNamespaceID("api-key:1")},
 			expectedErr:            authn.ErrUnsupportedIdentity,
 		},
 	}
@@ -318,31 +318,31 @@ func TestService_Logout(t *testing.T) {
 	tests := []TestCase{
 		{
 			desc:             "should redirect to default redirect url when identity is not a user",
-			identity:         &authn.Identity{ID: authn.NamespacedID(authn.NamespaceServiceAccount, 1)},
+			identity:         &authn.Identity{ID: authn.MustNewNamespaceID(authn.NamespaceServiceAccount, 1)},
 			expectedRedirect: &authn.Redirect{URL: "http://localhost:3000/login"},
 		},
 		{
 			desc:                 "should redirect to default redirect url when no external provider was used to authenticate",
-			identity:             &authn.Identity{ID: authn.NamespacedID(authn.NamespaceUser, 1)},
+			identity:             &authn.Identity{ID: authn.MustNewNamespaceID(authn.NamespaceUser, 1)},
 			expectedRedirect:     &authn.Redirect{URL: "http://localhost:3000/login"},
 			expectedTokenRevoked: true,
 		},
 		{
 			desc:                 "should redirect to default redirect url when client is not found",
-			identity:             &authn.Identity{ID: authn.NamespacedID(authn.NamespaceUser, 1), AuthenticatedBy: "notfound"},
+			identity:             &authn.Identity{ID: authn.MustNewNamespaceID(authn.NamespaceUser, 1), AuthenticatedBy: "notfound"},
 			expectedRedirect:     &authn.Redirect{URL: "http://localhost:3000/login"},
 			expectedTokenRevoked: true,
 		},
 		{
 			desc:                 "should redirect to default redirect url when client do not implement logout extension",
-			identity:             &authn.Identity{ID: authn.NamespacedID(authn.NamespaceUser, 1), AuthenticatedBy: "azuread"},
+			identity:             &authn.Identity{ID: authn.MustNewNamespaceID(authn.NamespaceUser, 1), AuthenticatedBy: "azuread"},
 			expectedRedirect:     &authn.Redirect{URL: "http://localhost:3000/login"},
 			client:               &authntest.FakeClient{ExpectedName: "auth.client.azuread"},
 			expectedTokenRevoked: true,
 		},
 		{
 			desc:             "should redirect to client specific url",
-			identity:         &authn.Identity{ID: authn.NamespacedID(authn.NamespaceUser, 1), AuthenticatedBy: "azuread"},
+			identity:         &authn.Identity{ID: authn.MustNewNamespaceID(authn.NamespaceUser, 1), AuthenticatedBy: "azuread"},
 			expectedRedirect: &authn.Redirect{URL: "http://idp.com/logout"},
 			client: &authntest.MockClient{
 				NameFunc: func() string { return "auth.client.azuread" },
