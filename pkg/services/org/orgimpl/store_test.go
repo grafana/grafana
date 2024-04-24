@@ -253,11 +253,10 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	ss, cfg := db.InitTestDBWithCfg(t)
+	ss := db.InitTestDB(t)
 	orgUserStore := sqlStore{
 		db:      ss,
 		dialect: ss.GetDialect(),
-		cfg:     cfg,
 	}
 
 	t.Run("org user inserted", func(t *testing.T) {
@@ -536,13 +535,15 @@ func TestIntegrationSQLStore_AddOrgUser(t *testing.T) {
 	}
 
 	store, cfg := db.InitTestDBWithCfg(t)
+	defer func() {
+		cfg.AutoAssignOrg, cfg.AutoAssignOrgId, cfg.AutoAssignOrgRole = false, 0, ""
+	}()
 	cfg.AutoAssignOrg = true
 	cfg.AutoAssignOrgId = 1
 	cfg.AutoAssignOrgRole = "Viewer"
 	orgUserStore := sqlStore{
 		db:      store,
 		dialect: store.GetDialect(),
-		cfg:     cfg,
 	}
 	orgSvc, usrSvc := createOrgAndUserSvc(t, store, cfg)
 
@@ -608,11 +609,10 @@ func TestIntegration_SQLStore_GetOrgUsers(t *testing.T) {
 	orgUserStore := sqlStore{
 		db:      store,
 		dialect: store.GetDialect(),
-		cfg:     cfg,
 	}
-	orgUserStore.cfg.IsEnterprise = true
+	cfg.IsEnterprise = true
 	defer func() {
-		orgUserStore.cfg.IsEnterprise = false
+		cfg.IsEnterprise = false
 	}()
 
 	orgSvc, userSvc := createOrgAndUserSvc(t, store, cfg)
@@ -727,7 +727,6 @@ func TestIntegration_SQLStore_GetOrgUsers_PopulatesCorrectly(t *testing.T) {
 	orgUserStore := sqlStore{
 		db:      store,
 		dialect: store.GetDialect(),
-		cfg:     cfg,
 	}
 	_, usrSvc := createOrgAndUserSvc(t, store, cfg)
 
@@ -789,7 +788,6 @@ func TestIntegration_SQLStore_SearchOrgUsers(t *testing.T) {
 	orgUserStore := sqlStore{
 		db:      store,
 		dialect: store.GetDialect(),
-		cfg:     cfg,
 	}
 	// orgUserStore.cfg.Skip
 	orgSvc, userSvc := createOrgAndUserSvc(t, store, cfg)
@@ -866,7 +864,6 @@ func TestIntegration_SQLStore_RemoveOrgUser(t *testing.T) {
 	orgUserStore := sqlStore{
 		db:      store,
 		dialect: store.GetDialect(),
-		cfg:     cfg,
 	}
 	orgSvc, usrSvc := createOrgAndUserSvc(t, store, cfg)
 
