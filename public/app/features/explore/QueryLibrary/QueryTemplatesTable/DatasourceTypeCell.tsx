@@ -7,8 +7,7 @@ import { useQueryLibraryListStyles } from './styles';
 import { QueryTemplateRow } from './types';
 
 export function DatasourceTypeCell(props: CellProps<QueryTemplateRow>) {
-  const datasource = props.row.original.queryTemplate?.targets[0]?.datasource;
-  const datasourceApi = useDatasource(datasource);
+  const datasourceApi = useDatasource(props.row.original.datasourceRef);
   const styles = useQueryLibraryListStyles();
 
   return <p className={styles.otherText}>{datasourceApi?.meta.name}</p>;

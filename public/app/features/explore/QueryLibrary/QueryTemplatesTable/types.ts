@@ -1,6 +1,10 @@
-import { QueryTemplate } from '@grafana/data';
+import { DataQuery, DataSourceRef } from '@grafana/schema';
 
 export type QueryTemplateRow = {
   index: string;
-  queryTemplate?: QueryTemplate;
+  description?: string;
+  query?: DataQuery;
+  datasourceRef?: DataSourceRef | null;
+  datasourceType?: string;
+  createdAtTimestamp?: number;
 };

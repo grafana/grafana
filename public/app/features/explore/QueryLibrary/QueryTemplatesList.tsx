@@ -13,7 +13,11 @@ export function QueryTemplatesList() {
   const { data, isLoading, error } = useAllQueryTemplatesQuery();
 
   if (error) {
-    return <EmptyState variant="not-found" message={`Ooops! Something went wrong. Error: ${error.message}`} />;
+    return (
+      <EmptyState variant="not-found" message={`Something went wrong`}>
+        {error.message}
+      </EmptyState>
+    );
   }
 
   if (isLoading) {
@@ -32,12 +36,18 @@ export function QueryTemplatesList() {
     );
   }
 
-  const queryTemplateRows: QueryTemplateRow[] = data!.map((queryTemplate: QueryTemplate, index: number) => ({
-    index: index.toString(),
-    dateAdded: queryTemplate?.formattedDate,
-    datasourceType: getDatasourceSrv().getInstanceSettings(queryTemplate.targets[0]?.datasource)?.meta.name,
-    queryTemplate,
-  }));
+  const queryTemplateRows: QueryTemplateRow[] = data.map((queryTemplate: QueryTemplate, index: number) => {
+    const datasourceRef = queryTemplate.targets[0]?.datasource;
+    const datasourceType = getDatasourceSrv().getInstanceSettings(datasourceRef)?.meta.name || '';
+    return {
+      index: index.toString(),
+      datasourceRef,
+      datasourceType,
+      createdAtTimestamp: queryTemplate?.createdAtTimestamp || 0,
+      query: queryTemplate.targets[0],
+      description: queryTemplate.title,
+    };
+  });
 
   return <QueryTemplatesTable queryTemplateRows={queryTemplateRows} />;
 }

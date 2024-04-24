@@ -5,5 +5,4 @@ export type QueryTemplate = {
   title: string;
   targets: DataQuery[];
   createdAtTimestamp: number;
-  formattedDate: string;
 };

@@ -2,20 +2,25 @@ import { cx } from '@emotion/css';
 import React from 'react';
 import { CellProps } from 'react-table';
 
+import { Spinner } from '@grafana/ui';
+
 import { useDatasource } from '../utils/useDatasource';
-import { QueryTemplateRow } from '../utils/view';
 
 import { useQueryLibraryListStyles } from './styles';
+import { QueryTemplateRow } from './types';
 
 export function QueryDescriptionCell(props: CellProps<QueryTemplateRow>) {
-  const datasource = props.row.original.queryTemplate?.targets[0]?.datasource;
-  const datasourceApi = useDatasource(datasource);
+  const datasourceApi = useDatasource(props.row.original.datasourceRef);
   const styles = useQueryLibraryListStyles();
 
-  if (props.row.original.queryTemplate?.targets.length === 0) {
+  if (!datasourceApi) {
+    return <Spinner />;
+  }
+
+  if (!props.row.original.query) {
     return <div>No queries</div>;
   }
-  const firstQuery = props.row.original.queryTemplate?.targets[0]!;
+  const query = props.row.original.query;
 
   return (
     <>
@@ -27,8 +32,8 @@ export function QueryDescriptionCell(props: CellProps<QueryTemplateRow>) {
         />
         {datasourceApi?.name}
       </p>
-      <p className={cx(styles.mainText, styles.singleLine)}>{datasourceApi?.getQueryDisplayText?.(firstQuery)}</p>
-      <p className={cx(styles.otherText, styles.singleLine)}>{props.row.original.queryTemplate?.title}</p>
+      <p className={cx(styles.mainText, styles.singleLine)}>{datasourceApi?.getQueryDisplayText?.(query)}</p>
+      <p className={cx(styles.otherText, styles.singleLine)}>{props.row.original.description}</p>
     </>
   );
 }
