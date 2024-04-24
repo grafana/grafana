@@ -7,7 +7,6 @@ import (
 
 	"golang.org/x/oauth2"
 
-	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -131,13 +130,13 @@ func (i *Identity) GetOrgName() string {
 	return i.OrgName
 }
 
-func (i *Identity) GetOrgRole() roletype.RoleType {
+func (i *Identity) GetOrgRole() org.RoleType {
 	if i.OrgRoles == nil {
-		return roletype.RoleNone
+		return org.RoleNone
 	}
 
 	if i.OrgRoles[i.GetOrgID()] == "" {
-		return roletype.RoleNone
+		return org.RoleNone
 	}
 
 	return i.OrgRoles[i.GetOrgID()]
@@ -172,7 +171,7 @@ func (i *Identity) GetTeams() []int64 {
 	return i.Teams
 }
 
-func (i *Identity) HasRole(role roletype.RoleType) bool {
+func (i *Identity) HasRole(role org.RoleType) bool {
 	if i.GetIsGrafanaAdmin() {
 		return true
 	}
