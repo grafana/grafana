@@ -141,10 +141,13 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       }
 
       if (datasource && dsSettings) {
-        this.setState({
-          datasource,
-          dsSettings,
-        });
+        // If the datasource is not mixed, update state with datasource and settings
+        if (!datasource.meta.mixed) {
+          this.setState({ datasource, dsSettings });
+        } else {
+          // If datasource is mixed, update state only with settings
+          this.setState({ dsSettings });
+        }
 
         storeLastUsedDataSourceInLocalStorage(
           {
