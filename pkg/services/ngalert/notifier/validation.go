@@ -14,10 +14,24 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
 
-var (
-	ErrReceiverDoesNotExist     = errors.New("receiver does not exist")
-	ErrTimeIntervalDoesNotExist = errors.New("time interval does not exist")
-)
+type ErrorReferenceInvalid struct {
+	Reference string
+}
+
+type ErrorReceiverDoesNotExist struct {
+	ErrorReferenceInvalid
+}
+type ErrorTimeIntervalDoesNotExist struct {
+	ErrorReferenceInvalid
+}
+
+func (e ErrorReceiverDoesNotExist) Error() string {
+	return fmt.Sprintf("receiver %s does not exist", e.Reference)
+}
+
+func (e ErrorTimeIntervalDoesNotExist) Error() string {
+	return fmt.Sprintf("time interval %s does not exist", e.Reference)
+}
 
 // NotificationSettingsValidator validates NotificationSettings against the current Alertmanager configuration
 type NotificationSettingsValidator interface {
@@ -70,11 +84,11 @@ func (n staticValidator) Validate(settings models.NotificationSettings) error {
 	}
 	var errs []error
 	if _, ok := n.availableReceivers[settings.Receiver]; !ok {
-		errs = append(errs, fmt.Errorf("%w: %s", ErrReceiverDoesNotExist, settings.Receiver))
+		errs = append(errs, ErrorReceiverDoesNotExist{ErrorReferenceInvalid: ErrorReferenceInvalid{Reference: settings.Receiver}})
 	}
 	for _, interval := range settings.MuteTimeIntervals {
 		if _, ok := n.availableTimeIntervals[interval]; !ok {
-			errs = append(errs, fmt.Errorf("%w: %s", ErrTimeIntervalDoesNotExist, interval))
+			errs = append(errs, ErrorTimeIntervalDoesNotExist{ErrorReferenceInvalid: ErrorReferenceInvalid{Reference: interval}})
 		}
 	}
 	return errors.Join(errs...)
