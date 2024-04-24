@@ -10,7 +10,7 @@ import { DateTimePicker, Props } from './DateTimePicker';
 // An assortment of timezones that we will test the behavior of the DateTimePicker with different timezones
 const TEST_TIMEZONES = ['browser', 'Europe/Stockholm', 'America/Indiana/Marengo'];
 
-let defaultTimeZone = getTimeZone();
+const defaultTimeZone = getTimeZone();
 afterAll(() => {
   return setTimeZoneResolver(() => defaultTimeZone);
 });
