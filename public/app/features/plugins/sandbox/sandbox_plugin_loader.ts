@@ -31,7 +31,7 @@ const pluginLogCache: Record<string, boolean> = {};
 export async function importPluginModuleInSandbox({ pluginId }: { pluginId: string }): Promise<System.Module> {
   patchWebAPIs();
   try {
-    const pluginMeta = await getPluginLoadData(pluginId);
+    const pluginMeta = getPluginLoadData(pluginId);
     if (!pluginImportCache.has(pluginId)) {
       pluginImportCache.set(pluginId, doImportPluginModuleInSandbox(pluginMeta));
     }

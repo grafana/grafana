@@ -90,7 +90,7 @@ export function patchSandboxEnvironmentPrototype(sandboxEnvironment: SandboxEnvi
   );
 }
 
-export async function getPluginLoadData(pluginId: string): Promise<SandboxPluginMeta> {
+export function getPluginLoadData(pluginId: string): SandboxPluginMeta {
   // find it in datasources
   for (const datasource of Object.values(config.datasources)) {
     if (datasource.type === pluginId) {
