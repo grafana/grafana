@@ -303,7 +303,8 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: uid && !isEditing && !meta.isSnapshot && !isPlaying,
+    condition:
+      !config.featureToggles.newDashboardSharingComponent && uid && !isEditing && !meta.isSnapshot && !isPlaying,
     render: () => (
       <Button
         key="share-dashboard-button"
@@ -332,7 +333,7 @@ export function ToolbarActions({ dashboard }: Props) {
         tooltip="Enter edit mode"
         key="edit"
         className={styles.buttonWithExtraMargin}
-        variant="primary"
+        variant={config.featureToggles.newDashboardSharingComponent ? 'secondary' : 'primary'}
         size="sm"
       >
         Edit
@@ -341,9 +342,10 @@ export function ToolbarActions({ dashboard }: Props) {
   });
 
   toolbarActions.push({
-    group: 'main-buttons',
-    condition: uid && !isEditing && !meta.isSnapshot && !isPlaying,
-    render: () => <ShareButton key="share-button" dashboard={dashboard} />,
+    group: 'new-share-dashboard-button',
+    condition:
+      config.featureToggles.newDashboardSharingComponent && uid && !isEditing && !meta.isSnapshot && !isPlaying,
+    render: () => <ShareButton key="new-share-dashboard-button" dashboard={dashboard} />,
   });
 
   toolbarActions.push({

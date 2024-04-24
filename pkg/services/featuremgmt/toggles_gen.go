@@ -654,4 +654,8 @@ const (
 	// FlagGrafanaManagedRecordingRules
 	// Enables Grafana-managed recording rules.
 	FlagGrafanaManagedRecordingRules = "grafanaManagedRecordingRules"
+
+	// FlagNewDashboardSharingComponent
+	// Enables the new sharing drawer design
+	FlagNewDashboardSharingComponent = "newDashboardSharingComponent"
 )

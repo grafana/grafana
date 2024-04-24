@@ -176,6 +176,7 @@ Experimental features might be changed or removed without prior notice.
 | `expressionParser`                          | Enable new expression parser                                                                                                                                                                                                                                                      |
 | `accessActionSets`                          | Introduces action sets for resource permissions                                                                                                                                                                                                                                   |
 | `disableNumericMetricsSortingInExpressions` | In server-side expressions, disable the sorting of numeric-kind metrics by their metric name or labels.                                                                                                                                                                           |
+| `newDashboardSharingComponent`              | Enables the new sharing drawer design                                                                                                                                                                                                                                             |
 
 ## Development feature toggles
 
