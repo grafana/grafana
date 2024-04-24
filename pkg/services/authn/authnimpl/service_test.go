@@ -193,7 +193,6 @@ func TestService_Authenticate(t *testing.T) {
 							assert.Equal(t, tt.expectedIdentity.ClientParams.FetchPermissionsParams.Roles, attr.Value.AsStringSlice())
 						}
 					}
-
 				}
 
 				if len(matchedClients) > 1 {
