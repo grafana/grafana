@@ -113,6 +113,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			log:                logger,
 			cfg:                &api.Cfg.UnifiedAlerting,
 			authz:              ruleAuthzService,
+			alertRuleService:   api.AlertRules,
 			amConfigStore:      api.AlertingStore,
 			amRefresher:        api.MultiOrgAlertmanager,
 			featureManager:     api.FeatureManager,

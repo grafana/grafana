@@ -4441,6 +4441,7 @@
    "type": "object"
   },
   "alertGroups": {
+   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
@@ -4600,13 +4601,13 @@
    "type": "object"
   },
   "gettableAlerts": {
+   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
    "type": "array"
   },
   "gettableSilence": {
-   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4655,7 +4656,6 @@
    "type": "object"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
@@ -4806,6 +4806,7 @@
    "type": "array"
   },
   "postableSilence": {
+   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4843,7 +4844,6 @@
    "type": "object"
   },
   "receiver": {
-   "description": "Receiver receiver",
    "properties": {
     "active": {
      "description": "active",
@@ -6201,6 +6201,35 @@
       "description": "AlertingFileExport",
       "schema": {
        "$ref": "#/definitions/AlertingFileExport"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
+     "404": {
+      "description": " Not found."
+     }
+    },
+    "tags": [
+     "ruler"
+    ]
+   }
+  },
+  "/ruler/grafana/api/v1/rule/{RuleUID}": {
+   "get": {
+    "description": "Get rule by UID",
+    "operationId": "RouteGetRuleByUID",
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "202": {
+      "description": "GettableGrafanaRule",
+      "schema": {
+       "$ref": "#/definitions/GettableGrafanaRule"
       }
      },
      "403": {

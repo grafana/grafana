@@ -1272,6 +1272,35 @@
         }
       }
     },
+    "/ruler/grafana/api/v1/rule/{RuleUID}": {
+      "get": {
+        "description": "Get rule by UID",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "ruler"
+        ],
+        "operationId": "RouteGetRuleByUID",
+        "responses": {
+          "202": {
+            "description": "GettableGrafanaRule",
+            "schema": {
+              "$ref": "#/definitions/GettableGrafanaRule"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          },
+          "404": {
+            "description": " Not found."
+          }
+        }
+      }
+    },
     "/ruler/grafana/api/v1/rules": {
       "get": {
         "description": "List rule groups",
@@ -7920,6 +7949,7 @@
       "$ref": "#/definitions/alertGroup"
     },
     "alertGroups": {
+      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -8081,6 +8111,7 @@
       "$ref": "#/definitions/gettableAlert"
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
@@ -8088,7 +8119,6 @@
       "$ref": "#/definitions/gettableAlerts"
     },
     "gettableSilence": {
-      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -8138,7 +8168,6 @@
       "$ref": "#/definitions/gettableSilence"
     },
     "gettableSilences": {
-      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
@@ -8291,6 +8320,7 @@
       }
     },
     "postableSilence": {
+      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
@@ -8329,7 +8359,6 @@
       "$ref": "#/definitions/postableSilence"
     },
     "receiver": {
-      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "active",

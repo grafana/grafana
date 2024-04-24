@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	alerting_models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -53,6 +54,7 @@ type RulerSrv struct {
 	cfg                *setting.UnifiedAlertingSettings
 	conditionValidator ConditionValidator
 	authz              RuleAccessControlService
+	alertRuleService   AlertRuleService
 
 	amConfigStore  AMConfigStore
 	amRefresher    AMRefresher
@@ -259,6 +261,37 @@ func (srv RulerSrv) RouteGetRulesConfig(c *contextmodel.ReqContext) response.Res
 			continue
 		}
 		result[folder.Fullpath] = append(result[folder.Fullpath], toGettableRuleGroupConfig(groupKey.RuleGroup, rules, provenanceRecords))
+	}
+	return response.JSON(http.StatusOK, result)
+}
+
+// RouteGetRuleByUID returns the alert rule with the given UID
+func (srv RulerSrv) RouteGetRuleByUID(c *contextmodel.ReqContext, ruleUID string) response.Response {
+	rule, provenance, err := srv.alertRuleService.GetAlertRule(c.Req.Context(), c.SignedInUser, ruleUID)
+	if err != nil {
+		if errors.Is(err, alerting_models.ErrAlertRuleNotFound) {
+			return response.Empty(http.StatusNotFound)
+		}
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get rule by UID", err)
+	}
+
+	result := &apimodels.GettableGrafanaRule{
+		ID:                   rule.ID,
+		OrgID:                rule.OrgID,
+		Title:                rule.Title,
+		Condition:            rule.Condition,
+		Data:                 ApiAlertQueriesFromAlertQueries(rule.Data),
+		Updated:              rule.Updated,
+		IntervalSeconds:      rule.IntervalSeconds,
+		Version:              rule.Version,
+		UID:                  rule.UID,
+		NamespaceUID:         rule.NamespaceUID,
+		RuleGroup:            rule.RuleGroup,
+		NoDataState:          apimodels.NoDataState(rule.NoDataState),
+		ExecErrState:         apimodels.ExecutionErrorState(rule.ExecErrState),
+		Provenance:           apimodels.Provenance(provenance),
+		IsPaused:             rule.IsPaused,
+		NotificationSettings: AlertRuleNotificationSettingsFromNotificationSettings(rule.NotificationSettings),
 	}
 	return response.JSON(http.StatusOK, result)
 }

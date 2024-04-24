@@ -318,6 +318,32 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 	})
 }
 
+func TestRouteGetRuleByUID(t *testing.T) {
+	t.Run("rule is successfully fetched with the correct UID", func(t *testing.T) {
+		orgID := rand.Int63()
+		folder := randFolder()
+		ruleStore := fakes.NewRuleStore(t)
+		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
+		groupKey := models.GenerateGroupKey(orgID)
+		groupKey.NamespaceUID = folder.UID
+
+		expectedRules := models.GenerateAlertRules(3, models.AlertRuleGen(withGroupKey(groupKey), models.WithUniqueGroupIndex(), models.WithUniqueID()))
+		require.Len(t, expectedRules, 3)
+		ruleStore.PutRule(context.Background(), expectedRules...)
+
+		perms := createPermissionsForRules(expectedRules, orgID)
+		req := createRequestContextWithPerms(orgID, perms, nil)
+		response := createService(ruleStore).RouteGetRuleByUID(req, expectedRules[0].UID)
+
+		require.Equal(t, http.StatusOK, response.Status())
+		result := &apimodels.GettableGrafanaRule{}
+		require.NoError(t, json.Unmarshal(response.Body(), result))
+		require.NotNil(t, result)
+
+		fmt.Println("FAZ: ", result)
+	})
+}
+
 func TestRouteGetRulesConfig(t *testing.T) {
 	gen := models.RuleGen
 	t.Run("fine-grained access is enabled", func(t *testing.T) {
@@ -623,6 +649,7 @@ func createServiceWithProvenanceStore(store *fakes.RuleStore, provenanceStore pr
 }
 
 func createService(store *fakes.RuleStore) *RulerSrv {
+
 	return &RulerSrv{
 		xactManager:     store,
 		store:           store,
@@ -637,6 +664,7 @@ func createService(store *fakes.RuleStore) *RulerSrv {
 		amRefresher:    &fakeAMRefresher{},
 		featureManager: featuremgmt.WithFeatures(),
 	}
+	// provisioning.NewAlertRuleService(env.store, env.prov, env.folderService, env.dashboardService, env.quotas, env.xact, 60, 10, 100, env.log, &provisioning.NotificationSettingsValidatorProviderFake{}, env.rulesAuthz)
 }
 
 type fakeAMRefresher struct {

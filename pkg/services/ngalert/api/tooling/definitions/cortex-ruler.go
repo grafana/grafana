@@ -8,6 +8,18 @@ import (
 	"github.com/prometheus/common/model"
 )
 
+// swagger:route Get /ruler/grafana/api/v1/rule/{RuleUID} ruler RouteGetRuleByUID
+//
+// Get rule by UID
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       202: GettableGrafanaRule
+//       403: ForbiddenError
+//       404: description: Not found.
+
 // swagger:route Get /ruler/grafana/api/v1/rules ruler RouteGetGrafanaRulesConfig
 //
 // List rule groups
