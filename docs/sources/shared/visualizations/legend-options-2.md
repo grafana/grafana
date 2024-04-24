@@ -6,7 +6,7 @@ comments: |
   This file is used in the following visualizations: state timeline, status history
 ---
 
-When the legend option is enabled it can show either the value mappings or the threshold brackets. To show the value mappings in the legend, it's important that the **Color scheme** as referenced in [Color scheme][] is set to **Single color** or **Classic palette**. To see the threshold brackets in the legend set the **Color scheme** to **From thresholds**.
+When the legend option is enabled it can show either the value mappings or the threshold brackets. To show the value mappings in the legend, it's important that the **Color scheme** as referenced in [Color scheme](../../configure-standard-options#color-scheme) is set to **Single color** or **Classic palette**. To see the threshold brackets in the legend set the **Color scheme** to **From thresholds**.
 
 For more information about the legend, refer to [Configure a legend](../configure-legend/).
 
@@ -31,8 +31,3 @@ Choose where to display the legend.
 #### Width
 
 Control how wide the legend is when placed on the right side of the visualization. This option is only displayed if you set the legend placement to **Right**.
-
-{{% docs/reference %}}
-[Color scheme]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#color-scheme"
-[Color scheme]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#color-scheme"
-{{% /docs/reference %}}

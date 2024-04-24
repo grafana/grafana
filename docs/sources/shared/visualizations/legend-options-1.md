@@ -32,4 +32,4 @@ Control how wide the legend is when placed on the right side of the visualizatio
 
 ### Values
 
-Choose which of the [standard calculations]({{< relref "../../panels-visualizations/query-transform-data/calculation-types/" >}}) to show in the legend. You can have more than one.
+Choose which of the [standard calculations](../../query-transform-data/calculation-types/) to show in the legend. You can have more than one.
