@@ -1,8 +1,12 @@
 ---
 title: Tooltip options
 comments: |
+  There are two tooltip shared files to cover the most common combinations of options. 
+  Using two shared files ensures that content remains consistent across visualizations that share the same options and users don't have to figure out which options apply to a specific visualization when reading that content. 
   This file is used in the following visualizations: candlestick, time series, trend
 ---
+
+Tooltip options control the information overlay that appears when you hover over data points in the visualization.
 
 ### Tooltip mode
 
