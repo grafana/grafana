@@ -15,7 +15,7 @@ title: Install Grafana
 weight: 100
 ---
 
-# Install Grafana
+# Minimum Hardware and Software Requirements for Grafana Installation
 
 This page lists the minimum hardware and software requirements to install Grafana.
 
@@ -23,7 +23,7 @@ To run Grafana, you must have a supported operating system, hardware that meets 
 
 Grafana relies on other open source software to operate. For a list of open source software that Grafana uses, refer to [package.json](https://github.com/grafana/grafana/blob/main/package.json).
 
-## Supported operating systems
+## Installation instructions for supported operating systems
 
 Grafana supports the following operating systems:
 
