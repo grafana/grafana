@@ -281,12 +281,10 @@ class UnthemedLogs extends PureComponent<Props, State> {
       store.set(visualisationTypeKey, visualisationType);
     }
 
-    if (prevProps.logsVolumeData?.data !== this.props.logsVolumeData?.data) {
-      console.log('LogsVolume data changed');
-      this.registerLogLevelsWithContentOutline();
-    }
-
-    if (prevState.hiddenLogLevels !== this.state.hiddenLogLevels) {
+    if (
+      prevProps.logsVolumeData?.data !== this.props.logsVolumeData?.data ||
+      prevState.hiddenLogLevels !== this.state.hiddenLogLevels
+    ) {
       this.registerLogLevelsWithContentOutline();
     }
   }
