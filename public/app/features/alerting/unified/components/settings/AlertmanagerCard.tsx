@@ -54,22 +54,23 @@ export function AlertmanagerCard({
       </Card.Figure>
 
       <Card.Meta>
-        {implementation && capitalize(implementation)}
-        {url && url}
+        <Stack direction="column" gap={1} alignItems="flex-start">
+          <Stack direction="row" gap={0.5}>
+            {implementation && capitalize(implementation)}
+            {url && <> | {url}</>}
+          </Stack>
+          {!receiving ? (
+            <Text variant="bodySmall">Not receiving Grafana managed alerts</Text>
+          ) : (
+            <>
+              {status === 'pending' && <Badge text="Activation in progress" color="orange" />}
+              {status === 'active' && <Badge text="Receiving Grafana-managed alerts" color="green" />}
+              {status === 'dropped' && <Badge text="Failed to adopt Alertmanager" color="red" />}
+              {status === 'inconclusive' && <Badge text="Inconclusive" color="orange" />}
+            </>
+          )}
+        </Stack>
       </Card.Meta>
-
-      <Card.Description>
-        {!receiving ? (
-          <Text variant="bodySmall">Not receiving Grafana managed alerts</Text>
-        ) : (
-          <>
-            {status === 'pending' && <Badge text="Activation in progress" color="orange" />}
-            {status === 'active' && <Badge text="Receiving Grafana-managed alerts" color="green" />}
-            {status === 'dropped' && <Badge text="Failed to adopt Alertmanager" color="red" />}
-            {status === 'inconclusive' && <Badge text="Inconclusive" color="orange" />}
-          </>
-        )}
-      </Card.Description>
 
       {/* we'll use the "tags" area to append buttons and actions */}
       <Card.Tags>
