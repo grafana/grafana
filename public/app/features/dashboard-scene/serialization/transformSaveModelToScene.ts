@@ -30,7 +30,6 @@ import {
   AdHocFiltersVariable,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { trackDashboardLoaded } from 'app/features/dashboard/utils/tracking';
 import { DashboardDTO } from 'app/types';
 
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
@@ -284,7 +283,6 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       }),
       new behaviors.SceneQueryController(),
       registerDashboardMacro,
-      registerDashboardSceneTracking(oldModel),
       registerPanelInteractionsReporter,
       new behaviors.LiveNowTimer({ enabled: oldModel.liveNow }),
     ],
@@ -515,18 +513,6 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     ...repeatOptions,
     $behaviors: [hoverHeaderOffsetBehavior],
   });
-}
-
-function registerDashboardSceneTracking(model: DashboardModel) {
-  return () => {
-    const unsetDashboardInteractionsScenesContext = DashboardInteractions.setScenesContext();
-
-    trackDashboardLoaded(model, model.version);
-
-    return () => {
-      unsetDashboardInteractionsScenesContext();
-    };
-  };
 }
 
 function registerPanelInteractionsReporter(scene: DashboardScene) {
