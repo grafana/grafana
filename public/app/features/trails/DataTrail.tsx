@@ -181,7 +181,8 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     // Begin re-render of controls
     //
     // Ensure that the trail renders the current state values for the time range controls and the adhoc filter control.
-    // Otherwise, the state values that we test against would be correct, but the rendering on screen would be incorrect
+    // Otherwise, while the state values that we test against would be correct, the rendering on screen would be incorrect for certain transitions
+    // (e.g., when going back to a non-final index parent step which created a new history step due to change in filters or time range, due to how we correct parent steps in those cases)
 
     // Forces a rerender of the controls
     this.state.controls.forEach((control) => control.forceRender());
