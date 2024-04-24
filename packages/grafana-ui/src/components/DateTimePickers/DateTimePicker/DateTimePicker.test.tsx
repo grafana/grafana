@@ -48,7 +48,8 @@ describe('Date time picker', () => {
     expect(dateTimeInput).toHaveDisplayValue('2021-05-05 12:00:00');
   });
 
-  it.each(TEST_TIMEZONES)('should update date onblur (timezone: %)', async () => {
+  it.each(TEST_TIMEZONES)('should update date onblur (timezone: %)', async (timeZone) => {
+    setTimeZoneResolver(() => timeZone);
     const onChangeInput = jest.fn();
     render(<DateTimePicker date={dateTime('2021-05-05 12:00:00')} onChange={onChangeInput} />);
     const dateTimeInput = screen.getByTestId(Components.DateTimePicker.input);
@@ -69,6 +70,95 @@ describe('Date time picker', () => {
     expect(dateTimeInput).toHaveDisplayValue('2021:05:05 12-00-00');
     await userEvent.click(document.body);
     expect(onChangeInput).not.toHaveBeenCalled();
+  });
+
+  it.each(TEST_TIMEZONES)(
+    'should not change the day at times near the day boundary (timezone: %s)',
+    async (timeZone) => {
+      setTimeZoneResolver(() => timeZone);
+      const onChangeInput = jest.fn();
+      render(<DateTimePicker date={dateTime('2021-05-05 12:34:56')} onChange={onChangeInput} />);
+
+      // Click the calendar button
+      await userEvent.click(screen.getByRole('button', { name: 'Time picker' }));
+
+      // Check the active day is the 5th
+      expect(screen.getByRole('button', { name: 'May 5, 2021' })).toHaveClass('react-calendar__tile--active');
+
+      // open the time of day overlay
+      await userEvent.click(screen.getAllByRole('textbox')[1]);
+
+      // change the hour
+      await userEvent.click(
+        screen.getAllByRole('button', {
+          name: '00',
+        })[0]
+      );
+
+      // Check the active day is the 5th
+      expect(screen.getByRole('button', { name: 'May 5, 2021' })).toHaveClass('react-calendar__tile--active');
+
+      // change the hour
+      await userEvent.click(
+        screen.getAllByRole('button', {
+          name: '23',
+        })[0]
+      );
+
+      // Check the active day is the 5th
+      expect(screen.getByRole('button', { name: 'May 5, 2021' })).toHaveClass('react-calendar__tile--active');
+    }
+  );
+
+  it.each(TEST_TIMEZONES)(
+    'should not reset the time when selecting a different day (timezone: %s)',
+    async (timeZone) => {
+      setTimeZoneResolver(() => timeZone);
+      const onChangeInput = jest.fn();
+      render(<DateTimePicker date={dateTime('2021-05-05 12:34:56')} onChange={onChangeInput} />);
+
+      // Click the calendar button
+      await userEvent.click(screen.getByRole('button', { name: 'Time picker' }));
+
+      // Select a different day in the calendar
+      await userEvent.click(screen.getByRole('button', { name: 'May 15, 2021' }));
+
+      const timeInput = screen.getAllByRole('textbox')[1];
+      expect(timeInput).toHaveClass('rc-time-picker-input');
+      expect(timeInput).not.toHaveDisplayValue('00:00:00');
+    }
+  );
+
+  it.each(TEST_TIMEZONES)('should not alter a UTC time when blurring (timezone: %s)', async (timeZone) => {
+    setTimeZoneResolver(() => timeZone);
+    const onChangeInput = jest.fn();
+
+    // render with a UTC value
+    const { rerender } = render(
+      <DateTimePicker date={dateTime('2024-04-16T08:44:41.000000Z')} onChange={onChangeInput} />
+    );
+
+    const inputValue = screen.getByTestId(Components.DateTimePicker.input).getAttribute('value')!;
+
+    // blur the input to trigger an onChange
+    await userEvent.click(screen.getByTestId(Components.DateTimePicker.input));
+    await userEvent.click(document.body);
+
+    const onChangeValue = onChangeInput.mock.calls[0][0];
+    expect(onChangeInput).toHaveBeenCalledWith(onChangeValue);
+
+    // now rerender with the "changed" value
+    rerender(<DateTimePicker date={onChangeValue} onChange={onChangeInput} />);
+
+    // expect the input to show the same value
+    expect(screen.getByTestId(Components.DateTimePicker.input)).toHaveDisplayValue(inputValue);
+
+    // blur the input to trigger an onChange
+    await userEvent.click(screen.getByTestId(Components.DateTimePicker.input));
+    await userEvent.click(document.body);
+
+    // expect the onChange to be called with the same value
+    expect(onChangeInput).toHaveBeenCalledWith(onChangeValue);
   });
 
   it.each(TEST_TIMEZONES)(
