@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
-	alerting_models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -271,7 +270,7 @@ func (srv RulerSrv) RouteGetRuleByUID(c *contextmodel.ReqContext, ruleUID string
 
 	rule, err := srv.getAuthorizedRuleByUid(ctx, c, ruleUID)
 	if err != nil {
-		if errors.Is(err, alerting_models.ErrAlertRuleNotFound) {
+		if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
 			return response.Empty(http.StatusNotFound)
 		}
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get rule by UID", err)
