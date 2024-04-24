@@ -9,6 +9,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -123,10 +124,29 @@ func (s *Service) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 }
 
 func (s *Service) authenticate(ctx context.Context, c authn.Client, r *authn.Request) (*authn.Identity, error) {
+	ctx, span := s.tracer.Start(ctx, "authn.authenticate")
+	defer span.End()
+
 	identity, err := c.Authenticate(ctx, r)
 	if err != nil {
+		span.SetStatus(codes.Error, "authenticate failed on client")
+		span.RecordError(err)
 		s.errorLogFunc(ctx, err)("Failed to authenticate request", "client", c.Name(), "error", err)
 		return nil, err
+	}
+
+	span.SetAttributes(
+		attribute.String("identity.ID", identity.ID.String()),
+		attribute.String("identity.AuthID", identity.AuthID),
+		attribute.String("identity.AuthenticatedBy", identity.AuthenticatedBy),
+	)
+
+	if len(identity.ClientParams.FetchPermissionsParams.ActionsLookup) > 0 {
+		span.SetAttributes(attribute.StringSlice("identity.ClientParams.FetchPermissionsParams.ActionsLookup", identity.ClientParams.FetchPermissionsParams.ActionsLookup))
+	}
+
+	if len(identity.ClientParams.FetchPermissionsParams.Roles) > 0 {
+		span.SetAttributes(attribute.StringSlice("identity.ClientParams.FetchPermissionsParams.Roles", identity.ClientParams.FetchPermissionsParams.Roles))
 	}
 
 	if err := s.runPostAuthHooks(ctx, identity, r); err != nil {
