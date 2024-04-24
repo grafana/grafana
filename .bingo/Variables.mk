@@ -53,6 +53,8 @@ $(LEFTHOOK): $(BINGO_DIR)/lefthook.mod
 	@echo "(re)installing $(GOBIN)/lefthook-v1.4.8"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=lefthook.mod -o=$(GOBIN)/lefthook-v1.4.8 "github.com/evilmartians/lefthook"
 
+# swagger 0.30.5 isn't compatibile with go 1.22 yet so pinning to a specific commit until there's a new release
+# https://github.com/go-swagger/go-swagger/issues/3070
 SWAGGER := $(GOBIN)/swagger-db51e79a0e37c572d8b59ae0c58bf2bbbbe53285
 $(SWAGGER): $(BINGO_DIR)/swagger.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
