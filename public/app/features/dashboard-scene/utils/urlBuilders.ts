@@ -22,6 +22,8 @@ export interface DashboardUrlOptions {
   absolute?: boolean;
   // Add tz to query params
   timeZone?: string;
+  // Check if we are on the home dashboard
+  isHomeDashboard?: boolean;
 }
 
 export function getDashboardUrl(options: DashboardUrlOptions) {
@@ -52,6 +54,10 @@ export function getDashboardUrl(options: DashboardUrlOptions) {
       height: 500,
       tz: options.timeZone,
     };
+  }
+
+  if (options.isHomeDashboard) {
+    path = '/';
   }
 
   const params = options.currentQueryParams ? locationSearchToObject(options.currentQueryParams) : {};

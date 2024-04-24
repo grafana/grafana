@@ -14,7 +14,7 @@ import { DashboardScene } from './DashboardScene';
 import { NavToolbarActions } from './NavToolbarActions';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
-  const { controls, overlay, editview, editPanel, isEmpty, scopes } = model.useState();
+  const { controls, overlay, editview, editPanel, isEmpty, scopes, meta } = model.useState();
   const { isExpanded: isScopesExpanded } = scopes?.useState() ?? {};
   const styles = useStyles2(getStyles);
   const location = useLocation();
@@ -22,6 +22,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   const pageNav = model.getPageNav(location, navIndex);
   const bodyToRender = model.getBodyToRender();
   const navModel = getNavModel(navIndex, 'dashboards/browse');
+  const isHomePage = !meta.url && !meta.slug && !meta.isNew;
 
   if (editview) {
     return (
@@ -54,7 +55,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
         >
           {scopes && <scopes.Component model={scopes} />}
           <NavToolbarActions dashboard={model} />
-          {controls && (
+          {!isHomePage && controls && (
             <div
               className={cx(styles.controlsWrapper, scopes && !isScopesExpanded && styles.controlsWrapperWithScopes)}
             >
@@ -62,7 +63,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
             </div>
           )}
           <CustomScrollbar autoHeightMin={'100%'} className={styles.scrollbarContainer}>
-            <div className={styles.canvasContent}>
+            <div className={cx(styles.canvasContent, isHomePage && styles.homePagePadding)}>
               <>{isEmpty && emptyState}</>
               {withPanels}
             </div>
@@ -114,6 +115,9 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     controlsWrapperWithScopes: css({
       padding: theme.spacing(2, 2, 2, 0),
+    }),
+    homePagePadding: css({
+      padding: theme.spacing(2, 2),
     }),
     canvasContent: css({
       label: 'canvas-content',
