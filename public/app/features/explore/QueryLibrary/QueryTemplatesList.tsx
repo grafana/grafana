@@ -2,10 +2,8 @@ import { css } from '@emotion/css';
 import React from 'react';
 import { SortByFn } from 'react-table';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { useQueryTemplates } from '@grafana/runtime/src/services/queryLibrary/hooks';
 import { Column, EmptyState, InteractiveTable } from '@grafana/ui';
-import { useStyles2 } from '@grafana/ui/';
 
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 
@@ -13,7 +11,6 @@ import { ActionsCell } from './cell/ActionsCell';
 import { AddedByCell } from './cell/AddedByCell';
 import { DatasourceTypeCell } from './cell/DatasourceTypeCell';
 import { DateAddedCell } from './cell/DateAddedCell';
-import { PrivateToggleCell } from './cell/PrivateToggleCell';
 import { TitleCell } from './cell/TitleCell';
 import { QueryTemplateRow } from './utils/view';
 
@@ -28,14 +25,19 @@ const columns: Array<Column<QueryTemplateRow>> = [
   { id: 'addedBy', header: 'Added by', cell: AddedByCell },
   { id: 'datasourceType', header: 'Datasource type', cell: DatasourceTypeCell, sortType: 'string' },
   { id: 'dateAdded', header: 'Date added', cell: DateAddedCell, sortType: timestampSort },
-  { id: 'privateToggle', header: '', cell: PrivateToggleCell },
   { id: 'actions', header: '', cell: ActionsCell },
 ];
 
+const styles = {
+  tableWithSpacing: css({
+    'th:first-child': {
+      width: '50%',
+    },
+  }),
+};
+
 export function QueryTemplatesList() {
   const { queryTemplates } = useQueryTemplates();
-
-  const styles = useStyles2(getStyles);
 
   const queryTemplateRows: QueryTemplateRow[] = queryTemplates.map((queryTemplate, index) => ({
     index: index.toString(),
@@ -57,13 +59,3 @@ export function QueryTemplatesList() {
     );
   }
 }
-
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    tableWithSpacing: css({
-      'th:first-child': {
-        width: '50%',
-      },
-    }),
-  };
-};
