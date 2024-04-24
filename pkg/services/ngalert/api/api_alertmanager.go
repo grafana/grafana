@@ -305,7 +305,7 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *contextmodel.ReqContext, b
 		return response.Error(http.StatusConflict, err.Error(), err)
 	}
 
-	return response.ErrOrFallback(http.StatusInternalServerError, err.Error(), err)
+	return response.ErrOrFallback(http.StatusInternalServerError, "Failed to save Alertmanager configuration", err)
 }
 
 func (srv AlertmanagerSrv) RouteGetReceivers(c *contextmodel.ReqContext) response.Response {
