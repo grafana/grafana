@@ -12,8 +12,6 @@ import { DataQuery } from '@grafana/schema';
 
 import { FetchResponse, getBackendSrv } from '../backendSrv';
 
-import { detectVariables } from './parsting';
-
 const BASE_URL = '/apis/peakq.grafana.app/v0alpha1/namespaces/default/querytemplates/';
 const RENDER_URL = '/apis/peakq.grafana.app/v0alpha1/render';
 
@@ -98,7 +96,7 @@ export async function createQueryTemplate({
       vars: variableDefinitions,
       targets: [
         {
-          variables: detectVariables(query),
+          variables: {}, // TODO: Detect variables in #86838
           properties: query,
         },
       ],
