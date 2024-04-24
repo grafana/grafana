@@ -51,7 +51,6 @@ export const reduxTester = <State>(args?: ReduxTesterArguments<State>): ReduxTes
   const givenRootReducer = (
     rootReducer: Reducer<State, UnknownAction, Partial<NoInfer<State>>>
   ): ReduxTesterWhen<State> => {
-    // store = configureStore({
     store = configureStore<
       State,
       UnknownAction,
@@ -77,9 +76,6 @@ export const reduxTester = <State>(args?: ReduxTesterArguments<State>): ReduxTes
           logActionsMiddleWare,
           thunk,
         ] as unknown as Tuple<[ThunkMiddleware<State>]>,
-      // because we allow for a partial state, we need to cast it to the correct type
-      // test utils, amirite? ¯\_(ツ)_/¯
-      // preloadedState: preloadedState as State,
       preloadedState,
     });
 
