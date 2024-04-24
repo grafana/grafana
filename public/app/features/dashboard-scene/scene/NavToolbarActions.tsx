@@ -23,6 +23,7 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
 import { PanelEditor } from '../panel-edit/PanelEditor';
+import ShareButton from '../sharing/ShareButton/ShareButton';
 import { ShareModal } from '../sharing/ShareModal';
 import { DashboardInteractions } from '../utils/interactions';
 import { DynamicDashNavButtonModel, dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
@@ -337,6 +338,12 @@ export function ToolbarActions({ dashboard }: Props) {
         Edit
       </Button>
     ),
+  });
+
+  toolbarActions.push({
+    group: 'main-buttons',
+    condition: uid && !isEditing && !meta.isSnapshot && !isPlaying,
+    render: () => <ShareButton key="share-button" dashboard={dashboard} />,
   });
 
   toolbarActions.push({

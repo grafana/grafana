@@ -11,7 +11,7 @@ import { InlineToast } from '../InlineToast/InlineToast';
 
 export interface Props extends ButtonProps {
   /** A function that returns text to be copied */
-  getText(): string;
+  getText(): Promise<string> | string;
   /** Callback when the text has been successfully copied */
   onClipboardCopy?(copiedText: string): void;
   /** Callback when there was an error copying the text */
@@ -48,7 +48,7 @@ export function ClipboardButton({
 
   const buttonRef = useRef<null | HTMLButtonElement>(null);
   const copyTextCallback = useCallback(async () => {
-    const textToCopy = getText();
+    const textToCopy = await getText();
 
     try {
       await copyText(textToCopy, buttonRef);
