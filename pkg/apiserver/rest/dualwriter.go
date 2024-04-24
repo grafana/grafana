@@ -2,6 +2,7 @@ package rest
 
 import (
 	"context"
+	"errors"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -64,6 +65,12 @@ type DualWriter struct {
 	Storage
 	Legacy LegacyStorage
 }
+
+var errDualWriterCreaterMissing = errors.New("legacy storage rest.Creater is missing")
+var errDualWriterListerMissing = errors.New("legacy storage rest.Lister is missing")
+var errDualWriterDeleterMissing = errors.New("legacy storage rest.GracefulDeleter is missing")
+var errDualWriterCollectionDeleterMissing = errors.New("legacy storage rest.CollectionDeleter is missing")
+var errDualWriterUpdaterMissing = errors.New("legacy storage rest.Updater is missing")
 
 type DualWriterMode int
 

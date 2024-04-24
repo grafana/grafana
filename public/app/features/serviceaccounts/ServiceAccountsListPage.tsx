@@ -4,10 +4,10 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { OrgRole } from '@grafana/data';
 import { ConfirmModal, FilterInput, LinkButton, RadioButtonGroup, InlineField, EmptyState, Box } from '@grafana/ui';
-import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
+import { Trans, t } from 'app/core/internationalization';
 import { StoreState, ServiceAccountDTO, AccessControlAction, ServiceAccountStateFilter } from 'app/types';
 
 import { ServiceAccountTable } from './ServiceAccountTable';
@@ -209,21 +209,31 @@ export const ServiceAccountsListPageUnconnected = ({
             />
           </Box>
         </div>
-        {!isLoading && !noServiceAccountsCreated && serviceAccounts.length === 0 && <EmptyState variant="not-found" />}
+        {!isLoading && !noServiceAccountsCreated && serviceAccounts.length === 0 && (
+          <EmptyState
+            variant="not-found"
+            message={t('service-accounts.empty-state.message', 'No services accounts found')}
+          />
+        )}
         {!isLoading && noServiceAccountsCreated && (
-          <>
-            <EmptyListCTA
-              title="You haven't created any service accounts yet."
-              buttonIcon="key-skeleton-alt"
-              buttonLink="org/serviceaccounts/create"
-              buttonTitle="Add service account"
-              buttonDisabled={!contextSrv.hasPermission(AccessControlAction.ServiceAccountsCreate)}
-              proTip="Remember, you can provide specific permissions for API access to other applications."
-              proTipLink=""
-              proTipLinkTitle=""
-              proTipTarget="_blank"
-            />
-          </>
+          <EmptyState
+            variant="call-to-action"
+            button={
+              <LinkButton
+                disabled={!contextSrv.hasPermission(AccessControlAction.ServiceAccountsCreate)}
+                href="org/serviceaccounts/create"
+                icon="key-skeleton-alt"
+                size="lg"
+              >
+                <Trans i18nKey="service-accounts.empty-state.button-title">Add service account</Trans>
+              </LinkButton>
+            }
+            message={t('service-accounts.empty-state.title', "You haven't created any service accounts yet")}
+          >
+            <Trans i18nKey="service-accounts.empty-state.more-info">
+              Remember, you can provide specific permissions for API access to other applications
+            </Trans>
+          </EmptyState>
         )}
 
         {(isLoading || serviceAccounts.length !== 0) && (

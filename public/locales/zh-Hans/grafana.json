@@ -1,5 +1,5 @@
 {
-  "_comment": "此文件是英文字符串的真实来源。在代码库中编辑此文件以更改复数形式和 UI 的其他短语。",
+  "_comment": "",
   "access-control": {
     "add-permission": {
       "role-label": "角色",
@@ -25,13 +25,26 @@
       "user": "用户"
     }
   },
+  "annotations": {
+    "empty-state": {
+      "button-title": "",
+      "info-box-content": "",
+      "info-box-content-2": "",
+      "title": ""
+    }
+  },
+  "api-keys": {
+    "empty-state": {
+      "message": ""
+    }
+  },
   "bouncing-loader": {
     "label": "正在加载"
   },
   "browse-dashboards": {
     "action": {
       "cancel-button": "取消",
-      "cannot-move-folders": "文件夹无法移动",
+      "cannot-move-folders": "",
       "delete-button": "删除",
       "delete-modal-invalid-text": "一个或多个文件夹包含库面板或警报规则。请首先删除这些以便继续。",
       "delete-modal-invalid-title": "无法删除文件夹",
@@ -61,6 +74,12 @@
       "select-all-header-checkbox": "全选",
       "select-checkbox": "选择",
       "tags-column": "标签"
+    },
+    "empty-state": {
+      "button-title": "",
+      "pro-tip": "",
+      "title": "",
+      "title-folder": ""
     },
     "folder-actions-button": {
       "delete": "删除",
@@ -102,6 +121,9 @@
       "change-theme": "更改主题...",
       "dark-theme": "深色",
       "light-theme": "浅色"
+    },
+    "empty-state": {
+      "message": ""
     },
     "search-box": {
       "placeholder": "搜索或跳转至..."
@@ -145,6 +167,11 @@
       "label-required": "此字段是必填字段。",
       "sub-text": "<0>定义将会描述关联的文本。</0>",
       "title": "定义关联标签（第 1 步，共 3 步）"
+    },
+    "empty-state": {
+      "button-title": "",
+      "pro-tip": "",
+      "title": ""
     },
     "list": {
       "delete": "删除关联",
@@ -237,14 +264,14 @@
     "empty": {
       "add-library-panel-body": "添加与其他仪表板共享的可视化。",
       "add-library-panel-button": "添加库面板",
-      "add-library-panel-header": "添加一个库面板",
+      "add-library-panel-header": "",
       "add-visualization-body": "选择一个数据源，然后用图表、统计信息和表格查询您的数据以及将其可视化，或创建列表、Markdown 和其他小部件。",
       "add-visualization-button": "添加可视化",
       "add-visualization-header": "通过添加可视化开始您的新仪表板",
       "add-widget-body": "创建列表、Markdown 和其他小部件",
       "add-widget-button": "添加小部件",
       "add-widget-header": "添加一个小部件",
-      "import-a-dashboard-body": "从文件或 <1>grafana.com/</1> 导入仪表板。",
+      "import-a-dashboard-body": "",
       "import-a-dashboard-header": "导入仪表板",
       "import-dashboard-button": "导入仪表板"
     },
@@ -342,13 +369,20 @@
       "validation-required": "需要一个仪表板 JSON 模型"
     }
   },
+  "dashboard-links": {
+    "empty-state": {
+      "button-title": "",
+      "info-box-content": "",
+      "title": ""
+    }
+  },
   "dashboard-settings": {
     "annotations": {
       "title": "注释"
     },
     "dashboard-delete-button": "删除仪表板",
     "general": {
-      "auto-refresh-description": "定义自动刷新列表中可用的自动刷新间隔。",
+      "auto-refresh-description": "",
       "auto-refresh-label": "自动刷新",
       "description-label": "描述",
       "editable-description": "设置为只读以禁用所有编辑。重新加载仪表板以使更改生效",
@@ -392,6 +426,13 @@
       "title": "版本"
     }
   },
+  "data-source-list": {
+    "empty-state": {
+      "button-title": "",
+      "pro-tip": "",
+      "title": ""
+    }
+  },
   "data-source-picker": {
     "add-new-data-source": "配置新数据源",
     "built-in-list": {
@@ -412,6 +453,9 @@
   "data-sources": {
     "datasource-add-button": {
       "label": "添加新数据源"
+    },
+    "empty-state": {
+      "message": ""
     }
   },
   "explore": {
@@ -534,15 +578,15 @@
     "toolbar": {
       "aria-label": "浏览 工具栏",
       "copy-link": "复制网址",
-      "copy-link-abs-time": "复制绝对网址",
+      "copy-link-abs-time": "",
       "copy-links-absolute-category": "时间同步网址链接（保持时间范围共享）",
       "copy-links-normal-category": "正常链接地址",
       "copy-shortened-link": "复制短网址",
-      "copy-shortened-link-abs-time": "复制绝对短网址",
-      "copy-shortened-link-menu": "打开短链接菜单",
+      "copy-shortened-link-abs-time": "",
+      "copy-shortened-link-menu": "",
       "refresh-picker-cancel": "取消",
       "refresh-picker-run": "运行查询",
-      "split-close": "关闭",
+      "split-close": "",
       "split-close-tooltip": "关闭拆分窗格",
       "split-narrow": "窄窗格",
       "split-title": "拆分",
@@ -556,9 +600,6 @@
   "grafana-ui": {
     "drawer": {
       "close": "关闭"
-    },
-    "empty-state": {
-      "not-found-message": ""
     },
     "modal": {
       "close-tooltip": "关闭"
@@ -584,9 +625,9 @@
   "help-modal": {
     "shortcuts-category": {
       "dashboard": "仪表板",
-      "focused-panel": "聚焦面板",
+      "focused-panel": "",
       "global": "全局",
-      "time-range": "时间范围"
+      "time-range": ""
     },
     "shortcuts-description": {
       "change-theme": "更改主题",
@@ -644,6 +685,10 @@
     },
     "add-widget": {
       "title": "从面板库中添加面板"
+    },
+    "empty-state": {
+      "message": "",
+      "more-info": ""
     }
   },
   "library-panels": {
@@ -651,7 +696,7 @@
       "message": ""
     },
     "modal": {
-      "button-cancel": "<0>取消</0>",
+      "button-cancel": "",
       "button-view-panel1": "在 {{label}} 中查看面板...",
       "button-view-panel2": "在仪表板中查看面板...",
       "panel-not-linked": "面板没有链接到仪表板。请将面板添加到仪表板，然后重试。",
@@ -708,6 +753,8 @@
       "connect": "连接到这个堆栈",
       "connecting": "正在连接此堆栈...",
       "title": "连接到云堆栈",
+      "token-error-description": "",
+      "token-error-title": "",
       "token-required-error": "迁移令牌是必需项"
     },
     "cta": {
@@ -917,7 +964,7 @@
       "title": "创建"
     },
     "create-alert": {
-      "title": "创建警报规则"
+      "title": ""
     },
     "create-dashboard": {
       "title": "仪表板"
@@ -1005,7 +1052,7 @@
       "title": "迁移到Grafana Cloud"
     },
     "monitoring": {
-      "subtitle": "监控和基础设施应用",
+      "subtitle": "",
       "title": "可观测性"
     },
     "new": {
@@ -1147,6 +1194,10 @@
     "title": "最新博客"
   },
   "notifications": {
+    "empty-state": {
+      "description": "",
+      "title": ""
+    },
     "starred-dashboard": "仪表盘已加星标",
     "unstarred-dashboard": "仪表板未加星标"
   },
@@ -1210,13 +1261,17 @@
       "confirm-text": "删除"
     },
     "empty": {
-      "button": "创建播放列表",
-      "pro-tip": "您可以使用播放列表来循环电视上的仪表板而不受用户控制",
-      "pro-tip-link-title": "了解更多",
+      "button": "",
+      "pro-tip": "",
       "title": "尚未创建播放列表"
     }
   },
   "playlists": {
+    "empty-state": {
+      "message": ""
+    }
+  },
+  "plugins": {
     "empty-state": {
       "message": ""
     }
@@ -1321,6 +1376,10 @@
       "orphaned-title": "<0>孤立的公共仪表板</0>",
       "orphaned-tooltip": "链接的仪表板已被删除"
     },
+    "empty-state": {
+      "message": "",
+      "more-info": ""
+    },
     "toggle": {
       "pause-sharing-toggle-text": "暂停共享"
     }
@@ -1423,6 +1482,14 @@
       "placeholder": "搜索仪表板"
     }
   },
+  "service-accounts": {
+    "empty-state": {
+      "button-title": "",
+      "message": "",
+      "more-info": "",
+      "title": ""
+    }
+  },
   "share-modal": {
     "dashboard": {
       "title": "分享"
@@ -1451,7 +1518,7 @@
       "info-text": "创建指向此仪表板或面板的直接链接，通过以下选项自定义。",
       "link-url": "链接网址",
       "render-alert": "未安装图像渲染器插件",
-      "render-instructions": "要渲染面板图像，需要安装 <1>Grafana 图像渲染器插件</1>。请联系您的 Grafana 管理员安装此插件。",
+      "render-instructions": "",
       "rendered-image": "直接链接至渲染后的图像",
       "save-alert": "仪表板未保存",
       "save-dashboard": "要渲染面板图像，需要先保存仪表板。",
@@ -1540,7 +1607,17 @@
     },
     "title": "首选项"
   },
+  "silences": {
+    "empty-state": {
+      "button-title": "",
+      "title": ""
+    }
+  },
   "snapshot": {
+    "empty-state": {
+      "message": "",
+      "more-info": ""
+    },
     "external-badge": "外部",
     "name-column-header": "名称",
     "url-column-header": "快照网址",
@@ -1550,6 +1627,14 @@
     "loading": "加载中...",
     "no-tags": "未找到标签",
     "placeholder": "按标签筛选"
+  },
+  "teams": {
+    "empty-state": {
+      "button-title": "",
+      "message": "",
+      "pro-tip": "",
+      "title": ""
+    }
   },
   "time-picker": {
     "absolute": {
@@ -1644,6 +1729,11 @@
   "user-sessions": {
     "loading": "正在加载会话..."
   },
+  "users": {
+    "empty-state": {
+      "message": ""
+    }
+  },
   "users-access-list": {
     "tabs": {
       "public-dashboard-users-tab-title": "公共仪表板用户"
@@ -1664,6 +1754,14 @@
     },
     "textbox": {
       "placeholder": "输入变量值"
+    }
+  },
+  "variables": {
+    "empty-state": {
+      "button-title": "",
+      "info-box-content": "",
+      "info-box-content-2": "",
+      "title": ""
     }
   }
 }

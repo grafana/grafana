@@ -170,6 +170,16 @@ describe('Tempo data source', () => {
             valueType: 'string',
           },
         ],
+        groupBy: [
+          {
+            id: 'groupBy1',
+            tag: '$interpolationVar',
+          },
+          {
+            id: 'groupBy2',
+            tag: '$interpolationVar',
+          },
+        ],
       };
     }
     let templateSrv: TemplateSrv;
@@ -202,6 +212,8 @@ describe('Tempo data source', () => {
       expect(queries[0].filters[0].value).toBe(textWithPipe);
       expect(queries[0].filters[1].value).toBe(text);
       expect(queries[0].filters[1].tag).toBe(text);
+      expect(queries[0].groupBy?.[0].tag).toBe(text);
+      expect(queries[0].groupBy?.[1].tag).toBe(text);
     });
 
     it('when applying template variables', async () => {
@@ -214,6 +226,8 @@ describe('Tempo data source', () => {
       expect(resp.filters[0].value).toBe(textWithPipe);
       expect(resp.filters[1].value).toBe(scopedText);
       expect(resp.filters[1].tag).toBe(scopedText);
+      expect(resp.groupBy?.[0].tag).toBe(scopedText);
+      expect(resp.groupBy?.[1].tag).toBe(scopedText);
     });
 
     it('when serviceMapQuery is an array', async () => {

@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	acdb "github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -200,13 +201,12 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 
 func setupDB(b testing.TB) benchScenario {
 	b.Helper()
-	db := sqlstore.InitTestDB(b)
+	db, cfg := sqlstore.InitTestDB(b)
 	IDs := map[int64]struct{}{}
 
 	opts := sqlstore.NativeSettingsForDialect(db.GetDialect())
 
 	quotaService := quotatest.New(false, nil)
-	cfg := setting.NewCfg()
 
 	teamSvc, err := teamimpl.ProvideService(db, cfg)
 	require.NoError(b, err)
@@ -459,10 +459,10 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 
 	cfg := setting.NewCfg()
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
-		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
+		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, resourcepermissions.NewActionSetService())
 	require.NoError(b, err)
 	dashboardPermissions, err := ossaccesscontrol.ProvideDashboardPermissions(
-		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
+		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, resourcepermissions.NewActionSetService())
 	require.NoError(b, err)
 
 	dashboardSvc, err := dashboardservice.ProvideDashboardServiceImpl(

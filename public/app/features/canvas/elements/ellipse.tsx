@@ -106,6 +106,7 @@ export const ellipseItem: CanvasElementItem<CanvasElementConfig, CanvasElementDa
       height: options?.placement?.height ?? 138,
       top: options?.placement?.top,
       left: options?.placement?.left,
+      rotation: options?.placement?.rotation ?? 0,
     },
   }),
 
@@ -189,6 +190,24 @@ export const ellipseItem: CanvasElementItem<CanvasElementConfig, CanvasElementDa
         },
       });
   },
+
+  customConnectionAnchors: [
+    // points along the left edge
+    { x: -1, y: 0 }, // middle left
+    { x: -0.7, y: 0.7 },
+
+    // points along the top edge
+    { x: 0, y: 1 }, // top
+    { x: 0.7, y: 0.7 },
+
+    // points along the right edge
+    { x: 1, y: 0 }, // middle right
+    { x: 0.7, y: -0.7 },
+
+    // points along the bottom edge
+    { x: 0, y: -1 }, // bottom
+    { x: -0.7, y: -0.7 },
+  ],
 };
 
 const getStyles = (theme: GrafanaTheme2, data: CanvasElementData | undefined) => {

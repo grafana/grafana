@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/sqleng"
+	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/sqleng"
 
 	_ "github.com/lib/pq"
 )
