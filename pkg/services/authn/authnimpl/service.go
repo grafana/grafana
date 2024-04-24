@@ -188,14 +188,13 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (i
 		return nil, err
 	}
 
-	namespace, namespaceID := id.GetNamespacedID()
 	// Login is only supported for users
-	if namespace != authn.NamespaceUser {
+	if !id.ID.IsNamespace(authn.NamespaceUser) {
 		s.metrics.failedLogin.WithLabelValues(client).Inc()
-		return nil, authn.ErrUnsupportedIdentity.Errorf("expected identity of type user but got: %s", namespace)
+		return nil, authn.ErrUnsupportedIdentity.Errorf("expected identity of type user but got: %s", id.ID.Namespace())
 	}
 
-	intId, err := identity.IntIdentifier(namespace, namespaceID)
+	userID, err := id.ID.ParseInt()
 	if err != nil {
 		return nil, err
 	}
@@ -206,7 +205,7 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (i
 		s.log.FromContext(ctx).Debug("Failed to parse ip from address", "client", c.Name(), "id", id.ID, "addr", addr, "error", err)
 	}
 
-	sessionToken, err := s.sessionService.CreateToken(ctx, &user.User{ID: intId}, ip, r.HTTPRequest.UserAgent())
+	sessionToken, err := s.sessionService.CreateToken(ctx, &user.User{ID: userID}, ip, r.HTTPRequest.UserAgent())
 	if err != nil {
 		s.metrics.failedLogin.WithLabelValues(client).Inc()
 		s.log.FromContext(ctx).Error("Failed to create session", "client", client, "id", id.ID, "err", err)
@@ -340,7 +339,7 @@ func (s *Service) resolveIdenity(ctx context.Context, orgID int64, namespaceID a
 	if namespaceID.IsNamespace(authn.NamespaceUser) {
 		return &authn.Identity{
 			OrgID: orgID,
-			ID:    namespaceID.String(),
+			ID:    namespaceID,
 			ClientParams: authn.ClientParams{
 				AllowGlobalOrg:  true,
 				FetchSyncedUser: true,
@@ -350,7 +349,7 @@ func (s *Service) resolveIdenity(ctx context.Context, orgID int64, namespaceID a
 
 	if namespaceID.IsNamespace(authn.NamespaceServiceAccount) {
 		return &authn.Identity{
-			ID:    namespaceID.String(),
+			ID:    namespaceID,
 			OrgID: orgID,
 			ClientParams: authn.ClientParams{
 				AllowGlobalOrg:  true,

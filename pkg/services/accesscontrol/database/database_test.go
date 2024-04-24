@@ -392,12 +392,13 @@ func createUsersAndTeams(t *testing.T, store db.DB, svcs helperServices, orgID i
 }
 
 func setupTestEnv(t testing.TB) (*AccessControlStore, rs.Store, user.Service, team.Service, org.Service) {
-	sql, cfg := db.InitTestDBwithCfg(t)
+	sql, cfg := db.InitTestDBWithCfg(t)
 	cfg.AutoAssignOrg = true
 	cfg.AutoAssignOrgRole = "Viewer"
 	cfg.AutoAssignOrgId = 1
 	acstore := ProvideService(sql)
-	permissionStore := rs.NewStore(sql, featuremgmt.WithFeatures())
+	asService := rs.NewActionSetService()
+	permissionStore := rs.NewStore(sql, featuremgmt.WithFeatures(), &asService)
 	teamService, err := teamimpl.ProvideService(sql, cfg)
 	require.NoError(t, err)
 	orgService, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
