@@ -76,8 +76,6 @@ type GetUserByEmailQuery struct {
 	Email string
 }
 
-// UpdateUserCommand is used to update a user. All fields except userID is optional and only
-// fields with values will be updated.
 type UpdateUserCommand struct {
 	Name  string `json:"name"`
 	Email string `json:"email"`
