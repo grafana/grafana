@@ -4,6 +4,7 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, SceneObject, SceneObjectState } from '@grafana/scenes';
 import { Drawer, useStyles2 } from '@grafana/ui';
+import { Props as DrawerProps } from '@grafana/ui/src/components/Drawer/Drawer';
 import appEvents from 'app/core/app_events';
 import { ShowModalReactEvent } from 'app/types/events';
 
@@ -11,14 +12,14 @@ export type SceneDrawerProps = {
   scene: SceneObject;
   title: string;
   onDismiss: () => void;
-};
+} & Partial<DrawerProps>;
 
 export function SceneDrawer(props: SceneDrawerProps) {
-  const { scene, title, onDismiss } = props;
+  const { scene, title, onDismiss, size = 'lg', ...rest } = props;
   const styles = useStyles2(getStyles);
 
   return (
-    <Drawer title={title} onClose={onDismiss} size="lg">
+    <Drawer title={title} onClose={onDismiss} {...rest} size={size}>
       <div className={styles.drawerInnerWrapper}>
         <scene.Component model={scene} />
       </div>
