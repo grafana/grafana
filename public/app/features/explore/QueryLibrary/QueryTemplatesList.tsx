@@ -11,7 +11,7 @@ import { ActionsCell } from './cell/ActionsCell';
 import { AddedByCell } from './cell/AddedByCell';
 import { DatasourceTypeCell } from './cell/DatasourceTypeCell';
 import { DateAddedCell } from './cell/DateAddedCell';
-import { TitleCell } from './cell/TitleCell';
+import { QueryDescriptionCell } from './cell/QueryDescriptionCell';
 import { QueryTemplateRow } from './utils/view';
 
 const timestampSort: SortByFn<QueryTemplateRow> = (rowA, rowB, _, desc) => {
@@ -21,7 +21,7 @@ const timestampSort: SortByFn<QueryTemplateRow> = (rowA, rowB, _, desc) => {
 };
 
 const columns: Array<Column<QueryTemplateRow>> = [
-  { id: 'query', header: 'Data source and query', cell: TitleCell },
+  { id: 'query', header: 'Data source and query', cell: QueryDescriptionCell },
   { id: 'addedBy', header: 'Added by', cell: AddedByCell },
   { id: 'datasourceType', header: 'Datasource type', cell: DatasourceTypeCell, sortType: 'string' },
   { id: 'dateAdded', header: 'Date added', cell: DateAddedCell, sortType: timestampSort },
