@@ -332,17 +332,16 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 const getStylesActionCell = () => {
   return {
-    actionCellWrapper: css`
-      label: actionCellWrapper;
-      display: flex;
-      height: 24px;
-    `,
-
-    actionCellButton: css`
-      label: actionCellButton;
-      margin-right: 0;
-      width: 24px;
-    `,
+    actionCellWrapper: css({
+      label: 'actionCellWrapper',
+      display: 'flex',
+      height: '24px',
+    }),
+    actionCellButton: css({
+      label: 'actionCellButton',
+      marginRight: 0,
+      width: '24px',
+    }),
   };
 };
 
