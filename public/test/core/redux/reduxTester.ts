@@ -38,7 +38,6 @@ export const reduxTester = <State>(args?: ReduxTesterArguments<State>): ReduxTes
   const logActionsMiddleWare: Middleware<{}, Partial<StoreState>> = (store) => (next) => (action) => {
     // filter out thunk actions
     if (action && typeof action !== 'function') {
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       dispatchedActions.push(action as AnyAction);
     }
 
