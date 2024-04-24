@@ -3,22 +3,18 @@ import React, { useState, useEffect } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { TabbedContainer, TabConfig } from '@grafana/ui';
+import { EmptyState, TabbedContainer, TabConfig } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { SortOrder, RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistory';
 import { RichHistoryQuery } from 'app/types/explore';
 
 import { supportedFeatures } from '../../../core/history/richHistoryStorageProvider';
+import { Tabs, useQueriesDrawerContext } from '../QueriesDrawer/QueriesDrawerContext';
+import { i18n } from '../QueriesDrawer/utils';
 
 import { RichHistoryQueriesTab } from './RichHistoryQueriesTab';
 import { RichHistorySettingsTab } from './RichHistorySettingsTab';
 import { RichHistoryStarredTab } from './RichHistoryStarredTab';
-
-export enum Tabs {
-  RichHistory = 'Query history',
-  Starred = 'Starred',
-  Settings = 'Settings',
-}
 
 export const getSortOrderOptions = () =>
   [
@@ -48,6 +44,8 @@ export function RichHistory(props: RichHistoryProps) {
   const { richHistory, richHistoryTotal, height, deleteRichHistory, onClose, firstTab } = props;
 
   const [loading, setLoading] = useState(false);
+
+  const { queryLibraryAvailable } = useQueriesDrawerContext();
 
   const updateSettings = (settingsToUpdate: Partial<RichHistorySettings>) => {
     props.updateHistorySettings({ ...props.richHistorySettings, ...settingsToUpdate });
@@ -84,8 +82,15 @@ export function RichHistory(props: RichHistoryProps) {
     setLoading(false);
   }, [richHistory]);
 
+  const QueryLibraryTab: TabConfig = {
+    label: i18n.queryLibrary,
+    value: Tabs.QueryLibrary,
+    content: <EmptyState message="Coming soon!" variant="not-found" />,
+    icon: 'book',
+  };
+
   const QueriesTab: TabConfig = {
-    label: t('explore.rich-history.query-history', 'Query history'),
+    label: i18n.queryHistory,
     value: Tabs.RichHistory,
     content: (
       <RichHistoryQueriesTab
@@ -138,7 +143,7 @@ export function RichHistory(props: RichHistoryProps) {
     icon: 'sliders-v-alt',
   };
 
-  let tabs = [QueriesTab, StarredTab, SettingsTab];
+  let tabs = (queryLibraryAvailable ? [QueryLibraryTab] : []).concat([QueriesTab, StarredTab, SettingsTab]);
   return (
     <TabbedContainer
       tabs={tabs}

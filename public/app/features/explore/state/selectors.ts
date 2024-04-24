@@ -7,6 +7,8 @@ import { ExploreItemState, StoreState } from 'app/types';
 export const selectPanes = (state: Pick<StoreState, 'explore'>) => state.explore.panes;
 export const selectExploreRoot = (state: Pick<StoreState, 'explore'>) => state.explore;
 
+export const selectRichHistorySettings = (state: Pick<StoreState, 'explore'>) => state.explore.richHistorySettings;
+
 export const selectPanesEntries = createSelector<
   [(state: Pick<StoreState, 'explore'>) => Record<string, ExploreItemState | undefined>],
   Array<[string, ExploreItemState]>
@@ -25,8 +27,6 @@ export const isLeftPaneSelector = (exploreId: string) =>
 export const getExploreItemSelector = (exploreId: string) => createSelector(selectPanes, (panes) => panes[exploreId]);
 
 export const selectCorrelationDetails = createSelector(selectExploreRoot, (state) => state.correlationEditorDetails);
-
-export const selectShowQueryHistory = createSelector(selectExploreRoot, (state) => state.showQueryHistory);
 
 export const selectExploreDSMaps = createSelector(selectPanesEntries, (panes) => {
   const exploreDSMap = panes

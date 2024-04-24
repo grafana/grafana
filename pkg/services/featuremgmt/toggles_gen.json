@@ -2088,6 +2088,21 @@
         "hideFromAdminPage": true,
         "hideFromDocs": true
       }
+    },
+    {
+      "metadata": {
+        "name": "queryLibrary",
+        "resourceVersion": "1713260947272",
+        "creationTimestamp": "2024-04-16T07:18:28Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-04-16 09:49:07.272595 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables Query Library feature in Explore",
+        "stage": "experimental",
+        "codeowner": "@grafana/explore-squad"
+      }
     }
   ]
 }
