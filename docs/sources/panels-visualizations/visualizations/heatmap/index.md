@@ -174,11 +174,15 @@ When you set the **Tooltip mode** to **Single**, this option is displayed. This 
 
 Choose whether you want to display the heatmap legend on the visualization.
 
+### Data links
+
+{{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+3" >}}
+
 ### Exemplars
 
 Set the color used to show exemplar data.
 
 {{% docs/reference %}}
-[Introduction to histograms and heatmaps]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/intro-histograms"
-[Introduction to histograms and heatmaps]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/intro-histograms"
+[Introduction to histograms and heatmaps]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/fundamentals/intro-histograms"
+[Introduction to histograms and heatmaps]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/fundamentals/intro-histograms"
 {{% /docs/reference %}}
