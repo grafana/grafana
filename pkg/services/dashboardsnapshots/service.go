@@ -41,16 +41,16 @@ func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg dashboardsnapshot.S
 		return
 	}
 
-	if cmd.DashboardCreateCommand.Name == "" {
-		cmd.DashboardCreateCommand.Name = "Unnamed snapshot"
-	}
-
 	id := cmd.DashboardCreateCommand.Dashboard.GetNestedFloat64("id")
 
 	_, err := svc.FindDashboard(c.Req.Context(), c.SignedInUser.GetOrgID(), int64(id))
 	if err != nil {
 		c.JsonApiErr(http.StatusInternalServerError, "Failed to find dashboard", err)
 		return
+	}
+
+	if cmd.DashboardCreateCommand.Name == "" {
+		cmd.DashboardCreateCommand.Name = "Unnamed snapshot"
 	}
 
 	userID, err := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
