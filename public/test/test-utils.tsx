@@ -82,8 +82,7 @@ const customRender = (
   ui: React.ReactElement,
   { renderWithRouter = true, ...renderOptions }: ExtendedRenderOptions = {}
 ) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const store = renderOptions.preloadedState ? configureStore(renderOptions?.preloadedState as any) : undefined;
+  const store = renderOptions.preloadedState ? configureStore(renderOptions?.preloadedState) : undefined;
   const AllTheProviders = renderOptions.wrapper || getWrapper({ store, renderWithRouter, ...renderOptions });
 
   return {
