@@ -40,7 +40,7 @@ In Grafana, there are two ways to template your alert notification messages:
 
 This diagram illustrates the entire process of templating, from the creation of labels and annotations in alert rules or notification templates in contact points, to what they look like when exported and applied in your alert notification messages.
 
-{{< figure src="/media/docs/alerting/templating-diagram.jpg" max-width="1200px" caption="How Templating works" >}}
+{{< figure src="/media/docs/alerting/grafana-templating-diagram.jpg" max-width="1200px" caption="How Templating works" >}}
 
 In this diagram:
 
