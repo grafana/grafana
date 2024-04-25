@@ -12,8 +12,7 @@ const (
 	LowerCaseUserLoginAndEmail = "update login and email fields to lowercase"
 )
 
-// Service accounts login were not unique per org. this migration is part of making it unique per org
-// to be able to create service accounts that are unique per org
+// AddLowerCaseUserLoginAndEmail adds a migration that updates the login and email fields of all users to be in lower case.
 func AddLowerCaseUserLoginAndEmail(mg *migrator.Migrator) {
 	mg.AddMigration(LowerCaseUserLoginAndEmail, &UsersLowerCaseLoginAndEmail{})
 }
@@ -41,25 +40,27 @@ func (p *UsersLowerCaseLoginAndEmail) Exec(sess *xorm.Session, mg *migrator.Migr
 			LOGIN
 		*/
 		lowerLogin := strings.ToLower(usr.Login)
+		// only work through if login is not already in lower case
+		if usr.Login != lowerLogin {
+			// Check if lower login exists
+			existingLowerCasedUserLogin := &user.User{}
 
-		// Check if lower login exists
-		existingLowerCasedUserLogin := &user.User{}
-
-		// lowercaseexists in database
-		hasLowerCasedLogin, err := sess.Table("user").Where("login = ?", lowerLogin).Get(existingLowerCasedUserLogin)
-		if err != nil {
-			return err
-		}
-
-		// If exact login does not exist and lower case login does not exist, update the user's login to be in lower case
-		if !hasLowerCasedLogin {
-			uLogin := user.User{
-				Name:  usr.Name,
-				Login: lowerLogin,
-			}
-			_, err := sess.ID(usr.ID).Update(&uLogin)
+			// lowercaseexists in database
+			hasLowerCasedLogin, err := sess.Table("user").Where("login = ?", lowerLogin).Get(existingLowerCasedUserLogin)
 			if err != nil {
 				return err
+			}
+
+			// If exact login does not exist and lower case login does not exist, update the user's login to be in lower case
+			if !hasLowerCasedLogin {
+				uLogin := user.User{
+					Name:  usr.Name,
+					Login: lowerLogin,
+				}
+				_, err := sess.ID(usr.ID).Update(&uLogin)
+				if err != nil {
+					return err
+				}
 			}
 		}
 
@@ -67,22 +68,24 @@ func (p *UsersLowerCaseLoginAndEmail) Exec(sess *xorm.Session, mg *migrator.Migr
 			EMAIL
 		*/
 		lowerEmail := strings.ToLower(usr.Email)
-
-		// Check if lower case email exists
-		existingUserEmail := &user.User{}
-		hasLowerCasedEmail, err := sess.Table("user").Where("email = ?", lowerEmail).Get(existingUserEmail)
-		if err != nil {
-			return err
-		}
-		// If lower case email does not exist, update the user's email to be in lower case
-		if !hasLowerCasedEmail {
-			uEmail := user.User{
-				Name:  usr.Name,
-				Email: lowerEmail,
-			}
-			_, err := sess.ID(usr.ID).Update(&uEmail)
+		// only work through if email is not already in lower case
+		if usr.Email != lowerEmail {
+			// Check if lower case email exists
+			existingUserEmail := &user.User{}
+			hasLowerCasedEmail, err := sess.Table("user").Where("email = ?", lowerEmail).Get(existingUserEmail)
 			if err != nil {
 				return err
+			}
+			// If lower case email does not exist, update the user's email to be in lower case
+			if !hasLowerCasedEmail {
+				uEmail := user.User{
+					Name:  usr.Name,
+					Email: lowerEmail,
+				}
+				_, err := sess.ID(usr.ID).Update(&uEmail)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
