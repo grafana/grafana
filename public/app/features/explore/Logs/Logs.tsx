@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { capitalize } from 'lodash';
+import { capitalize, groupBy } from 'lodash';
 import memoizeOne from 'memoize-one';
 import React, { createRef, PureComponent } from 'react';
 
@@ -32,7 +32,7 @@ import {
   urlUtil,
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { DataQuery, TimeZone } from '@grafana/schema';
+import { DataQuery, DataTopic, TimeZone } from '@grafana/schema';
 import {
   Button,
   InlineField,
@@ -217,6 +217,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
   registerLogLevelsWithContentOutline = () => {
     const logVolumeDataFrames = new Set(this.props.logsVolumeData?.data);
+    // TODO remove this once filtering multiple log volumes is supported
+    const numberOfLogVolumes = this.getNumberOfLogVolumes();
 
     // clean up all current log levels
     const logsParent = this.context?.outlineItems.find((item) => item.panelId === 'Logs' && item.level === 'root');
@@ -224,7 +226,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
       this.context?.unregisterAllChildren(logsParent.id, 'filter');
     }
 
-    if (logVolumeDataFrames.size > 1 && this.props.logsVolumeEnabled) {
+    if (logVolumeDataFrames.size > 1 && this.props.logsVolumeEnabled && numberOfLogVolumes === 1) {
       logVolumeDataFrames.forEach((dataFrame) => {
         const { level } = getLogLevelInfo(dataFrame);
         const allLevelsSelected = this.state.hiddenLogLevels.length === 0;
@@ -260,6 +262,15 @@ class UnthemedLogs extends PureComponent<Props, State> {
       );
     }
   };
+
+  getNumberOfLogVolumes() {
+    const data = this.props.logsVolumeData?.data.filter(
+      (frame: DataFrame) => frame.meta?.dataTopic !== DataTopic.Annotations
+    );
+    const grouped = groupBy(data, 'meta.custom.datasourceName');
+    const numberOfLogVolumes = Object.keys(grouped).length;
+    return numberOfLogVolumes;
+  }
 
   componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>): void {
     if (this.props.loading && !prevProps.loading && this.props.panelState?.logs?.id) {
