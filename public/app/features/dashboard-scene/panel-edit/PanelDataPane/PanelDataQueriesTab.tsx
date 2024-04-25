@@ -2,7 +2,7 @@ import React from 'react';
 
 import { CoreApp, DataSourceApi, DataSourceInstanceSettings, IconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import { SceneObjectBase, SceneComponentProps, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 import { Button, HorizontalGroup, Tab } from '@grafana/ui';
@@ -120,7 +120,15 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
   newQuery(): Partial<DataQuery> {
     const { dsSettings, datasource } = this._panelManager.state;
 
-    const ds = !dsSettings?.meta.mixed ? dsSettings : datasource;
+    let ds;
+    if (!dsSettings?.meta.mixed) {
+      ds = dsSettings; // Use dsSettings if it is not mixed
+    } else if (!datasource?.meta.mixed) {
+      ds = datasource; // Use datasource if dsSettings is mixed but datasource is not
+    } else {
+      // Use default datasource if both are mixed or just datasource is mixed
+      ds = getDataSourceSrv().getInstanceSettings(config.defaultDatasource);
+    }
 
     return {
       ...datasource?.getDefaultQuery?.(CoreApp.PanelEditor),
