@@ -66,7 +66,7 @@ Add a member to a new Team or add a team member to an existing Team when you wan
 
 To add a team member, complete the following steps:
 
-1. 1. Sign in to Grafana as an `org administrator` or `team administrator`.
+1. Sign in to Grafana as an `org administrator` or `team administrator`.
 1. Click the arrow next to **Administration** in the left-side menu, click **Users and access**, and select **Teams**. 
 1. Click the name of the Team to which you want to add members, and click **+ Add member**.
 1. Search for and select a user.
