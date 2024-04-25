@@ -21,11 +21,18 @@ func TestExternalOrgRoleMapper_MapOrgRoles(t *testing.T) {
 		expected           map[int64]org.RoleType
 	}{
 		{
+			name:               "should return the default mapping when no org mapping settings are provided and directly mapped role is not set",
+			externalOrgs:       []string{},
+			orgMappingSettings: []string{},
+			directlyMappedRole: "",
+			expected:           map[int64]org.RoleType{2: org.RoleViewer},
+		},
+		{
 			name:               "should return the default mapping when no org mapping settings are provided",
 			externalOrgs:       []string{},
 			orgMappingSettings: []string{},
-			directlyMappedRole: org.RoleViewer,
-			expected:           map[int64]org.RoleType{2: org.RoleViewer},
+			directlyMappedRole: org.RoleEditor,
+			expected:           map[int64]org.RoleType{2: org.RoleEditor},
 		},
 		{
 			name:               "should return the default mapping when org mapping doesn't match any of the external orgs and no directly mapped role is not provided",
@@ -84,28 +91,35 @@ func TestExternalOrgRoleMapper_MapOrgRoles(t *testing.T) {
 			expected:           map[int64]org.RoleType{1: org.RoleEditor, 2: org.RoleEditor, 3: org.RoleEditor},
 		},
 		{
-			name:               "should map correctly when a global org mapping is provided",
+			name:               "should map correctly when global org mapping is provided",
+			externalOrgs:       []string{"First", "Second", "Third"},
+			orgMappingSettings: []string{"First:1:Viewer", "*:1:Editor", "Second:2:Viewer"},
+			directlyMappedRole: "",
+			expected:           map[int64]org.RoleType{1: org.RoleEditor, 2: org.RoleViewer},
+		},
+		{
+			name:               "should map correctly and respect wildcard precedence when global org mapping is provided",
 			externalOrgs:       []string{"First", "Second"},
 			orgMappingSettings: []string{"*:1:Editor", "First:1:Viewer", "Second:2:Viewer"},
 			directlyMappedRole: "",
 			expected:           map[int64]org.RoleType{1: org.RoleEditor, 2: org.RoleViewer},
 		},
 		{
-			name:               "should map directly mapped role when a global org mapping is provided and the directly mapped role is higher than the role found in the org mappings",
+			name:               "should map directly mapped role when global org mapping is provided and the directly mapped role is higher than the role found in the org mappings",
 			externalOrgs:       []string{"First", "Second", "Third"},
 			orgMappingSettings: []string{"First:1:Viewer", "*:1:Editor", "Second:2:Viewer"},
 			directlyMappedRole: org.RoleAdmin,
 			expected:           map[int64]org.RoleType{1: org.RoleAdmin, 2: org.RoleAdmin},
 		},
 		{
-			name:               "should map correctly when multiple org mappings are provided for the same org",
+			name:               "should map correctly and respect the mapping precedence when multiple org mappings are provided for the same org",
 			externalOrgs:       []string{"First"},
 			orgMappingSettings: []string{"First:1:Editor", "First:1:Viewer"},
 			directlyMappedRole: "",
 			expected:           map[int64]org.RoleType{1: org.RoleViewer},
 		},
 		{
-			name:               "should map to all organizations when a global org mapping is provided and the directly mapped role is higher than the role found in the org mappings",
+			name:               "should map to all organizations when global org mapping is provided and the directly mapped role is higher than the role found in the org mappings",
 			externalOrgs:       []string{"First"},
 			orgMappingSettings: []string{"First:*:Editor"},
 			directlyMappedRole: org.RoleAdmin,
