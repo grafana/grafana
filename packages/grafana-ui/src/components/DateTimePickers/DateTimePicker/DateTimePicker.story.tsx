@@ -7,8 +7,7 @@ import { dateTime, DateTime } from '@grafana/data';
 import { DateTimePicker } from './DateTimePicker';
 import mdx from './DateTimePicker.mdx';
 
-// const today = new Date();
-const today = '2024-04-16T23:59:41.000000Z';
+const today = new Date();
 
 // minimum date is initially set to 7 days before to allow the user
 // to quickly see its effects
@@ -68,14 +67,14 @@ export const Basic: StoryFn<typeof DateTimePicker> = ({ label, minDate, maxDate,
   const [date, setDate] = useState<DateTime>(dateTime(today));
   // the minDate arg can change from Date object to number, we need to handle this
   // scenario to avoid a crash in the component's story.
-  // const minDateVal = typeof minDate === 'number' ? new Date(minDate) : minDate;
-  // const maxDateVal = typeof maxDate === 'number' ? new Date(maxDate) : maxDate;
+  const minDateVal = typeof minDate === 'number' ? new Date(minDate) : minDate;
+  const maxDateVal = typeof maxDate === 'number' ? new Date(maxDate) : maxDate;
 
   return (
     <DateTimePicker
       label={label}
-      // minDate={minDateVal}
-      // maxDate={maxDateVal}
+      minDate={minDateVal}
+      maxDate={maxDateVal}
       date={date}
       showSeconds={showSeconds}
       onChange={(newValue) => {
