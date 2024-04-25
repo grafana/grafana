@@ -4,7 +4,7 @@ import { useAsync } from 'react-use';
 
 import { DataFrame, GrafanaTheme2, isDataFrame, ValueLinkConfig } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { useStyles2, Spinner, TabsBar, Tab, Button, Stack, Alert, toIconName } from '@grafana/ui';
+import { useStyles2, Spinner, TabsBar, Tab, Button, Stack, Box, Alert, toIconName } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
@@ -163,7 +163,7 @@ export default function StoragePage(props: Props) {
 
     return (
       <div className={styles.wrapper}>
-        <Stack justifyContent="space-between" gap={2}>
+        <Box display="flex" justifyContent="space-between" width="100%" height={3}>
           <Breadcrumb pathName={path} onPathChange={setPath} rootIcon={toIconName(navModel.node.icon ?? '')} />
           <Stack>
             {canAddFolder && (
@@ -201,7 +201,7 @@ export default function StoragePage(props: Props) {
               </Button>
             )}
           </Stack>
-        </Stack>
+        </Box>
 
         {errorMessages.length > 0 && getErrorMessages()}
 
