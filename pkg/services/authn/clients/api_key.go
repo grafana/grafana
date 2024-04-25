@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apikey"
-	authidentity "github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -141,7 +140,7 @@ func (s *APIKey) Namespace() string {
 
 func (s *APIKey) ResolveIdentity(ctx context.Context, orgID int64, namespaceID authn.NamespaceID) (*authn.Identity, error) {
 	if !namespaceID.IsNamespace(authn.NamespaceAPIKey) {
-		return nil, authn.ErrInvalidNamepsaceID.Errorf("got unspected namespace: %s", namespaceID.Namespace())
+		return nil, authn.ErrInvalidNamespaceID.Errorf("got unspected namespace: %s", namespaceID.Namespace())
 	}
 
 	apiKeyID, err := namespaceID.ParseInt()
@@ -161,7 +160,7 @@ func (s *APIKey) ResolveIdentity(ctx context.Context, orgID int64, namespaceID a
 	}
 
 	if key.ServiceAccountId != nil && *key.ServiceAccountId >= 1 {
-		return nil, authn.ErrInvalidNamepsaceID.Errorf("api key belongs to service account")
+		return nil, authn.ErrInvalidNamespaceID.Errorf("api key belongs to service account")
 	}
 
 	return newAPIKeyIdentity(key), nil
@@ -189,18 +188,17 @@ func (s *APIKey) Hook(ctx context.Context, identity *authn.Identity, r *authn.Re
 }
 
 func (s *APIKey) getAPIKeyID(ctx context.Context, identity *authn.Identity, r *authn.Request) (apiKeyID int64, exists bool) {
-	namespace, identifier := identity.GetNamespacedID()
-
-	id, err := authidentity.IntIdentifier(namespace, identifier)
+	id, err := identity.ID.ParseInt()
 	if err != nil {
 		s.log.Warn("Failed to parse ID from identifier", "err", err)
 		return -1, false
 	}
-	if namespace == authn.NamespaceAPIKey {
+
+	if identity.ID.IsNamespace(authn.NamespaceAPIKey) {
 		return id, true
 	}
 
-	if namespace == authn.NamespaceServiceAccount {
+	if identity.ID.IsNamespace(authn.NamespaceServiceAccount) {
 		// When the identity is service account, the ID in from the namespace is the service account ID.
 		// We need to fetch the API key in this scenario, as we could use it to uniquely identify a service account token.
 		apiKey, err := s.getAPIKey(ctx, getTokenFromRequest(r))
@@ -211,6 +209,7 @@ func (s *APIKey) getAPIKeyID(ctx context.Context, identity *authn.Identity, r *a
 
 		return apiKey.ID, true
 	}
+
 	return -1, false
 }
 
