@@ -12,9 +12,9 @@ export function renderHistogram(
   if (histCtx != null) {
     let fromIdx = index;
 
-    while (xVals[fromIdx--] === xVals[index]) {}
-
-    fromIdx++;
+    while (xVals[fromIdx - 1] === xVals[index]) {
+      fromIdx--;
+    }
 
     let toIdx = fromIdx + yBucketCount;
 
