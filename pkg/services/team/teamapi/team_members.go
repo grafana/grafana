@@ -77,13 +77,12 @@ func (tapi *TeamAPI) addTeamMember(c *contextmodel.ReqContext) response.Response
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	cmd.OrgID = c.SignedInUser.GetOrgID()
-	cmd.TeamID, err = strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
+	teamID, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
-	isTeamMember, err := tapi.teamService.IsTeamMember(c.SignedInUser.GetOrgID(), cmd.TeamID, cmd.UserID)
+	isTeamMember, err := tapi.teamService.IsTeamMember(c.SignedInUser.GetOrgID(), teamID, cmd.UserID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to add team member.", err)
 	}
@@ -91,7 +90,7 @@ func (tapi *TeamAPI) addTeamMember(c *contextmodel.ReqContext) response.Response
 		return response.Error(http.StatusBadRequest, "User is already added to this team", nil)
 	}
 
-	err = addOrUpdateTeamMember(c.Req.Context(), tapi.teamPermissionsService, cmd.UserID, cmd.OrgID, cmd.TeamID, getPermissionName(cmd.Permission))
+	err = addOrUpdateTeamMember(c.Req.Context(), tapi.teamPermissionsService, cmd.UserID, c.SignedInUser.GetOrgID(), teamID, team.MemberPermissionName)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to add Member to Team", err)
 	}
