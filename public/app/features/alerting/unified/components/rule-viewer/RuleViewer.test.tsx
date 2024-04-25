@@ -2,7 +2,7 @@ import React from 'react';
 import { render, waitFor, screen, userEvent } from 'test/test-utils';
 import { byText, byRole } from 'testing-library-selector';
 
-import { setBackendSrv, setPluginExtensionGetter } from '@grafana/runtime';
+import { setBackendSrv, setPluginExtensionsHook } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { AccessControlAction } from 'app/types';
 import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
@@ -46,9 +46,9 @@ const ELEMENTS = {
         delete: byRole('menuitem', { name: /Delete/i }),
       },
       pluginActions: {
-        sloDashboard: byRole('menuitem', { name: /SLO dashboard/i }),
+        sloDashboard: byRole('link', { name: /SLO dashboard/i }),
         declareIncident: byRole('link', { name: /Declare incident/i }),
-        assertsWorkbench: byRole('menuitem', { name: /Open workbench/i }),
+        assertsWorkbench: byRole('link', { name: /Open workbench/i }),
       },
     },
   },
@@ -59,7 +59,7 @@ const { apiHandlers: pluginApiHandlers } = setupPlugins(plugins.slo, plugins.inc
 const server = createMockGrafanaServer(...pluginApiHandlers);
 
 setupDataSources(mockDataSource({ type: DataSourceType.Prometheus, name: 'mimir-1' }));
-setPluginExtensionGetter(() => ({
+setPluginExtensionsHook(() => ({
   extensions: [
     mockPluginLinkExtension({ pluginId: 'grafana-slo-app', title: 'SLO dashboard', path: '/a/grafana-slo-app' }),
     mockPluginLinkExtension({
@@ -68,6 +68,7 @@ setPluginExtensionGetter(() => ({
       path: '/a/grafana-asserts-app',
     }),
   ],
+  isLoading: false,
 }));
 
 beforeAll(() => {
