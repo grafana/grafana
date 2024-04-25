@@ -319,7 +319,7 @@ Please use the following endpoints instead:
 - `GET /api/access-control/datasources/:uid` for listing data source permissions
 - `POST /api/access-control/datasources/:uid/users/:id`, `POST /api/access-control/datasources/:uid/teams/:id` and `POST /api/access-control/datasources/:uid/buildInRoles/:id` for adding or removing data source permissions
 
-If you are using Terraform Grafana provider to manage data source permissions, you will need to upgrade your provider to [version 2.6.0](https://registry.terraform.io/providers/grafana/grafana/2.6.0/docs) or newer to ensure that data source permission provisioning keeps working. Issue [#5880](https://github.com/grafana/grafana/issues/5880)
+If you are using Terraform Grafana provider to manage data source permissions, you will need to upgrade your provider to [version 2.6.0](https://registry.terraform.io/providers/grafana/grafana/2.6.0/docs) or newer to ensure that data source permission provisioning keeps working.
 
 ### Deprecations
 
