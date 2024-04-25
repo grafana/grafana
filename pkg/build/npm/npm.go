@@ -22,7 +22,6 @@ var packages = []string{
 	"@grafana/ui",
 	"@grafana/data",
 	"@grafana/runtime",
-	"@grafana/e2e",
 	"@grafana/e2e-selectors",
 	"@grafana/schema",
 	"@grafana/flamegraph",
