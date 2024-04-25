@@ -67,11 +67,11 @@ export const SaveProvisionedDashboardForm = ({ dashboard, onCancel }: Omit<SaveD
 };
 
 const styles = {
-  json: css`
-    height: 400px;
-    width: 100%;
-    overflow: auto;
-    resize: none;
-    font-family: monospace;
-  `,
+  json: css({
+    height: '400px',
+    width: '100%',
+    overflow: 'auto',
+    resize: 'none',
+    fontFamily: 'monospace',
+  }),
 };

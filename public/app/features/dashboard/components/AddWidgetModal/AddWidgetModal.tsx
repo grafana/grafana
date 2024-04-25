@@ -68,19 +68,18 @@ export const AddWidgetModal = () => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  modal: css`
-    width: 65%;
-    max-width: 960px;
-
-    ${theme.breakpoints.down('md')} {
-      width: 100%;
-    }
-  `,
-  searchInput: css`
-    margin-bottom: ${theme.spacing(2)};
-  `,
-  grid: css`
-    display: grid;
-    grid-gap: ${theme.spacing(1)};
-  `,
+  modal: css({
+    width: '65%',
+    maxWidth: '960px',
+    [theme.breakpoints.down('md')]: {
+      width: '100%',
+    },
+  }),
+  searchInput: css({
+    marginBottom: theme.spacing(2),
+  }),
+  grid: css({
+    display: 'grid',
+    gridGap: theme.spacing(1),
+  }),
 });

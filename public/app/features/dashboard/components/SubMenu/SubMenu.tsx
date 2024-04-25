@@ -80,20 +80,19 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
-    formStyles: css`
-      display: flex;
-      flex-wrap: wrap;
-      display: contents;
-    `,
-    submenu: css`
-      display: flex;
-      flex-direction: row;
-      flex-wrap: wrap;
-      align-content: flex-start;
-      align-items: flex-start;
-      gap: ${theme.spacing(1)} ${theme.spacing(2)};
-      padding: 0 0 ${theme.spacing(1)} 0;
-    `,
+    formStyles: css({
+      display: 'contents',
+      flexWrap: 'wrap',
+    }),
+    submenu: css({
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignContent: 'flex-start',
+      alignItems: 'flex-start',
+      gap: `${theme.spacing(1)} ${theme.spacing(2)}`,
+      padding: `0 0 ${theme.spacing(1)} 0`,
+    }),
     spacer: css({
       flexGrow: 1,
     }),
