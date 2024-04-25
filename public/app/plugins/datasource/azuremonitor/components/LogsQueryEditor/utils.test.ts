@@ -1,4 +1,4 @@
-import { shouldShowBasicLogsToggle } from './utils';
+import { calculateTimeRange, shouldShowBasicLogsToggle } from './utils';
 
 describe('LogsQueryEditor utils', () => {
   describe('shouldShowBasicLogsToggle', () => {
@@ -49,6 +49,37 @@ describe('LogsQueryEditor utils', () => {
           true
         )
       ).toBe(true);
+    });
+  });
+
+  describe('calculateTimeRange', () => {
+    it('should correctly calculate the time range in days', () => {
+      const from = Date.now() - 1000 * 60 * 60 * 24 * 3; // 3 days ago
+      const to = Date.now();
+
+      const result = calculateTimeRange(from, to);
+
+      // The result should be approximately 3
+      expect(result).toBeCloseTo(3, 0);
+    });
+
+    it('should return 0 when from and to are the same', () => {
+      const from = Date.now();
+      const to = from;
+
+      const result = calculateTimeRange(from, to);
+
+      expect(result).toBe(0);
+    });
+
+    it('should return a negative number when from is later than to', () => {
+      const from = Date.now();
+      const to = from - 1000 * 60 * 60 * 24; // 1 day ago
+
+      const result = calculateTimeRange(from, to);
+
+      // The result should be approximately -1
+      expect(result).toBeCloseTo(-1, 0);
     });
   });
 });
