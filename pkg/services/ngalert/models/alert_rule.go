@@ -564,6 +564,9 @@ type AlertRuleVersion struct {
 	Condition       string
 	Data            []AlertQuery
 	IntervalSeconds int64
+	Record          string
+	RecordFrom      string
+	RecordTo        *DataSourceRef
 	NoDataState     NoDataState
 	ExecErrState    ExecutionErrorState
 	// ideally this field should have been apimodels.ApiDuration
@@ -764,4 +767,14 @@ func GroupByAlertRuleGroupKey(rules []*AlertRule) map[AlertRuleGroupKey]RulesGro
 type DataSourceRef struct {
 	Type string
 	UID  string
+}
+
+// FromDB implements Conversion from xorm, and tells the ORM to store this object as a JSON blob in the database.
+func (dsr *DataSourceRef) FromDB(b []byte) error {
+	return json.Unmarshal(b, dsr)
+}
+
+// ToDB implements Conversion from xorm, and tells the ORM to store this object as a JSON blob in the database.
+func (dsr *DataSourceRef) ToDB() ([]byte, error) {
+	return json.Marshal(dsr)
 }

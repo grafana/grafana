@@ -161,6 +161,9 @@ func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRu
 				For:                  r.For,
 				Annotations:          r.Annotations,
 				Labels:               r.Labels,
+				Record:               r.Record,
+				RecordFrom:           r.RecordFrom,
+				RecordTo:             r.RecordTo,
 				NotificationSettings: r.NotificationSettings,
 			})
 		}
