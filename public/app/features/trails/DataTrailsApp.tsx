@@ -96,10 +96,7 @@ export function getDataTrailsApp() {
     // Set the initial state of the newTrail based on the URL,
     // In case we are initializing from an externally created URL or a page reload
     getUrlSyncManager().initSync(newTrail);
-    // Any further changes to the state should occur directly to the state, not through the URL.
-    // We want to stop automatically syncing the URL state (and vice versa) to the trail after this point.
-    // Moving forward in the lifecycle of the trail, we will make explicit calls to trail.syncTrailToUrl()
-    // so we can ensure the URL is kept up to date at key points.
+    // Remove the URL sync for now. It will be restored on the trail if it is activated.
     getUrlSyncManager().cleanUp(newTrail);
 
     // If one of the recent trails is a match to the newTrail derived from the current URL,

@@ -32,7 +32,11 @@ export const trailDS = { uid: VAR_DATASOURCE_EXPR };
 
 // Local storage keys
 export const RECENT_TRAILS_KEY = 'grafana.trails.recent';
+
+/** @deprecated replaced by BOOKMARKED_TRAIL_STATES_KEY */
 export const BOOKMARKED_TRAILS_KEY = 'grafana.trails.bookmarks';
+
+export const BOOKMARKED_STATES_KEY = 'grafana.trails.bookmarkedStates';
 
 export type MakeOptional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 
