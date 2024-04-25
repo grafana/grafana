@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/login/social/socialtest"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
@@ -92,7 +91,7 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 			)
 
 			service := &oauthtokentest.MockOauthTokenService{
-				HasOAuthEntryFunc: func(ctx context.Context, usr identity.Requester) (*login.UserAuth, bool, error) {
+				HasOAuthEntryFunc: func(ctx context.Context, usr authn.Requester) (*login.UserAuth, bool, error) {
 					hasEntryCalled = true
 					return tt.expectedHasEntryToken, tt.expectedHasEntryToken != nil, nil
 				},
@@ -100,7 +99,7 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 					invalidateTokensCalled = true
 					return nil
 				},
-				TryTokenRefreshFunc: func(ctx context.Context, usr identity.Requester) error {
+				TryTokenRefreshFunc: func(ctx context.Context, usr authn.Requester) error {
 					tryRefreshCalled = true
 					return tt.expectedTryRefreshErr
 				},
