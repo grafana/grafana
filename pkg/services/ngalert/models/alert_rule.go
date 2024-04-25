@@ -517,6 +517,16 @@ func (alertRule *AlertRule) ValidateAlertRule(cfg setting.UnifiedAlertingSetting
 		}
 	}
 
+	if alertRule.Record != "" {
+		return fmt.Errorf("%w: Storing recording rules is not yet allowed.", ErrAlertRuleFailedValidation)
+	}
+	if alertRule.RecordFrom != "" {
+		return fmt.Errorf("%w: Storing recording rules is not yet allowed.", ErrAlertRuleFailedValidation)
+	}
+	if alertRule.RecordTo != nil {
+		return fmt.Errorf("%w: Storing recording rules is not yet allowed.", ErrAlertRuleFailedValidation)
+	}
+
 	if len(alertRule.NotificationSettings) > 0 {
 		if len(alertRule.NotificationSettings) != 1 {
 			return fmt.Errorf("%w: only one notification settings entry is allowed", ErrAlertRuleFailedValidation)
