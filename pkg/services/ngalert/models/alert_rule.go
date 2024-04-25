@@ -240,6 +240,9 @@ type AlertRule struct {
 	PanelID         *int64  `xorm:"panel_id"`
 	RuleGroup       string
 	RuleGroupIndex  int `xorm:"rule_group_idx"`
+	Record          string
+	RecordFrom      string
+	RecordTo        *DataSourceRef
 	NoDataState     NoDataState
 	ExecErrState    ExecutionErrorState
 	// ideally this field should have been apimodels.ApiDuration
@@ -756,4 +759,9 @@ func GroupByAlertRuleGroupKey(rules []*AlertRule) map[AlertRuleGroupKey]RulesGro
 		group.SortByGroupIndex()
 	}
 	return result
+}
+
+type DataSourceRef struct {
+	Type string
+	UID  string
 }
