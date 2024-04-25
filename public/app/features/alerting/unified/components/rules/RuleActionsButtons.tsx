@@ -12,8 +12,8 @@ import { useDispatch } from 'app/types';
 import { CombinedRule, RuleIdentifier, RulesSource } from 'app/types/unified-alerting';
 
 import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
-import { fetchAllPromAndRulerRulesAction } from '../../state/actions';
-import { getRulesSourceName } from '../../utils/datasource';
+import { fetchPromRulesAction, fetchRulerRulesAction } from '../../state/actions';
+import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName } from '../../utils/datasource';
 import { createViewLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
 import { isGrafanaRulerRule } from '../../utils/rules';
@@ -127,7 +127,8 @@ export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton
           // Trigger a re-fetch of the rules table
           // TODO: Migrate rules table functionality to RTK Query, so we instead rely
           // on tag invalidation (or optimistic cache updates) for this
-          dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts }));
+          dispatch(fetchPromRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME, limitAlerts }));
+          dispatch(fetchRulerRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME }));
         }}
       />
       {deleteModal}
