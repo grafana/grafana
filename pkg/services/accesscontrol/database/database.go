@@ -360,9 +360,14 @@ func (s *AccessControlStore) SynchronizeUserData(ctx context.Context, zanzanaSer
 		return err
 	}
 
+	// Sync org memberships
 	if err := s.syncOrgMembership(ctx, cl); err != nil {
 		return err
 	}
+
+	// Sync Team memberships
+
+	// Sync Managed permissions
 
 	return nil
 }
@@ -370,9 +375,6 @@ func (s *AccessControlStore) SynchronizeUserData(ctx context.Context, zanzanaSer
 func (s *AccessControlStore) syncOrgMembership(ctx context.Context, cl *zclient.GRPCClient) error {
 	tupleKeys := map[string]*openfgav1.TupleKey{}
 	logger := log.New("accesscontrol.syncOrgs")
-
-	// parameter this
-	basicRoles := accesscontrol.BuildBasicRoleDefinitions()
 
 	// should we use UID as the user identifier?
 	query := `SELECT user_id, org_id, role FROM org_user`
@@ -411,7 +413,7 @@ func (s *AccessControlStore) syncOrgMembership(ctx context.Context, cl *zclient.
 			key = &openfgav1.TupleKey{
 				User:     "user:" + strconv.FormatInt(memb.UserId, 10), // "user:1"
 				Relation: "assignee",
-				Object:   "role:" + basicRoles[memb.Role].UID, // "role:basic_admin"
+				Object:   zclient.GenerateBasicRoleResource(memb.Role, memb.OrgId), // "role:basic_admin_1"
 			}
 
 			// basic role

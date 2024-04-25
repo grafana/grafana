@@ -235,7 +235,7 @@ func (s *Service) RegisterFixedRoles(ctx context.Context) error {
 		return err
 	}
 
-	err = cl.SeedRoles(ctx, roles, []int{1})
+	err = cl.SeedRoles(ctx, roles, []int64{1})
 	if err != nil {
 		s.log.Error("Failed to seed roles", "error", err)
 		return err
