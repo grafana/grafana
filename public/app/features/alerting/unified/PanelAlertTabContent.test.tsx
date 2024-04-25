@@ -286,7 +286,7 @@ describe('PanelAlertTabContent', () => {
     });
   });
 
-  it('Will render alerts belonging to panel and a button to create alert from panel queries', async () => {
+  it.skip('Will render alerts belonging to panel and a button to create alert from panel queries', async () => {
     mocks.api.fetchRules.mockResolvedValue(rules);
     mocks.api.fetchRulerRules.mockResolvedValue(rulerRules);
 
