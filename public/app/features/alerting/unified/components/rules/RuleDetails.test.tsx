@@ -7,7 +7,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { byRole } from 'testing-library-selector';
 
 import { PluginExtensionTypes } from '@grafana/data';
-import { getPluginLinkExtensions, setBackendSrv } from '@grafana/runtime';
+import { usePluginLinkExtensions, setBackendSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
@@ -26,7 +26,7 @@ import { RuleDetails } from './RuleDetails';
 jest.mock('../../hooks/useIsRuleEditable');
 
 const mocks = {
-  getPluginLinkExtensionsMock: jest.mocked(getPluginLinkExtensions),
+  usePluginLinkExtensionsMock: jest.mocked(usePluginLinkExtensions),
   useIsRuleEditable: jest.mocked(useIsRuleEditable),
 };
 
@@ -62,7 +62,7 @@ afterAll(() => {
 });
 
 beforeEach(() => {
-  mocks.getPluginLinkExtensionsMock.mockReturnValue({
+  mocks.usePluginLinkExtensionsMock.mockReturnValue({
     extensions: [
       {
         pluginId: 'grafana-ml-app',
@@ -74,6 +74,7 @@ beforeEach(() => {
         onClick: jest.fn(),
       },
     ],
+    isLoading: false,
   });
   server.resetHandlers();
   mockAlertmanagerChoiceResponse(server, alertmanagerChoiceMockedResponse);

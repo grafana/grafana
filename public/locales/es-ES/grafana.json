@@ -25,6 +25,14 @@
       "user": "Usuario"
     }
   },
+  "annotations": {
+    "empty-state": {
+      "button-title": "",
+      "info-box-content": "",
+      "info-box-content-2": "",
+      "title": ""
+    }
+  },
   "api-keys": {
     "empty-state": {
       "message": ""
@@ -71,6 +79,12 @@
       "select-all-header-checkbox": "Seleccionar todo",
       "select-checkbox": "Seleccionar",
       "tags-column": "Etiquetas"
+    },
+    "empty-state": {
+      "button-title": "",
+      "pro-tip": "",
+      "title": "",
+      "title-folder": ""
     },
     "folder-actions-button": {
       "delete": "Eliminar",
@@ -158,6 +172,11 @@
       "label-required": "Este campo es obligatorio.",
       "sub-text": "<0>Defina el texto que describirá la correlación.</0>",
       "title": "Definir la etiqueta de correlación (paso 1 de 3)"
+    },
+    "empty-state": {
+      "button-title": "",
+      "pro-tip": "",
+      "title": ""
     },
     "list": {
       "delete": "eliminar correlación",
@@ -355,6 +374,13 @@
       "validation-required": "Se necesita un modelo JSON del tablero"
     }
   },
+  "dashboard-links": {
+    "empty-state": {
+      "button-title": "",
+      "info-box-content": "",
+      "title": ""
+    }
+  },
   "dashboard-settings": {
     "annotations": {
       "title": "Anotaciones"
@@ -403,6 +429,13 @@
     },
     "versions": {
       "title": "Versiones"
+    }
+  },
+  "data-source-list": {
+    "empty-state": {
+      "button-title": "",
+      "pro-tip": "",
+      "title": ""
     }
   },
   "data-source-picker": {
@@ -657,6 +690,10 @@
     },
     "add-widget": {
       "title": "Añadir panel de la biblioteca de paneles"
+    },
+    "empty-state": {
+      "message": "",
+      "more-info": ""
     }
   },
   "library-panels": {
@@ -1230,9 +1267,8 @@
       "confirm-text": "Eliminar"
     },
     "empty": {
-      "button": "Crear lista de reproducción",
-      "pro-tip": "Puede usar las listas de reproducción para crear ciclos de tableros en televisiones sin control de usuario",
-      "pro-tip-link-title": "Más información",
+      "button": "",
+      "pro-tip": "",
       "title": "Aún no se ha creado ninguna lista de reproducción"
     }
   },
@@ -1346,6 +1382,10 @@
       "orphaned-title": "<0>Tablero público huérfano</0>",
       "orphaned-tooltip": "El tablero vinculado ya se ha eliminado"
     },
+    "empty-state": {
+      "message": "",
+      "more-info": ""
+    },
     "toggle": {
       "pause-sharing-toggle-text": "Pausar el uso compartido"
     }
@@ -1450,7 +1490,10 @@
   },
   "service-accounts": {
     "empty-state": {
-      "message": ""
+      "button-title": "",
+      "message": "",
+      "more-info": "",
+      "title": ""
     }
   },
   "share-modal": {
@@ -1570,7 +1613,17 @@
     },
     "title": "Preferencias"
   },
+  "silences": {
+    "empty-state": {
+      "button-title": "",
+      "title": ""
+    }
+  },
   "snapshot": {
+    "empty-state": {
+      "message": "",
+      "more-info": ""
+    },
     "external-badge": "Externo",
     "name-column-header": "Nombre",
     "url-column-header": "URL de la instantánea",
@@ -1583,7 +1636,10 @@
   },
   "teams": {
     "empty-state": {
-      "message": ""
+      "button-title": "",
+      "message": "",
+      "pro-tip": "",
+      "title": ""
     }
   },
   "time-picker": {
@@ -1704,6 +1760,14 @@
     },
     "textbox": {
       "placeholder": "Introducir el valor de la variable"
+    }
+  },
+  "variables": {
+    "empty-state": {
+      "button-title": "",
+      "info-box-content": "",
+      "info-box-content-2": "",
+      "title": ""
     }
   }
 }

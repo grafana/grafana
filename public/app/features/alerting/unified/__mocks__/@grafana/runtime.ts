@@ -5,4 +5,5 @@ module.exports = {
   ...original,
   useReturnToPrevious: jest.fn(),
   getPluginLinkExtensions: jest.fn(),
+  usePluginLinkExtensions: jest.fn(),
 };

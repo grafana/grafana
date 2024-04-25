@@ -14,6 +14,7 @@ import {
   locationService,
   setBackendSrv,
   setDataSourceSrv,
+  usePluginLinkExtensions,
 } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
@@ -76,6 +77,7 @@ jest.spyOn(actions, 'rulesInSameGroupHaveInvalidFor').mockReturnValue([]);
 const mocks = {
   getAllDataSourcesMock: jest.mocked(config.getAllDataSources),
   getPluginLinkExtensionsMock: jest.mocked(getPluginLinkExtensions),
+  usePluginLinkExtensionsMock: jest.mocked(usePluginLinkExtensions),
   rulesInSameGroupHaveInvalidForMock: jest.mocked(actions.rulesInSameGroupHaveInvalidFor),
 
   api: {
@@ -196,7 +198,7 @@ describe('RuleList', () => {
       AccessControlAction.AlertingRuleExternalWrite,
     ]);
     mocks.rulesInSameGroupHaveInvalidForMock.mockReturnValue([]);
-    mocks.getPluginLinkExtensionsMock.mockReturnValue({
+    mocks.usePluginLinkExtensionsMock.mockReturnValue({
       extensions: [
         {
           pluginId: 'grafana-ml-app',
@@ -208,6 +210,7 @@ describe('RuleList', () => {
           onClick: jest.fn(),
         },
       ],
+      isLoading: false,
     });
   });
 
@@ -435,8 +438,10 @@ describe('RuleList', () => {
     await userEvent.click(ui.ruleCollapseToggle.get(ruleRows[1]));
 
     const ruleDetails = ui.expandedContent.get(ruleRows[1]);
+    const labels = byTestId('label-value').getAll(ruleDetails);
+    expect(labels[0]).toHaveTextContent('severitywarning');
+    expect(labels[1]).toHaveTextContent('foobar');
 
-    expect(ruleDetails).toHaveTextContent('Labels severitywarning foobar');
     expect(ruleDetails).toHaveTextContent('Expressiontopk ( 5 , foo ) [ 5m ]');
     expect(ruleDetails).toHaveTextContent('messagegreat alert');
     expect(ruleDetails).toHaveTextContent('Matching instances');
@@ -447,8 +452,8 @@ describe('RuleList', () => {
     const instanceRows = byTestId('row').getAll(instancesTable);
     expect(instanceRows).toHaveLength(2);
 
-    expect(instanceRows![0]).toHaveTextContent('Firing foobar severitywarning2021-03-18 08:47:05');
-    expect(instanceRows![1]).toHaveTextContent('Firing foobaz severityerror2021-03-18 08:47:05');
+    expect(instanceRows![0]).toHaveTextContent('Firingfoobarseveritywarning2021-03-18 08:47:05');
+    expect(instanceRows![1]).toHaveTextContent('Firingfoobazseverityerror2021-03-18 08:47:05');
 
     // expand details of an instance
     await userEvent.click(ui.ruleCollapseToggle.get(instanceRows![0]));
@@ -588,8 +593,9 @@ describe('RuleList', () => {
 
     await userEvent.click(ui.ruleCollapseToggle.get(ruleRows[0]));
     const ruleDetails = ui.expandedContent.get(ruleRows[0]);
-
-    expect(ruleDetails).toHaveTextContent('Labels severitywarning foobar');
+    const labels = byTestId('label-value').getAll(ruleDetails);
+    expect(labels[0]).toHaveTextContent('severitywarning');
+    expect(labels[1]).toHaveTextContent('foobar');
 
     // Check for different label matchers
     await userEvent.clear(filterInput);

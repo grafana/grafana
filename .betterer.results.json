@@ -7006,10 +7006,6 @@
           "count": 1
         },
         {
-          "path": "/packages/grafana-e2e/src/flows/addDataSource.ts",
-          "count": 1
-        },
-        {
           "path": "/packages/grafana-prometheus/src/components/PromExploreExtraField.tsx",
           "count": 4
         },

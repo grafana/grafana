@@ -25,6 +25,14 @@
       "user": "用户"
     }
   },
+  "annotations": {
+    "empty-state": {
+      "button-title": "",
+      "info-box-content": "",
+      "info-box-content-2": "",
+      "title": ""
+    }
+  },
   "api-keys": {
     "empty-state": {
       "message": ""
@@ -66,6 +74,12 @@
       "select-all-header-checkbox": "全选",
       "select-checkbox": "选择",
       "tags-column": "标签"
+    },
+    "empty-state": {
+      "button-title": "",
+      "pro-tip": "",
+      "title": "",
+      "title-folder": ""
     },
     "folder-actions-button": {
       "delete": "删除",
@@ -153,6 +167,11 @@
       "label-required": "此字段是必填字段。",
       "sub-text": "<0>定义将会描述关联的文本。</0>",
       "title": "定义关联标签（第 1 步，共 3 步）"
+    },
+    "empty-state": {
+      "button-title": "",
+      "pro-tip": "",
+      "title": ""
     },
     "list": {
       "delete": "删除关联",
@@ -350,6 +369,13 @@
       "validation-required": "需要一个仪表板 JSON 模型"
     }
   },
+  "dashboard-links": {
+    "empty-state": {
+      "button-title": "",
+      "info-box-content": "",
+      "title": ""
+    }
+  },
   "dashboard-settings": {
     "annotations": {
       "title": "注释"
@@ -398,6 +424,13 @@
     },
     "versions": {
       "title": "版本"
+    }
+  },
+  "data-source-list": {
+    "empty-state": {
+      "button-title": "",
+      "pro-tip": "",
+      "title": ""
     }
   },
   "data-source-picker": {
@@ -652,6 +685,10 @@
     },
     "add-widget": {
       "title": "从面板库中添加面板"
+    },
+    "empty-state": {
+      "message": "",
+      "more-info": ""
     }
   },
   "library-panels": {
@@ -1224,9 +1261,8 @@
       "confirm-text": "删除"
     },
     "empty": {
-      "button": "创建播放列表",
-      "pro-tip": "您可以使用播放列表来循环电视上的仪表板而不受用户控制",
-      "pro-tip-link-title": "了解更多",
+      "button": "",
+      "pro-tip": "",
       "title": "尚未创建播放列表"
     }
   },
@@ -1340,6 +1376,10 @@
       "orphaned-title": "<0>孤立的公共仪表板</0>",
       "orphaned-tooltip": "链接的仪表板已被删除"
     },
+    "empty-state": {
+      "message": "",
+      "more-info": ""
+    },
     "toggle": {
       "pause-sharing-toggle-text": "暂停共享"
     }
@@ -1444,7 +1484,10 @@
   },
   "service-accounts": {
     "empty-state": {
-      "message": ""
+      "button-title": "",
+      "message": "",
+      "more-info": "",
+      "title": ""
     }
   },
   "share-modal": {
@@ -1564,7 +1607,17 @@
     },
     "title": "首选项"
   },
+  "silences": {
+    "empty-state": {
+      "button-title": "",
+      "title": ""
+    }
+  },
   "snapshot": {
+    "empty-state": {
+      "message": "",
+      "more-info": ""
+    },
     "external-badge": "外部",
     "name-column-header": "名称",
     "url-column-header": "快照网址",
@@ -1577,7 +1630,10 @@
   },
   "teams": {
     "empty-state": {
-      "message": ""
+      "button-title": "",
+      "message": "",
+      "pro-tip": "",
+      "title": ""
     }
   },
   "time-picker": {
@@ -1698,6 +1754,14 @@
     },
     "textbox": {
       "placeholder": "输入变量值"
+    }
+  },
+  "variables": {
+    "empty-state": {
+      "button-title": "",
+      "info-box-content": "",
+      "info-box-content-2": "",
+      "title": ""
     }
   }
 }
