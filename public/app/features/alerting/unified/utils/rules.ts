@@ -35,6 +35,7 @@ import { RuleHealth } from '../search/rulesSearchParser';
 
 import { RULER_NOT_SUPPORTED_MSG } from './constants';
 import { getRulesSourceName } from './datasource';
+import { GRAFANA_ORIGIN_LABEL } from './labels';
 import { AsyncRequestState } from './redux';
 import { safeParsePrometheusDuration } from './time';
 
@@ -101,8 +102,6 @@ export function getRuleHealth(health: string): RuleHealth | undefined {
       return undefined;
   }
 }
-
-export const GRAFANA_ORIGIN_LABEL = '__grafana_origin';
 
 export interface RuleOrigin {
   pluginId: string;

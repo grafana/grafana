@@ -12,7 +12,7 @@ import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSel
 import { fetchRulerRulesIfNotFetchedYet } from '../../../state/actions';
 import { SupportedPlugin } from '../../../types/pluginBridges';
 import { RuleFormValues } from '../../../types/rule-form';
-import { GRAFANA_ORIGIN_LABEL } from '../../../utils/rules';
+import { isPrivateLabelKey } from '../../../utils/labels';
 import AlertLabelDropdown from '../../AlertLabelDropdown';
 import { AlertLabels } from '../../AlertLabels';
 import { NeedHelpInfo } from '../NeedHelpInfo';
@@ -148,11 +148,7 @@ export function LabelsSubForm({ dataSourceName, onClose, initialLabels }: Labels
   );
 }
 
-const restrictedLabelKeys = new Set([GRAFANA_ORIGIN_LABEL]);
-
-function isKeyAllowed(labelKey: string): boolean {
-  return !restrictedLabelKeys.has(labelKey);
-}
+const isKeyAllowed = (labelKey: string) => !isPrivateLabelKey(labelKey);
 
 export function useCombinedLabels(
   dataSourceName: string,
