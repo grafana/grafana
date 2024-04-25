@@ -12,7 +12,7 @@ import (
 	"cuelang.org/go/pkg/encoding/yaml"
 	"github.com/dave/dst/decorator"
 	"github.com/dave/dst/dstutil"
-	"github.com/deepmap/oapi-codegen/pkg/codegen"
+	"github.com/deepmap/oapi-codegen/v2/pkg/codegen"
 	"github.com/getkin/kin-openapi/openapi3"
 	"golang.org/x/tools/imports"
 )
@@ -182,8 +182,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/deepmap/oapi-codegen/pkg/runtime"
-	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
+	"github.com/oapi-codegen/runtime"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-chi/chi/v5"
 	"github.com/labstack/echo/v4"
