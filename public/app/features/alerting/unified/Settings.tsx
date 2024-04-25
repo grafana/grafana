@@ -43,10 +43,10 @@ function SettingsContent() {
       ]}
     >
       <Stack direction="column" gap={2}>
-        {/* internal Alertmanager */}
+        {/* Grafana built-in Alertmanager */}
         <Text variant="h5">Built-in Alertmanager</Text>
         <InternalAlertmanager onEditConfiguration={showConfiguration} />
-        {/* external Alertmanagers (data sources) we have added to Grafana (vanilla, Mimir, Cortex) */}
+        {/* other (external Alertmanager data sources we have added to Grafana such as vanilla, Mimir, Cortex) */}
         <Text variant="h5">Other Alertmanagers</Text>
         <ExternalAlertmanagers onEditConfiguration={showConfiguration} />
       </Stack>
