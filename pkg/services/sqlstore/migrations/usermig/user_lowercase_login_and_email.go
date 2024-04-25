@@ -34,6 +34,8 @@ func (p *UsersLowerCaseLoginAndEmail) Exec(sess *xorm.Session, mg *migrator.Migr
 	if err != nil {
 		return err
 	}
+	processedLogins := make(map[string]bool)
+	processedEmails := make(map[string]bool)
 
 	for _, usr := range users {
 		/*
@@ -41,7 +43,7 @@ func (p *UsersLowerCaseLoginAndEmail) Exec(sess *xorm.Session, mg *migrator.Migr
 		*/
 		lowerLogin := strings.ToLower(usr.Login)
 		// only work through if login is not already in lower case
-		if usr.Login != lowerLogin {
+		if usr.Login != lowerLogin && !processedLogins[lowerLogin] {
 			// Check if lower login exists
 			existingLowerCasedUserLogin := &user.User{}
 
@@ -63,13 +65,14 @@ func (p *UsersLowerCaseLoginAndEmail) Exec(sess *xorm.Session, mg *migrator.Migr
 				}
 			}
 		}
+		processedLogins[lowerLogin] = true
 
 		/*
 			EMAIL
 		*/
 		lowerEmail := strings.ToLower(usr.Email)
 		// only work through if email is not already in lower case
-		if usr.Email != lowerEmail {
+		if usr.Email != lowerEmail && !processedEmails[lowerEmail] {
 			// Check if lower case email exists
 			existingUserEmail := &user.User{}
 			hasLowerCasedEmail, err := sess.Table("user").Where("email = ?", lowerEmail).Get(existingUserEmail)
@@ -88,6 +91,7 @@ func (p *UsersLowerCaseLoginAndEmail) Exec(sess *xorm.Session, mg *migrator.Migr
 				}
 			}
 		}
+		processedEmails[lowerEmail] = true
 	}
 	return nil
 }
