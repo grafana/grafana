@@ -6,7 +6,7 @@ import { GrafanaTheme2, ThemeSpacingTokens, ThemeShape, ThemeShadows } from '@gr
 import { useStyles2 } from '../../../themes';
 import { AlignItems, Direction, FlexProps, JustifyContent } from '../types';
 import { ResponsiveProp, getResponsiveStyle } from '../utils/responsiveness';
-import { getSizingStyles, SizeProps } from '../utils/styles';
+import { getSizeStyles, SizeProps } from '../utils/styles';
 
 type Display = 'flex' | 'block' | 'inline' | 'inline-block' | 'none';
 export type BackgroundColor = keyof GrafanaTheme2['colors']['background'] | 'error' | 'success' | 'warning' | 'info';
@@ -138,11 +138,11 @@ export const Box = forwardRef<HTMLElement, PropsWithChildren<BoxProps>>((props, 
     boxShadow,
     gap
   );
-  const sizingStyles = useStyles2(getSizingStyles, width, minWidth, maxWidth, height, minHeight, maxHeight);
+  const sizeStyles = useStyles2(getSizeStyles, width, minWidth, maxWidth, height, minHeight, maxHeight);
   const Element = element ?? 'div';
 
   return (
-    <Element ref={ref} className={cx(styles.root, sizingStyles)} {...rest}>
+    <Element ref={ref} className={cx(styles.root, sizeStyles)} {...rest}>
       {children}
     </Element>
   );

@@ -14,7 +14,7 @@ export interface SizeProps {
   maxHeight?: ResponsiveProp<Property.MaxHeight<number>>;
   height?: ResponsiveProp<Property.Height<number>>;
 }
-export const getSizingStyles = (
+export const getSizeStyles = (
   theme: GrafanaTheme2,
   width: SizeProps['width'],
   minWidth: SizeProps['minWidth'],
