@@ -71,7 +71,7 @@ export class TrailStore {
   private _loadBookmarkedStatesFromStorage() {
     const storageItem = localStorage.getItem(BOOKMARKED_STATES_KEY);
 
-    const list: SerializedBookmarkState[] = JSON.parse(storageItem);
+    const list: SerializedBookmarkState[] = storageItem ? JSON.parse(storageItem) : [];
     return list;
   }
 
