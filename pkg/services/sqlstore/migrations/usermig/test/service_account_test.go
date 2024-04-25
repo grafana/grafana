@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	usermig "github.com/grafana/grafana/pkg/services/sqlstore/migrations/user"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/usermig"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
