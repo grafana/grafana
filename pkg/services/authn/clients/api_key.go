@@ -140,7 +140,7 @@ func (s *APIKey) Namespace() string {
 
 func (s *APIKey) ResolveIdentity(ctx context.Context, orgID int64, namespaceID authn.NamespaceID) (*authn.Identity, error) {
 	if !namespaceID.IsNamespace(authn.NamespaceAPIKey) {
-		return nil, authn.ErrInvalidNamepsaceID.Errorf("got unspected namespace: %s", namespaceID.Namespace())
+		return nil, authn.ErrInvalidNamespaceID.Errorf("got unspected namespace: %s", namespaceID.Namespace())
 	}
 
 	apiKeyID, err := namespaceID.ParseInt()
@@ -160,7 +160,7 @@ func (s *APIKey) ResolveIdentity(ctx context.Context, orgID int64, namespaceID a
 	}
 
 	if key.ServiceAccountId != nil && *key.ServiceAccountId >= 1 {
-		return nil, authn.ErrInvalidNamepsaceID.Errorf("api key belongs to service account")
+		return nil, authn.ErrInvalidNamespaceID.Errorf("api key belongs to service account")
 	}
 
 	return newAPIKeyIdentity(key), nil

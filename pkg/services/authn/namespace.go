@@ -23,5 +23,5 @@ var (
 	NewNamespaceID          = identity.NewNamespaceID
 	MustNewNamespaceID      = identity.MustNewNamespaceID
 	NewNamespaceIDUnchecked = identity.NewNamespaceIDUnchecked
-	ErrInvalidNamepsaceID   = identity.ErrInvalidNamepsaceID
+	ErrInvalidNamespaceID   = identity.ErrInvalidNamespaceID
 )
