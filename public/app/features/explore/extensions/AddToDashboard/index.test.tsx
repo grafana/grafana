@@ -1,4 +1,3 @@
-import 'whatwg-fetch';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { ReactNode } from 'react';

@@ -41,6 +41,8 @@ Once you've [created a dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERS
 
 {{< youtube id="a9wZHM0mdxo" >}}
 
+{{< docs/play title="Grafana State Timeline & Status History" url="https://play.grafana.org/d/qD-rVv6Mz/6-state-timeline-and-status-history?orgId=1s" >}}
+
 ## Supported data formats
 
 The status history visualization works best if you have data capturing the various status of entities over time, formatted as a table. The data must include:
@@ -113,6 +115,10 @@ To assign colors to boolean or string values, use the [Value mappings][].
 When the legend option is enabled it can show either the value mappings or the threshold brackets. To show the value mappings in the legend, it's important that the `Color scheme` as referenced in [Color scheme][] is set to `Single color` or `Classic palette`. To see the threshold brackets in the legend set the `Color scheme` to `From thresholds`.
 
 {{< docs/shared lookup="visualizations/legend-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
+
+## Tooltip options
+
+{{< docs/shared lookup="visualizations/tooltip-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 {{% docs/reference %}}
 [Value mappings]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-value-mappings"
