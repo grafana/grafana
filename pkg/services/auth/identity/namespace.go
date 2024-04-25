@@ -37,7 +37,7 @@ func ParseNamespaceID(str string) (NamespaceID, error) {
 	namespace, id := parts[0], parts[1]
 
 	if _, ok := namespaceLookup[namespace]; !ok {
-		return namespaceID, ErrInvalidNamepsaceID.Errorf("got invalid namespace %s", namespace)
+		return namespaceID, ErrInvalidNamespaceID.Errorf("got invalid namespace %s", namespace)
 	}
 
 	namespaceID.id = id
@@ -60,7 +60,7 @@ func MustParseNamespaceID(str string) NamespaceID {
 func NewNamespaceID(namespace string, id int64) (NamespaceID, error) {
 	var namespaceID NamespaceID
 	if _, ok := namespaceLookup[namespace]; !ok {
-		return namespaceID, ErrInvalidNamepsaceID.Errorf("got invalid namespace %s", namespace)
+		return namespaceID, ErrInvalidNamespaceID.Errorf("got invalid namespace %s", namespace)
 	}
 	namespaceID.id = strconv.FormatInt(id, 10)
 	namespaceID.namespace = namespace
