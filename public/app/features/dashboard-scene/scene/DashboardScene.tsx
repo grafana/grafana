@@ -396,6 +396,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
         slug: meta.slug,
         currentQueryParams: location.search,
         updateQuery: { viewPanel: null, inspect: null, editview: null, editPanel: null, tab: null },
+        isHomeDashboard: !meta.url && !meta.slug && !meta.isNew,
       }),
     };
 
