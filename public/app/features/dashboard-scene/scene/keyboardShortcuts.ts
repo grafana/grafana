@@ -146,7 +146,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
 export function withFocusedPanel(scene: DashboardScene, fn: (vizPanel: VizPanel) => void) {
   return () => {
     const elements = document.querySelectorAll(':hover');
-    const focusedGridElement = document.activeElement?.closest('[data-viz-panel-key]');
+    const focusedGridElement = document.querySelector(':focus-visible')?.closest('[data-viz-panel-key]');
 
     if (focusedGridElement instanceof HTMLElement && focusedGridElement.dataset?.vizPanelKey) {
       const panelKey = focusedGridElement.dataset?.vizPanelKey;
