@@ -193,11 +193,12 @@ func (s *APIKey) getAPIKeyID(ctx context.Context, identity *authn.Identity, r *a
 		s.log.Warn("Failed to parse ID from identifier", "err", err)
 		return -1, false
 	}
-	if namespace == authn.NamespaceAPIKey {
+
+	if identity.ID.IsNamespace(authn.NamespaceAPIKey) {
 		return id, true
 	}
 
-	if namespace == authn.NamespaceServiceAccount {
+	if identity.ID.IsNamespace(authn.NamespaceServiceAccount) {
 		// When the identity is service account, the ID in from the namespace is the service account ID.
 		// We need to fetch the API key in this scenario, as we could use it to uniquely identify a service account token.
 		apiKey, err := s.getAPIKey(ctx, getTokenFromRequest(r))
@@ -208,6 +209,7 @@ func (s *APIKey) getAPIKeyID(ctx context.Context, identity *authn.Identity, r *a
 
 		return apiKey.ID, true
 	}
+
 	return -1, false
 }
 
