@@ -377,8 +377,9 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
         .setTitle('')
         .setOption('showTypeIcons', true)
         .setOption('showHeader', true)
-        // this needs to use same instance as the queries tab is subscribing to it
-        .setData(this.queryRunner)
+        // Here we are breaking a scene rule and changing the parent of the main panel data provider
+        // But we need to share this same instance as the queries tab is subscribing to it
+        .setData(this.dataTransformer)
         .build(),
     });
   }
