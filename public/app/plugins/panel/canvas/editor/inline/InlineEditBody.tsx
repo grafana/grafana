@@ -34,7 +34,7 @@ export function InlineEditBody() {
   const pane = useMemo(() => {
     const p = activePanel?.panel;
     const state: InstanceState = instanceState;
-    if (!state || !p) {
+    if (!(state && state.scene) || !p) {
       return new OptionsPaneCategoryDescriptor({ id: 'root', title: 'root' });
     }
 
