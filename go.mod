@@ -52,7 +52,6 @@ require (
 	github.com/grafana/grafana-aws-sdk v0.25.0 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.0.1 // @grafana/partner-datasources
 	github.com/grafana/grafana-plugin-sdk-go v0.226.0 // @grafana/plugins-platform-backend
-	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/grafana-backend-group
 	github.com/hashicorp/go-hclog v1.6.3 // @grafana/plugins-platform-backend
 	github.com/hashicorp/go-plugin v1.6.0 // @grafana/plugins-platform-backend
 	github.com/hashicorp/go-version v1.6.0 // @grafana/grafana-backend-group
@@ -471,7 +470,9 @@ require github.com/getkin/kin-openapi v0.120.0 // @grafana/grafana-as-code
 
 require github.com/grafana/authlib v0.0.0-20240328140636-a7388d0bac72 // @grafana/identity-access-team
 
-require github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.0.1 // indirect
+require github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.0.1
+
+require github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0 // @grafana/grafana-backend-group
 
 require (
 	cloud.google.com/go/auth v0.2.2 // indirect
@@ -487,7 +488,6 @@ require (
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.14.0 // indirect
-	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
 	github.com/hashicorp/golang-lru v0.6.0 // indirect
 	github.com/invopop/jsonschema v0.12.0 // indirect
