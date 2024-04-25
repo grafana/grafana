@@ -46,7 +46,7 @@ func ParseNamespaceID(str string) (NamespaceID, error) {
 	return namespaceID, nil
 }
 
-// MustParseNamespaceID parses namespace id, it will panic it failes to do so.
+// MustParseNamespaceID parses namespace id, it will panic if it fails to do so.
 // Sutable to use in tests or when we can garantuee that we pass a correct format.
 func MustParseNamespaceID(str string) NamespaceID {
 	namespaceID, err := ParseNamespaceID(str)
