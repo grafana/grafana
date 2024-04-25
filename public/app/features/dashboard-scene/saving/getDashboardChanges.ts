@@ -1,10 +1,33 @@
-import { compare, Operation } from 'fast-json-patch';
+import { compare } from 'fast-json-patch';
 // @ts-ignore
 import jsonMap from 'json-source-map';
-import { flow, get, isEqual, sortBy, tail } from 'lodash';
 
-import { AdHocVariableModel, TypedVariableModel } from '@grafana/data';
-import { Dashboard } from '@grafana/schema';
+import type { AdHocVariableModel, TypedVariableModel } from '@grafana/data';
+import type { Dashboard, VariableOption } from '@grafana/schema';
+
+export function get(obj: any, keys: string[]) {
+  try {
+    let val = obj;
+    for (const key of keys) {
+      val = val[key];
+    }
+    return val;
+  } catch (err) {
+    return undefined;
+  }
+}
+
+export function deepEqual(a: string | string[], b: string | string[]) {
+  return (
+    typeof a === typeof b &&
+    ((typeof a === 'string' && a === b) ||
+      (Array.isArray(a) && a.length === b.length && a.every((val, i) => val === b[i])))
+  );
+}
+
+export function isEqual(a: VariableOption | undefined, b: VariableOption | undefined) {
+  return a === b || (a && b && a.selected === b.selected && deepEqual(a.text, b.text) && deepEqual(a.value, b.value));
+}
 
 export function getDashboardChanges(
   initial: Dashboard,
@@ -28,11 +51,8 @@ export function getDashboardChanges(
   }
 
   const diff = jsonDiff(initialSaveModel, changedSaveModel);
+  const diffCount = Object.values(diff).reduce((acc, cur) => acc + cur.length, 0);
 
-  let diffCount = 0;
-  for (const d of Object.values(diff)) {
-    diffCount += d.length;
-  }
   return {
     changedSaveModel,
     initialSaveModel,
@@ -63,7 +83,7 @@ export function applyVariableChanges(saveModel: Dashboard, originalSaveModel: Da
     }
 
     // Old schema property that never should be in persisted model
-    if (original.current && Object.hasOwn(original.current, 'selected')) {
+    if (original.current) {
       delete original.current.selected;
     }
 
@@ -75,11 +95,9 @@ export function applyVariableChanges(saveModel: Dashboard, originalSaveModel: Da
       const typed = variable as TypedVariableModel;
       if (typed.type === 'adhoc') {
         typed.filters = (original as AdHocVariableModel).filters;
-      } else {
-        if (typed.type !== 'groupby') {
-          variable.current = original.current;
-          variable.options = original.options;
-        }
+      } else if (typed.type !== 'groupby') {
+        variable.current = original.current;
+        variable.options = original.options;
       }
     }
   }
@@ -95,60 +113,49 @@ export type Diff = {
   startLineNumber: number;
 };
 
-export type Diffs = {
-  [key: string]: Diff[];
-};
+export type Diffs = Record<string, Diff[]>;
 
-export type JSONValue = string | Dashboard;
-
-export const jsonDiff = (lhs: JSONValue, rhs: JSONValue): Diffs => {
+export const jsonDiff = (lhs: Dashboard, rhs: Dashboard): Diffs => {
   const diffs = compare(lhs, rhs);
   const lhsMap = jsonMap.stringify(lhs, null, 2);
   const rhsMap = jsonMap.stringify(rhs, null, 2);
 
-  const getDiffInformation = (diffs: Operation[]): Diff[] => {
-    return diffs.map((diff) => {
-      let originalValue = undefined;
-      let value = undefined;
-      let startLineNumber = 0;
+  const diffInfo = diffs.map((diff) => {
+    let originalValue = undefined;
+    let value = undefined;
+    let startLineNumber = 0;
 
-      const path = tail(diff.path.split('/'));
+    const path = diff.path.split('/').slice(1);
 
-      if (diff.op === 'replace' && rhsMap.pointers[diff.path]) {
-        originalValue = get(lhs, path);
-        value = diff.value;
-        startLineNumber = rhsMap.pointers[diff.path].value.line;
-      }
-      if (diff.op === 'add' && rhsMap.pointers[diff.path]) {
-        value = diff.value;
-        startLineNumber = rhsMap.pointers[diff.path].value.line;
-      }
-      if (diff.op === 'remove' && lhsMap.pointers[diff.path]) {
-        originalValue = get(lhs, path);
-        startLineNumber = lhsMap.pointers[diff.path].value.line;
-      }
+    if (diff.op === 'replace' && rhsMap.pointers[diff.path]) {
+      originalValue = get(lhs, path);
+      value = diff.value;
+      startLineNumber = rhsMap.pointers[diff.path].value.line;
+    } else if (diff.op === 'add' && rhsMap.pointers[diff.path]) {
+      value = diff.value;
+      startLineNumber = rhsMap.pointers[diff.path].value.line;
+    } else if (diff.op === 'remove' && lhsMap.pointers[diff.path]) {
+      originalValue = get(lhs, path);
+      startLineNumber = lhsMap.pointers[diff.path].value.line;
+    }
 
-      return {
-        op: diff.op,
-        value,
-        path,
-        originalValue,
-        startLineNumber,
-      };
-    });
-  };
+    return {
+      op: diff.op,
+      value,
+      path,
+      originalValue,
+      startLineNumber,
+    };
+  });
 
-  const sortByLineNumber = (diffs: Diff[]) => sortBy(diffs, 'startLineNumber');
-  const groupByPath = (diffs: Diff[]) =>
-    diffs.reduce<Record<string, Diff[]>>((acc, value) => {
-      const groupKey: string = value.path[0];
-      if (!acc[groupKey]) {
-        acc[groupKey] = [];
-      }
-      acc[groupKey].push(value);
-      return acc;
-    }, {});
+  const sortedDiffs = diffInfo.sort((a, b) => a.startLineNumber - b.startLineNumber);
+  const grouped = sortedDiffs.reduce<Record<string, Diff[]>>((acc, value) => {
+    const groupKey = value.path[0];
+    acc[groupKey] ??= [];
+    acc[groupKey].push(value);
 
-  //   return 1;
-  return flow([getDiffInformation, sortByLineNumber, groupByPath])(diffs);
+    return acc;
+  }, {});
+
+  return grouped;
 };
