@@ -76,7 +76,7 @@ const RuleViewer = () => {
   const isPaused = isGrafanaRulerRule(rule.rulerRule) && isGrafanaRulerRulePaused(rule.rulerRule);
 
   const showError = hasError && !isPaused;
-  const originMeta = getRuleOrigin(rule);
+  const ruleOrigin = getRuleOrigin(rule);
 
   const summary = annotations[Annotation.summary];
 
@@ -92,7 +92,7 @@ const RuleViewer = () => {
           state={isAlertType ? promRule.state : undefined}
           health={rule.promRule?.health}
           ruleType={rule.promRule?.type}
-          ruleOrigin={originMeta}
+          ruleOrigin={ruleOrigin}
         />
       )}
       actions={actions}

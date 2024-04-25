@@ -1,5 +1,7 @@
+import { useMemo } from 'react';
+
 import { PluginExtensionPoints } from '@grafana/data';
-import { getPluginLinkExtensions } from '@grafana/runtime';
+import { usePluginLinkExtensions } from '@grafana/runtime';
 import { CombinedRule } from 'app/types/unified-alerting';
 import { PromRuleType } from 'app/types/unified-alerting-dto';
 
@@ -13,13 +15,16 @@ interface BaseRuleExtensionContext {
   labels: Record<string, string>;
 }
 
-interface AlertingRuleExtensionContext extends BaseRuleExtensionContext {
+export interface AlertingRuleExtensionContext extends BaseRuleExtensionContext {
   annotations: Record<string, string>;
 }
 
-interface RecordingRuleExtensionContext extends BaseRuleExtensionContext {}
+export interface RecordingRuleExtensionContext extends BaseRuleExtensionContext {}
 
 export function useRulePluginLinkExtension(rule: CombinedRule) {
+  const ruleExtensionPoint = useRuleExtensionPoint(rule);
+  const { extensions } = usePluginLinkExtensions(ruleExtensionPoint);
+
   const ruleOrigin = getRuleOrigin(rule);
   const ruleType = rule.promRule?.type;
   if (!ruleOrigin || !ruleType) {
@@ -28,49 +33,60 @@ export function useRulePluginLinkExtension(rule: CombinedRule) {
 
   const { pluginId } = ruleOrigin;
 
-  switch (ruleType) {
-    case PromRuleType.Alerting:
-      return getAlertingRuleActionPluginLinkExtension({ pluginId, rule });
-    case PromRuleType.Recording:
-      return getRecordingRulePluginLinkExtension({ pluginId, rule });
-    default:
-      return [];
-  }
-}
-
-function getAlertingRuleActionPluginLinkExtension({ pluginId, rule }: { pluginId: string; rule: CombinedRule }) {
-  const context: AlertingRuleExtensionContext = {
-    name: rule.name,
-    namespace: rule.namespace.name,
-    group: rule.group.name,
-    expression: rule.query,
-    labels: rule.labels,
-    annotations: rule.annotations,
-  };
-
-  const { extensions } = getPluginLinkExtensions({
-    extensionPointId: PluginExtensionPoints.AlertingRuleAction,
-    context,
-    limitPerPlugin: 3,
-  });
-
   return extensions.filter((extension) => extension.pluginId === pluginId);
 }
 
-function getRecordingRulePluginLinkExtension({ pluginId, rule }: { pluginId: string; rule: CombinedRule }) {
-  const context: RecordingRuleExtensionContext = {
-    name: rule.name,
-    namespace: rule.namespace.name,
-    group: rule.group.name,
-    expression: rule.query,
-    labels: rule.labels,
-  };
+export interface PluginRuleExtensionParam {
+  pluginId: string;
+  rule: CombinedRule;
+}
 
-  const { extensions } = getPluginLinkExtensions({
-    extensionPointId: PluginExtensionPoints.RecordingRuleAction,
-    context,
-    limitPerPlugin: 3,
-  });
+interface AlertingRuleExtensionPoint {
+  extensionPointId: PluginExtensionPoints.AlertingAlertingRuleAction;
+  context: AlertingRuleExtensionContext;
+}
 
-  return extensions.filter((extension) => extension.pluginId === pluginId);
+interface RecordingRuleExtensionPoint {
+  extensionPointId: PluginExtensionPoints.AlertingRecordingRuleAction;
+  context: RecordingRuleExtensionContext;
+}
+
+interface EmptyExtensionPoint {
+  extensionPointId: '';
+}
+
+type RuleExtensionPoint = AlertingRuleExtensionPoint | RecordingRuleExtensionPoint | EmptyExtensionPoint;
+
+function useRuleExtensionPoint(rule: CombinedRule): RuleExtensionPoint {
+  return useMemo(() => {
+    const ruleType = rule.promRule?.type;
+
+    switch (ruleType) {
+      case PromRuleType.Alerting:
+        return {
+          extensionPointId: PluginExtensionPoints.AlertingAlertingRuleAction,
+          context: {
+            name: rule.name,
+            namespace: rule.namespace.name,
+            group: rule.group.name,
+            expression: rule.query,
+            labels: rule.labels,
+            annotations: rule.annotations,
+          },
+        };
+      case PromRuleType.Recording:
+        return {
+          extensionPointId: PluginExtensionPoints.AlertingRecordingRuleAction,
+          context: {
+            name: rule.name,
+            namespace: rule.namespace.name,
+            group: rule.group.name,
+            expression: rule.query,
+            labels: rule.labels,
+          },
+        };
+      default:
+        return { extensionPointId: '' };
+    }
+  }, [rule]);
 }
