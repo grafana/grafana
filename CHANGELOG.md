@@ -127,6 +127,7 @@
 
 ### Bug fixes
 
+- **Grafana:** Fix internal metrics endpoint not accessible from browser if basic auth is enabled. [#86902](https://github.com/grafana/grafana/issues/86902), [@wasim-nihal](https://github.com/wasim-nihal)
 - **RBAC:** Fix access checks for interactions with RBAC roles in hosted Grafana. [#85520](https://github.com/grafana/grafana/issues/85520), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
 - **Keybindings:** Replace mod+h as help shortcut with ? . [#85449](https://github.com/grafana/grafana/issues/85449), [@tskarhed](https://github.com/tskarhed)
 - **RBAC:** Fix slow user permission search query on MySQL. [#85410](https://github.com/grafana/grafana/issues/85410), [@gamab](https://github.com/gamab)
