@@ -45,7 +45,7 @@ function isCreateAlertRuleDone() {
 }
 
 function isContactPointReady(contactPoints: Receiver[]) {
-  // We consider the contact point ready if the default contact has the address filled or if there is at least one contact point created by the user
+  // We consider the contact point ready if the default contact has the address filled
 
   const defaultEmailUpdated = contactPoints.some(
     (contactPoint: Receiver) =>
@@ -54,10 +54,7 @@ function isContactPointReady(contactPoints: Receiver[]) {
         (receiver) => receiver.name === 'grafana-default-email' && receiver.settings?.address !== '<example@email.com>'
       )
   );
-  const hasAnotherContactPoint = contactPoints.some((contactPoint: Receiver) =>
-    contactPoint.grafana_managed_receiver_configs?.some((receiver) => receiver.name !== 'grafana-default-email')
-  );
-  return defaultEmailUpdated || hasAnotherContactPoint;
+  return defaultEmailUpdated;
 }
 
 function isOnCallContactPointReady(contactPoints: Receiver[]) {
@@ -165,7 +162,7 @@ function useOnCallOptions() {
   }));
 }
 
-function useChatOpsConnections() {
+function useOnCallChatOpsConnections() {
   const { is_chatops_connected, is_integration_chatops_connected } = useGetOnCallConfigurationChecks();
   return { is_chatops_connected, is_integration_chatops_connected };
 }
@@ -175,7 +172,7 @@ export function useGetEssentialsConfiguration() {
   const incidentPluginConfig = useGetIncidentPluginConfig();
   const onCallIntegrations = useGetOnCallIntegrations();
   const onCallOptions = useOnCallOptions();
-  const chatOpsConnections = useChatOpsConnections();
+  const chatOpsConnections = useOnCallChatOpsConnections();
 
   const essentialContent: SectionsDto = {
     sections: [
@@ -188,7 +185,7 @@ export function useGetEssentialsConfiguration() {
             description: 'Make sure that you add a valid email to the existing default email contact point.',
             button: {
               type: 'openLink',
-              url: '/alerting/notifications',
+              url: '/alerting/notifications/receivers/grafana-default-email/edit?alertmanager=grafana',
               label: 'Update',
               done: isContactPointReady(contactPoints),
             },
@@ -244,7 +241,7 @@ export function useGetEssentialsConfiguration() {
             description: 'Receive alerts and oncall notifications within your chat environment.',
             button: {
               type: 'openLink',
-              url: '/alerting/notifications',
+              url: '/a/grafana-oncall-app/settings?tab=Slack',
               label: 'Connect',
               done: chatOpsConnections.is_chatops_connected,
             },
