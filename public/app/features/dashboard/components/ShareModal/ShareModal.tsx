@@ -57,7 +57,7 @@ function getTabs(canEditDashboard: boolean, panel?: PanelModel, activeTab?: stri
     tabs.push(...customDashboardTabs);
   }
 
-  if (isPublicDashboardsEnabled()) {
+  if (isPublicDashboardsEnabled() && !panel) {
     tabs.push({
       label: t('share-modal.tab-title.public-dashboard-title', 'Public dashboard'),
       value: shareDashboardType.publicDashboard,

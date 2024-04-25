@@ -79,7 +79,7 @@ export class ShareModal extends SceneObjectBase<ShareModalState> implements Moda
       tabs.push(...customDashboardTabs.map((Tab) => new Tab({ dashboardRef, modalRef })));
     }
 
-    if (isPublicDashboardsEnabled()) {
+    if (isPublicDashboardsEnabled() && !panelRef) {
       tabs.push(new SharePublicDashboardTab({ dashboardRef, modalRef }));
     }
 
