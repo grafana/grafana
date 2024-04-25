@@ -55,6 +55,12 @@ import {
 import * as config from './utils/config';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getPluginLinkExtensions: jest.fn(),
+  usePluginLinkExtensions: jest.fn(),
+  useReturnToPrevious: jest.fn(),
+}));
 jest.mock('./api/buildInfo');
 jest.mock('./api/prometheus');
 jest.mock('./api/ruler');

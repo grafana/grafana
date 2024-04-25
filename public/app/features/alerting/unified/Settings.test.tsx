@@ -13,6 +13,11 @@ import { grantUserRole } from './mocks';
 
 const server = setupMswServer();
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  useReturnToPrevious: jest.fn(),
+}));
+
 describe('Alerting settings', () => {
   beforeEach(() => {
     grantUserRole('ServerAdmin');
