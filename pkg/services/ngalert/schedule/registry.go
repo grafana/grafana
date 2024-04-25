@@ -311,5 +311,11 @@ func (r ruleWithFolder) Fingerprint() fingerprint {
 	writeInt(int64(rule.RuleGroupIndex))
 	writeString(string(rule.NoDataState))
 	writeString(string(rule.ExecErrState))
+	writeString(string(rule.Record))
+	writeString(string(rule.RecordFrom))
+	if rule.RecordTo != nil {
+		writeString(string(rule.RecordTo.Type))
+		writeString(string(rule.RecordTo.UID))
+	}
 	return fingerprint(sum.Sum64())
 }
