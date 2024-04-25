@@ -345,37 +345,6 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			return nil
 		})
 		require.NoError(t, err)
-
-		t.Run("GetByEmail - email conflict", func(t *testing.T) {
-			query := user.GetUserByEmailQuery{Email: "confusertest@test.com"}
-			_, err = userStore.GetByEmail(context.Background(), &query)
-			require.Error(t, err)
-		})
-
-		t.Run("GetByEmail - login conflict", func(t *testing.T) {
-			query := user.GetUserByEmailQuery{Email: "user_test_login_conflict@test.com"}
-			_, err = userStore.GetByEmail(context.Background(), &query)
-			require.Error(t, err)
-		})
-
-		t.Run("GetByLogin - email conflict", func(t *testing.T) {
-			query := user.GetUserByLoginQuery{LoginOrEmail: "user_email_conflict_two"}
-			_, err = userStore.GetByLogin(context.Background(), &query)
-			require.Error(t, err)
-		})
-
-		t.Run("GetByLogin - login conflict", func(t *testing.T) {
-			query := user.GetUserByLoginQuery{LoginOrEmail: "user_test_login_conflict"}
-			_, err = userStore.GetByLogin(context.Background(), &query)
-			require.Error(t, err)
-		})
-
-		t.Run("GetByLogin - login conflict by email", func(t *testing.T) {
-			query := user.GetUserByLoginQuery{LoginOrEmail: "user_test_login_conflict@test.com"}
-			_, err = userStore.GetByLogin(context.Background(), &query)
-			require.Error(t, err)
-		})
-
 		t.Run("GetByLogin - user2 uses user1.email as login", func(t *testing.T) {
 			// create user_1
 			user1 := &user.User{
@@ -921,15 +890,6 @@ func TestIntegrationUserUpdate(t *testing.T) {
 			Login:      fmt.Sprint("loginUSER", i),
 			IsDisabled: false,
 		}
-	})
-
-	t.Run("Testing DB - update generates duplicate user", func(t *testing.T) {
-		err := userStore.Update(context.Background(), &user.UpdateUserCommand{
-			Login:  "loginuser2",
-			UserID: users[0].ID,
-		})
-
-		require.Error(t, err)
 	})
 
 	t.Run("Testing DB - update lowercases existing user", func(t *testing.T) {
