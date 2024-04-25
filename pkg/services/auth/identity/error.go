@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	ErrInvalidNamepsaceID       = errutil.BadRequest("auth.identity.invalid-namespace-id")
+	ErrInvalidNamespaceID       = errutil.BadRequest("auth.identity.invalid-namespace-id")
 	ErrNotIntIdentifier         = errors.New("identifier is not an int64")
 	ErrIdentifierNotInitialized = errors.New("identifier is not initialized")
 )
