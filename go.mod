@@ -23,7 +23,7 @@ require (
 	github.com/BurntSushi/toml v1.3.2 // @grafana/identity-access-team
 	github.com/Masterminds/semver v1.5.0 // @grafana/grafana-backend-group
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f // @grafana/grafana-backend-group
-	github.com/aws/aws-sdk-go v1.50.8 // @grafana/aws-datasources
+	github.com/aws/aws-sdk-go v1.50.29 // @grafana/aws-datasources
 	github.com/beevik/etree v1.2.0 // @grafana/grafana-backend-group
 	github.com/benbjohnson/clock v1.3.5 // @grafana/alerting-squad-backend
 	github.com/blang/semver/v4 v4.0.0 // @grafana/grafana-release-guild
@@ -47,7 +47,7 @@ require (
 	github.com/google/uuid v1.6.0 // @grafana/grafana-backend-group
 	github.com/google/wire v0.5.0 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.0 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20240409171830-e039a7f57a92 // @grafana/alerting-squad-backend
+	github.com/grafana/alerting v0.0.0-20240424080142-bb4f4f429d36 // @grafana/alerting-squad-backend
 	github.com/grafana/cuetsy v0.1.11 // @grafana/grafana-as-code
 	github.com/grafana/grafana-aws-sdk v0.25.0 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.0.1 // @grafana/partner-datasources
@@ -74,9 +74,9 @@ require (
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/alertmanager v0.26.0 // @grafana/alerting-squad-backend
-	github.com/prometheus/client_golang v1.18.0 // @grafana/alerting-squad-backend
-	github.com/prometheus/client_model v0.5.0 // @grafana/grafana-backend-group
-	github.com/prometheus/common v0.46.0 // @grafana/alerting-squad-backend
+	github.com/prometheus/client_golang v1.19.0 // @grafana/alerting-squad-backend
+	github.com/prometheus/client_model v0.6.0 // @grafana/grafana-backend-group
+	github.com/prometheus/common v0.48.0 // @grafana/alerting-squad-backend
 	github.com/prometheus/prometheus v1.8.2-0.20221021121301-51a44e6657c3 // @grafana/alerting-squad-backend
 	github.com/robfig/cron/v3 v3.0.1 // @grafana/grafana-backend-group
 	github.com/russellhaering/goxmldsig v1.4.0 // @grafana/grafana-backend-group
@@ -99,7 +99,7 @@ require (
 	golang.org/x/oauth2 v0.19.0 // @grafana/identity-access-team
 	golang.org/x/sync v0.6.0 // @grafana/alerting-squad-backend
 	golang.org/x/time v0.5.0 // @grafana/grafana-backend-group
-	golang.org/x/tools v0.17.0 // @grafana/grafana-as-code
+	golang.org/x/tools v0.18.0 // @grafana/grafana-as-code
 	gonum.org/v1/gonum v0.12.0 // @grafana/observability-metrics
 	google.golang.org/api v0.176.0 // @grafana/grafana-backend-group
 	google.golang.org/grpc v1.63.2 // @grafana/plugins-platform-backend
@@ -247,7 +247,7 @@ require (
 	github.com/microsoft/go-mssqldb v1.6.1-0.20240214161942-b65008136246 // @grafana/grafana-bi-squad
 	github.com/redis/go-redis/v9 v9.1.0 // @grafana/alerting-squad-backend
 	go.opentelemetry.io/contrib/samplers/jaegerremote v0.18.0 // @grafana/grafana-backend-group
-	golang.org/x/mod v0.14.0 // @grafana/grafana-backend-group
+	golang.org/x/mod v0.15.0 // @grafana/grafana-backend-group
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b // @grafana/partner-datasources
 )
 
@@ -261,7 +261,7 @@ require (
 	k8s.io/component-base v0.29.2 // @grafana/grafana-app-platform-squad
 	k8s.io/klog/v2 v2.120.1 // @grafana/grafana-app-platform-squad
 	k8s.io/kube-aggregator v0.29.0 // @grafana/grafana-app-platform-squad
-	k8s.io/kube-openapi v0.0.0-20240220201932-37d671a357a5 // @grafana/grafana-app-platform-squad
+	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340 // @grafana/grafana-app-platform-squad
 )
 
 require github.com/grafana/gofpdf v0.0.0-20231002120153-857cc45be447 // @grafana/sharing-squad
@@ -481,6 +481,7 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/gin-gonic/gin v1.9.1 // indirect
+	github.com/go-logr/zapr v1.3.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.14.0 // indirect
@@ -514,7 +515,7 @@ replace github.com/hashicorp/go-hclog => github.com/hashicorp/go-hclog v0.16.1
 
 // Use our fork of the upstream alertmanagers.
 // This is required in order to get notification delivery errors from the receivers API.
-replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20240321101410-40158de684b2
+replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20240422145632-c33c6b5b6e6b
 
 exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
 
