@@ -311,7 +311,7 @@ func (s ssoSettingsSecret) Rollback(
 	})
 
 	if err != nil {
-		logger.Warn("Failed to fetch sso_settings to roll back")
+		logger.Warn("Failed to fetch SSO settings to roll back")
 		return true
 	}
 
@@ -321,7 +321,7 @@ func (s ssoSettingsSecret) Rollback(
 				if ssosettingsimpl.IsSecretField(field) {
 					decrypted, err := s.decryptValue(ctx, value, secretsSrv)
 					if err != nil {
-						logger.Warn("Could not decrypt sso settings secret", "id", result.ID, "field", field, "error", err)
+						logger.Warn("Could not decrypt SSO settings secret", "id", result.ID, "field", field, "error", err)
 						return err
 					}
 
@@ -331,7 +331,7 @@ func (s ssoSettingsSecret) Rollback(
 
 					reencrypted, err := encryptionSrv.Encrypt(ctx, decrypted, secretKey)
 					if err != nil {
-						logger.Warn("Could not re-encrypt sso settings secret", "id", result.ID, "field", field, "error", err)
+						logger.Warn("Could not re-encrypt SSO settings secret", "id", result.ID, "field", field, "error", err)
 						return err
 					}
 
@@ -344,7 +344,7 @@ func (s ssoSettingsSecret) Rollback(
 				return err
 			})
 			if err != nil {
-				logger.Warn("Could not update sso settings secrets while re-encrypting it", "id", result.ID, "error", err)
+				logger.Warn("Could not update SSO settings secrets while re-encrypting it", "id", result.ID, "error", err)
 				return err
 			}
 

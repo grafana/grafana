@@ -300,7 +300,7 @@ func (s ssoSettingsSecret) ReEncrypt(ctx context.Context, secretsSrv *manager.Se
 	})
 
 	if err != nil {
-		logger.Warn("Failed to fetch sso_settings to re-encrypt", "err", err)
+		logger.Warn("Failed to fetch SSO settings to re-encrypt", "err", err)
 		return false
 	}
 
@@ -312,7 +312,7 @@ func (s ssoSettingsSecret) ReEncrypt(ctx context.Context, secretsSrv *manager.Se
 				if ssosettingsimpl.IsSecretField(field) {
 					decrypted, err := s.decryptValue(ctx, value, secretsSrv)
 					if err != nil {
-						logger.Warn("Could not decrypt sso settings secret", "id", result.ID, "field", field, "error", err)
+						logger.Warn("Could not decrypt SSO settings secret", "id", result.ID, "field", field, "error", err)
 						return err
 					}
 
@@ -322,7 +322,7 @@ func (s ssoSettingsSecret) ReEncrypt(ctx context.Context, secretsSrv *manager.Se
 
 					reencrypted, err := secretsSrv.Encrypt(ctx, decrypted, secrets.WithoutScope())
 					if err != nil {
-						logger.Warn("Could not re-encrypt sso settings secret", "id", result.ID, "field", field, "error", err)
+						logger.Warn("Could not re-encrypt SSO settings secret", "id", result.ID, "field", field, "error", err)
 						return err
 					}
 
@@ -335,7 +335,7 @@ func (s ssoSettingsSecret) ReEncrypt(ctx context.Context, secretsSrv *manager.Se
 				return err
 			})
 			if err != nil {
-				logger.Warn("Could not update sso settings secrets while re-encrypting it", "id", result.ID, "error", err)
+				logger.Warn("Could not update SSO settings secrets while re-encrypting it", "id", result.ID, "error", err)
 				return err
 			}
 
@@ -359,7 +359,7 @@ func (s ssoSettingsSecret) ReEncrypt(ctx context.Context, secretsSrv *manager.Se
 func (s ssoSettingsSecret) decryptValue(ctx context.Context, value any, secretsSrv *manager.SecretsService) ([]byte, error) {
 	strValue, ok := value.(string)
 	if !ok {
-		return nil, fmt.Errorf("sso secret value is not a string")
+		return nil, fmt.Errorf("SSO secret value is not a string")
 	}
 
 	if strValue == "" {
@@ -368,12 +368,12 @@ func (s ssoSettingsSecret) decryptValue(ctx context.Context, value any, secretsS
 
 	decoded, err := base64.RawStdEncoding.DecodeString(strValue)
 	if err != nil {
-		return nil, fmt.Errorf("could not decode base64-encoded sso settings secret: %w", err)
+		return nil, fmt.Errorf("could not decode base64-encoded SSO settings secret: %w", err)
 	}
 
 	decrypted, err := secretsSrv.Decrypt(ctx, decoded)
 	if err != nil {
-		return nil, fmt.Errorf("could not decrypt sso settings secret: %w", err)
+		return nil, fmt.Errorf("could not decrypt SSO settings secret: %w", err)
 	}
 
 	return decrypted, nil
