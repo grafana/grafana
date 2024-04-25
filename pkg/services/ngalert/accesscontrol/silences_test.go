@@ -11,6 +11,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 )
@@ -18,15 +19,15 @@ import (
 var orgID = rand.Int63()
 
 func TestFilterByAccess(t *testing.T) {
-	global := testSilence{ID: "global", RuleUID: nil}
-	ruleSilence1 := testSilence{ID: "rule-1", RuleUID: utils.Pointer("rule-1-uid")}
+	global := testSilence("global", nil)
+	ruleSilence1 := testSilence("rule-1", utils.Pointer("rule-1-uid"))
 	folder1 := "rule-1-folder-uid"
 	folder1Scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder1)
-	ruleSilence2 := testSilence{ID: "rule-2", RuleUID: utils.Pointer("rule-2-uid")}
+	ruleSilence2 := testSilence("rule-2", utils.Pointer("rule-2-uid"))
 	folder2 := "rule-2-folder-uid"
-	notFoundRule := testSilence{ID: "unknown-rule", RuleUID: utils.Pointer("unknown-rule-uid")}
+	notFoundRule := testSilence("unknown-rule", utils.Pointer("unknown-rule-uid"))
 
-	silences := []Silence{
+	silences := []*models.Silence{
 		global,
 		ruleSilence1,
 		ruleSilence2,
@@ -36,19 +37,19 @@ func TestFilterByAccess(t *testing.T) {
 	testCases := []struct {
 		name             string
 		user             identity.Requester
-		expected         []Silence
+		expected         []*models.Silence
 		expectedDbAccess bool
 	}{
 		{
 			name:             "no silence access, empty list",
 			user:             newUser(),
-			expected:         []Silence{},
+			expected:         []*models.Silence{},
 			expectedDbAccess: false,
 		},
 		{
 			name: "instance reader should get all",
 			user: newUser(ac.Permission{Action: instancesRead}),
-			expected: []Silence{
+			expected: []*models.Silence{
 				global,
 				ruleSilence1,
 				ruleSilence2,
@@ -59,7 +60,7 @@ func TestFilterByAccess(t *testing.T) {
 		{
 			name: "silence reader should get global + folder",
 			user: newUser(ac.Permission{Action: silenceRead, Scope: folder1Scope}),
-			expected: []Silence{
+			expected: []*models.Silence{
 				global,
 				ruleSilence1,
 			},
@@ -71,8 +72,8 @@ func TestFilterByAccess(t *testing.T) {
 			ac := &recordingAccessControlFake{}
 			store := &fakeRuleUIDToNamespaceStore{
 				Response: map[string]string{
-					*ruleSilence1.RuleUID: folder1,
-					*ruleSilence2.RuleUID: folder2,
+					*ruleSilence1.GetRuleUID(): folder1,
+					*ruleSilence2.GetRuleUID(): folder2,
 				},
 			}
 			svc := NewSilenceService(ac, store)
@@ -93,60 +94,60 @@ func TestFilterByAccess(t *testing.T) {
 }
 
 func TestAuthorizeReadSilence(t *testing.T) {
-	global := testSilence{ID: "global", RuleUID: nil}
-	ruleSilence1 := testSilence{ID: "rule-1", RuleUID: utils.Pointer("rule-1-uid")}
+	global := testSilence("global", nil)
+	ruleSilence1 := testSilence("rule-1", utils.Pointer("rule-1-uid"))
 	folder1 := "rule-1-folder-uid"
 	folder1Scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder1)
-	ruleSilence2 := testSilence{ID: "rule-2", RuleUID: utils.Pointer("rule-2-uid")}
+	ruleSilence2 := testSilence("rule-2", utils.Pointer("rule-2-uid"))
 	folder2 := "rule-2-folder-uid"
-	notFoundRule := testSilence{ID: "unknown-rule", RuleUID: utils.Pointer("unknown-rule-uid")}
+	notFoundRule := testSilence("unknown-rule", utils.Pointer("unknown-rule-uid"))
 
 	testCases := []struct {
 		name             string
 		user             identity.Requester
-		silence          []testSilence
+		silence          []*models.Silence
 		expectedErr      error
 		expectedDbAccess bool
 	}{
 		{
 			name:             "not authorized without permissions",
 			user:             newUser(),
-			silence:          []testSilence{global, ruleSilence1, notFoundRule},
+			silence:          []*models.Silence{global, ruleSilence1, notFoundRule},
 			expectedErr:      ErrAuthorizationBase,
 			expectedDbAccess: false,
 		},
 		{
 			name:             "instance reader can read any silence",
 			user:             newUser(ac.Permission{Action: instancesRead}),
-			silence:          []testSilence{global, ruleSilence1, notFoundRule},
+			silence:          []*models.Silence{global, ruleSilence1, notFoundRule},
 			expectedErr:      nil,
 			expectedDbAccess: false,
 		},
 		{
 			name:             "silence reader can read global",
 			user:             newUser(ac.Permission{Action: silenceRead, Scope: folder1Scope}),
-			silence:          []testSilence{global},
+			silence:          []*models.Silence{global},
 			expectedErr:      nil,
 			expectedDbAccess: false,
 		},
 		{
 			name:             "silence reader can read from allowed folder",
 			user:             newUser(ac.Permission{Action: silenceRead, Scope: folder1Scope}),
-			silence:          []testSilence{ruleSilence1},
+			silence:          []*models.Silence{ruleSilence1},
 			expectedErr:      nil,
 			expectedDbAccess: true,
 		},
 		{
 			name:             "silence reader cannot read from other folders",
 			user:             newUser(ac.Permission{Action: silenceRead, Scope: folder1Scope}),
-			silence:          []testSilence{ruleSilence2},
+			silence:          []*models.Silence{ruleSilence2},
 			expectedErr:      ErrAuthorizationBase,
 			expectedDbAccess: true,
 		},
 		{
 			name:             "silence reader cannot read unknown rule",
 			user:             newUser(ac.Permission{Action: silenceRead, Scope: folder1Scope}),
-			silence:          []testSilence{notFoundRule},
+			silence:          []*models.Silence{notFoundRule},
 			expectedErr:      ErrAuthorizationBase,
 			expectedDbAccess: true,
 		},
@@ -155,12 +156,12 @@ func TestAuthorizeReadSilence(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			for _, silence := range testCase.silence {
-				t.Run(silence.ID, func(t *testing.T) {
+				t.Run(*silence.ID, func(t *testing.T) {
 					ac := &recordingAccessControlFake{}
 					store := &fakeRuleUIDToNamespaceStore{
 						Response: map[string]string{
-							*ruleSilence1.RuleUID: folder1,
-							*ruleSilence2.RuleUID: folder2,
+							*ruleSilence1.GetRuleUID(): folder1,
+							*ruleSilence2.GetRuleUID(): folder2,
 						},
 					}
 					svc := NewSilenceService(ac, store)
@@ -183,16 +184,16 @@ func TestAuthorizeReadSilence(t *testing.T) {
 }
 
 func TestAuthorizeCreateSilence(t *testing.T) {
-	global := testSilence{ID: "global", RuleUID: nil}
-	ruleSilence1 := testSilence{ID: "rule-1", RuleUID: utils.Pointer("rule-1-uid")}
+	global := testSilence("global", nil)
+	ruleSilence1 := testSilence("rule-1", utils.Pointer("rule-1-uid"))
 	folder1 := "rule-1-folder-uid"
 	folder1Scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder1)
-	ruleSilence2 := testSilence{ID: "rule-2", RuleUID: utils.Pointer("rule-2-uid")}
+	ruleSilence2 := testSilence("rule-2", utils.Pointer("rule-2-uid"))
 	folder2 := "rule-2-folder-uid"
 	folder2Scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder2)
-	notFoundRule := testSilence{ID: "unknown-rule", RuleUID: utils.Pointer("unknown-rule-uid")}
+	notFoundRule := testSilence("unknown-rule", utils.Pointer("unknown-rule-uid"))
 
-	silences := []testSilence{
+	silences := []*models.Silence{
 		global,
 		ruleSilence1,
 		ruleSilence2,
@@ -208,7 +209,7 @@ func TestAuthorizeCreateSilence(t *testing.T) {
 		user             identity.Requester
 		expectedErr      error
 		expectedDbAccess bool
-		overrides        map[testSilence]override
+		overrides        map[*models.Silence]override
 	}{
 		{
 			name:        "not authorized without permissions",
@@ -243,7 +244,7 @@ func TestAuthorizeCreateSilence(t *testing.T) {
 		{
 			name: "instance read + silence create",
 			user: newUser(ac.Permission{Action: silenceCreate, Scope: folder1Scope}, ac.Permission{Action: instancesRead}),
-			overrides: map[testSilence]override{
+			overrides: map[*models.Silence]override{
 				global: {
 					expectedErr:      ErrAuthorizationBase,
 					expectedDbAccess: false,
@@ -259,7 +260,7 @@ func TestAuthorizeCreateSilence(t *testing.T) {
 		{
 			name: "silence read + instance create",
 			user: newUser(ac.Permission{Action: silenceRead, Scope: folder1Scope}, ac.Permission{Action: instancesCreate}),
-			overrides: map[testSilence]override{
+			overrides: map[*models.Silence]override{
 				global: {
 					expectedErr:      nil,
 					expectedDbAccess: false,
@@ -275,7 +276,7 @@ func TestAuthorizeCreateSilence(t *testing.T) {
 		{
 			name: "silence read + create",
 			user: newUser(ac.Permission{Action: silenceRead, Scope: folder1Scope}, ac.Permission{Action: silenceCreate, Scope: folder1Scope}),
-			overrides: map[testSilence]override{
+			overrides: map[*models.Silence]override{
 				global: {
 					expectedErr:      ErrAuthorizationBase,
 					expectedDbAccess: false,
@@ -299,12 +300,12 @@ func TestAuthorizeCreateSilence(t *testing.T) {
 					expectedErr = s.expectedErr
 					expectedDbAccess = s.expectedDbAccess
 				}
-				t.Run(silence.ID, func(t *testing.T) {
+				t.Run(*silence.ID, func(t *testing.T) {
 					ac := &recordingAccessControlFake{}
 					store := &fakeRuleUIDToNamespaceStore{
 						Response: map[string]string{
-							*ruleSilence1.RuleUID: folder1,
-							*ruleSilence2.RuleUID: folder2,
+							*ruleSilence1.GetRuleUID(): folder1,
+							*ruleSilence2.GetRuleUID(): folder2,
 						},
 					}
 					svc := NewSilenceService(ac, store)
@@ -328,16 +329,16 @@ func TestAuthorizeCreateSilence(t *testing.T) {
 }
 
 func TestAuthorizeUpdateSilence(t *testing.T) {
-	global := testSilence{ID: "global", RuleUID: nil}
-	ruleSilence1 := testSilence{ID: "rule-1", RuleUID: utils.Pointer("rule-1-uid")}
+	global := testSilence("global", nil)
+	ruleSilence1 := testSilence("rule-1", utils.Pointer("rule-1-uid"))
 	folder1 := "rule-1-folder-uid"
 	folder1Scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder1)
-	ruleSilence2 := testSilence{ID: "rule-2", RuleUID: utils.Pointer("rule-2-uid")}
+	ruleSilence2 := testSilence("rule-2", utils.Pointer("rule-2-uid"))
 	folder2 := "rule-2-folder-uid"
 	folder2Scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder2)
-	notFoundRule := testSilence{ID: "unknown-rule", RuleUID: utils.Pointer("unknown-rule-uid")}
+	notFoundRule := testSilence("unknown-rule", utils.Pointer("unknown-rule-uid"))
 
-	silences := []testSilence{
+	silences := []*models.Silence{
 		global,
 		ruleSilence1,
 		ruleSilence2,
@@ -353,7 +354,7 @@ func TestAuthorizeUpdateSilence(t *testing.T) {
 		user             identity.Requester
 		expectedErr      error
 		expectedDbAccess bool
-		overrides        map[testSilence]override
+		overrides        map[*models.Silence]override
 	}{
 		{
 			name:        "not authorized without permissions",
@@ -388,7 +389,7 @@ func TestAuthorizeUpdateSilence(t *testing.T) {
 		{
 			name: "instance read + silence write",
 			user: newUser(ac.Permission{Action: silenceWrite, Scope: folder1Scope}, ac.Permission{Action: instancesRead}),
-			overrides: map[testSilence]override{
+			overrides: map[*models.Silence]override{
 				global: {
 					expectedErr:      ErrAuthorizationBase,
 					expectedDbAccess: false,
@@ -404,7 +405,7 @@ func TestAuthorizeUpdateSilence(t *testing.T) {
 		{
 			name: "silence read + instance write",
 			user: newUser(ac.Permission{Action: silenceRead, Scope: folder1Scope}, ac.Permission{Action: instancesWrite}),
-			overrides: map[testSilence]override{
+			overrides: map[*models.Silence]override{
 				global: {
 					expectedErr:      nil,
 					expectedDbAccess: false,
@@ -420,7 +421,7 @@ func TestAuthorizeUpdateSilence(t *testing.T) {
 		{
 			name: "silence read + write",
 			user: newUser(ac.Permission{Action: silenceRead, Scope: folder1Scope}, ac.Permission{Action: silenceWrite, Scope: folder1Scope}),
-			overrides: map[testSilence]override{
+			overrides: map[*models.Silence]override{
 				global: {
 					expectedErr:      ErrAuthorizationBase,
 					expectedDbAccess: false,
@@ -444,12 +445,12 @@ func TestAuthorizeUpdateSilence(t *testing.T) {
 					expectedErr = s.expectedErr
 					expectedDbAccess = s.expectedDbAccess
 				}
-				t.Run(silence.ID, func(t *testing.T) {
+				t.Run(*silence.ID, func(t *testing.T) {
 					ac := &recordingAccessControlFake{}
 					store := &fakeRuleUIDToNamespaceStore{
 						Response: map[string]string{
-							*ruleSilence1.RuleUID: folder1,
-							*ruleSilence2.RuleUID: folder2,
+							*ruleSilence1.GetRuleUID(): folder1,
+							*ruleSilence2.GetRuleUID(): folder2,
 						},
 					}
 					svc := NewSilenceService(ac, store)
@@ -472,13 +473,8 @@ func TestAuthorizeUpdateSilence(t *testing.T) {
 	}
 }
 
-type testSilence struct {
-	ID      string
-	RuleUID *string
-}
-
-func (t testSilence) GetRuleUID() *string {
-	return t.RuleUID
+func testSilence(id string, ruleUID *string) *models.Silence {
+	return &models.Silence{ID: &id, RuleUID: ruleUID}
 }
 
 type fakeRuleUIDToNamespaceStore struct {
