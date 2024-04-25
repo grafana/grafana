@@ -10,9 +10,8 @@ import { ShowModalReactEvent } from 'app/types/events';
 
 export type SceneDrawerProps = {
   scene: SceneObject;
-  title: string;
   onDismiss: () => void;
-} & Partial<DrawerProps>;
+} & Partial<Omit<DrawerProps, 'onClose'>>;
 
 export function SceneDrawer(props: SceneDrawerProps) {
   const { scene, title, onDismiss, size = 'lg', ...rest } = props;
