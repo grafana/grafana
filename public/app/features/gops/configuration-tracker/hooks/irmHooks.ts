@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { getBackendSrv } from '@grafana/runtime';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
-import { OnCallIntegrationDTO, onCallApi } from 'app/features/alerting/unified/api/onCallApi';
+import { onCallApi } from 'app/features/alerting/unified/api/onCallApi';
 import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
@@ -61,10 +61,6 @@ function isOnCallContactPointReady(contactPoints: Receiver[]) {
   return contactPoints.some((contactPoint: Receiver) =>
     contactPoint.grafana_managed_receiver_configs?.some((receiver) => receiver.type === 'oncall')
   );
-}
-
-function isOnCallIntegrationReady(onCallIntegrations: OnCallIntegrationDTO[]) {
-  return onCallIntegrations.length > 0;
 }
 
 interface IncidentsPluginConfig {
@@ -170,7 +166,6 @@ function useOnCallChatOpsConnections() {
 export function useGetEssentialsConfiguration() {
   const contactPoints = useGetContactPoints();
   const incidentPluginConfig = useGetIncidentPluginConfig();
-  const onCallIntegrations = useGetOnCallIntegrations();
   const onCallOptions = useOnCallOptions();
   const chatOpsConnections = useOnCallChatOpsConnections();
 
@@ -186,8 +181,18 @@ export function useGetEssentialsConfiguration() {
             button: {
               type: 'openLink',
               url: '/alerting/notifications/receivers/grafana-default-email/edit?alertmanager=grafana',
-              label: 'Update',
+              label: 'Edit',
               done: isContactPointReady(contactPoints),
+            },
+          },
+          {
+            title: 'Connect alerting to OnCall',
+            description: 'OnCall allows precisely manage your on-call strategy and use multiple channels to deliver',
+            button: {
+              type: 'openLink',
+              url: '/alerting/notifications/receivers/new',
+              label: 'Connect',
+              done: isOnCallContactPointReady(contactPoints),
             },
           },
           {
@@ -198,16 +203,6 @@ export function useGetEssentialsConfiguration() {
               url: '/alerting/new',
               label: 'Create',
               done: isCreateAlertRuleDone(),
-            },
-          },
-          {
-            title: 'Create OnCall contact point',
-            description: 'OnCall allows precisely manage your on-call strategy and use multiple channels to deliver',
-            button: {
-              type: 'openLink',
-              url: '/alerting/notifications',
-              label: 'View',
-              done: isOnCallContactPointReady(contactPoints),
             },
           },
         ],
@@ -227,17 +222,7 @@ export function useGetEssentialsConfiguration() {
             },
           },
           {
-            title: 'Integrate Alerting with OnCall',
-            description: 'Boost your alert notification capabilities and unlock on-call tools.',
-            button: {
-              type: 'openLink',
-              url: '/a/grafana-oncall-app/integrations?tab=monitoring-systems&p=1',
-              label: 'View',
-              done: isOnCallIntegrationReady(onCallIntegrations),
-            },
-          },
-          {
-            title: 'Connect your ChatOps Workspace to OnCall',
+            title: 'Connect your Messaging workspace to OnCall',
             description: 'Receive alerts and oncall notifications within your chat environment.',
             button: {
               type: 'openLink',
@@ -247,7 +232,7 @@ export function useGetEssentialsConfiguration() {
             },
           },
           {
-            title: 'Connect your ChatOps Workspace to Incident',
+            title: 'Connect your Messaging workspace to Incident',
             description:
               'Automatically create an incident channel and manage incidents directly within your chat environment.',
             button: {
@@ -258,12 +243,12 @@ export function useGetEssentialsConfiguration() {
             },
           },
           {
-            title: 'Configure channels to receive alert notifications',
+            title: 'Add Messaging workspace channel to OnCall Integration',
             description: 'Select ChatOps channels to route notifications',
             button: {
               type: 'openLink',
               url: '/a/grafana-oncall-app/integrations/',
-              label: 'Connect',
+              label: 'Add',
               done: chatOpsConnections.is_integration_chatops_connected,
             },
           },
