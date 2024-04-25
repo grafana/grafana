@@ -1,7 +1,8 @@
 name: Run dashboard scenes e2e
 
 on:
-  push
+  schedule:
+    - cron: "0 8 * * 1-5" # every day at 08:00UTC on weekdays
 
 env:
   ARCH: linux-amd64
@@ -25,16 +26,16 @@ jobs:
           runTests: false
       - name: Run dashboard scenes e2e
         run: yarn e2e:scenes
-      # - name: "Send Slack notification"
-      #   if: ${{ failure() }}
-      #   uses: slackapi/slack-github-action@v1.26.0
-      #   with:
-      #     payload: >
-      #       {
-      #         "icon_emoji": ":this-is-fine-fire:",
-      #         "username": "Dashboard scenes e2e tests failed",
-      #         "text": "Link to run: https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}",
-      #         "channel": "#grafana-dashboards-squad"
-      #       }
-      #   env:
-      #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      - name: "Send Slack notification"
+        if: ${{ failure() }}
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: >
+            {
+              "icon_emoji": ":this-is-fine-fire:",
+              "username": "Dashboard scenes e2e tests failed",
+              "text": "Link to run: https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}",
+              "channel": "#grafana-dashboards-squad"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
