@@ -111,7 +111,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
         return childTop && childTop >= offsetTop;
       });
 
-      if (activeChild) {
+      if (activeChild && isCollapsible(item)) {
         setActiveSectionChildId(activeChild.id);
         setActiveSectionId(item.id);
         break;
@@ -120,6 +120,10 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
       if (activeItem) {
         setActiveSectionId(activeItem.id);
         setActiveSectionChildId(undefined);
+        setSectionsExpanded((prev) => ({
+          ...prev,
+          [item.id]: false,
+        }));
         break;
       }
     }
