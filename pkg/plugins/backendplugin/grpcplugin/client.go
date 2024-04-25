@@ -4,7 +4,6 @@ import (
 	"os/exec"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
-	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
 	goplugin "github.com/hashicorp/go-plugin"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
@@ -54,12 +53,6 @@ func newClientConfig(executablePath string, args []string, env []string, skipHos
 		Logger:           logWrapper{Logger: logger},
 		AllowedProtocols: []goplugin.Protocol{goplugin.ProtocolGRPC},
 		GRPCDialOptions: []grpc.DialOption{
-			grpc.WithChainUnaryInterceptor(
-				grpc_opentracing.UnaryClientInterceptor(),
-			),
-			grpc.WithChainStreamInterceptor(
-				grpc_opentracing.StreamClientInterceptor(),
-			),
 			grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 		},
 	}
