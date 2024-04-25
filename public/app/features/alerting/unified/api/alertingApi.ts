@@ -40,6 +40,7 @@ export const alertingApi = createApi({
     'DataSourceSettings',
     'GrafanaLabels',
     'CombinedAlertRule',
+    'AlertSilences',
   ],
   endpoints: () => ({}),
 });
