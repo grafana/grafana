@@ -13,7 +13,7 @@
     "@swc/core", // versions ~1.4.5 contain multiple bugs related to baseUrl resolution breaking builds.
   ],
   "includePaths": ["package.json", "packages/**", "public/app/plugins/**"],
-  "ignorePaths": ["emails/**", "plugins-bundled/**", "**/mocks/**", "packages/grafana-e2e/**"],
+  "ignorePaths": ["emails/**", "plugins-bundled/**", "**/mocks/**"],
   "labels": ["area/frontend", "dependencies", "no-changelog"],
   "postUpdateOptions": ["yarnDedupeHighest"],
   "packageRules": [
