@@ -99,6 +99,21 @@ const AlertRuleMenu = ({
     </>
   );
 
+  const atLeastOneItem = [
+    canPause,
+    canSilence,
+    shouldShowDeclareIncidentButton,
+    canDuplicate,
+    showDivider,
+    showCopyLinkButton,
+    canExport,
+    canDelete,
+  ].some(Boolean);
+
+  if (!atLeastOneItem) {
+    return null;
+  }
+
   return (
     <Dropdown overlay={<Menu>{menuItems}</Menu>}>
       <MoreButton size={buttonSize} />
