@@ -164,7 +164,7 @@ export function useAllAlertRuleAbilities(rule: CombinedRule): Abilities<AlertRul
   const MaybeSupported = loading ? NotSupported : isRulerAvailable;
   const MaybeSupportedUnlessImmutable = immutableRule ? NotSupported : MaybeSupported;
 
-  // Creating duplicates of plugin-provides rules does not seem to make a lot of sense
+  // Creating duplicates of plugin-provided rules does not seem to make a lot of sense
   const duplicateSupported = isPluginProvided ? NotSupported : MaybeSupported;
 
   const rulesPermissions = getRulesPermissions(rulesSourceName);
