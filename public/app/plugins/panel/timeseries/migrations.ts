@@ -1,5 +1,4 @@
 import { omitBy, pickBy, isNil, isNumber, isString } from 'lodash';
-import tinycolor from 'tinycolor2';
 
 import {
   ConfigOverrideRule,
@@ -17,8 +16,6 @@ import {
   Threshold,
   ThresholdsMode,
 } from '@grafana/data';
-import { createColors } from '@grafana/data/src/themes/createColors';
-import { createVisualizationColors } from '@grafana/data/src/themes/createVisualizationColors';
 import {
   LegendDisplayMode,
   TooltipDisplayMode,
@@ -82,9 +79,6 @@ export const graphPanelChangedHandler: PanelTypeChangedHandler = (
   return {};
 };
 
-const darkThemeColors = createColors({});
-const vizColors = createVisualizationColors(darkThemeColors);
-
 export function graphToTimeseriesOptions(angular: any): {
   fieldConfig: FieldConfigSource;
   options: Options;
@@ -122,7 +116,6 @@ export function graphToTimeseriesOptions(angular: any): {
   if (angular.aliasColors) {
     for (const alias of Object.keys(angular.aliasColors)) {
       const color = angular.aliasColors[alias];
-
       if (color) {
         overrides.push({
           matcher: {
@@ -134,7 +127,7 @@ export function graphToTimeseriesOptions(angular: any): {
               id: FieldConfigProperty.Color,
               value: {
                 mode: FieldColorModeId.Fixed,
-                fixedColor: tinycolor(vizColors.getColorByName(color)).toHexString(),
+                fixedColor: color,
               },
             },
           ],
@@ -278,7 +271,7 @@ export function graphToTimeseriesOptions(angular: any): {
             rule.properties.push({
               id: 'color',
               value: {
-                fixedColor: tinycolor(vizColors.getColorByName(v)).toHexString(),
+                fixedColor: v,
                 mode: FieldColorModeId.Fixed,
               },
             });
@@ -591,18 +584,18 @@ interface GraphTimeRegionConfig extends TimeRegionConfig {
 
 function getThresholdColor(threshold: AngularThreshold): string {
   if (threshold.colorMode === 'critical') {
-    return tinycolor(vizColors.getColorByName('red')).toHexString();
+    return 'red';
   }
 
   if (threshold.colorMode === 'warning') {
-    return tinycolor(vizColors.getColorByName('orange')).toHexString();
+    return 'orange';
   }
 
   if (threshold.colorMode === 'custom') {
-    return tinycolor(vizColors.getColorByName(threshold.fillColor || threshold.lineColor)).toHexString();
+    return threshold.fillColor || threshold.lineColor;
   }
 
-  return tinycolor(vizColors.getColorByName('red')).toHexString();
+  return 'red';
 }
 
 interface AngularThreshold {
