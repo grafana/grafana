@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
+
 	alertingNotify "github.com/grafana/alerting/notify"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -301,7 +302,7 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *contextmodel.ReqContext, b
 		return response.Error(http.StatusConflict, err.Error(), err)
 	}
 
-	return ErrResp(http.StatusInternalServerError, err, "")
+	return response.ErrOrFallback(http.StatusInternalServerError, err.Error(), err)
 }
 
 func (srv AlertmanagerSrv) RouteGetReceivers(c *contextmodel.ReqContext) response.Response {
