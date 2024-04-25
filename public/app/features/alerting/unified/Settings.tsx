@@ -9,10 +9,6 @@ import { ExternalAlertmanagers } from './components/settings/ExternalAlertmanage
 import InternalAlertmanager from './components/settings/InternalAlertmanager';
 import { SettingsProvider, useSettings } from './components/settings/SettingsContext';
 
-// @todo translate subtitle – move to navtree?
-const SUBTITLE =
-  'Manage Alertmanager configurations and configure where alert instances generated from Grafana managed alert rules are sent.';
-
 export default function SettingsPage() {
   return (
     <SettingsProvider>
@@ -28,7 +24,6 @@ function SettingsContent() {
   return (
     <AlertingPageWrapper
       navId="alerting-admin"
-      subTitle={SUBTITLE}
       isLoading={isLoading}
       actions={[
         <WithReturnButton
