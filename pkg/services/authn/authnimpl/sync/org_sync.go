@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -33,31 +32,30 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 		return nil
 	}
 
-	ctxLogger := s.log.FromContext(ctx)
+	ctxLogger := s.log.FromContext(ctx).New("id", id.ID, "login", id.Login)
 
-	namespace, identifier := id.GetNamespacedID()
-	if namespace != authn.NamespaceUser {
-		ctxLogger.Warn("Failed to sync org role, invalid namespace for identity", "id", id.ID, "namespace", namespace)
+	if !id.ID.IsNamespace(authn.NamespaceUser) {
+		ctxLogger.Warn("Failed to sync org role, invalid namespace for identity", "namespace", id.ID.Namespace())
 		return nil
 	}
 
-	userID, err := identity.IntIdentifier(namespace, identifier)
+	userID, err := id.ID.ParseInt()
 	if err != nil {
-		ctxLogger.Warn("Failed to sync org role, invalid ID for identity", "id", id.ID, "namespace", namespace, "err", err)
+		ctxLogger.Warn("Failed to sync org role, invalid ID for identity", "namespace", id.ID.Namespace(), "err", err)
 		return nil
 	}
 
-	ctxLogger.Debug("Syncing organization roles", "id", id.ID, "extOrgRoles", id.OrgRoles)
+	ctxLogger.Debug("Syncing organization roles", "extOrgRoles", id.OrgRoles)
 	// don't sync org roles if none is specified
 	if len(id.OrgRoles) == 0 {
-		ctxLogger.Debug("Not syncing organization roles since external user doesn't have any", "id", id.ID)
+		ctxLogger.Debug("Not syncing organization roles since external user doesn't have any")
 		return nil
 	}
 
 	orgsQuery := &org.GetUserOrgListQuery{UserID: userID}
 	result, err := s.orgService.GetUserOrgList(ctx, orgsQuery)
 	if err != nil {
-		ctxLogger.Error("Failed to get user's organizations", "id", id.ID, "error", err)
+		ctxLogger.Error("Failed to get user's organizations", "error", err)
 		return nil
 	}
 
@@ -75,7 +73,7 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 			// update role
 			cmd := &org.UpdateOrgUserCommand{OrgID: orga.OrgID, UserID: userID, Role: extRole}
 			if err := s.orgService.UpdateOrgUser(ctx, cmd); err != nil {
-				ctxLogger.Error("Failed to update active org user", "id", id.ID, "error", err)
+				ctxLogger.Error("Failed to update active org user", "error", err)
 				return err
 			}
 		}
@@ -93,17 +91,17 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 		cmd := &org.AddOrgUserCommand{UserID: userID, Role: orgRole, OrgID: orgId}
 		err := s.orgService.AddOrgUser(ctx, cmd)
 		if err != nil && !errors.Is(err, org.ErrOrgNotFound) {
-			ctxLogger.Error("Failed to update active org for user", "id", id.ID, "error", err)
+			ctxLogger.Error("Failed to update active org for user", "error", err)
 			return err
 		}
 	}
 
 	// delete any removed org roles
 	for _, orgID := range deleteOrgIds {
-		ctxLogger.Debug("Removing user's organization membership as part of syncing with OAuth login", "id", id.ID, "orgId", orgID)
+		ctxLogger.Debug("Removing user's organization membership as part of syncing with OAuth login", "orgId", orgID)
 		cmd := &org.RemoveOrgUserCommand{OrgID: orgID, UserID: userID}
 		if err := s.orgService.RemoveOrgUser(ctx, cmd); err != nil {
-			ctxLogger.Error("Failed to remove user from org", "id", id.ID, "orgId", orgID, "error", err)
+			ctxLogger.Error("Failed to remove user from org", "orgId", orgID, "error", err)
 			if errors.Is(err, org.ErrLastOrgAdmin) {
 				continue
 			}
@@ -112,7 +110,7 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 		}
 
 		if err := s.accessControl.DeleteUserPermissions(ctx, orgID, cmd.UserID); err != nil {
-			ctxLogger.Error("Failed to delete permissions for user", "id", id.ID, "orgId", orgID, "error", err)
+			ctxLogger.Error("Failed to delete permissions for user", "orgId", orgID, "error", err)
 		}
 	}
 
@@ -132,43 +130,39 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 	return nil
 }
 
-func (s *OrgSync) SetDefaultOrgHook(ctx context.Context, currentIdentity *authn.Identity, r *authn.Request) error {
-	if s.cfg.LoginDefaultOrgId < 1 || currentIdentity == nil {
-		return nil
+func (s *OrgSync) SetDefaultOrgHook(ctx context.Context, currentIdentity *authn.Identity, r *authn.Request, err error) {
+	if s.cfg.LoginDefaultOrgId < 1 || currentIdentity == nil || err != nil {
+		return
 	}
 
 	ctxLogger := s.log.FromContext(ctx)
 
-	namespace, identifier := currentIdentity.GetNamespacedID()
-	if namespace != identity.NamespaceUser {
-		ctxLogger.Debug("Skipping default org sync, not a user", "namespace", namespace)
-		return nil
+	if !currentIdentity.ID.IsNamespace(authn.NamespaceUser) {
+		ctxLogger.Debug("Skipping default org sync, not a user", "namespace", currentIdentity.ID.Namespace())
+		return
 	}
 
-	userID, err := identity.IntIdentifier(namespace, identifier)
+	userID, err := currentIdentity.ID.ParseInt()
 	if err != nil {
-		ctxLogger.Debug("Skipping default org sync, invalid ID for identity", "id", currentIdentity.ID, "namespace", namespace, "err", err)
-		return nil
+		ctxLogger.Debug("Skipping default org sync, invalid ID for identity", "id", currentIdentity.ID, "namespace", currentIdentity.ID.Namespace(), "err", err)
+		return
 	}
 
 	hasAssignedToOrg, err := s.validateUsingOrg(ctx, userID, s.cfg.LoginDefaultOrgId)
 	if err != nil {
 		ctxLogger.Error("Skipping default org sync, failed to validate user's organizations", "id", currentIdentity.ID, "err", err)
-		return nil
+		return
 	}
 
 	if !hasAssignedToOrg {
 		ctxLogger.Debug("Skipping default org sync, user is not assigned to org", "id", currentIdentity.ID, "org", s.cfg.LoginDefaultOrgId)
-		return nil
+		return
 	}
 
 	cmd := user.SetUsingOrgCommand{UserID: userID, OrgID: s.cfg.LoginDefaultOrgId}
-	if err := s.userService.SetUsingOrg(ctx, &cmd); err != nil {
-		ctxLogger.Error("Failed to set default org", "id", currentIdentity.ID, "err", err)
-		return err
+	if svcErr := s.userService.SetUsingOrg(ctx, &cmd); svcErr != nil {
+		ctxLogger.Error("Failed to set default org", "id", currentIdentity.ID, "err", svcErr)
 	}
-
-	return nil
 }
 
 func (s *OrgSync) validateUsingOrg(ctx context.Context, userID int64, orgID int64) (bool, error) {

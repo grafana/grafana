@@ -11,7 +11,7 @@ import {
   TextBoxVariable,
   SceneVariableSet,
 } from '@grafana/scenes';
-import { DataQuery, DataSourceJsonData, VariableType } from '@grafana/schema';
+import { DataQuery, DataSourceJsonData, VariableHide, VariableType } from '@grafana/schema';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 
@@ -226,7 +226,6 @@ describe('getVariableScene', () => {
   it.each([
     ['custom', CustomVariable],
     ['query', QueryVariable],
-    ['constant', ConstantVariable],
     ['interval', IntervalVariable],
     ['datasource', DataSourceVariable],
     ['adhoc', AdHocFiltersVariable],
@@ -237,6 +236,15 @@ describe('getVariableScene', () => {
     const sceneVariable = getVariableScene(type as EditableVariableType, initialState);
     expect(sceneVariable).toBeInstanceOf(instanceType);
     expect(sceneVariable.state.name).toBe(initialState.name);
+    expect(sceneVariable.state.hide).toBe(undefined);
+  });
+
+  it('should return the scene variable instance for the constant editable variable type', () => {
+    const initialState = { name: 'MyVariable' };
+    const sceneVariable = getVariableScene('constant' as EditableVariableType, initialState);
+    expect(sceneVariable).toBeInstanceOf(ConstantVariable);
+    expect(sceneVariable.state.name).toBe(initialState.name);
+    expect(sceneVariable.state.hide).toBe(VariableHide.hideVariable);
   });
 });
 

@@ -362,8 +362,7 @@ func TestSocialGitlab_extractFromToken(t *testing.T) {
 					TokenUrl:            tc.config.Endpoint.TokenURL,
 				},
 				&setting.Cfg{
-					AutoAssignOrgRole:          "",
-					OAuthSkipOrgRoleUpdateSync: false,
+					AutoAssignOrgRole: "",
 				}, &ssosettingstests.MockService{},
 				featuremgmt.WithFeatures())
 

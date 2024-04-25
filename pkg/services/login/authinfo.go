@@ -78,12 +78,6 @@ func IsExternallySynced(cfg *setting.Cfg, authModule string, oauthInfo *social.O
 	case JWTModule:
 		return !cfg.JWTAuth.SkipOrgRoleSync
 	}
-	// then check the rest of the oauth providers
-	// FIXME: remove this once we remove the setting
-	// is a deprecated setting that is used to skip org role sync for all external oauth providers
-	if cfg.OAuthSkipOrgRoleUpdateSync {
-		return false
-	}
 	switch authModule {
 	case GoogleAuthModule, OktaAuthModule, AzureADAuthModule, GitLabAuthModule, GithubAuthModule, GrafanaComAuthModule, GenericOAuthModule:
 		if oauthInfo == nil {

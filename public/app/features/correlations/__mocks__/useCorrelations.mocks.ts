@@ -15,7 +15,7 @@ export function createFetchCorrelationsResponse<T>(overrides?: DeepPartial<Fetch
       type: 'basic',
       statusText: 'Ok',
       redirected: false,
-      headers: {} as unknown as Headers,
+      headers: new Headers(),
       ok: true,
     },
     overrides

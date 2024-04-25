@@ -38,6 +38,8 @@ export const alertingApi = createApi({
     'OnCallIntegrations',
     'OrgMigrationState',
     'DataSourceSettings',
+    'GrafanaLabels',
+    'CombinedAlertRule',
   ],
   endpoints: () => ({}),
 });

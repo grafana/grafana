@@ -346,7 +346,11 @@ func (alertRule *AlertRule) Diff(rule *AlertRule, ignore ...string) cmputil.Diff
 
 	// json.RawMessage is a slice of bytes and therefore cmp's default behavior is to compare it by byte, which is not really useful
 	var jsonCmp = cmp.Transformer("", func(in json.RawMessage) string {
-		return string(in)
+		b, err := json.Marshal(in)
+		if err != nil {
+			return string(in)
+		}
+		return string(b)
 	})
 	ops = append(
 		ops,

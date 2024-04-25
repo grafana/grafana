@@ -10,6 +10,9 @@ import {
 } from '@grafana/scenes';
 import { Button } from '@grafana/ui';
 
+import { reportExploreMetrics } from '../interactions';
+import { getTrailFor } from '../utils';
+
 export interface AddToFiltersGraphActionState extends SceneObjectState {
   frame: DataFrame;
 }
@@ -27,22 +30,28 @@ export class AddToFiltersGraphAction extends SceneObjectBase<AddToFiltersGraphAc
     }
 
     const labelName = Object.keys(labels)[0];
-
-    variable.setState({
-      filters: [
-        ...variable.state.filters,
-        {
-          key: labelName,
-          operator: '=',
-          value: labels[labelName],
-        },
-      ],
-    });
+    reportExploreMetrics('label_filter_changed', { label: labelName, action: 'added', cause: 'breakdown' });
+    const trail = getTrailFor(this);
+    const filter = {
+      key: labelName,
+      operator: '=',
+      value: labels[labelName],
+    };
+    trail.addFilterWithoutReportingInteraction(filter);
   };
 
   public static Component = ({ model }: SceneComponentProps<AddToFiltersGraphAction>) => {
+    const state = model.useState();
+    const labels = state.frame.fields[1]?.labels || {};
+
+    const canAddToFilters = Object.keys(labels).length !== 0;
+
+    if (!canAddToFilters) {
+      return null;
+    }
+
     return (
-      <Button variant="primary" size="sm" fill="text" onClick={model.onClick}>
+      <Button variant="secondary" size="sm" fill="solid" onClick={model.onClick}>
         Add to filters
       </Button>
     );

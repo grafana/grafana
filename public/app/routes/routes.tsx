@@ -364,9 +364,9 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     config.featureToggles.onPremToCloudMigrations && {
       path: '/admin/migrate-to-cloud',
-      roles: () => ['ServerAdmin'],
+      roles: () => ['Admin'],
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "MigrateToCloud" */ 'app/features/admin/migrate-to-cloud/MigrateToCloud')
+        () => import(/* webpackChunkName: "MigrateToCloud" */ 'app/features/migrate-to-cloud/MigrateToCloud')
       ),
     },
     // LOGIN / SIGNUP

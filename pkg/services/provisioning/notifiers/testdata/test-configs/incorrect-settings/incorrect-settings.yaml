@@ -1,9 +1,0 @@
-notifiers:
-  - name: slack-notification-without-token-in-settings
-    type: slack
-    org_id: 2
-    uid: notifier1
-    is_default: true
-    settings:
-      recipient: "XXX"
-      uploadImage: true

@@ -21,7 +21,7 @@ import { FormPrompt } from '../../core/components/FormPrompt/FormPrompt';
 import { Page } from '../../core/components/Page/Page';
 
 import { FieldRenderer } from './FieldRenderer';
-import { fields, sectionFields } from './fields';
+import { sectionFields } from './fields';
 import { SSOProvider, SSOProviderDTO } from './types';
 import { dataToDTO, dtoToData } from './utils/data';
 
@@ -45,7 +45,6 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
     formState: { errors, dirtyFields, isSubmitted },
   } = useForm({ defaultValues: dataToDTO(config), mode: 'onSubmit', reValidateMode: 'onChange' });
   const [isSaving, setIsSaving] = useState(false);
-  const providerFields = fields[provider];
   const [submitError, setSubmitError] = useState(false);
   const dataSubmitted = isSubmitted && !submitError;
   const sections = sectionFields[provider];
@@ -155,55 +154,34 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
         <Field label="Enabled" hidden={true}>
           <Switch {...register('enabled')} id="enabled" label={'Enabled'} />
         </Field>
-        {sections ? (
-          <Stack gap={2} direction={'column'}>
-            {sections
-              .filter((section) => !section.hidden)
-              .map((section, index) => {
-                return (
-                  <CollapsableSection label={section.name} isOpen={index === 0} key={section.name}>
-                    {section.fields
-                      .filter((field) => (typeof field !== 'string' ? !field.hidden : true))
-                      .map((field) => {
-                        return (
-                          <FieldRenderer
-                            key={typeof field === 'string' ? field : field.name}
-                            field={field}
-                            control={control}
-                            errors={errors}
-                            setValue={setValue}
-                            register={register}
-                            watch={watch}
-                            unregister={unregister}
-                            provider={provider}
-                            secretConfigured={!!config?.settings.clientSecret}
-                          />
-                        );
-                      })}
-                  </CollapsableSection>
-                );
-              })}
-          </Stack>
-        ) : (
-          <>
-            {providerFields.map((field) => {
+        <Stack gap={2} direction={'column'}>
+          {sections
+            .filter((section) => !section.hidden)
+            .map((section, index) => {
               return (
-                <FieldRenderer
-                  key={field}
-                  field={field}
-                  control={control}
-                  errors={errors}
-                  setValue={setValue}
-                  register={register}
-                  watch={watch}
-                  unregister={unregister}
-                  provider={provider}
-                  secretConfigured={!!config?.settings.clientSecret}
-                />
+                <CollapsableSection label={section.name} isOpen={index === 0} key={section.name}>
+                  {section.fields
+                    .filter((field) => (typeof field !== 'string' ? !field.hidden : true))
+                    .map((field) => {
+                      return (
+                        <FieldRenderer
+                          key={typeof field === 'string' ? field : field.name}
+                          field={field}
+                          control={control}
+                          errors={errors}
+                          setValue={setValue}
+                          register={register}
+                          watch={watch}
+                          unregister={unregister}
+                          provider={provider}
+                          secretConfigured={!!config?.settings.clientSecret}
+                        />
+                      );
+                    })}
+                </CollapsableSection>
               );
             })}
-          </>
-        )}
+        </Stack>
         <Box display={'flex'} gap={2} marginTop={5}>
           <Stack alignItems={'center'} gap={2}>
             <Button

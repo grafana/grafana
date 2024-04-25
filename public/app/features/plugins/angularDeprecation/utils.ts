@@ -14,3 +14,13 @@ export function isAngularDatasourcePluginAndNotHidden(dsUid: string): boolean {
   const settings = getDsInstanceSettingsByUid(dsUid);
   return (settings?.meta.angular?.detected && !settings?.meta.angular.hideDeprecation) ?? false;
 }
+
+export const migrationFeatureFlags = new Set([
+  'autoMigrateOldPanels',
+  'autoMigrateGraphPanel',
+  'autoMigrateTablePanel',
+  'autoMigratePiechartPanel',
+  'autoMigrateWorldmapPanel',
+  'autoMigrateStatPanel',
+  'disableAngular',
+]);

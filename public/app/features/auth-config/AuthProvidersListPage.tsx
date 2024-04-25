@@ -8,7 +8,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { config } from 'app/core/config';
 import { StoreState } from 'app/types';
 
-import { AuthDrawer } from './AuthDrawer';
+import AuthDrawer from './AuthDrawer';
 import ConfigureAuthCTA from './components/ConfigureAuthCTA';
 import { ProviderCard } from './components/ProviderCard';
 import { loadSettings } from './state/actions';
@@ -51,6 +51,9 @@ export const AuthConfigPageUnconnected = ({
   const onProviderCardClick = (providerType: string, enabled: boolean) => {
     reportInteraction('authentication_ui_provider_clicked', { provider: providerType, enabled });
   };
+
+  // filter out saml from sso providers because it is already included in availableProviders
+  providers = providers.filter((p) => p.provider !== 'saml');
 
   const providerList = availableProviders.length
     ? [

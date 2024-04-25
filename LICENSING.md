@@ -18,7 +18,7 @@ packaging/
 kinds/
 pkg/kinds/
 pkg/kindsys/
-pkg/registry/corekind/
+pkg/registry/schemas/
 grafana-mixin/
 public/app/plugins/datasource/tempo
 public/app/features/explore/TraceView/components

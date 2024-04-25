@@ -267,6 +267,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Description:  "Optional message. You can use templates to customize this field. Using a custom message will replace the default message",
 					Element:      ElementTypeTextArea,
 					PropertyName: "message",
+					Placeholder:  alertingTemplates.DefaultMessageEmbed,
 				},
 				{ // New in 9.0.
 					Label:        "Subject",
@@ -1280,7 +1281,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 				}, {
 					Label:        "Override priority",
 					Element:      ElementTypeCheckbox,
-					Description:  "Allow the alert priority to be set using the og_priority annotation",
+					Description:  "Allow the alert priority to be set using the og_priority label.",
 					PropertyName: "overridePriority",
 				},
 				{

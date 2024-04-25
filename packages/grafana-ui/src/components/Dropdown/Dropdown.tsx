@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import {
+  FloatingFocusManager,
   autoUpdate,
   flip,
   offset as floatingUIOffset,
@@ -9,11 +10,10 @@ import {
   useFloating,
   useInteractions,
 } from '@floating-ui/react';
-import { FocusScope } from '@react-aria/focus';
 import React, { useEffect, useRef, useState } from 'react';
 import { CSSTransition } from 'react-transition-group';
 
-import { ReactUtils } from '../../utils';
+import { ReactUtils, handleReducedMotion } from '../../utils';
 import { getPlacement } from '../../utils/tooltipUtils';
 import { Portal } from '../Portal/Portal';
 import { TooltipPlacement } from '../Tooltip/types';
@@ -83,7 +83,7 @@ export const Dropdown = React.memo(({ children, overlay, placement, offset, onVi
       })}
       {show && (
         <Portal>
-          <FocusScope autoFocus restoreFocus contain>
+          <FloatingFocusManager context={context}>
             {/*
               this is handling bubbled events from the inner overlay
               see https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/docs/rules/no-static-element-interactions.md#case-the-event-handler-is-only-being-used-to-capture-bubbled-events
@@ -100,7 +100,7 @@ export const Dropdown = React.memo(({ children, overlay, placement, offset, onVi
                 <div ref={transitionRef}>{ReactUtils.renderOrCallToRender(overlay, { ...getFloatingProps() })}</div>
               </CSSTransition>
             </div>
-          </FocusScope>
+          </FloatingFocusManager>
         </Portal>
       )}
     </>
@@ -114,13 +114,17 @@ const getStyles = (duration: number) => {
     appear: css({
       opacity: '0',
       position: 'relative',
-      transform: 'scaleY(0.5)',
       transformOrigin: 'top',
+      ...handleReducedMotion({
+        transform: 'scaleY(0.5)',
+      }),
     }),
     appearActive: css({
       opacity: '1',
-      transform: 'scaleY(1)',
-      transition: `transform ${duration}ms cubic-bezier(0.2, 0, 0.2, 1), opacity ${duration}ms cubic-bezier(0.2, 0, 0.2, 1)`,
+      ...handleReducedMotion({
+        transform: 'scaleY(1)',
+        transition: `transform ${duration}ms cubic-bezier(0.2, 0, 0.2, 1), opacity ${duration}ms cubic-bezier(0.2, 0, 0.2, 1)`,
+      }),
     }),
   };
 };

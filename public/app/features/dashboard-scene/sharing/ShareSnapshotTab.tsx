@@ -9,7 +9,6 @@ import { t, Trans } from 'app/core/internationalization';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { getDashboardSnapshotSrv, SnapshotSharingOptions } from 'app/features/dashboard/services/SnapshotSrv';
 
-import { DashboardScene } from '../scene/DashboardScene';
 import { transformSceneToSaveModel, trimDashboardForSnapshot } from '../serialization/transformSceneToSaveModel';
 import { DashboardInteractions } from '../utils/interactions';
 
@@ -44,7 +43,6 @@ const getDefaultExpireOption = () => {
 
 export interface ShareSnapshotTabState extends SceneShareTabState {
   panelRef?: SceneObjectRef<VizPanel>;
-  dashboardRef: SceneObjectRef<DashboardScene>;
   snapshotName?: string;
   selectedExpireOption?: SelectableValue<number>;
 

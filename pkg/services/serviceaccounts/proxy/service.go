@@ -30,7 +30,7 @@ func ProvideServiceAccountsProxy(
 	cfg *setting.Cfg,
 	ac accesscontrol.AccessControl,
 	accesscontrolService accesscontrol.Service,
-	features *featuremgmt.FeatureManager,
+	features featuremgmt.FeatureToggles,
 	permissionService accesscontrol.ServiceAccountPermissionsService,
 	proxiedService *manager.ServiceAccountsService,
 	routeRegister routing.RouteRegister,
@@ -187,5 +187,5 @@ func isNameValid(name string) bool {
 }
 
 func isExternalServiceAccount(login string) bool {
-	return strings.HasPrefix(login, serviceaccounts.ServiceAccountPrefix+serviceaccounts.ExtSvcPrefix)
+	return strings.HasPrefix(login, serviceaccounts.ExtSvcLoginPrefix)
 }

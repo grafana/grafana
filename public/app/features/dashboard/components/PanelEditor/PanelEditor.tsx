@@ -266,7 +266,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         {panelPane}
         <div
           className={styles.tabsWrapper}
-          aria-label={selectors.components.PanelEditor.DataPane.content}
+          data-testid={selectors.components.PanelEditor.DataPane.content}
           key="panel-editor-tabs"
         >
           <PanelEditorTabs
@@ -309,7 +309,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
               id="table-view"
               value={tableViewEnabled}
               onClick={this.onToggleTableView}
-              aria-label={selectors.components.PanelEditor.toggleTableView}
+              data-testid={selectors.components.PanelEditor.toggleTableView}
             />
             <RadioButtonGroup value={uiState.mode} options={displayModes} onChange={this.onDisplayModeChange} />
             <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={updateTimeZoneForSession} isOnCanvas={true} />
@@ -333,27 +333,28 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
       >
         Discard
       </Button>,
-      this.props.panel.libraryPanel ? (
-        <Button
-          onClick={this.onSaveLibraryPanel}
-          variant="primary"
-          size={size}
-          title="Apply changes and save library panel"
-          key="save-panel"
-        >
-          Save library panel
-        </Button>
-      ) : (
-        <Button
-          onClick={this.onSaveDashboard}
-          title="Apply changes and save dashboard"
-          key="save"
-          size={size}
-          variant="secondary"
-        >
-          Save
-        </Button>
-      ),
+      this.props.dashboard.meta.canSave &&
+        (this.props.panel.libraryPanel ? (
+          <Button
+            onClick={this.onSaveLibraryPanel}
+            variant="primary"
+            size={size}
+            title="Apply changes and save library panel"
+            key="save-panel"
+          >
+            Save library panel
+          </Button>
+        ) : (
+          <Button
+            onClick={this.onSaveDashboard}
+            title="Apply changes and save dashboard"
+            key="save"
+            size={size}
+            variant="secondary"
+          >
+            Save
+          </Button>
+        )),
       <Button
         onClick={this.onBack}
         variant="primary"
@@ -441,7 +442,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
       <Page
         navModel={sectionNav}
         pageNav={pageNav}
-        aria-label={selectors.components.PanelEditor.General.content}
+        data-testid={selectors.components.PanelEditor.General.content}
         layout={PageLayoutType.Custom}
         className={className}
       >

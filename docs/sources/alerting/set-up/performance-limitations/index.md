@@ -1,7 +1,7 @@
 ---
 aliases:
-  - alerting-limitations/
-  - alerting/performance-limitations/
+  - ./alerting-limitations/ # /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/alerting-limitations/
+  - ../../alerting/performance-limitations/ # /docs/grafana/<GRAFANA_VERSION>/alerting/performance-limitations/
 canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/performance-limitations/
 description: Learn about performance considerations and limitations
 keywords:
@@ -67,3 +67,8 @@ can also be configured using the `state_periodic_save_interval` configuration fl
 
 The time it takes to write to the database periodically can be monitored using the `state_full_sync_duration_seconds` metric
 that is exposed by Grafana.
+
+If Grafana crashes or is force killed, then the database can be up to `state_periodic_save_interval` seconds out of date.
+When Grafana restarts, the UI might show incorrect state for some alerts until the alerts are re-evaluated.
+In some cases, alerts that were firing before the crash might fire again.
+If this happens, Grafana might send duplicate notifications for firing alerts.

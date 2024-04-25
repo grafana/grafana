@@ -543,6 +543,7 @@ export const somePromRules = (dataSourceName = 'Prometheus'): RuleNamespace[] =>
     groups: [mockPromRuleGroup({ name: 'group3', rules: [mockPromAlertingRule({ name: 'alert3' })] })],
   },
 ];
+
 export const someRulerRules: RulerRulesConfigDTO = {
   namespace1: [
     mockRulerRuleGroup({ name: 'group1', rules: [mockRulerAlertingRule({ alert: 'alert1' })] }),
@@ -550,6 +551,23 @@ export const someRulerRules: RulerRulesConfigDTO = {
   ],
   namespace2: [mockRulerRuleGroup({ name: 'group3', rules: [mockRulerAlertingRule({ alert: 'alert3' })] })],
 };
+
+export const getPotentiallyPausedRulerRules: (isPaused: boolean) => RulerRulesConfigDTO = (isPaused) => ({
+  namespacePaused: [
+    mockRulerRuleGroup({
+      name: 'groupPaused',
+      rules: [mockGrafanaRulerRule({ title: 'paused alert', is_paused: isPaused })],
+    }),
+  ],
+});
+
+export const pausedPromRules = (dataSourceName = 'Prometheus'): RuleNamespace[] => [
+  {
+    dataSourceName,
+    name: 'namespacePaused',
+    groups: [mockPromRuleGroup({ name: 'groupPaused', rules: [mockPromAlertingRule({ name: 'paused alert' })] })],
+  },
+];
 
 export const mockCombinedRule = (partial?: Partial<CombinedRule>): CombinedRule => ({
   name: 'mockRule',
@@ -719,6 +737,26 @@ export const onCallPluginMetaMock: PluginMeta = {
   info: {
     author: { name: 'Grafana Labs' },
     description: 'Grafana OnCall',
+    updated: '',
+    version: '',
+    links: [],
+    logos: {
+      small: '',
+      large: '',
+    },
+    screenshots: [],
+  },
+};
+
+export const labelsPluginMetaMock: PluginMeta = {
+  name: 'Grafana IRM Labels',
+  id: 'grafana-labels-app',
+  type: PluginType.app,
+  module: 'plugins/grafana-labels-app/module',
+  baseUrl: 'public/plugins/grafana-labels-app',
+  info: {
+    author: { name: 'Grafana Labs' },
+    description: '',
     updated: '',
     version: '',
     links: [],

@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 func TestSetDefaultNavURL(t *testing.T) {
@@ -143,17 +142,19 @@ func Test_configureAppChildPlugin(t *testing.T) {
 func TestSkipEnvVarsDecorateFunc(t *testing.T) {
 	const pluginID = "plugin-id"
 
-	t.Run("feature flag is not present", func(t *testing.T) {
-		f := SkipHostEnvVarsDecorateFunc(&config.PluginManagementCfg{Features: featuremgmt.WithFeatures()})
+	t.Run("config field is false", func(t *testing.T) {
+		f := SkipHostEnvVarsDecorateFunc(&config.PluginManagementCfg{
+			Features: config.Features{SkipHostEnvVarsEnabled: false},
+		})
 		p, err := f(context.Background(), &plugins.Plugin{JSONData: plugins.JSONData{ID: pluginID}})
 		require.NoError(t, err)
 		require.False(t, p.SkipHostEnvVars)
 	})
 
-	t.Run("feature flag is present", func(t *testing.T) {
+	t.Run("config field is true", func(t *testing.T) {
 		t.Run("no plugin settings should set SkipHostEnvVars to true", func(t *testing.T) {
 			f := SkipHostEnvVarsDecorateFunc(&config.PluginManagementCfg{
-				Features: featuremgmt.WithFeatures(featuremgmt.FlagPluginsSkipHostEnvVars),
+				Features: config.Features{SkipHostEnvVarsEnabled: true},
 			})
 			p, err := f(context.Background(), &plugins.Plugin{JSONData: plugins.JSONData{ID: pluginID}})
 			require.NoError(t, err)
@@ -189,7 +190,9 @@ func TestSkipEnvVarsDecorateFunc(t *testing.T) {
 			} {
 				t.Run(tc.name, func(t *testing.T) {
 					f := SkipHostEnvVarsDecorateFunc(&config.PluginManagementCfg{
-						Features:           featuremgmt.WithFeatures(featuremgmt.FlagPluginsSkipHostEnvVars),
+						Features: config.Features{
+							SkipHostEnvVarsEnabled: true,
+						},
 						ForwardHostEnvVars: tc.forwardHostEnvVars,
 					})
 					p, err := f(context.Background(), &plugins.Plugin{JSONData: plugins.JSONData{ID: pluginID}})

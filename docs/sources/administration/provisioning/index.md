@@ -15,7 +15,7 @@ weight: 600
 
 # Provision Grafana
 
-In previous versions of Grafana, you could only use the API for provisioning data sources and dashboards. But that required the service to be running before you started creating dashboards and you also needed to set up credentials for the HTTP API. In v5.0 we decided to improve this experience by adding a new active provisioning system that uses config files. This will make GitOps more natural as data sources and dashboards can be defined via files that can be version controlled. We hope to extend this system to later add support for users, orgs and alerts as well.
+In previous versions of Grafana, you could only use the API for provisioning data sources and dashboards. But that required the service to be running before you started creating dashboards and you also needed to set up credentials for the HTTP API. In v5.0 we decided to improve this experience by adding a new active provisioning system that uses config files. This will make GitOps more natural as data sources and dashboards can be defined via files that can be version controlled. We hope to extend this system to later add support for users and orgs as well.
 
 ## Config File
 
@@ -81,6 +81,14 @@ If the data source already exists, Grafana reconfigures it to match the provisio
 The configuration file can also list data sources to automatically delete, called `deleteDatasources`.
 Grafana deletes the data sources listed in `deleteDatasources` _before_ adding or updating those in the `datasources` list.
 
+You can configure Grafana to automatically delete provisioned data sources when they're removed from the provisioning file.
+To do so, add `prune: true` to the root of your provisioning file.
+With this configuration, Grafana also removes the provisioned data sources if you remove the provisioning file entirely.
+
+{{% admonition type="note" %}}
+The `prune` parameter is available in Grafana v11.1 and higher.
+{{% /admonition %}}
+
 ### Running multiple Grafana instances
 
 If you run multiple instances of Grafana, add a version number to each data source in the configuration and increase it when you update the configuration.
@@ -99,6 +107,10 @@ apiVersion: 1
 deleteDatasources:
   - name: Graphite
     orgId: 1
+
+# Mark provisioned data sources for deletion if they are no longer in a provisioning file.
+# It takes no effect if data sources are already listed in the deleteDatasources section.
+prune: true
 
 # List of data sources to insert/update depending on what's
 # available in the database.

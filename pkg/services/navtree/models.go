@@ -39,7 +39,6 @@ const (
 	NavIDAlertsAndIncidents   = "alerts-and-incidents"
 	NavIDTestingAndSynthetics = "testing-and-synthetics"
 	NavIDAlerting             = "alerting"
-	NavIDAlertingLegacy       = "alerting-legacy"
 	NavIDMonitoring           = "monitoring"
 	NavIDInfrastructure       = "infrastructure"
 	NavIDFrontend             = "frontend"
@@ -125,6 +124,14 @@ func Sort(nodes []*NavLink) {
 
 	for _, child := range nodes {
 		child.Sort()
+	}
+}
+
+func (root *NavTreeRoot) ApplyHelpVersion(version string) {
+	helpNode := root.FindById("help")
+
+	if helpNode != nil {
+		helpNode.SubTitle = version
 	}
 }
 

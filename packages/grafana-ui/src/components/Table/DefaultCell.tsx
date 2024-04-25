@@ -1,22 +1,21 @@
 import { cx } from '@emotion/css';
 import React, { ReactElement, useState } from 'react';
-import tinycolor from 'tinycolor2';
 
 import { DisplayValue, formattedValueToString } from '@grafana/data';
-import { TableCellBackgroundDisplayMode, TableCellDisplayMode } from '@grafana/schema';
+import { TableCellDisplayMode } from '@grafana/schema';
 
 import { useStyles2 } from '../../themes';
-import { getCellLinks, getTextColorForAlphaBackground } from '../../utils';
+import { getCellLinks } from '../../utils';
 import { clearLinkButtonStyles } from '../Button';
 import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
 
 import { CellActions } from './CellActions';
 import { TableStyles } from './styles';
 import { TableCellProps, CustomCellRendererProps, TableCellOptions } from './types';
-import { getCellOptions } from './utils';
+import { getCellColors, getCellOptions } from './utils';
 
 export const DefaultCell = (props: TableCellProps) => {
-  const { field, cell, tableStyles, row, cellProps, frame } = props;
+  const { field, cell, tableStyles, row, cellProps, frame, rowStyled } = props;
 
   const inspectEnabled = Boolean(field.config.custom?.inspect);
   const displayValue = field.display!(cell.value);
@@ -53,7 +52,15 @@ export const DefaultCell = (props: TableCellProps) => {
 
   // Text should wrap when the content length is less than or equal to the length of an OG tweet and it contains whitespace
   const textShouldWrap = displayValue.text.length <= OG_TWEET_LENGTH && /\s/.test(displayValue.text);
-  const cellStyle = getCellStyle(tableStyles, cellOptions, displayValue, inspectEnabled, isStringValue, textShouldWrap);
+  const cellStyle = getCellStyle(
+    tableStyles,
+    cellOptions,
+    displayValue,
+    inspectEnabled,
+    isStringValue,
+    textShouldWrap,
+    rowStyled
+  );
 
   if (isStringValue) {
     let justifyContent = cellProps.style?.justifyContent;
@@ -104,40 +111,30 @@ function getCellStyle(
   displayValue: DisplayValue,
   disableOverflowOnHover = false,
   isStringValue = false,
-  shouldWrapText = false
+  shouldWrapText = false,
+  rowStyled = false
 ) {
-  // How much to darken elements depends upon if we're in dark mode
-  const darkeningFactor = tableStyles.theme.isDark ? 1 : -0.7;
-
   // Setup color variables
   let textColor: string | undefined = undefined;
   let bgColor: string | undefined = undefined;
+  let bgHoverColor: string | undefined = undefined;
 
-  if (cellOptions.type === TableCellDisplayMode.ColorText) {
-    textColor = displayValue.color;
-  } else if (cellOptions.type === TableCellDisplayMode.ColorBackground) {
-    const mode = cellOptions.mode ?? TableCellBackgroundDisplayMode.Gradient;
-
-    if (mode === TableCellBackgroundDisplayMode.Basic) {
-      textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
-      bgColor = tinycolor(displayValue.color).toRgbString();
-    } else if (mode === TableCellBackgroundDisplayMode.Gradient) {
-      const bgColor2 = tinycolor(displayValue.color)
-        .darken(10 * darkeningFactor)
-        .spin(5);
-      textColor = getTextColorForAlphaBackground(displayValue.color!, tableStyles.theme.isDark);
-      bgColor = `linear-gradient(120deg, ${bgColor2.toRgbString()}, ${displayValue.color})`;
-    }
-  }
+  // Get colors
+  const colors = getCellColors(tableStyles, cellOptions, displayValue);
+  textColor = colors.textColor;
+  bgColor = colors.bgColor;
+  bgHoverColor = colors.bgHoverColor;
 
   // If we have definied colors return those styles
   // Otherwise we return default styles
   return tableStyles.buildCellContainerStyle(
     textColor,
     bgColor,
+    bgHoverColor,
     !disableOverflowOnHover,
     isStringValue,
-    shouldWrapText
+    shouldWrapText,
+    rowStyled
   );
 }
 

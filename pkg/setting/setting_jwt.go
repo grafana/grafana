@@ -21,6 +21,24 @@ type AuthJWTSettings struct {
 	AllowAssignGrafanaAdmin bool
 	SkipOrgRoleSync         bool
 	GroupsAttributePath     string
+	EmailAttributePath      string
+	UsernameAttributePath   string
+}
+
+type ExtJWTSettings struct {
+	Enabled        bool
+	ExpectIssuer   string
+	ExpectAudience string
+	JWKSUrl        string
+}
+
+func (cfg *Cfg) readAuthExtJWTSettings() {
+	authExtendedJWT := cfg.SectionWithEnvOverrides("auth.extended_jwt")
+	jwtSettings := ExtJWTSettings{}
+	jwtSettings.Enabled = authExtendedJWT.Key("enabled").MustBool(false)
+	jwtSettings.ExpectAudience = authExtendedJWT.Key("expect_audience").MustString("")
+	jwtSettings.JWKSUrl = authExtendedJWT.Key("jwks_url").MustString("")
+	cfg.ExtJWTAuth = jwtSettings
 }
 
 func (cfg *Cfg) readAuthJWTSettings() {
@@ -43,6 +61,8 @@ func (cfg *Cfg) readAuthJWTSettings() {
 	jwtSettings.AllowAssignGrafanaAdmin = authJWT.Key("allow_assign_grafana_admin").MustBool(false)
 	jwtSettings.SkipOrgRoleSync = authJWT.Key("skip_org_role_sync").MustBool(false)
 	jwtSettings.GroupsAttributePath = valueAsString(authJWT, "groups_attribute_path", "")
+	jwtSettings.EmailAttributePath = valueAsString(authJWT, "email_attribute_path", "")
+	jwtSettings.UsernameAttributePath = valueAsString(authJWT, "username_attribute_path", "")
 
 	cfg.JWTAuth = jwtSettings
 }

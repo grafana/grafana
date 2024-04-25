@@ -347,7 +347,7 @@ func TestPatchPartialAlertRule(t *testing.T) {
 			t.Run(testCase.name, func(t *testing.T) {
 				var existing *AlertRule
 				for {
-					existing = AlertRuleGen()()
+					existing = AlertRuleGen(WithUniqueID())()
 					cloned := *existing
 					// make sure the generated rule does not match the mutated one
 					testCase.mutator(&cloned)
@@ -654,6 +654,21 @@ func TestDiff(t *testing.T) {
 			if t.Failed() {
 				t.Logf("rule1: %#v, rule2: %#v\ndiff: %v", rule1, rule2, diff)
 			}
+		})
+
+		t.Run("should correctly detect no change with '<' and '>' in query", func(t *testing.T) {
+			old := query1
+			new := query1
+			old.Model = json.RawMessage(`{"field1": "$A \u003c 1"}`)
+			new.Model = json.RawMessage(`{"field1": "$A < 1"}`)
+			rule1.Data = []AlertQuery{old}
+			rule2.Data = []AlertQuery{new}
+
+			diff := rule1.Diff(rule2)
+			assert.Nil(t, diff)
+
+			// reset rule1
+			rule1.Data = []AlertQuery{query1}
 		})
 
 		t.Run("should detect new changes in array if too many fields changed", func(t *testing.T) {

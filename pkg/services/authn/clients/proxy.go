@@ -107,6 +107,10 @@ func (c *Proxy) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	return nil, clientErr
 }
 
+func (c *Proxy) IsEnabled() bool {
+	return c.cfg.AuthProxy.Enabled
+}
+
 // See if we have cached the user id, in that case we can fetch the signed-in user and skip sync.
 // Error here means that we could not find anything in cache, so we can proceed as usual
 func (c *Proxy) retrieveIDFromCache(ctx context.Context, cacheKey string, r *authn.Request) (*authn.Identity, error) {
@@ -121,7 +125,7 @@ func (c *Proxy) retrieveIDFromCache(ctx context.Context, cacheKey string, r *aut
 	}
 
 	return &authn.Identity{
-		ID:    authn.NamespacedID(authn.NamespaceUser, uid),
+		ID:    authn.NewNamespaceIDUnchecked(authn.NamespaceUser, uid),
 		OrgID: r.OrgID,
 		// FIXME: This does not match the actual auth module used, but should not have any impact
 		// Maybe caching the auth module used with the user ID would be a good idea

@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -69,7 +68,9 @@ func TestAsExternal(t *testing.T) {
 
 	t.Run("should skip a core plugin", func(t *testing.T) {
 		cfg := &config.PluginManagementCfg{
-			Features: featuremgmt.WithFeatures(featuremgmt.FlagExternalCorePlugins),
+			Features: config.Features{
+				ExternalCorePluginsEnabled: true,
+			},
 			PluginSettings: setting.PluginSettings{
 				"plugin1": map[string]string{
 					"as_external": "true",

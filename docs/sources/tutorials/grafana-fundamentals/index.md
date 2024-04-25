@@ -41,7 +41,12 @@ Alternatively, you can also watch our Grafana for Beginners series where we disc
 - [Docker](https://docs.docker.com/install/)
 - [Docker Compose](https://docs.docker.com/compose/) (included in Docker for Desktop for macOS and Windows)
 - [Git](https://git-scm.com/)
-  {{% /class %}}
+
+### KillerCoda sandbox environment (Alternative)
+
+If you would prefer to follow along with this tutorial without needing to set up a local environment, you can use the [KillerCoda sandbox environment](https://killercoda.com/grafana-labs/course/full-stack/tutorial-enviroment).
+
+{{% /class %}}
 
 ## Set up the sample application
 
@@ -281,7 +286,7 @@ The most basic alert consists of two parts:
    - Email
    - [Webhooks](#create-a-contact-point-for-grafana-managed-alerts)
    - [Telegram](https://grafana.com/blog/2023/12/28/how-to-integrate-grafana-alerting-and-telegram/)
-   - Slack
+   - [Slack](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/manage-contact-points/integrations/configure-slack/)
    - PagerDuty
 
 1. An _Alert rule_ - An Alert rule defines one or more _conditions_ that Grafana regularly evaluates. When these evaluations meet the rule's criteria, the alert is triggered.
@@ -328,7 +333,7 @@ Now that Grafana knows how to notify us, it's time to set up an alert rule:
    ```
 
 1. Press **Preview**. You should see some data returned.
-1. Keep expressions “B” and "C" as they are. These expressions (Reduce and Threshold, respectively) come by default when creating a new rule. Expression "B", selects the last value of our query “A”, while the Threshold expression "C" will check if the last value from expression "B" is above a specific value. In addition, the Threshold expression is the alert condition by default. Enter `0.2` as threshold value. [You can read more about queries and conditions here](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/queries-conditions/#expression-queries).
+1. Keep expressions “B” and "C" as they are. These expressions (Reduce and Threshold, respectively) come by default when creating a new rule. Expression "B", selects the last value of our query “A”, while the Threshold expression "C" will check if the last value from expression "B" is above a specific value. In addition, the Threshold expression is the alert condition by default. Enter `0.2` as threshold value. [You can read more about queries and conditions here](/docs/grafana/latest/alerting/fundamentals/alert-rules/queries-conditions/#expression-queries).
 1. In **Section 3**, in Folder, create a new folder, by clicking `New folder` and typing a name for the folder. This folder will contain our alerts. For example: `fundamentals`. Then, click `create`.
 1. In the Evaluation group, repeat the above step to create a new one. We will name it `fundamentals` too.
 1. Choose an Evaluation interval (how often the alert will be evaluated). For example, every `10s` (10 seconds).
@@ -380,13 +385,17 @@ In this tutorial you learned about fundamental features of Grafana. To do so, we
 docker-compose down -v
 ```
 
+### KillerCoda sandbox environment (completed tutorial)
+
+Do you want to see the finished result? Check out our [completed KillerCoda sandbox environment](https://killercoda.com/grafana-labs/course/full-stack/tutorial-enviroment-completed) containing the entire demo with dashboards, checks, and data sources configured.
+
 ### Learn more
 
 Check out the links below to continue your learning journey with Grafana's LGTM stack.
 
 - [Prometheus](/docs/grafana/latest/features/datasources/prometheus/)
 - [Loki](/docs/grafana/latest/features/datasources/loki/)
-- [Explore](/docs/grafana/latest/features/explore/)
+- [Explore](/docs/grafana/latest/explore/)
 - [Alerting Overview](/docs/grafana/latest/alerting/)
 - [Alert rules](/docs/grafana/latest/alerting/create-alerts/)
-- [Contact Points](/docs/grafana/latest/alerting/notifications/)
+- [Contact points](/docs/grafana/latest/alerting/fundamentals/contact-points/)

@@ -16,5 +16,5 @@
     ]
   },
   "expect": {},
-  "error": "expression [A] can not depend on itself"
+  "error": "[sse.cyclic] cyclic reference in expression [A]"
 }

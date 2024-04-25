@@ -73,7 +73,7 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 
-	if err := srv.authz.AuthorizeAccessToRuleGroup(c.Req.Context(), c.SignedInUser, ngmodels.RulesGroup{rule}); err != nil {
+	if err := srv.authz.AuthorizeDatasourceAccessForRule(c.Req.Context(), c.SignedInUser, rule); err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to authorize access to rule group", err)
 	}
 
@@ -244,7 +244,7 @@ func (srv TestingApiSrv) BacktestAlertRule(c *contextmodel.ReqContext, cmd apimo
 	}
 
 	queries := AlertQueriesFromApiAlertQueries(cmd.Data)
-	if err := srv.authz.AuthorizeAccessToRuleGroup(c.Req.Context(), c.SignedInUser, ngmodels.RulesGroup{&ngmodels.AlertRule{Data: queries}}); err != nil {
+	if err := srv.authz.AuthorizeDatasourceAccessForRule(c.Req.Context(), c.SignedInUser, &ngmodels.AlertRule{Data: queries}); err != nil {
 		return errorToResponse(err)
 	}
 

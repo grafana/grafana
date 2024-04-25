@@ -126,9 +126,10 @@ func (r *Registry) RemoveExternalService(ctx context.Context, name string) error
 // associated service account has the correct permissions.
 func (r *Registry) SaveExternalService(ctx context.Context, cmd *extsvcauth.ExternalServiceRegistration) (*extsvcauth.ExternalService, error) {
 	var (
-		errSave  error
-		extSvc   *extsvcauth.ExternalService
-		lockName = "ext-svc-save-" + cmd.Name
+		errSave   error
+		extSvc    *extsvcauth.ExternalService
+		lockName  = "ext-svc-save-" + cmd.Name
+		ctxLogger = r.logger.FromContext(ctx)
 	)
 
 	err := r.serverLock.LockExecuteAndReleaseWithRetries(ctx, lockName, lockTimeConfig, func(ctx context.Context) {
@@ -140,10 +141,10 @@ func (r *Registry) SaveExternalService(ctx context.Context, cmd *extsvcauth.Exte
 		switch cmd.AuthProvider {
 		case extsvcauth.ServiceAccounts:
 			if !r.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
-				r.logger.Warn("Skipping External Service authentication, flag disabled", "service", cmd.Name, "flag", featuremgmt.FlagExternalServiceAccounts)
+				ctxLogger.Warn("Skipping External Service authentication, flag disabled", "service", cmd.Name, "flag", featuremgmt.FlagExternalServiceAccounts)
 				return
 			}
-			r.logger.Debug("Routing the External Service registration to the External Service Account service", "service", cmd.Name)
+			ctxLogger.Debug("Routing the External Service registration to the External Service Account service", "service", cmd.Name)
 			extSvc, errSave = r.saReg.SaveExternalService(ctx, cmd)
 		default:
 			errSave = extsvcauth.ErrUnknownProvider.Errorf("unknown provider '%v'", cmd.AuthProvider)

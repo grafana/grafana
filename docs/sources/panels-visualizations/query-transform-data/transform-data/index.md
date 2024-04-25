@@ -243,11 +243,11 @@ Config query result:
 
 In the field mapping specify:
 
-| Field | Use as                  | Select     |
-| ----- | ----------------------- | ---------- |
-| Value | Value mappings / Value  | All values |
-| Text  | Value mappings / Text   | All values |
-| Color | Value mappings / Ciolor | All values |
+| Field | Use as                 | Select     |
+| ----- | ---------------------- | ---------- |
+| Value | Value mappings / Value | All values |
+| Text  | Value mappings / Text  | All values |
+| Color | Value mappings / Color | All values |
 
 Grafana builds value mappings from your query result and applies them to the real data query results. You should see values being mapped and colored according to the config query results.
 
@@ -402,6 +402,11 @@ The available conditions for all fields are:
 - **Is Not Null** - Match if the value is not null.
 - **Equal** - Match if the value is equal to the specified value.
 - **Different** - Match if the value is different than the specified value.
+
+The available conditions for string fields are:
+
+- **Contains substring** - Match if the value contains the specified substring (case insensitive).
+- **Does not contain substring** - Match if the value doesn't contain the specified substring (case insensitive).
 
 The available conditions for number fields are:
 
@@ -1160,15 +1165,17 @@ This flexible transformation simplifies the process of consolidating and summari
 
 Use this transformation to rename parts of the query results using a regular expression and replacement pattern.
 
-You can specify a regular expression, which is only applied to matches, along with a replacement pattern that support back references. For example, let's imagine you're visualizing CPU usage per host and you want to remove the domain name. You could set the regex to '([^.]+)..+' and the replacement pattern to '$1', 'web-01.example.com' would become 'web-01'.
+You can specify a regular expression, which is only applied to matches, along with a replacement pattern that support back references. For example, let's imagine you're visualizing CPU usage per host and you want to remove the domain name. You could set the regex to '/^([^.]+).\*/' and the replacement pattern to '$1', 'web-01.example.com' would become 'web-01'.
 
-In the following example, we are stripping the prefix from event types. In the before image, you can see everything is prefixed with 'system.'
+> **Note:** The Rename by regex transformation was improved in Grafana v9.0.0 to allow global patterns of the form '/<stringToReplace>/g'. Depending on the regex match used, this may cause some transformations to behave slightly differently. You can guarantee the same behavior as before by wrapping the match string in forward slashes '(/)', e.g. '(._)' would become '/(._)/'.
 
-{{< figure src="/static/img/docs/transformations/rename-by-regex-before-7-3.png" class="docs-image--no-shadow" max-width= "1100px" alt="A bar chart with long series names" >}}
+In the following example, we are stripping the 'A-' prefix from field names. In the before image, you can see everything is prefixed with 'A-':
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-rename-by-regex-before-v11.0.png" class="docs-image--no-shadow" max-width= "1100px" alt="A time series with full series names" >}}
 
 With the transformation applied, you can see we are left with just the remainder of the string.
 
-{{< figure src="/static/img/docs/transformations/rename-by-regex-after-7-3.png" class="docs-image--no-shadow" max-width= "1100px" alt="A bar chart with shortened series names" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-rename-by-regex-after-v11.0.png" class="docs-image--no-shadow" max-width= "1100px" alt="A time series with shortened series names" >}}
 
 This transformation lets you to tailor your data to meet your visualization needs, making your dashboards more informative and user-friendly.
 

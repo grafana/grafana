@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social/connectors"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	secretsfake "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingsimpl"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
@@ -69,7 +70,18 @@ func TestSocialService_ProvideService(t *testing.T) {
 	accessControl := acimpl.ProvideAccessControl(cfg)
 	sqlStore := db.InitTestDB(t)
 
-	ssoSettingsSvc := ssosettingsimpl.ProvideService(cfg, sqlStore, accessControl, routing.NewRouteRegister(), featuremgmt.WithFeatures(), secrets, &usagestats.UsageStatsMock{}, nil)
+	ssoSettingsSvc := ssosettingsimpl.ProvideService(
+		cfg,
+		sqlStore,
+		accessControl,
+		routing.NewRouteRegister(),
+		featuremgmt.WithFeatures(),
+		secrets,
+		&usagestats.UsageStatsMock{},
+		nil,
+		&setting.OSSImpl{Cfg: cfg},
+		&licensing.OSSLicensingService{},
+	)
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -170,7 +182,7 @@ func TestSocialService_ProvideService_GrafanaComGrafanaNet(t *testing.T) {
 	accessControl := acimpl.ProvideAccessControl(cfg)
 	sqlStore := db.InitTestDB(t)
 
-	ssoSettingsSvc := ssosettingsimpl.ProvideService(cfg, sqlStore, accessControl, routing.NewRouteRegister(), featuremgmt.WithFeatures(), secrets, &usagestats.UsageStatsMock{}, nil)
+	ssoSettingsSvc := ssosettingsimpl.ProvideService(cfg, sqlStore, accessControl, routing.NewRouteRegister(), featuremgmt.WithFeatures(), secrets, &usagestats.UsageStatsMock{}, nil, nil, &licensing.OSSLicensingService{})
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {

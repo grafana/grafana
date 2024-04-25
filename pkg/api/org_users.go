@@ -324,10 +324,13 @@ func (hs *HTTPServer) searchOrgUsersHelper(c *contextmodel.ReqContext, query *or
 	// Get accesscontrol metadata and IPD labels for users in the target org
 	accessControlMetadata := map[string]accesscontrol.Metadata{}
 	if c.QueryBool("accesscontrol") {
-		permissionsList, err := hs.accesscontrolService.GetUserPermissionsInOrg(c.Req.Context(), c.SignedInUser, query.OrgID)
-		permissions := accesscontrol.GroupScopesByAction(permissionsList)
-		if err != nil {
-			return nil, err
+		permissions := c.SignedInUser.GetPermissions()
+		if query.OrgID != c.SignedInUser.GetOrgID() {
+			identity, err := hs.authnService.ResolveIdentity(c.Req.Context(), query.OrgID, c.SignedInUser.GetID())
+			if err != nil {
+				return nil, err
+			}
+			permissions = identity.GetPermissions()
 		}
 		accessControlMetadata = accesscontrol.GetResourcesMetadata(c.Req.Context(), permissions, "users:id:", userIDs)
 	}

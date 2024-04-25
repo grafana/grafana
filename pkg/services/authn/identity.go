@@ -3,7 +3,6 @@ package authn
 import (
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
 
 	"golang.org/x/oauth2"
@@ -16,44 +15,30 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-// NamespacedID builds a namespaced ID from a namespace and an ID.
-func NamespacedID(namespace string, id int64) string {
-	return fmt.Sprintf("%s:%d", namespace, id)
-}
-
-const (
-	NamespaceUser           = identity.NamespaceUser
-	NamespaceAPIKey         = identity.NamespaceAPIKey
-	NamespaceServiceAccount = identity.NamespaceServiceAccount
-	NamespaceAnonymous      = identity.NamespaceAnonymous
-	NamespaceRenderService  = identity.NamespaceRenderService
-)
-
-const (
-	AnonymousNamespaceID = NamespaceAnonymous + ":0"
-	GlobalOrgID          = int64(0)
-)
+const GlobalOrgID = int64(0)
 
 var _ identity.Requester = (*Identity)(nil)
 
 type Identity struct {
+	// ID is the unique identifier for the entity in the Grafana database.
+	// It is in the format <namespace>:<id> where namespace is one of the
+	// Namespace* constants. For example, "user:1" or "api-key:1".
+	// If the entity is not found in the DB or this entity is non-persistent, this field will be empty.
+	ID NamespaceID
 	// OrgID is the active organization for the entity.
 	OrgID int64
 	// OrgName is the name of the active organization.
 	OrgName string
 	// OrgRoles is the list of organizations the entity is a member of and their roles.
 	OrgRoles map[int64]org.RoleType
-	// ID is the unique identifier for the entity in the Grafana database.
-	// It is in the format <namespace>:<id> where namespace is one of the
-	// Namespace* constants. For example, "user:1" or "api-key:1".
-	// If the entity is not found in the DB or this entity is non-persistent, this field will be empty.
-	ID string
 	// Login is the shorthand identifier of the entity. Should be unique.
 	Login string
 	// Name is the display name of the entity. It is not guaranteed to be unique.
 	Name string
 	// Email is the email address of the entity. Should be unique.
 	Email string
+	// EmailVerified is true if entity has verified their email with grafana.
+	EmailVerified bool
 	// IsGrafanaAdmin is true if the entity is a Grafana admin.
 	IsGrafanaAdmin *bool
 	// AuthenticatedBy is the name of the authentication client that was used to authenticate the current Identity.
@@ -87,6 +72,18 @@ type Identity struct {
 	IDToken string
 }
 
+func (i *Identity) GetID() string {
+	return i.ID.String()
+}
+
+func (i *Identity) GetNamespacedID() (namespace string, identifier string) {
+	return i.ID.Namespace(), i.ID.ID()
+}
+
+func (i *Identity) GetAuthID() string {
+	return i.AuthID
+}
+
 func (i *Identity) GetAuthenticatedBy() string {
 	return i.AuthenticatedBy
 }
@@ -110,6 +107,10 @@ func (i *Identity) GetEmail() string {
 	return i.Email
 }
 
+func (i *Identity) IsEmailVerified() bool {
+	return i.EmailVerified
+}
+
 func (i *Identity) GetIDToken() string {
 	return i.IDToken
 }
@@ -122,17 +123,6 @@ func (i *Identity) GetLogin() string {
 	return i.Login
 }
 
-func (i *Identity) GetNamespacedID() (namespace string, identifier string) {
-	split := strings.Split(i.ID, ":")
-
-	if len(split) != 2 {
-		return "", ""
-	}
-
-	return split[0], split[1]
-}
-
-// GetOrgID implements identity.Requester.
 func (i *Identity) GetOrgID() int64 {
 	return i.OrgID
 }
@@ -195,6 +185,15 @@ func (i *Identity) HasUniqueId() bool {
 	return namespace == NamespaceUser || namespace == NamespaceServiceAccount || namespace == NamespaceAPIKey
 }
 
+func (i *Identity) IsAuthenticatedBy(providers ...string) bool {
+	for _, p := range providers {
+		if i.AuthenticatedBy == p {
+			return true
+		}
+	}
+	return false
+}
+
 func (i *Identity) IsNil() bool {
 	return i == nil
 }
@@ -210,6 +209,7 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		Login:           i.Login,
 		Name:            i.Name,
 		Email:           i.Email,
+		AuthID:          i.AuthID,
 		AuthenticatedBy: i.AuthenticatedBy,
 		IsGrafanaAdmin:  i.GetIsGrafanaAdmin(),
 		IsAnonymous:     namespace == NamespaceAnonymous,
@@ -219,6 +219,7 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		Teams:           i.Teams,
 		Permissions:     i.Permissions,
 		IDToken:         i.IDToken,
+		NamespacedID:    i.ID.String(),
 	}
 
 	if namespace == NamespaceAPIKey {
@@ -255,27 +256,5 @@ func (i *Identity) ExternalUserInfo() login.ExternalUserInfo {
 		OrgRoles:       i.OrgRoles,
 		IsGrafanaAdmin: i.IsGrafanaAdmin,
 		IsDisabled:     i.IsDisabled,
-	}
-}
-
-// IdentityFromSignedInUser creates an identity from a SignedInUser.
-func IdentityFromSignedInUser(id string, usr *user.SignedInUser, params ClientParams, authenticatedBy string) *Identity {
-	return &Identity{
-		ID:              id,
-		OrgID:           usr.OrgID,
-		OrgName:         usr.OrgName,
-		OrgRoles:        map[int64]org.RoleType{usr.OrgID: usr.OrgRole},
-		Login:           usr.Login,
-		Name:            usr.Name,
-		Email:           usr.Email,
-		AuthenticatedBy: authenticatedBy,
-		IsGrafanaAdmin:  &usr.IsGrafanaAdmin,
-		IsDisabled:      usr.IsDisabled,
-		HelpFlags1:      usr.HelpFlags1,
-		LastSeenAt:      usr.LastSeenAt,
-		Teams:           usr.Teams,
-		ClientParams:    params,
-		Permissions:     usr.Permissions,
-		IDToken:         usr.IDToken,
 	}
 }
