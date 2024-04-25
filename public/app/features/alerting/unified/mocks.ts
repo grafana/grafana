@@ -18,6 +18,7 @@ import {
 import { DataSourceSrv, GetDataSourceListFilters, config } from '@grafana/runtime';
 import { defaultDashboard } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
+import { parseMatchers } from 'app/features/alerting/unified/utils/alertmanager';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import {
   AlertManagerCortexConfig,
@@ -305,6 +306,12 @@ export const mockSilence = (partial: Partial<Silence> = {}): Silence => {
     ...partial,
   };
 };
+
+export const mockSilences = [
+  mockSilence({ id: '12345' }),
+  mockSilence({ id: '67890', matchers: parseMatchers('foo!=bar'), comment: 'Catch all' }),
+  mockSilence({ id: '1111', status: { state: SilenceState.Expired } }),
+];
 
 export const mockNotifiersState = (partial: Partial<NotifiersState> = {}): NotifiersState => {
   return {
