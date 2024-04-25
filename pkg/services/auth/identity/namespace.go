@@ -68,7 +68,7 @@ func NewNamespaceID(namespace string, id int64) (NamespaceID, error) {
 }
 
 // MustNewNamespaceID creates a new NamespaceID, will panic for invalid namespace.
-// Sutable to use in tests or when we can garantuee that we pass a correct format.
+// Suitable to use in tests or when we can guarantee that we pass a correct format.
 func MustNewNamespaceID(namespace string, id int64) NamespaceID {
 	namespaceID, err := NewNamespaceID(namespace, id)
 	if err != nil {
