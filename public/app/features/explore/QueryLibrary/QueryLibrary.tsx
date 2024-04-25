@@ -7,7 +7,7 @@ import { QueryTemplatesList } from './QueryTemplatesList';
 export function QueryLibrary() {
   return (
     <QueryLibraryApiProvider>
-      <QueryTemplatesList />;
+      <QueryTemplatesList />
     </QueryLibraryApiProvider>
   );
 }
