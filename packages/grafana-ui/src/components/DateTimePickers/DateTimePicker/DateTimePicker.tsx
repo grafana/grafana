@@ -29,6 +29,7 @@ import { Portal } from '../../Portal/Portal';
 import { TimeOfDayPicker, POPUP_CLASS_NAME } from '../TimeOfDayPicker';
 import { getBodyStyles } from '../TimeRangePicker/CalendarBody';
 import { isValid } from '../utils';
+import { adjustDateForReactCalendar } from '../utils/adjustDateForReactCalendar';
 
 export interface Props {
   /** Input date for the component */
@@ -284,9 +285,18 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
   ) => {
     const calendarStyles = useStyles2(getBodyStyles);
     const styles = useStyles2(getStyles);
-    const [internalDate, setInternalDate] = useState<Date>(() => {
+
+    // need to keep these 2 separate in state since react-calendar doesn't support different timezones
+    const [timeOfDayDateTime, setTimeOfDayDateTime] = useState(() => {
       if (date && date.isValid()) {
-        return date.toDate();
+        return dateTimeForTimeZone(getTimeZone(), date.toDate());
+      }
+
+      return dateTimeForTimeZone(getTimeZone(), new Date());
+    });
+    const [reactCalendarDate, setReactCalendarDate] = useState<Date>(() => {
+      if (date && date.isValid()) {
+        return adjustDateForReactCalendar(date.toDate(), getTimeZone());
       }
 
       return new Date();
@@ -294,35 +304,33 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
 
     const onChangeDate = useCallback<NonNullable<React.ComponentProps<typeof Calendar>['onChange']>>((date) => {
       if (date && !Array.isArray(date)) {
-        setInternalDate((prevState) => {
-          // If we don't use time from prevState
-          // the time will be reset to 00:00:00
-          date.setHours(prevState.getHours());
-          date.setMinutes(prevState.getMinutes());
-          date.setSeconds(prevState.getSeconds());
-
-          return date;
-        });
+        setReactCalendarDate(date);
       }
     }, []);
 
     const onChangeTime = useCallback((date: DateTime) => {
-      setInternalDate((prevState) => {
-        const newDate = new Date(prevState);
-        const newTime = date.toDate();
-        newDate.setHours(newTime.getHours());
-        newDate.setMinutes(newTime.getMinutes());
-        newDate.setSeconds(newTime.getSeconds());
-        return newDate;
-      });
+      setTimeOfDayDateTime(date);
     }, []);
+
+    // here we need to stitch the 2 date objects back together
+    const handleApply = () => {
+      // we take the date that's set by TimeOfDayPicker
+      const newDate = new Date(timeOfDayDateTime.toDate());
+
+      // and apply the date/month/year set by react-calendar
+      newDate.setDate(reactCalendarDate.getDate());
+      newDate.setMonth(reactCalendarDate.getMonth());
+      newDate.setFullYear(reactCalendarDate.getFullYear());
+
+      onChange(dateTime(newDate));
+    };
 
     return (
       <div className={cx(styles.container, { [styles.fullScreen]: isFullscreen })} style={style} ref={ref}>
         <Calendar
           next2Label={null}
           prev2Label={null}
-          value={internalDate}
+          value={reactCalendarDate}
           nextLabel={<Icon name="angle-right" />}
           nextAriaLabel="Next month"
           prevLabel={<Icon name="angle-left" />}
@@ -338,14 +346,14 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
           <TimeOfDayPicker
             showSeconds={showSeconds}
             onChange={onChangeTime}
-            value={dateTimeForTimeZone(getTimeZone(), internalDate)}
+            value={timeOfDayDateTime}
             disabledHours={disabledHours}
             disabledMinutes={disabledMinutes}
             disabledSeconds={disabledSeconds}
           />
         </div>
         <Stack>
-          <Button type="button" onClick={() => onChange(dateTime(internalDate))}>
+          <Button type="button" onClick={handleApply}>
             Apply
           </Button>
           <Button variant="secondary" type="button" onClick={onClose}>
