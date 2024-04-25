@@ -53,9 +53,9 @@ export class Connections {
   };
 
   updateState = () => {
-    const s = this.selection.value;
     this.state = getConnections(this.scene.byName);
 
+    const s = this.selection.value;
     if (s) {
       for (let c of this.state) {
         if (c.source === s.source && c.index === s.index) {
@@ -95,7 +95,7 @@ export class Connections {
     let elementTarget = undefined;
 
     // Cap recursion at the scene level
-    if (element === this.scene.div) {
+    if (element === this.scene.viewportDiv) {
       return undefined;
     }
 
@@ -171,11 +171,12 @@ export class Connections {
   connectionListener = (event: MouseEvent) => {
     event.preventDefault();
 
-    if (!(this.connectionLine && this.scene.div && this.scene.div.parentElement)) {
+    if (!(this.connectionLine && this.scene.viewportDiv && this.scene.viewportDiv.parentElement)) {
       return;
     }
 
-    const transformScale = this.scene.scale;
+    // const transformScale = this.scene.scale;
+    const transformScale = 1;
     const parentBoundingRect = getParentBoundingClientRect(this.scene);
 
     if (!parentBoundingRect) {
@@ -203,7 +204,8 @@ export class Connections {
       if (this.connectionSource && this.connectionSource.div && this.connectionSource.div.parentElement) {
         const sourceRect = this.connectionSource.div.getBoundingClientRect();
 
-        const transformScale = this.scene.scale;
+        // const transformScale = this.scene.scale;
+        const transformScale = 1;
         const parentRect = getParentBoundingClientRect(this.scene);
 
         if (!parentRect) {
@@ -291,11 +293,12 @@ export class Connections {
 
     event.preventDefault();
 
-    if (!(this.connectionVertex && this.scene.div && this.scene.div.parentElement)) {
+    if (!(this.connectionVertex && this.scene.viewportDiv && this.scene.viewportDiv.parentElement)) {
       return;
     }
 
-    const transformScale = this.scene.scale;
+    // const transformScale = this.scene.scale;
+    const transformScale = 1;
     const parentBoundingRect = getParentBoundingClientRect(this.scene);
 
     if (!parentBoundingRect) {
@@ -446,11 +449,12 @@ export class Connections {
 
     event.preventDefault();
 
-    if (!(this.connectionVertex && this.scene.div && this.scene.div.parentElement)) {
+    if (!(this.connectionVertex && this.scene.viewportDiv && this.scene.viewportDiv.parentElement)) {
       return;
     }
 
-    const transformScale = this.scene.scale;
+    // const transformScale = this.scene.scale;
+    const transformScale = 1;
     const parentBoundingRect = getParentBoundingClientRect(this.scene);
 
     if (!parentBoundingRect) {
@@ -591,10 +595,11 @@ export class Connections {
 
   handleConnectionDragStart = (selectedTarget: HTMLElement, clientX: number, clientY: number) => {
     this.scene.selecto!.rootContainer!.style.cursor = 'crosshair';
-    if (this.connectionSVG && this.connectionLine && this.scene.div && this.scene.div.parentElement) {
+    if (this.connectionSVG && this.connectionLine && this.scene.viewportDiv && this.scene.viewportDiv.parentElement) {
       const connectionStartTargetBox = selectedTarget.getBoundingClientRect();
 
-      const transformScale = this.scene.scale;
+      // const transformScale = this.scene.scale;
+      const transformScale = 1;
       const parentBoundingRect = getParentBoundingClientRect(this.scene);
 
       if (!parentBoundingRect) {

@@ -131,7 +131,8 @@ export const ConnectionSVG = ({
           const { source, target, info, vertices } = v;
           const sourceRect = source.div?.getBoundingClientRect();
           const parent = source.div?.parentElement;
-          const transformScale = scene.scale;
+          // const transformScale = scene.scale;
+          const transformScale = 1;
           const parentRect = getParentBoundingClientRect(scene);
 
           if (!sourceRect || !parent || !parentRect) {
@@ -139,6 +140,7 @@ export const ConnectionSVG = ({
           }
 
           const { x1, y1, x2, y2 } = calculateCoordinates(sourceRect, parentRect, info, target, transformScale);
+          console.log('x1, y1, x2, y2', x1, y1, x2, y2);
 
           let { xStart, yStart, xEnd, yEnd } = { xStart: x1, yStart: y1, xEnd: x2, yEnd: y2 };
           if (v.sourceOriginal && v.targetOriginal) {
@@ -364,7 +366,17 @@ export const ConnectionSVG = ({
           };
 
           return (
-            <svg className={styles.connection} key={idx}>
+            <svg
+              className={styles.connection}
+              key={idx}
+              // viewBox={`0 0 ${Math.abs(x1 - x2)} ${Math.abs(y1 - y2)}`}
+              style={{
+                top: Math.min(y1, y2),
+                left: Math.min(x1, x2),
+                width: Math.abs(x1 - x2),
+                height: Math.abs(y1 - y2),
+              }}
+            >
               <g onClick={() => selectConnection(v)}>
                 <defs>
                   <marker
@@ -484,10 +496,10 @@ export const ConnectionSVG = ({
                       markerStart={markerStart}
                       strokeDasharray={lineStyle}
                       strokeDashoffset={1}
-                      x1={x1}
-                      y1={y1}
-                      x2={x2}
-                      y2={y2}
+                      x1={x1 - Math.min(x1, x2)}
+                      y1={y1 - Math.min(y1, y2)}
+                      x2={x2 - Math.min(x1, x2)}
+                      y2={y2 - Math.min(y1, y2)}
                       cursor={connectionCursorStyle}
                     >
                       {shouldAnimate && (
@@ -568,9 +580,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   connection: css({
     position: 'absolute',
     width: '100%',
-    height: '100%',
+    // height: '100%',
     zIndex: 1000,
     pointerEvents: 'none',
+    // border: '1px solid green',
   }),
   vertex: css({
     fill: '#44aaff',

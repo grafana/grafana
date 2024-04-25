@@ -2,8 +2,12 @@ import { css } from '@emotion/css';
 import InfiniteViewer from 'infinite-viewer';
 // import InfiniteViewer from "react-infinite-viewer";
 import Moveable from 'moveable';
-import React, { createRef, CSSProperties, RefObject } from 'react';
-import { ReactZoomPanPinchContentRef } from 'react-zoom-pan-pinch';
+import React, {
+  // createRef,
+  CSSProperties,
+  // RefObject,
+} from 'react';
+// import { ReactZoomPanPinchContentRef } from 'react-zoom-pan-pinch';
 import { BehaviorSubject, ReplaySubject, Subject, Subscription } from 'rxjs';
 import { first } from 'rxjs/operators';
 import Selecto from 'selecto';
@@ -37,7 +41,10 @@ import {
   CONNECTION_VERTEX_ID,
 } from 'app/plugins/panel/canvas/components/connections/Connections';
 import { AnchorPoint, CanvasTooltipPayload, LayerActionID } from 'app/plugins/panel/canvas/types';
-import { getParent, getTransformInstance } from 'app/plugins/panel/canvas/utils';
+import {
+  // getParent,
+  getTransformInstance,
+} from 'app/plugins/panel/canvas/utils';
 
 import appEvents from '../../../core/app_events';
 import { CanvasPanel } from '../../../plugins/panel/canvas/CanvasPanel';
@@ -66,12 +73,12 @@ export class Scene {
 
   width = 0;
   height = 0;
-  scale = 1;
+  // scale = 1;
   style: CSSProperties = {};
   data?: PanelData;
   selecto?: Selecto;
   moveable?: Moveable;
-  div?: HTMLDivElement;
+  // div?: HTMLDivElement;
   viewerDiv?: HTMLDivElement;
   viewportDiv?: HTMLDivElement;
   connections: Connections;
@@ -89,9 +96,9 @@ export class Scene {
     const transformInstance = getTransformInstance(this);
     if (transformInstance) {
       if (visible) {
-        transformInstance.setup.disabled = true;
+        // transformInstance.setup.disabled = true;
       } else {
-        transformInstance.setup.disabled = false;
+        // transformInstance.setup.disabled = false;
       }
     }
   };
@@ -110,7 +117,7 @@ export class Scene {
   subscription: Subscription;
 
   targetsToSelect = new Set<HTMLDivElement>();
-  transformComponentRef: RefObject<ReactZoomPanPinchContentRef> | undefined;
+  // transformComponentRef: RefObject<ReactZoomPanPinchContentRef> | undefined;
 
   constructor(
     cfg: CanvasFrameOptions,
@@ -132,7 +139,7 @@ export class Scene {
 
     this.panel = panel;
     this.connections = new Connections(this);
-    this.transformComponentRef = createRef();
+    // this.transformComponentRef = createRef();
   }
 
   getNextElementName = (isFrame = false) => {
@@ -176,7 +183,8 @@ export class Scene {
     this.shouldInfinitePan = infinitePan;
 
     setTimeout(() => {
-      if (this.div) {
+      // if (this.div) {
+      if (this.viewportDiv) {
         // If editing is enabled, clear selecto instance
         const destroySelecto = enableEditing;
         this.initMoveable(destroySelecto, enableEditing);
@@ -289,7 +297,8 @@ export class Scene {
   clearCurrentSelection(skipNextSelectionBroadcast = false) {
     this.skipNextSelectionBroadcast = skipNextSelectionBroadcast;
     let event: MouseEvent = new MouseEvent('click');
-    this.selecto?.clickTarget(event, this.div);
+    // this.selecto?.clickTarget(event, this.div);
+    this.selecto?.clickTarget(event, this.viewportDiv);
   }
 
   updateCurrentLayer(newLayer: FrameState) {
@@ -303,7 +312,8 @@ export class Scene {
 
     if (updateMoveable) {
       setTimeout(() => {
-        if (this.div) {
+        // if (this.div) {
+        if (this.viewportDiv) {
           this.initMoveable(true, this.isEditingEnabled);
         }
       });
@@ -346,12 +356,12 @@ export class Scene {
     }
   };
 
-  setRef = (sceneContainer: HTMLDivElement) => {
-    this.div = sceneContainer;
-  };
+  // setRef = (sceneContainer: HTMLDivElement) => {
+  //   this.div = sceneContainer;
+  // };
 
-  setViewerRef = (viewContainer: HTMLDivElement) => {
-    this.viewerDiv = viewContainer;
+  setViewerRef = (viewerContainer: HTMLDivElement) => {
+    this.viewerDiv = viewerContainer;
   };
 
   setViewportRef = (viewportContainer: HTMLDivElement) => {
@@ -423,6 +433,7 @@ export class Scene {
   };
 
   initMoveable = (destroySelecto = false, allowChanges = true) => {
+    console.log('initMoveable');
     const targetElements = this.generateTargetElements(this.root.elements);
 
     if (destroySelecto && this.selecto) {
@@ -430,8 +441,10 @@ export class Scene {
     }
 
     this.selecto = new Selecto({
-      container: this.div,
-      rootContainer: getParent(this),
+      // container: this.div,
+      container: this.viewportDiv,
+      // rootContainer: getParent(this),
+      rootContainer: this.viewerDiv,
       selectableTargets: targetElements,
       toggleContinueSelect: 'shift',
       selectFromInside: false,
@@ -441,7 +454,8 @@ export class Scene {
     const snapDirections = { top: true, left: true, bottom: true, right: true, center: true, middle: true };
     const elementSnapDirections = { top: true, left: true, bottom: true, right: true, center: true, middle: true };
 
-    this.moveable = new Moveable(this.div!, {
+    // this.moveable = new Moveable(this.div!, {
+    this.moveable = new Moveable(this.viewportDiv!, {
       draggable: allowChanges && !this.editModeEnabled.getValue(),
       resizable: allowChanges,
 
@@ -549,9 +563,8 @@ export class Scene {
         e.events.forEach((event) => {
           const targetedElement = this.findElementByTarget(event.target);
           if (targetedElement) {
-            if (targetedElement) {
-              targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
-            }
+            // targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
+            targetedElement.setPlacementFromConstraint(undefined, undefined);
 
             // re-add the selected elements to the snappable guidelines
             if (this.moveable && this.moveable.elementGuidelines) {
@@ -566,7 +579,8 @@ export class Scene {
       .on('dragEnd', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
         if (targetedElement) {
-          targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
+          // targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
+          targetedElement.setPlacementFromConstraint(undefined, undefined);
         }
 
         this.moved.next(Date.now());
@@ -595,7 +609,8 @@ export class Scene {
             vertical: VerticalConstraint.Top,
             horizontal: HorizontalConstraint.Left,
           };
-          targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
+          // targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
+          targetedElement.setPlacementFromConstraint(undefined, undefined);
         }
       })
       .on('resizeGroupStart', (e) => {
@@ -612,7 +627,8 @@ export class Scene {
       .on('resize', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
         if (targetedElement) {
-          targetedElement.applyResize(event, this.scale);
+          // targetedElement.applyResize(event, this.scale);
+          targetedElement.applyResize(event);
 
           if (this.connections.connectionsNeedUpdate(targetedElement) && this.moveableActionCallback) {
             this.moveableActionCallback(true);
@@ -648,7 +664,8 @@ export class Scene {
             targetedElement.tempConstraint = undefined;
           }
 
-          targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
+          // targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
+          targetedElement.setPlacementFromConstraint(undefined, undefined);
 
           // re-add the selected element to the snappable guidelines
           if (this.moveable && this.moveable.elementGuidelines) {
@@ -746,10 +763,11 @@ export class Scene {
       // zoom: 1,
       // rangeX: [0, 0],
       // rangeY: [0, 0],
+      useWheelScroll: true,
     });
 
     infiniteViewer.on('scroll', () => {
-      console.log(infiniteViewer.getScrollLeft(), infiniteViewer.getScrollTop());
+      // console.log(infiniteViewer.getScrollLeft(), infiniteViewer.getScrollTop());
     });
   };
 
@@ -823,11 +841,13 @@ export class Scene {
   };
 
   render() {
+    console.log('render');
     const isTooltipValid = (this.tooltip?.element?.data?.links?.length ?? 0) > 0;
     const canShowElementTooltip = !this.isEditingEnabled && isTooltipValid;
 
     const sceneDiv = (
-      <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.setRef}>
+      <>
+        {/* <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.setRef}> */}
         {this.connections.render()}
         {this.root.render()}
         {this.isEditingEnabled && (
@@ -844,7 +864,8 @@ export class Scene {
             <CanvasTooltip scene={this} />
           </Portal>
         )}
-      </div>
+        {/* </div> */}
+      </>
     );
 
     // return (
@@ -865,11 +886,14 @@ export class Scene {
     // )
 
     return config.featureToggles.canvasPanelPanZoom ? (
-      <div className={this.styles.viewer} ref={this.setViewerRef}>
-        <div className={this.styles.viewport} ref={this.setViewportRef}>
-          {sceneDiv}
+      <>
+        {/* <SceneTransformWrapper scene={this}>{sceneDiv}</SceneTransformWrapper> */}
+        <div className={this.styles.viewer} ref={this.setViewerRef}>
+          <div className={this.styles.viewport} ref={this.setViewportRef} key={this.revId}>
+            {sceneDiv}
+          </div>
         </div>
-      </div>
+      </>
     ) : (
       sceneDiv
     );
@@ -880,6 +904,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   wrap: css({
     overflow: 'hidden',
     position: 'relative',
+    border: `2px solid green`,
   }),
   selected: css({
     zIndex: '999 !important',
@@ -888,5 +913,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: '100%',
     height: '100%',
   }),
-  viewport: css({}),
+  viewport: css({
+    // overflow: 'hidden',
+    // position: 'relative',
+  }),
 });
