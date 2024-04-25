@@ -481,7 +481,6 @@ require (
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/go-logr/zapr v1.3.0 // indirect
-	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
 	github.com/hashicorp/golang-lru v0.6.0 // indirect
 	github.com/invopop/jsonschema v0.12.0 // indirect
@@ -511,4 +510,4 @@ exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
 // Use our fork xorm. go.work currently overrides this and points to the local ./pkg/util/xorm directory.
 replace xorm.io/xorm => github.com/grafana/grafana/pkg/util/xorm v0.0.1
 
-replace github.com/grafana/grafana-plugin-sdk-go => github.com/grafana/grafana-plugin-sdk-go v0.225.1-0.20240423104652-c545d7f7c4f7
+replace github.com/grafana/grafana-plugin-sdk-go => github.com/grafana/grafana-plugin-sdk-go v0.226.1-0.20240425112324-77aee9aa9827
