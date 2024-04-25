@@ -2,7 +2,7 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 
 import { QueryTemplate } from '@grafana/data';
 
-import { fromApiResponse } from './mappers';
+import { convertDataQueryResponseToQueryTemplates } from './mappers';
 import { baseQuery } from './query';
 
 export const createQueryLibraryApi = () => {
@@ -11,7 +11,7 @@ export const createQueryLibraryApi = () => {
     endpoints: (builder) => ({
       allQueryTemplates: builder.query<QueryTemplate[], void>({
         query: () => undefined,
-        transformResponse: fromApiResponse,
+        transformResponse: convertDataQueryResponseToQueryTemplates,
       }),
     }),
     reducerPath: undefined,

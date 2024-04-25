@@ -21,19 +21,21 @@ export function QueryDescriptionCell(props: CellProps<QueryTemplateRow>) {
     return <div>No queries</div>;
   }
   const query = props.row.original.query;
+  const description = props.row.original.description;
+  const dsName = datasourceApi?.name || '';
 
   return (
-    <>
+    <div aria-label={`Query template for ${dsName}: ${description}`}>
       <p className={styles.header}>
         <img
           className={styles.logo}
           src={datasourceApi?.meta.info.logos.small || 'public/img/icn-datasource.svg'}
           alt={datasourceApi?.meta.info.description}
         />
-        {datasourceApi?.name}
+        {dsName}
       </p>
       <p className={cx(styles.mainText, styles.singleLine)}>{datasourceApi?.getQueryDisplayText?.(query)}</p>
-      <p className={cx(styles.otherText, styles.singleLine)}>{props.row.original.description}</p>
-    </>
+      <p className={cx(styles.otherText, styles.singleLine)}>{description}</p>
+    </div>
   );
 }

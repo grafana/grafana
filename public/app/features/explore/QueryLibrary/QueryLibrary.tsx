@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { QueryLibraryApiProvider } from '@grafana/runtime/src/services/queryLibrary';
+import { QueryLibraryApiProvider } from '@grafana/runtime';
 
 import { QueryTemplatesList } from './QueryTemplatesList';
 

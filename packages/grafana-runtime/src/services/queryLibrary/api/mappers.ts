@@ -2,7 +2,7 @@ import { QueryTemplate } from '@grafana/data';
 
 import { DataQuerySpecResponse, DataQueryTarget } from './types';
 
-export const fromApiResponse = (result: DataQuerySpecResponse): QueryTemplate[] => {
+export const convertDataQueryResponseToQueryTemplates = (result: DataQuerySpecResponse): QueryTemplate[] => {
   if (!result.items) {
     return [];
   }

@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { QueryTemplate } from '@grafana/data';
-import { useAllQueryTemplatesQuery } from '@grafana/runtime/src/services/queryLibrary';
+import { useAllQueryTemplatesQuery } from '@grafana/runtime';
 import { EmptyState, Spinner } from '@grafana/ui';
 
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
@@ -24,7 +24,7 @@ export function QueryTemplatesList() {
     return <Spinner />;
   }
 
-  if (!data) {
+  if (!data || data.length === 0) {
     return (
       <EmptyState message={`Query Library`} variant="not-found">
         <p>

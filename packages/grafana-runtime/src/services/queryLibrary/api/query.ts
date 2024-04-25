@@ -5,7 +5,7 @@ import { getBackendSrv, isFetchError } from '../../backendSrv';
 
 import { DataQuerySpecResponse } from './types';
 
-const BASE_URL = '/apis/peakq.grafana.app/v0alpha1/namespaces/default/querytemplates/';
+export const BASE_URL = '/apis/peakq.grafana.app/v0alpha1/namespaces/default/querytemplates/';
 
 export const baseQuery: BaseQueryFn<void, DataQuerySpecResponse, Error> = async () => {
   try {
