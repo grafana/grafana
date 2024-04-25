@@ -300,6 +300,15 @@ export const Components = {
     groupToggle: 'data-testid group-collapse-toggle',
     toggle: 'data-testid collapse-toggle',
     expandedContent: 'data-testid expanded-content',
+    previewButton: 'data-testid alert-rule preview-button',
+    ruleNameField: 'data-testid alert-rule name-field',
+    newFolderButton: 'data-testid alert-rule new-folder-button',
+    newFolderNameField: 'data-testid alert-rule name-folder-name-field',
+    newFolderNameCreateButton: 'data-testid alert-rule name-folder-name-create-button',
+    newEvaluationGroupButton: 'data-testid alert-rule new-evaluation-group-button',
+    newEvaluationGroupName: 'data-testid alert-rule new-evaluation-group-name',
+    newEvaluationGroupInterval: 'data-testid alert-rule new-evaluation-group-interval',
+    newEvaluationGroupCreate: 'data-testid alert-rule new-evaluation-group-create-button',
   },
   Alert: {
     /**
