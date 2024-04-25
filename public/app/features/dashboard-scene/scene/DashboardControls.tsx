@@ -29,7 +29,6 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
   static Component = DashboardControlsRenderer;
 
   protected _variableDependency = new VariableDependencyConfig(this, {
-    variableNames: ['*'],
     onAnyVariableChanged: this._onAnyVariableChanged.bind(this),
   });
 
