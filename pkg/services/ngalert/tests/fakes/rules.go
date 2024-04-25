@@ -68,10 +68,12 @@ mainloop:
 		}
 		if existing == nil {
 			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.NGAlerts).Inc()
+			title := "TEST-FOLDER-" + util.GenerateShortUID()
 			folders = append(folders, &folder.Folder{
-				ID:    rand.Int63(), // nolint:staticcheck
-				UID:   r.NamespaceUID,
-				Title: "TEST-FOLDER-" + util.GenerateShortUID(),
+				ID:       rand.Int63(), // nolint:staticcheck
+				UID:      r.NamespaceUID,
+				Title:    title,
+				Fullpath: "fullpath_" + title,
 			})
 			f.Folders[r.OrgID] = folders
 		}

@@ -269,8 +269,21 @@ func (am *Alertmanager) CompareAndSendState(ctx context.Context) error {
 	return nil
 }
 
+// SaveAndApplyConfig decrypts and sends a configuration to the remote Alertmanager.
 func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
-	return nil
+	// Get the hash for the encrypted configuration.
+	rawCfg, err := json.Marshal(cfg)
+	if err != nil {
+		return err
+	}
+	hash := fmt.Sprintf("%x", md5.Sum(rawCfg))
+
+	// Decrypt and send.
+	decrypted, err := am.decryptConfiguration(ctx, cfg)
+	if err != nil {
+		return err
+	}
+	return am.sendConfiguration(ctx, decrypted, hash, time.Now().Unix(), false)
 }
 
 // SaveAndApplyDefaultConfig sends the default Grafana Alertmanager configuration to the remote Alertmanager.

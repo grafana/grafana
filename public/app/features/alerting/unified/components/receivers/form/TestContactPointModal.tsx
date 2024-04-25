@@ -9,7 +9,7 @@ import { Annotations, Labels } from 'app/types/unified-alerting-dto';
 
 import { defaultAnnotations } from '../../../utils/constants';
 import AnnotationsStep from '../../rule-editor/AnnotationsStep';
-import LabelsField from '../../rule-editor/LabelsField';
+import LabelsField from '../../rule-editor/labels/LabelsField';
 
 interface Props {
   isOpen: boolean;
