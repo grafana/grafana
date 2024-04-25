@@ -38,25 +38,48 @@ func AuthZUnaryInterceptor(authorizer Authorizer) grpc.UnaryServerInterceptor {
 
 func AuthZStreamInterceptor(authorizer Authorizer) grpc.StreamServerInterceptor {
 	return func(srv any, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
-		// TODO: because this is a stream interceptor, it requires more work
-		// to be functionally comparable to the unary interceptor
+		ctx := stream.Context()
+		authzStream := &authzServerStream{
+			ServerStream: stream,
+			authorizer:   authorizer,
+			ctx:          ctx,
+		}
 
-		// authzParams, err := extractRequestEntityData(info, req)
-		// if err != nil {
-		// 	return err
-		// }
-		//
-		// ctx, err := authorizer.Authorize(ctx, &AuthZParams{})
-		// if err != nil {
-		// 	return err
-		// }
-		//
-		// wrappedStream := grpc_middleware.WrapServerStream(stream)
-		// wrappedStream.WrappedContext = ctx
-		// return handler(srv, wrappedStream)
-
-		return handler(srv, stream)
+		return handler(srv, authzStream)
 	}
+}
+
+type authzServerStream struct {
+	grpc.ServerStream
+	authorizer Authorizer
+	ctx        context.Context
+}
+
+func (s *authzServerStream) Context() context.Context {
+	return s.ctx
+}
+
+func (w *authzServerStream) RecvMsg(m any) error {
+	return w.ServerStream.RecvMsg(m)
+}
+
+func (w *authzServerStream) SendMsg(m any) error {
+	if parsedRes, ok := m.(*entity.EntityWatchResponse); ok {
+		key, _ := entity.ParseKey(parsedRes.Entity.Key)
+		authzParams := &AuthZParams{
+			Key:    []*entity.Key{key},
+			Kind:   []string{parsedRes.Entity.Resource},
+			Folder: parsedRes.Entity.Folder,
+		}
+
+		_, _ = w.authorizer.Authorize(w.ctx, authzParams)
+
+		// TODO(drclau): only call SendMsg() if the authorization was successful.
+		// Not calling SendMsg() means the entity is not sent back to the client.
+		return w.ServerStream.SendMsg(m)
+	}
+
+	return nil
 }
 
 func extractRequestEntityData(info *grpc.UnaryServerInfo, req any) (*AuthZParams, error) {
