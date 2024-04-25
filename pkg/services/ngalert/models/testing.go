@@ -440,10 +440,21 @@ func (a *AlertRuleMutators) WithNotificationSettingsGen(ns func() NotificationSe
 		rule.NotificationSettings = []NotificationSettings{ns()}
 	}
 }
+func (a *AlertRuleMutators) WithNotificationSettings(ns NotificationSettings) AlertRuleMutator {
+	return func(_ *AlertRuleGenerator, rule *AlertRule) {
+		rule.NotificationSettings = []NotificationSettings{ns}
+	}
+}
 
 func (a *AlertRuleMutators) WithNoNotificationSettings() AlertRuleMutator {
 	return func(_ *AlertRuleGenerator, rule *AlertRule) {
 		rule.NotificationSettings = nil
+	}
+}
+
+func (a *AlertRuleMutators) WithIsPaused(paused bool) AlertRuleMutator {
+	return func(_ *AlertRuleGenerator, rule *AlertRule) {
+		rule.IsPaused = paused
 	}
 }
 
