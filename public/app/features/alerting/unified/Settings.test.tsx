@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
@@ -11,12 +11,6 @@ import {
 import { setupMswServer } from './mockApi';
 import { grantUserRole } from './mocks';
 
-// @TODO maybe abstract this somehow?
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  useReturnToPrevious: jest.fn(),
-}));
-
 const server = setupMswServer();
 
 describe('Alerting settings', () => {
@@ -25,21 +19,26 @@ describe('Alerting settings', () => {
     setupGrafanaManagedServer(server);
   });
 
-  it('should render the page with the correct title', async () => {
+  it('should render the page with Built-in only enabled, others disabled', async () => {
     render(<SettingsPage />, { wrapper: TestProvider });
 
     await waitFor(() => {
       expect(screen.getByText('Built-in Alertmanager')).toBeInTheDocument();
-      expect(screen.getByRole('heading', { name: 'Grafana built-in' })).toBeInTheDocument();
-      expect(screen.getByText('Receiving Grafana-managed alerts')).toBeInTheDocument();
-
       expect(screen.getByText('Other Alertmanagers')).toBeInTheDocument();
+    });
 
-      DataSourcesResponse.forEach((ds) => {
-        // expect link to data source, provisioned badge, type, and status
-        // expect(screen.getByRole('link', { name: ds.name })).toBeInTheDocument();
-        // expect action buttons
-      });
+    // check internal alertmanager configuration
+    expect(screen.getByText('Receiving Grafana-managed alerts')).toBeInTheDocument();
+    const builtInAlertmanagerCard = screen.getByTestId('alertmanager-card-Grafana built-in');
+    expect(within(builtInAlertmanagerCard).getByText(/Receiving Grafana-managed/i)).toBeInTheDocument();
+
+    // check external altermanagers
+    DataSourcesResponse.forEach((ds) => {
+      // get the card for datasource
+      const card = screen.getByTestId(`alertmanager-card-${ds.name}`);
+
+      // expect link to data source, provisioned badge, type, and status
+      expect(within(card).getByRole('link', { name: ds.name })).toBeInTheDocument();
     });
   });
 

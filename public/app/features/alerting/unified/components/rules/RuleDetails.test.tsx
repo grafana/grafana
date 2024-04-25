@@ -23,12 +23,6 @@ import { SupportedPlugin } from '../../types/pluginBridges';
 
 import { RuleDetails } from './RuleDetails';
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getPluginLinkExtensions: jest.fn(),
-  useReturnToPrevious: jest.fn(),
-}));
-
 jest.mock('../../hooks/useIsRuleEditable');
 
 const mocks = {

@@ -167,8 +167,3 @@ const renderRuleViewer = async (rule: CombinedRule, identifier: RuleIdentifier) 
 
   await waitFor(() => expect(ELEMENTS.loading.query()).not.toBeInTheDocument());
 };
-
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  useReturnToPrevious: jest.fn(),
-}));

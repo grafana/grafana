@@ -38,7 +38,7 @@ export function AlertmanagerCard({
   onDisable,
 }: Props) {
   return (
-    <Card>
+    <Card data-testid={`alertmanager-card-${name}`}>
       <Card.Heading>
         <Stack alignItems="center" gap={1}>
           {href ? (
