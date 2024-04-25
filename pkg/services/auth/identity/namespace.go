@@ -31,7 +31,7 @@ func ParseNamespaceID(str string) (NamespaceID, error) {
 
 	parts := strings.Split(str, ":")
 	if len(parts) != 2 {
-		return namespaceID, ErrInvalidNamepsaceID.Errorf("expected namespace id to have 2 parts")
+		return namespaceID, ErrInvalidNamespaceID.Errorf("expected namespace id to have 2 parts")
 	}
 
 	namespace, id := parts[0], parts[1]
