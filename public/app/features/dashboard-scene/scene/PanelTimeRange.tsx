@@ -5,11 +5,9 @@ import { dateMath, getDefaultTimeRange, GrafanaTheme2, rangeUtil, TimeRange } fr
 import {
   SceneComponentProps,
   sceneGraph,
-  SceneObjectBase,
   SceneTimeRangeLike,
   SceneTimeRangeState,
   SceneTimeRangeTransformerBase,
-  VizPanel,
 } from '@grafana/scenes';
 import { Icon, PanelChrome, TimePickerTooltip, Tooltip, useStyles2 } from '@grafana/ui';
 import { TimeOverrideResult } from 'app/features/dashboard/utils/panel';

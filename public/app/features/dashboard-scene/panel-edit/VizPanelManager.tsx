@@ -455,16 +455,10 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     }
 
     const parentClone = gridItem.clone({
-      body: this.state.panel.clone({
-        $data: this.state.$data?.clone(),
-      }),
+      body: this.state.panel.clone(),
     });
 
     return gridItemToPanel(parentClone);
-  }
-
-  public getPanelCloneWithData(): VizPanel {
-    return this.state.panel.clone({ $data: this.state.$data?.clone() });
   }
 
   public setPanelTitle(newTitle: string) {
