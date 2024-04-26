@@ -201,13 +201,12 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 
 func setupDB(b testing.TB) benchScenario {
 	b.Helper()
-	db := sqlstore.InitTestDB(b)
+	db, cfg := sqlstore.InitTestDB(b)
 	IDs := map[int64]struct{}{}
 
 	opts := sqlstore.NativeSettingsForDialect(db.GetDialect())
 
 	quotaService := quotatest.New(false, nil)
-	cfg := setting.NewCfg()
 
 	teamSvc, err := teamimpl.ProvideService(db, cfg)
 	require.NoError(b, err)
