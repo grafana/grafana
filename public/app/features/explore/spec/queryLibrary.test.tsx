@@ -55,22 +55,15 @@ jest.mock('react-virtualized-auto-sizer', () => {
   };
 });
 
-// const server = setupServer(...testing.serverHandlers);
-
 describe('QueryLibrary', () => {
   silenceConsoleOutput();
 
   beforeAll(() => {
     config.featureToggles.queryLibrary = true;
-    // server.listen();
-  });
-
-  afterEach(() => {
-    // server.resetHandlers();
   });
 
   afterAll(() => {
-    // server.close();
+    config.featureToggles.queryLibrary = false;
   });
 
   it('Load query templates', async () => {
