@@ -9,7 +9,7 @@ import { DashboardInteractions } from 'app/features/dashboard-scene/utils/intera
 
 import { ThemePicker } from './ThemePicker';
 import { ShareModalTabProps } from './types';
-import { buildIframeHtml } from './utils';
+import { buildIframeHtml, reportSharingInteraction } from './utils';
 
 interface Props extends Omit<ShareModalTabProps, 'panel' | 'dashboard'> {
   panel?: { timeFrom?: string; id: number };
@@ -24,7 +24,7 @@ export function ShareEmbed({ panel, dashboard, range, buildIframe = buildIframeH
   const [iframeHtml, setIframeHtml] = useState('');
 
   useEffectOnce(() => {
-    reportInteraction('grafana_dashboards_embed_share_viewed');
+    reportSharingInteraction(() => reportInteraction('grafana_dashboards_embed_share_viewed'), undefined, panel);
   });
 
   useEffect(() => {
@@ -82,10 +82,14 @@ export function ShareEmbed({ panel, dashboard, range, buildIframe = buildIframeH
           variant="primary"
           getText={() => iframeHtml}
           onClipboardCopy={() => {
-            DashboardInteractions.embedSnippetCopy({
-              currentTimeRange: useCurrentTimeRange,
-              theme: selectedTheme,
-            });
+            reportSharingInteraction(
+              DashboardInteractions.embedSnippetCopy,
+              {
+                currentTimeRange: useCurrentTimeRange,
+                theme: selectedTheme,
+              },
+              panel
+            );
           }}
         >
           <Trans i18nKey="share-modal.embed.copy">Copy to clipboard</Trans>

@@ -8,7 +8,7 @@ import { DashboardInteractions } from 'app/features/dashboard-scene/utils/intera
 
 import { ThemePicker } from './ThemePicker';
 import { ShareModalTabProps } from './types';
-import { buildImageUrl, buildShareUrl } from './utils';
+import { buildImageUrl, buildShareUrl, reportSharingInteraction } from './utils';
 
 export interface Props extends ShareModalTabProps {}
 
@@ -30,7 +30,6 @@ export class ShareLink extends PureComponent<Props, State> {
       shareUrl: '',
       imageUrl: '',
     };
-    this.onCopy = this.onCopy.bind(this);
   }
 
   componentDidMount() {
@@ -74,13 +73,17 @@ export class ShareLink extends PureComponent<Props, State> {
     return this.state.shareUrl;
   };
 
-  onCopy() {
-    DashboardInteractions.shareLinkCopied({
-      currentTimeRange: this.state.useCurrentTimeRange,
-      theme: this.state.selectedTheme,
-      shortenURL: this.state.useShortUrl,
-    });
-  }
+  onCopy = () => {
+    reportSharingInteraction(
+      DashboardInteractions.shareLinkCopied,
+      {
+        currentTimeRange: this.state.useCurrentTimeRange,
+        theme: this.state.selectedTheme,
+        shortenURL: this.state.useShortUrl,
+      },
+      this.props.panel
+    );
+  };
 
   render() {
     const { panel, dashboard } = this.props;

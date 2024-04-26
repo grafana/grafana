@@ -10,6 +10,7 @@ import { ShowModalReactEvent } from 'app/types/events';
 
 import { ViewJsonModal } from './ViewJsonModal';
 import { ShareModalTabProps } from './types';
+import { reportSharingInteraction } from './utils';
 
 interface Props extends ShareModalTabProps {}
 
@@ -39,7 +40,11 @@ export class ShareExport extends PureComponent<Props, State> {
     const { dashboard } = this.props;
     const { shareExternally } = this.state;
 
-    DashboardInteractions.exportSaveJsonClicked({ externally: shareExternally });
+    reportSharingInteraction(
+      DashboardInteractions.exportSaveJsonClicked,
+      { externally: shareExternally },
+      this.props.panel
+    );
 
     if (shareExternally) {
       this.exporter.makeExportable(dashboard).then((dashboardJson) => {
@@ -53,7 +58,11 @@ export class ShareExport extends PureComponent<Props, State> {
   onViewJson = () => {
     const { dashboard } = this.props;
     const { shareExternally } = this.state;
-    DashboardInteractions.exportViewJsonClicked({ externally: shareExternally });
+    reportSharingInteraction(
+      DashboardInteractions.exportViewJsonClicked,
+      { externally: shareExternally },
+      this.props.panel
+    );
 
     if (shareExternally) {
       this.exporter.makeExportable(dashboard).then((dashboardJson) => {
