@@ -605,7 +605,7 @@ Displays debug information in the upper right corner. This can be useful for deb
 
 ## Data links
 
-{{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+2" >}}
+{{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 {{% docs/reference %}}
 [provisioning docs page]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning"

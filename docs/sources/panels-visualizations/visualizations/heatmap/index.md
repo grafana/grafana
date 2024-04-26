@@ -176,7 +176,7 @@ Choose whether you want to display the heatmap legend on the visualization.
 
 ### Data links
 
-{{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+3" >}}
+{{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ### Exemplars
 
