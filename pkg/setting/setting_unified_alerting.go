@@ -104,6 +104,8 @@ type UnifiedAlertingSettings struct {
 
 	// Retention period for Alertmanager notification log entries.
 	NotificationLogRetention time.Duration
+
+	BlockProvisioningWriteOps bool
 }
 
 // RemoteAlertmanagerSettings contains the configuration needed
@@ -387,6 +389,8 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	if err != nil {
 		return err
 	}
+
+	uaCfg.BlockProvisioningWriteOps = ua.Key("block_provisioning_write_ops").MustBool(false)
 
 	cfg.UnifiedAlerting = uaCfg
 	return nil
