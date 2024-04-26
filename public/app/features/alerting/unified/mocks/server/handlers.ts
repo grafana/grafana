@@ -7,16 +7,23 @@ import {
   alertmanagerChoiceHandler,
 } from 'app/features/alerting/unified/mocks/alertmanagerApi';
 import { datasourceBuildInfoHandler } from 'app/features/alerting/unified/mocks/datasources';
-import { silenceCreateHandler, silencesListHandler } from 'app/features/alerting/unified/mocks/silences';
+import {
+  silenceCreateHandler,
+  silenceGetHandler,
+  silencesListHandler,
+} from 'app/features/alerting/unified/mocks/silences';
 
 /**
  * All mock handlers that are required across Alerting tests
  */
 const allHandlers = [
   alertmanagerChoiceHandler(),
-  silencesListHandler(),
-  silenceCreateHandler(),
   alertmanagerAlertsListHandler(),
+
+  silencesListHandler(),
+  silenceGetHandler(),
+  silenceCreateHandler(),
+
   datasourceBuildInfoHandler(),
 ];
 

@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw';
 import { SetupServer } from 'msw/node';
 
-import { mockAlertmanagerAlert } from 'app/features/alerting/unified/mocks';
+import { MOCK_SILENCE_ID_EXISTING, mockAlertmanagerAlert } from 'app/features/alerting/unified/mocks';
 
 import {
   AlertmanagerChoice,
@@ -51,11 +51,11 @@ export const alertmanagerAlertsListHandler = () =>
     HttpResponse.json([
       mockAlertmanagerAlert({
         labels: { foo: 'bar', buzz: 'bazz' },
-        status: { state: AlertState.Suppressed, silencedBy: ['12345'], inhibitedBy: [] },
+        status: { state: AlertState.Suppressed, silencedBy: [MOCK_SILENCE_ID_EXISTING], inhibitedBy: [] },
       }),
       mockAlertmanagerAlert({
         labels: { foo: 'bar', buzz: 'bazz' },
-        status: { state: AlertState.Suppressed, silencedBy: ['12345'], inhibitedBy: [] },
+        status: { state: AlertState.Suppressed, silencedBy: [MOCK_SILENCE_ID_EXISTING], inhibitedBy: [] },
       }),
     ])
   );
