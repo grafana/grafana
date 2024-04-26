@@ -56,7 +56,6 @@ export const renderSharePublicDashboard = async (
 
   const newProps = Object.assign(
     {
-      panel: mockPanel,
       dashboard: mockDashboard,
       onDismiss: () => {},
     },

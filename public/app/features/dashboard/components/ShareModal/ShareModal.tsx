@@ -55,14 +55,14 @@ function getTabs(canEditDashboard: boolean, panel?: PanelModel, activeTab?: stri
       component: ShareExport,
     });
     tabs.push(...customDashboardTabs);
-  }
 
-  if (isPublicDashboardsEnabled()) {
-    tabs.push({
-      label: t('share-modal.tab-title.public-dashboard-title', 'Public dashboard'),
-      value: shareDashboardType.publicDashboard,
-      component: SharePublicDashboard,
-    });
+    if (isPublicDashboardsEnabled()) {
+      tabs.push({
+        label: t('share-modal.tab-title.public-dashboard-title', 'Public dashboard'),
+        value: shareDashboardType.publicDashboard,
+        component: SharePublicDashboard,
+      });
+    }
   }
 
   const at = tabs.find((t) => t.value === activeTab);
