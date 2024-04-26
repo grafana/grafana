@@ -195,7 +195,7 @@ export const SilencesEditor = ({ silenceId, alertManagerSourceName }: Props) => 
   return (
     <FormProvider {...formAPI}>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <FieldSet label={`${silenceId ? 'Recreate silence' : 'Create silence'}`}>
+        <FieldSet label={silenceId ? 'Recreate silence' : 'Create silence'}>
           <div className={cx(styles.flexRow, styles.silencePeriod)}>
             <SilencePeriod />
             <Field
