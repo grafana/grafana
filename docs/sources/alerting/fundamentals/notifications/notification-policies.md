@@ -120,7 +120,7 @@ Group wait is the amount of time Grafana waits before sending the first notifica
 
 #### Group interval
 
-Once the first notification has been sent for a new group of alerts, the Group interval timer starts. This is the amount of wait time before  notifications about changes to the group are sent. For example, another firing alert might have just been added to the group while an existing alert might have resolved. If an alert was too late to be included in the first notification due to Group wait, it is included in subsequent notifications after Group interval. Once Group interval has elapsed, Grafana resets the Group interval timer. This repeats until there are no more alerts in the group after which the group is deleted.
+Once the first notification has been sent for a new group of alerts, the Group interval timer starts. This is the amount of wait time before notifications about changes to the group are sent. For example, another firing alert might have just been added to the group while an existing alert might have resolved. If an alert was too late to be included in the first notification due to Group wait, it is included in subsequent notifications after Group interval. Once Group interval has elapsed, Grafana resets the Group interval timer. This repeats until there are no more alerts in the group after which the group is deleted.
 
 **Default** 5 minutes
 
