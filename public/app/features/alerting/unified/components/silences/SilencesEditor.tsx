@@ -139,6 +139,7 @@ export const SilencesEditor = ({ silenceId, alertManagerSourceName }: Props) => 
   const matcherFields = watch('matchers');
 
   useEffect(() => {
+    // Allows the form to correctly initialise when an existing silence is fetch from the backend
     reset(getDefaultFormValues(urlSearchParams, silence));
   }, [reset, silence, urlSearchParams]);
 
