@@ -13,7 +13,8 @@ export const alertSilencesApi = alertingApi.injectEndpoints({
       query: ({ datasourceUid }) => ({
         url: `/api/alertmanager/${datasourceUid}/api/v2/silences`,
       }),
-      providesTags: ['AlertmanagerSilences'],
+      providesTags: (result) =>
+        result ? result.map(({ id }) => ({ type: 'AlertmanagerSilences', id })) : ['AlertmanagerSilences'],
     }),
 
     getSilence: build.query<
@@ -25,8 +26,10 @@ export const alertSilencesApi = alertingApi.injectEndpoints({
     >({
       query: ({ datasourceUid, id }) => ({
         url: `/api/alertmanager/${datasourceUid}/api/v2/silence/${id}`,
+        showErrorAlert: false,
       }),
-      providesTags: ['AlertmanagerSilences'],
+      providesTags: (result, error, { id }) =>
+        result ? [{ type: 'AlertmanagerSilences', id }] : ['AlertmanagerSilences'],
     }),
 
     createSilence: build.mutation<
