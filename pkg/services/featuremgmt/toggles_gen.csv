@@ -161,3 +161,4 @@ cloudWatchNewLabelParsing,GA,@grafana/aws-datasources,false,false,false
 accessActionSets,experimental,@grafana/identity-access-team,false,false,false
 disableNumericMetricsSortingInExpressions,experimental,@grafana/observability-metrics,false,true,false
 grafanaManagedRecordingRules,experimental,@grafana/alerting-squad,false,false,false
+queryLibrary,experimental,@grafana/explore-squad,false,false,false

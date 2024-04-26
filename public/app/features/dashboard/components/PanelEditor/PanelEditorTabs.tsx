@@ -113,25 +113,25 @@ function getCounter(panel: PanelModel, tab: PanelEditorTab) {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    wrapper: css`
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-    `,
-    tabBar: css`
-      padding-left: ${theme.spacing(2)};
-    `,
-    tabContent: css`
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-      min-height: 0;
-      background: ${theme.colors.background.primary};
-      border: 1px solid ${theme.components.panel.borderColor};
-      border-left: none;
-      border-bottom: none;
-      border-top-right-radius: ${theme.shape.borderRadius(1.5)};
-    `,
+    wrapper: css({
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%',
+    }),
+    tabBar: css({
+      paddingLeft: theme.spacing(2),
+    }),
+    tabContent: css({
+      padding: 0,
+      display: 'flex',
+      flexDirection: 'column',
+      flex: 1,
+      minHeight: 0,
+      background: theme.colors.background.primary,
+      border: `1px solid ${theme.components.panel.borderColor}`,
+      borderLeft: 'none',
+      borderBottom: 'none',
+      borderTopRightRadius: theme.shape.borderRadius(1.5),
+    }),
   };
 };
