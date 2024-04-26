@@ -6,7 +6,7 @@ comments: |
 
 Value mapping is a technique you can use to change how data appears in a visualization.
 
-For each value mapping, you'll set the following options:
+For each value mapping, set the following options:
 
 - **Condition** - Choose what's mapped to the display text and (optionally) color:
   - **Value** - Specific values
