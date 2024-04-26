@@ -289,7 +289,7 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
     // need to keep these 2 separate in state since react-calendar doesn't support different timezones
     const [timeOfDayDateTime, setTimeOfDayDateTime] = useState(() => {
       if (date && date.isValid()) {
-        return dateTimeForTimeZone(getTimeZone(), date.toDate());
+        return dateTimeForTimeZone(getTimeZone(), date);
       }
 
       return dateTimeForTimeZone(getTimeZone(), new Date());
@@ -315,14 +315,14 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
     // here we need to stitch the 2 date objects back together
     const handleApply = () => {
       // we take the date that's set by TimeOfDayPicker
-      const newDate = new Date(timeOfDayDateTime.toDate());
+      const newDate = dateTime(timeOfDayDateTime);
 
       // and apply the date/month/year set by react-calendar
-      newDate.setDate(reactCalendarDate.getDate());
-      newDate.setMonth(reactCalendarDate.getMonth());
-      newDate.setFullYear(reactCalendarDate.getFullYear());
+      newDate.set('date', reactCalendarDate.getDate());
+      newDate.set('month', reactCalendarDate.getMonth());
+      newDate.set('year', reactCalendarDate.getFullYear());
 
-      onChange(dateTime(newDate));
+      onChange(newDate);
     };
 
     return (
