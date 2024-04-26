@@ -6,6 +6,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, CodeEditor, ConfirmModal, Stack, useStyles2 } from '@grafana/ui';
 
+import { reportFormErrors } from '../../Analytics';
 import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { GRAFANA_RULES_SOURCE_NAME, isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
@@ -85,14 +86,9 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss, onSave
     },
   });
 
-  const handleSave = handleSubmit(
-    (values: FormValues) => {
-      onSave(alertmanagerName, defaultValues.configJSON, values.configJSON);
-    },
-    (errors) => {
-      console.error(errors);
-    }
-  );
+  const handleSave = handleSubmit((values: FormValues) => {
+    onSave(alertmanagerName, defaultValues.configJSON, values.configJSON);
+  }, reportFormErrors);
 
   const isOperating = isLoadingConfig || isDeleting || isSaving;
 
