@@ -1,7 +1,7 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/notifications/templates/template-labels-annotations
 
-description: Template labels and annotations to customize alert notifications
+description: Learn how to use annotations and labels to store key information about alerts and customize alert notifications
 keywords:
   - grafana
   - alerting
@@ -13,8 +13,8 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Template labels and annotations
-title: Template labels and annotations
+menuTitle: labels and annotations
+title: Labels and annotations
 weight: 300
 ---
 
