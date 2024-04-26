@@ -1,5 +1,6 @@
 // Libraries
-import { isString, map as isArray } from 'lodash';
+import { isString, map as isArray, isPlainObject } from 'lodash';
+import { LRUCache } from 'lru-cache';
 import { from, merge, Observable, of, timer } from 'rxjs';
 import { catchError, map, mapTo, share, takeUntil, tap } from 'rxjs/operators';
 
@@ -126,6 +127,15 @@ export function runRequest(
   request: DataQueryRequest,
   queryFunction?: typeof datasource.query
 ): Observable<PanelData> {
+  const cache = getCache();
+  const cacheKey = getCacheKey(request);
+  const fromCache = cache?.get(cacheKey);
+
+  if (fromCache) {
+    console.log('runRequest: cache hit');
+    return of(fromCache);
+  }
+
   let state: RunningQueryState = {
     panelData: {
       state: LoadingState.Loading,
@@ -159,6 +169,7 @@ export function runRequest(
       request.endTime = Date.now();
 
       state = processResponsePacket(packet, state);
+      cache.set(cacheKey, state.panelData);
 
       return state.panelData;
     }),
@@ -225,3 +236,72 @@ export function callQueryMethod(
   const returnVal = queryFunction ? queryFunction(request) : datasource.query(request);
   return from(returnVal);
 }
+
+let cache: LRUCache<string, PanelData> | undefined;
+
+function getCache() {
+  if (cache) {
+    return cache;
+  }
+
+  const options = {
+    max: 500,
+
+    // for use with tracking overall storage size
+    maxSize: 5000,
+    sizeCalculation: (value, key) => {
+      return 1;
+    },
+
+    // how long to live in ms
+    ttl: 1000 * 60 * 5,
+
+    // return stale items before removing from cache?
+    allowStale: false,
+
+    updateAgeOnGet: false,
+    updateAgeOnHas: false,
+  };
+
+  cache = new LRUCache(options);
+  return cache;
+}
+
+function getCacheKey(request: DataQueryRequest) {
+  const queriesKey = hashKey([request.targets]);
+  console.log('queriesKey', queriesKey);
+  console.log('queries hash', cyrb53(queriesKey));
+  console.log('request.id', request.requestId);
+  console.log('time', request.range.from.valueOf(), request.range.to.valueOf());
+
+  return hashKey([request.targets, request.range.from.valueOf(), request.range.to.valueOf()]);
+}
+
+export function hashKey(queryKey: unknown[]): string {
+  return JSON.stringify(queryKey, (_, val) =>
+    isPlainObject(val)
+      ? Object.keys(val)
+          .sort()
+          .reduce((result, key) => {
+            result[key] = val[key];
+            return result;
+          }, {} as any)
+      : val
+  );
+}
+
+const cyrb53 = (str: string, seed = 0) => {
+  let h1 = 0xdeadbeef ^ seed,
+    h2 = 0x41c6ce57 ^ seed;
+  for (let i = 0, ch; i < str.length; i++) {
+    ch = str.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507);
+  h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507);
+  h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+
+  return 4294967296 * (2097151 & h2) + (h1 >>> 0);
+};
