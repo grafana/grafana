@@ -6,6 +6,8 @@ import { dateTime } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService, setDataSourceSrv } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { waitForServerRequest } from 'app/features/alerting/unified/mocks/server/events';
+import { silenceCreateHandler } from 'app/features/alerting/unified/mocks/silences';
 import { MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 
@@ -239,6 +241,8 @@ describe('Silence create/edit', () => {
       renderSilences(baseUrlPath);
       expect(await ui.editor.durationField.find()).toBeInTheDocument();
 
+      const postRequest = waitForServerRequest(silenceCreateHandler());
+
       const start = new Date();
       const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
 
@@ -266,6 +270,20 @@ describe('Silence create/edit', () => {
       await userEvent.click(ui.editor.submit.get());
 
       expect(await ui.notExpiredTable.find()).toBeInTheDocument();
+
+      const createSilenceRequest = await postRequest;
+      const requestBody = await createSilenceRequest.clone().json();
+      expect(requestBody).toMatchObject(
+        expect.objectContaining({
+          comment: expect.stringMatching(/created (\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/),
+          matchers: [
+            { isEqual: true, isRegex: false, name: 'foo', value: 'bar' },
+            { isEqual: false, isRegex: false, name: 'bar', value: 'buzz' },
+            { isEqual: true, isRegex: true, name: 'region', value: 'us-west-.*' },
+            { isEqual: false, isRegex: true, name: 'env', value: 'dev|staging' },
+          ],
+        })
+      );
     },
     TEST_TIMEOUT
   );
@@ -274,6 +292,8 @@ describe('Silence create/edit', () => {
     'silences page should contain alertmanager parameter after creating a silence',
     async () => {
       const user = userEvent.setup();
+
+      const postRequest = waitForServerRequest(silenceCreateHandler());
 
       renderSilences(`${baseUrlPath}?alertmanager=Alertmanager`);
       await waitFor(() => expect(ui.editor.durationField.query()).not.toBeNull());
@@ -285,6 +305,14 @@ describe('Silence create/edit', () => {
       expect(await ui.notExpiredTable.find()).toBeInTheDocument();
 
       expect(locationService.getSearch().get('alertmanager')).toBe('Alertmanager');
+
+      const createSilenceRequest = await postRequest;
+      const requestBody = await createSilenceRequest.clone().json();
+      expect(requestBody).toMatchObject(
+        expect.objectContaining({
+          matchers: [{ isEqual: true, isRegex: false, name: 'foo', value: 'bar' }],
+        })
+      );
     },
     TEST_TIMEOUT
   );
