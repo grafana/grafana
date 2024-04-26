@@ -148,7 +148,8 @@ export function withFocusedPanel(scene: DashboardScene, fn: (vizPanel: VizPanel)
     const elements = document.querySelectorAll(':hover');
     const focusedGridElement = document.querySelector(':focus-visible')?.closest('[data-viz-panel-key]');
 
-    if (focusedGridElement instanceof HTMLElement && focusedGridElement.dataset?.vizPanelKey) {
+    // `:focus-visible` is a bit inconsitent, which is why hasFocus() is needed. It checks if the document or the activeElement is in focus
+    if (document.hasFocus() && focusedGridElement instanceof HTMLElement && focusedGridElement.dataset?.vizPanelKey) {
       const panelKey = focusedGridElement.dataset?.vizPanelKey;
       const vizPanel = sceneGraph.findObject(scene, (o) => o.state.key === panelKey);
       if (vizPanel && vizPanel instanceof VizPanel) {

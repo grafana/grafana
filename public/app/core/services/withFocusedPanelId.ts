@@ -5,7 +5,7 @@ export function withFocusedPanel(fn: (panelId: number) => void) {
     // Handle keyboard focus first
     const focusedGridElement = document.querySelector(':focus-visible')?.closest('[data-panelid]');
 
-    if (focusedGridElement instanceof HTMLElement && focusedGridElement.dataset?.panelid) {
+    if (document.hasFocus() && focusedGridElement instanceof HTMLElement && focusedGridElement.dataset?.panelid) {
       fn(parseInt(focusedGridElement.dataset?.panelid, 10));
       return;
     }
