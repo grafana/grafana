@@ -43,7 +43,7 @@ export const alertSilencesApi = alertingApi.injectEndpoints({
         method: 'POST',
         data: payload,
       }),
-      invalidatesTags: ['AlertSilences'],
+      invalidatesTags: ['AlertSilences', 'AlertmanagerAlerts'],
     }),
 
     expireSilence: build.mutation<

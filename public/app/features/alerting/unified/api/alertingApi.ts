@@ -35,12 +35,13 @@ export const alertingApi = createApi({
   tagTypes: [
     'AlertmanagerChoice',
     'AlertmanagerConfiguration',
+    'AlertmanagerAlerts',
+    'AlertSilences',
     'OnCallIntegrations',
     'OrgMigrationState',
     'DataSourceSettings',
     'GrafanaLabels',
     'CombinedAlertRule',
-    'AlertSilences',
   ],
   endpoints: () => ({}),
 });
