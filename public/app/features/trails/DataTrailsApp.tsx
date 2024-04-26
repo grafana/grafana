@@ -91,28 +91,41 @@ let dataTrailsApp: DataTrailsApp;
 
 export function getDataTrailsApp() {
   if (!dataTrailsApp) {
-    const newTrail = newMetricsTrail();
-
-    // Set the initial state of the newTrail based on the URL,
-    // In case we are initializing from an externally created URL or a page reload
-    getUrlSyncManager().initSync(newTrail);
-    // Remove the URL sync for now. It will be restored on the trail if it is activated.
-    getUrlSyncManager().cleanUp(newTrail);
-
-    // If one of the recent trails is a match to the newTrail derived from the current URL,
-    // let's restore that trail so that a page refresh doesn't create a new trail.
-    const recentMatchingTrail = getTrailStore().findMatchingRecentTrail(newTrail)?.resolve();
-
-    // If there is a matching trail, initialize with that. Otherwise, use the new trail.
-    const trail = recentMatchingTrail || newTrail;
-
     dataTrailsApp = new DataTrailsApp({
-      trail,
+      trail: getInitialTrail(),
       home: new DataTrailsHome({}),
     });
   }
 
   return dataTrailsApp;
+}
+
+/**
+ * Get the initial trail for the app to work with based on the current URL
+ *
+ * It will either be a new trail that will be started based on the state represented
+ * in the URL parameters, or it will be the most recently used trail (according to the trail store)
+ * which has its current history step matching the URL parameters.
+ *
+ * The reason for trying to reinitialize from the recent trail is to resolve an issue
+ * where refreshing the browser would wipe the step history. This allows you to preserve
+ * it between browser refreshes, or when reaccessing the same URL.
+ */
+function getInitialTrail() {
+  const newTrail = newMetricsTrail();
+
+  // Set the initial state of the newTrail based on the URL,
+  // In case we are initializing from an externally created URL or a page reload
+  getUrlSyncManager().initSync(newTrail);
+  // Remove the URL sync for now. It will be restored on the trail if it is activated.
+  getUrlSyncManager().cleanUp(newTrail);
+
+  // If one of the recent trails is a match to the newTrail derived from the current URL,
+  // let's restore that trail so that a page refresh doesn't create a new trail.
+  const recentMatchingTrail = getTrailStore().findMatchingRecentTrail(newTrail)?.resolve();
+
+  // If there is a matching trail, initialize with that. Otherwise, use the new trail.
+  return recentMatchingTrail || newTrail;
 }
 
 function getStyles(theme: GrafanaTheme2) {
