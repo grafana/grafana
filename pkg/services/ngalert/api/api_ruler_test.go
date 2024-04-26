@@ -696,29 +696,3 @@ func createPermissionsForRules(rules []*models.AlertRule, orgID int64) map[int64
 	}
 	return map[int64]map[string][]string{orgID: permissions}
 }
-
-func withOrgID(orgId int64) func(rule *models.AlertRule) {
-	return func(rule *models.AlertRule) {
-		rule.OrgID = orgId
-	}
-}
-
-func withGroup(groupName string) func(rule *models.AlertRule) {
-	return func(rule *models.AlertRule) {
-		rule.RuleGroup = groupName
-	}
-}
-
-func withNamespace(namespace *folder.Folder) func(rule *models.AlertRule) {
-	return func(rule *models.AlertRule) {
-		rule.NamespaceUID = namespace.UID
-	}
-}
-
-func withGroupKey(groupKey models.AlertRuleGroupKey) func(rule *models.AlertRule) {
-	return func(rule *models.AlertRule) {
-		rule.RuleGroup = groupKey.RuleGroup
-		rule.OrgID = groupKey.OrgID
-		rule.NamespaceUID = groupKey.NamespaceUID
-	}
-}
