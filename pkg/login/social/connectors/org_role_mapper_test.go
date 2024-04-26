@@ -6,7 +6,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
@@ -140,7 +139,7 @@ func TestOrgRoleMapper_MapOrgRoles(t *testing.T) {
 			orgMappingSettings: []string{"First:*:Editor"},
 			getAllOrgsError:    assert.AnError,
 			directlyMappedRole: org.RoleAdmin,
-			expected:           map[int64]org.RoleType{2: org.RoleAdmin},
+			expected:           nil,
 		},
 	}
 	orgService := orgtest.NewOrgServiceFake()
@@ -160,8 +159,7 @@ func TestOrgRoleMapper_MapOrgRoles(t *testing.T) {
 				{Name: "Third", ID: 3},
 			}
 		}
-		actual, err := mapper.MapOrgRoles(context.Background(), tc.externalOrgs, tc.orgMappingSettings, tc.directlyMappedRole)
-		require.NoError(t, err)
+		actual := mapper.MapOrgRoles(context.Background(), tc.externalOrgs, tc.orgMappingSettings, tc.directlyMappedRole)
 
 		assert.EqualValues(t, tc.expected, actual)
 	}
@@ -207,8 +205,7 @@ func TestOrgRoleMapper_MapOrgRoles_OrgNameResolution(t *testing.T) {
 		orgService.ExpectedCalls = nil
 		tc.setupMock(orgService)
 
-		actual, err := mapper.MapOrgRoles(context.Background(), []string{"ExternalOrg1"}, tc.orgMapping, org.RoleViewer)
-		require.NoError(t, err)
+		actual := mapper.MapOrgRoles(context.Background(), []string{"ExternalOrg1"}, tc.orgMapping, org.RoleViewer)
 
 		assert.EqualValues(t, tc.expectedOrgRoles, actual)
 	}

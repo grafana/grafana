@@ -27,23 +27,27 @@ func ProvideOrgRoleMapper(cfg *setting.Cfg, orgService org.Service) *OrgRoleMapp
 	}
 }
 
-func (m *OrgRoleMapper) MapOrgRoles(ctx context.Context, externalOrgs []string, orgMappingSettings []string, directlyMappedRole org.RoleType) (map[int64]org.RoleType, error) {
+func (m *OrgRoleMapper) MapOrgRoles(ctx context.Context, externalOrgs []string, orgMappingSettings []string, directlyMappedRole org.RoleType) map[int64]org.RoleType {
 	orgMapping := m.splitOrgMappingSettings(ctx, orgMappingSettings)
+
 	if len(orgMapping) == 0 {
-		return m.GetDefaultOrgMapping(directlyMappedRole), nil
+		return m.GetDefaultOrgMapping(directlyMappedRole)
 	}
 
 	userOrgRoles := getMappedOrgRoles(externalOrgs, orgMapping)
 
-	m.handleGlobalOrgMapping(userOrgRoles)
+	if err := m.handleGlobalOrgMapping(userOrgRoles); err != nil {
+		// Cannot map global org roles, return nil (prevent resetting asignments)
+		return nil
+	}
 
 	if len(userOrgRoles) == 0 {
-		return m.GetDefaultOrgMapping(directlyMappedRole), nil
+		return m.GetDefaultOrgMapping(directlyMappedRole)
 	}
 
 	if directlyMappedRole == "" {
 		m.logger.Debug("No direct role mapping found")
-		return userOrgRoles, nil
+		return userOrgRoles
 	}
 
 	m.logger.Debug("Direct role mapping found", "role", directlyMappedRole)
@@ -53,7 +57,7 @@ func (m *OrgRoleMapper) MapOrgRoles(ctx context.Context, externalOrgs []string, 
 		userOrgRoles[orgID] = getTopRole(directlyMappedRole, role)
 	}
 
-	return userOrgRoles, nil
+	return userOrgRoles
 }
 
 func (m *OrgRoleMapper) GetDefaultOrgMapping(directlyMappedRole org.RoleType) map[int64]org.RoleType {
@@ -73,11 +77,11 @@ func (m *OrgRoleMapper) GetDefaultOrgMapping(directlyMappedRole org.RoleType) ma
 	return orgRoles
 }
 
-func (m *OrgRoleMapper) handleGlobalOrgMapping(orgRoles map[int64]org.RoleType) {
+func (m *OrgRoleMapper) handleGlobalOrgMapping(orgRoles map[int64]org.RoleType) error {
 	// No global role mapping => return
 	globalRole, ok := orgRoles[MapperMatchAllOrgID]
 	if !ok {
-		return
+		return nil
 	}
 
 	allOrgIDs, err := m.getAllOrgs()
@@ -85,7 +89,7 @@ func (m *OrgRoleMapper) handleGlobalOrgMapping(orgRoles map[int64]org.RoleType) 
 		// Prevent resetting assignments
 		clear(orgRoles)
 		m.logger.Warn("error fetching all orgs, removing org mapping to prevent org sync")
-		return
+		return err
 	}
 
 	// Remove the global role mapping
@@ -95,6 +99,8 @@ func (m *OrgRoleMapper) handleGlobalOrgMapping(orgRoles map[int64]org.RoleType) 
 	for orgID := range allOrgIDs {
 		orgRoles[orgID] = getTopRole(orgRoles[orgID], globalRole)
 	}
+
+	return nil
 }
 
 func (m *OrgRoleMapper) splitOrgMappingSettings(ctx context.Context, mappings []string) map[string]map[int64]org.RoleType {
