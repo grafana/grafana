@@ -11,6 +11,32 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
+var BLOCKED_ROUTES = []string{
+	"/api/v1/provisioning/policies",
+	"/api/v1/provisioning/contact-points",
+	"/api/v1/provisioning/templates",
+	"/api/v1/provisioning/templates/{name}",
+	"/api/v1/provisioning/mute-timings",
+	"/api/v1/provisioning/mute-timings/{name}",
+}
+
+func (api *API) block(method string, path string) web.Handler {
+	return func(res http.ResponseWriter, req *http.Request, c *web.Context) {
+		if method == http.MethodGet {
+			return
+		}
+
+		if api.Cfg.UnifiedAlerting.BlockProvisioningWriteOps {
+			for _, blockedRoute := range BLOCKED_ROUTES {
+				if path == blockedRoute {
+					http.Error(res, "Provisioning write operations are blocked", http.StatusForbidden)
+					return
+				}
+			}
+		}
+	}
+}
+
 //nolint:gocyclo
 func (api *API) authorize(method, path string) web.Handler {
 	authorize := ac.Middleware(api.AccessControl)

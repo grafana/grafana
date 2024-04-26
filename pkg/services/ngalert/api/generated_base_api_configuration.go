@@ -55,6 +55,7 @@ func (api *API) RegisterConfigurationApiEndpoints(srv ConfigurationApi, m *metri
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodDelete, "/api/v1/ngalert/admin_config"),
+			api.block(http.MethodDelete, "/api/v1/ngalert/admin_config"),
 			metrics.Instrument(
 				http.MethodDelete,
 				"/api/v1/ngalert/admin_config",
@@ -67,6 +68,7 @@ func (api *API) RegisterConfigurationApiEndpoints(srv ConfigurationApi, m *metri
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/v1/ngalert/alertmanagers"),
+			api.block(http.MethodGet, "/api/v1/ngalert/alertmanagers"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/ngalert/alertmanagers",
@@ -79,6 +81,7 @@ func (api *API) RegisterConfigurationApiEndpoints(srv ConfigurationApi, m *metri
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/v1/ngalert/admin_config"),
+			api.block(http.MethodGet, "/api/v1/ngalert/admin_config"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/ngalert/admin_config",
@@ -91,6 +94,7 @@ func (api *API) RegisterConfigurationApiEndpoints(srv ConfigurationApi, m *metri
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/v1/ngalert"),
+			api.block(http.MethodGet, "/api/v1/ngalert"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/ngalert",
@@ -103,6 +107,7 @@ func (api *API) RegisterConfigurationApiEndpoints(srv ConfigurationApi, m *metri
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodPost, "/api/v1/ngalert/admin_config"),
+			api.block(http.MethodPost, "/api/v1/ngalert/admin_config"),
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/v1/ngalert/admin_config",

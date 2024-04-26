@@ -40,6 +40,7 @@ func (api *API) Register{{classname}}Endpoints(srv {{classname}}, m *metrics.API
 		requestmeta.SetOwner(requestmeta.TeamAlerting),
 		requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 		api.authorize(http.Method{{httpMethod}}, "/api{{{path}}}"),
+		api.block(http.Method{{httpMethod}}, "/api{{{path}}}"),
 		metrics.Instrument(
 			http.Method{{httpMethod}},
 			"/api{{{path}}}",

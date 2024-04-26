@@ -49,6 +49,7 @@ func (api *API) RegisterNotificationsApiEndpoints(srv NotificationsApi, m *metri
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/v1/notifications/receivers/{Name}"),
+			api.block(http.MethodGet, "/api/v1/notifications/receivers/{Name}"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/notifications/receivers/{Name}",
@@ -61,6 +62,7 @@ func (api *API) RegisterNotificationsApiEndpoints(srv NotificationsApi, m *metri
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/v1/notifications/receivers"),
+			api.block(http.MethodGet, "/api/v1/notifications/receivers"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/notifications/receivers",
@@ -73,6 +75,7 @@ func (api *API) RegisterNotificationsApiEndpoints(srv NotificationsApi, m *metri
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/v1/notifications/time-intervals/{name}"),
+			api.block(http.MethodGet, "/api/v1/notifications/time-intervals/{name}"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/notifications/time-intervals/{name}",
@@ -85,6 +88,7 @@ func (api *API) RegisterNotificationsApiEndpoints(srv NotificationsApi, m *metri
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/v1/notifications/time-intervals"),
+			api.block(http.MethodGet, "/api/v1/notifications/time-intervals"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/notifications/time-intervals",

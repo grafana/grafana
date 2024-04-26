@@ -32,6 +32,7 @@ func (api *API) RegisterHistoryApiEndpoints(srv HistoryApi, m *metrics.API) {
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/v1/rules/history"),
+			api.block(http.MethodGet, "/api/v1/rules/history"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/rules/history",

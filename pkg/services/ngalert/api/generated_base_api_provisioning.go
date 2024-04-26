@@ -237,6 +237,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodDelete, "/api/v1/provisioning/alert-rules/{UID}"),
+			api.block(http.MethodDelete, "/api/v1/provisioning/alert-rules/{UID}"),
 			metrics.Instrument(
 				http.MethodDelete,
 				"/api/v1/provisioning/alert-rules/{UID}",
@@ -249,6 +250,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodDelete, "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}"),
+			api.block(http.MethodDelete, "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}"),
 			metrics.Instrument(
 				http.MethodDelete,
 				"/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}",
@@ -261,6 +263,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodDelete, "/api/v1/provisioning/contact-points/{UID}"),
+			api.block(http.MethodDelete, "/api/v1/provisioning/contact-points/{UID}"),
 			metrics.Instrument(
 				http.MethodDelete,
 				"/api/v1/provisioning/contact-points/{UID}",
@@ -273,6 +276,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodDelete, "/api/v1/provisioning/mute-timings/{name}"),
+			api.block(http.MethodDelete, "/api/v1/provisioning/mute-timings/{name}"),
 			metrics.Instrument(
 				http.MethodDelete,
 				"/api/v1/provisioning/mute-timings/{name}",
@@ -285,6 +289,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodDelete, "/api/v1/provisioning/templates/{name}"),
+			api.block(http.MethodDelete, "/api/v1/provisioning/templates/{name}"),
 			metrics.Instrument(
 				http.MethodDelete,
 				"/api/v1/provisioning/templates/{name}",
@@ -297,6 +302,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/v1/provisioning/mute-timings/{name}/export"),
+			api.block(http.MethodGet, "/api/v1/provisioning/mute-timings/{name}/export"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/provisioning/mute-timings/{name}/export",
@@ -309,6 +315,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/v1/provisioning/mute-timings/export"),
+			api.block(http.MethodGet, "/api/v1/provisioning/mute-timings/export"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/provisioning/mute-timings/export",
@@ -321,6 +328,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/v1/provisioning/alert-rules/{UID}"),
+			api.block(http.MethodGet, "/api/v1/provisioning/alert-rules/{UID}"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/provisioning/alert-rules/{UID}",
@@ -333,6 +341,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/v1/provisioning/alert-rules/{UID}/export"),
+			api.block(http.MethodGet, "/api/v1/provisioning/alert-rules/{UID}/export"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/provisioning/alert-rules/{UID}/export",
@@ -345,6 +354,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}"),
+			api.block(http.MethodGet, "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}",
@@ -357,6 +367,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export"),
+			api.block(http.MethodGet, "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export",
@@ -369,6 +380,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/v1/provisioning/alert-rules"),
+			api.block(http.MethodGet, "/api/v1/provisioning/alert-rules"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/provisioning/alert-rules",
@@ -381,6 +393,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/v1/provisioning/alert-rules/export"),
+			api.block(http.MethodGet, "/api/v1/provisioning/alert-rules/export"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/provisioning/alert-rules/export",
@@ -393,6 +406,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/v1/provisioning/contact-points"),
+			api.block(http.MethodGet, "/api/v1/provisioning/contact-points"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/provisioning/contact-points",
@@ -405,6 +419,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/v1/provisioning/contact-points/export"),
+			api.block(http.MethodGet, "/api/v1/provisioning/contact-points/export"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/provisioning/contact-points/export",
@@ -417,6 +432,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/v1/provisioning/mute-timings/{name}"),
+			api.block(http.MethodGet, "/api/v1/provisioning/mute-timings/{name}"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/provisioning/mute-timings/{name}",
@@ -429,6 +445,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/v1/provisioning/mute-timings"),
+			api.block(http.MethodGet, "/api/v1/provisioning/mute-timings"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/provisioning/mute-timings",
@@ -441,6 +458,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/v1/provisioning/policies"),
+			api.block(http.MethodGet, "/api/v1/provisioning/policies"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/provisioning/policies",
@@ -453,6 +471,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/v1/provisioning/policies/export"),
+			api.block(http.MethodGet, "/api/v1/provisioning/policies/export"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/provisioning/policies/export",
@@ -465,6 +484,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/v1/provisioning/templates/{name}"),
+			api.block(http.MethodGet, "/api/v1/provisioning/templates/{name}"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/provisioning/templates/{name}",
@@ -477,6 +497,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/v1/provisioning/templates"),
+			api.block(http.MethodGet, "/api/v1/provisioning/templates"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/provisioning/templates",
@@ -489,6 +510,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodPost, "/api/v1/provisioning/alert-rules"),
+			api.block(http.MethodPost, "/api/v1/provisioning/alert-rules"),
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/v1/provisioning/alert-rules",
@@ -501,6 +523,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodPost, "/api/v1/provisioning/contact-points"),
+			api.block(http.MethodPost, "/api/v1/provisioning/contact-points"),
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/v1/provisioning/contact-points",
@@ -513,6 +536,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodPost, "/api/v1/provisioning/mute-timings"),
+			api.block(http.MethodPost, "/api/v1/provisioning/mute-timings"),
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/v1/provisioning/mute-timings",
@@ -525,6 +549,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodPut, "/api/v1/provisioning/alert-rules/{UID}"),
+			api.block(http.MethodPut, "/api/v1/provisioning/alert-rules/{UID}"),
 			metrics.Instrument(
 				http.MethodPut,
 				"/api/v1/provisioning/alert-rules/{UID}",
@@ -537,6 +562,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodPut, "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}"),
+			api.block(http.MethodPut, "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}"),
 			metrics.Instrument(
 				http.MethodPut,
 				"/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}",
@@ -549,6 +575,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodPut, "/api/v1/provisioning/contact-points/{UID}"),
+			api.block(http.MethodPut, "/api/v1/provisioning/contact-points/{UID}"),
 			metrics.Instrument(
 				http.MethodPut,
 				"/api/v1/provisioning/contact-points/{UID}",
@@ -561,6 +588,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodPut, "/api/v1/provisioning/mute-timings/{name}"),
+			api.block(http.MethodPut, "/api/v1/provisioning/mute-timings/{name}"),
 			metrics.Instrument(
 				http.MethodPut,
 				"/api/v1/provisioning/mute-timings/{name}",
@@ -573,6 +601,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodPut, "/api/v1/provisioning/policies"),
+			api.block(http.MethodPut, "/api/v1/provisioning/policies"),
 			metrics.Instrument(
 				http.MethodPut,
 				"/api/v1/provisioning/policies",
@@ -585,6 +614,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodPut, "/api/v1/provisioning/templates/{name}"),
+			api.block(http.MethodPut, "/api/v1/provisioning/templates/{name}"),
 			metrics.Instrument(
 				http.MethodPut,
 				"/api/v1/provisioning/templates/{name}",
@@ -597,6 +627,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodDelete, "/api/v1/provisioning/policies"),
+			api.block(http.MethodDelete, "/api/v1/provisioning/policies"),
 			metrics.Instrument(
 				http.MethodDelete,
 				"/api/v1/provisioning/policies",
