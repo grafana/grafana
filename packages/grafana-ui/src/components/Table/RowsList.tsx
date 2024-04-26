@@ -82,12 +82,16 @@ export const RowsList = (props: RowsListProps) => {
   console.log(theme);
 
   // Create off-screen canbas for measuring rows for virtualized rendering
-  const osCan = new OffscreenCanvas(1024, 1024);
+  const osCan = new OffscreenCanvas(256, 1024);
   const osContext = osCan.getContext("2d");
 
   // Set font property using theme info
   // This will make text measurement accurate
-  osContext.font = `${theme.typography.body.fontSize} ${theme.typography.body.fontFamily}`;
+  if (osContext !== null) {
+    osContext.font = `${theme.typography.body.fontSize} ${theme.typography.body.fontFamily}`;
+  }
+
+
 
   const threshold = useMemo(() => {
     const timeField = data.fields.find((f) => f.type === FieldType.time);
@@ -258,6 +262,14 @@ export const RowsList = (props: RowsListProps) => {
         style.color = textColor;
       }
 
+      // console.log(row.values[1]);
+
+      const textValue = row.values[1]
+      const bbox = getTextBoundingBox(textValue, headerGroups, osContext);
+      style.height = bbox?.height;
+      // console.log(bbox);
+
+
       return (
         <div
           {...row.getRowProps({ style, ...additionalProps })}
@@ -286,6 +298,7 @@ export const RowsList = (props: RowsListProps) => {
               timeRange={timeRange}
               frame={data}
               rowStyled={rowBg !== undefined}
+              height={style.height}
             />
           ))}
         </div>
@@ -307,6 +320,8 @@ export const RowsList = (props: RowsListProps) => {
       timeRange,
       width,
       rowBg,
+      headerGroups,
+      osContext,
     ]
   );
 
@@ -318,7 +333,9 @@ export const RowsList = (props: RowsListProps) => {
       return getExpandedRowHeight(nestedDataField, index, tableStyles);
     }
 
-    return tableStyles.rowHeight;
+    const bbox = getTextBoundingBox(row.values[1], headerGroups, osContext);
+
+    return bbox !== undefined ? bbox.height : tableStyles.rowHeight;
   };
 
   const handleScroll: UIEventHandler = (event) => {
@@ -351,10 +368,10 @@ export const RowsList = (props: RowsListProps) => {
 
 
 /**
-     * Calculate an esimated bounding box for a block
-     * of text using an offscreen canvas.
-     */
-function getTextBoundingBox(text: string, headerGroups, osContext) {
+ * Calculate an esimated bounding box for a block
+ * of text using an offscreen canvas.
+ */
+function getTextBoundingBox(text: string, headerGroups: HeaderGroup[], osContext: OffscreenCanvasRenderingContext2D | null) {
   let width = 300;
   if (typeof headerGroups[0].headers[1].width === 'number') {
     width = headerGroups[0].headers[1].width;
@@ -376,5 +393,8 @@ function getTextBoundingBox(text: string, headerGroups, osContext) {
     // Estimated height would be lines multiplied
     // by the line height
     let height = lines * lineHeight;
-    console.log(height);
+    // console.log(height);
+
+    return { width, height };
   }
+}

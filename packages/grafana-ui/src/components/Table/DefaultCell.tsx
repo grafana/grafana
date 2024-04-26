@@ -15,7 +15,7 @@ import { TableCellProps, CustomCellRendererProps, TableCellOptions } from './typ
 import { getCellColors, getCellOptions } from './utils';
 
 export const DefaultCell = (props: TableCellProps) => {
-  const { field, cell, tableStyles, row, cellProps, frame, rowStyled } = props;
+  const { field, cell, tableStyles, row, cellProps, frame, rowStyled, height } = props;
 
   const inspectEnabled = Boolean(field.config.custom?.inspect);
   const displayValue = field.display!(cell.value);
@@ -70,6 +70,10 @@ export const DefaultCell = (props: TableCellProps) => {
     } else if (justifyContent === 'center') {
       cellProps.style = { ...cellProps.style, textAlign: 'center' };
     }
+  }
+
+  if (height) {
+    cellProps.style = { ...cellProps.style, height, textWrap: 'wrap' };
   }
 
   return (
