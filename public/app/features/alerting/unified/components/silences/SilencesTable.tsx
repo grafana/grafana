@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 
 import { dateMath, GrafanaTheme2 } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
-import { CollapsableSection, Icon, Link, LinkButton, useStyles2, Stack, Alert } from '@grafana/ui';
+import { CollapsableSection, Icon, Link, LinkButton, useStyles2, Stack, Alert, LoadingPlaceholder } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { alertSilencesApi } from 'app/features/alerting/unified/api/alertSilencesApi';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
@@ -14,7 +14,7 @@ import { AlertmanagerAlert, Silence, SilenceState } from 'app/plugins/datasource
 
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { parseMatchers } from '../../utils/alertmanager';
-import { getSilenceFiltersFromUrlParams, makeAMLink } from '../../utils/misc';
+import { getSilenceFiltersFromUrlParams, makeAMLink, stringifyErrorLike } from '../../utils/misc';
 import { Authorize } from '../Authorize';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { ActionButton } from '../rules/ActionButton';
@@ -36,11 +36,13 @@ interface Props {
   alertManagerSourceName: string;
 }
 
+const API_QUERY_OPTIONS = { pollingInterval: SILENCES_POLL_INTERVAL_MS, refetchOnFocus: true };
+
 const SilencesTable = ({ alertManagerSourceName }: Props) => {
   const { data: alertManagerAlerts = [], isLoading: amAlertsIsLoading } =
     alertmanagerApi.endpoints.getAlertmanagerAlerts.useQuery(
       { amSourceName: alertManagerSourceName, filter: { silenced: true, active: true, inhibited: true } },
-      { pollingInterval: SILENCES_POLL_INTERVAL_MS }
+      API_QUERY_OPTIONS
     );
 
   const {
@@ -49,9 +51,7 @@ const SilencesTable = ({ alertManagerSourceName }: Props) => {
     error,
   } = alertSilencesApi.endpoints.getSilences.useQuery(
     { datasourceUid: getDatasourceAPIUid(alertManagerSourceName) },
-    {
-      pollingInterval: SILENCES_POLL_INTERVAL_MS,
-    }
+    API_QUERY_OPTIONS
   );
 
   const { currentData: amFeatures } = featureDiscoveryApi.useDiscoverAmFeaturesQuery(
@@ -60,7 +60,7 @@ const SilencesTable = ({ alertManagerSourceName }: Props) => {
   );
 
   const mimirLazyInitError =
-    isFetchError(error) && error?.message?.includes('the Alertmanager is not configured') && amFeatures?.lazyConfigInit;
+    stringifyErrorLike(error).includes('the Alertmanager is not configured') && amFeatures?.lazyConfigInit;
 
   const styles = useStyles2(getStyles);
   const [queryParams] = useQueryParams();
@@ -97,7 +97,7 @@ const SilencesTable = ({ alertManagerSourceName }: Props) => {
   }, [filteredSilencesExpired, alertManagerAlerts]);
 
   if (isLoading || amAlertsIsLoading) {
-    return null;
+    return <LoadingPlaceholder text="Loading silences..." />;
   }
 
   if (mimirLazyInitError) {
@@ -218,9 +218,6 @@ const useFilteredSilences = (silences: Silence[], expired = false) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  addNewSilence: css({
-    margin: theme.spacing(2, 0),
-  }),
   callout: css({
     backgroundColor: theme.colors.background.secondary,
     borderTop: `3px solid ${theme.colors.info.border}`,

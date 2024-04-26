@@ -28,7 +28,7 @@ const renderSilences = (location = '/alerting/silences/') => {
       <Silences />
     </AlertmanagerProvider>,
     {
-      routerOptions: {
+      historyOptions: {
         initialEntries: [location],
       },
     }
@@ -156,10 +156,11 @@ describe('Silences', () => {
   it(
     'filters silences by matchers',
     async () => {
+      const user = userEvent.setup();
       renderSilences();
 
       const queryBar = await ui.queryBar.find();
-      await userEvent.type(queryBar, 'foo=bar');
+      await user.type(queryBar, 'foo=bar');
 
       await waitFor(() => expect(ui.silenceRow.getAll()).toHaveLength(2));
     },
@@ -238,6 +239,7 @@ describe('Silence create/edit', () => {
   it(
     'creates a new silence',
     async () => {
+      const user = userEvent.setup();
       renderSilences(baseUrlPath);
       expect(await ui.editor.durationField.find()).toBeInTheDocument();
 
@@ -249,8 +251,8 @@ describe('Silence create/edit', () => {
       const startDateString = dateTime(start).format('YYYY-MM-DD');
       const endDateString = dateTime(end).format('YYYY-MM-DD');
 
-      await userEvent.clear(ui.editor.durationInput.get());
-      await userEvent.type(ui.editor.durationInput.get(), '1d');
+      await user.clear(ui.editor.durationInput.get());
+      await user.type(ui.editor.durationInput.get(), '1d');
 
       await waitFor(() => expect(ui.editor.durationInput.query()).toHaveValue('1d'));
       await waitFor(() => expect(ui.editor.timeRange.get()).toHaveTextContent(startDateString));
@@ -267,7 +269,7 @@ describe('Silence create/edit', () => {
       await addAdditionalMatcher();
       await enterSilenceLabel(3, 'env', MatcherOperator.notRegex, 'dev|staging');
 
-      await userEvent.click(ui.editor.submit.get());
+      await user.click(ui.editor.submit.get());
 
       expect(await ui.notExpiredTable.find()).toBeInTheDocument();
 
