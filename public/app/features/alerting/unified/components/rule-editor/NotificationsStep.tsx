@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -9,10 +9,11 @@ import { Icon, RadioButtonGroup, Stack, Text, useStyles2 } from '@grafana/ui';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
-import LabelsField from './LabelsField';
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
 import { SimplifiedRouting } from './alert-rule-form/simplifiedRouting/SimplifiedRouting';
+import { LabelsEditorModal } from './labels/LabelsEditorModal';
+import { LabelsFieldInForm } from './labels/LabelsFieldInForm';
 import { NotificationPreview } from './notificaton-preview/NotificationPreview';
 
 type NotificationsStepProps = {
@@ -25,15 +26,28 @@ enum RoutingOptions {
 }
 
 export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
-  const { watch } = useFormContext<RuleFormValues>();
+  const { watch, getValues, setValue } = useFormContext<RuleFormValues>();
   const styles = useStyles2(getStyles);
 
   const [type] = watch(['type', 'labels', 'queries', 'condition', 'folder', 'name', 'manualRouting']);
+  const [showLabelsEditor, setShowLabelsEditor] = useState(false);
 
   const dataSourceName = watch('dataSourceName') ?? GRAFANA_RULES_SOURCE_NAME;
   const simplifiedRoutingToggleEnabled = config.featureToggles.alertingSimplifiedRouting ?? false;
   const shouldRenderpreview = type === RuleFormType.grafana;
   const shouldAllowSimplifiedRouting = type === RuleFormType.grafana && simplifiedRoutingToggleEnabled;
+
+  function onCloseLabelsEditor(
+    labelsToUpdate?: Array<{
+      key: string;
+      value: string;
+    }>
+  ) {
+    if (labelsToUpdate) {
+      setValue('labels', labelsToUpdate);
+    }
+    setShowLabelsEditor(false);
+  }
 
   return (
     <RuleEditorSection
@@ -56,7 +70,13 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
       }
       fullWidth
     >
-      <LabelsField dataSourceName={dataSourceName} />
+      <LabelsFieldInForm onEditClick={() => setShowLabelsEditor(true)} />
+      <LabelsEditorModal
+        isOpen={showLabelsEditor}
+        onClose={onCloseLabelsEditor}
+        dataSourceName={dataSourceName}
+        initialLabels={getValues('labels')}
+      />
       {shouldAllowSimplifiedRouting && (
         <div className={styles.configureNotifications}>
           <Text element="h5">Notifications</Text>
