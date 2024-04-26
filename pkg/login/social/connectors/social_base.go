@@ -199,6 +199,10 @@ func (s *SocialBase) defaultRole() org.RoleType {
 	return org.RoleViewer
 }
 
+func (s *SocialBase) getDefaultOrgRoleMapping(defRole org.RoleType) map[int64]org.RoleType {
+	return s.orgRoleMapper.GetDefaultOrgMapping(defRole)
+}
+
 func (s *SocialBase) isGroupMember(groups []string) bool {
 	if len(s.info.AllowedGroups) == 0 {
 		return true

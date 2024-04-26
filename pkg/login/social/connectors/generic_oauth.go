@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"net/mail"
 	"strconv"
@@ -231,6 +232,7 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 	}
 
 	userInfo := &social.BasicUserInfo{}
+	defaultOrgMapping := s.orgRoleMapper.GetDefaultOrgMapping("")
 	for _, data := range toCheck {
 		s.log.Debug("Processing external user info", "source", data.source, "data", data)
 
@@ -265,7 +267,7 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 			}
 		}
 
-		if len(userInfo.OrgRoles) == 0 && !s.info.SkipOrgRoleSync {
+		if (len(userInfo.OrgRoles) == 0 || maps.Equal(userInfo.OrgRoles, defaultOrgMapping)) && !s.info.SkipOrgRoleSync {
 			externalOrgs, err := s.extractOrgs(data.rawJSON)
 			if err != nil {
 				s.log.Warn("Failed to extract orgs", "err", err)
@@ -296,6 +298,11 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 			return nil, errRoleAttributeStrictViolation.Errorf("idP did not return a role attribute")
 		}
 		userInfo.Role = s.defaultRole()
+	}
+
+	if s.info.RoleAttributeStrict && !s.info.SkipOrgRoleSync {
+		// If RoleAttributeStrict is set then OrgMapping must not be used
+		userInfo.OrgRoles = s.orgRoleMapper.GetDefaultOrgMapping(userInfo.Role)
 	}
 
 	if s.info.AllowAssignGrafanaAdmin && s.info.SkipOrgRoleSync {

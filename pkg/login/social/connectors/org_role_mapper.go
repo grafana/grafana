@@ -28,8 +28,6 @@ func ProvideOrgRoleMapper(cfg *setting.Cfg, orgService org.Service) *OrgRoleMapp
 }
 
 func (m *OrgRoleMapper) MapOrgRoles(ctx context.Context, externalOrgs []string, orgMappingSettings []string, directlyMappedRole org.RoleType) (map[int64]org.RoleType, error) {
-	defaultOrgMapping := m.getDefaultOrgMapping(directlyMappedRole)
-
 	orgMapping := m.splitOrgMappingSettings(ctx, orgMappingSettings)
 
 	userOrgRoles := getMappedOrgRoles(externalOrgs, orgMapping)
@@ -37,7 +35,7 @@ func (m *OrgRoleMapper) MapOrgRoles(ctx context.Context, externalOrgs []string, 
 	m.handleGlobalOrgMapping(userOrgRoles)
 
 	if len(userOrgRoles) == 0 {
-		userOrgRoles = defaultOrgMapping
+		userOrgRoles = m.GetDefaultOrgMapping(directlyMappedRole)
 	}
 
 	if directlyMappedRole == "" {
@@ -55,7 +53,7 @@ func (m *OrgRoleMapper) MapOrgRoles(ctx context.Context, externalOrgs []string, 
 	return userOrgRoles, nil
 }
 
-func (m *OrgRoleMapper) getDefaultOrgMapping(directlyMappedRole org.RoleType) map[int64]org.RoleType {
+func (m *OrgRoleMapper) GetDefaultOrgMapping(directlyMappedRole org.RoleType) map[int64]org.RoleType {
 	orgRoles := make(map[int64]org.RoleType, 0)
 
 	orgID := int64(1)
@@ -156,7 +154,7 @@ func getMappedOrgRoles(externalOrgs []string, orgMapping map[string]map[int64]or
 
 	if orgRoles, ok := orgMapping["*"]; ok {
 		for orgID, role := range orgRoles {
-			userOrgRoles[orgID] = getTopRole(userOrgRoles[orgID], role)
+			userOrgRoles[orgID] = role
 		}
 	}
 
