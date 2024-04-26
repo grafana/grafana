@@ -2,7 +2,7 @@ import memoizeOne from 'memoize-one';
 
 import { UrlQueryMap } from '@grafana/data';
 import { getBackendSrv, config, locationService } from '@grafana/runtime';
-import { sceneGraph, VizPanel } from '@grafana/scenes';
+import { sceneGraph, SceneTimeRangeLike, VizPanel } from '@grafana/scenes';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
@@ -59,6 +59,22 @@ export const createDashboardShareUrl = async (
   const location = locationService.getLocation();
   const timeRange = sceneGraph.getTimeRange(panel ?? dashboard);
 
+  const urlParamsUpdate = getShareUrlParams(opts, timeRange, panel);
+
+  return getDashboardUrl({
+    uid: dashboard.state.uid,
+    slug: dashboard.state.meta.slug,
+    currentQueryParams: location.search,
+    updateQuery: urlParamsUpdate,
+    absolute: true,
+  });
+};
+
+export const getShareUrlParams = (
+  opts: { useAbsoluteTimeRange: boolean; theme: string },
+  timeRange: SceneTimeRangeLike,
+  panel?: VizPanel
+) => {
   const urlParamsUpdate: UrlQueryMap = {};
 
   if (panel) {
@@ -74,11 +90,5 @@ export const createDashboardShareUrl = async (
     urlParamsUpdate.theme = opts.theme;
   }
 
-  return getDashboardUrl({
-    uid: dashboard.state.uid,
-    slug: dashboard.state.meta.slug,
-    currentQueryParams: location.search,
-    updateQuery: urlParamsUpdate,
-    absolute: true,
-  });
+  return urlParamsUpdate;
 };
