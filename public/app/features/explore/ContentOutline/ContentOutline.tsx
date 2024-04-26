@@ -120,10 +120,13 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
       if (activeItem) {
         setActiveSectionId(activeItem.id);
         setActiveSectionChildId(undefined);
-        setSectionsExpanded((prev) => ({
-          ...prev,
-          [item.id]: false,
-        }));
+        const hasActiveFilterChild = activeItem.children?.find((child) => child.type === 'filter' && child.highlight);
+
+        !hasActiveFilterChild &&
+          setSectionsExpanded((prev) => ({
+            ...prev,
+            [item.id]: false,
+          }));
         break;
       }
     }
@@ -181,7 +184,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                 />
                 <div id={item.id} data-testid={`section-wrapper-${item.id}`}>
                   {item.children &&
-                    (!item.mergeSingleChild || item.children.length !== 1) &&
+                    isCollapsible(item) &&
                     sectionsExpanded[item.id] &&
                     item.children.map((child, i) => (
                       <div key={child.id} className={styles.itemWrapper}>

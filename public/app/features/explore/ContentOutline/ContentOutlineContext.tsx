@@ -43,7 +43,6 @@ export function ContentOutlineContextProvider({ children, refreshDependencies }:
 
     setOutlineItems((prevItems) => {
       if (outlineItem.level === 'root') {
-        const mergeSingleChild = checkMergeSingleChild(parentlessItemsRef, outlineItem);
         const parentlessItems = parentlessItemsRef.current[outlineItem.panelId] || [];
 
         // if item has children in parentlessItemsRef and they are filters,
@@ -66,7 +65,6 @@ export function ContentOutlineContextProvider({ children, refreshDependencies }:
             ...outlineItem,
             id,
             children: parentlessItems,
-            mergeSingleChild,
           },
         ];
 
@@ -144,12 +142,10 @@ export function ContentOutlineContextProvider({ children, refreshDependencies }:
 
         const childrenUpdated = [...(parent.children || []), { ...outlineItem, id, ref }];
         childrenUpdated.sort(sortElementsByDocumentPosition);
-        const mergeSingleChild = checkMergeSingleChild(parentlessItemsRef, parent);
 
         newItems[parentIndex] = {
           ...parent,
           children: childrenUpdated,
-          mergeSingleChild,
         };
 
         return newItems;
@@ -218,16 +214,6 @@ export function sortElementsByDocumentPosition(a: ContentOutlineItemContextProps
     }
   }
   return 0;
-}
-
-function checkMergeSingleChild(
-  parentlessItemsRef: React.MutableRefObject<ParentlessItems>,
-  outlineItem: Omit<ContentOutlineItemContextProps, 'id'>
-) {
-  const children = parentlessItemsRef.current[outlineItem.panelId] || [];
-  const mergeSingleChild = children.length === 1 && outlineItem.mergeSingleChild;
-
-  return mergeSingleChild;
 }
 
 export function useContentOutlineContext() {
