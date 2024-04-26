@@ -42,16 +42,6 @@ export const createAndCopyShortLink = async (path: string) => {
   }
 };
 
-export const createDashboardShortLink = async (
-  dashboard: DashboardScene,
-  opts: { useAbsoluteTimeRange: boolean; theme: string },
-  panel?: VizPanel
-) => {
-  const shareUrl = await createDashboardShareUrl(dashboard, opts, panel);
-  //TODO CONFIRMAR CON NAT
-  return await createShortLink(shareUrl);
-};
-
 export const createAndCopyDashboardShortLink = async (
   dashboard: DashboardScene,
   opts: { useAbsoluteTimeRange: boolean; theme: string },
