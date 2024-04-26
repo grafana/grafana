@@ -4,7 +4,7 @@ comments: |
   This file is used in the following visualizations: bar chart, bar gauge, candlestick, canvas, gauge, geomap, histogram, pie chart, stat, state timeline, status history, table, time series, trend
 ---
 
-In addition to field overrides, value mapping is a technique you can use to change how data appears in a visualization.
+Value mapping is a technique you can use to change how data appears in a visualization.
 
 For each value mapping, you'll set the following options:
 
