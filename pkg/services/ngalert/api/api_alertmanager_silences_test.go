@@ -146,7 +146,7 @@ func TestRouteCreateSilence(t *testing.T) {
 				},
 			}
 
-			silence := notifier.PostableSilenceToNotifyPostableSilence(tesCase.silence())
+			silence := notifier.SilenceToNotifyPostableSilence(tesCase.silence())
 
 			if silence.ID != "" {
 				alertmanagerFor, err := sut.mam.AlertmanagerFor(1)

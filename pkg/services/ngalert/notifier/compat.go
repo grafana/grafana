@@ -139,7 +139,7 @@ func GettableSilencesToModelGettableSilences(silences alertingNotify.GettableSil
 	return res
 }
 
-func PostableSilenceToNotifyPostableSilence(s models.Silence) *alertingNotify.PostableSilence {
+func SilenceToNotifyPostableSilence(s models.Silence) *alertingNotify.PostableSilence {
 	var id string
 	if s.ID != nil {
 		id = *s.ID

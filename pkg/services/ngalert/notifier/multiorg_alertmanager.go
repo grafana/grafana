@@ -485,7 +485,7 @@ func (moa *MultiOrgAlertmanager) CreateSilence(ctx context.Context, orgID int64,
 	}
 
 	// Need to create the silence in the AM first to get the silence ID.
-	silenceID, err := orgAM.CreateSilence(ctx, PostableSilenceToNotifyPostableSilence(ps))
+	silenceID, err := orgAM.CreateSilence(ctx, SilenceToNotifyPostableSilence(ps))
 	if err != nil {
 		if errors.Is(err, alertingNotify.ErrSilenceNotFound) {
 			return "", WithPublicError(ErrSilenceNotFound.Errorf("silence %v not found", ps.ID))

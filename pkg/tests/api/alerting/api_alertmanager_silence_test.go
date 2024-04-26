@@ -300,7 +300,7 @@ func TestIntegrationSilenceAuth(t *testing.T) {
 			}
 
 			persistSilence := func(gen func() ngmodels.Silence) apimodels.PostableSilence {
-				silence := *notifier.PostableSilenceToNotifyPostableSilence(gen())
+				silence := *notifier.SilenceToNotifyPostableSilence(gen())
 				silence.ID = ""
 				okBody, status, _ := adminApiClient.PostSilence(t, silence)
 				require.Equal(t, http.StatusAccepted, status)
@@ -316,7 +316,7 @@ func TestIntegrationSilenceAuth(t *testing.T) {
 					return status, body
 				},
 				createSilence: func(gen func() ngmodels.Silence, sType silenceType) (int, string) {
-					silence := *notifier.PostableSilenceToNotifyPostableSilence(gen())
+					silence := *notifier.SilenceToNotifyPostableSilence(gen())
 					silence.ID = ""
 					_, status, body := apiClient.PostSilence(t, silence)
 					return status, body
