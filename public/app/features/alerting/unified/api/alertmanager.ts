@@ -1,15 +1,13 @@
 import { lastValueFrom } from 'rxjs';
 
-import { isObject, urlUtil } from '@grafana/data';
+import { isObject } from '@grafana/data';
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import {
-  AlertmanagerAlert,
   AlertManagerCortexConfig,
   AlertmanagerGroup,
   AlertmanagerStatus,
   ExternalAlertmanagerConfig,
   ExternalAlertmanagersResponse,
-  Matcher,
   Receiver,
   TestReceiversAlert,
   TestReceiversPayload,
@@ -75,37 +73,6 @@ export async function deleteAlertManagerConfig(alertManagerSourceName: string): 
       showSuccessAlert: false,
     })
   );
-}
-
-export async function fetchAlerts(
-  alertmanagerSourceName: string,
-  matchers?: Matcher[],
-  silenced = true,
-  active = true,
-  inhibited = true
-): Promise<AlertmanagerAlert[]> {
-  const filters =
-    urlUtil.toUrlParams({ silenced, active, inhibited }) +
-      matchers
-        ?.map(
-          (matcher) =>
-            `filter=${encodeURIComponent(
-              `${escapeQuotes(matcher.name)}=${matcher.isRegex ? '~' : ''}"${escapeQuotes(matcher.value)}"`
-            )}`
-        )
-        .join('&') || '';
-
-  const result = await lastValueFrom(
-    getBackendSrv().fetch<AlertmanagerAlert[]>({
-      url:
-        `/api/alertmanager/${getDatasourceAPIUid(alertmanagerSourceName)}/api/v2/alerts` +
-        (filters ? '?' + filters : ''),
-      showErrorAlert: false,
-      showSuccessAlert: false,
-    })
-  );
-
-  return result.data;
 }
 
 export async function fetchAlertGroups(alertmanagerSourceName: string): Promise<AlertmanagerGroup[]> {
@@ -233,8 +200,4 @@ export async function fetchExternalAlertmanagerConfig(): Promise<ExternalAlertma
   );
 
   return result.data;
-}
-
-function escapeQuotes(value: string): string {
-  return value.replace(/"/g, '\\"');
 }
