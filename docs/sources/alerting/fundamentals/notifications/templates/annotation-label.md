@@ -135,15 +135,15 @@ Labels prefixed with `grafana_` are reserved by Grafana for special use. To stop
 
 Label templates are applied in the alert rule itself (i.e. in the Configure labels and notifications section of an alert).
 
-{{ <admonition type=”note”> }}
+{<admonition type=”note”>}
 Think about templating labels when you need to improve or change how alerts are uniquely identified. This is especially helpful if the labels you get from your query aren't detailed enough. Keep in mind that, it's better to keep long sentences for summaries and descriptions. Also, avoid using the query's value in labels because it might cause Grafana to create many alerts when you actually only need one
-{{ </admonition> }}
+{</admonition>}
 
 Templating can be applied by using variables and functions. These variables can represent dynamic values retrieved from your data queries.
 
-{{ <admonition type=”note”> }}
+{<admonition type=”note”>}
 In Grafana templating, the $ and . symbols are used to reference variables and their properties. You can reference variables directly in your alert rule definitions using the $ symbol followed by the variable name. Similarly, you can access properties of variables using the dot (.) notation within alert rule definitions.
-{{ </admonition> }}
+{</admonition>}
 
 Here are some commonly used built-in [variables][variables-label-annotation] to interact with the name and value of labels in Grafana alerting:
 
