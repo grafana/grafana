@@ -7,7 +7,7 @@ import { contextSrv } from 'app/core/core';
 import { t } from 'app/core/internationalization';
 import { isPublicDashboardsEnabled } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 
-import { reportSharingInteraction } from '../../dashboard/components/ShareModal/utils';
+import { getTrackingSource } from '../../dashboard/components/ShareModal/utils';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { DashboardInteractions } from '../utils/interactions';
@@ -93,7 +93,7 @@ export class ShareModal extends SceneObjectBase<ShareModalState> implements Moda
   };
 
   onChangeTab: ComponentProps<typeof ModalTabsHeader>['onChangeTab'] = (tab) => {
-    reportSharingInteraction(DashboardInteractions.sharingTabChanged, { item: tab.value }, this.state.panelRef);
+    DashboardInteractions.sharingTabChanged({ item: tab.value, source: getTrackingSource(this.state.panelRef) });
     this.setState({ activeTab: tab.value });
   };
 }

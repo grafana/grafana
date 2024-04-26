@@ -7,7 +7,7 @@ import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { Button, ClipboardButton, CodeEditor, Field, Modal, Switch, VerticalGroup } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { DashboardExporter } from 'app/features/dashboard/components/DashExportModal';
-import { reportSharingInteraction, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
+import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { DashboardModel } from 'app/features/dashboard/state';
 
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
@@ -87,7 +87,7 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> {
       title = dashboardJson.title;
     }
     saveAs(blob, `${title}-${time}.json`);
-    reportSharingInteraction(DashboardInteractions.exportDownloadJsonClicked, {
+    DashboardInteractions.exportDownloadJsonClicked({
       externally: isSharingExternally,
     });
   }

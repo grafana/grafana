@@ -163,12 +163,10 @@ export function getLocalTimeZone() {
   return '&tz=' + encodeURIComponent(options.timeZone);
 }
 
-export const reportSharingInteraction = (
-  fn: (p: Record<string, unknown>) => void,
-  properties?: Record<string, unknown>,
+export const getTrackingSource = (
   panel?: PanelModel | SceneObjectRef<VizPanel> | { timeFrom?: string; id: number }
 ) => {
-  fn({ ...properties, source: panel ? 'panel' : 'dashboard' });
+  return panel ? 'panel' : 'dashboard';
 };
 
 export const shareDashboardType: {

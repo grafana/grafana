@@ -5,7 +5,7 @@ import { Trans } from 'app/core/internationalization';
 import { AddLibraryPanelContents } from 'app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal';
 
 import { ShareModalTabProps } from './types';
-import { reportSharingInteraction } from './utils';
+import { getTrackingSource } from './utils';
 
 interface Props extends ShareModalTabProps {
   initialFolderUid?: string;
@@ -13,11 +13,7 @@ interface Props extends ShareModalTabProps {
 
 export const ShareLibraryPanel = ({ panel, initialFolderUid, onDismiss }: Props) => {
   useEffect(() => {
-    reportSharingInteraction(
-      () => reportInteraction('grafana_dashboards_library_panel_share_viewed'),
-      undefined,
-      panel
-    );
+    reportInteraction('grafana_dashboards_library_panel_share_viewed', { source: getTrackingSource(panel) });
   }, [panel]);
 
   if (!panel) {
