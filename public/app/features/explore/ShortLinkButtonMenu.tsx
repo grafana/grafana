@@ -93,7 +93,7 @@ export function ShortLinkButtonMenu() {
         {
           key: 'copy-link-abs-time',
           icon: 'clock-nine',
-          label: t('explore.toolbar.copy-link-abs-time', 'Copy Absolute Shortened URL'),
+          label: t('explore.toolbar.copy-link-abs-time', 'Copy Absolute URL'),
           shorten: false,
           getUrl: () => {
             return constructAbsoluteUrl(panes);
