@@ -126,13 +126,13 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
     return this.state.shareUrl;
   };
 
-  onCopy() {
+  onCopy = () => {
     DashboardInteractions.shareLinkCopied({
       currentTimeRange: this.state.useLockedTime,
       theme: this.state.selectedTheme,
       shortenURL: this.state.useShortUrl,
     });
-  }
+  };
 }
 
 function ShareLinkTabRenderer({ model }: SceneComponentProps<ShareLinkTab>) {
@@ -220,7 +220,7 @@ function ShareLinkTabRenderer({ model }: SceneComponentProps<ShareLinkTab>) {
           bottomSpacing={0}
         >
           <Trans i18nKey="share-modal.link.render-instructions">
-            To render a panel image, you must install the
+            To render a panel image, you must install the{' '}
             <a
               href="https://grafana.com/grafana/plugins/grafana-image-renderer"
               target="_blank"

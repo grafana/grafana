@@ -3,12 +3,12 @@ import LanguageDetector, { DetectorOptions } from 'i18next-browser-languagedetec
 import React from 'react';
 import { Trans as I18NextTrans, initReactI18next } from 'react-i18next'; // eslint-disable-line no-restricted-imports
 
-import { DEFAULT_LANGUAGE, VALID_LANGUAGES } from './constants';
+import { DEFAULT_LANGUAGE, NAMESPACES, VALID_LANGUAGES } from './constants';
 import { loadTranslations } from './loadTranslations';
 
 let tFunc: TFunction<string[], undefined> | undefined;
 
-export function initializeI18n(language: string): Promise<{ language: string | undefined }> {
+export async function initializeI18n(language: string): Promise<{ language: string | undefined }> {
   // This is a placeholder so we can put a 'comment' in the message json files.
   // Starts with an underscore so it's sorted to the top of the file. Even though it is in a comment the following line is still extracted
   // t('_comment', 'The code is the source of truth for English phrases. They should be updated in the components directly, and additional plurals specified in this file.');
@@ -24,7 +24,10 @@ export function initializeI18n(language: string): Promise<{ language: string | u
     // Required to ensure that `resolvedLanguage` is set property when an invalid language is passed (such as through 'detect')
     supportedLngs: VALID_LANGUAGES,
     fallbackLng: DEFAULT_LANGUAGE,
+
+    ns: NAMESPACES,
   };
+
   let i18nInstance = i18n;
   if (language === 'detect') {
     i18nInstance = i18nInstance.use(LanguageDetector);
@@ -39,13 +42,13 @@ export function initializeI18n(language: string): Promise<{ language: string | u
     .use(initReactI18next) // passes i18n down to react-i18next
     .init(options);
 
-  tFunc = i18n.t;
+  await loadPromise;
 
-  return loadPromise.then(() => {
-    return {
-      language: i18nInstance.resolvedLanguage,
-    };
-  });
+  tFunc = i18n.getFixedT(null, NAMESPACES);
+
+  return {
+    language: i18nInstance.resolvedLanguage,
+  };
 }
 
 export function changeLanguage(locale: string) {
@@ -54,7 +57,7 @@ export function changeLanguage(locale: string) {
 }
 
 export const Trans: typeof I18NextTrans = (props) => {
-  return <I18NextTrans shouldUnescape {...props} />;
+  return <I18NextTrans shouldUnescape ns={NAMESPACES} {...props} />;
 };
 
 // Wrap t() to provide default namespaces and enforce a consistent API

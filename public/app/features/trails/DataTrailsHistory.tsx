@@ -124,14 +124,17 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
       return;
     }
 
-    this.stepTransitionInProgress = true;
     const step = this.state.steps[stepIndex];
     const type = step.type === 'metric' && step.trailState.metric === undefined ? 'metric-clear' : step.type;
+
     reportExploreMetrics('history_step_clicked', { type });
 
+    this.stepTransitionInProgress = true;
     this.setState({ currentStep: stepIndex });
-    // The URL will update
 
+    getTrailFor(this).restoreFromHistoryStep(step.trailState);
+
+    // The URL will update
     this.stepTransitionInProgress = false;
   }
 
