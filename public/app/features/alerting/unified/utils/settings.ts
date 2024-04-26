@@ -2,6 +2,12 @@ import { AlertmanagerChoice, GrafanaAlertingConfiguration } from 'app/plugins/da
 
 // if we have either "internal" or "both" configured this means the internal Alertmanager is receiving Grafana-managed alerts
 export const isInternalAlertmanagerInterestedInAlerts = (config?: GrafanaAlertingConfiguration): boolean => {
-  const INTERNAL_RECEIVING = [AlertmanagerChoice.Internal, AlertmanagerChoice.All];
-  return INTERNAL_RECEIVING.some((choice) => config?.alertmanagersChoice === choice);
+  switch (config?.alertmanagersChoice) {
+    case AlertmanagerChoice.Internal:
+    case AlertmanagerChoice.All:
+      return true;
+    case AlertmanagerChoice.External:
+    default:
+      return false;
+  }
 };
