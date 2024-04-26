@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datasourcesService "github.com/grafana/grafana/pkg/services/datasources/service"
@@ -139,7 +140,7 @@ func GenerateDatasourcePermissions(b *testing.B, db db.DB, cfg *setting.Cfg, ac 
 }
 
 func generateTeamsAndUsers(b *testing.B, store db.DB, cfg *setting.Cfg, users int) ([]int64, []int64) {
-	teamSvc, err := teamimpl.ProvideService(store, cfg)
+	teamSvc, err := teamimpl.ProvideService(store, cfg, tracing.InitializeTracerForTest())
 	require.NoError(b, err)
 	numberOfTeams := int(math.Ceil(float64(users) / UsersPerTeam))
 	globalUserId := 0

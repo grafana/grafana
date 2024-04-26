@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
@@ -35,7 +36,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 	}
 	t.Run("Testing Team commands and queries", func(t *testing.T) {
 		sqlStore, cfg := db.InitTestDBWithCfg(t)
-		teamSvc, err := ProvideService(sqlStore, cfg)
+		teamSvc, err := ProvideService(sqlStore, cfg, tracing.InitializeTracerForTest())
 		require.NoError(t, err)
 		testUser := &user.SignedInUser{
 			OrgID: 1,
@@ -524,7 +525,7 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 	}
 
 	store, cfg := db.InitTestDBWithCfg(t, db.InitTestDBOpt{})
-	teamSvc, err := ProvideService(store, cfg)
+	teamSvc, err := ProvideService(store, cfg, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	// Seed 10 teams
@@ -561,7 +562,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 
 	// Seed 2 teams with 2 members
 	setup := func(store db.DB, cfg *setting.Cfg) {
-		teamSvc, err := ProvideService(store, cfg)
+		teamSvc, err := ProvideService(store, cfg, tracing.InitializeTracerForTest())
 		require.NoError(t, err)
 		team1, errCreateTeam := teamSvc.CreateTeam("group1 name", "test1@example.org", testOrgID)
 		require.NoError(t, errCreateTeam)
@@ -604,7 +605,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 
 	store, cfg := db.InitTestDBWithCfg(t, db.InitTestDBOpt{})
 	setup(store, cfg)
-	teamSvc, err := ProvideService(store, cfg)
+	teamSvc, err := ProvideService(store, cfg, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	type getTeamMembersTestCase struct {

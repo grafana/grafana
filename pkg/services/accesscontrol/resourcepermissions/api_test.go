@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -509,7 +510,7 @@ func checkSeededPermissions(t *testing.T, permissions []resourcePermissionDTO) {
 func seedPermissions(t *testing.T, resourceID string, sql db.DB, cfg *setting.Cfg, service *Service) {
 	t.Helper()
 	// seed team 1 with "Edit" permission on dashboard 1
-	teamSvc, err := teamimpl.ProvideService(sql, cfg)
+	teamSvc, err := teamimpl.ProvideService(sql, cfg, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 	team, err := teamSvc.CreateTeam("test", "test@test.com", 1)
 	require.NoError(t, err)
