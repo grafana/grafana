@@ -172,3 +172,7 @@ If multiple elements use the same field name, and you want to control which elem
 1. Reference the new unique field alias to create the element and field override.
 
 {{< video-embed src="/media/docs/grafana/canvas-data-links-9-4-0.mp4" max-width="750px" caption="Data links demo" >}}
+
+## Value mappings
+
+{{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
