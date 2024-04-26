@@ -1,5 +1,5 @@
 ---
-title: Value mapping options
+title: Value mappings options
 comments: |
   This file is used in the following visualizations: bar chart, bar gauge, candlestick, canvas*, gauge, geomap, heatmap, histogram, stat, state timeline, status history, table, time series, trend, xy chart*
 ---
