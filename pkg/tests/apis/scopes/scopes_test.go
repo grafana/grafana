@@ -77,6 +77,22 @@ func TestIntegrationScopes(t *testing.T) {
 				  "update",
 				  "watch"
 				]
+			  },
+			  {
+				"name": "scopeNodes",
+				"singularName": "scopeNode",
+				"namespaced": true,
+				"kind": "scopeNode",
+				"verbs": [
+				  "create",
+				  "delete",
+				  "deletecollection",
+				  "get",
+				  "list",
+				  "patch",
+				  "update",
+				  "watch"
+				]
 			  }
 			]
 		  }`, string(v1Disco))

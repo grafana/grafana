@@ -373,6 +373,13 @@ func schema_pkg_apis_scope_v0alpha1_ScopeNodeSpec(ref common.ReferenceCallback) 
 							Format:  "",
 						},
 					},
+					"description": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
 					"isLeaf": {
 						SchemaProps: spec.SchemaProps{
 							Default: false,
@@ -395,7 +402,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeNodeSpec(ref common.ReferenceCallback) 
 						},
 					},
 				},
-				Required: []string{"parentName", "title", "isLeaf", "leafType", "leafName"},
+				Required: []string{"parentName", "title", "description", "isLeaf", "leafType", "leafName"},
 			},
 		},
 	}
