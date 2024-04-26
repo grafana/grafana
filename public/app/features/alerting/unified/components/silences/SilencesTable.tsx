@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 import React, { useMemo } from 'react';
 
 import { dateMath, GrafanaTheme2 } from '@grafana/data';
-import { isFetchError } from '@grafana/runtime';
 import { CollapsableSection, Icon, Link, LinkButton, useStyles2, Stack, Alert, LoadingPlaceholder } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { alertSilencesApi } from 'app/features/alerting/unified/api/alertSilencesApi';
@@ -109,8 +108,8 @@ const SilencesTable = ({ alertManagerSourceName }: Props) => {
     );
   }
 
-  if (isFetchError(error)) {
-    const errMessage = error?.message || 'Unknown error.';
+  if (error) {
+    const errMessage = stringifyErrorLike(error) || 'Unknown error.';
     return (
       <Alert severity="error" title="Error loading silences">
         {errMessage}
