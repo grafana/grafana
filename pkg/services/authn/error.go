@@ -8,5 +8,4 @@ var (
 	ErrClientNotConfigured = errutil.BadRequest("auth.client.notConfigured")
 	ErrUnsupportedIdentity = errutil.NotImplemented("auth.identity.unsupported")
 	ErrExpiredAccessToken  = errutil.Unauthorized("oauth.expired-token", errutil.WithPublicMessage("OAuth access token expired"))
-	ErrInvalidNamepsaceID  = errutil.BadRequest("auth.identity.invalid-namespace-id")
 )

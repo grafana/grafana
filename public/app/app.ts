@@ -222,7 +222,7 @@ export class GrafanaApp {
         const appPlugins = Object.values(config.apps).filter((app) => !awaitedAppPluginIds.includes(app.id));
 
         preloadPlugins(appPlugins, extensionsRegistry);
-        await preloadPlugins(awaitedAppPlugins, extensionsRegistry);
+        await preloadPlugins(awaitedAppPlugins, extensionsRegistry, 'frontend_awaited_plugins_preload');
       }
 
       setPluginExtensionGetter(createPluginExtensionsGetter(extensionsRegistry));
