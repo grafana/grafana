@@ -16,7 +16,7 @@ import (
 //     - application/json
 //
 //     Responses:
-//       202: GettableGrafanaRule
+//       202: GettableExtendedRuleNode
 //       403: ForbiddenError
 //       404: description: Not found.
 

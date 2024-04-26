@@ -281,24 +281,7 @@ func (srv RulerSrv) RouteGetRuleByUID(c *contextmodel.ReqContext, ruleUID string
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get rule provenance", err)
 	}
 
-	result := &apimodels.GettableGrafanaRule{
-		ID:                   rule.ID,
-		OrgID:                rule.OrgID,
-		Title:                rule.Title,
-		Condition:            rule.Condition,
-		Data:                 ApiAlertQueriesFromAlertQueries(rule.Data),
-		Updated:              rule.Updated,
-		IntervalSeconds:      rule.IntervalSeconds,
-		Version:              rule.Version,
-		UID:                  rule.UID,
-		NamespaceUID:         rule.NamespaceUID,
-		RuleGroup:            rule.RuleGroup,
-		NoDataState:          apimodels.NoDataState(rule.NoDataState),
-		ExecErrState:         apimodels.ExecutionErrorState(rule.ExecErrState),
-		Provenance:           apimodels.Provenance(provenance),
-		IsPaused:             rule.IsPaused,
-		NotificationSettings: AlertRuleNotificationSettingsFromNotificationSettings(rule.NotificationSettings),
-	}
+	result := toGettableExtendedRuleNode(rule, map[string]ngmodels.Provenance{rule.ResourceID(): provenance})
 
 	return response.JSON(http.StatusOK, result)
 }

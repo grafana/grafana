@@ -338,13 +338,13 @@ func TestRouteGetRuleByUID(t *testing.T) {
 		response := createService(ruleStore).RouteGetRuleByUID(req, expectedRule.UID)
 
 		require.Equal(t, http.StatusOK, response.Status())
-		result := &apimodels.GettableGrafanaRule{}
+		result := &apimodels.GettableExtendedRuleNode{}
 		require.NoError(t, json.Unmarshal(response.Body(), result))
 		require.NotNil(t, result)
 
-		require.Equal(t, expectedRule.UID, result.UID)
-		require.Equal(t, expectedRule.RuleGroup, result.RuleGroup)
-		require.Equal(t, expectedRule.Title, result.Title)
+		require.Equal(t, expectedRule.UID, result.GrafanaManagedAlert.UID)
+		require.Equal(t, expectedRule.RuleGroup, result.GrafanaManagedAlert.RuleGroup)
+		require.Equal(t, expectedRule.Title, result.GrafanaManagedAlert.Title)
 	})
 
 	t.Run("error when fetching rule with non-existent UID", func(t *testing.T) {
