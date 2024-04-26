@@ -11,13 +11,9 @@ export default function ShareMenu({ dashboard }: { dashboard: DashboardScene }) 
     return await createAndCopyDashboardShortLink(dashboard, { useAbsoluteTimeRange: true, theme: 'current' });
   }, [dashboard]);
 
-  const getAsyncText = async () => {
-    return await buildUrl();
-  };
-
   return (
     <Menu>
-      <Menu.Item label="Share internally" description="Copy link" icon="building" onClick={getAsyncText} />
+      <Menu.Item label="Share internally" description="Copy link" icon="building" onClick={buildUrl} />
     </Menu>
   );
 }
