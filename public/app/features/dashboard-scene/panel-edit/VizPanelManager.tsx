@@ -208,14 +208,14 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     });
 
     // When changing from non-data to data panel, we need to add a new data provider
-    if (!this.state.$data && !config.panels[pluginId].skipDataQuery) {
+    if (!this.state.panel.state.$data && !config.panels[pluginId].skipDataQuery) {
       let ds = getLastUsedDatasourceFromStorage(getDashboardSceneFor(this).state.uid!)?.datasourceUid;
 
       if (!ds) {
         ds = config.defaultDatasource;
       }
 
-      this.setState({
+      newPanel.setState({
         $data: new SceneDataTransformer({
           $data: new SceneQueryRunner({
             datasource: {
@@ -428,10 +428,12 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
         const newLibPanel = sourcePanel.parent.clone({
           panel: this.state.panel.clone(),
         });
+
         sourcePanel.parent.parent.setState({
           body: newLibPanel,
           ...repeatUpdate,
         });
+
         updateLibraryVizPanel(newLibPanel!).then((p) => {
           if (sourcePanel.parent instanceof LibraryVizPanel) {
             newLibPanel.setPanelFromLibPanel(p);
