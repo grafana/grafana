@@ -201,12 +201,15 @@
     {
       "metadata": {
         "name": "returnToPrevious",
-        "resourceVersion": "1713545444177",
-        "creationTimestamp": "2024-04-19T16:50:44Z"
+        "resourceVersion": "1713870623848",
+        "creationTimestamp": "2024-04-19T16:50:44Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-04-23 11:10:23.848446 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the return to previous context functionality",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true
       }
@@ -2084,6 +2087,21 @@
         "codeowner": "@grafana/alerting-squad",
         "hideFromAdminPage": true,
         "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "queryLibrary",
+        "resourceVersion": "1713260947272",
+        "creationTimestamp": "2024-04-16T07:18:28Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-04-16 09:49:07.272595 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables Query Library feature in Explore",
+        "stage": "experimental",
+        "codeowner": "@grafana/explore-squad"
       }
     },
     {

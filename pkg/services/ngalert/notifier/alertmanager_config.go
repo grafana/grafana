@@ -13,6 +13,20 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/errutil"
+)
+
+var (
+	// ErrAlertmanagerReceiverInUse is primarily meant for when a receiver is used by a rule and is being deleted.
+	ErrAlertmanagerReceiverInUse = errutil.BadRequest("alerting.notifications.alertmanager.receiverInUse").MustTemplate("receiver [Name: {{ .Public.Receiver }}] is used by rule: {{ .Error }}",
+		errutil.WithPublic(
+			"receiver [Name: {{ .Public.Receiver }}] is used by rule",
+		))
+	// ErrAlertmanagerTimeIntervalInUse is primarily meant for when a time interval is used by a rule and is being deleted.
+	ErrAlertmanagerTimeIntervalInUse = errutil.BadRequest("alerting.notifications.alertmanager.intervalInUse").MustTemplate("time interval [Name: {{ .Public.Interval }}] is used by rule: {{ .Error }}",
+		errutil.WithPublic(
+			"time interval [Name: {{ .Public.Interval }}] is used by rule",
+		))
 )
 
 type UnknownReceiverError struct {
@@ -227,6 +241,14 @@ func (moa *MultiOrgAlertmanager) SaveAndApplyAlertmanagerConfiguration(ctx conte
 
 	if err := am.SaveAndApplyConfig(ctx, &config); err != nil {
 		moa.logger.Error("Unable to save and apply alertmanager configuration", "error", err)
+		errReceiverDoesNotExist := ErrorReceiverDoesNotExist{}
+		if errors.As(err, &errReceiverDoesNotExist) {
+			return ErrAlertmanagerReceiverInUse.Build(errutil.TemplateData{Public: map[string]interface{}{"Receiver": errReceiverDoesNotExist.Reference}, Error: err})
+		}
+		errTimeIntervalDoesNotExist := ErrorTimeIntervalDoesNotExist{}
+		if errors.As(err, &errTimeIntervalDoesNotExist) {
+			return ErrAlertmanagerTimeIntervalInUse.Build(errutil.TemplateData{Public: map[string]interface{}{"Interval": errTimeIntervalDoesNotExist.Reference}, Error: err})
+		}
 		return AlertmanagerConfigRejectedError{err}
 	}
 

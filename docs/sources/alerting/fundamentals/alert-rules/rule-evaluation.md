@@ -42,7 +42,7 @@ In the pending period, you select the period in which an alert rule can be in br
 
 Imagine you have an alert rule evaluation interval set at every 30 seconds and the pending period to 90 seconds.
 
-Evaluation will occur as follows:
+Evaluation occurs as follows:
 
 [00:30] First evaluation - condition not met.
 
@@ -61,12 +61,12 @@ If the alert rule has a condition that needs to be in breach for a certain amoun
 
 - The rule stays in the "pending" state until the condition has been broken for the required amount of time - pending period.
 
-- Once the required time has passed, the rule goes into a "firing" state.
+- After the required time has passed, the rule goes into a "firing" state.
 
 - If the condition is no longer broken during the pending period, the rule goes back to its normal state.
 
 **Note:**
 
-If you want to skip the pending state, you can simply set the pending period to 0. This effectively skips the pending period and your alert rule will start firing as soon as the condition is breached.
+If you want to skip the pending state, you can simply set the pending period to 0. This effectively skips the pending period and your alert rule starts firing as soon as the condition is breached.
 
 When an alert rule fires, alert instances are produced, which are then sent to the Alertmanager.
