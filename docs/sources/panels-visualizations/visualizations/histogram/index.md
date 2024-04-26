@@ -139,3 +139,7 @@ Gradient color is generated based on the hue of the line color.
 ### Legend calculations
 
 Choose a [standard calculations](ref:standard-calculations) to show in the legend. You can select more than one.
+
+## Value mappings
+
+{{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
