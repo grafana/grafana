@@ -29,13 +29,16 @@ func ProvideOrgRoleMapper(cfg *setting.Cfg, orgService org.Service) *OrgRoleMapp
 
 func (m *OrgRoleMapper) MapOrgRoles(ctx context.Context, externalOrgs []string, orgMappingSettings []string, directlyMappedRole org.RoleType) (map[int64]org.RoleType, error) {
 	orgMapping := m.splitOrgMappingSettings(ctx, orgMappingSettings)
+	if len(orgMapping) == 0 {
+		return m.GetDefaultOrgMapping(directlyMappedRole), nil
+	}
 
 	userOrgRoles := getMappedOrgRoles(externalOrgs, orgMapping)
 
 	m.handleGlobalOrgMapping(userOrgRoles)
 
 	if len(userOrgRoles) == 0 {
-		userOrgRoles = m.GetDefaultOrgMapping(directlyMappedRole)
+		return m.GetDefaultOrgMapping(directlyMappedRole), nil
 	}
 
 	if directlyMappedRole == "" {
@@ -80,8 +83,9 @@ func (m *OrgRoleMapper) handleGlobalOrgMapping(orgRoles map[int64]org.RoleType) 
 	allOrgIDs, err := m.getAllOrgs()
 	if err != nil {
 		// Prevent resetting assignments
-		orgRoles = map[int64]org.RoleType{}
+		clear(orgRoles)
 		m.logger.Warn("error fetching all orgs, removing org mapping to prevent org sync")
+		return
 	}
 
 	// Remove the global role mapping

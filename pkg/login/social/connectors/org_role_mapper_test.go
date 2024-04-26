@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/org"
@@ -12,12 +13,13 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestExternalOrgRoleMapper_MapOrgRoles(t *testing.T) {
+func TestOrgRoleMapper_MapOrgRoles(t *testing.T) {
 	testCases := []struct {
 		name               string
 		externalOrgs       []string
 		orgMappingSettings []string
 		directlyMappedRole org.RoleType
+		getAllOrgsError    error
 		expected           map[int64]org.RoleType
 	}{
 		{
@@ -40,6 +42,13 @@ func TestExternalOrgRoleMapper_MapOrgRoles(t *testing.T) {
 			orgMappingSettings: []string{"Second:1:Editor"},
 			directlyMappedRole: "",
 			expected:           map[int64]org.RoleType{2: org.RoleViewer},
+		},
+		{
+			name:               "should return Viewer role for the org if the specified role is invalid",
+			externalOrgs:       []string{"First"},
+			orgMappingSettings: []string{"First:1:SuperEditor"},
+			directlyMappedRole: "",
+			expected:           map[int64]org.RoleType{1: org.RoleViewer},
 		},
 		{
 			name:               "should map the higher role if directly mapped role is lower than the role found in the org mapping",
@@ -125,13 +134,16 @@ func TestExternalOrgRoleMapper_MapOrgRoles(t *testing.T) {
 			directlyMappedRole: org.RoleAdmin,
 			expected:           map[int64]org.RoleType{1: org.RoleAdmin, 2: org.RoleAdmin, 3: org.RoleAdmin},
 		},
+		{
+			name:               "should skip map to all organizations if org service returns an error",
+			externalOrgs:       []string{"First"},
+			orgMappingSettings: []string{"First:*:Editor"},
+			getAllOrgsError:    assert.AnError,
+			directlyMappedRole: org.RoleAdmin,
+			expected:           map[int64]org.RoleType{2: org.RoleAdmin},
+		},
 	}
 	orgService := orgtest.NewOrgServiceFake()
-	orgService.ExpectedOrgs = []*org.OrgDTO{
-		{Name: "First", ID: 1},
-		{Name: "Second", ID: 2},
-		{Name: "Third", ID: 3},
-	}
 	cfg := setting.NewCfg()
 	cfg.AutoAssignOrg = true
 	cfg.AutoAssignOrgId = 2
@@ -139,9 +151,65 @@ func TestExternalOrgRoleMapper_MapOrgRoles(t *testing.T) {
 	mapper := ProvideOrgRoleMapper(cfg, orgService)
 
 	for _, tc := range testCases {
+		if tc.getAllOrgsError != nil {
+			orgService.ExpectedError = tc.getAllOrgsError
+		} else {
+			orgService.ExpectedOrgs = []*org.OrgDTO{
+				{Name: "First", ID: 1},
+				{Name: "Second", ID: 2},
+				{Name: "Third", ID: 3},
+			}
+		}
 		actual, err := mapper.MapOrgRoles(context.Background(), tc.externalOrgs, tc.orgMappingSettings, tc.directlyMappedRole)
 		require.NoError(t, err)
 
 		assert.EqualValues(t, tc.expected, actual)
+	}
+}
+
+func TestOrgRoleMapper_MapOrgRoles_OrgNameResolution(t *testing.T) {
+	testCases := []struct {
+		name             string
+		orgMapping       []string
+		setupMock        func(*orgtest.MockService)
+		expectedOrgRoles map[int64]org.RoleType
+	}{
+		{
+			name:       "should skip org mapping if org name is not found or the resolution fails",
+			orgMapping: []string{"ExternalOrg1:First:Editor", "ExternalOrg1:NonExistent:Viewer"},
+			setupMock: func(orgService *orgtest.MockService) {
+				orgService.On("GetByName", mock.Anything, mock.MatchedBy(func(query *org.GetOrgByNameQuery) bool {
+					return query.Name == "First"
+				})).Return(&org.Org{ID: 1}, nil)
+				orgService.On("GetByName", mock.Anything, mock.Anything).Return(nil, assert.AnError)
+			},
+			expectedOrgRoles: map[int64]org.RoleType{1: org.RoleEditor},
+		},
+		{
+			name:       "should return default mapping when all of the org names are invalid",
+			orgMapping: []string{"ExternalOrg1:NonExistent1:Editor", "ExternalOrg1:NonExistent2:Viewer"},
+			setupMock: func(orgService *orgtest.MockService) {
+				orgService.On("GetByName", mock.Anything, mock.Anything).Return(nil, assert.AnError)
+			},
+			expectedOrgRoles: map[int64]org.RoleType{2: org.RoleViewer},
+		},
+	}
+
+	cfg := setting.NewCfg()
+	cfg.AutoAssignOrg = true
+	cfg.AutoAssignOrgId = 2
+	cfg.AutoAssignOrgRole = string(org.RoleViewer)
+
+	orgService := orgtest.NewMockService(t)
+	mapper := ProvideOrgRoleMapper(cfg, orgService)
+
+	for _, tc := range testCases {
+		orgService.ExpectedCalls = nil
+		tc.setupMock(orgService)
+
+		actual, err := mapper.MapOrgRoles(context.Background(), []string{"ExternalOrg1"}, tc.orgMapping, org.RoleViewer)
+		require.NoError(t, err)
+
+		assert.EqualValues(t, tc.expectedOrgRoles, actual)
 	}
 }
