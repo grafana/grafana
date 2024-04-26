@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import { dateMath, GrafanaTheme2 } from '@grafana/data';
 import { CollapsableSection, Icon, Link, LinkButton, useStyles2, Stack, Alert } from '@grafana/ui';
@@ -36,11 +36,22 @@ interface Props {
 }
 
 const SilencesTable = ({ alertManagerSourceName }: Props) => {
-  const [getAmAlerts, { data: alertManagerAlerts, isLoading: amAlertsIsLoading }] =
-    alertmanagerApi.endpoints.getAlertmanagerAlerts.useLazyQuery({ pollingInterval: SILENCES_POLL_INTERVAL_MS });
-  const [getSilences, { data: silences = [], isLoading, error }] = alertSilencesApi.endpoints.getSilences.useLazyQuery({
-    pollingInterval: SILENCES_POLL_INTERVAL_MS,
-  });
+  const { data: alertManagerAlerts, isLoading: amAlertsIsLoading } =
+    alertmanagerApi.endpoints.getAlertmanagerAlerts.useQuery(
+      { amSourceName: alertManagerSourceName, filter: { silenced: true, active: true, inhibited: true } },
+      { pollingInterval: SILENCES_POLL_INTERVAL_MS }
+    );
+
+  const {
+    data: silences = [],
+    isLoading,
+    error,
+  } = alertSilencesApi.endpoints.getSilences.useQuery(
+    { datasourceUid: getDatasourceAPIUid(alertManagerSourceName) },
+    {
+      pollingInterval: SILENCES_POLL_INTERVAL_MS,
+    }
+  );
 
   const { currentData: amFeatures } = featureDiscoveryApi.useDiscoverAmFeaturesQuery(
     { amSourceName: alertManagerSourceName ?? '' },
@@ -50,11 +61,6 @@ const SilencesTable = ({ alertManagerSourceName }: Props) => {
   const mimirLazyInitError =
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (error as any)?.message?.includes('the Alertmanager is not configured') && amFeatures?.lazyConfigInit;
-
-  useEffect(() => {
-    getSilences({ datasourceUid: getDatasourceAPIUid(alertManagerSourceName) });
-    getAmAlerts({ amSourceName: alertManagerSourceName });
-  }, [alertManagerSourceName, getAmAlerts, getSilences]);
 
   const styles = useStyles2(getStyles);
   const [queryParams] = useQueryParams();
@@ -119,11 +125,11 @@ const SilencesTable = ({ alertManagerSourceName }: Props) => {
         <Stack direction="column">
           <SilencesFilter />
           <Authorize actions={[AlertmanagerAction.CreateSilence]}>
-            <div className={styles.topButtonContainer}>
+            <Stack justifyContent="end">
               <LinkButton href={makeAMLink('/alerting/silence/new', alertManagerSourceName)} icon="plus">
                 Add Silence
               </LinkButton>
-            </div>
+            </Stack>
           </Authorize>
           <SilenceList
             items={itemsNotExpired}
@@ -213,11 +219,6 @@ const useFilteredSilences = (silences: Silence[], expired = false) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  topButtonContainer: css({
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-  }),
   addNewSilence: css({
     margin: theme.spacing(2, 0),
   }),
@@ -237,13 +238,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   calloutIcon: css({
     color: theme.colors.info.text,
   }),
-  editButton: css({
-    marginLeft: theme.spacing(0.5),
-  }),
 });
 
 function useColumns(alertManagerSourceName: string) {
-  const styles = useStyles2(getStyles);
   const [updateSupported, updateAllowed] = useAlertmanagerAbility(AlertmanagerAction.UpdateSilence);
   const [expireSilence] = alertSilencesApi.endpoints.expireSilence.useMutation();
 
@@ -312,10 +309,9 @@ function useColumns(alertManagerSourceName: string) {
               )}
               {silence.status.state !== 'expired' && (
                 <ActionIcon
-                  className={styles.editButton}
                   to={makeAMLink(`/alerting/silence/${silence.id}/edit`, alertManagerSourceName)}
                   icon="pen"
-                  tooltip="edit"
+                  tooltip="Edit"
                 />
               )}
             </Stack>
@@ -325,6 +321,6 @@ function useColumns(alertManagerSourceName: string) {
       });
     }
     return columns;
-  }, [alertManagerSourceName, expireSilence, styles.editButton, updateAllowed, updateSupported]);
+  }, [alertManagerSourceName, expireSilence, updateAllowed, updateSupported]);
 }
 export default SilencesTable;
