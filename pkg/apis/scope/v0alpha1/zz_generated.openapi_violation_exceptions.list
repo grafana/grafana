@@ -1,0 +1,6 @@
+API rule violation: names_match,github.com/grafana/grafana/pkg/apis/scope/v0alpha1,ScopeNodeSpec,IsLeaf
+API rule violation: names_match,github.com/grafana/grafana/pkg/apis/scope/v0alpha1,ScopeNodeSpec,LeafName
+API rule violation: names_match,github.com/grafana/grafana/pkg/apis/scope/v0alpha1,ScopeNodeSpec,LeafType
+API rule violation: names_match,github.com/grafana/grafana/pkg/apis/scope/v0alpha1,ScopeNodeSpec,Name
+API rule violation: names_match,github.com/grafana/grafana/pkg/apis/scope/v0alpha1,ScopeNodeSpec,ParentName
+API rule violation: names_match,github.com/grafana/grafana/pkg/apis/scope/v0alpha1,ScopeNodeSpec,Title
