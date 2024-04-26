@@ -8,8 +8,7 @@ import (
 	"github.com/grafana/dskit/instrument"
 	"github.com/grafana/dskit/middleware"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
+	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -67,22 +66,18 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 
 	// Default auth is admin token check, but this can be overridden by
 	// services which implement ServiceAuthFuncOverride interface.
-	// See https://github.com/grpc-ecosystem/go-grpc-middleware/blob/master/auth/auth.go#L30.
+	// See https://github.com/grpc-ecosystem/go-grpc-middleware/blob/main/interceptors/auth/auth.go#L30.
 	opts = append(opts, []grpc.ServerOption{
-		grpc.UnaryInterceptor(
-			grpc_middleware.ChainUnaryServer(
-				grpcAuth.UnaryServerInterceptor(authenticator.Authenticate),
-				interceptors.TracingUnaryInterceptor(tracer),
-				interceptors.LoggingUnaryInterceptor(s.cfg, s.logger), // needs to be registered after tracing interceptor to get trace id
-				middleware.UnaryServerInstrumentInterceptor(grpcRequestDuration),
-			),
+		grpc.ChainUnaryInterceptor(
+			grpcAuth.UnaryServerInterceptor(authenticator.Authenticate),
+			interceptors.TracingUnaryInterceptor(tracer),
+			interceptors.LoggingUnaryInterceptor(s.cfg, s.logger), // needs to be registered after tracing interceptor to get trace id
+			middleware.UnaryServerInstrumentInterceptor(grpcRequestDuration),
 		),
-		grpc.StreamInterceptor(
-			grpc_middleware.ChainStreamServer(
-				interceptors.TracingStreamInterceptor(tracer),
-				grpcAuth.StreamServerInterceptor(authenticator.Authenticate),
-				middleware.StreamServerInstrumentInterceptor(grpcRequestDuration),
-			),
+		grpc.ChainStreamInterceptor(
+			interceptors.TracingStreamInterceptor(tracer),
+			grpcAuth.StreamServerInterceptor(authenticator.Authenticate),
+			middleware.StreamServerInstrumentInterceptor(grpcRequestDuration),
 		),
 	}...)
 
