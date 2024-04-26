@@ -1,6 +1,8 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { render } from 'test/test-utils';
+import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import SettingsPage from './Settings';
 import {
@@ -11,12 +13,29 @@ import {
 import { setupMswServer } from './mockApi';
 import { grantUserRole } from './mocks';
 
-const server = setupMswServer();
-
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   useReturnToPrevious: jest.fn(),
 }));
+
+const server = setupMswServer();
+
+const ui = {
+  builtInAlertmanagerSection: byText('Built-in Alertmanager'),
+  otherAlertmanagerSection: byText('Other Alertmanagers'),
+
+  builtInAlertmanagerCard: byTestId('alertmanager-card-Grafana built-in'),
+  otherAlertmanagerCard: (name: string) => byTestId(`alertmanager-card-${name}`),
+
+  statusReceiving: byText(/receiving grafana-managed alerts/i),
+  statusNotReceiving: byText(/not receiving/i),
+
+  configurationDrawer: byRole('dialog', { name: 'Drawer title Internal Grafana Alertmanager' }),
+  editConfigurationButton: byRole('button', { name: /edit configuration/i }),
+  saveConfigurationButton: byRole('button', { name: /save/i }),
+
+  versionsTab: byRole('tab', { name: /versions/i }),
+};
 
 describe('Alerting settings', () => {
   beforeEach(() => {
@@ -25,22 +44,22 @@ describe('Alerting settings', () => {
   });
 
   it('should render the page with Built-in only enabled, others disabled', async () => {
-    render(<SettingsPage />, { wrapper: TestProvider });
+    render(<SettingsPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('Built-in Alertmanager')).toBeInTheDocument();
-      expect(screen.getByText('Other Alertmanagers')).toBeInTheDocument();
+      expect(ui.builtInAlertmanagerSection.get()).toBeInTheDocument();
+      expect(ui.otherAlertmanagerSection.get()).toBeInTheDocument();
     });
 
     // check internal alertmanager configuration
-    expect(screen.getByText('Receiving Grafana-managed alerts')).toBeInTheDocument();
-    const builtInAlertmanagerCard = screen.getByTestId('alertmanager-card-Grafana built-in');
-    expect(within(builtInAlertmanagerCard).getByText(/Receiving Grafana-managed/i)).toBeInTheDocument();
+    expect(ui.builtInAlertmanagerCard.get()).toBeInTheDocument();
+
+    expect(ui.statusReceiving.get(ui.builtInAlertmanagerCard.get())).toBeInTheDocument();
 
     // check external altermanagers
     DataSourcesResponse.forEach((ds) => {
       // get the card for datasource
-      const card = screen.getByTestId(`alertmanager-card-${ds.name}`);
+      const card = ui.otherAlertmanagerCard(ds.name).get();
 
       // expect link to data source, provisioned badge, type, and status
       expect(within(card).getByRole('link', { name: ds.name })).toBeInTheDocument();
@@ -48,11 +67,57 @@ describe('Alerting settings', () => {
   });
 
   it('should render the page with external only', async () => {
-    render(<SettingsPage />, { wrapper: TestProvider });
+    render(<SettingsPage />);
     withExternalOnlySetting(server);
 
     await waitFor(() => {
-      expect(screen.queryByText('Receiving Grafana-managed alerts')).not.toBeInTheDocument();
+      expect(ui.statusReceiving.query()).not.toBeInTheDocument();
+    });
+  });
+
+  it('should be able to view configuration', async () => {
+    render(<SettingsPage />);
+
+    // wait for loading to be done
+    await waitFor(() => expect(ui.builtInAlertmanagerSection.get()).toBeInTheDocument());
+
+    // open configuration drawer
+    const internalAMCard = ui.builtInAlertmanagerCard.get();
+    const editInternal = ui.editConfigurationButton.get(internalAMCard);
+    await userEvent.click(editInternal);
+
+    await waitFor(() => {
+      expect(ui.configurationDrawer.get()).toBeInTheDocument();
+    });
+
+    await userEvent.click(ui.saveConfigurationButton.get());
+    expect(ui.saveConfigurationButton.get()).toBeDisabled();
+
+    await waitFor(() => {
+      expect(ui.saveConfigurationButton.get()).not.toBeDisabled();
+    });
+  });
+
+  it('should be able to view versions', async () => {
+    render(<SettingsPage />);
+
+    // wait for loading to be done
+    await waitFor(() => expect(ui.builtInAlertmanagerSection.get()).toBeInTheDocument());
+
+    // open configuration drawer
+    const internalAMCard = ui.builtInAlertmanagerCard.get();
+    const editInternal = ui.editConfigurationButton.get(internalAMCard);
+    await userEvent.click(editInternal);
+
+    await waitFor(() => {
+      expect(ui.configurationDrawer.get()).toBeInTheDocument();
+    });
+
+    // click versions tab
+    await userEvent.click(ui.versionsTab.get());
+
+    await waitFor(() => {
+      expect(screen.getByText(/last applied/i)).toBeInTheDocument();
     });
   });
 });

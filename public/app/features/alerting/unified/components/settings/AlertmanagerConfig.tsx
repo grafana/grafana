@@ -52,6 +52,13 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss, onSave
     defaultValues,
   });
 
+  // make sure we update the configJSON field when we receive a response from the `useAlertmanagerConfig` hook
+  useEffect(() => {
+    if (config) {
+      setValue('configJSON', JSON.stringify(config, null, 2));
+    }
+  }, [config, setValue]);
+
   useEffect(() => {
     if (savingError) {
       setError('configJSON', { type: 'deps', message: savingError.message });
@@ -65,6 +72,7 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss, onSave
   }, [deletingError, setError]);
 
   // manually register the config field with validation
+  // @TODO sometimes the value doesn't get registered – find out why
   register('configJSON', {
     required: { value: true, message: 'Configuration cannot be empty' },
     validate: (value: string) => {
