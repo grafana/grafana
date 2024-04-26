@@ -470,7 +470,7 @@ func mergeSettings(storedSettings, systemSettings map[string]any) map[string]any
 
 	for k, v := range systemSettings {
 		if _, ok := settings[k]; !ok {
-			if isMergeAllowed(k) {
+			if isMergingAllowed(k) {
 				settings[k] = v
 			}
 		} else if isURL(k) && isEmptyString(settings[k]) {
@@ -485,10 +485,10 @@ func mergeSettings(storedSettings, systemSettings map[string]any) map[string]any
 	return settings
 }
 
-// isMergeAllowed returns true if the field provided can be merged from the system settings.
+// isMergingAllowed returns true if the field provided can be merged from the system settings.
 // It won't allow SAML fields that are part of a group of settings to be merged from system settings
 // because the DB settings already contain one valid setting from each group.
-func isMergeAllowed(fieldName string) bool {
+func isMergingAllowed(fieldName string) bool {
 	forbiddenMergePatterns := []string{"certificate", "private_key", "idp_metadata"}
 
 	for _, v := range forbiddenMergePatterns {
