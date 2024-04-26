@@ -126,13 +126,13 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
     return this.state.shareUrl;
   };
 
-  onCopy() {
+  onCopy = () => {
     DashboardInteractions.shareLinkCopied({
       currentTimeRange: this.state.useLockedTime,
       theme: this.state.selectedTheme,
       shortenURL: this.state.useShortUrl,
     });
-  }
+  };
 }
 
 function ShareLinkTabRenderer({ model }: SceneComponentProps<ShareLinkTab>) {
