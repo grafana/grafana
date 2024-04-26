@@ -36,7 +36,7 @@ interface Props {
 }
 
 const SilencesTable = ({ alertManagerSourceName }: Props) => {
-  const { data: alertManagerAlerts, isLoading: amAlertsIsLoading } =
+  const { data: alertManagerAlerts = [], isLoading: amAlertsIsLoading } =
     alertmanagerApi.endpoints.getAlertmanagerAlerts.useQuery(
       { amSourceName: alertManagerSourceName, filter: { silenced: true, active: true, inhibited: true } },
       { pollingInterval: SILENCES_POLL_INTERVAL_MS }
@@ -72,7 +72,7 @@ const SilencesTable = ({ alertManagerSourceName }: Props) => {
 
   const itemsNotExpired = useMemo((): SilenceTableItemProps[] => {
     const findSilencedAlerts = (id: string) => {
-      return (alertManagerAlerts || []).filter((alert) => alert.status.silencedBy.includes(id));
+      return alertManagerAlerts.filter((alert) => alert.status.silencedBy.includes(id));
     };
     return filteredSilencesNotExpired.map((silence) => {
       const silencedAlerts = findSilencedAlerts(silence.id);
@@ -85,7 +85,7 @@ const SilencesTable = ({ alertManagerSourceName }: Props) => {
 
   const itemsExpired = useMemo((): SilenceTableItemProps[] => {
     const findSilencedAlerts = (id: string) => {
-      return (alertManagerAlerts || []).filter((alert) => alert.status.silencedBy.includes(id));
+      return alertManagerAlerts.filter((alert) => alert.status.silencedBy.includes(id));
     };
     return filteredSilencesExpired.map((silence) => {
       const silencedAlerts = findSilencedAlerts(silence.id);
