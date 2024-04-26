@@ -29,7 +29,7 @@ A namespace contains one or more groups. The rules within a group are run sequen
 
 ### Groups
 
-The rules within a group are run sequentially at a regular interval, meaning no rules will be evaluated at the same time and in order of appearance. The default interval is one (1) minute. You can rename Grafana Mimir or Loki rule namespaces and groups, and edit group evaluation intervals.
+The rules within a group are run sequentially at a regular interval, meaning no rules are evaluated at the same time and in order of appearance. The default interval is one (1) minute. You can rename Grafana Mimir or Loki rule namespaces and groups, and edit group evaluation intervals.
 
 > **Note** If you want rules to be evaluated concurrently and with different intervals, consider storing them in different groups.
 
