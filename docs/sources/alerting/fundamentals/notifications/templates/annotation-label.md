@@ -132,7 +132,6 @@ Reserved labels can be used in the same way as manually configured labels. The c
 
 Labels prefixed with `grafana_` are reserved by Grafana for special use. To stop Grafana Alerting from adding a reserved label, you can disable it via the `disabled_labels` option in [unified_alerting.reserved_labels](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana#unified_alertingreserved_labels) configuration.
 
-
 ### Template labels
 
 Label templates are applied in the alert rule itself (i.e. in the Configure labels and notifications section of an alert).
@@ -141,43 +140,41 @@ Label templates are applied in the alert rule itself (i.e. in the Configure labe
 Think about templating labels when you need to improve or change how alerts are uniquely identified. This is especially helpful if the labels you get from your query aren't detailed enough. Keep in mind that, it's better to keep long sentences for summaries and descriptions. Also, avoid using the query's value in labels because it might cause Grafana to create many alerts when you actually only need one
 {{ </admonition> }}
 
-Templating can be applied by using variables and functions. These variables can represent dynamic values retrieved from your data queries. 
+Templating can be applied by using variables and functions. These variables can represent dynamic values retrieved from your data queries.
 
 {{ <admonition type=”note”> }}
-In Grafana templating, the $ and . symbols  are used to reference variables and their properties. You can reference variables directly in your alert rule definitions using the $ symbol followed by the variable name. Similarly, you can access properties of variables using the dot (.) notation within alert rule definitions.
+In Grafana templating, the $ and . symbols are used to reference variables and their properties. You can reference variables directly in your alert rule definitions using the $ symbol followed by the variable name. Similarly, you can access properties of variables using the dot (.) notation within alert rule definitions.
 {{ </admonition> }}
 
 Here are some commonly used built-in [variables][variables-label-annotation] to interact with the name and value of labels in Grafana alerting:
 
 - The `$labels` variable, which contains all labels from the query.
 
-    For example, let's say you have an alert rule that triggers when the CPU usage exceeds a certain threshold. You want to create annotations that provide additional context when this alert is triggered, such as including the specific server that experienced the high CPU usage.
-
+  For example, let's say you have an alert rule that triggers when the CPU usage exceeds a certain threshold. You want to create annotations that provide additional context when this alert is triggered, such as including the specific server that experienced the high CPU usage.
 
         The host {{ index $labels "instance" }} has exceeded 80% CPU usage for the last 5 minutes
 
-	The outcome of this template would print:
+  The outcome of this template would print:
 
         The host instance 1 has exceeded 80% CPU usage for the last 5 minutes
 
 - The `$value` variable, which is a string containing the labels and values of all instant queries; threshold, reduce and math expressions, and classic conditions in the alert rule.
 
-	In the context of the previous example, $value variable would write something like this:
+  In the context of the previous example, $value variable would write something like this:
 
         CPU usage for {{ index $labels "instance" }} has exceeded 80% for the last 5 minutes: {{ $value }}
 
-    The outcome of this template would print:
+  The outcome of this template would print:
 
         CPU usage for instance1 has exceeded 80% for the last 5 minutes: [ var='A' labels={instance=instance1} value=81.234 ]
 
 - The `$values` variable is a table containing the labels and floating point values of all instant queries and expressions, indexed by their Ref IDs (i.e. the id that identifies the query or expression. By default the Red ID of the query is “A”).
 
-    Given an alert with the labels instance=server1 and an instant query with the value 81.2345, would write like this:
-
+  Given an alert with the labels instance=server1 and an instant query with the value 81.2345, would write like this:
 
         CPU usage for {{ index $labels "instance" }} has exceeded 80% for the last 5 minutes: {{ index $values "A" }}
 
-    And it would print:
+  And it would print:
 
         CPU usage for instance1 has exceeded 80% for the last 5 minutes: 81.2345
 
@@ -194,7 +191,6 @@ Here is an example of templating an annotation in the context of an alert rule. 
 The outcome of this template would print
 
         CPU usage for Instance 1 has exceeded 80% for the last 5 minutes
-
 
 {{% docs/reference %}}
 [variables-label-annotation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templating-labels-annotations"
