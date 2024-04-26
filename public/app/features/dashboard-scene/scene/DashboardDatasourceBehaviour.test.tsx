@@ -545,8 +545,6 @@ describe('DashboardDatasourceBehaviour', () => {
 
       activateFullSceneTree(scene);
 
-      await new Promise((r) => setTimeout(r, 1));
-
       // spy on runQueries
       const spy = jest.spyOn(dashboardDSPanel.state.$data as SceneQueryRunner, 'runQueries');
 
@@ -556,6 +554,7 @@ describe('DashboardDatasourceBehaviour', () => {
 
       // Simulate library panel being loaded
       sourcePanel.setState({
+        isLoaded: true,
         panel: new VizPanel({
           title: 'Panel A',
           pluginId: 'table',
@@ -566,8 +565,6 @@ describe('DashboardDatasourceBehaviour', () => {
           }),
         }),
       });
-
-      await new Promise((r) => setTimeout(r, 1));
 
       expect(spy).toHaveBeenCalledTimes(1);
     });
