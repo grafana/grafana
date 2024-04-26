@@ -72,11 +72,11 @@ func (w *authzServerStream) SendMsg(m any) error {
 			Folder: parsedRes.Entity.Folder,
 		}
 
-		_, _ = w.authorizer.Authorize(w.ctx, authzParams)
-
-		// TODO(drclau): only call SendMsg() if the authorization was successful.
-		// Not calling SendMsg() means the entity is not sent back to the client.
-		return w.ServerStream.SendMsg(m)
+		_, err := w.authorizer.Authorize(w.ctx, authzParams)
+		if err == nil {
+			// Not calling SendMsg() means the entity is not sent back to the client.
+			return w.ServerStream.SendMsg(m)
+		}
 	}
 
 	return nil
