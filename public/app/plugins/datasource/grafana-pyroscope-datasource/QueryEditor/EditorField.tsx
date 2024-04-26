@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { ComponentProps } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Field, Icon, PopoverContent, ReactUtils, stylesFactory, Tooltip, useTheme2 } from '@grafana/ui';
+import { Field, Icon, PopoverContent, ReactUtils, Tooltip, useStyles2 } from '@grafana/ui';
 
 interface EditorFieldProps extends ComponentProps<typeof Field> {
   label: string;
@@ -15,8 +15,7 @@ interface EditorFieldProps extends ComponentProps<typeof Field> {
 export const EditorField = (props: EditorFieldProps) => {
   const { label, optional, tooltip, children, width, ...fieldProps } = props;
 
-  const theme = useTheme2();
-  const styles = getStyles(theme, width);
+  const styles = useStyles2(getStyles, width);
 
   // Null check for backward compatibility
   const childInputId = fieldProps?.htmlFor || ReactUtils?.getChildId(children);
@@ -45,32 +44,30 @@ export const EditorField = (props: EditorFieldProps) => {
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme2, width?: number | string) => {
-  return {
-    space: css({
-      paddingRight: theme.spacing(0),
-      paddingBottom: theme.spacing(0.5),
-    }),
-    root: css({
-      minWidth: theme.spacing(width ?? 0),
-    }),
-    label: css({
-      fontSize: 12,
-      fontWeight: theme.typography.fontWeightMedium,
-    }),
-    optional: css({
-      fontStyle: 'italic',
-      color: theme.colors.text.secondary,
-    }),
-    field: css({
-      marginBottom: 0, // GrafanaUI/Field has a bottom margin which we must remove
-    }),
-    icon: css({
-      color: theme.colors.text.secondary,
-      marginLeft: theme.spacing(1),
-      ':hover': {
-        color: theme.colors.text.primary,
-      },
-    }),
-  };
+const getStyles = (theme: GrafanaTheme2, width?: number | string) => ({
+  space: css({
+    paddingRight: theme.spacing(0),
+    paddingBottom: theme.spacing(0.5),
+  }),
+  root: css({
+    minWidth: theme.spacing(width ?? 0),
+  }),
+  label: css({
+    fontSize: 12,
+    fontWeight: theme.typography.fontWeightMedium,
+  }),
+  optional: css({
+    fontStyle: 'italic',
+    color: theme.colors.text.secondary,
+  }),
+  field: css({
+    marginBottom: 0, // GrafanaUI/Field has a bottom margin which we must remove
+  }),
+  icon: css({
+    color: theme.colors.text.secondary,
+    marginLeft: theme.spacing(1),
+    ':hover': {
+      color: theme.colors.text.primary,
+    },
+  }),
 });

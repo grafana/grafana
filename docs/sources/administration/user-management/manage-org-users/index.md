@@ -38,7 +38,7 @@ You can see a list of users with accounts in your Grafana organization. If neces
 **To view a list of organization users**:
 
 1. Sign in to Grafana as an organization administrator.
-1. Navigate to **Administration > Users**.
+1. Navigate to **Administration > Users and access > Users**.
 
 {{% admonition type="note" %}}
 If you have [server administrator]({{< relref "../../roles-and-permissions/#grafana-server-administrators" >}}) permissions, you can also [view a global list of users]({{< relref "../server-user-management#view-a-list-of-users" >}}) in the Server Admin section of Grafana.
@@ -59,7 +59,7 @@ Organization roles sync from the authentication provider on user sign-in. To pre
 **To change the organization role of a user**:
 
 1. Sign in to Grafana as an organization administrator.
-1. Navigate to **Administration > Users**.
+1. Navigate to **Administration > Users and access > Users**.
 1. Find the user account for which you want to change the role.
 
    If necessary, use the search field to filter the list.
@@ -96,7 +96,7 @@ If you have [server administrator]({{< relref "../../roles-and-permissions/#graf
 
    > **Note**: It might be that you are currently in the proper organization and don't need to switch organizations.
 
-1. Navigate to **Administration > Users**.
+1. Navigate to **Administration > Users and access > Users**.
 1. Click **Organization users**.
 1. Click **Invite**.
 1. Enter the following information:
@@ -127,7 +127,7 @@ The **Pending Invites** button is only visible if there are unanswered invitatio
 **To manage a pending invitation**:
 
 1. Sign in to Grafana as an organization administrator.
-1. Navigate to **Administration > Users**.
+1. Navigate to **Administration > Users and access > Users**.
 1. Click **Pending Invites**.
 
    The **Pending Invites** button appears only when there are unaccepted invitations.
@@ -149,7 +149,7 @@ This action does not remove the user account from the Grafana server.
 **To remove a user from an organization**:
 
 1. Sign in to Grafana as an organization administrator.
-1. Navigate to **Administration > Users**.
+1. Navigate to **Administration > Users and access > Users**.
 1. Find the user account that you want to remove from the organization.
 
    Use the search field to filter the list, if necessary.

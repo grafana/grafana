@@ -15,6 +15,10 @@ var (
 	batchSize = 1000
 )
 
+const (
+	maxLen = 40
+)
+
 func MigrateScopeSplit(db db.DB, log log.Logger) error {
 	t := time.Now()
 	ctx := context.Background()
@@ -48,6 +52,12 @@ func MigrateScopeSplit(db db.DB, log log.Logger) error {
 		// Prepare batch of updated permissions
 		for i := start; i < end; i++ {
 			kind, attribute, identifier := permissions[i].SplitScope()
+
+			// Trim to max length to avoid bootloop.
+			// too long scopes will be truncated and the permission will become invalid.
+			kind = trimToMaxLen(kind, maxLen)
+			attribute = trimToMaxLen(attribute, maxLen)
+			identifier = trimToMaxLen(identifier, maxLen)
 
 			delQuery += "?,"
 			delArgs = append(delArgs, permissions[i].ID)
@@ -108,4 +118,11 @@ func batch(count, batchSize int, eachFn func(start, end int) error) error {
 	}
 
 	return nil
+}
+
+func trimToMaxLen(s string, maxLen int) string {
+	if len(s) > maxLen {
+		return s[:maxLen]
+	}
+	return s
 }

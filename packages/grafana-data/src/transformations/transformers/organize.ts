@@ -9,6 +9,7 @@ export interface OrganizeFieldsTransformerOptions
   extends OrderFieldsTransformerOptions,
     RenameFieldsTransformerOptions {
   excludeByName: Record<string, boolean>;
+  includeByName?: Record<string, boolean>;
 }
 
 export const organizeFieldsTransformer: DataTransformerInfo<OrganizeFieldsTransformerOptions> = {
@@ -19,6 +20,7 @@ export const organizeFieldsTransformer: DataTransformerInfo<OrganizeFieldsTransf
     excludeByName: {},
     indexByName: {},
     renameByName: {},
+    includeByName: {},
   },
   isApplicable: (data: DataFrame[]) => {
     return data.length > 1
@@ -33,6 +35,7 @@ export const organizeFieldsTransformer: DataTransformerInfo<OrganizeFieldsTransf
     source.pipe(
       filterFieldsByNameTransformer.operator(
         {
+          include: options.includeByName ? { names: mapToExcludeArray(options.includeByName) } : undefined,
           exclude: { names: mapToExcludeArray(options.excludeByName) },
         },
         ctx

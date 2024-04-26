@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import { debounce, take, uniqueId } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { FormProvider, useForm, useFormContext } from 'react-hook-form';
+import { FormProvider, useForm, useFormContext, Controller } from 'react-hook-form';
 
 import { AppEvents, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { AsyncSelect, Button, Field, Input, InputControl, Label, Modal, Text, useStyles2 } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
+import { AsyncSelect, Box, Button, Field, Input, Label, Modal, Stack, Text, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
 import { createFolder } from 'app/features/manage-dashboards/state/actions';
@@ -18,17 +18,18 @@ import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelect
 import { fetchRulerRulesAction } from '../../state/actions';
 import { RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
-import { MINUTE } from '../../utils/rule-form';
+import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../utils/rule-form';
 import { isGrafanaRulerRule } from '../../utils/rules';
 import { ProvisioningBadge } from '../Provisioning';
 import { evaluateEveryValidationOptions } from '../rules/EditRuleGroupModal';
 
+import { EvaluationGroupQuickPick } from './EvaluationGroupQuickPick';
 import { containsSlashes, Folder, RuleFolderPicker } from './RuleFolderPicker';
 import { checkForPathSeparator } from './util';
 
 export const MAX_GROUP_RESULTS = 1000;
 
-export const useFolderGroupOptions = (folderTitle: string, enableProvisionedGroups: boolean) => {
+export const useFolderGroupOptions = (folderUid: string, enableProvisionedGroups: boolean) => {
   const dispatch = useDispatch();
 
   // fetch the ruler rules from the database so we can figure out what other "groups" are already defined
@@ -41,7 +42,7 @@ export const useFolderGroupOptions = (folderTitle: string, enableProvisionedGrou
   const groupfoldersForGrafana = rulerRuleRequests[GRAFANA_RULES_SOURCE_NAME];
 
   const grafanaFolders = useCombinedRuleNamespaces(GRAFANA_RULES_SOURCE_NAME);
-  const folderGroups = grafanaFolders.find((f) => f.name === folderTitle)?.groups ?? [];
+  const folderGroups = grafanaFolders.find((f) => f.uid === folderUid)?.groups ?? [];
 
   const groupOptions = folderGroups
     .map<SelectableValue<string>>((group) => {
@@ -49,7 +50,7 @@ export const useFolderGroupOptions = (folderTitle: string, enableProvisionedGrou
       return {
         label: group.name,
         value: group.name,
-        description: group.interval ?? MINUTE,
+        description: group.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL,
         // we include provisioned folders, but disable the option to select them
         isDisabled: !enableProvisionedGroups ? isProvisioned : false,
         isProvisioned: isProvisioned,
@@ -94,7 +95,7 @@ export function FolderAndGroup({
   const folder = watch('folder');
   const group = watch('group');
 
-  const { groupOptions, loading } = useFolderGroupOptions(folder?.title ?? '', enableProvisionedGroups);
+  const { groupOptions, loading } = useFolderGroupOptions(folder?.uid ?? '', enableProvisionedGroups);
 
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [isCreatingEvaluationGroup, setIsCreatingEvaluationGroup] = useState(false);
@@ -134,7 +135,7 @@ export function FolderAndGroup({
 
   return (
     <div className={styles.container}>
-      <div>
+      <Stack alignItems="center">
         {
           <Field
             label={
@@ -144,17 +145,17 @@ export function FolderAndGroup({
             }
             className={styles.formInput}
             error={errors.folder?.message}
-            invalid={!!errors.folder?.message}
             data-testid="folder-picker"
           >
             <Stack direction="row" alignItems="center">
               {(!isCreatingFolder && (
                 <>
-                  <InputControl
+                  <Controller
                     render={({ field: { ref, ...field } }) => (
                       <div style={{ width: 420 }}>
                         <RuleFolderPicker
                           inputId="folder"
+                          invalid={!!errors.folder?.message}
                           {...field}
                           enableReset={true}
                           onChange={({ title, uid }) => {
@@ -168,7 +169,7 @@ export function FolderAndGroup({
                     rules={{
                       required: { value: true, message: 'Select a folder' },
                       validate: {
-                        pathSeparator: (folder: Folder) => checkForPathSeparator(folder.title),
+                        pathSeparator: (folder: Folder) => checkForPathSeparator(folder.uid),
                       },
                     }}
                   />
@@ -180,6 +181,7 @@ export function FolderAndGroup({
                     fill="outline"
                     variant="secondary"
                     disabled={!contextSrv.hasPermission(AccessControlAction.FoldersCreate)}
+                    data-testid={selectors.components.AlertRules.newFolderButton}
                   >
                     New folder
                   </Button>
@@ -191,50 +193,52 @@ export function FolderAndGroup({
         {isCreatingFolder && (
           <FolderCreationModal onCreate={handleFolderCreation} onClose={() => setIsCreatingFolder(false)} />
         )}
-      </div>
+      </Stack>
 
-      <div>
-        <Field
-          label="Evaluation group"
-          data-testid="group-picker"
-          description="Rules within the same group are evaluated sequentially over the same time interval."
-          className={styles.formInput}
-          error={errors.group?.message}
-          invalid={!!errors.group?.message}
-        >
-          <Stack direction="row" alignItems="center">
-            <InputControl
+      {isCreatingFolder && (
+        <FolderCreationModal onCreate={handleFolderCreation} onClose={() => setIsCreatingFolder(false)} />
+      )}
+
+      <Stack alignItems="center">
+        <div style={{ width: 420 }}>
+          <Field
+            label="Evaluation group"
+            data-testid="group-picker"
+            description="Rules within the same group are evaluated concurrently over the same time interval."
+            className={styles.formInput}
+            error={errors.group?.message}
+            invalid={!!errors.group?.message}
+          >
+            <Controller
               render={({ field: { ref, ...field }, fieldState }) => (
-                <div style={{ width: 420 }}>
-                  <AsyncSelect
-                    disabled={!folder || loading}
-                    inputId="group"
-                    key={uniqueId()}
-                    {...field}
-                    onChange={(group) => {
-                      field.onChange(group.label ?? '');
-                    }}
-                    isLoading={loading}
-                    invalid={Boolean(folder) && !group && Boolean(fieldState.error)}
-                    loadOptions={debouncedSearch}
-                    cacheOptions
-                    loadingMessage={'Loading groups...'}
-                    defaultValue={defaultGroupValue}
-                    defaultOptions={groupOptions}
-                    getOptionLabel={(option: SelectableValue<string>) => (
-                      <div>
-                        <span>{option.label}</span>
-                        {option['isProvisioned'] && (
-                          <>
-                            {' '}
-                            <ProvisioningBadge />
-                          </>
-                        )}
-                      </div>
-                    )}
-                    placeholder={'Select an evaluation group...'}
-                  />
-                </div>
+                <AsyncSelect
+                  disabled={!folder || loading}
+                  inputId="group"
+                  key={uniqueId()}
+                  {...field}
+                  onChange={(group) => {
+                    field.onChange(group.label ?? '');
+                  }}
+                  isLoading={loading}
+                  invalid={Boolean(folder) && !group && Boolean(fieldState.error)}
+                  loadOptions={debouncedSearch}
+                  cacheOptions
+                  loadingMessage={'Loading groups...'}
+                  defaultValue={defaultGroupValue}
+                  defaultOptions={groupOptions}
+                  getOptionLabel={(option: SelectableValue<string>) => (
+                    <div>
+                      <span>{option.label}</span>
+                      {option['isProvisioned'] && (
+                        <>
+                          {' '}
+                          <ProvisioningBadge />
+                        </>
+                      )}
+                    </div>
+                  )}
+                  placeholder={'Select an evaluation group...'}
+                />
               )}
               name="group"
               control={control}
@@ -245,19 +249,22 @@ export function FolderAndGroup({
                 },
               }}
             />
-            <Text color="secondary">or</Text>
-            <Button
-              onClick={onOpenEvaluationGroupCreationModal}
-              type="button"
-              icon="plus"
-              fill="outline"
-              variant="secondary"
-              disabled={!folder}
-            >
-              New evaluation group
-            </Button>
-          </Stack>
-        </Field>
+          </Field>
+        </div>
+        <Box marginTop={4} gap={1} display={'flex'} alignItems={'center'}>
+          <Text color="secondary">or</Text>
+          <Button
+            onClick={onOpenEvaluationGroupCreationModal}
+            type="button"
+            icon="plus"
+            fill="outline"
+            variant="secondary"
+            disabled={!folder}
+            data-testid={selectors.components.AlertRules.newEvaluationGroupButton}
+          >
+            New evaluation group
+          </Button>
+        </Box>
         {isCreatingEvaluationGroup && (
           <EvaluationGroupCreationModal
             onCreate={handleEvalGroupCreation}
@@ -265,7 +272,7 @@ export function FolderAndGroup({
             groupfoldersForGrafana={groupfoldersForGrafana}
           />
         )}
-      </div>
+      </Stack>
     </div>
   );
 }
@@ -305,6 +312,7 @@ function FolderCreationModal({
           invalid={error}
         >
           <Input
+            data-testid={selectors.components.AlertRules.newFolderNameField}
             autoFocus={true}
             id="folderName"
             placeholder="Enter a name"
@@ -318,7 +326,11 @@ function FolderCreationModal({
           <Button variant="secondary" type="button" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit" disabled={!title || error}>
+          <Button
+            type="submit"
+            disabled={!title || error}
+            data-testid={selectors.components.AlertRules.newFolderNameCreateButton}
+          >
             Create
           </Button>
         </Modal.ButtonRow>
@@ -354,12 +366,17 @@ function EvaluationGroupCreationModal({
   };
 
   const formAPI = useForm({
-    defaultValues: { group: '', evaluateEvery: '' },
+    defaultValues: { group: '', evaluateEvery: DEFAULT_GROUP_EVALUATION_INTERVAL },
     mode: 'onChange',
     shouldFocusError: true,
   });
 
-  const { register, handleSubmit, formState, getValues } = formAPI;
+  const { register, handleSubmit, formState, setValue, getValues, watch: watchGroupFormValues } = formAPI;
+  const evaluationInterval = watchGroupFormValues('evaluateEvery');
+
+  const setEvaluationInterval = (interval: string) => {
+    setValue('evaluateEvery', interval, { shouldValidate: true });
+  };
 
   return (
     <Modal
@@ -376,9 +393,10 @@ function EvaluationGroupCreationModal({
           <Field
             label={<Label htmlFor={'group'}>Evaluation group name</Label>}
             error={formState.errors.group?.message}
-            invalid={!!formState.errors.group}
+            invalid={Boolean(formState.errors.group)}
           >
             <Input
+              data-testid={selectors.components.AlertRules.newEvaluationGroupName}
               className={styles.formInput}
               autoFocus={true}
               id={'group'}
@@ -389,28 +407,35 @@ function EvaluationGroupCreationModal({
 
           <Field
             error={formState.errors.evaluateEvery?.message}
-            invalid={!!formState.errors.evaluateEvery}
+            invalid={Boolean(formState.errors.evaluateEvery) ? true : undefined}
             label={
-              <Label
-                htmlFor={evaluateEveryId}
-                description="How often is the rule evaluated. Applies to every rule within the group."
-              >
+              <Label htmlFor={evaluateEveryId} description="How often all rules in the group are evaluated.">
                 Evaluation interval
               </Label>
             }
           >
-            <Input
-              className={styles.formInput}
-              id={evaluateEveryId}
-              placeholder="e.g. 5m"
-              {...register('evaluateEvery', evaluateEveryValidationOptions(groupRules))}
-            />
+            <Stack direction="column">
+              <Input
+                data-testid={selectors.components.AlertRules.newEvaluationGroupInterval}
+                className={styles.formInput}
+                id={evaluateEveryId}
+                placeholder={DEFAULT_GROUP_EVALUATION_INTERVAL}
+                {...register('evaluateEvery', evaluateEveryValidationOptions(groupRules))}
+              />
+              <Stack direction="row" alignItems="flex-end">
+                <EvaluationGroupQuickPick currentInterval={evaluationInterval} onSelect={setEvaluationInterval} />
+              </Stack>
+            </Stack>
           </Field>
           <Modal.ButtonRow>
             <Button variant="secondary" type="button" onClick={onCancel}>
               Cancel
             </Button>
-            <Button type="submit" disabled={!formState.isValid}>
+            <Button
+              type="submit"
+              disabled={!formState.isValid}
+              data-testid={selectors.components.AlertRules.newEvaluationGroupCreate}
+            >
               Create
             </Button>
           </Modal.ButtonRow>

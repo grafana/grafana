@@ -1,11 +1,22 @@
 import { css, cx } from '@emotion/css';
 import { isEqual } from 'lodash';
 import memoizeOne from 'memoize-one';
-import React, { PureComponent, useState } from 'react';
+import React, { PureComponent, useEffect, useState } from 'react';
 
-import { CoreApp, Field, GrafanaTheme2, IconName, LinkModel, LogLabelStatsModel, LogRowModel } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import {
+  CoreApp,
+  DataFrame,
+  Field,
+  GrafanaTheme2,
+  IconName,
+  LinkModel,
+  LogLabelStatsModel,
+  LogRowModel,
+} from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { ClipboardButton, DataLinkButton, IconButton, Themeable2, withTheme2 } from '@grafana/ui';
+
+import { logRowToSingleRowDataFrame } from '../logsModel';
 
 import { LogLabelStats } from './LogLabelStats';
 import { getLogRowStyles } from './getLogRowStyles';
@@ -16,8 +27,8 @@ export interface Props extends Themeable2 {
   disableActions: boolean;
   wrapLogMessage?: boolean;
   isLabel?: boolean;
-  onClickFilterLabel?: (key: string, value: string, refId?: string) => void;
-  onClickFilterOutLabel?: (key: string, value: string, refId?: string) => void;
+  onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
+  onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
   links?: Array<LinkModel<Field>>;
   getStats: () => LogLabelStatsModel[] | null;
   displayedFields?: string[];
@@ -143,7 +154,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   filterLabel = () => {
     const { onClickFilterLabel, parsedKeys, parsedValues, row } = this.props;
     if (onClickFilterLabel) {
-      onClickFilterLabel(parsedKeys[0], parsedValues[0], row.dataFrame?.refId);
+      onClickFilterLabel(parsedKeys[0], parsedValues[0], logRowToSingleRowDataFrame(row) || undefined);
     }
 
     reportInteraction('grafana_explore_logs_log_details_filter_clicked', {
@@ -156,7 +167,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   filterOutLabel = () => {
     const { onClickFilterOutLabel, parsedKeys, parsedValues, row } = this.props;
     if (onClickFilterOutLabel) {
-      onClickFilterOutLabel(parsedKeys[0], parsedValues[0], row.dataFrame?.refId);
+      onClickFilterOutLabel(parsedKeys[0], parsedValues[0], logRowToSingleRowDataFrame(row) || undefined);
     }
 
     reportInteraction('grafana_explore_logs_log_details_filter_clicked', {
@@ -257,8 +268,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     const singleKey = parsedKeys == null ? false : parsedKeys.length === 1;
     const singleVal = parsedValues == null ? false : parsedValues.length === 1;
     const hasFilteringFunctionality = !disableActions && onClickFilterLabel && onClickFilterOutLabel;
-    const refIdTooltip =
-      config.featureToggles.toggleLabelsInLogsUI && row.dataFrame?.refId ? ` in query ${row.dataFrame?.refId}` : '';
+    const refIdTooltip = row.dataFrame?.refId ? ` in query ${row.dataFrame?.refId}` : '';
 
     const isMultiParsedValueWithNoContent =
       !singleVal && parsedValues != null && !parsedValues.every((val) => val === '');
@@ -277,17 +287,13 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
             <div className={styles.buttonRow}>
               {hasFilteringFunctionality && (
                 <>
-                  {config.featureToggles.toggleLabelsInLogsUI ? (
-                    // If we are using the new label toggling, we want to use the async icon button
-                    <AsyncIconButton
-                      name="search-plus"
-                      onClick={this.filterLabel}
-                      isActive={this.isFilterLabelActive}
-                      tooltipSuffix={refIdTooltip}
-                    />
-                  ) : (
-                    <IconButton name="search-plus" onClick={this.filterLabel} tooltip="Filter for value" />
-                  )}
+                  <AsyncIconButton
+                    name="search-plus"
+                    onClick={this.filterLabel}
+                    // We purposely want to pass a new function on every render to allow the active state to be updated when log details remains open between updates.
+                    isActive={() => this.isFilterLabelActive()}
+                    tooltipSuffix={refIdTooltip}
+                  />
                   <IconButton
                     name="search-minus"
                     tooltip={`Filter out value${refIdTooltip}`}
@@ -363,11 +369,9 @@ const AsyncIconButton = ({ isActive, tooltipSuffix, ...rest }: AsyncIconButtonPr
   const [active, setActive] = useState(false);
   const tooltip = active ? 'Remove filter' : 'Filter for value';
 
-  /**
-   * We purposely want to run this on every render to allow the active state to be updated
-   * when log details remains open between updates.
-   */
-  isActive().then(setActive);
+  useEffect(() => {
+    isActive().then(setActive);
+  }, [isActive]);
 
   return <IconButton {...rest} variant={active ? 'primary' : undefined} tooltip={tooltip + tooltipSuffix} />;
 };

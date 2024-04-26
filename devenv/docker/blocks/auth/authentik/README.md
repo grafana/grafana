@@ -85,8 +85,6 @@ auth_url = http://localhost:9000/application/o/authorize/
 token_url = http://localhost:9000/application/o/token/
 api_url = http://localhost:9000/application/o/userinfo/
 role_attribute_path = contains(groups[*], 'admin') && 'Admin' || contains(groups[*], 'editor') && 'Editor' || 'Viewer'
-
-[auth]
 signout_redirect_url = http://localhost:9000/application/o/grafana-oidc/end-session/
 ```
 

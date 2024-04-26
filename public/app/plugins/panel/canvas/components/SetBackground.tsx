@@ -59,9 +59,9 @@ export function SetBackground({ onClose, scene, anchorPoint }: Props) {
 }
 
 const getStyles = (theme: GrafanaTheme2, anchorPoint: AnchorPoint) => ({
-  portalWrapper: css`
-    width: 315px;
-    height: 445px;
-    transform: translate(${anchorPoint.x}px, ${anchorPoint.y - 200}px);
-  `,
+  portalWrapper: css({
+    width: '315px',
+    height: '445px',
+    transform: `translate(${anchorPoint.x}px, ${anchorPoint.y - 200}px)`,
+  }),
 });

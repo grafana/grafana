@@ -16,11 +16,11 @@ describe('Dashboard browse', () => {
     e2e.pages.BrowseDashboards.table.row('E2E Test - Import Dashboard').should('be.visible');
 
     // gdev dashboards folder is collapsed - its content should not be visible
-    e2e.pages.BrowseDashboards.table.row('Alerting with TestData').should('not.exist');
+    e2e.pages.BrowseDashboards.table.row('Bar Gauge Demo').should('not.exist');
 
     // should click a folder and see it's children
     e2e.pages.BrowseDashboards.table.row('gdev dashboards').find('[aria-label^="Expand folder"]').click();
-    e2e.pages.BrowseDashboards.table.row('Alerting with TestData').should('be.visible');
+    e2e.pages.BrowseDashboards.table.row('Bar Gauge Demo').should('be.visible');
 
     // Open the new folder drawer
     cy.contains('button', 'New').click();

@@ -90,7 +90,15 @@ export const getAlignmentPickerData = (
 };
 
 export const labelsToGroupedOptions = (groupBys: string[]) => {
-  const groups = groupBys.reduce((acc: any, curr: string) => {
+  const groups = groupBys.reduce<
+    Record<
+      string,
+      Array<{
+        value: string;
+        label: string;
+      }>
+    >
+  >((acc, curr) => {
     const arr = curr.split('.').map(startCase);
     const group = (arr.length === 2 ? arr : initial(arr)).join(' ');
     const option = {

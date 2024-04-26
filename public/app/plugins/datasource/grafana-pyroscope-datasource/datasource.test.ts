@@ -1,13 +1,56 @@
-import { AbstractLabelOperator, CoreApp, DataSourceInstanceSettings, PluginMetaInfo, PluginType } from '@grafana/data';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import {
+  AbstractLabelOperator,
+  CoreApp,
+  DataSourceInstanceSettings,
+  PluginMetaInfo,
+  PluginType,
+  DataSourceJsonData,
+} from '@grafana/data';
+import { setPluginExtensionsHook, getBackendSrv, setBackendSrv, getTemplateSrv } from '@grafana/runtime';
 
 import { defaultPyroscopeQueryType } from './dataquery.gen';
 import { normalizeQuery, PyroscopeDataSource } from './datasource';
 import { Query } from './types';
 
+jest.mock('@grafana/runtime', () => {
+  const actual = jest.requireActual('@grafana/runtime');
+  return {
+    ...actual,
+    getTemplateSrv: () => {
+      return {
+        replace: (query: string): string => {
+          return query.replace(/\$var/g, 'interpolated');
+        },
+      };
+    },
+  };
+});
+
+/** The datasource QueryEditor fetches datasource settings to send to the extension's `configure` method */
+export function mockFetchPyroscopeDatasourceSettings(
+  datasourceSettings?: Partial<DataSourceInstanceSettings<DataSourceJsonData>>
+) {
+  const settings = { ...defaultSettings, ...datasourceSettings };
+  const returnValues: Record<string, unknown> = {
+    [`/api/datasources/uid/${settings.uid}`]: settings,
+  };
+  setBackendSrv({
+    ...getBackendSrv(),
+    get: function <T>(path: string) {
+      const value = returnValues[path];
+      if (value) {
+        return Promise.resolve(value as T);
+      }
+      return Promise.reject({ message: 'reject' });
+    },
+  });
+}
+
 describe('Pyroscope data source', () => {
   let ds: PyroscopeDataSource;
   beforeEach(() => {
+    mockFetchPyroscopeDatasourceSettings();
+    setPluginExtensionsHook(() => ({ extensions: [], isLoading: false })); // No extensions
     ds = new PyroscopeDataSource(defaultSettings);
   });
 
@@ -50,10 +93,7 @@ describe('Pyroscope data source', () => {
   });
 
   describe('applyTemplateVariables', () => {
-    const templateSrv = new TemplateSrv();
-    templateSrv.replace = jest.fn((query: string): string => {
-      return query.replace(/\$var/g, 'interpolated');
-    });
+    const templateSrv = getTemplateSrv();
 
     it('should not update labelSelector if there are no template variables', () => {
       ds = new PyroscopeDataSource(defaultSettings, templateSrv);

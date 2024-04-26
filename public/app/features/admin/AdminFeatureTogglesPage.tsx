@@ -1,36 +1,32 @@
 import { css } from '@emotion/css';
 import React, { useState } from 'react';
+import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Icon } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
-import { useGetFeatureTogglesQuery, useGetManagerStateQuery } from './AdminFeatureTogglesAPI';
+import { getTogglesAPI } from './AdminFeatureTogglesAPI';
 import { AdminFeatureTogglesTable } from './AdminFeatureTogglesTable';
 
 export default function AdminFeatureTogglesPage() {
-  const { data: featureToggles, isLoading, isError } = useGetFeatureTogglesQuery();
-  const { data: featureMgmtState } = useGetManagerStateQuery();
-  const [updateSuccessful, setUpdateSuccessful] = useState(false);
-
+  const [reload, setReload] = useState(1);
+  const togglesApi = getTogglesAPI();
+  const featureState = useAsync(() => togglesApi.getFeatureToggles(), [reload]);
   const styles = useStyles2(getStyles);
 
-  const getErrorMessage = () => {
-    return 'Error fetching feature toggles';
-  };
-
   const handleUpdateSuccess = () => {
-    setUpdateSuccessful(true);
+    setReload(reload + 1);
   };
 
-  const AlertMessage = () => {
+  const EditingAlert = () => {
     return (
       <div className={styles.warning}>
         <div className={styles.icon}>
           <Icon name="exclamation-triangle" />
         </div>
         <span className={styles.message}>
-          {featureMgmtState?.restartRequired || updateSuccessful
+          {featureState.value?.restartRequired
             ? 'A restart is pending for your Grafana instance to apply the latest feature toggle changes'
             : 'Saving feature toggle changes will prompt a restart of the instance, which may take a few minutes'}
         </span>
@@ -38,15 +34,34 @@ export default function AdminFeatureTogglesPage() {
     );
   };
 
+  const subTitle = (
+    <div>
+      View and edit feature toggles. Read more about feature toggles at{' '}
+      <a
+        className="external-link"
+        target="_new"
+        href="https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/"
+      >
+        grafana.com
+      </a>
+      .
+    </div>
+  );
+
   return (
-    <Page navId="feature-toggles">
-      <Page.Contents>
+    <Page navId="feature-toggles" subTitle={subTitle}>
+      <Page.Contents isLoading={featureState.loading}>
         <>
-          {isError && getErrorMessage()}
-          {isLoading && 'Fetching feature toggles'}
-          <AlertMessage />
-          {featureToggles && (
-            <AdminFeatureTogglesTable featureToggles={featureToggles} onUpdateSuccess={handleUpdateSuccess} />
+          {featureState.error}
+          {featureState.loading && 'Fetching feature toggles'}
+
+          <EditingAlert />
+          {featureState.value && (
+            <AdminFeatureTogglesTable
+              featureToggles={featureState.value.toggles}
+              allowEditing={featureState.value.allowEditing || false}
+              onUpdateSuccess={handleUpdateSuccess}
+            />
           )}
         </>
       </Page.Contents>
@@ -58,7 +73,8 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     warning: css({
       display: 'flex',
-      marginTop: theme.spacing(3),
+      marginTop: theme.spacing(0.25),
+      marginBottom: theme.spacing(0.25),
     }),
     icon: css({
       color: theme.colors.warning.main,

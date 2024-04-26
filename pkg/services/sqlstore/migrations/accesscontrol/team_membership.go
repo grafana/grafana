@@ -8,7 +8,7 @@ import (
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -64,12 +64,12 @@ func (p *teamPermissionMigrator) setRolePermissions(roleID int64, permissions []
 }
 
 // mapPermissionToRBAC translates the legacy membership (Member or Admin) into RBAC permissions
-func (p *teamPermissionMigrator) mapPermissionToRBAC(permission dashboards.PermissionType, teamID int64) []accesscontrol.Permission {
+func (p *teamPermissionMigrator) mapPermissionToRBAC(permission dashboardaccess.PermissionType, teamID int64) []accesscontrol.Permission {
 	teamIDScope := accesscontrol.Scope("teams", "id", strconv.FormatInt(teamID, 10))
 	switch permission {
 	case 0:
 		return []accesscontrol.Permission{{Action: "teams:read", Scope: teamIDScope}}
-	case dashboards.PERMISSION_ADMIN:
+	case dashboardaccess.PERMISSION_ADMIN:
 		return []accesscontrol.Permission{
 			{Action: "teams:delete", Scope: teamIDScope},
 			{Action: "teams:read", Scope: teamIDScope},
@@ -210,7 +210,7 @@ func (p *teamPermissionMigrator) generateAssociatedPermissions(teamMemberships [
 		// Downgrade team permissions if needed:
 		// only admins or editors (when editorsCanAdmin option is enabled)
 		// can access team administration endpoints
-		if m.Permission == dashboards.PERMISSION_ADMIN {
+		if m.Permission == dashboardaccess.PERMISSION_ADMIN {
 			if userRolesByOrg[m.OrgID][m.UserID] == string(org.RoleViewer) || (userRolesByOrg[m.OrgID][m.UserID] == string(org.RoleEditor) && !p.editorsCanAdmin) {
 				m.Permission = 0
 

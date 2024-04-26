@@ -1,8 +1,8 @@
+import { DashboardLink } from '@grafana/schema';
 import { backendSrv } from 'app/core/services/__mocks__/backend_srv';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
 
 import { DashboardSearchItem, DashboardSearchItemType } from '../../../search/types';
-import { DashboardLink } from '../../state/DashboardModel';
 
 import { resolveLinks, searchForTags } from './DashboardLinksDashboard';
 

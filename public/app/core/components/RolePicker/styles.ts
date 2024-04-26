@@ -2,7 +2,12 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { ROLE_PICKER_SUBMENU_MIN_WIDTH } from './constants';
+import {
+  ROLE_PICKER_MENU_MAX_WIDTH,
+  ROLE_PICKER_MENU_MIN_WIDTH,
+  ROLE_PICKER_SUBMENU_MAX_WIDTH,
+  ROLE_PICKER_SUBMENU_MIN_WIDTH,
+} from './constants';
 
 export const getStyles = (theme: GrafanaTheme2) => ({
   hideScrollBar: css({
@@ -24,18 +29,19 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     minWidth: 'auto',
   }),
   menu: css({
-    minWidth: `${ROLE_PICKER_SUBMENU_MIN_WIDTH}px`,
+    minWidth: `${ROLE_PICKER_MENU_MIN_WIDTH}px`,
+    maxWidth: `${ROLE_PICKER_MENU_MAX_WIDTH}px`,
     '& > div': {
       paddingTop: theme.spacing(1),
     },
   }),
   menuLeft: css({
-    right: 0,
     flexDirection: 'row-reverse',
   }),
   subMenu: css({
     height: '100%',
     minWidth: `${ROLE_PICKER_SUBMENU_MIN_WIDTH}px`,
+    maxWidth: `${ROLE_PICKER_SUBMENU_MAX_WIDTH}px`,
     display: 'flex',
     flexDirection: 'column',
     borderLeft: `1px solid ${theme.components.input.borderColor}`,
@@ -83,7 +89,7 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   }),
   menuOptionExpand: css({
     position: 'absolute',
-    right: theme.spacing(1.25),
+    right: theme.spacing(2.5),
     color: theme.colors.text.disabled,
 
     '&:after': {

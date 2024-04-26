@@ -15,7 +15,7 @@ const NewMessageTemplate = ({ match }: Props) => {
 
   const name = match?.params.name;
   if (!name) {
-    return <EntityNotFound entity="Message template" />;
+    return <EntityNotFound entity="Notification template" />;
   }
 
   if (isLoading && !data) {

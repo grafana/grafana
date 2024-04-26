@@ -3,29 +3,32 @@ package mysql
 import (
 	"context"
 	"fmt"
+	"net"
 	"testing"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/sqleng"
-	"github.com/grafana/grafana/pkg/tsdb/sqleng/proxyutil"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/proxy"
 )
 
+type testDialer struct {
+}
+
+func (d *testDialer) Dial(network, addr string) (c net.Conn, err error) {
+	return nil, fmt.Errorf("test-dialer: Dial is not functional")
+}
+
+func (d *testDialer) DialContext(ctx context.Context, network, address string) (net.Conn, error) {
+	return nil, fmt.Errorf("test-dialer: DialContext is not functional")
+}
+
+var _ proxy.Dialer = (&testDialer{})
+var _ proxy.ContextDialer = (&testDialer{})
+
 func TestMySQLProxyDialer(t *testing.T) {
-	settings := proxyutil.SetupTestSecureSocksProxySettings(t)
-	proxySettings := setting.SecureSocksDSProxySettings{
-		Enabled:      true,
-		ClientCert:   settings.ClientCert,
-		ClientKey:    settings.ClientKey,
-		RootCA:       settings.RootCA,
-		ProxyAddress: settings.ProxyAddress,
-		ServerName:   settings.ServerName,
-	}
 	protocol := "tcp"
-	opts := proxyutil.GetSQLProxyOptions(proxySettings, sqleng.DataSourceInfo{UID: "1", JsonData: sqleng.JsonData{SecureDSProxy: true}})
 	dbURL := "localhost:5432"
-	network, err := registerProxyDialerContext(protocol, dbURL, opts)
+	network, err := registerProxyDialerContext(protocol, dbURL, &testDialer{})
 	require.NoError(t, err)
 	driver := mysql.MySQLDriver{}
 	cnnstr := fmt.Sprintf("test:test@%s(%s)/db",
@@ -38,7 +41,7 @@ func TestMySQLProxyDialer(t *testing.T) {
 	})
 
 	t.Run("Multiple networks can be created", func(t *testing.T) {
-		network, err := registerProxyDialerContext(protocol, dbURL, opts)
+		network, err := registerProxyDialerContext(protocol, dbURL, &testDialer{})
 		require.NoError(t, err)
 		cnnstr2 := fmt.Sprintf("test:test@%s(%s)/db",
 			network,
@@ -56,6 +59,6 @@ func TestMySQLProxyDialer(t *testing.T) {
 		require.NoError(t, err)
 		_, err = conn.Connect(context.Background())
 		require.Error(t, err)
-		require.Contains(t, err.Error(), fmt.Sprintf("socks connect %s %s->%s", protocol, settings.ProxyAddress, dbURL))
+		require.Contains(t, err.Error(), "test-dialer: DialContext is not functional")
 	})
 }

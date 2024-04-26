@@ -22,7 +22,7 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
     super(instanceSettings);
   }
 
-  applyTemplateVariables(query: ExpressionQuery, scopedVars: ScopedVars): Record<string, any> {
+  applyTemplateVariables(query: ExpressionQuery, scopedVars: ScopedVars) {
     const templateSrv = getTemplateSrv();
     return {
       ...query,

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 
 import { DataFrame, DataLink, GrafanaTheme2, VariableSuggestion } from '@grafana/data';
 
-import { stylesFactory, useTheme2 } from '../../../themes';
+import { useStyles2 } from '../../../themes';
 import { Button } from '../../Button/Button';
 import { Modal } from '../../Modal/Modal';
 
@@ -19,11 +19,10 @@ interface DataLinksInlineEditorProps {
 }
 
 export const DataLinksInlineEditor = ({ links, onChange, getSuggestions, data }: DataLinksInlineEditorProps) => {
-  const theme = useTheme2();
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [isNew, setIsNew] = useState(false);
 
-  const styles = getDataLinksInlineEditorStyles(theme);
+  const styles = useStyles2(getDataLinksInlineEditorStyles);
   const linksSafe: DataLink[] = links ?? [];
   const isEditing = editIndex !== null;
 
@@ -110,10 +109,8 @@ export const DataLinksInlineEditor = ({ links, onChange, getSuggestions, data }:
   );
 };
 
-const getDataLinksInlineEditorStyles = stylesFactory((theme: GrafanaTheme2) => {
-  return {
-    wrapper: css({
-      marginBottom: theme.spacing(2),
-    }),
-  };
+const getDataLinksInlineEditorStyles = (theme: GrafanaTheme2) => ({
+  wrapper: css({
+    marginBottom: theme.spacing(2),
+  }),
 });

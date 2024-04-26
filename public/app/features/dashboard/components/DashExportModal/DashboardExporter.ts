@@ -5,6 +5,7 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
+import { variableRegex } from 'app/features/variables/utils';
 
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 import { LibraryElementKind } from '../../../library-panels/types';
@@ -52,8 +53,10 @@ interface PanelWithExportableLibraryPanel {
   libraryPanel: LibraryPanel;
 }
 
-function isExportableLibraryPanel(p: any): p is PanelWithExportableLibraryPanel {
-  return p.libraryPanel && typeof p.libraryPanel.name === 'string' && typeof p.libraryPanel.uid === 'string';
+function isExportableLibraryPanel(
+  p: PanelModel | PanelWithExportableLibraryPanel
+): p is PanelWithExportableLibraryPanel {
+  return Boolean(p.libraryPanel?.name && p.libraryPanel?.uid);
 }
 
 interface DataSources {
@@ -108,14 +111,15 @@ export class DashboardExporter {
       let datasource = obj.datasource;
       let datasourceVariable: any = null;
 
-      const datasourceUid: string = datasource?.uid;
+      const datasourceUid: string | undefined = datasource?.uid;
+      const match = datasourceUid && variableRegex.exec(datasourceUid);
+
       // ignore data source properties that contain a variable
-      if (datasourceUid) {
-        if (datasourceUid.indexOf('$') === 0) {
-          datasourceVariable = variableLookup[datasourceUid.substring(1)];
-          if (datasourceVariable && datasourceVariable.current) {
-            datasource = datasourceVariable.current.value;
-          }
+      if (match) {
+        const varName = match[1] || match[2] || match[4];
+        datasourceVariable = variableLookup[varName];
+        if (datasourceVariable && datasourceVariable.current) {
+          datasource = datasourceVariable.current.value;
         }
       }
 

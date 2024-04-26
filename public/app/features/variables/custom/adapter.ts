@@ -6,7 +6,7 @@ import { ALL_VARIABLE_TEXT } from '../constants';
 import { optionPickerFactory } from '../pickers';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { CustomVariableModel } from '../types';
-import { isAllVariable, toKeyedVariableIdentifier } from '../utils';
+import { containsVariable, isAllVariable, toKeyedVariableIdentifier } from '../utils';
 
 import { CustomVariableEditor } from './CustomVariableEditor';
 import { updateCustomVariableOptions } from './actions';
@@ -21,8 +21,8 @@ export const createCustomVariableAdapter = (): VariableAdapter<CustomVariableMod
     reducer: customVariableReducer,
     picker: optionPickerFactory<CustomVariableModel>(),
     editor: CustomVariableEditor,
-    dependsOn: () => {
-      return false;
+    dependsOn: (variable, variableToTest) => {
+      return containsVariable(variable.query, variableToTest.name);
     },
     setValue: async (variable, option, emitChanges = false) => {
       await dispatch(setOptionAsCurrent(toKeyedVariableIdentifier(variable), option, emitChanges));

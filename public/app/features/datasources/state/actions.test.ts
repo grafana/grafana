@@ -1,8 +1,9 @@
 import { thunkTester } from 'test/core/thunk/thunkTester';
 
 import { AppPluginMeta, DataSourceSettings, PluginMetaInfo, PluginType } from '@grafana/data';
-import { FetchError } from '@grafana/runtime';
+import { DataSourceSrv, FetchError } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
+import { getBackendSrv } from 'app/core/services/backend_srv';
 import { ThunkResult, ThunkDispatch } from 'app/types';
 
 import { getMockDataSource } from '../__mocks__';
@@ -26,7 +27,6 @@ import {
   testDataSourceSucceeded,
   testDataSourceFailed,
   dataSourceLoaded,
-  dataSourcesLoaded,
 } from './reducers';
 
 jest.mock('../api');
@@ -56,7 +56,7 @@ const getBackendSrvMock = () =>
       }),
     }),
     withNoBackendCache: jest.fn().mockImplementationOnce((cb) => cb()),
-  }) as any;
+  }) as unknown as ReturnType<typeof getBackendSrv>;
 
 const failDataSourceTest = async (error: object) => {
   const dependencies: TestDataSourceDependencies = {
@@ -67,7 +67,7 @@ const failDataSourceTest = async (error: object) => {
             throw error;
           }),
         }),
-      }) as any,
+      }) as Pick<DataSourceSrv, 'get'>,
     getBackendSrv: getBackendSrvMock,
   };
   const state = {
@@ -229,7 +229,7 @@ describe('testDataSource', () => {
               type: 'cloudwatch',
               uid: 'CW1234',
             }),
-          }) as any,
+          }) as Pick<DataSourceSrv, 'get'>,
         getBackendSrv: getBackendSrvMock,
       };
       const state = {
@@ -264,7 +264,7 @@ describe('testDataSource', () => {
               type: 'azure-monitor',
               uid: 'azM0nit0R',
             }),
-          }) as any,
+          }) as Pick<DataSourceSrv, 'get'>,
         getBackendSrv: getBackendSrvMock,
       };
       const result = {
@@ -383,18 +383,12 @@ describe('addDataSource', () => {
       type: PluginType.datasource,
       name: 'test DS',
     };
-    const state = {
-      dataSources: {
-        dataSources: [],
-      },
-    };
     const dataSourceMock = { datasource: { uid: 'azure23' }, meta };
     (api.createDataSource as jest.Mock).mockResolvedValueOnce(dataSourceMock);
     (api.getDataSources as jest.Mock).mockResolvedValueOnce([]);
 
-    const dispatchedActions = await thunkTester(state).givenThunk(addDataSource).whenThunkIsDispatched(meta);
+    await thunkTester({}).givenThunk(addDataSource).whenThunkIsDispatched(meta);
 
-    expect(dispatchedActions).toEqual([dataSourcesLoaded([])]);
     expect(trackDataSourceCreated).toHaveBeenCalledWith({
       plugin_id: 'azure-monitor',
       plugin_version: '1.2.3',

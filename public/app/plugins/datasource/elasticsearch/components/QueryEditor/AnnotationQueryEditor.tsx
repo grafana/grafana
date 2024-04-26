@@ -2,7 +2,7 @@ import React from 'react';
 
 import { AnnotationQuery } from '@grafana/data';
 import { EditorField, EditorRow } from '@grafana/experimental';
-import { Input } from '@grafana/ui';
+import { Input, Stack } from '@grafana/ui';
 
 import { ElasticsearchQuery } from '../../types';
 
@@ -18,8 +18,8 @@ export function ElasticsearchAnnotationsQueryEditor(props: Props) {
   const onAnnotationChange = props.onAnnotationChange!;
 
   return (
-    <>
-      <div className="gf-form-group">
+    <Stack direction="column" gap={5}>
+      <div>
         <ElasticSearchQueryField
           value={annotation.target?.query}
           onChange={(query) => {
@@ -37,7 +37,7 @@ export function ElasticsearchAnnotationsQueryEditor(props: Props) {
         />
       </div>
 
-      <div className="gf-form-group">
+      <div>
         <h6>Field mappings</h6>
         <EditorRow>
           <EditorField label="Time">
@@ -92,6 +92,9 @@ export function ElasticsearchAnnotationsQueryEditor(props: Props) {
           </EditorField>
         </EditorRow>
       </div>
-    </>
+
+      {/*Empty div to preserve the bottom margin */}
+      <div />
+    </Stack>
   );
 }

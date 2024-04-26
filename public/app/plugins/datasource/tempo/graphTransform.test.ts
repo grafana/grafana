@@ -80,6 +80,27 @@ it('assigns correct field type even if values are numbers', async () => {
   ]);
 });
 
+it('do not fail on response with empty list', async () => {
+  const range = {
+    from: dateTime('2000-01-01T00:00:00'),
+    to: dateTime('2000-01-01T00:01:00'),
+  };
+  const { nodes } = mapPromMetricsToServiceMap([], {
+    ...range,
+    raw: range,
+  });
+
+  expect(nodes.fields).toMatchObject([
+    { name: 'id', values: [], type: FieldType.string },
+    { name: 'title', values: [], type: FieldType.string },
+    { name: 'subtitle', type: FieldType.string, values: [] },
+    { name: 'mainstat', values: [], type: FieldType.number },
+    { name: 'secondarystat', values: [], type: FieldType.number },
+    { name: 'arc__success', values: [], type: FieldType.number },
+    { name: 'arc__failed', values: [], type: FieldType.number },
+  ]);
+});
+
 describe('mapPromMetricsToServiceMap', () => {
   it('transforms prom metrics to service graph', async () => {
     const range = {

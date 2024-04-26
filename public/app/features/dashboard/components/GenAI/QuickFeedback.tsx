@@ -20,6 +20,7 @@ export const QuickFeedback = ({ onSuggestionClick, isGenerating }: QuickActionsP
         onClick={() => onSuggestionClick(QuickFeedbackType.Shorter)}
         size="sm"
         variant="secondary"
+        icon="paragraph"
         disabled={isGenerating}
       >
         {QuickFeedbackType.Shorter}
@@ -28,12 +29,14 @@ export const QuickFeedback = ({ onSuggestionClick, isGenerating }: QuickActionsP
         onClick={() => onSuggestionClick(QuickFeedbackType.MoreDescriptive)}
         size="sm"
         variant="secondary"
+        icon="document-layout-left"
         disabled={isGenerating}
       >
         {QuickFeedbackType.MoreDescriptive}
       </Button>
       <Button
         onClick={() => onSuggestionClick(QuickFeedbackType.Regenerate)}
+        icon="sync"
         size="sm"
         variant="secondary"
         disabled={isGenerating}
@@ -48,10 +51,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   quickSuggestionsWrapper: css({
     display: 'flex',
     flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    flexGrow: 1,
     gap: 8,
-    paddingTop: 10,
   }),
 });

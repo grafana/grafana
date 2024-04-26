@@ -3,10 +3,12 @@ import uPlot, { AlignedData } from 'uplot';
 
 import {
   DataFrame,
+  FieldType,
   formattedValueToString,
   getFieldColorModeForField,
   getFieldSeriesColor,
   GrafanaTheme2,
+  roundDecimals,
 } from '@grafana/data';
 import {
   histogramBucketSizes,
@@ -22,6 +24,7 @@ import {
   measureText,
   UPLOT_AXIS_FONT_SIZE,
 } from '@grafana/ui';
+import { getStackingGroups, preparePlotData2 } from '@grafana/ui/src/components/uPlot/utils';
 
 import { defaultFieldConfig, FieldConfig, Options } from './panelcfg.gen';
 
@@ -36,6 +39,7 @@ function incrRoundUp(num: number, incr: number) {
 export interface HistogramProps extends Themeable2 {
   options: Options; // used for diff
   alignedFrame: DataFrame; // This could take HistogramFields
+  bucketCount?: number;
   bucketSize: number;
   width: number;
   height: number;
@@ -47,7 +51,16 @@ export interface HistogramProps extends Themeable2 {
 
 export function getBucketSize(frame: DataFrame) {
   // assumes BucketMin is fields[0] and BucktMax is fields[1]
-  return frame.fields[1].values[0] - frame.fields[0].values[0];
+  return frame.fields[0].type === FieldType.string
+    ? 1
+    : roundDecimals(frame.fields[1].values[0] - frame.fields[0].values[0], 9);
+}
+
+export function getBucketSize1(frame: DataFrame) {
+  // assumes BucketMin is fields[0] and BucktMax is fields[1]
+  return frame.fields[0].type === FieldType.string
+    ? 1
+    : roundDecimals(frame.fields[1].values[1] - frame.fields[0].values[1], 9);
 }
 
 const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
@@ -59,8 +72,15 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
 
   let builder = new UPlotConfigBuilder();
 
+  let isOrdinalX = frame.fields[0].type === FieldType.string;
+
   // assumes BucketMin is fields[0] and BucktMax is fields[1]
   let bucketSize = getBucketSize(frame);
+  let bucketSize1 = getBucketSize1(frame);
+
+  let bucketFactor = bucketSize1 / bucketSize;
+
+  let useLogScale = bucketSize1 !== bucketSize; // (imperfect floats)
 
   // splits shifter, to ensure splits always start at first bucket
   let xSplits: uPlot.Axis.Splits = (u, axisIdx, scaleMin, scaleMax, foundIncr, foundSpace) => {
@@ -84,35 +104,37 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
   builder.addScale({
     scaleKey: 'x', // bukkits
     isTime: false,
-    distribution: ScaleDistribution.Linear,
+    distribution: isOrdinalX
+      ? ScaleDistribution.Ordinal
+      : useLogScale
+        ? ScaleDistribution.Log
+        : ScaleDistribution.Linear,
+    log: 2,
     orientation: ScaleOrientation.Horizontal,
     direction: ScaleDirection.Right,
-    range: (u, wantedMin, wantedMax) => {
-      // these settings will prevent zooming, probably okay?
-      if (xScaleMin != null) {
-        wantedMin = xScaleMin;
-      }
-      if (xScaleMax != null) {
-        wantedMax = xScaleMax;
-      }
+    range: useLogScale
+      ? (u, wantedMin, wantedMax) => {
+          return uPlot.rangeLog(wantedMin, wantedMax * bucketFactor, 2, true);
+        }
+      : (u, wantedMin, wantedMax) => {
+          // these settings will prevent zooming, probably okay?
+          if (xScaleMin != null) {
+            wantedMin = xScaleMin;
+          }
+          if (xScaleMax != null) {
+            wantedMax = xScaleMax;
+          }
 
-      let fullRangeMin = u.data[0][0];
-      let fullRangeMax = u.data[0][u.data[0].length - 1];
+          let fullRangeMax = u.data[0][u.data[0].length - 1];
 
-      // snap to bucket divisors...
+          // isOrdinalX is when we have classic histograms, which are LE, ordinal X, and already have 0 dummy bucket prepended
+          // else we have calculated histograms which are GE and cardinal+linear X, and have no next dummy bucket appended
+          wantedMin = incrRoundUp(wantedMin, bucketSize);
+          wantedMax =
+            !isOrdinalX && wantedMax === fullRangeMax ? wantedMax + bucketSize : incrRoundDn(wantedMax, bucketSize);
 
-      if (wantedMax === fullRangeMax) {
-        wantedMax += bucketSize;
-      } else {
-        wantedMax = incrRoundUp(wantedMax, bucketSize);
-      }
-
-      if (wantedMin > fullRangeMin) {
-        wantedMin = incrRoundDn(wantedMin, bucketSize);
-      }
-
-      return [wantedMin, wantedMax];
-    },
+          return [wantedMin, wantedMax];
+        },
   });
 
   builder.addScale({
@@ -121,6 +143,7 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     distribution: ScaleDistribution.Linear,
     orientation: ScaleOrientation.Vertical,
     direction: ScaleDirection.Up,
+    softMin: 0,
   });
 
   const fmt = frame.fields[0].display!;
@@ -132,22 +155,24 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     scaleKey: 'x',
     isTime: false,
     placement: AxisPlacement.Bottom,
-    incrs: histogramBucketSizes,
-    splits: xSplits,
-    values: (u: uPlot, splits: any[]) => {
-      const tickLabels = splits.map(xAxisFormatter);
+    incrs: isOrdinalX ? [1] : useLogScale ? undefined : histogramBucketSizes,
+    splits: useLogScale || isOrdinalX ? undefined : xSplits,
+    values: isOrdinalX
+      ? (u, splits) => splits
+      : (u, splits) => {
+          const tickLabels = splits.map(xAxisFormatter);
 
-      const maxWidth = tickLabels.reduce(
-        (curMax, label) => Math.max(measureText(label, UPLOT_AXIS_FONT_SIZE).width, curMax),
-        0
-      );
+          const maxWidth = tickLabels.reduce(
+            (curMax, label) => Math.max(measureText(label, UPLOT_AXIS_FONT_SIZE).width, curMax),
+            0
+          );
 
-      const labelSpacing = 10;
-      const maxCount = u.bbox.width / ((maxWidth + labelSpacing) * devicePixelRatio);
-      const keepMod = Math.ceil(tickLabels.length / maxCount);
+          const labelSpacing = 10;
+          const maxCount = u.bbox.width / ((maxWidth + labelSpacing) * devicePixelRatio);
+          const keepMod = Math.ceil(tickLabels.length / maxCount);
 
-      return tickLabels.map((label, i) => (i % keepMod === 0 ? label : null));
-    },
+          return tickLabels.map((label, i) => (i % keepMod === 0 ? label : null));
+        },
     //incrs: () => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((mult) => mult * bucketSize),
     //splits: config.xSplits,
     //values: config.xValues,
@@ -182,6 +207,9 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
       setScale: true,
     },
   });
+
+  let stackingGroups = getStackingGroups(xMinOnlyFrame(frame));
+  builder.setStackingGroups(stackingGroups);
 
   let pathBuilder = uPlot.paths.bars!({ align: 1, size: [1, Infinity] });
 
@@ -228,31 +256,32 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
   return builder;
 };
 
-const preparePlotData = (frame: DataFrame) => {
-  let data = [];
+// since we're reusing timeseries prep for stacking, we need to make a tmp frame where fields match the uplot data
+// by removing the x bucket max field to make sure stacking group series idxs match up
+const xMinOnlyFrame = (frame: DataFrame) => ({
+  ...frame,
+  fields: frame.fields.filter((f) => f.name !== histogramFrameBucketMaxFieldName),
+});
 
-  for (const field of frame.fields) {
-    if (field.name !== histogramFrameBucketMaxFieldName) {
-      data.push(field.values);
-    }
-  }
-
+const preparePlotData = (builder: UPlotConfigBuilder, xMinOnlyFrame: DataFrame) => {
   // uPlot's bars pathBuilder will draw rects even if 0 (to distinguish them from nulls)
   // but for histograms we want to omit them, so remap 0s -> nulls
-  for (let i = 1; i < data.length; i++) {
-    let counts = data[i];
+  for (let i = 1; i < xMinOnlyFrame.fields.length; i++) {
+    let counts = xMinOnlyFrame.fields[i].values;
+
     for (let j = 0; j < counts.length; j++) {
       if (counts[j] === 0) {
-        counts[j] = null;
+        counts[j] = null; // mutates!
       }
     }
   }
 
-  return data as AlignedData;
+  return preparePlotData2(xMinOnlyFrame, builder.getStackingGroups());
 };
 
 interface State {
   alignedData: AlignedData;
+  alignedFrame: DataFrame;
   config?: UPlotConfigBuilder;
 }
 
@@ -262,21 +291,17 @@ export class Histogram extends React.Component<HistogramProps, State> {
     this.state = this.prepState(props);
   }
 
-  prepState(props: HistogramProps, withConfig = true) {
-    let state: State = null as any;
-
+  prepState(props: HistogramProps, withConfig = true): State {
     const { alignedFrame } = props;
-    if (alignedFrame) {
-      state = {
-        alignedData: preparePlotData(alignedFrame),
-      };
 
-      if (withConfig) {
-        state.config = prepConfig(alignedFrame, this.props.theme);
-      }
-    }
+    const config = withConfig ? prepConfig(alignedFrame, this.props.theme) : this.state.config!;
+    const alignedData = preparePlotData(config, xMinOnlyFrame(alignedFrame));
 
-    return state;
+    return {
+      alignedFrame,
+      alignedData,
+      config,
+    };
   }
 
   renderLegend(config: UPlotConfigBuilder) {
@@ -286,29 +311,27 @@ export class Histogram extends React.Component<HistogramProps, State> {
       return null;
     }
 
-    return <PlotLegend data={this.props.rawSeries!} config={config} maxHeight="35%" maxWidth="60%" {...legend} />;
+    const frames = this.props.options.combine ? [this.props.alignedFrame] : this.props.rawSeries!;
+
+    return <PlotLegend data={frames} config={config} maxHeight="35%" maxWidth="60%" {...legend} />;
   }
 
   componentDidUpdate(prevProps: HistogramProps) {
-    const { structureRev, alignedFrame, bucketSize } = this.props;
+    const { structureRev, alignedFrame, bucketSize, bucketCount } = this.props;
 
     if (alignedFrame !== prevProps.alignedFrame) {
-      let newState = this.prepState(this.props, false);
+      const shouldReconfig =
+        this.state.config == null ||
+        bucketCount !== prevProps.bucketCount ||
+        bucketSize !== prevProps.bucketSize ||
+        this.props.options !== prevProps.options ||
+        this.state.config === undefined ||
+        structureRev !== prevProps.structureRev ||
+        !structureRev;
 
-      if (newState) {
-        const shouldReconfig =
-          bucketSize !== prevProps.bucketSize ||
-          this.props.options !== prevProps.options ||
-          this.state.config === undefined ||
-          structureRev !== prevProps.structureRev ||
-          !structureRev;
+      const newState = this.prepState(this.props, shouldReconfig);
 
-        if (shouldReconfig) {
-          newState.config = prepConfig(alignedFrame, this.props.theme);
-        }
-      }
-
-      newState && this.setState(newState);
+      this.setState(newState);
     }
   }
 

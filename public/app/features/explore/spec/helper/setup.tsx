@@ -1,4 +1,4 @@
-import { waitFor, within } from '@testing-library/dom';
+import { ByRoleMatcher, waitFor, within } from '@testing-library/dom';
 import { render, screen } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
 import { fromPairs } from 'lodash';
@@ -22,7 +22,7 @@ import {
   locationService,
   HistoryWrapper,
   LocationService,
-  setPluginExtensionGetter,
+  setPluginExtensionsHook,
   setBackendSrv,
   getBackendSrv,
   getDataSourceSrv,
@@ -86,7 +86,7 @@ export function setupExplore(options?: SetupOptions): {
     request: jest.fn().mockRejectedValue(undefined),
   });
 
-  setPluginExtensionGetter(() => ({ extensions: [] }));
+  setPluginExtensionsHook(() => ({ extensions: [], isLoading: false }));
 
   // Clear this up otherwise it persists data source selection
   // TODO: probably add test for that too
@@ -282,8 +282,23 @@ export const withinExplore = (exploreId: string) => {
   return within(container[exploreId === 'left' ? 0 : 1]);
 };
 
+export const withinQueryHistory = () => {
+  const container = screen.getByTestId('data-testid QueryHistory');
+  return within(container);
+};
+
 const exploreTestsHelper: { setupExplore: typeof setupExplore; tearDownExplore?: (options?: TearDownOptions) => void } =
   {
     setupExplore,
     tearDownExplore: undefined,
   };
+
+/**
+ * Optimized version of getAllByRole to avoid timeouts in tests. Please check #70158, #59116 and #47635, #78236.
+ */
+export const getAllByRoleInQueryHistoryTab = (role: ByRoleMatcher, name: string | RegExp) => {
+  const selector = withinQueryHistory();
+  // Test ID is used to avoid test timeouts reported in
+  const queriesContainer = selector.getByTestId('query-history-queries-tab');
+  return within(queriesContainer).getAllByRole(role, { name });
+};

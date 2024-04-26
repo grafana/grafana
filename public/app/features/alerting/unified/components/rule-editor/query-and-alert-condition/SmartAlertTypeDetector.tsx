@@ -2,9 +2,8 @@ import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
 import { DataSourceJsonData } from '@grafana/schema';
-import { RadioButtonGroup, Text } from '@grafana/ui';
+import { RadioButtonGroup, Text, Stack } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { AccessControlAction } from 'app/types';

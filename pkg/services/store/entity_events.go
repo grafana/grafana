@@ -70,7 +70,7 @@ type EntityEventsService interface {
 }
 
 func ProvideEntityEventsService(cfg *setting.Cfg, sqlStore db.DB, features featuremgmt.FeatureToggles) EntityEventsService {
-	if !features.IsEnabled(featuremgmt.FlagPanelTitleSearch) {
+	if !features.IsEnabledGlobally(featuremgmt.FlagPanelTitleSearch) {
 		return &dummyEntityEventsService{}
 	}
 

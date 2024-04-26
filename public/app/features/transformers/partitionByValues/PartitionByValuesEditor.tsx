@@ -19,6 +19,8 @@ import {
 } from '@grafana/ui';
 import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/src/components/MatchersUI/utils';
 
+import { getTransformationContent } from '../docs/getTransformationContent';
+
 import { partitionByValuesTransformer, PartitionByValuesTransformerOptions } from './partitionByValues';
 
 export function PartitionByValuesEditor({
@@ -63,6 +65,11 @@ export function PartitionByValuesEditor({
   const namingModesOptions = [
     { label: 'As label', value: namingModes.asLabels },
     { label: 'As frame name', value: namingModes.frameName },
+  ];
+
+  const KeepFieldsOptions = [
+    { label: 'Yes', value: true },
+    { label: 'No', value: false },
   ];
 
   const removeField = useCallback(
@@ -133,6 +140,15 @@ export function PartitionByValuesEditor({
           />
         </InlineField>
       </InlineFieldRow>
+      <InlineFieldRow>
+        <InlineField tooltip={'Keeps the partition fields in the frames.'} label={'Keep fields'} labelWidth={16}>
+          <RadioButtonGroup
+            options={KeepFieldsOptions}
+            value={options.keepFields}
+            onChange={(v) => onChange({ ...options, keepFields: v })}
+          />
+        </InlineField>
+      </InlineFieldRow>
     </div>
   );
 }
@@ -145,4 +161,5 @@ export const partitionByValuesTransformRegistryItem: TransformerRegistryItem<Par
   description: partitionByValuesTransformer.description,
   state: PluginState.alpha,
   categories: new Set([TransformerCategory.Reformat]),
+  help: getTransformationContent(DataTransformerID.partitionByValues).helperDocs,
 };

@@ -1,5 +1,5 @@
 import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
-import React, { ReactNode, useCallback } from 'react';
+import React, { ReactNode, useCallback, useRef } from 'react';
 
 import { QueryEditorProps } from '@grafana/data';
 import { CodeEditor, Monaco, Themeable2, withTheme2 } from '@grafana/ui';
@@ -7,7 +7,7 @@ import { CodeEditor, Monaco, Themeable2, withTheme2 } from '@grafana/ui';
 import { CloudWatchDatasource } from '../../../datasource';
 import language from '../../../language/logs/definition';
 import { TRIGGER_SUGGEST } from '../../../language/monarch/commands';
-import { registerLanguage } from '../../../language/monarch/register';
+import { registerLanguage, reRegisterCompletionProvider } from '../../../language/monarch/register';
 import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery } from '../../../types';
 import { getStatsGroups } from '../../../utils/query/getStatsGroups';
 import { LogGroupsFieldWrapper } from '../../shared/LogGroups/LogGroupsField';
@@ -18,10 +18,31 @@ export interface CloudWatchLogsQueryFieldProps
   ExtraFieldElement?: ReactNode;
   query: CloudWatchLogsQuery;
 }
-export const CloudWatchLogsQueryFieldMonaco = (props: CloudWatchLogsQueryFieldProps) => {
+export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) => {
   const { query, datasource, onChange, ExtraFieldElement, data } = props;
 
   const showError = data?.error?.refId === query.refId;
+  const monacoRef = useRef<Monaco>();
+  const disposalRef = useRef<monacoType.IDisposable>();
+
+  const onChangeLogs = useCallback(
+    async (query: CloudWatchLogsQuery) => {
+      onChange(query);
+    },
+    [onChange]
+  );
+
+  const onFocus = useCallback(async () => {
+    disposalRef.current = await reRegisterCompletionProvider(
+      monacoRef.current!,
+      language,
+      datasource.logsCompletionItemProviderFunc({
+        region: query.region,
+        logGroups: query.logGroups,
+      }),
+      disposalRef.current
+    );
+  }, [datasource, query.logGroups, query.region]);
 
   const onChangeQuery = useCallback(
     (value: string) => {
@@ -44,6 +65,17 @@ export const CloudWatchLogsQueryFieldMonaco = (props: CloudWatchLogsQueryFieldPr
     },
     [onChangeQuery]
   );
+  const onBeforeEditorMount = async (monaco: Monaco) => {
+    monacoRef.current = monaco;
+    disposalRef.current = await registerLanguage(
+      monaco,
+      language,
+      datasource.logsCompletionItemProviderFunc({
+        region: query.region,
+        logGroups: query.logGroups,
+      })
+    );
+  };
 
   return (
     <>
@@ -53,11 +85,11 @@ export const CloudWatchLogsQueryFieldMonaco = (props: CloudWatchLogsQueryFieldPr
         legacyLogGroupNames={query.logGroupNames}
         logGroups={query.logGroups}
         onChange={(logGroups) => {
-          onChange({ ...query, logGroups, logGroupNames: undefined });
+          onChangeLogs({ ...query, logGroups, logGroupNames: undefined });
         }}
         //legacy props
         legacyOnChange={(logGroupNames) => {
-          onChange({ ...query, logGroupNames });
+          onChangeLogs({ ...query, logGroupNames });
         }}
       />
       <div className="gf-form-inline gf-form-inline--nowrap flex-grow-1">
@@ -90,11 +122,12 @@ export const CloudWatchLogsQueryFieldMonaco = (props: CloudWatchLogsQueryFieldPr
               if (value !== query.expression) {
                 onChangeQuery(value);
               }
+              disposalRef.current?.dispose();
             }}
-            onBeforeEditorMount={(monaco: Monaco) =>
-              registerLanguage(monaco, language, datasource.logsCompletionItemProvider)
-            }
+            onFocus={onFocus}
+            onBeforeEditorMount={onBeforeEditorMount}
             onEditorDidMount={onEditorMount}
+            onEditorWillUnmount={() => disposalRef.current?.dispose()}
           />
         </div>
         {ExtraFieldElement}
@@ -108,4 +141,4 @@ export const CloudWatchLogsQueryFieldMonaco = (props: CloudWatchLogsQueryFieldPr
   );
 };
 
-export default withTheme2(CloudWatchLogsQueryFieldMonaco);
+export default withTheme2(CloudWatchLogsQueryField);

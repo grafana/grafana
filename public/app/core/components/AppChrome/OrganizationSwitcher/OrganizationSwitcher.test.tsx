@@ -97,7 +97,7 @@ describe('OrganisationSwitcher', () => {
       },
     });
 
-    expect(screen.getByRole('button', { name: /change organization/i })).toBeInTheDocument();
+    expect(screen.getByTestId('data-testid Value picker button Change organization')).toBeInTheDocument();
   });
 
   it('should not render and not try to get user organizations if not signed in', () => {

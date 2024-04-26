@@ -1,5 +1,6 @@
 import { Team as TeamDTO } from '@grafana/schema/src/raw/team/x/team_types.gen';
 
+import { Role } from './accessControl';
 import { TeamPermissionLevel } from './acl';
 
 // The team resource
@@ -37,6 +38,10 @@ export interface Team {
    * TODO - it seems it's a team_member.permission, unlikely it should belong to the team kind
    */
   permission: TeamPermissionLevel;
+  /**
+   * RBAC roles assigned to the team.
+   */
+  roles?: Role[];
 }
 
 export interface TeamMember {
@@ -64,6 +69,7 @@ export interface TeamsState {
   totalPages: number;
   hasFetched: boolean;
   sort?: string;
+  rolesLoading?: boolean;
 }
 
 export interface TeamState {

@@ -55,6 +55,28 @@ func NotFound(msgID string, opts ...BaseOpt) Base {
 	return NewBase(StatusNotFound, msgID, opts...)
 }
 
+// UnprocessableContent initializes a new [Base] error with reason StatusUnprocessableEntity
+// that is used to construct [Error]. The msgID is passed to the caller
+// to serve as the base for user facing error messages.
+//
+// msgID should be structured as component.errorBrief, for example
+//
+//	plugin.checksumMismatch
+func UnprocessableEntity(msgID string, opts ...BaseOpt) Base {
+	return NewBase(StatusUnprocessableEntity, msgID, opts...)
+}
+
+// Conflict initializes a new [Base] error with reason StatusConflict
+// that is used to construct [Error]. The msgID is passed to the caller
+// to serve as the base for user facing error messages.
+//
+// msgID should be structured as component.errorBrief, for example
+//
+//	folder.alreadyExists
+func Conflict(msgID string, opts ...BaseOpt) Base {
+	return NewBase(StatusConflict, msgID, opts...)
+}
+
 // BadRequest initializes a new [Base] error with reason StatusBadRequest
 // that is used to construct [Error]. The msgID is passed to the caller
 // to serve as the base for user facing error messages.

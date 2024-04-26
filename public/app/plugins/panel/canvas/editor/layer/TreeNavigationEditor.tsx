@@ -20,7 +20,7 @@ import { getTreeData, onNodeDrop, TreeElement } from './tree';
 
 let allowSelection = true;
 
-export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeViewEditorProps, Options>) => {
+export const TreeNavigationEditor = ({ item }: StandardEditorProps<unknown, TreeViewEditorProps, Options>) => {
   const [treeData, setTreeData] = useState(getTreeData(item?.settings?.scene.root));
   const [autoExpandParent, setAutoExpandParent] = useState(true);
   const [expandedKeys, setExpandedKeys] = useState<Key[]>([]);
@@ -167,8 +167,8 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  addLayerButton: css`
-    margin-left: 18px;
-    min-width: 150px;
-  `,
+  addLayerButton: css({
+    marginLeft: '18px',
+    minWidth: '150px',
+  }),
 });

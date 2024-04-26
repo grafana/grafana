@@ -157,7 +157,7 @@ export const navIndex: NavIndex = {
       },
       {
         id: 'alert',
-        text: 'Create alert rule',
+        text: 'New alert rule',
         subTitle: 'Create an alert rule',
         icon: 'plus',
         url: '/alerting/new',
@@ -215,7 +215,7 @@ export const navIndex: NavIndex = {
   },
   alert: {
     id: 'alert',
-    text: 'Create alert rule',
+    text: 'New alert rule',
     subTitle: 'Create an alert rule',
     icon: 'plus',
     url: '/alerting/new',
@@ -490,7 +490,7 @@ export const navIndex: NavIndex = {
   monitoring: {
     id: 'monitoring',
     text: 'Observability',
-    subTitle: 'Monitoring and infrastructure apps',
+    subTitle: 'Out-of-the-box observability solutions',
     icon: 'heart-rate',
     url: '/monitoring',
     sortWeight: -900,

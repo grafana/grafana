@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -33,17 +34,22 @@ func TestService_bundleCreate(t *testing.T) {
 		log:            log.New("test"),
 		bundleRegistry: bundleregistry.ProvideService(),
 		store:          newStore(kvstore.NewFakeKVStore()),
+		tracer:         tracing.InitializeTracerForTest(),
 	}
 
 	cfg := setting.NewCfg()
 
 	collector := basicCollector(cfg)
+	disabledCollector := settingsCollector(setting.ProvideProvider(cfg))
+	disabledCollector.EnabledFn = func() bool { return false }
+
 	s.bundleRegistry.RegisterSupportItemCollector(collector)
+	s.bundleRegistry.RegisterSupportItemCollector(disabledCollector)
 
 	createdBundle, err := s.store.Create(context.Background(), &user.SignedInUser{UserID: 1, Login: "bob"})
 	require.NoError(t, err)
 
-	s.startBundleWork(context.Background(), []string{collector.UID}, createdBundle.UID)
+	s.startBundleWork(context.Background(), []string{collector.UID, disabledCollector.UID}, createdBundle.UID)
 
 	bundle, err := s.get(context.Background(), createdBundle.UID)
 	require.NoError(t, err)
@@ -62,6 +68,7 @@ func TestService_bundleEncryptDecrypt(t *testing.T) {
 		bundleRegistry:       bundleregistry.ProvideService(),
 		store:                newStore(kvstore.NewFakeKVStore()),
 		encryptionPublicKeys: []string{testAgePublicKey},
+		tracer:               tracing.InitializeTracerForTest(),
 	}
 
 	cfg := setting.NewCfg()
@@ -94,6 +101,7 @@ func TestService_bundleEncryptDecryptMultipleRecipients(t *testing.T) {
 		bundleRegistry:       bundleregistry.ProvideService(),
 		store:                newStore(kvstore.NewFakeKVStore()),
 		encryptionPublicKeys: []string{testAgePublicKey, testAgePublicKey2},
+		tracer:               tracing.InitializeTracerForTest(),
 	}
 
 	cfg := setting.NewCfg()

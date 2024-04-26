@@ -12,6 +12,7 @@ labels:
     - cloud
     - enterprise
     - oss
+description: Configure options for Grafana's trend visualization
 title: Trend
 weight: 100
 ---
@@ -36,6 +37,10 @@ Use this option to select a field that contains increasing numeric values.
 For example, you could represent engine power and torque versus speed where speed is plotted on the x axis and power and torque are plotted on the y axes.
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-0-trend-panel-new-colors.png" max-width="750px" caption="Trend engine power and torque curves" >}}
+
+## Tooltip options
+
+{{< docs/shared lookup="visualizations/tooltip-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 {{% docs/reference %}}
 [Time series visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series"

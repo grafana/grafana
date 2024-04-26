@@ -1,12 +1,11 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { cloneDeep, defaults as lodashDefaults } from 'lodash';
 
-import { LoadingState, VariableType } from '@grafana/data';
+import { LoadingState, VariableType, TypedVariableModel, VariableOption } from '@grafana/data';
 
 import { variableAdapters } from '../adapters';
 import { changeVariableNameSucceeded } from '../editor/reducer';
 import { hasOptions } from '../guard';
-import { VariableModel, VariableOption } from '../types';
 import { ensureStringValues } from '../utils';
 
 import { getInstanceState, getNextVariableIndex } from './selectors';
@@ -77,7 +76,7 @@ const sharedReducerSlice = createSlice({
         return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       }
 
-      const original = cloneDeep<VariableModel>(state[action.payload.id]);
+      const original = cloneDeep<TypedVariableModel>(state[action.payload.id]);
       const copyRegex = new RegExp(`^copy_of_${escapeRegExp(original.name)}(_(\\d+))?$`);
 
       const copies = Object.values(state)

@@ -31,7 +31,7 @@ describe('Dashboard templating', () => {
       `Server:percentencode = %7BA%27A%22A%2CBB%5CB%2CCCC%7D`,
       `Server:singlequote = 'A\\'A"A','BB\\B','CCC'`,
       `Server:doublequote = "A'A\\"A","BB\\B","CCC"`,
-      `Server:sqlstring = 'A''A"A','BB\\\B','CCC'`,
+      `Server:sqlstring = 'A''A\\"A','BB\\\B','CCC'`,
       `Server:date = NaN`,
       `Server:text = All`,
       `Server:queryparam = var-Server=All`,

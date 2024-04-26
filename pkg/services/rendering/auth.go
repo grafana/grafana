@@ -37,7 +37,7 @@ func (rs *RenderingService) GetRenderUser(ctx context.Context, key string) (*Ren
 
 	var renderUser *RenderUser
 
-	if looksLikeJWT(key) && rs.features.IsEnabled(featuremgmt.FlagRenderAuthJWT) {
+	if looksLikeJWT(key) && rs.features.IsEnabled(ctx, featuremgmt.FlagRenderAuthJWT) {
 		from = "jwt"
 		renderUser = rs.getRenderUserFromJWT(key)
 	} else {

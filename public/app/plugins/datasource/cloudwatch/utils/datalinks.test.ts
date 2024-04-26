@@ -40,6 +40,7 @@ describe('addDataLinksToLogsResponse', () => {
           region: 'us-east-1',
         },
       ],
+      range: { ...time, raw: time },
     } as DataQueryRequest<CloudWatchQuery>;
 
     setDataSourceSrv({
@@ -53,7 +54,6 @@ describe('addDataLinksToLogsResponse', () => {
     await addDataLinksToLogsResponse(
       mockResponse,
       mockOptions,
-      { ...time, raw: time },
       (s) => s ?? '',
       (v) => [v] ?? [],
       (r) => r,
@@ -125,12 +125,12 @@ describe('addDataLinksToLogsResponse', () => {
           region: 'us-east-1',
         } as CloudWatchQuery,
       ],
+      range: { ...time, raw: time },
     } as DataQueryRequest<CloudWatchQuery>;
 
     await addDataLinksToLogsResponse(
       mockResponse,
       mockOptions,
-      { ...time, raw: time },
       (s) => s ?? '',
       (v) => [v] ?? [],
       (r) => r
@@ -182,12 +182,12 @@ describe('addDataLinksToLogsResponse', () => {
           region: 'us-east-1',
         } as CloudWatchQuery,
       ],
+      range: { ...time, raw: time },
     } as DataQueryRequest<CloudWatchQuery>;
 
     await addDataLinksToLogsResponse(
       mockResponse,
       mockOptions,
-      { ...time, raw: time },
       (s) => s ?? '',
       (v) => [v] ?? [],
       (r) => r

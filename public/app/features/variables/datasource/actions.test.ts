@@ -29,7 +29,12 @@ function getTestContext({ sources = [], query, regex }: Args = {}) {
   const getListMock = jest.fn().mockReturnValue(sources);
   const getDatasourceSrvMock = jest.fn().mockReturnValue({ getList: getListMock });
   const dependencies: DataSourceVariableActionDependencies = { getDatasourceSrv: getDatasourceSrvMock };
-  const datasource = datasourceBuilder().withId('0').withRootStateKey('key').withQuery(query).withRegEx(regex).build();
+  const datasource = datasourceBuilder()
+    .withId('0')
+    .withRootStateKey('key')
+    .withQuery(query!)
+    .withRegEx(regex!)
+    .build();
 
   return { getListMock, getDatasourceSrvMock, dependencies, datasource };
 }

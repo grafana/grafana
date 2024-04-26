@@ -25,8 +25,8 @@ import (
 )
 
 const (
-	MIN_DELAY = 30
-	MAX_DELAY = 120
+	minDelay = 30
+	maxDelay = 120
 )
 
 type Service struct {
@@ -45,7 +45,6 @@ type Service struct {
 	startTime                time.Time
 	concurrentUserStatsCache memoConcurrentUserStats
 	promFlavorCache          memoPrometheusFlavor
-	usageStatProviders       []registry.ProvidesUsageStats
 }
 
 func ProvideService(
@@ -82,8 +81,8 @@ func ProvideService(
 		s.collectDatasourceAccess,
 		s.collectAlertNotifierStats,
 		s.collectPrometheusFlavors,
-		s.collectAdditionalMetrics,
 	}
+
 	for _, c := range collectors {
 		us.RegisterMetricsFunc(c)
 	}
@@ -94,12 +93,19 @@ func ProvideService(
 // RegisterProviders is called only once - during Grafana start up
 func (s *Service) RegisterProviders(usageStatProviders []registry.ProvidesUsageStats) {
 	s.log.Info("registering usage stat providers", "usageStatsProvidersLen", len(usageStatProviders))
-	s.usageStatProviders = usageStatProviders
+	for _, usageStatProvider := range usageStatProviders {
+		provider := usageStatProvider.GetUsageStats
+		collector := func(ctx context.Context) (map[string]interface{}, error) {
+			return provider(ctx), nil
+		}
+
+		s.usageStats.RegisterMetricsFunc(collector)
+	}
 }
 
 func (s *Service) Run(ctx context.Context) error {
 	sendInterval := time.Second * time.Duration(s.cfg.MetricsTotalStatsIntervalSeconds)
-	nextSendInterval := time.Duration(rand.Intn(MAX_DELAY-MIN_DELAY)+MIN_DELAY) * time.Second
+	nextSendInterval := time.Duration(rand.Intn(maxDelay-minDelay)+minDelay) * time.Second
 	s.log.Debug("usage stats collector started", "sendInterval", sendInterval, "nextSendInterval", nextSendInterval)
 	updateStatsTicker := time.NewTicker(nextSendInterval)
 	defer updateStatsTicker.Stop()
@@ -164,6 +170,7 @@ func (s *Service) collectSystemStats(ctx context.Context) (map[string]any, error
 	m["stats.dashboard_versions.count"] = statsResult.DashboardVersions
 	m["stats.annotations.count"] = statsResult.Annotations
 	m["stats.alert_rules.count"] = statsResult.AlertRules
+	m["stats.rule_groups.count"] = statsResult.RuleGroups
 	m["stats.library_panels.count"] = statsResult.LibraryPanels
 	m["stats.library_variables.count"] = statsResult.LibraryVariables
 	m["stats.dashboards_viewers_can_edit.count"] = statsResult.DashboardsViewersCanEdit
@@ -208,17 +215,6 @@ func (s *Service) collectSystemStats(ctx context.Context) (map[string]any, error
 		m[k] = v
 	}
 
-	return m, nil
-}
-
-func (s *Service) collectAdditionalMetrics(ctx context.Context) (map[string]any, error) {
-	m := map[string]any{}
-	for _, usageStatProvider := range s.usageStatProviders {
-		stats := usageStatProvider.GetUsageStats(ctx)
-		for k, v := range stats {
-			m[k] = v
-		}
-	}
 	return m, nil
 }
 
@@ -328,6 +324,7 @@ func (s *Service) updateTotalStats(ctx context.Context) bool {
 	metrics.StatsTotalDashboardVersions.Set(float64(statsResult.DashboardVersions))
 	metrics.StatsTotalAnnotations.Set(float64(statsResult.Annotations))
 	metrics.StatsTotalAlertRules.Set(float64(statsResult.AlertRules))
+	metrics.StatsTotalRuleGroups.Set(float64(statsResult.RuleGroups))
 	metrics.StatsTotalLibraryPanels.Set(float64(statsResult.LibraryPanels))
 	metrics.StatsTotalLibraryVariables.Set(float64(statsResult.LibraryVariables))
 

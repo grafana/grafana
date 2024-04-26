@@ -8,7 +8,6 @@ import { locationService } from '@grafana/runtime';
 import { Button, ToolbarButtonRow } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
-import config from 'app/core/config';
 import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types';
@@ -54,7 +53,7 @@ export function DashboardSettings({ dashboard, editview, pageNav, sectionNav }: 
   const canSave = dashboard.meta.canSave;
   const location = useLocation();
   const editIndex = getEditIndex(location);
-  const subSectionNav = getSectionNav(pageNav, sectionNav, pages, currentPage, location);
+  const subSectionNav = getSectionNav(pageNav, sectionNav, pages, currentPage, location, dashboard.uid);
   const size = 'sm';
 
   const actions = [
@@ -179,24 +178,21 @@ function getSectionNav(
   sectionNav: NavModel,
   pages: SettingsPage[],
   currentPage: SettingsPage,
-  location: H.Location
+  location: H.Location,
+  dashboardUid: string
 ): NavModel {
   const main: NavModelItem = {
     text: t('dashboard-settings.settings.title', 'Settings'),
     children: [],
     icon: 'apps',
-    hideFromBreadcrumbs: true,
+    hideFromBreadcrumbs: false,
+    url: locationUtil.getUrlForPartial(location, { editview: 'settings', editIndex: null }),
   };
-
-  if (config.featureToggles.dockedMegaMenu) {
-    main.hideFromBreadcrumbs = false;
-    main.url = locationUtil.getUrlForPartial(location, { editview: 'settings', editIndex: null });
-  }
 
   main.children = pages.map((page) => ({
     text: page.title,
     icon: page.icon,
-    id: page.id,
+    id: `${dashboardUid}/${page.id}`,
     url: locationUtil.getUrlForPartial(location, { editview: page.id, editIndex: null }),
     active: page === currentPage,
     parentItem: main,

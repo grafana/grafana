@@ -8,8 +8,8 @@ import { byRole, byTestId, byText } from 'testing-library-selector';
 import { selectors } from '@grafana/e2e-selectors/src';
 import { config, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { DashboardSearchItem, DashboardSearchItemType } from 'app/features/search/types';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
-import 'whatwg-fetch';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 
 import {
@@ -21,7 +21,9 @@ import {
 
 import { cloneRuleDefinition, CloneRuleEditor } from './CloneRuleEditor';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
+import { mockApi, mockSearchApi } from './mockApi';
 import {
+  labelsPluginMetaMock,
   mockDataSource,
   MockDataSourceSrv,
   mockRulerAlertingRule,
@@ -30,7 +32,6 @@ import {
   mockStore,
 } from './mocks';
 import { mockAlertmanagerConfigResponse } from './mocks/alertmanagerApi';
-import { mockSearchApiResponse } from './mocks/grafanaApi';
 import { mockRulerRulesApiResponse, mockRulerRulesGroupApiResponse } from './mocks/rulerApi';
 import { AlertingQueryRunner } from './state/AlertingQueryRunner';
 import { RuleFormValues } from './types/rule-form';
@@ -138,6 +139,7 @@ const amConfig: AlertManagerCortexConfig = {
   template_files: {},
 };
 
+mockApi(server).plugins.getPluginSettings({ ...labelsPluginMetaMock, enabled: false });
 describe('CloneRuleEditor', function () {
   describe('Grafana-managed rules', function () {
     it('should populate form values from the existing alert rule', async function () {
@@ -156,7 +158,9 @@ describe('CloneRuleEditor', function () {
         'folder-one': [{ name: 'group1', interval: '20s', rules: [originRule] }],
       });
 
-      mockSearchApiResponse(server, []);
+      mockSearchApi(server).search([
+        mockDashboardSearchItem({ title: 'folder-one', uid: '123', type: DashboardSearchItemType.DashDB }),
+      ]);
       mockAlertmanagerConfigResponse(server, GRAFANA_RULES_SOURCE_NAME, amConfig);
 
       render(<CloneRuleEditor sourceRuleId={{ uid: 'grafana-rule-1', ruleSourceName: 'grafana' }} />, {
@@ -172,8 +176,16 @@ describe('CloneRuleEditor', function () {
         expect(ui.inputs.name.get()).toHaveValue('First Grafana Rule (copy)');
         expect(ui.inputs.folderContainer.get()).toHaveTextContent('folder-one');
         expect(ui.inputs.group.get()).toHaveTextContent('group1');
-        expect(ui.inputs.labelValue(0).get()).toHaveTextContent('critical');
-        expect(ui.inputs.labelValue(1).get()).toHaveTextContent('nasa');
+        expect(
+          byRole('listitem', {
+            name: 'severity: critical',
+          }).get()
+        ).toBeInTheDocument();
+        expect(
+          byRole('listitem', {
+            name: 'region: nasa',
+          }).get()
+        ).toBeInTheDocument();
         expect(ui.inputs.annotationValue(0).get()).toHaveTextContent('This is a very important alert rule');
       });
     });
@@ -209,13 +221,20 @@ describe('CloneRuleEditor', function () {
         rules: [originRule],
       });
 
-      mockSearchApiResponse(server, []);
+      mockSearchApi(server).search([
+        mockDashboardSearchItem({
+          title: 'folder-one',
+          uid: '123',
+          type: DashboardSearchItemType.DashDB,
+          folderTitle: 'folder-one',
+          folderUid: '123',
+        }),
+      ]);
       mockAlertmanagerConfigResponse(server, GRAFANA_RULES_SOURCE_NAME, amConfig);
 
       render(
         <CloneRuleEditor
           sourceRuleId={{
-            uid: 'prom-rule-1',
             ruleSourceName: 'my-prom-ds',
             namespace: 'namespace-one',
             groupName: 'group1',
@@ -235,8 +254,16 @@ describe('CloneRuleEditor', function () {
         expect(ui.inputs.expr.get()).toHaveValue('vector(1) > 0');
         expect(ui.inputs.namespace.get()).toHaveTextContent('namespace-one');
         expect(ui.inputs.group.get()).toHaveTextContent('group1');
-        expect(ui.inputs.labelValue(0).get()).toHaveTextContent('critical');
-        expect(ui.inputs.labelValue(1).get()).toHaveTextContent('nasa');
+        expect(
+          byRole('listitem', {
+            name: 'severity: critical',
+          }).get()
+        ).toBeInTheDocument();
+        expect(
+          byRole('listitem', {
+            name: 'region: nasa',
+          }).get()
+        ).toBeInTheDocument();
         expect(ui.inputs.annotationValue(0).get()).toHaveTextContent('This is a very important alert rule');
       });
     });
@@ -363,3 +390,18 @@ describe('CloneRuleEditor', function () {
     });
   });
 });
+
+function mockDashboardSearchItem(searchItem: Partial<DashboardSearchItem>) {
+  return {
+    title: '',
+    uid: '',
+    type: DashboardSearchItemType.DashDB,
+    url: '',
+    uri: '',
+    items: [],
+    tags: [],
+    slug: '',
+    isStarred: false,
+    ...searchItem,
+  };
+}

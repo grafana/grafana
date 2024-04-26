@@ -1,7 +1,7 @@
-import { dateTime, ExploreUrlState, LogsSortOrder } from '@grafana/data';
+import { DataSourceApi, dateTime, ExploreUrlState, LogsSortOrder } from '@grafana/data';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
+import { DataQuery } from '@grafana/schema';
 import { RefreshPicker } from '@grafana/ui';
-import store from 'app/core/store';
 import { DEFAULT_RANGE } from 'app/features/explore/state/utils';
 
 import { DatasourceSrvMock, MockDataSourceApi } from '../../../test/mocks/datasource_srv';
@@ -10,7 +10,6 @@ import {
   buildQueryTransaction,
   hasNonEmptyQuery,
   refreshIntervalToSortOrder,
-  updateHistory,
   getExploreUrl,
   GetExploreUrlArguments,
   getTimeRange,
@@ -24,12 +23,36 @@ const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
 };
 
 const defaultDs = new MockDataSourceApi('default datasource', { data: ['default data'] });
-
+const interpolateMockLoki = jest
+  .fn()
+  .mockReturnValue([{ refId: 'a', expr: 'replaced testDs loki' }]) as unknown as DataQuery[];
+const interpolateMockProm = jest
+  .fn()
+  .mockReturnValue([{ refId: 'a', expr: 'replaced testDs2 prom' }]) as unknown as DataQuery[];
 const datasourceSrv = new DatasourceSrvMock(defaultDs, {
   'generate empty query': new MockDataSourceApi('generateEmptyQuery'),
   ds1: {
     name: 'testDs',
     type: 'loki',
+    meta: { mixed: false },
+    interpolateVariablesInQueries: interpolateMockLoki,
+    getRef: () => {
+      return 'ds1';
+    },
+  } as unknown as DataSourceApi,
+  ds2: {
+    name: 'testDs2',
+    type: 'prom',
+    meta: { mixed: false },
+    interpolateVariablesInQueries: interpolateMockProm,
+    getRef: () => {
+      return 'ds2';
+    },
+  } as unknown as DataSourceApi,
+  dsMixed: {
+    name: 'testDSMixed',
+    type: 'mixed',
+    meta: { mixed: true },
   } as MockDataSourceApi,
 });
 
@@ -70,6 +93,10 @@ describe('state functions', () => {
 });
 
 describe('getExploreUrl', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   const args = {
     queries: [
       { refId: 'A', expr: 'query1', legendFormat: 'legendFormat1' },
@@ -86,26 +113,39 @@ describe('getExploreUrl', () => {
   it('should omit expression target in explore url', async () => {
     expect(await getExploreUrl(args)).not.toMatch(/__expr__/g);
   });
-});
-
-describe('updateHistory()', () => {
-  const datasourceId = 'myDatasource';
-  const key = `grafana.explore.history.${datasourceId}`;
-
-  beforeEach(() => {
-    store.delete(key);
-    expect(store.exists(key)).toBeFalsy();
-  });
-
-  test('should save history item to localStorage', () => {
-    const expected = [
-      {
-        query: { refId: '1', expr: 'metric' },
+  it('should interpolate queries with variables in a non-mixed datasource scenario', async () => {
+    // this is not actually valid (see root and query DS being different) but it will test the root DS mock was called
+    const nonMixedArgs = {
+      queries: [{ refId: 'A', expr: 'query1', datasource: { type: 'prom', uid: 'ds2' } }],
+      dsRef: {
+        uid: 'ds1',
+        meta: { mixed: false },
       },
-    ];
-    expect(updateHistory([], datasourceId, [{ refId: '1', expr: 'metric' }])).toMatchObject(expected);
-    expect(store.exists(key)).toBeTruthy();
-    expect(store.getObject(key)).toMatchObject(expected);
+      timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1h', to: 'now' } },
+      scopedVars: {},
+    };
+    expect(await getExploreUrl(nonMixedArgs)).toMatch(/replaced%20testDs2%20prom/g);
+    expect(interpolateMockLoki).not.toBeCalled();
+    expect(interpolateMockProm).toBeCalled();
+  });
+  it('should interpolate queries with variables in a mixed datasource scenario', async () => {
+    const nonMixedArgs = {
+      queries: [
+        { refId: 'A', expr: 'query1', datasource: { type: 'loki', uid: 'ds1' } },
+        { refId: 'B', expr: 'query2', datasource: { type: 'prom', uid: 'ds2' } },
+      ],
+      dsRef: {
+        uid: 'dsMixed',
+        meta: { mixed: true },
+      },
+      timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1h', to: 'now' } },
+      scopedVars: {},
+    };
+    const url = await getExploreUrl(nonMixedArgs);
+    expect(url).toMatch(/replaced%20testDs%20loki/g);
+    expect(url).toMatch(/replaced%20testDs2%20prom/g);
+    expect(interpolateMockLoki).toBeCalled();
+    expect(interpolateMockProm).toBeCalled();
   });
 });
 
@@ -124,7 +164,7 @@ describe('hasNonEmptyQuery', () => {
 });
 
 describe('getTimeRange', () => {
-  describe('should flip from and to when from is after to', () => {
+  describe('should not flip from and to when from is after to', () => {
     const rawRange = {
       from: 'now',
       to: 'now-6h',
@@ -132,7 +172,7 @@ describe('getTimeRange', () => {
 
     const range = getTimeRange('utc', rawRange, 0);
 
-    expect(range.from.isBefore(range.to)).toBe(true);
+    expect(range.from.isBefore(range.to)).toBe(false);
   });
 });
 
@@ -191,6 +231,12 @@ describe('when buildQueryTransaction', () => {
     const range = { from: dateTime().subtract(1, 'd'), to: dateTime(), raw: { from: '1h', to: '1h' } };
     const transaction = buildQueryTransaction('left', queries, queryOptions, range, false);
     expect(transaction.request.interval).toEqual('2h');
+  });
+  it('it should create a request with X-Cache-Skip set to true', () => {
+    const queries = [{ refId: 'A' }];
+    const range = { from: dateTime().subtract(1, 'd'), to: dateTime(), raw: { from: '1h', to: '1h' } };
+    const transaction = buildQueryTransaction('left', queries, {}, range, false);
+    expect(transaction.request.skipQueryCache).toBe(true);
   });
 });
 

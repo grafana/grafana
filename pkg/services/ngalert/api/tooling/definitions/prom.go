@@ -1,7 +1,9 @@
 package definitions
 
 import (
+	"container/heap"
 	"fmt"
+	"net/http"
 	"sort"
 	"strings"
 	"time"
@@ -9,14 +11,14 @@ import (
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
-// swagger:route GET /api/prometheus/grafana/api/v1/rules prometheus RouteGetGrafanaRuleStatuses
+// swagger:route GET /prometheus/grafana/api/v1/rules prometheus RouteGetGrafanaRuleStatuses
 //
 // gets the evaluation statuses of all rules
 //
 //     Responses:
 //       200: RuleResponse
 
-// swagger:route GET /api/prometheus/{DatasourceUID}/api/v1/rules prometheus RouteGetRuleStatuses
+// swagger:route GET /prometheus/{DatasourceUID}/api/v1/rules prometheus RouteGetRuleStatuses
 //
 // gets the evaluation statuses of all rules
 //
@@ -24,14 +26,14 @@ import (
 //       200: RuleResponse
 //       404: NotFound
 
-// swagger:route GET /api/prometheus/grafana/api/v1/alerts prometheus RouteGetGrafanaAlertStatuses
+// swagger:route GET /prometheus/grafana/api/v1/alerts prometheus RouteGetGrafanaAlertStatuses
 //
 // gets the current alerts
 //
 //     Responses:
 //       200: AlertResponse
 
-// swagger:route GET /api/prometheus/{DatasourceUID}/api/v1/alerts prometheus RouteGetAlertStatuses
+// swagger:route GET /prometheus/{DatasourceUID}/api/v1/alerts prometheus RouteGetAlertStatuses
 //
 // gets the current alerts
 //
@@ -95,6 +97,23 @@ type RuleGroup struct {
 	Interval       float64   `json:"interval"`
 	LastEvaluation time.Time `json:"lastEvaluation"`
 	EvaluationTime float64   `json:"evaluationTime"`
+}
+
+// HTTPStatusCode returns the HTTP status code for a given Prometheus style error.
+func (d DiscoveryBase) HTTPStatusCode() int {
+	if d.Status == "success" {
+		return http.StatusOK
+	}
+
+	// Mapping taken from prometheus/web/api/v1/api.go
+	// Note this is not exhaustive as our API does not return
+	// the same spectrum of errors as Prometheus does.
+	switch d.ErrorType {
+	case v1.ErrBadData:
+		return http.StatusBadRequest
+	default:
+		return http.StatusInternalServerError
+	}
 }
 
 // RuleGroupsBy is a function that defines the ordering of Rule Groups.
@@ -204,6 +223,76 @@ type AlertsBy func(a1, a2 *Alert) bool
 
 func (by AlertsBy) Sort(alerts []Alert) {
 	sort.Sort(AlertsSorter{alerts: alerts, by: by})
+}
+
+// AlertsHeap extends AlertsSorter for use with container/heap functions.
+type AlertsHeap struct {
+	AlertsSorter
+}
+
+func (h *AlertsHeap) Push(x any) {
+	h.alerts = append(h.alerts, x.(Alert))
+}
+
+func (h *AlertsHeap) Pop() any {
+	old := h.alerts
+	n := len(old)
+	x := old[n-1]
+	h.alerts = old[0 : n-1]
+	return x
+}
+
+// TopK returns the highest k elements. It does not modify the input.
+func (by AlertsBy) TopK(alerts []Alert, k int) []Alert {
+	// Concept is that instead of sorting the whole list and taking the number
+	// of items we need, maintain a heap of the top k elements, and update it
+	// for each element. This vastly reduces the number of comparisons needed,
+	// which is important for sorting alerts, as the comparison function is
+	// very expensive.
+
+	// If k is zero or less, return nothing.
+	if k < 1 {
+		return []Alert{}
+	}
+
+	// The heap must be in ascending order, so that the root of the heap is
+	// the current smallest element.
+	byAscending := func(a1, a2 *Alert) bool { return by(a2, a1) }
+
+	h := AlertsHeap{
+		AlertsSorter: AlertsSorter{
+			alerts: make([]Alert, 0, k),
+			by:     byAscending,
+		},
+	}
+
+	// Go version of this algorithm taken from Prometheus (promql/engine.go)
+
+	heap.Init(&h)
+	for i := 0; i < len(alerts); i++ {
+		a := alerts[i]
+
+		// We build a heap of up to k elements, with the smallest element at heap[0].
+		switch {
+		case len(h.alerts) < k:
+			heap.Push(&h, a)
+
+		case h.by(&h.alerts[0], &a):
+			// This new element is bigger than the previous smallest element - overwrite that.
+			h.alerts[0] = a
+			// Maintain the heap invariant.
+			if k > 1 {
+				heap.Fix(&h, 0)
+			}
+		}
+	}
+
+	// The heap keeps the lowest value on top, so reverse it.
+	if len(h.alerts) > 1 {
+		sort.Sort(sort.Reverse(&h))
+	}
+
+	return h.alerts
 }
 
 // AlertsByImportance orders alerts by importance. An alert is more important

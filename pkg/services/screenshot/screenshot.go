@@ -43,18 +43,20 @@ type ScreenshotService interface {
 
 // HeadlessScreenshotService takes screenshots using a headless browser.
 type HeadlessScreenshotService struct {
-	ds dashboards.DashboardService
-	rs rendering.Service
+	cfg *setting.Cfg
+	ds  dashboards.DashboardService
+	rs  rendering.Service
 
 	duration  prometheus.Histogram
 	failures  *prometheus.CounterVec
 	successes prometheus.Counter
 }
 
-func NewHeadlessScreenshotService(ds dashboards.DashboardService, rs rendering.Service, r prometheus.Registerer) ScreenshotService {
+func NewHeadlessScreenshotService(cfg *setting.Cfg, ds dashboards.DashboardService, rs rendering.Service, r prometheus.Registerer) ScreenshotService {
 	return &HeadlessScreenshotService{
-		ds: ds,
-		rs: rs,
+		cfg: cfg,
+		ds:  ds,
+		rs:  rs,
 		duration: promauto.With(r).NewHistogram(prometheus.HistogramOpts{
 			Name:      "duration_seconds",
 			Buckets:   []float64{0.1, 0.25, 0.5, 1, 2, 5, 10, 15},
@@ -120,32 +122,32 @@ func (s *HeadlessScreenshotService) Take(ctx context.Context, opts ScreenshotOpt
 		Width:           opts.Width,
 		Height:          opts.Height,
 		Theme:           opts.Theme,
-		ConcurrentLimit: setting.AlertingRenderLimit,
+		ConcurrentLimit: s.cfg.RendererConcurrentRequestLimit,
 		Path:            u.String(),
 	}
 
-	result, err := s.rs.Render(ctx, renderOpts, nil)
+	result, err := s.rs.Render(ctx, rendering.RenderPNG, renderOpts, nil)
 	if err != nil {
 		s.instrumentError(err)
 		return nil, fmt.Errorf("failed to take screenshot: %w", err)
 	}
 
-	defer s.successes.Inc()
+	s.successes.Inc()
 	screenshot := Screenshot{Path: result.FilePath}
 	return &screenshot, nil
 }
 
 func (s *HeadlessScreenshotService) instrumentError(err error) {
 	if errors.Is(err, dashboards.ErrDashboardNotFound) {
-		defer s.failures.With(prometheus.Labels{
+		s.failures.With(prometheus.Labels{
 			"reason": "dashboard_not_found",
 		}).Inc()
 	} else if errors.Is(err, context.Canceled) {
-		defer s.failures.With(prometheus.Labels{
+		s.failures.With(prometheus.Labels{
 			"reason": "context_canceled",
 		}).Inc()
 	} else {
-		defer s.failures.With(prometheus.Labels{
+		s.failures.With(prometheus.Labels{
 			"reason": "error",
 		}).Inc()
 	}

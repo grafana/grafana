@@ -102,7 +102,7 @@ function createOrderByOptionsForExtendedStats(metric: ExtendedStats): Selectable
   return metaKeys
     .filter((key) => metric.meta?.[key])
     .map((key) => {
-      let method = key as string;
+      let method: string = key;
       // The bucket path for std_deviation_bounds.lower and std_deviation_bounds.upper
       // is accessed via std_lower and std_upper, respectively.
       if (key === 'std_deviation_bounds_lower') {

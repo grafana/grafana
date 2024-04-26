@@ -14,18 +14,16 @@ import (
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	dashboardsV0 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/dashdiffs"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
@@ -68,32 +66,6 @@ func dashboardGuardianResponse(err error) response.Response {
 	return response.Error(http.StatusForbidden, "Access denied to this dashboard", nil)
 }
 
-// swagger:route POST /dashboards/trim dashboards trimDashboard
-//
-// Trim defaults from dashboard.
-//
-// Responses:
-// 200: trimDashboardResponse
-// 401: unauthorisedError
-// 500: internalServerError
-func (hs *HTTPServer) TrimDashboard(c *contextmodel.ReqContext) response.Response {
-	cmd := dashboards.TrimDashboardCommand{}
-	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
-	}
-	dash := cmd.Dashboard
-	meta := cmd.Meta
-
-	// TODO temporarily just return the input as a no-op while we convert to thema calls
-	dto := dtos.TrimDashboardFullWithMeta{
-		Dashboard: dash,
-		Meta:      meta,
-	}
-
-	c.TimeRequest(metrics.MApiDashboardGet)
-	return response.JSON(http.StatusOK, dto)
-}
-
 // swagger:route GET /dashboards/uid/{uid} dashboards getDashboardByUID
 //
 // Get dashboard by uid.
@@ -118,15 +90,14 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 		err                    error
 	)
 
-	// If public dashboards is enabled and we have a public dashboard, update meta
-	// values
-	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
+	// If public dashboards is enabled and we have a public dashboard, update meta values
+	if hs.Features.IsEnabledGlobally(featuremgmt.FlagPublicDashboards) && hs.Cfg.PublicDashboardsEnabled {
 		publicDashboard, err := hs.PublicDashboardsApi.PublicDashboardService.FindByDashboardUid(c.Req.Context(), c.SignedInUser.GetOrgID(), dash.UID)
 		if err != nil && !errors.Is(err, publicdashboardModels.ErrPublicDashboardNotFound) {
 			return response.Error(http.StatusInternalServerError, "Error while retrieving public dashboards", err)
 		}
 
-		if publicDashboard != nil {
+		if publicDashboard != nil && (hs.License.FeatureEnabled(publicdashboardModels.FeaturePublicDashboardsEmailSharing) || publicDashboard.Share != publicdashboardModels.EmailShareType) {
 			publicDashboardEnabled = publicDashboard.IsEnabled
 		}
 	}
@@ -170,8 +141,12 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 		creator = hs.getUserLogin(c.Req.Context(), dash.CreatedBy)
 	}
 
-	annotationPermissions := &dtos.AnnotationPermission{}
-	hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Dashboard, accesscontrol.ScopeAnnotationsTypeDashboard)
+	annotationPermissions := &dashboardsV0.AnnotationPermission{}
+	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagAnnotationPermissionUpdate) {
+		hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Dashboard, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dash.UID))
+	} else {
+		hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Dashboard, accesscontrol.ScopeAnnotationsTypeDashboard)
+	}
 	hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Organization, accesscontrol.ScopeAnnotationsTypeOrganization)
 
 	meta := dtos.DashboardMeta{
@@ -190,16 +165,19 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 		Version:                dash.Version,
 		HasACL:                 dash.HasACL,
 		IsFolder:               dash.IsFolder,
-		FolderId:               dash.FolderID,
+		FolderId:               dash.FolderID, // nolint:staticcheck
 		Url:                    dash.GetURL(),
 		FolderTitle:            "General",
 		AnnotationsPermissions: annotationPermissions,
 		PublicDashboardEnabled: publicDashboardEnabled,
 	}
-
+	metrics.MFolderIDsAPICount.WithLabelValues(metrics.GetDashboard).Inc()
 	// lookup folder title
+	// nolint:staticcheck
 	if dash.FolderID > 0 {
+		// nolint:staticcheck
 		query := dashboards.GetDashboardQuery{ID: dash.FolderID, OrgID: c.SignedInUser.GetOrgID()}
+		metrics.MFolderIDsAPICount.WithLabelValues(metrics.GetDashboard).Inc()
 		queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
 		if err != nil {
 			if errors.Is(err, dashboards.ErrFolderNotFound) {
@@ -246,7 +224,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	return response.JSON(http.StatusOK, dto)
 }
 
-func (hs *HTTPServer) getAnnotationPermissionsByScope(c *contextmodel.ReqContext, actions *dtos.AnnotationActions, scope string) {
+func (hs *HTTPServer) getAnnotationPermissionsByScope(c *contextmodel.ReqContext, actions *dashboardsV0.AnnotationActions, scope string) {
 	var err error
 
 	evaluate := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsCreate, scope)
@@ -324,6 +302,10 @@ func (hs *HTTPServer) deleteDashboard(c *contextmodel.ReqContext) response.Respo
 		return dashboardGuardianResponse(err)
 	}
 
+	if dash.IsFolder {
+		return response.Error(http.StatusBadRequest, "Use folders endpoint for deleting folders.", nil)
+	}
+
 	namespaceID, userIDStr := c.SignedInUser.GetNamespacedID()
 
 	// disconnect all library elements for this dashboard
@@ -377,6 +359,7 @@ func (hs *HTTPServer) deleteDashboard(c *contextmodel.ReqContext) response.Respo
 // Create / Update dashboard
 //
 // Creates a new dashboard or updates an existing dashboard.
+// Note: This endpoint is not intended for creating folders, use `POST /api/folders` for that.
 //
 // Responses:
 // 200: postDashboardResponse
@@ -396,6 +379,10 @@ func (hs *HTTPServer) PostDashboard(c *contextmodel.ReqContext) response.Respons
 }
 
 func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.SaveDashboardCommand) response.Response {
+	if cmd.IsFolder {
+		return response.Error(http.StatusBadRequest, "Use folders endpoint for saving folders.", nil)
+	}
+
 	ctx := c.Req.Context()
 	var err error
 
@@ -412,25 +399,6 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 
 	cmd.OrgID = c.SignedInUser.GetOrgID()
 	cmd.UserID = userID
-	// nolint:staticcheck
-	if cmd.FolderUID != "" || cmd.FolderID != 0 {
-		folder, err := hs.folderService.Get(ctx, &folder.GetFolderQuery{
-			OrgID: c.SignedInUser.GetOrgID(),
-			UID:   &cmd.FolderUID,
-			// nolint:staticcheck
-			ID:           &cmd.FolderID,
-			SignedInUser: c.SignedInUser,
-		})
-		if err != nil {
-			if errors.Is(err, dashboards.ErrFolderNotFound) {
-				return response.Error(http.StatusBadRequest, "Folder not found", err)
-			}
-			return response.Error(http.StatusInternalServerError, "Error while checking folder ID", err)
-		}
-		// nolint:staticcheck
-		cmd.FolderID = folder.ID
-		cmd.FolderUID = folder.UID
-	}
 
 	dash := cmd.GetDashboardModel()
 	newDashboard := dash.ID == 0
@@ -472,7 +440,7 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 		Overwrite: cmd.Overwrite,
 	}
 
-	dashboard, err := hs.DashboardService.SaveDashboard(alerting.WithUAEnabled(ctx, hs.Cfg.UnifiedAlerting.IsEnabled()), dashItem, allowUiUpdate)
+	dashboard, err := hs.DashboardService.SaveDashboard(ctx, dashItem, allowUiUpdate)
 
 	if hs.Live != nil {
 		// Tell everyone listening that the dashboard changed
@@ -521,12 +489,13 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 
 	c.TimeRequest(metrics.MApiDashboardSave)
 	return response.JSON(http.StatusOK, util.DynMap{
-		"status":  "success",
-		"slug":    dashboard.Slug,
-		"version": dashboard.Version,
-		"id":      dashboard.ID,
-		"uid":     dashboard.UID,
-		"url":     dashboard.GetURL(),
+		"status":    "success",
+		"slug":      dashboard.Slug,
+		"version":   dashboard.Version,
+		"id":        dashboard.ID,
+		"uid":       dashboard.UID,
+		"url":       dashboard.GetURL(),
+		"folderUid": dashboard.FolderUID,
 	})
 }
 
@@ -831,72 +800,6 @@ func (hs *HTTPServer) GetDashboardVersion(c *contextmodel.ReqContext) response.R
 	return response.JSON(http.StatusOK, dashVersionMeta)
 }
 
-// swagger:route POST /dashboards/validate dashboards alpha validateDashboard
-//
-// Validates a dashboard JSON against the schema.
-//
-// Produces:
-// - application/json
-//
-// Responses:
-// 200: validateDashboardResponse
-// 412: validateDashboardResponse
-// 422: validateDashboardResponse
-// 401: unauthorisedError
-// 403: forbiddenError
-// 500: internalServerError
-func (hs *HTTPServer) ValidateDashboard(c *contextmodel.ReqContext) response.Response {
-	cmd := dashboards.ValidateDashboardCommand{}
-
-	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "Bad request data", err)
-	}
-
-	dk := hs.Kinds.Dashboard()
-	dashboardBytes := []byte(cmd.Dashboard)
-
-	// POST api receives dashboard as a string of json (so line numbers for errors stay consistent),
-	// but we need to parse the schema version out of it
-	dashboardJson, err := simplejson.NewJson(dashboardBytes)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "unable to parse dashboard", err)
-	}
-
-	schemaVersion, err := dashboardJson.Get("schemaVersion").Int()
-
-	isValid := false
-	statusCode := http.StatusOK
-	validationMessage := ""
-
-	// Only try to validate if the schemaVersion is at least the handoff version
-	// (the minimum schemaVersion against which the dashboard schema is known to
-	// work), or if schemaVersion is absent (which will happen once the Thema
-	// schema becomes canonical).
-	if err != nil || schemaVersion >= dashboard.HandoffSchemaVersion {
-		// Schemas expect the dashboard to live in the spec field
-		k8sResource := `{"spec": ` + cmd.Dashboard + "}"
-
-		_, _, validationErr := dk.JSONValueMux([]byte(k8sResource))
-
-		if validationErr == nil {
-			isValid = true
-		} else {
-			validationMessage = validationErr.Error()
-			statusCode = http.StatusUnprocessableEntity
-		}
-	} else {
-		validationMessage = "invalid schema version"
-		statusCode = http.StatusPreconditionFailed
-	}
-
-	respData := &ValidateDashboardResponse{
-		IsValid: isValid,
-		Message: validationMessage,
-	}
-
-	return response.JSON(statusCode, respData)
-}
-
 // swagger:route POST /dashboards/calculate-diff dashboards calculateDashboardDiff
 //
 // Perform diff on two dashboards.
@@ -1080,6 +983,7 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *contextmodel.ReqContext) respon
 	saveCmd.Message = fmt.Sprintf("Restored from version %d", version.Version)
 	// nolint:staticcheck
 	saveCmd.FolderID = dash.FolderID
+	metrics.MFolderIDsAPICount.WithLabelValues(metrics.RestoreDashboardVersion).Inc()
 	saveCmd.FolderUID = dash.FolderUID
 
 	return hs.postDashboard(c, saveCmd)
@@ -1123,12 +1027,6 @@ func (hs *HTTPServer) GetDashboardUIDs(c *contextmodel.ReqContext) {
 		uids = append(uids, qResult.UID)
 	}
 	c.JSON(http.StatusOK, uids)
-}
-
-// swagger:parameters renderReportPDF
-type RenderReportPDFParams struct {
-	// in:path
-	DashboardID int64
 }
 
 // swagger:parameters restoreDashboardVersionByID
@@ -1232,13 +1130,6 @@ type CalcDashboardDiffParams struct {
 	}
 }
 
-// swagger:parameters trimDashboard
-type TrimDashboardParams struct {
-	// in:body
-	// required:true
-	Body dashboards.TrimDashboardCommand
-}
-
 // swagger:response dashboardResponse
 type DashboardResponse struct {
 	// The response message
@@ -1301,6 +1192,10 @@ type PostDashboardResponse struct {
 		// required: true
 		// example: /d/nHz3SXiiz/my-dashboard
 		URL string `json:"url"`
+
+		// FolderUID The unique identifier (uid) of the folder the dashboard belongs to.
+		// required: false
+		FolderUID string `json:"folderUid"`
 	} `json:"body"`
 }
 
@@ -1308,12 +1203,6 @@ type PostDashboardResponse struct {
 type CalculateDashboardDiffResponse struct {
 	// in: body
 	Body []byte `json:"body"`
-}
-
-// swagger:response trimDashboardResponse
-type TrimDashboardResponse struct {
-	// in: body
-	Body dtos.TrimDashboardFullWithMeta `json:"body"`
 }
 
 // swagger:response getHomeDashboardResponse
@@ -1350,10 +1239,4 @@ type DashboardVersionsResponse struct {
 type DashboardVersionResponse struct {
 	// in: body
 	Body *dashver.DashboardVersionMeta `json:"body"`
-}
-
-// swagger:response validateDashboardResponse
-type ValidateDashboardResponse struct {
-	IsValid bool   `json:"isValid"`
-	Message string `json:"message,omitempty"`
 }

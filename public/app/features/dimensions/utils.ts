@@ -93,11 +93,11 @@ export function getTextDimensionFromData(
 }
 
 export function findField(frame?: DataFrame, name?: string): Field | undefined {
-  const idx = findFieldIndex(frame, name);
+  const idx = findFieldIndex(name, frame);
   return idx == null ? undefined : frame!.fields[idx];
 }
 
-export function findFieldIndex(frame?: DataFrame, name?: string): number | undefined {
+export function findFieldIndex(name?: string, frame?: DataFrame, frames?: DataFrame[]): number | undefined {
   if (!frame || !name?.length) {
     return undefined;
   }
@@ -107,7 +107,7 @@ export function findFieldIndex(frame?: DataFrame, name?: string): number | undef
     if (name === field.name) {
       return i;
     }
-    const disp = getFieldDisplayName(field, frame);
+    const disp = getFieldDisplayName(field, frame, frames);
     if (name === disp) {
       return i;
     }
@@ -132,5 +132,5 @@ export function getLastNotNullFieldValue<T>(field: Field): T {
       return v;
     }
   }
-  return undefined as any;
+  return undefined as T;
 }

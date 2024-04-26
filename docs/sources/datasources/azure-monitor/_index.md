@@ -35,7 +35,7 @@ Only users with the organization administrator role can add data sources.
 
 Once you've added the Azure Monitor data source, you can [configure it](#configure-the-data-source) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor" >}}) when they [build dashboards][build-dashboards] and use [Explore][explore].
 
-The Azure Monitor data source supports visualizing data from three Azure services:
+The Azure Monitor data source supports visualizing data from four Azure services:
 
 - **Azure Monitor Metrics:** Collect numeric data from resources in your Azure account.
 - **Azure Monitor Logs:** Collect log and performance data from your Azure account, and query using the Kusto Query Language (KQL).
@@ -133,6 +133,28 @@ datasources:
     version: 1
 ```
 
+**Current User:**
+
+{{< admonition type="note" >}}
+The `oauthPassThru` property is required for current user authentication to function.
+Additionally, `disableGrafanaCache` is necessary to prevent the data source returning cached responses for resources users don't have access to.
+{{< /admonition >}}
+
+```yaml
+apiVersion: 1 # config file version
+
+datasources:
+  - name: Azure Monitor
+    type: grafana-azure-monitor-datasource
+    access: proxy
+    jsonData:
+      azureAuthType: currentuser
+      oauthPassThru: true
+      disableGrafanaCache: true
+      subscriptionId: <subscription-id> # Optional, default subscription
+    version: 1
+```
+
 #### Supported cloud names
 
 | Azure Cloud                          | `cloudName` Value          |
@@ -140,6 +162,11 @@ datasources:
 | **Microsoft Azure public cloud**     | `azuremonitor` (_Default_) |
 | **Microsoft Chinese national cloud** | `chinaazuremonitor`        |
 | **US Government cloud**              | `govazuremonitor`          |
+
+{{< admonition type="note" >}}
+Cloud names for current user authentication differ to the `cloudName` values in the preceding table.
+The public cloud name is `AzureCloud`, the Chinese national cloud name is `AzureChinaCloud`, and the US Government cloud name is `AzureUSGovernment`.
+{{< /admonition >}}
 
 ### Configure Managed Identity
 
@@ -201,6 +228,66 @@ For details on workload identity, refer to the [Azure workload identity document
    workload_identity_token_file = TOKEN_FILE_PATH
    ```
 
+### Configure Current User authentication
+
+{{< admonition type="note" >}}
+Current user authentication is an [experimental feature](/docs/release-life-cycle). Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Contact Grafana Support to enable this feature in Grafana Cloud. Aspects of Grafana may not work as expected when using this authentication method.
+{{< /admonition >}}
+
+If your Grafana instance is configured with Azure Entra (formerly Active Directory) authentication for login, this authentication method can be used to forward the currently logged in user's credentials to the data source. The users credentials will then be used when requesting data from the data source. For details on how to configure your Grafana instance using Azure Entra refer to the [documentation][configure-grafana-azure-auth].
+
+{{< admonition type="note" >}}
+Additional configuration is required to ensure that the App Registration used to login a user via Azure provides an access token with the permissions required by the data source.
+
+The App Registration must be configured to issue both **Access Tokens** and **ID Tokens**.
+
+1. In the Azure Portal, open the App Registration that requires configuration.
+2. Select **Authentication** in the side menu.
+3. Under **Implicit grant and hybrid flows** check both the **Access tokens** and **ID tokens** boxes.
+4. Save the changes to ensure the App Registration is updated.
+
+The App Registration must also be configured with additional **API Permissions** to provide authenticated users with access to the APIs utilised by the data source.
+
+1. In the Azure Portal, open the App Registration that requires configuration.
+1. Select **API Permissions** in the side menu.
+1. Ensure the `openid`, `profile`, `email`, and `offline_access` permissions are present under the **Microsoft Graph** section. If not, they must be added.
+1. Select **Add a permission** and choose the following permissions. They must be added individually. Refer to the [Azure documentation](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-configure-app-access-web-apis) for more information.
+   - Select **Azure Service Management** > **Delegated permissions** > `user_impersonation` > **Add permissions**
+   - Select **APIs my organization uses** > Search for **Log Analytics API** and select it > **Delegated permissions** > `Date.Read` > **Add permissions**
+
+Once all permissions have been added, the Azure authentication section in Grafana must be updated. The `scopes` section must be updated to include the `.default` scope to ensure that a token with access to all APIs declared on the App Registration is requested by Grafana. Once updated the scopes value should equal: `.default openid email profile`.
+{{< /admonition >}}
+
+This method of authentication doesn't inherently support all backend functionality as a user's credentials won't be in scope.
+Affected functionality includes alerting, reporting, and recorded queries.
+In order to support backend queries when using a data source configured with current user authentication, you can configure service credentials.
+Also, note that query and resource caching is disabled by default for data sources using current user authentication.
+
+{{< admonition type="note" >}}
+To configure fallback service credentials the [feature toggle][configure-grafana-feature-toggles] `idForwarding` must be set to `true` and `user_identity_fallback_credentials_enabled` must be enabled in the [Azure configuration section][configure-grafana-azure] (enabled by default when `user_identity_enabled` is set to `true`).
+{{< /admonition >}}
+
+Permissions for fallback credentials may need to be broad to appropriately support backend functionality.
+For example, an alerting query created by a user is dependent on their permissions.
+If a user tries to create an alert for a resource that the fallback credentials can't access, the alert will fail.
+
+**To enable current user authentication for Grafana:**
+
+1. Set the `user_identity_enabled` flag in the `[azure]` section of the [Grafana server configuration][configure-grafana-azure].
+   By default this will also enable fallback service credentials.
+   If you want to disable service credentials at the instance level set `user_identity_fallback_credentials_enabled` to false.
+
+   ```ini
+   [azure]
+   user_identity_enabled = true
+   ```
+
+1. In the Azure Monitor data source configuration, set **Authentication** to **Current User**.
+   If fallback service credentials are enabled at the instance level, an additional configuration section is visible that you can use to enable or disable using service credentials for this data source.
+   {{< figure src="/media/docs/grafana/data-sources/screenshot-current-user.png" max-width="800px" class="docs-image--no-shadow" caption="Azure Monitor screenshot showing Current User authentication" >}}
+
+1. If you want backend functionality to work with this data source, enable service credentials and configure the data source using the most applicable credentials for your circumstances.
+
 ## Query the data source
 
 The Azure Monitor data source can query data from Azure Monitor Metrics and Logs, the Azure Resource Graph, and Application Insights Traces. Each source has its own specialized query editor.
@@ -215,7 +302,7 @@ Grafana refers to such variables as template variables.
 
 For details, see the [template variables documentation]({{< relref "./template-variables" >}}).
 
-## Application Insights and Insights Analytics (removed))
+## Application Insights and Insights Analytics (removed)
 
 Until Grafana v8.0, you could query the same Azure Application Insights data using Application Insights and Insights Analytics.
 
@@ -229,6 +316,15 @@ If you're upgrading from a Grafana version prior to v9.0 and relied on Applicati
 
 [configure-grafana-azure]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#azure"
 [configure-grafana-azure]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#azure"
+
+[configure-grafana-azure-auth]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-security/configure-authentication/azuread"
+[configure-grafana-azure-auth]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-security/configure-authentication/azuread"
+
+[configure-grafana-azure-auth-scopes]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-security/configure-authentication/azuread/#enable-azure-ad-oauth-in-grafana"
+[configure-grafana-azure-auth-scopes]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-security/configure-authentication/azuread/#enable-azure-ad-oauth-in-grafana"
+
+[configure-grafana-feature-toggles]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana/#feature_toggles"
+[configure-grafana-feature-toggles]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana/#feature_toggles"
 
 [data-source-management]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
 [data-source-management]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"

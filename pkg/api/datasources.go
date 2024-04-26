@@ -6,9 +6,13 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/prometheus/prometheus/promql/parser"
+	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
@@ -17,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -46,12 +51,12 @@ func (hs *HTTPServer) GetDataSources(c *contextmodel.ReqContext) response.Respon
 
 	dataSources, err := hs.DataSourcesService.GetDataSources(c.Req.Context(), &query)
 	if err != nil {
-		return response.Error(500, "Failed to query datasources", err)
+		return response.Error(http.StatusInternalServerError, "Failed to query datasources", err)
 	}
 
 	filtered, err := hs.dsGuardian.New(c.SignedInUser.OrgID, c.SignedInUser).FilterDatasourcesByQueryPermissions(dataSources)
 	if err != nil {
-		return response.Error(500, "Failed to query datasources", err)
+		return response.Error(http.StatusInternalServerError, "Failed to query datasources", err)
 	}
 
 	result := make(dtos.DataSourceList, 0)
@@ -120,18 +125,18 @@ func (hs *HTTPServer) GetDataSourceById(c *contextmodel.ReqContext) response.Res
 	dataSource, err := hs.DataSourcesService.GetDataSource(c.Req.Context(), &query)
 	if err != nil {
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
-			return response.Error(404, "Data source not found", nil)
+			return response.Error(http.StatusNotFound, "Data source not found", nil)
 		}
 		if errors.Is(err, datasources.ErrDataSourceIdentifierNotSet) {
-			return response.Error(400, "Datasource id is missing", nil)
+			return response.Error(http.StatusBadRequest, "Datasource id is missing", nil)
 		}
-		return response.Error(500, "Failed to query datasources", err)
+		return response.Error(http.StatusInternalServerError, "Failed to query datasources", err)
 	}
 
 	dto := hs.convertModelToDtos(c.Req.Context(), dataSource)
 
 	// Add accesscontrol metadata
-	dto.AccessControl = hs.getAccessControlMetadata(c, c.SignedInUser.GetOrgID(), datasources.ScopePrefix, dto.UID)
+	dto.AccessControl = hs.getAccessControlMetadata(c, datasources.ScopePrefix, dto.UID)
 
 	return response.JSON(http.StatusOK, &dto)
 }
@@ -160,19 +165,19 @@ func (hs *HTTPServer) DeleteDataSourceById(c *contextmodel.ReqContext) response.
 	}
 
 	if id <= 0 {
-		return response.Error(400, "Missing valid datasource id", nil)
+		return response.Error(http.StatusBadRequest, "Missing valid datasource id", nil)
 	}
 
 	ds, err := hs.getRawDataSourceById(c.Req.Context(), id, c.SignedInUser.GetOrgID())
 	if err != nil {
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
-			return response.Error(404, "Data source not found", nil)
+			return response.Error(http.StatusNotFound, "Data source not found", nil)
 		}
-		return response.Error(400, "Failed to delete datasource", nil)
+		return response.Error(http.StatusBadRequest, "Failed to delete datasource", nil)
 	}
 
 	if ds.ReadOnly {
-		return response.Error(403, "Cannot delete read-only data source", nil)
+		return response.Error(http.StatusForbidden, "Cannot delete read-only data source", nil)
 	}
 
 	cmd := &datasources.DeleteDataSourceCommand{ID: id, OrgID: c.SignedInUser.GetOrgID(), Name: ds.Name}
@@ -180,9 +185,9 @@ func (hs *HTTPServer) DeleteDataSourceById(c *contextmodel.ReqContext) response.
 	err = hs.DataSourcesService.DeleteDataSource(c.Req.Context(), cmd)
 	if err != nil {
 		if errors.As(err, &secretsPluginError) {
-			return response.Error(500, "Failed to delete datasource: "+err.Error(), err)
+			return response.Error(http.StatusInternalServerError, "Failed to delete datasource: "+err.Error(), err)
 		}
-		return response.Error(500, "Failed to delete datasource", err)
+		return response.Error(http.StatusInternalServerError, "Failed to delete datasource", err)
 	}
 
 	hs.Live.HandleDatasourceDelete(c.SignedInUser.GetOrgID(), ds.UID)
@@ -217,7 +222,7 @@ func (hs *HTTPServer) GetDataSourceByUID(c *contextmodel.ReqContext) response.Re
 	dto := hs.convertModelToDtos(c.Req.Context(), ds)
 
 	// Add accesscontrol metadata
-	dto.AccessControl = hs.getAccessControlMetadata(c, c.SignedInUser.GetOrgID(), datasources.ScopePrefix, dto.UID)
+	dto.AccessControl = hs.getAccessControlMetadata(c, datasources.ScopePrefix, dto.UID)
 
 	return response.JSON(http.StatusOK, &dto)
 }
@@ -239,19 +244,19 @@ func (hs *HTTPServer) DeleteDataSourceByUID(c *contextmodel.ReqContext) response
 	uid := web.Params(c.Req)[":uid"]
 
 	if uid == "" {
-		return response.Error(400, "Missing datasource uid", nil)
+		return response.Error(http.StatusBadRequest, "Missing datasource uid", nil)
 	}
 
 	ds, err := hs.getRawDataSourceByUID(c.Req.Context(), uid, c.SignedInUser.GetOrgID())
 	if err != nil {
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
-			return response.Error(404, "Data source not found", nil)
+			return response.Error(http.StatusNotFound, "Data source not found", nil)
 		}
-		return response.Error(400, "Failed to delete datasource", nil)
+		return response.Error(http.StatusBadRequest, "Failed to delete datasource", nil)
 	}
 
 	if ds.ReadOnly {
-		return response.Error(403, "Cannot delete read-only data source", nil)
+		return response.Error(http.StatusForbidden, "Cannot delete read-only data source", nil)
 	}
 
 	cmd := &datasources.DeleteDataSourceCommand{UID: uid, OrgID: c.SignedInUser.GetOrgID(), Name: ds.Name}
@@ -259,9 +264,9 @@ func (hs *HTTPServer) DeleteDataSourceByUID(c *contextmodel.ReqContext) response
 	err = hs.DataSourcesService.DeleteDataSource(c.Req.Context(), cmd)
 	if err != nil {
 		if errors.As(err, &secretsPluginError) {
-			return response.Error(500, "Failed to delete datasource: "+err.Error(), err)
+			return response.Error(http.StatusInternalServerError, "Failed to delete datasource: "+err.Error(), err)
 		}
-		return response.Error(500, "Failed to delete datasource", err)
+		return response.Error(http.StatusInternalServerError, "Failed to delete datasource", err)
 	}
 
 	hs.Live.HandleDatasourceDelete(c.SignedInUser.GetOrgID(), ds.UID)
@@ -289,29 +294,29 @@ func (hs *HTTPServer) DeleteDataSourceByName(c *contextmodel.ReqContext) respons
 	name := web.Params(c.Req)[":name"]
 
 	if name == "" {
-		return response.Error(400, "Missing valid datasource name", nil)
+		return response.Error(http.StatusBadRequest, "Missing valid datasource name", nil)
 	}
 
 	getCmd := &datasources.GetDataSourceQuery{Name: name, OrgID: c.SignedInUser.GetOrgID()}
 	dataSource, err := hs.DataSourcesService.GetDataSource(c.Req.Context(), getCmd)
 	if err != nil {
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
-			return response.Error(404, "Data source not found", nil)
+			return response.Error(http.StatusNotFound, "Data source not found", nil)
 		}
-		return response.Error(500, "Failed to delete datasource", err)
+		return response.Error(http.StatusInternalServerError, "Failed to delete datasource", err)
 	}
 
 	if dataSource.ReadOnly {
-		return response.Error(403, "Cannot delete read-only data source", nil)
+		return response.Error(http.StatusForbidden, "Cannot delete read-only data source", nil)
 	}
 
 	cmd := &datasources.DeleteDataSourceCommand{Name: name, OrgID: c.SignedInUser.GetOrgID()}
 	err = hs.DataSourcesService.DeleteDataSource(c.Req.Context(), cmd)
 	if err != nil {
 		if errors.As(err, &secretsPluginError) {
-			return response.Error(500, "Failed to delete datasource: "+err.Error(), err)
+			return response.Error(http.StatusInternalServerError, "Failed to delete datasource: "+err.Error(), err)
 		}
-		return response.Error(500, "Failed to delete datasource", err)
+		return response.Error(http.StatusInternalServerError, "Failed to delete datasource", err)
 	}
 
 	hs.Live.HandleDatasourceDelete(c.SignedInUser.GetOrgID(), dataSource.UID)
@@ -334,43 +339,84 @@ func validateURL(cmdType string, url string) response.Response {
 // validateJSONData prevents the user from adding a custom header with name that matches the auth proxy header name.
 // This is done to prevent data source proxy from being used to circumvent auth proxy.
 // For more context take a look at CVE-2022-35957
-func validateJSONData(ctx context.Context, jsonData *simplejson.Json, cfg *setting.Cfg, features *featuremgmt.FeatureManager) error {
-	if jsonData == nil || !cfg.AuthProxyEnabled {
+func validateJSONData(ctx context.Context, jsonData *simplejson.Json, cfg *setting.Cfg, features featuremgmt.FeatureToggles) error {
+	if jsonData == nil {
 		return nil
 	}
 
-	for key, value := range jsonData.MustMap() {
-		if strings.HasPrefix(key, datasources.CustomHeaderName) {
-			header := fmt.Sprint(value)
-			if http.CanonicalHeaderKey(header) == http.CanonicalHeaderKey(cfg.AuthProxyHeaderName) {
-				datasourcesLogger.Error("Forbidden to add a data source header with a name equal to auth proxy header name", "headerName", key)
-				return errors.New("validation error, invalid header name specified")
-			}
-		}
-	}
-
-	// Prevent adding a data source team header with a name that matches the auth proxy header name
-	if features.IsEnabled(featuremgmt.FlagTeamHttpHeaders) {
-		teamHTTPHeadersJSON, err := datasources.GetTeamHTTPHeaders(jsonData)
-		if err != nil {
-			datasourcesLogger.Error("Unable to marshal TeamHTTPHeaders")
-			return errors.New("validation error, invalid format of TeamHTTPHeaders")
-		}
-		// whitelisting X-Prom-Label-Policy
-		for _, headers := range teamHTTPHeadersJSON {
-			for _, header := range headers {
-				// TODO: currently we only allow for X-Prom-Label-Policy header to be used by our proxy
-				for _, name := range []string{"X-Prom-Label-Policy"} {
-					if http.CanonicalHeaderKey(header.Header) != http.CanonicalHeaderKey(name) {
-						datasourcesLogger.Error("Cannot add a data source team header that is different than", "headerName", name)
-						return errors.New("validation error, invalid header name specified")
-					}
+	if cfg.AuthProxy.Enabled {
+		for key, value := range jsonData.MustMap() {
+			if strings.HasPrefix(key, datasources.CustomHeaderName) {
+				header := fmt.Sprint(value)
+				if http.CanonicalHeaderKey(header) == http.CanonicalHeaderKey(cfg.AuthProxy.HeaderName) {
+					datasourcesLogger.Error("Forbidden to add a data source header with a name equal to auth proxy header name", "headerName", key)
+					return errors.New("validation error, invalid header name specified")
 				}
 			}
 		}
 	}
 
+	// Prevent adding a data source team header with a name that matches the auth proxy header name
+	if features.IsEnabled(ctx, featuremgmt.FlagTeamHttpHeaders) {
+		err := validateTeamHTTPHeaderJSON(jsonData)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
+}
+
+// we only allow for now the following headers to be added to a data source team header
+var validHeaders = []string{"X-Prom-Label-Policy"}
+
+func validateTeamHTTPHeaderJSON(jsonData *simplejson.Json) error {
+	teamHTTPHeadersJSON, err := datasources.GetTeamHTTPHeaders(jsonData)
+	if err != nil {
+		datasourcesLogger.Error("Unable to marshal TeamHTTPHeaders")
+		return errors.New("validation error, invalid format of TeamHTTPHeaders")
+	}
+	if teamHTTPHeadersJSON == nil {
+		return nil
+	}
+	// whitelisting ValidHeaders
+	// each teams headers
+	for _, teamheaders := range teamHTTPHeadersJSON.Headers {
+		for _, header := range teamheaders {
+			if !slices.ContainsFunc(validHeaders, func(v string) bool {
+				return http.CanonicalHeaderKey(v) == http.CanonicalHeaderKey(header.Header)
+			}) {
+				datasourcesLogger.Error("Cannot add a data source team header that is different than", "headerName", header.Header)
+				return errors.New("validation error, invalid header name specified")
+			}
+			if !validateLBACHeader(header.Value) {
+				datasourcesLogger.Error("Cannot add a data source team header value with invalid value", "headerValue", header.Value)
+				return errors.New("validation error, invalid header value syntax")
+			}
+		}
+	}
+	return nil
+}
+
+// validateLBACHeader returns true if the header value matches the syntax
+// 1234:{ name!="value",foo!~"bar" }
+func validateLBACHeader(headervalue string) bool {
+	exp := `^\d+:(.+)`
+	pattern, err := regexp.Compile(exp)
+	if err != nil {
+		return false
+	}
+	match := pattern.FindSubmatch([]byte(strings.TrimSpace(headervalue)))
+	if match == nil || len(match) < 2 {
+		return false
+	}
+	_, err = parser.ParseMetricSelector(string(match[1]))
+	return err == nil
+}
+
+func evaluateTeamHTTPHeaderPermissions(hs *HTTPServer, c *contextmodel.ReqContext, scope string) (bool, error) {
+	ev := ac.EvalPermission(datasources.ActionPermissionsWrite, ac.Scope(scope))
+	return hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, ev)
 }
 
 // swagger:route POST /datasources datasources addDataSource
@@ -410,6 +456,7 @@ func (hs *HTTPServer) AddDataSource(c *contextmodel.ReqContext) response.Respons
 			return resp
 		}
 	}
+
 	if err := validateJSONData(c.Req.Context(), cmd.JsonData, hs.Cfg, hs.Features); err != nil {
 		return response.Error(http.StatusBadRequest, "Failed to add datasource", err)
 	}
@@ -478,14 +525,20 @@ func (hs *HTTPServer) UpdateDataSourceByID(c *contextmodel.ReqContext) response.
 	if err := validateJSONData(c.Req.Context(), cmd.JsonData, hs.Cfg, hs.Features); err != nil {
 		return response.Error(http.StatusBadRequest, "Failed to update datasource", err)
 	}
-
 	ds, err := hs.getRawDataSourceById(c.Req.Context(), cmd.ID, cmd.OrgID)
 	if err != nil {
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
-			return response.Error(404, "Data source not found", nil)
+			return response.Error(http.StatusNotFound, "Data source not found", nil)
 		}
-		return response.Error(500, "Failed to update datasource", err)
+		return response.Error(http.StatusInternalServerError, "Failed to update datasource", err)
 	}
+
+	// check if LBAC rules have been modified
+	hasAccess, errAccess := checkTeamHTTPHeaderPermissions(hs, c, ds, cmd)
+	if !hasAccess {
+		return response.Error(http.StatusForbidden, fmt.Sprintf("You'll need additional permissions to perform this action. Permissions needed: %s", datasources.ActionPermissionsWrite), errAccess)
+	}
+
 	return hs.updateDataSourceByID(c, ds, cmd)
 }
 
@@ -527,12 +580,40 @@ func (hs *HTTPServer) UpdateDataSourceByUID(c *contextmodel.ReqContext) response
 		return response.Error(http.StatusInternalServerError, "Failed to update datasource", err)
 	}
 	cmd.ID = ds.ID
+
+	// check if LBAC rules have been modified
+	hasAccess, errAccess := checkTeamHTTPHeaderPermissions(hs, c, ds, cmd)
+	if !hasAccess {
+		return response.Error(http.StatusForbidden, fmt.Sprintf("You'll need additional permissions to perform this action. Permissions needed: %s", datasources.ActionPermissionsWrite), errAccess)
+	}
+
 	return hs.updateDataSourceByID(c, ds, cmd)
+}
+
+func getEncodedString(jsonData *simplejson.Json, key string) string {
+	if jsonData == nil {
+		return ""
+	}
+	jsonValues, exists := jsonData.CheckGet(key)
+	if !exists {
+		return ""
+	}
+	val, _ := jsonValues.Encode()
+	return string(val)
+}
+
+func checkTeamHTTPHeaderPermissions(hs *HTTPServer, c *contextmodel.ReqContext, ds *datasources.DataSource, cmd datasources.UpdateDataSourceCommand) (bool, error) {
+	currentTeamHTTPHeaders := getEncodedString(ds.JsonData, "teamHttpHeaders")
+	newTeamHTTPHeaders := getEncodedString(cmd.JsonData, "teamHttpHeaders")
+	if (currentTeamHTTPHeaders != "" || newTeamHTTPHeaders != "") && currentTeamHTTPHeaders != newTeamHTTPHeaders {
+		return evaluateTeamHTTPHeaderPermissions(hs, c, datasources.ScopePrefix+ds.UID)
+	}
+	return true, nil
 }
 
 func (hs *HTTPServer) updateDataSourceByID(c *contextmodel.ReqContext, ds *datasources.DataSource, cmd datasources.UpdateDataSourceCommand) response.Response {
 	if ds.ReadOnly {
-		return response.Error(403, "Cannot update read-only data source", nil)
+		return response.Error(http.StatusForbidden, "Cannot update read-only data source", nil)
 	}
 
 	_, err := hs.DataSourcesService.UpdateDataSource(c.Req.Context(), &cmd)
@@ -560,9 +641,9 @@ func (hs *HTTPServer) updateDataSourceByID(c *contextmodel.ReqContext, ds *datas
 	dataSource, err := hs.DataSourcesService.GetDataSource(c.Req.Context(), &query)
 	if err != nil {
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
-			return response.Error(404, "Data source not found", nil)
+			return response.Error(http.StatusNotFound, "Data source not found", nil)
 		}
-		return response.Error(500, "Failed to query datasource", err)
+		return response.Error(http.StatusInternalServerError, "Failed to query datasource", err)
 	}
 
 	datasourceDTO := hs.convertModelToDtos(c.Req.Context(), dataSource)
@@ -623,9 +704,9 @@ func (hs *HTTPServer) GetDataSourceByName(c *contextmodel.ReqContext) response.R
 	dataSource, err := hs.DataSourcesService.GetDataSource(c.Req.Context(), &query)
 	if err != nil {
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
-			return response.Error(404, "Data source not found", nil)
+			return response.Error(http.StatusNotFound, "Data source not found", nil)
 		}
-		return response.Error(500, "Failed to query datasources", err)
+		return response.Error(http.StatusInternalServerError, "Failed to query datasources", err)
 	}
 
 	dto := hs.convertModelToDtos(c.Req.Context(), dataSource)
@@ -651,9 +732,9 @@ func (hs *HTTPServer) GetDataSourceIdByName(c *contextmodel.ReqContext) response
 	ds, err := hs.DataSourcesService.GetDataSource(c.Req.Context(), &query)
 	if err != nil {
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
-			return response.Error(404, "Data source not found", nil)
+			return response.Error(http.StatusNotFound, "Data source not found", nil)
 		}
-		return response.Error(500, "Failed to query datasources", err)
+		return response.Error(http.StatusInternalServerError, "Failed to query datasources", err)
 	}
 
 	dtos := dtos.AnyId{

@@ -10,7 +10,7 @@ describe('AddLayerButton', () => {
   it('renders AddLayerButton', () => {
     renderScenario({});
 
-    const button = screen.getByLabelText(selectors.components.ValuePicker.button(testLabel));
+    const button = screen.getByTestId(selectors.components.ValuePicker.button(testLabel));
 
     expect(button).toBeInTheDocument();
   });

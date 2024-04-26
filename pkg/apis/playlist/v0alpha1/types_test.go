@@ -16,7 +16,7 @@ func TestPlaylistClone(t *testing.T) {
 			ResourceVersion:   "12345",
 			CreationTimestamp: metav1.NewTime(time.Now()),
 			Annotations: map[string]string{
-				"grafana.com/updatedTime": time.Now().Format(time.RFC3339),
+				"grafana.app/updatedTimestamp": time.Now().Format(time.RFC3339),
 			},
 		},
 		Spec: Spec{

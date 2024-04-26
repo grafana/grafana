@@ -13,6 +13,9 @@ export interface IconProps extends Omit<React.SVGProps<SVGElement>, 'onLoad' | '
   name: IconName;
   size?: IconSize;
   type?: IconType;
+  /**
+   * Give your icon a semantic meaning. The icon will be hidden from screen readers, unless this prop or an aria-label is provided.
+   */
   title?: string;
 }
 
@@ -51,14 +54,28 @@ export const Icon = React.forwardRef<SVGElement, IconProps>(
     const subDir = getIconSubDir(iconName, type);
     const svgPath = `${iconRoot}${subDir}/${iconName}.svg`;
 
+    const composedClassName = cx(
+      styles.icon,
+      className,
+      type === 'mono' ? { [styles.orange]: name === 'favorite' } : '',
+      iconName === 'spinner' && 'fa-spin'
+    );
+
     return (
       <SVG
+        aria-hidden={
+          rest.tabIndex === undefined &&
+          !title &&
+          !rest['aria-label'] &&
+          !rest['aria-labelledby'] &&
+          !rest['aria-describedby']
+        }
         innerRef={ref}
         src={svgPath}
         width={svgWid}
         height={svgHgt}
         title={title}
-        className={cx(styles.icon, className, type === 'mono' ? { [styles.orange]: name === 'favorite' } : '')}
+        className={composedClassName}
         style={style}
         {...rest}
       />

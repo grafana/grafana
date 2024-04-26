@@ -2,57 +2,40 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
-import { CallToActionCard, IconName, LinkButton, useStyles2 } from '@grafana/ui';
+import { Icon, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 
-export interface Props {
-  title: string;
-  buttonIcon: IconName;
-  buttonLink?: string;
-  buttonTitle: string;
-  buttonDisabled?: boolean;
-  description?: string;
-  onClick?: () => void;
-}
+export interface Props {}
 
-const ConfigureAuthCTA: React.FunctionComponent<Props> = ({
-  title,
-  buttonIcon,
-  buttonLink,
-  buttonTitle,
-  buttonDisabled,
-  description,
-  onClick,
-}) => {
+const ConfigureAuthCTA: React.FunctionComponent<Props> = () => {
   const styles = useStyles2(getStyles);
-  const footer = description ? <span key="proTipFooter">{description}</span> : '';
-  const ctaElementClassName = !description ? styles.button : '';
-
-  const ctaElement = (
-    <LinkButton
-      size="lg"
-      href={buttonLink}
-      icon={buttonIcon}
-      className={ctaElementClassName}
-      data-testid={selectors.components.CallToActionCard.buttonV2(buttonTitle)}
-      disabled={buttonDisabled}
-      onClick={() => onClick && onClick()}
-    >
-      {buttonTitle}
-    </LinkButton>
+  return (
+    <div className={styles.container}>
+      <Stack gap={1} alignItems={'center'}>
+        <Icon name={'cog'} />
+        <Text>Configuration required</Text>
+      </Stack>
+      <Text variant={'bodySmall'} color={'secondary'}>
+        You have no authentication configuration created at the moment.
+      </Text>
+      <TextLink href={'https://grafana.com/docs/grafana/latest/auth/overview/'} external>
+        Refer to the documentation on how to configure authentication
+      </TextLink>
+    </div>
   );
-
-  return <CallToActionCard className={styles.cta} message={title} footer={footer} callToActionElement={ctaElement} />;
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    cta: css`
-      text-align: center;
-    `,
-    button: css`
-      margin-bottom: ${theme.spacing(2.5)};
-    `,
+    container: css({
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(2),
+      backgroundColor: theme.colors.background.secondary,
+      borderRadius: theme.shape.radius.default,
+      padding: theme.spacing(3),
+      width: 'max-content',
+      margin: theme.spacing(3, 'auto'),
+    }),
   };
 };
 

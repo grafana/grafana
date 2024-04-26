@@ -3,7 +3,7 @@ _build:
   list: false
 aliases:
   - ../guides/whats-new-in-v7-3/
-description: Feature and improvement highlights for Grafana v7.3
+description: Learn about new and updated features in Grafana v7.3
 keywords:
   - grafana
   - new
@@ -21,7 +21,7 @@ weight: -30
 
 # What's new in Grafana v7.3
 
-This topic includes the release notes for Grafana v7.3. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) or the [Patch release notes](#patch-release-notes).
+This topic includes the release notes for Grafana v7.3. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/main/CHANGELOG.md) or the [Patch release notes](#patch-release-notes).
 
 The main highlights are:
 
@@ -154,7 +154,7 @@ IdP-initiated single sign on (SSO) allows the user to log in directly from the S
 
 ## Changelog
 
-Check out [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) for a complete list of new features, changes, and bug fixes.
+Check out [CHANGELOG.md](https://github.com/grafana/grafana/blob/main/CHANGELOG.md) for a complete list of new features, changes, and bug fixes.
 
 ## Patch release notes
 

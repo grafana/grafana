@@ -292,7 +292,7 @@ func (c cdkBlobStorage) list(ctx context.Context, folderPath string, paging *Pag
 	})}
 
 	recursive := options.Recursive
-	pageSize := paging.First
+	pageSize := paging.Limit
 
 	foundCursor := true
 	if paging.After != "" {

@@ -21,16 +21,17 @@ type Plugin struct {
 	Pinned          bool
 
 	// Signature fields
-	Signature      plugins.SignatureStatus
-	SignatureType  plugins.SignatureType
-	SignatureOrg   string
-	SignatureError *plugins.SignatureError
+	Signature     plugins.SignatureStatus
+	SignatureType plugins.SignatureType
+	SignatureOrg  string
+
+	Error *plugins.Error
 
 	// SystemJS fields
 	Module  string
 	BaseURL string
 
-	AngularDetected bool
+	Angular plugins.AngularMeta
 
 	ExternalService *auth.ExternalService
 }
@@ -69,10 +70,11 @@ func ToGrafanaDTO(p *plugins.Plugin) Plugin {
 		Signature:         p.Signature,
 		SignatureType:     p.SignatureType,
 		SignatureOrg:      p.SignatureOrg,
-		SignatureError:    p.SignatureError,
+		Error:             p.Error,
 		Module:            p.Module,
 		BaseURL:           p.BaseURL,
-		AngularDetected:   p.AngularDetected,
 		ExternalService:   p.ExternalService,
+
+		Angular: p.Angular,
 	}
 }

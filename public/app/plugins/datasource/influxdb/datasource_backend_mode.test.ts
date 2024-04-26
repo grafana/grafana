@@ -5,6 +5,7 @@ import { FetchResponse } from '@grafana/runtime/src';
 import config from 'app/core/config';
 
 import { TemplateSrv } from '../../../features/templating/template_srv';
+import { queryBuilder } from '../../../features/variables/shared/testing/builders';
 
 import InfluxDatasource from './datasource';
 import {
@@ -149,6 +150,7 @@ describe('InfluxDataSource Backend Mode', () => {
     const text2 = 'interpolationText2';
     const textWithoutFormatRegex = 'interpolationText,interpolationText2';
     const textWithFormatRegex = 'interpolationText,interpolationText2';
+    const justText = 'interpolationText';
     const variableMap: Record<string, string> = {
       $interpolationVar: text,
       $interpolationVar2: text2,
@@ -176,16 +178,16 @@ describe('InfluxDataSource Backend Mode', () => {
     const ds = new InfluxDatasource(getMockDSInstanceSettings(), templateSrv);
 
     function influxChecks(query: InfluxQuery) {
-      expect(templateSrv.replace).toBeCalledTimes(10);
+      expect(templateSrv.replace).toBeCalledTimes(12);
       expect(query.alias).toBe(text);
       expect(query.measurement).toBe(textWithFormatRegex);
-      expect(query.policy).toBe(textWithFormatRegex);
-      expect(query.limit).toBe(textWithFormatRegex);
-      expect(query.slimit).toBe(textWithFormatRegex);
+      expect(query.policy).toBe(justText);
+      expect(query.limit).toBe(justText);
+      expect(query.slimit).toBe(justText);
       expect(query.tz).toBe(text);
       expect(query.tags![0].value).toBe(textWithFormatRegex);
-      expect(query.groupBy![0].params![0]).toBe(textWithFormatRegex);
-      expect(query.select![0][0].params![0]).toBe(textWithFormatRegex);
+      expect(query.groupBy![0].params![0]).toBe(justText);
+      expect(query.select![0][0].params![0]).toBe(justText);
       expect(query.adhocFilters?.[0].key).toBe(adhocFilters[0].key);
     }
 
@@ -216,7 +218,35 @@ describe('InfluxDataSource Backend Mode', () => {
   });
 
   describe('variable interpolation with chained variables with backend mode', () => {
-    const mockTemplateService = new TemplateSrv();
+    const variablesMock = [
+      queryBuilder().withId('var1').withName('var1').withCurrent('var1').build(),
+      queryBuilder().withId('path').withName('path').withCurrent('/etc/hosts').build(),
+      queryBuilder()
+        .withId('field_var')
+        .withName('field_var')
+        .withMulti(true)
+        .withOptions(
+          {
+            text: `field_1`,
+            value: `field_1`,
+          },
+          {
+            text: `field_2`,
+            value: `field_2`,
+          },
+          {
+            text: `field_3`,
+            value: `field_3`,
+          }
+        )
+        .withCurrent(['field_1', 'field_3'])
+        .build(),
+    ];
+    const mockTemplateService = new TemplateSrv({
+      getVariables: () => variablesMock,
+      getVariableWithName: (name: string) => variablesMock.filter((v) => v.name === name)[0],
+      getFilteredVariables: jest.fn(),
+    });
     mockTemplateService.getAdhocFilters = jest.fn((_: string) => []);
     let ds = getMockInfluxDS(getMockDSInstanceSettings(), mockTemplateService);
     const fetchMockImpl = () =>
@@ -263,6 +293,7 @@ describe('InfluxDataSource Backend Mode', () => {
         },
       });
       const qe = `SHOW TAG VALUES WITH KEY = "agent_url" WHERE agent_url =~ /^https:\\/\\/aaaa-aa-aaa\\.bbb\\.ccc\\.ddd:8443\\/ggggg$/`;
+      expect(fetchMock).toHaveBeenCalled();
       const qData = fetchMock.mock.calls[0][0].data.queries[0].query;
       expect(qData).toBe(qe);
     });
@@ -285,5 +316,128 @@ describe('InfluxDataSource Backend Mode', () => {
       const qData = fetchMock.mock.calls[0][0].data.queries[0].query;
       expect(qData).toBe(qe);
     });
+
+    it('should interpolate variable inside a regex pattern', () => {
+      const query: InfluxQuery = {
+        refId: 'A',
+        tags: [
+          {
+            key: 'key',
+            operator: '=~',
+            value: '/^.*-$var1$/',
+          },
+        ],
+      };
+      const res = ds.applyVariables(query, {});
+      const expected = `/^.*-var1$/`;
+      expect(res.tags?.[0].value).toEqual(expected);
+    });
+
+    it('should remove regex wrappers when operator is not a regex operator', () => {
+      const query: InfluxQuery = {
+        refId: 'A',
+        tags: [
+          {
+            key: 'key',
+            operator: '=',
+            value: '/^$path$/',
+          },
+        ],
+      };
+      const res = ds.applyVariables(query, {});
+      const expected = `/etc/hosts`;
+      expect(res.tags?.[0].value).toEqual(expected);
+    });
+
+    it('should interpolate field keys with given scopedVars', () => {
+      const query: InfluxQuery = {
+        refId: 'A',
+        tags: [
+          {
+            key: 'key',
+            operator: '=',
+            value: 'value',
+          },
+        ],
+        select: [
+          [
+            {
+              type: 'field',
+              params: ['$field_var'],
+            },
+            {
+              type: 'mean',
+              params: [],
+            },
+          ],
+        ],
+      };
+      const res = ds.applyVariables(query, { field_var: { text: 'field_3', value: 'field_3' } });
+      const expected = `field_3`;
+      expect(res.select?.[0][0].params?.[0]).toEqual(expected);
+    });
+  });
+
+  describe('metric find query', () => {
+    let ds = getMockInfluxDS(getMockDSInstanceSettings());
+    it('handles multiple frames', async () => {
+      const fetchMockImpl = () => {
+        return of(mockMetricFindQueryResponse);
+      };
+
+      fetchMock.mockImplementation(fetchMockImpl);
+      const values = await ds.getTagValues({ key: 'test_id', filters: [] });
+      expect(fetchMock).toHaveBeenCalled();
+      expect(values.length).toBe(5);
+      expect(values[0].text).toBe('test-t2-1');
+    });
   });
 });
+
+const mockMetricFindQueryResponse = {
+  data: {
+    results: {
+      metricFindQuery: {
+        status: 200,
+        frames: [
+          {
+            schema: {
+              name: 'NoneNone',
+              refId: 'metricFindQuery',
+              fields: [
+                {
+                  name: 'Value',
+                  type: 'string',
+                  typeInfo: {
+                    frame: 'string',
+                  },
+                },
+              ],
+            },
+            data: {
+              values: [['test-t2-1', 'test-t2-10']],
+            },
+          },
+          {
+            schema: {
+              name: 'some-other',
+              refId: 'metricFindQuery',
+              fields: [
+                {
+                  name: 'Value',
+                  type: 'string',
+                  typeInfo: {
+                    frame: 'string',
+                  },
+                },
+              ],
+            },
+            data: {
+              values: [['test-t2-1', 'test-t2-10', 'test-t2-2', 'test-t2-3', 'test-t2-4']],
+            },
+          },
+        ],
+      },
+    },
+  },
+};

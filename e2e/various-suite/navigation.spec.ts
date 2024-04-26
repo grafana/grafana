@@ -6,16 +6,12 @@ describe('Docked Navigation', () => {
     cy.viewport(1280, 800);
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
 
-    cy.visit(fromBaseUrl('/'), {
-      onBeforeLoad(window) {
-        window.localStorage.setItem('grafana.featureToggles', 'dockedMegaMenu=1');
-      },
-    });
+    cy.visit(fromBaseUrl('/'));
   });
 
   it('should remain docked when reloading the page', () => {
     // Expand, then dock the mega menu
-    cy.get('[aria-label="Toggle menu"]').click();
+    cy.get('[aria-label="Open menu"]').click();
     cy.get('[aria-label="Dock menu"]').click();
 
     e2e.components.NavMenu.Menu().should('be.visible');
@@ -26,7 +22,7 @@ describe('Docked Navigation', () => {
 
   it('should remain docked when navigating to another page', () => {
     // Expand, then dock the mega menu
-    cy.get('[aria-label="Toggle menu"]').click();
+    cy.get('[aria-label="Open menu"]').click();
     cy.get('[aria-label="Dock menu"]').click();
 
     cy.contains('a', 'Administration').click();

@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorField, Space } from '@grafana/experimental';
-import { Button, Checkbox, Icon, Label, LoadingPlaceholder, Modal, Select, useStyles2 } from '@grafana/ui';
+import { EditorField } from '@grafana/experimental';
+import { Button, Checkbox, Icon, Label, LoadingPlaceholder, Modal, Select, Space, useStyles2 } from '@grafana/ui';
 
 import { DescribeLogGroupsRequest, ResourceResponse, LogGroupResponse } from '../../../resources/types';
 import { LogGroup } from '../../../types';

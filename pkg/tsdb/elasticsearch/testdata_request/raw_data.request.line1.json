@@ -26,5 +26,12 @@
       "_doc": {
         "order": "desc"
       }
-    }
+    },
+  "fields": 
+    [ 
+      {
+        "field": "testtime",
+        "format": "strict_date_optional_time_nanos"
+      }
+    ]
 }

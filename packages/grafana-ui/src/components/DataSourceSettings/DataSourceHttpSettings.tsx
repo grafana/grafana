@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useId } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -153,12 +153,15 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
 
   const inputStyle = cx({ [`width-20`]: true, [notValidStyle]: !isValidUrl });
 
+  const fromFieldId = useId();
+
   const urlInput = (
     <Input
+      id={fromFieldId}
       className={inputStyle}
       placeholder={defaultUrl}
       value={dataSourceConfig.url}
-      aria-label={selectors.components.DataSource.DataSourceHttpSettings.urlInput}
+      data-testid={selectors.components.DataSource.DataSourceHttpSettings.urlInput}
       onChange={(event) => onSettingsChange({ url: event.currentTarget.value })}
       disabled={dataSourceConfig.readOnly}
     />

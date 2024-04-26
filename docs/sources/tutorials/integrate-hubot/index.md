@@ -25,10 +25,7 @@ Grafana 2.0 shipped with a great feature that enables it to render any graph or 
 
 No matter what data source you are using, the PNG image of the Graph will look the same as it does in your browser.
 
-This guide will show you how to install and configure the [Hubot-Grafana](https://github.com/stephenyeargin/hubot-grafana) plugin. This plugin allows you to tell hubot to render any dashboard or graph right from a channel in Slack, Hipchat or Basecamp. The bot will respond with an image of the graph and a link that will take you to the graph.
-
-> _Amazon S3 Required_: The hubot-grafana script will upload the rendered graphs to Amazon S3. This
-> is so Hipchat and Slack can show them reliably (they require the image to be publicly available).
+This guide shows you how to install and configure the [Hubot-Grafana](https://github.com/stephenyeargin/hubot-grafana) plugin. This plugin allows you to tell Hubot to render any dashboard or graph right from a channel in Slack, Basecamp, or any other supported Hubot adapter. The bot will respond with an image of the graph and a link that will take you to the graph.
 
 {{< figure src="/static/img/docs/tutorials/hubot_grafana.png"  max-width="800px" >}}
 
@@ -40,7 +37,7 @@ This guide will show you how to install and configure the [Hubot-Grafana](https:
 
 Hubot is very easy to install and host. If you do not already have a bot up and running please read the official [Getting Started With Hubot](https://hubot.github.com/docs/) guide.
 
-## Install Hubot-Grafana script
+## Install the Hubot-Grafana script
 
 In your Hubot project repo install the Grafana plugin using `npm`:
 
@@ -56,17 +53,14 @@ Edit the file external-scripts.json, and add hubot-grafana to the list of plugin
 
 ## Configure
 
-The `hubot-grafana` plugin requires a number of environment variables to be set in order to work properly.
+The Hubot-Grafana plugin requires two environment variables to be set in order to work properly.
 
 ```bash
 export HUBOT_GRAFANA_HOST=https://play.grafana.org
 export HUBOT_GRAFANA_API_KEY=abcd01234deadbeef01234
-export HUBOT_GRAFANA_S3_BUCKET=mybucket
-export HUBOT_GRAFANA_S3_ACCESS_KEY_ID=ABCDEF123456XYZ
-export HUBOT_GRAFANA_S3_SECRET_ACCESS_KEY=aBcD01234dEaDbEef01234
-export HUBOT_GRAFANA_S3_PREFIX=graphs
-export HUBOT_GRAFANA_S3_REGION=us-standard
 ```
+
+There are [additional environment variables](https://github.com/stephenyeargin/hubot-grafana?tab=readme-ov-file#general-settings) that you can set to control the appearance of the graphs.
 
 ### Grafana server side rendering
 
@@ -80,9 +74,9 @@ To verify that this feature works try the `Direct link to rendered image` link i
 
 You need to set the environment variable `HUBOT_GRAFANA_API_KEY` to a Grafana API Key. You can add these from the API Keys page which you find in the Organization dropdown.
 
-### Amazon S3
+### Image uploading
 
-The `S3` options are optional but for the images to work properly in services like Slack and Hipchat they need to publicly available. By specifying the `S3` options the hubot-grafana script will publish the rendered panel to `S3` and it will use that URL when it posts to Slack or Hipchat.
+There are several approaches to uploading the rendered graphs. If you are using Slack, Rocket.Chat, or Telegram, the adapter's native uploader will take care of sending it through their respective API. If your Hubot is hosted on a platform that doesn't support uploads (such as IRC), you can use the [built-in S3 uploader](https://github.com/stephenyeargin/hubot-grafana/wiki/Amazon-S3-Image-Hosting). Note if you configure S3, it will not use the adapter's upload features.
 
 ## Hubot commands
 

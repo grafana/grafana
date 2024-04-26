@@ -124,7 +124,8 @@ func (s *Service) doListQuery(ctx context.Context, query backend.DataQuery) back
 	}
 
 	path := store.RootPublicStatic + "/" + q.Path
-	listFrame, err := s.store.List(ctx, nil, path)
+	maxFiles := int(query.MaxDataPoints)
+	listFrame, err := s.store.List(ctx, nil, path, maxFiles)
 	response.Error = err
 	if listFrame != nil {
 		response.Frames = data.Frames{listFrame.Frame}

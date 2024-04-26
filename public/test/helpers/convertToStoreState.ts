@@ -1,8 +1,11 @@
+import { TypedVariableModel } from '@grafana/data';
+
 import { getPreloadedState } from '../../app/features/variables/state/helpers';
+import { VariablesState } from '../../app/features/variables/state/types';
 import { StoreState } from '../../app/types';
 
-export const convertToStoreState = (key: string, models: any[]): StoreState => {
-  const variables = models.reduce((byName, variable) => {
+export const convertToStoreState = (key: string, models: TypedVariableModel[]): StoreState => {
+  const variables = models.reduce<VariablesState>((byName, variable) => {
     byName[variable.name] = variable;
     return byName;
   }, {});

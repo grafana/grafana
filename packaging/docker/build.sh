@@ -59,7 +59,7 @@ docker_build () {
   esac
   if [ $UBUNTU_BASE = "0" ]; then
     libc="-musl"
-    base_image="${base_arch}alpine:3.18.3"
+    base_image="${base_arch}alpine:3.18.5"
   else
     libc=""
     base_image="${base_arch}ubuntu:22.04"

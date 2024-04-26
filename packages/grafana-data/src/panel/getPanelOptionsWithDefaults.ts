@@ -14,15 +14,15 @@ import { ThresholdsConfig, ThresholdsMode } from '../types/thresholds';
 
 import { PanelPlugin } from './PanelPlugin';
 
-export interface Props {
+interface Props {
   plugin: PanelPlugin;
   currentFieldConfig: FieldConfigSource;
-  currentOptions: Record<string, any>;
+  currentOptions: Record<string, unknown>;
   isAfterPluginChange: boolean;
 }
 
 export interface OptionDefaults {
-  options: any;
+  options: Record<string, unknown>;
   fieldConfig: FieldConfigSource;
 }
 
@@ -111,11 +111,10 @@ export function filterFieldConfigOverrides(
     .filter((x) => x.properties.length > 0);
 }
 
-function cleanProperties(obj: any, parentPath: string, fieldConfigRegistry: FieldConfigOptionsRegistry) {
+function cleanProperties(obj: object, parentPath: string, fieldConfigRegistry: FieldConfigOptionsRegistry) {
   let found = false;
 
-  for (const propName of Object.keys(obj)) {
-    const value = obj[propName];
+  for (const [propName, value] of Object.entries(obj)) {
     const fullPath = `${parentPath}${propName}`;
     const existsInRegistry = !!fieldConfigRegistry.getIfExists(fullPath);
 

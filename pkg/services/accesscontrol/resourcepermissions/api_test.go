@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"path"
 	"strconv"
 	"strings"
 	"testing"
@@ -14,13 +13,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -117,7 +116,7 @@ func TestApi_getDescription(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, _, _ := setupTestEnvironment(t, tt.options)
+			service, _, _, _ := setupTestEnvironment(t, tt.options)
 			server := setupTestServer(t, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
 
 			req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/access-control/%s/description", tt.options.Resource), nil)
@@ -164,10 +163,10 @@ func TestApi_getPermissions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, sql, _ := setupTestEnvironment(t, testOptions)
+			service, sql, cfg, _ := setupTestEnvironment(t, testOptions)
 			server := setupTestServer(t, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
 
-			seedPermissions(t, tt.resourceID, sql, service)
+			seedPermissions(t, tt.resourceID, sql, cfg, service)
 
 			permissions, recorder := getPermission(t, server, testOptions.Resource, tt.resourceID)
 			assert.Equal(t, tt.expectedStatus, recorder.Code)
@@ -241,7 +240,7 @@ func TestApi_setBuiltinRolePermission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, _, _ := setupTestEnvironment(t, testOptions)
+			service, _, _, _ := setupTestEnvironment(t, testOptions)
 			server := setupTestServer(t, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
 
 			recorder := setPermission(t, server, testOptions.Resource, tt.resourceID, tt.permission, "builtInRoles", tt.builtInRole)
@@ -319,7 +318,7 @@ func TestApi_setTeamPermission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, _, teamSvc := setupTestEnvironment(t, testOptions)
+			service, _, _, teamSvc := setupTestEnvironment(t, testOptions)
 			server := setupTestServer(t, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
 
 			// seed team
@@ -402,16 +401,16 @@ func TestApi_setUserPermission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, sql, _ := setupTestEnvironment(t, testOptions)
+			service, sql, cfg, _ := setupTestEnvironment(t, testOptions)
 			server := setupTestServer(t, &user.SignedInUser{
 				OrgID:       1,
 				Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)},
 			}, service)
 
 			// seed user
-			orgSvc, err := orgimpl.ProvideService(sql, sql.Cfg, quotatest.New(false, nil))
+			orgSvc, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
 			require.NoError(t, err)
-			usrSvc, err := userimpl.ProvideService(sql, orgSvc, sql.Cfg, nil, nil, &quotatest.FakeQuotaService{}, supportbundlestest.NewFakeBundleService())
+			usrSvc, err := userimpl.ProvideService(sql, orgSvc, cfg, nil, nil, &quotatest.FakeQuotaService{}, supportbundlestest.NewFakeBundleService())
 			require.NoError(t, err)
 			_, err = usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "test", OrgID: 1})
 			require.NoError(t, err)
@@ -432,7 +431,7 @@ func TestApi_setUserPermission(t *testing.T) {
 
 func setupTestServer(t *testing.T, user *user.SignedInUser, service *Service) *web.Mux {
 	server := web.New()
-	server.UseMiddleware(web.Renderer(path.Join(setting.StaticRootPath, "views"), "[[", "]]"))
+	server.UseMiddleware(web.Renderer("views", "[[", "]]"))
 	server.Use(contextProvider(&testContext{user}))
 	service.api.router.Register(server)
 	return server
@@ -507,18 +506,19 @@ func checkSeededPermissions(t *testing.T, permissions []resourcePermissionDTO) {
 	}
 }
 
-func seedPermissions(t *testing.T, resourceID string, sql *sqlstore.SQLStore, service *Service) {
+func seedPermissions(t *testing.T, resourceID string, sql db.DB, cfg *setting.Cfg, service *Service) {
 	t.Helper()
 	// seed team 1 with "Edit" permission on dashboard 1
-	teamSvc := teamimpl.ProvideService(sql, sql.Cfg)
+	teamSvc, err := teamimpl.ProvideService(sql, cfg)
+	require.NoError(t, err)
 	team, err := teamSvc.CreateTeam("test", "test@test.com", 1)
 	require.NoError(t, err)
 	_, err = service.SetTeamPermission(context.Background(), team.OrgID, team.ID, resourceID, "Edit")
 	require.NoError(t, err)
 	// seed user 1 with "View" permission on dashboard 1
-	orgSvc, err := orgimpl.ProvideService(sql, sql.Cfg, quotatest.New(false, nil))
+	orgSvc, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
 	require.NoError(t, err)
-	usrSvc, err := userimpl.ProvideService(sql, orgSvc, sql.Cfg, nil, nil, &quotatest.FakeQuotaService{}, supportbundlestest.NewFakeBundleService())
+	usrSvc, err := userimpl.ProvideService(sql, orgSvc, cfg, nil, nil, &quotatest.FakeQuotaService{}, supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
 	u, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "test", OrgID: 1})
 	require.NoError(t, err)

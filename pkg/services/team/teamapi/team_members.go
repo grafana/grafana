@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/util"
@@ -47,7 +47,7 @@ func (tapi *TeamAPI) getTeamMembers(c *contextmodel.ReqContext) response.Respons
 			continue
 		}
 
-		member.AvatarURL = dtos.GetGravatarUrl(member.Email)
+		member.AvatarURL = dtos.GetGravatarUrl(tapi.cfg, member.Email)
 		member.Labels = []string{}
 
 		if tapi.license.FeatureEnabled("teamgroupsync") && member.External {
@@ -141,7 +141,7 @@ func (tapi *TeamAPI) updateTeamMember(c *contextmodel.ReqContext) response.Respo
 	return response.Success("Team member updated")
 }
 
-func getPermissionName(permission dashboards.PermissionType) string {
+func getPermissionName(permission dashboardaccess.PermissionType) string {
 	permissionName := permission.String()
 	// Team member permission is 0, which maps to an empty string.
 	// However, we want the team permission service to display "Member" for team members. This is a hack to make it work.

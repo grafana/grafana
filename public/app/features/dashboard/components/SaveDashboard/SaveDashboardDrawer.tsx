@@ -2,8 +2,7 @@ import React, { useMemo, useState } from 'react';
 
 import { config, isFetchError } from '@grafana/runtime';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
-
-import { jsonDiff } from '../VersionHistory/utils';
+import { jsonDiff } from 'app/features/dashboard-scene/settings/version-history/utils';
 
 import DashboardValidation from './DashboardValidation';
 import { SaveDashboardDiff } from './SaveDashboardDiff';
@@ -19,6 +18,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
   const previous = dashboard.getOriginalDashboard();
   const isProvisioned = dashboard.meta.provisioned;
   const isNew = dashboard.version === 0;
+  const [errorIsHandled, setErrorIsHandled] = useState(false);
 
   const data = useMemo<SaveDashboardData>(() => {
     const clone = dashboard.getSaveModelClone({
@@ -89,18 +89,14 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
     );
   };
 
-  if (
-    state.error &&
-    isFetchError(state.error) &&
-    !state.error.isHandled &&
-    proxyHandlesError(state.error.data.status)
-  ) {
+  if (state.error && !errorIsHandled && isFetchError(state.error) && proxyHandlesError(state.error.data.status)) {
     return (
       <SaveDashboardErrorProxy
         error={state.error}
         dashboard={dashboard}
         dashboardSaveModel={data.clone}
         onDismiss={onDismiss}
+        setErrorIsHandled={setErrorIsHandled}
       />
     );
   }

@@ -74,8 +74,8 @@ const AlertSuccessMessage = ({ title, exploreUrl, dataSourceId, onDashboardLinkC
 
 AlertSuccessMessage.displayName = 'AlertSuccessMessage';
 
-const alertVariants = new Set<AlertVariant>(['success', 'info', 'warning', 'error']);
-const isAlertVariant = (str: string): str is AlertVariant => alertVariants.has(str as AlertVariant);
+const alertVariants = new Set(['success', 'info', 'warning', 'error']);
+const isAlertVariant = (str: string): str is AlertVariant => alertVariants.has(str);
 const getAlertVariant = (status: string): AlertVariant => {
   if (status.toLowerCase() === 'ok') {
     return 'success';
@@ -100,7 +100,7 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
   if (message) {
     return (
       <div className="gf-form-group p-t-2">
-        <Alert severity={severity} title={message} aria-label={e2eSelectors.pages.DataSource.alert}>
+        <Alert severity={severity} title={message} data-testid={e2eSelectors.pages.DataSource.alert}>
           {testingStatus?.details && (
             <>
               {detailsMessage}

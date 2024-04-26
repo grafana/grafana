@@ -52,6 +52,9 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 		return response
 	}
 
+	profileTypeId := depointerizer(qm.ProfileTypeId)
+	labelSelector := depointerizer(qm.LabelSelector)
+
 	responseMutex := sync.Mutex{}
 	g, gCtx := errgroup.WithContext(ctx)
 	if query.QueryType == queryTypeMetrics || query.QueryType == queryTypeBoth {
@@ -69,14 +72,14 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 				parsedInterval, err = gtime.ParseDuration(dsJson.MinStep)
 				if err != nil {
 					parsedInterval = time.Second * 15
-					logger.Debug("Failed to parse the MinStep using default", "MinStep", dsJson.MinStep)
+					logger.Error("Failed to parse the MinStep using default", "MinStep", dsJson.MinStep, "function", logEntrypoint())
 				}
 			}
-			logger.Debug("Sending SelectSeriesRequest", "queryModel", qm)
+			logger.Debug("Sending SelectSeriesRequest", "queryModel", qm, "function", logEntrypoint())
 			seriesResp, err := d.client.GetSeries(
 				gCtx,
-				qm.ProfileTypeId,
-				qm.LabelSelector,
+				profileTypeId,
+				labelSelector,
 				query.TimeRange.From.UnixMilli(),
 				query.TimeRange.To.UnixMilli(),
 				qm.GroupBy,
@@ -85,7 +88,7 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 			if err != nil {
 				span.RecordError(err)
 				span.SetStatus(codes.Error, err.Error())
-				logger.Error("Querying SelectSeries()", "err", err)
+				logger.Error("Querying SelectSeries()", "err", err, "function", logEntrypoint())
 				return err
 			}
 			// add the frames to the response.
@@ -98,18 +101,32 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 
 	if query.QueryType == queryTypeProfile || query.QueryType == queryTypeBoth {
 		g.Go(func() error {
-			logger.Debug("Calling GetProfile", "queryModel", qm)
-			prof, err := d.client.GetProfile(gCtx, qm.ProfileTypeId, qm.LabelSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli(), qm.MaxNodes)
-			if err != nil {
-				span.RecordError(err)
-				span.SetStatus(codes.Error, err.Error())
-				logger.Error("Error GetProfile()", "err", err)
-				return err
+			var profileResp *ProfileResponse
+			if len(qm.SpanSelector) > 0 {
+				logger.Debug("Calling GetSpanProfile", "queryModel", qm, "function", logEntrypoint())
+				prof, err := d.client.GetSpanProfile(gCtx, profileTypeId, labelSelector, qm.SpanSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli(), qm.MaxNodes)
+				if err != nil {
+					span.RecordError(err)
+					span.SetStatus(codes.Error, err.Error())
+					logger.Error("Error GetSpanProfile()", "err", err, "function", logEntrypoint())
+					return err
+				}
+				profileResp = prof
+			} else {
+				logger.Debug("Calling GetProfile", "queryModel", qm, "function", logEntrypoint())
+				prof, err := d.client.GetProfile(gCtx, profileTypeId, labelSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli(), qm.MaxNodes)
+				if err != nil {
+					span.RecordError(err)
+					span.SetStatus(codes.Error, err.Error())
+					logger.Error("Error GetProfile()", "err", err, "function", logEntrypoint())
+					return err
+				}
+				profileResp = prof
 			}
 
 			var frame *data.Frame
-			if prof != nil {
-				frame = responseToDataFrames(prof)
+			if profileResp != nil {
+				frame = responseToDataFrames(profileResp)
 
 				// If query called with streaming on then return a channel
 				// to subscribe on a client-side and consume updates from a plugin.
@@ -201,7 +218,7 @@ func levelsToTree(levels []*Level, names []string) *ProfileTree {
 
 		// If we still have levels to go, this should not happen. Something is probably wrong with the flamebearer data.
 		if len(parentsStack) == 0 {
-			logger.Error("ParentsStack is empty but we are not at the the last level", "currentLevel", currentLevel)
+			logger.Error("ParentsStack is empty but we are not at the last level", "currentLevel", currentLevel, "function", logEntrypoint())
 			break
 		}
 
@@ -245,7 +262,7 @@ func levelsToTree(levels []*Level, names []string) *ProfileTree {
 				// We went out of parents bounds so lets move to next parent. We will evaluate the same item again, but
 				// we will check if it is a child of the next parent item in line.
 				if len(parentsStack) == 0 {
-					logger.Error("ParentsStack is empty but there are still items in current level", "currentLevel", currentLevel, "itemIndex", itemIndex)
+					logger.Error("ParentsStack is empty but there are still items in current level", "currentLevel", currentLevel, "itemIndex", itemIndex, "function", logEntrypoint())
 					break
 				}
 				currentParent = parentsStack[:1][0]
@@ -435,4 +452,13 @@ func seriesToDataFrames(resp *SeriesResponse) []*data.Frame {
 		frames = append(frames, frame)
 	}
 	return frames
+}
+
+func depointerizer[T any](v *T) T {
+	var emptyValue T
+	if v != nil {
+		emptyValue = *v
+	}
+
+	return emptyValue
 }

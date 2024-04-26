@@ -1,6 +1,7 @@
 ---
 aliases:
   - guides/
+description: Learn about breaking changes in Grafana
 labels:
   products:
     - cloud

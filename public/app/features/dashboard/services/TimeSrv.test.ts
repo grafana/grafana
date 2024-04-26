@@ -24,7 +24,7 @@ describe('timeSrv', () => {
     _dashboard = {
       time: { from: 'now-6h', to: 'now' },
       getTimezone: jest.fn(() => 'browser'),
-      refresh: false,
+      refresh: '',
       timeRangeUpdated: jest.fn(() => {}),
       timepicker: {},
     };
@@ -94,7 +94,7 @@ describe('timeSrv', () => {
         _dashboard = {
           time: { from: 'now-6h', to: 'now' },
           getTimezone: jest.fn(() => 'browser'),
-          refresh: false,
+          refresh: '',
           timeRangeUpdated: jest.fn(() => {}),
           timepicker: {},
         };
@@ -210,36 +210,36 @@ describe('timeSrv', () => {
         expect(time.to.valueOf()).toEqual(1410337650000);
       });
 
-      it('corrects inverted from/to dates in ms', () => {
+      it('does not correct inverted from/to dates in ms', () => {
         locationService.push('/d/id?from=1621436828909&to=1621436818909');
 
         timeSrv = new TimeSrv(new ContextSrvStub());
 
         timeSrv.init(_dashboard);
         const time = timeSrv.timeRange();
-        expect(time.from.valueOf()).toEqual(1621436818909);
-        expect(time.to.valueOf()).toEqual(1621436828909);
+        expect(time.from.valueOf()).toEqual(1621436828909);
+        expect(time.to.valueOf()).toEqual(1621436818909);
       });
 
-      it('corrects inverted from/to dates as relative times', () => {
+      it('does not correct inverted from/to dates as relative times', () => {
         locationService.push('/d/id?from=now&to=now-1h');
 
         timeSrv = new TimeSrv(new ContextSrvStub());
 
         timeSrv.init(_dashboard);
         const time = timeSrv.timeRange();
-        expect(time.raw.from).toBe('now-1h');
-        expect(time.raw.to).toBe('now');
+        expect(time.raw.from).toBe('now');
+        expect(time.raw.to).toBe('now-1h');
       });
     });
   });
 
   describe('setTime', () => {
     it('should return disable refresh if refresh is disabled for any range', () => {
-      _dashboard.refresh = false;
+      _dashboard.refresh = '';
 
       timeSrv.setTime({ from: '2011-01-01', to: '2015-01-01' });
-      expect(_dashboard.refresh).toBe(false);
+      expect(_dashboard.refresh).toBe('');
     });
 
     it('should restore refresh for absolute time range', () => {
@@ -255,7 +255,7 @@ describe('timeSrv', () => {
         from: dateTime([2011, 1, 1]),
         to: dateTime([2015, 1, 1]),
       });
-      expect(_dashboard.refresh).toBe(false);
+      expect(_dashboard.refresh).toBe('');
       timeSrv.setTime({ from: '2011-01-01', to: 'now' });
       expect(_dashboard.refresh).toBe('10s');
     });

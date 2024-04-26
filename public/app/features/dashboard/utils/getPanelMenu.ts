@@ -1,17 +1,14 @@
-import {
-  getTimeZone,
-  PanelMenuItem,
-  PluginExtensionLink,
-  PluginExtensionPoints,
-  urlUtil,
-  type PluginExtensionPanelContext,
-} from '@grafana/data';
-import { AngularComponent, getPluginLinkExtensions, locationService, reportInteraction } from '@grafana/runtime';
+import { PanelMenuItem, urlUtil, PluginExtensionLink } from '@grafana/data';
+import { AngularComponent, locationService } from '@grafana/runtime';
 import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import config from 'app/core/config';
+import { createErrorNotification } from 'app/core/copy/appNotification';
 import { t } from 'app/core/internationalization';
+import { notifyApp } from 'app/core/reducers/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
+import { getMessageFromError } from 'app/core/utils/errors';
 import { getExploreUrl } from 'app/core/utils/explore';
+import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { panelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -24,11 +21,12 @@ import {
   toggleLegend,
   unlinkLibraryPanel,
 } from 'app/features/dashboard/utils/panel';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { InspectTab } from 'app/features/inspector/types';
 import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
-import { truncateTitle } from 'app/features/plugins/extensions/utils';
+import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
-import { store } from 'app/store/store';
+import { dispatch, store } from 'app/store/store';
 
 import { getCreateAlertInMenuAvailability } from '../../alerting/unified/utils/access-control';
 import { navigateToExplore } from '../../explore/state/main';
@@ -37,6 +35,7 @@ import { getTimeSrv } from '../services/TimeSrv';
 export function getPanelMenu(
   dashboard: DashboardModel,
   panel: PanelModel,
+  extensions: PluginExtensionLink[],
   angularComponent?: AngularComponent | null
 ): PanelMenuItem[] {
   const onViewPanel = (event: React.MouseEvent) => {
@@ -44,7 +43,7 @@ export function getPanelMenu(
     locationService.partial({
       viewPanel: panel.id,
     });
-    reportInteraction('dashboards_panelheader_menu', { item: 'view' });
+    DashboardInteractions.panelMenuItemClicked('view');
   };
 
   const onEditPanel = (event: React.MouseEvent) => {
@@ -53,25 +52,25 @@ export function getPanelMenu(
       editPanel: panel.id,
     });
 
-    reportInteraction('dashboards_panelheader_menu', { item: 'edit' });
+    DashboardInteractions.panelMenuItemClicked('edit');
   };
 
   const onSharePanel = (event: React.MouseEvent) => {
     event.preventDefault();
     sharePanel(dashboard, panel);
-    reportInteraction('dashboards_panelheader_menu', { item: 'share' });
+    DashboardInteractions.panelMenuItemClicked('share');
   };
 
   const onAddLibraryPanel = (event: React.MouseEvent) => {
     event.preventDefault();
     addLibraryPanel(dashboard, panel);
-    reportInteraction('dashboards_panelheader_menu', { item: 'createLibraryPanel' });
+    DashboardInteractions.panelMenuItemClicked('createLibraryPanel');
   };
 
   const onUnlinkLibraryPanel = (event: React.MouseEvent) => {
     event.preventDefault();
     unlinkLibraryPanel(panel);
-    reportInteraction('dashboards_panelheader_menu', { item: 'unlinkLibraryPanel' });
+    DashboardInteractions.panelMenuItemClicked('unlinkLibraryPanel');
   };
 
   const onInspectPanel = (tab?: InspectTab) => {
@@ -79,7 +78,7 @@ export function getPanelMenu(
       inspect: panel.id,
       inspectTab: tab,
     });
-    reportInteraction('dashboards_panelheader_menu', { item: 'inspect', tab: tab ?? InspectTab.Data });
+    DashboardInteractions.panelMenuInspectClicked(tab ?? InspectTab.Data);
   };
 
   const onMore = (event: React.MouseEvent) => {
@@ -89,19 +88,19 @@ export function getPanelMenu(
   const onDuplicatePanel = (event: React.MouseEvent) => {
     event.preventDefault();
     duplicatePanel(dashboard, panel);
-    reportInteraction('dashboards_panelheader_menu', { item: 'duplicate' });
+    DashboardInteractions.panelMenuItemClicked('duplicate');
   };
 
   const onCopyPanel = (event: React.MouseEvent) => {
     event.preventDefault();
     copyPanel(panel);
-    reportInteraction('dashboards_panelheader_menu', { item: 'copy' });
+    DashboardInteractions.panelMenuItemClicked('copy');
   };
 
   const onRemovePanel = (event: React.MouseEvent) => {
     event.preventDefault();
     removePanel(dashboard, panel, true);
-    reportInteraction('dashboards_panelheader_menu', { item: 'remove' });
+    DashboardInteractions.panelMenuItemClicked('remove');
   };
 
   const onNavigateToExplore = (event: React.MouseEvent) => {
@@ -115,13 +114,13 @@ export function getPanelMenu(
         openInNewWindow,
       }) as any
     );
-    reportInteraction('dashboards_panelheader_menu', { item: 'explore' });
+    DashboardInteractions.panelMenuItemClicked('explore');
   };
 
   const onToggleLegend = (event: React.MouseEvent) => {
     event.preventDefault();
     toggleLegend(panel);
-    reportInteraction('dashboards_panelheader_menu', { item: 'toggleLegend' });
+    DashboardInteractions.panelMenuItemClicked('toggleLegend');
   };
 
   const menu: PanelMenuItem[] = [];
@@ -206,8 +205,14 @@ export function getPanelMenu(
   });
 
   const createAlert = async () => {
-    const formValues = await panelToRuleFormValues(panel, dashboard);
-
+    let formValues: Partial<RuleFormValues> | undefined;
+    try {
+      formValues = await panelToRuleFormValues(panel, dashboard);
+    } catch (err) {
+      const message = `Error getting rule values from the panel: ${getMessageFromError(err)}`;
+      dispatch(notifyApp(createErrorNotification(message)));
+      return;
+    }
     const ruleFormUrl = urlUtil.renderUrl('/alerting/new', {
       defaults: JSON.stringify(formValues),
       returnTo: location.pathname + location.search,
@@ -219,7 +224,7 @@ export function getPanelMenu(
   const onCreateAlert = (event: React.MouseEvent) => {
     event.preventDefault();
     createAlert();
-    reportInteraction('dashboards_panelheader_menu', { item: 'create-alert' });
+    DashboardInteractions.panelMenuItemClicked('create-alert');
   };
 
   const subMenu: PanelMenuItem[] = [];
@@ -261,7 +266,7 @@ export function getPanelMenu(
 
   if (isCreateAlertMenuOptionAvailable) {
     subMenu.push({
-      text: t('panel.header-menu.create-alert', `Create alert`),
+      text: t('panel.header-menu.new-alert-rule', `New alert rule`),
       onClick: onCreateAlert,
     });
   }
@@ -304,7 +309,7 @@ export function getPanelMenu(
     subMenu.length = 0;
     if (isCreateAlertMenuOptionAvailable) {
       subMenu.push({
-        text: t('panel.header-menu.create-alert', `Create alert`),
+        text: t('panel.header-menu.new-alert-rule', `New alert rule`),
         onClick: onCreateAlert,
       });
     }
@@ -316,12 +321,6 @@ export function getPanelMenu(
       onClick: (e: React.MouseEvent) => onInspectPanel(InspectTab.Help),
     });
   }
-
-  const { extensions } = getPluginLinkExtensions({
-    extensionPointId: PluginExtensionPoints.DashboardPanelMenu,
-    context: createExtensionContext(panel, dashboard),
-    limitPerPlugin: 3,
-  });
 
   if (extensions.length > 0 && !panel.isEditing) {
     menu.push({
@@ -354,74 +353,4 @@ export function getPanelMenu(
   }
 
   return menu;
-}
-
-function createExtensionContext(panel: PanelModel, dashboard: DashboardModel): PluginExtensionPanelContext {
-  return {
-    id: panel.id,
-    pluginId: panel.type,
-    title: panel.title,
-    timeRange: dashboard.time,
-    timeZone: getTimeZone({
-      timeZone: dashboard.timezone,
-    }),
-    dashboard: {
-      uid: dashboard.uid,
-      title: dashboard.title,
-      tags: Array.from<string>(dashboard.tags),
-    },
-    targets: panel.targets,
-    scopedVars: panel.scopedVars,
-    data: panel.getQueryRunner().getLastResult(),
-  };
-}
-
-function createExtensionSubMenu(extensions: PluginExtensionLink[]): PanelMenuItem[] {
-  const categorized: Record<string, PanelMenuItem[]> = {};
-  const uncategorized: PanelMenuItem[] = [];
-
-  for (const extension of extensions) {
-    const category = extension.category;
-
-    if (!category) {
-      uncategorized.push({
-        text: truncateTitle(extension.title, 25),
-        href: extension.path,
-        onClick: extension.onClick,
-      });
-      continue;
-    }
-
-    if (!Array.isArray(categorized[category])) {
-      categorized[category] = [];
-    }
-
-    categorized[category].push({
-      text: truncateTitle(extension.title, 25),
-      href: extension.path,
-      onClick: extension.onClick,
-    });
-  }
-
-  const subMenu = Object.keys(categorized).reduce((subMenu: PanelMenuItem[], category) => {
-    subMenu.push({
-      text: truncateTitle(category, 25),
-      type: 'group',
-      subMenu: categorized[category],
-    });
-    return subMenu;
-  }, []);
-
-  if (uncategorized.length > 0) {
-    if (subMenu.length > 0) {
-      subMenu.push({
-        text: 'divider',
-        type: 'divider',
-      });
-    }
-
-    Array.prototype.push.apply(subMenu, uncategorized);
-  }
-
-  return subMenu;
 }

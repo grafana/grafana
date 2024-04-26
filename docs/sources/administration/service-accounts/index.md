@@ -22,7 +22,7 @@ weight: 800
 You can use a service account to run automated workloads in Grafana, such as dashboard provisioning, configuration, or report generation. Create service accounts and tokens to authenticate applications, such as Terraform, with the Grafana API.
 
 {{% admonition type="note" %}}
-Service accounts will eventually replace [API keys]({{< relref "../api-keys/" >}}) as the primary way to authenticate applications that interact with Grafana.
+Service accounts replace [API keys]({{< relref "../api-keys/" >}}) as the primary way to authenticate applications that interact with Grafana.
 {{% /admonition %}}
 
 A common use case for creating a service account is to perform operations on automated or triggered tasks. You can use service accounts to:
@@ -79,8 +79,9 @@ Note that the user who created a service account will also be able to read, upda
 ### To create a service account
 
 1. Sign in to Grafana and click **Administration** in the left-side menu.
+1. Click **Users and access**.
 1. Click **Service accounts**.
-1. Click **Add service account** .
+1. Click **Add service account**.
 1. Enter a **Display name**.
 1. The display name must be unique as it determines the ID associated with the service account.
    - We recommend that you use a consistent naming convention when you name service accounts. A consistent naming convention can help you scale and maintain service accounts in the future.
@@ -104,6 +105,7 @@ By default, service account tokens don't have an expiration date, meaning they w
 ### To add a token to a service account
 
 1. Sign in to Grafana and click **Administration** in the left-side menu.
+1. Click **Users and access**.
 1. Click **Service accounts**.
 1. Click the service account to which you want to add a token.
 1. Click **Add service account token**.
@@ -131,6 +133,7 @@ Since Grafana 10.2.0, the `No Basic Role` is available for organization users or
 ### To assign a role to a service account
 
 1. Sign in to Grafana and click **Administration** in the left-side menu.
+1. Click **Users and access**.
 1. Click **Service accounts**.
 1. Click the service account to which you want to assign a role. As an alternative, find the service account in the list view.
 1. Assign a role using the role picker to update.
@@ -154,6 +157,7 @@ You can assign on of the following permissions to a specific user or a team:
 ### To update team permissions for a service account
 
 1. Sign in to Grafana and click **Administration** in the left-side menu.
+1. Click **Users and access**.
 1. Click **Service accounts**.
 1. Click the service account for which you want to update team permissions a role.
 1. In the Permissions section at the bottom, click **Add permission**.
@@ -163,6 +167,7 @@ You can assign on of the following permissions to a specific user or a team:
 ### To update user permissions for a service account
 
 1. Sign in to Grafana and click **Administration** in the left-side menu.
+1. Click **Users and access**.
 1. Click **Service accounts**.
 1. Click the service account for which you want to update team permissions a role.
 1. In the Permissions section at the bottom, click **Add permission**.

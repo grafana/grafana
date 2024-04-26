@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"strings"
 
 	"github.com/urfave/cli/v2"
@@ -72,12 +71,6 @@ func NpmReleaseAction(c *cli.Context) error {
 	tag := c.String("tag")
 	if tag == "" {
 		return fmt.Errorf("no tag version specified, exitting")
-	}
-
-	cmd := exec.Command("git", "checkout", ".")
-	if err := cmd.Run(); err != nil {
-		fmt.Println("command failed to run, err: ", err)
-		return err
 	}
 
 	err := npm.PublishNpmPackages(c.Context, tag)

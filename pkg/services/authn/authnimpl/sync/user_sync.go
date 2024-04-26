@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	authidentity "github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -109,13 +111,20 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, identity *authn.Iden
 	if !identity.ClientParams.FetchSyncedUser {
 		return nil
 	}
-	namespace, id := identity.NamespacedID()
-	if namespace != authn.NamespaceUser {
+
+	namespace, id := identity.GetNamespacedID()
+	if !authidentity.IsNamespace(namespace, authn.NamespaceUser, authn.NamespaceServiceAccount) {
+		return nil
+	}
+
+	userID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id, "err", err)
 		return nil
 	}
 
 	usr, err := s.userService.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{
-		UserID: id,
+		UserID: userID,
 		OrgID:  r.OrgID,
 	})
 	if err != nil {
@@ -123,6 +132,13 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, identity *authn.Iden
 			return errFetchingSignedInUserNotFound.Errorf("%w", err)
 		}
 		return errFetchingSignedInUser.Errorf("failed to resolve user: %w", err)
+	}
+
+	if identity.ClientParams.AllowGlobalOrg && identity.OrgID == authn.GlobalOrgID {
+		usr.Teams = nil
+		usr.OrgName = ""
+		usr.OrgRole = org.RoleNone
+		usr.OrgID = authn.GlobalOrgID
 	}
 
 	syncSignedInUserToIdentity(usr, identity)
@@ -135,15 +151,15 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, identity *authn.Identit
 		return nil
 	}
 
-	namespace, id := identity.NamespacedID()
-
-	// do not sync invalid users
-	if id <= 0 {
-		return nil // skip sync
+	namespace, id := identity.GetNamespacedID()
+	if namespace != authn.NamespaceUser && namespace != authn.NamespaceServiceAccount {
+		return nil
 	}
 
-	if namespace != authn.NamespaceUser && namespace != authn.NamespaceServiceAccount {
-		return nil // skip sync
+	userID, err := authidentity.IntIdentifier(namespace, id)
+	if err != nil {
+		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id, "err", err)
+		return nil
 	}
 
 	go func(userID int64) {
@@ -158,7 +174,7 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, identity *authn.Identit
 			!errors.Is(err, user.ErrLastSeenUpToDate) {
 			s.log.Error("Failed to update last_seen_at", "err", err, "userId", userID)
 		}
-	}(id)
+	}(userID)
 
 	return nil
 }
@@ -168,12 +184,19 @@ func (s *UserSync) EnableUserHook(ctx context.Context, identity *authn.Identity,
 		return nil
 	}
 
-	namespace, id := identity.NamespacedID()
+	namespace, id := identity.GetNamespacedID()
 	if namespace != authn.NamespaceUser {
 		return nil
 	}
 
-	return s.userService.Disable(ctx, &user.DisableUserCommand{UserID: id, IsDisabled: false})
+	userID, err := authidentity.IntIdentifier(namespace, id)
+	if err != nil {
+		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id, "err", err)
+		return nil
+	}
+
+	isDisabled := false
+	return s.userService.Update(ctx, &user.UpdateUserCommand{UserID: userID, IsDisabled: &isDisabled})
 }
 
 func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, identity *authn.Identity, createConnection bool) error {
@@ -221,6 +244,12 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 	if id.Email != "" && id.Email != usr.Email {
 		updateCmd.Email = id.Email
 		usr.Email = id.Email
+
+		// If we get a new email for a user we need to mark it as non-verified.
+		verified := false
+		updateCmd.EmailVerified = &verified
+		usr.EmailVerified = verified
+
 		needsUpdate = true
 	}
 
@@ -230,18 +259,17 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 		needsUpdate = true
 	}
 
+	// Sync isGrafanaAdmin permission
+	if id.IsGrafanaAdmin != nil && *id.IsGrafanaAdmin != usr.IsAdmin {
+		updateCmd.IsGrafanaAdmin = id.IsGrafanaAdmin
+		usr.IsAdmin = *id.IsGrafanaAdmin
+		needsUpdate = true
+	}
+
 	if needsUpdate {
 		s.log.FromContext(ctx).Debug("Syncing user info", "id", id.ID, "update", fmt.Sprintf("%v", updateCmd))
 		if err := s.userService.Update(ctx, updateCmd); err != nil {
 			return err
-		}
-	}
-
-	// Sync isGrafanaAdmin permission
-	if id.IsGrafanaAdmin != nil && *id.IsGrafanaAdmin != usr.IsAdmin {
-		usr.IsAdmin = *id.IsGrafanaAdmin
-		if errPerms := s.userService.UpdatePermissions(ctx, usr.ID, *id.IsGrafanaAdmin); errPerms != nil {
-			return errPerms
 		}
 	}
 
@@ -340,14 +368,6 @@ func (s *UserSync) lookupByOneOf(ctx context.Context, params login.UserLookupPar
 	var usr *user.User
 	var err error
 
-	// If not found, try to find the user by id
-	if params.UserID != nil && *params.UserID != 0 {
-		usr, err = s.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: *params.UserID})
-		if err != nil && !errors.Is(err, user.ErrUserNotFound) {
-			return nil, err
-		}
-	}
-
 	// If not found, try to find the user by email address
 	if usr == nil && params.Email != nil && *params.Email != "" {
 		usr, err = s.userService.GetByEmail(ctx, &user.GetUserByEmailQuery{Email: *params.Email})
@@ -374,10 +394,11 @@ func (s *UserSync) lookupByOneOf(ctx context.Context, params login.UserLookupPar
 // syncUserToIdentity syncs a user to an identity.
 // This is used to update the identity with the latest user information.
 func syncUserToIdentity(usr *user.User, id *authn.Identity) {
-	id.ID = authn.NamespacedID(authn.NamespaceUser, usr.ID)
+	id.ID = authn.NewNamespaceIDUnchecked(authn.NamespaceUser, usr.ID)
 	id.Login = usr.Login
 	id.Email = usr.Email
 	id.Name = usr.Name
+	id.EmailVerified = usr.EmailVerified
 	id.IsGrafanaAdmin = &usr.IsAdmin
 }
 
@@ -394,4 +415,5 @@ func syncSignedInUserToIdentity(usr *user.SignedInUser, identity *authn.Identity
 	identity.LastSeenAt = usr.LastSeenAt
 	identity.IsDisabled = usr.IsDisabled
 	identity.IsGrafanaAdmin = &usr.IsGrafanaAdmin
+	identity.EmailVerified = usr.EmailVerified
 }

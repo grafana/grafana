@@ -133,7 +133,6 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, "Data source not found", response.Message)
-		require.Equal(t, correlations.ErrSourceDataSourceDoesNotExists.Error(), response.Error)
 
 		require.NoError(t, res.Body.Close())
 	})
@@ -161,7 +160,6 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, "Data source not found", response.Message)
-		require.Equal(t, correlations.ErrTargetDataSourceDoesNotExists.Error(), response.Error)
 
 		require.NoError(t, res.Body.Close())
 	})
@@ -357,8 +355,6 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Contains(t, response.Message, "bad request data")
-		require.Contains(t, response.Error, correlations.ErrInvalidConfigType.Error())
-		require.Contains(t, response.Error, configType)
 
 		require.NoError(t, res.Body.Close())
 	})

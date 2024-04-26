@@ -3,7 +3,7 @@ _build:
   list: false
 aliases:
   - ../guides/whats-new-in-v8-2/
-description: Feature and improvement highlights for Grafana v8.2
+description: Learn about new and updated features in Grafana v8.2
 keywords:
   - grafana
   - new
@@ -27,7 +27,7 @@ The plugin catalog is now on by default in Grafana 8.2. Using the plugin catalog
 
 Grafana Enterprise includes a revamped Stats and Licensing page, new role-based access control permissions, and improvements that make usage insights and reporting easier to access.
 
-We’ve summarized what’s new in the release here, but you might also be interested in the announcement blog post. If you’d like all the details you can check out the [release notes](/docs/grafana/next/release-notes/release-notes-8-2-0/) and complete [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
+We’ve summarized what’s new in the release here, but you might also be interested in the announcement blog post. If you’d like all the details you can check out the [release notes](/docs/grafana/next/release-notes/release-notes-8-2-0/) and complete [CHANGELOG.md](https://github.com/grafana/grafana/blob/main/CHANGELOG.md).
 
 ## OSS
 

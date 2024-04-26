@@ -19,7 +19,7 @@ labels:
 
 The TraceQL query builder, located on the **Explore** > **Query type** > **Search** in Grafana, provides drop-downs and text fields to help you write a query.
 
-![The TraceQL query builder](/static/img/docs/tempo/screenshot-traceql-query-type-search-v10.png)
+![The TraceQL query builder](/media/docs/tempo/traceql/screenshot-traceql-query-type-search-v10.png)
 
 The builder lets you run the most common queries in as few clicks as possible. You don't need to know the underlying query language or database architecture to use it.
 
@@ -32,14 +32,14 @@ You can use the query builder to search trace data by resource service name, spa
 
 In addition, you can add query builder blocks, view the query history, and use the **Inspector** to see details.
 
-{{< figure src="/static/img/docs/queries/screenshot-tempods-query-search.png" class="docs-image--no-shadow" max-width="750px" caption="Screenshot of the Tempo Search query type" >}}
+{{< figure src="/media/docs/tempo/traceql/screenshot-tempods-query-search.png" class="docs-image--no-shadow" max-width="750px" caption="Screenshot of the Tempo Search query type" >}}
 
 ## Perform a search
 
 To perform a search, you need to select filters and/or tags and then run the query. The results appear underneath the query builder.
-The screenshot below identifies the areas used to perform a search.
+The screenshot identifies the areas used to perform a search.
 
-{{< figure src="/static/img/docs/queries/screenshot-tempods-query-search-parts.png" class="docs-image--no-shadow" max-width="750px" caption="Parts of Tempo Search query type" >}}
+{{< figure src="/media/docs/tempo/traceql/screenshot-tempods-query-search-parts.png" class="docs-image--no-shadow" max-width="750px" caption="Parts of Tempo Search query type" >}}
 
 | Number | Name               | Action                                                                                                                                                                     | Comment                                                                                                                                          |
 | :----- | :----------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -59,11 +59,11 @@ To access Search, use the following steps:
 
 1. Sign into Grafana.
 1. Select your Tempo data source.
-1. From the menu, choose Explore and select Query type > Search.
+1. From the menu, choose **Explore** and select **Query type > Search**.
 
 ## Define filters
 
-Using filters, you refine the data returned from the query by selecting Resource Service Name, Span Name, or Duration. The **Duration** represents span time, calculated by subtracting the end time from the start time of the span.
+Using filters, you refine the data returned from the query by selecting **Resource Service Name**, **Span Name**, or **Duration**. The **Duration** represents span time, calculated by subtracting the end time from the start time of the span.
 
 Grafana administrators can change the default filters using the Tempo data source configuration.
 Filters can be limited by the operators. The available operators are determined by the field type.
@@ -109,20 +109,25 @@ To add a tag, follow these steps:
 Using **Aggregate by**, you can calculate RED metrics (total span count, percent erroring spans, and latency information) for spans of `kind=server` that match your filter criteria, grouped by one or more attributes.
 This capability is based on the [metrics summary API](/docs/grafana-cloud/monitor-infrastructure/traces/metrics-summary-api/).
 Metrics summary only calculates summaries based on spans received within the last hour.
+For additional information, refer to [Traces to metrics: Ad-hoc RED metrics in Grafana Tempo with `Aggregate by`](https://grafana.com/blog/2023/12/07/traces-to-metrics-ad-hoc-red-metrics-in-grafana-tempo-with-aggregate-by/).
+
+<!--Impromptu RED metrics with Aggregate by -->
+
+{{< youtube id="xOolCpm2F8c" >}}
 
 When you use **Aggregate by**, the selections you make determine how the information is reported in the Table. Every combination that matches selections in your data is listed in the table.
 Each aggregate value, for example `intrinsic`:`name`, has a corresponding column in the results table.
 
-For example, **names** matching `GET /:endpoint` with a **span.http.user_agent** of `k6/0.46` appeared in 31,466 spans. Instead of being listed by traces and associated spans, the query results are grouped by the the selections in **Aggregate by**.
+For example, **names** matching `GET /:endpoint` with a **span.http.user_agent** of `k6/0.46` appeared in 31,466 spans. Instead of being listed by traces and associated spans, the query results are grouped by the selections in **Aggregate by**.
 
 The RED metrics are calculated for every name and user agent combination found in your data.
-
-![Use Aggregate by to calculate RED metrics for spans and group by attributes](/static/img/docs/tempo/screenshot-traces-aggregate-by.png)
 
 The screenshot shows all of the successful HTTP `status_code` API calls against the `mystical-server` service.
 The results are shown in the same order used in **Aggregate by**.
 For example, **Aggregate by** lists `intrinsic.name` followed by `span.http.user_agent`.
 The first column in the results Table shows **name** and then **span.http.user_agent**.
+
+![Use Aggregate by to calculate RED metrics for spans and group by attributes](/media/docs/tempo/traceql/screenshot-traces-aggregate-by.png)
 
 To use this capability:
 
@@ -131,6 +136,10 @@ To use this capability:
 1. Optional: Select **+** to add an **Aggregate by** row.
 1. Optional: Select a **Time range** to expand or narrow the data set for an hour's range.
 1. Select **Run query**.
+
+<!-- Explanation of how to use feature -->
+
+{{< youtube id="g97CjKOZqT4" >}}
 
 ### Optional: Add queries
 
@@ -145,4 +154,16 @@ Select **Run query** to run the TraceQL query (1 in the screenshot).
 
 Queries can take a little while to return results. The results appear in a table underneath the query builder. Selecting a Trace ID (2 in the screenshot) displays more detailed information (3 in the screenshot).
 
-{{< figure src="/static/img/docs/queries/screenshot-tempods-query-results.png" class="docs-image--no-shadow" max-width="750px" caption="Tempo Search query type results" >}}
+{{< figure src="/media/docs/tempo/traceql/screenshot-tempods-query-results.png" class="docs-image--no-shadow" max-width="750px" caption="Tempo Search query type results" >}}
+
+#### Streaming results
+
+The Tempo data source supports streaming responses to TraceQL queries so you can see partial query results as they come in without waiting for the whole query to finish.
+
+{{% admonition type="note" %}}
+To use this experimental feature, enable the `traceQLStreaming` feature toggle. If you’re using Grafana Cloud and would like to enable this feature, please contact customer support.
+{{% /admonition %}}
+
+Streaming is available for both the **Search** and **TraceQL** query types, and you'll get immediate visibility of incoming traces on the results table.
+
+{{< video-embed src="/media/docs/grafana/data-sources/tempo-streaming-v2.mp4" >}}

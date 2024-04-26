@@ -42,6 +42,8 @@ export type TracePageHeaderProps = {
   setShowSpanFilters: (isOpen: boolean) => void;
   showSpanFilterMatchesOnly: boolean;
   setShowSpanFilterMatchesOnly: (showMatchesOnly: boolean) => void;
+  showCriticalPathSpansOnly: boolean;
+  setShowCriticalPathSpansOnly: (showCriticalPathSpansOnly: boolean) => void;
   setFocusedSpanIdForSearch: React.Dispatch<React.SetStateAction<string>>;
   spanFilterMatches: Set<string> | undefined;
   datasourceType: string;
@@ -60,6 +62,8 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
     setShowSpanFilters,
     showSpanFilterMatchesOnly,
     setShowSpanFilterMatchesOnly,
+    showCriticalPathSpansOnly,
+    setShowCriticalPathSpansOnly,
     setFocusedSpanIdForSearch,
     spanFilterMatches,
     datasourceType,
@@ -152,6 +156,8 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
         setShowSpanFilters={setShowSpanFilters}
         showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
         setShowSpanFilterMatchesOnly={setShowSpanFilterMatchesOnly}
+        showCriticalPathSpansOnly={showCriticalPathSpansOnly}
+        setShowCriticalPathSpansOnly={setShowCriticalPathSpansOnly}
         search={search}
         setSearch={setSearch}
         spanFilterMatches={spanFilterMatches}
@@ -196,30 +202,34 @@ const getNewStyles = (theme: GrafanaTheme2) => {
         color: unset;
       }
     `,
-    header: css`
-      label: TracePageHeader;
-      background-color: ${theme.colors.background.primary};
-      padding: 0.5em 0 0 0;
-      position: sticky;
-      top: 0;
-      z-index: 5;
-    `,
-    titleRow: css`
-      align-items: flex-start;
-      display: flex;
-      padding: 0 8px;
-    `,
-    title: css`
-      color: inherit;
-      flex: 1;
-      font-size: 1.7em;
-      line-height: 1em;
-    `,
-    subtitle: css`
-      flex: 1;
-      line-height: 1em;
-      margin: -0.5em 0.5em 0.75em 0.5em;
-    `,
+    header: css({
+      label: 'TracePageHeader',
+      backgroundColor: theme.colors.background.primary,
+      padding: '0.5em 0 0 0',
+      position: 'sticky',
+      top: 0,
+      zIndex: 5,
+      textAlign: 'left',
+    }),
+    titleRow: css({
+      alignItems: 'flex-start',
+      display: 'flex',
+      padding: '0 8px',
+      flexWrap: 'wrap',
+    }),
+    title: css({
+      color: 'inherit',
+      flex: 1,
+      fontSize: '1.7em',
+      lineHeight: '1em',
+      marginBottom: 0,
+      minWidth: '200px',
+    }),
+    subtitle: css({
+      flex: 1,
+      lineHeight: '1em',
+      margin: '-0.5em 0.5em 0.75em 0.5em',
+    }),
     tag: css`
       margin: 0 0.5em 0 0;
     `,

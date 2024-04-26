@@ -12,6 +12,7 @@ labels:
     - oss
 menuTitle: Create a dashboard
 title: Create a dashboard
+description: Create and edit a dashboard
 weight: 1
 ---
 
@@ -34,7 +35,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
    ![Empty dashboard state](/media/docs/grafana/dashboards/empty-dashboard-10.2.png)
 
-1. In the modal that opens, do one of the following:
+1. In the dialog box that opens, do one of the following:
 
    - Select one of your existing data sources.
    - Select one of the Grafana's [built-in special data sources][].
@@ -43,7 +44,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
    {{< figure class="float-right"  src="/media/docs/grafana/dashboards/screenshot-data-source-selector-10.0.png" max-width="800px" alt="Select data source modal" >}}
 
    The **Edit panel** view opens with your data source selected.
-   You can change the panel data source later using the dropdown in the **Query** tab of the panel editor if needed.
+   You can change the panel data source later using the drop-down in the **Query** tab of the panel editor if needed.
 
    For more information about data sources, refer to [Data sources][] for specific guidelines.
 
@@ -61,6 +62,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
    For more information about individual visualizations, refer to [Visualizations options][].
 
+1. Under **Panel options**, enter a title and description for your panel or have Grafana create them using [generative AI features][].
 1. Refer to the following documentation for ways you can adjust panel settings.
 
    While not required, most visualizations need some adjustment before they properly display the information that you need.
@@ -75,13 +77,28 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
    Alternatively, click **Apply** if you want to see your changes applied to the dashboard first. Then click the save icon in the dashboard header.
 
-1. Enter a name for your dashboard and select a folder, if applicable.
+1. Enter a title and description for your dashboard or have Grafana create them using [generative AI features][].
+1. Select a folder, if applicable.
 1. Click **Save**.
-1. To add more panels to the dashboard, click **Add** in the dashboard header and select **Visualization** in the dropdown.
+1. To add more panels to the dashboard, click **Add** in the dashboard header and select **Visualization** in the drop-down.
 
-   ![Add dropdown](/media/docs/grafana/dashboards/screenshot-add-dropdown-10.0.png)
+   ![Add drop-down](/media/docs/grafana/dashboards/screenshot-add-dropdown-10.0.png)
 
    When you add additional panels to the dashboard, you're taken straight to the **Edit panel** view.
+
+## Copy an existing dashboard
+
+To copy an existing dashboard, follow these steps:
+
+1. Click **Dashboards** in the primary menu.
+1. Open the dashboard to be copied.
+1. Click **Settings** (gear icon) in the top right of the dashboard.
+1. Click **Save as** in the top-right corner of the dashboard.
+1. (Optional) Specify the name, folder, description, and whether or not to copy the original dashboard tags for the copied dashboard.
+
+   By default, the copied dashboard has the same name as the original dashboard with the word "Copy" appended and is located in the same folder.
+
+1. Click **Save**.
 
 ## Configure repeating rows
 
@@ -97,7 +114,7 @@ To see an example of repeating rows, refer to [Dashboard with repeating rows](ht
 
 1. Click **Dashboards** in the left-side menu.
 1. Navigate to the dashboard you want to work on.
-1. At the top of the dashboard, click **Add** and select **Row** in the dropdown.
+1. At the top of the dashboard, click **Add** and select **Row** in the drop-down.
 
    If the dashboard is empty, you can click the **+ Add row** button in the middle of the dashboard.
 
@@ -170,4 +187,7 @@ You can size a dashboard panel to suits your needs.
 
 [Configure standard options]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options"
 [Configure standard options]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options"
+
+[generative AI features]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/manage-dashboards#set-up-generative-ai-features-for-dashboards"
+[generative AI features]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/manage-dashboards#set-up-generative-ai-features-for-dashboards"
 {{% /docs/reference %}}

@@ -3,7 +3,7 @@ import React, { useEffect, useMemo } from 'react';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { LogMessages, logInfo } from '../../Analytics';
-import { AlertSourceAction } from '../../hooks/useAbilities';
+import { AlertingAction } from '../../hooks/useAbilities';
 import { isCloudRulesSource, isGrafanaRulesSource } from '../../utils/datasource';
 import { Authorize } from '../Authorize';
 
@@ -35,10 +35,10 @@ export const RuleListGroupView = ({ namespaces, expandAll }: Props) => {
 
   return (
     <>
-      <Authorize actions={[AlertSourceAction.ViewAlertRule]}>
+      <Authorize actions={[AlertingAction.ViewAlertRule]}>
         <GrafanaRules namespaces={grafanaNamespaces} expandAll={expandAll} />
       </Authorize>
-      <Authorize actions={[AlertSourceAction.ViewExternalAlertRule]}>
+      <Authorize actions={[AlertingAction.ViewExternalAlertRule]}>
         <CloudRules namespaces={cloudNamespaces} expandAll={expandAll} />
       </Authorize>
     </>

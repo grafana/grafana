@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 )
@@ -27,7 +28,7 @@ type ForwardIDMiddleware struct {
 
 func (m *ForwardIDMiddleware) applyToken(ctx context.Context, pCtx backend.PluginContext, req backend.ForwardHTTPHeaders) error {
 	reqCtx := contexthandler.FromContext(ctx)
-	// if request not for a datasource or no HTTP request context skip middleware
+	// no HTTP request context => skip middleware
 	if req == nil || reqCtx == nil || reqCtx.SignedInUser == nil {
 		return nil
 	}

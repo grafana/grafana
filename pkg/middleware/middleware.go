@@ -48,7 +48,10 @@ func AddDefaultResponseHeaders(cfg *setting.Cfg) web.Handler {
 			_, _, resourceURLMatch := t.Match(c.Req.URL.Path)
 			resourceCachable := resourceURLMatch && allowCacheControl(c.Resp)
 			if !strings.HasPrefix(c.Req.URL.Path, "/public/plugins/") &&
-				!strings.HasPrefix(c.Req.URL.Path, "/api/datasources/proxy/") && !resourceCachable {
+				!strings.HasPrefix(c.Req.URL.Path, "/avatar/") &&
+				!strings.HasPrefix(c.Req.URL.Path, "/api/datasources/proxy/") &&
+				!strings.HasPrefix(c.Req.URL.Path, "/api/reports/render/") &&
+				!strings.HasPrefix(c.Req.URL.Path, "/render/d-solo/") && !resourceCachable {
 				addNoCacheHeaders(c.Resp)
 			}
 
@@ -59,14 +62,6 @@ func AddDefaultResponseHeaders(cfg *setting.Cfg) web.Handler {
 				addXFrameOptionsDenyHeader(w)
 			}
 			addSecurityHeaders(w, cfg)
-		})
-	}
-}
-
-func AddAllowEmbeddingHeader() web.Handler {
-	return func(c *web.Context) {
-		c.Resp.Before(func(w web.ResponseWriter) {
-			w.Header().Set("X-Allow-Embedding", "allow")
 		})
 	}
 }

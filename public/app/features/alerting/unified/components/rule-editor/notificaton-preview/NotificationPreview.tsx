@@ -3,14 +3,13 @@ import { compact } from 'lodash';
 import React, { lazy, Suspense } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, LoadingPlaceholder, useStyles2, Text } from '@grafana/ui';
+import { Button, LoadingPlaceholder, Text, useStyles2 } from '@grafana/ui';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { Stack } from 'app/plugins/datasource/parca/QueryEditor/Stack';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
+import { useGetAlertManagerDataSourcesByPermissionAndConfig } from '../../../utils/datasource';
 import { Folder } from '../RuleFolderPicker';
-
-import { useGetAlertManagersSourceNamesAndImage } from './useGetAlertManagersSourceNamesAndImage';
 
 const NotificationPreviewByAlertManager = lazy(() => import('./NotificationPreviewByAlertManager'));
 
@@ -63,16 +62,16 @@ export const NotificationPreview = ({
     });
   };
 
-  // Get list of alert managers source name + image
-  const alertManagerSourceNamesAndImage = useGetAlertManagersSourceNamesAndImage();
+  //  Get alert managers's data source information
+  const alertManagerDataSources = useGetAlertManagerDataSourcesByPermissionAndConfig('notification');
 
-  const onlyOneAM = alertManagerSourceNamesAndImage.length === 1;
+  const onlyOneAM = alertManagerDataSources.length === 1;
 
   return (
     <Stack direction="column">
       <div className={styles.routePreviewHeaderRow}>
         <div className={styles.previewHeader}>
-          <Text element="h4">Alert instance routing preview</Text>
+          <Text element="h5">Alert instance routing preview</Text>
           {isLoading && previewUninitialized && (
             <Text color="secondary" variant="bodySmall">
               Loading...
@@ -98,7 +97,7 @@ export const NotificationPreview = ({
       </div>
       {!isLoading && !previewUninitialized && potentialInstances.length > 0 && (
         <Suspense fallback={<LoadingPlaceholder text="Loading preview..." />}>
-          {alertManagerSourceNamesAndImage.map((alertManagerSource) => (
+          {alertManagerDataSources.map((alertManagerSource) => (
             <NotificationPreviewByAlertManager
               alertManagerSource={alertManagerSource}
               potentialInstances={potentialInstances}
@@ -125,6 +124,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex-direction: row;
     justify-content: space-between;
     align-items: flex-start;
+    margin-top: ${theme.spacing(1)};
   `,
   collapseLabel: css`
     flex: 1;

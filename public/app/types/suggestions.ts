@@ -28,4 +28,6 @@ export enum SuggestionName {
   DashboardList = 'Dashboard list',
   Logs = 'Logs',
   FlameGraph = 'Flame graph',
+  Trace = 'Trace',
+  NodeGraph = 'Node graph',
 }

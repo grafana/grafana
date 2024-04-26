@@ -21,7 +21,7 @@ export function PluginDetailsDisabledError({ className, plugin }: Props): ReactE
       severity="error"
       title="Plugin disabled"
       className={className}
-      aria-label={selectors.pages.PluginPage.disabledInfo}
+      data-testid={selectors.pages.PluginPage.disabledInfo}
     >
       {renderDescriptionFromError(plugin.error)}
       <p>Please contact your server administrator to get this resolved.</p>
@@ -66,6 +66,11 @@ function renderDescriptionFromError(error?: PluginErrorCode): ReactElement {
           version of this plugin.
         </p>
       );
+    case PluginErrorCode.failedBackendStart:
+      return <p>This plugin failed to start. Server logs can provide more information.</p>;
+    case PluginErrorCode.angular:
+      // Error message already rendered by AngularDeprecationPluginNotice
+      return <></>;
     default:
       return (
         <p>

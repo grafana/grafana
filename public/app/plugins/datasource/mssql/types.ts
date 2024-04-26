@@ -1,11 +1,15 @@
 import { DataSourceJsonData } from '@grafana/data';
+import { SQLOptions } from '@grafana/sql';
 import { HttpSettingsBaseProps } from '@grafana/ui/src/components/DataSourceSettings/types';
-import { SQLOptions } from 'app/features/plugins/sql/types';
 
 export enum MSSQLAuthenticationType {
   sqlAuth = 'SQL Server Authentication',
   windowsAuth = 'Windows Authentication',
   azureAuth = 'Azure AD Authentication',
+  kerberosRaw = 'Windows AD: Username + password',
+  kerberosKeytab = 'Windows AD: Keytab',
+  kerberosCredentialCache = 'Windows AD: Credential cache',
+  kerberosCredentialCacheLookupFile = 'Windows AD: Credential cache file',
 }
 
 export enum MSSQLEncryptOptions {
@@ -41,6 +45,12 @@ export interface MssqlOptions extends SQLOptions {
   serverName?: string;
   connectionTimeout?: number;
   azureCredentials?: AzureCredentialsType;
+  keytabFilePath?: string;
+  credentialCache?: string;
+  credentialCacheLookupFile?: string;
+  configFilePath?: string;
+  UDPConnectionLimit?: number;
+  enableDNSLookupKDC?: string;
 }
 
 export interface MssqlSecureOptions {

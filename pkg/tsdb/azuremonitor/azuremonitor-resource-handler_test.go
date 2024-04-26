@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/metrics"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
@@ -104,8 +104,9 @@ func Test_handleResourceReq(t *testing.T) {
 		im: &fakeInstance{
 			services: map[string]types.DatasourceService{
 				azureMonitor: {
-					URL:        routes[azsettings.AzurePublic][azureMonitor].URL,
+					URL:        "https://management.azure.com",
 					HTTPClient: &http.Client{},
+					Logger:     log.DefaultLogger,
 				},
 			},
 		},
@@ -114,6 +115,7 @@ func Test_handleResourceReq(t *testing.T) {
 				Proxy: proxy,
 			},
 		},
+		logger: log.DefaultLogger,
 	}
 	rw := httptest.NewRecorder()
 	req, err := http.NewRequest(http.MethodGet, "http://foo/azuremonitor/subscriptions/44693801", nil)

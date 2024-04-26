@@ -3,10 +3,11 @@ import React from 'react';
 
 import { GrafanaTheme2, colorManipulator, deprecationWarning } from '@grafana/data';
 
-import { useTheme2, stylesFactory } from '../../themes';
+import { useStyles2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 import { ComponentSize } from '../../types';
 import { IconName, IconSize, IconType } from '../../types/icon';
+import { handleReducedMotion } from '../../utils/handleReducedMotion';
 import { Icon } from '../Icon/Icon';
 import { getSvgSize } from '../Icon/utils';
 import { TooltipPlacement, PopoverContent, Tooltip } from '../Tooltip';
@@ -44,8 +45,6 @@ export type Props = BasePropsWithTooltip | BasePropsWithAriaLabel;
 
 export const IconButton = React.forwardRef<HTMLButtonElement, Props>((props, ref) => {
   const { size = 'md', variant = 'secondary' } = props;
-
-  const theme = useTheme2();
   let limitedIconSize: LimitedIconSize;
 
   // very large icons (xl to xxxl) are unified to size xl
@@ -56,7 +55,7 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>((props, ref
     limitedIconSize = size;
   }
 
-  const styles = getStyles(theme, limitedIconSize, variant);
+  const styles = useStyles2(getStyles, limitedIconSize, variant);
 
   let ariaLabel: string | undefined;
   let buttonRef: typeof ref | undefined;
@@ -104,7 +103,7 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>((props, ref
 
 IconButton.displayName = 'IconButton';
 
-const getStyles = stylesFactory((theme: GrafanaTheme2, size, variant: IconButtonVariant) => {
+const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVariant) => {
   // overall size of the IconButton on hover
   // theme.spacing.gridSize originates from 2*4px for padding and letting the IconSize generally decide on the hoverSize
   const hoverSize = getSvgSize(size) + theme.spacing.gridSize;
@@ -145,9 +144,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, size, variant: IconButton
         height: `${hoverSize}px`,
         borderRadius: theme.shape.radius.default,
         content: '""',
-        transitionDuration: '0.2s',
-        transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
-        transitionProperty: 'opacity',
+        ...handleReducedMotion({
+          transitionDuration: '0.2s',
+          transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
+          transitionProperty: 'opacity',
+        }),
       },
 
       '&:focus, &:focus-visible': getFocusStyles(theme),
@@ -166,4 +167,4 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, size, variant: IconButton
       verticalAlign: 'baseline',
     }),
   };
-});
+};

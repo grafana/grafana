@@ -8,7 +8,7 @@ import { PanelModel } from '../../state';
 export interface BuildParamsArgs {
   useCurrentTimeRange: boolean;
   selectedTheme?: string;
-  panel?: PanelModel;
+  panel?: { timeFrom?: string; id: number };
   search?: string;
   range?: TimeRange;
   orgId?: number;
@@ -49,6 +49,13 @@ export function buildParams({
     searchParams.set('viewPanel', String(panel.id));
   }
 
+  // Token is unique to the authenticated identity and should not be shared with the URL,
+  // so we are stripping it from the query params as a safety measure.
+  searchParams.delete('auth_token');
+
+  // The shareView param is used to indicate that the sharing modal is open and should never be included in the URL
+  searchParams.delete('shareView');
+
   return searchParams;
 }
 
@@ -82,10 +89,11 @@ export function buildSoloUrl(
   useCurrentTimeRange: boolean,
   dashboardUid: string,
   selectedTheme?: string,
-  panel?: PanelModel
+  panel?: { timeFrom?: string; id: number },
+  range?: TimeRange
 ) {
   const baseUrl = buildBaseUrl();
-  const params = buildParams({ useCurrentTimeRange, selectedTheme, panel });
+  const params = buildParams({ useCurrentTimeRange, selectedTheme, panel, range });
 
   let soloUrl = baseUrl.replace(config.appSubUrl + '/dashboard/', config.appSubUrl + '/dashboard-solo/');
   soloUrl = soloUrl.replace(config.appSubUrl + '/d/', config.appSubUrl + '/d-solo/');
@@ -113,7 +121,12 @@ export function buildImageUrl(
   let soloUrl = buildSoloUrl(useCurrentTimeRange, dashboardUid, selectedTheme, panel);
   let imageUrl = soloUrl.replace(config.appSubUrl + '/dashboard-solo/', config.appSubUrl + '/render/dashboard-solo/');
   imageUrl = imageUrl.replace(config.appSubUrl + '/d-solo/', config.appSubUrl + '/render/d-solo/');
-  imageUrl += '&width=1000&height=500' + getLocalTimeZone();
+  imageUrl +=
+    `&width=${config.rendererDefaultImageWidth}` +
+    `&height=${config.rendererDefaultImageHeight}` +
+    `&scale=${config.rendererDefaultImageScale}` +
+    getLocalTimeZone();
+
   return imageUrl;
 }
 
@@ -121,10 +134,11 @@ export function buildIframeHtml(
   useCurrentTimeRange: boolean,
   dashboardUid: string,
   selectedTheme?: string,
-  panel?: PanelModel
+  panel?: { timeFrom?: string; id: number },
+  range?: TimeRange
 ) {
-  let soloUrl = buildSoloUrl(useCurrentTimeRange, dashboardUid, selectedTheme, panel);
-  return '<iframe src="' + soloUrl + '" width="450" height="200" frameborder="0"></iframe>';
+  let soloUrl = buildSoloUrl(useCurrentTimeRange, dashboardUid, selectedTheme, panel, range);
+  return `<iframe src="${soloUrl}" width="450" height="200" frameborder="0"></iframe>`;
 }
 
 export function getLocalTimeZone() {

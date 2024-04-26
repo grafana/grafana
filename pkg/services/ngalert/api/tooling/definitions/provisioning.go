@@ -7,9 +7,10 @@ type AlertingFileExport struct {
 	Groups        []AlertRuleGroupExport     `json:"groups,omitempty" yaml:"groups,omitempty"`
 	ContactPoints []ContactPointExport       `json:"contactPoints,omitempty" yaml:"contactPoints,omitempty"`
 	Policies      []NotificationPolicyExport `json:"policies,omitempty" yaml:"policies,omitempty"`
+	MuteTimings   []MuteTimeIntervalExport   `json:"muteTimes,omitempty" yaml:"muteTimes,omitempty"`
 }
 
-// swagger:parameters RouteGetAlertRuleGroupExport RouteGetAlertRuleExport RouteGetContactpointsExport RouteGetContactpointExport RoutePostRulesGroupForExport
+// swagger:parameters RouteGetAlertRuleGroupExport RouteGetAlertRuleExport RouteGetContactpointsExport RouteGetContactpointExport RoutePostRulesGroupForExport RouteExportMuteTimings RouteExportMuteTiming
 type ExportQueryParams struct {
 	// Whether to initiate a download of the file or not.
 	// in: query
@@ -17,10 +18,11 @@ type ExportQueryParams struct {
 	// default: false
 	Download bool `json:"download"`
 
-	// Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.
+	// Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.
 	// in: query
 	// required: false
 	// default: yaml
+	// enum: yaml,json,hcl
 	Format string `json:"format"`
 }
 

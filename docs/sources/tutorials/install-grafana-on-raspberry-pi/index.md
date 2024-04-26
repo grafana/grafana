@@ -51,7 +51,7 @@ Follow the directions on the website to download and install the imager.
 
 #### Install Raspberry Pi OS
 
-Now it is time to install Raspberry Pi OS.
+Now it's time to install Raspberry Pi OS.
 
 1. Insert the SD card into your regular computer from which you plan to install Raspberry Pi OS.
 1. Run the Raspberry Pi Imager that you downloaded and installed.
@@ -69,7 +69,7 @@ While you _could_ fire up the Raspberry Pi now, we don't yet have any way of acc
 
 1. **(Optional)** Create a file called `wpa_supplicant.conf` in the boot directory:
 
-   ```
+   ```bash
    ctrl_interface=/var/run/wpa_supplicant
    update_config=1
    country=<Insert 2 letter ISO 3166-1 country code here>
@@ -89,13 +89,16 @@ All the necessary files are now on the SD card. Let's start up the Raspberry Pi.
 #### Connect remotely via SSH
 
 1. Open up your terminal and enter the following command:
-   ```
+
+   ```bash
    ssh pi@<ip address>
    ```
+
 1. SSH warns you that the authenticity of the host can't be established. Type "yes" to continue connecting.
 1. When asked for a password, enter the default password: `raspberry`.
 1. Once you're logged in, change the default password:
-   ```
+
+   ```bash
    passwd
    ```
 
@@ -107,18 +110,20 @@ Now that you've got the Raspberry Pi up and running, the next step is to install
 
 1. Add the APT key used to authenticate packages:
 
-   ```
-   wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
+   ```bash
+   sudo mkdir -p /etc/apt/keyrings/
+   wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/grafana.gpg > /dev/null
    ```
 
 1. Add the Grafana APT repository:
 
-   ```
-   echo "deb https://packages.grafana.com/oss/deb stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
+   ```bash
+   echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | sudo tee /etc/apt/sources.list.d/grafana.list
    ```
 
 1. Install Grafana:
-   ```
+
+   ```bash
    sudo apt-get update
    sudo apt-get install -y grafana
    ```
@@ -127,13 +132,13 @@ Grafana is now installed, but not yet running. To make sure Grafana starts up ev
 
 1. Enable the Grafana server:
 
-   ```
+   ```bash
    sudo /bin/systemctl enable grafana-server
    ```
 
 1. Start the Grafana server:
 
-   ```
+   ```bash
    sudo /bin/systemctl start grafana-server
    ```
 
@@ -143,7 +148,7 @@ Grafana is now installed, but not yet running. To make sure Grafana starts up ev
 1. Log in to Grafana with the default username `admin`, and the default password `admin`.
 1. Change the password for the admin user when asked.
 
-Congratulations! Grafana is now running on your Raspberry Pi. If the Raspberry Pi is ever restarted or turned off, Grafana will start up whenever the machine regains power.
+Congratulations, Grafana is now running on your Raspberry Pi. If the Raspberry Pi is ever restarted or turned off, Grafana will start up whenever the machine regains power.
 
 ## Summary
 

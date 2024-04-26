@@ -10,7 +10,6 @@ import {
   SelectableValue,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Stack } from '@grafana/experimental';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
 import { AnnotationPanelFilter } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 import {
@@ -23,15 +22,15 @@ import {
   MultiSelect,
   Select,
   useStyles2,
+  Stack,
 } from '@grafana/ui';
 import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
 import config from 'app/core/config';
 import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
+import { AngularEditorLoader } from 'app/features/dashboard-scene/settings/annotations/AngularEditorLoader';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { DashboardModel } from '../../state/DashboardModel';
-
-import { AngularEditorLoader } from './AngularEditorLoader';
 
 type Props = {
   editIdx: number;
@@ -72,10 +71,26 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
   };
 
   const onDataSourceChange = (ds: DataSourceInstanceSettings) => {
-    onUpdate({
-      ...annotation,
-      datasource: getDataSourceRef(ds),
-    });
+    const dsRef = getDataSourceRef(ds);
+
+    if (annotation.datasource?.type !== dsRef.type) {
+      onUpdate({
+        datasource: dsRef,
+        builtIn: annotation.builtIn,
+        enable: annotation.enable,
+        iconColor: annotation.iconColor,
+        name: annotation.name,
+        hide: annotation.hide,
+        filter: annotation.filter,
+        mappings: annotation.mappings,
+        type: annotation.type,
+      });
+    } else {
+      onUpdate({
+        ...annotation,
+        datasource: dsRef,
+      });
+    }
   };
 
   const onChange = (ev: React.FocusEvent<HTMLInputElement>) => {
@@ -162,7 +177,7 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
       <FieldSet className={styles.settingsForm}>
         <Field label="Name">
           <Input
-            aria-label={selectors.pages.Dashboard.Settings.Annotations.Settings.name}
+            data-testid={selectors.pages.Dashboard.Settings.Annotations.Settings.name}
             name="name"
             id="name"
             autoFocus={isNewAnnotation}
@@ -187,13 +202,13 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
             <ColorValueEditor value={annotation?.iconColor} onChange={onColorChange} />
           </HorizontalGroup>
         </Field>
-        <Field label="Show in" aria-label={selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.showInLabel}>
+        <Field label="Show in" data-testid={selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.showInLabel}>
           <>
             <Select
               options={panelFilters}
               value={panelFilter}
               onChange={onFilterTypeChange}
-              aria-label={selectors.components.Annotations.annotationsTypeInput}
+              data-testid={selectors.components.Annotations.annotationsTypeInput}
             />
             {panelFilter !== PanelFilterType.AllPanels && (
               <MultiSelect
@@ -205,7 +220,7 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
                 width={100}
                 closeMenuOnSelect={false}
                 className={styles.select}
-                aria-label={selectors.components.Annotations.annotationsChoosePanelInput}
+                data-testid={selectors.components.Annotations.annotationsChoosePanelInput}
               />
             )}
           </>

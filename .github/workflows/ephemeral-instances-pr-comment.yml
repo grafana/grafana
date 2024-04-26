@@ -4,7 +4,11 @@ on:
     types: [created]
 jobs:
   config:
-    runs-on: "ubuntu-latest"
+    if: github.event.sender.type == 'User' &&
+        github.event.issue.pull_request &&
+        startsWith(github.event.comment.body, '/deploy-to-hg')
+    runs-on:
+      labels: ubuntu-latest-8-cores
     outputs:
       has-secrets: ${{ steps.check.outputs.has-secrets }}
     steps:
@@ -62,6 +66,7 @@ jobs:
           cd $GITHUB_WORKSPACE/ephemeral/src
           go run . \
             -GITHUB_TOKEN="${{ steps.generate_token.outputs.token }}" \
+            -GITHUB_WORKFLOW_RUN_ID="${{ github.run_id }}" \
             -GITHUB_EVENT="$GITHUB_EVENT" \
             -GITHUB_TRIGGERING_ACTOR="${{ github.triggering_actor }}" \
             -GCOM_HOST="${{ secrets.EI_GCOM_HOST }}" \

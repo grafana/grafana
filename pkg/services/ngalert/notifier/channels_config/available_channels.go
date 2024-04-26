@@ -3,6 +3,7 @@ package channels_config
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	alertingOpsgenie "github.com/grafana/alerting/receivers/opsgenie"
 	alertingTemplates "github.com/grafana/alerting/templates"
@@ -266,6 +267,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Description:  "Optional message. You can use templates to customize this field. Using a custom message will replace the default message",
 					Element:      ElementTypeTextArea,
 					PropertyName: "message",
+					Placeholder:  alertingTemplates.DefaultMessageEmbed,
 				},
 				{ // New in 9.0.
 					Label:        "Subject",
@@ -814,6 +816,15 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					PropertyName: "chatid",
 					Required:     true,
 				},
+				{
+					Label:          "Message Thread ID",
+					Element:        ElementTypeInput,
+					InputType:      InputTypeText,
+					Description:    "Integer Telegram Message Thread Identifier",
+					PropertyName:   "message_thread_id",
+					Required:       false,
+					ValidationRule: "-?[0-9]{1,10}",
+				},
 				{ // New in 8.0.
 					Label:        "Message",
 					Element:      ElementTypeTextArea,
@@ -1270,7 +1281,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 				}, {
 					Label:        "Override priority",
 					Element:      ElementTypeCheckbox,
-					Description:  "Allow the alert priority to be set using the og_priority annotation",
+					Description:  "Allow the alert priority to be set using the og_priority label.",
 					PropertyName: "overridePriority",
 				},
 				{
@@ -1292,6 +1303,40 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					},
 					Description:  "Send the common annotations to Opsgenie as either Extra Properties, Tags or both",
 					PropertyName: "sendTagsAs",
+				},
+				// New in 10.3
+				{
+					Label:        "Responders",
+					PropertyName: "responders",
+					Description:  "If the API key belongs to a team, this field is ignored.",
+					Element:      ElementSubformArray,
+					SubformOptions: []NotifierOption{
+						{
+							Label:        "Type",
+							Description:  fmt.Sprintf("%s or a template", strings.Join(alertingOpsgenie.SupportedResponderTypes, ", ")),
+							Element:      ElementTypeInput,
+							Required:     true,
+							PropertyName: "type",
+						},
+						{
+							Label:        "Name",
+							Element:      ElementTypeInput,
+							Description:  "Name of the responder. Must be specified if ID and Username are empty or if the type is 'teams'.",
+							PropertyName: "name",
+						},
+						{
+							Label:        "ID",
+							Element:      ElementTypeInput,
+							Description:  "ID of the responder. Must be specified if name and Username are empty.",
+							PropertyName: "id",
+						},
+						{
+							Label:        "Username",
+							Element:      ElementTypeInput,
+							Description:  "User name of the responder. Must be specified if ID and Name are empty.",
+							PropertyName: "username",
+						},
+					},
 				},
 			},
 		},

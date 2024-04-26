@@ -25,6 +25,7 @@ const testSpan = {
   spanID: 'testSpanID',
   traceID: 'testTraceID',
   depth: 3,
+  tags: [],
   process: {
     serviceName: 'some-service',
     tags: [{ key: 'tag-key', value: 'tag-value' }],
@@ -46,6 +47,7 @@ const setup = (propOverrides?: SpanDetailRowProps) => {
     tagsToggle: jest.fn(),
     traceStartTime: 1000,
     theme: createTheme(),
+    traceFlameGraphs: {},
     ...propOverrides,
   };
   return render(<UnthemedSpanDetailRow {...(props as SpanDetailRowProps)} />);

@@ -249,7 +249,7 @@ function PieSlice({ arc, pie, highlightState, openMenu, fill, tooltip, tooltipOp
       onMouseMove={tooltipOptions.mode !== 'none' ? onMouseMoveOverArc : undefined}
       onMouseOut={onMouseOut}
       onClick={openMenu}
-      aria-label={selectors.components.Panels.Visualization.PieChart.svgSlice}
+      data-testid={selectors.components.Panels.Visualization.PieChart.svgSlice}
     >
       <path d={pie.path({ ...arc })!} fill={fill} stroke={theme.colors.background.primary} strokeWidth={1} />
     </g>

@@ -18,7 +18,7 @@ func TestTimeLimitCodes(t *testing.T) {
 	user := &user.User{ID: 10, Email: "t@a.com", Login: "asd", Password: "1", Rands: "2"}
 
 	format := "200601021504"
-	mailPayload := strconv.FormatInt(user.ID, 10) + user.Email + user.Login + user.Password + user.Rands
+	mailPayload := strconv.FormatInt(user.ID, 10) + user.Email + user.Login + string(user.Password) + user.Rands
 	tenMinutesAgo := time.Now().Add(-time.Minute * 10)
 
 	tests := []struct {
@@ -76,7 +76,7 @@ func TestTimeLimitCodes(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			code, err := createTimeLimitCode(test.payload, test.minutes, test.start.Format(format))
+			code, err := createTimeLimitCode(cfg.SecretKey, test.payload, test.minutes, test.start.Format(format))
 			require.NoError(t, err)
 
 			isValid, err := validateUserEmailCode(cfg, user, code)
@@ -86,7 +86,7 @@ func TestTimeLimitCodes(t *testing.T) {
 	}
 
 	t.Run("tampered minutes", func(t *testing.T) {
-		code, err := createTimeLimitCode(mailPayload, 5, tenMinutesAgo.Format(format))
+		code, err := createTimeLimitCode(cfg.SecretKey, mailPayload, 5, tenMinutesAgo.Format(format))
 		require.NoError(t, err)
 
 		// code is expired
@@ -102,7 +102,7 @@ func TestTimeLimitCodes(t *testing.T) {
 	})
 
 	t.Run("tampered start string", func(t *testing.T) {
-		code, err := createTimeLimitCode(mailPayload, 5, tenMinutesAgo.Format(format))
+		code, err := createTimeLimitCode(cfg.SecretKey, mailPayload, 5, tenMinutesAgo.Format(format))
 		require.NoError(t, err)
 
 		// code is expired

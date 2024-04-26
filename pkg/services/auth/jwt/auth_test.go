@@ -20,6 +20,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
 type scenarioContext struct {
@@ -38,6 +39,10 @@ type scenarioFunc func(*testing.T, scenarioContext)
 type cachingScenarioFunc func(*testing.T, cachingScenarioContext)
 
 const subject = "foo-subj"
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestVerifyUsingPKIXPublicKeyFile(t *testing.T) {
 	key := rsaKeys[0]
@@ -70,7 +75,7 @@ func TestVerifyUsingPKIXPublicKeyFile(t *testing.T) {
 		assert.Equal(t, verifiedClaims["sub"], subject)
 	}, configurePKIXPublicKeyFile, func(t *testing.T, cfg *setting.Cfg) {
 		t.Helper()
-		cfg.JWTAuthKeyID = publicKeyID
+		cfg.JWTAuth.KeyID = publicKeyID
 	})
 }
 
@@ -89,7 +94,7 @@ func TestVerifyUsingJWKSetFile(t *testing.T) {
 		require.NoError(t, json.NewEncoder(file).Encode(jwksPublic))
 		require.NoError(t, file.Close())
 
-		cfg.JWTAuthJWKSetFile = file.Name()
+		cfg.JWTAuth.JWKSetFile = file.Name()
 	}
 
 	scenario(t, "verifies a token signed with a key from the set", func(t *testing.T, sc scenarioContext) {
@@ -118,22 +123,18 @@ func TestVerifyUsingJWKSetURL(t *testing.T) {
 		var err error
 
 		_, err = initAuthService(t, func(t *testing.T, cfg *setting.Cfg) {
-			cfg.JWTAuthJWKSetURL = "https://example.com/.well-known/jwks.json"
+			cfg.JWTAuth.JWKSetURL = "https://example.com/.well-known/jwks.json"
 		})
 		require.NoError(t, err)
 
 		_, err = initAuthService(t, func(t *testing.T, cfg *setting.Cfg) {
-			cfg.JWTAuthJWKSetURL = "http://example.com/.well-known/jwks.json"
+			cfg.JWTAuth.JWKSetURL = "http://example.com/.well-known/jwks.json"
 		})
 		require.NoError(t, err)
 
-		oldEnv := setting.Env
-		setting.Env = setting.Prod
-		defer func() {
-			setting.Env = oldEnv
-		}()
 		_, err = initAuthService(t, func(t *testing.T, cfg *setting.Cfg) {
-			cfg.JWTAuthJWKSetURL = "http://example.com/.well-known/jwks.json"
+			cfg.Env = setting.Prod
+			cfg.JWTAuth.JWKSetURL = "http://example.com/.well-known/jwks.json"
 		})
 		require.Error(t, err)
 	})
@@ -184,7 +185,7 @@ func TestCachingJWKHTTPResponse(t *testing.T) {
 		assert.Equal(t, 1, *sc.reqCount)
 	}, func(t *testing.T, cfg *setting.Cfg) {
 		// Arbitrary high value, several times what the test should take.
-		cfg.JWTAuthCacheTTL = time.Minute
+		cfg.JWTAuth.CacheTTL = time.Minute
 	})
 
 	jwkCachingScenario(t, "does not cache the response when TTL is zero", func(t *testing.T, sc cachingScenarioContext) {
@@ -195,7 +196,7 @@ func TestCachingJWKHTTPResponse(t *testing.T) {
 
 		assert.Equal(t, 2, *sc.reqCount)
 	}, func(t *testing.T, cfg *setting.Cfg) {
-		cfg.JWTAuthCacheTTL = 0
+		cfg.JWTAuth.CacheTTL = 0
 	})
 }
 
@@ -220,7 +221,7 @@ func TestClaimValidation(t *testing.T) {
 		_, err = sc.authJWTSvc.Verify(sc.ctx, tokenInvalid)
 		require.Error(t, err)
 	}, configurePKIXPublicKeyFile, func(t *testing.T, cfg *setting.Cfg) {
-		cfg.JWTAuthExpectClaims = `{"iss": "http://foo"}`
+		cfg.JWTAuth.ExpectClaims = `{"iss": "http://foo"}`
 	})
 
 	scenario(t, "validates sub field for equality", func(t *testing.T, sc scenarioContext) {
@@ -235,7 +236,7 @@ func TestClaimValidation(t *testing.T) {
 		_, err = sc.authJWTSvc.Verify(sc.ctx, tokenInvalid)
 		require.Error(t, err)
 	}, configurePKIXPublicKeyFile, func(t *testing.T, cfg *setting.Cfg) {
-		cfg.JWTAuthExpectClaims = `{"sub": "foo"}`
+		cfg.JWTAuth.ExpectClaims = `{"sub": "foo"}`
 	})
 
 	scenario(t, "validates aud field for inclusion", func(t *testing.T, sc scenarioContext) {
@@ -256,7 +257,7 @@ func TestClaimValidation(t *testing.T) {
 		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{Audience: []string{"baz"}}, nil))
 		require.Error(t, err)
 	}, configurePKIXPublicKeyFile, func(t *testing.T, cfg *setting.Cfg) {
-		cfg.JWTAuthExpectClaims = `{"aud": ["foo", "bar"]}`
+		cfg.JWTAuth.ExpectClaims = `{"aud": ["foo", "bar"]}`
 	})
 
 	scenario(t, "validates non-registered (custom) claims for equality", func(t *testing.T, sc scenarioContext) {
@@ -277,7 +278,7 @@ func TestClaimValidation(t *testing.T) {
 		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, map[string]any{"my-number": 123}, nil))
 		require.Error(t, err)
 	}, configurePKIXPublicKeyFile, func(t *testing.T, cfg *setting.Cfg) {
-		cfg.JWTAuthExpectClaims = `{"my-str": "foo", "my-number": 123}`
+		cfg.JWTAuth.ExpectClaims = `{"my-str": "foo", "my-number": 123}`
 	})
 
 	scenario(t, "validates exp claim of the token", func(t *testing.T, sc scenarioContext) {
@@ -322,7 +323,7 @@ func jwkHTTPScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...configur
 		t.Cleanup(ts.Close)
 
 		configure := func(t *testing.T, cfg *setting.Cfg) {
-			cfg.JWTAuthJWKSetURL = ts.URL
+			cfg.JWTAuth.JWKSetURL = ts.URL
 		}
 		runner := scenarioRunner(func(t *testing.T, sc scenarioContext) {
 			keySet := sc.authJWTSvc.keySet.(*keySetHTTP)
@@ -354,8 +355,8 @@ func jwkCachingScenario(t *testing.T, desc string, fn cachingScenarioFunc, cbs .
 		t.Cleanup(ts.Close)
 
 		configure := func(t *testing.T, cfg *setting.Cfg) {
-			cfg.JWTAuthJWKSetURL = ts.URL
-			cfg.JWTAuthCacheTTL = time.Hour
+			cfg.JWTAuth.JWKSetURL = ts.URL
+			cfg.JWTAuth.CacheTTL = time.Hour
 		}
 		runner := scenarioRunner(func(t *testing.T, sc scenarioContext) {
 			keySet := sc.authJWTSvc.keySet.(*keySetHTTP)
@@ -396,8 +397,8 @@ func initAuthService(t *testing.T, cbs ...configureFunc) (*AuthService, error) {
 	t.Helper()
 
 	cfg := setting.NewCfg()
-	cfg.JWTAuthEnabled = true
-	cfg.JWTAuthExpectClaims = "{}"
+	cfg.JWTAuth.Enabled = true
+	cfg.JWTAuth.ExpectClaims = "{}"
 
 	for _, cb := range cbs {
 		cb(t, cfg)
@@ -441,5 +442,5 @@ func configurePKIXPublicKeyFile(t *testing.T, cfg *setting.Cfg) {
 	}))
 	require.NoError(t, file.Close())
 
-	cfg.JWTAuthKeyFile = file.Name()
+	cfg.JWTAuth.KeyFile = file.Name()
 }

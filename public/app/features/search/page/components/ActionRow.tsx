@@ -3,7 +3,7 @@ import React, { FormEvent } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Button, Checkbox, HorizontalGroup, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Button, Checkbox, Stack, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { SortPicker } from 'app/core/components/Select/SortPicker';
 import { TagFilter, TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { t, Trans } from 'app/core/internationalization';
@@ -70,11 +70,14 @@ export const ActionRow = ({
   const layout = getValidQueryLayout(state);
 
   // Disabled folder layout option when query is present
-  const disabledOptions = state.query || state.datasource || state.panel_type ? [SearchLayout.Folders] : [];
+  const disabledOptions =
+    state.tag.length || state.starred || state.query || state.datasource || state.panel_type
+      ? [SearchLayout.Folders]
+      : [];
 
   return (
     <div className={styles.actionRow}>
-      <HorizontalGroup spacing="md" width="auto">
+      <Stack gap={2} alignItems="center">
         <TagFilter isClearable={false} tags={state.tag} tagOptions={getTagOptions} onChange={onTagFilterChange} />
         {config.featureToggles.panelTitleSearch && (
           <Checkbox
@@ -107,9 +110,9 @@ export const ActionRow = ({
             Panel: {state.panel_type}
           </Button>
         )}
-      </HorizontalGroup>
+      </Stack>
 
-      <HorizontalGroup spacing="md" width="auto">
+      <Stack gap={2}>
         {!hideLayout && (
           <RadioButtonGroup
             options={getLayoutOptions()}
@@ -125,7 +128,7 @@ export const ActionRow = ({
           placeholder={sortPlaceholder || t('search.actions.sort-placeholder', 'Sort')}
           isClearable
         />
-      </HorizontalGroup>
+      </Stack>
     </div>
   );
 };

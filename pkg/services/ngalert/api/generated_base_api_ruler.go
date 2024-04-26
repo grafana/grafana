@@ -252,6 +252,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 		group.Get(
 			toMacaronPath("/api/ruler/grafana/api/v1/export/rules"),
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/ruler/grafana/api/v1/export/rules"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -287,6 +288,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 		group.Post(
 			toMacaronPath("/api/ruler/grafana/api/v1/rules/{Namespace}/export"),
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodPost, "/api/ruler/grafana/api/v1/rules/{Namespace}/export"),
 			metrics.Instrument(
 				http.MethodPost,

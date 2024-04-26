@@ -1,3 +1,5 @@
+import { randomLcg } from 'd3-random';
+
 import {
   FieldColorModeId,
   FieldDTO,
@@ -5,12 +7,16 @@ import {
   MutableDataFrame,
   NodeGraphDataFrameFieldNames,
   DataFrame,
+  addRow,
 } from '@grafana/data';
 
-import { nodes, edges } from './testData/serviceMapResponse';
+import * as serviceMapResponseSmall from './testData/serviceMapResponse';
+import * as serviceMapResponsMedium from './testData/serviceMapResponseMedium';
 
-export function generateRandomNodes(count = 10) {
+export function generateRandomNodes(count = 10, seed?: number) {
   const nodes = [];
+  const edges: string[] = [];
+  const rand = randomLcg(seed);
 
   const root = {
     id: 'root',
@@ -20,7 +26,7 @@ export function generateRandomNodes(count = 10) {
     error: 0,
     stat1: Math.random(),
     stat2: Math.random(),
-    edges: [] as any[],
+    edges,
   };
   nodes.push(root);
   const nodesWithoutMaxEdges = [root];
@@ -30,7 +36,7 @@ export function generateRandomNodes(count = 10) {
   for (let i = 1; i < count; i++) {
     const node = makeRandomNode(i);
     nodes.push(node);
-    const sourceIndex = Math.floor(Math.random() * Math.floor(nodesWithoutMaxEdges.length - 1));
+    const sourceIndex = Math.floor(rand() * Math.floor(nodesWithoutMaxEdges.length - 1));
     const source = nodesWithoutMaxEdges[sourceIndex];
     source.edges.push(node.id);
     if (source.edges.length >= maxEdges) {
@@ -42,8 +48,8 @@ export function generateRandomNodes(count = 10) {
   // Add some random edges to create possible cycle
   const additionalEdges = Math.floor(count / 2);
   for (let i = 0; i <= additionalEdges; i++) {
-    const sourceIndex = Math.floor(Math.random() * Math.floor(nodes.length - 1));
-    const targetIndex = Math.floor(Math.random() * Math.floor(nodes.length - 1));
+    const sourceIndex = Math.floor(rand() * Math.floor(nodes.length - 1));
+    const targetIndex = Math.floor(rand() * Math.floor(nodes.length - 1));
     if (sourceIndex === targetIndex || nodes[sourceIndex].id === '0' || nodes[targetIndex].id === '0') {
       continue;
     }
@@ -51,7 +57,74 @@ export function generateRandomNodes(count = 10) {
     nodes[sourceIndex].edges.push(nodes[targetIndex].id);
   }
 
-  const nodeFields: Record<string, Omit<FieldDTO, 'name'> & { values: any[] }> = {
+  const { nodesFields, nodesFrame, edgesFrame } = makeDataFrames();
+
+  const edgesSet = new Set();
+  for (const node of nodes) {
+    nodesFields.id.values.push(node.id);
+    nodesFields.title.values.push(node.title);
+    nodesFields[NodeGraphDataFrameFieldNames.subTitle].values.push(node.subTitle);
+    nodesFields[NodeGraphDataFrameFieldNames.mainStat].values.push(node.stat1);
+    nodesFields[NodeGraphDataFrameFieldNames.secondaryStat].values.push(node.stat2);
+    nodesFields.arc__success.values.push(node.success);
+    nodesFields.arc__errors.values.push(node.error);
+    const rnd = Math.random();
+    nodesFields[NodeGraphDataFrameFieldNames.icon].values.push(rnd > 0.9 ? 'database' : rnd < 0.1 ? 'cloud' : '');
+    nodesFields[NodeGraphDataFrameFieldNames.nodeRadius].values.push(Math.max(rnd * 100, 30)); // ensure a minimum radius of 30 or icons will not fit well in the node
+    nodesFields[NodeGraphDataFrameFieldNames.highlighted].values.push(Math.random() > 0.5);
+
+    for (const edge of node.edges) {
+      const id = `${node.id}--${edge}`;
+      // We can have duplicate edges when we added some more by random
+      if (edgesSet.has(id)) {
+        continue;
+      }
+      edgesSet.add(id);
+      edgesFrame.fields[0].values.push(`${node.id}--${edge}`);
+      edgesFrame.fields[1].values.push(node.id);
+      edgesFrame.fields[2].values.push(edge);
+      edgesFrame.fields[3].values.push(Math.random() * 100);
+      edgesFrame.fields[4].values.push(Math.random() > 0.5);
+      edgesFrame.fields[5].values.push(Math.ceil(Math.random() * 15));
+    }
+  }
+  edgesFrame.length = edgesFrame.fields[0].values.length;
+
+  return [nodesFrame, edgesFrame];
+}
+
+function makeRandomNode(index: number) {
+  const success = Math.random();
+  const error = 1 - success;
+  return {
+    id: `service:${index}`,
+    title: `service:${index}`,
+    subTitle: 'service',
+    success,
+    error,
+    stat1: Math.random(),
+    stat2: Math.random(),
+    edges: [],
+    highlighted: Math.random() > 0.5,
+  };
+}
+
+export function savedNodesResponse(size: 'small' | 'medium'): [DataFrame, DataFrame] {
+  const response = size === 'small' ? serviceMapResponseSmall : serviceMapResponsMedium;
+  return [new MutableDataFrame(response.nodes), new MutableDataFrame(response.edges)];
+}
+
+// Generates node graph data but only returns the edges
+export function generateRandomEdges(count = 10, seed = 1) {
+  return generateRandomNodes(count, seed)[1];
+}
+
+function makeDataFrames(): {
+  nodesFrame: DataFrame;
+  edgesFrame: DataFrame;
+  nodesFields: Record<string, Omit<FieldDTO, 'name'> & { values: unknown[] }>;
+} {
+  const nodesFields: Record<string, Omit<FieldDTO, 'name'> & { values: unknown[] }> = {
     [NodeGraphDataFrameFieldNames.id]: {
       values: [],
       type: FieldType.string,
@@ -109,12 +182,20 @@ export function generateRandomNodes(count = 10) {
       values: [],
       type: FieldType.boolean,
     },
+
+    [NodeGraphDataFrameFieldNames.detail + 'test_value']: {
+      values: [],
+      config: {
+        displayName: 'Test value',
+      },
+      type: FieldType.number,
+    },
   };
 
-  const nodeFrame = new MutableDataFrame({
+  const nodesFrame = new MutableDataFrame({
     name: 'nodes',
-    fields: Object.keys(nodeFields).map((key) => ({
-      ...nodeFields[key],
+    fields: Object.keys(nodesFields).map((key) => ({
+      ...nodesFields[key],
       name: key,
     })),
     meta: { preferredVisualisationType: 'nodeGraph' },
@@ -129,66 +210,106 @@ export function generateRandomNodes(count = 10) {
       { name: NodeGraphDataFrameFieldNames.mainStat, values: [], type: FieldType.number, config: {} },
       { name: NodeGraphDataFrameFieldNames.highlighted, values: [], type: FieldType.boolean, config: {} },
       { name: NodeGraphDataFrameFieldNames.thickness, values: [], type: FieldType.number, config: {} },
+      { name: NodeGraphDataFrameFieldNames.color, values: [], type: FieldType.string, config: {} },
+      { name: NodeGraphDataFrameFieldNames.strokeDasharray, values: [], type: FieldType.string, config: {} },
     ],
     meta: { preferredVisualisationType: 'nodeGraph' },
     length: 0,
   };
 
-  const edgesSet = new Set();
-  for (const node of nodes) {
-    nodeFields.id.values.push(node.id);
-    nodeFields.title.values.push(node.title);
-    nodeFields[NodeGraphDataFrameFieldNames.subTitle].values.push(node.subTitle);
-    nodeFields[NodeGraphDataFrameFieldNames.mainStat].values.push(node.stat1);
-    nodeFields[NodeGraphDataFrameFieldNames.secondaryStat].values.push(node.stat2);
-    nodeFields.arc__success.values.push(node.success);
-    nodeFields.arc__errors.values.push(node.error);
-    const rnd = Math.random();
-    nodeFields[NodeGraphDataFrameFieldNames.icon].values.push(rnd > 0.9 ? 'database' : rnd < 0.1 ? 'cloud' : '');
-    nodeFields[NodeGraphDataFrameFieldNames.nodeRadius].values.push(Math.max(rnd * 100, 30)); // ensure a minimum radius of 30 or icons will not fit well in the node
-    nodeFields[NodeGraphDataFrameFieldNames.highlighted].values.push(Math.random() > 0.5);
-
-    for (const edge of node.edges) {
-      const id = `${node.id}--${edge}`;
-      // We can have duplicate edges when we added some more by random
-      if (edgesSet.has(id)) {
-        continue;
-      }
-      edgesSet.add(id);
-      edgesFrame.fields[0].values.push(`${node.id}--${edge}`);
-      edgesFrame.fields[1].values.push(node.id);
-      edgesFrame.fields[2].values.push(edge);
-      edgesFrame.fields[3].values.push(Math.random() * 100);
-      edgesFrame.fields[4].values.push(Math.random() > 0.5);
-      edgesFrame.fields[5].values.push(Math.ceil(Math.random() * 15));
-    }
-  }
-  edgesFrame.length = edgesFrame.fields[0].values.length;
-
-  return [nodeFrame, edgesFrame];
+  return { nodesFrame, edgesFrame, nodesFields };
 }
 
-function makeRandomNode(index: number) {
-  const success = Math.random();
-  const error = 1 - success;
-  return {
-    id: `service:${index}`,
-    title: `service:${index}`,
-    subTitle: 'service',
-    success,
-    error,
-    stat1: Math.random(),
-    stat2: Math.random(),
-    edges: [],
-    highlighted: Math.random() > 0.5,
-  };
-}
+export function generateShowcaseData() {
+  const { nodesFrame, edgesFrame } = makeDataFrames();
 
-export function savedNodesResponse() {
-  return [new MutableDataFrame(nodes), new MutableDataFrame(edges)];
-}
+  addRow(nodesFrame, {
+    [NodeGraphDataFrameFieldNames.id]: 'root',
+    [NodeGraphDataFrameFieldNames.title]: 'root',
+    [NodeGraphDataFrameFieldNames.subTitle]: 'client',
+    [NodeGraphDataFrameFieldNames.mainStat]: 1234,
+    [NodeGraphDataFrameFieldNames.secondaryStat]: 5678,
+    arc__success: 0.5,
+    arc__errors: 0.5,
+    [NodeGraphDataFrameFieldNames.icon]: '',
+    [NodeGraphDataFrameFieldNames.nodeRadius]: 40,
+    [NodeGraphDataFrameFieldNames.highlighted]: false,
+    [NodeGraphDataFrameFieldNames.detail + 'test_value']: 1,
+  });
 
-// Generates node graph data but only returns the edges
-export function generateRandomEdges(count = 10) {
-  return generateRandomNodes(count)[1];
+  addRow(nodesFrame, {
+    [NodeGraphDataFrameFieldNames.id]: 'app_service',
+    [NodeGraphDataFrameFieldNames.title]: 'app service',
+    [NodeGraphDataFrameFieldNames.subTitle]: 'with icon',
+    [NodeGraphDataFrameFieldNames.mainStat]: 1.2,
+    [NodeGraphDataFrameFieldNames.secondaryStat]: 2.3,
+    arc__success: 1,
+    arc__errors: 0,
+    [NodeGraphDataFrameFieldNames.icon]: 'apps',
+    [NodeGraphDataFrameFieldNames.nodeRadius]: 40,
+    [NodeGraphDataFrameFieldNames.highlighted]: false,
+    [NodeGraphDataFrameFieldNames.detail + 'test_value']: 42,
+  });
+
+  addRow(edgesFrame, {
+    [NodeGraphDataFrameFieldNames.id]: 'root-app_service',
+    [NodeGraphDataFrameFieldNames.source]: 'root',
+    [NodeGraphDataFrameFieldNames.target]: 'app_service',
+    [NodeGraphDataFrameFieldNames.mainStat]: 3.4,
+    [NodeGraphDataFrameFieldNames.secondaryStat]: 4.5,
+    [NodeGraphDataFrameFieldNames.thickness]: 4,
+    [NodeGraphDataFrameFieldNames.color]: '',
+    [NodeGraphDataFrameFieldNames.strokeDasharray]: '',
+  });
+
+  addRow(nodesFrame, {
+    [NodeGraphDataFrameFieldNames.id]: 'auth_service',
+    [NodeGraphDataFrameFieldNames.title]: 'auth service',
+    [NodeGraphDataFrameFieldNames.subTitle]: 'highlighted',
+    [NodeGraphDataFrameFieldNames.mainStat]: 3.4,
+    [NodeGraphDataFrameFieldNames.secondaryStat]: 4.5,
+    arc__success: 0,
+    arc__errors: 1,
+    [NodeGraphDataFrameFieldNames.icon]: '',
+    [NodeGraphDataFrameFieldNames.nodeRadius]: 40,
+    [NodeGraphDataFrameFieldNames.highlighted]: true,
+  });
+
+  addRow(edgesFrame, {
+    [NodeGraphDataFrameFieldNames.id]: 'root-auth_service',
+    [NodeGraphDataFrameFieldNames.source]: 'root',
+    [NodeGraphDataFrameFieldNames.target]: 'auth_service',
+    [NodeGraphDataFrameFieldNames.mainStat]: 113.4,
+    [NodeGraphDataFrameFieldNames.secondaryStat]: 4.511,
+    [NodeGraphDataFrameFieldNames.thickness]: 8,
+    [NodeGraphDataFrameFieldNames.color]: 'red',
+    [NodeGraphDataFrameFieldNames.strokeDasharray]: '',
+  });
+
+  addRow(nodesFrame, {
+    [NodeGraphDataFrameFieldNames.id]: 'db',
+    [NodeGraphDataFrameFieldNames.title]: 'db',
+    [NodeGraphDataFrameFieldNames.subTitle]: 'bigger size',
+    [NodeGraphDataFrameFieldNames.mainStat]: 9876.123,
+    [NodeGraphDataFrameFieldNames.secondaryStat]: 123.9876,
+    arc__success: 0.9,
+    arc__errors: 0.1,
+    [NodeGraphDataFrameFieldNames.icon]: 'database',
+    [NodeGraphDataFrameFieldNames.nodeRadius]: 60,
+    [NodeGraphDataFrameFieldNames.highlighted]: false,
+    [NodeGraphDataFrameFieldNames.detail + 'test_value']: 1357,
+  });
+
+  addRow(edgesFrame, {
+    [NodeGraphDataFrameFieldNames.id]: 'auth_service-db',
+    [NodeGraphDataFrameFieldNames.source]: 'auth_service',
+    [NodeGraphDataFrameFieldNames.target]: 'db',
+    [NodeGraphDataFrameFieldNames.mainStat]: 1139.4,
+    [NodeGraphDataFrameFieldNames.secondaryStat]: 477.511,
+    [NodeGraphDataFrameFieldNames.thickness]: 2,
+    [NodeGraphDataFrameFieldNames.color]: 'blue',
+    [NodeGraphDataFrameFieldNames.strokeDasharray]: '2 2',
+  });
+
+  return [nodesFrame, edgesFrame];
 }

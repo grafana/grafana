@@ -8,7 +8,7 @@ export type RootPanelsState = Record<string, PanelState>;
 export interface PanelState {
   plugin?: PanelPlugin;
   angularComponent?: AngularComponent;
-  instanceState?: any | null;
+  instanceState?: unknown | null;
 }
 
 export const initialState: RootPanelsState = {};
@@ -54,7 +54,7 @@ export interface SetPanelAngularComponentPayload {
 
 export interface SetPanelInstanceStatePayload {
   key: string;
-  value: any;
+  value: unknown;
 }
 
 export const {

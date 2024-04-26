@@ -1,7 +1,7 @@
 import React, { lazy, ReactElement, Suspense, useMemo, useState } from 'react';
 
 import { type PluginExtensionLink, PluginExtensionPoints, RawTimeRange, getTimeZone } from '@grafana/data';
-import { getPluginLinkExtensions, config } from '@grafana/runtime';
+import { config, usePluginLinkExtensions } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { Dropdown, ToolbarButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -19,15 +19,18 @@ const AddToDashboard = lazy(() =>
 type Props = {
   exploreId: string;
   timeZone: TimeZone;
-  splitted: boolean;
 };
 
 export function ToolbarExtensionPoint(props: Props): ReactElement | null {
-  const { exploreId, splitted } = props;
+  const { exploreId } = props;
   const [selectedExtension, setSelectedExtension] = useState<PluginExtensionLink | undefined>();
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const context = useExtensionPointContext(props);
-  const extensions = useExtensionLinks(context);
+  const { extensions } = usePluginLinkExtensions({
+    extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
+    context: context,
+    limitPerPlugin: 3,
+  });
   const selectExploreItem = getExploreItemSelector(exploreId);
   const noQueriesInPane = useSelector(selectExploreItem)?.queries?.length;
 
@@ -54,14 +57,8 @@ export function ToolbarExtensionPoint(props: Props): ReactElement | null {
   return (
     <>
       <Dropdown onVisibleChange={setIsOpen} placement="bottom-start" overlay={menu}>
-        <ToolbarButton
-          aria-label="Add"
-          icon="plus"
-          disabled={!Boolean(noQueriesInPane)}
-          variant="canvas"
-          isOpen={isOpen}
-        >
-          {splitted ? ' ' : 'Add'}
+        <ToolbarButton aria-label="Add" disabled={!Boolean(noQueriesInPane)} variant="canvas" isOpen={isOpen}>
+          Add
         </ToolbarButton>
       </Dropdown>
       {!!selectedExtension && !!selectedExtension.path && (
@@ -120,16 +117,4 @@ function useExtensionPointContext(props: Props): PluginExtensionExploreContext {
     isLeftPane,
     numUniqueIds,
   ]);
-}
-
-function useExtensionLinks(context: PluginExtensionExploreContext): PluginExtensionLink[] {
-  return useMemo(() => {
-    const { extensions } = getPluginLinkExtensions({
-      extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
-      context: context,
-      limitPerPlugin: 3,
-    });
-
-    return extensions;
-  }, [context]);
 }

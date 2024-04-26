@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
-	"github.com/grafana/grafana-azure-sdk-go/azhttpclient"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azcredentials"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azhttpclient"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
@@ -21,14 +21,14 @@ type Provider interface {
 	GetTLSConfig(...httpclient.Options) (*tls.Config, error)
 }
 
-func newHTTPClient(ctx context.Context, route types.AzRoute, model types.DatasourceInfo, settings *backend.DataSourceInstanceSettings, cfg *setting.Cfg, clientProvider Provider) (*http.Client, error) {
+func newHTTPClient(ctx context.Context, route types.AzRoute, model types.DatasourceInfo, settings *backend.DataSourceInstanceSettings, azureSettings *azsettings.AzureSettings, clientProvider Provider) (*http.Client, error) {
 	clientOpts, err := settings.HTTPClientOptions(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error getting HTTP options: %w", err)
 	}
 
 	for header, value := range route.Headers {
-		clientOpts.Headers[header] = value
+		clientOpts.Header.Add(header, value)
 	}
 
 	// Use Azure credentials if the route has OAuth scopes configured
@@ -37,7 +37,8 @@ func newHTTPClient(ctx context.Context, route types.AzRoute, model types.Datasou
 			return nil, fmt.Errorf("unable to initialize HTTP Client: clientSecret not found")
 		}
 
-		authOpts := azhttpclient.NewAuthOptions(cfg.Azure)
+		authOpts := azhttpclient.NewAuthOptions(azureSettings)
+		authOpts.AllowUserIdentity()
 		authOpts.Scopes(route.Scopes)
 		azhttpclient.AddAzureAuthentication(&clientOpts, authOpts, model.Credentials)
 	}

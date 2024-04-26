@@ -14,6 +14,7 @@ import (
 
 type Store interface {
 	GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error)
+	GetPrunableProvisionedDataSources(ctx context.Context) ([]*datasources.DataSource, error)
 	AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error)
 	UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error)
 	DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error
@@ -71,7 +72,7 @@ func (dc *DatasourceProvisioner) provisionDataSources(ctx context.Context, cfg *
 
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
 			insertCmd := createInsertCommand(ds)
-			dc.log.Info("inserting datasource from configuration ", "name", insertCmd.Name, "uid", insertCmd.UID)
+			dc.log.Info("inserting datasource from configuration", "name", insertCmd.Name, "uid", insertCmd.UID)
 			_, err = dc.store.AddDataSource(ctx, insertCmd)
 			if err != nil {
 				return err
@@ -80,7 +81,11 @@ func (dc *DatasourceProvisioner) provisionDataSources(ctx context.Context, cfg *
 			updateCmd := createUpdateCommand(ds, dataSource.ID)
 			dc.log.Debug("updating datasource from configuration", "name", updateCmd.Name, "uid", updateCmd.UID)
 			if _, err := dc.store.UpdateDataSource(ctx, updateCmd); err != nil {
-				return err
+				if errors.Is(err, datasources.ErrDataSourceUpdatingOldVersion) {
+					dc.log.Debug("ignoring old version of datasource", "name", updateCmd.Name, "uid", updateCmd.UID)
+				} else {
+					return err
+				}
 			}
 		}
 	}
@@ -147,6 +152,28 @@ func (dc *DatasourceProvisioner) applyChanges(ctx context.Context, configPath st
 		for _, ds := range cfg.Datasources {
 			willExistAfterProvisioning[DataSourceMapKey{Name: ds.Name, OrgId: ds.OrgID}] = true
 		}
+	}
+
+	prunableProvisionedDataSources, err := dc.store.GetPrunableProvisionedDataSources(ctx)
+	if err != nil {
+		return err
+	}
+
+	staleProvisionedDataSources := []*deleteDatasourceConfig{}
+
+	for _, prunableProvisionedDataSource := range prunableProvisionedDataSources {
+		key := DataSourceMapKey{
+			OrgId: prunableProvisionedDataSource.OrgID,
+			Name:  prunableProvisionedDataSource.Name,
+		}
+		if _, ok := willExistAfterProvisioning[key]; !ok {
+			staleProvisionedDataSources = append(staleProvisionedDataSources, &deleteDatasourceConfig{OrgID: prunableProvisionedDataSource.OrgID, Name: prunableProvisionedDataSource.Name})
+			willExistAfterProvisioning[key] = false
+		}
+	}
+
+	if err := dc.deleteDatasources(ctx, staleProvisionedDataSources, willExistAfterProvisioning); err != nil {
+		return err
 	}
 
 	for _, cfg := range configs {

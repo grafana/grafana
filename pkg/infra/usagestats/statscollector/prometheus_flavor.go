@@ -5,7 +5,10 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"sync"
 	"time"
+
+	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
@@ -44,21 +47,43 @@ func (s *Service) detectPrometheusVariants(ctx context.Context) (map[string]int6
 		return nil, err
 	}
 
-	variants := map[string]int64{}
+	g, ctx := errgroup.WithContext(ctx)
+	g.SetLimit(10)
+	flavors := sync.Map{}
+
 	for _, ds := range dataSources {
-		variant, err := s.detectPrometheusVariant(ctx, ds)
-		if err != nil {
-			return nil, err
+		ds := ds
+		g.Go(func() error {
+			variant, err := s.detectPrometheusVariant(ctx, ds)
+			if err != nil {
+				return err
+			}
+			flavors.Store(ds.UID, variant)
+			return nil
+		})
+	}
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+
+	variants := map[string]int64{}
+
+	flavors.Range(func(_, value any) bool {
+		variant, ok := value.(string)
+		if !ok {
+			return true
 		}
+
 		if variant == "" {
-			continue
+			return true
 		}
 
 		if _, exists := variants[variant]; !exists {
 			variants[variant] = 0
 		}
 		variants[variant] += 1
-	}
+		return true
+	})
 
 	s.promFlavorCache.variants = variants
 	s.promFlavorCache.memoized = time.Now()
@@ -66,13 +91,16 @@ func (s *Service) detectPrometheusVariants(ctx context.Context) (map[string]int6
 }
 
 func (s *Service) detectPrometheusVariant(ctx context.Context, ds *datasources.DataSource) (string, error) {
+	// 5s timeout
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
 	type buildInfo struct {
 		Data struct {
 			Application *string        `json:"application"`
 			Features    map[string]any `json:"features"`
 		} `json:"data"`
 	}
-
 	c, err := s.datasources.GetHTTPTransport(ctx, ds, s.httpClientProvider)
 	if err != nil {
 		s.log.Error("Failed to get HTTP client for Prometheus data source", "error", err)

@@ -31,6 +31,7 @@ const setup = (propOverrides?: object) => {
     page: 0,
     hasFetched: false,
     perPage: 10,
+    rolesLoading: false,
   };
 
   Object.assign(props, propOverrides);

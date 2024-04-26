@@ -21,12 +21,12 @@ export function getVizPluginMeta(): PanelPluginMeta[] {
 export function filterPluginList(
   pluginsList: PanelPluginMeta[],
   searchQuery: string, // Note: this will be an escaped regex string as it comes from `FilterInput`
-  current?: PanelPluginMeta
+  pluginId?: string
 ): PanelPluginMeta[] {
   if (!searchQuery.length) {
     return pluginsList.filter((p) => {
       if (p.state === PluginState.deprecated) {
-        return current?.id === p.id;
+        return pluginId === p.id;
       }
       return true;
     });
@@ -38,7 +38,7 @@ export function filterPluginList(
   const isGraphQuery = 'graph'.startsWith(query);
 
   for (const item of pluginsList) {
-    if (item.state === PluginState.deprecated && current?.id !== item.id) {
+    if (item.state === PluginState.deprecated && pluginId !== item.id) {
       continue;
     }
 

@@ -14,12 +14,12 @@ import {
   TimeRange,
   LoadingState,
 } from '@grafana/data';
+import { combineResponses } from '@grafana/o11y-ds-frontend';
 
 import { LokiDatasource } from './datasource';
 import { splitTimeRange as splitLogsTimeRange } from './logsTimeSplitting';
 import { splitTimeRange as splitMetricTimeRange } from './metricTimeSplitting';
 import { isLogsQuery, isQueryWithRangeVariable } from './queryUtils';
-import { combineResponses } from './responseUtils';
 import { trackGroupedQueries } from './tracking';
 import { LokiGroupedRequest, LokiQuery, LokiQueryType } from './types';
 
@@ -76,7 +76,8 @@ function adjustTargetsFromResponseState(targets: LokiQuery[], response: DataQuer
     .filter((target) => target.maxLines === undefined || target.maxLines > 0);
 }
 export function runSplitGroupedQueries(datasource: LokiDatasource, requests: LokiGroupedRequest[]) {
-  let mergedResponse: DataQueryResponse = { data: [], state: LoadingState.Streaming };
+  const responseKey = requests.length ? requests[0].request.queryGroupId : uuidv4();
+  let mergedResponse: DataQueryResponse = { data: [], state: LoadingState.Streaming, key: responseKey };
   const totalRequests = Math.max(...requests.map(({ partition }) => partition.length));
   const longestPartition = requests.filter(({ partition }) => partition.length === totalRequests)[0].partition;
 
@@ -149,17 +150,18 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
   return response;
 }
 
+export const LOADING_FRAME_NAME = 'loki-splitting-progress';
+
 function updateLoadingFrame(
   response: DataQueryResponse,
   request: DataQueryRequest<LokiQuery>,
   partition: TimeRange[],
   requestN: number
 ): DataQueryResponse {
-  if (isLogsQuery(request.targets[0].expr) || isLogsVolumeRequest(request)) {
+  if (isLogsQuery(request.targets[0].expr)) {
     return response;
   }
-  const loadingFrameName = 'loki-splitting-progress';
-  response.data = response.data.filter((frame) => frame.name !== loadingFrameName);
+  response.data = response.data.filter((frame) => frame.name !== LOADING_FRAME_NAME);
 
   if (requestN <= 1) {
     return response;
@@ -173,7 +175,7 @@ function updateLoadingFrame(
       color: 'rgba(120, 120, 120, 0.1)',
     },
   ]);
-  loadingFrame.name = loadingFrameName;
+  loadingFrame.name = LOADING_FRAME_NAME;
   loadingFrame.meta = {
     dataTopic: DataTopic.Annotations,
   };
@@ -181,10 +183,6 @@ function updateLoadingFrame(
   response.data.push(loadingFrame);
 
   return response;
-}
-
-function isLogsVolumeRequest(request: DataQueryRequest<LokiQuery>): boolean {
-  return request.targets.some((target) => target.refId.startsWith('log-volume'));
 }
 
 function getNextRequestPointers(requests: LokiGroupedRequest[], requestGroup: number, requestN: number) {
@@ -245,8 +243,12 @@ export function runSplitQuery(datasource: LokiDatasource, request: DataQueryRequ
     );
 
     for (const stepMs in stepMsPartition) {
+      const targets = stepMsPartition[stepMs].map((q) => {
+        const { maxLines, ...query } = q;
+        return query;
+      });
       requests.push({
-        request: { ...request, targets: stepMsPartition[stepMs] },
+        request: { ...request, targets },
         partition: partitionTimeRange(false, request.range, Number(stepMs), Number(chunkRangeMs)),
       });
     }

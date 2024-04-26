@@ -3,7 +3,7 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { stylesFactory, useTheme2 } from '../../themes';
+import { useStyles2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 
 export interface FieldValidationMessageProps {
@@ -12,7 +12,23 @@ export interface FieldValidationMessageProps {
   horizontal?: boolean;
 }
 
-export const getFieldValidationMessageStyles = stylesFactory((theme: GrafanaTheme2) => {
+export const FieldValidationMessage = ({
+  children,
+  horizontal,
+  className,
+}: React.PropsWithChildren<FieldValidationMessageProps>) => {
+  const styles = useStyles2(getFieldValidationMessageStyles);
+  const cssName = cx(horizontal ? styles.horizontal : styles.vertical, className);
+
+  return (
+    <div role="alert" className={cssName}>
+      <Icon className={styles.fieldValidationMessageIcon} name="exclamation-triangle" />
+      {children}
+    </div>
+  );
+};
+
+export const getFieldValidationMessageStyles = (theme: GrafanaTheme2) => {
   const baseStyle = `
       font-size: ${theme.typography.size.sm};
       font-weight: ${theme.typography.fontWeightMedium};
@@ -69,21 +85,4 @@ export const getFieldValidationMessageStyles = stylesFactory((theme: GrafanaThem
       marginRight: theme.spacing(),
     }),
   };
-});
-
-export const FieldValidationMessage = ({
-  children,
-  horizontal,
-  className,
-}: React.PropsWithChildren<FieldValidationMessageProps>) => {
-  const theme = useTheme2();
-  const styles = getFieldValidationMessageStyles(theme);
-  const cssName = cx(horizontal ? styles.horizontal : styles.vertical, className);
-
-  return (
-    <div role="alert" className={cssName}>
-      <Icon className={styles.fieldValidationMessageIcon} name="exclamation-triangle" />
-      {children}
-    </div>
-  );
 };

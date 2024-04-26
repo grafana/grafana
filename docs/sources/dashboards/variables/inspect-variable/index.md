@@ -15,6 +15,7 @@ labels:
     - enterprise
     - oss
 title: Inspect variables
+description: Review and manage your dashboard variables
 weight: 200
 ---
 

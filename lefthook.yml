@@ -12,7 +12,8 @@ pre-commit:
   commands:
     frontend-betterer:
       glob: '*.{ts,tsx}'
-      run: yarn betterer precommit {staged_files}
+      run: |
+        yarn betterer precommit {staged_files}
       stage_fixed: true
 
     frontend-lint:
@@ -20,11 +21,6 @@ pre-commit:
       run: |
         yarn eslint --ext .js,.tsx,.ts --cache --fix {staged_files}
         yarn prettier --write {staged_files}
-      stage_fixed: true
-
-    internationalization:
-      glob: 'public/locales/en-US/grafana.json'
-      run: yarn i18n:pseudo
       stage_fixed: true
 
     other-format:

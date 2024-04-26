@@ -1,6 +1,6 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/configure-alert-state-history/
-description: Configure Alert State History
+description: Configure alert state history to explore the behavior of your alert rules
 keywords:
   - grafana
   - alerting
@@ -9,12 +9,12 @@ keywords:
   - alert state history
 labels:
   products:
-    - cloud
-title: Configure Alert State History
-weight: 600
+    - oss
+title: Configure alert state history
+weight: 250
 ---
 
-# Configure Alert State History
+# Configure alert state history
 
 Starting with Grafana 10, Alerting can record all alert rule state changes for your Grafana managed alert rules in a Loki instance.
 

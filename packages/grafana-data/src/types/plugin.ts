@@ -43,6 +43,8 @@ export enum PluginErrorCode {
   missingSignature = 'signatureMissing',
   invalidSignature = 'signatureInvalid',
   modifiedSignature = 'signatureModified',
+  failedBackendStart = 'failedBackendStart',
+  angular = 'angular',
 }
 
 /** Describes error returned from Grafana plugins API call */
@@ -50,6 +52,11 @@ export interface PluginError {
   errorCode: PluginErrorCode;
   pluginId: string;
   pluginType?: PluginType;
+}
+
+export interface AngularMeta {
+  detected: boolean;
+  hideDeprecation: boolean;
 }
 
 export interface PluginMeta<T extends KeyValue = {}> {
@@ -82,7 +89,7 @@ export interface PluginMeta<T extends KeyValue = {}> {
   signatureType?: PluginSignatureType;
   signatureOrg?: string;
   live?: boolean;
-  angularDetected?: boolean;
+  angular?: AngularMeta;
 }
 
 interface PluginDependencyInfo {
@@ -115,6 +122,10 @@ export interface PluginInclude {
 
   // "Admin", "Editor" or "Viewer". If set then the include will only show up in the navigation if the user has the required roles.
   role?: string;
+
+  // if action is set then the include will only show up in the navigation if the user has the required permission.
+  // The action will take precedence over the role.
+  action?: string;
 
   // Adds the "page" or "dashboard" type includes to the navigation if set to `true`.
   addToNav?: boolean;
@@ -198,7 +209,7 @@ export class GrafanaPlugin<T extends PluginMeta = PluginMeta> {
   /**
    * @deprecated -- this is no longer necessary and will be removed
    */
-  setChannelSupport(support: any) {
+  setChannelSupport() {
     console.warn('[deprecation] plugin is using ignored option: setChannelSupport', this.meta);
     return this;
   }

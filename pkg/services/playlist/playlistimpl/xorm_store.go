@@ -2,6 +2,7 @@ package playlistimpl
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -177,6 +178,51 @@ func (s *sqlStore) List(ctx context.Context, query *playlist.GetPlaylistsQuery) 
 
 		return err
 	})
+	return playlists, err
+}
+
+func (s *sqlStore) ListAll(ctx context.Context, orgId int64) ([]playlist.PlaylistDTO, error) {
+	db := s.db.GetSqlxSession() // OK because dates are numbers!
+
+	playlists := []playlist.PlaylistDTO{}
+	err := db.Select(ctx, &playlists, "SELECT * FROM playlist WHERE org_id=? ORDER BY created_at asc", orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create a map that links playlist id to the playlist array index
+	lookup := map[int64]int{}
+	for i, v := range playlists {
+		lookup[v.Id] = i
+	}
+
+	var playlistId int64
+	var itemType string
+	var itemValue string
+
+	rows, err := db.Query(ctx, `SELECT playlist.id,playlist_item.type,playlist_item.value
+		FROM playlist_item 
+		JOIN playlist ON playlist_item.playlist_id = playlist.id
+		WHERE playlist.org_id = ?
+		ORDER BY playlist_id asc, `+s.db.Quote("order")+` asc`, orgId)
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		err = rows.Scan(&playlistId, &itemType, &itemValue)
+		if err != nil {
+			return nil, err
+		}
+		idx, ok := lookup[playlistId]
+		if !ok {
+			return nil, fmt.Errorf("could not find playlist by id")
+		}
+		items := append(playlists[idx].Items, playlist.PlaylistItemDTO{
+			Type:  itemType,
+			Value: itemValue,
+		})
+		playlists[idx].Items = items
+	}
 	return playlists, err
 }
 

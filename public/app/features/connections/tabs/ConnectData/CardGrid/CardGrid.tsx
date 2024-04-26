@@ -2,8 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Card, useStyles2 } from '@grafana/ui';
-import { Grid } from '@grafana/ui/src/unstable';
+import { Card, Grid, useStyles2 } from '@grafana/ui';
 import { PluginAngularBadge } from 'app/features/plugins/admin/components/Badges';
 
 const getStyles = (theme: GrafanaTheme2) => ({

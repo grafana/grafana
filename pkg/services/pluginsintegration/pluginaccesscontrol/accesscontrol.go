@@ -3,6 +3,7 @@ package pluginaccesscontrol
 import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -29,7 +30,7 @@ func ReqCanAdminPlugins(cfg *setting.Cfg) func(rc *contextmodel.ReqContext) bool
 	}
 }
 
-func DeclareRBACRoles(service ac.Service, cfg *setting.Cfg) error {
+func DeclareRBACRoles(service ac.Service, cfg *setting.Cfg, features featuremgmt.FeatureToggles) error {
 	AppPluginsReader := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        ac.FixedRolePrefix + "plugins.app:reader",
@@ -58,7 +59,7 @@ func DeclareRBACRoles(service ac.Service, cfg *setting.Cfg) error {
 		Role: ac.RoleDTO{
 			Name:        ac.FixedRolePrefix + "plugins:maintainer",
 			DisplayName: "Plugin Maintainer",
-			Description: "Install, uninstall plugins",
+			Description: "Install, uninstall plugins. Needs to be assigned globally.",
 			Group:       "Plugins",
 			Permissions: []ac.Permission{
 				{Action: ActionInstall},
@@ -67,7 +68,8 @@ func DeclareRBACRoles(service ac.Service, cfg *setting.Cfg) error {
 		Grants: []string{ac.RoleGrafanaAdmin},
 	}
 
-	if !cfg.PluginAdminEnabled || cfg.PluginAdminExternalManageEnabled {
+	if !cfg.PluginAdminEnabled ||
+		(cfg.PluginAdminExternalManageEnabled && !features.IsEnabledGlobally(featuremgmt.FlagManagedPluginsInstall)) {
 		PluginsMaintainer.Grants = []string{}
 	}
 

@@ -1,9 +1,8 @@
 import React from 'react';
 
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
-import { ConfigSubSection } from '@grafana/experimental';
+import { ConfigDescriptionLink, ConfigSubSection } from '@grafana/experimental';
 import { InlineField, Input, Select, InlineSwitch } from '@grafana/ui';
-import { ConfigDescriptionLink } from 'app/core/components/ConfigDescriptionLink';
 
 import { ElasticsearchOptions, Interval } from '../types';
 
@@ -116,29 +115,18 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
           placeholder="10s"
         />
       </InlineField>
-
-      <InlineField label="X-Pack enabled" labelWidth={29} tooltip="Enable or disable X-Pack specific features">
+      <InlineField
+        label="Include Frozen Indices"
+        htmlFor="es_config_frozenIndices"
+        labelWidth={29}
+        tooltip="Include frozen indices in searches."
+      >
         <InlineSwitch
-          id="es_config_xpackEnabled"
-          value={value.jsonData.xpack || false}
-          onChange={jsonDataSwitchChangeHandler('xpack', value, onChange)}
+          id="es_config_frozenIndices"
+          value={value.jsonData.includeFrozen ?? false}
+          onChange={jsonDataSwitchChangeHandler('includeFrozen', value, onChange)}
         />
       </InlineField>
-
-      {value.jsonData.xpack && (
-        <InlineField
-          label="Include Frozen Indices"
-          htmlFor="es_config_frozenIndices"
-          labelWidth={29}
-          tooltip="Include frozen indices in searches."
-        >
-          <InlineSwitch
-            id="es_config_frozenIndices"
-            value={value.jsonData.includeFrozen ?? false}
-            onChange={jsonDataSwitchChangeHandler('includeFrozen', value, onChange)}
-          />
-        </InlineField>
-      )}
     </ConfigSubSection>
   );
 };

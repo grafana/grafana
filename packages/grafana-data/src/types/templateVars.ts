@@ -1,4 +1,5 @@
 import { LoadingState } from './data';
+import { MetricFindValue } from './datasource';
 import { DataSourceRef } from './query';
 
 export type VariableType = TypedVariableModel['type'];
@@ -13,6 +14,7 @@ export interface VariableModel {
 export type TypedVariableModel =
   | QueryVariableModel
   | AdHocVariableModel
+  | GroupByVariableModel
   | ConstantVariableModel
   | DataSourceVariableModel
   | IntervalVariableModel
@@ -36,6 +38,8 @@ export enum VariableSort {
   numericalDesc,
   alphabeticalCaseInsensitiveAsc,
   alphabeticalCaseInsensitiveDesc,
+  naturalAsc,
+  naturalDesc,
 }
 
 export enum VariableHide {
@@ -60,6 +64,16 @@ export interface AdHocVariableModel extends BaseVariableModel {
    * Filters that are always applied to the lookup of keys. Not shown in the AdhocFilterBuilder UI.
    */
   baseFilters?: AdHocVariableFilter[];
+  /**
+   * Static keys that override any dynamic keys from the datasource.
+   */
+  defaultKeys?: MetricFindValue[];
+}
+
+export interface GroupByVariableModel extends VariableWithOptions {
+  type: 'groupby';
+  datasource: DataSourceRef | null;
+  multi: true;
 }
 
 export interface VariableOption {
@@ -162,4 +176,5 @@ export interface BaseVariableModel {
   state: LoadingState;
   error: any | null;
   description: string | null;
+  usedInRepeat?: boolean;
 }

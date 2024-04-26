@@ -2,7 +2,7 @@ import debounce from 'debounce-promise';
 import React from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
-import { Select, Input, InlineFormLabel, AsyncSelect } from '@grafana/ui';
+import { Select, Input, InlineFormLabel, AsyncSelect, Stack, InlineLabel } from '@grafana/ui';
 
 import { OpenTsdbQuery } from '../types';
 
@@ -19,8 +19,8 @@ export function MetricSection({ query, onChange, onRunQuery, suggestMetrics, agg
   const metricSearch = debounce((query: string) => suggestMetrics(query), 350);
 
   return (
-    <div className="gf-form-inline" data-testid={testIds.section}>
-      <div className="gf-form">
+    <Stack gap={0.5} alignItems="flex-start" data-testid={testIds.section}>
+      <Stack gap={0}>
         <InlineFormLabel width={8} className="query-keyword">
           Metric
         </InlineFormLabel>
@@ -28,7 +28,6 @@ export function MetricSection({ query, onChange, onRunQuery, suggestMetrics, agg
         <AsyncSelect
           width={25}
           inputId="opentsdb-metric-select"
-          className="gf-form-input"
           value={query.metric ? toOption(query.metric) : undefined}
           placeholder="Metric name"
           allowCustomValue
@@ -41,14 +40,13 @@ export function MetricSection({ query, onChange, onRunQuery, suggestMetrics, agg
             }
           }}
         />
-      </div>
-      <div className="gf-form">
+      </Stack>
+      <Stack gap={0} alignItems="flex-start">
         <InlineFormLabel width={'auto'} className="query-keyword">
           Aggregator
         </InlineFormLabel>
         <Select
           inputId="opentsdb-aggregator-select"
-          className="gf-form-input"
           value={query.aggregator ? toOption(query.aggregator) : undefined}
           options={aggregatorOptions}
           onChange={({ value }) => {
@@ -58,8 +56,8 @@ export function MetricSection({ query, onChange, onRunQuery, suggestMetrics, agg
             }
           }}
         />
-      </div>
-      <div className="gf-form max-width-20">
+      </Stack>
+      <Stack gap={0}>
         <InlineFormLabel
           className="query-keyword"
           width={6}
@@ -77,11 +75,11 @@ export function MetricSection({ query, onChange, onRunQuery, suggestMetrics, agg
           }}
           onBlur={() => onRunQuery()}
         />
-      </div>
-      <div className="gf-form gf-form--grow">
-        <div className="gf-form-label gf-form-label--grow"></div>
-      </div>
-    </div>
+      </Stack>
+      <Stack gap={0} grow={1}>
+        <InlineLabel> </InlineLabel>
+      </Stack>
+    </Stack>
   );
 }
 

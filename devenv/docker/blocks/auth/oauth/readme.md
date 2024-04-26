@@ -10,9 +10,6 @@ make devenv sources="auth/oauth"
 Here is the conf you need to add to your configuration file (conf/custom.ini):
 
 ```ini
-[auth]
-signout_redirect_url = http://localhost:8087/realms/grafana/protocol/openid-connect/logout?post_logout_redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Flogin
-
 [auth.generic_oauth]
 enabled = true
 name = Keycloak-OAuth
@@ -28,6 +25,7 @@ auth_url = http://localhost:8087/realms/grafana/protocol/openid-connect/auth
 token_url = http://localhost:8087/realms/grafana/protocol/openid-connect/token
 role_attribute_path = contains(roles[*], 'grafanaadmin') && 'GrafanaAdmin' || contains(roles[*], 'admin') && 'Admin' || contains(roles[*], 'editor') && 'Editor' || 'Viewer'
 allow_assign_grafana_admin = true
+signout_redirect_url = http://localhost:8087/realms/grafana/protocol/openid-connect/logout?post_logout_redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Flogin
 ```
 
 ## Devenv setup jwt auth

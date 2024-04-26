@@ -3,7 +3,6 @@ const fs = require('fs');
 const path = require('path');
 
 const benchmarkPlugin = require('./e2e/cypress/plugins/benchmark/index');
-const compareScreenshots = require('./e2e/cypress/plugins/compareScreenshots');
 const readProvisions = require('./e2e/cypress/plugins/readProvisions');
 const typescriptPreprocessor = require('./e2e/cypress/plugins/typescriptPreprocessor');
 
@@ -29,7 +28,6 @@ module.exports = defineConfig({
       }
 
       on('task', {
-        compareScreenshots,
         readProvisions: (filePaths) => readProvisions({ CWD: process.cwd(), filePaths }),
       });
 

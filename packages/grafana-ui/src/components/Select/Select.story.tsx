@@ -45,7 +45,6 @@ const meta: Meta = {
         'renderControl',
         'options',
         'isOptionDisabled',
-        'maxVisibleValues',
         'aria-label',
         'noOptionsMessage',
         'menuPosition',
@@ -106,6 +105,7 @@ export const Basic: Story<StoryProps> = (args) => {
     </>
   );
 };
+
 export const BasicVirtualizedList: Story<StoryProps> = (args) => {
   const [value, setValue] = useState<SelectableValue<string>>();
 
@@ -124,6 +124,7 @@ export const BasicVirtualizedList: Story<StoryProps> = (args) => {
     </>
   );
 };
+
 /**
  * Uses plain values instead of SelectableValue<T>
  */
@@ -144,6 +145,7 @@ export const BasicSelectPlainValue: Story<StoryProps> = (args) => {
     </>
   );
 };
+
 /**
  * Uses plain values instead of SelectableValue<T>
  */
@@ -225,7 +227,7 @@ export const MultiSelectBasic: Story = (args) => {
   const [value, setValue] = useState<Array<SelectableValue<string>>>([]);
 
   return (
-    <>
+    <div style={{ maxWidth: '450px' }}>
       <MultiSelect
         options={generateOptions()}
         value={value}
@@ -236,13 +238,15 @@ export const MultiSelectBasic: Story = (args) => {
         prefix={getPrefix(args.icon)}
         {...args}
       />
-    </>
+    </div>
   );
 };
+
 MultiSelectBasic.args = {
   isClearable: false,
   closeMenuOnSelect: false,
   maxVisibleValues: 5,
+  noMultiValueWrap: false,
 };
 
 export const MultiSelectAsync: Story = (args) => {

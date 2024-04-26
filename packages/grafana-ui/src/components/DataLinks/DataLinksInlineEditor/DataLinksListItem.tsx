@@ -3,7 +3,7 @@ import React from 'react';
 
 import { DataFrame, DataLink, GrafanaTheme2 } from '@grafana/data';
 
-import { stylesFactory, useTheme2 } from '../../../themes';
+import { useStyles2 } from '../../../themes';
 import { isCompactUrl } from '../../../utils/dataLinks';
 import { FieldValidationMessage } from '../../Forms/FieldValidationMessage';
 import { IconButton } from '../../IconButton/IconButton';
@@ -19,8 +19,7 @@ export interface DataLinksListItemProps {
 }
 
 export const DataLinksListItem = ({ link, onEdit, onRemove }: DataLinksListItemProps) => {
-  const theme = useTheme2();
-  const styles = getDataLinkListItemStyles(theme);
+  const styles = useStyles2(getDataLinkListItemStyles);
   const { title = '', url = '' } = link;
 
   const hasTitle = title.trim() !== '';
@@ -52,7 +51,7 @@ export const DataLinksListItem = ({ link, onEdit, onRemove }: DataLinksListItemP
   );
 };
 
-const getDataLinkListItemStyles = stylesFactory((theme: GrafanaTheme2) => {
+const getDataLinkListItemStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css({
       marginBottom: theme.spacing(2),
@@ -95,4 +94,4 @@ const getDataLinkListItemStyles = stylesFactory((theme: GrafanaTheme2) => {
       maxWidth: '90%',
     }),
   };
-});
+};

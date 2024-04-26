@@ -12,6 +12,13 @@ import { ExploreItemState, ExploreState, StoreState, ThunkDispatch } from '../..
 
 import { exploreReducer, navigateToExplore, splitClose, splitOpen } from './main';
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => ({
+    getInstanceSettings: jest.fn().mockReturnValue({}),
+  }),
+}));
+
 const getNavigateToExploreContext = async (openInNewWindow?: (url: string) => void) => {
   const url = '/explore';
   const panel: Partial<PanelModel> = {
@@ -53,6 +60,7 @@ describe('navigateToExplore', () => {
           queries: panel.targets,
           timeRange,
           dsRef: panel.datasource,
+          adhocFilters: [],
         });
       });
     });
@@ -73,6 +81,7 @@ describe('navigateToExplore', () => {
           queries: panel.targets,
           timeRange,
           dsRef: panel.datasource,
+          adhocFilters: [],
         });
       });
 

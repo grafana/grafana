@@ -4,6 +4,10 @@ import { getGrafanaSearcher, NestedFolderDTO } from 'app/features/search/service
 import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
 
+import { contextSrv } from '../../../core/core';
+import { AccessControlAction } from '../../../types';
+import { isSharedWithMe } from '../components/utils';
+
 export const PAGE_SIZE = 50;
 
 export async function listFolders(
@@ -18,11 +22,15 @@ export async function listFolders(
 
   const backendSrv = getBackendSrv();
 
-  const folders = await backendSrv.get<NestedFolderDTO[]>('/api/folders', {
-    parentUid: parentUID,
-    page,
-    limit: pageSize,
-  });
+  let folders: NestedFolderDTO[] = [];
+  if (contextSrv.hasPermission(AccessControlAction.FoldersRead)) {
+    folders = await backendSrv.get<NestedFolderDTO[]>('/api/folders', {
+      parentUid: parentUID,
+      page,
+      limit: pageSize,
+    });
+  }
+  const subUrlPrefix = config.appSubUrl ?? '';
 
   return folders.map((item) => ({
     kind: 'folder',
@@ -30,7 +38,9 @@ export async function listFolders(
     title: item.title,
     parentTitle,
     parentUID,
-    url: `/dashboards/f/${item.uid}/`,
+
+    // URLs from the backend come with subUrlPrefix already included, so match that behaviour here
+    url: isSharedWithMe(item.uid) ? undefined : `${subUrlPrefix}/dashboards/f/${item.uid}/`,
   }));
 }
 

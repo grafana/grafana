@@ -14,6 +14,7 @@ type AlertInstance struct {
 	CurrentStateSince time.Time
 	CurrentStateEnd   time.Time
 	LastEvalTime      time.Time
+	ResultFingerprint string
 }
 
 type AlertInstanceKey struct {

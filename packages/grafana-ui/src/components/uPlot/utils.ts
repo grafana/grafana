@@ -5,13 +5,8 @@ import { BarAlignment, GraphDrawStyle, GraphTransform, LineInterpolation, Stacki
 
 import { attachDebugger } from '../../utils';
 import { createLogger } from '../../utils/logger';
-import { buildScaleKey } from '../GraphNG/utils';
 
-const ALLOWED_FORMAT_STRINGS_REGEX = /\b(YYYY|YY|MMMM|MMM|MM|M|DD|D|WWWW|WWW|HH|H|h|AA|aa|a|mm|m|ss|s|fff)\b/g;
-
-export function timeFormatToTemplate(f: string) {
-  return f.replace(ALLOWED_FORMAT_STRINGS_REGEX, (match) => `{${match}}`);
-}
+import { buildScaleKey } from './internal';
 
 const paddingSide: PaddingSide = (u, side, sidesWithAxes) => {
   let hasCrossAxis = side % 2 ? sidesWithAxes[0] || sidesWithAxes[2] : sidesWithAxes[1] || sidesWithAxes[3];
@@ -122,8 +117,8 @@ export function getStackingGroups(frame: DataFrame) {
       drawStyle === GraphDrawStyle.Bars
         ? custom.barAlignment
         : drawStyle === GraphDrawStyle.Line
-        ? custom.lineInterpolation
-        : null;
+          ? custom.lineInterpolation
+          : null;
 
     let stackKey = `${stackDir}|${stackingMode}|${stackingGroup}|${buildScaleKey(
       config,
@@ -152,8 +147,8 @@ export function preparePlotData2(
   frame: DataFrame,
   stackingGroups: StackingGroup[],
   onStackMeta?: (meta: StackMeta) => void
-) {
-  let data: AlignedData = Array(frame.fields.length);
+): AlignedData {
+  let data = Array(frame.fields.length);
 
   let stacksQty = stackingGroups.length;
 
@@ -191,9 +186,9 @@ export function preparePlotData2(
 
     if (i === 0) {
       if (field.type === FieldType.time) {
-        data[i] = ensureTimeField(field).values;
+        data[0] = ensureTimeField(field).values;
       } else {
-        data[i] = vals;
+        data[0] = vals;
       }
       return;
     }
@@ -380,7 +375,7 @@ function hasNegSample(data: unknown[], samples = 100) {
     for (let i = firstIdx; i <= lastIdx; i += stride) {
       const v = data[i];
 
-      if (v != null) {
+      if (v != null && typeof v === 'number') {
         if (v < 0 || Object.is(v, -0)) {
           negCount++;
         } else if (v > 0) {

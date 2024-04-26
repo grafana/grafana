@@ -1,46 +1,29 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { initTemplateSrv } from 'test/helpers/initTemplateSrv';
 
-import { FetchError, setTemplateSrv } from '@grafana/runtime';
+import { LanguageProvider } from '@grafana/data';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
+import TempoLanguageProvider from '../language_provider';
+import { initTemplateSrv } from '../test_utils';
+import { keywordOperators, numberOperators, operators, stringOperators } from '../traceql/traceql';
 
 import SearchField from './SearchField';
 
-const getOptionsV2 = jest.fn().mockImplementation(() => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve([
-        {
-          value: 'customer',
-          label: 'customer',
-          type: 'string',
-        },
-        {
-          value: 'driver',
-          label: 'driver',
-          type: 'string',
-        },
-      ]);
-    }, 1000);
-  });
-});
-
-jest.mock('../language_provider', () => {
-  return jest.fn().mockImplementation(() => {
-    return { getOptionsV2 };
-  });
-});
-
 describe('SearchField', () => {
-  let templateSrv = initTemplateSrv('key', [{ name: 'templateVariable1' }, { name: 'templateVariable2' }]);
   let user: ReturnType<typeof userEvent.setup>;
 
   beforeEach(() => {
-    setTemplateSrv(templateSrv);
+    const expectedValues = {
+      interpolationVar: 'interpolationText',
+      interpolationText: 'interpolationText',
+      interpolationVarWithPipe: 'interpolationTextOne|interpolationTextTwo',
+      scopedInterpolationText: 'scopedInterpolationText',
+    };
+    initTemplateSrv([{ name: 'templateVariable1' }, { name: 'templateVariable2' }], expectedValues);
+
     jest.useFakeTimers();
     // Need to use delay: null here to work with fakeTimers
     // see https://github.com/testing-library/user-event/issues/833
@@ -51,7 +34,7 @@ describe('SearchField', () => {
     jest.useRealTimers();
   });
 
-  it('should not render tag if hideTag is true', () => {
+  it('should not render tag if hideTag is true', async () => {
     const updateFilter = jest.fn((val) => {
       return val;
     });
@@ -59,9 +42,11 @@ describe('SearchField', () => {
 
     const { container } = renderSearchField(updateFilter, filter, [], true);
 
-    expect(container.querySelector(`input[aria-label="select test1 tag"]`)).not.toBeInTheDocument();
-    expect(container.querySelector(`input[aria-label="select test1 operator"]`)).toBeInTheDocument();
-    expect(container.querySelector(`input[aria-label="select test1 value"]`)).toBeInTheDocument();
+    await waitFor(async () => {
+      expect(container.querySelector(`input[aria-label="select test1 tag"]`)).not.toBeInTheDocument();
+      expect(container.querySelector(`input[aria-label="select test1 operator"]`)).toBeInTheDocument();
+      expect(container.querySelector(`input[aria-label="select test1 value"]`)).toBeInTheDocument();
+    });
   });
 
   it('should update operator when new value is selected in operator input', async () => {
@@ -71,7 +56,7 @@ describe('SearchField', () => {
     const filter: TraceqlFilter = { id: 'test1', operator: '=', valueType: 'string', tag: 'test-tag' };
     const { container } = renderSearchField(updateFilter, filter);
 
-    const select = await container.querySelector(`input[aria-label="select test1 operator"]`);
+    const select = container.querySelector(`input[aria-label="select test1 operator"]`);
     expect(select).not.toBeNull();
     expect(select).toBeInTheDocument();
     if (select) {
@@ -95,7 +80,7 @@ describe('SearchField', () => {
     };
     const { container } = renderSearchField(updateFilter, filter);
 
-    const select = await container.querySelector(`input[aria-label="select test1 value"]`);
+    const select = container.querySelector(`input[aria-label="select test1 value"]`);
     expect(select).not.toBeNull();
     expect(select).toBeInTheDocument();
     if (select) {
@@ -139,19 +124,19 @@ describe('SearchField', () => {
       jest.advanceTimersByTime(1000);
       const tag22 = await screen.findByText('tag22');
       await user.click(tag22);
-      expect(updateFilter).toHaveBeenCalledWith({ ...filter, tag: 'tag22' });
+      expect(updateFilter).toHaveBeenCalledWith({ ...filter, tag: 'tag22', value: [] });
 
       // Select tag1 as the tag
       await user.click(select);
       jest.advanceTimersByTime(1000);
       const tag1 = await screen.findByText('tag1');
       await user.click(tag1);
-      expect(updateFilter).toHaveBeenCalledWith({ ...filter, tag: 'tag1' });
+      expect(updateFilter).toHaveBeenCalledWith({ ...filter, tag: 'tag1', value: [] });
 
       // Remove the tag
       const tagRemove = await screen.findByLabelText('select-clear-value');
       await user.click(tagRemove);
-      expect(updateFilter).toHaveBeenCalledWith({ ...filter, value: undefined });
+      expect(updateFilter).toHaveBeenCalledWith({ ...filter, value: [] });
     }
   });
 
@@ -178,14 +163,112 @@ describe('SearchField', () => {
       expect(await screen.findByText('$templateVariable2')).toBeInTheDocument();
     }
   });
+
+  it('should only show keyword operators if options tag type is keyword', async () => {
+    const filter: TraceqlFilter = { id: 'test1', operator: '=', valueType: 'string', tag: 'test-tag' };
+    const lp = {
+      getOptionsV2: jest.fn().mockReturnValue([
+        {
+          value: 'ok',
+          label: 'ok',
+          type: 'keyword',
+        },
+      ]),
+    } as unknown as TempoLanguageProvider;
+
+    const { container } = renderSearchField(jest.fn(), filter, [], false, lp);
+    const select = container.querySelector(`input[aria-label="select test1 operator"]`);
+    if (select) {
+      await user.click(select);
+      await waitFor(async () => {
+        expect(screen.getByText('Equals')).toBeInTheDocument();
+        expect(screen.getByText('Not equals')).toBeInTheDocument();
+        operators
+          .filter((op) => !keywordOperators.includes(op))
+          .forEach((op) => {
+            expect(screen.queryByText(op)).not.toBeInTheDocument();
+          });
+      });
+    }
+  });
+
+  it('should only show string operators if options tag type is string', async () => {
+    const filter: TraceqlFilter = { id: 'test1', operator: '=', valueType: 'string', tag: 'test-tag' };
+    const { container } = renderSearchField(jest.fn(), filter);
+    const select = container.querySelector(`input[aria-label="select test1 operator"]`);
+    if (select) {
+      await user.click(select);
+      await waitFor(async () => {
+        expect(screen.getByText('Equals')).toBeInTheDocument();
+        expect(screen.getByText('Not equals')).toBeInTheDocument();
+        expect(screen.getByText('Matches regex')).toBeInTheDocument();
+        expect(screen.getByText('Does not match regex')).toBeInTheDocument();
+        operators
+          .filter((op) => !stringOperators.includes(op))
+          .forEach((op) => {
+            expect(screen.queryByText(op)).not.toBeInTheDocument();
+          });
+      });
+    }
+  });
+
+  it('should only show number operators if options tag type is number', async () => {
+    const filter: TraceqlFilter = { id: 'test1', operator: '=', valueType: 'string', tag: 'test-tag' };
+    const lp = {
+      getOptionsV2: jest.fn().mockReturnValue([
+        {
+          value: 200,
+          label: 200,
+          type: 'int',
+        },
+      ]),
+    } as unknown as TempoLanguageProvider;
+
+    const { container } = renderSearchField(jest.fn(), filter, [], false, lp);
+    const select = container.querySelector(`input[aria-label="select test1 operator"]`);
+    if (select) {
+      await user.click(select);
+      await waitFor(async () => {
+        expect(screen.getByText('Equals')).toBeInTheDocument();
+        expect(screen.getByText('Not equals')).toBeInTheDocument();
+        expect(screen.getByText('Greater')).toBeInTheDocument();
+        expect(screen.getByText('Less')).toBeInTheDocument();
+        expect(screen.getByText('Greater or Equal')).toBeInTheDocument();
+        expect(screen.getByText('Less or Equal')).toBeInTheDocument();
+        operators
+          .filter((op) => !numberOperators.includes(op))
+          .forEach((op) => {
+            expect(screen.queryByText(op)).not.toBeInTheDocument();
+          });
+      });
+    }
+  });
 });
 
 const renderSearchField = (
   updateFilter: (f: TraceqlFilter) => void,
   filter: TraceqlFilter,
   tags?: string[],
-  hideTag?: boolean
+  hideTag?: boolean,
+  lp?: LanguageProvider
 ) => {
+  const languageProvider =
+    lp ||
+    ({
+      getOptionsV2: jest.fn().mockReturnValue([
+        {
+          value: 'customer',
+          label: 'customer',
+          type: 'string',
+        },
+        {
+          value: 'driver',
+          label: 'driver',
+          type: 'string',
+        },
+      ]),
+    } as unknown as TempoLanguageProvider);
+
   const datasource: TempoDatasource = {
     search: {
       filters: [
@@ -198,15 +281,15 @@ const renderSearchField = (
         { id: 'span-name', type: 'static', tag: 'name', operator: '=', scope: TraceqlSearchScope.Span },
       ],
     },
+    languageProvider,
   } as TempoDatasource;
+
   return render(
     <SearchField
       datasource={datasource}
       updateFilter={updateFilter}
       filter={filter}
-      setError={function (error: FetchError): void {
-        throw error;
-      }}
+      setError={() => {}}
       tags={tags || []}
       hideTag={hideTag}
       query={'{}'}

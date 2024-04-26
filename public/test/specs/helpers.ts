@@ -39,7 +39,7 @@ export function ControllerTestContext(this: any) {
       $provide.value('templateSrv', self.templateSrv);
       $provide.value('$element', self.$element);
       $provide.value('$sanitize', self.$sanitize);
-      each(mocks, (value: any, key: any) => {
+      each(mocks, (value, key) => {
         $provide.value(key, value);
       });
     });
@@ -101,7 +101,7 @@ export function ControllerTestContext(this: any) {
     });
   };
 
-  this.setIsUtc = (isUtc: any = false) => {
+  this.setIsUtc = (isUtc = false) => {
     self.isUtc = isUtc;
   };
 }
@@ -129,7 +129,7 @@ export class TimeSrvStub {
     };
   }
 
-  setTime(time: any) {
+  setTime(time: RawTimeRange) {
     this.time = time;
   }
 }
@@ -161,7 +161,7 @@ export function TemplateSrvStub(this: any) {
     return template(text, this.templateSettings)(this.data);
   };
   this.init = () => {};
-  this.getAdhocFilters = (): any => {
+  this.getAdhocFilters = () => {
     return [];
   };
   this.fillVariableValuesForUrl = () => {};

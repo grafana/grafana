@@ -23,8 +23,10 @@ export function PageTabs({ navItem }: Props) {
                 active={child.active}
                 key={`${child.url}-${index}`}
                 icon={icon}
+                counter={child.tabCounter}
                 href={child.url}
                 suffix={child.tabSuffix}
+                onChangeTab={child.onClick}
               />
             )
           );

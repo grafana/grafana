@@ -16,6 +16,7 @@ jobs:
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
+    if: github.repository == 'grafana/grafana'
 
     steps:
     - name: Checkout repository

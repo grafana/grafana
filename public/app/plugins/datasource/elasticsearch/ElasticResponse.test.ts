@@ -1,9 +1,9 @@
 import { DataFrame, DataFrameView, Field, FieldCache, FieldType, KeyValue, MutableDataFrame } from '@grafana/data';
-import flatten from 'app/core/utils/flatten';
 
 import { ElasticResponse } from './ElasticResponse';
 import { highlightTags } from './queryDef';
 import { ElasticsearchQuery } from './types';
+import { flattenObject } from './utils';
 
 function getTimeField(frame: DataFrame): Field {
   const field = frame.fields[0];
@@ -1445,7 +1445,7 @@ describe('ElasticResponse', () => {
         expect(r._id).toEqual(response.responses[0].hits.hits[i]._id);
         expect(r._type).toEqual(response.responses[0].hits.hits[i]._type);
         expect(r._index).toEqual(response.responses[0].hits.hits[i]._index);
-        expect(r._source).toEqual(flatten(response.responses[0].hits.hits[i]._source));
+        expect(r._source).toEqual(flattenObject(response.responses[0].hits.hits[i]._source));
       }
 
       // Make a map from the histogram results

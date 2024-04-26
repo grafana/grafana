@@ -65,7 +65,7 @@ export function ValuePicker<T>({
           variant={variant}
           fill={fill}
           fullWidth={isFullWidth}
-          aria-label={selectors.components.ValuePicker.button(ariaLabel ?? label)}
+          data-testid={selectors.components.ValuePicker.button(ariaLabel ?? label)}
         >
           {label}
         </Button>

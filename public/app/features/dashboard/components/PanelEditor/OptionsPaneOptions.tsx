@@ -33,7 +33,14 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
   );
 
   const justOverrides = useMemo(
-    () => getFieldOverrideCategories(props, searchQuery),
+    () =>
+      getFieldOverrideCategories(
+        props.panel.fieldConfig,
+        props.plugin.fieldConfigRegistry,
+        props.data?.series ?? [],
+        searchQuery,
+        props.onFieldConfigsChange
+      ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [panel.configRev, props.data, props.instanceState, searchQuery]
   );
@@ -102,7 +109,7 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
   return (
     <div className={styles.wrapper}>
       <div className={styles.formBox}>
-        {panel.isAngularPlugin() && (
+        {panel.isAngularPlugin() && !plugin.meta.angular?.hideDeprecation && (
           <AngularDeprecationPluginNotice
             className={styles.angularDeprecationWrapper}
             showPluginDetailsLink={true}
@@ -143,7 +150,7 @@ export enum OptionFilter {
   Recent = 'Recent',
 }
 
-function renderSearchHits(
+export function renderSearchHits(
   allOptions: OptionsPaneCategoryDescriptor[],
   overrides: OptionsPaneCategoryDescriptor[],
   searchQuery: string

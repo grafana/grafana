@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 
-import { Switch, InteractiveTable, type CellProps, Button, type SortByFn } from '@grafana/ui';
+import { Switch, InteractiveTable, Tooltip, type CellProps, Button, ConfirmModal, type SortByFn } from '@grafana/ui';
 
-import { type FeatureToggle, useUpdateFeatureTogglesMutation } from './AdminFeatureTogglesAPI';
+import { FeatureToggle, getTogglesAPI } from './AdminFeatureTogglesAPI';
 
 interface Props {
   featureToggles: FeatureToggle[];
+  allowEditing: boolean;
   onUpdateSuccess: () => void;
 }
 
@@ -28,11 +29,14 @@ const sortByEnabled: SortByFn<FeatureToggle> = (a, b) => {
   return a.original.enabled === b.original.enabled ? 0 : a.original.enabled ? 1 : -1;
 };
 
-export function AdminFeatureTogglesTable({ featureToggles, onUpdateSuccess }: Props) {
+export function AdminFeatureTogglesTable({ featureToggles, allowEditing, onUpdateSuccess }: Props) {
+  // sort manually, doesn't look like it can be automatically done in the table
+  featureToggles.sort((a, b) => a.name.localeCompare(b.name));
+  const serverToggles = useRef<FeatureToggle[]>(featureToggles);
   const [localToggles, setLocalToggles] = useState<FeatureToggle[]>(featureToggles);
-  const [updateFeatureToggles] = useUpdateFeatureTogglesMutation();
-  const [modifiedToggles, setModifiedToggles] = useState<FeatureToggle[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [showSaveModel, setShowSaveModal] = useState(false);
+  const togglesApi = getTogglesAPI();
 
   const handleToggleChange = (toggle: FeatureToggle, newValue: boolean) => {
     const updatedToggle = { ...toggle, enabled: newValue };
@@ -40,43 +44,65 @@ export function AdminFeatureTogglesTable({ featureToggles, onUpdateSuccess }: Pr
     // Update the local state
     const updatedToggles = localToggles.map((t) => (t.name === toggle.name ? updatedToggle : t));
     setLocalToggles(updatedToggles);
-
-    // Check if the toggle exists in modifiedToggles
-    const existingToggle = modifiedToggles.find((t) => t.name === toggle.name);
-
-    // If it exists and its state is the same as the updated one, remove it from modifiedToggles
-    if (existingToggle && existingToggle.enabled === newValue) {
-      setModifiedToggles((prev) => prev.filter((t) => t.name !== toggle.name));
-    } else {
-      // Else, add/update the toggle in modifiedToggles
-      setModifiedToggles((prev) => {
-        const newToggles = prev.filter((t) => t.name !== toggle.name);
-        newToggles.push(updatedToggle);
-        return newToggles;
-      });
-    }
   };
 
   const handleSaveChanges = async () => {
     setIsSaving(true);
     try {
-      const resp = await updateFeatureToggles(modifiedToggles);
-      // Reset modifiedToggles after successful update
-      if (!('error' in resp)) {
-        onUpdateSuccess();
-        setModifiedToggles([]);
-      }
+      const modifiedToggles = getModifiedToggles();
+      await togglesApi.updateFeatureToggles(modifiedToggles);
+      // Pretend the values came from a new request
+      serverToggles.current = [...localToggles];
+      onUpdateSuccess(); // should trigger a new get
     } finally {
       setIsSaving(false);
     }
   };
 
+  const saveButtonRef = useRef<HTMLButtonElement | null>(null);
+  const showSaveChangesModal = (show: boolean) => () => {
+    setShowSaveModal(show);
+    if (!show && saveButtonRef.current) {
+      saveButtonRef.current.focus();
+    }
+  };
+
+  const getModifiedToggles = (): FeatureToggle[] => {
+    return localToggles.filter((toggle, index) => toggle.enabled !== serverToggles.current[index].enabled);
+  };
+
   const hasModifications = () => {
     // Check if there are any differences between the original toggles and the local toggles
-    return featureToggles.some((originalToggle) => {
-      const modifiedToggle = localToggles.find((t) => t.name === originalToggle.name);
-      return modifiedToggle && modifiedToggle.enabled !== originalToggle.enabled;
-    });
+    return localToggles.some((toggle, index) => toggle.enabled !== serverToggles.current[index].enabled);
+  };
+
+  const getToggleTooltipContent = (readOnlyToggle?: boolean) => {
+    if (!allowEditing) {
+      return 'Feature management is not configured for editing';
+    }
+    if (readOnlyToggle) {
+      return 'This is a non-editable feature';
+    }
+    return '';
+  };
+
+  const getStageCell = (stage: string) => {
+    switch (stage) {
+      case 'GA':
+        return (
+          <Tooltip content={'General availability'}>
+            <div>GA</div>
+          </Tooltip>
+        );
+      case 'privatePreview':
+      case 'preview':
+      case 'experimental':
+        return 'Beta';
+      case 'deprecated':
+        return 'Deprecated';
+      default:
+        return stage;
+    }
   };
 
   const columns = [
@@ -93,28 +119,62 @@ export function AdminFeatureTogglesTable({ featureToggles, onUpdateSuccess }: Pr
       sortType: sortByDescription,
     },
     {
+      id: 'stage',
+      header: 'Stage',
+      cell: ({ cell: { value } }: CellProps<FeatureToggle, string>) => <div>{getStageCell(value)}</div>,
+    },
+    {
       id: 'enabled',
       header: 'State',
-      cell: ({ row }: CellProps<FeatureToggle, boolean>) => (
-        <div>
-          <Switch
-            value={row.original.enabled}
-            disabled={row.original.readOnly}
-            onChange={(e) => handleToggleChange(row.original, e.currentTarget.checked)}
-          />
-        </div>
-      ),
+      cell: ({ row }: CellProps<FeatureToggle, boolean>) => {
+        const renderStateSwitch = (
+          <div>
+            <Switch
+              value={row.original.enabled}
+              disabled={row.original.readOnly}
+              onChange={(e) => handleToggleChange(row.original, e.currentTarget.checked)}
+            />
+          </div>
+        );
+
+        return row.original.readOnly ? (
+          <Tooltip content={getToggleTooltipContent(row.original.readOnly)}>{renderStateSwitch}</Tooltip>
+        ) : (
+          renderStateSwitch
+        );
+      },
       sortType: sortByEnabled,
     },
   ];
 
   return (
     <>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0 0 5px 0' }}>
-        <Button disabled={!hasModifications() || isSaving} onClick={handleSaveChanges}>
-          {isSaving ? 'Saving...' : 'Save Changes'}
-        </Button>
-      </div>
+      {allowEditing && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0 0 5px 0' }}>
+          <Button disabled={!hasModifications() || isSaving} onClick={showSaveChangesModal(true)} ref={saveButtonRef}>
+            {isSaving ? 'Saving...' : 'Save Changes'}
+          </Button>
+          <ConfirmModal
+            isOpen={showSaveModel}
+            title="Apply feature toggle changes"
+            body={
+              <div>
+                <p>
+                  Some features are stable (GA) and enabled by default, whereas some are currently in their preliminary
+                  Beta phase, available for early adoption.
+                </p>
+                <p>We advise understanding the implications of each feature change before making modifications.</p>
+              </div>
+            }
+            confirmText="Save changes"
+            onConfirm={async () => {
+              showSaveChangesModal(false)();
+              handleSaveChanges();
+            }}
+            onDismiss={showSaveChangesModal(false)}
+          />
+        </div>
+      )}
       <InteractiveTable columns={columns} data={localToggles} getRowId={(featureToggle) => featureToggle.name} />
     </>
   );

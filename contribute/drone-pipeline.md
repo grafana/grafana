@@ -13,5 +13,3 @@ The Drone pipelines are built with [Starlark](https://github.com/bazelbuild/star
 
 - Open a PR where you can do test runs for your changes. If you need to experiment with secrets, create a PR in the [grafana-ci-sandbox repo](https://github.com/grafana/grafana-ci-sandbox), before opening a PR in the main repo.
 - Run `make drone` after making changes to the Starlark files. This builds the `.drone.yml` file.
-
-For further questions, reach out to the grafana-delivery squad.

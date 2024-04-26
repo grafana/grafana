@@ -45,8 +45,13 @@ import (
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestDataSourceProxy_routeRule(t *testing.T) {
 	cfg := &setting.Cfg{}
@@ -156,6 +161,36 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.matchedRoute, dsInfo, proxy.cfg)
 
 			assert.Equal(t, "http://localhost/asd", req.URL.String())
+		})
+
+		t.Run("When matching route path and has setting url", func(t *testing.T) {
+			ctx, req := setUp()
+			proxy, err := setupDSProxyTest(t, ctx, ds, routes, "api/common/some/method")
+			require.NoError(t, err)
+			proxy.matchedRoute = &plugins.Route{
+				Path: "api/common",
+				URL:  "{{.URL}}",
+				Headers: []plugins.Header{
+					{Name: "x-header", Content: "my secret {{.SecureJsonData.key}}"},
+				},
+				URLParams: []plugins.URLParam{
+					{Name: "{{.JsonData.queryParam}}", Content: "{{.SecureJsonData.key}}"},
+				},
+			}
+
+			dsInfo := DSInfo{
+				ID:       ds.ID,
+				Updated:  ds.Updated,
+				JSONData: jd,
+				DecryptedSecureJSONData: map[string]string{
+					"key": "123",
+				},
+				URL: "https://dynamic.grafana.com",
+			}
+			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.matchedRoute, dsInfo, proxy.cfg)
+
+			assert.Equal(t, "https://dynamic.grafana.com/some/method?apiKey=123", req.URL.String())
+			assert.Equal(t, "my secret 123", req.Header.Get("x-header"))
 		})
 
 		t.Run("When matching route path and has dynamic body", func(t *testing.T) {
@@ -478,7 +513,8 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			t,
 			&contextmodel.ReqContext{
 				SignedInUser: &user.SignedInUser{
-					Login: "test_user",
+					Login:        "test_user",
+					NamespacedID: "user:1",
 				},
 			},
 			&setting.Cfg{SendUserHeader: true},

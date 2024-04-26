@@ -1,12 +1,8 @@
-import { Vector } from '../types';
-
-import { vectorToArray } from './vectorToArray';
-
 /**
  * @public
  * @deprecated use a simple Arrays
  */
-export abstract class FunctionalVector<T = any> implements Vector<T> {
+export abstract class FunctionalVector<T = unknown> {
   abstract get length(): number;
 
   abstract get(index: number): T;
@@ -18,7 +14,7 @@ export abstract class FunctionalVector<T = any> implements Vector<T> {
     }
   }
 
-  set(index: number, value: any): void {
+  set(index: number, value: T): void {
     throw 'unsupported operation';
   }
 
@@ -55,7 +51,11 @@ export abstract class FunctionalVector<T = any> implements Vector<T> {
   }
 
   toArray(): T[] {
-    return vectorToArray(this);
+    const arr = new Array<T>(this.length);
+    for (let i = 0; i < this.length; i++) {
+      arr[i] = this.get(i);
+    }
+    return arr;
   }
 
   join(separator?: string | undefined): string {
@@ -101,18 +101,8 @@ export abstract class FunctionalVector<T = any> implements Vector<T> {
   copyWithin(target: number, start: number, end?: number | undefined): this {
     throw new Error('Method not implemented.');
   }
-
-  [Symbol.unscopables](): {
-    copyWithin: boolean;
-    entries: boolean;
-    fill: boolean;
-    find: boolean;
-    findIndex: boolean;
-    keys: boolean;
-    values: boolean;
-  } {
-    throw new Error('Method not implemented.');
-  }
+  // Object not implemented
+  [Symbol.unscopables] = {};
 
   //--------------------------------------------------------------------------------
   // Delegated Array function -- these will not be efficient :grimmice:
@@ -193,7 +183,7 @@ const emptyarray: any[] = [];
  *
  * @deprecated use a simple Arrays
  */
-export function vectorator<T>(vector: Vector<T>) {
+export function vectorator<T>(vector: FunctionalVector<T>) {
   return {
     *[Symbol.iterator]() {
       for (let i = 0; i < vector.length; i++) {

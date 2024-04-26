@@ -4,8 +4,7 @@ import React, { FormEvent, MouseEvent, useState } from 'react';
 import { dateTime, getDefaultTimeRange, GrafanaTheme2, TimeRange, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { stylesFactory } from '../../themes';
-import { useTheme2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 import { Icon } from '../Icon/Icon';
 import { getInputStyles } from '../Input/Input';
@@ -47,8 +46,7 @@ export const TimeRangeInput = ({
   showIcon = false,
 }: TimeRangeInputProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const theme = useTheme2();
-  const styles = getStyles(theme, disabled);
+  const styles = useStyles2(getStyles, disabled);
 
   const onOpen = (event: FormEvent<HTMLButtonElement>) => {
     event.stopPropagation();
@@ -80,7 +78,7 @@ export const TimeRangeInput = ({
       <button
         type="button"
         className={styles.pickerInput}
-        aria-label={selectors.components.TimePicker.openButton}
+        data-testid={selectors.components.TimePicker.openButton}
         onClick={onOpen}
       >
         {showIcon && <Icon name="clock-nine" size={'sm'} className={styles.icon} />}
@@ -115,7 +113,7 @@ export const TimeRangeInput = ({
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme2, disabled = false) => {
+const getStyles = (theme: GrafanaTheme2, disabled = false) => {
   const inputStyles = getInputStyles({ theme, invalid: false });
   return {
     container: css({
@@ -163,4 +161,4 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, disabled = false) => {
       marginRight: theme.spacing(0.5),
     }),
   };
-});
+};

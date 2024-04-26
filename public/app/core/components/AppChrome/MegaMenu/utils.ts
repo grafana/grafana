@@ -1,6 +1,7 @@
-import { locationUtil, NavModelItem } from '@grafana/data';
+import { NavModelItem } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
+import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 
 import { ShowModalReactEvent } from '../../../../types/events';
 import appEvents from '../../../app_events';
@@ -29,23 +30,21 @@ export const enrichHelpItem = (helpItem: NavModelItem) => {
   return helpItem;
 };
 
-export const enrichWithInteractionTracking = (item: NavModelItem, expandedState: boolean) => {
-  const onClick = item.onClick;
-  item.onClick = () => {
+export const enrichWithInteractionTracking = (item: NavModelItem, megaMenuDockedState: boolean) => {
+  // creating a new object here to not mutate the original item object
+  const newItem = { ...item };
+  const onClick = newItem.onClick;
+  newItem.onClick = () => {
     reportInteraction('grafana_navigation_item_clicked', {
-      path: item.url ?? item.id,
-      state: expandedState ? 'expanded' : 'collapsed',
+      path: newItem.url ?? newItem.id,
+      menuIsDocked: megaMenuDockedState,
     });
     onClick?.();
   };
-  if (item.children) {
-    item.children = item.children.map((item) => enrichWithInteractionTracking(item, expandedState));
+  if (newItem.children) {
+    newItem.children = newItem.children.map((item) => enrichWithInteractionTracking(item, megaMenuDockedState));
   }
-  return item;
-};
-
-export const isMatchOrChildMatch = (itemToCheck: NavModelItem, searchItem?: NavModelItem) => {
-  return Boolean(itemToCheck === searchItem || hasChildMatch(itemToCheck, searchItem));
+  return newItem;
 };
 
 export const hasChildMatch = (itemToCheck: NavModelItem, searchItem?: NavModelItem): boolean => {
@@ -60,57 +59,48 @@ export const hasChildMatch = (itemToCheck: NavModelItem, searchItem?: NavModelIt
   );
 };
 
-const stripQueryParams = (url?: string) => {
-  return url?.split('?')[0] ?? '';
-};
-
-const isBetterMatch = (newMatch: NavModelItem, currentMatch?: NavModelItem) => {
-  const currentMatchUrl = stripQueryParams(currentMatch?.url);
-  const newMatchUrl = stripQueryParams(newMatch.url);
-  return newMatchUrl && newMatchUrl.length > currentMatchUrl?.length;
-};
-
 export const getActiveItem = (
   navTree: NavModelItem[],
-  pathname: string,
-  currentBestMatch?: NavModelItem
+  currentPage: NavModelItem,
+  url?: string
 ): NavModelItem | undefined => {
-  const dashboardLinkMatch = '/dashboards';
+  const { id, parentItem } = currentPage;
 
-  for (const link of navTree) {
-    const linkWithoutParams = stripQueryParams(link.url);
-    const linkPathname = locationUtil.stripBaseFromUrl(linkWithoutParams);
-    if (linkPathname && link.id !== 'starred') {
-      if (linkPathname === pathname) {
-        // exact match
-        currentBestMatch = link;
-        break;
-      } else if (linkPathname !== '/' && pathname.startsWith(linkPathname)) {
-        // partial match
-        if (isBetterMatch(link, currentBestMatch)) {
-          currentBestMatch = link;
-        }
-      } else if (linkPathname === '/alerting/list' && pathname.startsWith('/alerting/notification/')) {
-        // alert channel match
-        // TODO refactor routes such that we don't need this custom logic
-        currentBestMatch = link;
-        break;
-      } else if (linkPathname === dashboardLinkMatch && pathname.startsWith('/d/')) {
-        // dashboard match
-        // TODO refactor routes such that we don't need this custom logic
-        if (isBetterMatch(link, currentBestMatch)) {
-          currentBestMatch = link;
-        }
+  // special case for the home page
+  if (url === '/') {
+    return navTree.find((item) => item.id === HOME_NAV_ID);
+  }
+
+  // special case for profile as it's not part of the mega menu
+  if (currentPage.id === 'profile') {
+    return undefined;
+  }
+
+  for (const navItem of navTree) {
+    const isIdMatch = Boolean(navItem.id && navItem.id === id);
+    const isTextUrlMatch = navItem.text === currentPage.text && navItem.url === currentPage.url;
+
+    // ideally, we should only match on id
+    // unfortunately it's not a required property of the interface, and there are some cases
+    // where it's not set, particularly with child pages of plugins
+    // in those cases, we fall back to a text + url match
+    if (isIdMatch || isTextUrlMatch) {
+      return navItem;
+    }
+
+    if (navItem.children) {
+      const childrenMatch = getActiveItem(navItem.children, currentPage);
+      if (childrenMatch) {
+        return childrenMatch;
       }
     }
-    if (link.children) {
-      currentBestMatch = getActiveItem(link.children, pathname, currentBestMatch);
-    }
-    if (stripQueryParams(currentBestMatch?.url) === pathname) {
-      return currentBestMatch;
-    }
   }
-  return currentBestMatch;
+
+  if (parentItem) {
+    return getActiveItem(navTree, parentItem);
+  }
+
+  return undefined;
 };
 
 export function getEditionAndUpdateLinks(): NavModelItem[] {

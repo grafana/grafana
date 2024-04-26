@@ -3,53 +3,31 @@ import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { usePrevious } from 'react-use';
 
 import { DataSourceInstanceSettings, VariableSuggestion } from '@grafana/data';
+import { DataSourcePicker } from '@grafana/runtime';
 import {
   Button,
   DataLinkInput,
-  stylesFactory,
   InlineField,
   InlineSwitch,
   InlineFieldRow,
   InlineLabel,
   Input,
+  useStyles2,
 } from '@grafana/ui';
-import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { DataLinkConfig } from '../types';
 
-const getStyles = stylesFactory(() => ({
-  firstRow: css`
-    display: flex;
-  `,
-  nameField: css`
-    flex: 2;
-  `,
-  regexField: css`
-    flex: 3;
-  `,
-  row: css`
-    display: flex;
-    align-items: baseline;
-  `,
-  urlField: css`
-    display: flex;
-    flex: 1;
-  `,
-  urlDisplayLabelField: css`
-    flex: 1;
-  `,
-}));
-
-type Props = {
+interface Props {
   value: DataLinkConfig;
   onChange: (value: DataLinkConfig) => void;
   onDelete: () => void;
   suggestions: VariableSuggestion[];
   className?: string;
-};
+}
+
 export const DataLink = (props: Props) => {
   const { value, onChange, onDelete, suggestions, className } = props;
-  const styles = getStyles();
+  const styles = useStyles2(getStyles);
   const [showInternalLink, setShowInternalLink] = useInternalLink(value.datasourceUid);
 
   const handleChange = (field: keyof typeof value) => (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -173,3 +151,26 @@ function useInternalLink(datasourceUid?: string): [boolean, Dispatch<SetStateAct
 
   return [showInternalLink, setShowInternalLink];
 }
+
+const getStyles = () => ({
+  firstRow: css`
+    display: flex;
+  `,
+  nameField: css`
+    flex: 2;
+  `,
+  regexField: css`
+    flex: 3;
+  `,
+  row: css`
+    display: flex;
+    align-items: baseline;
+  `,
+  urlField: css`
+    display: flex;
+    flex: 1;
+  `,
+  urlDisplayLabelField: css`
+    flex: 1;
+  `,
+});

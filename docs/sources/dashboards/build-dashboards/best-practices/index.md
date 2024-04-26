@@ -6,7 +6,7 @@ aliases:
   - ../../best-practices/common-observability-strategies/
   - ../../best-practices/dashboard-management-maturity-levels/
   - ../../getting-started/strategies/
-description: Best practices for working with Grafana
+description: Learn best practices for building and maintaining Grafana dashboards
 labels:
   products:
     - cloud
@@ -14,7 +14,7 @@ labels:
     - oss
 menuTitle: Best practices
 title: Grafana dashboard best practices
-weight: 100
+weight: 800
 ---
 
 # Grafana dashboard best practices
@@ -69,7 +69,7 @@ This method is similar to the RED method, but it includes saturation.
 - **Errors -** Rate of requests that are failing
 - **Saturation -** How "full" your system is
 
-[Here's an example from Grafana Play](https://play.grafana.org/d/000000109/the-four-golden-signals?orgId=1).
+{{< docs/play title="The Four Golden Signals" url="https://play.grafana.org/d/000000109/" >}}
 
 ## Dashboard management maturity model
 

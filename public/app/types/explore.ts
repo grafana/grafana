@@ -17,6 +17,7 @@ import {
   SupplementaryQueryType,
   UrlQueryMap,
   ExploreCorrelationHelperData,
+  DataLinkTransformationConfig,
 } from '@grafana/data';
 import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
 
@@ -27,21 +28,25 @@ export type ExploreQueryParams = UrlQueryMap;
 export enum CORRELATION_EDITOR_POST_CONFIRM_ACTION {
   CLOSE_PANE,
   CHANGE_DATASOURCE,
+  CLOSE_EDITOR,
 }
 
 export interface CorrelationEditorDetails {
   editorMode: boolean;
-  dirty: boolean;
+  correlationDirty: boolean;
+  queryEditorDirty: boolean;
   isExiting: boolean;
   postConfirmAction?: {
     // perform an action after a confirmation modal instead of exiting editor mode
     exploreId: string;
     action: CORRELATION_EDITOR_POST_CONFIRM_ACTION;
     changeDatasourceUid?: string;
+    isActionLeft: boolean;
   };
   canSave?: boolean;
   label?: string;
   description?: string;
+  transformations?: DataLinkTransformationConfig[];
 }
 
 // updates can have any properties
@@ -57,6 +62,13 @@ export interface ExploreState {
   syncedTimes: boolean;
 
   panes: Record<string, ExploreItemState | undefined>;
+
+  /**
+   * History of all queries
+   */
+  richHistory: RichHistoryQuery[];
+  richHistorySearchFilters?: RichHistorySearchFilters;
+  richHistoryTotal?: number;
 
   /**
    * Settings for rich history (note: filters are stored per each pane separately)
@@ -200,13 +212,6 @@ export interface ExploreItemState {
   showNodeGraph?: boolean;
   showFlameGraph?: boolean;
   showCustom?: boolean;
-
-  /**
-   * History of all queries
-   */
-  richHistory: RichHistoryQuery[];
-  richHistorySearchFilters?: RichHistorySearchFilters;
-  richHistoryTotal?: number;
 
   /**
    * We are using caching to store query responses of queries run from logs navigation.

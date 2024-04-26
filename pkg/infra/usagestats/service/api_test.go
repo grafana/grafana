@@ -4,18 +4,17 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"path"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -30,13 +29,13 @@ func TestApi_getUsageStats(t *testing.T) {
 		{
 			desc:           "expect usage stats",
 			enabled:        true,
-			permissions:    map[string][]string{ActionRead: {}},
+			permissions:    map[string][]string{accesscontrol.ActionUsageStatsRead: {}},
 			expectedStatus: 200,
 		},
 		{
 			desc:           "expect usage stat preview still there after disabling",
 			enabled:        false,
-			permissions:    map[string][]string{ActionRead: {}},
+			permissions:    map[string][]string{accesscontrol.ActionUsageStatsRead: {}},
 			expectedStatus: 200,
 		},
 		{
@@ -80,7 +79,7 @@ func getUsageStats(t *testing.T, server *web.Mux) (*stats.SystemStats, *httptest
 
 func setupTestServer(t *testing.T, user *user.SignedInUser, service *UsageStats) *web.Mux {
 	server := web.New()
-	server.UseMiddleware(web.Renderer(path.Join(setting.StaticRootPath, "views"), "[[", "]]"))
+	server.UseMiddleware(web.Renderer("views", "[[", "]]"))
 	server.Use(contextProvider(&testContext{user}))
 	service.RouteRegister.Register(server)
 	return server

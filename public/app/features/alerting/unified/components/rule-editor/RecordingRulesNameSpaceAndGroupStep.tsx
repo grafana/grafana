@@ -7,7 +7,7 @@ import { GroupAndNamespaceFields } from './GroupAndNamespaceFields';
 import { RuleEditorSection } from './RuleEditorSection';
 
 export function RecordingRulesNameSpaceAndGroupStep() {
-  const { watch } = useFormContext<RuleFormValues & { location?: string }>();
+  const { watch } = useFormContext<RuleFormValues>();
 
   const dataSourceName = watch('dataSourceName');
 

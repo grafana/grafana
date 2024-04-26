@@ -26,6 +26,7 @@ jest.mock('react-router-dom', () => ({
 jest.spyOn(analytics, 'logInfo');
 
 jest.mock('react-use', () => ({
+  ...jest.requireActual('react-use'),
   useAsync: () => ({ loading: false, value: {} }),
 }));
 
@@ -39,7 +40,7 @@ describe('Analytics', () => {
     });
     render(<NewRuleFromPanelButton panel={panel} dashboard={dashboard} />);
 
-    const button = screen.getByText('Create alert rule from this panel');
+    const button = screen.getByText('New alert rule');
 
     button.addEventListener('click', (event) => event.preventDefault(), false);
 

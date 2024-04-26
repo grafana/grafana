@@ -4,12 +4,25 @@ import { times } from 'lodash';
 import React from 'react';
 import { byLabelText, byRole, byTestId } from 'testing-library-selector';
 
+import { PluginExtensionTypes } from '@grafana/data';
+import { usePluginLinkExtensions } from '@grafana/runtime';
+
 import { CombinedRuleNamespace } from '../../../../../types/unified-alerting';
 import { GrafanaAlertState, PromAlertingRuleState } from '../../../../../types/unified-alerting-dto';
 import { mockCombinedRule, mockDataSource, mockPromAlert, mockPromAlertingRule } from '../../mocks';
 import { alertStateToReadable } from '../../utils/rules';
 
 import { RuleDetailsMatchingInstances } from './RuleDetailsMatchingInstances';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getPluginLinkExtensions: jest.fn(),
+  usePluginLinkExtensions: jest.fn(),
+}));
+
+const mocks = {
+  usePluginLinkExtensionsMock: jest.mocked(usePluginLinkExtensions),
+};
 
 const ui = {
   stateFilter: byTestId('alert-instance-state-filter'),
@@ -30,6 +43,23 @@ const ui = {
 };
 
 describe('RuleDetailsMatchingInstances', () => {
+  beforeEach(() => {
+    mocks.usePluginLinkExtensionsMock.mockReturnValue({
+      extensions: [
+        {
+          pluginId: 'grafana-ml-app',
+          id: '1',
+          type: PluginExtensionTypes.link,
+          title: 'Run investigation',
+          category: 'Sift',
+          description: 'Run a Sift investigation for this alert',
+          onClick: jest.fn(),
+        },
+      ],
+      isLoading: false,
+    });
+  });
+
   describe('Filtering', () => {
     it('For Grafana Managed rules instances filter should contain five states', () => {
       const rule = mockCombinedRule();

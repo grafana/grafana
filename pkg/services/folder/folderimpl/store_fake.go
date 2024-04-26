@@ -9,6 +9,7 @@ import (
 type fakeStore struct {
 	ExpectedChildFolders  []*folder.Folder
 	ExpectedParentFolders []*folder.Folder
+	ExpectedFolders       []*folder.Folder
 	ExpectedFolder        *folder.Folder
 	ExpectedError         error
 	ExpectedFolderHeight  int
@@ -27,7 +28,7 @@ func (f *fakeStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) 
 	return f.ExpectedFolder, f.ExpectedError
 }
 
-func (f *fakeStore) Delete(ctx context.Context, uid string, orgID int64) error {
+func (f *fakeStore) Delete(ctx context.Context, UIDs []string, orgID int64) error {
 	f.DeleteCalled = true
 	return f.ExpectedError
 }
@@ -44,7 +45,7 @@ func (f *fakeStore) Get(ctx context.Context, cmd folder.GetFolderQuery) (*folder
 	return f.ExpectedFolder, f.ExpectedError
 }
 
-func (f *fakeStore) GetParents(ctx context.Context, cmd folder.GetParentsQuery) ([]*folder.Folder, error) {
+func (f *fakeStore) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
 	return f.ExpectedParentFolders, f.ExpectedError
 }
 
@@ -54,4 +55,12 @@ func (f *fakeStore) GetChildren(ctx context.Context, cmd folder.GetChildrenQuery
 
 func (f *fakeStore) GetHeight(ctx context.Context, folderUID string, orgID int64, parentUID *string) (int, error) {
 	return f.ExpectedFolderHeight, f.ExpectedError
+}
+
+func (f *fakeStore) GetFolders(ctx context.Context, q getFoldersQuery) ([]*folder.Folder, error) {
+	return f.ExpectedFolders, f.ExpectedError
+}
+
+func (f *fakeStore) GetDescendants(ctx context.Context, orgID int64, ancestor_uid string) ([]*folder.Folder, error) {
+	return f.ExpectedFolders, f.ExpectedError
 }

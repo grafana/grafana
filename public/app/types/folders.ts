@@ -1,6 +1,9 @@
 import { WithAccessControlMetadata } from '@grafana/data';
 
-import { DashboardAcl } from './acl';
+export interface FolderListItemDTO {
+  uid: string;
+  title: string;
+}
 
 export interface FolderDTO extends WithAccessControlMetadata {
   canAdmin: boolean;
@@ -30,8 +33,6 @@ export interface FolderState {
   canDelete: boolean;
   hasChanged: boolean;
   version: number;
-  permissions: DashboardAcl[];
-  canViewFolderPermissions: boolean;
 }
 
 export interface DescendantCountDTO {
@@ -57,5 +58,4 @@ export interface FolderInfo {
   uid?: string;
   title?: string;
   url?: string;
-  canViewFolderPermissions?: boolean;
 }

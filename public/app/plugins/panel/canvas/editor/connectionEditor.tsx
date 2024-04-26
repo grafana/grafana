@@ -24,9 +24,8 @@ export function getConnectionEditor(opts: CanvasConnectionEditorOptions): Nested
       getValue: (path: string) => {
         return lodashGet(opts.connection.info, path);
       },
-      // TODO: Fix this any (maybe a dimension supplier?)
-      onChange: (path: string, value: any) => {
-        console.log(value, typeof value);
+      // TODO: Fix this unknown (maybe a dimension supplier?)
+      onChange: (path: string, value: unknown) => {
         let options = opts.connection.info;
         options = setOptionImmutably(options, path, value);
         opts.scene.connections.onChange(opts.connection, options);
@@ -37,6 +36,9 @@ export function getConnectionEditor(opts: CanvasConnectionEditorOptions): Nested
       const ctx = { ...context, options: opts.connection.info };
       optionBuilder.addColor(builder, ctx);
       optionBuilder.addSize(builder, ctx);
+      optionBuilder.addRadius(builder, ctx);
+      optionBuilder.addDirection(builder, ctx);
+      optionBuilder.addLineStyle(builder, ctx);
     },
   };
 }

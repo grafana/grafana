@@ -214,7 +214,7 @@ export const convertRawToRange = (
   return { from, to, raw: { from, to } };
 };
 
-function isRelativeTime(v: DateTime | string) {
+export function isRelativeTime(v: DateTime | string) {
   if (typeof v === 'string') {
     return v.indexOf('now') >= 0;
   }

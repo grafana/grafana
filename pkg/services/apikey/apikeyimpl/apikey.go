@@ -5,7 +5,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/apikey"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -15,15 +14,9 @@ type Service struct {
 }
 
 func ProvideService(db db.DB, cfg *setting.Cfg, quotaService quota.Service) (apikey.Service, error) {
-	s := &Service{}
-	if cfg.IsFeatureToggleEnabled(featuremgmt.FlagNewDBLibrary) {
-		s.store = &sqlxStore{
-			sess: db.GetSqlxSession(),
-			cfg:  cfg,
-		}
+	s := &Service{
+		store: &sqlStore{db: db},
 	}
-	s.store = &sqlStore{db: db, cfg: cfg}
-
 	defaultLimits, err := readQuotaConfig(cfg)
 	if err != nil {
 		return s, err

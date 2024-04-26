@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"slices"
 	"strconv"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"golang.org/x/exp/slices"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -22,42 +23,50 @@ const (
 )
 
 type elasticsearchDataQuery struct {
-	client      es.Client
-	dataQueries []backend.DataQuery
-	logger      log.Logger
-	ctx         context.Context
-	tracer      tracing.Tracer
+	client               es.Client
+	dataQueries          []backend.DataQuery
+	logger               log.Logger
+	ctx                  context.Context
+	tracer               tracing.Tracer
+	keepLabelsInResponse bool
 }
 
-var newElasticsearchDataQuery = func(ctx context.Context, client es.Client, dataQuery []backend.DataQuery, logger log.Logger, tracer tracing.Tracer) *elasticsearchDataQuery {
+var newElasticsearchDataQuery = func(ctx context.Context, client es.Client, req *backend.QueryDataRequest, logger log.Logger, tracer tracing.Tracer) *elasticsearchDataQuery {
+	_, fromAlert := req.Headers[headerFromAlert]
+	fromExpression := req.GetHTTPHeader(headerFromExpression) != ""
+
 	return &elasticsearchDataQuery{
 		client:      client,
-		dataQueries: dataQuery,
+		dataQueries: req.Queries,
 		logger:      logger,
 		ctx:         ctx,
 		tracer:      tracer,
+		// To maintain backward compatibility, it is necessary to keep labels in responses for alerting and expressions queries.
+		// Historically, these labels have been used in alerting rules and transformations.
+		keepLabelsInResponse: fromAlert || fromExpression,
 	}
 }
 
 func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 	start := time.Now()
+	response := backend.NewQueryDataResponse()
 	e.logger.Debug("Parsing queries", "queriesLength", len(e.dataQueries))
 	queries, err := parseQuery(e.dataQueries, e.logger)
 	if err != nil {
 		mq, _ := json.Marshal(e.dataQueries)
 		e.logger.Error("Failed to parse queries", "error", err, "queries", string(mq), "queriesLength", len(queries), "duration", time.Since(start), "stage", es.StagePrepareRequest)
-		return &backend.QueryDataResponse{}, err
+		return errorsource.AddPluginErrorToResponse(e.dataQueries[0].RefID, response, err), nil
 	}
 
 	ms := e.client.MultiSearch()
 
-	from := e.dataQueries[0].TimeRange.From.UnixNano() / int64(time.Millisecond)
-	to := e.dataQueries[0].TimeRange.To.UnixNano() / int64(time.Millisecond)
 	for _, q := range queries {
+		from := q.TimeRange.From.UnixNano() / int64(time.Millisecond)
+		to := q.TimeRange.To.UnixNano() / int64(time.Millisecond)
 		if err := e.processQuery(q, ms, from, to); err != nil {
 			mq, _ := json.Marshal(q)
 			e.logger.Error("Failed to process query to multisearch request builder", "error", err, "query", string(mq), "queriesLength", len(queries), "duration", time.Since(start), "stage", es.StagePrepareRequest)
-			return &backend.QueryDataResponse{}, err
+			return errorsource.AddPluginErrorToResponse(q.RefID, response, err), nil
 		}
 	}
 
@@ -65,16 +74,17 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 	if err != nil {
 		mqs, _ := json.Marshal(e.dataQueries)
 		e.logger.Error("Failed to build multisearch request", "error", err, "queriesLength", len(queries), "queries", string(mqs), "duration", time.Since(start), "stage", es.StagePrepareRequest)
-		return &backend.QueryDataResponse{}, err
+		return errorsource.AddPluginErrorToResponse(e.dataQueries[0].RefID, response, err), nil
 	}
 
 	e.logger.Info("Prepared request", "queriesLength", len(queries), "duration", time.Since(start), "stage", es.StagePrepareRequest)
 	res, err := e.client.ExecuteMultisearch(req)
 	if err != nil {
-		return &backend.QueryDataResponse{}, err
+		// We are returning error containing the source that was added trough errorsource.Middleware
+		return errorsource.AddErrorToResponse(e.dataQueries[0].RefID, response, err), nil
 	}
 
-	return parseResponse(e.ctx, res.Responses, queries, e.client.GetConfiguredFields(), e.logger, e.tracer)
+	return parseResponse(e.ctx, res.Responses, queries, e.client.GetConfiguredFields(), e.keepLabelsInResponse, e.logger, e.tracer)
 }
 
 func (e *elasticsearchDataQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilder, from, to int64) error {
@@ -85,7 +95,7 @@ func (e *elasticsearchDataQuery) processQuery(q *Query, ms *es.MultiSearchReques
 	}
 
 	defaultTimeField := e.client.GetConfiguredFields().TimeField
-	b := ms.Search(q.Interval)
+	b := ms.Search(q.Interval, q.TimeRange)
 	b.Size(0)
 	filters := b.Query().Bool().Filter()
 	filters.AddDateRangeFilter(defaultTimeField, to, from, es.DateFormatEpochMS)
@@ -386,6 +396,11 @@ func processDocumentQuery(q *Query, b *es.SearchRequestBuilder, from, to int64, 
 	b.Sort(es.SortOrderDesc, defaultTimeField, "boolean")
 	b.Sort(es.SortOrderDesc, "_doc", "")
 	b.AddDocValueField(defaultTimeField)
+	if isRawDataQuery(q) {
+		// For raw_data queries we need to add timeField as field with standardized time format to not receive
+		// invalid formats that elasticsearch can parse, but our frontend can't (e.g. yyyy_MM_dd_HH_mm_ss)
+		b.AddTimeFieldWithStandardizedFormat(defaultTimeField)
+	}
 	b.Size(stringToIntWithDefaultValue(metric.Settings.Get("size").MustString(), defaultSize))
 }
 

@@ -11,15 +11,16 @@
 //      }
 //  }
 //  Name: 
-//  Dimensions: 3 Fields by 2 Rows
-//  +--------------------+----------------------+---------------+
-//  | Name: name         | Name: mediaType      | Name: size    |
-//  | Labels:            | Labels:              | Labels:       |
-//  | Type: []string     | Type: []string       | Type: []int64 |
-//  +--------------------+----------------------+---------------+
-//  | countries.geojson  | application/geo+json | 255943        |
-//  | usa-states.geojson | application/geo+json | 89263         |
-//  +--------------------+----------------------+---------------+
+//  Dimensions: 3 Fields by 3 Rows
+//  +----------------------------+----------------------+---------------+
+//  | Name: name                 | Name: mediaType      | Name: size    |
+//  | Labels:                    | Labels:              | Labels:       |
+//  | Type: []string             | Type: []string       | Type: []int64 |
+//  +----------------------------+----------------------+---------------+
+//  | countries.geojson          | application/geo+json | 255943        |
+//  | example-with-style.geojson | application/geo+json | 3332          |
+//  | usa-states.geojson         | application/geo+json | 89263         |
+//  +----------------------------+----------------------+---------------+
 //  
 //  
 //  🌟 This was machine generated.  Do not edit. 🌟
@@ -69,14 +70,17 @@
         "values": [
           [
             "countries.geojson",
+            "example-with-style.geojson",
             "usa-states.geojson"
           ],
           [
+            "application/geo+json",
             "application/geo+json",
             "application/geo+json"
           ],
           [
             255943,
+            3332,
             89263
           ]
         ]

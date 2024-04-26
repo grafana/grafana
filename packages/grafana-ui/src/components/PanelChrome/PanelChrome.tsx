@@ -10,6 +10,7 @@ import { getFocusStyles } from '../../themes/mixins';
 import { DelayRender } from '../../utils/DelayRender';
 import { Icon } from '../Icon/Icon';
 import { LoadingBar } from '../LoadingBar/LoadingBar';
+import { Text } from '../Text/Text';
 import { Tooltip } from '../Tooltip';
 
 import { HoverWidget } from './HoverWidget';
@@ -25,7 +26,7 @@ export type PanelChromeProps = (AutoSize | FixedDimensions) & (Collapsible | Hov
 
 interface BaseProps {
   padding?: PanelPadding;
-  title?: string;
+  title?: string | React.ReactElement;
   description?: string | (() => string);
   titleItems?: ReactNode;
   menu?: ReactElement | (() => ReactElement);
@@ -161,40 +162,46 @@ export function PanelChrome({
     actions = leftItems;
   }
 
-  const testid = title ? selectors.components.Panels.Panel.title(title) : 'Panel';
+  const testid = typeof title === 'string' ? selectors.components.Panels.Panel.title(title) : 'Panel';
 
   const headerContent = (
     <>
       {/* Non collapsible title */}
       {!collapsible && title && (
-        <h6 title={title} className={styles.title}>
-          {title}
-        </h6>
+        <div className={styles.title}>
+          <Text element="h2" variant="h6" truncate title={typeof title === 'string' ? title : undefined}>
+            {title}
+          </Text>
+        </div>
       )}
 
       {/* Collapsible title */}
       {collapsible && (
-        <h6 className={styles.title}>
-          <button
-            type="button"
-            className={styles.clearButtonStyles}
-            onClick={() => {
-              toggleOpen();
-              if (onToggleCollapse) {
-                onToggleCollapse(!collapsed);
-              }
-            }}
-            aria-expanded={!collapsed}
-            aria-controls={!collapsed ? panelContentId : undefined}
-          >
-            <Icon
-              name={!collapsed ? 'angle-down' : 'angle-right'}
-              aria-hidden={!!title}
-              aria-label={!title ? 'toggle collapse panel' : undefined}
-            />
-            {title}
-          </button>
-        </h6>
+        <div className={styles.title}>
+          <Text element="h2" variant="h6">
+            <button
+              type="button"
+              className={styles.clearButtonStyles}
+              onClick={() => {
+                toggleOpen();
+                if (onToggleCollapse) {
+                  onToggleCollapse(!collapsed);
+                }
+              }}
+              aria-expanded={!collapsed}
+              aria-controls={!collapsed ? panelContentId : undefined}
+            >
+              <Icon
+                name={!collapsed ? 'angle-down' : 'angle-right'}
+                aria-hidden={!!title}
+                aria-label={!title ? 'toggle collapse panel' : undefined}
+              />
+              <Text variant="h6" truncate>
+                {title}
+              </Text>
+            </button>
+          </Text>
+        </div>
       )}
 
       <div className={cx(styles.titleItems, dragClassCancel)} data-testid="title-items-container">
@@ -229,7 +236,7 @@ export function PanelChrome({
 
   return (
     // tabIndex={0} is needed for keyboard accessibility in the plot area
-    <div
+    <section
       className={cx(styles.container, { [styles.transparentContainer]: isPanelTransparent })}
       style={containerStyles}
       data-testid={testid}
@@ -246,7 +253,7 @@ export function PanelChrome({
         <>
           <HoverWidget
             menu={menu}
-            title={title}
+            title={typeof title === 'string' ? title : undefined}
             offset={hoverHeaderOffset}
             dragClass={dragClass}
             onOpenMenu={onOpenMenu}
@@ -275,7 +282,7 @@ export function PanelChrome({
           {menu && (
             <PanelMenu
               menu={menu}
-              title={title}
+              title={typeof title === 'string' ? title : undefined}
               placement="bottom-end"
               menuButtonClass={cx(styles.menuItem, dragClassCancel, showOnHoverClass)}
               onOpenMenu={onOpenMenu}
@@ -287,13 +294,14 @@ export function PanelChrome({
       {!collapsed && (
         <div
           id={panelContentId}
+          data-testid={selectors.components.Panels.Panel.content}
           className={cx(styles.content, height === undefined && styles.containNone)}
           style={contentStyle}
         >
           {typeof children === 'function' ? children(innerWidth, innerHeight) : children}
         </div>
       )}
-    </div>
+    </section>
   );
 }
 
@@ -357,15 +365,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
-
-      '> *': {
-        zIndex: 0,
-      },
-
-      // matches .react-grid-item styles in _dashboard_grid.scss to ensure any contained tooltips occlude adjacent panels
-      '&:hover, &:active, &:focus': {
-        zIndex: theme.zIndex.activePanel,
-      },
 
       '.show-on-hover': {
         opacity: '0',
@@ -433,13 +432,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     title: css({
       label: 'panel-title',
       display: 'flex',
-      marginBottom: 0, // override default h6 margin-bottom
       padding: theme.spacing(0, padding),
-      textOverflow: 'ellipsis',
-      overflow: 'hidden',
-      whiteSpace: 'nowrap',
-      fontSize: theme.typography.h6.fontSize,
-      fontWeight: theme.typography.h6.fontWeight,
+      minWidth: 0,
+      '& > h2': {
+        minWidth: 0,
+      },
     }),
     items: css({
       display: 'flex',
@@ -465,7 +462,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'absolute',
       left: 0,
       top: 0,
-      zIndex: theme.zIndex.tooltip,
+      zIndex: 1,
     }),
     rightActions: css({
       display: 'flex',
@@ -487,14 +484,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       gap: theme.spacing(0.5),
       background: 'transparent',
-      color: theme.colors.text.primary,
       border: 'none',
       padding: 0,
-      textOverflow: 'ellipsis',
-      overflow: 'hidden',
-      whiteSpace: 'nowrap',
-      fontSize: theme.typography.h6.fontSize,
-      fontWeight: theme.typography.h6.fontWeight,
+      maxWidth: '100%',
     }),
   };
 };

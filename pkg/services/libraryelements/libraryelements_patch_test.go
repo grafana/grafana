@@ -26,8 +26,9 @@ func TestPatchLibraryElement(t *testing.T) {
 		func(t *testing.T, sc scenarioContext) {
 			newFolder := createFolder(t, sc, "NewFolder")
 			cmd := model.PatchLibraryElementCommand{
-				FolderID: newFolder.ID,
-				Name:     "Panel - New name",
+				FolderID:  newFolder.ID, // nolint:staticcheck
+				FolderUID: &newFolder.UID,
+				Name:      "Panel - New name",
 				Model: []byte(`
 								{
 								  "datasource": "${DS_GDEV-TESTDATA}",
@@ -49,7 +50,8 @@ func TestPatchLibraryElement(t *testing.T) {
 				Result: libraryElement{
 					ID:          1,
 					OrgID:       1,
-					FolderID:    newFolder.ID,
+					FolderID:    newFolder.ID, // nolint:staticcheck
+					FolderUID:   newFolder.UID,
 					UID:         sc.initialResult.Result.UID,
 					Name:        "Panel - New name",
 					Kind:        int64(model.PanelElement),
@@ -91,16 +93,19 @@ func TestPatchLibraryElement(t *testing.T) {
 		func(t *testing.T, sc scenarioContext) {
 			newFolder := createFolder(t, sc, "NewFolder")
 			cmd := model.PatchLibraryElementCommand{
-				FolderID: newFolder.ID,
-				Kind:     int64(model.PanelElement),
-				Version:  1,
+				FolderID:  newFolder.ID, // nolint:staticcheck
+				FolderUID: &newFolder.UID,
+				Kind:      int64(model.PanelElement),
+				Version:   1,
 			}
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			sc.reqContext.Req.Body = mockRequestBody(cmd)
 			resp := sc.service.patchHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 			var result = validateAndUnMarshalResponse(t, resp)
+			// nolint:staticcheck
 			sc.initialResult.Result.FolderID = newFolder.ID
+			sc.initialResult.Result.FolderUID = newFolder.UID
 			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
 			sc.initialResult.Result.Meta.CreatedBy.AvatarUrl = userInDbAvatar
 			sc.initialResult.Result.Meta.Updated = result.Result.Meta.Updated
@@ -115,7 +120,7 @@ func TestPatchLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to patch a library panel with name only, it should change name successfully and return correct result",
 		func(t *testing.T, sc scenarioContext) {
 			cmd := model.PatchLibraryElementCommand{
-				FolderID: -1,
+				FolderID: -1, // nolint:staticcheck
 				Name:     "New Name",
 				Kind:     int64(model.PanelElement),
 				Version:  1,
@@ -138,7 +143,7 @@ func TestPatchLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to patch a library panel with a nonexistent UID, it should change UID successfully and return correct result",
 		func(t *testing.T, sc scenarioContext) {
 			cmd := model.PatchLibraryElementCommand{
-				FolderID: -1,
+				FolderID: -1, // nolint:staticcheck
 				UID:      util.GenerateShortUID(),
 				Kind:     int64(model.PanelElement),
 				Version:  1,
@@ -161,7 +166,7 @@ func TestPatchLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to patch a library panel with an invalid UID, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			cmd := model.PatchLibraryElementCommand{
-				FolderID: -1,
+				FolderID: -1, // nolint:staticcheck
 				UID:      "Testing an invalid UID",
 				Kind:     int64(model.PanelElement),
 				Version:  1,
@@ -175,10 +180,11 @@ func TestPatchLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to patch a library panel with an UID that is too long, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			cmd := model.PatchLibraryElementCommand{
-				FolderID: -1,
-				UID:      "j6T00KRZzj6T00KRZzj6T00KRZzj6T00KRZzj6T00K",
-				Kind:     int64(model.PanelElement),
-				Version:  1,
+				FolderID:  -1, // nolint:staticcheck
+				FolderUID: &sc.folder.UID,
+				UID:       "j6T00KRZzj6T00KRZzj6T00KRZzj6T00KRZzj6T00K",
+				Kind:      int64(model.PanelElement),
+				Version:   1,
 			}
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			sc.ctx.Req.Body = mockRequestBody(cmd)
@@ -188,16 +194,18 @@ func TestPatchLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to patch a library panel with an existing UID, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreatePanelCommand(sc.folder.ID, "Existing UID")
+			// nolint:staticcheck
+			command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "Existing UID")
 			command.UID = util.GenerateShortUID()
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 			cmd := model.PatchLibraryElementCommand{
-				FolderID: -1,
-				UID:      command.UID,
-				Kind:     int64(model.PanelElement),
-				Version:  1,
+				FolderID:  -1, // nolint:staticcheck
+				FolderUID: &sc.folder.UID,
+				UID:       command.UID,
+				Kind:      int64(model.PanelElement),
+				Version:   1,
 			}
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			sc.ctx.Req.Body = mockRequestBody(cmd)
@@ -208,7 +216,7 @@ func TestPatchLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to patch a library panel with model only, it should change model successfully, sync type and description fields and return correct result",
 		func(t *testing.T, sc scenarioContext) {
 			cmd := model.PatchLibraryElementCommand{
-				FolderID: -1,
+				FolderID: -1, // nolint:staticcheck
 				Model:    []byte(`{ "title": "New Model Title", "name": "New Model Name", "type":"graph", "description": "New description" }`),
 				Kind:     int64(model.PanelElement),
 				Version:  1,
@@ -237,7 +245,7 @@ func TestPatchLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to patch a library panel with model.description only, it should change model successfully, sync type and description fields and return correct result",
 		func(t *testing.T, sc scenarioContext) {
 			cmd := model.PatchLibraryElementCommand{
-				FolderID: -1,
+				FolderID: -1, // nolint:staticcheck
 				Model:    []byte(`{ "description": "New description" }`),
 				Kind:     int64(model.PanelElement),
 				Version:  1,
@@ -264,7 +272,7 @@ func TestPatchLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to patch a library panel with model.type only, it should change model successfully, sync type and description fields and return correct result",
 		func(t *testing.T, sc scenarioContext) {
 			cmd := model.PatchLibraryElementCommand{
-				FolderID: -1,
+				FolderID: -1, // nolint:staticcheck
 				Model:    []byte(`{ "type": "graph" }`),
 				Kind:     int64(model.PanelElement),
 				Version:  1,
@@ -290,6 +298,7 @@ func TestPatchLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When another admin tries to patch a library panel, it should change UpdatedBy successfully and return correct result",
 		func(t *testing.T, sc scenarioContext) {
+			// nolint:staticcheck
 			cmd := model.PatchLibraryElementCommand{FolderID: -1, Version: 1, Kind: int64(model.PanelElement)}
 			sc.reqContext.UserID = 2
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
@@ -308,7 +317,8 @@ func TestPatchLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to patch a library panel with a name that already exists, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreatePanelCommand(sc.folder.ID, "Another Panel")
+			// nolint:staticcheck
+			command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "Another Panel")
 			sc.ctx.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			var result = validateAndUnMarshalResponse(t, resp)
@@ -326,14 +336,16 @@ func TestPatchLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to patch a library panel with a folder where a library panel with the same name already exists, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			newFolder := createFolder(t, sc, "NewFolder")
-			command := getCreatePanelCommand(newFolder.ID, "Text - Library Panel")
+			// nolint:staticcheck
+			command := getCreatePanelCommand(newFolder.ID, newFolder.UID, "Text - Library Panel")
 			sc.ctx.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			var result = validateAndUnMarshalResponse(t, resp)
 			cmd := model.PatchLibraryElementCommand{
-				FolderID: 1,
-				Version:  1,
-				Kind:     int64(model.PanelElement),
+				FolderID:  1, // nolint:staticcheck
+				FolderUID: &sc.folder.UID,
+				Version:   1,
+				Kind:      int64(model.PanelElement),
 			}
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
 			sc.ctx.Req.Body = mockRequestBody(cmd)
@@ -344,23 +356,25 @@ func TestPatchLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to patch a library panel in another org, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			cmd := model.PatchLibraryElementCommand{
-				FolderID: sc.folder.ID,
-				Version:  1,
-				Kind:     int64(model.PanelElement),
+				FolderID:  sc.folder.ID, // nolint:staticcheck
+				FolderUID: &sc.folder.UID,
+				Version:   1,
+				Kind:      int64(model.PanelElement),
 			}
 			sc.reqContext.OrgID = 2
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			sc.ctx.Req.Body = mockRequestBody(cmd)
 			resp := sc.service.patchHandler(sc.reqContext)
-			require.Equal(t, 404, resp.Status())
+			require.Equal(t, 400, resp.Status())
 		})
 
 	scenarioWithPanel(t, "When an admin tries to patch a library panel with an old version number, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			cmd := model.PatchLibraryElementCommand{
-				FolderID: sc.folder.ID,
-				Version:  1,
-				Kind:     int64(model.PanelElement),
+				FolderID:  sc.folder.ID, // nolint:staticcheck
+				FolderUID: &sc.folder.UID,
+				Version:   1,
+				Kind:      int64(model.PanelElement),
 			}
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			sc.ctx.Req.Body = mockRequestBody(cmd)
@@ -374,9 +388,10 @@ func TestPatchLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to patch a library panel with an other kind, it should succeed but panel should not change",
 		func(t *testing.T, sc scenarioContext) {
 			cmd := model.PatchLibraryElementCommand{
-				FolderID: sc.folder.ID,
-				Version:  1,
-				Kind:     int64(model.VariableElement),
+				FolderID:  sc.folder.ID, // nolint:staticcheck
+				FolderUID: &sc.folder.UID,
+				Version:   1,
+				Kind:      int64(model.VariableElement),
 			}
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			sc.ctx.Req.Body = mockRequestBody(cmd)

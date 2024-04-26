@@ -1,4 +1,5 @@
 import { DataQuery, ReducerID, SelectableValue } from '@grafana/data';
+import { config } from 'app/core/config';
 
 import { EvalFunction } from '../alerting/state/alertDef';
 
@@ -13,6 +14,7 @@ export enum ExpressionQueryType {
   resample = 'resample',
   classic = 'classic_conditions',
   threshold = 'threshold',
+  sql = 'sql',
 }
 
 export const getExpressionLabel = (type: ExpressionQueryType) => {
@@ -24,9 +26,11 @@ export const getExpressionLabel = (type: ExpressionQueryType) => {
     case ExpressionQueryType.resample:
       return 'Resample';
     case ExpressionQueryType.classic:
-      return 'Classic condition';
+      return 'Classic condition (legacy)';
     case ExpressionQueryType.threshold:
       return 'Threshold';
+    case ExpressionQueryType.sql:
+      return 'SQL';
   }
 };
 
@@ -49,7 +53,7 @@ export const expressionTypes: Array<SelectableValue<ExpressionQueryType>> = [
   },
   {
     value: ExpressionQueryType.classic,
-    label: 'Classic condition',
+    label: 'Classic condition (legacy)',
     description:
       'Takes one or more time series returned from a query or an expression and checks if any of the series match the condition. Disables multi-dimensional alerts for this rule.',
   },
@@ -59,7 +63,17 @@ export const expressionTypes: Array<SelectableValue<ExpressionQueryType>> = [
     description:
       'Takes one or more time series returned from a query or an expression and checks if any of the series match the threshold condition.',
   },
-];
+  {
+    value: ExpressionQueryType.sql,
+    label: 'SQL',
+    description: 'Transform data using SQL. Supports Aggregate/Analytics functions from DuckDB',
+  },
+].filter((expr) => {
+  if (expr.value === ExpressionQueryType.sql) {
+    return config.featureToggles?.sqlExpressions;
+  }
+  return true;
+});
 
 export const reducerTypes: Array<SelectableValue<string>> = [
   { value: ReducerID.min, label: 'Min', description: 'Get the minimum value' },
@@ -130,6 +144,9 @@ export interface ExpressionQuery extends DataQuery {
   settings?: ExpressionQuerySettings;
 }
 
+export interface ThresholdExpressionQuery extends ExpressionQuery {
+  conditions: ClassicCondition[];
+}
 export interface ExpressionQuerySettings {
   mode?: ReducerMode;
   replaceWithValue?: number;
@@ -137,6 +154,10 @@ export interface ExpressionQuerySettings {
 
 export interface ClassicCondition {
   evaluator: {
+    params: number[];
+    type: EvalFunction;
+  };
+  unloadEvaluator?: {
     params: number[];
     type: EvalFunction;
   };

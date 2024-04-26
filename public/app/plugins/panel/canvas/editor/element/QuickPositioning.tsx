@@ -110,13 +110,13 @@ export const QuickPositioning = ({ onPositionChange, element, settings }: Props)
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  buttonGroup: css`
-    display: flex;
-    flex-wrap: wrap;
-    padding: 12px 0 12px 0;
-  `,
-  button: css`
-    margin-left: 5px;
-    margin-right: 5px;
-  `,
+  buttonGroup: css({
+    display: 'flex',
+    flexWrap: 'wrap',
+    padding: '12px 0 12px 0',
+  }),
+  button: css({
+    marginLeft: '5px',
+    marginRight: '5px',
+  }),
 });

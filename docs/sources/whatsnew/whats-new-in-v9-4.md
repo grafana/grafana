@@ -1,5 +1,5 @@
 ---
-description: Feature and improvement highlights for Grafana v9.4
+description: Learn about new and updated features in Grafana v9.4
 keywords:
   - grafana
   - new
@@ -17,7 +17,7 @@ weight: -35
 
 # What's new in Grafana v9.4
 
-Welcome to Grafana 9.4! Read on to learn about changes to search and navigation, dashboards and visualizations, and authentication and security. For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
+Welcome to Grafana 9.4! Read on to learn about changes to search and navigation, dashboards and visualizations, and authentication and security. For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md).
 
 ## Search and navigation
 

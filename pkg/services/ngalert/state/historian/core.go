@@ -34,6 +34,30 @@ func shouldRecord(transition state.StateTransition) bool {
 	return true
 }
 
+// ShouldRecordAnnotation returns true if an annotation should be created for a given state transition.
+// This is stricter than shouldRecord to avoid cluttering panels with state transitions.
+func ShouldRecordAnnotation(t state.StateTransition) bool {
+	if !shouldRecord(t) {
+		return false
+	}
+
+	// Do not log transitions when keeping last state
+	toKeepLast := strings.Contains(t.StateReason, models.StateReasonKeepLast) && !strings.Contains(t.PreviousStateReason, models.StateReasonKeepLast)
+	if toKeepLast {
+		return false
+	}
+
+	// Do not record transitions between Normal and Normal (NoData)
+	if t.State.State == eval.Normal && t.PreviousState == eval.Normal {
+		if (t.State.StateReason == "" && t.PreviousStateReason == models.StateReasonNoData) ||
+			(t.State.StateReason == models.StateReasonNoData && t.PreviousStateReason == "") {
+			return false
+		}
+	}
+
+	return true
+}
+
 func removePrivateLabels(labels data.Labels) data.Labels {
 	result := make(data.Labels)
 	for k, v := range labels {

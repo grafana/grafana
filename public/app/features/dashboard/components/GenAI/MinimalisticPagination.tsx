@@ -51,5 +51,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'row',
     gap: 16,
+    userSelect: 'none',
   }),
 });

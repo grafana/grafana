@@ -2,7 +2,7 @@
 aliases:
   - installation/upgrading/
   - setup-grafana/upgrade-grafana
-description: Guide for upgrading Grafana
+description: Upgrade Grafana
 keywords:
   - grafana
   - configuration

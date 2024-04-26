@@ -60,6 +60,24 @@ func (j *Json) Value() (driver.Value, error) {
 	return j.ToDB()
 }
 
+// DeepCopyInto creates a copy by serializing JSON
+func (j *Json) DeepCopyInto(out *Json) {
+	b, err := j.Encode()
+	if err == nil {
+		_ = out.UnmarshalJSON(b)
+	}
+}
+
+// DeepCopy will make a deep copy of the JSON object
+func (j *Json) DeepCopy() *Json {
+	if j == nil {
+		return nil
+	}
+	out := new(Json)
+	j.DeepCopyInto(out)
+	return out
+}
+
 // NewJson returns a pointer to a new `Json` object
 // after unmarshaling `body` bytes
 func NewJson(body []byte) (*Json, error) {

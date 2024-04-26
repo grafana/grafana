@@ -79,7 +79,7 @@ func (s *AccessControlStore) SaveExternalServiceRole(ctx context.Context, cmd ac
 func genExternalServiceRole(cmd accesscontrol.SaveExternalServiceRoleCommand) accesscontrol.Role {
 	name := extServiceRoleName(cmd.ExternalServiceID)
 	role := accesscontrol.Role{
-		OrgID:       cmd.OrgID,
+		OrgID:       accesscontrol.GlobalOrgID, // External Service Roles are global
 		Version:     1,
 		Name:        name,
 		UID:         accesscontrol.PrefixedRoleUID(name),
@@ -90,20 +90,14 @@ func genExternalServiceRole(cmd accesscontrol.SaveExternalServiceRoleCommand) ac
 		Created:     time.Now(),
 		Updated:     time.Now(),
 	}
-	if cmd.Global {
-		role.OrgID = accesscontrol.GlobalOrgID
-	}
 	return role
 }
 
 func genExternalServiceAssignment(cmd accesscontrol.SaveExternalServiceRoleCommand) accesscontrol.UserRole {
 	assignment := accesscontrol.UserRole{
-		OrgID:   cmd.OrgID,
+		OrgID:   cmd.AssignmentOrgID,
 		UserID:  cmd.ServiceAccountID,
 		Created: time.Now(),
-	}
-	if cmd.Global {
-		assignment.OrgID = accesscontrol.GlobalOrgID
 	}
 	return assignment
 }

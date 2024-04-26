@@ -4,6 +4,9 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
@@ -11,8 +14,17 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-// ViewPublicDashboard Gets public dashboard
-// GET /api/public/dashboards/:accessToken
+// swagger:route GET /public/dashboards/{accessToken} dashboard_public viewPublicDashboard
+//
+//	Get public dashboard for view
+//
+// Responses:
+// 200: viewPublicDashboardResponse
+// 400: badRequestPublicError
+// 401: unauthorisedPublicError
+// 403: forbiddenPublicError
+// 404: notFoundPublicError
+// 500: internalServerPublicError
 func (api *Api) ViewPublicDashboard(c *contextmodel.ReqContext) response.Response {
 	accessToken := web.Params(c.Req)[":accessToken"]
 	if !validation.IsValidAccessToken(accessToken) {
@@ -27,8 +39,18 @@ func (api *Api) ViewPublicDashboard(c *contextmodel.ReqContext) response.Respons
 	return response.JSON(http.StatusOK, dto)
 }
 
-// QueryPublicDashboard returns all results for a given panel on a public dashboard
-// POST /api/public/dashboard/:accessToken/panels/:panelId/query
+// swagger:route POST /public/dashboards/{accessToken}/panels/{panelId}/query dashboard_public queryPublicDashboard
+//
+//	Get results for a given panel on a public dashboard
+//
+// Responses:
+// 200: queryPublicDashboardResponse
+// 400: badRequestPublicError
+// 401: unauthorisedPublicError
+// 404: panelNotFoundPublicError
+// 404: notFoundPublicError
+// 403: forbiddenPublicError
+// 500: internalServerPublicError
 func (api *Api) QueryPublicDashboard(c *contextmodel.ReqContext) response.Response {
 	accessToken := web.Params(c.Req)[":accessToken"]
 	if !validation.IsValidAccessToken(accessToken) {
@@ -50,15 +72,24 @@ func (api *Api) QueryPublicDashboard(c *contextmodel.ReqContext) response.Respon
 		return response.Err(err)
 	}
 
-	return toJsonStreamingResponse(api.Features, resp)
+	return toJsonStreamingResponse(c.Req.Context(), api.features, resp)
 }
 
-// GetAnnotations returns annotations for a public dashboard
-// GET /api/public/dashboards/:accessToken/annotations
-func (api *Api) GetAnnotations(c *contextmodel.ReqContext) response.Response {
+// swagger:route GET /public/dashboards/{accessToken}/annotations dashboard_public getPublicAnnotations
+//
+//	Get annotations for a public dashboard
+//
+// Responses:
+// 200: getPublicAnnotationsResponse
+// 400: badRequestPublicError
+// 404: notFoundPublicError
+// 401: unauthorisedPublicError
+// 403: forbiddenPublicError
+// 500: internalServerPublicError
+func (api *Api) GetPublicAnnotations(c *contextmodel.ReqContext) response.Response {
 	accessToken := web.Params(c.Req)[":accessToken"]
 	if !validation.IsValidAccessToken(accessToken) {
-		return response.Err(ErrInvalidAccessToken.Errorf("GetAnnotations: invalid access token"))
+		return response.Err(ErrInvalidAccessToken.Errorf("GetPublicAnnotations: invalid access token"))
 	}
 
 	reqDTO := AnnotationsQueryDTO{
@@ -72,4 +103,42 @@ func (api *Api) GetAnnotations(c *contextmodel.ReqContext) response.Response {
 	}
 
 	return response.JSON(http.StatusOK, annotations)
+}
+
+// swagger:response viewPublicDashboardResponse
+type ViewPublicDashboardResponse struct {
+	// in: body
+	Body dtos.DashboardFullWithMeta `json:"body"`
+}
+
+// swagger:parameters viewPublicDashboard
+type ViewPublicDashboardParams struct {
+	// in: path
+	AccessToken string `json:"accessToken"`
+}
+
+// swagger:response queryPublicDashboardResponse
+type QueryPublicDashboardResponse struct {
+	// in: body
+	Body backend.QueryDataResponse `json:"body"`
+}
+
+// swagger:parameters queryPublicDashboard
+type QueryPublicDashboardParams struct {
+	// in: path
+	AccessToken string `json:"accessToken"`
+	// in: path
+	PanelId int64 `json:"panelId"`
+}
+
+// swagger:response getPublicAnnotationsResponse
+type GetPublicAnnotationsResponse struct {
+	// in: body
+	Body []AnnotationEvent `json:"body"`
+}
+
+// swagger:parameters getPublicAnnotations
+type GetPublicAnnotationsParams struct {
+	// in: path
+	AccessToken string `json:"accessToken"`
 }

@@ -4,9 +4,9 @@ import { cloneDeep, defaultsDeep } from 'lodash';
 import React from 'react';
 
 import { CoreApp } from '@grafana/data';
-import { QueryEditorMode } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
+import { QueryEditorMode } from '@grafana/experimental';
 
-import { createLokiDatasource } from '../mocks';
+import { createLokiDatasource } from '../__mocks__/datasource';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from '../querybuilder/components/LokiQueryBuilderExplained';
 import { LokiQuery, LokiQueryType } from '../types';
 
@@ -29,18 +29,6 @@ jest.mock('./monaco-query-field/MonacoQueryFieldWrapper', () => {
   };
 });
 
-jest.mock('app/core/store', () => {
-  return {
-    get() {
-      return undefined;
-    },
-    set() {},
-    getObject(key: string, defaultValue: unknown) {
-      return defaultValue;
-    },
-  };
-});
-
 const defaultQuery = {
   refId: 'A',
   expr: '{label1="foo", label2="bar"}',
@@ -59,6 +47,10 @@ const defaultProps = {
 };
 
 describe('LokiQueryEditorSelector', () => {
+  // We need to clear local storage after each test because we are using it to store the editor mode and enabled explain
+  afterEach(() => {
+    window.localStorage.clear();
+  });
   it('shows code editor if expr and nothing else', async () => {
     // We opt for showing code editor for queries created before this feature was added
     render(<LokiQueryEditor {...defaultProps} />);

@@ -14,7 +14,7 @@ import { NullEditorSettings } from '../timeseries/config';
 
 import { StateTimelinePanel } from './StateTimelinePanel';
 import { timelinePanelChangedHandler } from './migrations';
-import { Options, FieldConfig, defaultOptions, defaultFieldConfig } from './panelcfg.gen';
+import { defaultFieldConfig, defaultOptions, FieldConfig, Options } from './panelcfg.gen';
 import { StatTimelineSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
@@ -121,7 +121,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
       });
 
     commonOptionsBuilder.addLegendOptions(builder, false);
-    commonOptionsBuilder.addTooltipOptions(builder, true);
+    commonOptionsBuilder.addTooltipOptions(builder);
   })
   .setSuggestionsSupplier(new StatTimelineSuggestionsSupplier())
   .setDataSupport({ annotations: true });

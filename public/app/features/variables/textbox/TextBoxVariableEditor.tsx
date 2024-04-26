@@ -2,8 +2,8 @@ import React, { FormEvent, ReactElement, useCallback } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 
-import { VariableLegend } from '../editor/VariableLegend';
-import { VariableTextField } from '../editor/VariableTextField';
+import { VariableLegend } from '../../dashboard-scene/settings/variables/components/VariableLegend';
+import { VariableTextField } from '../../dashboard-scene/settings/variables/components/VariableTextField';
 import { VariableEditorProps } from '../editor/types';
 import { TextBoxVariableModel } from '../types';
 

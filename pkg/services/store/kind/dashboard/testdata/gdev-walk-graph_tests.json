@@ -6,11 +6,11 @@
     "panel-tests": ""
   },
   "fields": {
-    "schemaVersion": 16
+    "schemaVersion": "16"
   },
   "nested": [
     {
-      "uid": "graph_tests.json#1",
+      "UID": "graph_tests.json#1",
       "kind": "panel",
       "name": "No Data Points Warning",
       "fields": {
@@ -19,17 +19,17 @@
       "references": [
         {
           "family": "ds",
-          "ID": "gdev-testdata"
+          "identifier": "gdev-testdata"
         },
         {
           "family": "plugin",
           "type": "panel",
-          "ID": "graph"
+          "identifier": "graph"
         }
       ]
     },
     {
-      "uid": "graph_tests.json#2",
+      "UID": "graph_tests.json#2",
       "kind": "panel",
       "name": "Datapoints Outside Range Warning",
       "fields": {
@@ -38,17 +38,17 @@
       "references": [
         {
           "family": "ds",
-          "ID": "gdev-testdata"
+          "identifier": "gdev-testdata"
         },
         {
           "family": "plugin",
           "type": "panel",
-          "ID": "graph"
+          "identifier": "graph"
         }
       ]
     },
     {
-      "uid": "graph_tests.json#3",
+      "UID": "graph_tests.json#3",
       "kind": "panel",
       "name": "Random walk series",
       "fields": {
@@ -57,17 +57,17 @@
       "references": [
         {
           "family": "ds",
-          "ID": "gdev-testdata"
+          "identifier": "gdev-testdata"
         },
         {
           "family": "plugin",
           "type": "panel",
-          "ID": "graph"
+          "identifier": "graph"
         }
       ]
     },
     {
-      "uid": "graph_tests.json#4",
+      "UID": "graph_tests.json#4",
       "kind": "panel",
       "name": "Millisecond res x-axis and tooltip",
       "fields": {
@@ -76,17 +76,17 @@
       "references": [
         {
           "family": "ds",
-          "ID": "gdev-testdata"
+          "identifier": "gdev-testdata"
         },
         {
           "family": "plugin",
           "type": "panel",
-          "ID": "graph"
+          "identifier": "graph"
         }
       ]
     },
     {
-      "uid": "graph_tests.json#6",
+      "UID": "graph_tests.json#6",
       "kind": "panel",
       "fields": {
         "type": "text"
@@ -98,12 +98,12 @@
         {
           "family": "plugin",
           "type": "panel",
-          "ID": "text"
+          "identifier": "text"
         }
       ]
     },
     {
-      "uid": "graph_tests.json#5",
+      "UID": "graph_tests.json#5",
       "kind": "panel",
       "name": "2 yaxis and axis labels",
       "fields": {
@@ -112,17 +112,17 @@
       "references": [
         {
           "family": "ds",
-          "ID": "gdev-testdata"
+          "identifier": "gdev-testdata"
         },
         {
           "family": "plugin",
           "type": "panel",
-          "ID": "graph"
+          "identifier": "graph"
         }
       ]
     },
     {
-      "uid": "graph_tests.json#7",
+      "UID": "graph_tests.json#7",
       "kind": "panel",
       "fields": {
         "type": "text"
@@ -134,12 +134,12 @@
         {
           "family": "plugin",
           "type": "panel",
-          "ID": "text"
+          "identifier": "text"
         }
       ]
     },
     {
-      "uid": "graph_tests.json#8",
+      "UID": "graph_tests.json#8",
       "kind": "panel",
       "name": "null value connected",
       "fields": {
@@ -148,17 +148,17 @@
       "references": [
         {
           "family": "ds",
-          "ID": "gdev-testdata"
+          "identifier": "gdev-testdata"
         },
         {
           "family": "plugin",
           "type": "panel",
-          "ID": "graph"
+          "identifier": "graph"
         }
       ]
     },
     {
-      "uid": "graph_tests.json#10",
+      "UID": "graph_tests.json#10",
       "kind": "panel",
       "name": "null value null as zero",
       "fields": {
@@ -167,17 +167,17 @@
       "references": [
         {
           "family": "ds",
-          "ID": "gdev-testdata"
+          "identifier": "gdev-testdata"
         },
         {
           "family": "plugin",
           "type": "panel",
-          "ID": "graph"
+          "identifier": "graph"
         }
       ]
     },
     {
-      "uid": "graph_tests.json#13",
+      "UID": "graph_tests.json#13",
       "kind": "panel",
       "fields": {
         "type": "text"
@@ -189,12 +189,12 @@
         {
           "family": "plugin",
           "type": "panel",
-          "ID": "text"
+          "identifier": "text"
         }
       ]
     },
     {
-      "uid": "graph_tests.json#9",
+      "UID": "graph_tests.json#9",
       "kind": "panel",
       "name": "Stacking value ontop of nulls",
       "fields": {
@@ -203,17 +203,17 @@
       "references": [
         {
           "family": "ds",
-          "ID": "gdev-testdata"
+          "identifier": "gdev-testdata"
         },
         {
           "family": "plugin",
           "type": "panel",
-          "ID": "graph"
+          "identifier": "graph"
         }
       ]
     },
     {
-      "uid": "graph_tests.json#14",
+      "UID": "graph_tests.json#14",
       "kind": "panel",
       "fields": {
         "type": "text"
@@ -225,12 +225,12 @@
         {
           "family": "plugin",
           "type": "panel",
-          "ID": "text"
+          "identifier": "text"
         }
       ]
     },
     {
-      "uid": "graph_tests.json#12",
+      "UID": "graph_tests.json#12",
       "kind": "panel",
       "name": "Stacking all series null segment",
       "fields": {
@@ -239,17 +239,17 @@
       "references": [
         {
           "family": "ds",
-          "ID": "gdev-testdata"
+          "identifier": "gdev-testdata"
         },
         {
           "family": "plugin",
           "type": "panel",
-          "ID": "graph"
+          "identifier": "graph"
         }
       ]
     },
     {
-      "uid": "graph_tests.json#15",
+      "UID": "graph_tests.json#15",
       "kind": "panel",
       "fields": {
         "type": "text"
@@ -261,12 +261,12 @@
         {
           "family": "plugin",
           "type": "panel",
-          "ID": "text"
+          "identifier": "text"
         }
       ]
     },
     {
-      "uid": "graph_tests.json#21",
+      "UID": "graph_tests.json#21",
       "kind": "panel",
       "name": "Null between points",
       "fields": {
@@ -275,17 +275,17 @@
       "references": [
         {
           "family": "ds",
-          "ID": "gdev-testdata"
+          "identifier": "gdev-testdata"
         },
         {
           "family": "plugin",
           "type": "panel",
-          "ID": "graph"
+          "identifier": "graph"
         }
       ]
     },
     {
-      "uid": "graph_tests.json#22",
+      "UID": "graph_tests.json#22",
       "kind": "panel",
       "fields": {
         "type": "text"
@@ -297,12 +297,12 @@
         {
           "family": "plugin",
           "type": "panel",
-          "ID": "text"
+          "identifier": "text"
         }
       ]
     },
     {
-      "uid": "graph_tests.json#20",
+      "UID": "graph_tests.json#20",
       "kind": "panel",
       "name": "Legend Table Single Series Should Take Minimum Height",
       "fields": {
@@ -311,17 +311,17 @@
       "references": [
         {
           "family": "ds",
-          "ID": "gdev-testdata"
+          "identifier": "gdev-testdata"
         },
         {
           "family": "plugin",
           "type": "panel",
-          "ID": "graph"
+          "identifier": "graph"
         }
       ]
     },
     {
-      "uid": "graph_tests.json#16",
+      "UID": "graph_tests.json#16",
       "kind": "panel",
       "name": "Legend Table No Scroll Visible",
       "fields": {
@@ -330,17 +330,17 @@
       "references": [
         {
           "family": "ds",
-          "ID": "gdev-testdata"
+          "identifier": "gdev-testdata"
         },
         {
           "family": "plugin",
           "type": "panel",
-          "ID": "graph"
+          "identifier": "graph"
         }
       ]
     },
     {
-      "uid": "graph_tests.json#17",
+      "UID": "graph_tests.json#17",
       "kind": "panel",
       "name": "Legend Table Should Scroll",
       "fields": {
@@ -349,17 +349,17 @@
       "references": [
         {
           "family": "ds",
-          "ID": "gdev-testdata"
+          "identifier": "gdev-testdata"
         },
         {
           "family": "plugin",
           "type": "panel",
-          "ID": "graph"
+          "identifier": "graph"
         }
       ]
     },
     {
-      "uid": "graph_tests.json#18",
+      "UID": "graph_tests.json#18",
       "kind": "panel",
       "name": "Legend Table No Scroll Visible",
       "fields": {
@@ -368,17 +368,17 @@
       "references": [
         {
           "family": "ds",
-          "ID": "gdev-testdata"
+          "identifier": "gdev-testdata"
         },
         {
           "family": "plugin",
           "type": "panel",
-          "ID": "graph"
+          "identifier": "graph"
         }
       ]
     },
     {
-      "uid": "graph_tests.json#19",
+      "UID": "graph_tests.json#19",
       "kind": "panel",
       "name": "Legend Table No Scroll Visible",
       "fields": {
@@ -387,12 +387,12 @@
       "references": [
         {
           "family": "ds",
-          "ID": "gdev-testdata"
+          "identifier": "gdev-testdata"
         },
         {
           "family": "plugin",
           "type": "panel",
-          "ID": "graph"
+          "identifier": "graph"
         }
       ]
     }
@@ -403,17 +403,17 @@
     },
     {
       "family": "ds",
-      "ID": "gdev-testdata"
+      "identifier": "gdev-testdata"
     },
     {
       "family": "plugin",
       "type": "panel",
-      "ID": "graph"
+      "identifier": "graph"
     },
     {
       "family": "plugin",
       "type": "panel",
-      "ID": "text"
+      "identifier": "text"
     }
   ]
 }

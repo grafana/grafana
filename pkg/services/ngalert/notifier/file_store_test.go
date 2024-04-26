@@ -2,95 +2,107 @@ package notifier
 
 import (
 	"context"
-	"os"
-	"path/filepath"
+	"encoding/base64"
+	"strings"
 	"testing"
+	"time"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 )
 
-func TestFileStore_FilepathFor_DirectoryNotExist(t *testing.T) {
+func TestFileStore_Silences(t *testing.T) {
 	store := fakes.NewFakeKVStore(t)
-	workingDir := filepath.Join(t.TempDir(), "notexistdir")
-	fs := NewFileStore(1, store, workingDir)
-	filekey := "silences"
-	filePath := filepath.Join(workingDir, filekey)
+	ctx := context.Background()
+	var orgId int64 = 1
 
-	// With a file already on the database and the path does not exist yet, it creates the path,
-	// writes the file to disk, then returns the filepath.
-	{
-		require.NoError(t, store.Set(context.Background(), 1, KVNamespace, filekey, encode([]byte("silence1,silence3"))))
-		r, err := fs.FilepathFor(context.Background(), filekey)
-		require.NoError(t, err)
-		require.Equal(t, filePath, r)
-		f, err := os.ReadFile(filepath.Clean(filePath))
-		require.NoError(t, err)
-		require.Equal(t, "silence1,silence3", string(f))
-		require.NoError(t, os.Remove(filePath))
-		require.NoError(t, store.Del(context.Background(), 1, KVNamespace, filekey))
+	// Initialize kvstore.
+	now := time.Now()
+	oneHour := now.Add(time.Hour)
+	initialState := silenceState{
+		"1": createSilence("1", now, oneHour),
+		"2": createSilence("2", now, oneHour),
 	}
-}
-func TestFileStore_FilepathFor(t *testing.T) {
-	store := fakes.NewFakeKVStore(t)
-	workingDir := t.TempDir()
-	fs := NewFileStore(1, store, workingDir)
-	filekey := "silences"
-	filePath := filepath.Join(workingDir, filekey)
+	decodedState, err := initialState.MarshalBinary()
+	require.NoError(t, err)
+	encodedState := base64.StdEncoding.EncodeToString(decodedState)
+	err = store.Set(ctx, orgId, KVNamespace, SilencesFilename, encodedState)
+	require.NoError(t, err)
 
-	// With a file already on disk, it returns the existing file's filepath and no modification to the original file.
-	{
-		require.NoError(t, os.WriteFile(filePath, []byte("silence1,silence2"), 0644))
-		r, err := fs.FilepathFor(context.Background(), filekey)
-		require.NoError(t, err)
-		require.Equal(t, filePath, r)
-		f, err := os.ReadFile(filepath.Clean(filePath))
-		require.NoError(t, err)
-		require.Equal(t, "silence1,silence2", string(f))
-		require.NoError(t, os.Remove(filePath))
+	fs := NewFileStore(orgId, store)
+
+	// Load initial.
+	silences, err := fs.GetSilences(ctx)
+	require.NoError(t, err)
+	decoded, err := decodeSilenceState(strings.NewReader(silences))
+	require.NoError(t, err)
+	if !cmp.Equal(initialState, decoded) {
+		t.Errorf("Unexpected Diff: %v", cmp.Diff(initialState, decoded))
 	}
 
-	// With a file already on the database, it writes the file to disk and returns the filepath.
-	{
-		require.NoError(t, store.Set(context.Background(), 1, KVNamespace, filekey, encode([]byte("silence1,silence3"))))
-		r, err := fs.FilepathFor(context.Background(), filekey)
-		require.NoError(t, err)
-		require.Equal(t, filePath, r)
-		f, err := os.ReadFile(filepath.Clean(filePath))
-		require.NoError(t, err)
-		require.Equal(t, "silence1,silence3", string(f))
-		require.NoError(t, os.Remove(filePath))
-		require.NoError(t, store.Del(context.Background(), 1, KVNamespace, filekey))
+	// Save new.
+	newState := silenceState{
+		"a": createSilence("a", now, oneHour),
+		"b": createSilence("b", now, oneHour),
 	}
+	size, err := fs.SaveSilences(ctx, newState)
+	require.NoError(t, err)
+	require.EqualValues(t, len(decodedState), size)
 
-	// With no file on disk or database, it returns the original filepath.
-	{
-		r, err := fs.FilepathFor(context.Background(), filekey)
-		require.NoError(t, err)
-		require.Equal(t, filePath, r)
-		_, err = os.ReadFile(filepath.Clean(filePath))
-		require.Error(t, err)
+	// Load new.
+	silences, err = fs.GetSilences(ctx)
+	require.NoError(t, err)
+	decoded, err = decodeSilenceState(strings.NewReader(silences))
+	require.NoError(t, err)
+	if !cmp.Equal(newState, decoded) {
+		t.Errorf("Unexpected Diff: %v", cmp.Diff(newState, decoded))
 	}
 }
 
-func TestFileStore_Persist(t *testing.T) {
+func TestFileStore_NotificationLog(t *testing.T) {
 	store := fakes.NewFakeKVStore(t)
-	state := &fakeState{data: "something to marshal"}
-	workingDir := t.TempDir()
-	fs := NewFileStore(1, store, workingDir)
-	filekey := "silences"
+	ctx := context.Background()
+	var orgId int64 = 1
 
-	size, err := fs.Persist(context.Background(), filekey, state)
+	// Initialize kvstore.
+	now := time.Now()
+	oneHour := now.Add(time.Hour)
+	k1, v1 := createNotificationLog("group1", "receiver1", now, oneHour)
+	k2, v2 := createNotificationLog("group2", "receiver2", now, oneHour)
+	initialState := nflogState{k1: v1, k2: v2}
+	decodedState, err := initialState.MarshalBinary()
 	require.NoError(t, err)
-	require.Equal(t, int64(20), size)
-	store.Mtx.Lock()
-	require.Len(t, store.Store, 1)
-	store.Mtx.Unlock()
-	v, ok, err := store.Get(context.Background(), 1, KVNamespace, filekey)
+	encodedState := base64.StdEncoding.EncodeToString(decodedState)
+	err = store.Set(ctx, orgId, KVNamespace, NotificationLogFilename, encodedState)
 	require.NoError(t, err)
-	require.True(t, ok)
-	b, err := decode(v)
+
+	fs := NewFileStore(orgId, store)
+
+	// Load initial.
+	nflog, err := fs.GetNotificationLog(ctx)
 	require.NoError(t, err)
-	require.Equal(t, "something to marshal", string(b))
+	decoded, err := decodeNflogState(strings.NewReader(nflog))
+	require.NoError(t, err)
+	if !cmp.Equal(initialState, decoded) {
+		t.Errorf("Unexpected Diff: %v", cmp.Diff(initialState, decoded))
+	}
+
+	// Save new.
+	k1, v1 = createNotificationLog("groupA", "receiverA", now, oneHour)
+	k2, v2 = createNotificationLog("groupB", "receiverB", now, oneHour)
+	newState := nflogState{k1: v1, k2: v2}
+	size, err := fs.SaveNotificationLog(ctx, newState)
+	require.NoError(t, err)
+	require.EqualValues(t, len(decodedState), size)
+
+	// Load new.
+	nflog, err = fs.GetNotificationLog(ctx)
+	require.NoError(t, err)
+	decoded, err = decodeNflogState(strings.NewReader(nflog))
+	require.NoError(t, err)
+	if !cmp.Equal(newState, decoded) {
+		t.Errorf("Unexpected Diff: %v", cmp.Diff(newState, decoded))
+	}
 }

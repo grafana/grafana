@@ -47,6 +47,7 @@ const props = {
   viewBuffer: 10,
   viewBufferMin: 5,
   windowScroller: true,
+  redraw: {},
 };
 
 describe('<ListView />', () => {

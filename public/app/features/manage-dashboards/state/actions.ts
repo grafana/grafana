@@ -1,10 +1,11 @@
-import { DataSourceInstanceSettings, locationUtil } from '@grafana/data';
-import { getBackendSrv, getDataSourceSrv, isFetchError, locationService } from '@grafana/runtime';
+import { DataSourceInstanceSettings } from '@grafana/data';
+import { getBackendSrv, getDataSourceSrv, isFetchError } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
+import { browseDashboardsAPI, ImportInputs } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { DashboardDTO, FolderInfo, PermissionLevelString, SearchQueryType, ThunkResult } from 'app/types';
+import { FolderInfo, PermissionLevelString, SearchQueryType, ThunkResult } from 'app/types';
 
 import {
   Input,
@@ -200,7 +201,7 @@ export function importDashboard(importDashboardForm: ImportDashboardDTO): ThunkR
     const dashboard = getState().importDashboard.dashboard;
     const inputs = getState().importDashboard.inputs;
 
-    let inputsToPersist = [] as any[];
+    const inputsToPersist: ImportInputs[] = [];
     importDashboardForm.dataSources?.forEach((dataSource: DataSourceInstanceSettings, index: number) => {
       const input = inputs.dataSources[index];
       inputsToPersist.push({
@@ -221,18 +222,17 @@ export function importDashboard(importDashboardForm: ImportDashboardDTO): ThunkR
       });
     });
 
-    const result = await getBackendSrv().post('api/dashboards/import', {
-      // uid: if user changed it, take the new uid from importDashboardForm,
-      // else read it from original dashboard
-      // by default the uid input is disabled, onSubmit ignores values from disabled inputs
-      dashboard: { ...dashboard, title: importDashboardForm.title, uid: importDashboardForm.uid || dashboard.uid },
-      overwrite: true,
-      inputs: inputsToPersist,
-      folderUid: importDashboardForm.folder.uid,
-    });
-
-    const dashboardUrl = locationUtil.stripBaseFromUrl(result.importedUrl);
-    locationService.push(dashboardUrl);
+    dispatch(
+      browseDashboardsAPI.endpoints.importDashboard.initiate({
+        // uid: if user changed it, take the new uid from importDashboardForm,
+        // else read it from original dashboard
+        // by default the uid input is disabled, onSubmit ignores values from disabled inputs
+        dashboard: { ...dashboard, title: importDashboardForm.title, uid: importDashboardForm.uid || dashboard.uid },
+        overwrite: true,
+        inputs: inputsToPersist,
+        folderUid: importDashboardForm.folder.uid,
+      })
+    );
   };
 }
 
@@ -280,60 +280,6 @@ export async function moveFolders(folderUIDs: string[], toFolder: FolderInfo) {
   }
 
   return result;
-}
-
-export function moveDashboards(dashboardUids: string[], toFolder: FolderInfo) {
-  const tasks = [];
-
-  for (const uid of dashboardUids) {
-    tasks.push(createTask(moveDashboard, true, uid, toFolder));
-  }
-
-  return executeInOrder(tasks).then((result: any) => {
-    return {
-      totalCount: result.length,
-      successCount: result.filter((res: any) => res.succeeded).length,
-      alreadyInFolderCount: result.filter((res: any) => res.alreadyInFolder).length,
-    };
-  });
-}
-
-async function moveDashboard(uid: string, toFolder: FolderInfo) {
-  const fullDash: DashboardDTO = await getBackendSrv().get(`/api/dashboards/uid/${uid}`);
-
-  if (
-    ((fullDash.meta.folderUid === undefined || fullDash.meta.folderUid === null) && toFolder.uid === '') ||
-    fullDash.meta.folderUid === toFolder.uid
-  ) {
-    return { alreadyInFolder: true };
-  }
-
-  const options = {
-    dashboard: fullDash.dashboard,
-    folderUid: toFolder.uid,
-    overwrite: false,
-  };
-
-  try {
-    await saveDashboard(options);
-    return { succeeded: true };
-  } catch (err) {
-    if (isFetchError(err)) {
-      if (err.data?.status !== 'plugin-dashboard') {
-        return { succeeded: false };
-      }
-
-      err.isHandled = true;
-    }
-    options.overwrite = true;
-
-    try {
-      await saveDashboard(options);
-      return { succeeded: true };
-    } catch (e) {
-      return { succeeded: false };
-    }
-  }
 }
 
 function createTask(fn: (...args: any[]) => Promise<any>, ignoreRejections: boolean, ...args: any[]) {

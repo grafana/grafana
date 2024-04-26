@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+	"slices"
 	"strings"
 	"text/template"
-
-	"golang.org/x/exp/slices"
 )
 
 type query struct {

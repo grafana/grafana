@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { DataFrame, Field, getFieldDisplayName, SelectableValue } from '@grafana/data';
+import { DataFrame, Field, getFieldDisplayName, SelectableValue, FieldNamePickerBaseNameMode } from '@grafana/data';
 
 import { getFieldTypeIcon } from '../../types';
 
@@ -74,7 +74,8 @@ export function useSelectOptions(
   displayNames: FrameFieldsDisplayNames,
   currentName?: string,
   firstItem?: SelectableValue<string>,
-  fieldType?: string
+  fieldType?: string,
+  baseNameMode?: FieldNamePickerBaseNameMode
 ): Array<SelectableValue<string>> {
   return useMemo(() => {
     let found = false;
@@ -82,21 +83,8 @@ export function useSelectOptions(
     if (firstItem) {
       options.push(firstItem);
     }
-    for (const name of displayNames.display) {
-      if (!found && name === currentName) {
-        found = true;
-      }
-      const field = displayNames.fields.get(name);
-      if (!fieldType || fieldType === field?.type) {
-        options.push({
-          value: name,
-          label: name,
-          icon: field ? getFieldTypeIcon(field) : undefined,
-        });
-      }
-    }
-    for (const name of displayNames.raw) {
-      if (!displayNames.display.has(name)) {
+    if (baseNameMode === FieldNamePickerBaseNameMode.OnlyBaseNames) {
+      for (const name of displayNames.raw) {
         if (!found && name === currentName) {
           found = true;
         }
@@ -104,6 +92,34 @@ export function useSelectOptions(
           value: name,
           label: `${name} (base field name)`,
         });
+      }
+    } else {
+      for (const name of displayNames.display) {
+        if (!found && name === currentName) {
+          found = true;
+        }
+        const field = displayNames.fields.get(name);
+        if (!fieldType || fieldType === field?.type) {
+          options.push({
+            value: name,
+            label: name,
+            icon: field ? getFieldTypeIcon(field) : undefined,
+          });
+        }
+      }
+
+      if (baseNameMode !== FieldNamePickerBaseNameMode.ExcludeBaseNames) {
+        for (const name of displayNames.raw) {
+          if (!displayNames.display.has(name)) {
+            if (!found && name === currentName) {
+              found = true;
+            }
+            options.push({
+              value: name,
+              label: `${name} (base field name)`,
+            });
+          }
+        }
       }
     }
 
@@ -114,5 +130,5 @@ export function useSelectOptions(
       });
     }
     return options;
-  }, [displayNames, currentName, firstItem, fieldType]);
+  }, [displayNames, currentName, firstItem, fieldType, baseNameMode]);
 }

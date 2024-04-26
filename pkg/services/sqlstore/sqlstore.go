@@ -4,10 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/url"
 	"os"
-	"path"
-	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -23,7 +20,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/fs"
-	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry"
@@ -35,22 +31,21 @@ import (
 	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 // ContextSessionKey is used as key to save values in `context.Context`
 type ContextSessionKey struct{}
 
 type SQLStore struct {
-	Cfg          *setting.Cfg
-	sqlxsession  *session.SessionDB
-	CacheService *localcache.CacheService
+	cfg         *setting.Cfg
+	features    featuremgmt.FeatureToggles
+	sqlxsession *session.SessionDB
 
 	bus                          bus.Bus
-	dbCfg                        DatabaseConfig
+	dbCfg                        *DatabaseConfig
 	engine                       *xorm.Engine
 	log                          log.Logger
-	Dialect                      migrator.Dialect
+	dialect                      migrator.Dialect
 	skipEnsureDefaultOrgAndUser  bool
 	migrations                   registry.DatabaseMigrator
 	tracer                       tracing.Tracer
@@ -58,17 +53,21 @@ type SQLStore struct {
 	recursiveQueriesMu           sync.Mutex
 }
 
-func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer) (*SQLStore, error) {
+func ProvideService(cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
+	migrations registry.DatabaseMigrator,
+	bus bus.Bus, tracer tracing.Tracer) (*SQLStore, error) {
 	// This change will make xorm use an empty default schema for postgres and
 	// by that mimic the functionality of how it was functioning before
 	// xorm's changes above.
 	xorm.DefaultPostgresSchema = ""
-	s, err := newSQLStore(cfg, cacheService, nil, migrations, bus, tracer)
+	s, err := newSQLStore(cfg, nil, migrations, bus, tracer)
 	if err != nil {
 		return nil, err
 	}
+	s.features = features
 
-	if err := s.Migrate(cfg.IsFeatureToggleEnabled(featuremgmt.FlagMigrationLocking)); err != nil {
+	if err := s.Migrate(s.dbCfg.MigrationLock); err != nil {
 		return nil, err
 	}
 
@@ -92,15 +91,30 @@ func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, mig
 	return s, nil
 }
 
-func ProvideServiceForTests(cfg *setting.Cfg, migrations registry.DatabaseMigrator) (*SQLStore, error) {
-	return initTestDB(cfg, migrations, InitTestDBOpt{EnsureDefaultOrgAndUser: true})
+func ProvideServiceForTests(t sqlutil.ITestDB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, migrations registry.DatabaseMigrator) (*SQLStore, error) {
+	return initTestDB(t, cfg, features, migrations, InitTestDBOpt{EnsureDefaultOrgAndUser: true})
 }
 
-func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, engine *xorm.Engine,
+// NewSQLStoreWithoutSideEffects creates a new *SQLStore without side-effects such as
+// running database migrations and/or ensuring main org and admin user exists.
+func NewSQLStoreWithoutSideEffects(cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
+	bus bus.Bus, tracer tracing.Tracer) (*SQLStore, error) {
+	s, err := newSQLStore(cfg, nil, nil, bus, tracer)
+	if err != nil {
+		return nil, err
+	}
+
+	s.features = features
+	s.tracer = tracer
+
+	return s, nil
+}
+
+func newSQLStore(cfg *setting.Cfg, engine *xorm.Engine,
 	migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer, opts ...InitTestDBOpt) (*SQLStore, error) {
 	ss := &SQLStore{
-		Cfg:                         cfg,
-		CacheService:                cacheService,
+		cfg:                         cfg,
 		log:                         log.New("sqlstore"),
 		skipEnsureDefaultOrgAndUser: false,
 		migrations:                  migrations,
@@ -117,7 +131,7 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, engine
 		return nil, fmt.Errorf("%v: %w", "failed to connect to database", err)
 	}
 
-	ss.Dialect = migrator.NewDialect(ss.engine.DriverName())
+	ss.dialect = migrator.NewDialect(ss.engine.DriverName())
 
 	// if err := ss.Reset(); err != nil {
 	// 	return nil, err
@@ -137,19 +151,14 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, engine
 // Has to be done in a second phase (after initialization), since other services can register migrations during
 // the initialization phase.
 func (ss *SQLStore) Migrate(isDatabaseLockingEnabled bool) error {
-	if ss.dbCfg.SkipMigrations {
+	if ss.dbCfg.SkipMigrations || ss.migrations == nil {
 		return nil
 	}
 
-	migrator := migrator.NewMigrator(ss.engine, ss.Cfg)
+	migrator := migrator.NewMigrator(ss.engine, ss.cfg)
 	ss.migrations.AddMigration(migrator)
 
 	return migrator.Start(isDatabaseLockingEnabled, ss.dbCfg.MigrationLockAttemptTimeout)
-}
-
-// Sync syncs changes to the database.
-func (ss *SQLStore) Sync() error {
-	return ss.engine.Sync2()
 }
 
 // Reset resets database state.
@@ -162,18 +171,6 @@ func (ss *SQLStore) Reset() error {
 	return ss.ensureMainOrgAndAdminUser(false)
 }
 
-// TestReset resets database state. If default org and user creation is enabled,
-// it will be ensured they exist in the database. TestReset() is more permissive
-// than Reset in that it will create the user and org whether or not there are
-// already users in the database.
-func (ss *SQLStore) TestReset() error {
-	if ss.skipEnsureDefaultOrgAndUser {
-		return nil
-	}
-
-	return ss.ensureMainOrgAndAdminUser(true)
-}
-
 // Quote quotes the value in the used SQL dialect
 func (ss *SQLStore) Quote(value string) string {
 	return ss.engine.Quote(value)
@@ -181,7 +178,7 @@ func (ss *SQLStore) Quote(value string) string {
 
 // GetDialect return the dialect
 func (ss *SQLStore) GetDialect() migrator.Dialect {
-	return ss.Dialect
+	return ss.dialect
 }
 
 func (ss *SQLStore) GetDBType() core.DbType {
@@ -213,7 +210,7 @@ func (ss *SQLStore) ensureMainOrgAndAdminUser(test bool) error {
 			var stats stats.SystemUserCountStats
 			// TODO: Should be able to rename "Count" to "count", for more standard SQL style
 			// Just have to make sure it gets deserialized properly into models.SystemUserCountStats
-			rawSQL := `SELECT COUNT(id) AS Count FROM ` + ss.Dialect.Quote("user")
+			rawSQL := `SELECT COUNT(id) AS Count FROM ` + ss.dialect.Quote("user")
 			if _, err := sess.SQL(rawSQL).Get(&stats); err != nil {
 				return fmt.Errorf("could not determine if admin user exists: %w", err)
 			}
@@ -223,19 +220,19 @@ func (ss *SQLStore) ensureMainOrgAndAdminUser(test bool) error {
 		}
 
 		// ensure admin user
-		if !ss.Cfg.DisableInitAdminCreation {
+		if !ss.cfg.DisableInitAdminCreation {
 			ss.log.Debug("Creating default admin user")
 
 			if _, err := ss.createUser(ctx, sess, user.CreateUserCommand{
-				Login:    ss.Cfg.AdminUser,
-				Email:    ss.Cfg.AdminEmail,
-				Password: ss.Cfg.AdminPassword,
+				Login:    ss.cfg.AdminUser,
+				Email:    ss.cfg.AdminEmail,
+				Password: user.Password(ss.cfg.AdminPassword),
 				IsAdmin:  true,
 			}); err != nil {
 				return fmt.Errorf("failed to create admin user: %s", err)
 			}
 
-			ss.log.Info("Created default admin", "user", ss.Cfg.AdminUser)
+			ss.log.Info("Created default admin", "user", ss.cfg.AdminUser)
 		}
 
 		ss.log.Debug("Creating default org", "name", mainOrgName)
@@ -250,113 +247,6 @@ func (ss *SQLStore) ensureMainOrgAndAdminUser(test bool) error {
 	return err
 }
 
-func (ss *SQLStore) buildExtraConnectionString(sep rune) string {
-	if ss.dbCfg.UrlQueryParams == nil {
-		return ""
-	}
-
-	var sb strings.Builder
-	for key, values := range ss.dbCfg.UrlQueryParams {
-		for _, value := range values {
-			sb.WriteRune(sep)
-			sb.WriteString(key)
-			sb.WriteRune('=')
-			sb.WriteString(value)
-		}
-	}
-	return sb.String()
-}
-
-func (ss *SQLStore) buildConnectionString() (string, error) {
-	if err := ss.readConfig(); err != nil {
-		return "", err
-	}
-
-	cnnstr := ss.dbCfg.ConnectionString
-
-	// special case used by integration tests
-	if cnnstr != "" {
-		return cnnstr, nil
-	}
-
-	switch ss.dbCfg.Type {
-	case migrator.MySQL:
-		protocol := "tcp"
-		if strings.HasPrefix(ss.dbCfg.Host, "/") {
-			protocol = "unix"
-		}
-
-		cnnstr = fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true",
-			ss.dbCfg.User, ss.dbCfg.Pwd, protocol, ss.dbCfg.Host, ss.dbCfg.Name)
-
-		if ss.dbCfg.SslMode == "true" || ss.dbCfg.SslMode == "skip-verify" {
-			tlsCert, err := makeCert(ss.dbCfg)
-			if err != nil {
-				return "", err
-			}
-			if err := mysql.RegisterTLSConfig("custom", tlsCert); err != nil {
-				return "", err
-			}
-
-			cnnstr += "&tls=custom"
-		}
-
-		if isolation := ss.dbCfg.IsolationLevel; isolation != "" {
-			val := url.QueryEscape(fmt.Sprintf("'%s'", isolation))
-			cnnstr += fmt.Sprintf("&transaction_isolation=%s", val)
-		}
-
-		if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagMysqlAnsiQuotes) || ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagNewDBLibrary) {
-			cnnstr += "&sql_mode='ANSI_QUOTES'"
-		}
-
-		if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagNewDBLibrary) {
-			cnnstr += "&parseTime=true"
-		}
-
-		cnnstr += ss.buildExtraConnectionString('&')
-	case migrator.Postgres:
-		addr, err := util.SplitHostPortDefault(ss.dbCfg.Host, "127.0.0.1", "5432")
-		if err != nil {
-			return "", fmt.Errorf("invalid host specifier '%s': %w", ss.dbCfg.Host, err)
-		}
-
-		args := []any{ss.dbCfg.User, addr.Host, addr.Port, ss.dbCfg.Name, ss.dbCfg.SslMode, ss.dbCfg.ClientCertPath,
-			ss.dbCfg.ClientKeyPath, ss.dbCfg.CaCertPath}
-		for i, arg := range args {
-			if arg == "" {
-				args[i] = "''"
-			}
-		}
-		cnnstr = fmt.Sprintf("user=%s host=%s port=%s dbname=%s sslmode=%s sslcert=%s sslkey=%s sslrootcert=%s", args...)
-		if ss.dbCfg.Pwd != "" {
-			cnnstr += fmt.Sprintf(" password=%s", ss.dbCfg.Pwd)
-		}
-
-		cnnstr += ss.buildExtraConnectionString(' ')
-	case migrator.SQLite:
-		// special case for tests
-		if !filepath.IsAbs(ss.dbCfg.Path) {
-			ss.dbCfg.Path = filepath.Join(ss.Cfg.DataPath, ss.dbCfg.Path)
-		}
-		if err := os.MkdirAll(path.Dir(ss.dbCfg.Path), os.ModePerm); err != nil {
-			return "", err
-		}
-
-		cnnstr = fmt.Sprintf("file:%s?cache=%s&mode=rwc", ss.dbCfg.Path, ss.dbCfg.CacheMode)
-
-		if ss.dbCfg.WALEnabled {
-			cnnstr += "&_journal_mode=WAL"
-		}
-
-		cnnstr += ss.buildExtraConnectionString('&')
-	default:
-		return "", fmt.Errorf("unknown database type: %s", ss.dbCfg.Type)
-	}
-
-	return cnnstr, nil
-}
-
 // initEngine initializes ss.engine.
 func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 	if ss.engine != nil {
@@ -364,18 +254,20 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 		return nil
 	}
 
-	connectionString, err := ss.buildConnectionString()
+	dbCfg, err := NewDatabaseConfig(ss.cfg, ss.features)
 	if err != nil {
 		return err
 	}
 
-	if ss.Cfg.DatabaseInstrumentQueries {
+	ss.dbCfg = dbCfg
+
+	if ss.cfg.DatabaseInstrumentQueries {
 		ss.dbCfg.Type = WrapDatabaseDriverWithHooks(ss.dbCfg.Type, ss.tracer)
 	}
 
 	ss.log.Info("Connecting to DB", "dbtype", ss.dbCfg.Type)
-	if ss.dbCfg.Type == migrator.SQLite && strings.HasPrefix(connectionString, "file:") &&
-		!strings.HasPrefix(connectionString, "file::memory:") {
+	if ss.dbCfg.Type == migrator.SQLite && strings.HasPrefix(ss.dbCfg.ConnectionString, "file:") &&
+		!strings.HasPrefix(ss.dbCfg.ConnectionString, "file::memory:") {
 		exists, err := fs.Exists(ss.dbCfg.Path)
 		if err != nil {
 			return fmt.Errorf("can't check for existence of %q: %w", ss.dbCfg.Path, err)
@@ -405,14 +297,14 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 	}
 	if engine == nil {
 		var err error
-		engine, err = xorm.NewEngine(ss.dbCfg.Type, connectionString)
+		engine, err = xorm.NewEngine(ss.dbCfg.Type, ss.dbCfg.ConnectionString)
 		if err != nil {
 			return err
 		}
 		// Only for MySQL or MariaDB, verify we can connect with the current connection string's system var for transaction isolation.
 		// If not, create a new engine with a compatible connection string.
 		if ss.dbCfg.Type == migrator.MySQL {
-			engine, err = ss.ensureTransactionIsolationCompatibility(engine, connectionString)
+			engine, err = ss.ensureTransactionIsolationCompatibility(engine, ss.dbCfg.ConnectionString)
 			if err != nil {
 				return err
 			}
@@ -424,7 +316,7 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 	engine.SetConnMaxLifetime(time.Second * time.Duration(ss.dbCfg.ConnMaxLifetime))
 
 	// configure sql logging
-	debugSQL := ss.Cfg.Raw.Section("database").Key("log_queries").MustBool(false)
+	debugSQL := ss.cfg.Raw.Section("database").Key("log_queries").MustBool(false)
 	if !debugSQL {
 		engine.SetLogger(&xorm.DiscardLogger{})
 	} else {
@@ -464,62 +356,6 @@ func (ss *SQLStore) ensureTransactionIsolationCompatibility(engine *xorm.Engine,
 	return engine, nil
 }
 
-// readConfig initializes the SQLStore from its configuration.
-func (ss *SQLStore) readConfig() error {
-	sec := ss.Cfg.Raw.Section("database")
-
-	cfgURL := sec.Key("url").String()
-	if len(cfgURL) != 0 {
-		dbURL, err := url.Parse(cfgURL)
-		if err != nil {
-			return err
-		}
-		ss.dbCfg.Type = dbURL.Scheme
-		ss.dbCfg.Host = dbURL.Host
-
-		pathSplit := strings.Split(dbURL.Path, "/")
-		if len(pathSplit) > 1 {
-			ss.dbCfg.Name = pathSplit[1]
-		}
-
-		userInfo := dbURL.User
-		if userInfo != nil {
-			ss.dbCfg.User = userInfo.Username()
-			ss.dbCfg.Pwd, _ = userInfo.Password()
-		}
-
-		ss.dbCfg.UrlQueryParams = dbURL.Query()
-	} else {
-		ss.dbCfg.Type = sec.Key("type").String()
-		ss.dbCfg.Host = sec.Key("host").String()
-		ss.dbCfg.Name = sec.Key("name").String()
-		ss.dbCfg.User = sec.Key("user").String()
-		ss.dbCfg.ConnectionString = sec.Key("connection_string").String()
-		ss.dbCfg.Pwd = sec.Key("password").String()
-	}
-
-	ss.dbCfg.MaxOpenConn = sec.Key("max_open_conn").MustInt(0)
-	ss.dbCfg.MaxIdleConn = sec.Key("max_idle_conn").MustInt(2)
-	ss.dbCfg.ConnMaxLifetime = sec.Key("conn_max_lifetime").MustInt(14400)
-
-	ss.dbCfg.SslMode = sec.Key("ssl_mode").String()
-	ss.dbCfg.CaCertPath = sec.Key("ca_cert_path").String()
-	ss.dbCfg.ClientKeyPath = sec.Key("client_key_path").String()
-	ss.dbCfg.ClientCertPath = sec.Key("client_cert_path").String()
-	ss.dbCfg.ServerCertName = sec.Key("server_cert_name").String()
-	ss.dbCfg.Path = sec.Key("path").MustString("data/grafana.db")
-	ss.dbCfg.IsolationLevel = sec.Key("isolation_level").String()
-
-	ss.dbCfg.CacheMode = sec.Key("cache_mode").MustString("private")
-	ss.dbCfg.WALEnabled = sec.Key("wal").MustBool(false)
-	ss.dbCfg.SkipMigrations = sec.Key("skip_migrations").MustBool()
-	ss.dbCfg.MigrationLockAttemptTimeout = sec.Key("locking_attempt_timeout_sec").MustInt()
-
-	ss.dbCfg.QueryRetries = sec.Key("query_retries").MustInt()
-	ss.dbCfg.TransactionRetries = sec.Key("transaction_retries").MustInt(5)
-	return nil
-}
-
 func (ss *SQLStore) GetMigrationLockAttemptTimeout() int {
 	return ss.dbCfg.MigrationLockAttemptTimeout
 }
@@ -546,7 +382,7 @@ func (ss *SQLStore) RecursiveQueriesAreSupported() (bool, error) {
 		}); err != nil {
 			var driverErr *mysql.MySQLError
 			if errors.As(err, &driverErr) {
-				if driverErr.Number == mysqlerr.ER_PARSE_ERROR {
+				if driverErr.Number == mysqlerr.ER_PARSE_ERROR || driverErr.Number == mysqlerr.ER_NOT_SUPPORTED_YET {
 					return false, nil
 				}
 			}
@@ -563,33 +399,25 @@ func (ss *SQLStore) RecursiveQueriesAreSupported() (bool, error) {
 	return *ss.recursiveQueriesAreSupported, nil
 }
 
-// ITestDB is an interface of arguments for testing db
-type ITestDB interface {
-	Helper()
-	Fatalf(format string, args ...any)
-	Logf(format string, args ...any)
-	Log(args ...any)
-}
-
+var testSQLStoreSetup = false
 var testSQLStore *SQLStore
 var testSQLStoreMutex sync.Mutex
+var testSQLStoreCleanup []func()
 
 // InitTestDBOpt contains options for InitTestDB.
 type InitTestDBOpt struct {
 	// EnsureDefaultOrgAndUser flags whether to ensure that default org and user exist.
 	EnsureDefaultOrgAndUser bool
 	FeatureFlags            []string
-}
-
-var featuresEnabledDuringTests = []string{
-	featuremgmt.FlagPanelTitleSearch,
-	featuremgmt.FlagEntityStore,
+	Cfg                     *setting.Cfg
 }
 
 // InitTestDBWithMigration initializes the test DB given custom migrations.
-func InitTestDBWithMigration(t ITestDB, migration registry.DatabaseMigrator, opts ...InitTestDBOpt) *SQLStore {
+func InitTestDBWithMigration(t sqlutil.ITestDB, migration registry.DatabaseMigrator, opts ...InitTestDBOpt) *SQLStore {
 	t.Helper()
-	store, err := initTestDB(setting.NewCfg(), migration, opts...)
+	features := getFeaturesForTesting(opts...)
+	cfg := getCfgForTesting(opts...)
+	store, err := initTestDB(t, cfg, features, migration, opts...)
 	if err != nil {
 		t.Fatalf("failed to initialize sql store: %s", err)
 	}
@@ -597,55 +425,117 @@ func InitTestDBWithMigration(t ITestDB, migration registry.DatabaseMigrator, opt
 }
 
 // InitTestDB initializes the test DB.
-func InitTestDB(t ITestDB, opts ...InitTestDBOpt) *SQLStore {
+func InitTestDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) (*SQLStore, *setting.Cfg) {
 	t.Helper()
-	store, err := initTestDB(setting.NewCfg(), &migrations.OSSMigrations{}, opts...)
+	features := getFeaturesForTesting(opts...)
+	cfg := getCfgForTesting(opts...)
+
+	store, err := initTestDB(t, cfg, features, migrations.ProvideOSSMigrations(features), opts...)
 	if err != nil {
 		t.Fatalf("failed to initialize sql store: %s", err)
 	}
-	return store
+	return store, store.cfg
 }
 
-func InitTestDBWithCfg(t ITestDB, opts ...InitTestDBOpt) (*SQLStore, *setting.Cfg) {
-	store := InitTestDB(t, opts...)
-	return store, store.Cfg
+func SetupTestDB() {
+	testSQLStoreMutex.Lock()
+	defer testSQLStoreMutex.Unlock()
+	if testSQLStoreSetup {
+		fmt.Printf("ERROR: Test DB already set up, SetupTestDB called twice\n")
+		os.Exit(1)
+	}
+	testSQLStoreSetup = true
+}
+
+func CleanupTestDB() {
+	testSQLStoreMutex.Lock()
+	defer testSQLStoreMutex.Unlock()
+	if !testSQLStoreSetup {
+		fmt.Printf("ERROR: Test DB not set up, SetupTestDB not called\n")
+		os.Exit(1)
+	}
+	if testSQLStore != nil {
+		if err := testSQLStore.GetEngine().Close(); err != nil {
+			fmt.Printf("Failed to close testSQLStore engine: %s\n", err)
+		}
+
+		for _, cleanup := range testSQLStoreCleanup {
+			cleanup()
+		}
+
+		testSQLStoreCleanup = []func(){}
+		testSQLStore = nil
+	}
+}
+
+func getCfgForTesting(opts ...InitTestDBOpt) *setting.Cfg {
+	cfg := setting.NewCfg()
+	for _, opt := range opts {
+		if len(opt.FeatureFlags) > 0 {
+			cfg = opt.Cfg
+		}
+	}
+	return cfg
+}
+
+func getFeaturesForTesting(opts ...InitTestDBOpt) featuremgmt.FeatureToggles {
+	featureKeys := []any{
+		featuremgmt.FlagPanelTitleSearch,
+		featuremgmt.FlagUnifiedStorage,
+	}
+	for _, opt := range opts {
+		if len(opt.FeatureFlags) > 0 {
+			for _, f := range opt.FeatureFlags {
+				featureKeys = append(featureKeys, f)
+			}
+		}
+	}
+	return featuremgmt.WithFeatures(featureKeys...)
 }
 
 //nolint:gocyclo
-func initTestDB(testCfg *setting.Cfg, migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQLStore, error) {
+func initTestDB(t sqlutil.ITestDB, testCfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
+	migration registry.DatabaseMigrator,
+	opts ...InitTestDBOpt) (*SQLStore, error) {
 	testSQLStoreMutex.Lock()
 	defer testSQLStoreMutex.Unlock()
+	if !testSQLStoreSetup {
+		t.Fatalf(`
+
+ERROR: Test DB not set up, are you missing TestMain?
+
+https://github.com/grafana/grafana/blob/main/contribute/backend/style-guide.md
+
+Example:
+
+package mypkg
+
+import (
+	"testing"
+
+	"github.com/grafana/grafana/pkg/tests/testsuite"
+)
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
+
+`)
+		os.Exit(1)
+	}
 
 	if len(opts) == 0 {
 		opts = []InitTestDBOpt{{EnsureDefaultOrgAndUser: false, FeatureFlags: []string{}}}
 	}
 
-	features := make([]string, len(featuresEnabledDuringTests))
-	copy(features, featuresEnabledDuringTests)
-	for _, opt := range opts {
-		if len(opt.FeatureFlags) > 0 {
-			features = append(features, opt.FeatureFlags...)
-		}
-	}
-
 	if testSQLStore == nil {
-		dbType := migrator.SQLite
-
-		// environment variable present for test db?
-		if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
-			dbType = db
-		}
+		dbType := sqlutil.GetTestDBType()
 
 		// set test db config
 		cfg := setting.NewCfg()
-		cfg.IsFeatureToggleEnabled = func(key string) bool {
-			for _, enabledFeature := range features {
-				if enabledFeature == key {
-					return true
-				}
-			}
-			return false
-		}
+		// nolint:staticcheck
+		cfg.IsFeatureToggleEnabled = features.IsEnabledGlobally
 
 		sec, err := cfg.Raw.NewSection("database")
 		if err != nil {
@@ -655,20 +545,20 @@ func initTestDB(testCfg *setting.Cfg, migration registry.DatabaseMigrator, opts 
 		if _, err := sec.NewKey("type", dbType); err != nil {
 			return nil, err
 		}
-		switch dbType {
-		case "mysql":
-			if _, err := sec.NewKey("connection_string", sqlutil.MySQLTestDB().ConnStr); err != nil {
-				return nil, err
-			}
-		case "postgres":
-			if _, err := sec.NewKey("connection_string", sqlutil.PostgresTestDB().ConnStr); err != nil {
-				return nil, err
-			}
-		default:
-			if _, err := sec.NewKey("connection_string", sqlutil.SQLite3TestDB().ConnStr); err != nil {
-				return nil, err
-			}
+
+		testDB, err := sqlutil.GetTestDB(dbType)
+		if err != nil {
+			return nil, err
 		}
+
+		if _, err := sec.NewKey("connection_string", testDB.ConnStr); err != nil {
+			return nil, err
+		}
+		if _, err := sec.NewKey("path", testDB.Path); err != nil {
+			return nil, err
+		}
+
+		testSQLStoreCleanup = append(testSQLStoreCleanup, testDB.Cleanup)
 
 		// useful if you already have a database that you want to use for tests.
 		// cannot just set it on testSQLStore as it overrides the config in Init
@@ -704,7 +594,7 @@ func initTestDB(testCfg *setting.Cfg, migration registry.DatabaseMigrator, opts 
 
 		tracer := tracing.InitializeTracerForTest()
 		bus := bus.ProvideBus(tracer)
-		testSQLStore, err = newSQLStore(cfg, localcache.New(5*time.Minute, 10*time.Minute), engine, migration, bus, tracer, opts...)
+		testSQLStore, err = newSQLStore(cfg, engine, migration, bus, tracer, opts...)
 		if err != nil {
 			return nil, err
 		}
@@ -712,36 +602,12 @@ func initTestDB(testCfg *setting.Cfg, migration registry.DatabaseMigrator, opts 
 		if err := testSQLStore.Migrate(false); err != nil {
 			return nil, err
 		}
-
-		if err := testSQLStore.Dialect.TruncateDBTables(engine); err != nil {
-			return nil, err
-		}
-
-		if err := testSQLStore.Reset(); err != nil {
-			return nil, err
-		}
-
-		// Make sure the changes are synced, so they get shared with eventual other DB connections
-		// XXX: Why is this only relevant when not skipping migrations?
-		if !testSQLStore.dbCfg.SkipMigrations {
-			if err := testSQLStore.Sync(); err != nil {
-				return nil, err
-			}
-		}
-
-		return testSQLStore, nil
 	}
 
-	testSQLStore.Cfg.IsFeatureToggleEnabled = func(key string) bool {
-		for _, enabledFeature := range features {
-			if enabledFeature == key {
-				return true
-			}
-		}
-		return false
-	}
+	// nolint:staticcheck
+	testSQLStore.cfg.IsFeatureToggleEnabled = features.IsEnabledGlobally
 
-	if err := testSQLStore.Dialect.TruncateDBTables(testSQLStore.GetEngine()); err != nil {
+	if err := testSQLStore.dialect.TruncateDBTables(testSQLStore.GetEngine()); err != nil {
 		return nil, err
 	}
 	if err := testSQLStore.Reset(); err != nil {
@@ -749,56 +615,4 @@ func initTestDB(testCfg *setting.Cfg, migration registry.DatabaseMigrator, opts 
 	}
 
 	return testSQLStore, nil
-}
-
-func IsTestDbMySQL() bool {
-	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
-		return db == migrator.MySQL
-	}
-
-	return false
-}
-
-func IsTestDbPostgres() bool {
-	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
-		return db == migrator.Postgres
-	}
-
-	return false
-}
-
-func IsTestDBMSSQL() bool {
-	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
-		return db == migrator.MSSQL
-	}
-
-	return false
-}
-
-type DatabaseConfig struct {
-	Type                        string
-	Host                        string
-	Name                        string
-	User                        string
-	Pwd                         string
-	Path                        string
-	SslMode                     string
-	CaCertPath                  string
-	ClientKeyPath               string
-	ClientCertPath              string
-	ServerCertName              string
-	ConnectionString            string
-	IsolationLevel              string
-	MaxOpenConn                 int
-	MaxIdleConn                 int
-	ConnMaxLifetime             int
-	CacheMode                   string
-	WALEnabled                  bool
-	UrlQueryParams              map[string][]string
-	SkipMigrations              bool
-	MigrationLockAttemptTimeout int
-	// SQLite only
-	QueryRetries int
-	// SQLite only
-	TransactionRetries int
 }

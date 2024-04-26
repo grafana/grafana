@@ -1,5 +1,5 @@
 import { ExploreUrlState } from '@grafana/data';
-import { generateExploreId, safeParseJson } from 'app/core/utils/explore';
+import { ID_ALPHABET, generateExploreId } from 'app/core/utils/explore';
 import { DEFAULT_RANGE } from 'app/features/explore/state/utils';
 
 import { hasKey } from '../../utils';
@@ -18,21 +18,51 @@ export const v1Migrator: MigrationHandler<ExploreURLV0, ExploreURLV1> = {
   parse: (params) => {
     if (!params || !params.panes || typeof params.panes !== 'string') {
       return {
-        schemaVersion: 1,
-        panes: {
-          [generateExploreId()]: DEFAULT_STATE,
+        to: {
+          schemaVersion: 1,
+          panes: {
+            [generateExploreId()]: DEFAULT_STATE,
+          },
         },
+        error: false,
       };
     }
 
-    const rawPanes: Record<string, unknown> = safeParseJson(params.panes) || {};
+    let rawPanes: unknown;
+    try {
+      rawPanes = JSON.parse(params.panes);
+    } catch {}
+
+    if (rawPanes == null || typeof rawPanes !== 'object') {
+      return {
+        to: {
+          schemaVersion: 1,
+          panes: {
+            [generateExploreId()]: DEFAULT_STATE,
+          },
+        },
+        error: true,
+      };
+    }
 
     const panes = Object.entries(rawPanes)
       .map(([key, value]) => [key, applyDefaults(value)] as const)
       .reduce<Record<string, ExploreUrlState>>((acc, [key, value]) => {
+        let newKey = key;
+        // Panes IDs must be 3 characters long and contain at least one letter
+        if (
+          newKey.length !== 3 ||
+          /^\d+$/.test(newKey) ||
+          newKey.split('').some((ch) => {
+            return ID_ALPHABET.indexOf(ch) === -1;
+          })
+        ) {
+          newKey = generateExploreId();
+        }
+
         return {
           ...acc,
-          [key]: value,
+          [newKey]: value,
         };
       }, {});
 
@@ -41,8 +71,11 @@ export const v1Migrator: MigrationHandler<ExploreURLV0, ExploreURLV1> = {
     }
 
     return {
-      schemaVersion: 1,
-      panes,
+      to: {
+        schemaVersion: 1,
+        panes,
+      },
+      error: false,
     };
   },
   migrate: (params) => {

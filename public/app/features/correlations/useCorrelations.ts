@@ -15,6 +15,7 @@ import {
   UpdateCorrelationParams,
   UpdateCorrelationResponse,
 } from './types';
+import { correlationsLogger } from './utils';
 
 export interface CorrelationsResponse {
   correlations: Correlation[];
@@ -43,6 +44,13 @@ const toEnrichedCorrelationData = ({
   const sourceDatasource = getDataSourceSrv().getInstanceSettings(sourceUID);
   const targetDatasource = getDataSourceSrv().getInstanceSettings(targetUID);
 
+  // According to #72258 we will remove logic to handle orgId=0/null as global correlations.
+  // This logging is to check if there are any customers who did not migrate existing correlations.
+  // See Deprecation Notice in https://github.com/grafana/grafana/pull/72258 for more details
+  if (correlation?.orgId === undefined || correlation?.orgId === null || correlation?.orgId === 0) {
+    correlationsLogger.logWarning('Invalid correlation config: Missing org id.');
+  }
+
   if (
     sourceDatasource &&
     sourceDatasource?.uid !== undefined &&
@@ -55,6 +63,10 @@ const toEnrichedCorrelationData = ({
       target: targetDatasource,
     };
   } else {
+    correlationsLogger.logWarning(`Invalid correlation config: Missing source or target.`, {
+      source: JSON.stringify(sourceDatasource),
+      target: JSON.stringify(targetDatasource),
+    });
     return undefined;
   }
 };

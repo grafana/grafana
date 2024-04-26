@@ -1,12 +1,15 @@
 import { Observable, of } from 'rxjs';
 
-import { DataQueryRequest, DataQueryResponse, DataSourceInstanceSettings } from '@grafana/data';
-import { DataSourceWithBackend } from '@grafana/runtime';
+import { DataQueryRequest, DataQueryResponse, DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
+import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 import { ParcaDataSourceOptions, Query, ProfileTypeMessage } from './types';
 
 export class ParcaDataSource extends DataSourceWithBackend<Query, ParcaDataSourceOptions> {
-  constructor(instanceSettings: DataSourceInstanceSettings<ParcaDataSourceOptions>) {
+  constructor(
+    instanceSettings: DataSourceInstanceSettings<ParcaDataSourceOptions>,
+    private readonly templateSrv: TemplateSrv = getTemplateSrv()
+  ) {
     super(instanceSettings);
   }
 
@@ -17,6 +20,13 @@ export class ParcaDataSource extends DataSourceWithBackend<Query, ParcaDataSourc
     }
 
     return super.query(request);
+  }
+
+  applyTemplateVariables(query: Query, scopedVars: ScopedVars): Query {
+    return {
+      ...query,
+      labelSelector: this.templateSrv.replace(query.labelSelector ?? '', scopedVars),
+    };
   }
 
   async getProfileTypes(): Promise<ProfileTypeMessage[]> {

@@ -2,8 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { ReactElement } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { FieldSet, Text, useStyles2 } from '@grafana/ui';
+import { FieldSet, Text, useStyles2, Stack } from '@grafana/ui';
 
 export interface RuleEditorSectionProps {
   title: string;
@@ -44,7 +43,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   parent: css`
     display: flex;
     flex-direction: row;
-    max-width: ${theme.breakpoints.values.xl}px;
     border: solid 1px ${theme.colors.border.weak};
     border-radius: ${theme.shape.radius.default};
     padding: ${theme.spacing(2)} ${theme.spacing(3)};

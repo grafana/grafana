@@ -1,5 +1,5 @@
   authentikdb:
-    image: docker.io/library/postgres:12-alpine
+    image: docker.io/library/postgres:16-alpine
     restart: unless-stopped
     container_name: authentikdb
     environment:
@@ -39,7 +39,7 @@
       - "authentik:authentik"
 
   authentik:
-    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2023.5.1}
+    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2023.10.6}
     restart: unless-stopped
     container_name: authentik
     command: server
@@ -66,7 +66,7 @@
       - "authentikredis:authentikredis"
 
   authentik-worker:
-    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2023.5.1}
+    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2023.10.6}
     restart: unless-stopped
     container_name: authentik-worker
     command: worker

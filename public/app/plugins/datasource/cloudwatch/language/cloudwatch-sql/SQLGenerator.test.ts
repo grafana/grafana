@@ -1,10 +1,9 @@
-import { TemplateSrv } from 'app/features/templating/template_srv';
-
 import {
   aggregationvariable,
   labelsVariable,
   metricVariable,
   namespaceVariable,
+  setupMockedTemplateService,
 } from '../../__mocks__/CloudWatchDataSource';
 import {
   createFunctionWithParameter,
@@ -25,11 +24,12 @@ describe('SQLGenerator', () => {
     from: createFunctionWithParameter('SCHEMA', ['AWS/EC2']),
     orderByDirection: 'DESC',
   };
+  let mockTemplateSrv = setupMockedTemplateService();
 
   describe('mandatory fields check', () => {
     it('should return undefined if metric and aggregation is missing', () => {
       expect(
-        new SQLGenerator().expressionToSqlQuery({
+        new SQLGenerator(mockTemplateSrv).expressionToSqlQuery({
           from: createFunctionWithParameter('SCHEMA', ['AWS/EC2']),
         })
       ).toBeUndefined();
@@ -37,7 +37,7 @@ describe('SQLGenerator', () => {
 
     it('should return undefined if aggregation is missing', () => {
       expect(
-        new SQLGenerator().expressionToSqlQuery({
+        new SQLGenerator(mockTemplateSrv).expressionToSqlQuery({
           from: createFunctionWithParameter('SCHEMA', []),
         })
       ).toBeUndefined();
@@ -45,21 +45,28 @@ describe('SQLGenerator', () => {
   });
 
   it('should return query if mandatory fields are provided', () => {
-    expect(new SQLGenerator().expressionToSqlQuery(baseQuery)).not.toBeUndefined();
+    expect(new SQLGenerator(mockTemplateSrv).expressionToSqlQuery(baseQuery)).not.toBeUndefined();
   });
 
   describe('select', () => {
     it('should use statistic and metric name', () => {
       const select = createFunctionWithParameter('COUNT', ['BytesPerSecond']);
-      expect(new SQLGenerator().expressionToSqlQuery({ ...baseQuery, select })).toEqual(
+      expect(new SQLGenerator(mockTemplateSrv).expressionToSqlQuery({ ...baseQuery, select })).toEqual(
         `SELECT COUNT(BytesPerSecond) FROM SCHEMA("AWS/EC2")`
       );
     });
 
     it('should wrap in double quotes if metric name contains illegal characters ', () => {
       const select = createFunctionWithParameter('COUNT', ['Bytes-Per-Second']);
-      expect(new SQLGenerator().expressionToSqlQuery({ ...baseQuery, select })).toEqual(
+      expect(new SQLGenerator(mockTemplateSrv).expressionToSqlQuery({ ...baseQuery, select })).toEqual(
         `SELECT COUNT("Bytes-Per-Second") FROM SCHEMA("AWS/EC2")`
+      );
+    });
+
+    it('should wrap in double quotes if metric name starts with a number ', () => {
+      const select = createFunctionWithParameter('COUNT', ['4xxErrorRate']);
+      expect(new SQLGenerator(mockTemplateSrv).expressionToSqlQuery({ ...baseQuery, select })).toEqual(
+        `SELECT COUNT("4xxErrorRate") FROM SCHEMA("AWS/EC2")`
       );
     });
   });
@@ -68,14 +75,14 @@ describe('SQLGenerator', () => {
     describe('with schema contraint', () => {
       it('should handle schema without dimensions', () => {
         const from = createFunctionWithParameter('SCHEMA', ['AWS/MQ']);
-        expect(new SQLGenerator().expressionToSqlQuery({ ...baseQuery, from })).toEqual(
+        expect(new SQLGenerator(mockTemplateSrv).expressionToSqlQuery({ ...baseQuery, from })).toEqual(
           `SELECT SUM(CPUUtilization) FROM SCHEMA("AWS/MQ")`
         );
       });
 
       it('should handle schema with dimensions', () => {
         const from = createFunctionWithParameter('SCHEMA', ['AWS/MQ', 'InstanceId', 'InstanceType']);
-        expect(new SQLGenerator().expressionToSqlQuery({ ...baseQuery, from })).toEqual(
+        expect(new SQLGenerator(mockTemplateSrv).expressionToSqlQuery({ ...baseQuery, from })).toEqual(
           `SELECT SUM(CPUUtilization) FROM SCHEMA("AWS/MQ", InstanceId, InstanceType)`
         );
       });
@@ -87,7 +94,7 @@ describe('SQLGenerator', () => {
           'Instance.Type',
           'Instance-Group',
         ]);
-        expect(new SQLGenerator().expressionToSqlQuery({ ...baseQuery, from })).toEqual(
+        expect(new SQLGenerator(mockTemplateSrv).expressionToSqlQuery({ ...baseQuery, from })).toEqual(
           `SELECT SUM(CPUUtilization) FROM SCHEMA("AWS/MQ", "Instance Id", "Instance.Type", "Instance-Group")`
         );
       });
@@ -96,7 +103,7 @@ describe('SQLGenerator', () => {
     describe('without schema', () => {
       it('should use the specified namespace', () => {
         const from = createProperty('AWS/MQ');
-        expect(new SQLGenerator().expressionToSqlQuery({ ...baseQuery, from })).toEqual(
+        expect(new SQLGenerator(mockTemplateSrv).expressionToSqlQuery({ ...baseQuery, from })).toEqual(
           `SELECT SUM(CPUUtilization) FROM "AWS/MQ"`
         );
       });
@@ -104,25 +111,25 @@ describe('SQLGenerator', () => {
   });
 
   function assertQueryEndsWith(rest: Partial<SQLExpression>, expectedFilter: string) {
-    expect(new SQLGenerator().expressionToSqlQuery({ ...baseQuery, ...rest })).toEqual(
+    expect(new SQLGenerator(mockTemplateSrv).expressionToSqlQuery({ ...baseQuery, ...rest })).toEqual(
       `SELECT SUM(CPUUtilization) FROM SCHEMA("AWS/EC2") ${expectedFilter}`
     );
   }
 
   describe('filter', () => {
     it('should not add WHERE clause in case its empty', () => {
-      expect(new SQLGenerator().expressionToSqlQuery({ ...baseQuery })).not.toContain('WHERE');
+      expect(new SQLGenerator(mockTemplateSrv).expressionToSqlQuery({ ...baseQuery })).not.toContain('WHERE');
     });
 
     it('should not add WHERE clause when there is no filter conditions', () => {
       const where = createArray([]);
-      expect(new SQLGenerator().expressionToSqlQuery({ ...baseQuery, where })).not.toContain('WHERE');
+      expect(new SQLGenerator(mockTemplateSrv).expressionToSqlQuery({ ...baseQuery, where })).not.toContain('WHERE');
     });
 
     // TODO: We should handle this scenario
     it.skip('should not add WHERE clause when the operator is incomplete', () => {
       const where = createArray([createOperator('Instance-Id', '=')]);
-      expect(new SQLGenerator().expressionToSqlQuery({ ...baseQuery, where })).not.toContain('WHERE');
+      expect(new SQLGenerator(mockTemplateSrv).expressionToSqlQuery({ ...baseQuery, where })).not.toContain('WHERE');
     });
 
     it('should handle one top level filter with AND', () => {
@@ -273,7 +280,7 @@ describe('SQLGenerator', () => {
 
   describe('group by', () => {
     it('should not add GROUP BY clause in case its empty', () => {
-      expect(new SQLGenerator().expressionToSqlQuery({ ...baseQuery })).not.toContain('GROUP BY');
+      expect(new SQLGenerator(mockTemplateSrv).expressionToSqlQuery({ ...baseQuery })).not.toContain('GROUP BY');
     });
     it('should handle single label', () => {
       const groupBy = createArray([createGroupBy('InstanceId')], QueryEditorExpressionType.And);
@@ -290,7 +297,7 @@ describe('SQLGenerator', () => {
 
   describe('order by', () => {
     it('should not add ORDER BY clause in case its empty', () => {
-      expect(new SQLGenerator().expressionToSqlQuery({ ...baseQuery })).not.toContain('ORDER BY');
+      expect(new SQLGenerator(mockTemplateSrv).expressionToSqlQuery({ ...baseQuery })).not.toContain('ORDER BY');
     });
     it('should handle SUM ASC', () => {
       const orderBy = createFunction('SUM');
@@ -308,7 +315,7 @@ describe('SQLGenerator', () => {
   });
   describe('limit', () => {
     it('should not add LIMIT clause in case its empty', () => {
-      expect(new SQLGenerator().expressionToSqlQuery({ ...baseQuery })).not.toContain('LIMIT');
+      expect(new SQLGenerator(mockTemplateSrv).expressionToSqlQuery({ ...baseQuery })).not.toContain('LIMIT');
     });
 
     it('should be added in case its specified', () => {
@@ -339,15 +346,19 @@ describe('SQLGenerator', () => {
         orderByDirection: 'DESC',
         limit: 100,
       };
-      expect(new SQLGenerator().expressionToSqlQuery(query)).toEqual(
+      expect(new SQLGenerator(mockTemplateSrv).expressionToSqlQuery(query)).toEqual(
         `SELECT COUNT(DroppedBytes) FROM SCHEMA("AWS/MQ", InstanceId, "Instance-Group") WHERE (InstanceId = 'I-123' OR Type != 'some-type') AND (InstanceId != 'I-456' OR Type != 'some-type') GROUP BY InstanceId, InstanceType ORDER BY COUNT() DESC LIMIT 100`
       );
     });
   });
 
   describe('using variables', () => {
-    const templateService = new TemplateSrv();
-    templateService.init([metricVariable, namespaceVariable, labelsVariable, aggregationvariable]);
+    const templateService = setupMockedTemplateService([
+      metricVariable,
+      namespaceVariable,
+      labelsVariable,
+      aggregationvariable,
+    ]);
 
     it('should interpolate variables correctly', () => {
       let query: SQLExpression = {

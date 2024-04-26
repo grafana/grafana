@@ -1,6 +1,11 @@
 import { DataQuery, DataQueryRequest, DataSourceJsonData, TimeRange } from '@grafana/data';
 
-import { Loki as LokiQueryFromSchema, LokiQueryType, SupportingQueryType, LokiQueryDirection } from './dataquery.gen';
+import {
+  LokiDataQuery as LokiQueryFromSchema,
+  LokiQueryType,
+  SupportingQueryType,
+  LokiQueryDirection,
+} from './dataquery.gen';
 
 export { LokiQueryDirection, LokiQueryType, SupportingQueryType };
 
@@ -8,6 +13,12 @@ export enum LokiResultType {
   Stream = 'streams',
   Vector = 'vector',
   Matrix = 'matrix',
+}
+
+export enum LabelType {
+  Indexed = 'I',
+  StructuredMetadata = 'S',
+  Parsed = 'P',
 }
 
 export interface LokiQuery extends LokiQueryFromSchema {
@@ -54,6 +65,7 @@ export type DerivedFieldConfig = {
   url?: string;
   urlDisplayLabel?: string;
   datasourceUid?: string;
+  matcherType?: 'label' | 'regex';
 };
 
 export enum LokiVariableQueryType {
@@ -80,12 +92,12 @@ export interface ContextFilter {
   enabled: boolean;
   label: string;
   value: string;
-  fromParser: boolean;
-  description?: string;
+  nonIndexed: boolean;
 }
 
 export interface ParserAndLabelKeysResult {
   extractedLabelKeys: string[];
+  structuredMetadataKeys: string[];
   hasJSON: boolean;
   hasLogfmt: boolean;
   hasPack: boolean;

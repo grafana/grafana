@@ -8,6 +8,8 @@ description: "The user or team frontend preferences"
 lineage: schemas: [{
 	version: [0, 0]
 	schema: {
+		// Spec defines user, team or org Grafana preferences
+		// swagger:model Preferences
 		spec: {
 			// UID for the home dashboard
 			homeDashboardUID?: string

@@ -13,6 +13,8 @@ import { VariableHide } from '../../variables/types';
 import { DashboardModel } from '../state/DashboardModel';
 import { PanelModel } from '../state/PanelModel';
 
+import { DASHBOARD_SCHEMA_VERSION } from './DashboardMigrator';
+
 jest.mock('app/core/services/context_srv', () => ({}));
 
 const dataSources = {
@@ -44,7 +46,7 @@ setDataSourceSrv(new MockDataSourceSrv(dataSources));
 
 describe('DashboardModel', () => {
   describe('when creating dashboard with old schema', () => {
-    let model: any;
+    let model: DashboardModel;
     let graph: any;
     let singlestat: any;
     let table: any;
@@ -69,8 +71,8 @@ describe('DashboardModel', () => {
         panels: [
           {
             type: 'graph',
-            legend: { show: true },
             // @ts-expect-error
+            legend: { show: true },
             aliasYAxis: { test: 2 },
             y_formats: ['kbyte', 'ms'],
             grid: {
@@ -228,7 +230,7 @@ describe('DashboardModel', () => {
     });
 
     it('dashboard schema version should be set to latest', () => {
-      expect(model.schemaVersion).toBe(38);
+      expect(model.schemaVersion).toBe(DASHBOARD_SCHEMA_VERSION);
     });
 
     it('graph thresholds should be migrated', () => {
@@ -515,7 +517,7 @@ describe('DashboardModel', () => {
   });
 
   describe('when migrating panel links', () => {
-    let model: any;
+    let model: DashboardModel;
 
     beforeEach(() => {
       model = new DashboardModel({
@@ -562,24 +564,26 @@ describe('DashboardModel', () => {
     });
 
     it('should add keepTime as variable', () => {
-      expect(model.panels[0].links[0].url).toBe(`http://mylink.com?$${DataLinkBuiltInVars.keepTime}`);
+      expect(model.panels[0].links?.[0].url).toBe(`http://mylink.com?$${DataLinkBuiltInVars.keepTime}`);
     });
 
     it('should add params to url', () => {
-      expect(model.panels[0].links[1].url).toBe('http://mylink.com?existingParam&customParam');
+      expect(model.panels[0].links?.[1].url).toBe('http://mylink.com?existingParam&customParam');
     });
 
     it('should add includeVars to url', () => {
-      expect(model.panels[0].links[2].url).toBe(`http://mylink.com?existingParam&$${DataLinkBuiltInVars.includeVars}`);
+      expect(model.panels[0].links?.[2].url).toBe(
+        `http://mylink.com?existingParam&$${DataLinkBuiltInVars.includeVars}`
+      );
     });
 
     it('should slugify dashboard name', () => {
-      expect(model.panels[0].links[3].url).toBe(`dashboard/db/my-other-dashboard`);
+      expect(model.panels[0].links?.[3].url).toBe(`dashboard/db/my-other-dashboard`);
     });
   });
 
   describe('when migrating variables', () => {
-    let model: any;
+    let model: DashboardModel;
     beforeEach(() => {
       model = new DashboardModel({
         panels: [
@@ -646,7 +650,7 @@ describe('DashboardModel', () => {
   });
 
   describe('when migrating labels from DataFrame to Field', () => {
-    let model: any;
+    let model: DashboardModel;
     beforeEach(() => {
       model = new DashboardModel({
         panels: [
@@ -890,7 +894,7 @@ describe('DashboardModel', () => {
     });
 
     it('should migrate panels with new Text Panel id', () => {
-      const reactPanel: any = model.panels[1];
+      const reactPanel = model.panels[1];
       expect(reactPanel.id).toEqual(3);
       expect(reactPanel.type).toEqual('text');
       expect(reactPanel.title).toEqual('React Text Panel from scratch');
@@ -901,7 +905,7 @@ describe('DashboardModel', () => {
     });
 
     it('should clean up old angular options for panels with new Text Panel id', () => {
-      const reactPanel: any = model.panels[2];
+      const reactPanel = model.panels[2];
       expect(reactPanel.id).toEqual(4);
       expect(reactPanel.type).toEqual('text');
       expect(reactPanel.title).toEqual('React Text Panel from Angular Panel');
@@ -1077,12 +1081,14 @@ describe('DashboardModel', () => {
               type: 'query',
               name: 'variable_with_unknown_refresh_with_options',
               options: [{ text: 'A', value: 'A' }],
+              // @ts-expect-error
               refresh: 2001,
             },
             {
               type: 'query',
               name: 'variable_with_unknown_refresh_without_options',
               options: [],
+              // @ts-expect-error
               refresh: 2001,
             },
             {
@@ -1560,7 +1566,7 @@ describe('DashboardModel', () => {
   });
 
   describe('migrating legacy CloudWatch queries', () => {
-    let model: any;
+    let model: DashboardModel;
     let panelTargets: any;
 
     beforeEach(() => {

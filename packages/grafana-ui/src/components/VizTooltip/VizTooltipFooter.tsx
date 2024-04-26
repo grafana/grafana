@@ -3,17 +3,17 @@ import React from 'react';
 
 import { Field, GrafanaTheme2, LinkModel } from '@grafana/data';
 
-import { Button, ButtonProps, DataLinkButton, HorizontalGroup } from '..';
+import { Button, ButtonProps, DataLinkButton, Stack } from '..';
 import { useStyles2 } from '../../themes';
 
-interface Props {
+interface VizTooltipFooterProps {
   dataLinks: Array<LinkModel<Field>>;
-  canAnnotate: boolean;
+  annotate?: () => void;
 }
 
 export const ADD_ANNOTATION_ID = 'add-annotation-button';
 
-export const VizTooltipFooter = ({ dataLinks, canAnnotate }: Props) => {
+export const VizTooltipFooter = ({ dataLinks, annotate }: VizTooltipFooterProps) => {
   const styles = useStyles2(getStyles);
 
   const renderDataLinks = () => {
@@ -22,20 +22,20 @@ export const VizTooltipFooter = ({ dataLinks, canAnnotate }: Props) => {
     };
 
     return (
-      <HorizontalGroup>
+      <Stack direction="column" justifyContent="flex-start">
         {dataLinks.map((link, i) => (
           <DataLinkButton key={i} link={link} buttonProps={buttonProps} />
         ))}
-      </HorizontalGroup>
+      </Stack>
     );
   };
 
   return (
     <div className={styles.wrapper}>
       {dataLinks.length > 0 && <div className={styles.dataLinks}>{renderDataLinks()}</div>}
-      {canAnnotate && (
+      {annotate != null && (
         <div className={styles.addAnnotations}>
-          <Button icon="comment-alt" variant="secondary" size="sm" id={ADD_ANNOTATION_ID}>
+          <Button icon="comment-alt" variant="secondary" size="sm" id={ADD_ANNOTATION_ID} onClick={annotate}>
             Add annotation
           </Button>
         </div>
@@ -49,17 +49,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     flex: 1,
+    padding: theme.spacing(0),
   }),
   dataLinks: css({
-    height: 40,
-    overflowX: 'auto',
-    overflowY: 'hidden',
-    whiteSpace: 'nowrap',
     borderTop: `1px solid ${theme.colors.border.medium}`,
-    maskImage: 'linear-gradient(90deg, rgba(0, 0, 0, 1) 80%, transparent)',
+    padding: theme.spacing(1),
   }),
   addAnnotations: css({
     borderTop: `1px solid ${theme.colors.border.medium}`,
-    paddingTop: theme.spacing(1),
+    padding: theme.spacing(1),
   }),
 });

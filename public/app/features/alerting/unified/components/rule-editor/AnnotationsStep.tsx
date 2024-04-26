@@ -5,19 +5,18 @@ import { useFieldArray, useFormContext } from 'react-hook-form';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Button, Field, Input, Text, TextArea, useStyles2 } from '@grafana/ui';
-import { DashboardDataDTO } from 'app/types';
+import { Button, Field, Input, Text, TextArea, useStyles2, Stack } from '@grafana/ui';
 
-import { dashboardApi } from '../../api/dashboardApi';
+import { DashboardModel } from '../../../../dashboard/state';
 import { RuleFormValues } from '../../types/rule-form';
 import { Annotation, annotationLabels } from '../../utils/constants';
 
 import AnnotationHeaderField from './AnnotationHeaderField';
 import DashboardAnnotationField from './DashboardAnnotationField';
-import { DashboardPicker, mergePanels, PanelDTO } from './DashboardPicker';
+import { DashboardPicker, getVisualPanels, PanelDTO } from './DashboardPicker';
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
+import { useDashboardQuery } from './useDashboardQuery';
 
 const AnnotationsStep = () => {
   const styles = useStyles2(getStyles);
@@ -35,31 +34,26 @@ const AnnotationsStep = () => {
   const { fields, append, remove } = useFieldArray({ control, name: 'annotations' });
 
   const selectedDashboardUid = annotations.find((annotation) => annotation.key === Annotation.dashboardUID)?.value;
-  const selectedPanelId = annotations.find((annotation) => annotation.key === Annotation.panelID)?.value;
+  const selectedPanelId = Number(annotations.find((annotation) => annotation.key === Annotation.panelID)?.value);
 
-  const [selectedDashboard, setSelectedDashboard] = useState<DashboardDataDTO | undefined>(undefined);
+  const [selectedDashboard, setSelectedDashboard] = useState<DashboardModel | undefined>(undefined);
   const [selectedPanel, setSelectedPanel] = useState<PanelDTO | undefined>(undefined);
 
-  const { useDashboardQuery } = dashboardApi;
-
-  const { currentData: dashboardResult, isFetching: isDashboardFetching } = useDashboardQuery(
-    { uid: selectedDashboardUid ?? '' },
-    { skip: !selectedDashboardUid }
-  );
+  const { dashboardModel, isFetching: isDashboardFetching } = useDashboardQuery(selectedDashboardUid);
 
   useEffect(() => {
-    if (isDashboardFetching) {
+    if (isDashboardFetching || !dashboardModel) {
       return;
     }
 
-    setSelectedDashboard(dashboardResult?.dashboard);
+    setSelectedDashboard(dashboardModel);
 
-    const allPanels = mergePanels(dashboardResult);
-    const currentPanel = allPanels.find((panel) => panel.id.toString() === selectedPanelId);
+    const allPanels = getVisualPanels(dashboardModel);
+    const currentPanel = allPanels.find((panel) => panel.id === selectedPanelId);
     setSelectedPanel(currentPanel);
-  }, [selectedPanelId, dashboardResult, isDashboardFetching]);
+  }, [selectedPanelId, dashboardModel, isDashboardFetching]);
 
-  const setSelectedDashboardAndPanelId = (dashboardUid: string, panelId: string) => {
+  const setSelectedDashboardAndPanelId = (dashboardUid: string, panelId: number) => {
     const updatedAnnotations = produce(annotations, (draft) => {
       const dashboardAnnotation = draft.find((a) => a.key === Annotation.dashboardUID);
       const panelAnnotation = draft.find((a) => a.key === Annotation.panelID);
@@ -71,9 +65,9 @@ const AnnotationsStep = () => {
       }
 
       if (panelAnnotation) {
-        panelAnnotation.value = panelId;
+        panelAnnotation.value = panelId.toString();
       } else {
-        draft.push({ key: Annotation.panelID, value: panelId });
+        draft.push({ key: Annotation.panelID, value: panelId.toString() });
       }
     });
 
@@ -95,20 +89,15 @@ const AnnotationsStep = () => {
   };
 
   function getAnnotationsSectionDescription() {
-    const docsLink =
-      'https://grafana.com/docs/grafana/latest/alerting/fundamentals/annotation-label/variables-label-annotation';
-
     return (
       <Stack direction="row" gap={0.5} alignItems="baseline">
         <Text variant="bodySmall" color="secondary">
-          Add annotations to provide more context in your alert notifications.
+          Add more context in your notification messages.
         </Text>
         <NeedHelpInfo
-          contentText={`Annotations add metadata to provide more information on the alert in your alert notifications.
+          contentText={`Annotations add metadata to provide more information on the alert in your alert notification messages.
           For example, add a Summary annotation to tell you which value caused the alert to fire or which server it happened on.
           Annotations can contain a combination of text and template code.`}
-          externalLink={docsLink}
-          linkText={`Read about annotations`}
           title="Annotations"
         />
       </Stack>
@@ -116,7 +105,7 @@ const AnnotationsStep = () => {
   }
 
   return (
-    <RuleEditorSection stepNo={4} title="Add annotations" description={getAnnotationsSectionDescription()} fullWidth>
+    <RuleEditorSection stepNo={5} title="Add annotations" description={getAnnotationsSectionDescription()} fullWidth>
       <Stack direction="column" gap={1}>
         {fields.map((annotationField, index: number) => {
           const isUrl = annotations[index]?.key?.toLocaleLowerCase().endsWith('url');

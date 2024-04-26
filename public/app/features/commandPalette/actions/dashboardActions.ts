@@ -8,7 +8,7 @@ import impressionSrv from 'app/core/services/impression_srv';
 import { getGrafanaSearcher } from 'app/features/search/service';
 
 import { CommandPaletteAction } from '../types';
-import { RECENT_DASHBOARDS_PRORITY, SEARCH_RESULTS_PRORITY } from '../values';
+import { RECENT_DASHBOARDS_PRIORITY, SEARCH_RESULTS_PRIORITY } from '../values';
 
 const MAX_SEARCH_RESULTS = 100;
 const MAX_RECENT_DASHBOARDS = 5;
@@ -41,7 +41,7 @@ export async function getRecentDashboardActions(): Promise<CommandPaletteAction[
       id: `recent-dashboards${url}`,
       name: `${name}`,
       section: t('command-palette.section.recent-dashboards', 'Recent dashboards'),
-      priority: RECENT_DASHBOARDS_PRORITY,
+      priority: RECENT_DASHBOARDS_PRIORITY,
       url,
     };
   });
@@ -70,7 +70,7 @@ export async function getSearchResultActions(searchQuery: string): Promise<Comma
         kind === 'dashboard'
           ? t('command-palette.section.dashboard-search-results', 'Dashboards')
           : t('command-palette.section.folder-search-results', 'Folders'),
-      priority: SEARCH_RESULTS_PRORITY,
+      priority: SEARCH_RESULTS_PRIORITY,
       url,
       subtitle: data.view.dataFrame.meta?.custom?.locationInfo[location]?.name,
     };

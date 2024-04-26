@@ -275,7 +275,7 @@ type FakeClient struct {
 	Args []any
 }
 
-func (f *FakeClient) ProfileTypes(ctx context.Context) ([]*ProfileType, error) {
+func (f *FakeClient) ProfileTypes(ctx context.Context, start int64, end int64) ([]*ProfileType, error) {
 	return []*ProfileType{
 		{
 			ID:    "type:1",
@@ -288,15 +288,31 @@ func (f *FakeClient) ProfileTypes(ctx context.Context) ([]*ProfileType, error) {
 	}, nil
 }
 
-func (f *FakeClient) LabelValues(ctx context.Context, label string) ([]string, error) {
+func (f *FakeClient) LabelValues(ctx context.Context, label string, labelSelector string, start int64, end int64) ([]string, error) {
 	panic("implement me")
 }
 
-func (f *FakeClient) LabelNames(ctx context.Context) ([]string, error) {
+func (f *FakeClient) LabelNames(ctx context.Context, labelSelector string, start int64, end int64) ([]string, error) {
 	panic("implement me")
 }
 
 func (f *FakeClient) GetProfile(ctx context.Context, profileTypeID, labelSelector string, start, end int64, maxNodes *int64) (*ProfileResponse, error) {
+	return &ProfileResponse{
+		Flamebearer: &Flamebearer{
+			Names: []string{"foo", "bar", "baz"},
+			Levels: []*Level{
+				{Values: []int64{0, 10, 0, 0}},
+				{Values: []int64{0, 9, 0, 1}},
+				{Values: []int64{0, 8, 8, 2}},
+			},
+			Total:   100,
+			MaxSelf: 56,
+		},
+		Units: "count",
+	}, nil
+}
+
+func (f *FakeClient) GetSpanProfile(ctx context.Context, profileTypeID, labelSelector string, spanSelector []string, start, end int64, maxNodes *int64) (*ProfileResponse, error) {
 	return &ProfileResponse{
 		Flamebearer: &Flamebearer{
 			Names: []string{"foo", "bar", "baz"},

@@ -16,6 +16,7 @@ labels:
     - enterprise
 menuTitle: Reporting
 title: Create and manage reports
+description: Generate and share PDF reports from your Grafana dashboards
 weight: 85
 ---
 
@@ -25,10 +26,6 @@ Reporting enables you to automatically generate PDFs from any of your dashboards
 
 > If you have [Role-based access control][] enabled, for some actions you would need to have relevant permissions.
 > Refer to specific guides to understand what permissions are required.
-
-<!--
-{{< figure src="/static/img/docs/enterprise/reports_list_8.1.png" max-width="500px" >}}
--->
 
 Any changes you make to a dashboard used in a report are reflected the next time the report is sent. For example, if you change the time range in the dashboard, then the time range in the report also changes, unless you've configured a custom time range.
 
@@ -110,23 +107,27 @@ You can include dynamic dashboards with panels or rows, set to repeat by a varia
 
 By default, reports use the saved time range of the dashboard. You can change the time range of the report by:
 
-- Saving a modified time range to the dashboard.
+- Saving a modified time range to the dashboard. Changing the dashboard time range without saving it doesn't change the time zone of the report.
 - Setting a time range via the **Time range** field in the report form. If specified, the custom time range overrides the time range from the report's dashboard.
 
-The page header of the report displays the time range for the dashboard's data queries. Dashboards set to use the browser's time zone use the time zone on the Grafana server.
+The page header of the report displays the time range for the dashboard's data queries.
+
+#### Report time zones
+
+Reports use the time zone of the dashboard from which they’re generated. You can control the time zone for your reports by setting the dashboard to a specific time zone. Note that this affects the display of the dashboard for all users.
+
+If a dashboard has the **Browser Time** setting, the reports generated from that dashboard use the time zone of the Grafana server. As a result, this time zone might not match the time zone of users creating or receiving the report.
 
 If the time zone is set differently between your Grafana server and its remote image renderer, then the time ranges in the report might be different between the page header and the time axes in the panels. To avoid this, set the time zone to UTC for dashboards when using a remote renderer. Each dashboard's time zone setting is visible in the [time range controls][].
 
 ### Layout and orientation
 
-> We're actively developing new report layout options. [Contact us](https://grafana.com/contact?about=grafana-enterprise&topic=design-process&value=reporting) to get involved in the design process.
-
-| Layout | Orientation | Support | Description                                                                                               | Preview                                                                                                                                               |
-| ------ | ----------- | ------- | --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Simple | Portrait    | v6.4+   | Generates an A4 page in portrait mode with three panels per page.                                         | {{< figure src="/static/img/docs/enterprise/reports_portrait_preview.png" max-width="500px" max-height="500px" class="docs-image--no-shadow" >}}      |
-| Simple | Landscape   | v6.7+   | Generates an A4 page in landscape mode with a single panel per page.                                      | {{< figure src="/static/img/docs/enterprise/reports_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" >}}                        |
-| Grid   | Portrait    | v7.2+   | Generates an A4 page in portrait mode with panels arranged in the same way as at the original dashboard.  | {{< figure src="/static/img/docs/enterprise/reports_grid_portrait_preview.png" max-width="500px" max-height="500px" class="docs-image--no-shadow" >}} |
-| Grid   | Landscape   | v7.2+   | Generates an A4 page in landscape mode with panels arranged in the same way as in the original dashboard. | {{< figure src="/static/img/docs/enterprise/reports_grid_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" >}}                   |
+| Layout | Orientation | Support | Description                                                                                               | Preview                                                                                                                                                                             |
+| ------ | ----------- | ------- | --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Simple | Portrait    | v6.4+   | Generates an A4 page in portrait mode with three panels per page.                                         | {{< figure src="/static/img/docs/enterprise/reports_portrait_preview.png" max-width="500px" max-height="500px" class="docs-image--no-shadow" alt="Simple layout in portrait" >}}    |
+| Simple | Landscape   | v6.7+   | Generates an A4 page in landscape mode with a single panel per page.                                      | {{< figure src="/static/img/docs/enterprise/reports_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" alt="Simple layout in landscape" >}}                     |
+| Grid   | Portrait    | v7.2+   | Generates an A4 page in portrait mode with panels arranged in the same way as at the original dashboard.  | {{< figure src="/static/img/docs/enterprise/reports_grid_portrait_preview.png" max-width="500px" max-height="500px" class="docs-image--no-shadow" alt="Grid layout in portrait" >}} |
+| Grid   | Landscape   | v7.2+   | Generates an A4 page in landscape mode with panels arranged in the same way as in the original dashboard. | {{< figure src="/static/img/docs/enterprise/reports_grid_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" alt="Grid layout in landscape" >}}                  |
 
 ### CSV export
 
@@ -139,6 +140,19 @@ This feature relies on the same plugin that supports the [image rendering][] fea
 When the CSV file is generated, it is temporarily written to the `csv` folder in the Grafana `data` folder.
 
 A background job runs every 10 minutes and removes temporary CSV files. You can configure how long a CSV file should be stored before being removed by configuring the [temp-data-lifetime][] setting. This setting also affects how long a renderer PNG file should be stored.
+
+### Table data in PDF
+
+{{% admonition type="note" %}}
+Available in public preview (`pdfTables` feature toggle) in [Grafana Enterprise][] v10.3+ with the [Grafana image renderer plugin](/grafana/plugins/grafana-image-renderer) v3.0+, and [Grafana Cloud](/docs/grafana-cloud/).
+{{% /admonition %}}
+
+When there's more data in your table visualizations than can be shown in the dashboard PDF, you can select one of these two options to access all table visualization data as PDF in your reports:
+
+- **Include table data as PDF appendix** - Adds an appendix to the main dashboard PDF.
+- **Attach a separate PDF of table data** - Generates a separate PDF file.
+
+This feature relies on the same plugin that supports the [image rendering][] features.
 
 ### Scheduling
 
@@ -196,7 +210,7 @@ You can generate and save PDF files of any dashboard.
 
 > **Note:** Available in [Grafana Enterprise][] version 6.7 and later, and [Grafana Cloud](/docs/grafana-cloud/).
 
-1. In the dashboard that you want to export as PDF, click the **Share dashboard** icon.
+1. In the dashboard that you want to export as PDF, click the **Share** button.
 1. On the PDF tab, select a layout option for the exported dashboard: **Portrait** or **Landscape**.
 1. Click **Save as PDF** to render the dashboard as a PDF file.
 
@@ -270,8 +284,8 @@ filters = report:debug
 ```
 
 {{% docs/reference %}}
-[time range controls]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/manage-dashboards"
-[time range controls]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/manage-dashboards"
+[time range controls]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/use-dashboards#set-dashboard-time-range"
+[time range controls]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/use-dashboards#set-dashboard-time-range"
 
 [image rendering]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/image-rendering"
 [image rendering]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/image-rendering"
@@ -292,10 +306,10 @@ filters = report:debug
 [SMTP]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#smtp"
 
 [Repeat panels or rows]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-panel-options#configure-repeating-rows-or-panels"
-[Repeat panels or rows]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-panel-options#configure-repeating-rows-or-panels"
+[Repeat panels or rows]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-panel-options#configure-repeating-rows-or-panels"
 
 [Templates and variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
-[Templates and variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+[Templates and variables]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/variables"
 
 [temp-data-lifetime]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#temp-data-lifetime"
 [temp-data-lifetime]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#temp-data-lifetime"

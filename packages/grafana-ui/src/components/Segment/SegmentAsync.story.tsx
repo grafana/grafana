@@ -29,12 +29,13 @@ const SegmentFrame = ({
   loadOptions: (options: Array<SelectableValue<string>>) => Promise<Array<SelectableValue<string>>>;
 }>) => (
   <>
-    <SegmentSection label="Segment Name">
+    <SegmentSection label="Segment">
       {children}
       <SegmentAsync
         Component={AddButton}
         onChange={(value) => action('New value added')(value)}
         loadOptions={() => loadOptions(options)}
+        inputMinWidth={100}
       />
     </SegmentSection>
   </>
