@@ -13,7 +13,7 @@ export const alertSilencesApi = alertingApi.injectEndpoints({
       query: ({ datasourceUid }) => ({
         url: `/api/alertmanager/${datasourceUid}/api/v2/silences`,
       }),
-      providesTags: ['AlertSilences'],
+      providesTags: ['AlertmanagerSilences'],
     }),
 
     getSilence: build.query<
@@ -26,7 +26,7 @@ export const alertSilencesApi = alertingApi.injectEndpoints({
       query: ({ datasourceUid, id }) => ({
         url: `/api/alertmanager/${datasourceUid}/api/v2/silence/${id}`,
       }),
-      providesTags: ['AlertSilences'],
+      providesTags: ['AlertmanagerSilences'],
     }),
 
     createSilence: build.mutation<
@@ -43,7 +43,7 @@ export const alertSilencesApi = alertingApi.injectEndpoints({
         method: 'POST',
         data: payload,
       }),
-      invalidatesTags: ['AlertSilences', 'AlertmanagerAlerts'],
+      invalidatesTags: ['AlertmanagerSilences', 'AlertmanagerAlerts'],
     }),
 
     expireSilence: build.mutation<
@@ -59,7 +59,7 @@ export const alertSilencesApi = alertingApi.injectEndpoints({
         url: `/api/alertmanager/${datasourceUid}/api/v2/silence/${silenceId}`,
         method: 'DELETE',
       }),
-      invalidatesTags: ['AlertSilences'],
+      invalidatesTags: ['AlertmanagerSilences'],
     }),
   }),
 });

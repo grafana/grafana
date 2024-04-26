@@ -36,7 +36,7 @@ export const alertingApi = createApi({
     'AlertmanagerChoice',
     'AlertmanagerConfiguration',
     'AlertmanagerAlerts',
-    'AlertSilences',
+    'AlertmanagerSilences',
     'OnCallIntegrations',
     'OrgMigrationState',
     'DataSourceSettings',
