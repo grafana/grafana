@@ -38,7 +38,7 @@ weight: 10
 
 {{< figure src="/static/img/docs/time-series-panel/time_series_small_example.png" max-width="1200px" caption="Time series" >}}
 
-Time series visualizations are the default and primary way to visualize time series data as a graph. They can render series as lines, points, or bars. They're versatile enough to display almost any time-series data. [This public demo dashboard](https://play.grafana.org/d/000000016/1-time-series-graphs?orgId=1) contains many different examples of how a time series visualization can be configured and styled.
+Time series visualizations are the default and primary way to visualize time series data as a graph. They can render series as lines, points, or bars. They're versatile enough to display almost any time-series data.
 
 {{% admonition type="note" %}}
 You can migrate from the old Graph visualization to the new time series visualization. To migrate, open the panel and click the **Migrate** button in the side pane.
@@ -48,21 +48,17 @@ The following video guides you through the creation steps and common customizati
 
 {{< youtube id="RKtW87cPxsw" >}}
 
+{{< docs/play title="Time Series Visualizations in Grafana" url="https://play.grafana.org/d/000000016/" >}}
+
 ## Tooltip options
 
-Tooltip options control the information overlay that appears when you hover over data points in the graph.
-
-{{< docs/shared lookup="visualizations/tooltip-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
-
-### Hover proximity
-
-This option controls how close your cursor must be to a data point before the tooltip appears. Values are in pixels.
+{{< docs/shared lookup="visualizations/tooltip-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Legend options
 
-Legend options control the series names and statistics that appear under or to the right of the graph.
+Legend options control the series names and statistics that appear under or to the right of the visualization.
 
-{{< docs/shared lookup="visualizations/legend-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
+{{< docs/shared lookup="visualizations/legend-mode.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Graph styles
 

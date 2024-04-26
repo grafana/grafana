@@ -28,17 +28,13 @@ type store interface {
 	GetByLogin(context.Context, *user.GetUserByLoginQuery) (*user.User, error)
 	GetByEmail(context.Context, *user.GetUserByEmailQuery) (*user.User, error)
 	Update(context.Context, *user.UpdateUserCommand) error
-	ChangePassword(context.Context, *user.ChangeUserPasswordCommand) error
 	UpdateLastSeenAt(context.Context, *user.UpdateUserLastSeenAtCommand) error
 	GetSignedInUser(context.Context, *user.GetSignedInUserQuery) (*user.SignedInUser, error)
 	UpdateUser(context.Context, *user.User) error
 	GetProfile(context.Context, *user.GetUserProfileQuery) (*user.UserProfileDTO, error)
 	SetHelpFlag(context.Context, *user.SetUserHelpFlagCommand) error
-	UpdatePermissions(context.Context, int64, bool) error
 	BatchDisableUsers(context.Context, *user.BatchDisableUsersCommand) error
-	Disable(context.Context, *user.DisableUserCommand) error
 	Search(context.Context, *user.SearchUsersQuery) (*user.SearchUserQueryResult, error)
-
 	Count(ctx context.Context) (int64, error)
 	CountUserAccountsWithEmptyRole(ctx context.Context) (int64, error)
 }
@@ -94,9 +90,10 @@ func (ss *sqlStore) Insert(ctx context.Context, cmd *user.User) (int64, error) {
 func (ss *sqlStore) Get(ctx context.Context, usr *user.User) (*user.User, error) {
 	ret := &user.User{}
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		login := usr.Login
-		email := usr.Email
-		where := "LOWER(email)=LOWER(?) OR LOWER(login)=LOWER(?)"
+		// enforcement of lowercase due to forcement of caseinsensitive login
+		login := strings.ToLower(usr.Login)
+		email := strings.ToLower(usr.Email)
+		where := "email=? OR login=?"
 
 		exists, err := sess.Where(where, email, login).Get(ret)
 		if !exists {
@@ -182,6 +179,9 @@ func (ss *sqlStore) CaseInsensitiveLoginConflict(ctx context.Context, login, ema
 }
 
 func (ss *sqlStore) GetByLogin(ctx context.Context, query *user.GetUserByLoginQuery) (*user.User, error) {
+	// enforcement of lowercase due to forcement of caseinsensitive login
+	query.LoginOrEmail = strings.ToLower(query.LoginOrEmail)
+
 	usr := &user.User{}
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		if query.LoginOrEmail == "" {
@@ -195,7 +195,7 @@ func (ss *sqlStore) GetByLogin(ctx context.Context, query *user.GetUserByLoginQu
 		// Since username can be an email address, attempt login with email address
 		// first if the login field has the "@" symbol.
 		if strings.Contains(query.LoginOrEmail, "@") {
-			where = "LOWER(email)=LOWER(?)"
+			where = "email=?"
 			has, err = sess.Where(ss.notServiceAccountFilter()).Where(where, query.LoginOrEmail).Get(usr)
 			if err != nil {
 				return err
@@ -204,7 +204,7 @@ func (ss *sqlStore) GetByLogin(ctx context.Context, query *user.GetUserByLoginQu
 
 		// Look for the login field instead of email
 		if !has {
-			where = "LOWER(login)=LOWER(?)"
+			where = "login=?"
 			has, err = sess.Where(ss.notServiceAccountFilter()).Where(where, query.LoginOrEmail).Get(usr)
 		}
 
@@ -212,9 +212,6 @@ func (ss *sqlStore) GetByLogin(ctx context.Context, query *user.GetUserByLoginQu
 			return err
 		} else if !has {
 			return user.ErrUserNotFound
-		}
-		if err := ss.userCaseInsensitiveLoginConflict(ctx, sess, usr.Login, usr.Email); err != nil {
-			return err
 		}
 		return nil
 	})
@@ -227,13 +224,16 @@ func (ss *sqlStore) GetByLogin(ctx context.Context, query *user.GetUserByLoginQu
 }
 
 func (ss *sqlStore) GetByEmail(ctx context.Context, query *user.GetUserByEmailQuery) (*user.User, error) {
+	// enforcement of lowercase due to forcement of caseinsensitive login
+	query.Email = strings.ToLower(query.Email)
+
 	usr := &user.User{}
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		if query.Email == "" {
 			return user.ErrUserNotFound
 		}
 
-		where := "LOWER(email)=LOWER(?)"
+		where := "email=?"
 		has, err := sess.Where(ss.notServiceAccountFilter()).Where(where, query.Email).Get(usr)
 
 		if err != nil {
@@ -241,31 +241,12 @@ func (ss *sqlStore) GetByEmail(ctx context.Context, query *user.GetUserByEmailQu
 		} else if !has {
 			return user.ErrUserNotFound
 		}
-
-		if err := ss.userCaseInsensitiveLoginConflict(ctx, sess, usr.Login, usr.Email); err != nil {
-			return err
-		}
 		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
 	return usr, nil
-}
-
-func (ss *sqlStore) userCaseInsensitiveLoginConflict(ctx context.Context, sess *db.Session, login, email string) error {
-	users := make([]user.User, 0)
-
-	if err := sess.Where("LOWER(email)=LOWER(?) OR LOWER(login)=LOWER(?)",
-		email, login).Find(&users); err != nil {
-		return err
-	}
-
-	if len(users) > 1 {
-		return &user.ErrCaseInsensitiveLoginConflict{Users: users}
-	}
-
-	return nil
 }
 
 // LoginConflict returns an error if the provided email or login are already
@@ -303,31 +284,49 @@ func (ss *sqlStore) loginConflict(ctx context.Context, sess *db.Session, login, 
 }
 
 func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
+	// enforcement of lowercase due to forcement of caseinsensitive login
 	cmd.Login = strings.ToLower(cmd.Login)
 	cmd.Email = strings.ToLower(cmd.Email)
 
 	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		user := user.User{
 			Name:    cmd.Name,
-			Email:   cmd.Email,
-			Login:   cmd.Login,
+			Email:   strings.ToLower(cmd.Email),
+			Login:   strings.ToLower(cmd.Login),
 			Theme:   cmd.Theme,
 			Updated: time.Now(),
 		}
 
 		q := sess.ID(cmd.UserID).Where(ss.notServiceAccountFilter())
 
+		if cmd.Password != nil {
+			user.Password = *cmd.Password
+		}
+
+		if cmd.IsDisabled != nil {
+			sess.UseBool("is_disabled")
+			user.IsDisabled = *cmd.IsDisabled
+		}
+
 		if cmd.EmailVerified != nil {
 			q.UseBool("email_verified")
 			user.EmailVerified = *cmd.EmailVerified
+		}
+
+		if cmd.IsGrafanaAdmin != nil {
+			q.UseBool("is_admin")
+			user.IsAdmin = *cmd.IsGrafanaAdmin
 		}
 
 		if _, err := q.Update(&user); err != nil {
 			return err
 		}
 
-		if err := ss.userCaseInsensitiveLoginConflict(ctx, sess, user.Login, user.Email); err != nil {
-			return err
+		if cmd.IsGrafanaAdmin != nil && !*cmd.IsGrafanaAdmin {
+			// validate that after update there is at least one server admin
+			if err := validateOneAdminLeft(ctx, sess); err != nil {
+				return err
+			}
 		}
 
 		sess.PublishAfterCommit(&events.UserUpdated{
@@ -339,18 +338,6 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) err
 		})
 
 		return nil
-	})
-}
-
-func (ss *sqlStore) ChangePassword(ctx context.Context, cmd *user.ChangeUserPasswordCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		user := user.User{
-			Password: cmd.NewPassword,
-			Updated:  time.Now(),
-		}
-
-		_, err := sess.ID(cmd.UserID).Where(ss.notServiceAccountFilter()).Update(&user)
-		return err
 	})
 }
 
@@ -476,28 +463,6 @@ func (ss *sqlStore) SetHelpFlag(ctx context.Context, cmd *user.SetUserHelpFlagCo
 	})
 }
 
-// UpdatePermissions sets the user Server Admin flag
-func (ss *sqlStore) UpdatePermissions(ctx context.Context, userID int64, isAdmin bool) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		var user user.User
-		if _, err := sess.ID(userID).Where(ss.notServiceAccountFilter()).Get(&user); err != nil {
-			return err
-		}
-
-		user.IsAdmin = isAdmin
-		sess.UseBool("is_admin")
-		_, err := sess.ID(user.ID).Update(&user)
-		if err != nil {
-			return err
-		}
-		// validate that after update there is at least one server admin
-		if err := validateOneAdminLeft(ctx, sess); err != nil {
-			return err
-		}
-		return nil
-	})
-}
-
 func (ss *sqlStore) Count(ctx context.Context) (int64, error) {
 	type result struct {
 		Count int64
@@ -566,25 +531,6 @@ func (ss *sqlStore) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisabl
 		}
 
 		_, err := sess.Where(ss.notServiceAccountFilter()).Exec(disableParams...)
-		return err
-	})
-}
-
-func (ss *sqlStore) Disable(ctx context.Context, cmd *user.DisableUserCommand) error {
-	return ss.db.WithDbSession(ctx, func(dbSess *db.Session) error {
-		usr := user.User{}
-		sess := dbSess.Table("user")
-
-		if has, err := sess.ID(cmd.UserID).Where(ss.notServiceAccountFilter()).Get(&usr); err != nil {
-			return err
-		} else if !has {
-			return user.ErrUserNotFound
-		}
-
-		usr.IsDisabled = cmd.IsDisabled
-		sess.UseBool("is_disabled")
-
-		_, err := sess.ID(cmd.UserID).Update(&usr)
 		return err
 	})
 }

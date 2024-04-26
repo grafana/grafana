@@ -24,6 +24,7 @@ import store from 'app/core/store';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
+import { deleteDashboard } from 'app/features/manage-dashboards/state/actions';
 import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardDTO, DashboardMeta, SaveDashboardResponseDTO } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
@@ -49,6 +50,7 @@ import {
   NEW_PANEL_WIDTH,
   forceRenderChildren,
   getClosestVizPanel,
+  getDashboardSceneFor,
   getDefaultRow,
   getDefaultVizPanel,
   getPanelIdForVizPanel,
@@ -56,7 +58,7 @@ import {
   isPanelClone,
 } from '../utils/utils';
 
-import { AddLibraryPanelWidget } from './AddLibraryPanelWidget';
+import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
 import { DashboardControls } from './DashboardControls';
 import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
@@ -116,7 +118,6 @@ export interface DashboardSceneState extends SceneObjectState {
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
-  static listenToChangesInProps = PERSISTED_PROPS;
   static Component = DashboardSceneRenderer;
 
   /**
@@ -252,6 +253,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
         url: result.url,
         slug: result.slug,
         folderUid: folderUid,
+        isNew: false,
       },
     });
 
@@ -394,6 +396,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
         slug: meta.slug,
         currentQueryParams: location.search,
         updateQuery: { viewPanel: null, inspect: null, editview: null, editPanel: null, tab: null },
+        isHomeDashboard: !meta.url && !meta.slug && !meta.isNew,
       }),
     };
 
@@ -760,30 +763,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     locationService.partial({ editview: 'settings' });
   };
 
-  public onCreateLibPanelWidget() {
-    if (!(this.state.body instanceof SceneGridLayout)) {
-      throw new Error('Trying to add a panel in a layout that is not SceneGridLayout');
-    }
-
-    if (!this.state.isEditing) {
-      this.onEnterEditMode();
-    }
-
-    const sceneGridLayout = this.state.body;
-
-    const panelId = dashboardSceneGraph.getNextPanelId(this);
-
-    const newGridItem = new DashboardGridItem({
-      height: NEW_PANEL_HEIGHT,
-      width: NEW_PANEL_WIDTH,
-      x: 0,
-      y: 0,
-      body: new AddLibraryPanelWidget({ key: getVizPanelKeyForPanelId(panelId) }),
-      key: `grid-item-${panelId}`,
-    });
-
-    sceneGridLayout.setState({
-      children: [newGridItem, ...sceneGridLayout.state.children],
+  public onShowAddLibraryPanelDrawer() {
+    this.setState({
+      overlay: new AddLibraryPanelDrawer({}),
     });
   }
 
@@ -811,7 +793,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
    * Called by the SceneQueryRunner to privide contextural parameters (tracking) props for the request
    */
   public enrichDataRequest(sceneObject: SceneObject): Partial<DataQueryRequest> {
-    const panel = getClosestVizPanel(sceneObject);
+    const dashboard = getDashboardSceneFor(sceneObject);
+
+    let panel = getClosestVizPanel(sceneObject);
+
+    if (dashboard.state.isEditing && dashboard.state.editPanel) {
+      panel = dashboard.state.editPanel.state.vizManager.state.panel;
+    }
+
     let panelId = 0;
 
     if (panel && panel.state.key) {
@@ -844,6 +833,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   /** Hacky temp function until we refactor transformSaveModelToScene a bit */
   public setInitialSaveModel(saveModel: Dashboard) {
     this._initialSaveModel = saveModel;
+  }
+
+  public async deleteDashboard() {
+    await deleteDashboard(this.state.uid!, true);
+    // Need to mark it non dirty to navigate away without unsaved changes warning
+    this.setState({ isDirty: false });
+    locationService.replace('/');
   }
 }
 

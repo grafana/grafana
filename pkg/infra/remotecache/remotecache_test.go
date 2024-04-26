@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
@@ -33,15 +34,15 @@ func createTestClient(t *testing.T, opts *setting.RemoteCacheOptions, sqlstore d
 }
 
 func TestCachedBasedOnConfig(t *testing.T) {
-	cfg := setting.NewCfg()
+	db, cfg := sqlstore.InitTestDB(t)
 	err := cfg.Load(setting.CommandLineArgs{
 		HomePath: "../../../",
 	})
 	require.Nil(t, err, "Failed to load config")
 
-	client := createTestClient(t, cfg.RemoteCacheOptions, db.InitTestDB(t))
+	client := createTestClient(t, cfg.RemoteCacheOptions, db)
 	runTestsForClient(t, client)
-	runCountTestsForClient(t, cfg.RemoteCacheOptions, db.InitTestDB(t))
+	runCountTestsForClient(t, cfg.RemoteCacheOptions, db)
 }
 
 func TestInvalidCacheTypeReturnsError(t *testing.T) {

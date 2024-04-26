@@ -346,7 +346,7 @@ export function RichHistoryCard(props: Props) {
 
   // exploreId on where the query will be ran, and the datasource ID for the item's DS
   const runQueryText = (exploreId: string, dsUid: string) => {
-    return dsUid !== undefined && isDifferentDatasource(dsUid, exploreId)
+    return dsUid !== undefined && exploreId !== undefined && isDifferentDatasource(dsUid, exploreId)
       ? {
           fallbackText: 'Switch data source and run query',
           translation: t('explore.rich-history-card.switch-datasource-button', 'Switch data source and run query'),
@@ -360,14 +360,14 @@ export function RichHistoryCard(props: Props) {
   const runButton = () => {
     const disabled = cardRootDatasource?.uid === undefined;
     if (!isPaneSplit) {
-      const exploreId = exploreActiveDS.exploreToDS[0].exploreId;
+      const exploreId = exploreActiveDS.exploreToDS[0]?.exploreId; // may be undefined if explore is refreshed while the pane is up
       const buttonText = runQueryText(exploreId, props.queryHistoryItem.datasourceUid);
       return (
         <Button
           variant="secondary"
           aria-label={buttonText.translation}
           onClick={() => onRunQuery(exploreId)}
-          disabled={disabled}
+          disabled={disabled || exploreId === undefined}
         >
           {buttonText.translation}
         </Button>

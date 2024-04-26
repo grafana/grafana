@@ -14,6 +14,7 @@ import {
 import { useStyles2, Tooltip, Stack } from '@grafana/ui';
 
 import { DataTrail, DataTrailState, getTopSceneFor } from './DataTrail';
+import { reportExploreMetrics } from './interactions';
 import { VAR_FILTERS } from './shared';
 import { getTrailFor, isSceneTimeRangeState } from './utils';
 
@@ -123,10 +124,17 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
       return;
     }
 
+    const step = this.state.steps[stepIndex];
+    const type = step.type === 'metric' && step.trailState.metric === undefined ? 'metric-clear' : step.type;
+
+    reportExploreMetrics('history_step_clicked', { type });
+
     this.stepTransitionInProgress = true;
     this.setState({ currentStep: stepIndex });
-    // The URL will update
 
+    getTrailFor(this).restoreFromHistoryStep(step.trailState);
+
+    // The URL will update
     this.stepTransitionInProgress = false;
   }
 
