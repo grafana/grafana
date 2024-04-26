@@ -1,7 +1,9 @@
 package scope
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/http"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -12,10 +14,12 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/spec3"
 
 	scope "github.com/grafana/grafana/pkg/apis/scope/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 )
 
 var _ builder.APIGroupBuilder = (*ScopeAPIBuilder)(nil)
@@ -150,5 +154,69 @@ func (b *ScopeAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 
 // Register additional routes with the server
 func (b *ScopeAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	return nil
+
+	defs := scope.GetOpenAPIDefinitions(func(path string) spec.Ref { return spec.Ref{} })
+	scopeNodeSchema := defs["github.com/grafana/grafana/pkg/apis/scopes/v0alpha1.ScopeNodeSpec"].Schema
+
+	return &builder.APIRoutes{
+		Root: []builder.APIRouteHandler{
+			{
+				Path: "find",
+				Spec: &spec3.PathProps{
+					Summary:     "find scope nodes by certain critieras",
+					Description: "find searches for scope nodes based on parentName and a search query that matches titles. If parentName is left empty all root scope nodes will be returned. The query will return no more then 200 scope nodes by default. If the limit is exceeded, the client should refine the query.",
+					Get: &spec3.Operation{
+						OperationProps: spec3.OperationProps{
+							Parameters: []*spec3.Parameter{
+								{
+									ParameterProps: spec3.ParameterProps{Name: "parentName"},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{Name: "query"},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{Name: "limit"},
+								},
+							},
+							Responses: &spec3.Responses{
+								ResponsesProps: spec3.ResponsesProps{
+									StatusCodeResponses: map[int]*spec3.Response{
+										200: {
+											ResponseProps: spec3.ResponseProps{
+												Description: "OK",
+												Content: map[string]*spec3.MediaType{
+													"text/plain": {
+														MediaTypeProps: spec3.MediaTypeProps{
+															Schema: &scopeNodeSchema,
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Handler: findGETHandler,
+			},
+		},
+	}
+}
+
+// findGETHandler is a custom handler for searching ScopeNodes based on parentName and a query that can match on the title of the scopenode.
+// The API only needs to return a fixed number of results. If the limit is exceeded, the client should refine the query.
+func findGETHandler(w http.ResponseWriter, req *http.Request) {
+	//parentName := req.URL.Query().Get("parentName")
+	//query := req.URL.Query().Get("query")
+	//limit := req.URL.Query().Get("limit")
+
+	// fetch scopesnodes from the api server based on parent + query match on title.
+
+	var results []scope.ScopeNode = nil
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(results)
 }
