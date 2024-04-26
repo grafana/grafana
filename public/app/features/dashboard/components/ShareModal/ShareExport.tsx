@@ -42,7 +42,7 @@ export class ShareExport extends PureComponent<Props, State> {
 
     DashboardInteractions.exportSaveJsonClicked({
       externally: shareExternally,
-      source: getTrackingSource(this.props.panel),
+      shareResource: getTrackingSource(this.props.panel),
     });
 
     if (shareExternally) {
@@ -59,7 +59,7 @@ export class ShareExport extends PureComponent<Props, State> {
     const { shareExternally } = this.state;
     DashboardInteractions.exportViewJsonClicked({
       externally: shareExternally,
-      source: getTrackingSource(this.props.panel),
+      shareResource: getTrackingSource(this.props.panel),
     });
 
     if (shareExternally) {

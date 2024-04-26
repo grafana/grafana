@@ -131,7 +131,7 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
       currentTimeRange: this.state.useLockedTime,
       theme: this.state.selectedTheme,
       shortenURL: this.state.useShortUrl,
-      source: getTrackingSource(this.state.panelRef),
+      shareResource: getTrackingSource(this.state.panelRef),
     });
   };
 }

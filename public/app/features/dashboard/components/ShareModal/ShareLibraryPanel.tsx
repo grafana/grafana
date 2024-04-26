@@ -13,7 +13,7 @@ interface Props extends ShareModalTabProps {
 
 export const ShareLibraryPanel = ({ panel, initialFolderUid, onDismiss }: Props) => {
   useEffect(() => {
-    reportInteraction('grafana_dashboards_library_panel_share_viewed', { source: getTrackingSource(panel) });
+    reportInteraction('grafana_dashboards_library_panel_share_viewed', { shareResource: getTrackingSource(panel) });
   }, [panel]);
 
   if (!panel) {

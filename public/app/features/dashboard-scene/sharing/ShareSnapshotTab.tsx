@@ -126,12 +126,12 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> {
       if (external) {
         DashboardInteractions.publishSnapshotClicked({
           expires: cmdData.expires,
-          source: getTrackingSource(this.state.panelRef),
+          shareResource: getTrackingSource(this.state.panelRef),
         });
       } else {
         DashboardInteractions.publishSnapshotLocalClicked({
           expires: cmdData.expires,
-          source: getTrackingSource(this.state.panelRef),
+          shareResource: getTrackingSource(this.state.panelRef),
         });
       }
     }

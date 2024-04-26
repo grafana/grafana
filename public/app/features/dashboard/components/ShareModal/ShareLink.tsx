@@ -78,7 +78,7 @@ export class ShareLink extends PureComponent<Props, State> {
       currentTimeRange: this.state.useCurrentTimeRange,
       theme: this.state.selectedTheme,
       shortenURL: this.state.useShortUrl,
-      source: getTrackingSource(this.props.panel),
+      shareResource: getTrackingSource(this.props.panel),
     });
   };
 

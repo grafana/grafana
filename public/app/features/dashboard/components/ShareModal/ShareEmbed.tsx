@@ -24,7 +24,7 @@ export function ShareEmbed({ panel, dashboard, range, buildIframe = buildIframeH
   const [iframeHtml, setIframeHtml] = useState('');
 
   useEffectOnce(() => {
-    reportInteraction('grafana_dashboards_embed_share_viewed', { source: getTrackingSource(panel) });
+    reportInteraction('grafana_dashboards_embed_share_viewed', { shareResource: getTrackingSource(panel) });
   });
 
   useEffect(() => {
@@ -85,7 +85,7 @@ export function ShareEmbed({ panel, dashboard, range, buildIframe = buildIframeH
             DashboardInteractions.embedSnippetCopy({
               currentTimeRange: useCurrentTimeRange,
               theme: selectedTheme,
-              source: getTrackingSource(panel),
+              shareResource: getTrackingSource(panel),
             });
           }}
         >

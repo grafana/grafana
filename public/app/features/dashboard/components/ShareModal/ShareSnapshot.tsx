@@ -119,13 +119,13 @@ export class ShareSnapshot extends PureComponent<Props, State> {
         DashboardInteractions.publishSnapshotClicked({
           expires: snapshotExpires,
           timeout: timeoutSeconds,
-          source: getTrackingSource(this.props.panel),
+          shareResource: getTrackingSource(this.props.panel),
         });
       } else {
         DashboardInteractions.publishSnapshotLocalClicked({
           expires: snapshotExpires,
           timeout: timeoutSeconds,
-          source: getTrackingSource(this.props.panel),
+          shareResource: getTrackingSource(this.props.panel),
         });
       }
       this.setState({ isLoading: false });

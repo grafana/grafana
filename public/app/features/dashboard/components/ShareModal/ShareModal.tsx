@@ -104,7 +104,7 @@ class UnthemedShareModal extends React.Component<Props, State> {
     this.setState((prevState) => ({ ...prevState, activeTab: t.value }));
     DashboardInteractions.sharingTabChanged({
       item: t.value,
-      source: getTrackingSource(this.props.panel),
+      shareResource: getTrackingSource(this.props.panel),
     });
   };
 
