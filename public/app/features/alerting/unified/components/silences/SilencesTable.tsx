@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React, { useMemo } from 'react';
 
 import { dateMath, GrafanaTheme2 } from '@grafana/data';
+import { isFetchError } from '@grafana/runtime';
 import { CollapsableSection, Icon, Link, LinkButton, useStyles2, Stack, Alert } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { alertSilencesApi } from 'app/features/alerting/unified/api/alertSilencesApi';
@@ -59,8 +60,7 @@ const SilencesTable = ({ alertManagerSourceName }: Props) => {
   );
 
   const mimirLazyInitError =
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (error as any)?.message?.includes('the Alertmanager is not configured') && amFeatures?.lazyConfigInit;
+    isFetchError(error) && error?.message?.includes('the Alertmanager is not configured') && amFeatures?.lazyConfigInit;
 
   const styles = useStyles2(getStyles);
   const [queryParams] = useQueryParams();
@@ -109,9 +109,8 @@ const SilencesTable = ({ alertManagerSourceName }: Props) => {
     );
   }
 
-  if (error) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const errMessage = (error as any)?.message || 'Unknown error.';
+  if (isFetchError(error)) {
+    const errMessage = error?.message || 'Unknown error.';
     return (
       <Alert severity="error" title="Error loading silences">
         {errMessage}
