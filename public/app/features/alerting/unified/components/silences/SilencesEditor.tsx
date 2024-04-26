@@ -2,7 +2,6 @@ import { css, cx } from '@emotion/css';
 import { isEqual, pickBy } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { useHistory } from 'react-router';
 import { useDebounce } from 'react-use';
 
 import {
@@ -14,8 +13,18 @@ import {
   isValidDate,
   parseDuration,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { Button, Field, FieldSet, Input, LinkButton, TextArea, useStyles2 } from '@grafana/ui';
+import { config, isFetchError, locationService } from '@grafana/runtime';
+import {
+  Alert,
+  Button,
+  Field,
+  FieldSet,
+  Input,
+  LinkButton,
+  LoadingPlaceholder,
+  TextArea,
+  useStyles2,
+} from '@grafana/ui';
 import { alertSilencesApi } from 'app/features/alerting/unified/api/alertSilencesApi';
 import { getDatasourceAPIUid } from 'app/features/alerting/unified/utils/datasource';
 import { Matcher, MatcherOperator, Silence, SilenceCreatePayload } from 'app/plugins/datasource/alertmanager/types';
@@ -96,8 +105,9 @@ const getDefaultFormValues = (searchParams: URLSearchParams, silence?: Silence):
 };
 
 export const SilencesEditor = ({ silenceId, alertManagerSourceName }: Props) => {
-  const history = useHistory();
-  const [getSilence, { data: silence, isLoading: getSilenceIsLoading }] =
+  // Use a lazy query to fetch the Silence info, as we may not always require this
+  // (e.g. if creating a new one from scratch, we don't need to fetch anything)
+  const [getSilence, { data: silence, isLoading: getSilenceIsLoading, error: errorGettingExistingSilence }] =
     alertSilencesApi.endpoints.getSilence.useLazyQuery();
   const [createSilence, { isLoading }] = alertSilencesApi.endpoints.createSilence.useMutation();
   const [urlSearchParams] = useURLSearchParams();
@@ -129,7 +139,7 @@ export const SilencesEditor = ({ silenceId, alertManagerSourceName }: Props) => 
     await createSilence({ datasourceUid: getDatasourceAPIUid(alertManagerSourceName), payload })
       .unwrap()
       .then(() => {
-        history.push(makeAMLink('/alerting/silences', alertManagerSourceName));
+        locationService.push(makeAMLink('/alerting/silences', alertManagerSourceName));
       });
   };
 
@@ -139,8 +149,10 @@ export const SilencesEditor = ({ silenceId, alertManagerSourceName }: Props) => 
   const matcherFields = watch('matchers');
 
   useEffect(() => {
-    // Allows the form to correctly initialise when an existing silence is fetch from the backend
-    reset(getDefaultFormValues(urlSearchParams, silence));
+    if (silence) {
+      // Allows the form to correctly initialise when an existing silence is fetch from the backend
+      reset(getDefaultFormValues(urlSearchParams, silence));
+    }
   }, [reset, silence, urlSearchParams]);
 
   useEffect(() => {
@@ -190,13 +202,20 @@ export const SilencesEditor = ({ silenceId, alertManagerSourceName }: Props) => 
   const userLogged = Boolean(config.bootData.user.isSignedIn && config.bootData.user.name);
 
   if (getSilenceIsLoading) {
-    return null;
+    return <LoadingPlaceholder text="Loading existing silence information..." />;
+  }
+
+  const existingSilenceNotFound =
+    isFetchError(errorGettingExistingSilence) && errorGettingExistingSilence.status === 404;
+
+  if (existingSilenceNotFound) {
+    return <Alert title={`Existing silence "${silenceId}" not found`} severity="warning" />;
   }
 
   return (
     <FormProvider {...formAPI}>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <FieldSet label={silenceId ? 'Recreate silence' : 'Create silence'}>
+        <FieldSet>
           <div className={cx(styles.flexRow, styles.silencePeriod)}>
             <SilencePeriod />
             <Field
