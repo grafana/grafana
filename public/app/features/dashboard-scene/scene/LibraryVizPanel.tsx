@@ -83,7 +83,7 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
 
   private async loadLibraryPanelFromPanelModel() {
     let vizPanel = this.state.panel!;
-    await new Promise((f) => setTimeout(f, 1000));
+
     try {
       const libPanel = await getLibraryPanel(this.state.uid, true);
       this.setPanelFromLibPanel(libPanel);
