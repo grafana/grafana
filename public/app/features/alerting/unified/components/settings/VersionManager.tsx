@@ -59,12 +59,10 @@ const AlertmanagerConfigurationVersionManager = ({
     currentData: historicalConfigs = [],
     isLoading,
     error,
-  } = alertmanagerApi.endpoints.getValidAlertManagersConfig.useQuery(undefined, {
-    refetchOnMountOrArgChange: true,
-  });
+  } = alertmanagerApi.endpoints.getAlertmanagerConfigurationHistory.useQuery(undefined);
 
   const [resetAlertManagerConfigToOldVersion, restoreVersionState] =
-    alertmanagerApi.endpoints.resetAlertManagerConfigToOldVersion.useMutation();
+    alertmanagerApi.endpoints.resetAlertmanagerConfigurationToOldVersion.useMutation();
 
   const showConfirmation = () => {
     setConfirmRestore(true);

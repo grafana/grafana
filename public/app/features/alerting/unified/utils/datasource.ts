@@ -111,7 +111,7 @@ export function useGetAlertManagerDataSourcesByPermissionAndConfig(
   const internalDSAlertManagers = allAlertManagersByPermission.availableInternalDataSources;
 
   //get current alerting configuration
-  const { currentData: amConfigStatus } = alertmanagerApi.useGetAlertmanagerChoiceStatusQuery(undefined);
+  const { currentData: amConfigStatus } = alertmanagerApi.endpoints.getGrafanaAlertingConfigurationStatus.useQuery();
 
   const alertmanagerChoice = amConfigStatus?.alertmanagersChoice;
 

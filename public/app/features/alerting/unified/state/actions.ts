@@ -7,8 +7,6 @@ import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
   AlertmanagerGroup,
-  ExternalAlertmanagerConfig,
-  ExternalAlertmanagersResponse,
   Matcher,
   Receiver,
   Silence,
@@ -44,14 +42,11 @@ import {
   withRulerRulesMetadataLogging,
 } from '../Analytics';
 import {
-  addAlertManagers,
   createOrUpdateSilence,
   deleteAlertManagerConfig,
   expireSilence,
   fetchAlertGroups,
   fetchAlerts,
-  fetchExternalAlertmanagerConfig,
-  fetchExternalAlertmanagers,
   fetchSilences,
   testReceivers,
   updateAlertManagerConfig,
@@ -133,20 +128,6 @@ export const fetchPromRulesAction = createAsyncThunk(
     return await withSerializedError(
       fetchRulesWithLogging(rulesSourceName, filter, limitAlerts, matcher, state, identifier)
     );
-  }
-);
-
-export const fetchExternalAlertmanagersAction = createAsyncThunk(
-  'unifiedAlerting/fetchExternalAlertmanagers',
-  (): Promise<ExternalAlertmanagersResponse> => {
-    return withSerializedError(fetchExternalAlertmanagers());
-  }
-);
-
-export const fetchExternalAlertmanagersConfigAction = createAsyncThunk(
-  'unifiedAlerting/fetchExternAlertmanagersConfig',
-  (): Promise<ExternalAlertmanagerConfig> => {
-    return withSerializedError(fetchExternalAlertmanagerConfig());
   }
 );
 
@@ -944,24 +925,6 @@ export const updateRulesOrder = createAsyncThunk(
       {
         errorMessage: 'Failed to update namespace / group',
         successMessage: 'Update successful',
-      }
-    );
-  }
-);
-
-export const addExternalAlertmanagersAction = createAsyncThunk(
-  'unifiedAlerting/addExternalAlertmanagers',
-  async (alertmanagerConfig: ExternalAlertmanagerConfig, thunkAPI): Promise<void> => {
-    return withAppEvents(
-      withSerializedError(
-        (async () => {
-          await addAlertManagers(alertmanagerConfig);
-          thunkAPI.dispatch(fetchExternalAlertmanagersConfigAction());
-        })()
-      ),
-      {
-        errorMessage: 'Failed adding alertmanagers',
-        successMessage: 'Alertmanagers updated',
       }
     );
   }

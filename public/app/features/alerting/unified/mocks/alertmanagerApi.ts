@@ -4,26 +4,29 @@ import { SetupServer } from 'msw/node';
 import {
   AlertmanagerChoice,
   AlertManagerCortexConfig,
-  ExternalAlertmanagersResponse,
+  ExternalAlertmanagersStatusResponse,
 } from '../../../../plugins/datasource/alertmanager/types';
-import { AlertmanagersChoiceResponse } from '../api/alertmanagerApi';
+import { GrafanaAlertingConfigurationStatusResponse } from '../api/alertmanagerApi';
 import { getDatasourceAPIUid } from '../utils/datasource';
 
-export const defaultAlertmanagerChoiceResponse: AlertmanagersChoiceResponse = {
+export const defaultAlertmanagerChoiceResponse: GrafanaAlertingConfigurationStatusResponse = {
   alertmanagersChoice: AlertmanagerChoice.Internal,
   numExternalAlertmanagers: 0,
 };
-export function mockAlertmanagerChoiceResponse(server: SetupServer, response: AlertmanagersChoiceResponse) {
+export function mockAlertmanagerChoiceResponse(
+  server: SetupServer,
+  response: GrafanaAlertingConfigurationStatusResponse
+) {
   server.use(http.get('/api/v1/ngalert', () => HttpResponse.json(response)));
 }
 
-export const emptyExternalAlertmanagersResponse: ExternalAlertmanagersResponse = {
+export const emptyExternalAlertmanagersResponse: ExternalAlertmanagersStatusResponse = {
   data: {
     droppedAlertManagers: [],
     activeAlertManagers: [],
   },
 };
-export function mockAlertmanagersResponse(server: SetupServer, response: ExternalAlertmanagersResponse) {
+export function mockAlertmanagersResponse(server: SetupServer, response: ExternalAlertmanagersStatusResponse) {
   server.use(http.get('/api/v1/ngalert/alertmanagers', () => HttpResponse.json(response)));
 }
 

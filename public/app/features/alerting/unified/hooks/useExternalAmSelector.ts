@@ -1,5 +1,8 @@
 import { DataSourceSettings } from '@grafana/data';
-import { AlertManagerDataSourceJsonData, ExternalAlertmanagers } from 'app/plugins/datasource/alertmanager/types';
+import {
+  AlertManagerDataSourceJsonData,
+  ExternalAlertmanagersConnectionStatus,
+} from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { dataSourcesApi } from '../api/dataSourcesApi';
@@ -50,7 +53,7 @@ export function useExternalDataSourceAlertmanagers(): ExternalAlertmanagerDataSo
 
 // using the information from /api/v1/ngalert/alertmanagers we should derive the connection status of a single data source
 function determineAlertmanagerConnectionStatus(
-  externalAlertmanagers: ExternalAlertmanagers,
+  externalAlertmanagers: ExternalAlertmanagersConnectionStatus,
   dataSourceSettings: DataSourceSettings<AlertManagerDataSourceJsonData>
 ): ConnectionStatus {
   const isInterestedInAlerts = dataSourceSettings.jsonData.handleGrafanaManagedAlerts;

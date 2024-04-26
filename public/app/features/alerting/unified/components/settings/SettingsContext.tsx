@@ -3,7 +3,7 @@ import React, { PropsWithChildren, useEffect, useRef } from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
-import { AlertmanagerChoice, ExternalAlertmanagerConfig } from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerChoice, GrafanaAlertingConfiguration } from 'app/plugins/datasource/alertmanager/types';
 import { dispatch } from 'app/store/store';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
@@ -14,14 +14,14 @@ import {
 } from '../../hooks/useExternalAmSelector';
 import { deleteAlertManagerConfigAction, updateAlertManagerConfigAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME, isAlertmanagerDataSourceInterestedInAlerts } from '../../utils/datasource';
-import { isReceivingOnInternalAlertmanager } from '../../utils/settings';
+import { isInternalAlertmanagerInterestedInAlerts } from '../../utils/settings';
 
 import { useEnableOrDisableHandlingGrafanaManagedAlerts } from './hooks';
 
 const appEvents = getAppEvents();
 
 interface Context {
-  deliverySettings?: ExternalAlertmanagerConfig;
+  configuration?: GrafanaAlertingConfiguration;
   externalAlertmanagerDataSourcesWithStatus: ExternalAlertmanagerDataSourceWithStatus[];
 
   isLoading: boolean;
@@ -44,17 +44,17 @@ export const SettingsProvider = (props: PropsWithChildren) => {
   // this will be used to infer the correct "delivery mode" and update the correct list of datasources with "wantsAlertsReceived"
   let interestedAlertmanagers: string[] = [];
 
-  const { currentData: deliverySettings, isLoading: isLoadingDeliverySettings } =
-    alertmanagerApi.endpoints.getExternalAlertmanagerConfig.useQuery();
+  const { currentData: configuration, isLoading: isLoadingConfiguration } =
+    alertmanagerApi.endpoints.getGrafanaAlertingConfiguration.useQuery();
 
-  const [updateDeliverySettings, updateDeliverySettingsState] =
-    alertmanagerApi.endpoints.saveExternalAlertmanagersConfig.useMutation();
+  const [updateConfiguration, updateConfigurationState] =
+    alertmanagerApi.endpoints.updateGrafanaAlertingConfiguration.useMutation();
   const [enableGrafanaManagedAlerts, disableGrafanaManagedAlerts, enableOrDisableHandlingGrafanaManagedAlertsState] =
     useEnableOrDisableHandlingGrafanaManagedAlerts();
 
   const externalAlertmanagersWithStatus = useExternalDataSourceAlertmanagers();
 
-  const interestedInternal = isReceivingOnInternalAlertmanager(deliverySettings);
+  const interestedInternal = isInternalAlertmanagerInterestedInAlerts(configuration);
   if (interestedInternal) {
     interestedAlertmanagers.push(GRAFANA_RULES_SOURCE_NAME);
   }
@@ -72,8 +72,8 @@ export const SettingsProvider = (props: PropsWithChildren) => {
       return;
     }
 
-    if (newDeliveryMode !== deliverySettings?.alertmanagersChoice) {
-      updateDeliverySettings({ alertmanagersChoice: newDeliveryMode });
+    if (newDeliveryMode !== configuration?.alertmanagersChoice) {
+      updateConfiguration({ alertmanagersChoice: newDeliveryMode });
     }
 
     if (!isInternalAlertmanager(uid)) {
@@ -88,8 +88,8 @@ export const SettingsProvider = (props: PropsWithChildren) => {
       return;
     }
 
-    if (newDeliveryMode !== deliverySettings?.alertmanagersChoice) {
-      updateDeliverySettings({ alertmanagersChoice: newDeliveryMode });
+    if (newDeliveryMode !== configuration?.alertmanagersChoice) {
+      updateConfiguration({ alertmanagersChoice: newDeliveryMode });
     }
 
     if (!isInternalAlertmanager(uid)) {
@@ -113,12 +113,12 @@ export const SettingsProvider = (props: PropsWithChildren) => {
   };
 
   const value: Context = {
-    deliverySettings,
+    configuration,
     externalAlertmanagerDataSourcesWithStatus: externalAlertmanagersWithStatus,
     enableAlertmanager,
     disableAlertmanager,
-    isLoading: isLoadingDeliverySettings,
-    isUpdating: updateDeliverySettingsState.isLoading || enableOrDisableHandlingGrafanaManagedAlertsState.isLoading,
+    isLoading: isLoadingConfiguration,
+    isUpdating: updateConfigurationState.isLoading || enableOrDisableHandlingGrafanaManagedAlertsState.isLoading,
 
     // CRUD for Alertmanager settings
     updateAlertmanagerSettings,

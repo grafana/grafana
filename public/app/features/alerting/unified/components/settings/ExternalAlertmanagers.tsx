@@ -19,12 +19,8 @@ interface Props {
 }
 
 export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
-  const {
-    externalAlertmanagerDataSourcesWithStatus: externalAlertmanagersWithStatus,
-    deliverySettings,
-    enableAlertmanager,
-    disableAlertmanager,
-  } = useSettings();
+  const { externalAlertmanagerDataSourcesWithStatus, configuration, enableAlertmanager, disableAlertmanager } =
+    useSettings();
 
   // determine if the alertmanger is receiving alerts
   // this is true if Grafana is configured to send to either "both" or "external" and the Alertmanager datasource _wants_ to receive alerts.
@@ -32,7 +28,7 @@ export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
     externalDataSourceAlertmanager: ExternalAlertmanagerDataSourceWithStatus
   ): boolean => {
     const sendingToExternal = [AlertmanagerChoice.All, AlertmanagerChoice.External].some(
-      (choice) => deliverySettings?.alertmanagersChoice === choice
+      (choice) => configuration?.alertmanagersChoice === choice
     );
     const wantsAlertsReceived = isAlertmanagerDataSourceInterestedInAlerts(
       externalDataSourceAlertmanager.dataSourceSettings
@@ -43,7 +39,7 @@ export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
 
   return (
     <Stack direction="column" gap={0}>
-      {externalAlertmanagersWithStatus.map((alertmanager) => {
+      {externalAlertmanagerDataSourcesWithStatus.map((alertmanager) => {
         const { uid, name, jsonData, url } = alertmanager.dataSourceSettings;
         const { status } = alertmanager;
 

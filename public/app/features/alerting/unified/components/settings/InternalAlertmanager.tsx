@@ -2,7 +2,7 @@ import React from 'react';
 
 import { ConnectionStatus } from '../../hooks/useExternalAmSelector';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
-import { isReceivingOnInternalAlertmanager } from '../../utils/settings';
+import { isInternalAlertmanagerInterestedInAlerts } from '../../utils/settings';
 
 import { AlertmanagerCard } from './AlertmanagerCard';
 import { useSettings } from './SettingsContext';
@@ -12,9 +12,9 @@ interface Props {
 }
 
 export default function InternalAlertmanager({ onEditConfiguration }: Props) {
-  const { deliverySettings, enableAlertmanager, disableAlertmanager } = useSettings();
+  const { configuration, enableAlertmanager, disableAlertmanager } = useSettings();
 
-  const isReceiving = isReceivingOnInternalAlertmanager(deliverySettings);
+  const isReceiving = isInternalAlertmanagerInterestedInAlerts(configuration);
   const status: ConnectionStatus = isReceiving ? 'active' : 'uninterested';
   const handleEditConfiguration = () => onEditConfiguration(GRAFANA_RULES_SOURCE_NAME);
 

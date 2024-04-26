@@ -1,12 +1,12 @@
 import { http, HttpResponse } from 'msw';
 import { SetupServer, setupServer } from 'msw/node';
 
-import { AlertmanagersChoiceResponse } from 'app/features/alerting/unified/api/alertmanagerApi';
+import { GrafanaAlertingConfigurationStatusResponse } from 'app/features/alerting/unified/api/alertmanagerApi';
 import { mockAlertmanagerChoiceResponse } from 'app/features/alerting/unified/mocks/alertmanagerApi';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 
-const alertmanagerChoiceMockedResponse: AlertmanagersChoiceResponse = {
+const alertmanagerChoiceMockedResponse: GrafanaAlertingConfigurationStatusResponse = {
   alertmanagersChoice: AlertmanagerChoice.Internal,
   numExternalAlertmanagers: 0,
 };
