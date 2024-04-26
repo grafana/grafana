@@ -15,4 +15,4 @@ You'll set the following options:
   - **Absolute**
   - **Percentage**
 
-To learn more, refer to [Configure thresholds](../../configure-thresholds/)
+To learn more, refer to [Configure thresholds](../../configure-thresholds/).

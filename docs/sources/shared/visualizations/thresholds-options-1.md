@@ -14,12 +14,6 @@ You'll set the following options:
 - **Thresholds mode** - Choose from:
   - **Absolute**
   - **Percentage**
-- **Show thresholds** - Choose from:
-  - **Off**
-  - **As lines**
-  - **As lines (dashed)**
-  - **As filled regions**
-  - **As filled regions and lines**
-  - **As filled regions and lines (dashed)**
+- **Show thresholds** - Choose from a variety of display options including not displaying thresholds at all.
 
-To learn more, refer to [Configure thresholds](../../configure-thresholds/)
+To learn more, refer to [Configure thresholds](../../configure-thresholds/).
