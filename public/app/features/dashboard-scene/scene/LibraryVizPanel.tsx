@@ -19,7 +19,7 @@ import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from './PanelMenuBehavior';
 import { PanelNotices } from './PanelNotices';
 
-interface LibraryVizPanelState extends SceneObjectState {
+export interface LibraryVizPanelState extends SceneObjectState {
   // Library panels use title from dashboard JSON's panel model, not from library panel definition, hence we pass it.
   title: string;
   uid: string;
@@ -83,7 +83,7 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
 
   private async loadLibraryPanelFromPanelModel() {
     let vizPanel = this.state.panel!;
-
+    await new Promise((f) => setTimeout(f, 1000));
     try {
       const libPanel = await getLibraryPanel(this.state.uid, true);
       this.setPanelFromLibPanel(libPanel);
