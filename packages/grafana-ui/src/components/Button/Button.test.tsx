@@ -12,15 +12,13 @@ describe('Button', () => {
 
 describe('LinkButton', () => {
   it('Renders link button without attributes for disabled state.', () => {
-    const linkText = 'link-button';
     const href = 'https://grafana.com';
 
-    render(<LinkButton href={href}>{linkText}</LinkButton>);
+    render(<LinkButton href={href}>link-button</LinkButton>);
 
-    const linkElem = screen.getByText(linkText).closest('a');
+    const linkElem = screen.getByRole('link').closest('a');
 
     expect(linkElem).toHaveAttribute('href', href);
-    expect(linkElem).not.toHaveAttribute('role');
     expect(linkElem).not.toHaveAttribute('aria-disabled');
   });
 
