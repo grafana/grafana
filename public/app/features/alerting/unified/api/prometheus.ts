@@ -102,7 +102,23 @@ export const groupRulesByFileName = (groups: PromRuleGroupDTO[], dataSourceName:
 
   return Object.values(nsMap);
 };
+export const ungroupRulesByFileName = (namespaces?: RuleNamespace[]): PromRuleGroupDTO[] => {
+  let groups: PromRuleGroupDTO[] = [];
 
+  namespaces?.forEach((namespace) => {
+    namespace.groups.forEach((group) => {
+      const promGroup: PromRuleGroupDTO = {
+        name: group.name,
+        file: namespace.name,
+        rules: group.rules,
+        interval: group.interval,
+      };
+      groups.push(promGroup);
+    });
+  });
+
+  return groups;
+};
 export async function fetchRules(
   dataSourceName: string,
   filter?: FetchPromRulesFilter,

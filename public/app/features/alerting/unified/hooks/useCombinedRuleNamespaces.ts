@@ -38,7 +38,7 @@ import {
 
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 
-interface CacheValue {
+export interface CacheValue {
   promRules?: RuleNamespace[];
   rulerRules?: RulerRulesConfigDTO | null;
   result: CombinedRuleNamespace[];
@@ -211,7 +211,10 @@ export function sortRulesByName(rules: CombinedRule[]) {
   return rules.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-function addRulerGroupsToCombinedNamespace(namespace: CombinedRuleNamespace, groups: RulerRuleGroupDTO[] = []): void {
+export function addRulerGroupsToCombinedNamespace(
+  namespace: CombinedRuleNamespace,
+  groups: RulerRuleGroupDTO[] = []
+): void {
   namespace.groups = groups.map((group) => {
     const numRecordingRules = group.rules.filter((rule) => isRecordingRulerRule(rule)).length;
     const numPaused = group.rules.filter((rule) => isGrafanaRulerRule(rule) && rule.grafana_alert.is_paused).length;
@@ -231,7 +234,7 @@ function addRulerGroupsToCombinedNamespace(namespace: CombinedRuleNamespace, gro
   });
 }
 
-function addPromGroupsToCombinedNamespace(namespace: CombinedRuleNamespace, groups: RuleGroup[]): void {
+export function addPromGroupsToCombinedNamespace(namespace: CombinedRuleNamespace, groups: RuleGroup[]): void {
   const existingGroupsByName = new Map<string, CombinedRuleGroup>();
   namespace.groups.forEach((group) => existingGroupsByName.set(group.name, group));
 

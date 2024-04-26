@@ -15,12 +15,12 @@ interface AlertRulesToolbarButtonProps {
 export default function AlertRulesToolbarButton({ dashboardUid }: AlertRulesToolbarButtonProps) {
   const { showModal, hideModal } = useContext(ModalsContext);
 
-  const { data: namespaces = [] } = alertRuleApi.endpoints.prometheusRuleNamespaces.useQuery({
+  const { currentData: promRuleNs } = alertRuleApi.endpoints.prometheusRuleNamespaces.useQuery({
     ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
     dashboardUid: dashboardUid,
   });
 
-  if (namespaces.length === 0) {
+  if (promRuleNs?.length === 0) {
     return null;
   }
 
