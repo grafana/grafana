@@ -1,7 +1,9 @@
-import { HttpResponse, RequestHandler, http } from 'msw';
+import { RequestHandler } from 'msw';
 
 import { PluginMeta, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
+
+import { pluginsHandler } from '../mocks/server/handlers';
 
 export function setupPlugins(...plugins: PluginMeta[]): { apiHandlers: RequestHandler[] } {
   const pluginsRegistry = new Map<string, PluginMeta>();
@@ -18,14 +20,7 @@ export function setupPlugins(...plugins: PluginMeta[]): { apiHandlers: RequestHa
   });
 
   return {
-    apiHandlers: [
-      http.get<{ pluginId: string }>(`/api/plugins/:pluginId/settings`, ({ params: { pluginId } }) => {
-        if (pluginsRegistry.has(pluginId)) {
-          return HttpResponse.json<PluginMeta>(pluginsRegistry.get(pluginId)!);
-        }
-        return HttpResponse.json({ message: 'Plugin not found, no installed plugin with that id' }, { status: 404 });
-      }),
-    ],
+    apiHandlers: [pluginsHandler(pluginsRegistry)],
   };
 }
 

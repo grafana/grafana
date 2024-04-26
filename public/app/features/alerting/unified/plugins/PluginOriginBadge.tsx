@@ -15,7 +15,7 @@ export function PluginOriginBadge({ pluginId }: PluginOriginBadgeProps) {
   const logo = pluginMeta?.info.logos?.small;
 
   const badgeIcon = logo ? (
-    <img src={logo} alt={pluginMeta?.name} style={{ width: '20px', height: '20px', borderRadius: '50%' }} />
+    <img src={logo} alt={pluginMeta?.name} style={{ width: '20px', height: '20px' }} />
   ) : (
     <Badge text={pluginId} color="orange" />
   );

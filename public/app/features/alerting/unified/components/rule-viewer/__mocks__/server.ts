@@ -2,9 +2,10 @@ import { http, HttpResponse, RequestHandler } from 'msw';
 import { setupServer } from 'msw/node';
 
 import { AlertmanagersChoiceResponse } from 'app/features/alerting/unified/api/alertmanagerApi';
-import { mockAlertmanagerChoiceResponseHandler } from 'app/features/alerting/unified/mocks/alertmanagerApi';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
+
+import { alertmanagerChoiceHandler } from '../../../mocks/server/handlers';
 
 const alertmanagerChoiceMockedResponse: AlertmanagersChoiceResponse = {
   alertmanagersChoice: AlertmanagerChoice.Internal,
@@ -20,10 +21,9 @@ const folderAccess = {
 
 export function createMockGrafanaServer(...handlers: RequestHandler[]) {
   const folderHandler = mockFolderAccess(folderAccess);
-  const amChoiceHandler = mockAlertmanagerChoiceResponseHandler(alertmanagerChoiceMockedResponse);
-  const server = setupServer(folderHandler, amChoiceHandler, ...handlers);
+  const amChoiceHandler = alertmanagerChoiceHandler(alertmanagerChoiceMockedResponse);
 
-  return server;
+  return setupServer(folderHandler, amChoiceHandler, ...handlers);
 }
 
 // this endpoint is used to determine of we have edit / delete permissions for the Grafana managed alert rule

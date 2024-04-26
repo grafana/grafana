@@ -9,16 +9,14 @@ import {
 import { AlertmanagersChoiceResponse } from '../api/alertmanagerApi';
 import { getDatasourceAPIUid } from '../utils/datasource';
 
+import { alertmanagerChoiceHandler } from './server/handlers';
+
 export const defaultAlertmanagerChoiceResponse: AlertmanagersChoiceResponse = {
   alertmanagersChoice: AlertmanagerChoice.Internal,
   numExternalAlertmanagers: 0,
 };
 export function mockAlertmanagerChoiceResponse(server: SetupServer, response: AlertmanagersChoiceResponse) {
-  server.use(mockAlertmanagerChoiceResponseHandler(response));
-}
-
-export function mockAlertmanagerChoiceResponseHandler(response: AlertmanagersChoiceResponse) {
-  return http.get('/api/v1/ngalert', () => HttpResponse.json(response));
+  server.use(alertmanagerChoiceHandler(response));
 }
 
 export const emptyExternalAlertmanagersResponse: ExternalAlertmanagersResponse = {
