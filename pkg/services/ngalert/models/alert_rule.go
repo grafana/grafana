@@ -768,8 +768,3 @@ func GroupByAlertRuleGroupKey(rules []*AlertRule) map[AlertRuleGroupKey]RulesGro
 	}
 	return result
 }
-
-type DataSourceRef struct {
-	Type string
-	UID  string
-}
