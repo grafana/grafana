@@ -7,6 +7,9 @@ import { DataQuerySpecResponse } from './types';
 
 export const BASE_URL = '/apis/peakq.grafana.app/v0alpha1/namespaces/default/querytemplates/';
 
+/**
+ * TODO: similar code is duplicated in many places. To be unified in #86960
+ */
 export const baseQuery: BaseQueryFn<void, DataQuerySpecResponse, Error> = async () => {
   try {
     const responseObservable = getBackendSrv().fetch<DataQuerySpecResponse>({

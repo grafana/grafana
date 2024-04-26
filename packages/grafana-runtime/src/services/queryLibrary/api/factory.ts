@@ -15,6 +15,5 @@ export const createQueryLibraryApi = () => {
       }),
     }),
     reducerPath: undefined,
-    tagTypes: [],
   });
 };
