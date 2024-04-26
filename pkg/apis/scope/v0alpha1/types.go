@@ -83,11 +83,11 @@ type ScopeNode struct {
 }
 
 type ScopeNodeSpec struct {
-	ParentName *string `json:"parentname, omitempty"`
-	Title      string  `json:"title, omitempty"`
-	IsLeaf     bool    `json:"isLeaf, omitempty"`
-	LeafType   string  `json:"leafType, omitempty"`
-	LeafName   string  `json:"leafName, omitempty"`
+	ParentName *string `json:"parentName"`
+	Title      string  `json:"title"`
+	IsLeaf     bool    `json:"isLeaf"`
+	LeafType   string  `json:"leafType"`
+	LeafName   string  `json:"leafName"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
