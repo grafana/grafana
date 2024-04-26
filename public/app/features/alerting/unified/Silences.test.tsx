@@ -12,7 +12,7 @@ import { MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 
 import Silences from './Silences';
-import { grantUserPermissions, mockDataSource, MockDataSourceSrv } from './mocks';
+import { grantUserPermissions, MOCK_SILENCE_ID_EXISTING, mockDataSource, MockDataSourceSrv } from './mocks';
 import { AlertmanagerProvider } from './state/AlertmanagerContext';
 import { setupDataSources } from './testSetup/datasources';
 import { DataSourceType } from './utils/datasource';
@@ -51,6 +51,7 @@ const ui = {
   silencedAlertCell: byTestId('alerts'),
   addSilenceButton: byRole('link', { name: /add silence/i }),
   queryBar: byPlaceholderText('Search'),
+  existingSilenceNotFound: byRole('alert', { name: /existing silence .* not found/i }),
   editor: {
     timeRange: byTestId(selectors.components.TimePicker.openButton),
     durationField: byLabelText('Duration'),
@@ -289,6 +290,22 @@ describe('Silence create/edit', () => {
     },
     TEST_TIMEOUT
   );
+
+  it('shows an error when existing silence cannot be found', async () => {
+    renderSilences('/alerting/silence/foo-bar/edit');
+
+    expect(await ui.existingSilenceNotFound.find()).toBeInTheDocument();
+  });
+
+  it('populates form with existing silence information', async () => {
+    renderSilences(`/alerting/silence/${MOCK_SILENCE_ID_EXISTING}/edit`);
+
+    // Await the first value to be populated, after which we can expect that all of the other
+    // existing fields have been filled out as well
+    await waitFor(() => expect(ui.editor.matcherName.get()).toHaveValue('foo'));
+    expect(ui.editor.matcherValue.get()).toHaveValue('bar');
+    expect(ui.editor.comment.get()).toHaveValue('Silence noisy alerts');
+  });
 
   it(
     'silences page should contain alertmanager parameter after creating a silence',

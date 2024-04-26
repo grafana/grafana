@@ -307,10 +307,16 @@ export const mockSilence = (partial: Partial<Silence> = {}): Silence => {
   };
 };
 
+export const MOCK_SILENCE_ID_EXISTING = 'f209e273-0e4e-434f-9f66-e72f092025a2';
+
 export const mockSilences = [
-  mockSilence({ id: '12345' }),
-  mockSilence({ id: '67890', matchers: parseMatchers('foo!=bar'), comment: 'Catch all' }),
-  mockSilence({ id: '1111', status: { state: SilenceState.Expired } }),
+  mockSilence({ id: MOCK_SILENCE_ID_EXISTING }),
+  mockSilence({
+    id: 'ce031625-61c7-47cd-9beb-8760bccf0ed7',
+    matchers: parseMatchers('foo!=bar'),
+    comment: 'Catch all',
+  }),
+  mockSilence({ id: '145884a8-ee20-4864-9f84-661305fb7d82', status: { state: SilenceState.Expired } }),
 ];
 
 export const mockNotifiersState = (partial: Partial<NotifiersState> = {}): NotifiersState => {
