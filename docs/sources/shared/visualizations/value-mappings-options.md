@@ -8,7 +8,7 @@ In addition to field overrides, value mapping is a technique you can use to chan
 
 For each value mapping, you'll set the following options:
 
-- **Condition** - Choose what is mapped to the display text and (optionally) color:
+- **Condition** - Choose what's mapped to the display text and (optionally) color:
   - **Value** - Specific values
   - **Range** - Numerical ranges
   - **Regex** - Regular expressions
