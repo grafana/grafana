@@ -227,17 +227,15 @@ class UnthemedLogs extends PureComponent<Props, State> {
     }
 
     // check if we have dataFrames that return the same level
-    let tempLevel: string;
-    const logLevels: string[] = [];
+    const logLevelsArray: string[] = [];
     logVolumeDataFrames.forEach((dataFrame) => {
       const { level } = getLogLevelInfo(dataFrame);
-      if (tempLevel !== level) {
-        logLevels.push(level);
-      }
-      tempLevel = level;
+      logLevelsArray.push(level);
     });
 
-    if (logLevels.length > 1 && this.props.logsVolumeEnabled && numberOfLogVolumes === 1) {
+    const logLevels = new Set(logLevelsArray);
+
+    if (logLevels.size > 1 && this.props.logsVolumeEnabled && numberOfLogVolumes === 1) {
       logLevels.forEach((level) => {
         const allLevelsSelected = this.state.hiddenLogLevels.length === 0;
         const currentLevelSelected = !this.state.hiddenLogLevels.find((hiddenLevel) => hiddenLevel === level);
