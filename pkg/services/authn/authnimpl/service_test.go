@@ -488,7 +488,7 @@ func TestService_ResolveIdentity(t *testing.T) {
 	t.Run("should return error for for unknown namespace", func(t *testing.T) {
 		svc := setupTests(t)
 		_, err := svc.ResolveIdentity(context.Background(), 1, "some:1")
-		assert.ErrorIs(t, err, authn.ErrInvalidNamepsaceID)
+		assert.ErrorIs(t, err, authn.ErrInvalidNamespaceID)
 	})
 
 	t.Run("should return error for for namespace that don't have a resolver", func(t *testing.T) {

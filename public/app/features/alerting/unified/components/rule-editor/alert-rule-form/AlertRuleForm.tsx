@@ -5,7 +5,7 @@ import { Link, useParams } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Button, ConfirmModal, CustomScrollbar, HorizontalGroup, Spinner, Stack, useStyles2 } from '@grafana/ui';
+import { Button, ConfirmModal, CustomScrollbar, Spinner, Stack, useStyles2 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
@@ -184,7 +184,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   useEffect(() => setEvaluateEvery(evaluateEveryInForm), [evaluateEveryInForm]);
 
   const actionButtons = (
-    <HorizontalGroup height="auto" justify="flex-end">
+    <Stack justifyContent="flex-end" alignItems="center">
       {existing && (
         <Button
           variant="primary"
@@ -217,7 +217,6 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
           Delete
         </Button>
       ) : null}
-
       {existing && isCortexLokiOrRecordingRule(watch) && (
         <Button
           variant="secondary"
@@ -229,7 +228,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
           Edit YAML
         </Button>
       )}
-    </HorizontalGroup>
+    </Stack>
   );
 
   const isPaused = existing && isGrafanaRulerRule(existing.rule) && isGrafanaRulerRulePaused(existing.rule);
