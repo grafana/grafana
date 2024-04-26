@@ -13,6 +13,8 @@ type slogHandler struct {
 	log.Logger
 }
 
+func Provide() slog.Handler { return New(log.New()) }
+
 // NewSLogHandler returns a new slog.Handler that logs to the given log.Logger.
 func New(logger log.Logger) *slogHandler {
 	return &slogHandler{logger}
@@ -31,6 +33,7 @@ func (h *slogHandler) Handle(ctx context.Context, r slog.Record) error {
 		return true
 	}
 	r.Attrs(fn)
+	attrs = append(attrs, log.FromContext(ctx)...)
 
 	switch level := r.Level; {
 	case level < slog.LevelInfo:

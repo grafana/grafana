@@ -90,7 +90,7 @@ func TestIntegrationFolderService(t *testing.T) {
 
 		service := &Service{
 			cfg:                  cfg,
-			log:                  log.New("test-folder-service"),
+			glog:                 log.New("test-folder-service"),
 			dashboardStore:       dashStore,
 			dashboardFolderStore: folderStore,
 			store:                nestedFolderStore,
@@ -367,7 +367,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 
 	serviceWithFlagOn := &Service{
 		cfg:                  cfg,
-		log:                  log.New("test-folder-service"),
+		glog:                 log.New("test-folder-service"),
 		dashboardStore:       dashStore,
 		dashboardFolderStore: folderStore,
 		store:                nestedFolderStore,
@@ -482,7 +482,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 
 			serviceWithFlagOff := &Service{
 				cfg:                  cfg,
-				log:                  log.New("test-folder-service"),
+				glog:                 log.New("test-folder-service"),
 				dashboardStore:       dashStore,
 				dashboardFolderStore: folderStore,
 				store:                nestedFolderStore,
@@ -562,7 +562,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 		featuresFlagOff := featuremgmt.WithFeatures()
 		serviceWithFlagOff := &Service{
 			cfg:                  cfg,
-			log:                  log.New("test-folder-service"),
+			glog:                 log.New("test-folder-service"),
 			dashboardFolderStore: folderStore,
 			features:             featuresFlagOff,
 			bus:                  b,
@@ -742,7 +742,7 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 		dashboardStore:       &dashStore,
 		dashboardFolderStore: dashboardFolderStore,
 		features:             featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
-		log:                  log.New("test-folder-service"),
+		glog:                 log.New("test-folder-service"),
 		accessControl:        acimpl.ProvideAccessControl(cfg),
 		metrics:              newFoldersMetrics(nil),
 	}
@@ -779,7 +779,7 @@ func TestFolderServiceDualWrite(t *testing.T) {
 		dashboardStore:       dashStore,
 		dashboardFolderStore: dashboardFolderStore,
 		features:             featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
-		log:                  log.New("test-folder-service"),
+		glog:                 log.New("test-folder-service"),
 		accessControl:        acimpl.ProvideAccessControl(cfg),
 		metrics:              newFoldersMetrics(nil),
 		bus:                  bus.ProvideBus(tracing.InitializeTracerForTest()),
@@ -1295,7 +1295,7 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 
 	serviceWithFlagOn := &Service{
 		cfg:                  cfg,
-		log:                  log.New("test-folder-service"),
+		glog:                 log.New("test-folder-service"),
 		dashboardStore:       dashStore,
 		dashboardFolderStore: folderStore,
 		store:                nestedFolderStore,
@@ -1664,7 +1664,7 @@ func TestFolderServiceGetFolder(t *testing.T) {
 
 		return Service{
 			cfg:                  cfg,
-			log:                  log.New("test-folder-service"),
+			glog:                 log.New("test-folder-service"),
 			dashboardStore:       dashStore,
 			dashboardFolderStore: folderStore,
 			store:                nestedFolderStore,
@@ -1747,7 +1747,7 @@ func TestFolderServiceGetFolders(t *testing.T) {
 
 	serviceWithFlagOff := &Service{
 		cfg:                  cfg,
-		log:                  log.New("test-folder-service"),
+		glog:                 log.New("test-folder-service"),
 		dashboardStore:       dashStore,
 		dashboardFolderStore: folderStore,
 		store:                nestedFolderStore,
@@ -1834,7 +1834,7 @@ func TestGetChildrenFilterByPermission(t *testing.T) {
 
 	folderSvcOn := &Service{
 		cfg:                  cfg,
-		log:                  log.New("test-folder-service"),
+		glog:                 log.New("test-folder-service"),
 		dashboardStore:       dashStore,
 		dashboardFolderStore: folderStore,
 		store:                nestedFolderStore,
@@ -2138,7 +2138,7 @@ func setup(t *testing.T, dashStore dashboards.Store, dashboardFolderStore folder
 	cfg := setting.NewCfg()
 	return &Service{
 		cfg:                  cfg,
-		log:                  log.New("test-folder-service"),
+		glog:                 log.New("test-folder-service"),
 		dashboardStore:       dashStore,
 		dashboardFolderStore: dashboardFolderStore,
 		store:                nestedFolderStore,

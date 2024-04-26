@@ -200,19 +200,21 @@ func (cl *ConcreteLogger) log(msg string, logLevel level.Value, args ...any) err
 	return cl.Log(append([]any{level.Key(), logLevel, "msg", msg}, args...)...)
 }
 
-func (cl *ConcreteLogger) FromContext(ctx context.Context) Logger {
+func FromContext(ctx context.Context) []any {
 	args := []any{}
-
 	for _, p := range ctxLogProviders {
 		if pArgs, exists := p(ctx); exists {
 			args = append(args, pArgs...)
 		}
 	}
+	return args
+}
 
+func (cl *ConcreteLogger) FromContext(ctx context.Context) Logger {
+	args := FromContext(ctx)
 	if len(args) > 0 {
 		return cl.New(args...)
 	}
-
 	return cl
 }
 
