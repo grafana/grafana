@@ -35,7 +35,6 @@ func AlertRuleFromProvisionedAlertRule(a definitions.ProvisionedAlertRule) (mode
 		// For now, no rules can be recording rules. So, we force these to be empty.
 		Record:     "",
 		RecordFrom: "",
-		RecordTo:   nil,
 	}, nil
 }
 

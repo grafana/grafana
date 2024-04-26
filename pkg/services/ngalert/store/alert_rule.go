@@ -163,7 +163,6 @@ func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRu
 				Labels:               r.Labels,
 				Record:               r.Record,
 				RecordFrom:           r.RecordFrom,
-				RecordTo:             r.RecordTo,
 				NotificationSettings: r.NotificationSettings,
 			})
 		}
@@ -243,7 +242,6 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateR
 				ExecErrState:         r.New.ExecErrState,
 				Record:               r.New.Record,
 				RecordFrom:           r.New.RecordFrom,
-				RecordTo:             r.New.RecordTo,
 				For:                  r.New.For,
 				Annotations:          r.New.Annotations,
 				Labels:               r.New.Labels,

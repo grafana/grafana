@@ -194,7 +194,6 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 			ExecErrState:    "test-err",
 			Record:          "my_metric",
 			RecordFrom:      "A",
-			RecordTo:        &models.DataSourceRef{Type: "prometheus", UID: "prometheus-ds-uid"},
 			For:             12,
 			Annotations: map[string]string{
 				"key-annotation": "value-annotation",
@@ -235,7 +234,6 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 			ExecErrState:    "test-err2",
 			Record:          "my_metric2",
 			RecordFrom:      "B",
-			RecordTo:        &models.DataSourceRef{Type: "prometheus2", UID: "prometheus-ds-uid-2"},
 			For:             1141,
 			Annotations: map[string]string{
 				"key-annotation2": "value-annotation",

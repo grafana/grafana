@@ -647,7 +647,6 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		for _, rule := range dbRules {
 			require.Empty(t, rule.Record)
 			require.Empty(t, rule.RecordFrom)
-			require.Nil(t, rule.RecordTo)
 		}
 	})
 

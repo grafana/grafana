@@ -242,7 +242,6 @@ type AlertRule struct {
 	RuleGroupIndex  int `xorm:"rule_group_idx"`
 	Record          string
 	RecordFrom      string
-	RecordTo        *DataSourceRef `xorm:"text null 'record_to'"` // tells xorm to store this field as a nullable JSON string
 	NoDataState     NoDataState
 	ExecErrState    ExecutionErrorState
 	// ideally this field should have been apimodels.ApiDuration
@@ -523,9 +522,6 @@ func (alertRule *AlertRule) ValidateAlertRule(cfg setting.UnifiedAlertingSetting
 	if alertRule.RecordFrom != "" {
 		return fmt.Errorf("%w: Storing recording rules is not yet allowed.", ErrAlertRuleFailedValidation)
 	}
-	if alertRule.RecordTo != nil {
-		return fmt.Errorf("%w: Storing recording rules is not yet allowed.", ErrAlertRuleFailedValidation)
-	}
 
 	if len(alertRule.NotificationSettings) > 0 {
 		if len(alertRule.NotificationSettings) != 1 {
@@ -576,7 +572,6 @@ type AlertRuleVersion struct {
 	IntervalSeconds int64
 	Record          string
 	RecordFrom      string
-	RecordTo        *DataSourceRef `xorm:"text null 'record_to'"`
 	NoDataState     NoDataState
 	ExecErrState    ExecutionErrorState
 	// ideally this field should have been apimodels.ApiDuration

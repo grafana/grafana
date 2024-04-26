@@ -519,11 +519,6 @@ func TestDiff(t *testing.T) {
 			assert.Equal(t, rule2.RecordFrom, diff[0].Right.String())
 			difCnt++
 		}
-		if rule1.RecordTo != rule2.RecordTo {
-			diff := diffs.GetDiffsForField("RecordTo")
-			assert.Len(t, diff, 1)
-			difCnt++
-		}
 
 		require.Lenf(t, diffs, difCnt, "Got some unexpected diffs. Either add to ignore or add assert to it")
 
