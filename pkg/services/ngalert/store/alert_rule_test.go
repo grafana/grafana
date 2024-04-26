@@ -830,6 +830,66 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 	})
 }
 
+func TestIntegrationGetNamespacesByRuleUID(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	sqlStore := db.InitTestDB(t)
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting.BaseInterval = 1 * time.Second
+	store := &DBstore{
+		SQLStore:      sqlStore,
+		FolderService: setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures()),
+		Logger:        log.New("test-dbstore"),
+		Cfg:           cfg.UnifiedAlerting,
+	}
+
+	uniqueUids := &sync.Map{}
+	rules := models.GenerateAlertRules(5, models.AlertRuleGen(models.WithOrgID(1), withIntervalMatching(cfg.UnifiedAlerting.BaseInterval), models.WithUniqueUID(uniqueUids)))
+	deref := make([]models.AlertRule, 0, len(rules))
+	for _, rule := range rules {
+		r := *rule
+		r.ID = 0
+		deref = append(deref, r)
+	}
+
+	_, err := store.InsertAlertRules(context.Background(), deref)
+	require.NoError(t, err)
+
+	uids := make([]string, 0, len(rules))
+	for _, rule := range rules {
+		uids = append(uids, rule.UID)
+	}
+
+	result, err := store.GetNamespacesByRuleUID(context.Background(), 1, uids...)
+	require.NoError(t, err)
+	require.Len(t, result, len(rules))
+	for _, rule := range rules {
+		if !assert.Contains(t, result, rule.UID) {
+			continue
+		}
+		assert.EqualValues(t, rule.NamespaceUID, result[rule.UID])
+	}
+
+	// Now test with a subset of uids.
+	subset := uids[:3]
+	result, err = store.GetNamespacesByRuleUID(context.Background(), 1, subset...)
+	require.NoError(t, err)
+	require.Len(t, result, len(subset))
+	for _, uid := range subset {
+		if !assert.Contains(t, result, uid) {
+			continue
+		}
+		for _, rule := range rules {
+			if rule.UID == uid {
+				assert.EqualValues(t, rule.NamespaceUID, result[uid])
+			}
+		}
+	}
+
+}
+
 // createAlertRule creates an alert rule in the database and returns it.
 // If a generator is not specified, uniqueness of primary key is not guaranteed.
 func createRule(t *testing.T, store *DBstore, generate func() *models.AlertRule) *models.AlertRule {
