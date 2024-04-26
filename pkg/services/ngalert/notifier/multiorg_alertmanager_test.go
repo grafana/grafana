@@ -314,10 +314,11 @@ func TestMultiOrgAlertmanager_Silences(t *testing.T) {
 	require.Empty(t, v)
 
 	// Create 2 silences.
-	sid, err := mam.CreateSilence(ctx, 1, models.Silence{Silence: GenSilence("test").Silence})
+	gen := models.SilenceGen(models.SilenceMuts.WithEmptyId())
+	sid, err := mam.CreateSilence(ctx, 1, gen())
 	require.NoError(t, err)
 	require.NotEmpty(t, sid)
-	sid2, err := mam.CreateSilence(ctx, 1, models.Silence{Silence: GenSilence("test").Silence})
+	sid2, err := mam.CreateSilence(ctx, 1, gen())
 	require.NoError(t, err)
 	require.NotEmpty(t, sid2)
 
