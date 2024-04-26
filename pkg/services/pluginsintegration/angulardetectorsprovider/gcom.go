@@ -9,7 +9,7 @@ import (
 )
 
 // gcomAngularPatternsPath is the relative path to the GCOM API handler that returns angular detection patterns.
-const gcomAngularPatternsPath = "/api/plugins/angular_patterns"
+const gcomAngularPatternsPath = "/plugins/angular_patterns"
 
 // GCOMPatternType is a pattern type returned by the GCOM API.
 type GCOMPatternType string

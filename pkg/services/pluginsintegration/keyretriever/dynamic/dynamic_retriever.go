@@ -115,7 +115,7 @@ func (kr *KeyRetriever) downloadKeys(ctx context.Context) error {
 		Items []ManifestKeys
 	}
 
-	url, err := url.JoinPath(kr.cfg.GrafanaComURL, "/api/plugins/ci/keys") // nolint:gosec URL is provided by config
+	url, err := url.JoinPath(kr.cfg.GrafanaComAPIURL, "/plugins/ci/keys") // nolint:gosec URL is provided by config
 	if err != nil {
 		return err
 	}
