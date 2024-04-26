@@ -12,6 +12,7 @@ import { VariableRefresh } from '../../../variables/types';
 import { getDashboardSnapshotSrv } from '../../services/SnapshotSrv';
 
 import { ShareModalTabProps } from './types';
+import { getTrackingSource } from './utils';
 
 interface Props extends ShareModalTabProps {}
 
@@ -118,11 +119,13 @@ export class ShareSnapshot extends PureComponent<Props, State> {
         DashboardInteractions.publishSnapshotClicked({
           expires: snapshotExpires,
           timeout: timeoutSeconds,
+          shareResource: getTrackingSource(this.props.panel),
         });
       } else {
         DashboardInteractions.publishSnapshotLocalClicked({
           expires: snapshotExpires,
           timeout: timeoutSeconds,
+          shareResource: getTrackingSource(this.props.panel),
         });
       }
       this.setState({ isLoading: false });
