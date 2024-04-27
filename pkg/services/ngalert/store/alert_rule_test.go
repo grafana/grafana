@@ -887,7 +887,6 @@ func TestIntegrationGetNamespacesByRuleUID(t *testing.T) {
 			}
 		}
 	}
-
 }
 
 // createAlertRule creates an alert rule in the database and returns it.

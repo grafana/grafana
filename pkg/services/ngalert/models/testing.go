@@ -806,7 +806,6 @@ func CopyMatchers(matchers []*amv2.Matcher) []*amv2.Matcher {
 		copies[i] = &c
 	}
 	return copies
-
 }
 
 // SilenceGen generates Silence using a base and mutators.
