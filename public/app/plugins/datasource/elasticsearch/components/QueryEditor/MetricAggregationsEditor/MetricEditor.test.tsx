@@ -116,9 +116,7 @@ describe('Metric Editor', () => {
 
     render(<MetricEditor value={count} />, { wrapper });
 
-    act(() => {
-      userEvent.click(screen.getByText('Count'));
-    });
+    await userEvent.click(screen.getByText('Count'));
 
     // we check if the list-of-options is visible by
     // checking for an item to exist

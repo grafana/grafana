@@ -3,7 +3,7 @@ import React from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2, isTimeSeriesFrames, PanelData, ThresholdsConfig } from '@grafana/data';
-import { GraphTresholdsStyleMode } from '@grafana/schema';
+import { GraphThresholdsStyleMode } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { GraphContainer } from 'app/features/explore/Graph/GraphContainer';
@@ -15,7 +15,7 @@ import { getStatusMessage } from './util';
 interface Props {
   data: PanelData;
   thresholds?: ThresholdsConfig;
-  thresholdsType?: GraphTresholdsStyleMode;
+  thresholdsType?: GraphThresholdsStyleMode;
   onThresholdsChange?: (thresholds: ThresholdsConfig) => void;
 }
 

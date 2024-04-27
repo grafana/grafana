@@ -2,6 +2,7 @@ package utils
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"regexp"
 
@@ -11,14 +12,7 @@ import (
 )
 
 var varRegex = regexp.MustCompile(`(\$\{.+?\})`)
-
-type DashboardInputMissingError struct {
-	VariableName string
-}
-
-func (e DashboardInputMissingError) Error() string {
-	return fmt.Sprintf("Dashboard input variable: %v missing from import command", e.VariableName)
-}
+var ErrDashboardInputMissing = errors.New("missing dashboard input variable")
 
 type DashTemplateEvaluator struct {
 	template  *simplejson.Json
@@ -63,7 +57,7 @@ func (e *DashTemplateEvaluator) Eval() (*simplejson.Json, error) {
 		}
 
 		if input == nil {
-			return nil, &DashboardInputMissingError{VariableName: inputName}
+			return nil, fmt.Errorf("dashboard import failed: %w %s", ErrDashboardInputMissing, inputName)
 		}
 
 		e.variables["${"+inputName+"}"] = input.Value

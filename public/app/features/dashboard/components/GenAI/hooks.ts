@@ -3,7 +3,7 @@ import { useAsync } from 'react-use';
 import { Subscription } from 'rxjs';
 
 import { llms } from '@grafana/experimental';
-import { logError } from '@grafana/runtime';
+import { createMonitoringLogger } from '@grafana/runtime';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { isLLMPluginEnabled, DEFAULT_OAI_MODEL } from './utils';
@@ -11,6 +11,8 @@ import { isLLMPluginEnabled, DEFAULT_OAI_MODEL } from './utils';
 // Declared instead of imported from utils to make this hook modular
 // Ideally we will want to move the hook itself to a different scope later.
 type Message = llms.openai.Message;
+
+const genAILogger = createMonitoringLogger('features.dashboards.genai');
 
 export enum StreamStatus {
   IDLE = 'idle',
@@ -50,6 +52,8 @@ export function useOpenAIStream(
   const [streamStatus, setStreamStatus] = useState<StreamStatus>(StreamStatus.IDLE);
   const [error, setError] = useState<Error>();
   const { error: notifyError } = useAppNotification();
+  // Accumulate response and it will only update the state of the attatched component when the stream is completed.
+  let partialReply = '';
 
   const onError = useCallback(
     (e: Error) => {
@@ -62,10 +66,16 @@ export function useOpenAIStream(
         `Please try again or if the problem persists, contact your organization admin.`
       );
       console.error(e);
-      logError(e, { messages: JSON.stringify(messages), model, temperature: String(temperature) });
+      genAILogger.logError(e, { messages: JSON.stringify(messages), model, temperature: String(temperature) });
     },
     [messages, model, temperature, notifyError]
   );
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      setReply('');
+    }
+  }, [messages]);
 
   const { error: enabledError, value: enabled } = useAsync(
     async () => await isLLMPluginEnabled(),
@@ -100,9 +110,12 @@ export function useOpenAIStream(
     return {
       enabled,
       stream: stream.subscribe({
-        next: setReply,
+        next: (reply) => {
+          partialReply = reply;
+        },
         error: onError,
         complete: () => {
+          setReply(partialReply);
           setStreamStatus(StreamStatus.COMPLETED);
           setTimeout(() => {
             setStreamStatus(StreamStatus.IDLE);

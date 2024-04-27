@@ -28,6 +28,8 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
       datasourceUid: datasource.uid,
       datasourceType: datasource.type,
       dataSize: 0,
+      panelId: 0,
+      panelPluginId: data.request?.panelPluginId,
       duration: data.request.endTime! - data.request.startTime,
     };
 
@@ -60,7 +62,9 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
 
     eventData.totalQueries = Object.keys(queryCacheStatus).length;
     eventData.cachedQueries = Object.values(queryCacheStatus).filter((val) => val === true).length;
-    eventData.panelId = data.request!.panelId;
+    if (data.request && Number.isInteger(data.request.panelId)) {
+      eventData.panelId = data.request.panelId;
+    }
 
     const dashboard = getDashboardSrv().getCurrent();
     if (dashboard) {

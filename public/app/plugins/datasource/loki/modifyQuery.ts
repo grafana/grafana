@@ -1,6 +1,7 @@
 import { NodeType, SyntaxNode } from '@lezer/common';
 import { sortBy } from 'lodash';
 
+import { QueryBuilderLabelFilter } from '@grafana/experimental';
 import {
   Identifier,
   LabelFilter,
@@ -20,9 +21,8 @@ import {
   JsonExpressionParser,
   LogfmtExpressionParser,
   Expr,
+  LabelFormatExpr,
 } from '@grafana/lezer-logql';
-
-import { QueryBuilderLabelFilter } from '../prometheus/querybuilder/shared/types';
 
 import { unescapeLabelValue } from './languageUtils';
 import { getNodePositionsFromQuery } from './queryUtils';
@@ -163,6 +163,8 @@ export function addLabelToQuery(
   const parserPositions = getParserPositions(query);
   const labelFilterPositions = getLabelFilterPositions(query);
   const hasStreamSelectorMatchers = getMatcherInStreamPositions(query);
+  // For non-indexed labels we want to add them after label_format to, for example, allow ad-hoc filters to use formatted labels
+  const labelFormatPositions = getNodePositionsFromQuery(query, [LabelFormatExpr]);
   const everyStreamSelectorHasMatcher = streamSelectorPositions.every((streamSelectorPosition) =>
     hasStreamSelectorMatchers.some(
       (matcherPosition) =>
@@ -172,8 +174,14 @@ export function addLabelToQuery(
 
   const filter = toLabelFilter(key, value, operator);
   if (labelType === LabelType.Parsed || labelType === LabelType.StructuredMetadata) {
-    const positionToAdd = findLastPosition([...streamSelectorPositions, ...labelFilterPositions, ...parserPositions]);
-    return addFilterAsLabelFilter(query, [positionToAdd], filter);
+    const lastPositionsPerExpression = getLastPositionPerExpression(query, [
+      ...streamSelectorPositions,
+      ...labelFilterPositions,
+      ...parserPositions,
+      ...labelFormatPositions,
+    ]);
+
+    return addFilterAsLabelFilter(query, lastPositionsPerExpression, filter);
   } else if (labelType === LabelType.Indexed) {
     return addFilterToStreamSelector(query, streamSelectorPositions, filter);
   } else {
@@ -184,21 +192,30 @@ export function addLabelToQuery(
     } else {
       // If `labelType` is not set, it indicates a potential metric query (`labelType` is present only in log queries that came from a Loki instance supporting the `categorize-labels` API). In case we are not adding the label to stream selectors we need to find the last position to add in each expression.
       // E.g. in `sum(rate({foo="bar"} | logfmt [$__auto])) / sum(rate({foo="baz"} | logfmt [$__auto]))` we need to add the label at two places.
-      const subExpressions = findLeaves(getNodePositionsFromQuery(query, [Expr]));
-      const parserFilterPositions = [...parserPositions, ...labelFilterPositions];
-
-      // find last position for each subexpression
-      const lastPositionsPerExpression = subExpressions.map((subExpression) => {
-        return findLastPosition(
-          parserFilterPositions.filter((p) => {
-            return subExpression.contains(p);
-          })
-        );
-      });
+      const lastPositionsPerExpression = getLastPositionPerExpression(query, [
+        ...parserPositions,
+        ...labelFilterPositions,
+        ...labelFormatPositions,
+      ]);
 
       return addFilterAsLabelFilter(query, lastPositionsPerExpression, filter);
     }
   }
+}
+
+function getLastPositionPerExpression(query: string, positions: NodePosition[]): NodePosition[] {
+  const subExpressions = findLeaves(getNodePositionsFromQuery(query, [Expr]));
+  const subPositions = [...positions];
+
+  // find last position for each subexpression
+  const lastPositionsPerExpression = subExpressions.map((subExpression) => {
+    return findLastPosition(
+      subPositions.filter((p) => {
+        return subExpression.contains(p);
+      })
+    );
+  });
+  return lastPositionsPerExpression;
 }
 
 /**

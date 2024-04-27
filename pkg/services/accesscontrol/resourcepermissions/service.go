@@ -2,6 +2,7 @@ package resourcepermissions
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Store interface {
@@ -52,10 +54,10 @@ type Store interface {
 	DeleteResourcePermissions(ctx context.Context, orgID int64, cmd *DeleteResourcePermissionsCmd) error
 }
 
-func New(
+func New(cfg *setting.Cfg,
 	options Options, features featuremgmt.FeatureToggles, router routing.RouteRegister, license licensing.Licensing,
 	ac accesscontrol.AccessControl, service accesscontrol.Service, sqlStore db.DB,
-	teamService team.Service, userService user.Service,
+	teamService team.Service, userService user.Service, actionSetService ActionSetService,
 ) (*Service, error) {
 	permissions := make([]string, 0, len(options.PermissionsToActions))
 	actionSet := make(map[string]struct{})
@@ -64,6 +66,7 @@ func New(
 		for _, a := range actions {
 			actionSet[a] = struct{}{}
 		}
+		actionSetService.StoreActionSet(options.Resource, permission, actions)
 	}
 
 	// Sort all permissions based on action length. Will be used when mapping between actions to permissions
@@ -78,7 +81,7 @@ func New(
 
 	s := &Service{
 		ac:          ac,
-		store:       NewStore(sqlStore, features),
+		store:       NewStore(sqlStore, features, &actionSetService),
 		options:     options,
 		license:     license,
 		permissions: permissions,
@@ -89,7 +92,7 @@ func New(
 		userService: userService,
 	}
 
-	s.api = newApi(ac, router, s)
+	s.api = newApi(cfg, ac, router, s)
 
 	if err := s.declareFixedRoles(); err != nil {
 		return nil, err
@@ -284,7 +287,7 @@ func (s *Service) mapPermission(permission string) ([]string, error) {
 			return v, nil
 		}
 	}
-	return nil, ErrInvalidPermission
+	return nil, ErrInvalidPermission.Build(ErrInvalidPermissionData(permission))
 }
 
 func (s *Service) validateResource(ctx context.Context, orgID int64, resourceID string) error {
@@ -296,27 +299,37 @@ func (s *Service) validateResource(ctx context.Context, orgID int64, resourceID 
 
 func (s *Service) validateUser(ctx context.Context, orgID, userID int64) error {
 	if !s.options.Assignments.Users {
-		return ErrInvalidAssignment
+		return ErrInvalidAssignment.Build(ErrInvalidAssignmentData("users"))
 	}
 
 	_, err := s.userService.GetSignedInUser(ctx, &user.GetSignedInUserQuery{OrgID: orgID, UserID: userID})
-	return err
+	switch {
+	case errors.Is(err, user.ErrUserNotFound):
+		return accesscontrol.ErrAssignmentEntityNotFound.Build(accesscontrol.ErrAssignmentEntityNotFoundData("user"))
+	default:
+		return err
+	}
 }
 
 func (s *Service) validateTeam(ctx context.Context, orgID, teamID int64) error {
 	if !s.options.Assignments.Teams {
-		return ErrInvalidAssignment
+		return ErrInvalidAssignment.Build(ErrInvalidAssignmentData("teams"))
 	}
 
 	if _, err := s.teamService.GetTeamByID(ctx, &team.GetTeamByIDQuery{OrgID: orgID, ID: teamID}); err != nil {
-		return err
+		switch {
+		case errors.Is(err, team.ErrTeamNotFound):
+			return accesscontrol.ErrAssignmentEntityNotFound.Build(accesscontrol.ErrAssignmentEntityNotFoundData("team"))
+		default:
+			return err
+		}
 	}
 	return nil
 }
 
-func (s *Service) validateBuiltinRole(ctx context.Context, builtinRole string) error {
+func (s *Service) validateBuiltinRole(_ context.Context, builtinRole string) error {
 	if !s.options.Assignments.BuiltInRoles {
-		return ErrInvalidAssignment
+		return ErrInvalidAssignment.Build(ErrInvalidAssignmentData("builtInRoles"))
 	}
 
 	if err := accesscontrol.ValidateBuiltInRoles([]string{builtinRole}); err != nil {

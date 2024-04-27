@@ -7,9 +7,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/expr"
 )
 
 func TestAlertQuery(t *testing.T) {
@@ -17,6 +19,7 @@ func TestAlertQuery(t *testing.T) {
 		desc                 string
 		alertQuery           AlertQuery
 		expectedIsExpression bool
+		expectedIsHysteresis bool
 		expectedDatasource   string
 		expectedMaxPoints    int64
 		expectedIntervalMS   int64
@@ -133,6 +136,64 @@ func TestAlertQuery(t *testing.T) {
 			expectedMaxPoints:    int64(defaultMaxDataPoints),
 			expectedIntervalMS:   int64(defaultIntervalMS),
 		},
+		{
+			desc: "given a query with threshold expression",
+			alertQuery: AlertQuery{
+				RefID:         "A",
+				DatasourceUID: expr.DatasourceType,
+				Model: json.RawMessage(`{
+	                "type": "threshold",
+					"queryType": "metricQuery",
+					"extraParam": "some text",
+	                "conditions": [
+		                {
+		                  "evaluator": {
+		                    "params": [
+		                      4
+		                    ],
+		                    "type": "gt"
+		                  }
+		                }
+		              ]
+				}`),
+			},
+			expectedIsExpression: true,
+			expectedIsHysteresis: false,
+			expectedMaxPoints:    int64(defaultMaxDataPoints),
+			expectedIntervalMS:   int64(defaultIntervalMS),
+		},
+		{
+			desc: "given a query with hysteresis expression",
+			alertQuery: AlertQuery{
+				RefID:         "A",
+				DatasourceUID: expr.DatasourceType,
+				Model: json.RawMessage(`{
+					"type": "threshold",
+					"queryType": "metricQuery",
+					"extraParam": "some text",
+					"conditions": [
+		                {
+		                  "evaluator": {
+		                    "params": [
+		                      4
+		                    ],
+		                    "type": "gt"
+		                  },
+		                  "unloadEvaluator": {
+		                    "params": [
+		                      2
+		                    ],
+		                    "type": "lt"
+		                  }
+		                }
+		              ]
+				}`),
+			},
+			expectedMaxPoints:    int64(defaultMaxDataPoints),
+			expectedIntervalMS:   int64(defaultIntervalMS),
+			expectedIsExpression: true,
+			expectedIsHysteresis: true,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -141,6 +202,12 @@ func TestAlertQuery(t *testing.T) {
 				isExpression, err := tc.alertQuery.IsExpression()
 				require.NoError(t, err)
 				assert.Equal(t, tc.expectedIsExpression, isExpression)
+			})
+
+			t.Run("can recognize if it's a hysteresis expression", func(t *testing.T) {
+				isExpression, err := tc.alertQuery.IsHysteresisExpression()
+				require.NoError(t, err)
+				assert.Equal(t, tc.expectedIsHysteresis, isExpression)
 			})
 
 			t.Run("can set queryType for expression", func(t *testing.T) {
@@ -186,6 +253,17 @@ func TestAlertQuery(t *testing.T) {
 				require.True(t, ok)
 				require.Equal(t, "some text", extraParam)
 			})
+
+			if tc.expectedIsHysteresis {
+				t.Run("can patch the command with loaded metrics", func(t *testing.T) {
+					require.NoError(t, tc.alertQuery.PatchHysteresisExpression(map[data.Fingerprint]struct{}{1: {}, 2: {}, 3: {}}))
+					data, ok := tc.alertQuery.modelProps["conditions"].([]any)[0].(map[string]any)["loadedDimensions"]
+					require.True(t, ok)
+					require.NotNil(t, data)
+					_, err := tc.alertQuery.GetModel()
+					require.NoError(t, err)
+				})
+			}
 		})
 	}
 }
@@ -245,6 +323,53 @@ func TestAlertQueryMarshalling(t *testing.T) {
 			assert.Equal(t, tc.expectedFrom, aq.RelativeTimeRange.From)
 			assert.Equal(t, tc.expectedTo, aq.RelativeTimeRange.To)
 		}
+	}
+}
+
+func TestAlertQuery_PreSave(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		blob        string
+		errContains string
+	}{
+		{
+			desc: "no error when input is correct",
+			blob: `{
+				"refId": "B",
+				"relativeTimeRange": {
+					"from": 2000,
+					"to": 1000
+				},
+				"model": {}
+			}`,
+		},
+		{
+			desc: "expected error when range is incorrect",
+			blob: `{
+				"refId": "B",
+				"relativeTimeRange": {
+					"from": 1000,
+					"to": 1000
+				},
+				"model": {}
+			}`,
+			errContains: "Invalid alert rule query B: invalid relative time range [From: 16m40s, To: 16m40s]",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			var aq AlertQuery
+			err := json.Unmarshal([]byte(tc.blob), &aq)
+			require.NoError(t, err)
+
+			err = aq.PreSave()
+			if tc.errContains == "" {
+				require.NoError(t, err)
+			} else {
+				require.ErrorContains(t, err, tc.errContains)
+			}
+		})
 	}
 }
 

@@ -1,6 +1,9 @@
 package log
 
-import "context"
+import (
+	"context"
+	"sync"
+)
 
 var _ Logger = (*TestLogger)(nil)
 
@@ -20,27 +23,19 @@ func (f *TestLogger) New(_ ...any) Logger {
 }
 
 func (f *TestLogger) Info(msg string, ctx ...any) {
-	f.InfoLogs.Calls++
-	f.InfoLogs.Message = msg
-	f.InfoLogs.Ctx = ctx
+	f.InfoLogs.Call(msg, ctx)
 }
 
 func (f *TestLogger) Warn(msg string, ctx ...any) {
-	f.WarnLogs.Calls++
-	f.WarnLogs.Message = msg
-	f.WarnLogs.Ctx = ctx
+	f.WarnLogs.Call(msg, ctx)
 }
 
 func (f *TestLogger) Debug(msg string, ctx ...any) {
-	f.DebugLogs.Calls++
-	f.DebugLogs.Message = msg
-	f.DebugLogs.Ctx = ctx
+	f.DebugLogs.Call(msg, ctx)
 }
 
 func (f *TestLogger) Error(msg string, ctx ...any) {
-	f.ErrorLogs.Calls++
-	f.ErrorLogs.Message = msg
-	f.ErrorLogs.Ctx = ctx
+	f.ErrorLogs.Call(msg, ctx)
 }
 
 func (f *TestLogger) FromContext(_ context.Context) Logger {
@@ -51,6 +46,16 @@ type Logs struct {
 	Calls   int
 	Message string
 	Ctx     []any
+
+	mu sync.Mutex
+}
+
+func (l *Logs) Call(msg string, ctx ...any) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.Calls++
+	l.Message = msg
+	l.Ctx = ctx
 }
 
 var _ PrettyLogger = (*TestPrettyLogger)(nil)

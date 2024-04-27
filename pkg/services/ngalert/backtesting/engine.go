@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 )
 
@@ -35,6 +36,7 @@ type backtestingEvaluator interface {
 
 type stateManager interface {
 	ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *models.AlertRule, results eval.Results, extraLabels data.Labels) []state.StateTransition
+	schedule.RuleStateProvider
 }
 
 type Engine struct {
@@ -47,17 +49,16 @@ func NewEngine(appUrl *url.URL, evalFactory eval.EvaluatorFactory, tracer tracin
 		evalFactory: evalFactory,
 		createStateManager: func() stateManager {
 			cfg := state.ManagerCfg{
-				Metrics:                 nil,
-				ExternalURL:             appUrl,
-				InstanceStore:           nil,
-				Images:                  &NoopImageService{},
-				Clock:                   clock.New(),
-				Historian:               nil,
-				MaxStateSaveConcurrency: 1,
-				Tracer:                  tracer,
-				Log:                     log.New("ngalert.state.manager"),
+				Metrics:       nil,
+				ExternalURL:   appUrl,
+				InstanceStore: nil,
+				Images:        &NoopImageService{},
+				Clock:         clock.New(),
+				Historian:     nil,
+				Tracer:        tracer,
+				Log:           log.New("ngalert.state.manager"),
 			}
-			return state.NewManager(cfg)
+			return state.NewManager(cfg, state.NewNoopPersister())
 		},
 	}
 }
@@ -74,12 +75,15 @@ func (e *Engine) Test(ctx context.Context, user identity.Requester, rule *models
 	}
 	length := int(to.Sub(from).Seconds()) / int(rule.IntervalSeconds)
 
-	evaluator, err := backtestingEvaluatorFactory(ruleCtx, e.evalFactory, user, rule.GetEvalCondition())
+	stateManager := e.createStateManager()
+
+	evaluator, err := backtestingEvaluatorFactory(ruleCtx, e.evalFactory, user, rule.GetEvalCondition(), &schedule.AlertingResultsFromRuleState{
+		Manager: stateManager,
+		Rule:    rule,
+	})
 	if err != nil {
 		return nil, errors.Join(ErrInvalidInputData, err)
 	}
-
-	stateManager := e.createStateManager()
 
 	logger.Info("Start testing alert rule", "from", from, "to", to, "interval", rule.IntervalSeconds, "evaluations", length)
 
@@ -126,7 +130,7 @@ func (e *Engine) Test(ctx context.Context, user identity.Requester, rule *models
 	return result, nil
 }
 
-func newBacktestingEvaluator(ctx context.Context, evalFactory eval.EvaluatorFactory, user identity.Requester, condition models.Condition) (backtestingEvaluator, error) {
+func newBacktestingEvaluator(ctx context.Context, evalFactory eval.EvaluatorFactory, user identity.Requester, condition models.Condition, reader eval.AlertingResultsReader) (backtestingEvaluator, error) {
 	for _, q := range condition.Data {
 		if q.DatasourceUID == "__data__" || q.QueryType == "__data__" {
 			if len(condition.Data) != 1 {
@@ -152,9 +156,7 @@ func newBacktestingEvaluator(ctx context.Context, evalFactory eval.EvaluatorFact
 		}
 	}
 
-	evaluator, err := evalFactory.Create(eval.EvaluationContext{Ctx: ctx,
-		User: user,
-	}, condition)
+	evaluator, err := evalFactory.Create(eval.NewContextWithPreviousResults(ctx, user, reader), condition)
 
 	if err != nil {
 		return nil, err

@@ -30,12 +30,7 @@ export class LegacyQueryRunner {
     this.templateSrv = templateSrv;
   }
 
-  request(
-    method: string,
-    url: string,
-    data?: BackendSrvRequest['data'],
-    headers?: BackendSrvRequest['headers']
-  ): Observable<any> {
+  request(method: string, url: string, data?: BackendSrvRequest['data'], headers?: BackendSrvRequest['headers']) {
     if (!this.datasource.isProxyAccess) {
       const error = new Error(
         'Browser access mode in the Elasticsearch datasource is no longer available. Switch to server access mode.'
@@ -151,7 +146,11 @@ export class LegacyQueryRunner {
 
   query(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> {
     let payload = '';
-    const targets = this.datasource.interpolateVariablesInQueries(cloneDeep(request.targets), request.scopedVars);
+    const targets = this.datasource.interpolateVariablesInQueries(
+      cloneDeep(request.targets),
+      request.scopedVars,
+      request.filters
+    );
     const sentTargets: ElasticsearchQuery[] = [];
     let targetsContainsLogsQuery = targets.some((target) => hasMetricOfType(target, 'logs'));
 

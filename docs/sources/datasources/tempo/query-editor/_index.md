@@ -12,12 +12,12 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Query editor
-title: Tempo query editor
+menuTitle: Query tracing data
+title: Query tracing data
 weight: 300
 ---
 
-# Tempo query editor
+# Query tracing data
 
 The Tempo data source's query editor helps you query and display traces from Tempo in [Explore][explore].
 
@@ -98,13 +98,6 @@ To query a particular trace:
 1. Enter the trace's ID into the query field.
 
 {{< figure src="/static/img/docs/tempo/query-editor-traceid.png" class="docs-image--no-shadow" max-width="750px" caption="Screenshot of the Tempo TraceID query type" >}}
-
-## Query Loki for traces
-
-To find traces to visualize, you can use the [Loki query editor]({{< relref "../../loki#loki-query-editor" >}}).
-For results, you must configure [derived fields]({{< relref "../../loki#configure-derived-fields" >}}) in the Loki data source that point to this data source.
-
-{{< figure src="/static/img/docs/tempo/query-editor-search.png" class="docs-image--no-shadow" max-width="750px" caption="Screenshot of the Tempo query editor showing the Loki Search tab" >}}
 
 {{% docs/reference %}}
 [explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore"

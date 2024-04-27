@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import debounce from 'debounce-promise';
-import React, { useState, useEffect, useMemo, useCallback, FormEvent } from 'react';
+import React, { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { AppEvents, SelectableValue, GrafanaTheme2 } from '@grafana/data';
+import { AppEvents, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
-import { useStyles2, ActionMeta, Input, InputActionMeta, AsyncVirtualizedSelect } from '@grafana/ui';
+import { ActionMeta, AsyncVirtualizedSelect, Input, InputActionMeta, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -54,6 +54,7 @@ export interface Props {
   skipInitialLoad?: boolean;
   /** The id of the search input. Use this to set a matching label with htmlFor */
   inputId?: string;
+  invalid?: boolean;
 }
 
 export type SelectedFolder = SelectableValue<string>;
@@ -78,6 +79,7 @@ export function OldFolderPicker(props: Props) {
     searchQueryType,
     customAdd,
     folderWarning,
+    invalid,
   } = props;
 
   const rootName = rootNameProp ?? 'Dashboards';
@@ -338,7 +340,7 @@ export function OldFolderPicker(props: Props) {
         <FolderWarningWhenSearching />
         <AsyncVirtualizedSelect
           inputId={inputId}
-          aria-label={selectors.components.FolderPicker.input}
+          data-testid={selectors.components.FolderPicker.input}
           loadingMessage={t('folder-picker.loading', 'Loading folders...')}
           defaultOptions
           defaultValue={folder}
@@ -349,6 +351,7 @@ export function OldFolderPicker(props: Props) {
           loadOptions={debouncedSearch}
           onChange={onFolderChange}
           onCreateOption={createNewFolder}
+          invalid={invalid}
           isClearable={isClearable}
         />
       </div>
@@ -380,9 +383,9 @@ export async function getInitialValues({ folderName, folderUid, getFolder }: Arg
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  newFolder: css`
-    color: ${theme.colors.warning.main};
-    font-size: ${theme.typography.bodySmall.fontSize};
-    padding-bottom: ${theme.spacing(1)};
-  `,
+  newFolder: css({
+    color: theme.colors.warning.main,
+    fontSize: theme.typography.bodySmall.fontSize,
+    paddingBottom: theme.spacing(1),
+  }),
 });

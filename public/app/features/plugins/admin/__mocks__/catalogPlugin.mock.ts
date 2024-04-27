@@ -11,6 +11,7 @@ export default {
       small: 'https://grafana.com/api/plugins/alexanderzobnin-zabbix-app/versions/4.2.2/logos/small',
       large: 'https://grafana.com/api/plugins/alexanderzobnin-zabbix-app/versions/4.2.2/logos/large',
     },
+    keywords: ['zabbix', 'monitoring', 'dashboard'],
   },
   isCore: false,
   isDev: false,

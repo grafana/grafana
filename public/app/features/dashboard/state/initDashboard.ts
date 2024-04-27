@@ -6,23 +6,20 @@ import { createErrorNotification } from 'app/core/copy/appNotification';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { KeybindingSrv } from 'app/core/services/keybindingSrv';
 import store from 'app/core/store';
+import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardSrv, getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
+import {
+  HOME_DASHBOARD_CACHE_KEY,
+  getDashboardScenePageStateManager,
+} from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
+import { buildNewDashboardSaveModel } from 'app/features/dashboard-scene/serialization/buildNewDashboardSaveModel';
 import { getFolderByUid } from 'app/features/folders/state/actions';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { toStateKey } from 'app/features/variables/utils';
-import {
-  DashboardDTO,
-  DashboardInitPhase,
-  DashboardMeta,
-  DashboardRoutes,
-  StoreState,
-  ThunkDispatch,
-  ThunkResult,
-} from 'app/types';
+import { DashboardDTO, DashboardInitPhase, DashboardRoutes, StoreState, ThunkDispatch, ThunkResult } from 'app/types';
 
 import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { initVariablesTransaction } from '../../variables/state/actions';
@@ -34,6 +31,8 @@ import { PanelModel } from './PanelModel';
 import { emitDashboardViewEvent } from './analyticsProcessor';
 import { dashboardInitCompleted, dashboardInitFailed, dashboardInitFetching, dashboardInitServices } from './reducers';
 
+const INIT_DASHBOARD_MEASUREMENT = 'initDashboard';
+
 export interface InitDashboardArgs {
   urlUid?: string;
   urlSlug?: string;
@@ -44,7 +43,6 @@ export interface InitDashboardArgs {
   routeName?: string;
   fixUrl: boolean;
   keybindingSrv: KeybindingSrv;
-  dashboardDto?: DashboardDTO;
 }
 
 async function fetchDashboard(
@@ -63,7 +61,7 @@ async function fetchDashboard(
     switch (args.routeName) {
       case DashboardRoutes.Home: {
         const stateManager = getDashboardScenePageStateManager();
-        const cachedDashboard = stateManager.getFromCache(DashboardRoutes.Home);
+        const cachedDashboard = stateManager.getFromCache(HOME_DASHBOARD_CACHE_KEY);
 
         if (cachedDashboard) {
           return cachedDashboard;
@@ -88,11 +86,6 @@ async function fetchDashboard(
       case DashboardRoutes.Public: {
         return await dashboardLoaderSrv.loadDashboard('public', args.urlSlug, args.accessToken);
       }
-      case DashboardRoutes.Embedded: {
-        if (args.dashboardDto) {
-          return args.dashboardDto;
-        }
-      }
       case DashboardRoutes.Normal: {
         const dashDTO: DashboardDTO = await dashboardLoaderSrv.loadDashboard(args.urlType, args.urlSlug, args.urlUid);
 
@@ -107,7 +100,7 @@ async function fetchDashboard(
           }
         }
 
-        if (args.fixUrl && dashDTO.meta.url && !playlistSrv.isPlaying) {
+        if (args.fixUrl && dashDTO.meta.url && !playlistSrv.state.isPlaying) {
           // check if the current url is correct (might be old slug)
           const dashboardUrl = locationUtil.stripBaseFromUrl(dashDTO.meta.url);
           const currentPath = locationService.getLocation().pathname;
@@ -130,7 +123,7 @@ async function fetchDashboard(
         if (args.urlFolderUid) {
           await dispatch(getFolderByUid(args.urlFolderUid));
         }
-        return getNewDashboardModelData(args.urlFolderUid, args.panelType);
+        return await buildNewDashboardSaveModel(args.urlFolderUid);
       }
       case DashboardRoutes.Path: {
         const path = args.urlSlug ?? '';
@@ -184,6 +177,8 @@ const getQueriesByDatasource = (
  */
 export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
   return async (dispatch, getState) => {
+    startMeasure(INIT_DASHBOARD_MEASUREMENT);
+
     // set fetching state
     dispatch(dashboardInitFetching());
 
@@ -257,7 +252,9 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
         dashboard.autoFitPanels(window.innerHeight, queryParams.kiosk);
       }
 
-      args.keybindingSrv.setupDashboardBindings(dashboard);
+      if (!config.publicDashboardAccessToken) {
+        args.keybindingSrv.setupDashboardBindings(dashboard);
+      }
     } catch (err) {
       if (err instanceof Error) {
         dispatch(notifyApp(createErrorNotification('Dashboard init failed', err)));
@@ -293,49 +290,15 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       })
     );
 
-    trackDashboardLoaded(dashboard, versionBeforeMigration);
+    const measure = stopMeasure(INIT_DASHBOARD_MEASUREMENT);
+    trackDashboardLoaded(dashboard, measure?.duration, versionBeforeMigration);
 
     // yay we are done
     dispatch(dashboardInitCompleted(dashboard));
   };
 }
 
-export function getNewDashboardModelData(
-  urlFolderUid?: string,
-  panelType?: string
-): { dashboard: any; meta: DashboardMeta } {
-  const panels = config.featureToggles.emptyDashboardPage
-    ? []
-    : [
-        {
-          type: panelType ?? 'add-panel',
-          gridPos: { x: 0, y: 0, w: 12, h: 9 },
-          title: 'Panel Title',
-        },
-      ];
-
-  const data = {
-    meta: {
-      canStar: false,
-      canShare: false,
-      canDelete: false,
-      isNew: true,
-      folderUid: '',
-    },
-    dashboard: {
-      title: 'New dashboard',
-      panels,
-    },
-  };
-
-  if (urlFolderUid) {
-    data.meta.folderUid = urlFolderUid;
-  }
-
-  return data;
-}
-
-const DASHBOARD_FROM_LS_KEY = 'DASHBOARD_FROM_LS_KEY';
+export const DASHBOARD_FROM_LS_KEY = 'DASHBOARD_FROM_LS_KEY';
 
 export function setDashboardToFetchFromLocalStorage(model: DashboardDTO) {
   store.setObject(DASHBOARD_FROM_LS_KEY, model);

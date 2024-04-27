@@ -12,6 +12,7 @@ const (
 
 type foldersMetrics struct {
 	sharedWithMeFetchFoldersRequestsDuration *prometheus.HistogramVec
+	foldersGetChildrenRequestsDuration       *prometheus.HistogramVec
 }
 
 func newFoldersMetrics(r prometheus.Registerer) *foldersMetrics {
@@ -25,6 +26,16 @@ func newFoldersMetrics(r prometheus.Registerer) *foldersMetrics {
 				Subsystem: metricsSubSystem,
 			},
 			[]string{"status"},
+		),
+		foldersGetChildrenRequestsDuration: promauto.With(r).NewHistogramVec(
+			prometheus.HistogramOpts{
+				Name:      "get_children_duration_seconds",
+				Help:      "Duration of listing subfolders in specific folder",
+				Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
+				Namespace: metricsNamespace,
+				Subsystem: metricsSubSystem,
+			},
+			[]string{"parent"},
 		),
 	}
 }

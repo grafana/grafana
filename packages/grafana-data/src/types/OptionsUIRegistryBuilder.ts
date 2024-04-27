@@ -30,7 +30,7 @@ export interface OptionsEditorItem<TOptions, TSettings, TEditorProps, TValue>
 /**
  * Describes an API for option editors UI builder
  */
-export interface OptionsUIRegistryBuilderAPI<
+interface OptionsUIRegistryBuilderAPI<
   TOptions,
   TEditorProps,
   T extends OptionsEditorItem<TOptions, any, TEditorProps, any>,

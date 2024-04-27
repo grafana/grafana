@@ -6,7 +6,6 @@ description: Change the look of Grafana to match your corporate brand.
 labels:
   products:
     - enterprise
-    - oss
 title: Configure custom branding
 weight: 300
 ---

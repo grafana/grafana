@@ -2,18 +2,7 @@ import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import {
-  Alert,
-  Button,
-  HorizontalGroup,
-  Icon,
-  IconButton,
-  Input,
-  Text,
-  TextLink,
-  useStyles2,
-  VerticalGroup,
-} from '@grafana/ui';
+import { Alert, Button, Icon, Input, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 
 import { STOP_GENERATION_TEXT } from './GenAIButton';
 import { GenerationHistoryCarousel } from './GenerationHistoryCarousel';
@@ -100,7 +89,9 @@ export const GenAIHistory = ({
 
   const onGenerateWithFeedback = (suggestion: string | QuickFeedbackType) => {
     if (suggestion !== QuickFeedbackType.Regenerate) {
-      messages = [...messages, ...getFeedbackMessage(history[currentIndex], suggestion)];
+      messages = [...messages, ...getFeedbackMessage(history[currentIndex - 1], suggestion)];
+    } else {
+      messages = [...messages, ...getFeedbackMessage(history[currentIndex - 1], 'Please, regenerate')];
     }
 
     setMessages(messages);
@@ -122,53 +113,59 @@ export const GenAIHistory = ({
   return (
     <div className={styles.container}>
       {showError && (
-        <div>
-          <Alert title="">
-            <VerticalGroup>
-              <div>Sorry, I was unable to complete your request. Please try again.</div>
-            </VerticalGroup>
-          </Alert>
-        </div>
+        <Alert title="">
+          <Stack direction={'column'}>
+            <p>Sorry, I was unable to complete your request. Please try again.</p>
+          </Stack>
+        </Alert>
       )}
+
+      <GenerationHistoryCarousel
+        history={history}
+        index={currentIndex}
+        onNavigate={onNavigate}
+        reply={sanitizeReply(reply)}
+        streamStatus={streamStatus}
+      />
+
+      <div className={styles.actionButtons}>
+        <QuickFeedback onSuggestionClick={onGenerateWithFeedback} isGenerating={isStreamGenerating} />
+      </div>
 
       <Input
         placeholder="Tell AI what to do next..."
         suffix={
-          <IconButton
-            name="corner-down-right-alt"
+          <Button
+            icon="enter"
             variant="secondary"
+            fill="text"
             aria-label="Send custom feedback"
             onClick={onClickSubmitCustomFeedback}
             disabled={customFeedback === ''}
-          />
+          >
+            Send
+          </Button>
         }
         value={customFeedback}
         onChange={onChangeCustomFeedback}
         onKeyDown={onKeyDownCustomFeedbackInput}
       />
-      <div className={styles.actions}>
-        <QuickFeedback onSuggestionClick={onGenerateWithFeedback} isGenerating={isStreamGenerating} />
-        <GenerationHistoryCarousel
-          history={history}
-          index={currentIndex}
-          onNavigate={onNavigate}
-          reply={sanitizeReply(reply)}
-          streamStatus={streamStatus}
-        />
-      </div>
+
       <div className={styles.applySuggestion}>
-        <HorizontalGroup justify={'flex-end'}>
+        <Stack justifyContent={'flex-end'} direction={'row'}>
           <Button icon={!isStreamGenerating ? 'check' : 'fa fa-spinner'} onClick={onApply}>
             {isStreamGenerating ? STOP_GENERATION_TEXT : 'Apply'}
           </Button>
-        </HorizontalGroup>
+        </Stack>
       </div>
+
       <div className={styles.footer}>
         <Icon name="exclamation-circle" aria-label="exclamation-circle" className={styles.infoColor} />
         <Text variant="bodySmall" color="secondary">
           This content is AI-generated using the{' '}
           <TextLink
             variant="bodySmall"
+            inline={true}
             href="https://grafana.com/docs/grafana-cloud/alerting-and-irm/machine-learning/llm-plugin/"
             external
             onClick={onClickDocs}
@@ -186,12 +183,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     width: 520,
-    height: 250,
+    maxHeight: 350,
     // This is the space the footer height
-    paddingBottom: 35,
+    paddingBottom: 25,
   }),
   applySuggestion: css({
-    marginTop: theme.spacing(1),
+    paddingTop: theme.spacing(2),
   }),
   actions: css({
     display: 'flex',
@@ -216,5 +213,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   infoColor: css({
     color: theme.colors.info.main,
+  }),
+  actionButtons: css({
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: '24px 0 8px 0',
   }),
 });

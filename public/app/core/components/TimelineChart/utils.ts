@@ -1,12 +1,5 @@
-import React from 'react';
-import uPlot from 'uplot';
-
 import {
   DataFrame,
-  DashboardCursorSync,
-  DataHoverPayload,
-  DataHoverEvent,
-  DataHoverClearEvent,
   FALLBACK_COLOR,
   Field,
   FieldColorModeId,
@@ -21,8 +14,10 @@ import {
   getFieldConfigWithMinMax,
   ThresholdsMode,
   TimeRange,
+  cacheFieldDisplayNames,
+  outerJoinDataFrames,
 } from '@grafana/data';
-import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/joinDataFrames';
+import { maybeSortFrame, NULL_RETAIN } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import { applyNullInsertThreshold } from '@grafana/data/src/transformations/transformers/nulls/nullInsertThreshold';
 import { nullToValue } from '@grafana/data/src/transformations/transformers/nulls/nullToValue';
 import {
@@ -35,14 +30,7 @@ import {
   HideableFieldConfig,
   MappingType,
 } from '@grafana/schema';
-import {
-  FIXED_UNIT,
-  SeriesVisibilityChangeMode,
-  UPlotConfigBuilder,
-  UPlotConfigPrepFn,
-  VizLegendItem,
-} from '@grafana/ui';
-import { PlotTooltipInterpolator } from '@grafana/ui/src/components/uPlot/types';
+import { FIXED_UNIT, UPlotConfigBuilder, UPlotConfigPrepFn, VizLegendItem } from '@grafana/ui';
 import { preparePlotData2, getStackingGroups } from '@grafana/ui/src/components/uPlot/utils';
 
 import { getConfig, TimelineCoreOptions } from './timeline';
@@ -54,15 +42,13 @@ interface UPlotConfigOptions {
   frame: DataFrame;
   theme: GrafanaTheme2;
   mode: TimelineMode;
-  sync?: () => DashboardCursorSync;
   rowHeight?: number;
   colWidth?: number;
   showValue: VisibilityMode;
   alignValue?: TimelineValueAlignment;
   mergeValues?: boolean;
   getValueColor: (frameIdx: number, fieldIdx: number, value: unknown) => string;
-  // Identifies the shared key for uPlot cursor sync
-  eventsScope?: string;
+  hoverMulti: boolean;
 }
 
 /**
@@ -83,32 +69,22 @@ const defaultConfig: PanelFieldConfig = {
   fillOpacity: 80,
 };
 
-export function mapMouseEventToMode(event: React.MouseEvent): SeriesVisibilityChangeMode {
-  if (event.ctrlKey || event.metaKey || event.shiftKey) {
-    return SeriesVisibilityChangeMode.AppendToSelection;
-  }
-  return SeriesVisibilityChangeMode.ToggleSelection;
-}
-
 export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = ({
   frame,
   theme,
   timeZones,
   getTimeRange,
   mode,
-  eventBus,
-  sync,
   rowHeight,
   colWidth,
   showValue,
   alignValue,
   mergeValues,
   getValueColor,
-  eventsScope = '__global_',
+  hoverMulti,
 }) => {
   const builder = new UPlotConfigBuilder(timeZones[0]);
 
-  const xScaleUnit = 'time';
   const xScaleKey = 'x';
 
   const isDiscrete = (field: Field) => {
@@ -155,55 +131,13 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     getTimeRange,
     // hardcoded formatter for state values
     formatValue: (seriesIdx, value) => formattedValueToString(frame.fields[seriesIdx].display!(value)),
-    onHover: (seriesIndex, valueIndex) => {
-      hoveredSeriesIdx = seriesIndex;
-      hoveredDataIdx = valueIndex;
-      shouldChangeHover = true;
-    },
-    onLeave: () => {
-      hoveredSeriesIdx = null;
-      hoveredDataIdx = null;
-      shouldChangeHover = true;
-    },
+    hoverMulti,
   };
-
-  let shouldChangeHover = false;
-  let hoveredSeriesIdx: number | null = null;
-  let hoveredDataIdx: number | null = null;
 
   const coreConfig = getConfig(opts);
-  const payload: DataHoverPayload = {
-    point: {
-      [xScaleUnit]: null,
-      [FIXED_UNIT]: null,
-    },
-    data: frame,
-  };
 
   builder.addHook('init', coreConfig.init);
   builder.addHook('drawClear', coreConfig.drawClear);
-
-  // in TooltipPlugin, this gets invoked and the result is bound to a setCursor hook
-  // which fires after the above setCursor hook, so can take advantage of hoveringOver
-  // already set by the above onHover/onLeave callbacks that fire from coreConfig.setCursor
-  const interpolateTooltip: PlotTooltipInterpolator = (
-    updateActiveSeriesIdx,
-    updateActiveDatapointIdx,
-    updateTooltipPosition
-  ) => {
-    if (shouldChangeHover) {
-      if (hoveredSeriesIdx != null) {
-        updateActiveSeriesIdx(hoveredSeriesIdx);
-        updateActiveDatapointIdx(hoveredDataIdx);
-      }
-
-      shouldChangeHover = false;
-    }
-
-    updateTooltipPosition(hoveredSeriesIdx == null);
-  };
-
-  builder.setTooltipInterpolator(interpolateTooltip);
 
   builder.setPrepData((frames) => preparePlotData2(frames[0], getStackingGroups(frames[0])));
 
@@ -281,76 +215,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     });
   }
 
-  if (sync && sync() !== DashboardCursorSync.Off) {
-    let cursor: Partial<uPlot.Cursor> = {};
-
-    cursor.sync = {
-      key: eventsScope,
-      filters: {
-        pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
-          if (sync && sync() === DashboardCursorSync.Off) {
-            return false;
-          }
-          payload.rowIndex = dataIdx;
-          if (x < 0 && y < 0) {
-            payload.point[xScaleUnit] = null;
-            payload.point[FIXED_UNIT] = null;
-            eventBus.publish(new DataHoverClearEvent());
-          } else {
-            payload.point[xScaleUnit] = src.posToVal(x, xScaleKey);
-            payload.point.panelRelY = y > 0 ? y / h : 1; // used for old graph panel to position tooltip
-            payload.down = undefined;
-            eventBus.publish(new DataHoverEvent(payload));
-          }
-          return true;
-        },
-      },
-      scales: [xScaleKey, null],
-    };
-    builder.setSync();
-    builder.setCursor(cursor);
-  }
-
   return builder;
 };
-
-export function getNamesToFieldIndex(frame: DataFrame): Map<string, number> {
-  const names = new Map<string, number>();
-  for (let i = 0; i < frame.fields.length; i++) {
-    names.set(getFieldDisplayName(frame.fields[i], frame), i);
-  }
-  return names;
-}
-
-/**
- * If any sequential duplicate values exist, this will return a new array
- * with the future values set to undefined.
- *
- * in:  1,        1,undefined,        1,2,        2,null,2,3
- * out: 1,undefined,undefined,undefined,2,undefined,null,2,3
- */
-export function unsetSameFutureValues(values: unknown[]): unknown[] | undefined {
-  let prevVal = values[0];
-  let clone: unknown[] | undefined = undefined;
-
-  for (let i = 1; i < values.length; i++) {
-    let value = values[i];
-
-    if (value === null) {
-      prevVal = null;
-    } else {
-      if (value === prevVal) {
-        if (!clone) {
-          clone = [...values];
-        }
-        clone[i] = undefined;
-      } else if (value != null) {
-        prevVal = value;
-      }
-    }
-  }
-  return clone;
-}
 
 function getSpanNulls(field: Field) {
   let spanNulls = field.config.custom?.spanNulls;
@@ -433,19 +299,68 @@ export function prepareTimelineFields(
   if (!series?.length) {
     return { warn: 'No data in response' };
   }
+
+  cacheFieldDisplayNames(series);
+
   let hasTimeseries = false;
   const frames: DataFrame[] = [];
 
   for (let frame of series) {
-    let isTimeseries = false;
+    let startFieldIdx = -1;
+    let endFieldIdx = -1;
+
+    for (let i = 0; i < frame.fields.length; i++) {
+      let f = frame.fields[i];
+
+      if (f.type === FieldType.time) {
+        if (startFieldIdx === -1) {
+          startFieldIdx = i;
+        } else if (endFieldIdx === -1) {
+          endFieldIdx = i;
+          break;
+        }
+      }
+    }
+
+    let isTimeseries = startFieldIdx !== -1;
     let changed = false;
-    let maybeSortedFrame = maybeSortFrame(
-      frame,
-      frame.fields.findIndex((f) => f.type === FieldType.time)
-    );
+    frame = maybeSortFrame(frame, startFieldIdx);
+
+    // if we have a second time field, assume it is state end timestamps
+    // and insert nulls into the data at the end timestamps
+    if (endFieldIdx !== -1) {
+      let startFrame: DataFrame = {
+        ...frame,
+        fields: frame.fields.filter((f, i) => i !== endFieldIdx),
+      };
+
+      let endFrame: DataFrame = {
+        length: frame.length,
+        fields: [frame.fields[endFieldIdx]],
+      };
+
+      frame = outerJoinDataFrames({
+        frames: [startFrame, endFrame],
+        keepDisplayNames: true,
+        nullMode: () => NULL_RETAIN,
+      })!;
+
+      frame.fields.forEach((f, i) => {
+        if (i > 0) {
+          let vals = f.values;
+          for (let i = 0; i < vals.length; i++) {
+            if (vals[i] == null) {
+              vals[i] = null;
+            }
+          }
+        }
+      });
+
+      changed = true;
+    }
 
     let nulledFrame = applyNullInsertThreshold({
-      frame: maybeSortedFrame,
+      frame,
       refFieldPseudoMin: timeRange.from.valueOf(),
       refFieldPseudoMax: timeRange.to.valueOf(),
     });
@@ -454,8 +369,10 @@ export function prepareTimelineFields(
       changed = true;
     }
 
+    frame = nullToValue(nulledFrame);
+
     const fields: Field[] = [];
-    for (let field of nullToValue(nulledFrame).fields) {
+    for (let field of frame.fields) {
       if (field.config.custom?.hideFrom?.viz) {
         continue;
       }
@@ -488,6 +405,7 @@ export function prepareTimelineFields(
               },
             },
           };
+          changed = true;
           fields.push(field);
           break;
         default:
@@ -498,11 +416,11 @@ export function prepareTimelineFields(
       hasTimeseries = true;
       if (changed) {
         frames.push({
-          ...maybeSortedFrame,
+          ...frame,
           fields,
         });
       } else {
-        frames.push(maybeSortedFrame);
+        frames.push(frame);
       }
     }
   }
@@ -513,6 +431,7 @@ export function prepareTimelineFields(
   if (!frames.length) {
     return { warn: 'No graphable fields' };
   }
+
   return { frames };
 }
 
@@ -693,19 +612,19 @@ export function fmtDuration(milliSeconds: number): string {
     yr > 0
       ? yr + 'y ' + (mo > 0 ? mo + 'mo ' : '') + (wk > 0 ? wk + 'w ' : '') + (d > 0 ? d + 'd ' : '')
       : mo > 0
-      ? mo + 'mo ' + (wk > 0 ? wk + 'w ' : '') + (d > 0 ? d + 'd ' : '')
-      : wk > 0
-      ? wk + 'w ' + (d > 0 ? d + 'd ' : '')
-      : d > 0
-      ? d + 'd ' + (h > 0 ? h + 'h ' : '')
-      : h > 0
-      ? h + 'h ' + (m > 0 ? m + 'm ' : '')
-      : m > 0
-      ? m + 'm ' + (s > 0 ? s + 's ' : '')
-      : s > 0
-      ? s + 's ' + (ms > 0 ? ms + 'ms ' : '')
-      : ms > 0
-      ? ms + 'ms '
-      : '0'
+        ? mo + 'mo ' + (wk > 0 ? wk + 'w ' : '') + (d > 0 ? d + 'd ' : '')
+        : wk > 0
+          ? wk + 'w ' + (d > 0 ? d + 'd ' : '')
+          : d > 0
+            ? d + 'd ' + (h > 0 ? h + 'h ' : '')
+            : h > 0
+              ? h + 'h ' + (m > 0 ? m + 'm ' : '')
+              : m > 0
+                ? m + 'm ' + (s > 0 ? s + 's ' : '')
+                : s > 0
+                  ? s + 's ' + (ms > 0 ? ms + 'ms ' : '')
+                  : ms > 0
+                    ? ms + 'ms '
+                    : '0'
   ).trim();
 }

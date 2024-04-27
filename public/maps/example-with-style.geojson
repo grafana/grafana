@@ -1,0 +1,150 @@
+{
+  "type": "FeatureCollection",
+  "name": "Example with Style",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Bermuda Triangle",
+        "fill": "red",
+        "fill-opacity": 0.5,
+        "stroke-width": 10
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-80.226529, 25.789106],
+            [-66.1057427, 18.4663188],
+            [-64.78138, 32.294887]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Bermuda Triangles",
+        "fill": "red",
+        "fill-opacity": 0.1,
+        "stroke-width": 1
+      },
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [-72.5039545, 29.0419965],
+              [-73.16613585, 22.1277124],
+              [-80.226529, 25.789106]
+            ],
+            [
+              [-65.44356135, 25.3806029],
+              [-73.16613585, 22.12771244],
+              [-66.1057427, 18.4663188]
+            ],
+            [
+              [-65.44356135, 25.3806029],
+              [-72.5039545, 29.0419965],
+              [-64.78138, 32.294887]
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-80.226529, 25.789106] },
+      "properties": {
+        "name": "Miami",
+        "marker-color": "rgb(255,255,0)",
+        "marker-size": 20
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiPoint",
+        "coordinates": [
+          [-66.1057427, 18.4663188],
+          [-64.78138, 32.294887]
+        ]
+      },
+      "properties": {
+        "name": "San Juan and Hamilton",
+        "marker-color": "#F99E26",
+        "marker-size": 10
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-77.76975242, 13.2503978],
+          [-73.16613585, 22.1277124]
+        ]
+      },
+      "properties": {
+        "name": "Line 1",
+        "stroke": "red",
+        "stroke-width": 2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-55.48910779, 24.42726436],
+          [-65.44356135, 25.3806029]
+        ]
+      },
+      "properties": {
+        "name": "Line 2",
+        "stroke": "white",
+        "stroke-width": 2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-76.38582213, 38.25780378],
+          [-72.5039545, 29.0419965]
+        ]
+      },
+      "properties": {
+        "name": "Line 3",
+        "stroke": "blue",
+        "stroke-width": 2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [-80.226529, 25.789106],
+            [-66.1057427, 18.4663188]
+          ],
+          [
+            [-66.1057427, 18.4663188],
+            [-64.78138, 32.294887]
+          ],
+          [
+            [-64.78138, 32.294887],
+            [-80.226529, 25.789106]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Bermuda Triangle Thin Line",
+        "stroke": "yellow",
+        "stroke-width": 1
+      }
+    }
+  ]
+}

@@ -3,13 +3,13 @@ package cloudwatch
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestGetMetricQueryBatches(t *testing.T) {
-	logger := &logtest.Fake{}
+	nullLogger := log.NewNullLogger()
 	insight1 := models.CloudWatchQuery{
 		MetricQueryType: models.MetricQueryTypeQuery,
 		Id:              "i1",
@@ -86,7 +86,7 @@ func TestGetMetricQueryBatches(t *testing.T) {
 			&m88_ref_m98,
 		}
 
-		result := getMetricQueryBatches(batch, logger)
+		result := getMetricQueryBatches(batch, nullLogger)
 		assert.Len(t, result, 3)
 		assert.ElementsMatch(t, []*models.CloudWatchQuery{&insight1}, result[0])
 		assert.ElementsMatch(t, []*models.CloudWatchQuery{&insight2}, result[1])
@@ -102,7 +102,7 @@ func TestGetMetricQueryBatches(t *testing.T) {
 			&m4_ref_s1,
 		}
 
-		result := getMetricQueryBatches(batch, logger)
+		result := getMetricQueryBatches(batch, nullLogger)
 		assert.Len(t, result, 1)
 		assert.Equal(t, batch, result[0])
 	})
@@ -113,7 +113,7 @@ func TestGetMetricQueryBatches(t *testing.T) {
 			&metricStat,
 		}
 
-		result := getMetricQueryBatches(batch, logger)
+		result := getMetricQueryBatches(batch, nullLogger)
 		assert.Len(t, result, 1)
 		assert.ElementsMatch(t, batch, result[0])
 	})
@@ -125,7 +125,7 @@ func TestGetMetricQueryBatches(t *testing.T) {
 			&insight2,
 		}
 
-		result := getMetricQueryBatches(batch, logger)
+		result := getMetricQueryBatches(batch, nullLogger)
 		assert.Len(t, result, 3)
 		assert.ElementsMatch(t, []*models.CloudWatchQuery{&insight1}, result[0])
 		assert.ElementsMatch(t, []*models.CloudWatchQuery{&metricStat}, result[1])
@@ -142,7 +142,7 @@ func TestGetMetricQueryBatches(t *testing.T) {
 			&m4_ref_s1,
 		}
 
-		result := getMetricQueryBatches(batch, logger)
+		result := getMetricQueryBatches(batch, nullLogger)
 		assert.Len(t, result, 1)
 		assert.ElementsMatch(t, batch, result[0])
 	})
@@ -157,7 +157,7 @@ func TestGetMetricQueryBatches(t *testing.T) {
 			&m4_ref_s1,
 		}
 
-		result := getMetricQueryBatches(batch, logger)
+		result := getMetricQueryBatches(batch, nullLogger)
 		assert.Len(t, result, 3)
 		assert.ElementsMatch(t, []*models.CloudWatchQuery{&insight2}, result[0])
 		assert.ElementsMatch(t, []*models.CloudWatchQuery{&insight1, &m1_ref_i1, &m2_ref_i1, &m3_ref_m1_m2}, result[1])
@@ -172,7 +172,7 @@ func TestGetMetricQueryBatches(t *testing.T) {
 			&m4_ref_i1_i3,
 		}
 
-		result := getMetricQueryBatches(batch, logger)
+		result := getMetricQueryBatches(batch, nullLogger)
 		assert.Len(t, result, 3)
 		assert.ElementsMatch(t, []*models.CloudWatchQuery{&insight2}, result[0])
 		assert.ElementsMatch(t, []*models.CloudWatchQuery{&insight1, &m1_ref_i1}, result[1])

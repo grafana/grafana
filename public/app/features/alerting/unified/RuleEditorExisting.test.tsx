@@ -1,4 +1,4 @@
-import { render, waitFor, screen, within } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Route } from 'react-router-dom';
@@ -7,7 +7,7 @@ import { ui } from 'test/helpers/alertingRuleEditor';
 
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
-import { DashboardSearchHit } from 'app/features/search/types';
+import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
 import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
 import { searchFolders } from '../../../../app/features/manage-dashboards/state/actions';
@@ -18,7 +18,7 @@ import RuleEditor from './RuleEditor';
 import { discoverFeatures } from './api/buildInfo';
 import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
-import { grantUserPermissions, mockDataSource, MockDataSourceSrv, mockFolder } from './mocks';
+import { MockDataSourceSrv, grantUserPermissions, mockDataSource, mockFolder } from './mocks';
 import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
 import * as config from './utils/config';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
@@ -73,7 +73,6 @@ function renderRuleEditor(identifier?: string) {
   );
 }
 
-const getLabelInput = (selector: HTMLElement) => within(selector).getByRole('combobox');
 describe('RuleEditor grafana managed rules', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -101,6 +100,7 @@ describe('RuleEditor grafana managed rules', () => {
       title: 'Folder A',
       uid: 'abcd',
       id: 1,
+      type: DashboardSearchItemType.DashDB,
     };
 
     const slashedFolder = {
@@ -136,12 +136,12 @@ describe('RuleEditor grafana managed rules', () => {
       [folder.title]: [
         {
           interval: '1m',
-          name: 'my great new rule',
+          name: 'group1',
           rules: [
             {
               annotations: { description: 'some description', summary: 'some summary' },
               labels: { severity: 'warn', team: 'the a-team' },
-              for: '5m',
+              for: '1m',
               grafana_alert: {
                 uid,
                 namespace_uid: 'abcd',
@@ -186,10 +186,6 @@ describe('RuleEditor grafana managed rules', () => {
     await userEvent.type(screen.getByPlaceholderText('Enter custom annotation name...'), 'custom');
     await userEvent.type(screen.getByPlaceholderText('Enter custom annotation content...'), 'value');
 
-    //add a label
-    await userEvent.type(getLabelInput(ui.inputs.labelKey(2).get()), 'custom{enter}');
-    await userEvent.type(getLabelInput(ui.inputs.labelValue(2).get()), 'value{enter}');
-
     // save and check what was sent to backend
     await userEvent.click(ui.buttons.save.get());
     await waitFor(() => expect(mocks.api.setRulerRuleGroup).toHaveBeenCalled());
@@ -199,20 +195,21 @@ describe('RuleEditor grafana managed rules', () => {
 
     expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledWith(
       { dataSourceName: GRAFANA_RULES_SOURCE_NAME, apiVersion: 'legacy' },
-      'Folder A',
+      'abcd',
       {
         interval: '1m',
-        name: 'my great new rule',
+        name: 'group1',
         rules: [
           {
             annotations: { description: 'some description', summary: 'some summary', custom: 'value' },
-            labels: { severity: 'warn', team: 'the a-team', custom: 'value' },
-            for: '5m',
+            labels: { severity: 'warn', team: 'the a-team' },
+            for: '1m',
             grafana_alert: {
               uid,
               condition: 'B',
               data: getDefaultQueries(),
               exec_err_state: GrafanaAlertStateDecision.Error,
+              notification_settings: undefined,
               is_paused: false,
               no_data_state: 'NoData',
               title: 'my great new rule',

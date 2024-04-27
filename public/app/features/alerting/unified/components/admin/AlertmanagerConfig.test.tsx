@@ -89,7 +89,7 @@ const ui = {
 
 describe('Admin config', () => {
   beforeEach(() => {
-    jest.resetAllMocks();
+    jest.clearAllMocks();
     // FIXME: scope down
     grantUserPermissions(Object.values(AccessControlAction));
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));

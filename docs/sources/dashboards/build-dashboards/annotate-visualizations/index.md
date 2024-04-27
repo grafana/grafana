@@ -24,6 +24,8 @@ Annotations provide a way to mark points on a visualization with rich events. Th
 
 {{< figure src="/static/img/docs/v46/annotations.png" max-width="800px" alt="Annotated visualization with annotation context menu open" >}}
 
+{{< docs/play title="Annotations" url="https://play.grafana.org/d/000000010/" >}}
+
 You can annotate visualizations in three ways:
 
 - Directly in the panel, using the [built-in annotations query](#built-in-query)
@@ -44,7 +46,14 @@ Annotations are supported for the following visualization types:
 
 Grafana comes with the ability to add annotation events directly from a panel using the [built-in annotation query](#built-in-query) that exists on all dashboards. Annotations that you create this way are stored in Grafana.
 
-To add annotations directly in the panel, the built-in query must be enabled. Learn more in [Built-in query](#built-in-query)
+To add annotations directly in the panel:
+
+- The dashboard must already be saved.
+- The built-in query must be enabled. Learn more in [Built-in query](#built-in-query).
+
+Watch the following video for a quick tutorial on creating annotations:
+
+{{< youtube id="N5iOlyYyK6Q" >}}
 
 ### Add an annotation
 
@@ -82,6 +91,10 @@ Alternatively, to add an annotation, press Ctrl/Cmd and click the panel, and the
 ## Fetch annotations through dashboard settings
 
 In the dashboard settings, under **Annotations**, you can add new queries to fetch annotations using any data source, including the built-in data annotation data source. Annotation queries return events that can be visualized as event markers in graphs across the dashboard.
+
+Check out the video below for a quick tutorial.
+
+{{< youtube id="2istdJpPj2Y" >}}
 
 ### Add new annotation queries
 

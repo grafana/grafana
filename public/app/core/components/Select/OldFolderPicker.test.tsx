@@ -35,7 +35,7 @@ describe('OldFolderPicker', () => {
 
     render(<OldFolderPicker onChange={jest.fn()} filter={(hits) => hits.filter((h) => h.uid !== 'wfTJJL5Wz')} />);
 
-    const pickerContainer = screen.getByLabelText(selectors.components.FolderPicker.input);
+    const pickerContainer = screen.getByTestId(selectors.components.FolderPicker.input);
     selectEvent.openMenu(pickerContainer);
 
     const pickerOptions = await screen.findAllByLabelText('Select option');
@@ -62,7 +62,7 @@ describe('OldFolderPicker', () => {
     render(<OldFolderPicker onChange={onChangeFn} enableCreateNew={true} allowEmpty={true} />);
     expect(await screen.findByTestId(selectors.components.FolderPicker.containerV2)).toBeInTheDocument();
 
-    await userEvent.type(screen.getByLabelText('Select a folder'), newFolder.title);
+    await userEvent.type(screen.getByTestId(selectors.components.FolderPicker.input), newFolder.title);
     const enter = await screen.findByText('Hit enter to add');
 
     await userEvent.click(enter);
@@ -89,7 +89,7 @@ describe('OldFolderPicker', () => {
     const onChangeFn = jest.fn();
     render(<OldFolderPicker onChange={onChangeFn} />);
     expect(await screen.findByTestId(selectors.components.FolderPicker.containerV2)).toBeInTheDocument();
-    const pickerContainer = screen.getByLabelText(selectors.components.FolderPicker.input);
+    const pickerContainer = screen.getByTestId(selectors.components.FolderPicker.input);
     selectEvent.openMenu(pickerContainer);
 
     const pickerOptions = await screen.findAllByLabelText('Select option');
@@ -110,7 +110,7 @@ describe('OldFolderPicker', () => {
     const onChangeFn = jest.fn();
     render(<OldFolderPicker onChange={onChangeFn} showRoot={false} />);
     expect(await screen.findByTestId(selectors.components.FolderPicker.containerV2)).toBeInTheDocument();
-    const pickerContainer = screen.getByLabelText(selectors.components.FolderPicker.input);
+    const pickerContainer = screen.getByTestId(selectors.components.FolderPicker.input);
     selectEvent.openMenu(pickerContainer);
 
     const pickerOptions = await screen.findAllByLabelText('Select option');
@@ -131,7 +131,7 @@ describe('OldFolderPicker', () => {
     const onChangeFn = jest.fn();
     render(<OldFolderPicker onChange={onChangeFn} />);
     expect(await screen.findByTestId(selectors.components.FolderPicker.containerV2)).toBeInTheDocument();
-    const pickerContainer = screen.getByLabelText(selectors.components.FolderPicker.input);
+    const pickerContainer = screen.getByTestId(selectors.components.FolderPicker.input);
     selectEvent.openMenu(pickerContainer);
 
     const pickerOptions = await screen.findAllByLabelText('Select option');
@@ -152,7 +152,7 @@ describe('OldFolderPicker', () => {
     const onChangeFn = jest.fn();
     render(<OldFolderPicker onChange={onChangeFn} />);
 
-    const pickerContainer = screen.getByLabelText(selectors.components.FolderPicker.input);
+    const pickerContainer = screen.getByTestId(selectors.components.FolderPicker.input);
     await userEvent.type(pickerContainer, 'Test');
 
     expect(await screen.findByText('Dash Test')).toBeInTheDocument();

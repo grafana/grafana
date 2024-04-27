@@ -87,19 +87,41 @@ export const useDimensionKeys = (
   }
 
   if (dimensionFilters) {
-    dimensionFilters = datasource.resources.convertDimensionFormat(dimensionFilters, {});
+    dimensionFilters = datasource.resources.convertDimensionFormat(dimensionFilters, {}, false);
   }
 
   // doing deep comparison to avoid making new api calls to list metrics unless dimension filter object props changes
   useDeepCompareEffect(() => {
     datasource.resources
-      .getDimensionKeys({ namespace, region, metricName, accountId, dimensionFilters })
+      .getDimensionKeys({ namespace, region, metricName, accountId, dimensionFilters }, false)
       .then((result: Array<SelectableValue<string>>) => {
         setDimensionKeys(appendTemplateVariables(datasource, result));
       });
   }, [datasource, namespace, region, metricName, accountId, dimensionFilters]);
 
   return dimensionKeys;
+};
+
+export const useEnsureVariableHasSingleSelection = (datasource: CloudWatchDatasource, target?: string) => {
+  const [error, setError] = useState('');
+  // interpolate the target to ensure the check in useEffect runs when the variable selection is changed
+  const interpolatedTarget = datasource.templateSrv.replace(target);
+
+  useEffect(() => {
+    if (datasource.resources.isVariableWithMultipleOptionsSelected(target)) {
+      const newErrorMessage = `Template variables with multiple selected options are not supported for ${target}`;
+      if (error !== newErrorMessage) {
+        setError(newErrorMessage);
+      }
+      return;
+    }
+
+    if (error) {
+      setError('');
+    }
+  }, [datasource.resources, target, interpolatedTarget, error]);
+
+  return error;
 };
 
 export const useIsMonitoringAccount = (resources: ResourcesAPI, region: string) => {

@@ -21,12 +21,12 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	example "github.com/grafana/grafana/pkg/apis/example/v0alpha1"
+	"github.com/grafana/grafana/pkg/apiserver/builder"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 )
 
-var _ grafanaapiserver.APIGroupBuilder = (*TestingAPIBuilder)(nil)
+var _ builder.APIGroupBuilder = (*TestingAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type TestingAPIBuilder struct {
@@ -40,12 +40,12 @@ func NewTestingAPIBuilder() *TestingAPIBuilder {
 	}
 }
 
-func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration grafanaapiserver.APIRegistrar) *TestingAPIBuilder {
+func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar) *TestingAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
 	}
 	builder := NewTestingAPIBuilder()
-	apiregistration.RegisterAPI(NewTestingAPIBuilder())
+	apiregistration.RegisterAPI(builder)
 	return builder
 }
 
@@ -84,7 +84,8 @@ func (b *TestingAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 func (b *TestingAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
-	optsGetter generic.RESTOptionsGetter,
+	_ generic.RESTOptionsGetter,
+	_ bool,
 ) (*genericapiserver.APIGroupInfo, error) {
 	b.codecs = codecs
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(b.gv.Group, scheme, metav1.ParameterCodec, codecs)
@@ -102,9 +103,9 @@ func (b *TestingAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions
 }
 
 // Register additional routes with the server
-func (b *TestingAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
-	return &grafanaapiserver.APIRoutes{
-		Root: []grafanaapiserver.APIRouteHandler{
+func (b *TestingAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
+	return &builder.APIRoutes{
+		Root: []builder.APIRouteHandler{
 			{
 				Path: "aaa",
 				Spec: &spec3.PathProps{
@@ -166,7 +167,7 @@ func (b *TestingAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 				},
 			},
 		},
-		Namespace: []grafanaapiserver.APIRouteHandler{
+		Namespace: []builder.APIRouteHandler{
 			{
 				Path: "ccc",
 				Spec: &spec3.PathProps{

@@ -43,6 +43,8 @@ describe('addLabelToQuery()', () => {
     ${'{foo="bar"} | logfmt | x="y"'}                                                                                                 | ${'query with parser and label filter'}                                        | ${'bar'} | ${'='}   | ${'baz'}       | ${'{foo="bar"} | logfmt | x="y" | bar=`baz`'}
     ${'rate({foo="bar"} | logfmt [5m])'}                                                                                              | ${'metric query with parser'}                                                  | ${'bar'} | ${'='}   | ${'baz'}       | ${'rate({foo="bar"} | logfmt | bar=`baz` [5m])'}
     ${'sum by(host) (rate({foo="bar"} | logfmt | x="y" | line_format "{{.status}}" [5m]))'}                                           | ${'metric query with parser'}                                                  | ${'bar'} | ${'='}   | ${'baz'}       | ${'sum by(host) (rate({foo="bar"} | logfmt | x="y" | bar=`baz` | line_format "{{.status}}" [5m]))'}
+    ${'sum by(host) (rate({foo="bar"} | logfmt | x="y" | label_format process="{{.process}}" [5m]))'}                                 | ${'metric query with parser and label format'}                                 | ${'bar'} | ${'='}   | ${'baz'}       | ${'sum by(host) (rate({foo="bar"} | logfmt | x="y" | label_format process="{{.process}}" | bar=`baz` [5m]))'}
+    ${'{foo="bar"} | logfmt | x="y" | label_format process="{{.process}}"'}                                                           | ${'query with parser and label format'}                                        | ${'bar'} | ${'='}   | ${'baz'}       | ${'{foo="bar"} | logfmt | x="y" | label_format process="{{.process}}" | bar=`baz`'}
     ${'{foo="bar"} | logfmt | line_format "{{.status}}"'}                                                                             | ${'do not add filter to line_format expressions in query with parser'}         | ${'bar'} | ${'='}   | ${'baz'}       | ${'{foo="bar"} | logfmt | bar=`baz` | line_format "{{.status}}"'}
     ${'{foo="bar"} | logfmt | line_format "{{status}}"'}                                                                              | ${'do not add filter to line_format expressions in query with parser'}         | ${'bar'} | ${'='}   | ${'baz'}       | ${'{foo="bar"} | logfmt | bar=`baz` | line_format "{{status}}"'}
     ${'{}'}                                                                                                                           | ${'query without stream selector'}                                             | ${'bar'} | ${'='}   | ${'baz'}       | ${'{bar="baz"}'}
@@ -97,6 +99,18 @@ describe('addLabelToQuery()', () => {
     expect(addLabelToQuery('{foo="bar"} | logfmt', 'forcedLabel', '=', 'value', LabelType.StructuredMetadata)).toEqual(
       '{foo="bar"} | logfmt | forcedLabel=`value`'
     );
+  });
+
+  it('should add label as labelFilter to multiple places if label is StructuredMetadata', () => {
+    expect(
+      addLabelToQuery(
+        'rate({foo="bar"} [$__auto]) / rate({foo="bar"} [$__auto])',
+        'forcedLabel',
+        '=',
+        'value',
+        LabelType.StructuredMetadata
+      )
+    ).toEqual('rate({foo="bar"} | forcedLabel=`value` [$__auto]) / rate({foo="bar"} | forcedLabel=`value` [$__auto])');
   });
 });
 

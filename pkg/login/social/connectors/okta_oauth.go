@@ -12,9 +12,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
+	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -44,14 +46,13 @@ type OktaClaims struct {
 	Name              string `json:"name"`
 }
 
-func NewOktaProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features *featuremgmt.FeatureManager) *SocialOkta {
-	config := createOAuthConfig(info, cfg, social.OktaProviderName)
+func NewOktaProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialOkta {
 	provider := &SocialOkta{
-		SocialBase: newSocialBase(social.OktaProviderName, config, info, cfg.AutoAssignOrgRole, *features),
+		SocialBase: newSocialBase(social.OktaProviderName, info, features, cfg),
 	}
 
 	if info.UseRefreshToken {
-		appendUniqueScope(config, social.OfflineAccessScope)
+		appendUniqueScope(provider.Config, social.OfflineAccessScope)
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
@@ -61,11 +62,37 @@ func NewOktaProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssose
 	return provider
 }
 
-func (s *SocialOkta) Validate(ctx context.Context, settings ssoModels.SSOSettings) error {
-	return nil
+func (s *SocialOkta) Validate(ctx context.Context, settings ssoModels.SSOSettings, requester identity.Requester) error {
+	info, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+	if err != nil {
+		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
+	}
+
+	err = validateInfo(info, requester)
+	if err != nil {
+		return err
+	}
+
+	return validation.Validate(info, requester,
+		validation.RequiredUrlValidator(info.AuthUrl, "Auth URL"),
+		validation.RequiredUrlValidator(info.TokenUrl, "Token URL"),
+		validation.RequiredUrlValidator(info.ApiUrl, "API URL"))
 }
 
 func (s *SocialOkta) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
+	newInfo, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+	if err != nil {
+		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
+	}
+
+	s.reloadMutex.Lock()
+	defer s.reloadMutex.Unlock()
+
+	s.updateInfo(social.OktaProviderName, newInfo)
+	if newInfo.UseRefreshToken {
+		appendUniqueScope(s.Config, social.OfflineAccessScope)
+	}
+
 	return nil
 }
 
@@ -78,6 +105,9 @@ func (claims *OktaClaims) extractEmail() string {
 }
 
 func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*social.BasicUserInfo, error) {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
 	idToken := token.Extra("id_token")
 	if idToken == nil {
 		return nil, fmt.Errorf("no id_token found")
@@ -104,8 +134,8 @@ func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *o
 		return nil, err
 	}
 
-	groups := s.GetGroups(&data)
-	if !s.IsGroupMember(groups) {
+	groups := s.getGroups(&data)
+	if !s.isGroupMember(groups) {
 		return nil, errMissingGroupMembership
 	}
 
@@ -137,10 +167,6 @@ func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *o
 	}, nil
 }
 
-func (s *SocialOkta) GetOAuthInfo() *social.OAuthInfo {
-	return s.info
-}
-
 func (s *SocialOkta) extractAPI(ctx context.Context, data *OktaUserInfoJson, client *http.Client) error {
 	rawUserInfoResponse, err := s.httpGet(ctx, client, s.info.ApiUrl)
 	if err != nil {
@@ -160,7 +186,7 @@ func (s *SocialOkta) extractAPI(ctx context.Context, data *OktaUserInfoJson, cli
 	return nil
 }
 
-func (s *SocialOkta) GetGroups(data *OktaUserInfoJson) []string {
+func (s *SocialOkta) getGroups(data *OktaUserInfoJson) []string {
 	groups := make([]string, 0)
 	if len(data.Groups) > 0 {
 		groups = data.Groups
@@ -169,7 +195,7 @@ func (s *SocialOkta) GetGroups(data *OktaUserInfoJson) []string {
 }
 
 // TODO: remove this in a separate PR and use the isGroupMember from the social.go
-func (s *SocialOkta) IsGroupMember(groups []string) bool {
+func (s *SocialOkta) isGroupMember(groups []string) bool {
 	if len(s.info.AllowedGroups) == 0 {
 		return true
 	}

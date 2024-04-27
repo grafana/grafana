@@ -6,7 +6,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 
-	"github.com/grafana/grafana/pkg/apis"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
@@ -16,7 +16,7 @@ const (
 	APIVERSION = GROUP + "/" + VERSION
 )
 
-var AlertResourceInfo = apis.NewResourceInfo(GROUP, VERSION,
+var AlertResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 	"alertrules", "alertrule", "AlertRule",
 	func() runtime.Object { return &AlertRule{} },
 	func() runtime.Object { return &AlertRuleList{} },

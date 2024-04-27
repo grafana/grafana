@@ -23,7 +23,9 @@ Bar gauges simplify your data by reducing every field to a single value. You cho
 
 This panel can show one or more bar gauges depending on how many series, rows, or columns your query returns.
 
-{{< figure src="/static/img/docs/v66/bar_gauge_cover.png" max-width="1025px" caption="Stat panel" >}}
+{{< figure src="/static/img/docs/v66/bar_gauge_cover.png" max-width="1025px" alt="Bar gauge panel" >}}
+
+{{< docs/play title="Bar Gauge" url="https://play.grafana.org/d/vmie2cmWz/" >}}
 
 ## Value options
 
@@ -127,6 +129,10 @@ Automatically show y-axis scrollbar when there's a large amount of data.
 {{% admonition type="note" %}}
 This option only applies when bar size is set to manual.
 {{% /admonition %}}
+
+## Value mappings
+
+{{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 {{% docs/reference %}}
 [Calculation types]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/calculation-types"

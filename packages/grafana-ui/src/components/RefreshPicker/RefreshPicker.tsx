@@ -1,4 +1,4 @@
-import formatDuration from 'date-fns/formatDuration';
+import { formatDuration } from 'date-fns';
 import React, { PureComponent } from 'react';
 
 import { SelectableValue, parseDuration } from '@grafana/data';
@@ -61,10 +61,6 @@ export class RefreshPicker extends PureComponent<Props> {
   getVariant(): ToolbarButtonVariant {
     if (this.props.isLive) {
       return 'primary';
-    }
-
-    if (this.props.isLoading) {
-      return 'destructive';
     }
 
     if (this.props.primary) {

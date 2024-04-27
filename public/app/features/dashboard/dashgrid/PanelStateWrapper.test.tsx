@@ -74,6 +74,8 @@ function setupTestContext(options: Partial<Props>) {
     </Provider>
   );
 
+  // Needed so mocks work
+  props.panel.refreshWhenInView = false;
   return { rerender, props, subject, store };
 }
 

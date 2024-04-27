@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Modal, useStyles2 } from '@grafana/ui';
+import { Grid, Modal, useStyles2, Text } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { getModKey } from 'app/core/utils/browser';
 
@@ -27,16 +27,51 @@ const getShortcuts = (modKey: string) => {
           description: t('help-modal.shortcuts-description.exit-edit/setting-views', 'Exit edit/setting views'),
         },
         {
-          keys: ['h'],
+          keys: ['?'],
           description: t('help-modal.shortcuts-description.show-all-shortcuts', 'Show all keyboard shortcuts'),
         },
         { keys: ['c', 't'], description: t('help-modal.shortcuts-description.change-theme', 'Change theme') },
       ],
     },
     {
+      category: t('help-modal.shortcuts-category.time-range', 'Time range'),
+      shortcuts: [
+        {
+          keys: ['t', 'z'],
+          description: t('help-modal.shortcuts-description.zoom-out-time-range', 'Zoom out time range'),
+        },
+        {
+          keys: ['t', '←'],
+          description: t('help-modal.shortcuts-description.move-time-range-back', 'Move time range back'),
+        },
+        {
+          keys: ['t', '→'],
+          description: t('help-modal.shortcuts-description.move-time-range-forward', 'Move time range forward'),
+        },
+        {
+          keys: ['t', 'a'],
+          description: t(
+            'help-modal.shortcuts-description.make-time-range-permanent',
+            'Make time range absolute/permanent'
+          ),
+        },
+        {
+          keys: ['t', 'c'],
+          description: t('help-modal.shortcuts-description.copy-time-range', 'Copy time range'),
+        },
+        {
+          keys: ['t', 'v'],
+          description: t('help-modal.shortcuts-description.paste-time-range', 'Paste time range'),
+        },
+      ],
+    },
+    {
       category: t('help-modal.shortcuts-category.dashboard', 'Dashboard'),
       shortcuts: [
-        { keys: [`${modKey}+s`], description: t('help-modal.shortcuts-description.save-dashboard', 'Save dashboard') },
+        {
+          keys: [`${modKey} + s`],
+          description: t('help-modal.shortcuts-description.save-dashboard', 'Save dashboard'),
+        },
         {
           keys: ['d', 'r'],
           description: t('help-modal.shortcuts-description.refresh-all-panels', 'Refresh all panels'),
@@ -53,8 +88,14 @@ const getShortcuts = (modKey: string) => {
           keys: ['d', 'k'],
           description: t('help-modal.shortcuts-description.toggle-kiosk', 'Toggle kiosk mode (hides top nav)'),
         },
-        { keys: ['d', 'E'], description: t('help-modal.shortcuts-description.expand-all-rows', 'Expand all rows') },
-        { keys: ['d', 'C'], description: t('help-modal.shortcuts-description.collapse-all-rows', 'Collapse all rows') },
+        {
+          keys: ['d', '⇧ + e'],
+          description: t('help-modal.shortcuts-description.expand-all-rows', 'Expand all rows'),
+        },
+        {
+          keys: ['d', '⇧ + c'],
+          description: t('help-modal.shortcuts-description.collapse-all-rows', 'Collapse all rows'),
+        },
         {
           keys: ['d', 'a'],
           description: t(
@@ -77,7 +118,7 @@ const getShortcuts = (modKey: string) => {
       ],
     },
     {
-      category: t('help-modal.shortcuts-category.focused-panel', 'Focused Panel'),
+      category: t('help-modal.shortcuts-category.focused-panel', 'Focused panel'),
       shortcuts: [
         {
           keys: ['e'],
@@ -99,30 +140,6 @@ const getShortcuts = (modKey: string) => {
         },
       ],
     },
-    {
-      category: t('help-modal.shortcuts-category.time-range', 'Time Range'),
-      shortcuts: [
-        {
-          keys: ['t', 'z'],
-          description: t('help-modal.shortcuts-description.zoom-out-time-range', 'Zoom out time range'),
-        },
-        {
-          keys: ['t', '←'],
-          description: t('help-modal.shortcuts-description.move-time-range-back', 'Move time range back'),
-        },
-        {
-          keys: ['t', '→'],
-          description: t('help-modal.shortcuts-description.move-time-range-forward', 'Move time range forward'),
-        },
-        {
-          keys: ['t', 'a'],
-          description: t(
-            'help-modal.shortcuts-description.make-time-range-permanent',
-            'Make time range absolute/permanent'
-          ),
-        },
-      ],
-    },
   ];
 };
 
@@ -132,97 +149,110 @@ export interface HelpModalProps {
 
 export const HelpModal = ({ onDismiss }: HelpModalProps): JSX.Element => {
   const styles = useStyles2(getStyles);
+
   const modKey = useMemo(() => getModKey(), []);
   const shortcuts = useMemo(() => getShortcuts(modKey), [modKey]);
   return (
     <Modal title={t('help-modal.title', 'Shortcuts')} isOpen onDismiss={onDismiss} onClickBackdrop={onDismiss}>
-      <div className={styles.categories}>
-        {Object.values(shortcuts).map(({ category, shortcuts }, i) => (
-          <div className={styles.shortcutCategory} key={i}>
-            <table className={styles.shortcutTable}>
-              <tbody>
+      <Grid columns={{ xs: 1, sm: 2 }} gap={3} tabIndex={0}>
+        {Object.values(shortcuts).map(({ category, shortcuts }) => (
+          <section key={category}>
+            <table className={styles.table}>
+              <caption>
+                <Text element="p" variant="h5">
+                  {category}
+                </Text>
+              </caption>
+              <thead className="sr-only">
                 <tr>
-                  <th className={styles.shortcutTableCategoryHeader} colSpan={2}>
-                    {category}
-                  </th>
+                  <th>Keys</th>
+                  <th>Description</th>
                 </tr>
-                {shortcuts.map((shortcut, j) => (
-                  <tr key={`${i}-${j}`}>
-                    <td className={styles.shortcutTableKeys}>
-                      {shortcut.keys.map((key, k) => (
-                        <span className={styles.shortcutTableKey} key={`${i}-${j}-${k}`}>
-                          {key}
-                        </span>
+              </thead>
+              <tbody>
+                {shortcuts.map(({ keys, description }) => (
+                  <tr key={keys.join()}>
+                    <td className={styles.keys}>
+                      {keys.map((key) => (
+                        <Key key={key}>{key}</Key>
                       ))}
                     </td>
-                    <td className={styles.shortcutTableDescription}>{shortcut.description}</td>
+                    <td>
+                      <Text variant="bodySmall" element="p">
+                        {description}
+                      </Text>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
+          </section>
         ))}
-      </div>
+      </Grid>
     </Modal>
   );
 };
 
+interface KeyProps {
+  children: string;
+}
+
+const Key = ({ children }: KeyProps) => {
+  const styles = useStyles2(getStyles);
+  const displayText = useMemo(() => replaceCustomKeyNames(children), [children]);
+  const displayElement = <span dangerouslySetInnerHTML={{ __html: displayText }}></span>;
+  return (
+    <kbd className={styles.shortcutTableKey}>
+      <Text variant="code">{displayElement}</Text>
+    </kbd>
+  );
+};
+
+function replaceCustomKeyNames(key: string) {
+  let displayName;
+  let srName;
+
+  if (key.includes('ctrl')) {
+    displayName = 'ctrl';
+    srName = 'Control';
+  } else if (key.includes('esc')) {
+    displayName = 'esc';
+    srName = 'Escape';
+  } else {
+    return key;
+  }
+
+  return key.replace(
+    displayName,
+    `<span class="sr-only">${srName}</span><span aria-hidden="true" role="none">${displayName}</span>`
+  );
+}
+
 function getStyles(theme: GrafanaTheme2) {
   return {
-    titleDescription: css`
-      font-size: ${theme.typography.bodySmall.fontSize};
-      font-weight: ${theme.typography.bodySmall.fontWeight};
-      color: ${theme.colors.text.disabled};
-      padding-bottom: ${theme.spacing(2)};
-    `,
-    categories: css`
-      font-size: ${theme.typography.bodySmall.fontSize};
-      display: flex;
-      flex-flow: row wrap;
-      justify-content: space-between;
-      align-items: flex-start;
-    `,
-    shortcutCategory: css`
-      width: 50%;
-      font-size: ${theme.typography.bodySmall.fontSize};
-    `,
-    shortcutTable: css`
-      margin-bottom: ${theme.spacing(2)};
-    `,
-    shortcutTableCategoryHeader: css`
-      font-weight: normal;
-      font-size: ${theme.typography.h6.fontSize};
-      text-align: left;
-    `,
-    shortcutTableDescription: css`
-      text-align: left;
-      color: ${theme.colors.text.disabled};
-      width: 99%;
-      padding: ${theme.spacing(1, 2)};
-    `,
-    shortcutTableKeys: css`
-      white-space: nowrap;
-      width: 1%;
-      text-align: right;
-      color: ${theme.colors.text.primary};
-    `,
-    shortcutTableKey: css`
-      display: inline-block;
-      text-align: center;
-      margin-right: ${theme.spacing(0.5)};
-      padding: 3px 5px;
-      font:
-        11px Consolas,
-        'Liberation Mono',
-        Menlo,
-        Courier,
-        monospace;
-      line-height: 10px;
-      vertical-align: middle;
-      border: solid 1px ${theme.colors.border.medium};
-      border-radius: ${theme.shape.borderRadius(3)};
-      color: ${theme.colors.text.primary};
-      background-color: ${theme.colors.background.secondary};
-    `,
+    table: css({
+      borderCollapse: 'separate',
+      borderSpacing: theme.spacing(2),
+      '& caption': {
+        captionSide: 'top',
+      },
+    }),
+    keys: css({
+      textAlign: 'end',
+      whiteSpace: 'nowrap',
+      minWidth: 83, // To match column widths with the widest
+    }),
+    shortcutTableKey: css({
+      display: 'inline-block',
+      textAlign: 'center',
+      marginRight: theme.spacing(0.5),
+      padding: '3px 5px',
+      lineHeight: '10px',
+      verticalAlign: 'middle',
+      border: `solid 1px ${theme.colors.border.medium}`,
+      borderRadius: theme.shape.radius.default,
+      color: theme.colors.text.primary,
+      backgroundColor: theme.colors.background.secondary,
+    }),
   };
 }

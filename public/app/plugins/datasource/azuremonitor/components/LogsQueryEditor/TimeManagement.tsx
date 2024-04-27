@@ -123,10 +123,10 @@ export function TimeManagement({ query, onQueryChange: onChange, schema }: Azure
               query.azureLogAnalytics?.timeColumn
                 ? query.azureLogAnalytics?.timeColumn
                 : defaultTimeColumns
-                ? defaultTimeColumns[0]
-                : timeColumns
-                ? timeColumns[0]
-                : { value: 'TimeGenerated', label: 'TimeGenerated' }
+                  ? defaultTimeColumns[0]
+                  : timeColumns
+                    ? timeColumns[0]
+                    : { value: 'TimeGenerated', label: 'TimeGenerated' }
             }
             allowCustomValue
           />

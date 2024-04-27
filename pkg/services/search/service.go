@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/search/model"
@@ -79,6 +80,7 @@ func (s *SearchService) SearchHandler(ctx context.Context, query *Query) (model.
 		}
 	}
 
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Search).Inc()
 	dashboardQuery := dashboards.FindPersistedDashboardsQuery{
 		Title:         query.Title,
 		SignedInUser:  query.SignedInUser,

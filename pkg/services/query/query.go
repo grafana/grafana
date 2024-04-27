@@ -28,10 +28,11 @@ import (
 )
 
 const (
-	HeaderPluginID       = "X-Plugin-Id"         // can be used for routing
-	HeaderDatasourceUID  = "X-Datasource-Uid"    // can be used for routing/ load balancing
-	HeaderDashboardUID   = "X-Dashboard-Uid"     // mainly useful for debugging slow queries
-	HeaderPanelID        = "X-Panel-Id"          // mainly useful for debugging slow queries
+	HeaderPluginID       = "X-Plugin-Id"      // can be used for routing
+	HeaderDatasourceUID  = "X-Datasource-Uid" // can be used for routing/ load balancing
+	HeaderDashboardUID   = "X-Dashboard-Uid"  // mainly useful for debugging slow queries
+	HeaderPanelID        = "X-Panel-Id"       // mainly useful for debugging slow queries
+	HeaderPanelPluginId  = "X-Panel-Plugin-Id"
 	HeaderQueryGroupID   = "X-Query-Group-Id"    // mainly useful for finding related queries with query chunking
 	HeaderFromExpression = "X-Grafana-From-Expr" // used by datasources to identify expression queries
 )
@@ -305,14 +306,12 @@ func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user identity.Requ
 			req.parsedQueries[ds.UID] = []parsedQuery{}
 		}
 
-		s.log.Debug("Processing metrics query", "query", query)
-
 		modelJSON, err := query.MarshalJSON()
 		if err != nil {
 			return nil, err
 		}
 
-		req.parsedQueries[ds.UID] = append(req.parsedQueries[ds.UID], parsedQuery{
+		pq := parsedQuery{
 			datasource: ds,
 			query: backend.DataQuery{
 				TimeRange: backend.TimeRange{
@@ -326,7 +325,16 @@ func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user identity.Requ
 				JSON:          modelJSON,
 			},
 			rawQuery: query,
-		})
+		}
+		req.parsedQueries[ds.UID] = append(req.parsedQueries[ds.UID], pq)
+
+		s.log.Debug("Processed metrics query",
+			"ref_id", pq.query.RefID,
+			"from", timeRange.GetFromAsMsEpoch(),
+			"to", timeRange.GetToAsMsEpoch(),
+			"interval", pq.query.Interval.Milliseconds(),
+			"max_data_points", pq.query.MaxDataPoints,
+			"query", string(modelJSON))
 	}
 
 	return req, req.validateRequest(ctx)

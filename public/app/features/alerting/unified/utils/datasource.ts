@@ -1,4 +1,4 @@
-import { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
+import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceSettings } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import {
@@ -51,10 +51,20 @@ export function getRulesDataSource(rulesSourceName: string) {
 
 export function getAlertManagerDataSources() {
   return getAllDataSources()
-    .filter(
-      (ds): ds is DataSourceInstanceSettings<AlertManagerDataSourceJsonData> => ds.type === DataSourceType.Alertmanager
-    )
+    .filter(isAlertmanagerDataSourceInstance)
     .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export function isAlertmanagerDataSourceInstance(
+  dataSource: DataSourceInstanceSettings
+): dataSource is DataSourceInstanceSettings<AlertManagerDataSourceJsonData> {
+  return dataSource.type === DataSourceType.Alertmanager;
+}
+
+export function isAlertmanagerDataSource(
+  dataSource: DataSourceSettings
+): dataSource is DataSourceSettings<AlertManagerDataSourceJsonData> {
+  return dataSource.type === DataSourceType.Alertmanager;
 }
 
 export function getExternalDsAlertManagers() {
@@ -205,10 +215,9 @@ export function getDataSourceByName(name: string): DataSourceInstanceSettings<Da
 }
 
 export function getAlertmanagerDataSourceByName(name: string) {
-  return getAllDataSources().find(
-    (source): source is DataSourceInstanceSettings<AlertManagerDataSourceJsonData> =>
-      source.name === name && source.type === 'alertmanager'
-  );
+  return getAllDataSources()
+    .filter(isAlertmanagerDataSourceInstance)
+    .find((source) => source.name === name);
 }
 
 export function getRulesSourceByName(name: string): RulesSource | undefined {

@@ -15,54 +15,48 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/searchusers/sortopts"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestIntegrationUserGet(t *testing.T) {
 	testCases := []struct {
-		name            string
-		wantErr         error
-		searchLogin     string
-		searchEmail     string
-		caseInsensitive bool
+		name        string
+		wantErr     error
+		searchLogin string
+		searchEmail string
 	}{
 		{
-			name:            "user not found non exact - not case insensitive",
-			wantErr:         user.ErrUserNotFound,
-			searchLogin:     "Test",
-			searchEmail:     "Test@email.com",
-			caseInsensitive: false,
+			name:        "user found non exact",
+			wantErr:     nil,
+			searchLogin: "test",
+			searchEmail: "Test@email.com",
 		},
 		{
-			name:            "user found exact - not case insensitive",
-			wantErr:         nil,
-			searchLogin:     "test",
-			searchEmail:     "test@email.com",
-			caseInsensitive: false,
+			name:        "user found exact",
+			wantErr:     nil,
+			searchLogin: "test",
+			searchEmail: "test@email.com",
 		},
 		{
-			name:            "user found non exact - case insensitive",
-			wantErr:         nil,
-			searchLogin:     "Test",
-			searchEmail:     "Test@email.com",
-			caseInsensitive: true,
+			name:        "user found exact - case insensitive",
+			wantErr:     nil,
+			searchLogin: "Test",
+			searchEmail: "Test@email.com",
 		},
 		{
-			name:            "user found exact - case insensitive",
-			wantErr:         nil,
-			searchLogin:     "Test",
-			searchEmail:     "Test@email.com",
-			caseInsensitive: true,
-		},
-		{
-			name:            "user not found - case insensitive",
-			wantErr:         user.ErrUserNotFound,
-			searchLogin:     "Test_login",
-			searchEmail:     "Test*@email.com",
-			caseInsensitive: true,
+			name:        "user not found - case insensitive",
+			wantErr:     user.ErrUserNotFound,
+			searchLogin: "Test_login",
+			searchEmail: "Test*@email.com",
 		},
 	}
 
@@ -70,8 +64,7 @@ func TestIntegrationUserGet(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	ss := db.InitTestDB(t)
-	cfg := ss.Cfg
+	ss, cfg := db.InitTestDBWithCfg(t)
 	userStore := ProvideStore(ss, cfg)
 
 	_, errUser := userStore.Insert(context.Background(),
@@ -87,10 +80,9 @@ func TestIntegrationUserGet(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			if !tc.caseInsensitive && db.IsTestDbMySQL() {
+			if db.IsTestDbMySQL() {
 				t.Skip("mysql is always case insensitive")
 			}
-			cfg.CaseInsensitiveLogin = tc.caseInsensitive
 			usr, err := userStore.Get(context.Background(),
 				&user.User{
 					Email: tc.searchEmail,
@@ -104,6 +96,7 @@ func TestIntegrationUserGet(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, usr)
+				require.NotEmpty(t, usr.UID)
 			}
 		})
 	}
@@ -114,12 +107,12 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	ss := db.InitTestDB(t)
-	quotaService := quotaimpl.ProvideService(ss, ss.Cfg)
-	orgService, err := orgimpl.ProvideService(ss, ss.Cfg, quotaService)
+	ss, cfg := db.InitTestDBWithCfg(t)
+	quotaService := quotaimpl.ProvideService(ss, cfg)
+	orgService, err := orgimpl.ProvideService(ss, cfg, quotaService)
 	require.NoError(t, err)
 	userStore := ProvideStore(ss, setting.NewCfg())
-	usrSvc, err := ProvideService(ss, orgService, ss.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
+	usrSvc, err := ProvideService(ss, orgService, cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
 	usr := &user.SignedInUser{
 		OrgID:       1,
@@ -150,6 +143,32 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("insert user (with known UID)", func(t *testing.T) {
+		ctx := context.Background()
+		id, err := userStore.Insert(ctx,
+			&user.User{
+				UID:     "abcd",
+				Email:   "next-test@email.com",
+				Name:    "next-test1",
+				Login:   "next-test1",
+				Created: time.Now(),
+				Updated: time.Now(),
+			},
+		)
+		require.NoError(t, err)
+
+		found, err := userStore.GetByID(ctx, id)
+		require.NoError(t, err)
+		require.Equal(t, "abcd", found.UID)
+
+		siu, err := userStore.GetSignedInUser(ctx, &user.GetSignedInUserQuery{
+			UserID: id,
+			OrgID:  found.OrgID,
+		})
+		require.NoError(t, err)
+		require.Equal(t, "abcd", siu.UserUID)
+	})
+
 	t.Run("get user", func(t *testing.T) {
 		_, err := userStore.Get(context.Background(),
 			&user.User{
@@ -163,7 +182,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 	t.Run("Testing DB - creates and loads user", func(t *testing.T) {
 		ss := db.InitTestDB(t)
-		_, usrSvc := createOrgAndUserSvc(t, ss, ss.Cfg)
+		_, usrSvc := createOrgAndUserSvc(t, ss, cfg)
 
 		cmd := user.CreateUserCommand{
 			Email: "usertest@test.com",
@@ -177,7 +196,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 
 		require.Equal(t, result.Email, "usertest@test.com")
-		require.Equal(t, result.Password, "")
+		require.Equal(t, string(result.Password), "")
 		require.Len(t, result.Rands, 10)
 		require.Len(t, result.Salt, 10)
 		require.False(t, result.IsDisabled)
@@ -186,24 +205,21 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 
 		require.Equal(t, result.Email, "usertest@test.com")
-		require.Equal(t, result.Password, "")
+		require.Equal(t, string(result.Password), "")
 		require.Len(t, result.Rands, 10)
 		require.Len(t, result.Salt, 10)
 		require.False(t, result.IsDisabled)
 
 		t.Run("Get User by email case insensitive", func(t *testing.T) {
-			userStore.cfg.CaseInsensitiveLogin = true
 			query := user.GetUserByEmailQuery{Email: "USERtest@TEST.COM"}
 			result, err := userStore.GetByEmail(context.Background(), &query)
 			require.Nil(t, err)
 
 			require.Equal(t, result.Email, "usertest@test.com")
-			require.Equal(t, result.Password, "")
+			require.Equal(t, string(result.Password), "")
 			require.Len(t, result.Rands, 10)
 			require.Len(t, result.Salt, 10)
 			require.False(t, result.IsDisabled)
-
-			userStore.cfg.CaseInsensitiveLogin = false
 		})
 
 		t.Run("Testing DB - creates and loads user", func(t *testing.T) {
@@ -211,7 +227,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			require.Nil(t, err)
 
 			require.Equal(t, result.Email, "usertest@test.com")
-			require.Equal(t, result.Password, "")
+			require.Equal(t, string(result.Password), "")
 			require.Len(t, result.Rands, 10)
 			require.Len(t, result.Salt, 10)
 			require.False(t, result.IsDisabled)
@@ -220,11 +236,10 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			require.Nil(t, err)
 
 			require.Equal(t, result.Email, "usertest@test.com")
-			require.Equal(t, result.Password, "")
+			require.Equal(t, string(result.Password), "")
 			require.Len(t, result.Rands, 10)
 			require.Len(t, result.Salt, 10)
 			require.False(t, result.IsDisabled)
-			ss.Cfg.CaseInsensitiveLogin = false
 		})
 	})
 
@@ -232,73 +247,103 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		if ss.GetDBType() == migrator.MySQL {
 			t.Skip("Skipping on MySQL due to case insensitive indexes")
 		}
-		userStore.cfg.CaseInsensitiveLogin = true
-		cmd := user.CreateUserCommand{
-			Email: "confusertest@test.com",
-			Name:  "user name",
-			Login: "user_email_conflict",
-		}
-		// userEmailConflict
-		_, err = usrSvc.Create(context.Background(), &cmd)
+		testOrgID := int64(1)
+		err := ss.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			// create a user
+			// add additional user with conflicting login where DOMAIN is upper case
+			cmd := user.User{
+				Email:   "confusertest@test.com",
+				Name:    "user name",
+				Login:   "user_email_conflict",
+				OrgID:   testOrgID,
+				Created: time.Now(),
+				Updated: time.Now(),
+			}
+			rawSQL := fmt.Sprintf(
+				"INSERT INTO %s (email, login, org_id, version, is_admin, created, updated) VALUES (?,?,?,0,%s,?,?)",
+				ss.Quote("user"),
+				ss.GetDialect().BooleanStr(false),
+			)
+			_, err := sess.Exec(rawSQL, cmd.Email, cmd.Login, cmd.OrgID, cmd.Created, cmd.Updated)
+			if err != nil {
+				return err
+			}
+			return nil
+		})
+		require.NoError(t, err)
+		err = ss.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			// create a user
+			// add additional user with conflicting login where DOMAIN is upper case
+			cmd := user.User{
+				Email:   "confusertest@TEST.COM",
+				Name:    "user name",
+				Login:   "user_email_conflict_two",
+				OrgID:   testOrgID,
+				Created: time.Now(),
+				Updated: time.Now(),
+			}
+			rawSQL := fmt.Sprintf(
+				"INSERT INTO %s (email, login, org_id, version, is_admin, created, updated) VALUES (?,?,?,0,%s,?,?)",
+				ss.Quote("user"),
+				ss.GetDialect().BooleanStr(false),
+			)
+			_, err := sess.Exec(rawSQL, cmd.Email, cmd.Login, cmd.OrgID, cmd.Created, cmd.Updated)
+			if err != nil {
+				return err
+			}
+			return nil
+		})
 		require.NoError(t, err)
 
-		cmd = user.CreateUserCommand{
-			Email: "confusertest@TEST.COM",
-			Name:  "user name",
-			Login: "user_email_conflict_two",
-		}
-		_, err := usrSvc.Create(context.Background(), &cmd)
+		err = ss.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			// create a user
+			// add additional user with conflicting login where DOMAIN is upper case
+			// userLoginConflict
+			cmd := user.User{
+				Email:   "user_test_login_conflict@test.com",
+				Name:    "user name",
+				Login:   "user_test_login_conflict",
+				OrgID:   testOrgID,
+				Created: time.Now(),
+				Updated: time.Now(),
+			}
+			rawSQL := fmt.Sprintf(
+				"INSERT INTO %s (email, login, org_id, version, is_admin, created, updated) VALUES (?,?,?,0,%s,?,?)",
+				ss.Quote("user"),
+				ss.GetDialect().BooleanStr(false),
+			)
+			_, err := sess.Exec(rawSQL, cmd.Email, cmd.Login, cmd.OrgID, cmd.Created, cmd.Updated)
+			if err != nil {
+				return err
+			}
+			return nil
+		})
 		require.NoError(t, err)
 
-		cmd = user.CreateUserCommand{
-			Email: "user_test_login_conflict@test.com",
-			Name:  "user name",
-			Login: "user_test_login_conflict",
-		}
-		// userLoginConflict
-		_, err = usrSvc.Create(context.Background(), &cmd)
+		err = ss.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			// create a user
+			// add additional user with conflicting login where DOMAIN is upper case
+			// userLoginConflict
+			cmd := user.User{
+				Email:   "user_test_login_conflict_two@test.com",
+				Name:    "user name",
+				Login:   "user_test_login_CONFLICT",
+				OrgID:   testOrgID,
+				Created: time.Now(),
+				Updated: time.Now(),
+			}
+			rawSQL := fmt.Sprintf(
+				"INSERT INTO %s (email, login, org_id, version, is_admin, created, updated) VALUES (?,?,?,0,%s,?,?)",
+				ss.Quote("user"),
+				ss.GetDialect().BooleanStr(false),
+			)
+			_, err := sess.Exec(rawSQL, cmd.Email, cmd.Login, cmd.OrgID, cmd.Created, cmd.Updated)
+			if err != nil {
+				return err
+			}
+			return nil
+		})
 		require.NoError(t, err)
-
-		cmd = user.CreateUserCommand{
-			Email: "user_test_login_conflict_two@test.com",
-			Name:  "user name",
-			Login: "user_test_login_CONFLICT",
-		}
-		_, err = usrSvc.Create(context.Background(), &cmd)
-		require.NoError(t, err)
-
-		ss.Cfg.CaseInsensitiveLogin = true
-
-		t.Run("GetByEmail - email conflict", func(t *testing.T) {
-			query := user.GetUserByEmailQuery{Email: "confusertest@test.com"}
-			_, err = userStore.GetByEmail(context.Background(), &query)
-			require.Error(t, err)
-		})
-
-		t.Run("GetByEmail - login conflict", func(t *testing.T) {
-			query := user.GetUserByEmailQuery{Email: "user_test_login_conflict@test.com"}
-			_, err = userStore.GetByEmail(context.Background(), &query)
-			require.Error(t, err)
-		})
-
-		t.Run("GetByLogin - email conflict", func(t *testing.T) {
-			query := user.GetUserByLoginQuery{LoginOrEmail: "user_email_conflict_two"}
-			_, err = userStore.GetByLogin(context.Background(), &query)
-			require.Error(t, err)
-		})
-
-		t.Run("GetByLogin - login conflict", func(t *testing.T) {
-			query := user.GetUserByLoginQuery{LoginOrEmail: "user_test_login_conflict"}
-			_, err = userStore.GetByLogin(context.Background(), &query)
-			require.Error(t, err)
-		})
-
-		t.Run("GetByLogin - login conflict by email", func(t *testing.T) {
-			query := user.GetUserByLoginQuery{LoginOrEmail: "user_test_login_conflict@test.com"}
-			_, err = userStore.GetByLogin(context.Background(), &query)
-			require.Error(t, err)
-		})
-
 		t.Run("GetByLogin - user2 uses user1.email as login", func(t *testing.T) {
 			// create user_1
 			user1 := &user.User{
@@ -339,13 +384,34 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			require.NotEqual(t, user2.Login, result.Login)
 			require.NotEqual(t, user2.Name, result.Name)
 		})
-
-		ss.Cfg.CaseInsensitiveLogin = false
 	})
 
 	t.Run("Change user password", func(t *testing.T) {
-		err := userStore.ChangePassword(context.Background(), &user.ChangeUserPasswordCommand{})
+		id, err := userStore.Insert(context.Background(), &user.User{
+			Email:    "password@test.com",
+			Name:     "password",
+			Login:    "password",
+			Password: "password",
+			Salt:     "salt",
+			Created:  time.Now(),
+			Updated:  time.Now(),
+		})
 		require.NoError(t, err)
+
+		err = userStore.Update(context.Background(), &user.UpdateUserCommand{
+			UserID:   id,
+			Password: passwordPtr("updated"),
+		})
+		require.NoError(t, err)
+
+		updated, err := userStore.GetByID(context.Background(), id)
+		require.NoError(t, err)
+
+		assert.Equal(t, updated.Salt, "salt")
+		assert.Equal(t, updated.Name, "password")
+		assert.Equal(t, updated.Login, "password")
+		assert.Equal(t, updated.Email, "password@test.com")
+		assert.Equal(t, updated.Password, user.Password("updated"))
 	})
 
 	t.Run("update last seen at", func(t *testing.T) {
@@ -362,7 +428,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 	t.Run("get signed in user", func(t *testing.T) {
 		ss := db.InitTestDB(t)
-		orgService, usrSvc := createOrgAndUserSvc(t, ss, ss.Cfg)
+		orgService, usrSvc := createOrgAndUserSvc(t, ss, cfg)
 		users := createFiveTestUsers(t, usrSvc, func(i int) *user.CreateUserCommand {
 			return &user.CreateUserCommand{
 				Email:      fmt.Sprint("user", i, "@test.com"),
@@ -403,55 +469,48 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 	t.Run("Testing DB - grafana admin users", func(t *testing.T) {
 		ss := db.InitTestDB(t)
-		_, usrSvc := createOrgAndUserSvc(t, ss, ss.Cfg)
-		createUserCmd := user.CreateUserCommand{
-			Email:   fmt.Sprint("admin", "@test.com"),
+		_, usrSvc := createOrgAndUserSvc(t, ss, cfg)
+		usr, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{
+			Email:   "admin@test.com",
 			Name:    "admin",
 			Login:   "admin",
 			IsAdmin: true,
-		}
-		usr, err := usrSvc.Create(context.Background(), &createUserCmd)
+		})
 		require.Nil(t, err)
 
-		// Cannot make themselves a non-admin
-		updatePermsError := userStore.UpdatePermissions(context.Background(), usr.ID, false)
-		require.Equal(t, user.ErrLastGrafanaAdmin, updatePermsError)
+		// Cannot make user non grafana admin if it is the last one
+		err = userStore.Update(context.Background(), &user.UpdateUserCommand{
+			UserID:         usr.ID,
+			IsGrafanaAdmin: boolPtr(false),
+		})
+		require.ErrorIs(t, user.ErrLastGrafanaAdmin, err)
 
-		query := user.GetUserByIDQuery{ID: usr.ID}
-		queryResult, getUserError := userStore.GetByID(context.Background(), query.ID)
-		require.Nil(t, getUserError)
-		require.True(t, queryResult.IsAdmin)
+		usr, err = userStore.GetByID(context.Background(), usr.ID)
+		require.NoError(t, err)
+		require.True(t, usr.IsAdmin)
 
-		// One user
-		const email = "user@test.com"
-		const username = "user"
-		createUserCmd = user.CreateUserCommand{
-			Email: email,
-			Name:  "user",
-			Login: username,
-		}
-		_, err = usrSvc.Create(context.Background(), &createUserCmd)
-		require.Nil(t, err)
+		// Create another admin user
+		_, err = usrSvc.Create(context.Background(), &user.CreateUserCommand{
+			Email:   "admin2@test.com",
+			Name:    "admin2",
+			Login:   "admin2",
+			IsAdmin: true,
+		})
+		require.NoError(t, err)
 
-		// When trying to create a new user with the same email, an error is returned
-		createUserCmd = user.CreateUserCommand{
-			Email:        email,
-			Name:         "user2",
-			Login:        "user2",
-			SkipOrgSetup: true,
-		}
-		_, err = usrSvc.Create(context.Background(), &createUserCmd)
-		require.Equal(t, user.ErrUserAlreadyExists, err)
+		// Now first admin user should be able to be downgraded
+		err = userStore.Update(context.Background(), &user.UpdateUserCommand{
+			UserID:         usr.ID,
+			IsGrafanaAdmin: boolPtr(false),
+		})
+		require.NoError(t, err)
 
-		// When trying to create a new user with the same login, an error is returned
-		createUserCmd = user.CreateUserCommand{
-			Email:        "user2@test.com",
-			Name:         "user2",
-			Login:        username,
-			SkipOrgSetup: true,
-		}
-		_, err = usrSvc.Create(context.Background(), &createUserCmd)
-		require.Equal(t, user.ErrUserAlreadyExists, err)
+		updated, err := userStore.GetByID(context.Background(), usr.ID)
+		require.NoError(t, err)
+		require.False(t, updated.IsAdmin)
+		require.Equal(t, usr.Email, updated.Email)
+		require.Equal(t, usr.Login, updated.Login)
+		require.Equal(t, usr.Name, updated.Name)
 	})
 
 	t.Run("GetProfile", func(t *testing.T) {
@@ -466,8 +525,8 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 	t.Run("Testing DB - return list users based on their is_disabled flag", func(t *testing.T) {
 		ss = db.InitTestDB(t)
-		_, usrSvc := createOrgAndUserSvc(t, ss, ss.Cfg)
-		userStore := ProvideStore(ss, ss.Cfg)
+		_, usrSvc := createOrgAndUserSvc(t, ss, cfg)
+		userStore := ProvideStore(ss, cfg)
 
 		createFiveTestUsers(t, usrSvc, func(i int) *user.CreateUserCommand {
 			return &user.CreateUserCommand{
@@ -500,7 +559,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 		// Re-init DB
 		ss := db.InitTestDB(t)
-		orgService, usrSvc = createOrgAndUserSvc(t, ss, ss.Cfg)
+		orgService, usrSvc = createOrgAndUserSvc(t, ss, cfg)
 
 		users := createFiveTestUsers(t, usrSvc, func(i int) *user.CreateUserCommand {
 			return &user.CreateUserCommand{
@@ -524,7 +583,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		// A user is an org member and has been assigned permissions
 		// Re-init DB
 		ss = db.InitTestDB(t)
-		orgService, usrSvc = createOrgAndUserSvc(t, ss, ss.Cfg)
+		orgService, usrSvc = createOrgAndUserSvc(t, ss, cfg)
 		users = createFiveTestUsers(t, usrSvc, func(i int) *user.CreateUserCommand {
 			return &user.CreateUserCommand{
 				Email:      fmt.Sprint("user", i, "@test.com"),
@@ -566,9 +625,9 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 	t.Run("Testing DB - return list of users that the SignedInUser has permission to read", func(t *testing.T) {
 		ss := db.InitTestDB(t)
-		orgService, err := orgimpl.ProvideService(ss, ss.Cfg, quotaService)
+		orgService, err := orgimpl.ProvideService(ss, cfg, quotaService)
 		require.NoError(t, err)
-		usrSvc, err := ProvideService(ss, orgService, ss.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
+		usrSvc, err := ProvideService(ss, orgService, cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
 		require.NoError(t, err)
 
 		createFiveTestUsers(t, usrSvc, func(i int) *user.CreateUserCommand {
@@ -712,8 +771,16 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			Updated: time.Now(),
 		})
 		require.NoError(t, err)
-		err = userStore.Disable(context.Background(), &user.DisableUserCommand{UserID: id})
+
+		err = userStore.Update(context.Background(), &user.UpdateUserCommand{
+			UserID:     id,
+			IsDisabled: boolPtr(true),
+		})
 		require.NoError(t, err)
+
+		usr, err := userStore.GetByID(context.Background(), id)
+		require.NoError(t, err)
+		require.True(t, usr.IsDisabled)
 	})
 
 	t.Run("Testing DB - multiple users", func(t *testing.T) {
@@ -835,9 +902,9 @@ func TestIntegrationUserUpdate(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	ss := db.InitTestDB(t)
-	userStore := ProvideStore(ss, setting.NewCfg())
-	_, usrSvc := createOrgAndUserSvc(t, ss, ss.Cfg)
+	ss, cfg := db.InitTestDBWithCfg(t)
+	userStore := ProvideStore(ss, cfg)
+	_, usrSvc := createOrgAndUserSvc(t, ss, cfg)
 
 	users := createFiveTestUsers(t, usrSvc, func(i int) *user.CreateUserCommand {
 		return &user.CreateUserCommand{
@@ -846,17 +913,6 @@ func TestIntegrationUserUpdate(t *testing.T) {
 			Login:      fmt.Sprint("loginUSER", i),
 			IsDisabled: false,
 		}
-	})
-
-	userStore.cfg.CaseInsensitiveLogin = true
-
-	t.Run("Testing DB - update generates duplicate user", func(t *testing.T) {
-		err := userStore.Update(context.Background(), &user.UpdateUserCommand{
-			Login:  "loginuser2",
-			UserID: users[0].ID,
-		})
-
-		require.Error(t, err)
 	})
 
 	t.Run("Testing DB - update lowercases existing user", func(t *testing.T) {
@@ -891,11 +947,9 @@ func TestIntegrationUserUpdate(t *testing.T) {
 		require.Equal(t, "Change Name", result.Name)
 
 		// Unchanged
-		require.Equal(t, "loginUSER3", result.Login)
-		require.Equal(t, "USER3@test.com", result.Email)
+		require.Equal(t, "loginuser3", result.Login)
+		require.Equal(t, "user3@test.com", result.Email)
 	})
-
-	ss.Cfg.CaseInsensitiveLogin = false
 }
 
 func createFiveTestUsers(t *testing.T, svc user.Service, fn func(i int) *user.CreateUserCommand) []user.User {
@@ -913,13 +967,13 @@ func createFiveTestUsers(t *testing.T, svc user.Service, fn func(i int) *user.Cr
 }
 
 func TestMetricsUsage(t *testing.T) {
-	ss := db.InitTestDB(t)
+	ss, cfg := db.InitTestDBWithCfg(t)
 	userStore := ProvideStore(ss, setting.NewCfg())
-	quotaService := quotaimpl.ProvideService(ss, ss.Cfg)
-	orgService, err := orgimpl.ProvideService(ss, ss.Cfg, quotaService)
+	quotaService := quotaimpl.ProvideService(ss, cfg)
+	orgService, err := orgimpl.ProvideService(ss, cfg, quotaService)
 	require.NoError(t, err)
 
-	_, usrSvc := createOrgAndUserSvc(t, ss, ss.Cfg)
+	_, usrSvc := createOrgAndUserSvc(t, ss, cfg)
 
 	t.Run("Get empty role metrics for an org", func(t *testing.T) {
 		orgId := int64(1)
@@ -969,4 +1023,13 @@ func createOrgAndUserSvc(t *testing.T, store db.DB, cfg *setting.Cfg) (org.Servi
 	require.NoError(t, err)
 
 	return orgService, usrSvc
+}
+
+func passwordPtr(s string) *user.Password {
+	password := user.Password(s)
+	return &password
+}
+
+func boolPtr(b bool) *bool {
+	return &b
 }

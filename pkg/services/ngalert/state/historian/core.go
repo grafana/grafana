@@ -34,10 +34,16 @@ func shouldRecord(transition state.StateTransition) bool {
 	return true
 }
 
-// shouldRecordAnnotation returns true if an annotation should be created for a given state transition.
+// ShouldRecordAnnotation returns true if an annotation should be created for a given state transition.
 // This is stricter than shouldRecord to avoid cluttering panels with state transitions.
-func shouldRecordAnnotation(t state.StateTransition) bool {
+func ShouldRecordAnnotation(t state.StateTransition) bool {
 	if !shouldRecord(t) {
+		return false
+	}
+
+	// Do not log transitions when keeping last state
+	toKeepLast := strings.Contains(t.StateReason, models.StateReasonKeepLast) && !strings.Contains(t.PreviousStateReason, models.StateReasonKeepLast)
+	if toKeepLast {
 		return false
 	}
 

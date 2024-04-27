@@ -174,6 +174,12 @@ export interface StatsPickerConfigSettings {
   defaultStat?: string;
 }
 
+export enum FieldNamePickerBaseNameMode {
+  IncludeAll = 'all',
+  ExcludeBaseNames = 'exclude',
+  OnlyBaseNames = 'only',
+}
+
 export interface FieldNamePickerConfigSettings {
   /**
    * Function is a predicate, to test each element of the array.
@@ -186,10 +192,15 @@ export interface FieldNamePickerConfigSettings {
    */
   noFieldsMessage?: string;
 
-  /**addFieldNamePicker
+  /**
    * Sets the width to a pixel value.
    */
   width?: number;
+
+  /**
+   * Exclude names that can match a collection of values
+   */
+  baseNameMode?: FieldNamePickerBaseNameMode;
 
   /**
    * Placeholder text to display when nothing is selected.

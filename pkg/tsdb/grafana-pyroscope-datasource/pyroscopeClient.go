@@ -70,10 +70,13 @@ func NewPyroscopeClient(httpClient *http.Client, url string) *PyroscopeClient {
 	}
 }
 
-func (c *PyroscopeClient) ProfileTypes(ctx context.Context) ([]*ProfileType, error) {
+func (c *PyroscopeClient) ProfileTypes(ctx context.Context, start int64, end int64) ([]*ProfileType, error) {
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.pyroscope.ProfileTypes")
 	defer span.End()
-	res, err := c.connectClient.ProfileTypes(ctx, connect.NewRequest(&querierv1.ProfileTypesRequest{}))
+	res, err := c.connectClient.ProfileTypes(ctx, connect.NewRequest(&querierv1.ProfileTypesRequest{
+		Start: start,
+		End:   end,
+	}))
 	if err != nil {
 		logger.Error("Received error from client", "error", err, "function", logEntrypoint())
 		span.RecordError(err)
@@ -253,6 +256,10 @@ func (c *PyroscopeClient) LabelNames(ctx context.Context, labelSelector string, 
 		return nil, fmt.Errorf("error sending LabelNames request %v", err)
 	}
 
+	if resp.Msg.Names == nil {
+		return []string{}, nil
+	}
+
 	var filtered []string
 	for _, label := range resp.Msg.Names {
 		if !isPrivateLabel(label) {
@@ -277,6 +284,9 @@ func (c *PyroscopeClient) LabelValues(ctx context.Context, label string, labelSe
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, err
+	}
+	if resp.Msg.Names == nil {
+		return []string{}, nil
 	}
 	return resp.Msg.Names, nil
 }

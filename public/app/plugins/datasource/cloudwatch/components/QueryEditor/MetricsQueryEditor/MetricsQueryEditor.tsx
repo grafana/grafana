@@ -1,8 +1,8 @@
 import React, { ChangeEvent, useCallback, useEffect, useState } from 'react';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
-import { EditorField, EditorRow, InlineSelect, Space } from '@grafana/experimental';
-import { ConfirmModal, Input, RadioButtonGroup } from '@grafana/ui';
+import { EditorField, EditorRow, InlineSelect } from '@grafana/experimental';
+import { ConfirmModal, Input, RadioButtonGroup, Space } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../../datasource';
 import useMigratedMetricsQuery from '../../../migrations/useMigratedMetricsQuery';

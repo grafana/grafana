@@ -3,6 +3,7 @@ package alertrules
 import (
 	"fmt"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -14,25 +15,22 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-
 	"github.com/grafana/grafana/pkg/apis/alertrules/v0alpha1"
+	"github.com/grafana/grafana/pkg/apiserver/builder"
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
-	grafanaregistry "github.com/grafana/grafana/pkg/services/grafana-apiserver/registry/generic"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
+	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
-	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var _ grafanaapiserver.APIGroupBuilder = (*AlertRulesAPIBuilder)(nil)
+var _ builder.APIGroupBuilder = (*AlertRulesAPIBuilder)(nil)
 
 var resourceInfo = v0alpha1.AlertResourceInfo
 
@@ -45,30 +43,33 @@ type AlertRulesAPIBuilder struct {
 
 func RegisterAPIService(cfg *setting.Cfg,
 	features *featuremgmt.FeatureManager,
-	apiregistration grafanaapiserver.APIRegistrar,
+	apiregistration builder.APIRegistrar,
 	ruleStore *store.DBstore, // the ngalert storage engine
 	sqlStore db.DB,
 	dashboardService dashboards.DashboardService,
 	quotaService quota.Service,
+	ng *ngalert.AlertNG,
 ) *AlertRulesAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
 	}
 
-	ruleService := provisioning.NewAlertRuleService(
-		ruleStore,
-		ruleStore,
-		dashboardService,
-		quotaService,
-		sqlStore,
-		int64(cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
-		int64(cfg.UnifiedAlerting.BaseInterval.Seconds()),
-		log.New("alerting provisioner"))
+	// ruleService := provisioning.NewAlertRuleService(
+	// 	ruleStore,
+	// 	ruleStore,
+	// 	dashboardService,
+	// 	quotaService,
+	// 	sqlStore,
+	// 	int64(cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
+	// 	int64(cfg.UnifiedAlerting.BaseInterval.Seconds()),
+	// 	log.New("alerting provisioner"),
+	// 	notifier.NewNotificationSettingsValidationService(ng.store),
+	// 	ac.NewRuleService(ng.accesscontrol))
 
 	builder := &AlertRulesAPIBuilder{
 		gv:          resourceInfo.GroupVersion(),
 		namespacer:  request.GetNamespaceMapper(cfg),
-		ruleService: ruleService,
+		ruleService: ng.API().AlertRules,
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -109,6 +110,7 @@ func (b *AlertRulesAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
+	dualWrite bool,
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(v0alpha1.GROUP,
 		scheme, metav1.ParameterCodec, codecs)
@@ -159,7 +161,7 @@ func (b *AlertRulesAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefiniti
 	return v0alpha1.GetOpenAPIDefinitions
 }
 
-func (b *AlertRulesAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
+func (b *AlertRulesAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	return nil // no custom API routes
 }
 

@@ -20,7 +20,7 @@ interface Props {
   nowDelay?: string;
   timezone: TimeZone;
   weekStart: string;
-  liveNow: boolean;
+  liveNow?: boolean;
 }
 
 interface State {

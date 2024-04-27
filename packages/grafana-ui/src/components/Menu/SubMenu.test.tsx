@@ -13,13 +13,11 @@ describe('SubMenu', () => {
       <MenuItem key="subitem2" label="subitem2" icon="apps" />,
     ];
 
-    render(
-      <SubMenu items={items} isOpen={true} openedWithArrow={false} setOpenedWithArrow={jest.fn()} close={jest.fn()} />
-    );
+    render(<SubMenu items={items} isOpen={true} close={jest.fn()} />);
 
-    expect(screen.getByLabelText(selectors.components.Menu.SubMenu.icon)).toBeInTheDocument();
+    expect(screen.getByTestId(selectors.components.Menu.SubMenu.icon)).toBeInTheDocument();
 
-    const subMenuContainer = await screen.findByLabelText(selectors.components.Menu.SubMenu.container);
+    const subMenuContainer = await screen.findByTestId(selectors.components.Menu.SubMenu.container);
 
     expect(subMenuContainer).toBeInTheDocument();
     expect(subMenuContainer.firstChild?.childNodes.length).toBe(2);

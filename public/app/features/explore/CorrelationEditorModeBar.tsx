@@ -57,7 +57,9 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
         ) {
           const { exploreId, changeDatasourceUid } = correlationDetails?.postConfirmAction;
           if (exploreId && changeDatasourceUid) {
-            dispatch(changeDatasource(exploreId, changeDatasourceUid, { importQueries: true }));
+            dispatch(
+              changeDatasource({ exploreId, datasource: changeDatasourceUid, options: { importQueries: true } })
+            );
             dispatch(
               changeCorrelationEditorDetails({
                 isExiting: false,
@@ -143,7 +145,7 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
 
   const changeDatasourcePostAction = (exploreId: string, datasourceUid: string) => {
     setSaveMessage(undefined);
-    dispatch(changeDatasource(exploreId, datasourceUid, { importQueries: true }));
+    dispatch(changeDatasource({ exploreId, datasource: datasourceUid, options: { importQueries: true } }));
   };
 
   const saveCorrelationPostAction = (skipPostConfirmAction: boolean) => {
@@ -163,7 +165,7 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
         action === CORRELATION_EDITOR_POST_CONFIRM_ACTION.CHANGE_DATASOURCE &&
         changeDatasourceUid !== undefined
       ) {
-        changeDatasource(exploreId, changeDatasourceUid);
+        changeDatasource({ exploreId, datasource: changeDatasourceUid });
         resetEditor();
       }
     } else {

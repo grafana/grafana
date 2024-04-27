@@ -1,4 +1,4 @@
-import { DataQuery, SelectableValue } from '@grafana/data';
+import { DataQuery, SelectableValue, VariableWithMultiSupport } from '@grafana/data';
 import { DataSourceOptions, DataSourceSecureJsonData } from '@grafana/google-sdk';
 
 import { MetricKind } from './query';
@@ -60,4 +60,8 @@ export interface CustomMetaData {
 
 export interface PostResponse {
   results: Record<string, any>;
+}
+
+export interface CustomVariableModel extends VariableWithMultiSupport {
+  type: 'custom';
 }

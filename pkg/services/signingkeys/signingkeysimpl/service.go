@@ -177,12 +177,14 @@ func (s *Service) addPrivateKey(ctx context.Context, keyID string, alg jose.Sign
 		return nil, err
 	}
 
-	expiry := time.Now().Add(30 * 24 * time.Hour)
+	now := time.Now()
+	expiry := now.Add(30 * 24 * time.Hour)
 	key, err := s.store.Add(ctx, &signingkeys.SigningKey{
 		KeyID:      keyID,
 		PrivateKey: encoded,
 		ExpiresAt:  &expiry,
 		Alg:        alg,
+		AddedAt:    now,
 	}, force)
 
 	if err != nil && !errors.Is(err, signingkeys.ErrSigningKeyAlreadyExists) {

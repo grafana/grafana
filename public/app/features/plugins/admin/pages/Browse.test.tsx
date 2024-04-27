@@ -183,13 +183,19 @@ describe('Browse list of plugins', () => {
 
   describe('when searching', () => {
     it('should only list plugins matching search', async () => {
-      const { queryByText } = renderBrowse('/plugins?filterBy=all&q=zabbix', [
-        getCatalogPluginMock({ id: 'zabbix', name: 'Zabbix' }),
-        getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2' }),
-        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3' }),
+      const { queryByText } = renderBrowse('/plugins?filterBy=all&q=matches', [
+        getCatalogPluginMock({ id: 'matches-the-search', name: 'Matches the search' }),
+        getCatalogPluginMock({
+          id: 'plugin-2',
+          name: 'Plugin 2',
+        }),
+        getCatalogPluginMock({
+          id: 'plugin-3',
+          name: 'Plugin 3',
+        }),
       ]);
 
-      await waitFor(() => expect(queryByText('Zabbix')).toBeInTheDocument());
+      await waitFor(() => expect(queryByText('Matches the search')).toBeInTheDocument());
 
       // Other plugin types shouldn't be shown
       expect(queryByText('Plugin 2')).not.toBeInTheDocument();

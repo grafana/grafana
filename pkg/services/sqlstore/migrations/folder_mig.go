@@ -55,6 +55,31 @@ func addFolderMigrations(mg *migrator.Migrator) {
 			DELETE FROM folder WHERE NOT EXISTS
 				(SELECT 1 FROM dashboard WHERE dashboard.uid = folder.uid AND dashboard.org_id = folder.org_id AND dashboard.is_folder = true)
 	`))
+
+	mg.AddMigration("Remove unique index UQE_folder_uid_org_id", migrator.NewDropIndexMigration(folderv1(), &migrator.Index{
+		Type: migrator.UniqueIndex,
+		Cols: []string{"uid", "org_id"},
+	}))
+
+	mg.AddMigration("Add unique index UQE_folder_org_id_uid", migrator.NewAddIndexMigration(folderv1(), &migrator.Index{
+		Type: migrator.UniqueIndex,
+		Cols: []string{"org_id", "uid"},
+	}))
+
+	mg.AddMigration("Remove unique index UQE_folder_title_parent_uid_org_id", migrator.NewDropIndexMigration(folderv1(), &migrator.Index{
+		Type: migrator.UniqueIndex,
+		Cols: []string{"title", "parent_uid", "org_id"},
+	}))
+
+	mg.AddMigration("Add unique index UQE_folder_org_id_parent_uid_title", migrator.NewAddIndexMigration(folderv1(), &migrator.Index{
+		Type: migrator.UniqueIndex,
+		Cols: []string{"org_id", "parent_uid", "title"},
+	}))
+
+	// No need to introduce IDX_folder_org_id_parent_uid because is covered by UQE_folder_org_id_parent_uid_title
+	mg.AddMigration("Remove index IDX_folder_parent_uid_org_id", migrator.NewDropIndexMigration(folderv1(), &migrator.Index{
+		Cols: []string{"parent_uid", "org_id"},
+	}))
 }
 
 func folderv1() migrator.Table {

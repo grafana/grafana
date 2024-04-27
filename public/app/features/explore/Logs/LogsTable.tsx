@@ -9,6 +9,7 @@ import {
   DataTransformerConfig,
   Field,
   FieldType,
+  guessFieldTypeForField,
   LogsSortOrder,
   sortDataFrame,
   SplitOpen,
@@ -19,11 +20,11 @@ import {
 import { config } from '@grafana/runtime';
 import { AdHocFilterItem, Table } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/src/components/Table/types';
-import { LogsFrame, parseLogsFrame } from 'app/features/logs/logsFrame';
+import { LogsFrame } from 'app/features/logs/logsFrame';
 
 import { getFieldLinksForExplore } from '../utils/links';
 
-import { fieldNameMeta } from './LogsTableWrap';
+import { FieldNameMeta } from './LogsTableWrap';
 
 interface Props {
   dataFrame: DataFrame;
@@ -32,24 +33,23 @@ interface Props {
   splitOpen: SplitOpen;
   range: TimeRange;
   logsSortOrder: LogsSortOrder;
-  columnsWithMeta: Record<string, fieldNameMeta>;
+  columnsWithMeta: Record<string, FieldNameMeta>;
   height: number;
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
+  logsFrame: LogsFrame | null;
 }
 
 export function LogsTable(props: Props) {
-  const { timeZone, splitOpen, range, logsSortOrder, width, dataFrame, columnsWithMeta } = props;
+  const { timeZone, splitOpen, range, logsSortOrder, width, dataFrame, columnsWithMeta, logsFrame } = props;
   const [tableFrame, setTableFrame] = useState<DataFrame | undefined>(undefined);
+  const timeIndex = logsFrame?.timeField.index;
 
   const prepareTableFrame = useCallback(
     (frame: DataFrame): DataFrame => {
       if (!frame.length) {
         return frame;
       }
-      // Parse the dataframe to a logFrame
-      const logsFrame = parseLogsFrame(frame);
-      const timeIndex = logsFrame?.timeField.index;
 
       const sortedFrame = sortDataFrame(frame, timeIndex, logsSortOrder === LogsSortOrder.Descending);
 
@@ -81,30 +81,31 @@ export function LogsTable(props: Props) {
           custom: {
             inspect: true,
             filterable: true, // This sets the columns to be filterable
+            width: getInitialFieldWidth(field),
             ...field.config.custom,
           },
           // This sets the individual field value as filterable
-          filterable: isFieldFilterable(field, logsFrame ?? undefined),
+          filterable: isFieldFilterable(field, logsFrame?.bodyField.name ?? '', logsFrame?.timeField.name ?? ''),
         };
+
+        // If it's a string, then try to guess for a better type for numeric support in viz
+        field.type = field.type === FieldType.string ? guessFieldTypeForField(field) ?? FieldType.string : field.type;
       }
 
       return frameWithOverrides;
     },
-    [logsSortOrder, timeZone, splitOpen, range]
+    [logsSortOrder, timeZone, splitOpen, range, logsFrame?.bodyField.name, logsFrame?.timeField.name, timeIndex]
   );
 
   useEffect(() => {
     const prepare = async () => {
-      // Parse the dataframe to a logFrame
-      const logsFrame = dataFrame ? parseLogsFrame(dataFrame) : undefined;
-
-      if (!logsFrame) {
+      if (!logsFrame?.timeField.name || !logsFrame?.bodyField.name) {
         setTableFrame(undefined);
         return;
       }
 
       // create extract JSON transformation for every field that is `json.RawMessage`
-      const transformations: Array<DataTransformerConfig | CustomTransformOperator> = extractFields(dataFrame);
+      const transformations: Array<DataTransformerConfig | CustomTransformOperator> = getLogsExtractFields(dataFrame);
 
       let labelFilters = buildLabelFilters(columnsWithMeta);
 
@@ -117,6 +118,10 @@ export function LogsTable(props: Props) {
         transformations.push({
           id: 'organize',
           options: {
+            indexByName: {
+              [logsFrame.bodyField.name]: 0,
+              [logsFrame.timeField.name]: 1,
+            },
             includeByName: {
               [logsFrame.bodyField.name]: true,
               [logsFrame.timeField.name]: true,
@@ -134,7 +139,14 @@ export function LogsTable(props: Props) {
       }
     };
     prepare();
-  }, [columnsWithMeta, dataFrame, logsSortOrder, prepareTableFrame]);
+  }, [
+    columnsWithMeta,
+    dataFrame,
+    logsSortOrder,
+    prepareTableFrame,
+    logsFrame?.bodyField.name,
+    logsFrame?.timeField.name,
+  ]);
 
   if (!tableFrame) {
     return null;
@@ -166,14 +178,14 @@ export function LogsTable(props: Props) {
   );
 }
 
-const isFieldFilterable = (field: Field, logsFrame?: LogsFrame | undefined) => {
-  if (!logsFrame) {
+const isFieldFilterable = (field: Field, bodyName: string, timeName: string) => {
+  if (!bodyName || !timeName) {
     return false;
   }
-  if (logsFrame.bodyField.name === field.name) {
+  if (bodyName === field.name) {
     return false;
   }
-  if (logsFrame.timeField.name === field.name) {
+  if (timeName === field.name) {
     return false;
   }
   if (field.config.links?.length) {
@@ -185,7 +197,7 @@ const isFieldFilterable = (field: Field, logsFrame?: LogsFrame | undefined) => {
 
 // TODO: explore if `logsFrame.ts` can help us with getting the right fields
 // TODO Why is typeInfo not defined on the Field interface?
-function extractFields(dataFrame: DataFrame) {
+export function getLogsExtractFields(dataFrame: DataFrame) {
   return dataFrame.fields
     .filter((field: Field & { typeInfo?: { frame: string } }) => {
       const isFieldLokiLabels =
@@ -211,26 +223,44 @@ function extractFields(dataFrame: DataFrame) {
     });
 }
 
-function buildLabelFilters(columnsWithMeta: Record<string, fieldNameMeta>) {
+function buildLabelFilters(columnsWithMeta: Record<string, FieldNameMeta>) {
   // Create object of label filters to include columns selected by the user
-  let labelFilters: Record<string, true> = {};
+  let labelFilters: Record<string, number> = {};
   Object.keys(columnsWithMeta)
     .filter((key) => columnsWithMeta[key].active)
     .forEach((key) => {
-      labelFilters[key] = true;
+      const index = columnsWithMeta[key].index;
+      // Index should always be defined for any active column
+      if (index !== undefined) {
+        labelFilters[key] = index;
+      }
     });
 
   return labelFilters;
 }
 
-function getLabelFiltersTransform(labelFilters: Record<string, true>) {
+function getLabelFiltersTransform(labelFilters: Record<string, number>) {
+  let labelFiltersInclude: Record<string, boolean> = {};
+
+  for (const key in labelFilters) {
+    labelFiltersInclude[key] = true;
+  }
+
   if (Object.keys(labelFilters).length > 0) {
     return {
       id: 'organize',
       options: {
-        includeByName: labelFilters,
+        indexByName: labelFilters,
+        includeByName: labelFiltersInclude,
       },
     };
   }
   return null;
+}
+
+function getInitialFieldWidth(field: Field): number | undefined {
+  if (field.type === FieldType.time) {
+    return 200;
+  }
+  return undefined;
 }

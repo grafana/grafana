@@ -11,18 +11,20 @@ import (
 	"net/url"
 	"path"
 	"strconv"
+	"syscall"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	jsoniter "github.com/json-iterator/go"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc/metadata"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/promlib/converter"
 	"github.com/grafana/grafana/pkg/tsdb/loki/instrumentation"
-	"github.com/grafana/grafana/pkg/util/converter"
 )
 
 type LokiAPI struct {
@@ -97,7 +99,7 @@ func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery, cat
 	}
 
 	if query.SupportingQueryType != SupportingQueryNone {
-		value := getSupportingQueryHeaderValue(req, query.SupportingQueryType)
+		value := getSupportingQueryHeaderValue(query.SupportingQueryType)
 		if value != "" {
 			req.Header.Set("X-Query-Tags", "Source="+value)
 		}
@@ -106,6 +108,8 @@ func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery, cat
 	if categorizeLabels {
 		req.Header.Set("X-Loki-Response-Encoding-Flags", "categorize-labels")
 	}
+
+	setXScopeOrgIDHeader(req, ctx)
 
 	return req, nil
 }
@@ -160,7 +164,7 @@ func readLokiError(body io.ReadCloser) error {
 	return makeLokiError(bytes)
 }
 
-func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts ResponseOpts) (data.Frames, error) {
+func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts ResponseOpts) (*backend.DataResponse, error) {
 	req, err := makeDataRequest(ctx, api.url, query, api.requestStructuredMetadata)
 	if err != nil {
 		return nil, err
@@ -181,7 +185,13 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts
 			lp = append(lp, "statusCode", resp.StatusCode)
 		}
 		api.log.Error("Error received from Loki", lp...)
-		return nil, err
+		res := backend.DataResponse{
+			Error: err,
+		}
+		if errors.Is(err, syscall.ECONNREFUSED) {
+			res.ErrorSource = backend.ErrorSourceDownstream
+		}
+		return &res, nil
 	}
 
 	defer func() {
@@ -194,9 +204,13 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts
 	lp = append(lp, queryAttrs...)
 	if resp.StatusCode/100 != 2 {
 		err := readLokiError(resp.Body)
-		lp = append(lp, "status", "error", "error", err)
+		res := backend.DataResponse{
+			Error:       err,
+			ErrorSource: backend.ErrorSourceFromHTTPStatus(resp.StatusCode),
+		}
+		lp = append(lp, "status", "error", "error", err, "statusSource", res.ErrorSource)
 		api.log.Error("Error received from Loki", lp...)
-		return nil, err
+		return &res, nil
 	} else {
 		lp = append(lp, "status", "ok")
 		api.log.Info("Response received from loki", lp...)
@@ -221,7 +235,7 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts
 	instrumentation.UpdatePluginParsingResponseDurationSeconds(ctx, time.Since(start), "ok")
 	api.log.Info("Response parsed from loki", "duration", time.Since(start), "metricDataplane", responseOpts.metricDataplane, "framesLength", len(res.Frames), "stage", stageParseResponse)
 
-	return res.Frames, nil
+	return &res, nil
 }
 
 func makeRawRequest(ctx context.Context, lokiDsUrl string, resourcePath string) (*http.Request, error) {
@@ -244,6 +258,8 @@ func makeRawRequest(ctx context.Context, lokiDsUrl string, resourcePath string) 
 	if err != nil {
 		return nil, err
 	}
+
+	setXScopeOrgIDHeader(req, ctx)
 
 	return req, nil
 }
@@ -312,8 +328,13 @@ func (api *LokiAPI) RawQuery(ctx context.Context, resourcePath string) (RawLokiR
 	return rawLokiResponse, nil
 }
 
-func getSupportingQueryHeaderValue(req *http.Request, supportingQueryType SupportingQueryType) string {
+func getSupportingQueryHeaderValue(supportingQueryType SupportingQueryType) string {
 	value := ""
+
+	// we need to map the SupportingQueryType to the actual header value. For
+	// legacy reasons we defined each value, such as "logsVolume" maps to the
+	// "logvolhist" header value to Loki. With #85123, even the value set in the
+	// frontend query can be passed as is to Loki.
 	switch supportingQueryType {
 	case SupportingQueryLogsVolume:
 		value = "logvolhist"
@@ -321,8 +342,37 @@ func getSupportingQueryHeaderValue(req *http.Request, supportingQueryType Suppor
 		value = "logsample"
 	case SupportingQueryDataSample:
 		value = "datasample"
-	default: //ignore
+	case SupportingQueryInfiniteScroll:
+		value = "infinitescroll"
+	default:
+		value = string(supportingQueryType)
 	}
 
 	return value
+}
+
+// setXScopeOrgIDHeader sets the `X-Scope-OrgID` header in the provided HTTP request based on the tenant ID retrieved from the context.
+// `X-Scope-OrgID` is needed by the Loki system to work in multi-tenant mode.
+// See https://github.com/grafana/loki/blob/main/docs/sources/operations/multi-tenancy.md
+func setXScopeOrgIDHeader(req *http.Request, ctx context.Context) *http.Request {
+	logger := backend.NewLoggerWith("logger", "tsdb.loki")
+
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		logger.Error("Error in retrieving metadata from context. Header not set")
+		return req
+	}
+
+	tenantids := md.Get("tenantid")
+	if len(tenantids) == 0 {
+		// We assume we are not using multi-tenant mode, which is fine
+		logger.Debug("Tenant ID not present. Header not set")
+	} else if len(tenantids) > 1 {
+		// Loki supports multiple tenant IDs, but we should receive them from different contexts
+		logger.Error(strconv.Itoa(len(tenantids)) + " tenant IDs found. Header not set")
+	} else {
+		req.Header.Add("X-Scope-OrgID", tenantids[0])
+		logger.Debug("Tenant ID " + tenantids[0] + " added to Loki request")
+	}
+	return req
 }

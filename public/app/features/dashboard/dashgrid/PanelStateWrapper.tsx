@@ -340,7 +340,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
   onRefresh = () => {
     const { dashboard, panel, isInView, width } = this.props;
 
-    if (!isInView) {
+    if (!dashboard.snapshot && !isInView) {
       panel.refreshWhenInView = true;
       return;
     }
@@ -460,7 +460,12 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
   };
 
   shouldSignalRenderingCompleted(loadingState: LoadingState, pluginMeta: PanelPluginMeta) {
-    return loadingState === LoadingState.Done || loadingState === LoadingState.Error || pluginMeta.skipDataQuery;
+    return (
+      loadingState === LoadingState.Done ||
+      loadingState === LoadingState.Streaming ||
+      loadingState === LoadingState.Error ||
+      pluginMeta.skipDataQuery
+    );
   }
 
   skipFirstRender(loadingState: LoadingState) {

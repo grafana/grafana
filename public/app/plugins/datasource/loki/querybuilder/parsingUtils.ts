@@ -1,6 +1,6 @@
 import { SyntaxNode, TreeCursor } from '@lezer/common';
 
-import { QueryBuilderOperation, QueryBuilderOperationParamValue } from '../../prometheus/querybuilder/shared/types';
+import { QueryBuilderOperation, QueryBuilderOperationParamValue } from '@grafana/experimental';
 
 // Although 0 isn't explicitly provided in the @grafana/lezer-logql library as the error node ID, it does appear to be the ID of error nodes within lezer.
 export const ErrorId = 0;
@@ -28,7 +28,7 @@ export function makeError(expr: string, node: SyntaxNode) {
  * \[\[([\s\S]+?)(?::(\w+))?\]\]    [[var2]] or [[var2:fmt2]]
  * \${(\w+)(?::(\w+))?}             ${var3} or ${var3:fmt3}
  */
-const variableRegex = /\$(\w+)|\[\[([\s\S]+?)(?::(\w+))?\]\]|\${(\w+)(?:\.([^:^\}]+))?(?::([^\}]+))?}/g;
+export const variableRegex = /\$(\w+)|\[\[([\s\S]+?)(?::(\w+))?\]\]|\${(\w+)(?:\.([^:^\}]+))?(?::([^\}]+))?}/g;
 
 /**
  * As variables with $ are creating parsing errors, we first replace them with magic string that is parsable and at

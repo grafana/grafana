@@ -1,4 +1,4 @@
-import { css, CSSObject, cx } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { AnchorHTMLAttributes, ButtonHTMLAttributes } from 'react';
 
 import { GrafanaTheme2, ThemeRichColor } from '@grafana/data';
@@ -224,7 +224,7 @@ export const getButtonStyles = (props: StyleProps) => {
   };
 };
 
-function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fill: ButtonFill): CSSObject {
+function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fill: ButtonFill) {
   let outlineBorderColor = color.border;
   let borderColor = 'transparent';
   let hoverBorderColor = 'transparent';
@@ -293,7 +293,7 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
 }
 
 function getPropertiesForDisabled(theme: GrafanaTheme2, variant: ButtonVariant, fill: ButtonFill) {
-  const disabledStyles: CSSObject = {
+  const disabledStyles = {
     cursor: 'not-allowed',
     boxShadow: 'none',
     color: theme.colors.text.disabled,

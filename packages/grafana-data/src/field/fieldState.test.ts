@@ -15,11 +15,6 @@ function checkScenario(scenario: TitleScenario): string {
   return getFieldDisplayName(field, frame, scenario.frames);
 }
 
-jest.mock('lodash', () => ({
-  ...jest.requireActual('lodash'),
-  isEqual: jest.fn().mockImplementation((obj1, obj2) => obj1 === obj2),
-}));
-
 describe('getFieldDisplayName', () => {
   it('Should add suffix for comparison frames', () => {
     const frame = toDataFrame({

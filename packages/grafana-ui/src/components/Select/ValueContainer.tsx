@@ -29,17 +29,21 @@ class UnthemedValueContainer extends Component<any & { theme: GrafanaTheme2 }> {
   }
 
   renderContainer(children?: ReactNode) {
-    const { isMulti, theme } = this.props;
+    const { isMulti, theme, selectProps } = this.props;
     const noWrap = this.props.selectProps?.noMultiValueWrap && !this.props.selectProps?.menuIsOpen;
     const styles = getSelectStyles(theme);
-
+    const dataTestid = selectProps['data-testid'];
     const className = cx(
       styles.valueContainer,
       isMulti && styles.valueContainerMulti,
       noWrap && styles.valueContainerMultiNoWrap
     );
 
-    return <div className={className}>{children}</div>;
+    return (
+      <div data-testid={dataTestid} className={className}>
+        {children}
+      </div>
+    );
   }
 }
 

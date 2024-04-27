@@ -36,6 +36,8 @@ import {
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { TimeOverrideResult } from '../utils/panel';
 
+import { getPanelPluginToMigrateTo } from './getPanelPluginToMigrateTo';
+
 export interface GridPos {
   x: number;
   y: number;
@@ -96,6 +98,7 @@ const mustKeepProps: { [str: string]: boolean } = {
   links: true,
   fullscreen: true,
   isEditing: true,
+  isViewing: true,
   hasRefreshed: true,
   events: true,
   cacheTimeout: true,
@@ -121,12 +124,23 @@ const defaults: any = {
   cachedPluginOptions: {},
   transparent: false,
   options: {},
+  links: [],
+  transformations: [],
   fieldConfig: {
     defaults: {},
     overrides: [],
   },
   title: '',
 };
+
+export const explicitlyControlledMigrationPanels = [
+  'graph',
+  'table-old',
+  'grafana-piechart-panel',
+  'grafana-worldmap-panel',
+  'singlestat',
+  'grafana-singlestat-panel',
+];
 
 export const autoMigrateAngular: Record<string, string> = {
   graph: 'timeseries',
@@ -137,7 +151,7 @@ export const autoMigrateAngular: Record<string, string> = {
   'grafana-worldmap-panel': 'geomap',
 };
 
-const autoMigratePanelType: Record<string, string> = {
+export const autoMigrateRemovedPanelPlugins: Record<string, string> = {
   'heatmap-new': 'heatmap', // this was a temporary development panel that is now standard
 };
 
@@ -192,7 +206,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   cacheTimeout?: string | null;
   queryCachingTTL?: number | null;
   isNew?: boolean;
-  refreshWhenInView = false;
+  refreshWhenInView = true;
 
   cachedPluginOptions: Record<string, PanelOptionsCache> = {};
   legend?: { show: boolean; sort?: string; sortDesc?: boolean };
@@ -246,7 +260,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       (this as any)[property] = model[property];
     }
 
-    const newType = autoMigratePanelType[this.type];
+    const newType = getPanelPluginToMigrateTo(this);
     if (newType) {
       this.autoMigrateFrom = this.type;
       this.type = newType;
@@ -366,6 +380,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       datasource: this.datasource,
       queries: this.targets,
       panelId: this.id,
+      panelPluginId: this.type,
       dashboardUID: dashboardUID,
       timezone: dashboardTimezone,
       timeRange: timeData.timeRange,

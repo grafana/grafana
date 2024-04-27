@@ -2,6 +2,8 @@ package playlistimpl
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
@@ -9,7 +11,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/playlist"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 type getStore func(db.DB) store
 
@@ -104,6 +111,9 @@ func testIntegrationPlaylistDataAccess(t *testing.T, fn getStore) {
 	})
 
 	t.Run("Search playlist", func(t *testing.T) {
+		startTime := time.Now().UnixMilli()
+		time.Sleep(time.Millisecond * 20)
+
 		items := []playlist.PlaylistItem{
 			{Title: "graphite", Value: "graphite", Type: "dashboard_by_tag"},
 			{Title: "Backend response times", Value: "3", Type: "dashboard_by_id"},
@@ -113,10 +123,13 @@ func testIntegrationPlaylistDataAccess(t *testing.T, fn getStore) {
 		pl3 := playlist.CreatePlaylistCommand{Name: "NICE office", Interval: "10m", OrgId: 2, Items: items}
 		_, err := playlistStore.Insert(context.Background(), &pl1)
 		require.NoError(t, err)
+		time.Sleep(time.Millisecond * 20)
 		_, err = playlistStore.Insert(context.Background(), &pl2)
 		require.NoError(t, err)
+		time.Sleep(time.Millisecond * 20)
 		_, err = playlistStore.Insert(context.Background(), &pl3)
 		require.NoError(t, err)
+		time.Sleep(time.Millisecond * 20)
 
 		t.Run("With Org ID", func(t *testing.T) {
 			qr := playlist.GetPlaylistsQuery{Limit: 100, OrgId: 1}
@@ -136,6 +149,60 @@ func testIntegrationPlaylistDataAccess(t *testing.T, fn getStore) {
 			res, err := playlistStore.List(context.Background(), &qr)
 			require.NoError(t, err)
 			require.Equal(t, 2, len(res))
+		})
+
+		t.Run("With FullList support", func(t *testing.T) {
+			res, err := playlistStore.ListAll(context.Background(), 1)
+			require.NoError(t, err)
+
+			// Make sure the timestamps came through OK (the risk with SQLX)
+			offsetTime := startTime
+			for id, v := range res {
+				res[id].Uid = fmt.Sprintf("ROW:%d", id) // normalize for JSON test
+
+				elapsed := v.CreatedAt - offsetTime
+				require.Greater(t, v.CreatedAt, startTime)
+				require.Greater(t, elapsed, int64(10)) // sleeps 20ms
+				offsetTime = v.CreatedAt
+			}
+
+			jj, err := json.MarshalIndent(res, "", "  ")
+			require.NoError(t, err)
+			//fmt.Printf("OUT:%s\n", string(jj))
+
+			// Each row has a full payload
+			require.JSONEq(t, `[
+				{
+				  "uid": "ROW:0",
+				  "name": "NYC office",
+				  "interval": "10m",
+				  "items": [
+					{
+					  "type": "dashboard_by_tag",
+					  "value": "graphite"
+					},
+					{
+					  "type": "dashboard_by_id",
+					  "value": "3"
+					}
+				  ]
+				},
+				{
+				  "uid": "ROW:1",
+				  "name": "NICE office",
+				  "interval": "10m",
+				  "items": [
+					{
+					  "type": "dashboard_by_tag",
+					  "value": "graphite"
+					},
+					{
+					  "type": "dashboard_by_id",
+					  "value": "3"
+					}
+				  ]
+				}
+			  ]`, string(jj))
 		})
 	})
 

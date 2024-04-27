@@ -1,21 +1,25 @@
 import { capitalize } from 'lodash';
 import pluralize from 'pluralize';
 
-import { LabelParamEditor } from '../../prometheus/querybuilder/components/LabelParamEditor';
 import {
   QueryBuilderOperation,
-  QueryBuilderOperationDef,
+  QueryBuilderOperationDefinition,
   QueryBuilderOperationParamDef,
   QueryBuilderOperationParamValue,
-  QueryWithOperations,
+  VisualQuery,
   VisualQueryModeller,
-} from '../../prometheus/querybuilder/shared/types';
+} from '@grafana/experimental';
+
 import { escapeLabelValueInExactSelector } from '../languageUtils';
 import { FUNCTIONS } from '../syntax';
 
+import { LabelParamEditor } from './components/LabelParamEditor';
 import { LokiOperationId, LokiOperationOrder, LokiVisualQuery, LokiVisualQueryOperationCategory } from './types';
 
-export function createRangeOperation(name: string, isRangeOperationWithGrouping?: boolean): QueryBuilderOperationDef {
+export function createRangeOperation(
+  name: string,
+  isRangeOperationWithGrouping?: boolean
+): QueryBuilderOperationDefinition {
   const params = [getRangeVectorParamDef()];
   const defaultParams = ['$__auto'];
   let paramChangedHandler = undefined;
@@ -62,11 +66,11 @@ export function createRangeOperation(name: string, isRangeOperationWithGrouping?
   };
 }
 
-export function createRangeOperationWithGrouping(name: string): QueryBuilderOperationDef[] {
+export function createRangeOperationWithGrouping(name: string): QueryBuilderOperationDefinition[] {
   const rangeOperation = createRangeOperation(name, true);
   // Copy range operation params without the last param
   const params = rangeOperation.params.slice(0, -1);
-  const operations: QueryBuilderOperationDef[] = [
+  const operations: QueryBuilderOperationDefinition[] = [
     rangeOperation,
     {
       id: `__${name}_by`,
@@ -118,7 +122,11 @@ export function createRangeOperationWithGrouping(name: string): QueryBuilderOper
 }
 
 export function getRangeAggregationWithGroupingRenderer(aggregation: string, grouping: 'by' | 'without') {
-  return function aggregationRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
+  return function aggregationRenderer(
+    model: QueryBuilderOperation,
+    def: QueryBuilderOperationDefinition,
+    innerExpr: string
+  ) {
     const restParamIndex = def.params.findIndex((param) => param.restParam);
     const params = model.params.slice(0, restParamIndex);
     const restParams = model.params.slice(restParamIndex);
@@ -133,7 +141,7 @@ export function getRangeAggregationWithGroupingRenderer(aggregation: string, gro
 
 function operationWithRangeVectorRenderer(
   model: QueryBuilderOperation,
-  def: QueryBuilderOperationDef,
+  def: QueryBuilderOperationDefinition,
   innerExpr: string
 ) {
   const params = model.params ?? [];
@@ -147,7 +155,11 @@ function operationWithRangeVectorRenderer(
   return `${model.id}(${innerExpr} [${params[0] ?? '$__auto'}])`;
 }
 
-export function labelFilterRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
+export function labelFilterRenderer(
+  model: QueryBuilderOperation,
+  def: QueryBuilderOperationDefinition,
+  innerExpr: string
+) {
   const integerOperators = ['<', '<=', '>', '>='];
 
   if (integerOperators.includes(String(model.params[1]))) {
@@ -161,6 +173,9 @@ export function isConflictingFilter(
   operation: QueryBuilderOperation,
   queryOperations: QueryBuilderOperation[]
 ): boolean {
+  if (!operation) {
+    return false;
+  }
   const operationIsNegative = operation.params[1].toString().startsWith('!');
 
   const candidates = queryOperations.filter(
@@ -183,7 +198,11 @@ export function isConflictingFilter(
   return conflict;
 }
 
-export function pipelineRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
+export function pipelineRenderer(
+  model: QueryBuilderOperation,
+  def: QueryBuilderOperationDefinition,
+  innerExpr: string
+) {
   switch (model.id) {
     case LokiOperationId.Logfmt:
       const [strict = false, keepEmpty = false, ...labels] = model.params;
@@ -201,17 +220,17 @@ export function pipelineRenderer(model: QueryBuilderOperation, def: QueryBuilder
   }
 }
 
-function isRangeVectorFunction(def: QueryBuilderOperationDef) {
+function isRangeVectorFunction(def: QueryBuilderOperationDefinition) {
   return def.category === LokiVisualQueryOperationCategory.RangeFunctions;
 }
 
 function getIndexOfOrLast(
   operations: QueryBuilderOperation[],
   queryModeller: VisualQueryModeller,
-  condition: (def: QueryBuilderOperationDef) => boolean
+  condition: (def: QueryBuilderOperationDefinition) => boolean
 ) {
   const index = operations.findIndex((x) => {
-    const opDef = queryModeller.getOperationDef(x.id);
+    const opDef = queryModeller.getOperationDefinition(x.id);
     if (!opDef) {
       return false;
     }
@@ -222,7 +241,7 @@ function getIndexOfOrLast(
 }
 
 export function addLokiOperation(
-  def: QueryBuilderOperationDef,
+  def: QueryBuilderOperationDefinition,
   query: LokiVisualQuery,
   modeller: VisualQueryModeller
 ): LokiVisualQuery {
@@ -234,7 +253,7 @@ export function addLokiOperation(
   const operations = [...query.operations];
 
   const existingRangeVectorFunction = operations.find((x) => {
-    const opDef = modeller.getOperationDef(x.id);
+    const opDef = modeller.getOperationDefinition(x.id);
     if (!opDef) {
       return false;
     }
@@ -280,7 +299,7 @@ export function addLokiOperation(
   };
 }
 
-export function addNestedQueryHandler(def: QueryBuilderOperationDef, query: LokiVisualQuery): LokiVisualQuery {
+export function addNestedQueryHandler(def: QueryBuilderOperationDefinition, query: LokiVisualQuery): LokiVisualQuery {
   return {
     ...query,
     binaryQueries: [
@@ -294,7 +313,11 @@ export function addNestedQueryHandler(def: QueryBuilderOperationDef, query: Loki
 }
 
 export function getLineFilterRenderer(operation: string, caseInsensitive?: boolean) {
-  return function lineFilterRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
+  return function lineFilterRenderer(
+    model: QueryBuilderOperation,
+    def: QueryBuilderOperationDefinition,
+    innerExpr: string
+  ) {
     const hasBackticks = model.params.some((param) => typeof param === 'string' && param.includes('`'));
     const delimiter = hasBackticks ? '"' : '`';
     let params;
@@ -324,7 +347,7 @@ export function getOperationParamId(operationId: string, paramIndex: number) {
 }
 
 export function getOnLabelAddedHandler(changeToOperationId: string) {
-  return function onParamChanged(index: number, op: QueryBuilderOperation, def: QueryBuilderOperationDef) {
+  return function onParamChanged(index: number, op: QueryBuilderOperation, def: QueryBuilderOperationDefinition) {
     // Check if we actually have the label param. As it's optional the aggregation can have one less, which is the
     // case of just simple aggregation without label. When user adds the label it now has the same number of params
     // as its definition, and now we can change it to its `_by` variant.
@@ -361,7 +384,7 @@ export function getAggregationExplainer(aggregationName: string, mode: 'by' | 'w
  * This function will transform operations without labels to their plan aggregation operation
  */
 export function getLastLabelRemovedHandler(changeToOperationId: string) {
-  return function onParamChanged(index: number, op: QueryBuilderOperation, def: QueryBuilderOperationDef) {
+  return function onParamChanged(index: number, op: QueryBuilderOperation, def: QueryBuilderOperationDefinition) {
     // If definition has more params then is defined there are no optional rest params anymore.
     // We then transform this operation into a different one
     if (op.params.length < def.params.length) {
@@ -379,7 +402,7 @@ export function getLokiOperationDisplayName(funcName: string) {
   return capitalize(funcName.replace(/_/g, ' '));
 }
 
-export function defaultAddOperationHandler<T extends QueryWithOperations>(def: QueryBuilderOperationDef, query: T) {
+export function defaultAddOperationHandler<T extends VisualQuery>(def: QueryBuilderOperationDefinition, query: T) {
   const newOperation: QueryBuilderOperation = {
     id: def.id,
     params: def.defaultParams,
@@ -393,9 +416,9 @@ export function defaultAddOperationHandler<T extends QueryWithOperations>(def: Q
 
 export function createAggregationOperation(
   name: string,
-  overrides: Partial<QueryBuilderOperationDef> = {}
-): QueryBuilderOperationDef[] {
-  const operations: QueryBuilderOperationDef[] = [
+  overrides: Partial<QueryBuilderOperationDefinition> = {}
+): QueryBuilderOperationDefinition[] {
+  const operations: QueryBuilderOperationDefinition[] = [
     {
       id: name,
       name: getLokiOperationDisplayName(name),
@@ -466,12 +489,20 @@ export function createAggregationOperation(
 }
 
 function getAggregationWithoutRenderer(aggregation: string) {
-  return function aggregationRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
+  return function aggregationRenderer(
+    model: QueryBuilderOperation,
+    def: QueryBuilderOperationDefinition,
+    innerExpr: string
+  ) {
     return `${aggregation} without(${model.params.join(', ')}) (${innerExpr})`;
   };
 }
 
-export function functionRendererLeft(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
+export function functionRendererLeft(
+  model: QueryBuilderOperation,
+  def: QueryBuilderOperationDefinition,
+  innerExpr: string
+) {
   const params = renderParams(model, def, innerExpr);
   const str = model.id + '(';
 
@@ -482,7 +513,7 @@ export function functionRendererLeft(model: QueryBuilderOperation, def: QueryBui
   return str + params.join(', ') + ')';
 }
 
-function renderParams(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
+function renderParams(model: QueryBuilderOperation, def: QueryBuilderOperationDefinition, innerExpr: string) {
   return (model.params ?? []).map((value, index) => {
     const paramDef = def.params[index];
     if (paramDef.type === 'string') {
@@ -494,7 +525,11 @@ function renderParams(model: QueryBuilderOperation, def: QueryBuilderOperationDe
 }
 
 function getAggregationByRenderer(aggregation: string) {
-  return function aggregationRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
+  return function aggregationRenderer(
+    model: QueryBuilderOperation,
+    def: QueryBuilderOperationDefinition,
+    innerExpr: string
+  ) {
     return `${aggregation} by(${model.params.join(', ')}) (${innerExpr})`;
   };
 }
@@ -502,8 +537,8 @@ function getAggregationByRenderer(aggregation: string) {
 export function createAggregationOperationWithParam(
   name: string,
   paramsDef: { params: QueryBuilderOperationParamDef[]; defaultParams: QueryBuilderOperationParamValue[] },
-  overrides: Partial<QueryBuilderOperationDef> = {}
-): QueryBuilderOperationDef[] {
+  overrides: Partial<QueryBuilderOperationDefinition> = {}
+): QueryBuilderOperationDefinition[] {
   const operations = createAggregationOperation(name, overrides);
   operations[0].params.unshift(...paramsDef.params);
   operations[1].params.unshift(...paramsDef.params);
@@ -517,7 +552,11 @@ export function createAggregationOperationWithParam(
 }
 
 function getAggregationByRendererWithParameter(aggregation: string) {
-  return function aggregationRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
+  return function aggregationRenderer(
+    model: QueryBuilderOperation,
+    def: QueryBuilderOperationDefinition,
+    innerExpr: string
+  ) {
     const restParamIndex = def.params.findIndex((param) => param.restParam);
     const params = model.params.slice(0, restParamIndex);
     const restParams = model.params.slice(restParamIndex);

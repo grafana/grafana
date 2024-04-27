@@ -17,6 +17,10 @@ weight: 700
 
 # API keys
 
+{{% admonition type="note" %}}
+Deprecated: [Service accounts]({{< relref "../service-accounts/" >}}) have replaced API keys as the primary way to authenticate applications that interact with Grafana.
+{{% /admonition %}}
+
 An API key is a randomly generated string that external systems use to interact with Grafana HTTP APIs.
 
 When you create an API key, you specify a **Role** that determines the permissions associated with the API key. Role permissions control that actions the API key can perform on Grafana resources.

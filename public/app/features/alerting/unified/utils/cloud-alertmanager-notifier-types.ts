@@ -175,6 +175,16 @@ export const cloudNotifierTypes: Array<NotifierDTO<CloudNotifierType>> = [
           placeholder: '1h',
         }
       ),
+      option(
+        'ttl',
+        'TTL',
+        'The number of seconds before a message expires and is deleted automatically. Examples: 10s, 5m30s, 8h.',
+        {
+          // allow 30s, 4m30s, etc
+          validationRule: '^(\\d+[s|m|h])+$|^$',
+          element: 'input',
+        }
+      ),
       httpConfigOption,
     ],
   },
@@ -310,7 +320,11 @@ export const cloudNotifierTypes: Array<NotifierDTO<CloudNotifierType>> = [
         'max_alerts',
         'Max alerts',
         'The maximum number of alerts to include in a single webhook message. Alerts above this threshold are truncated. When leaving this at its default value of 0, all alerts are included.',
-        { placeholder: '0', validationRule: '(^\\d+$|^$)' }
+        {
+          placeholder: '0',
+          validationRule: '(^\\d+$|^$)',
+          setValueAs: (value) => (typeof value === 'string' ? parseInt(value, 10) : 0),
+        }
       ),
       httpConfigOption,
     ],

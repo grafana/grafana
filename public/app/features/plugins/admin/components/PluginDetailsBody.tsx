@@ -131,55 +131,44 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
 }
 
 export const getStyles = (theme: GrafanaTheme2) => ({
-  container: css``,
-  readme: css`
-    & img {
-      max-width: 100%;
-    }
-
-    h1,
-    h2,
-    h3 {
-      margin-top: ${theme.spacing(3)};
-      margin-bottom: ${theme.spacing(2)};
-    }
-
-    *:first-child {
-      margin-top: 0;
-    }
-
-    li {
-      margin-left: ${theme.spacing(2)};
-      & > p {
-        margin: ${theme.spacing()} 0;
-      }
-    }
-
-    a {
-      color: ${theme.colors.text.link};
-
-      &:hover {
-        color: ${theme.colors.text.link};
-        text-decoration: underline;
-      }
-    }
-
-    table {
-      table-layout: fixed;
-      width: 100%;
-
-      td,
-      th {
-        overflow-x: auto;
-        padding: ${theme.spacing(0.5)} ${theme.spacing(1)};
-      }
-
-      table,
-      th,
-      td {
-        border: 1px solid ${theme.colors.border.medium};
-        border-collapse: collapse;
-      }
-    }
-  `,
+  container: css({
+    height: '100%',
+  }),
+  readme: css({
+    '& img': {
+      maxWidth: '100%',
+    },
+    'h1, h2, h3': {
+      marginTop: theme.spacing(3),
+      marginBottom: theme.spacing(2),
+    },
+    '*:first-child': {
+      marginTop: 0,
+    },
+    li: {
+      marginLeft: theme.spacing(2),
+      '& > p': {
+        margin: theme.spacing(1, 0),
+      },
+    },
+    a: {
+      color: theme.colors.text.link,
+      '&:hover': {
+        color: theme.colors.text.link,
+        textDecoration: 'underline',
+      },
+    },
+    table: {
+      tableLayout: 'fixed',
+      width: '100%',
+      'td, th': {
+        overflowX: 'auto',
+        padding: theme.spacing(0.5, 1),
+      },
+      'table, th, td': {
+        border: `1px solid ${theme.colors.border.medium}`,
+        borderCollapse: 'collapse',
+      },
+    },
+  }),
 });

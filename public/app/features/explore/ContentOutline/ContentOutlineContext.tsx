@@ -1,64 +1,163 @@
 import { uniqueId } from 'lodash';
-import React, { useState, useContext, createContext, ReactNode, useCallback } from 'react';
+import React, { useState, useContext, createContext, ReactNode, useCallback, useRef, useEffect } from 'react';
 
 import { ContentOutlineItemBaseProps } from './ContentOutlineItem';
 
 export interface ContentOutlineItemContextProps extends ContentOutlineItemBaseProps {
   id: string;
   ref: HTMLElement | null;
+  children?: ContentOutlineItemContextProps[];
 }
 
-type RegisterFunction = ({ title, icon, ref }: Omit<ContentOutlineItemContextProps, 'id'>) => string;
+type RegisterFunction = (outlineItem: Omit<ContentOutlineItemContextProps, 'id'>) => string;
 
-interface ContentOutlineContextProps {
+export interface ContentOutlineContextProps {
   outlineItems: ContentOutlineItemContextProps[];
   register: RegisterFunction;
   unregister: (id: string) => void;
+  updateOutlineItems: (newItems: ContentOutlineItemContextProps[]) => void;
+}
+
+interface ContentOutlineContextProviderProps {
+  children: ReactNode;
+  /**
+   * used to resort children of an outline item when the dependencies change
+   * e.g. when the order of query rows changes on drag and drop
+   */
+  refreshDependencies?: unknown[];
+}
+
+interface ParentlessItems {
+  [panelId: string]: ContentOutlineItemContextProps[];
 }
 
 const ContentOutlineContext = createContext<ContentOutlineContextProps | undefined>(undefined);
 
-export const ContentOutlineContextProvider = ({ children }: { children: ReactNode }) => {
+export function ContentOutlineContextProvider({ children, refreshDependencies }: ContentOutlineContextProviderProps) {
   const [outlineItems, setOutlineItems] = useState<ContentOutlineItemContextProps[]>([]);
+  const parentlessItemsRef = useRef<ParentlessItems>({});
 
-  const register: RegisterFunction = useCallback(({ title, icon, ref }) => {
-    const id = uniqueId(`${title}-${icon}_`);
+  const register: RegisterFunction = useCallback((outlineItem) => {
+    const id = uniqueId(`${outlineItem.panelId}-${outlineItem.title}-${outlineItem.icon}_`);
 
     setOutlineItems((prevItems) => {
-      const updatedItems = [...prevItems, { id, title, icon, ref }];
+      if (outlineItem.level === 'root') {
+        const mergeSingleChild = checkMergeSingleChild(parentlessItemsRef, outlineItem);
+        const updatedItems = [
+          ...prevItems,
+          {
+            ...outlineItem,
+            id,
+            children: parentlessItemsRef.current[outlineItem.panelId] || [],
+            mergeSingleChild,
+          },
+        ];
 
-      return updatedItems.sort((a, b) => {
-        if (a.ref && b.ref) {
-          const diff = a.ref.compareDocumentPosition(b.ref);
-          if (diff === Node.DOCUMENT_POSITION_PRECEDING) {
-            return 1;
-          } else if (diff === Node.DOCUMENT_POSITION_FOLLOWING) {
-            return -1;
+        return updatedItems.sort(sortElementsByDocumentPosition);
+      }
+
+      if (outlineItem.level === 'child') {
+        const parentIndex = prevItems.findIndex(
+          (item) => item.panelId === outlineItem.panelId && item.level === 'root'
+        );
+        if (parentIndex === -1) {
+          const parentlessItemSibling = Object.keys(parentlessItemsRef.current).find(
+            (key) => key === outlineItem.panelId
+          );
+
+          if (parentlessItemSibling) {
+            parentlessItemsRef.current[outlineItem.panelId].push({
+              ...outlineItem,
+              id,
+            });
+          } else {
+            parentlessItemsRef.current[outlineItem.panelId] = [
+              {
+                ...outlineItem,
+                id,
+              },
+            ];
           }
+          return [...prevItems];
         }
-        return 0;
-      });
+
+        const newItems = [...prevItems];
+        const parent = { ...newItems[parentIndex] };
+        const childrenUpdated = [...(parent.children || []), { ...outlineItem, id }];
+        childrenUpdated.sort(sortElementsByDocumentPosition);
+        const mergeSingleChild = checkMergeSingleChild(parentlessItemsRef, parent);
+
+        newItems[parentIndex] = {
+          ...parent,
+          children: childrenUpdated,
+          mergeSingleChild,
+        };
+
+        return newItems;
+      }
+
+      return [...prevItems];
     });
 
     return id;
   }, []);
 
   const unregister = useCallback((id: string) => {
-    setOutlineItems((prevItems) => prevItems.filter((item) => item.id !== id));
+    setOutlineItems((prevItems) =>
+      prevItems
+        .filter((item) => item.id !== id)
+        .map((item) => {
+          if (item.children) {
+            item.children = item.children.filter((child) => child.id !== id);
+          }
+          return item;
+        })
+    );
   }, []);
 
+  const updateOutlineItems = useCallback((newItems: ContentOutlineItemContextProps[]) => {
+    setOutlineItems(newItems);
+  }, []);
+
+  useEffect(() => {
+    setOutlineItems((prevItems) => {
+      const newItems = [...prevItems];
+      for (const item of newItems) {
+        item.children?.sort(sortElementsByDocumentPosition);
+      }
+      return newItems;
+    });
+  }, [refreshDependencies]);
+
   return (
-    <ContentOutlineContext.Provider value={{ outlineItems, register, unregister }}>
+    <ContentOutlineContext.Provider value={{ outlineItems, register, unregister, updateOutlineItems }}>
       {children}
     </ContentOutlineContext.Provider>
   );
-};
+}
+
+export function sortElementsByDocumentPosition(a: ContentOutlineItemContextProps, b: ContentOutlineItemContextProps) {
+  if (a.ref && b.ref) {
+    const diff = a.ref.compareDocumentPosition(b.ref);
+    if (diff === Node.DOCUMENT_POSITION_PRECEDING) {
+      return 1;
+    } else if (diff === Node.DOCUMENT_POSITION_FOLLOWING) {
+      return -1;
+    }
+  }
+  return 0;
+}
+
+function checkMergeSingleChild(
+  parentlessItemsRef: React.MutableRefObject<ParentlessItems>,
+  outlineItem: Omit<ContentOutlineItemContextProps, 'id'>
+) {
+  const children = parentlessItemsRef.current[outlineItem.panelId] || [];
+  const mergeSingleChild = children.length === 1 && outlineItem.mergeSingleChild;
+
+  return mergeSingleChild;
+}
 
 export function useContentOutlineContext() {
-  const ctx = useContext(ContentOutlineContext);
-
-  if (!ctx) {
-    throw new Error('useContentOutlineContext must be used within a ContentOutlineContextProvider');
-  }
-  return ctx;
+  return useContext(ContentOutlineContext);
 }

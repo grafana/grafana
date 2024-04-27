@@ -1,9 +1,16 @@
-import { render } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 import React from 'react';
 
 import { dateTime, EventBusSrv } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
-import { AbsoluteTimeEvent, ShiftTimeEvent, ShiftTimeEventDirection, ZoomOutEvent } from 'app/types/events';
+import {
+  AbsoluteTimeEvent,
+  CopyTimeEvent,
+  PasteTimeEvent,
+  ShiftTimeEvent,
+  ShiftTimeEventDirection,
+  ZoomOutEvent,
+} from 'app/types/events';
 
 import { TestProvider } from '../../../../test/helpers/TestProvider';
 import { configureStore } from '../../../store/configureStore';
@@ -20,6 +27,15 @@ jest.mock('@grafana/runtime', () => {
     reportInteraction: jest.fn(),
     getAppEvents: () => testEventBus,
   };
+});
+
+const mockClipboard = {
+  writeText: jest.fn(),
+  readText: jest.fn(),
+};
+
+Object.defineProperty(global.navigator, 'clipboard', {
+  value: mockClipboard,
 });
 
 const NOW = new Date('2020-10-10T00:00:00.000Z');
@@ -110,5 +126,32 @@ describe('useKeyboardShortcuts', () => {
     expect(panes[0]!.absoluteRange.to).toBe(daysFromNow(0.5).getTime());
     expect(panes[1]!.absoluteRange.from).toBe(daysFromNow(-3).getTime());
     expect(panes[1]!.absoluteRange.to).toBe(daysFromNow(1).getTime());
+  });
+
+  it('copies the time range from the left pane', () => {
+    const store = setup();
+
+    getAppEvents().publish(new CopyTimeEvent());
+
+    const fromValue = store.getState().explore.panes.left!.range.raw.from;
+    const toValue = store.getState().explore.panes.left!.range.raw.to;
+
+    expect(global.navigator.clipboard.writeText).toHaveBeenCalledWith(JSON.stringify({ from: fromValue, to: toValue }));
+  });
+
+  it('pastes the time range to left pane', async () => {
+    const store = setup();
+
+    const fromValue = 'now-3d';
+    const toValue = 'now';
+
+    mockClipboard.readText.mockResolvedValue(JSON.stringify({ from: fromValue, to: toValue }));
+    getAppEvents().publish(new PasteTimeEvent({ updateUrl: false }));
+
+    await waitFor(() => {
+      const raw = store.getState().explore.panes.left!.range.raw;
+      expect(raw.from).toBe(fromValue);
+      expect(raw.to).toBe(toValue);
+    });
   });
 });

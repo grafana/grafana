@@ -516,7 +516,7 @@
           "refId": "A"
         }
       ],
-      "title": "Color line by discrete tresholds",
+      "title": "Color line by discrete thresholds",
       "type": "timeseries"
     },
     {

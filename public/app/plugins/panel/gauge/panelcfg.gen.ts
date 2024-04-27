@@ -4,7 +4,7 @@
 //     public/app/plugins/gen.go
 // Using jennies:
 //     TSTypesJenny
-//     PluginTSTypesJenny
+//     PluginTsTypesJenny
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
@@ -19,8 +19,8 @@ export interface Options extends common.SingleStatBaseOptions {
 }
 
 export const defaultOptions: Partial<Options> = {
-  minVizHeight: 200,
-  minVizWidth: 200,
+  minVizHeight: 75,
+  minVizWidth: 75,
   showThresholdLabels: false,
   showThresholdMarkers: true,
   sizing: common.BarGaugeSizing.Auto,

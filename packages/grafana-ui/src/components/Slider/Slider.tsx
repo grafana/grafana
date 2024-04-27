@@ -76,7 +76,7 @@ export const Slider = ({
     [max, min]
   );
 
-  const handleAfterChange = useCallback(
+  const handleChangeComplete = useCallback(
     (v: number | number[]) => {
       const value = typeof v === 'number' ? v : v[0];
       onAfterChange?.(value);
@@ -99,7 +99,7 @@ export const Slider = ({
           defaultValue={value}
           value={sliderValue}
           onChange={onSliderChange}
-          onAfterChange={handleAfterChange}
+          onChangeComplete={handleChangeComplete}
           vertical={!isHorizontal}
           reverse={reverse}
           ariaLabelForHandle={ariaLabelForHandle}

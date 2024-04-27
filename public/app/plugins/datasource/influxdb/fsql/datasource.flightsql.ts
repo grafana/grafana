@@ -1,14 +1,12 @@
 import { DataSourceInstanceSettings, TimeRange } from '@grafana/data';
 import { CompletionItemKind, LanguageDefinition, TableIdentifier } from '@grafana/experimental';
 import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
-import { SqlDatasource } from 'app/features/plugins/sql/datasource/SqlDatasource';
-import { DB, SQLQuery } from 'app/features/plugins/sql/types';
-import { formatSQL } from 'app/features/plugins/sql/utils/formatSQL';
+import { DB, formatSQL, SqlDatasource, SQLQuery } from '@grafana/sql';
 
 import { mapFieldsToTypes } from './fields';
 import { buildColumnQuery, buildTableQuery } from './flightsqlMetaQuery';
 import { getSqlCompletionProvider } from './sqlCompletionProvider';
-import { quoteLiteral, quoteIdentifierIfNecessary, toRawSql } from './sqlUtil';
+import { quoteIdentifierIfNecessary, quoteLiteral, toRawSql } from './sqlUtil';
 import { FlightSQLOptions } from './types';
 
 export class FlightSQLDatasource extends SqlDatasource {

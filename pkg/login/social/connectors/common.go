@@ -2,8 +2,6 @@ package connectors
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,7 +10,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jmespath/go-jmespath"
 	"github.com/mitchellh/mapstructure"
 	"golang.org/x/oauth2"
 
@@ -20,6 +17,18 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+type ExtraFieldType int
+
+const (
+	String ExtraFieldType = iota
+	Bool
+)
+
+type ExtraKeyInfo struct {
+	Type         ExtraFieldType
+	DefaultValue any
+}
 
 const (
 	// consider moving this to OAuthInfo
@@ -38,10 +47,16 @@ type httpGetResponse struct {
 }
 
 func (s *SocialBase) IsEmailAllowed(email string) bool {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
 	return isEmailAllowed(email, s.info.AllowedDomains)
 }
 
 func (s *SocialBase) IsSignupAllowed() bool {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
 	return s.info.AllowSignup
 }
 
@@ -90,63 +105,6 @@ func (s *SocialBase) httpGet(ctx context.Context, client *http.Client, url strin
 	s.log.Debug("HTTP GET", "url", url, "status", r.Status, "response_body", string(response.Body))
 
 	return response, nil
-}
-
-func (s *SocialBase) searchJSONForAttr(attributePath string, data []byte) (any, error) {
-	if attributePath == "" {
-		return "", errors.New("no attribute path specified")
-	}
-
-	if len(data) == 0 {
-		return "", errors.New("empty user info JSON response provided")
-	}
-
-	var buf any
-	if err := json.Unmarshal(data, &buf); err != nil {
-		return "", fmt.Errorf("%v: %w", "failed to unmarshal user info JSON response", err)
-	}
-
-	val, err := jmespath.Search(attributePath, buf)
-	if err != nil {
-		return "", fmt.Errorf("failed to search user info JSON response with provided path: %q: %w", attributePath, err)
-	}
-
-	return val, nil
-}
-
-func (s *SocialBase) searchJSONForStringAttr(attributePath string, data []byte) (string, error) {
-	val, err := s.searchJSONForAttr(attributePath, data)
-	if err != nil {
-		return "", err
-	}
-
-	strVal, ok := val.(string)
-	if ok {
-		return strVal, nil
-	}
-
-	return "", nil
-}
-
-func (s *SocialBase) searchJSONForStringArrayAttr(attributePath string, data []byte) ([]string, error) {
-	val, err := s.searchJSONForAttr(attributePath, data)
-	if err != nil {
-		return []string{}, err
-	}
-
-	ifArr, ok := val.([]any)
-	if !ok {
-		return []string{}, nil
-	}
-
-	result := []string{}
-	for _, v := range ifArr {
-		if strVal, ok := v.(string); ok {
-			result = append(result, strVal)
-		}
-	}
-
-	return result, nil
 }
 
 func createOAuthConfig(info *social.OAuthInfo, cfg *setting.Cfg, defaultName string) *oauth2.Config {
@@ -239,7 +197,7 @@ func CreateOAuthInfoFromKeyValues(settingsKV map[string]any) (*social.OAuthInfo,
 }
 
 func appendUniqueScope(config *oauth2.Config, scope string) {
-	if !slices.Contains(config.Scopes, social.OfflineAccessScope) {
-		config.Scopes = append(config.Scopes, social.OfflineAccessScope)
+	if !slices.Contains(config.Scopes, scope) {
+		config.Scopes = append(config.Scopes, scope)
 	}
 }

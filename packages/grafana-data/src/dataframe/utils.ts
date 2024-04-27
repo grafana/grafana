@@ -86,3 +86,40 @@ export function anySeriesWithTimeField(data: DataFrame[]) {
 export function hasTimeField(data: DataFrame): boolean {
   return data.fields.some((field) => field.type === FieldType.time);
 }
+
+/**
+ * Get row id based on the meta.uniqueRowIdFields attribute.
+ * @param dataFrame
+ * @param rowIndex
+ */
+export function getRowUniqueId(dataFrame: DataFrame, rowIndex: number) {
+  if (dataFrame.meta?.uniqueRowIdFields === undefined) {
+    return undefined;
+  }
+  return dataFrame.meta.uniqueRowIdFields.map((fieldIndex) => dataFrame.fields[fieldIndex].values[rowIndex]).join('-');
+}
+
+/**
+ * Simple helper to add values to a data frame. Doesn't do any validation so make sure you are adding the right types
+ * of values.
+ * @param dataFrame
+ * @param row Either an array of values or an object with keys that match the field names.
+ */
+export function addRow(dataFrame: DataFrame, row: Record<string, unknown> | unknown[]) {
+  if (row instanceof Array) {
+    for (let i = 0; i < row.length; i++) {
+      dataFrame.fields[i].values.push(row[i]);
+    }
+  } else {
+    for (const field of dataFrame.fields) {
+      field.values.push(row[field.name]);
+    }
+  }
+  try {
+    dataFrame.length++;
+  } catch (e) {
+    // Unfortunate but even though DataFrame as interface defines length some implementation of DataFrame only have
+    // length getter. In that case it will throw and so we just skip and assume they defined a `getter` for length that
+    // does not need any external updating.
+  }
+}

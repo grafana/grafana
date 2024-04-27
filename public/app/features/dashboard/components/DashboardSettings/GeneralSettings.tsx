@@ -10,9 +10,9 @@ import {
   RadioButtonGroup,
   TagsInput,
   Label,
-  HorizontalGroup,
   TextArea,
   Box,
+  Stack,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
@@ -43,9 +43,9 @@ export function GeneralSettingsUnconnected({
   const [renderCounter, setRenderCounter] = useState(0);
   const [dashboardTitle, setDashboardTitle] = useState(dashboard.title);
   const [dashboardDescription, setDashboardDescription] = useState(dashboard.description);
-  const pageNav = config.featureToggles.dockedMegaMenu ? sectionNav.node.parentItem : undefined;
+  const pageNav = sectionNav.node.parentItem;
 
-  const onFolderChange = (newUID: string, newTitle: string) => {
+  const onFolderChange = (newUID: string | undefined, newTitle: string | undefined) => {
     dashboard.meta.folderUid = newUID;
     dashboard.meta.folderTitle = newTitle;
     dashboard.meta.hasUnsavedFolderChange = true;
@@ -124,15 +124,13 @@ export function GeneralSettingsUnconnected({
         <Box marginBottom={5}>
           <Field
             label={
-              <HorizontalGroup justify="space-between">
+              <Stack justifyContent="space-between">
                 <Label htmlFor="title-input">
                   <Trans i18nKey="dashboard-settings.general.title-label">Title</Trans>
                 </Label>
 
-                {config.featureToggles.dashgpt && (
-                  <GenAIDashTitleButton onGenerate={onTitleChange} dashboard={dashboard} />
-                )}
-              </HorizontalGroup>
+                {config.featureToggles.dashgpt && <GenAIDashTitleButton onGenerate={onTitleChange} />}
+              </Stack>
             }
           >
             <Input
@@ -144,15 +142,13 @@ export function GeneralSettingsUnconnected({
           </Field>
           <Field
             label={
-              <HorizontalGroup justify="space-between">
+              <Stack justifyContent="space-between">
                 <Label htmlFor="description-input">
                   {t('dashboard-settings.general.description-label', 'Description')}
                 </Label>
 
-                {config.featureToggles.dashgpt && (
-                  <GenAIDashDescriptionButton onGenerate={onDescriptionChange} dashboard={dashboard} />
-                )}
-              </HorizontalGroup>
+                {config.featureToggles.dashgpt && <GenAIDashDescriptionButton onGenerate={onDescriptionChange} />}
+              </Stack>
             }
           >
             <TextArea

@@ -38,7 +38,7 @@ func NewServiceAccountsAPI(
 	accesscontrolService accesscontrol.Service,
 	routerRegister routing.RouteRegister,
 	permissionService accesscontrol.ServiceAccountPermissionsService,
-	features *featuremgmt.FeatureManager,
+	features featuremgmt.FeatureToggles,
 ) *ServiceAccountsAPI {
 	return &ServiceAccountsAPI{
 		cfg:                  cfg,
@@ -48,7 +48,7 @@ func NewServiceAccountsAPI(
 		RouterRegister:       routerRegister,
 		log:                  log.New("serviceaccounts.api"),
 		permissionService:    permissionService,
-		isExternalSAEnabled:  features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts) || features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAuth),
+		isExternalSAEnabled:  features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts),
 	}
 }
 
@@ -147,7 +147,7 @@ func (api *ServiceAccountsAPI) RetrieveServiceAccount(ctx *contextmodel.ReqConte
 
 	saIDString := strconv.FormatInt(serviceAccount.Id, 10)
 	metadata := api.getAccessControlMetadata(ctx, map[string]bool{saIDString: true})
-	serviceAccount.AvatarUrl = dtos.GetGravatarUrlWithDefault("", serviceAccount.Name)
+	serviceAccount.AvatarUrl = dtos.GetGravatarUrlWithDefault(api.cfg, "", serviceAccount.Name)
 	serviceAccount.AccessControl = metadata[saIDString]
 
 	tokens, err := api.service.ListTokens(ctx.Req.Context(), &serviceaccounts.GetSATokensQuery{
@@ -198,7 +198,7 @@ func (api *ServiceAccountsAPI) UpdateServiceAccount(c *contextmodel.ReqContext) 
 
 	saIDString := strconv.FormatInt(resp.Id, 10)
 	metadata := api.getAccessControlMetadata(c, map[string]bool{saIDString: true})
-	resp.AvatarUrl = dtos.GetGravatarUrlWithDefault("", resp.Name)
+	resp.AvatarUrl = dtos.GetGravatarUrlWithDefault(api.cfg, "", resp.Name)
 	resp.AccessControl = metadata[saIDString]
 
 	return response.JSON(http.StatusOK, util.DynMap{
@@ -296,7 +296,7 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *contextmode
 	saIDs := map[string]bool{}
 	for i := range serviceAccountSearch.ServiceAccounts {
 		sa := serviceAccountSearch.ServiceAccounts[i]
-		sa.AvatarUrl = dtos.GetGravatarUrlWithDefault("", sa.Name)
+		sa.AvatarUrl = dtos.GetGravatarUrlWithDefault(api.cfg, "", sa.Name)
 
 		saIDString := strconv.FormatInt(sa.Id, 10)
 		saIDs[saIDString] = true

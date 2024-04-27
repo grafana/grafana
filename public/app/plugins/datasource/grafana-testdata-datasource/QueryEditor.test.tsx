@@ -5,7 +5,7 @@ import React from 'react';
 import { QueryEditor, Props } from './QueryEditor';
 import { scenarios } from './__mocks__/scenarios';
 import { defaultQuery } from './constants';
-import { TestDataQueryType } from './dataquery.gen';
+import { TestDataQueryType } from './dataquery';
 import { TestDataDataSource } from './datasource';
 import { defaultStreamQuery } from './runStreams';
 

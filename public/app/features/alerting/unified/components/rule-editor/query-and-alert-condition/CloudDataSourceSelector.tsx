@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import React from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, Controller } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
-import { Field, InputControl, useStyles2 } from '@grafana/ui';
+import { Field, useStyles2 } from '@grafana/ui';
 
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { CloudRulesSourcePicker } from '../CloudRulesSourcePicker';
@@ -32,9 +32,8 @@ export const CloudDataSourceSelector = ({ disabled, onChangeCloudDatasource }: C
             label={disabled ? 'Data source' : 'Select data source'}
             error={errors.dataSourceName?.message}
             invalid={!!errors.dataSourceName?.message}
-            data-testid="datasource-picker"
           >
-            <InputControl
+            <Controller
               render={({ field: { onChange, ref, ...field } }) => (
                 <CloudRulesSourcePicker
                   {...field}

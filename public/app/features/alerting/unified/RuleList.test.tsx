@@ -1,21 +1,34 @@
 import { SerializedError } from '@reduxjs/toolkit';
 import { prettyDOM, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { setupServer } from 'msw/node';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
-import { PluginExtensionTypes } from '@grafana/data';
+import { PluginExtensionTypes, PluginMeta } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import {
   DataSourceSrv,
   getPluginLinkExtensions,
   locationService,
   setBackendSrv,
   setDataSourceSrv,
+  usePluginLinkExtensions,
 } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
+import {
+  mockAlertRuleApi,
+  mockApi,
+  mockFolderApi,
+  mockSearchApi,
+  mockUserApi,
+} from 'app/features/alerting/unified/mockApi';
+import { mockAlertmanagerChoiceResponse } from 'app/features/alerting/unified/mocks/alertmanagerApi';
 import * as actions from 'app/features/alerting/unified/state/actions';
+import { getMockUser } from 'app/features/users/__mocks__/userMocks';
+import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 import { PromAlertingRuleState, PromApplication } from 'app/types/unified-alerting-dto';
 
@@ -25,16 +38,19 @@ import { discoverFeatures } from './api/buildInfo';
 import { fetchRules } from './api/prometheus';
 import { deleteNamespace, deleteRulerRulesGroup, fetchRulerRules, setRulerRuleGroup } from './api/ruler';
 import {
+  MockDataSourceSrv,
   grantUserPermissions,
   mockDataSource,
-  MockDataSourceSrv,
   mockPromAlert,
   mockPromAlertingRule,
   mockPromRecordingRule,
   mockPromRuleGroup,
   mockPromRuleNamespace,
+  pausedPromRules,
+  getPotentiallyPausedRulerRules,
   somePromRules,
   someRulerRules,
+  mockFolder,
 } from './mocks';
 import * as config from './utils/config';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
@@ -42,6 +58,8 @@ import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getPluginLinkExtensions: jest.fn(),
+  usePluginLinkExtensions: jest.fn(),
+  useReturnToPrevious: jest.fn(),
 }));
 jest.mock('./api/buildInfo');
 jest.mock('./api/prometheus');
@@ -65,6 +83,7 @@ jest.spyOn(actions, 'rulesInSameGroupHaveInvalidFor').mockReturnValue([]);
 const mocks = {
   getAllDataSourcesMock: jest.mocked(config.getAllDataSources),
   getPluginLinkExtensionsMock: jest.mocked(getPluginLinkExtensions),
+  usePluginLinkExtensionsMock: jest.mocked(usePluginLinkExtensions),
   rulesInSameGroupHaveInvalidForMock: jest.mocked(actions.rulesInSameGroupHaveInvalidFor),
 
   api: {
@@ -111,20 +130,18 @@ const dataSources = {
 
 const ui = {
   ruleGroup: byTestId('rule-group'),
+  pausedRuleGroup: byText(/groupPaused/),
   cloudRulesSourceErrors: byTestId('cloud-rulessource-errors'),
-  groupCollapseToggle: byTestId('group-collapse-toggle'),
-  ruleCollapseToggle: byTestId('collapse-toggle'),
+  groupCollapseToggle: byTestId(selectors.components.AlertRules.groupToggle),
+  ruleCollapseToggle: byTestId(selectors.components.AlertRules.toggle),
   rulesTable: byTestId('rules-table'),
   ruleRow: byTestId('row'),
-  expandedContent: byTestId('expanded-content'),
+  expandedContent: byTestId(selectors.components.AlertRules.expandedContent),
   rulesFilterInput: byTestId('search-query-input'),
   moreErrorsButton: byRole('button', { name: /more errors/ }),
   editCloudGroupIcon: byTestId('edit-group'),
-  newRuleButton: byRole('link', { name: 'New alert rule' }),
-  moreButton: byRole('button', { name: 'More' }),
-  exportButton: byRole('menuitem', {
-    name: /export all grafana\-managed rules/i,
-  }),
+  newRuleButton: byText(/new alert rule/i),
+  exportButton: byText(/export rules/i),
   editGroupModal: {
     dialog: byRole('dialog'),
     namespaceInput: byRole('textbox', { name: /^Namespace/ }),
@@ -134,6 +151,42 @@ const ui = {
     }),
     saveButton: byRole('button', { name: /Save/ }),
   },
+  stateTags: {
+    paused: byText(/^Paused/),
+  },
+  actionButtons: {
+    more: byRole('button', { name: 'More' }),
+  },
+  moreActionItems: {
+    pause: byRole('menuitem', { name: /pause evaluation/i }),
+    resume: byRole('menuitem', { name: /resume evaluation/i }),
+  },
+};
+
+const server = setupServer();
+
+const configureMockServer = () => {
+  mockSearchApi(server).search([]);
+  mockUserApi(server).user(getMockUser());
+  mockFolderApi(server).folder(
+    'NAMESPACE_UID',
+    mockFolder({
+      accessControl: { [AccessControlAction.AlertingRuleUpdate]: true },
+    })
+  );
+  mockApi(server).plugins.getPluginSettings(
+    // We aren't particularly concerned with the plugin response in these tests
+    // at the time of writing, so we can go unknown -> PluginMeta to get the bare minimum
+    { id: 'grafana-incident-app' } as unknown as PluginMeta
+  );
+  mockAlertmanagerChoiceResponse(server, {
+    alertmanagersChoice: AlertmanagerChoice.All,
+    numExternalAlertmanagers: 1,
+  });
+  mockAlertRuleApi(server).updateRule('grafana', {
+    message: 'rule group updated successfully',
+    updated: ['foo', 'bar', 'baz'],
+  });
 };
 
 beforeAll(() => {
@@ -142,6 +195,8 @@ beforeAll(() => {
 
 describe('RuleList', () => {
   beforeEach(() => {
+    server.listen({ onUnhandledRequest: 'error' });
+    configureMockServer();
     grantUserPermissions([
       AccessControlAction.AlertingRuleRead,
       AccessControlAction.AlertingRuleUpdate,
@@ -149,7 +204,7 @@ describe('RuleList', () => {
       AccessControlAction.AlertingRuleExternalWrite,
     ]);
     mocks.rulesInSameGroupHaveInvalidForMock.mockReturnValue([]);
-    mocks.getPluginLinkExtensionsMock.mockReturnValue({
+    mocks.usePluginLinkExtensionsMock.mockReturnValue({
       extensions: [
         {
           pluginId: 'grafana-ml-app',
@@ -161,12 +216,18 @@ describe('RuleList', () => {
           onClick: jest.fn(),
         },
       ],
+      isLoading: false,
     });
   });
 
   afterEach(() => {
+    server.resetHandlers();
     jest.resetAllMocks();
     setDataSourceSrv(undefined as unknown as DataSourceSrv);
+  });
+
+  afterAll(() => {
+    server.close();
   });
 
   it('load & show rule groups from multiple cloud data sources', async () => {
@@ -383,8 +444,10 @@ describe('RuleList', () => {
     await userEvent.click(ui.ruleCollapseToggle.get(ruleRows[1]));
 
     const ruleDetails = ui.expandedContent.get(ruleRows[1]);
+    const labels = byTestId('label-value').getAll(ruleDetails);
+    expect(labels[0]).toHaveTextContent('severitywarning');
+    expect(labels[1]).toHaveTextContent('foobar');
 
-    expect(ruleDetails).toHaveTextContent('Labels severitywarning foobar');
     expect(ruleDetails).toHaveTextContent('Expressiontopk ( 5 , foo ) [ 5m ]');
     expect(ruleDetails).toHaveTextContent('messagegreat alert');
     expect(ruleDetails).toHaveTextContent('Matching instances');
@@ -395,19 +458,19 @@ describe('RuleList', () => {
     const instanceRows = byTestId('row').getAll(instancesTable);
     expect(instanceRows).toHaveLength(2);
 
-    expect(instanceRows![0]).toHaveTextContent('Firing foobar severitywarning2021-03-18 08:47:05');
-    expect(instanceRows![1]).toHaveTextContent('Firing foobaz severityerror2021-03-18 08:47:05');
+    expect(instanceRows![0]).toHaveTextContent('Firingfoobarseveritywarning2021-03-18 08:47:05');
+    expect(instanceRows![1]).toHaveTextContent('Firingfoobazseverityerror2021-03-18 08:47:05');
 
     // expand details of an instance
     await userEvent.click(ui.ruleCollapseToggle.get(instanceRows![0]));
 
-    const alertDetails = byTestId('expanded-content').get(instanceRows[0]);
+    const alertDetails = byTestId(selectors.components.AlertRules.expandedContent).get(instanceRows[0]);
     expect(alertDetails).toHaveTextContent('Value2e+10');
     expect(alertDetails).toHaveTextContent('messagefirst alert message');
 
     // collapse everything again
     await userEvent.click(ui.ruleCollapseToggle.get(instanceRows![0]));
-    expect(byTestId('expanded-content').query(instanceRows[0])).not.toBeInTheDocument();
+    expect(byTestId(selectors.components.AlertRules.expandedContent).query(instanceRows[0])).not.toBeInTheDocument();
     await userEvent.click(ui.ruleCollapseToggle.getAll(ruleRows[1])[0]);
     await userEvent.click(ui.groupCollapseToggle.get(groups[1]));
     expect(ui.rulesTable.query()).not.toBeInTheDocument();
@@ -536,8 +599,9 @@ describe('RuleList', () => {
 
     await userEvent.click(ui.ruleCollapseToggle.get(ruleRows[0]));
     const ruleDetails = ui.expandedContent.get(ruleRows[0]);
-
-    expect(ruleDetails).toHaveTextContent('Labels severitywarning foobar');
+    const labels = byTestId('label-value').getAll(ruleDetails);
+    expect(labels[0]).toHaveTextContent('severitywarning');
+    expect(labels[1]).toHaveTextContent('foobar');
 
     // Check for different label matchers
     await userEvent.clear(filterInput);
@@ -554,6 +618,44 @@ describe('RuleList', () => {
     await userEvent.type(filterInput, 'label:region=US{Enter}');
     await waitFor(() => expect(ui.ruleGroup.queryAll()).toHaveLength(1));
     await waitFor(() => expect(ui.ruleGroup.get()).toHaveTextContent('group-2'));
+  });
+
+  describe('pausing rules', () => {
+    beforeEach(() => {
+      grantUserPermissions([
+        AccessControlAction.AlertingRuleRead,
+        AccessControlAction.AlertingRuleUpdate,
+        AccessControlAction.AlertingRuleExternalRead,
+        AccessControlAction.AlertingRuleExternalWrite,
+      ]);
+      mocks.getAllDataSourcesMock.mockReturnValue([]);
+      setDataSourceSrv(new MockDataSourceSrv({}));
+      mocks.api.fetchRulerRules.mockImplementation(() => Promise.resolve(getPotentiallyPausedRulerRules(true)));
+      mocks.api.fetchRules.mockImplementation((sourceName) =>
+        Promise.resolve(sourceName === 'grafana' ? pausedPromRules('grafana') : [])
+      );
+    });
+
+    test('resuming paused alert rule', async () => {
+      const user = userEvent.setup();
+
+      renderRuleList();
+
+      // Expand the paused rule group so we can assert the rule state
+      await user.click(await ui.pausedRuleGroup.find());
+
+      expect(await ui.stateTags.paused.find()).toBeInTheDocument();
+
+      // TODO: Migrate all testing logic to MSW and so we aren't manually tweaking the API response behaviour
+      mocks.api.fetchRulerRules.mockImplementationOnce(() => {
+        return Promise.resolve(getPotentiallyPausedRulerRules(false));
+      });
+
+      await user.click(await ui.actionButtons.more.find());
+      await user.click(await ui.moreActionItems.resume.find());
+
+      await waitFor(() => expect(ui.stateTags.paused.query()).not.toBeInTheDocument());
+    });
   });
 
   describe('edit lotex groups, namespaces', () => {
@@ -611,6 +713,7 @@ describe('RuleList', () => {
       await userEvent.clear(ui.editGroupModal.ruleGroupInput.get());
       await userEvent.type(ui.editGroupModal.ruleGroupInput.get(), 'super group');
 
+      await userEvent.clear(ui.editGroupModal.intervalInput.get());
       await userEvent.type(ui.editGroupModal.intervalInput.get(), '5m');
 
       // submit, check that appropriate calls were made
@@ -648,6 +751,8 @@ describe('RuleList', () => {
       // make changes to form
       await userEvent.clear(ui.editGroupModal.ruleGroupInput.get());
       await userEvent.type(ui.editGroupModal.ruleGroupInput.get(), 'super group');
+
+      await userEvent.clear(ui.editGroupModal.intervalInput.get());
       await userEvent.type(ui.editGroupModal.intervalInput.get(), '5m');
 
       // submit, check that appropriate calls were made
@@ -678,6 +783,7 @@ describe('RuleList', () => {
 
     testCase('edit lotex group eval interval, no renaming', async () => {
       // make changes to form
+      await userEvent.clear(ui.editGroupModal.intervalInput.get());
       await userEvent.type(ui.editGroupModal.intervalInput.get(), '5m');
 
       // submit, check that appropriate calls were made
@@ -728,7 +834,8 @@ describe('RuleList', () => {
 
         renderRuleList();
 
-        await userEvent.click(ui.moreButton.get());
+        await waitFor(() => expect(mocks.api.fetchRules).toHaveBeenCalledTimes(1));
+
         expect(ui.exportButton.get()).toBeInTheDocument();
       });
     });

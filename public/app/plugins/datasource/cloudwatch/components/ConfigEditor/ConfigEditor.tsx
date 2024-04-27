@@ -11,13 +11,8 @@ import {
   DataSourceTestFailed,
 } from '@grafana/data';
 import { ConfigSection } from '@grafana/experimental';
-import { getAppEvents, usePluginInteractionReporter } from '@grafana/runtime';
-import { Input, InlineField, FieldProps, SecureSocksProxySettings, Field, Divider } from '@grafana/ui';
-import { notifyApp } from 'app/core/actions';
-import { config } from 'app/core/config';
-import { createWarningNotification } from 'app/core/copy/appNotification';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { store } from 'app/store/store';
+import { getAppEvents, usePluginInteractionReporter, getDataSourceSrv, config } from '@grafana/runtime';
+import { Alert, Input, InlineField, FieldProps, SecureSocksProxySettings, Field, Divider } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../datasource';
 import { SelectableResourceValue } from '../../resources/types';
@@ -31,11 +26,17 @@ export type Props = DataSourcePluginOptionsEditorProps<CloudWatchJsonData, Cloud
 
 type LogGroupFieldState = Pick<FieldProps, 'invalid'> & { error?: string | null };
 
+export const ARN_DEPRECATION_WARNING_MESSAGE =
+  'Since grafana 7.3 authentication type "arn" is deprecated, falling back to default SDK provider';
+export const CREDENTIALS_AUTHENTICATION_WARNING_MESSAGE =
+  'As of grafana 7.3 authentication type "credentials" should be used only for shared file credentials. \
+If you don\'t have a credentials file, switch to the default SDK provider for extracting credentials \
+from environment variables or IAM roles';
+
 export const ConfigEditor = (props: Props) => {
   const { options, onOptionsChange } = props;
   const { defaultLogGroups, logsTimeout, defaultRegion, logGroups } = options.jsonData;
   const datasource = useDatasource(props);
-  useAuthenticationWarning(options.jsonData);
   const logsTimeoutError = useTimoutValidation(logsTimeout);
   const saved = useDataSourceSavedState(props);
   const [logGroupFieldState, setLogGroupFieldState] = useState<LogGroupFieldState>({
@@ -70,8 +71,25 @@ export const ConfigEditor = (props: Props) => {
     }
   }, [datasource, externalId]);
 
+  const [warning, setWarning] = useState<string | null>(null);
+  const dismissWarning = () => {
+    setWarning(null);
+  };
+  useEffect(() => {
+    if (options.jsonData.authType === 'arn') {
+      setWarning(ARN_DEPRECATION_WARNING_MESSAGE);
+    } else if (options.jsonData.authType === 'credentials' && !options.jsonData.profile && !options.jsonData.database) {
+      setWarning(CREDENTIALS_AUTHENTICATION_WARNING_MESSAGE);
+    }
+  }, [options.jsonData.authType, options.jsonData.database, options.jsonData.profile]);
+
   return newFormStylingEnabled ? (
     <div className="width-30">
+      {warning && (
+        <Alert title="CloudWatch Authentication" severity="warning" onRemove={dismissWarning}>
+          {warning}
+        </Alert>
+      )}
       <ConnectionConfig
         {...props}
         newFormStylingEnabled={true}
@@ -89,7 +107,15 @@ export const ConfigEditor = (props: Props) => {
           })
         }
         externalId={externalId}
-      />
+      >
+        <Field label="Namespaces of Custom Metrics">
+          <Input
+            placeholder="Namespace1,Namespace2"
+            value={options.jsonData.customMetricsNamespaces || ''}
+            onChange={onUpdateDatasourceJsonDataOption(props, 'customMetricsNamespaces')}
+          />
+        </Field>
+      </ConnectionConfig>
       {config.secureSocksDSProxyEnabled && (
         <SecureSocksProxySettingsNewStyling options={options} onOptionsChange={onOptionsChange} />
       )}
@@ -168,6 +194,11 @@ export const ConfigEditor = (props: Props) => {
     </div>
   ) : (
     <>
+      {warning && (
+        <Alert title="CloudWatch Authentication" severity="warning" onRemove={dismissWarning}>
+          {warning}
+        </Alert>
+      )}
       <ConnectionConfig
         {...props}
         labelWidth={29}
@@ -274,31 +305,13 @@ export const ConfigEditor = (props: Props) => {
   );
 };
 
-function useAuthenticationWarning(jsonData: CloudWatchJsonData) {
-  const addWarning = (message: string) => {
-    store.dispatch(notifyApp(createWarningNotification('CloudWatch Authentication', message)));
-  };
-
-  useEffect(() => {
-    if (jsonData.authType === 'arn') {
-      addWarning('Since grafana 7.3 authentication type "arn" is deprecated, falling back to default SDK provider');
-    } else if (jsonData.authType === 'credentials' && !jsonData.profile && !jsonData.database) {
-      addWarning(
-        'As of grafana 7.3 authentication type "credentials" should be used only for shared file credentials. \
-             If you don\'t have a credentials file, switch to the default SDK provider for extracting credentials \
-             from environment variables or IAM roles'
-      );
-    }
-  }, [jsonData.authType, jsonData.database, jsonData.profile]);
-}
-
 function useDatasource(props: Props) {
   const [datasource, setDatasource] = useState<CloudWatchDatasource>();
 
   useEffect(() => {
     if (props.options.version) {
-      getDatasourceSrv()
-        .loadDatasource(props.options.name)
+      getDataSourceSrv()
+        .get(props.options.name)
         .then((datasource) => {
           if (datasource instanceof CloudWatchDatasource) {
             setDatasource(datasource);

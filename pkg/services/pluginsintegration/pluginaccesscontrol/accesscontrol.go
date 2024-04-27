@@ -30,7 +30,7 @@ func ReqCanAdminPlugins(cfg *setting.Cfg) func(rc *contextmodel.ReqContext) bool
 	}
 }
 
-func DeclareRBACRoles(service ac.Service, cfg *setting.Cfg) error {
+func DeclareRBACRoles(service ac.Service, cfg *setting.Cfg, features featuremgmt.FeatureToggles) error {
 	AppPluginsReader := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        ac.FixedRolePrefix + "plugins.app:reader",
@@ -69,7 +69,7 @@ func DeclareRBACRoles(service ac.Service, cfg *setting.Cfg) error {
 	}
 
 	if !cfg.PluginAdminEnabled ||
-		(cfg.PluginAdminExternalManageEnabled && !cfg.IsFeatureToggleEnabled(featuremgmt.FlagManagedPluginsInstall)) {
+		(cfg.PluginAdminExternalManageEnabled && !features.IsEnabledGlobally(featuremgmt.FlagManagedPluginsInstall)) {
 		PluginsMaintainer.Grants = []string{}
 	}
 

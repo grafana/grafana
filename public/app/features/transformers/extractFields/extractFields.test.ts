@@ -313,9 +313,6 @@ describe('Fields from JSON', () => {
         },
       ],
       length: 2,
-      meta: {
-        transformations: ['sortBy'],
-      },
     };
 
     const frames = extractFieldsTransformer.transformer(extractConfig, ctx)([testDataFrame]);

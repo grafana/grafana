@@ -19,11 +19,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fake_ds "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	fake_secrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -411,7 +411,7 @@ func createMultiOrgAlertmanager(t *testing.T, orgs []int64) *notifier.MultiOrgAl
 	m := metrics.NewNGAlert(registry)
 	secretsService := secretsManager.SetupTestService(t, fake_secrets.NewFakeSecretsStore())
 	decryptFn := secretsService.GetDecryptedValue
-	moa, err := notifier.NewMultiOrgAlertmanager(cfg, cfgStore, &orgStore, kvStore, provisioning.NewFakeProvisioningStore(), decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
+	moa, err := notifier.NewMultiOrgAlertmanager(cfg, cfgStore, orgStore, kvStore, fakes.NewFakeProvisioningStore(), decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService, featuremgmt.WithFeatures())
 	require.NoError(t, err)
 	require.NoError(t, moa.LoadAndSyncAlertmanagersForOrgs(context.Background()))
 	require.Eventually(t, func() bool {
@@ -460,6 +460,18 @@ func TestBuildExternalURL(t *testing.T) {
 				},
 			},
 			expectedURL: "https://johndoe:123@localhost:9000",
+		},
+		{
+			name: "datasource with auth that needs escaping",
+			ds: &datasources.DataSource{
+				URL:           "https://localhost:9000",
+				BasicAuth:     true,
+				BasicAuthUser: "johndoe",
+				SecureJsonData: map[string][]byte{
+					"basicAuthPassword": []byte("123#!"),
+				},
+			},
+			expectedURL: "https://johndoe:123%23%21@localhost:9000",
 		},
 		{
 			name: "datasource with auth and path",
@@ -527,6 +539,42 @@ func TestBuildExternalURL(t *testing.T) {
 				}(),
 			},
 			expectedURL: "https://localhost:9000/path/to/am",
+		},
+		{
+			name: "do not add /alertmanager to path when last segment already contains it",
+			ds: &datasources.DataSource{
+				URL: "https://localhost:9000/path/to/alertmanager",
+				JsonData: func() *simplejson.Json {
+					r := simplejson.New()
+					r.Set("implementation", "mimir")
+					return r
+				}(),
+			},
+			expectedURL: "https://localhost:9000/path/to/alertmanager",
+		},
+		{
+			name: "add /alertmanager to path when last segment does not exactly match",
+			ds: &datasources.DataSource{
+				URL: "https://localhost:9000/path/to/alertmanagerasdf",
+				JsonData: func() *simplejson.Json {
+					r := simplejson.New()
+					r.Set("implementation", "mimir")
+					return r
+				}(),
+			},
+			expectedURL: "https://localhost:9000/path/to/alertmanagerasdf/alertmanager",
+		},
+		{
+			name: "add /alertmanager to path when exists but is not last segment",
+			ds: &datasources.DataSource{
+				URL: "https://localhost:9000/alertmanager/path/to/am",
+				JsonData: func() *simplejson.Json {
+					r := simplejson.New()
+					r.Set("implementation", "mimir")
+					return r
+				}(),
+			},
+			expectedURL: "https://localhost:9000/alertmanager/path/to/am/alertmanager",
 		},
 	}
 	for _, test := range tests {

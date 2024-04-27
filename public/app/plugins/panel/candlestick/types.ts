@@ -1,4 +1,4 @@
-import { LegendDisplayMode } from '@grafana/schema';
+import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
 
 import {
   defaultOptions as defaultOptionsBase,
@@ -20,6 +20,10 @@ export const defaultOptions: Partial<Options> = {
     showLegend: true,
     placement: 'bottom',
     calcs: [],
+  },
+  tooltip: {
+    mode: TooltipDisplayMode.Multi,
+    sort: SortOrder.None,
   },
 };
 

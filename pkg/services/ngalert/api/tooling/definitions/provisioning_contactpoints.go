@@ -4,22 +4,29 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
-// swagger:route GET /api/v1/provisioning/contact-points provisioning stable RouteGetContactpoints
+// swagger:route GET /v1/provisioning/contact-points provisioning stable RouteGetContactpoints
 //
 // Get all the contact points.
 //
 //     Responses:
 //       200: ContactPoints
 
-// swagger:route GET /api/v1/provisioning/contact-points/export provisioning stable RouteGetContactpointsExport
+// swagger:route GET /v1/provisioning/contact-points/export provisioning stable RouteGetContactpointsExport
 //
 // Export all contact points in provisioning file format.
+//
+//     Produces:
+//     - application/json
+//     - application/yaml
+//     - application/terraform+hcl
+//     - text/yaml
+//     - text/hcl
 //
 //     Responses:
 //       200: AlertingFileExport
 //       403: PermissionDenied
 
-// swagger:route POST /api/v1/provisioning/contact-points provisioning stable RoutePostContactpoints
+// swagger:route POST /v1/provisioning/contact-points provisioning stable RoutePostContactpoints
 //
 // Create a contact point.
 //
@@ -30,7 +37,7 @@ import (
 //       202: EmbeddedContactPoint
 //       400: ValidationError
 
-// swagger:route PUT /api/v1/provisioning/contact-points/{UID} provisioning stable RoutePutContactpoint
+// swagger:route PUT /v1/provisioning/contact-points/{UID} provisioning stable RoutePutContactpoint
 //
 // Update an existing contact point.
 //
@@ -41,7 +48,7 @@ import (
 //       202: Ack
 //       400: ValidationError
 
-// swagger:route DELETE /api/v1/provisioning/contact-points/{UID} provisioning stable RouteDeleteContactpoints
+// swagger:route DELETE /v1/provisioning/contact-points/{UID} provisioning stable RouteDeleteContactpoints
 //
 // Delete a contact point.
 //

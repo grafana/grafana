@@ -1,10 +1,9 @@
 import { css, cx } from '@emotion/css';
 import { countBy, sum } from 'lodash';
 import React, { useMemo, useState } from 'react';
-import { useHistory } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, useStyles2 } from '@grafana/ui';
+import { LinkButton, useStyles2 } from '@grafana/ui';
 import { MatcherFilter } from 'app/features/alerting/unified/components/alert-groups/MatcherFilter';
 import {
   AlertInstanceStateFilter,
@@ -18,7 +17,6 @@ import { mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 
 import { GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from '../../utils/datasource';
 import { isAlertingRule } from '../../utils/rules';
-import { DetailsField } from '../DetailsField';
 
 import { AlertInstancesTable } from './AlertInstancesTable';
 import { getComponentsFromStats } from './RuleStats';
@@ -35,24 +33,28 @@ interface ShowMoreStats {
   visibleItemsCount: number;
 }
 
-function ShowMoreInstances(props: { onClick: () => void; stats: ShowMoreStats }) {
+interface ShowMoreInstancesProps {
+  stats: ShowMoreStats;
+  onClick?: React.ComponentProps<typeof LinkButton>['onClick'];
+  href?: React.ComponentProps<typeof LinkButton>['href'];
+}
+
+function ShowMoreInstances({ stats, onClick, href }: ShowMoreInstancesProps) {
   const styles = useStyles2(getStyles);
-  const { onClick, stats } = props;
 
   return (
     <div className={styles.footerRow}>
       <div>
         Showing {stats.visibleItemsCount} out of {stats.totalItemsCount} instances
       </div>
-      <Button size="sm" variant="secondary" data-testid="show-all" onClick={onClick}>
+      <LinkButton size="sm" variant="secondary" data-testid="show-all" onClick={onClick} href={href}>
         Show all {stats.totalItemsCount} alert instances
-      </Button>
+      </LinkButton>
     </div>
   );
 }
 
-export function RuleDetailsMatchingInstances(props: Props): JSX.Element | null {
-  const history = useHistory();
+export function RuleDetailsMatchingInstances(props: Props) {
   const { rule, itemsDisplayLimit = Number.POSITIVE_INFINITY, pagination, enableFiltering = false } = props;
   const { promRule, namespace, instanceTotals } = rule;
 
@@ -83,7 +85,14 @@ export function RuleDetailsMatchingInstances(props: Props): JSX.Element | null {
 
   // Count All By State is used only when filtering is enabled and we have access to all instances
   const countAllByState = countBy(promRule.alerts, (alert) => mapStateWithReasonToBaseState(alert.state));
-  const totalInstancesCount = sum(Object.values(instanceTotals));
+
+  // error state is not a separate state
+  const totalInstancesCount = sum([
+    instanceTotals.alerting,
+    instanceTotals.inactive,
+    instanceTotals.pending,
+    instanceTotals.nodata,
+  ]);
   const hiddenInstancesCount = totalInstancesCount - visibleInstances.length;
 
   const stats: ShowMoreStats = {
@@ -91,31 +100,32 @@ export function RuleDetailsMatchingInstances(props: Props): JSX.Element | null {
     visibleItemsCount: visibleInstances.length,
   };
 
+  // createViewLink returns a link containing the app subpath prefix hence cannot be used
+  // in locationService.push as it will result in a double prefix
   const ruleViewPageLink = createViewLink(namespace.rulesSource, props.rule, location.pathname + location.search);
   const statsComponents = getComponentsFromStats(instanceTotals);
 
   const resetFilter = () => setAlertState(undefined);
-  const navigateToDetailView = () => history.push(ruleViewPageLink);
-
-  const onShowMoreInstances = enableFiltering ? resetFilter : navigateToDetailView;
 
   const footerRow = hiddenInstancesCount ? (
-    <ShowMoreInstances stats={stats} onClick={onShowMoreInstances} />
+    <ShowMoreInstances
+      stats={stats}
+      onClick={enableFiltering ? resetFilter : undefined}
+      href={!enableFiltering ? ruleViewPageLink : undefined}
+    />
   ) : undefined;
 
   return (
-    <DetailsField label="Matching instances" horizontal={true}>
+    <>
       {enableFiltering && (
         <div className={cx(styles.flexRow, styles.spaceBetween)}>
           <div className={styles.flexRow}>
             <MatcherFilter
-              className={styles.rowChild}
               key={queryStringKey}
               defaultQueryString={queryString}
               onFilterChange={(value) => setQueryString(value)}
             />
             <AlertInstanceStateFilter
-              className={styles.rowChild}
               filterType={stateFilterType}
               stateFilter={alertState}
               onStateFilterChange={setAlertState}
@@ -126,7 +136,7 @@ export function RuleDetailsMatchingInstances(props: Props): JSX.Element | null {
       )}
       {!enableFiltering && <div className={styles.stats}>{statsComponents}</div>}
       <AlertInstancesTable rule={rule} instances={visibleInstances} pagination={pagination} footerRow={footerRow} />
-    </DetailsField>
+    </>
   );
 }
 
@@ -158,12 +168,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       width: 100%;
       flex-wrap: wrap;
       margin-bottom: ${theme.spacing(1)};
+      gap: ${theme.spacing(1)};
     `,
     spaceBetween: css`
       justify-content: space-between;
-    `,
-    rowChild: css`
-      margin-right: ${theme.spacing(1)};
     `,
     footerRow: css`
       display: flex;

@@ -8,13 +8,13 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 )
 
 var (
-	regexpOperatorPattern    = regexp.MustCompile(`^\/.*\/$`)
-	regexpMeasurementPattern = regexp.MustCompile(`^\/.*\/$`)
+	regexpOperatorPattern           = regexp.MustCompile(`^\/.*\/$`)
+	regexpMeasurementPattern        = regexp.MustCompile(`^\/.*\/$`)
+	regexMatcherWithStartEndPattern = regexp.MustCompile(`^/\^(.*)\$/$`)
 )
 
 func (query *Query) Build(queryContext *backend.QueryDataRequest) (string, error) {
@@ -33,7 +33,7 @@ func (query *Query) Build(queryContext *backend.QueryDataRequest) (string, error
 		res += query.renderTz()
 	}
 
-	intervalText := intervalv2.FormatDuration(query.Interval)
+	intervalText := gtime.FormatInterval(query.Interval)
 	intervalMs := int64(query.Interval / time.Millisecond)
 
 	res = strings.ReplaceAll(res, "$timeFilter", query.renderTimeFilter(queryContext))
@@ -103,20 +103,20 @@ func (query *Query) renderTags() []string {
 				textValue = fmt.Sprintf("'%s'", strings.ReplaceAll(tag.Value, `\`, `\\`))
 			}
 
-			return textValue, operator
+			return removeRegexWrappers(textValue, `'`), operator
 		}
 
 		// quote value unless regex or number
 		var textValue string
 		switch tag.Operator {
-		case "=~", "!~":
+		case "=~", "!~", "":
 			textValue = tag.Value
 		case "<", ">", ">=", "<=":
-			textValue = tag.Value
+			textValue = removeRegexWrappers(tag.Value, `'`)
 		case "Is", "Is Not":
 			textValue, tag.Operator = isOperatorTypeHandler(tag)
 		default:
-			textValue = fmt.Sprintf("'%s'", strings.ReplaceAll(tag.Value, `\`, `\\`))
+			textValue = fmt.Sprintf("'%s'", strings.ReplaceAll(removeRegexWrappers(tag.Value, ""), `\`, `\\`))
 		}
 
 		escapedKey := fmt.Sprintf(`"%s"`, tag.Key)
@@ -243,4 +243,16 @@ func epochMStoInfluxTime(tr *backend.TimeRange) (string, string) {
 	to := tr.To.UnixNano() / int64(time.Millisecond)
 
 	return fmt.Sprintf("%dms", from), fmt.Sprintf("%dms", to)
+}
+
+func removeRegexWrappers(wrappedValue string, wrapper string) string {
+	value := wrappedValue
+	// get the value only in between /^...$/
+	matches := regexMatcherWithStartEndPattern.FindStringSubmatch(wrappedValue)
+	if len(matches) > 1 {
+		// full match. the value is like /^value$/
+		value = wrapper + matches[1] + wrapper
+	}
+
+	return value
 }

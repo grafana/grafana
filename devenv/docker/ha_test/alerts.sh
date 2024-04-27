@@ -84,27 +84,6 @@ slack() {
 		http://admin:admin@grafana.loc/api/alert-notifications/2
 }
 
-provision() {
-	alerts=1
-	condition=65
-	while getopts ":a:c:" o; do
-    case "${o}" in
-        a)
-            alerts=${OPTARG}
-            ;;
-				c)
-            condition=${OPTARG}
-            ;;
-    esac
-	done
-	shift $((OPTIND-1))
-
-	requiresJsonnet
-
-	find grafana/provisioning/dashboards/alerts -maxdepth 1 -name 'alert*.json' -delete
-	jsonnet -m grafana/provisioning/dashboards/alerts grafana/provisioning/alerts.jsonnet --ext-code alerts=$alerts --ext-code condition=$condition
-}
-
 pause() {
 	curl -H "Content-Type: application/json" \
   -d '{"paused":true}' \
@@ -126,9 +105,6 @@ usage() {
 	echo -e "    [-u]\t\t\t url"
 	echo -e "    [-r]\t\t\t send reminders"
 	echo -e "    [-e <remind every>]\t\t default 10m\n"
-	echo -e "  provision\t provision alerts"
-	echo -e "    [-a <alert rule count>]\t default 1"
-	echo -e "    [-c <condition value>]\t default 65\n"
 	echo -e "  pause\t\t pause all alerts"
 	echo -e "  unpause\t unpause all alerts"
 }
@@ -140,8 +116,6 @@ main() {
 		setup
 	elif [[ $cmd == "slack" ]]; then
 		slack "${@:2}"
-	elif [[ $cmd == "provision" ]]; then
-		provision "${@:2}"
 	elif [[ $cmd == "pause" ]]; then
 		pause
 	elif [[ $cmd == "unpause" ]]; then

@@ -4,7 +4,7 @@
 //     public/app/plugins/gen.go
 // Using jennies:
 //     TSTypesJenny
-//     PluginTSTypesJenny
+//     PluginTsTypesJenny
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
@@ -375,4 +375,4 @@ export enum MetricFindQueryTypes {
   Services = 'services',
 }
 
-export interface GoogleCloudMonitoring {}
+export interface GoogleCloudMonitoringDataQuery {}

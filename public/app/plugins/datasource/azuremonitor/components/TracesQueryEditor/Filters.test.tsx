@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import { UserEvent } from '@testing-library/user-event/dist/types/setup/setup';
 import React from 'react';
 import { of } from 'rxjs';
-import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { CoreApp } from '@grafana/data';
 
@@ -12,6 +11,7 @@ import createMockQuery from '../../__mocks__/query';
 import { AzureQueryType } from '../../dataquery.gen';
 import Datasource from '../../datasource';
 import { AzureMonitorQuery } from '../../types';
+import { selectOptionInTest } from '../../utils/testUtils';
 
 import Filters from './Filters';
 import { setFilters } from './setQueryValue';
@@ -96,12 +96,10 @@ const addFilter = async (
 
   const operationLabel = operation === 'eq' ? '=' : '!=';
   const addFilter = await screen.findByLabelText('Add');
-  await act(() => {
-    userEvent.click(addFilter);
-    if (mockQuery.azureTraces?.filters && mockQuery.azureTraces.filters.length < 1) {
-      expect(onQueryChange).not.toHaveBeenCalled();
-    }
-  });
+  await userEvent.click(addFilter);
+  if (mockQuery.azureTraces?.filters && mockQuery.azureTraces.filters.length < 1) {
+    expect(onQueryChange).not.toHaveBeenCalled();
+  }
 
   await waitFor(() => expect(screen.getByText('Property')).toBeInTheDocument());
   const propertySelect = await screen.findByText('Property');
@@ -109,8 +107,9 @@ const addFilter = async (
   await waitFor(() => expect(screen.getByText(property)).toBeInTheDocument());
 
   await waitFor(() => expect(screen.getByText('Property')).toBeInTheDocument());
-  const operationSelect = await screen.getAllByText('=');
-  selectOptionInTest(operationSelect[index], operationLabel);
+  const operationSelect = await screen.findAllByText('=');
+  await userEvent.click(operationSelect[index]);
+  await userEvent.click(screen.getByRole('menuitemradio', { name: operationLabel }));
   await waitFor(() => expect(screen.getByText(operationLabel)).toBeInTheDocument());
 
   const valueSelect = await screen.findByText('Value');
@@ -161,8 +160,8 @@ const addFilter = async (
     ...(mockQuery.azureTraces?.filters ?? []),
     { property, operation, filters: values },
   ]);
+  await userEvent.type(valueSelect, '{Escape}');
   await waitFor(() => {
-    userEvent.type(valueSelect, '{Escape}');
     expect(onQueryChange).toHaveBeenCalledWith(newQuery);
   });
 

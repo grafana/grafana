@@ -12,18 +12,10 @@ import {
   FilterByValueType,
 } from './filterByValue';
 import { DataTransformerID } from './ids';
+import * as utils from './utils';
 
-let transformationSupport = false;
-
-jest.mock('./utils', () => {
-  const actual = jest.requireActual('./utils');
-  return {
-    ...actual,
-    transformationsVariableSupport: () => {
-      return transformationSupport;
-    },
-  };
-});
+const mockTransformationsVariableSupport = jest.spyOn(utils, 'transformationsVariableSupport');
+mockTransformationsVariableSupport.mockReturnValue(false);
 
 const seriesAWithSingleField = toDataFrame({
   name: 'A',
@@ -33,6 +25,25 @@ const seriesAWithSingleField = toDataFrame({
     { name: 'numbers', type: FieldType.number, values: [1, 2, 3, 4, 5, 6, 7] },
   ],
 });
+
+const multiSeriesWithSingleField = [
+  toDataFrame({
+    name: 'A',
+    length: 3,
+    fields: [
+      { name: 'time', type: FieldType.time, values: [1000, 2000, 3000] },
+      { name: 'value', type: FieldType.number, values: [1, 0, 1] },
+    ],
+  }),
+  toDataFrame({
+    name: 'B',
+    length: 3,
+    fields: [
+      { name: 'time', type: FieldType.time, values: [5000, 6000, 7000] },
+      { name: 'value', type: FieldType.number, values: [0, 1, 1] },
+    ],
+  }),
+];
 
 describe('FilterByValue transformer', () => {
   beforeAll(() => {
@@ -74,6 +85,68 @@ describe('FilterByValue transformer', () => {
           name: 'numbers',
           type: FieldType.number,
           values: [6, 7],
+          state: {},
+        },
+      ]);
+    });
+  });
+
+  it('should not cross frame boundaries', async () => {
+    const cfg: DataTransformerConfig<FilterByValueTransformerOptions> = {
+      id: DataTransformerID.filterByValue,
+      options: {
+        type: FilterByValueType.exclude,
+        match: FilterByValueMatch.any,
+        filters: [
+          {
+            fieldName: 'A value',
+            config: {
+              id: ValueMatcherID.equal,
+              options: { value: 0 },
+            },
+          },
+          {
+            fieldName: 'B value',
+            config: {
+              id: ValueMatcherID.equal,
+              options: { value: 0 },
+            },
+          },
+        ],
+      },
+    };
+
+    await expect(transformDataFrame([cfg], multiSeriesWithSingleField)).toEmitValuesWith((received) => {
+      const processed = received[0];
+
+      expect(processed.length).toEqual(2);
+
+      expect(processed[0].fields).toEqual([
+        {
+          name: 'time',
+          type: FieldType.time,
+          values: [1000, 3000],
+          state: {},
+        },
+        {
+          name: 'value',
+          type: FieldType.number,
+          values: [1, 1],
+          state: {},
+        },
+      ]);
+
+      expect(processed[1].fields).toEqual([
+        {
+          name: 'time',
+          type: FieldType.time,
+          values: [6000, 7000],
+          state: {},
+        },
+        {
+          name: 'value',
+          type: FieldType.number,
+          values: [1, 1],
           state: {},
         },
       ]);
@@ -122,7 +195,7 @@ describe('FilterByValue transformer', () => {
   });
 
   it('should interpolate dashboard variables', async () => {
-    transformationSupport = true;
+    mockTransformationsVariableSupport.mockReturnValue(true);
 
     const lower: MatcherConfig<BasicValueMatcherOptions<string | number>> = {
       id: ValueMatcherID.lower,
@@ -164,10 +237,11 @@ describe('FilterByValue transformer', () => {
         },
       ]);
     });
-    transformationSupport = false;
   });
 
   it('should not interpolate dashboard variables when feature toggle is off', async () => {
+    mockTransformationsVariableSupport.mockReturnValue(false);
+
     const lower: MatcherConfig<BasicValueMatcherOptions<number | string>> = {
       id: ValueMatcherID.lower,
       options: { value: 'notinterpolating' },

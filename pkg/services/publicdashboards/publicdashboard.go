@@ -59,7 +59,7 @@ type Store interface {
 	Delete(ctx context.Context, uid string) (int64, error)
 
 	GetOrgIdByAccessToken(ctx context.Context, accessToken string) (int64, error)
-	FindByDashboardFolder(ctx context.Context, dashboard *dashboards.Dashboard) ([]*PublicDashboard, error)
+	FindByFolder(ctx context.Context, orgId int64, folderUid string) ([]*PublicDashboard, error)
 	ExistsEnabledByAccessToken(ctx context.Context, accessToken string) (bool, error)
 	ExistsEnabledByDashboardUid(ctx context.Context, dashboardUid string) (bool, error)
 	GetMetrics(ctx context.Context) (*Metrics, error)
@@ -70,4 +70,5 @@ type Middleware interface {
 	HandleApi(c *contextmodel.ReqContext)
 	HandleView(c *contextmodel.ReqContext)
 	HandleAccessView(c *contextmodel.ReqContext)
+	HandleConfirmAccessView(c *contextmodel.ReqContext)
 }

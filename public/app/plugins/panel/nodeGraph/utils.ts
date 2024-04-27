@@ -86,8 +86,13 @@ export type EdgeFields = {
   mainStat?: Field;
   secondaryStat?: Field;
   details: Field[];
+  /**
+   * @deprecated use `color` instead
+   */
   highlighted?: Field;
   thickness?: Field;
+  color?: Field;
+  strokeDasharray?: Field;
 };
 
 export function getEdgeFields(edges: DataFrame): EdgeFields {
@@ -103,8 +108,11 @@ export function getEdgeFields(edges: DataFrame): EdgeFields {
     mainStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.mainStat.toLowerCase()),
     secondaryStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.secondaryStat.toLowerCase()),
     details: findFieldsByPrefix(edges, NodeGraphDataFrameFieldNames.detail.toLowerCase()),
+    // @deprecated -- for edges use color instead
     highlighted: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.highlighted.toLowerCase()),
     thickness: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.thickness.toLowerCase()),
+    color: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.color.toLowerCase()),
+    strokeDasharray: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.strokeDasharray.toLowerCase()),
   };
 }
 
@@ -234,8 +242,11 @@ function processEdges(edges: DataFrame, edgeFields: EdgeFields, nodesMap: { [id:
       secondaryStat: edgeFields.secondaryStat
         ? statToString(edgeFields.secondaryStat.config, edgeFields.secondaryStat.values[index])
         : '',
+      // @deprecated -- for edges use color instead
       highlighted: edgeFields.highlighted?.values[index] || false,
       thickness: edgeFields.thickness?.values[index] || 1,
+      color: edgeFields.color?.values[index],
+      strokeDasharray: edgeFields.strokeDasharray?.values[index],
     };
   });
 }
@@ -370,7 +381,7 @@ function makeNode(index: number) {
 }
 
 function nodesFrame() {
-  const fields: any = {
+  const fields = {
     [NodeGraphDataFrameFieldNames.id]: {
       values: [],
       type: FieldType.string,
@@ -394,17 +405,17 @@ function nodesFrame() {
     [NodeGraphDataFrameFieldNames.arc + 'success']: {
       values: [],
       type: FieldType.number,
-      config: { color: { fixedColor: 'green' } },
+      config: { color: { mode: FieldColorModeId.Fixed, fixedColor: 'green' } },
     },
     [NodeGraphDataFrameFieldNames.arc + 'errors']: {
       values: [],
       type: FieldType.number,
-      config: { color: { fixedColor: 'red' } },
+      config: { color: { mode: FieldColorModeId.Fixed, fixedColor: 'red' } },
     },
     [NodeGraphDataFrameFieldNames.color]: {
       values: [],
       type: FieldType.number,
-      config: { color: { mode: 'continuous-GrYlRd' } },
+      config: { color: { mode: FieldColorModeId.ContinuousGrYlRd } },
     },
     [NodeGraphDataFrameFieldNames.icon]: {
       values: [],
@@ -418,8 +429,8 @@ function nodesFrame() {
 
   return new MutableDataFrame({
     name: 'nodes',
-    fields: Object.keys(fields).map((key) => ({
-      ...fields[key],
+    fields: Object.entries(fields).map(([key, value]) => ({
+      ...value,
       name: key,
     })),
   });
@@ -440,7 +451,7 @@ export function makeEdgesDataFrame(
 }
 
 function edgesFrame() {
-  const fields: any = {
+  const fields = {
     [NodeGraphDataFrameFieldNames.id]: {
       values: [],
       type: FieldType.string,
@@ -465,8 +476,8 @@ function edgesFrame() {
 
   return new MutableDataFrame({
     name: 'edges',
-    fields: Object.keys(fields).map((key) => ({
-      ...fields[key],
+    fields: Object.entries(fields).map(([key, value]) => ({
+      ...value,
       name: key,
     })),
   });
@@ -588,7 +599,8 @@ export const applyOptionsToFrames = (frames: DataFrame[], options: NodeGraphOpti
       }
       if (options?.nodes?.arcs?.length) {
         for (const arc of options.nodes.arcs) {
-          const field = frame.fields.find((field) => field.name.toLowerCase() === arc.field);
+          // As the arc__ field suffixes can be custom we compare them case insensitively to be safe.
+          const field = frame.fields.find((field) => field.name.toLowerCase() === arc.field?.toLowerCase());
           if (field && arc.color) {
             field.config = { ...field.config, color: { fixedColor: arc.color, mode: FieldColorModeId.Fixed } };
           }

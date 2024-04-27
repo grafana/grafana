@@ -35,18 +35,10 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 		},
 	)
 
-	histogramLabels := []string{"handler", "status_code", "method"}
-
-	if features.IsEnabledGlobally(featuremgmt.FlagRequestInstrumentationStatusSource) {
-		histogramLabels = append(histogramLabels, "status_source")
-	}
+	histogramLabels := []string{"handler", "status_code", "method", "status_source", "slo_group"}
 
 	if cfg.MetricsIncludeTeamLabel {
 		histogramLabels = append(histogramLabels, "grafana_team")
-	}
-
-	if features.IsEnabledGlobally(featuremgmt.FlagHttpSLOLevels) {
-		histogramLabels = append(histogramLabels, "slo_group")
 	}
 
 	histogramOptions := prometheus.HistogramOpts{
@@ -104,16 +96,10 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 			labelValues := []string{handler, code, r.Method}
 			rmd := requestmeta.GetRequestMetaData(r.Context())
 
-			if features.IsEnabled(r.Context(), featuremgmt.FlagRequestInstrumentationStatusSource) {
-				labelValues = append(labelValues, string(rmd.StatusSource))
-			}
+			labelValues = append(labelValues, string(rmd.StatusSource), string(rmd.SLOGroup))
 
 			if cfg.MetricsIncludeTeamLabel {
 				labelValues = append(labelValues, rmd.Team)
-			}
-
-			if features.IsEnabled(r.Context(), featuremgmt.FlagHttpSLOLevels) {
-				labelValues = append(labelValues, string(rmd.SLOGroup))
 			}
 
 			// avoiding the sanitize functions for in the new instrumentation

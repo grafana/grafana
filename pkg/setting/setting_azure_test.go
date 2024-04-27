@@ -3,7 +3,7 @@ package setting
 import (
 	"testing"
 
-	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -64,6 +64,27 @@ func TestAzureSettings(t *testing.T) {
 		}
 	})
 
+	t.Run("prometheus", func(t *testing.T) {
+		t.Run("should enable azure auth", func(t *testing.T) {
+			cfg := NewCfg()
+
+			authSection, err := cfg.Raw.NewSection("auth")
+			require.NoError(t, err)
+			_, err = authSection.NewKey("azure_auth_enabled", "true")
+			require.NoError(t, err)
+
+			cfg.readAzureSettings()
+			require.NotNil(t, cfg.Azure.AzureAuthEnabled)
+			assert.True(t, cfg.Azure.AzureAuthEnabled)
+		})
+		t.Run("should default to disabled", func(t *testing.T) {
+			cfg := NewCfg()
+
+			cfg.readAzureSettings()
+			require.NotNil(t, cfg.Azure.AzureAuthEnabled)
+			assert.False(t, cfg.Azure.AzureAuthEnabled)
+		})
+	})
 	t.Run("User Identity", func(t *testing.T) {
 		t.Run("should be disabled by default", func(t *testing.T) {
 			cfg := NewCfg()
@@ -87,6 +108,32 @@ func TestAzureSettings(t *testing.T) {
 			require.NotNil(t, cfg.Azure.UserIdentityTokenEndpoint)
 
 			assert.True(t, cfg.Azure.UserIdentityEnabled)
+		})
+		t.Run("enables service credentials by default", func(t *testing.T) {
+			cfg := NewCfg()
+
+			azureSection, err := cfg.Raw.NewSection("azure")
+			require.NoError(t, err)
+			_, err = azureSection.NewKey("user_identity_enabled", "true")
+			require.NoError(t, err)
+
+			cfg.readAzureSettings()
+
+			assert.True(t, cfg.Azure.UserIdentityFallbackCredentialsEnabled)
+		})
+		t.Run("disables service credentials", func(t *testing.T) {
+			cfg := NewCfg()
+
+			azureSection, err := cfg.Raw.NewSection("azure")
+			require.NoError(t, err)
+			_, err = azureSection.NewKey("user_identity_enabled", "true")
+			require.NoError(t, err)
+			_, err = azureSection.NewKey("user_identity_fallback_credentials_enabled", "false")
+			require.NoError(t, err)
+
+			cfg.readAzureSettings()
+
+			assert.False(t, cfg.Azure.UserIdentityFallbackCredentialsEnabled)
 		})
 
 		t.Run("should use token endpoint from Azure AD if enabled", func(t *testing.T) {

@@ -275,7 +275,7 @@ type FakeClient struct {
 	Args []any
 }
 
-func (f *FakeClient) ProfileTypes(ctx context.Context) ([]*ProfileType, error) {
+func (f *FakeClient) ProfileTypes(ctx context.Context, start int64, end int64) ([]*ProfileType, error) {
 	return []*ProfileType{
 		{
 			ID:    "type:1",

@@ -8,9 +8,10 @@ import { DataSourcePicker } from 'app/features/datasources/components/picker/Dat
 
 import { QueryEditorField } from './QueryEditorField';
 import { useCorrelationsFormContext } from './correlationsFormContext';
+import { FormDTO } from './types';
 
 export const ConfigureCorrelationTargetForm = () => {
-  const { control, formState } = useFormContext();
+  const { control, formState } = useFormContext<FormDTO>();
   const withDsUID = (fn: Function) => (ds: DataSourceInstanceSettings) => fn(ds.uid);
   const { correlation } = useCorrelationsFormContext();
   const targetUID: string | undefined = useWatch({ name: 'targetUID' }) || correlation?.targetUID;

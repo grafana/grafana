@@ -56,26 +56,26 @@ export function LiveTailButton(props: LiveTailButtonProps) {
 }
 
 const styles = {
-  stopButtonEnter: css`
-    label: stopButtonEnter;
-    width: 0;
-    opacity: 0;
-    overflow: hidden;
-  `,
-  stopButtonEnterActive: css`
-    label: stopButtonEnterActive;
-    opacity: 1;
-    width: 32px;
-  `,
-  stopButtonExit: css`
-    label: stopButtonExit;
-    width: 32px;
-    opacity: 1;
-    overflow: hidden;
-  `,
-  stopButtonExitActive: css`
-    label: stopButtonExitActive;
-    opacity: 0;
-    width: 0;
-  `,
+  stopButtonEnter: css({
+    label: 'stopButtonEnter',
+    width: 0,
+    opacity: 0,
+    overflow: 'hidden',
+  }),
+  stopButtonEnterActive: css({
+    label: 'stopButtonEnterActive',
+    opacity: 1,
+    width: '32px',
+  }),
+  stopButtonExit: css({
+    label: 'stopButtonExit',
+    width: '32px',
+    opacity: 1,
+    overflow: 'hidden',
+  }),
+  stopButtonExitActive: css({
+    label: 'stopButtonExitActive',
+    opacity: 0,
+    width: 0,
+  }),
 };

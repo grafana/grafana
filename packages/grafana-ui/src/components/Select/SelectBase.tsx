@@ -73,6 +73,7 @@ export function SelectBase<T, Rest = {}>({
   allowCustomValue = false,
   allowCreateWhileLoading = false,
   'aria-label': ariaLabel,
+  'data-testid': dataTestid,
   autoFocus = false,
   backspaceRemovesValue = true,
   blurInputOnSelect,
@@ -199,6 +200,7 @@ export function SelectBase<T, Rest = {}>({
 
   const commonSelectProps = {
     'aria-label': ariaLabel,
+    'data-testid': dataTestid,
     autoFocus,
     backspaceRemovesValue,
     blurInputOnSelect,
@@ -270,7 +272,7 @@ export function SelectBase<T, Rest = {}>({
 
   // Instead of having AsyncSelect, as a separate component we render ReactAsyncSelect
   if (loadOptions) {
-    ReactSelectComponent = (allowCustomValue ? AsyncCreatable : ReactAsyncSelect) as any;
+    ReactSelectComponent = allowCustomValue ? AsyncCreatable : ReactAsyncSelect;
     asyncSelectProps = {
       loadOptions,
       cacheOptions,

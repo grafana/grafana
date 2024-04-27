@@ -3,7 +3,6 @@ import React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 import { useEffectOnce } from 'react-use';
-import { AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { TextBoxVariableModel } from '@grafana/data';
@@ -40,12 +39,6 @@ jest.mock('app/features/dashboard/dashgrid/LazyLoader', () => {
     return <>{typeof children === 'function' ? children({ isInView: true }) : children}</>;
   };
   return { LazyLoader };
-});
-
-jest.mock('react-virtualized-auto-sizer', () => {
-  // The size of the children need to be small enough to be outside the view.
-  // So it does not trigger the query to be run by the PanelQueryRunner.
-  return ({ children }: AutoSizerProps) => children({ height: 1, width: 1 });
 });
 
 function setup(props: Props) {

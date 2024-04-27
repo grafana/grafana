@@ -4,14 +4,13 @@
 //     public/app/plugins/gen.go
 // Using jennies:
 //     TSTypesJenny
-//     LatestMajorsOrXJenny
-//     PluginEachMajorJenny
+//     PluginTsTypesJenny
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "10.3.0-pre";
+export const pluginVersion = "11.1.0-pre";
 
 export interface Options {
   dedupStrategy: common.LogsDedupStrategy;
@@ -19,6 +18,7 @@ export interface Options {
   prettifyLogMessage: boolean;
   showCommonLabels: boolean;
   showLabels: boolean;
+  showLogContextToggle: boolean;
   showTime: boolean;
   sortOrder: common.LogsSortOrder;
   wrapLogMessage: boolean;

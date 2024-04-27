@@ -27,6 +27,23 @@ module.exports = (path, options) => {
         delete pkg['exports'];
         delete pkg['module'];
       }
+      // Jest + jsdom acts like a browser (i.e., it looks for "browser" imports
+      // under pkg.exports), but msw knows that you're operating in a Node
+      // environment:
+      //
+      // https://github.com/mswjs/msw/issues/1786#issuecomment-1782559851
+      //
+      // The MSW project's recommended workaround is to disable Jest's
+      // customExportConditions completely, so no packages use their browser's
+      // versions.  We'll instead clear export conditions only for MSW.
+      //
+      // Taken from https://github.com/mswjs/msw/issues/1786#issuecomment-1787730599
+      if (pkg.name === 'msw') {
+        delete pkg.exports['./node'].browser;
+      }
+      if (pkg.name === '@mswjs/interceptors') {
+        delete pkg.exports;
+      }
       return pkg;
     },
   });

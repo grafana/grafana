@@ -43,21 +43,14 @@ export const GenAIButton = ({
 }: GenAIButtonProps) => {
   const styles = useStyles2(getStyles);
 
-  const {
-    messages: streamMessages,
-    setMessages,
-    setStopGeneration,
-    reply,
-    value,
-    error,
-    streamStatus,
-  } = useOpenAIStream(model, temperature);
+  const { setMessages, setStopGeneration, reply, value, error, streamStatus } = useOpenAIStream(model, temperature);
 
   const [history, setHistory] = useState<string[]>([]);
-  const [showHistory, setShowHistory] = useState(true);
+  const [showHistory, setShowHistory] = useState(false);
 
   const hasHistory = history.length > 0;
-  const isFirstHistoryEntry = streamStatus === StreamStatus.GENERATING && !hasHistory;
+  const isGenerating = streamStatus === StreamStatus.GENERATING;
+  const isFirstHistoryEntry = !hasHistory;
   const isButtonDisabled = disabled || (value && !value.enabled && !error);
   const reportInteraction = (item: AutoGenerateItem) => reportAutoGenerateInteraction(eventTrackingSrc, item);
 
@@ -67,21 +60,19 @@ export const GenAIButton = ({
     } else {
       if (!hasHistory) {
         onClickProp?.(e);
-        setMessages(typeof messages === 'function' ? messages() : messages);
+        setMessages(getMessages());
       } else {
-        if (setShowHistory) {
-          setShowHistory(true);
-        }
+        setShowHistory(true);
       }
     }
 
     const buttonItem = error
       ? AutoGenerateItem.erroredRetryButton
-      : isFirstHistoryEntry
-      ? AutoGenerateItem.stopGenerationButton
-      : hasHistory
-      ? AutoGenerateItem.improveButton
-      : AutoGenerateItem.autoGenerateButton;
+      : isGenerating
+        ? AutoGenerateItem.stopGenerationButton
+        : isFirstHistoryEntry
+          ? AutoGenerateItem.autoGenerateButton
+          : AutoGenerateItem.improveButton;
     reportInteraction(buttonItem);
   };
 
@@ -96,10 +87,10 @@ export const GenAIButton = ({
 
   useEffect(() => {
     // Todo: Consider other options for `"` sanitation
-    if (isFirstHistoryEntry && reply) {
+    if (streamStatus === StreamStatus.COMPLETED && reply) {
       onGenerate(sanitizeReply(reply));
     }
-  }, [streamStatus, reply, onGenerate, isFirstHistoryEntry]);
+  }, [streamStatus, reply, onGenerate]);
 
   useEffect(() => {
     if (streamStatus === StreamStatus.COMPLETED) {
@@ -119,7 +110,7 @@ export const GenAIButton = ({
   };
 
   const getIcon = () => {
-    if (isFirstHistoryEntry) {
+    if (isGenerating) {
       return undefined;
     }
     if (error || (value && !value?.enabled)) {
@@ -135,7 +126,7 @@ export const GenAIButton = ({
       buttonText = 'Retry';
     }
 
-    if (isFirstHistoryEntry) {
+    if (isGenerating) {
       buttonText = STOP_GENERATION_TEXT;
     }
 
@@ -159,6 +150,13 @@ export const GenAIButton = ({
     </Button>
   );
 
+  const getMessages = () => {
+    if (typeof messages === 'function') {
+      return messages();
+    }
+    return messages;
+  };
+
   const renderButtonWithToggletip = () => {
     if (hasHistory) {
       const title = <Text element="p">{toggleTipTitle}</Text>;
@@ -169,15 +167,17 @@ export const GenAIButton = ({
           content={
             <GenAIHistory
               history={history}
-              messages={streamMessages}
+              messages={getMessages()}
               onApplySuggestion={onApplySuggestion}
               updateHistory={pushHistoryEntry}
               eventTrackingSrc={eventTrackingSrc}
             />
           }
-          placement="bottom-start"
+          placement="left-start"
           fitContent={true}
-          show={showHistory ? undefined : false}
+          show={showHistory}
+          onClose={() => setShowHistory(false)}
+          onOpen={() => setShowHistory(true)}
         >
           {button}
         </Toggletip>
@@ -189,8 +189,8 @@ export const GenAIButton = ({
 
   return (
     <div className={styles.wrapper}>
-      {isFirstHistoryEntry && <Spinner size="sm" className={styles.spinner} />}
-      {!hasHistory && (
+      {isGenerating && <Spinner size="sm" className={styles.spinner} />}
+      {isFirstHistoryEntry ? (
         <Tooltip
           show={error ? undefined : false}
           interactive
@@ -200,8 +200,9 @@ export const GenAIButton = ({
         >
           {button}
         </Tooltip>
+      ) : (
+        renderButtonWithToggletip()
       )}
-      {hasHistory && renderButtonWithToggletip()}
     </div>
   );
 };

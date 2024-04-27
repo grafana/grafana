@@ -11,6 +11,8 @@ import (
 	"syscall"
 	"time"
 
+	_ "github.com/grafana/pyroscope-go/godeltaprof/http/pprof"
+
 	"github.com/urfave/cli/v2"
 
 	"github.com/grafana/grafana/pkg/api"
@@ -19,8 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/process"
 	"github.com/grafana/grafana/pkg/server"
-	_ "github.com/grafana/grafana/pkg/services/alerting/conditions"
-	_ "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -98,7 +98,7 @@ func RunServer(opts ServerOptions) error {
 		}
 	}()
 
-	setBuildInfo(opts)
+	SetBuildInfo(opts)
 	checkPrivileges()
 
 	configOptions := strings.Split(ConfigOverrides, " ")
@@ -112,7 +112,7 @@ func RunServer(opts ServerOptions) error {
 		return err
 	}
 
-	metrics.SetBuildInformation(metrics.ProvideRegisterer(cfg), opts.Version, opts.Commit, opts.BuildBranch, getBuildstamp(opts))
+	metrics.SetBuildInformation(metrics.ProvideRegisterer(), opts.Version, opts.Commit, opts.BuildBranch, getBuildstamp(opts))
 
 	s, err := server.Initialize(
 		cfg,

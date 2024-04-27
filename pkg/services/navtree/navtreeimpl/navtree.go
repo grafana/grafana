@@ -1,16 +1,15 @@
 package navtreeimpl
 
 import (
-	"fmt"
 	"sort"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models/roletype"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -30,10 +29,11 @@ type ServiceImpl struct {
 	cfg                  *setting.Cfg
 	log                  log.Logger
 	accessControl        ac.AccessControl
+	authnService         authn.Service
 	pluginStore          pluginstore.Store
 	pluginSettings       pluginsettings.Service
 	starService          star.Service
-	features             *featuremgmt.FeatureManager
+	features             featuremgmt.FeatureToggles
 	dashboardService     dashboards.DashboardService
 	accesscontrolService ac.Service
 	kvStore              kvstore.KVStore
@@ -52,11 +52,14 @@ type NavigationAppConfig struct {
 	Icon       string
 }
 
-func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore pluginstore.Store, pluginSettings pluginsettings.Service, starService star.Service, features *featuremgmt.FeatureManager, dashboardService dashboards.DashboardService, accesscontrolService ac.Service, kvStore kvstore.KVStore, apiKeyService apikey.Service, license licensing.Licensing) navtree.Service {
+func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore pluginstore.Store, pluginSettings pluginsettings.Service, starService star.Service,
+	features featuremgmt.FeatureToggles, dashboardService dashboards.DashboardService, accesscontrolService ac.Service, kvStore kvstore.KVStore, apiKeyService apikey.Service,
+	license licensing.Licensing, authnService authn.Service) navtree.Service {
 	service := &ServiceImpl{
 		cfg:                  cfg,
 		log:                  log.New("navtree service"),
 		accessControl:        accessControl,
+		authnService:         authnService,
 		pluginStore:          pluginStore,
 		pluginSettings:       pluginSettings,
 		starService:          starService,
@@ -116,7 +119,8 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		treeRoot.AddSection(dashboardLink)
 	}
 
-	if setting.ExploreEnabled && hasAccess(ac.EvalPermission(ac.ActionDatasourcesExplore)) {
+	if s.cfg.ExploreEnabled && hasAccess(ac.EvalPermission(ac.ActionDatasourcesExplore)) {
+		exploreChildNavLinks := s.buildExploreNavLinks(c)
 		treeRoot.AddSection(&navtree.NavLink{
 			Text:       "Explore",
 			Id:         navtree.NavIDExplore,
@@ -124,21 +128,18 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 			Icon:       "compass",
 			SortWeight: navtree.WeightExplore,
 			Url:        s.cfg.AppSubURL + "/explore",
+			Children:   exploreChildNavLinks,
 		})
 	}
 
-	if setting.ProfileEnabled && c.IsSignedIn {
+	if s.cfg.ProfileEnabled && c.IsSignedIn {
 		treeRoot.AddSection(s.getProfileNode(c))
 	}
 
 	_, uaIsDisabledForOrg := s.cfg.UnifiedAlerting.DisabledOrgs[c.SignedInUser.GetOrgID()]
 	uaVisibleForOrg := s.cfg.UnifiedAlerting.IsEnabled() && !uaIsDisabledForOrg
 
-	if setting.AlertingEnabled != nil && *setting.AlertingEnabled {
-		if legacyAlertSection := s.buildLegacyAlertNavLinks(c); legacyAlertSection != nil {
-			treeRoot.AddSection(legacyAlertSection)
-		}
-	} else if uaVisibleForOrg {
+	if uaVisibleForOrg {
 		if alertingSection := s.buildAlertNavLinks(c); alertingSection != nil {
 			treeRoot.AddSection(alertingSection)
 		}
@@ -191,25 +192,11 @@ func isSupportBundlesEnabled(s *ServiceImpl) bool {
 	return s.cfg.SectionWithEnvOverrides("support_bundles").Key("enabled").MustBool(true)
 }
 
-// don't need to show the full commit hash in the UI
-// let's substring to 10 chars like local git does automatically
-func getShortCommitHash(commitHash string, maxLength int) string {
-	if len(commitHash) > maxLength {
-		return commitHash[:maxLength]
-	}
-	return commitHash
-}
-
 func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel.ReqContext) {
-	if setting.HelpEnabled {
-		helpVersion := fmt.Sprintf(`%s v%s (%s)`, setting.ApplicationName, setting.BuildVersion, getShortCommitHash(setting.BuildCommit, 10))
-		if s.cfg.AnonymousHideVersion && !c.IsSignedIn {
-			helpVersion = setting.ApplicationName
-		}
-
+	if s.cfg.HelpEnabled {
+		// The version subtitle is set later by NavTree.ApplyHelpVersion
 		helpNode := &navtree.NavLink{
 			Text:       "Help",
-			SubTitle:   helpVersion,
 			Id:         "help",
 			Url:        "#",
 			Icon:       "question-circle",
@@ -245,7 +232,7 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 	if c.SignedInUser.GetLogin() != c.SignedInUser.GetDisplayName() {
 		login = c.SignedInUser.GetLogin()
 	}
-	gravatarURL := dtos.GetGravatarUrl(c.SignedInUser.GetEmail())
+	gravatarURL := dtos.GetGravatarUrl(s.cfg, c.SignedInUser.GetEmail())
 
 	children := []*navtree.NavLink{
 		{
@@ -264,7 +251,7 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 		})
 	}
 
-	if !setting.DisableSignoutMenu {
+	if !s.cfg.DisableSignoutMenu {
 		// add sign out first
 		children = append(children, &navtree.NavLink{
 			Text:         "Sign out",
@@ -368,24 +355,6 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 		}
 	}
 
-	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagScenes) {
-		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
-			Text: "Scenes",
-			Id:   "scenes",
-			Url:  s.cfg.AppSubURL + "/scenes",
-			Icon: "apps",
-		})
-	}
-
-	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagDatatrails) {
-		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
-			Text: "Data trails",
-			Id:   "data-trails",
-			Url:  s.cfg.AppSubURL + "/data-trails",
-			Icon: "code-branch",
-		})
-	}
-
 	if hasAccess(ac.EvalPermission(dashboards.ActionDashboardsCreate)) {
 		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 			Text: "New dashboard", Icon: "plus", Url: s.cfg.AppSubURL + "/dashboard/new", HideFromTabs: true, Id: "dashboards/new", IsCreateAction: true,
@@ -398,32 +367,6 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 	}
 
 	return dashboardChildNavs
-}
-
-func (s *ServiceImpl) buildLegacyAlertNavLinks(c *contextmodel.ReqContext) *navtree.NavLink {
-	var alertChildNavs []*navtree.NavLink
-	alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-		Text: "Alert rules", Id: "alert-list", Url: s.cfg.AppSubURL + "/alerting/list", Icon: "list-ul",
-	})
-
-	if c.SignedInUser.HasRole(roletype.RoleEditor) {
-		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-			Text: "Notification channels", Id: "channels", Url: s.cfg.AppSubURL + "/alerting/notifications",
-			Icon: "comment-alt-share",
-		})
-	}
-
-	var alertNav = navtree.NavLink{
-		Text:       "Alerting",
-		SubTitle:   "Learn about problems in your systems moments after they occur",
-		Id:         "alerting-legacy",
-		Icon:       "bell",
-		Children:   alertChildNavs,
-		SortWeight: navtree.WeightAlerting,
-		Url:        s.cfg.AppSubURL + "/alerting",
-	}
-
-	return &alertNav
 }
 
 func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.NavLink {
@@ -496,6 +439,7 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext) *n
 			SubTitle: "Browse and create new connections",
 			Url:      baseUrl + "/add-new-connection",
 			Children: []*navtree.NavLink{},
+			Keywords: []string{"csv", "graphite", "json", "loki", "prometheus", "sql", "tempo"},
 		})
 
 		// Data sources
@@ -522,4 +466,18 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext) *n
 		return navLink
 	}
 	return nil
+}
+
+func (s *ServiceImpl) buildExploreNavLinks(c *contextmodel.ReqContext) []*navtree.NavLink {
+	exploreChildNavs := []*navtree.NavLink{}
+	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagExploreMetrics) {
+		exploreChildNavs = append(exploreChildNavs, &navtree.NavLink{
+			Text:     "Metrics",
+			SubTitle: "Queryless exploration of your metrics",
+			Id:       "explore/metrics",
+			Url:      s.cfg.AppSubURL + "/explore/metrics",
+			Icon:     "code-branch",
+		})
+	}
+	return exploreChildNavs
 }

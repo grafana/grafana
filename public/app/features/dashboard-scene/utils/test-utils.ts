@@ -2,7 +2,6 @@ import {
   DeepPartial,
   EmbeddedScene,
   SceneDeactivationHandler,
-  SceneGridItem,
   SceneGridLayout,
   SceneGridRow,
   SceneObject,
@@ -15,15 +14,17 @@ import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboar
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 import { DashboardDTO } from 'app/types';
 
-import { PanelRepeaterGridItem, RepeatDirection } from '../scene/PanelRepeaterGridItem';
+import { DashboardGridItem, RepeatDirection } from '../scene/DashboardGridItem';
+import { LibraryVizPanel } from '../scene/LibraryVizPanel';
+import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 
 export function setupLoadDashboardMock(rsp: DeepPartial<DashboardDTO>, spy?: jest.Mock) {
   const loadDashboardMock = (spy || jest.fn()).mockResolvedValue(rsp);
+  // disabling type checks since this is a test util
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   setDashboardLoaderSrv({
     loadDashboard: loadDashboardMock,
-    // disabling type checks since this is a test util
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   } as unknown as DashboardLoaderSrv);
   return loadDashboardMock;
 }
@@ -34,6 +35,8 @@ export function mockResizeObserver() {
       setTimeout(() => {
         callback(
           [
+            // disabling type checks since this is a test util
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             {
               contentRect: {
                 x: 1,
@@ -45,8 +48,6 @@ export function mockResizeObserver() {
                 left: 100,
                 right: 0,
               },
-              // disabling type checks since this is a test util
-              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             } as ResizeObserverEntry,
           ],
           this
@@ -98,32 +99,38 @@ interface SceneOptions {
   useRowRepeater?: boolean;
 }
 
-export function buildPanelRepeaterScene(options: SceneOptions) {
+export function buildPanelRepeaterScene(options: SceneOptions, source?: VizPanel | LibraryVizPanel) {
   const defaults = { usePanelRepeater: true, ...options };
 
-  const repeater = new PanelRepeaterGridItem({
+  const withRepeat = new DashboardGridItem({
     variableName: 'server',
     repeatedPanels: [],
     repeatDirection: options.repeatDirection,
     maxPerRow: options.maxPerRow,
     itemHeight: options.itemHeight,
-    source: new VizPanel({
-      title: 'Panel $server',
-      pluginId: 'timeseries',
-    }),
+    body:
+      source ??
+      new VizPanel({
+        title: 'Panel $server',
+        pluginId: 'timeseries',
+      }),
     x: options.x || 0,
     y: options.y || 0,
   });
 
-  const gridItem = new SceneGridItem({
+  const withoutRepeat = new DashboardGridItem({
     x: 0,
     y: 0,
     width: 10,
     height: 10,
-    body: new VizPanel({ title: 'Panel $server', pluginId: 'timeseries' }),
+    body: new VizPanel({
+      title: 'Panel $server',
+      pluginId: 'timeseries',
+      titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
+    }),
   });
 
-  const rowChildren = defaults.usePanelRepeater ? repeater : gridItem;
+  const rowChildren = defaults.usePanelRepeater ? withRepeat : withoutRepeat;
 
   const row = new SceneGridRow({
     $behaviors: defaults.useRowRepeater
@@ -181,5 +188,5 @@ export function buildPanelRepeaterScene(options: SceneOptions) {
     }),
   });
 
-  return { scene, repeater, row, variable: panelRepeatVariable };
+  return { scene, repeater: withRepeat, row, variable: panelRepeatVariable };
 }

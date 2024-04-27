@@ -24,6 +24,11 @@ const setup = (children: ReactNode, queries: DataQuery[] = [{ refId: 'A' }]) => 
     explore: {
       panes: {
         left: {
+          range: {
+            from: 'now-6h',
+            to: 'now',
+            raw: { from: 'now-6h', to: 'now' },
+          },
           queries,
           queryResponse: createEmptyQueryResponse(),
         },
@@ -49,6 +54,18 @@ const openModal = async (nameOverride?: string) => {
 describe('AddToDashboardButton', () => {
   beforeAll(() => {
     setEchoSrv(new Echo());
+  });
+
+  /* The Add to dashboard form brings in the DashboardPicker, which will call backendSrv.search as part of its instantiation 
+  If we do not need a list of dashboards for the test, return an empty array. */
+  beforeEach(() => {
+    // Mock the search response so we don't get any refused connection errors
+    // from this test (as the fetch polyfill means this logic would actually try and call the API)
+    jest.spyOn(backendSrv, 'search').mockResolvedValue([]);
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 
   it('Is disabled if explore pane has no queries', async () => {

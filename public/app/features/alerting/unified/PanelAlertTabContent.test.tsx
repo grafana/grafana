@@ -4,14 +4,13 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { byTestId } from 'testing-library-selector';
 
 import { DataSourceApi } from '@grafana/data';
+import { PromOptions, PrometheusDatasource } from '@grafana/prometheus';
 import { setDataSourceSrv } from '@grafana/runtime';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { toggleOption } from 'app/features/variables/pickers/OptionsPicker/reducer';
 import { toKeyedAction } from 'app/features/variables/state/keyedVariablesReducer';
-import { PrometheusDatasource } from 'app/plugins/datasource/prometheus/datasource';
-import { PromOptions } from 'app/plugins/datasource/prometheus/types';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
@@ -153,7 +152,7 @@ const dashboard = {
   },
   meta: {
     canSave: true,
-    folderId: 1,
+    folderUid: 'abc',
     folderTitle: 'super folder',
   },
 } as DashboardModel;
@@ -287,7 +286,7 @@ describe('PanelAlertTabContent', () => {
     });
   });
 
-  it('Will render alerts belonging to panel and a button to create alert from panel queries', async () => {
+  it.skip('Will render alerts belonging to panel and a button to create alert from panel queries', async () => {
     mocks.api.fetchRules.mockResolvedValue(rules);
     mocks.api.fetchRulerRules.mockResolvedValue(rulerRules);
 

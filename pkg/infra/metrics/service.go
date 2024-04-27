@@ -2,9 +2,10 @@ package metrics
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"regexp"
 	"sort"
+	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
@@ -12,7 +13,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics/graphitebridge"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -60,20 +60,13 @@ func (im *InternalMetricsService) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func ProvideRegisterer(cfg *setting.Cfg) prometheus.Registerer {
-	if cfg.IsFeatureToggleEnabled(featuremgmt.FlagGrafanaAPIServer) {
-		return legacyregistry.Registerer()
-	}
-	return prometheus.DefaultRegisterer
+func ProvideRegisterer() prometheus.Registerer {
+	return legacyregistry.Registerer()
 }
 
-func ProvideGatherer(cfg *setting.Cfg) prometheus.Gatherer {
-	if cfg.IsFeatureToggleEnabled(featuremgmt.FlagGrafanaAPIServer) {
-		k8sGatherer := newAddPrefixWrapper(legacyregistry.DefaultGatherer)
-		return newMultiRegistry(k8sGatherer, prometheus.DefaultGatherer)
-	}
-
-	return prometheus.DefaultGatherer
+func ProvideGatherer() prometheus.Gatherer {
+	k8sGatherer := newAddPrefixWrapper(legacyregistry.DefaultGatherer)
+	return newMultiRegistry(k8sGatherer, prometheus.DefaultGatherer)
 }
 
 func ProvideRegistererForTest() prometheus.Registerer {
@@ -116,7 +109,7 @@ func (g *addPrefixWrapper) Gather() ([]*dto.MetricFamily, error) {
 			*m.Name = "grafana_" + *m.Name
 			// since we are modifying the name, we need to check for duplicates in the gatherer
 			if _, exists := names[*m.Name]; exists {
-				return nil, errors.New("duplicate metric name: " + *m.Name)
+				return nil, fmt.Errorf("duplicate metric name: %s", *m.Name)
 			}
 		}
 		// keep track of names to detect duplicates
@@ -148,11 +141,20 @@ func (r *multiRegistry) Gather() (mfs []*dto.MetricFamily, err error) {
 
 		for i := 0; i < len(mf); i++ {
 			m := mf[i]
+			_, exists := names[*m.Name]
 			// prevent duplicate metric names
-			if _, exists := names[*m.Name]; !exists {
-				names[*m.Name] = struct{}{}
-				mfs = append(mfs, m)
+			if exists {
+				// we can skip go_ metrics without returning an error
+				// because they are known to be duplicates in both
+				// the k8s and prometheus gatherers.
+				if strings.HasPrefix(*m.Name, "go_") {
+					continue
+				}
+				errs = append(errs, fmt.Errorf("duplicate metric name: %s", *m.Name))
+				continue
 			}
+			names[*m.Name] = struct{}{}
+			mfs = append(mfs, m)
 		}
 	}
 

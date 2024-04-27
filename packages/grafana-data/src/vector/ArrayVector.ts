@@ -6,12 +6,12 @@ let notified = false;
  *
  * @deprecated use a simple Array<T>
  */
-export class ArrayVector<T = any> extends Array<T> {
+export class ArrayVector<T = unknown> extends Array<T> {
   get buffer() {
     return this;
   }
 
-  set buffer(values: any[]) {
+  set buffer(values: T[]) {
     this.length = 0;
 
     const len = values?.length;
@@ -27,10 +27,10 @@ export class ArrayVector<T = any> extends Array<T> {
   }
 
   /**
-   * This any type is here to make the change type changes in v10 non breaking for plugins.
-   * Before you could technically assign field.values any typed ArrayVector no matter what the Field<T> T type was.
+   * ArrayVector is deprecated and should not be used. If you get a Typescript error here, use plain arrays for field.values.
    */
-  constructor(buffer?: any[]) {
+  // `never` is used to force a build-type error from Typescript to encourage developers to move away from using this
+  constructor(buffer: never) {
     super();
     this.buffer = buffer ?? [];
 
