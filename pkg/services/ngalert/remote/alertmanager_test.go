@@ -513,7 +513,7 @@ func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 		if *s.ID == testSilence.ID {
 			require.Equal(t, *s.Status.State, "expired")
 		} else {
-			require.Equal(t, *s.Status.State, "pending")
+			require.Equal(t, *s.Status.State, "active")
 		}
 	}
 
