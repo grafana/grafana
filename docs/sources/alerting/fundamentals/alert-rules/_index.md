@@ -32,7 +32,7 @@ Grafana supports two different alert rule types: Grafana-managed alert rules and
 
 ## Grafana-managed alert rules
 
-Grafana-managed alert rules are the most flexible alert rule type. They allow you to create alerts that can act on data from any of our [supported data sources](#supported-data-sources), and use multiple data sources in a single alert rule.
+Grafana-managed alert rules are the most flexible alert rule type. They allow you to create alerts that can act on data from any of the [supported data sources](#supported-data-sources), and use multiple data sources in a single alert rule.
 
 Additionally, you can also add [expressions to transform your data][expression-queries], set custom alert conditions, and include [images in alert notifications][notification-images].
 
@@ -77,7 +77,7 @@ When choosing which alert rule type to use, consider the following comparison be
 
 | <div style="width:200px">Feature</div>                                         | <div style="width:200px">Grafana-managed alert rule</div>                                                                    | <div style="width:200px">Data source-managed alert rule                                                                                                 |
 | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Create alert rules<wbr /> based on data from any of our supported data sources | Yes                                                                                                                          | No. You can only create alert rules that are based on Prometheus-based data.                                                                            |
+| Create alert rules<wbr /> based on data from any of the supported data sources | Yes                                                                                                                          | No. You can only create alert rules that are based on Prometheus-based data.                                                                            |
 | Mix and match data sources                                                     | Yes                                                                                                                          | No                                                                                                                                                      |
 | Includes support for recording rules                                           | No                                                                                                                           | Yes                                                                                                                                                     |
 | Add expressions to transform<wbr /> your data and set alert conditions         | Yes                                                                                                                          | No                                                                                                                                                      |
