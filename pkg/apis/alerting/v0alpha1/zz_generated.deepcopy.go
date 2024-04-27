@@ -8,7 +8,7 @@
 package v0alpha1
 
 import (
-	simplejson "github.com/grafana/grafana/pkg/components/simplejson"
+	datav0alpha1 "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -102,7 +102,7 @@ func (in *Spec) DeepCopyInto(out *Spec) {
 	*out = *in
 	if in.Query != nil {
 		in, out := &in.Query, &out.Query
-		*out = make([]simplejson.Json, len(*in))
+		*out = make([]datav0alpha1.DataQuery, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}

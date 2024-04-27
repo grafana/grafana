@@ -303,7 +303,6 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 		DashboardUID:  dashboardUID,
 		PanelID:       panelID,
 	}
-	// XXX
 	ruleList, err := store.ListAlertRules(opts.Ctx, &alertRuleQuery)
 	if err != nil {
 		ruleResponse.DiscoveryBase.Status = "error"

@@ -1,4 +1,4 @@
-package alertrules
+package alerting
 
 import (
 	"context"
@@ -7,9 +7,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/grafana/pkg/apis/alertrules/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 )
 
 type rulePauseREST struct{}

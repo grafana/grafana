@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/registry/apis/alertrules"
+	"github.com/grafana/grafana/pkg/registry/apis/alerting"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboardsnapshot"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
@@ -29,7 +29,7 @@ func ProvideRegistryServiceSink(
 	_ *dashboard.DashboardsAPIBuilder,
 	_ *playlist.PlaylistAPIBuilder,
 	_ *example.TestingAPIBuilder,
-	_ *alertrules.AlertRulesAPIBuilder,
+	_ *alerting.AlertRulesAPIBuilder,
 	_ *dashboardsnapshot.SnapshotsAPIBuilder,
 	_ *featuretoggle.FeatureFlagAPIBuilder,
 	_ *datasource.DataSourceAPIBuilder,

@@ -3,15 +3,15 @@ package v0alpha1
 import (
 	"time"
 
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 const (
-	GROUP      = "alertrules.grafana.app"
+	GROUP      = "alerting.grafana.app"
 	VERSION    = "v0alpha1"
 	APIVERSION = GROUP + "/" + VERSION
 )
@@ -66,9 +66,8 @@ type Spec struct {
 	// Time (in seconds) that the state must be active before changing
 	For time.Duration `json:"for,omitempty"`
 
-	// Queries to execute
-	// TODO: this needs a better generic model/definition! (not defined in this package)
-	Query []simplejson.Json `json:"query"`
+	// Queries to execute (target in dashboards)
+	Query []data.DataQuery `json:"query"`
 
 	// The RefID for the query that defines alert status
 	Condition string `json:"condition"`

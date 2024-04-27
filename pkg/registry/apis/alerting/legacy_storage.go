@@ -1,19 +1,20 @@
-package alertrules
+package alerting
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/grafana/pkg/apis/alertrules/v0alpha1"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/kinds"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/apis/alerting/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
+	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	alerting_models "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -53,12 +54,12 @@ func (s *alertRuleStorage) ConvertToTable(ctx context.Context, object runtime.Ob
 }
 
 func (s *alertRuleStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	orgID, err := request.OrgIDForList(ctx)
+	user, err := appcontext.User(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	rules, prov, err := s.b.ruleService.GetAlertRules(ctx, orgID)
+	rules, prov, err := s.b.ruleService.GetAlertRules(ctx, user)
 	if err != nil {
 		return nil, err
 	}
@@ -76,12 +77,12 @@ func (s *alertRuleStorage) List(ctx context.Context, options *internalversion.Li
 }
 
 func (s *alertRuleStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	info, err := request.NamespaceInfoFrom(ctx, true)
+	user, err := appcontext.User(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	rule, prov, err := s.b.ruleService.GetAlertRule(ctx, info.OrgID, name)
+	rule, prov, err := s.b.ruleService.GetAlertRule(ctx, user, name)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +91,7 @@ func (s *alertRuleStorage) Get(ctx context.Context, name string, options *metav1
 }
 
 // Convert rule model to the resource equivalent
-// TODO!!! defining this is the real work :)  and a query model that feels OK
+// TODO!!! defining this is the real work :)
 func toRuleResource(namespace string, rule *alerting_models.AlertRule, prov alerting_models.Provenance) (*v0alpha1.AlertRule, error) {
 	obj := &v0alpha1.AlertRule{
 		TypeMeta: resourceInfo.TypeMeta(),
@@ -112,31 +113,30 @@ func toRuleResource(namespace string, rule *alerting_models.AlertRule, prov aler
 
 	// HACK!! define this better!!!
 	for _, target := range rule.Data {
-		q, err := simplejson.NewJson(target.Model)
+		query := data.DataQuery{}
+		err := json.Unmarshal(target.Model, &query)
 		if err != nil {
 			return nil, err
 		}
 
-		s, err := q.Get("refId").String()
-		if err != nil || s != target.RefID {
-			q.Set("refId", target.RefID)
+		// Always believe the target value
+		if query.RefID != target.RefID {
+			query.RefID = target.RefID
 		}
 
-		// s, err := q.Get("datasource").Map()
-		// if err != nil || s != target.RefID {
-		// 	q.Set("refId", target.RefID)
-		// }
-
-		obj.Spec.Query = append(obj.Spec.Query, *q)
+		obj.Spec.Query = append(obj.Spec.Query, query)
 	}
 
-	accessor := kinds.MetaAccessor(obj)
+	accessor, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return nil, err
+	}
 	accessor.SetUpdatedTimestamp(&rule.Updated)
 	accessor.SetFolder(rule.NamespaceUID)
 
 	p := string(prov)
 	if p != "" {
-		accessor.SetOriginInfo(&kinds.ResourceOriginInfo{
+		accessor.SetOriginInfo(&utils.ResourceOriginInfo{
 			Name: p,
 		})
 	}
