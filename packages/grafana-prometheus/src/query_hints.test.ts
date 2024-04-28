@@ -190,4 +190,26 @@ describe('getQueryHints()', () => {
     hints = getQueryHints('container_cpu_usage_seconds_total:irate_total', series);
     expect(hints!.length).toBe(0);
   });
+
+  // native histograms
+  it('returns hints for native histogram by metric type without suffix "_bucket"', () => {
+    const series = [
+      {
+        datapoints: [
+          [23, 1000],
+          [24, 1001],
+        ],
+      },
+    ];
+    const mock: unknown = { languageProvider: { metricsMetadata: { foo: { type: 'histogram' } } } };
+    const datasource = mock as PrometheusDatasource;
+
+    let hints = getQueryHints('foo', series, datasource);
+    expect(hints!.length).toBe(6);
+    expect(JSON.stringify(hints)).toContain('ADD_HISTOGRAM_AVG');
+    expect(JSON.stringify(hints)).toContain('ADD_HISTOGRAM_COUNT');
+    expect(JSON.stringify(hints)).toContain('ADD_HISTOGRAM_SUM');
+    expect(JSON.stringify(hints)).toContain('ADD_HISTOGRAM_FRACTION');
+    expect(JSON.stringify(hints)).toContain('ADD_HISTOGRAM_AVG');
+  });
 });
