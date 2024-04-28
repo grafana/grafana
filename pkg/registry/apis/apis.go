@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/registry/apis/collection"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboardsnapshot"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
@@ -34,6 +35,7 @@ func ProvideRegistryServiceSink(
 	_ *folders.FolderAPIBuilder,
 	_ *peakq.PeakQAPIBuilder,
 	_ *scope.ScopeAPIBuilder,
+	_ *collection.CollectionAPIBuilder,
 	_ *query.QueryAPIBuilder,
 ) *Service {
 	return &Service{}

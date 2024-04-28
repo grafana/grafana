@@ -1,0 +1,3 @@
+API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/collection/v0alpha1,CollectionSpec,Tags
+API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/collection/v0alpha1,StarsSpec,Dashboards
+API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/collection/v0alpha1,StarsSpec,QueryHistory
