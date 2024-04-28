@@ -47,5 +47,6 @@ export interface VizLegendItem<T = any> {
   // displayValues?: DisplayValue[];
   getDisplayValues?: () => DisplayValue[];
   fieldIndex?: DataFrameFieldIndex;
+  fieldName?: string;
   data?: T;
 }

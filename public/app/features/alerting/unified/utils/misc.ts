@@ -14,8 +14,6 @@ import {
   mapStateWithReasonToBaseState,
 } from 'app/types/unified-alerting-dto';
 
-import { FolderDTO } from '../../../../types';
-
 import { ALERTMANAGER_NAME_QUERY_KEY } from './constants';
 import { getRulesSourceName, isCloudRulesSource } from './datasource';
 import { getMatcherQueryParams } from './matchers';
@@ -149,8 +147,8 @@ export function makeFolderAlertsLink(folderUID: string, title: string): string {
   return createUrl(`/dashboards/f/${folderUID}/${title}/alerting`);
 }
 
-export function makeFolderSettingsLink(folder: FolderDTO): string {
-  return createUrl(`/dashboards/f/${folder.uid}/settings`);
+export function makeFolderSettingsLink(uid: string): string {
+  return createUrl(`/dashboards/f/${uid}/settings`);
 }
 
 export function makeDashboardLink(dashboardUID: string): string {
@@ -158,7 +156,8 @@ export function makeDashboardLink(dashboardUID: string): string {
 }
 
 export function makePanelLink(dashboardUID: string, panelId: string): string {
-  return createUrl(`/d/${encodeURIComponent(dashboardUID)}`, { viewPanel: panelId });
+  const panelParams = new URLSearchParams({ viewPanel: panelId });
+  return createUrl(`/d/${encodeURIComponent(dashboardUID)}`, panelParams);
 }
 
 // keep retrying fn if it's error passes shouldRetry(error) and timeout has not elapsed yet
@@ -227,7 +226,7 @@ export function isLocalDevEnv() {
 }
 
 export function isErrorLike(error: unknown): error is Error {
-  return 'message' in (error as Error);
+  return Boolean(error && typeof error === 'object' && 'message' in error);
 }
 
 export function stringifyErrorLike(error: unknown): string {

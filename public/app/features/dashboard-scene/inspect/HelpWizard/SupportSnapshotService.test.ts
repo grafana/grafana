@@ -1,13 +1,7 @@
 import { FieldType, getDefaultTimeRange, LoadingState, toDataFrame } from '@grafana/data';
-import {
-  SceneGridItem,
-  SceneGridLayout,
-  SceneQueryRunner,
-  SceneTimeRange,
-  VizPanel,
-  VizPanelMenu,
-} from '@grafana/scenes';
+import { SceneGridLayout, SceneQueryRunner, SceneTimeRange, VizPanel, VizPanelMenu } from '@grafana/scenes';
 
+import { DashboardGridItem } from '../../scene/DashboardGridItem';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { VizPanelLinks, VizPanelLinksMenu } from '../../scene/PanelLinks';
 import { panelMenuBehavior } from '../../scene/PanelMenuBehavior';
@@ -122,7 +116,7 @@ async function buildTestScene() {
     },
     body: new SceneGridLayout({
       children: [
-        new SceneGridItem({
+        new DashboardGridItem({
           key: 'griditem-1',
           x: 0,
           y: 0,

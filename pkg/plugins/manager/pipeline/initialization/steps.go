@@ -47,7 +47,7 @@ func (b *BackendClientInit) Initialize(ctx context.Context, p *plugins.Plugin) (
 		}
 
 		// this will ensure that the env variables are calculated every time a plugin is started
-		envFunc := func() []string { return b.envVarProvider.Get(ctx, p) }
+		envFunc := func() []string { return b.envVarProvider.PluginEnvVars(ctx, p) }
 
 		if backendClient, err := backendFactory(p.ID, p.Logger(), envFunc); err != nil {
 			return nil, err
@@ -79,8 +79,11 @@ func newBackendProcessStarter(processManager process.Manager) *BackendClientStar
 // Start will start the backend plugin process.
 func (b *BackendClientStarter) Start(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 	if err := b.processManager.Start(ctx, p); err != nil {
-		b.log.Error("Could not start plugin", "pluginId", p.ID, "error", err)
-		return nil, err
+		b.log.Error("Could not start plugin backend", "pluginId", p.ID, "error", err)
+		return nil, (&plugins.Error{
+			PluginID:  p.ID,
+			ErrorCode: plugins.ErrorCodeFailedBackendStart,
+		}).WithMessage(err.Error())
 	}
 	return p, nil
 }

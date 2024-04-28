@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -17,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social/socialtest"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -35,6 +37,8 @@ func TestOAuth_Authenticate(t *testing.T) {
 
 		addPKCECookie   bool
 		pkceCookieValue string
+
+		features []any
 
 		isEmailAllowed bool
 		userInfo       *social.BasicUserInfo
@@ -120,6 +124,24 @@ func TestOAuth_Authenticate(t *testing.T) {
 			expectedErr:      errOAuthEmailNotAllowed,
 		},
 		{
+			desc: "should return error when no auth id is set and feature toggle is enabled",
+			req: &authn.Request{
+				HTTPRequest: &http.Request{
+					Header: map[string][]string{},
+					URL:    mustParseURL("http://grafana.com/?state=some-state"),
+				},
+			},
+			features:         []any{featuremgmt.FlagOauthRequireSubClaim},
+			oauthCfg:         &social.OAuthInfo{UsePKCE: true, Enabled: true},
+			addStateCookie:   true,
+			stateCookieValue: "some-state",
+			addPKCECookie:    true,
+			pkceCookieValue:  "some-pkce-value",
+			userInfo:         &social.BasicUserInfo{Email: "some@email.com"},
+			isEmailAllowed:   false,
+			expectedErr:      errOAuthUserInfo,
+		},
+		{
 			desc: "should return identity for valid request",
 			req: &authn.Request{HTTPRequest: &http.Request{
 				Header: map[string][]string{},
@@ -196,15 +218,53 @@ func TestOAuth_Authenticate(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "should return identity when feature toggle is enabled and auth id is set",
+			req: &authn.Request{
+				HTTPRequest: &http.Request{
+					Header: map[string][]string{},
+					URL:    mustParseURL("http://grafana.com/?state=some-state"),
+				},
+			},
+			oauthCfg:         &social.OAuthInfo{Enabled: true},
+			addStateCookie:   true,
+			stateCookieValue: "some-state",
+			isEmailAllowed:   true,
+			features:         []any{featuremgmt.FlagOauthRequireSubClaim},
+			userInfo: &social.BasicUserInfo{
+				Id:    "123",
+				Name:  "name",
+				Email: "some@email.com",
+				Role:  "Admin",
+			},
+			expectedIdentity: &authn.Identity{
+				Email:           "some@email.com",
+				AuthenticatedBy: login.AzureADAuthModule,
+				AuthID:          "123",
+				Name:            "name",
+				OAuthToken:      &oauth2.Token{},
+				OrgRoles:        map[int64]org.RoleType{1: org.RoleAdmin},
+				ClientParams: authn.ClientParams{
+					SyncUser:        true,
+					SyncTeams:       true,
+					AllowSignUp:     true,
+					FetchSyncedUser: true,
+					SyncOrgRoles:    true,
+					LookUpParams:    login.UserLookupParams{},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			cfg := setting.NewCfg()
+			auth, err := cfg.Raw.NewSection("auth")
+			assert.NoError(t, err)
+			_, err = auth.NewKey("oauth_allow_insecure_email_lookup", strconv.FormatBool(tt.allowInsecureTakeover))
+			assert.NoError(t, err)
 
-			if tt.allowInsecureTakeover {
-				cfg.OAuthAllowInsecureEmailLookup = true
-			}
+			settingsProvider := &setting.OSSImpl{Cfg: cfg}
 
 			if tt.addStateCookie {
 				v := tt.stateCookieValue
@@ -228,7 +288,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 				},
 			}
 
-			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), cfg, nil, fakeSocialSvc)
+			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), cfg, nil, fakeSocialSvc, settingsProvider, featuremgmt.WithFeatures(tt.features...))
 
 			identity, err := c.Authenticate(context.Background(), tt.req)
 			assert.ErrorIs(t, err, tt.expectedErr)
@@ -248,7 +308,6 @@ func TestOAuth_Authenticate(t *testing.T) {
 
 				assert.EqualValues(t, tt.expectedIdentity.ClientParams.LookUpParams.Email, identity.ClientParams.LookUpParams.Email)
 				assert.EqualValues(t, tt.expectedIdentity.ClientParams.LookUpParams.Login, identity.ClientParams.LookUpParams.Login)
-				assert.EqualValues(t, tt.expectedIdentity.ClientParams.LookUpParams.UserID, identity.ClientParams.LookUpParams.UserID)
 			} else {
 				assert.Nil(t, tt.expectedIdentity)
 			}
@@ -309,7 +368,9 @@ func TestOAuth_RedirectURL(t *testing.T) {
 				},
 			}
 
-			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), setting.NewCfg(), nil, fakeSocialSvc)
+			cfg := setting.NewCfg()
+
+			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), cfg, nil, fakeSocialSvc, &setting.OSSImpl{Cfg: cfg}, featuremgmt.WithFeatures())
 
 			redirect, err := c.RedirectURL(context.Background(), nil)
 			assert.ErrorIs(t, err, tt.expectedErr)
@@ -422,9 +483,9 @@ func TestOAuth_Logout(t *testing.T) {
 			fakeSocialSvc := &socialtest.FakeSocialService{
 				ExpectedAuthInfoProvider: tt.oauthCfg,
 			}
-			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), tt.cfg, mockService, fakeSocialSvc)
+			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), tt.cfg, mockService, fakeSocialSvc, &setting.OSSImpl{Cfg: tt.cfg}, featuremgmt.WithFeatures())
 
-			redirect, ok := c.Logout(context.Background(), &authn.Identity{}, &login.UserAuth{})
+			redirect, ok := c.Logout(context.Background(), &authn.Identity{})
 
 			assert.Equal(t, tt.expectedOK, ok)
 			if tt.expectedOK {
@@ -443,6 +504,49 @@ func TestGenPKCECodeVerifier(t *testing.T) {
 	verifier, err := genPKCECodeVerifier()
 	assert.NoError(t, err)
 	assert.Len(t, verifier, 128)
+}
+
+func TestIsEnabled(t *testing.T) {
+	type testCase struct {
+		desc     string
+		oauthCfg *social.OAuthInfo
+		expected bool
+	}
+
+	tests := []testCase{
+		{
+			desc:     "should return false when client is not enabled",
+			oauthCfg: &social.OAuthInfo{Enabled: false},
+			expected: false,
+		},
+		{
+			desc:     "should return false when client doesnt exists",
+			oauthCfg: nil,
+			expected: false,
+		},
+		{
+			desc:     "should return true when client is enabled",
+			oauthCfg: &social.OAuthInfo{Enabled: true},
+			expected: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			fakeSocialSvc := &socialtest.FakeSocialService{
+				ExpectedAuthInfoProvider: tt.oauthCfg,
+			}
+			cfg := setting.NewCfg()
+			c := ProvideOAuth(
+				social.GitHubProviderName,
+				cfg,
+				nil,
+				fakeSocialSvc,
+				&setting.OSSImpl{Cfg: cfg},
+				featuremgmt.WithFeatures())
+			assert.Equal(t, tt.expected, c.IsEnabled())
+		})
+	}
 }
 
 type mockConnector struct {

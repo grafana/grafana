@@ -120,7 +120,7 @@ describe('RichHistoryLocalStorage', () => {
       const settings: RichHistorySettings = {
         retentionPeriod: 2,
         starredTabAsFirstTab: true,
-        activeDatasourceOnly: true,
+        activeDatasourcesOnly: true,
         lastUsedDatasourceFilters: ['foobar'],
       };
       await storage.updateSettings(settings);

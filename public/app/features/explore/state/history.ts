@@ -1,4 +1,4 @@
-import { AnyAction, createAction } from '@reduxjs/toolkit';
+import { createAction } from '@reduxjs/toolkit';
 
 import { HistoryItem } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
@@ -12,7 +12,7 @@ import {
   updateRichHistorySettings,
   updateStarredInRichHistory,
 } from 'app/core/utils/richHistory';
-import { ExploreItemState, ExploreState, RichHistoryQuery, ThunkResult } from 'app/types';
+import { RichHistoryQuery, ThunkResult } from 'app/types';
 
 import { supportedFeatures } from '../../../core/history/richHistoryStorageProvider';
 import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';
@@ -24,14 +24,12 @@ import {
   richHistoryStorageFullAction,
   richHistoryUpdatedAction,
 } from './main';
-import { selectPanesEntries } from './selectors';
 
 //
 // Actions and Payloads
 //
 
 export interface HistoryUpdatedPayload {
-  exploreId: string;
   history: HistoryItem[];
 }
 export const historyUpdatedAction = createAction<HistoryUpdatedPayload>('explore/historyUpdated');
@@ -50,49 +48,53 @@ type SyncHistoryUpdatesOptions = {
  */
 const updateRichHistoryState = ({ updatedQuery, deletedId }: SyncHistoryUpdatesOptions): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    forEachExplorePane(getState().explore, (item, exploreId) => {
-      const newRichHistory = item.richHistory
-        // update
-        .map((query) => (query.id === updatedQuery?.id ? updatedQuery : query))
-        // or remove
-        .filter((query) => query.id !== deletedId);
-      const deletedItems = item.richHistory.length - newRichHistory.length;
-      dispatch(
-        richHistoryUpdatedAction({
-          richHistoryResults: { richHistory: newRichHistory, total: item.richHistoryTotal! - deletedItems },
-          exploreId,
-        })
-      );
-    });
+    const richHistory = getState().explore.richHistory;
+
+    // update or remove entries
+    const newRichHistory = richHistory
+      .map((query) => (query.id === updatedQuery?.id ? updatedQuery : query))
+      .filter((query) => query.id !== deletedId);
+
+    const deletedItems = richHistory.length - newRichHistory.length;
+    dispatch(
+      richHistoryUpdatedAction({
+        richHistoryResults: {
+          richHistory: newRichHistory,
+          total: getState().explore.richHistoryTotal! - deletedItems,
+        },
+      })
+    );
   };
 };
 
-const forEachExplorePane = (state: ExploreState, callback: (item: ExploreItemState, exploreId: string) => void) => {
-  Object.entries(state.panes).forEach(([exploreId, item]) => {
-    item && callback(item, exploreId);
-  });
-};
-
 export const addHistoryItem = (
+  localOverride: boolean,
   datasourceUid: string,
   datasourceName: string,
-  queries: DataQuery[]
+  queries: DataQuery[],
+  hideAllErrorsAndWarnings: boolean
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const { richHistoryStorageFull, limitExceeded } = await addToRichHistory(
-      datasourceUid,
-      datasourceName,
+    const showNotif = hideAllErrorsAndWarnings
+      ? { quotaExceededError: false, limitExceededWarning: false, otherErrors: false }
+      : {
+          quotaExceededError: !getState().explore.richHistoryStorageFull,
+          limitExceededWarning: !getState().explore.richHistoryLimitExceededWarningShown,
+        };
+    const { richHistoryStorageFull, limitExceeded } = await addToRichHistory({
+      localOverride,
+      datasource: { uid: datasourceUid, name: datasourceName },
       queries,
-      false,
-      '',
-      !getState().explore.richHistoryStorageFull,
-      !getState().explore.richHistoryLimitExceededWarningShown
-    );
-    if (richHistoryStorageFull) {
-      dispatch(richHistoryStorageFullAction());
-    }
-    if (limitExceeded) {
-      dispatch(richHistoryLimitExceededAction());
+      starred: false,
+      showNotif,
+    });
+    if (!hideAllErrorsAndWarnings) {
+      if (richHistoryStorageFull) {
+        dispatch(richHistoryStorageFullAction());
+      }
+      if (limitExceeded) {
+        dispatch(richHistoryLimitExceededAction());
+      }
     }
   };
 };
@@ -119,45 +121,41 @@ export const deleteHistoryItem = (id: string): ThunkResult<void> => {
 };
 
 export const deleteRichHistory = (): ThunkResult<void> => {
-  return async (dispatch, getState) => {
+  return async (dispatch) => {
     await deleteAllFromRichHistory();
-    selectPanesEntries(getState()).forEach(([exploreId]) => {
-      dispatch(richHistoryUpdatedAction({ richHistoryResults: { richHistory: [], total: 0 }, exploreId }));
-      dispatch(richHistoryUpdatedAction({ richHistoryResults: { richHistory: [], total: 0 }, exploreId }));
-    });
+    dispatch(richHistoryUpdatedAction({ richHistoryResults: { richHistory: [], total: 0 } }));
+    dispatch(richHistoryUpdatedAction({ richHistoryResults: { richHistory: [], total: 0 } }));
   };
 };
 
-export const loadRichHistory = (exploreId: string): ThunkResult<void> => {
+export const loadRichHistory = (): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const filters = getState().explore.panes[exploreId]!.richHistorySearchFilters;
+    const filters = getState().explore.richHistorySearchFilters;
     if (filters) {
       const richHistoryResults = await getRichHistory(filters);
-      dispatch(richHistoryUpdatedAction({ richHistoryResults, exploreId }));
+      dispatch(richHistoryUpdatedAction({ richHistoryResults }));
     }
   };
 };
 
-export const loadMoreRichHistory = (exploreId: string): ThunkResult<void> => {
+export const loadMoreRichHistory = (): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const currentFilters = getState().explore.panes[exploreId]?.richHistorySearchFilters;
-    const currentRichHistory = getState().explore.panes[exploreId]?.richHistory;
+    const currentFilters = getState().explore.richHistorySearchFilters;
+    const currentRichHistory = getState().explore.richHistory;
     if (currentFilters && currentRichHistory) {
       const nextFilters = { ...currentFilters, page: (currentFilters?.page || 1) + 1 };
       const moreRichHistory = await getRichHistory(nextFilters);
       const richHistory = [...currentRichHistory, ...moreRichHistory.richHistory];
-      dispatch(richHistorySearchFiltersUpdatedAction({ filters: nextFilters, exploreId }));
-      dispatch(
-        richHistoryUpdatedAction({ richHistoryResults: { richHistory, total: moreRichHistory.total }, exploreId })
-      );
+      dispatch(richHistorySearchFiltersUpdatedAction({ filters: nextFilters }));
+      dispatch(richHistoryUpdatedAction({ richHistoryResults: { richHistory, total: moreRichHistory.total } }));
     }
   };
 };
 
-export const clearRichHistoryResults = (exploreId: string): ThunkResult<void> => {
+export const clearRichHistoryResults = (): ThunkResult<void> => {
   return async (dispatch) => {
-    dispatch(richHistorySearchFiltersUpdatedAction({ filters: undefined, exploreId }));
-    dispatch(richHistoryUpdatedAction({ richHistoryResults: { richHistory: [], total: 0 }, exploreId }));
+    dispatch(richHistorySearchFiltersUpdatedAction({ filters: undefined }));
+    dispatch(richHistoryUpdatedAction({ richHistoryResults: { richHistory: [], total: 0 } }));
   };
 };
 
@@ -185,9 +183,9 @@ export const updateHistorySettings = (settings: RichHistorySettings): ThunkResul
 /**
  * Assumed this can be called only when settings and filters are initialised
  */
-export const updateHistorySearchFilters = (exploreId: string, filters: RichHistorySearchFilters): ThunkResult<void> => {
+export const updateHistorySearchFilters = (filters: RichHistorySearchFilters): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    await dispatch(richHistorySearchFiltersUpdatedAction({ exploreId, filters: { ...filters } }));
+    await dispatch(richHistorySearchFiltersUpdatedAction({ filters: { ...filters } }));
     const currentSettings = getState().explore.richHistorySettings!;
     if (supportedFeatures().lastUsedDataSourcesAvailable) {
       await dispatch(
@@ -198,14 +196,4 @@ export const updateHistorySearchFilters = (exploreId: string, filters: RichHisto
       );
     }
   };
-};
-
-export const historyReducer = (state: ExploreItemState, action: AnyAction): ExploreItemState => {
-  if (historyUpdatedAction.match(action)) {
-    return {
-      ...state,
-      history: action.payload.history,
-    };
-  }
-  return state;
 };

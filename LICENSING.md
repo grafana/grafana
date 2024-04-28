@@ -10,7 +10,6 @@ The following directories and their subdirectories are licensed under Apache-2.0
 
 ```
 packages/grafana-data/
-packages/grafana-e2e/
 packages/grafana-e2e-selectors/
 packages/grafana-runtime/
 packages/grafana-ui/
@@ -18,7 +17,7 @@ packaging/
 kinds/
 pkg/kinds/
 pkg/kindsys/
-pkg/registry/corekind/
+pkg/registry/schemas/
 grafana-mixin/
 public/app/plugins/datasource/tempo
 public/app/features/explore/TraceView/components

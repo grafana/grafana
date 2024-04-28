@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
 const (
@@ -13,11 +15,10 @@ const (
 )
 
 type UserGrafanaConfig struct {
-	ID                        int64  `json:"id"`
-	GrafanaAlertmanagerConfig string `json:"configuration"`
-	Hash                      string `json:"configuration_hash"`
-	CreatedAt                 int64  `json:"created"`
-	Default                   bool   `json:"default"`
+	GrafanaAlertmanagerConfig *apimodels.PostableUserConfig `json:"configuration"`
+	Hash                      string                        `json:"configuration_hash"`
+	CreatedAt                 int64                         `json:"created"`
+	Default                   bool                          `json:"default"`
 }
 
 func (mc *Mimir) GetGrafanaAlertmanagerConfig(ctx context.Context) (*UserGrafanaConfig, error) {
@@ -39,9 +40,8 @@ func (mc *Mimir) GetGrafanaAlertmanagerConfig(ctx context.Context) (*UserGrafana
 	return gc, nil
 }
 
-func (mc *Mimir) CreateGrafanaAlertmanagerConfig(ctx context.Context, cfg, hash string, id, createdAt int64, isDefault bool) error {
+func (mc *Mimir) CreateGrafanaAlertmanagerConfig(ctx context.Context, cfg *apimodels.PostableUserConfig, hash string, createdAt int64, isDefault bool) error {
 	payload, err := json.Marshal(&UserGrafanaConfig{
-		ID:                        id,
 		GrafanaAlertmanagerConfig: cfg,
 		Hash:                      hash,
 		CreatedAt:                 createdAt,

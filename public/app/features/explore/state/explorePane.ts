@@ -20,8 +20,6 @@ import { createAsyncThunk, ThunkResult } from 'app/types';
 import { ExploreItemState } from 'app/types/explore';
 
 import { datasourceReducer } from './datasource';
-import { historyReducer } from './history';
-import { richHistorySearchFiltersUpdatedAction, richHistoryUpdatedAction } from './main';
 import { queryReducer, runQueries } from './query';
 import { timeReducer, updateTime } from './time';
 import {
@@ -214,24 +212,6 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
   state = queryReducer(state, action);
   state = datasourceReducer(state, action);
   state = timeReducer(state, action);
-  state = historyReducer(state, action);
-
-  if (richHistoryUpdatedAction.match(action)) {
-    const { richHistory, total } = action.payload.richHistoryResults;
-    return {
-      ...state,
-      richHistory,
-      richHistoryTotal: total,
-    };
-  }
-
-  if (richHistorySearchFiltersUpdatedAction.match(action)) {
-    const richHistorySearchFilters = action.payload.filters;
-    return {
-      ...state,
-      richHistorySearchFilters,
-    };
-  }
 
   if (changeSizeAction.match(action)) {
     const containerWidth = action.payload.width;

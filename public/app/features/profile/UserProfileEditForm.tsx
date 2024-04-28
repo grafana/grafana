@@ -1,7 +1,8 @@
 import React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Button, Field, FieldSet, Form, Icon, Input, Tooltip } from '@grafana/ui';
+import { Button, Field, FieldSet, Icon, Input, Tooltip } from '@grafana/ui';
+import { Form } from 'app/core/components/Form/Form';
 import config from 'app/core/config';
 import { t, Trans } from 'app/core/internationalization';
 import { UserDTO } from 'app/types';

@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/configuration/ExemplarSetting.tsx
 import React, { useState } from 'react';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
@@ -16,7 +17,7 @@ type Props = {
   disabled?: boolean;
 };
 
-export default function ExemplarSetting({ value, onChange, onDelete, disabled }: Props) {
+export function ExemplarSetting({ value, onChange, onDelete, disabled }: Props) {
   const [isInternalLink, setIsInternalLink] = useState(Boolean(value.datasourceUid));
 
   const theme = useTheme2();

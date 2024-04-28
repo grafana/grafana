@@ -8,7 +8,7 @@
 package v0alpha1
 
 import (
-	commonv0alpha1 "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
+	commonv0alpha1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 

@@ -1,4 +1,4 @@
-import { Field } from '@grafana/data';
+import { Field, FieldType } from '@grafana/data';
 import { TextDimensionConfig, TextDimensionMode } from '@grafana/schema';
 
 export interface DimensionSupplier<T = any> {
@@ -34,6 +34,7 @@ export interface ScaleDimensionOptions {
   max: number;
   step?: number;
   hideRange?: boolean; // false
+  filteredFieldType?: FieldType;
 }
 
 export interface ScalarDimensionOptions {

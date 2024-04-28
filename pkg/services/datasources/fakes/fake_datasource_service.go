@@ -45,6 +45,16 @@ func (s *FakeDataSourceService) GetAllDataSources(ctx context.Context, query *da
 	return s.DataSources, nil
 }
 
+func (s *FakeDataSourceService) GetPrunableProvisionedDataSources(ctx context.Context) (res []*datasources.DataSource, err error) {
+	var dataSources []*datasources.DataSource
+	for _, dataSource := range s.DataSources {
+		if dataSource.IsPrunable {
+			dataSources = append(dataSources, dataSource)
+		}
+	}
+	return dataSources, nil
+}
+
 func (s *FakeDataSourceService) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) ([]*datasources.DataSource, error) {
 	var dataSources []*datasources.DataSource
 	for _, datasource := range s.DataSources {
@@ -102,10 +112,6 @@ func (s *FakeDataSourceService) UpdateDataSource(ctx context.Context, cmd *datas
 	return nil, datasources.ErrDataSourceNotFound
 }
 
-func (s *FakeDataSourceService) GetDefaultDataSource(ctx context.Context, query *datasources.GetDefaultDataSourceQuery) (*datasources.DataSource, error) {
-	return nil, nil
-}
-
 func (s *FakeDataSourceService) GetHTTPTransport(ctx context.Context, ds *datasources.DataSource, provider httpclient.Provider, customMiddlewares ...sdkhttpclient.Middleware) (http.RoundTripper, error) {
 	rt, err := provider.GetTransport(sdkhttpclient.Options{})
 	if err != nil {
@@ -134,6 +140,6 @@ func (s *FakeDataSourceService) DecryptedPassword(ctx context.Context, ds *datas
 	return "", nil
 }
 
-func (s *FakeDataSourceService) CustomHeaders(ctx context.Context, ds *datasources.DataSource) (map[string]string, error) {
+func (s *FakeDataSourceService) CustomHeaders(ctx context.Context, ds *datasources.DataSource) (http.Header, error) {
 	return nil, nil
 }

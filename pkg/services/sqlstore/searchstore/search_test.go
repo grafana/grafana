@@ -182,6 +182,7 @@ func TestBuilder_RBAC(t *testing.T) {
 			expectedParams: []any{
 				int64(1),
 				int64(1),
+				int64(1),
 				0,
 				"Viewer",
 				int64(1),
@@ -189,6 +190,7 @@ func TestBuilder_RBAC(t *testing.T) {
 				"dashboards:read",
 				"dashboards:write",
 				2,
+				int64(1),
 				int64(1),
 				int64(1),
 				0,
@@ -257,6 +259,7 @@ func TestBuilder_RBAC(t *testing.T) {
 			expectedParams: []any{
 				int64(1),
 				int64(1),
+				int64(1),
 				0,
 				"Viewer",
 				int64(1),
@@ -264,6 +267,7 @@ func TestBuilder_RBAC(t *testing.T) {
 				"dashboards:read",
 				"dashboards:write",
 				2,
+				int64(1),
 				int64(1),
 				int64(1),
 				0,

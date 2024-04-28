@@ -1,4 +1,4 @@
-import configureMockStore from 'redux-mock-store';
+import configureMockStore, { MockStore } from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import { Subject } from 'rxjs';
 
@@ -71,7 +71,7 @@ interface ScenarioContext {
   loaderSrv: DashboardLoaderSrv;
   backendSrv: jest.Mocked<BackendSrv>;
   setup: (fn: () => void) => void;
-  actions: any[];
+  actions: ReturnType<MockStore['getActions']>;
   storeState: any;
 }
 

@@ -28,8 +28,8 @@ export const featureDiscoveryApi = alertingApi.injectEndpoints({
         }
 
         const discoverFeaturesWithLogging = withPerformanceLogging(
+          'unifiedalerting/featureDiscoveryApi/discoverDsFeatures',
           discoverFeatures,
-          `[${rulesSourceName}] Rules source features discovered`,
           {
             dataSourceName: rulesSourceName,
             endpoint: 'unifiedalerting/featureDiscoveryApi/discoverDsFeatures',

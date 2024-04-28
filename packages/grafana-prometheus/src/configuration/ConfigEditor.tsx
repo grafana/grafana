@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/configuration/ConfigEditor.tsx
 import { css } from '@emotion/css';
 import React from 'react';
 
@@ -9,7 +10,7 @@ import { Alert, FieldValidationMessage, useTheme2 } from '@grafana/ui';
 import { PromOptions } from '../types';
 
 import { AlertingSettingsOverhaul } from './AlertingSettingsOverhaul';
-import { DataSourcehttpSettingsOverhaul } from './DataSourceHttpSettingsOverhaul';
+import { DataSourceHttpSettingsOverhaul } from './DataSourceHttpSettingsOverhaul';
 import { PromSettings } from './PromSettings';
 
 export const PROM_CONFIG_LABEL_WIDTH = 30;
@@ -33,7 +34,7 @@ export const ConfigEditor = (props: PrometheusConfigProps) => {
         docsLink="https://grafana.com/docs/grafana/latest/datasources/prometheus/configure-prometheus-data-source/"
       />
       <hr className={`${styles.hrTopSpace} ${styles.hrBottomSpace}`} />
-      <DataSourcehttpSettingsOverhaul
+      <DataSourceHttpSettingsOverhaul
         options={options}
         onOptionsChange={onOptionsChange}
         secureSocksDSProxyEnabled={config.secureSocksDSProxyEnabled}

@@ -10,7 +10,6 @@ import (
 	"sync"
 
 	"github.com/grafana/dskit/services"
-
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
@@ -117,6 +116,14 @@ func (s *ModuleServer) Run() error {
 
 	m := modules.New(s.cfg.Target)
 
+	// only run the instrumentation server module if were not running a module that already contains an http server
+	m.RegisterInvisibleModule(modules.InstrumentationServer, func() (services.Service, error) {
+		if m.IsModuleEnabled(modules.All) || m.IsModuleEnabled(modules.Core) {
+			return services.NewBasicService(nil, nil, nil).WithName(modules.InstrumentationServer), nil
+		}
+		return NewInstrumentationService(s.log)
+	})
+
 	m.RegisterModule(modules.Core, func() (services.Service, error) {
 		return NewService(s.cfg, s.opts, s.apiOpts)
 	})
@@ -131,7 +138,7 @@ func (s *ModuleServer) Run() error {
 	//}
 
 	m.RegisterModule(modules.StorageServer, func() (services.Service, error) {
-		return storageServer.ProvideService(s.cfg, s.features)
+		return storageServer.ProvideService(s.cfg, s.features, s.log)
 	})
 
 	m.RegisterModule(modules.All, nil)

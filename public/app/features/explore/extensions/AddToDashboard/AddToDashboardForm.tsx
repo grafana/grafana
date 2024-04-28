@@ -1,10 +1,10 @@
 import { partial } from 'lodash';
 import React, { type ReactElement, useEffect, useState } from 'react';
-import { DeepMap, FieldError, FieldErrors, useForm } from 'react-hook-form';
+import { DeepMap, FieldError, FieldErrors, useForm, Controller } from 'react-hook-form';
 
 import { locationUtil, SelectableValue } from '@grafana/data';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
-import { Alert, Button, Field, InputControl, Modal, RadioButtonGroup } from '@grafana/ui';
+import { Alert, Button, Field, Modal, RadioButtonGroup } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { contextSrv } from 'app/core/services/context_srv';
 import { removeDashboardToFetchFromLocalStorage } from 'app/features/dashboard/state/initDashboard';
@@ -156,7 +156,7 @@ export function AddToDashboardForm(props: Props): ReactElement {
   return (
     <form>
       {saveTargets.length > 1 && (
-        <InputControl
+        <Controller
           control={control}
           render={({ field: { ref, ...field } }) => (
             <Field label="Target dashboard" description="Choose where to add the panel.">
@@ -171,7 +171,7 @@ export function AddToDashboardForm(props: Props): ReactElement {
         (() => {
           assertIsSaveToExistingDashboardError(errors);
           return (
-            <InputControl
+            <Controller
               render={({ field: { ref, value, onChange, ...field } }) => (
                 <Field
                   label="Dashboard"

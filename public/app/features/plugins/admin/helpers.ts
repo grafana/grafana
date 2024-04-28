@@ -7,25 +7,40 @@ import { contextSrv } from 'app/core/core';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { AccessControlAction } from 'app/types';
 
-import { CatalogPlugin, InstancePlugin, LocalPlugin, RemotePlugin, RemotePluginStatus, Version } from './types';
+import {
+  CatalogPlugin,
+  InstancePlugin,
+  LocalPlugin,
+  ProvisionedPlugin,
+  RemotePlugin,
+  RemotePluginStatus,
+  Version,
+} from './types';
 
 export function mergeLocalsAndRemotes({
   local = [],
   remote = [],
   instance = [],
+  provisioned = [],
   pluginErrors: errors,
 }: {
   local: LocalPlugin[];
   remote?: RemotePlugin[];
   instance?: InstancePlugin[];
+  provisioned?: ProvisionedPlugin[];
   pluginErrors?: PluginError[];
 }): CatalogPlugin[] {
   const catalogPlugins: CatalogPlugin[] = [];
   const errorByPluginId = groupErrorsByPluginId(errors);
 
-  const instancesSet = instance.reduce((set, instancePlugin) => {
-    set.add(instancePlugin.pluginSlug);
-    return set;
+  const instancesMap = instance.reduce((map, instancePlugin) => {
+    map.set(instancePlugin.pluginSlug, instancePlugin);
+    return map;
+  }, new Map<string, InstancePlugin>());
+
+  const provisionedSet = provisioned.reduce((map, provisionedPlugin) => {
+    map.add(provisionedPlugin.slug);
+    return map;
   }, new Set<string>());
 
   // add locals
@@ -51,8 +66,21 @@ export function mergeLocalsAndRemotes({
       if (configCore.featureToggles.managedPluginsInstall && config.pluginAdminExternalManageEnabled) {
         catalogPlugin.isFullyInstalled = catalogPlugin.isCore
           ? true
-          : instancesSet.has(remotePlugin.slug) && catalogPlugin.isInstalled;
-        catalogPlugin.isInstalled = instancesSet.has(remotePlugin.slug) || catalogPlugin.isInstalled;
+          : (instancesMap.has(remotePlugin.slug) || provisionedSet.has(remotePlugin.slug)) && catalogPlugin.isInstalled;
+
+        catalogPlugin.isInstalled = instancesMap.has(remotePlugin.slug) || catalogPlugin.isInstalled;
+
+        const instancePlugin = instancesMap.get(remotePlugin.slug);
+        catalogPlugin.isUpdatingFromInstance =
+          instancesMap.has(remotePlugin.slug) &&
+          catalogPlugin.hasUpdate &&
+          catalogPlugin.installedVersion !== instancePlugin?.version;
+
+        if (instancePlugin?.version && instancePlugin?.version !== remotePlugin.version) {
+          catalogPlugin.hasUpdate = true;
+        }
+
+        catalogPlugin.isUninstallingFromInstance = Boolean(localCounterpart) && !instancesMap.has(remotePlugin.slug);
       }
 
       catalogPlugins.push(catalogPlugin);
@@ -225,7 +253,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     error: error?.errorCode,
     // Only local plugins have access control metadata
     accessControl: local?.accessControl,
-    angularDetected: local?.angularDetected || remote?.angularDetected,
+    angularDetected: local?.angularDetected ?? remote?.angularDetected,
     isFullyInstalled: Boolean(local) || isDisabled,
     iam: local?.iam,
   };
@@ -367,7 +395,7 @@ function getPluginDetailsForFuzzySearch(plugins: CatalogPlugin[]): string[] {
 }
 export function filterByKeyword(plugins: CatalogPlugin[], query: string) {
   const dataArray = getPluginDetailsForFuzzySearch(plugins);
-  let uf = new uFuzzy({});
+  let uf = new uFuzzy({ intraMode: 1, intraSub: 0 });
   let idxs = uf.filter(dataArray, query);
   if (idxs === null) {
     return null;

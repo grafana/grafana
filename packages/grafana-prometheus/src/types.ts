@@ -1,7 +1,8 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/types.ts
 import { DataSourceJsonData } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 
-import { Prometheus as GenPromQuery } from './dataquery.gen';
+import { Prometheus as GenPromQuery } from './dataquery';
 import { QueryBuilderLabelFilter, QueryEditorMode } from './querybuilder/shared/types';
 
 export interface PromQuery extends GenPromQuery, DataQuery {
@@ -51,6 +52,7 @@ export interface PromOptions extends DataSourceJsonData {
   disableRecordingRules?: boolean;
   sigV4Auth?: boolean;
   oauthPassThru?: boolean;
+  codeModeMetricNamesSuggestionLimit?: number;
 }
 
 export type ExemplarTraceIdDestination = {

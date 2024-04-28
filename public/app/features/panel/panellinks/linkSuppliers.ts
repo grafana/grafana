@@ -164,7 +164,7 @@ export const getScenePanelLinksSupplier = (
   panel: VizPanel,
   replaceVariables: InterpolateFunction
 ): LinkModelSupplier<VizPanel> | undefined => {
-  const links = dashboardSceneGraph.getPanelLinks(panel).state.rawLinks;
+  const links = dashboardSceneGraph.getPanelLinks(panel)?.state.rawLinks;
 
   if (!links || links.length === 0) {
     return undefined;

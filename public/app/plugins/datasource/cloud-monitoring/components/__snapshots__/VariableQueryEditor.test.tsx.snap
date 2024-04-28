@@ -91,6 +91,7 @@ exports[`VariableQueryEditor renders correctly 1`] = `
             className="css-zyjsuv-input-suffix"
           >
             <svg
+              aria-hidden={true}
               className="css-1d3xu67-Icon"
               height={16}
               id="public/img/icons/unicons/angle-down.svg"

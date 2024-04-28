@@ -102,13 +102,6 @@ export function toMilliSeconds(size: number, decimals?: DecimalCount, scaledDeci
   return toFixedScaled(size / 31536000000, decimals, ' year');
 }
 
-export function trySubstract(value1: DecimalCount, value2: DecimalCount): DecimalCount {
-  if (value1 !== null && value1 !== undefined && value2 !== null && value2 !== undefined) {
-    return value1 - value2;
-  }
-  return undefined;
-}
-
 export function toSeconds(size: number, decimals?: DecimalCount): FormattedValue {
   if (size === null) {
     return { text: '' };

@@ -7,6 +7,7 @@ import {
   ComparisonOp,
   FieldExpression,
   FieldOp,
+  GroupOperation,
   Identifier,
   IntrinsicField,
   Or,
@@ -16,6 +17,7 @@ import {
   Resource,
   ScalarExpression,
   ScalarFilter,
+  SelectOperation,
   Span,
   SpansetFilter,
   SpansetPipelineExpression,
@@ -57,6 +59,10 @@ export const computeErrorMessage = (errorNode: SyntaxNode) => {
     case IntrinsicField:
     case Aggregate:
       return 'Invalid expression for aggregator operator.';
+    case GroupOperation:
+      return 'Invalid expression for by operator.';
+    case SelectOperation:
+      return 'Invalid expression for select operator.';
     case AttributeField:
       return 'Invalid expression for spanset.';
     case ScalarFilter:

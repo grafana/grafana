@@ -18,16 +18,23 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	exp "github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	exphttpclient "github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource/httpclient"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
 
 var eslog = log.New("tsdb.elasticsearch")
+
+const (
+	// headerFromExpression is used by data sources to identify expression queries
+	headerFromExpression = "X-Grafana-From-Expr"
+	// headerFromAlert is used by datasources to identify alert queries
+	headerFromAlert = "FromAlert"
+)
 
 type Service struct {
 	httpClientProvider httpclient.Provider
@@ -47,7 +54,7 @@ func ProvideService(httpClientProvider httpclient.Provider, tracer tracing.Trace
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
-	_, fromAlert := req.Headers[ngalertmodels.FromAlertHeaderName]
+	_, fromAlert := req.Headers[headerFromAlert]
 	logger := s.logger.FromContext(ctx).New("fromAlert", fromAlert)
 
 	if err != nil {
@@ -55,20 +62,20 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return &backend.QueryDataResponse{}, err
 	}
 
-	return queryData(ctx, req.Queries, dsInfo, logger, s.tracer)
+	return queryData(ctx, req, dsInfo, logger, s.tracer)
 }
 
 // separate function to allow testing the whole transformation and query flow
-func queryData(ctx context.Context, queries []backend.DataQuery, dsInfo *es.DatasourceInfo, logger log.Logger, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
-	if len(queries) == 0 {
+func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *es.DatasourceInfo, logger log.Logger, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
+	if len(req.Queries) == 0 {
 		return &backend.QueryDataResponse{}, fmt.Errorf("query contains no queries")
 	}
 
-	client, err := es.NewClient(ctx, dsInfo, queries[0].TimeRange, logger, tracer)
+	client, err := es.NewClient(ctx, dsInfo, logger, tracer)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
-	query := newElasticsearchDataQuery(ctx, client, queries, logger, tracer)
+	query := newElasticsearchDataQuery(ctx, client, req, logger, tracer)
 	return query.execute()
 }
 
@@ -150,11 +157,6 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			includeFrozen = false
 		}
 
-		xpack, ok := jsonData["xpack"].(bool)
-		if !ok {
-			xpack = false
-		}
-
 		configuredFields := es.ConfiguredFields{
 			TimeField:       timeField,
 			LogLevelField:   logLevelField,
@@ -170,7 +172,6 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			ConfiguredFields:           configuredFields,
 			Interval:                   interval,
 			IncludeFrozen:              includeFrozen,
-			XPack:                      xpack,
 		}
 		return model, nil
 	}
@@ -225,6 +226,10 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 			status = "cancelled"
 		}
 		lp := []any{"error", err, "status", status, "duration", time.Since(start), "stage", es.StageDatabaseRequest, "resourcePath", req.Path}
+		sourceErr := exp.Error{}
+		if errors.As(err, &sourceErr) {
+			lp = append(lp, "statusSource", sourceErr.Source())
+		}
 		if response != nil {
 			lp = append(lp, "statusCode", response.StatusCode)
 		}

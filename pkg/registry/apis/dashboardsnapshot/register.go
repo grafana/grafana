@@ -21,10 +21,10 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	dashboardsnapshot "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1"
+	"github.com/grafana/grafana/pkg/apiserver/builder"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -269,6 +269,13 @@ func (b *SnapshotsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 							fmt.Sprintf("user orgId does not match namespace (%d != %d)", info.OrgID, user.OrgID), nil)
 						return
 					}
+
+					cmd := dashboardsnapshots.CreateDashboardSnapshotCommand{}
+					if err := web.Bind(wrap.Req, &cmd); err != nil {
+						wrap.JsonApiErr(http.StatusBadRequest, "bad request data", err)
+						return
+					}
+
 					opts, err := b.options(info.Value)
 					if err != nil {
 						wrap.JsonApiErr(http.StatusBadRequest, "error getting options", err)
@@ -276,7 +283,7 @@ func (b *SnapshotsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 					}
 
 					// Use the existing snapshot service
-					dashboardsnapshots.CreateDashboardSnapshot(wrap, opts.Spec, b.service)
+					dashboardsnapshots.CreateDashboardSnapshot(wrap, opts.Spec, cmd, b.service)
 				},
 			},
 			{

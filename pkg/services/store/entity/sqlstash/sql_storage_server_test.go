@@ -4,13 +4,13 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/store/entity/db/dbimpl"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -34,7 +34,7 @@ func TestCreate(t *testing.T) {
 				Resource:  "playlists",
 				Namespace: "default",
 				Name:      "set-minimum-uid",
-				Key:       "/playlist.grafana.app/playlists/default/set-minimum-uid",
+				Key:       "/playlist.grafana.app/playlists/namespaces/default/set-minimum-uid",
 				CreatedBy: "set-minimum-creator",
 				Origin:    &entity.EntityOriginInfo{},
 			},
@@ -44,7 +44,7 @@ func TestCreate(t *testing.T) {
 		{
 			"request with no entity creator",
 			&entity.Entity{
-				Key: "/playlist.grafana.app/playlists/default/set-only-key",
+				Key: "/playlist.grafana.app/playlists/namespaces/default/set-only-key",
 			},
 			true,
 			false,
@@ -124,15 +124,20 @@ func TestCreate(t *testing.T) {
 }
 
 func setUpTestServer(t *testing.T) entity.EntityStoreServer {
-	sqlStore := db.InitTestDB(t)
+	sqlStore, cfg := db.InitTestDBWithCfg(t)
 
 	entityDB, err := dbimpl.ProvideEntityDB(
 		sqlStore,
-		setting.NewCfg(),
+		cfg,
 		featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorage))
 	require.NoError(t, err)
 
-	s, err := ProvideSQLEntityServer(entityDB)
+	traceConfig, err := tracing.ParseTracingConfig(cfg)
+	require.NoError(t, err)
+	tracer, err := tracing.ProvideService(traceConfig)
+	require.NoError(t, err)
+
+	s, err := ProvideSQLEntityServer(entityDB, tracer)
 	require.NoError(t, err)
 	return s
 }

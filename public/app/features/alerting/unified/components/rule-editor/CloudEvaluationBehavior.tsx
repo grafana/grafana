@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import React from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, Controller } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Field, Input, InputControl, Select, useStyles2 } from '@grafana/ui';
+import { Field, Input, Select, useStyles2 } from '@grafana/ui';
 
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { timeOptions } from '../../utils/time';
@@ -37,7 +37,7 @@ export const CloudEvaluationBehavior = () => {
               width={8}
             />
           </Field>
-          <InputControl
+          <Controller
             name="forTimeUnit"
             render={({ field: { onChange, ref, ...field } }) => (
               <Select

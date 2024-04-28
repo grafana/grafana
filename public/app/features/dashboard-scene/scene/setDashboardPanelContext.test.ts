@@ -15,7 +15,7 @@ setBackendSrv({
   post: postFn,
   put: putFn,
   delete: deleteFn,
-} as any as BackendSrv);
+} as unknown as BackendSrv);
 
 describe('setDashboardPanelContext', () => {
   describe('canAddAnnotations', () => {

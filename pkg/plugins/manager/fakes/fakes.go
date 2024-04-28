@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/plugins/plugindef"
+	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 )
@@ -255,6 +255,21 @@ func (s *FakePluginStorage) Extract(ctx context.Context, pluginID string, dirNam
 	return &storage.ExtractedPluginArchive{}, nil
 }
 
+type FakePluginEnvProvider struct {
+	PluginEnvVarsFunc func(ctx context.Context, plugin *plugins.Plugin) []string
+}
+
+func NewFakePluginEnvProvider() *FakePluginEnvProvider {
+	return &FakePluginEnvProvider{}
+}
+
+func (p *FakePluginEnvProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plugin) []string {
+	if p.PluginEnvVarsFunc != nil {
+		return p.PluginEnvVarsFunc(ctx, plugin)
+	}
+	return []string{}
+}
+
 type FakeProcessManager struct {
 	StartFunc func(_ context.Context, p *plugins.Plugin) error
 	StopFunc  func(_ context.Context, p *plugins.Plugin) error
@@ -441,7 +456,7 @@ func (f *FakeAuthService) HasExternalService(ctx context.Context, pluginID strin
 	return f.Result != nil, nil
 }
 
-func (f *FakeAuthService) RegisterExternalService(ctx context.Context, pluginID string, pType plugindef.Type, svc *plugindef.IAM) (*auth.ExternalService, error) {
+func (f *FakeAuthService) RegisterExternalService(ctx context.Context, pluginID string, pType pfs.Type, svc *pfs.IAM) (*auth.ExternalService, error) {
 	return f.Result, nil
 }
 
@@ -461,36 +476,36 @@ func (f *FakeDiscoverer) Discover(ctx context.Context, src plugins.PluginSource)
 }
 
 type FakeBootstrapper struct {
-	BootstrapFunc func(ctx context.Context, src plugins.PluginSource, bundles []*plugins.FoundBundle) ([]*plugins.Plugin, error)
+	BootstrapFunc func(ctx context.Context, src plugins.PluginSource, bundle *plugins.FoundBundle) ([]*plugins.Plugin, error)
 }
 
-func (f *FakeBootstrapper) Bootstrap(ctx context.Context, src plugins.PluginSource, bundles []*plugins.FoundBundle) ([]*plugins.Plugin, error) {
+func (f *FakeBootstrapper) Bootstrap(ctx context.Context, src plugins.PluginSource, bundle *plugins.FoundBundle) ([]*plugins.Plugin, error) {
 	if f.BootstrapFunc != nil {
-		return f.BootstrapFunc(ctx, src, bundles)
+		return f.BootstrapFunc(ctx, src, bundle)
 	}
 	return []*plugins.Plugin{}, nil
 }
 
 type FakeValidator struct {
-	ValidateFunc func(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error)
+	ValidateFunc func(ctx context.Context, ps *plugins.Plugin) error
 }
 
-func (f *FakeValidator) Validate(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error) {
+func (f *FakeValidator) Validate(ctx context.Context, ps *plugins.Plugin) error {
 	if f.ValidateFunc != nil {
 		return f.ValidateFunc(ctx, ps)
 	}
-	return []*plugins.Plugin{}, nil
+	return nil
 }
 
 type FakeInitializer struct {
-	IntializeFunc func(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error)
+	IntializeFunc func(ctx context.Context, ps *plugins.Plugin) (*plugins.Plugin, error)
 }
 
-func (f *FakeInitializer) Initialize(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error) {
+func (f *FakeInitializer) Initialize(ctx context.Context, ps *plugins.Plugin) (*plugins.Plugin, error) {
 	if f.IntializeFunc != nil {
 		return f.IntializeFunc(ctx, ps)
 	}
-	return []*plugins.Plugin{}, nil
+	return ps, nil
 }
 
 type FakeTerminator struct {

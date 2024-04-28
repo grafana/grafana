@@ -9,16 +9,14 @@ import { Alert, ClipboardButton, Field, FieldSet, Icon, Input, Switch } from '@g
 import { t, Trans } from 'app/core/internationalization';
 import { createShortLink } from 'app/core/utils/shortLinks';
 import { ThemePicker } from 'app/features/dashboard/components/ShareModal/ThemePicker';
-import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
+import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 
-import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardUrl } from '../utils/urlBuilders';
 
 import { SceneShareTabState } from './types';
 export interface ShareLinkTabState extends SceneShareTabState, ShareOptions {
   panelRef?: SceneObjectRef<VizPanel>;
-  dashboardRef: SceneObjectRef<DashboardScene>;
 }
 
 interface ShareOptions {
@@ -128,13 +126,14 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
     return this.state.shareUrl;
   };
 
-  onCopy() {
+  onCopy = () => {
     DashboardInteractions.shareLinkCopied({
       currentTimeRange: this.state.useLockedTime,
       theme: this.state.selectedTheme,
       shortenURL: this.state.useShortUrl,
+      shareResource: getTrackingSource(this.state.panelRef),
     });
-  }
+  };
 }
 
 function ShareLinkTabRenderer({ model }: SceneComponentProps<ShareLinkTab>) {
@@ -222,7 +221,7 @@ function ShareLinkTabRenderer({ model }: SceneComponentProps<ShareLinkTab>) {
           bottomSpacing={0}
         >
           <Trans i18nKey="share-modal.link.render-instructions">
-            To render a panel image, you must install the
+            To render a panel image, you must install the{' '}
             <a
               href="https://grafana.com/grafana/plugins/grafana-image-renderer"
               target="_blank"

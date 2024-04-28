@@ -876,6 +876,76 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 		},
 		{
+			desc:      "normal -> normal (NoData, KeepLastState) -> alerting -> alerting (NoData, KeepLastState) - keeps last state when result is NoData and NoDataState is KeepLast",
+			alertRule: baseRuleWith(models.WithForNTimes(0), models.WithNoDataExecAs(models.KeepLast)),
+			evalResults: map[time.Time]eval.Results{
+				t1: {
+					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+				},
+				t2: {
+					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)), // TODO fix it because NoData does not have same labels
+				},
+				t3: {
+					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+				},
+				tn(4): {
+					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)), // TODO fix it because NoData does not have same labels
+				},
+			},
+			expectedAnnotations: 1,
+			expectedStates: []*state.State{
+				{
+					Labels:            labels["system + rule + labels1"],
+					ResultFingerprint: labels1.Fingerprint(),
+					State:             eval.Alerting,
+					StateReason:       models.ConcatReasons(eval.NoData.String(), models.StateReasonKeepLast),
+					Results: []state.Evaluation{
+						newEvaluation(t1, eval.Normal),
+						newEvaluation(t2, eval.NoData),
+						newEvaluation(t3, eval.Alerting),
+						newEvaluation(tn(4), eval.NoData),
+					},
+					StartsAt:           t3,
+					EndsAt:             tn(4).Add(state.ResendDelay * 4),
+					LastEvaluationTime: tn(4),
+				},
+			},
+		},
+		{
+			desc:      "normal -> pending -> pending (NoData, KeepLastState) -> alerting (NoData, KeepLastState) - keep last state respects For when result is NoData",
+			alertRule: baseRuleWith(models.WithForNTimes(2), models.WithNoDataExecAs(models.KeepLast)),
+			evalResults: map[time.Time]eval.Results{
+				t1: {
+					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+				},
+				t2: {
+					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+				},
+				t3: {
+					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)), // TODO fix it because NoData does not have same labels
+				},
+				tn(4): {
+					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)), // TODO fix it because NoData does not have same labels
+				},
+			},
+			expectedAnnotations: 2,
+			expectedStates: []*state.State{
+				{
+					Labels:            labels["system + rule + labels1"],
+					ResultFingerprint: labels1.Fingerprint(),
+					State:             eval.Alerting,
+					StateReason:       models.ConcatReasons(eval.NoData.String(), models.StateReasonKeepLast),
+					Results: []state.Evaluation{
+						newEvaluation(t3, eval.NoData),
+						newEvaluation(tn(4), eval.NoData),
+					},
+					StartsAt:           tn(4),
+					EndsAt:             tn(4).Add(state.ResendDelay * 4),
+					LastEvaluationTime: tn(4),
+				},
+			},
+		},
+		{
 			desc:      "normal -> normal when result is NoData and NoDataState is ok",
 			alertRule: baseRuleWith(models.WithNoDataExecAs(models.OK)),
 			evalResults: map[time.Time]eval.Results{
@@ -1009,6 +1079,76 @@ func TestProcessEvalResults(t *testing.T) {
 					LastEvaluationTime: t2,
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test", "Error": "[sse.dataQueryError] failed to execute query [A]: this is an error"},
+				},
+			},
+		},
+		{
+			desc:      "normal -> normal (Error, KeepLastState) -> alerting -> alerting (Error, KeepLastState) - keeps last state when result is Error and ExecErrState is KeepLast",
+			alertRule: baseRuleWith(models.WithForNTimes(0), models.WithErrorExecAs(models.KeepLastErrState)),
+			evalResults: map[time.Time]eval.Results{
+				t1: {
+					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+				},
+				t2: {
+					newResult(eval.WithError(expr.MakeQueryError("A", "datasource_uid_1", errors.New("this is an error"))), eval.WithLabels(labels1)), // TODO fix it because error labels are different
+				},
+				t3: {
+					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+				},
+				tn(4): {
+					newResult(eval.WithError(expr.MakeQueryError("A", "datasource_uid_1", errors.New("this is an error"))), eval.WithLabels(labels1)), // TODO fix it because error labels are different
+				},
+			},
+			expectedAnnotations: 1,
+			expectedStates: []*state.State{
+				{
+					Labels:            labels["system + rule + labels1"],
+					ResultFingerprint: labels1.Fingerprint(),
+					State:             eval.Alerting,
+					StateReason:       models.ConcatReasons(eval.Error.String(), models.StateReasonKeepLast),
+					Results: []state.Evaluation{
+						newEvaluation(t1, eval.Normal),
+						newEvaluation(t2, eval.Error),
+						newEvaluation(t3, eval.Alerting),
+						newEvaluation(tn(4), eval.Error),
+					},
+					StartsAt:           t3,
+					EndsAt:             tn(4).Add(state.ResendDelay * 4),
+					LastEvaluationTime: tn(4),
+				},
+			},
+		},
+		{
+			desc:      "normal -> pending -> pending (Error, KeepLastState) -> alerting (Error, KeepLastState) - keep last state respects For when result is Error",
+			alertRule: baseRuleWith(models.WithForNTimes(2), models.WithErrorExecAs(models.KeepLastErrState)),
+			evalResults: map[time.Time]eval.Results{
+				t1: {
+					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+				},
+				t2: {
+					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+				},
+				t3: {
+					newResult(eval.WithError(expr.MakeQueryError("A", "datasource_uid_1", errors.New("this is an error"))), eval.WithLabels(labels1)), // TODO fix it because error labels are different
+				},
+				tn(4): {
+					newResult(eval.WithError(expr.MakeQueryError("A", "datasource_uid_1", errors.New("this is an error"))), eval.WithLabels(labels1)), // TODO fix it because error labels are different
+				},
+			},
+			expectedAnnotations: 2,
+			expectedStates: []*state.State{
+				{
+					Labels:            labels["system + rule + labels1"],
+					ResultFingerprint: labels1.Fingerprint(),
+					State:             eval.Alerting,
+					StateReason:       models.ConcatReasons(eval.Error.String(), models.StateReasonKeepLast),
+					Results: []state.Evaluation{
+						newEvaluation(t3, eval.Error),
+						newEvaluation(tn(4), eval.Error),
+					},
+					StartsAt:           tn(4),
+					EndsAt:             tn(4).Add(state.ResendDelay * 4),
+					LastEvaluationTime: tn(4),
 				},
 			},
 		},

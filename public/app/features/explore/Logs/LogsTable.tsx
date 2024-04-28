@@ -105,7 +105,7 @@ export function LogsTable(props: Props) {
       }
 
       // create extract JSON transformation for every field that is `json.RawMessage`
-      const transformations: Array<DataTransformerConfig | CustomTransformOperator> = extractFields(dataFrame);
+      const transformations: Array<DataTransformerConfig | CustomTransformOperator> = getLogsExtractFields(dataFrame);
 
       let labelFilters = buildLabelFilters(columnsWithMeta);
 
@@ -197,7 +197,7 @@ const isFieldFilterable = (field: Field, bodyName: string, timeName: string) => 
 
 // TODO: explore if `logsFrame.ts` can help us with getting the right fields
 // TODO Why is typeInfo not defined on the Field interface?
-function extractFields(dataFrame: DataFrame) {
+export function getLogsExtractFields(dataFrame: DataFrame) {
   return dataFrame.fields
     .filter((field: Field & { typeInfo?: { frame: string } }) => {
       const isFieldLokiLabels =

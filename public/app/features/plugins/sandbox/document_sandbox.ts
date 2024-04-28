@@ -2,11 +2,11 @@ import { isNearMembraneProxy, ProxyTarget } from '@locker/near-membrane-shared';
 import { cloneDeep } from 'lodash';
 import Prism from 'prismjs';
 
-import { DataSourceApi } from '@grafana/data';
+import { CustomVariableSupport, DataSourceApi } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { forbiddenElements } from './constants';
-import { isReactClassComponent, logWarning } from './utils';
+import { isReactClassComponent, logWarning, unboxNearMembraneProxies } from './utils';
 
 // IMPORTANT: NEVER export this symbol from a public (e.g `@grafana/*`) package
 const SANDBOX_LIVE_VALUE = Symbol.for('@@SANDBOX_LIVE_VALUE');
@@ -138,7 +138,7 @@ export function patchObjectAsLiveTarget(obj: unknown) {
     !(obj instanceof Function) &&
     // conditions for allowed objects
     // react class components
-    (isReactClassComponent(obj) || obj instanceof DataSourceApi)
+    (isReactClassComponent(obj) || obj instanceof DataSourceApi || obj instanceof CustomVariableSupport)
   ) {
     Reflect.defineProperty(obj, SANDBOX_LIVE_VALUE, {});
   } else {
@@ -194,7 +194,28 @@ export function patchWebAPIs() {
   if (!nativeAPIsPatched) {
     nativeAPIsPatched = true;
     patchHistoryReplaceState();
+    patchWorkerPostMessage();
   }
+}
+
+/*
+ *
+ * Worker.postMessage uses internally structureClone which won't work with proxies.
+ *
+ * In case where the blue realm code is directly handling proxy objects that
+ * should be send over a post message the blue realm will call postMessage and try to
+ * send the proxy resulting in an error.
+ *
+ * This makes sure all proxies are unboxed before being sent over the post message
+ */
+function patchWorkerPostMessage() {
+  const originalPostMessage = Worker.prototype.postMessage;
+  Object.defineProperty(Worker.prototype, 'postMessage', {
+    value: function (...args: Parameters<typeof Worker.prototype.postMessage>) {
+      // eslint-disable-next-line
+      return originalPostMessage.apply(this, unboxNearMembraneProxies(args) as typeof args);
+    },
+  });
 }
 
 /*

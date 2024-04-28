@@ -151,6 +151,10 @@ function getRowContentHeight(panels: SceneGridItemLike[]): number {
   let maxY = 0;
   let minY = Number.MAX_VALUE;
 
+  if (panels.length === 0) {
+    return 0;
+  }
+
   for (const panel of panels) {
     if (panel.state.y! + panel.state.height! > maxY) {
       maxY = panel.state.y! + panel.state.height!;
@@ -180,8 +184,12 @@ function updateLayout(layout: SceneGridLayout, rows: SceneGridRow[], maxYOfRows:
     const diff = maxYOfRows - firstChildAfterY;
 
     for (const child of childrenAfter) {
-      if (child.state.y! < maxYOfRows) {
-        child.setState({ y: child.state.y! + diff });
+      child.setState({ y: child.state.y! + diff });
+
+      if (child instanceof SceneGridRow) {
+        for (const rowChild of child.state.children) {
+          rowChild.setState({ y: rowChild.state.y! + diff });
+        }
       }
     }
   }

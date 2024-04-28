@@ -35,6 +35,85 @@ func TestParseQuery(t *testing.T) {
 		require.Equal(t, time.Second*15, models[0].Step)
 		require.Equal(t, "go_goroutines 15s 15000 3000s 3000 3000000", models[0].Expr)
 	})
+
+	t.Run("parsing query model with logsVolume supporting query type", func(t *testing.T) {
+		queryContext := &backend.QueryDataRequest{
+			Queries: []backend.DataQuery{
+				{
+					JSON: []byte(`
+					{
+						"expr": "go_goroutines $__interval $__interval_ms $__range $__range_s $__range_ms",
+						"format": "time_series",
+						"refId": "A",
+						"supportingQueryType": "logsVolume"
+					}`,
+					),
+					TimeRange: backend.TimeRange{
+						From: time.Now().Add(-3000 * time.Second),
+						To:   time.Now(),
+					},
+					Interval:      time.Second * 15,
+					MaxDataPoints: 200,
+				},
+			},
+		}
+		models, err := parseQuery(queryContext)
+		require.NoError(t, err)
+		require.Equal(t, SupportingQueryLogsVolume, models[0].SupportingQueryType)
+	})
+
+	t.Run("parsing query model with any supporting query type", func(t *testing.T) {
+		queryContext := &backend.QueryDataRequest{
+			Queries: []backend.DataQuery{
+				{
+					JSON: []byte(`
+					{
+						"expr": "go_goroutines $__interval $__interval_ms $__range $__range_s $__range_ms",
+						"format": "time_series",
+						"refId": "A",
+						"supportingQueryType": "foo"
+					}`,
+					),
+					TimeRange: backend.TimeRange{
+						From: time.Now().Add(-3000 * time.Second),
+						To:   time.Now(),
+					},
+					Interval:      time.Second * 15,
+					MaxDataPoints: 200,
+				},
+			},
+		}
+		models, err := parseQuery(queryContext)
+		require.NoError(t, err)
+		require.Equal(t, SupportingQueryType("foo"), models[0].SupportingQueryType)
+	})
+
+	t.Run("parsing query model with any empty query type", func(t *testing.T) {
+		queryContext := &backend.QueryDataRequest{
+			Queries: []backend.DataQuery{
+				{
+					JSON: []byte(`
+					{
+						"expr": "go_goroutines $__interval $__interval_ms $__range $__range_s $__range_ms",
+						"format": "time_series",
+						"refId": "A",
+						"supportingQueryType": ""
+					}`,
+					),
+					TimeRange: backend.TimeRange{
+						From: time.Now().Add(-3000 * time.Second),
+						To:   time.Now(),
+					},
+					Interval:      time.Second * 15,
+					MaxDataPoints: 200,
+				},
+			},
+		}
+		models, err := parseQuery(queryContext)
+		require.NoError(t, err)
+		require.Equal(t, SupportingQueryNone, models[0].SupportingQueryType)
+	})
+
 	t.Run("interpolate variables, range between 1s and 0.5s", func(t *testing.T) {
 		expr := "go_goroutines $__interval $__interval_ms $__range $__range_s $__range_ms"
 		queryType := dataquery.LokiQueryTypeRange

@@ -1,6 +1,6 @@
 ---
 aliases:
-  - unified-alerting/set-up/
+  - unified-alerting/set-up/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/set-up/
 canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/
 description: Set up or upgrade your implementation of Grafana Alerting
 labels:
@@ -23,6 +23,9 @@ These are set-up instructions for Grafana Alerting Open Source.
 
 - Configure your [data sources][data-source-management]
 - Check which data sources are compatible with and supported by [Grafana Alerting][data-source-alerting]
+
+Watch this short video to get started.
+{{< youtube id="6W8Nu4b_PXM" >}}
 
 ## Set up Alerting
 
@@ -54,7 +57,7 @@ Grafana Alerting supports many additional configuration options, from configurin
 
 The following topics provide you with advanced configuration options for Grafana Alerting.
 
-- [Provision alert rules using file provisioning](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/file-provisioning)
+- [Provision alert rules using file provisioning][file-provisioning]
 - [Provision alert rules using Terraform][terraform-provisioning]
 - [Add an external Alertmanager][configure-alertmanager]
 - [Configure high availability][configure-high-availability]
@@ -66,11 +69,12 @@ The following topics provide you with advanced configuration options for Grafana
 [configure-high-availability]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-high-availability"
 [configure-high-availability]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-high-availability"
 
-[data-source-alerting]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/data-source-alerting"
-[data-source-alerting]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/data-source-alerting"
+[data-source-alerting]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules#supported-data-sources"
+[data-source-alerting]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules#supported-data-sources"
 
-[data-source-management]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management"
-[data-source-management]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management"
+[data-source-management]: "/docs/ -> /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management"
+
+[file-provisioning]: "/docs/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/file-provisioning"
 
 [terraform-provisioning]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/terraform-provisioning"
 [terraform-provisioning]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/terraform-provisioning"

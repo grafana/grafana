@@ -22,7 +22,7 @@ Welcome to Grafana 10.3! Read on to learn about changes to navigation, visualiza
 
 We've also included here features released in Grafana 10.2.3, as well as breaking changes from that release. Features that were included in the 10.2.3 release are marked with an asterisk.
 
-For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md). For the specific steps we recommend when you upgrade to v10.3, check out our [Upgrade Guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v10.3/).
+For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v10.3, check out our [Upgrade Guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v10.3/).
 
 ## Breaking changes
 
@@ -365,7 +365,7 @@ Derived fields or data links are a concept to add correlations based on your log
 
 The following example would add the derived field `traceID regex` based on a regular expression and another `app label` field based on the `app` label.
 
-{{< figure src="/media/docs/grafana/2024-01-05_loki-derived-fields.png" >}}
+{{< figure src="/media/docs/grafana/2024-01-05_loki-derived-fields.png" alt="Derived fields added based on a regular expression and an app label">}}
 
 ### InfluxDB native SQL support
 

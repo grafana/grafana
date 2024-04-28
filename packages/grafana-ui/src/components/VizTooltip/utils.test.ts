@@ -1,4 +1,7 @@
-import { calculateTooltipPosition } from './utils';
+import { DataFrame, FieldType } from '@grafana/data';
+import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
+
+import { calculateTooltipPosition, getContentItems } from './utils';
 
 describe('utils', () => {
   describe('calculateTooltipPosition', () => {
@@ -160,6 +163,173 @@ describe('utils', () => {
         x: 60,
         y: 60,
       });
+    });
+  });
+
+  describe('it tests getContentItems with numeric values', () => {
+    const timeValues = [1707833954056, 1707838274056, 1707842594056];
+    const seriesAValues = [1, 20, 70];
+    const seriesBValues = [-100, -26, null];
+
+    const frame = {
+      name: 'a',
+      length: timeValues.length,
+      fields: [
+        {
+          name: 'time',
+          type: FieldType.time,
+          values: timeValues[0],
+          config: {},
+          display: (value: string) => ({
+            text: value,
+            color: undefined,
+            numeric: NaN,
+          }),
+        },
+        {
+          name: 'A-series',
+          type: FieldType.number,
+          values: seriesAValues,
+          config: {},
+          display: (value: string) => ({
+            text: value,
+            color: undefined,
+            numeric: Number(value),
+          }),
+        },
+        {
+          name: 'B-series',
+          type: FieldType.number,
+          values: seriesBValues,
+          config: {},
+          display: (value: string) => ({
+            text: value,
+            color: undefined,
+            numeric: Number(value),
+          }),
+        },
+      ],
+    } as unknown as DataFrame;
+
+    const fields = frame.fields;
+    const xField = frame.fields[0];
+    const dataIdxs = [1, 1, 1];
+
+    it('displays one series in single mode', () => {
+      const rows = getContentItems(fields, xField, dataIdxs, 2, TooltipDisplayMode.Single, SortOrder.None);
+      expect(rows.length).toBe(1);
+      expect(rows[0].value).toBe('-26');
+    });
+
+    it('displays the right content in multi mode', () => {
+      const rows = getContentItems(fields, xField, dataIdxs, null, TooltipDisplayMode.Multi, SortOrder.None);
+      expect(rows.length).toBe(2);
+      expect(rows[0].value).toBe('20');
+      expect(rows[1].value).toBe('-26');
+    });
+
+    it('displays the values sorted ASC', () => {
+      const rows = getContentItems(fields, xField, dataIdxs, null, TooltipDisplayMode.Multi, SortOrder.Ascending);
+      expect(rows.length).toBe(2);
+      expect(rows[0].value).toBe('-26');
+      expect(rows[1].value).toBe('20');
+    });
+
+    it('displays the values sorted DESC', () => {
+      const rows = getContentItems(fields, xField, dataIdxs, null, TooltipDisplayMode.Multi, SortOrder.Descending);
+      expect(rows.length).toBe(2);
+      expect(rows[0].value).toBe('20');
+      expect(rows[1].value).toBe('-26');
+    });
+
+    it('displays the correct value when NULL values', () => {
+      const rows = getContentItems(fields, xField, [2, 2, null], null, TooltipDisplayMode.Multi, SortOrder.Descending);
+      expect(rows.length).toBe(1);
+      expect(rows[0].value).toBe('70');
+    });
+  });
+
+  describe('it tests getContentItems with string values', () => {
+    const timeValues = [1707833954056, 1707838274056, 1707842594056];
+    const seriesAValues = ['LOW', 'HIGH', 'NORMAL'];
+    const seriesBValues = ['NORMAL', 'LOW', 'LOW'];
+
+    const frame = {
+      name: 'a',
+      length: timeValues.length,
+      fields: [
+        {
+          name: 'time',
+          type: FieldType.time,
+          values: timeValues[0],
+          config: {},
+          display: (value: string) => ({
+            text: value,
+            color: undefined,
+            numeric: NaN,
+          }),
+        },
+        {
+          name: 'A-series',
+          type: FieldType.string,
+          values: seriesAValues,
+          config: {},
+          display: (value: string) => ({
+            text: value,
+            color: undefined,
+            numeric: NaN,
+          }),
+        },
+        {
+          name: 'B-series',
+          type: FieldType.string,
+          values: seriesBValues,
+          config: {},
+          display: (value: string) => ({
+            text: value,
+            color: undefined,
+            numeric: NaN,
+          }),
+        },
+      ],
+    } as unknown as DataFrame;
+
+    const fields = frame.fields;
+    const xField = frame.fields[0];
+    const dataIdxs = [null, 0, 0];
+
+    it('displays one series in single mode', () => {
+      const rows = getContentItems(fields, xField, [null, null, 0], 2, TooltipDisplayMode.Single, SortOrder.None);
+      expect(rows.length).toBe(1);
+      expect(rows[0].value).toBe('NORMAL');
+    });
+
+    it('displays the right content in multi mode', () => {
+      const rows = getContentItems(fields, xField, dataIdxs, 2, TooltipDisplayMode.Multi, SortOrder.None);
+      expect(rows.length).toBe(2);
+      expect(rows[0].value).toBe('LOW');
+      expect(rows[1].value).toBe('NORMAL');
+    });
+
+    it('displays the values sorted ASC', () => {
+      const rows = getContentItems(fields, xField, dataIdxs, 2, TooltipDisplayMode.Multi, SortOrder.Ascending);
+      expect(rows.length).toBe(2);
+      expect(rows[0].value).toBe('LOW');
+      expect(rows[1].value).toBe('NORMAL');
+    });
+
+    it('displays the values sorted DESC', () => {
+      const rows = getContentItems(
+        frame.fields,
+        frame.fields[0],
+        dataIdxs,
+        2,
+        TooltipDisplayMode.Multi,
+        SortOrder.Descending
+      );
+      expect(rows.length).toBe(2);
+      expect(rows[0].value).toBe('NORMAL');
+      expect(rows[1].value).toBe('LOW');
     });
   });
 });

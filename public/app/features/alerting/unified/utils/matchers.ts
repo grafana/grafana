@@ -1,4 +1,11 @@
-import { uniqBy } from 'lodash';
+/**
+ * Functions in this file are used by the routeGroupsMatcher.worker.ts file.
+ * This is a web worker that matches active alert instances to a policy in the notification policy tree.
+ *
+ * Please keep the references to other files here to a minimum, if we reference a file that uses GrafanaBootData from `window` the worker will fail to load.
+ */
+
+import { compact, uniqBy } from 'lodash';
 
 import { Matcher, MatcherOperator, ObjectMatcher, Route } from 'app/plugins/datasource/alertmanager/types';
 
@@ -11,10 +18,18 @@ const matcherOperators = [
   MatcherOperator.equal,
 ];
 
+/**
+ * Parse a single matcher, examples:
+ *  foo="bar" => { name: foo, value: bar, isRegex: false, isEqual: true }
+ *  bar!~baz => { name: bar, value: baz, isRegex: true, isEqual: false }
+ */
 export function parseMatcher(matcher: string): Matcher {
   if (matcher.startsWith('{') && matcher.endsWith('}')) {
-    throw new Error(`PromQL matchers not supported yet, sorry! PromQL matcher found: ${matcher}`);
+    throw new Error(
+      'this function does not support PromQL-style matcher syntax, call parsePromQLStyleMatcher() instead'
+    );
   }
+
   const operatorsFound = matcherOperators
     .map((op): [MatcherOperator, number] => [op, matcher.indexOf(op)])
     .filter(([_, idx]) => idx > -1)
@@ -36,6 +51,34 @@ export function parseMatcher(matcher: string): Matcher {
     isRegex: operator === MatcherOperator.regex || operator === MatcherOperator.notRegex,
     isEqual: operator === MatcherOperator.equal || operator === MatcherOperator.regex,
   };
+}
+
+/**
+ * This function combines parseMatcher and parsePromQLStyleMatcher, always returning an array of Matcher[] regardless of input syntax
+ */
+export function parseMatcherToArray(matcher: string): Matcher[] {
+  return isPromQLStyleMatcher(matcher) ? parsePromQLStyleMatcher(matcher) : [parseMatcher(matcher)];
+}
+
+/**
+ * This function turns a PromQL-style matchers like { foo="bar", bar!=baz } in to an array of Matchers
+ */
+export function parsePromQLStyleMatcher(matcher: string): Matcher[] {
+  if (!isPromQLStyleMatcher(matcher)) {
+    throw new Error('not a PromQL style matcher');
+  }
+
+  // split by `,` but not when it's used as a label value
+  const commaUnlessQuoted = /,(?=(?:[^"]*"[^"]*")*[^"]*$)/;
+  const parts = matcher.replace(/^\{/, '').replace(/\}$/, '').trim().split(commaUnlessQuoted);
+
+  return compact(parts)
+    .flatMap(parseMatcher)
+    .map((matcher) => ({
+      ...matcher,
+      name: unquoteWithUnescape(matcher.name),
+      value: unquoteWithUnescape(matcher.value),
+    }));
 }
 
 // Parses a list of entries like like "['foo=bar', 'baz=~bad*']" into SilenceMatcher[]
@@ -65,47 +108,32 @@ export const getMatcherQueryParams = (labels: Labels) => {
  * this function will normalize all of the different ways to define matchers in to a single one.
  */
 export const normalizeMatchers = (route: Route): ObjectMatcher[] => {
-  const matchers: ObjectMatcher[] = [];
+  let routeMatchers: ObjectMatcher[] = [];
 
   if (route.matchers) {
     route.matchers.forEach((matcher) => {
-      const { name, value, isEqual, isRegex } = parseMatcher(matcher);
-      let operator = MatcherOperator.equal;
-
-      if (isEqual && isRegex) {
-        operator = MatcherOperator.regex;
-      }
-      if (!isEqual && isRegex) {
-        operator = MatcherOperator.notRegex;
-      }
-      if (isEqual && !isRegex) {
-        operator = MatcherOperator.equal;
-      }
-      if (!isEqual && !isRegex) {
-        operator = MatcherOperator.notEqual;
-      }
-
-      matchers.push([name, operator, value]);
+      const parsedMatchers = parseMatcherToArray(matcher).map(matcherToObjectMatcher);
+      routeMatchers = routeMatchers.concat(parsedMatchers);
     });
   }
 
   if (route.object_matchers) {
-    matchers.push(...route.object_matchers);
+    routeMatchers.push(...route.object_matchers);
   }
 
   if (route.match_re) {
     Object.entries(route.match_re).forEach(([label, value]) => {
-      matchers.push([label, MatcherOperator.regex, value]);
+      routeMatchers.push([label, MatcherOperator.regex, value]);
     });
   }
 
   if (route.match) {
     Object.entries(route.match).forEach(([label, value]) => {
-      matchers.push([label, MatcherOperator.equal, value]);
+      routeMatchers.push([label, MatcherOperator.equal, value]);
     });
   }
 
-  return matchers;
+  return routeMatchers;
 };
 
 /**
@@ -137,11 +165,35 @@ export const matcherFormatter = {
     return `${name} ${operator} ${formattedValue}`;
   },
   unquote: ([name, operator, value]: ObjectMatcher): string => {
+    const unquotedName = unquoteWithUnescape(name);
     // Unquoted value can be an empty string which we want to display as ""
     const unquotedValue = unquoteWithUnescape(value) || '""';
-    return `${name} ${operator} ${unquotedValue}`;
+    return `${unquotedName} ${operator} ${unquotedValue}`;
   },
 } as const;
+
+export function isPromQLStyleMatcher(input: string): boolean {
+  return input.startsWith('{') && input.endsWith('}');
+}
+
+export function matcherToObjectMatcher(matcher: Matcher): ObjectMatcher {
+  const operator = matcherToOperator(matcher);
+  return [matcher.name, operator, matcher.value];
+}
+
+function matcherToOperator(matcher: Matcher): MatcherOperator {
+  if (matcher.isEqual) {
+    if (matcher.isRegex) {
+      return MatcherOperator.regex;
+    } else {
+      return MatcherOperator.equal;
+    }
+  } else if (matcher.isRegex) {
+    return MatcherOperator.notRegex;
+  } else {
+    return MatcherOperator.notEqual;
+  }
+}
 
 export type MatcherFormatter = keyof typeof matcherFormatter;
 

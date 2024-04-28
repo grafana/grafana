@@ -9,6 +9,7 @@ import (
 	"reflect"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -19,20 +20,25 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 )
 
+const (
+	maxConcurrentCollectors  = 5
+	collectorTimeoutDuration = 5 * time.Minute
+)
+
 var usageStatsURL = "https://stats.grafana.org/grafana-usage-report"
 
 func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, error) {
 	version := strings.ReplaceAll(uss.Cfg.BuildVersion, ".", "_")
-	metrics := map[string]any{}
+	metrics := sync.Map{}
 	start := time.Now()
 
 	edition := "oss"
 	if uss.Cfg.IsEnterprise {
 		edition = "enterprise"
 	}
+
 	report := usagestats.Report{
 		Version:      version,
-		Metrics:      metrics,
 		Os:           runtime.GOOS,
 		Arch:         runtime.GOARCH,
 		Edition:      edition,
@@ -40,37 +46,62 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 		UsageStatsId: uss.GetUsageStatsId(ctx),
 	}
 
-	uss.gatherMetrics(ctx, metrics)
+	uss.gatherMetrics(ctx, &metrics)
 
 	// must run after registration of external metrics
-	if v, ok := metrics["stats.valid_license.count"]; ok {
+	if v, ok := metrics.Load("stats.valid_license.count"); ok {
 		report.HasValidLicense = v == 1
 	} else {
-		metrics["stats.valid_license.count"] = 0
+		metrics.Store("stats.valid_license.count", 0)
 	}
 
-	uss.log.FromContext(ctx).Debug("Collected usage stats", "metricCount", len(metrics), "version", report.Version, "os", report.Os, "arch", report.Arch, "edition", report.Edition, "duration", time.Since(start))
+	report.Metrics = make(map[string]any)
+	metricCount := 0
+	metrics.Range(func(key, value any) bool {
+		report.Metrics[key.(string)] = value
+		metricCount++
+		return true
+	})
+
+	uss.log.FromContext(ctx).Debug("Collected usage stats", "metricCount", metricCount, "version", report.Version, "os", report.Os, "arch", report.Arch, "edition", report.Edition, "duration", time.Since(start))
 	return report, nil
 }
 
-func (uss *UsageStats) gatherMetrics(ctx context.Context, metrics map[string]any) {
-	ctx, span := uss.tracer.Start(ctx, "UsageStats.GatherLoop")
+func (uss *UsageStats) gatherMetrics(ctx context.Context, metrics *sync.Map) {
+	ctxTracer, span := uss.tracer.Start(ctx, "UsageStats.GatherLoop")
 	defer span.End()
 	totC, errC := 0, 0
-	for _, fn := range uss.externalMetrics {
-		fnMetrics, err := uss.runMetricsFunc(ctx, fn)
-		totC++
-		if err != nil {
-			errC++
-			continue
-		}
 
-		for name, value := range fnMetrics {
-			metrics[name] = value
-		}
+	sem := make(chan struct{}, maxConcurrentCollectors) // create a semaphore with a capacity of 5
+	var wg sync.WaitGroup
+
+	for _, fn := range uss.externalMetrics {
+		wg.Add(1)
+		go func(fn func(context.Context) (map[string]any, error)) {
+			defer wg.Done()
+
+			sem <- struct{}{}        // acquire a token
+			defer func() { <-sem }() // release the token when done
+
+			ctxWithTimeout, cancel := context.WithTimeout(ctxTracer, collectorTimeoutDuration)
+			defer cancel()
+
+			fnMetrics, err := uss.runMetricsFunc(ctxWithTimeout, fn)
+			totC++
+			if err != nil {
+				errC++
+				return
+			}
+
+			for name, value := range fnMetrics {
+				metrics.Store(name, value)
+			}
+		}(fn)
 	}
-	metrics["stats.usagestats.debug.collect.total.count"] = totC
-	metrics["stats.usagestats.debug.collect.error.count"] = errC
+
+	wg.Wait()
+	metrics.Store("stats.usagestats.debug.collect.total.count", totC)
+	metrics.Store("stats.usagestats.debug.collect.error.count", errC)
 }
 
 func (uss *UsageStats) runMetricsFunc(ctx context.Context, fn usagestats.MetricsFunc) (map[string]any, error) {

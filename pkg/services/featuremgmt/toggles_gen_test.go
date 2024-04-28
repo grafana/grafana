@@ -49,8 +49,8 @@ func TestFeatureToggleFiles(t *testing.T) {
 			if flag.Name != strings.TrimSpace(flag.Name) {
 				t.Errorf("flag Name should not start/end with spaces.  See: %s", flag.Name)
 			}
-			if flag.AllowSelfServe && flag.Stage != FeatureStageGeneralAvailability {
-				t.Errorf("only allow self-serving GA toggles")
+			if flag.AllowSelfServe && !(flag.Stage == FeatureStageGeneralAvailability || flag.Stage == FeatureStagePublicPreview || flag.Stage == FeatureStageDeprecated) {
+				t.Errorf("only allow self-serving GA, PublicPreview and Deprecated toggles")
 			}
 			if flag.Owner == "" {
 				t.Errorf("feature %s does not have an owner. please fill the FeatureFlag.Owner property", flag.Name)
@@ -126,7 +126,7 @@ func TestFeatureToggleFiles(t *testing.T) {
 						item.Annotations[utils.AnnoKeyUpdatedTimestamp] = created.String()
 						item.Spec = v // the current value
 					}
-				} else {
+				} else if item.DeletionTimestamp == nil {
 					item.DeletionTimestamp = &created
 					fmt.Printf("mark feature as deleted")
 				}

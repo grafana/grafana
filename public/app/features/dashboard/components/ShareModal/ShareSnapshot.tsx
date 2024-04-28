@@ -12,6 +12,7 @@ import { VariableRefresh } from '../../../variables/types';
 import { getDashboardSnapshotSrv } from '../../services/SnapshotSrv';
 
 import { ShareModalTabProps } from './types';
+import { getTrackingSource } from './utils';
 
 interface Props extends ShareModalTabProps {}
 
@@ -37,10 +38,6 @@ export class ShareSnapshot extends PureComponent<Props, State> {
     this.dashboard = props.dashboard;
     this.expireOptions = [
       {
-        label: t('share-modal.snapshot.expire-never', `Never`),
-        value: 0,
-      },
-      {
         label: t('share-modal.snapshot.expire-hour', `1 Hour`),
         value: 60 * 60,
       },
@@ -49,15 +46,19 @@ export class ShareSnapshot extends PureComponent<Props, State> {
         value: 60 * 60 * 24,
       },
       {
-        label: t('share-modal.snapshot.expire-week', `7 Days`),
+        label: t('share-modal.snapshot.expire-week', `1 Week`),
         value: 60 * 60 * 24 * 7,
+      },
+      {
+        label: t('share-modal.snapshot.expire-never', `Never`),
+        value: 0,
       },
     ];
     this.state = {
       isLoading: false,
       step: 1,
-      selectedExpireOption: this.expireOptions[0],
-      snapshotExpires: this.expireOptions[0].value,
+      selectedExpireOption: this.expireOptions[2],
+      snapshotExpires: this.expireOptions[2].value,
       snapshotName: props.dashboard.title,
       timeoutSeconds: 4,
       snapshotUrl: '',
@@ -118,11 +119,13 @@ export class ShareSnapshot extends PureComponent<Props, State> {
         DashboardInteractions.publishSnapshotClicked({
           expires: snapshotExpires,
           timeout: timeoutSeconds,
+          shareResource: getTrackingSource(this.props.panel),
         });
       } else {
         DashboardInteractions.publishSnapshotLocalClicked({
           expires: snapshotExpires,
           timeout: timeoutSeconds,
+          shareResource: getTrackingSource(this.props.panel),
         });
       }
       this.setState({ isLoading: false });
@@ -277,7 +280,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
             </Button>
           )}
           <Button variant="primary" disabled={isLoading} onClick={this.createSnapshot()}>
-            <Trans i18nKey="share-modal.snapshot.local-button">Local Snapshot</Trans>
+            <Trans i18nKey="share-modal.snapshot.local-button">Publish Snapshot</Trans>
           </Button>
         </Modal.ButtonRow>
       </>

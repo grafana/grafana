@@ -109,7 +109,7 @@ fully Go modules compatible, but can be viewed using
 ### Error source
 
 You can optionally specify an error source that describes from where an
-error originates. By default it's _server_ and means the error originates
+error originates. By default, it's _server_ and means the error originates
 from within the application, e.g. Grafana. The `errutil.WithDownstream()`
 option may be appended to the NewBase function call to denote an error
 originates from a _downstream_ server/service. The error source information
