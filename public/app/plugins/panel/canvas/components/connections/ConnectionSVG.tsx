@@ -147,16 +147,13 @@ export const ConnectionSVG = ({
             xEnd = v.targetOriginal.x;
             yEnd = v.targetOriginal.y;
           } else if (source.options.connections) {
-            const currentConnections = [...source.options.connections];
-            // Check for original state
-            if (!currentConnections[index].sourceOriginal || !currentConnections[index].targetOriginal) {
-              currentConnections[index] = {
-                ...currentConnections[index],
-                sourceOriginal: { x: x1, y: y1 },
-                targetOriginal: { x: x2, y: y2 },
-              };
-              // Update model with populated originals
-              source.onChange({ ...source.options, connections: currentConnections });
+            // If original source or target coordinates are not set for the current connection, set them
+            if (
+              !source.options.connections[index].sourceOriginal ||
+              !source.options.connections[index].targetOriginal
+            ) {
+              source.options.connections[index].sourceOriginal = { x: x1, y: y1 };
+              source.options.connections[index].targetOriginal = { x: x2, y: y2 };
             }
           }
 
