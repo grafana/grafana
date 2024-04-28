@@ -39,14 +39,10 @@ export function getQueryHints(query: string, series?: unknown[], datasource?: Pr
     // metric name does not include '_bucket'
     const queryTokens = getQueryTokens(query);
 
-    let certainNativeHistogram = false;
     // Determine whether any of the query identifier tokens refers to a native histogram metric
-    const nativeHistogramNameMetric = checkMetricType(
-      queryTokens,
-      'histogram',
-      metricsMetadata,
-      certainNativeHistogram
-    );
+    const { nameMetric } = checkMetricType(queryTokens, 'histogram', metricsMetadata, false);
+
+    const nativeHistogramNameMetric = nameMetric;
 
     if (nativeHistogramNameMetric) {
       // add hints:
@@ -130,13 +126,17 @@ export function getQueryHints(query: string, series?: unknown[], datasource?: Pr
     // Use metric metadata for exact types
     const nameMatch = query.match(/\b((?<!:)\w+_(total|sum|count)(?!:))\b/);
     let counterNameMetric = nameMatch ? nameMatch[1] : '';
+
     let certain = false;
 
     if (metricsMetadata) {
       // Tokenize the query into its identifiers (see https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels)
       const queryTokens = getQueryTokens(query);
       // Determine whether any of the query identifier tokens refers to a counter metric
-      counterNameMetric = checkMetricType(queryTokens, 'counter', metricsMetadata, certain);
+      const metricTypeChecked = checkMetricType(queryTokens, 'counter', metricsMetadata, certain);
+
+      counterNameMetric = metricTypeChecked.nameMetric;
+      certain = metricTypeChecked.certain;
     }
 
     if (counterNameMetric) {
@@ -247,7 +247,8 @@ function checkMetricType(
   metricsMetadata: PromMetricsMetadata,
   certain: boolean
 ) {
-  return (
+  // update certain to change language for counters
+  const nameMetric =
     queryTokens.find((metricName) => {
       // Only considering first type information, could be non-deterministic
       const metadata = metricsMetadata[metricName];
@@ -257,6 +258,7 @@ function checkMetricType(
       } else {
         return false;
       }
-    }) ?? ''
-  );
+    }) ?? '';
+
+  return { nameMetric, certain };
 }
