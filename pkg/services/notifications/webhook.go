@@ -64,6 +64,11 @@ func (ns *NotificationService) sendWebRequestSync(ctx context.Context, webhook *
 	if err != nil {
 		return err
 	}
+	url, err := url.Parse(webhook.Url)
+	if err != nil {
+		// Should not be possible - NewRequestWithContext should also err if the URL is bad.
+		return err
+	}
 
 	if webhook.ContentType == "" {
 		webhook.ContentType = "application/json"
@@ -98,17 +103,17 @@ func (ns *NotificationService) sendWebRequestSync(ctx context.Context, webhook *
 	if webhook.Validation != nil {
 		err := webhook.Validation(body, resp.StatusCode)
 		if err != nil {
-			ns.log.Debug("Webhook failed validation", "statuscode", resp.Status, "body", string(body))
+			ns.log.Debug("Webhook failed validation", "url", url.Redacted(), "statuscode", resp.Status, "body", string(body), "error", err)
 			return fmt.Errorf("webhook failed validation: %w", err)
 		}
 	}
 
 	if resp.StatusCode/100 == 2 {
-		ns.log.Debug("Webhook succeeded", "statuscode", resp.Status)
+		ns.log.Debug("Webhook succeeded", "url", url.Redacted(), "statuscode", resp.Status)
 		return nil
 	}
 
-	ns.log.Debug("Webhook failed", "statuscode", resp.Status, "body", string(body))
+	ns.log.Debug("Webhook failed", "url", url.Redacted(), "statuscode", resp.Status, "body", string(body))
 	return fmt.Errorf("webhook response status %v", resp.Status)
 }
 
