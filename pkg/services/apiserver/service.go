@@ -9,15 +9,14 @@ import (
 	"github.com/grafana/dskit/services"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/endpoints/responsewriter"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/kube-openapi/pkg/common"
 
+	playlist "github.com/grafana/grafana/apps/playlist"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apiserver/builder"
 	grafanaresponsewriter "github.com/grafana/grafana/pkg/apiserver/endpoints/responsewriter"
@@ -49,26 +48,7 @@ var (
 	_ RestConfigProvider         = (*service)(nil)
 	_ registry.BackgroundService = (*service)(nil)
 	_ registry.CanBeDisabled     = (*service)(nil)
-
-	Scheme = runtime.NewScheme()
-	Codecs = serializer.NewCodecFactory(Scheme)
-
-	unversionedVersion = schema.GroupVersion{Group: "", Version: "v1"}
-	unversionedTypes   = []runtime.Object{
-		&metav1.Status{},
-		&metav1.WatchEvent{},
-		&metav1.APIVersions{},
-		&metav1.APIGroupList{},
-		&metav1.APIGroup{},
-		&metav1.APIResourceList{},
-	}
 )
-
-func init() {
-	// we need to add the options to empty v1
-	metav1.AddToGroupVersion(Scheme, schema.GroupVersion{Group: "", Version: "v1"})
-	Scheme.AddUnversionedTypes(unversionedVersion, unversionedTypes...)
-}
 
 type Service interface {
 	services.NamedService
@@ -188,30 +168,11 @@ func (s *service) RegisterAPI(b builder.APIGroupBuilder) {
 }
 
 func (s *service) start(ctx context.Context) error {
+	o := grafanaapiserveroptions.NewOptions(playlist.ResourceGroups()...)
+
 	// Get the list of groups the server will support
 	builders := s.builders
 
-	groupVersions := make([]schema.GroupVersion, 0, len(builders))
-	// Install schemas
-	initialSize := len(aggregator.APIVersionPriorities)
-	for i, b := range builders {
-		groupVersions = append(groupVersions, b.GetGroupVersion())
-		if err := b.InstallSchema(Scheme); err != nil {
-			return err
-		}
-
-		if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
-			// set the priority for the group+version
-			aggregator.APIVersionPriorities[b.GetGroupVersion()] = aggregator.Priority{Group: 15000, Version: int32(i + initialSize)}
-		}
-
-		auth := b.GetAuthorizer()
-		if auth != nil {
-			s.authorizer.Register(b.GetGroupVersion(), auth)
-		}
-	}
-
-	o := grafanaapiserveroptions.NewOptions(Codecs.LegacyCodec(groupVersions...))
 	applyGrafanaConfig(s.cfg, s.features, o)
 
 	if errs := o.Validate(); len(errs) != 0 {
@@ -219,9 +180,47 @@ func (s *service) start(ctx context.Context) error {
 		return errs[0]
 	}
 
-	serverConfig := genericapiserver.NewRecommendedConfig(Codecs)
-	if err := o.ApplyTo(serverConfig); err != nil {
+	serverConfig, err := o.APIServerOptions.Config()
+	if err != nil {
 		return err
+	}
+
+	serverConfig.ExtraConfig.OpenAPIDefinitionGetters = []common.GetOpenAPIDefinitions{builder.GetOpenAPIDefinitions(builders)}
+
+	versionPriority := int32(len(aggregator.APIVersionPriorities))
+	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
+		for _, g := range serverConfig.ExtraConfig.ResourceGroups {
+			for _, r := range g.Resources {
+				versionPriority += 1
+				gv := schema.GroupVersion{
+					Group:   r.Kind.Group(),
+					Version: r.Kind.Version(),
+				}
+				// set the priority for the group+version
+				aggregator.APIVersionPriorities[gv] = aggregator.Priority{Group: 15000, Version: versionPriority}
+			}
+		}
+	}
+
+	if err := o.ApplyTo(serverConfig.RecommendedConfig); err != nil {
+		return err
+	}
+	// Install schemas
+	for _, b := range builders {
+		versionPriority += 1
+		if err := b.InstallSchema(serverConfig.ExtraConfig.Scheme); err != nil {
+			return err
+		}
+
+		if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
+			// set the priority for the group+version
+			aggregator.APIVersionPriorities[b.GetGroupVersion()] = aggregator.Priority{Group: 15000, Version: versionPriority}
+		}
+
+		auth := b.GetAuthorizer()
+		if auth != nil {
+			s.authorizer.Register(b.GetGroupVersion(), auth)
+		}
 	}
 	serverConfig.Authorization.Authorizer = s.authorizer
 	serverConfig.Authentication.Authenticator = authenticator.NewAuthenticator(serverConfig.Authentication.Authenticator)
@@ -286,9 +285,9 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	// Add OpenAPI specs for each group+version
-	err := builder.SetupConfig(
-		Scheme,
-		serverConfig,
+	err = builder.SetupConfig(
+		serverConfig.ExtraConfig.Scheme,
+		serverConfig.RecommendedConfig,
 		builders,
 		s.cfg.BuildStamp,
 		s.cfg.BuildVersion,
@@ -300,7 +299,7 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	// Create the server
-	server, err := serverConfig.Complete().New("grafana-apiserver", genericapiserver.NewEmptyDelegate())
+	server, err := serverConfig.Complete().NewServer(genericapiserver.NewEmptyDelegate())
 	if err != nil {
 		return err
 	}
@@ -311,7 +310,7 @@ func (s *service) start(ctx context.Context) error {
 	dualWriteEnabled := o.StorageOptions.StorageType != grafanaapiserveroptions.StorageTypeLegacy
 
 	// Install the API group+version
-	err = builder.InstallAPIs(Scheme, Codecs, server, serverConfig.RESTOptionsGetter, builders, dualWriteEnabled)
+	err = builder.InstallAPIs(serverConfig.ExtraConfig.Scheme, serverConfig.ExtraConfig.Codecs, server.GenericAPIServer, serverConfig.RESTOptionsGetter, builders, dualWriteEnabled)
 	if err != nil {
 		return err
 	}
@@ -321,12 +320,12 @@ func (s *service) start(ctx context.Context) error {
 
 	var runningServer *genericapiserver.GenericAPIServer
 	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
-		runningServer, err = s.startAggregator(transport, serverConfig, server)
+		runningServer, err = s.startAggregator(transport, serverConfig.RecommendedConfig, server.GenericAPIServer)
 		if err != nil {
 			return err
 		}
 	} else {
-		runningServer, err = s.startCoreServer(transport, serverConfig, server)
+		runningServer, err = s.startCoreServer(transport, server.GenericAPIServer)
 		if err != nil {
 			return err
 		}
@@ -349,7 +348,6 @@ func (s *service) start(ctx context.Context) error {
 
 func (s *service) startCoreServer(
 	transport *roundTripperFunc,
-	serverConfig *genericapiserver.RecommendedConfig,
 	server *genericapiserver.GenericAPIServer,
 ) (*genericapiserver.GenericAPIServer, error) {
 	// setup the loopback transport and signal that it's ready.

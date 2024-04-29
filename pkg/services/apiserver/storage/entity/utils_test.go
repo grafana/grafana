@@ -5,17 +5,19 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
+	"github.com/grafana/grafana/apps/playlist/apis/playlist/v0alpha1"
 	entityStore "github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/endpoints/request"
 )
 
 func TestResourceToEntity(t *testing.T) {
+	gv := schema.GroupVersion{Group: v0alpha1.PlaylistKind().Group(), Version: v0alpha1.PlaylistKind().Version()}
 	createdAt := metav1.Now()
 	createdAtStr := createdAt.UTC().Format(time.RFC3339)
 
@@ -25,7 +27,7 @@ func TestResourceToEntity(t *testing.T) {
 	updatedAtStr := updatedAt.UTC().Format(time.RFC3339)
 
 	Scheme := runtime.NewScheme()
-	Scheme.AddKnownTypes(v0alpha1.PlaylistResourceInfo.GroupVersion(), &v0alpha1.Playlist{})
+	Scheme.AddKnownTypes(gv, v0alpha1.PlaylistKind().ZeroValue())
 	Codecs := serializer.NewCodecFactory(Scheme)
 
 	testCases := []struct {
@@ -73,12 +75,12 @@ func TestResourceToEntity(t *testing.T) {
 						"grafana.app/slug":             "test-slug",
 					},
 				},
-				Spec: v0alpha1.Spec{
+				Spec: v0alpha1.PlaylistSpec{
 					Title:    "A playlist",
 					Interval: "5m",
-					Items: []v0alpha1.Item{
-						{Type: v0alpha1.ItemTypeDashboardByTag, Value: "panel-tests"},
-						{Type: v0alpha1.ItemTypeDashboardByUid, Value: "vmie2cmWz"},
+					Items: []v0alpha1.PlaylistItem{
+						{Type: v0alpha1.PlaylistItemTypeDashboardByTag, Value: "panel-tests"},
+						{Type: v0alpha1.PlaylistItemTypeDashboardByUid, Value: "vmie2cmWz"},
 					},
 				},
 			},
@@ -104,7 +106,7 @@ func TestResourceToEntity(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.resource.GetObjectKind().GroupVersionKind().Kind+" to entity conversion should succeed", func(t *testing.T) {
-			entity, err := resourceToEntity(tc.resource, tc.requestInfo, Codecs.LegacyCodec(v0alpha1.PlaylistResourceInfo.GroupVersion()))
+			entity, err := resourceToEntity(tc.resource, tc.requestInfo, Codecs.LegacyCodec(gv))
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedKey, entity.Key)
 			assert.Equal(t, tc.expectedName, entity.Name)
@@ -128,6 +130,7 @@ func TestResourceToEntity(t *testing.T) {
 }
 
 func TestEntityToResource(t *testing.T) {
+	gv := schema.GroupVersion{Group: v0alpha1.PlaylistKind().Group(), Version: v0alpha1.PlaylistKind().Version()}
 	createdAt := metav1.Now()
 	createdAtStr := createdAt.UTC().Format(time.RFC3339)
 
@@ -135,7 +138,7 @@ func TestEntityToResource(t *testing.T) {
 	updatedAtStr := updatedAt.UTC().Format(time.RFC3339)
 
 	Scheme := runtime.NewScheme()
-	Scheme.AddKnownTypes(v0alpha1.PlaylistResourceInfo.GroupVersion(), &v0alpha1.Playlist{})
+	Scheme.AddKnownTypes(gv, v0alpha1.PlaylistKind().ZeroValue())
 	Codecs := serializer.NewCodecFactory(Scheme)
 
 	testCases := []struct {
@@ -187,12 +190,12 @@ func TestEntityToResource(t *testing.T) {
 				"grafana.app/updatedBy":        "test-updated-by",
 				"grafana.app/updatedTimestamp": updatedAtStr,
 			},
-			expectedSpec: v0alpha1.Spec{
+			expectedSpec: v0alpha1.PlaylistSpec{
 				Title:    "A playlist",
 				Interval: "5m",
-				Items: []v0alpha1.Item{
-					{Type: v0alpha1.ItemTypeDashboardByTag, Value: "panel-tests"},
-					{Type: v0alpha1.ItemTypeDashboardByUid, Value: "vmie2cmWz"},
+				Items: []v0alpha1.PlaylistItem{
+					{Type: v0alpha1.PlaylistItemTypeDashboardByTag, Value: "panel-tests"},
+					{Type: v0alpha1.PlaylistItemTypeDashboardByUid, Value: "vmie2cmWz"},
 				},
 			},
 		},
@@ -201,7 +204,7 @@ func TestEntityToResource(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.entity.Key+" to resource conversion should succeed", func(t *testing.T) {
 			var p v0alpha1.Playlist
-			err := entityToResource(tc.entity, &p, Codecs.LegacyCodec(v0alpha1.PlaylistResourceInfo.GroupVersion()))
+			err := entityToResource(tc.entity, &p, Codecs.LegacyCodec(gv))
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedApiVersion, p.TypeMeta.APIVersion)
 			assert.Equal(t, tc.expectedCreationTimestamp.Unix(), p.ObjectMeta.CreationTimestamp.Unix())

@@ -3,8 +3,9 @@ package options
 import (
 	"net"
 
+	"github.com/grafana/grafana-app-sdk/apiserver"
+	"github.com/grafana/grafana/pkg/apiserver/server/options"
 	"github.com/spf13/pflag"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/discovery/aggregated"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	genericoptions "k8s.io/apiserver/pkg/server/options"
@@ -16,19 +17,20 @@ type OptionsProvider interface {
 	ValidateOptions() []error
 }
 
-const defaultEtcdPathPrefix = "/registry/grafana.app"
-
 type Options struct {
 	RecommendedOptions *genericoptions.RecommendedOptions
+	APIServerOptions   *options.Options
 	AggregatorOptions  *AggregatorServerOptions
 	StorageOptions     *StorageOptions
 	ExtraOptions       *ExtraOptions
 	APIOptions         []OptionsProvider
 }
 
-func NewOptions(codec runtime.Codec) *Options {
+func NewOptions(groups ...*apiserver.ResourceGroup) *Options {
+	apiServerOptions := options.NewOptions(groups)
 	return &Options{
-		RecommendedOptions: NewRecommendedOptions(codec),
+		RecommendedOptions: apiServerOptions.RecommendedOptions,
+		APIServerOptions:   apiServerOptions,
 		AggregatorOptions:  NewAggregatorServerOptions(),
 		StorageOptions:     NewStorageOptions(),
 		ExtraOptions:       NewExtraOptions(),
@@ -36,7 +38,7 @@ func NewOptions(codec runtime.Codec) *Options {
 }
 
 func (o *Options) AddFlags(fs *pflag.FlagSet) {
-	o.RecommendedOptions.AddFlags(fs)
+	o.APIServerOptions.AddFlags(fs)
 	o.AggregatorOptions.AddFlags(fs)
 	o.StorageOptions.AddFlags(fs)
 	o.ExtraOptions.AddFlags(fs)
@@ -114,13 +116,6 @@ func (o *Options) ApplyTo(serverConfig *genericapiserver.RecommendedConfig) erro
 		serverConfig.SecureServing = nil
 	}
 	return nil
-}
-
-func NewRecommendedOptions(codec runtime.Codec) *genericoptions.RecommendedOptions {
-	return genericoptions.NewRecommendedOptions(
-		defaultEtcdPathPrefix,
-		codec,
-	)
 }
 
 type fakeListener struct {
