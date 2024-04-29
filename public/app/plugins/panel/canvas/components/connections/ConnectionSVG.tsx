@@ -128,7 +128,7 @@ export const ConnectionSVG = ({
         // Render selected connection last, ensuring it is above other connections
         .sort((_a, b) => (selectedConnection === b && scene.panel.context.instanceState.selectedConnection ? -1 : 0))
         .map((v, idx) => {
-          const { source, target, info, vertices } = v;
+          const { source, target, info, vertices, index } = v;
           const sourceRect = source.div?.getBoundingClientRect();
           const parent = source.div?.parentElement;
           const transformScale = scene.scale;
@@ -146,6 +146,15 @@ export const ConnectionSVG = ({
             yStart = v.sourceOriginal.y;
             xEnd = v.targetOriginal.x;
             yEnd = v.targetOriginal.y;
+          } else if (source.options.connections) {
+            // If original source or target coordinates are not set for the current connection, set them
+            if (
+              !source.options.connections[index].sourceOriginal ||
+              !source.options.connections[index].targetOriginal
+            ) {
+              source.options.connections[index].sourceOriginal = { x: x1, y: y1 };
+              source.options.connections[index].targetOriginal = { x: x2, y: y2 };
+            }
           }
 
           const midpoint = calculateMidpoint(x1, y1, x2, y2);
