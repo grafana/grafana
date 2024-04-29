@@ -655,6 +655,10 @@ const (
 	// Enables Grafana-managed recording rules.
 	FlagGrafanaManagedRecordingRules = "grafanaManagedRecordingRules"
 
+	// FlagQueryLibrary
+	// Enables Query Library feature in Explore
+	FlagQueryLibrary = "queryLibrary"
+
 	// FlagNewDashboardSharingComponent
 	// Enables the new sharing drawer design
 	FlagNewDashboardSharingComponent = "newDashboardSharingComponent"

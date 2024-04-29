@@ -1,24 +1,23 @@
 import React, { useCallback, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
-import { Button, ButtonGroup, ClipboardButton, Dropdown } from '@grafana/ui';
-import { createDashboardShortLink } from 'app/core/utils/shortLinks';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { Button, ButtonGroup, Dropdown } from '@grafana/ui';
+import { createAndCopyDashboardShortLink } from 'app/core/utils/shortLinks';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { DashboardInteractions } from '../../utils/interactions';
 
 import ShareMenu from './ShareMenu';
 
+const newShareButtonSelector = e2eSelectors.pages.Dashboard.DashNav.newShareButton;
+
 export default function ShareButton({ dashboard }: { dashboard: DashboardScene }) {
   const [isOpen, setIsOpen] = useState(false);
 
   const [_, buildUrl] = useAsyncFn(async () => {
-    return await createDashboardShortLink(dashboard, { useAbsoluteTimeRange: true, theme: 'current' });
+    return await createAndCopyDashboardShortLink(dashboard, { useAbsoluteTimeRange: true, theme: 'current' });
   }, [dashboard]);
-
-  const getAsyncText = async () => {
-    return await buildUrl();
-  };
 
   const onMenuClick = useCallback((isOpen: boolean) => {
     if (isOpen) {
@@ -31,12 +30,12 @@ export default function ShareButton({ dashboard }: { dashboard: DashboardScene }
   const MenuActions = () => <ShareMenu dashboard={dashboard} />;
 
   return (
-    <ButtonGroup>
-      <ClipboardButton size="sm" getText={getAsyncText} tooltip="Copy shortened URL">
+    <ButtonGroup data-testid={newShareButtonSelector.container}>
+      <Button data-testid={newShareButtonSelector.shareLink} size="sm" tooltip="Copy shortened URL" onClick={buildUrl}>
         Share link
-      </ClipboardButton>
+      </Button>
       <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={onMenuClick}>
-        <Button size="sm" icon={isOpen ? 'angle-up' : 'angle-down'} />
+        <Button data-testid={newShareButtonSelector.arrowMenu} size="sm" icon={isOpen ? 'angle-up' : 'angle-down'} />
       </Dropdown>
     </ButtonGroup>
   );

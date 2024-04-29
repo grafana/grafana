@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAsyncFn } from 'react-use';
 
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Menu } from '@grafana/ui';
 
 import { createAndCopyDashboardShortLink } from '../../../../core/utils/shortLinks';
@@ -9,14 +10,12 @@ import { DashboardScene } from '../../scene/DashboardScene';
 
 import { ShareExternallyDrawer } from './ShareExternallyDrawer';
 
+const newShareButtonSelector = e2eSelectors.pages.Dashboard.DashNav.newShareButton.menu;
+
 export default function ShareMenu({ dashboard }: { dashboard: DashboardScene }) {
   const [_, buildUrl] = useAsyncFn(async () => {
     return await createAndCopyDashboardShortLink(dashboard, { useAbsoluteTimeRange: true, theme: 'current' });
   }, [dashboard]);
-
-  const getAsyncText = async () => {
-    return await buildUrl();
-  };
 
   const onShareExternallyClick = () => {
     const drawer = new SceneDrawerAsScene({
@@ -31,8 +30,14 @@ export default function ShareMenu({ dashboard }: { dashboard: DashboardScene }) 
   };
 
   return (
-    <Menu>
-      <Menu.Item label="Share internally" description="Copy link" icon="building" onClick={getAsyncText} />
+    <Menu data-testid={newShareButtonSelector.container}>
+      <Menu.Item
+        testId={newShareButtonSelector.shareInternally}
+        label="Share internally"
+        description="Copy link"
+        icon="building"
+        onClick={buildUrl}
+      />
       <Menu.Item label="Share externally" icon="share-alt" onClick={onShareExternallyClick} />
     </Menu>
   );

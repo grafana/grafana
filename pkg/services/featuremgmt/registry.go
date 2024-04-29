@@ -208,8 +208,9 @@ var (
 		{
 			Name:         "returnToPrevious",
 			Description:  "Enables the return to previous context functionality",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
+			Expression:   "true", // enabled by default
 			Owner:        grafanaFrontendPlatformSquad,
 		},
 		{
@@ -1209,6 +1210,14 @@ var (
 			AllowSelfServe:    false,
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
+		},
+		{
+			Name:           "queryLibrary",
+			Description:    "Enables Query Library feature in Explore",
+			Stage:          FeatureStageExperimental,
+			Owner:          grafanaExploreSquad,
+			FrontendOnly:   false,
+			AllowSelfServe: false,
 		},
 		{
 			Name:         "newDashboardSharingComponent",

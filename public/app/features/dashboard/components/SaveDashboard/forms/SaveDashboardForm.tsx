@@ -135,11 +135,11 @@ export const SaveDashboardForm = ({
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    message: css`
-      display: flex;
-      align-items: end;
-      flex-direction: column;
-      width: 100%;
-    `,
+    message: css({
+      display: 'flex',
+      alignItems: 'end',
+      flexDirection: 'column',
+      width: '100%',
+    }),
   };
 }
