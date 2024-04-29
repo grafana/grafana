@@ -22,7 +22,7 @@ type Manager struct {
 }
 
 func ProvideService(cfg *config.PluginManagementCfg) (*Manager, error) {
-	baseURL, err := url.JoinPath(cfg.GrafanaComURL, "/api/plugins")
+	baseURL, err := url.JoinPath(cfg.GrafanaComAPIURL, "/plugins")
 	if err != nil {
 		return nil, err
 	}

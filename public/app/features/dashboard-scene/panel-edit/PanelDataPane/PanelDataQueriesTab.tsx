@@ -42,11 +42,19 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
 
   constructor(panelManager: VizPanelManager) {
     super({});
+
     this.TabComponent = (props: PanelDataTabHeaderProps) => {
       return QueriesTab({ ...props, model: this });
     };
 
     this._panelManager = panelManager;
+    this.addActivationHandler(this.onActivate.bind(this));
+  }
+
+  private onActivate() {
+    // This is to preserve SceneQueryRunner stays alive when switching between visualizations and table view
+    const deactivate = this._panelManager.queryRunner.activate();
+    return () => deactivate();
   }
 
   buildQueryOptions(): QueryGroupOptions {
@@ -179,7 +187,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
 
 function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQueriesTab>) {
   const { datasource, dsSettings } = model.panelManager.useState();
-  const { data } = model.panelManager.queryRunner.useState();
+  const { data, queries } = model.panelManager.queryRunner.useState();
 
   if (!datasource || !dsSettings || !data) {
     return null;
@@ -201,7 +209,7 @@ function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQue
 
       <QueryEditorRows
         data={data}
-        queries={model.getQueries()}
+        queries={queries}
         dsSettings={dsSettings}
         onAddQuery={model.onAddQuery}
         onQueriesChange={model.onQueriesChange}
