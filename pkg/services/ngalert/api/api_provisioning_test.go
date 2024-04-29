@@ -694,7 +694,7 @@ func TestProvisioningApi(t *testing.T) {
     is_paused      = false
 
     notification_settings {
-      receiver            = "Test-Receiver"
+      contact_point       = "Test-Receiver"
       group_by            = ["alertname", "grafana_folder", "test"]
       group_wait          = "1s"
       group_interval      = "5s"
