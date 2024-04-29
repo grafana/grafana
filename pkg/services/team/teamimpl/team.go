@@ -2,24 +2,37 @@ package teamimpl
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/setting"
+
+	"github.com/grafana/grafana/pkg/services/accesscontrol/embedserver"
+
+	zclient "github.com/grafana/zanzana/pkg/service/client"
+	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 )
 
 type Service struct {
-	store store
+	store   store
+	zClient *zclient.GRPCClient
 }
 
-func ProvideService(db db.DB, cfg *setting.Cfg) (team.Service, error) {
+func ProvideService(db db.DB, cfg *setting.Cfg, embedServer *embedserver.Service) (team.Service, error) {
 	store := &xormStore{db: db, cfg: cfg, deletes: []string{}}
 
 	if err := store.uidMigration(); err != nil {
 		return nil, err
 	}
-	return &Service{store: &xormStore{db: db, cfg: cfg, deletes: []string{}}}, nil
+
+	zClient, err := embedServer.GetClient(context.Background(), "1")
+	if err != nil {
+		return nil, err
+	}
+
+	return &Service{store: store, zClient: zClient}, nil
 }
 
 func (s *Service) CreateTeam(name, email string, orgID int64) (team.Team, error) {
@@ -51,6 +64,19 @@ func (s *Service) GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsBy
 }
 
 func (s *Service) AddTeamMember(ctx context.Context, userID, orgID, teamID int64, isExternal bool, permission dashboardaccess.PermissionType) error {
+	s.zClient.Write(ctx, &openfgav1.WriteRequest{
+		StoreId:              s.zClient.MustStoreID(ctx),
+		AuthorizationModelId: s.zClient.AuthorizationModelID,
+		Writes: &openfgav1.WriteRequestWrites{
+			TupleKeys: []*openfgav1.TupleKey{
+				{
+					User:     "user:" + strconv.FormatInt(userID, 10),
+					Relation: "member",
+					Object:   "team:" + strconv.FormatInt(teamID, 10), // FIXME: teamID has no org ref
+				},
+			},
+		},
+	})
 	return s.store.AddMember(ctx, userID, orgID, teamID, isExternal, permission)
 }
 
@@ -63,6 +89,19 @@ func (s *Service) IsTeamMember(orgId int64, teamId int64, userId int64) (bool, e
 }
 
 func (s *Service) RemoveTeamMember(ctx context.Context, cmd *team.RemoveTeamMemberCommand) error {
+	s.zClient.Write(ctx, &openfgav1.WriteRequest{
+		StoreId:              s.zClient.MustStoreID(ctx),
+		AuthorizationModelId: s.zClient.AuthorizationModelID,
+		Deletes: &openfgav1.WriteRequestDeletes{
+			TupleKeys: []*openfgav1.TupleKeyWithoutCondition{
+				{
+					User:     "user:" + strconv.FormatInt(cmd.UserID, 10),
+					Relation: "member",
+					Object:   "team:" + strconv.FormatInt(cmd.TeamID, 10), // FIXME: teamID has no org ref
+				},
+			},
+		},
+	})
 	return s.store.RemoveMember(ctx, cmd)
 }
 
