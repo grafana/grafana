@@ -226,7 +226,7 @@ func makeStateTransition() state.StateTransition {
 }
 
 func withUID(uid string) models.AlertRuleMutator {
-	return func(_ *models.AlertRuleGenerator, rule *models.AlertRule) {
+	return func(rule *models.AlertRule) {
 		rule.UID = uid
 	}
 }

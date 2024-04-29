@@ -475,7 +475,7 @@ func withQueryForState(t *testing.T, evalResult eval.State) models.AlertRuleMuta
 		require.Fail(t, fmt.Sprintf("Alert rule with desired evaluation result '%s' is not supported yet", evalResult))
 	}
 
-	return func(_ *models.AlertRuleGenerator, rule *models.AlertRule) {
+	return func(rule *models.AlertRule) {
 		rule.Condition = "A"
 		rule.Data = []models.AlertQuery{
 			{

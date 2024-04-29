@@ -140,32 +140,32 @@ func TestCalculateChanges(t *testing.T) {
 		}{
 			{
 				name: "title is empty",
-				mutator: func(_ *models.AlertRuleGenerator, r *models.AlertRule) {
+				mutator: func(r *models.AlertRule) {
 					r.Title = ""
 				},
 			},
 			{
 				name: "condition and data are empty",
-				mutator: func(_ *models.AlertRuleGenerator, r *models.AlertRule) {
+				mutator: func(r *models.AlertRule) {
 					r.Condition = ""
 					r.Data = nil
 				},
 			},
 			{
 				name: "ExecErrState is empty",
-				mutator: func(_ *models.AlertRuleGenerator, r *models.AlertRule) {
+				mutator: func(r *models.AlertRule) {
 					r.ExecErrState = ""
 				},
 			},
 			{
 				name: "NoDataState is empty",
-				mutator: func(_ *models.AlertRuleGenerator, r *models.AlertRule) {
+				mutator: func(r *models.AlertRule) {
 					r.NoDataState = ""
 				},
 			},
 			{
 				name: "For is 0",
-				mutator: func(_ *models.AlertRuleGenerator, r *models.AlertRule) {
+				mutator: func(r *models.AlertRule) {
 					r.For = 0
 				},
 			},
@@ -596,13 +596,13 @@ func TestCalculateRuleCreate(t *testing.T) {
 }
 
 // simulateSubmitted resets some fields of the structure that are not populated by API model to model conversion
-func simulateSubmitted(_ *models.AlertRuleGenerator, rule *models.AlertRule) {
+func simulateSubmitted(rule *models.AlertRule) {
 	rule.ID = 0
 	rule.Version = 0
 	rule.Updated = time.Time{}
 }
 
-func withoutUID(_ *models.AlertRuleGenerator, rule *models.AlertRule) {
+func withoutUID(rule *models.AlertRule) {
 	rule.UID = ""
 }
 
@@ -611,7 +611,7 @@ func withUIDs(uids map[string]*models.AlertRule) models.AlertRuleMutator {
 	for s := range uids {
 		unused = append(unused, s)
 	}
-	return func(_ *models.AlertRuleGenerator, rule *models.AlertRule) {
+	return func(rule *models.AlertRule) {
 		if len(unused) == 0 {
 			return
 		}

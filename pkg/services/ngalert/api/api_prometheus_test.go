@@ -1297,7 +1297,7 @@ func generateRuleAndInstanceWithQuery(t *testing.T, orgID int64, fakeAIM *fakeAl
 // asFixture removes variable values of the alert rule.
 // we're not too interested in variability of the rule in this scenario.
 func asFixture() ngmodels.AlertRuleMutator {
-	return func(_ *ngmodels.AlertRuleGenerator, r *ngmodels.AlertRule) {
+	return func(r *ngmodels.AlertRule) {
 		r.Title = "AlwaysFiring"
 		r.NamespaceUID = "namespaceUID"
 		r.RuleGroup = "rule-group"
@@ -1313,7 +1313,7 @@ func asFixture() ngmodels.AlertRuleMutator {
 }
 
 func withClassicConditionSingleQuery() ngmodels.AlertRuleMutator {
-	return func(_ *ngmodels.AlertRuleGenerator, r *ngmodels.AlertRule) {
+	return func(r *ngmodels.AlertRule) {
 		queries := []ngmodels.AlertQuery{
 			{
 				RefID:             "A",
@@ -1335,7 +1335,7 @@ func withClassicConditionSingleQuery() ngmodels.AlertRuleMutator {
 }
 
 func withExpressionsMultiQuery() ngmodels.AlertRuleMutator {
-	return func(_ *ngmodels.AlertRuleGenerator, r *ngmodels.AlertRule) {
+	return func(r *ngmodels.AlertRule) {
 		queries := []ngmodels.AlertQuery{
 			{
 				RefID:             "A",

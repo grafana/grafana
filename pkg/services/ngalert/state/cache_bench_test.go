@@ -16,7 +16,7 @@ import (
 
 func BenchmarkGetOrCreateTest(b *testing.B) {
 	cache := newCache()
-	rule := models.NewAlertRuleGenerator().With(func(_ *models.AlertRuleGenerator, rule *models.AlertRule) {
+	rule := models.NewAlertRuleGenerator().With(func(rule *models.AlertRule) {
 		for i := 0; i < 2; i++ {
 			rule.Labels = data.Labels{
 				"label-1": "{{ $value }}",

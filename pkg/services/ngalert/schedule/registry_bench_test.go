@@ -3,6 +3,7 @@ package schedule
 import (
 	"fmt"
 	"io"
+	"math/rand"
 	"testing"
 
 	"github.com/google/uuid"
@@ -11,10 +12,11 @@ import (
 )
 
 func BenchmarkRuleWithFolderFingerprint(b *testing.B) {
-	rules := models.NewAlertRuleGenerator().With(func(g *models.AlertRuleGenerator, rule *models.AlertRule) {
+	gen := models.NewAlertRuleGenerator()
+	rules := gen.With(func(rule *models.AlertRule) {
 		rule.Data = make([]models.AlertQuery, 0, 5)
-		for i := 0; i < g.Rand.Intn(5)+1; i++ {
-			rule.Data = append(rule.Data, g.GenerateQuery())
+		for i := 0; i < rand.Intn(5)+1; i++ {
+			rule.Data = append(rule.Data, gen.GenerateQuery())
 		}
 	}).GenerateManyRef(b.N)
 	folder := uuid.NewString()
