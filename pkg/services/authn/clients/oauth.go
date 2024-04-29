@@ -199,6 +199,15 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	}, nil
 }
 
+func (c *OAuth) IsEnabled() bool {
+	provider := c.socialService.GetOAuthInfoProvider(c.providerName)
+	if provider == nil {
+		return false
+	}
+
+	return provider.Enabled
+}
+
 func (c *OAuth) RedirectURL(ctx context.Context, r *authn.Request) (*authn.Redirect, error) {
 	var opts []oauth2.AuthCodeOption
 
@@ -241,7 +250,7 @@ func (c *OAuth) RedirectURL(ctx context.Context, r *authn.Request) (*authn.Redir
 	}, nil
 }
 
-func (c *OAuth) Logout(ctx context.Context, user identity.Requester) (*authn.Redirect, bool) {
+func (c *OAuth) Logout(ctx context.Context, user authn.Requester) (*authn.Redirect, bool) {
 	token := c.oauthService.GetCurrentOAuthToken(ctx, user)
 
 	namespace, id := user.GetNamespacedID()

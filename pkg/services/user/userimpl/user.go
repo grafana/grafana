@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
-	"github.com/grafana/grafana/pkg/models/roletype"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -135,9 +134,9 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 	// create user
 	usr := &user.User{
 		UID:              cmd.UID,
-		Email:            cmd.Email,
+		Email:            strings.ToLower(cmd.Email),
 		Name:             cmd.Name,
-		Login:            cmd.Login,
+		Login:            strings.ToLower(cmd.Login),
 		Company:          cmd.Company,
 		IsAdmin:          cmd.IsAdmin,
 		IsDisabled:       cmd.IsDisabled,
@@ -161,11 +160,14 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 	usr.Rands = rands
 
 	if len(cmd.Password) > 0 {
-		encodedPassword, err := util.EncodePassword(string(cmd.Password), usr.Salt)
+		if err := cmd.Password.Validate(s.cfg); err != nil {
+			return nil, err
+		}
+
+		usr.Password, err = cmd.Password.Hash(usr.Salt)
 		if err != nil {
 			return nil, err
 		}
-		usr.Password = user.Password(encodedPassword)
 	}
 
 	_, err = s.store.Insert(ctx, usr)
@@ -200,7 +202,7 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 }
 
 func (s *Service) Delete(ctx context.Context, cmd *user.DeleteUserCommand) error {
-	_, err := s.store.GetNotServiceAccount(ctx, cmd.UserID)
+	_, err := s.store.GetByID(ctx, cmd.UserID)
 	if err != nil {
 		return err
 	}
@@ -209,14 +211,7 @@ func (s *Service) Delete(ctx context.Context, cmd *user.DeleteUserCommand) error
 }
 
 func (s *Service) GetByID(ctx context.Context, query *user.GetUserByIDQuery) (*user.User, error) {
-	user, err := s.store.GetByID(ctx, query.ID)
-	if err != nil {
-		return nil, err
-	}
-	if err := s.store.CaseInsensitiveLoginConflict(ctx, user.Login, user.Email); err != nil {
-		return nil, err
-	}
-	return user, nil
+	return s.store.GetByID(ctx, query.ID)
 }
 
 func (s *Service) GetByLogin(ctx context.Context, query *user.GetUserByLoginQuery) (*user.User, error) {
@@ -228,14 +223,53 @@ func (s *Service) GetByEmail(ctx context.Context, query *user.GetUserByEmailQuer
 }
 
 func (s *Service) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
-	cmd.Login = strings.ToLower(cmd.Login)
-	cmd.Email = strings.ToLower(cmd.Email)
+	usr, err := s.store.GetByID(ctx, cmd.UserID)
+	if err != nil {
+		return err
+	}
+
+	if cmd.OldPassword != nil {
+		old, err := cmd.OldPassword.Hash(usr.Salt)
+		if err != nil {
+			return err
+		}
+
+		if old != usr.Password {
+			return user.ErrPasswordMissmatch.Errorf("old password does not match stored password")
+		}
+	}
+
+	if cmd.Password != nil {
+		if err := cmd.Password.Validate(s.cfg); err != nil {
+			return err
+		}
+
+		hashed, err := cmd.Password.Hash(usr.Salt)
+		if err != nil {
+			return err
+		}
+		cmd.Password = &hashed
+	}
+
+	if cmd.OrgID != nil {
+		orgs, err := s.orgService.GetUserOrgList(ctx, &org.GetUserOrgListQuery{UserID: cmd.UserID})
+		if err != nil {
+			return err
+		}
+
+		valid := false
+		for _, org := range orgs {
+			if org.OrgID == *cmd.OrgID {
+				valid = true
+			}
+		}
+
+		if !valid {
+			return fmt.Errorf("user does not belong to org")
+		}
+	}
 
 	return s.store.Update(ctx, cmd)
-}
-
-func (s *Service) ChangePassword(ctx context.Context, cmd *user.ChangeUserPasswordCommand) error {
-	return s.store.ChangePassword(ctx, cmd)
 }
 
 func (s *Service) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLastSeenAtCommand) error {
@@ -257,28 +291,6 @@ func (s *Service) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLast
 
 func shouldUpdateLastSeen(t time.Time) bool {
 	return time.Since(t) > time.Minute*5
-}
-
-func (s *Service) SetUsingOrg(ctx context.Context, cmd *user.SetUsingOrgCommand) error {
-	getOrgsForUserCmd := &org.GetUserOrgListQuery{UserID: cmd.UserID}
-	orgsForUser, err := s.orgService.GetUserOrgList(ctx, getOrgsForUserCmd)
-	if err != nil {
-		return err
-	}
-
-	valid := false
-	for _, other := range orgsForUser {
-		if other.OrgID == cmd.OrgID {
-			valid = true
-		}
-	}
-	if !valid {
-		return fmt.Errorf("user does not belong to org")
-	}
-	return s.store.UpdateUser(ctx, &user.User{
-		ID:    cmd.UserID,
-		OrgID: cmd.OrgID,
-	})
 }
 
 func (s *Service) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
@@ -326,49 +338,12 @@ func (s *Service) GetSignedInUser(ctx context.Context, query *user.GetSignedInUs
 	return signedInUser, err
 }
 
-func (s *Service) NewAnonymousSignedInUser(ctx context.Context) (*user.SignedInUser, error) {
-	if !s.cfg.AnonymousEnabled {
-		return nil, fmt.Errorf("anonymous access is disabled")
-	}
-
-	usr := &user.SignedInUser{
-		IsAnonymous: true,
-		OrgRole:     roletype.RoleType(s.cfg.AnonymousOrgRole),
-	}
-
-	if s.cfg.AnonymousOrgName == "" {
-		return usr, nil
-	}
-
-	getOrg := org.GetOrgByNameQuery{Name: s.cfg.AnonymousOrgName}
-	anonymousOrg, err := s.orgService.GetByName(ctx, &getOrg)
-	if err != nil {
-		return nil, err
-	}
-
-	usr.OrgID = anonymousOrg.ID
-	usr.OrgName = anonymousOrg.Name
-	return usr, nil
-}
-
 func (s *Service) Search(ctx context.Context, query *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
 	return s.store.Search(ctx, query)
 }
 
-func (s *Service) Disable(ctx context.Context, cmd *user.DisableUserCommand) error {
-	return s.store.Disable(ctx, cmd)
-}
-
 func (s *Service) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisableUsersCommand) error {
 	return s.store.BatchDisableUsers(ctx, cmd)
-}
-
-func (s *Service) UpdatePermissions(ctx context.Context, userID int64, isAdmin bool) error {
-	return s.store.UpdatePermissions(ctx, userID, isAdmin)
-}
-
-func (s *Service) SetUserHelpFlag(ctx context.Context, cmd *user.SetUserHelpFlagCommand) error {
-	return s.store.SetHelpFlag(ctx, cmd)
 }
 
 func (s *Service) GetProfile(ctx context.Context, query *user.GetUserProfileQuery) (*user.UserProfileDTO, error) {

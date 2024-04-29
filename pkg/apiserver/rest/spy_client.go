@@ -8,6 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/apis/example"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"
 )
@@ -59,13 +60,13 @@ type spyLegacyStorageShim struct {
 func (c *spyStorageClient) Create(ctx context.Context, obj runtime.Object, valitation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	c.spy.record("Storage.Create")
 	klog.Info("method: Storage.Create")
-	return nil, nil
+	return &dummyObject{}, nil
 }
 
 func (c *spyStorageClient) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	c.spy.record("Storage.Get")
 	klog.Info("method: Storage.Get")
-	return nil, nil
+	return &example.Pod{}, nil
 }
 
 func (c *spyStorageClient) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
@@ -89,16 +90,30 @@ func (c *spyStorageClient) List(ctx context.Context, options *metainternalversio
 	return &dummyList{Items: []dummyObject{i1, i2}}, nil
 }
 
+type UpdatedObjInfoObj struct{}
+
+func (u UpdatedObjInfoObj) UpdatedObject(ctx context.Context, oldObj runtime.Object) (newObj runtime.Object, err error) {
+	return &example.Pod{}, nil
+}
+
+func (u UpdatedObjInfoObj) Preconditions() *metav1.Preconditions { return &metav1.Preconditions{} }
+
 func (c *spyStorageClient) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	c.spy.record("Storage.Update")
 	klog.Info("method: Storage.Update")
-	return nil, false, nil
+	return &example.Pod{}, false, nil
 }
 
 func (c *spyStorageClient) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	c.spy.record("Storage.Delete")
 	klog.Info("method: Storage.Delete")
 	return nil, false, nil
+}
+
+func (c *spyStorageClient) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
+	c.spy.record("Storage.DeleteCollection")
+	klog.Info("method: Storage.DeleteCollection")
+	return nil, nil
 }
 
 // LegacyStorage Spy
@@ -137,13 +152,13 @@ func (c *spyLegacyStorageClient) Counts(method string) int {
 func (c *spyLegacyStorageClient) Create(ctx context.Context, obj runtime.Object, valitation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	c.spy.record("LegacyStorage.Create")
 	klog.Info("method: LegacyStorage.Create")
-	return nil, nil
+	return &dummyObject{}, nil
 }
 
 func (c *spyLegacyStorageClient) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	c.spy.record("LegacyStorage.Get")
 	klog.Info("method: LegacyStorage.Get")
-	return nil, nil
+	return &example.Pod{}, nil
 }
 
 func (c *spyLegacyStorageClient) NewList() runtime.Object {
@@ -175,13 +190,19 @@ func (c *spyLegacyStorageClient) List(ctx context.Context, options *metainternal
 func (c *spyLegacyStorageClient) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	c.spy.record("LegacyStorage.Update")
 	klog.Info("method: LegacyStorage.Update")
-	return nil, false, nil
+	return &example.Pod{}, false, nil
 }
 
 func (c *spyLegacyStorageClient) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	c.spy.record("LegacyStorage.Delete")
 	klog.Info("method: LegacyStorage.Delete")
 	return nil, false, nil
+}
+
+func (c *spyLegacyStorageClient) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
+	c.spy.record("LegacyStorage.DeleteCollection")
+	klog.Info("method: LegacyStorage.DeleteCollection")
+	return nil, nil
 }
 
 type dummyList struct {
@@ -192,8 +213,8 @@ type dummyList struct {
 
 type dummyObject struct {
 	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
 	Foo               string
+	metav1.ObjectMeta `json:"metadata,omitempty"`
 }
 
 func (d *dummyList) GetObjectKind() schema.ObjectKind {

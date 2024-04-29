@@ -9,6 +9,7 @@ include .bingo/Variables.mk
 
 
 GO = go
+GO_VERSION = 1.22.2
 GO_FILES ?= ./pkg/... ./pkg/apiserver/... ./pkg/apimachinery/... ./pkg/promlib/...
 SH_FILES ?= $(shell find ./scripts -name *.sh)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
@@ -109,6 +110,25 @@ OAPI_SPEC_TARGET = public/openapi3.json
 .PHONY: openapi3-gen
 openapi3-gen: swagger-gen ## Generates OpenApi 3 specs from the Swagger 2 already generated
 	$(GO) run scripts/openapi3/openapi3conv.go $(MERGED_SPEC_TARGET) $(OAPI_SPEC_TARGET)
+
+##@ Internationalisation
+.PHONY: i18n-extract-enterprise
+ENTERPRISE_FE_EXT_FILE = public/app/extensions/index.ts
+ifeq ("$(wildcard $(ENTERPRISE_FE_EXT_FILE))","") ## if enterprise is not enabled
+i18n-extract-enterprise:
+	@echo "Skipping i18n extract for Enterprise: not enabled"
+else
+i18n-extract-enterprise: $(SWAGGER) ## Generate API Swagger specification
+	@echo "Extracting i18n strings for Enterprise"
+	yarn run i18next --config public/locales/i18next-parser-enterprise.config.cjs
+	node ./public/locales/pseudo.mjs --mode enterprise
+endif
+
+.PHONY: i18n-extract
+i18n-extract: i18n-extract-enterprise
+	@echo "Extracting i18n strings for OSS"
+	yarn run i18next --config public/locales/i18next-parser.config.cjs
+	node ./public/locales/pseudo.mjs --mode oss
 
 ##@ Building
 .PHONY: gen-cue
@@ -297,7 +317,7 @@ build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
 	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
 	--build-arg BASE_IMAGE=ubuntu:22.04 \
-	--build-arg GO_IMAGE=golang:1.21.8 \
+	--build-arg GO_IMAGE=golang:$(GO_VERSION) \
 	--tag grafana/grafana$(TAG_SUFFIX):dev-ubuntu \
 	$(DOCKER_BUILD_ARGS)
 
