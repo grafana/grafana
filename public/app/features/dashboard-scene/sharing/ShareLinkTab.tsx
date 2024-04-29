@@ -9,7 +9,7 @@ import { Alert, ClipboardButton, Field, FieldSet, Icon, Input, Switch } from '@g
 import { t, Trans } from 'app/core/internationalization';
 import { createShortLink } from 'app/core/utils/shortLinks';
 import { ThemePicker } from 'app/features/dashboard/components/ShareModal/ThemePicker';
-import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
+import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardUrl } from '../utils/urlBuilders';
@@ -126,13 +126,14 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
     return this.state.shareUrl;
   };
 
-  onCopy() {
+  onCopy = () => {
     DashboardInteractions.shareLinkCopied({
       currentTimeRange: this.state.useLockedTime,
       theme: this.state.selectedTheme,
       shortenURL: this.state.useShortUrl,
+      shareResource: getTrackingSource(this.state.panelRef),
     });
-  }
+  };
 }
 
 function ShareLinkTabRenderer({ model }: SceneComponentProps<ShareLinkTab>) {

@@ -43,9 +43,9 @@ export const Pages = {
   AddDashboard: {
     url: '/dashboard/new',
     itemButton: (title: string) => `data-testid ${title}`,
-    addNewPanel: 'Add new panel',
-    addNewRow: 'Add new row',
-    addNewPanelLibrary: 'Add new panel from panel library',
+    addNewPanel: 'data-testid Add new panel',
+    addNewRow: 'data-testid Add new row',
+    addNewPanelLibrary: 'data-testid Add new panel from panel library',
   },
   Dashboard: {
     url: (uid: string) => `/d/${uid}`,
@@ -103,11 +103,11 @@ export const Pages = {
           annotations: 'data-testid list-annotations',
         },
         Settings: {
-          name: 'Annotations settings name input',
+          name: 'data-testid Annotations settings name input',
         },
         NewAnnotation: {
           panelFilterSelect: 'data-testid annotations-panel-filter',
-          showInLabel: 'show-in-label',
+          showInLabel: 'data-testid show-in-label',
           previewInDashboard: 'data-testid annotations-preview',
           delete: 'data-testid annotations-delete',
           apply: 'data-testid annotations-apply',
