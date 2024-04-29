@@ -20,7 +20,7 @@ import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from './PanelMenuBehavior';
 import { PanelNotices } from './PanelNotices';
 
-interface LibraryVizPanelState extends SceneObjectState {
+export interface LibraryVizPanelState extends SceneObjectState {
   // Library panels use title from dashboard JSON's panel model, not from library panel definition, hence we pass it.
   title: string;
   uid: string;
