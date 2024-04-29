@@ -133,7 +133,7 @@ type AlertNG struct {
 	stateManager        *state.Manager
 	folderService       folder.Service
 	dashboardService    dashboards.DashboardService
-	api                 *api.API
+	Api                 *api.API
 
 	// Alerting notification services
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
@@ -321,7 +321,7 @@ func (ng *AlertNG) init() error {
 		ng.Cfg.UnifiedAlerting.RulesPerRuleGroupLimit, ng.Log, notifier.NewNotificationSettingsValidationService(ng.store),
 		ac.NewRuleService(ng.accesscontrol))
 
-	ng.api = &api.API{
+	ng.Api = &api.API{
 		Cfg:                  ng.Cfg,
 		DatasourceCache:      ng.DataSourceCache,
 		DatasourceService:    ng.DataSourceService,
@@ -350,7 +350,7 @@ func (ng *AlertNG) init() error {
 		Hooks:                api.NewHooks(ng.Log),
 		Tracer:               ng.tracer,
 	}
-	ng.api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
+	ng.Api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 
 	if err := RegisterQuotas(ng.Cfg, ng.QuotaService, ng.store); err != nil {
 		return err
@@ -428,7 +428,7 @@ func (ng *AlertNG) IsDisabled() bool {
 // GetHooks returns a facility for replacing handlers for paths. The handler hook for a path
 // is invoked after all other middleware is invoked (authentication, instrumentation).
 func (ng *AlertNG) GetHooks() *api.Hooks {
-	return ng.api.Hooks
+	return ng.Api.Hooks
 }
 
 type Historian interface {
