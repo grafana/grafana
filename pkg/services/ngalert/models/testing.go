@@ -274,6 +274,7 @@ func (a *AlertRuleMutators) WithIntervalSeconds(seconds int64) AlertRuleMutator 
 	}
 }
 
+// WithIntervalMatching mutator that generates random interval and `for` duration that are times of the provided base interval.
 func (a *AlertRuleMutators) WithIntervalMatching(baseInterval time.Duration) AlertRuleMutator {
 	return func(rule *AlertRule) {
 		rule.IntervalSeconds = int64(baseInterval.Seconds()) * (rand.Int63n(10) + 1)
@@ -354,6 +355,24 @@ func (a *AlertRuleMutators) WithDashboardAndPanel(dashboardUID *string, panelID 
 	}
 }
 
+// WithUniqueUID returns AlertRuleMutator that generates a random UID if it is among UIDs known by the instance of mutator.
+// NOTE: two instances of the mutator do not share known UID.
+// Example #1 reuse mutator instance:
+//
+//	mut := WithUniqueUID()
+//	rule1 := RuleGen.With(mut).Generate()
+//	rule2 := RuleGen.With(mut).Generate()
+//
+// Example #2 reuse generator:
+//
+//	gen := RuleGen.With(WithUniqueUID())
+//	rule1 := gen.Generate()
+//	rule2 := gen.Generate()
+//
+// Example #3 non-unique:
+//
+//	rule1 := RuleGen.With(WithUniqueUID()).Generate
+//	rule2 := RuleGen.With(WithUniqueUID()).Generate
 func (a *AlertRuleMutators) WithUniqueUID() AlertRuleMutator {
 	uids := sync.Map{}
 	return func(rule *AlertRule) {
@@ -369,6 +388,24 @@ func (a *AlertRuleMutators) WithUniqueUID() AlertRuleMutator {
 	}
 }
 
+// WithUniqueTitle returns AlertRuleMutator that generates a random title if the rule's title is among titles known by the instance of mutator.
+// Two instances of the mutator do not share known titles.
+// Example #1 reuse mutator instance:
+//
+//	mut := WithUniqueTitle()
+//	rule1 := RuleGen.With(mut).Generate()
+//	rule2 := RuleGen.With(mut).Generate()
+//
+// Example #2 reuse generator:
+//
+//	gen := RuleGen.With(WithUniqueTitle())
+//	rule1 := gen.Generate()
+//	rule2 := gen.Generate()
+//
+// Example #3 non-unique:
+//
+//	rule1 := RuleGen.With(WithUniqueTitle()).Generate
+//	rule2 := RuleGen.With(WithUniqueTitle()).Generate
 func (a *AlertRuleMutators) WithUniqueTitle() AlertRuleMutator {
 	titles := sync.Map{}
 	return func(rule *AlertRule) {
@@ -413,6 +450,7 @@ func (a *AlertRuleMutators) WithGroupKey(groupKey AlertRuleGroupKey) AlertRuleMu
 	}
 }
 
+// WithSameGroup generates a random group name and assigns it to all rules passed to it
 func (a *AlertRuleMutators) WithSameGroup() AlertRuleMutator {
 	once := sync.Once{}
 	name := ""
