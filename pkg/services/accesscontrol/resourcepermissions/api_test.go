@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -322,7 +323,7 @@ func TestApi_setTeamPermission(t *testing.T) {
 			server := setupTestServer(t, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
 
 			// seed team
-			_, err := teamSvc.CreateTeam("test", "test@test.com", 1)
+			_, err := teamSvc.CreateTeam(context.Background(), "test", "test@test.com", 1)
 			require.NoError(t, err)
 
 			recorder := setPermission(t, server, testOptions.Resource, tt.resourceID, tt.permission, "teams", strconv.Itoa(int(tt.teamID)))
@@ -509,9 +510,9 @@ func checkSeededPermissions(t *testing.T, permissions []resourcePermissionDTO) {
 func seedPermissions(t *testing.T, resourceID string, sql db.DB, cfg *setting.Cfg, service *Service) {
 	t.Helper()
 	// seed team 1 with "Edit" permission on dashboard 1
-	teamSvc, err := teamimpl.ProvideService(sql, cfg)
+	teamSvc, err := teamimpl.ProvideService(sql, cfg, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
-	team, err := teamSvc.CreateTeam("test", "test@test.com", 1)
+	team, err := teamSvc.CreateTeam(context.Background(), "test", "test@test.com", 1)
 	require.NoError(t, err)
 	_, err = service.SetTeamPermission(context.Background(), team.OrgID, team.ID, resourceID, "Edit")
 	require.NoError(t, err)
