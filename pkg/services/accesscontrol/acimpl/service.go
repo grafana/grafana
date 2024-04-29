@@ -99,6 +99,8 @@ func (s *Service) GetUsageStats(_ context.Context) map[string]any {
 
 // GetUserPermissions returns user permissions based on built-in roles
 func (s *Service) GetUserPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
+	ctx, span := s.tracer.Start(ctx, "authz.GetUserPermissionsOSS")
+	defer span.End()
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
 
