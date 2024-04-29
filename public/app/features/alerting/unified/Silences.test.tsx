@@ -258,7 +258,7 @@ describe('Silence create/edit', () => {
     'creates a new silence',
     async () => {
       const user = userEvent.setup();
-      renderSilences(baseUrlPath);
+      renderSilences(`${baseUrlPath}?alertmanager=Alertmanager`);
       expect(await ui.editor.durationField.find()).toBeInTheDocument();
 
       const postRequest = waitForServerRequest(silenceCreateHandler());
