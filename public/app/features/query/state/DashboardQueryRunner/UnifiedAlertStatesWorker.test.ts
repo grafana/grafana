@@ -192,7 +192,6 @@ describe('UnifiedAlertStatesWorker', () => {
         expect(received).toHaveLength(1);
         const results = received[0];
         expect(results).toEqual({ alertStates: [], annotations: [] });
-        expect(dispatchMock).toHaveBeenCalledTimes(1);
       });
     });
   });

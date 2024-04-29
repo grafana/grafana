@@ -59,17 +59,21 @@ export class UnifiedAlertStatesWorker implements DashboardQueryRunnerWorker {
     }
 
     const { dashboard } = options;
-    const fetchData = async () => {
+    const fetchData: () => Promise<RuleNamespace[]> = async () => {
       const promRules = dispatch(
         alertRuleApi.endpoints.prometheusRuleNamespaces.initiate({
           ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
           dashboardUid: dashboard.uid,
         })
       );
-      return (await promRules).data;
+      const result = await promRules;
+      if (result.error) {
+        return emptyResult();
+      }
+      return result.data;
     };
 
-    const res: Observable<PromRuleGroupDTO[]> = from<Promise<RuleNamespace[]>>(fetchData()).pipe(
+    const res: Observable<PromRuleGroupDTO[]> = from(fetchData()).pipe(
       map((namespaces: RuleNamespace[]) => ungroupRulesByFileName(namespaces))
     );
 
