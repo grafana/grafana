@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { dateTime, dateTimeForTimeZone, getTimeZone, setTimeZoneResolver } from '@grafana/data';
+import { dateTime, dateTimeAsMoment, dateTimeForTimeZone, getTimeZone, setTimeZoneResolver } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 
 import { DateTimePicker, Props } from './DateTimePicker';
@@ -10,7 +10,7 @@ import { DateTimePicker, Props } from './DateTimePicker';
 // An assortment of timezones that we will test the behavior of the DateTimePicker with different timezones
 const TEST_TIMEZONES = ['browser', 'Europe/Stockholm', 'America/Indiana/Marengo'];
 
-let defaultTimeZone = getTimeZone();
+const defaultTimeZone = getTimeZone();
 afterAll(() => {
   return setTimeZoneResolver(() => defaultTimeZone);
 });
@@ -126,6 +126,49 @@ describe('Date time picker', () => {
       const timeInput = screen.getAllByRole('textbox')[1];
       expect(timeInput).toHaveClass('rc-time-picker-input');
       expect(timeInput).not.toHaveDisplayValue('00:00:00');
+    }
+  );
+
+  it.each(TEST_TIMEZONES)(
+    'should always show the correct matching day in the calendar (timezone: %s)',
+    async (timeZone) => {
+      setTimeZoneResolver(() => timeZone);
+      const onChangeInput = jest.fn();
+      render(<DateTimePicker date={dateTime('2021-05-05T23:59:41.000000Z')} onChange={onChangeInput} />);
+
+      const dateTimeInputValue = screen.getByTestId(Components.DateTimePicker.input).getAttribute('value')!;
+
+      // takes the string from the input
+      // depending on the timezone, this will look something like 2024-04-05 19:59:41
+      // parses out the day value and strips the leading 0
+      const day = parseInt(dateTimeInputValue.split(' ')[0].split('-')[2], 10);
+
+      // Click the calendar button
+      await userEvent.click(screen.getByRole('button', { name: 'Time picker' }));
+
+      // Check the active day matches the input
+      expect(screen.getByRole('button', { name: `May ${day}, 2021` })).toHaveClass('react-calendar__tile--active');
+    }
+  );
+
+  it.each(TEST_TIMEZONES)(
+    'should always show the correct matching day when selecting a date in the calendar (timezone: %s)',
+    async (timeZone) => {
+      setTimeZoneResolver(() => timeZone);
+      const onChangeInput = jest.fn();
+      render(<DateTimePicker date={dateTime('2021-05-05T23:59:41.000000Z')} onChange={onChangeInput} />);
+
+      // Click the calendar button
+      await userEvent.click(screen.getByRole('button', { name: 'Time picker' }));
+
+      // Select a new day
+      const day = 8;
+      await userEvent.click(screen.getByRole('button', { name: `May ${day}, 2021` }));
+      await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
+
+      const onChangeInputArg = onChangeInput.mock.calls[0][0];
+
+      expect(dateTimeAsMoment(dateTimeForTimeZone(timeZone, onChangeInputArg)).date()).toBe(day);
     }
   );
 
