@@ -311,7 +311,7 @@ func (s *Service) getFallbackStrategyFor(provider string) (ssosettings.FallbackS
 func (s *Service) encryptSecrets(ctx context.Context, settings, storedSettings map[string]any) (map[string]any, error) {
 	result := make(map[string]any)
 	for k, v := range settings {
-		if isSecret(k) && v != "" {
+		if IsSecretField(k) && v != "" {
 			strValue, ok := v.(string)
 			if !ok {
 				return result, fmt.Errorf("failed to encrypt %s setting because it is not a string: %v", k, v)
@@ -405,7 +405,7 @@ func (s *Service) mergeSSOSettings(dbSettings, systemSettings *models.SSOSetting
 
 func (s *Service) decryptSecrets(ctx context.Context, settings map[string]any) (map[string]any, error) {
 	for k, v := range settings {
-		if isSecret(k) && v != "" {
+		if IsSecretField(k) && v != "" {
 			strValue, ok := v.(string)
 			if !ok {
 				s.logger.Error("Failed to parse secret value, it is not a string", "key", k)
@@ -440,7 +440,7 @@ func (s *Service) isProviderConfigurable(provider string) bool {
 func removeSecrets(settings map[string]any) map[string]any {
 	result := make(map[string]any)
 	for k, v := range settings {
-		if isSecret(k) {
+		if IsSecretField(k) {
 			result[k] = setting.RedactedPassword
 			continue
 		}
@@ -479,7 +479,7 @@ func mergeSettings(storedSettings, systemSettings map[string]any) map[string]any
 func collectSecrets(settings *models.SSOSettings, storedSettings *models.SSOSettings) map[string]any {
 	secrets := map[string]any{}
 	for k, v := range settings.Settings {
-		if isSecret(k) {
+		if IsSecretField(k) {
 			if isNewSecretValue(v.(string)) {
 				secrets[k] = v.(string) // use the new value
 				continue
@@ -500,7 +500,8 @@ func overrideMaps(maps ...map[string]any) map[string]any {
 	return result
 }
 
-func isSecret(fieldName string) bool {
+// IsSecretField returns true if the SSO settings field provided is a secret
+func IsSecretField(fieldName string) bool {
 	secretFieldPatterns := []string{"secret"}
 
 	for _, v := range secretFieldPatterns {
