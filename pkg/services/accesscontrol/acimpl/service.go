@@ -140,22 +140,22 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 	return append(permissions, dbPermissions...), nil
 }
 
-func (s *Service) getBasicRolesPermissions(ctx context.Context, basicRoles []string) ([]accesscontrol.Permission, error) {
-	permissions := make([]accesscontrol.Permission, 0)
-	for _, builtin := range basicRoles {
-		if basicRole, ok := s.roles[builtin]; ok {
-			permissions = append(permissions, basicRole.Permissions...)
-		}
-	}
-	return permissions, nil
-}
-
 func (s *Service) getBasicRolePermissions(ctx context.Context, role string, orgID int64) ([]accesscontrol.Permission, error) {
 	ctx, span := s.tracer.Start(ctx, "authz.getBasicRolePermissions")
 	defer span.End()
 
-	roles := []string{role}
-	permissions, err := s.store.GetBasicRolesPermissions(ctx, roles, orgID)
+	permissions := make([]accesscontrol.Permission, 0)
+	if basicRole, ok := s.roles[role]; ok {
+		permissions = append(permissions, basicRole.Permissions...)
+	}
+
+	// Fetch managed role permissions assigned to basic roles
+	dbPermissions, err := s.store.GetBasicRolesPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
+		Roles:        []string{role},
+		OrgID:        orgID,
+		RolePrefixes: OSSRolesPrefixes,
+	})
+	permissions = append(permissions, dbPermissions...)
 	return permissions, err
 }
 
@@ -163,7 +163,11 @@ func (s *Service) getTeamsPermissions(ctx context.Context, teamIDs []int64, orgI
 	ctx, span := s.tracer.Start(ctx, "authz.getTeamsPermissions")
 	defer span.End()
 
-	teamPermissions, err := s.store.GetTeamsPermissions(ctx, teamIDs, orgID)
+	teamPermissions, err := s.store.GetTeamsPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
+		TeamIDs:      teamIDs,
+		OrgID:        orgID,
+		RolePrefixes: OSSRolesPrefixes,
+	})
 	return teamPermissions, err
 }
 

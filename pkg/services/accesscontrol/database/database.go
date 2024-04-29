@@ -63,11 +63,9 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 		` + filter
 
 		if len(query.RolePrefixes) > 0 {
-			q += " WHERE ( " + strings.Repeat("role.name LIKE ? OR ", len(query.RolePrefixes)-1)
-			q += "role.name LIKE ? )"
-			for i := range query.RolePrefixes {
-				params = append(params, query.RolePrefixes[i]+"%")
-			}
+			rolePrefixesFilter, filterParams := accesscontrol.RolePrefixesFilter(query.RolePrefixes)
+			q += rolePrefixesFilter
+			params = append(params, filterParams...)
 		}
 
 		if err := sess.SQL(q, params...).Find(&result); err != nil {
@@ -80,7 +78,10 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 	return result, err
 }
 
-func (s *AccessControlStore) GetBasicRolesPermissions(ctx context.Context, roles []string, orgID int64) ([]accesscontrol.Permission, error) {
+func (s *AccessControlStore) GetBasicRolesPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error) {
+	roles := query.Roles
+	orgID := query.OrgID
+	rolePrefixes := query.RolePrefixes
 	result := make([]accesscontrol.Permission, 0)
 	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
 		if len(roles) == 0 {
@@ -107,6 +108,12 @@ func (s *AccessControlStore) GetBasicRolesPermissions(ctx context.Context, roles
 		}
 		params = append(params, orgID, accesscontrol.GlobalOrgID)
 
+		if len(rolePrefixes) > 0 {
+			rolePrefixesFilter, filterParams := accesscontrol.RolePrefixesFilter(rolePrefixes)
+			q += rolePrefixesFilter
+			params = append(params, filterParams...)
+		}
+
 		if err := sess.SQL(q, params...).Find(&result); err != nil {
 			return err
 		}
@@ -129,7 +136,10 @@ func (p teamPermission) Permission() accesscontrol.Permission {
 	}
 }
 
-func (s *AccessControlStore) GetTeamsPermissions(ctx context.Context, teams []int64, orgID int64) (map[int64][]accesscontrol.Permission, error) {
+func (s *AccessControlStore) GetTeamsPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) (map[int64][]accesscontrol.Permission, error) {
+	teams := query.TeamIDs
+	orgID := query.OrgID
+	rolePrefixes := query.RolePrefixes
 	result := make([]teamPermission, 0)
 	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
 		if len(teams) == 0 {
@@ -156,6 +166,12 @@ func (s *AccessControlStore) GetTeamsPermissions(ctx context.Context, teams []in
 			params = append(params, team)
 		}
 		params = append(params, orgID)
+
+		if len(rolePrefixes) > 0 {
+			rolePrefixesFilter, filterParams := accesscontrol.RolePrefixesFilter(rolePrefixes)
+			q += rolePrefixesFilter
+			params = append(params, filterParams...)
+		}
 
 		if err := sess.SQL(q, params...).Find(&result); err != nil {
 			return err

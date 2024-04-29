@@ -88,11 +88,11 @@ func (f FakeStore) GetUserPermissions(ctx context.Context, query accesscontrol.G
 	return f.ExpectedUserPermissions, f.ExpectedErr
 }
 
-func (f FakeStore) GetBasicRolesPermissions(ctx context.Context, roles []string, orgID int64) ([]accesscontrol.Permission, error) {
+func (f FakeStore) GetBasicRolesPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error) {
 	return f.ExpectedBasicRolesPermissions, f.ExpectedErr
 }
 
-func (f FakeStore) GetTeamsPermissions(ctx context.Context, teams []int64, orgID int64) (map[int64][]accesscontrol.Permission, error) {
+func (f FakeStore) GetTeamsPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) (map[int64][]accesscontrol.Permission, error) {
 	return f.ExpectedTeamsPermissions, f.ExpectedErr
 }
 
