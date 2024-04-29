@@ -1,9 +1,10 @@
-import { compare } from 'fast-json-patch';
 // @ts-ignore
 import jsonMap from 'json-source-map';
 
 import type { AdHocVariableModel, TypedVariableModel } from '@grafana/data';
-import type { Dashboard, VariableOption } from '@grafana/schema';
+import { Dashboard, VariableOption } from '@grafana/schema';
+
+import { jsonDiff } from '../settings/version-history/utils';
 
 export function get(obj: any, keys: string[]) {
   try {
@@ -104,58 +105,3 @@ export function applyVariableChanges(saveModel: Dashboard, originalSaveModel: Da
 
   return hasVariableValueChanges;
 }
-
-export type Diff = {
-  op: 'add' | 'replace' | 'remove' | 'copy' | 'test' | '_get' | 'move';
-  value: unknown;
-  originalValue: unknown;
-  path: string[];
-  startLineNumber: number;
-};
-
-export type Diffs = Record<string, Diff[]>;
-
-export const jsonDiff = (lhs: Dashboard, rhs: Dashboard): Diffs => {
-  const diffs = compare(lhs, rhs);
-  const lhsMap = jsonMap.stringify(lhs, null, 2);
-  const rhsMap = jsonMap.stringify(rhs, null, 2);
-
-  const diffInfo = diffs.map((diff) => {
-    let originalValue = undefined;
-    let value = undefined;
-    let startLineNumber = 0;
-
-    const path = diff.path.split('/').slice(1);
-
-    if (diff.op === 'replace' && rhsMap.pointers[diff.path]) {
-      originalValue = get(lhs, path);
-      value = diff.value;
-      startLineNumber = rhsMap.pointers[diff.path].value.line;
-    } else if (diff.op === 'add' && rhsMap.pointers[diff.path]) {
-      value = diff.value;
-      startLineNumber = rhsMap.pointers[diff.path].value.line;
-    } else if (diff.op === 'remove' && lhsMap.pointers[diff.path]) {
-      originalValue = get(lhs, path);
-      startLineNumber = lhsMap.pointers[diff.path].value.line;
-    }
-
-    return {
-      op: diff.op,
-      value,
-      path,
-      originalValue,
-      startLineNumber,
-    };
-  });
-
-  const sortedDiffs = diffInfo.sort((a, b) => a.startLineNumber - b.startLineNumber);
-  const grouped = sortedDiffs.reduce<Record<string, Diff[]>>((acc, value) => {
-    const groupKey = value.path[0];
-    acc[groupKey] ??= [];
-    acc[groupKey].push(value);
-
-    return acc;
-  }, {});
-
-  return grouped;
-};
