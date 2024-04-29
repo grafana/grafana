@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
@@ -98,7 +99,7 @@ func TestService_SetTeamPermission(t *testing.T) {
 			})
 
 			// seed team
-			team, err := teamSvc.CreateTeam("test", "test@test.com", 1)
+			team, err := teamSvc.CreateTeam(context.Background(), "test", "test@test.com", 1)
 			require.NoError(t, err)
 
 			var hookCalled bool
@@ -217,7 +218,7 @@ func TestService_SetPermissions(t *testing.T) {
 			require.NoError(t, err)
 			_, err = usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "user", OrgID: 1})
 			require.NoError(t, err)
-			_, err = teamSvc.CreateTeam("team", "", 1)
+			_, err = teamSvc.CreateTeam(context.Background(), "team", "", 1)
 			require.NoError(t, err)
 
 			permissions, err := service.SetPermissions(context.Background(), 1, "1", tt.commands...)
@@ -236,7 +237,7 @@ func setupTestEnvironment(t *testing.T, ops Options) (*Service, db.DB, *setting.
 
 	sql := db.InitTestDB(t)
 	cfg := setting.NewCfg()
-	teamSvc, err := teamimpl.ProvideService(sql, cfg)
+	teamSvc, err := teamimpl.ProvideService(sql, cfg, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 	userSvc, err := userimpl.ProvideService(sql, nil, cfg, teamSvc, nil, quotatest.New(false, nil), supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
