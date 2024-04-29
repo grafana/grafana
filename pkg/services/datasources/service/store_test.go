@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 func TestIntegrationDataAccess(t *testing.T) {
@@ -99,7 +100,11 @@ func TestIntegrationDataAccess(t *testing.T) {
 
 		t.Run("autocorrects a wrong uid", func(t *testing.T) {
 			db := db.InitTestDB(t)
-			ss := SqlStore{db: db, logger: log.NewNopLogger()}
+			ss := SqlStore{
+				db:       db,
+				logger:   log.NewNopLogger(),
+				features: featuremgmt.WithFeatures(featuremgmt.FlagAutofixDSUID),
+			}
 			cmd := defaultAddDatasourceCommand
 			cmd.UID = "test/uid"
 			res, err := ss.AddDataSource(context.Background(), &cmd)
@@ -228,7 +233,11 @@ func TestIntegrationDataAccess(t *testing.T) {
 		t.Run("updates UID with a valid one", func(t *testing.T) {
 			db := db.InitTestDB(t)
 			ds := initDatasource(db)
-			ss := SqlStore{db: db, logger: log.NewNopLogger()}
+			ss := SqlStore{
+				db:       db,
+				logger:   log.NewNopLogger(),
+				features: featuremgmt.WithFeatures(featuremgmt.FlagAutofixDSUID),
+			}
 			require.NotEmpty(t, ds.UID)
 
 			cmd := defaultUpdateDatasourceCommand
@@ -239,7 +248,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			require.Equal(t, "new-uid", res.UID)
 
 			// Return the datasource with the valid UID
-			query := datasources.GetDataSourceQuery{UID: "new/uid", OrgID: 10}
+			query := datasources.GetDataSourceQuery{UID: "new-uid", OrgID: 10}
 			dataSource, err := ss.GetDataSource(context.Background(), &query)
 			require.NoError(t, err)
 			require.Equal(t, "new-uid", dataSource.UID)
@@ -376,106 +385,6 @@ func TestIntegrationDataAccess(t *testing.T) {
 
 		require.NoError(t, err)
 		require.Equal(t, 0, len(dataSources))
-	})
-
-	t.Run("GetDataSource", func(t *testing.T) {
-		t.Run("Can get datasource by id", func(t *testing.T) {
-			db := db.InitTestDB(t)
-			ds := initDatasource(db)
-			ss := SqlStore{db: db}
-			query := datasources.GetDataSourceQuery{ID: ds.ID, OrgID: 10}
-			dataSource, err := ss.GetDataSource(context.Background(), &query)
-			require.NoError(t, err)
-			require.Equal(t, ds.UID, dataSource.UID)
-		})
-
-		t.Run("Can get datasource by uid", func(t *testing.T) {
-			db := db.InitTestDB(t)
-			ds := initDatasource(db)
-			ss := SqlStore{db: db}
-			query := datasources.GetDataSourceQuery{UID: ds.UID, OrgID: 10}
-			dataSource, err := ss.GetDataSource(context.Background(), &query)
-			require.NoError(t, err)
-			require.Equal(t, ds.UID, dataSource.UID)
-		})
-
-		t.Run("Can get datasource with a wrong UID", func(t *testing.T) {
-			db := db.InitTestDB(t)
-			cmd := defaultAddDatasourceCommand
-			cmd.UID = "custom/uid"
-			ss := SqlStore{db: db, logger: log.NewNopLogger()}
-			// AddDatasource automatically fixes the wrong UID so the UID
-			// will be valid in the store
-			_, err := ss.AddDataSource(context.Background(), &cmd)
-			require.NoError(t, err)
-			query := datasources.GetDataSourceQuery{UID: "custom/uid", OrgID: 10}
-			dataSource, err := ss.GetDataSource(context.Background(), &query)
-			require.NoError(t, err)
-			require.Equal(t, "custom-uid", dataSource.UID)
-		})
-
-		t.Run("Can get datasource with a wrongly stored UID", func(t *testing.T) {
-			store := db.InitTestDB(t)
-			cmd := defaultAddDatasourceCommand
-			insertDS := &datasources.DataSource{
-				OrgID:     cmd.OrgID,
-				Name:      cmd.Name,
-				Type:      cmd.Type,
-				Access:    cmd.Access,
-				URL:       cmd.URL,
-				Database:  cmd.Database,
-				ReadOnly:  cmd.ReadOnly,
-				IsDefault: false,
-				Version:   1,
-				Created:   time.Now(),
-				Updated:   time.Now(),
-				UID:       "custom/uid",
-			}
-			err := store.WithTransactionalDbSession(context.Background(), func(sess *db.Session) error {
-				_, err := sess.Insert(insertDS)
-				return err
-			})
-			require.NoError(t, err)
-			query := datasources.GetDataSourceQuery{UID: "custom/uid", OrgID: 10}
-			ss := SqlStore{db: store, logger: log.NewNopLogger()}
-			dataSource, err := ss.GetDataSource(context.Background(), &query)
-			require.NoError(t, err)
-			require.Equal(t, "custom/uid", dataSource.UID)
-		})
-
-		t.Run("Can get datasource with a wrongly stored UID even if valid UID exists", func(t *testing.T) {
-			store := db.InitTestDB(t)
-			ss := SqlStore{db: store, logger: log.NewNopLogger()}
-			cmd := defaultAddDatasourceCommand
-			// Insert correct UID
-			cmd.UID = "custom-uid"
-			_, err := ss.AddDataSource(context.Background(), &cmd)
-			require.NoError(t, err)
-			// Insert wrong UID
-			insertDS := &datasources.DataSource{
-				OrgID:     cmd.OrgID,
-				Name:      cmd.Name + "_invalid",
-				Type:      cmd.Type,
-				Access:    cmd.Access,
-				URL:       cmd.URL,
-				Database:  cmd.Database,
-				ReadOnly:  cmd.ReadOnly,
-				IsDefault: false,
-				Version:   1,
-				Created:   time.Now(),
-				Updated:   time.Now(),
-				UID:       "custom/uid",
-			}
-			err = store.WithTransactionalDbSession(context.Background(), func(sess *db.Session) error {
-				_, err := sess.Insert(insertDS)
-				return err
-			})
-			require.NoError(t, err)
-			query := datasources.GetDataSourceQuery{UID: "custom/uid", OrgID: 10}
-			dataSource, err := ss.GetDataSource(context.Background(), &query)
-			require.NoError(t, err)
-			require.Equal(t, "custom/uid", dataSource.UID)
-		})
 	})
 
 	t.Run("GetDataSources", func(t *testing.T) {

@@ -42,8 +42,8 @@ type SqlStore struct {
 	features featuremgmt.FeatureToggles
 }
 
-func CreateStore(db db.DB, logger log.Logger, features featuremgmt.FeatureToggles) *SqlStore {
-	return &SqlStore{db: db, logger: logger, features: features}
+func CreateStore(db db.DB, logger log.Logger) *SqlStore {
+	return &SqlStore{db: db, logger: logger}
 }
 
 // GetDataSource adds a datasource to the query model by querying by org_id as well as

@@ -59,9 +59,6 @@ export class DatasourceSrv implements DataSourceService {
   }
 
   getDataSourceSettingsByUid(uid: string): DataSourceInstanceSettings | undefined {
-    if (!uid) {
-      return undefined;
-    }
     return this.settingsMapByUid[uid];
   }
 
@@ -92,7 +89,7 @@ export class DatasourceSrv implements DataSourceService {
       if (interpolatedName === 'default') {
         dsSettings = this.settingsMapByName[this.defaultName];
       } else {
-        dsSettings = this.getDataSourceSettingsByUid(interpolatedName) ?? this.settingsMapByName[interpolatedName];
+        dsSettings = this.settingsMapByUid[interpolatedName] ?? this.settingsMapByName[interpolatedName];
       }
 
       if (!dsSettings) {
@@ -109,9 +106,7 @@ export class DatasourceSrv implements DataSourceService {
       };
     }
 
-    return (
-      this.getDataSourceSettingsByUid(nameOrUid) ?? this.settingsMapByName[nameOrUid] ?? this.settingsMapById[nameOrUid]
-    );
+    return this.settingsMapByUid[nameOrUid] ?? this.settingsMapByName[nameOrUid] ?? this.settingsMapById[nameOrUid];
   }
 
   get(ref?: string | DataSourceRef | null, scopedVars?: ScopedVars): Promise<DataSourceApi> {
@@ -263,7 +258,7 @@ export class DatasourceSrv implements DataSourceService {
           dsValue = dsValue[0];
         }
         const dsSettings =
-          !Array.isArray(dsValue) && (this.settingsMapByName[dsValue] || this.getDataSourceSettingsByUid(dsValue));
+          !Array.isArray(dsValue) && (this.settingsMapByName[dsValue] || this.settingsMapByUid[dsValue]);
 
         if (dsSettings) {
           const key = `$\{${variable.name}\}`;
