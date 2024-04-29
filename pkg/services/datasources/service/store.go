@@ -259,7 +259,7 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 			cmd.UID = uid
 		} else if err := util.ValidateUID(cmd.UID); err != nil {
 			logDeprecatedInvalidDsUid(ss.logger, cmd.UID, cmd.Name, "create", err)
-			if ss.features.IsEnabled(ctx, featuremgmt.FlagAutofixDSUID) {
+			if ss.features != nil && ss.features.IsEnabled(ctx, featuremgmt.FlagAutofixDSUID) {
 				cmd.UID = util.AutofixUID(cmd.UID)
 			}
 		}
@@ -335,7 +335,7 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 		if cmd.UID != "" {
 			if err := util.ValidateUID(cmd.UID); err != nil {
 				logDeprecatedInvalidDsUid(ss.logger, cmd.UID, cmd.Name, "update", err)
-				if ss.features.IsEnabled(ctx, featuremgmt.FlagAutofixDSUID) {
+				if ss.features != nil && ss.features.IsEnabled(ctx, featuremgmt.FlagAutofixDSUID) {
 					cmd.UID = util.AutofixUID(cmd.UID)
 				}
 			}
