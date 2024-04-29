@@ -3,11 +3,14 @@ package rest
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"
 )
@@ -90,7 +93,27 @@ func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion
 		return nil, err
 	}
 
-	sl, err := d.Storage.List(ctx, options)
+	keys := []string{}
+	// #TODO: refactor so that we aren't iterating through legacyList twice
+	for _, obj := range legacyList {
+		accessor, err := utils.MetaAccessor(obj)
+		if err != nil {
+			return nil, err
+		}
+		keys = append(keys, accessor.GetOriginKey())
+	}
+
+	newSelector := labels.NewSelector()
+	// #TODO: additionally specify originSource as a requirement
+	r, err := labels.NewRequirement(utils.AnnoKeyOriginKey, selection.In, keys)
+	if err != nil {
+		return nil, err
+	}
+	optionsStorage := metainternalversion.ListOptions{
+		LabelSelector: newSelector.Add(*r),
+	}
+
+	sl, err := d.Storage.List(ctx, &optionsStorage)
 	if err != nil {
 		return nil, err
 	}
