@@ -665,6 +665,7 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 	})
 	if nestedFolder != nil && nestedFolder.ParentUID != "" {
 		// link to parent folder
+		// question: should we link to folder:general if parentUID is empty?
 		tupleKeys = append(tupleKeys, &openfgav1.TupleKey{
 			User:     "folder:" + nestedFolder.ParentUID,
 			Relation: "parent",
