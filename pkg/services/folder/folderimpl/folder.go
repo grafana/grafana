@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -20,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/embedserver"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
@@ -33,6 +35,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+
+	zclient "github.com/grafana/zanzana/pkg/service/client"
+	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 )
 
 type Service struct {
@@ -50,6 +55,7 @@ type Service struct {
 	mutex    sync.RWMutex
 	registry map[string]folder.RegistryService
 	metrics  *foldersMetrics
+	zclient  *zclient.GRPCClient
 }
 
 func ProvideService(
@@ -62,8 +68,15 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 	supportBundles supportbundles.Service,
 	r prometheus.Registerer,
+	embedService *embedserver.Service,
 ) folder.Service {
 	store := ProvideStore(db, cfg)
+
+	zClient, err := embedService.GetClient(context.Background(), "1")
+	if err != nil {
+		panic(fmt.Sprintf("failed to get zanzana client: %v", err))
+	}
+
 	srv := &Service{
 		cfg:                  cfg,
 		log:                  log.New("folder-service"),
@@ -76,6 +89,7 @@ func ProvideService(
 		db:                   db,
 		registry:             make(map[string]folder.RegistryService),
 		metrics:              newFoldersMetrics(r),
+		zclient:              zClient,
 	}
 	srv.DBMigration(db)
 
@@ -611,6 +625,8 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 		return nil, toFolderError(err)
 	}
 
+	tupleKeys := []*openfgav1.TupleKey{}
+
 	var nestedFolder *folder.Folder
 	var dash *dashboards.Dashboard
 	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
@@ -641,9 +657,33 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 	}
 
 	f := dashboards.FromDashboard(dash)
+	// link to org
+	tupleKeys = append(tupleKeys, &openfgav1.TupleKey{
+		User:     "org:" + strconv.FormatInt(cmd.OrgID, 10),
+		Relation: "org",
+		Object:   "folder:" + f.UID,
+	})
 	if nestedFolder != nil && nestedFolder.ParentUID != "" {
+		// link to parent folder
+		tupleKeys = append(tupleKeys, &openfgav1.TupleKey{
+			User:     "folder:" + nestedFolder.ParentUID,
+			Relation: "parent",
+			Object:   "folder:" + f.UID,
+		})
+
 		f.ParentUID = nestedFolder.ParentUID
 	}
+
+	if _, err := s.zclient.Write(ctx, &openfgav1.WriteRequest{
+		StoreId:              s.zclient.MustStoreID(ctx),
+		AuthorizationModelId: s.zclient.AuthorizationModelID,
+		Writes: &openfgav1.WriteRequestWrites{
+			TupleKeys: tupleKeys,
+		},
+	}); err != nil {
+		logger.Error("failed to write folder relations to zanzana", "error", err)
+	}
+
 	return f, nil
 }
 
