@@ -49,6 +49,7 @@
   },
   "devDependencies": {
     "@grafana/tsconfig": "^1.3.0-rc1",
+    "@reduxjs/toolkit": "1.9.5",
     "@rollup/plugin-node-resolve": "15.2.3",
     "@rollup/plugin-terser": "0.4.4",
     "@testing-library/dom": "10.0.0",
@@ -74,7 +75,6 @@
     "typescript": "5.4.5"
   },
   "peerDependencies": {
-    "@reduxjs/toolkit": "1.9.5",
     "react": "^18.0.0",
     "react-dom": "^18.0.0"
   }
