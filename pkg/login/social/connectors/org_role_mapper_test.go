@@ -159,7 +159,8 @@ func TestOrgRoleMapper_MapOrgRoles(t *testing.T) {
 				{Name: "Third", ID: 3},
 			}
 		}
-		actual := mapper.MapOrgRoles(context.Background(), tc.externalOrgs, tc.orgMappingSettings, tc.directlyMappedRole)
+		orgMapping := mapper.ParseOrgMappingSettings(context.Background(), tc.orgMappingSettings)
+		actual := mapper.MapOrgRoles(context.Background(), tc.externalOrgs, orgMapping, tc.directlyMappedRole)
 
 		assert.EqualValues(t, tc.expected, actual)
 	}
@@ -173,7 +174,7 @@ func TestOrgRoleMapper_MapOrgRoles_OrgNameResolution(t *testing.T) {
 		expectedOrgRoles map[int64]org.RoleType
 	}{
 		{
-			name:       "should skip org mapping if org name is not found or the resolution fails",
+			name:       "should skip org mapping if org was not found or the resolution fails",
 			orgMapping: []string{"ExternalOrg1:First:Editor", "ExternalOrg1:NonExistent:Viewer"},
 			setupMock: func(orgService *orgtest.MockService) {
 				orgService.On("GetByName", mock.Anything, mock.MatchedBy(func(query *org.GetOrgByNameQuery) bool {
@@ -205,7 +206,8 @@ func TestOrgRoleMapper_MapOrgRoles_OrgNameResolution(t *testing.T) {
 		orgService.ExpectedCalls = nil
 		tc.setupMock(orgService)
 
-		actual := mapper.MapOrgRoles(context.Background(), []string{"ExternalOrg1"}, tc.orgMapping, org.RoleViewer)
+		orgMapping := mapper.ParseOrgMappingSettings(context.Background(), tc.orgMapping)
+		actual := mapper.MapOrgRoles(context.Background(), []string{"ExternalOrg1"}, orgMapping, org.RoleViewer)
 
 		assert.EqualValues(t, tc.expectedOrgRoles, actual)
 	}

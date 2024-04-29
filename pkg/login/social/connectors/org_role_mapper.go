@@ -27,9 +27,13 @@ func ProvideOrgRoleMapper(cfg *setting.Cfg, orgService org.Service) *OrgRoleMapp
 	}
 }
 
-func (m *OrgRoleMapper) MapOrgRoles(ctx context.Context, externalOrgs []string, orgMappingSettings []string, directlyMappedRole org.RoleType) map[int64]org.RoleType {
-	orgMapping := m.splitOrgMappingSettings(ctx, orgMappingSettings)
-
+// MapOrgRoles maps the external orgs/groups to Grafana orgs and roles. It returns a  map or orgID to role.
+//
+// externalOrgs: list of external orgs/groups
+// orgMapping: mapping configuration from external orgs to Grafana orgs and roles. This is an internal representation of the `org_mapping` setting.
+// Use `ParseOrgMappingSettings` to convert the raw setting to this format.
+// directlyMappedRole: role that is directly mapped to the user
+func (m *OrgRoleMapper) MapOrgRoles(ctx context.Context, externalOrgs []string, orgMapping map[string]map[int64]org.RoleType, directlyMappedRole org.RoleType) map[int64]org.RoleType {
 	if len(orgMapping) == 0 {
 		return m.GetDefaultOrgMapping(directlyMappedRole)
 	}
@@ -103,7 +107,9 @@ func (m *OrgRoleMapper) handleGlobalOrgMapping(orgRoles map[int64]org.RoleType) 
 	return nil
 }
 
-func (m *OrgRoleMapper) splitOrgMappingSettings(ctx context.Context, mappings []string) map[string]map[int64]org.RoleType {
+// FIXME: Consider introducing a struct to represent the org mapping settings
+// ParseOrgMappingSettings parses the `org_mapping` setting and returns an internal representation of the mapping.
+func (m *OrgRoleMapper) ParseOrgMappingSettings(ctx context.Context, mappings []string) map[string]map[int64]org.RoleType {
 	res := map[string]map[int64]org.RoleType{}
 
 	for _, v := range mappings {
@@ -114,8 +120,8 @@ func (m *OrgRoleMapper) splitOrgMappingSettings(ctx context.Context, mappings []
 				res, getErr := m.orgService.GetByName(ctx, &org.GetOrgByNameQuery{Name: kv[1]})
 
 				if getErr != nil {
-					// ignore not existing org
-					m.logger.Warn("Could not fetch organization. Skipping.", "mapping", fmt.Sprintf("%v", v))
+					// skip in case of error
+					m.logger.Warn("Could not fetch organization. Skipping.", "err", getErr, "mapping", fmt.Sprintf("%v", v), "org", kv[1])
 					continue
 				}
 				orgID, err = int(res.ID), nil
