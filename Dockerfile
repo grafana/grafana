@@ -174,7 +174,10 @@ COPY --from=go-src /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
 COPY --from=js-src /tmp/grafana/public ./public
 COPY --from=go-src /tmp/grafana/LICENSE ./
 
-EXPOSE 3000
+COPY custom.ini conf/custom.ini
+RUN cp "$GF_PATHS_HOME/conf/custom.ini" "$GF_PATHS_CONFIG"
+
+EXPOSE 3333
 
 ARG RUN_SH=./packaging/docker/run.sh
 
