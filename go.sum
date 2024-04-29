@@ -2218,6 +2218,10 @@ github.com/grafana/zanzana v0.0.0-20240425124704-84c8599b093c h1:9frTKBSk3IvtC49
 github.com/grafana/zanzana v0.0.0-20240425124704-84c8599b093c/go.mod h1:NAffoErK0UKh5BM6JKHzY3zGp8PFmHj91T6AccwphLo=
 github.com/grafana/zanzana v0.0.0-20240425125006-4ad024797162 h1:PqSp8riNafZJb+UEjl3BaQv2sw6k6xY3xDgrCoGCqbE=
 github.com/grafana/zanzana v0.0.0-20240425125006-4ad024797162/go.mod h1:NAffoErK0UKh5BM6JKHzY3zGp8PFmHj91T6AccwphLo=
+github.com/grafana/zanzana v0.0.0-20240429091414-c269f37d2e64 h1:zy6M5x3wNAVncqFKdPTHXufS6oTTMwOu1ZNYmojN+cQ=
+github.com/grafana/zanzana v0.0.0-20240429091414-c269f37d2e64/go.mod h1:NAffoErK0UKh5BM6JKHzY3zGp8PFmHj91T6AccwphLo=
+github.com/grafana/zanzana v0.0.0-20240429092029-e2024fedc7ec h1:gxW6MSmQBsZ6j/iNX7a5ZGfoen3+36EGqqo2auMypkg=
+github.com/grafana/zanzana v0.0.0-20240429092029-e2024fedc7ec/go.mod h1:NAffoErK0UKh5BM6JKHzY3zGp8PFmHj91T6AccwphLo=
 github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7/go.mod h1:FecbI9+v66THATjSRHfNgh1IVFe/9kFxbXtjV0ctIMA=
 github.com/grpc-ecosystem/go-grpc-middleware v1.3.0/go.mod h1:z0ButlSOZa5vEBq9m2m2hlwIgKw+rp3sdCBRoJY+30Y=
 github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 h1:UH//fgunKIs4JdUbpDl1VZCDaL56wXCB/5+wF6uHfaI=
