@@ -16,7 +16,7 @@ export async function getMetricNames(dataSourceUid: string, timeRange: RawTimeRa
   const params: Record<string, string | number> = {
     start: getPrometheusTime(timeRange.from, false),
     end: getPrometheusTime(timeRange.to, true),
-    'match[]': filters,
+    ...(filters && filters !== '{}' ? { 'match[]': filters } : {}),
     ...(limit ? { limit } : {}),
   };
 
