@@ -33,7 +33,7 @@ import (
 var _ plugins.RoleRegistry = &Service{}
 
 const (
-	cacheTTL = 10 * time.Second
+	cacheTTL = 60 * time.Second
 )
 
 var SharedWithMeFolderPermission = accesscontrol.Permission{
