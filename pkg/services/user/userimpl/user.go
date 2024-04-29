@@ -225,7 +225,7 @@ func (s *Service) GetByLogin(ctx context.Context, query *user.GetUserByLoginQuer
 }
 
 func (s *Service) GetByEmail(ctx context.Context, query *user.GetUserByEmailQuery) (*user.User, error) {
-	ctx, span := s.tracer.Start(ctx, "user.GetByLogin")
+	ctx, span := s.tracer.Start(ctx, "user.GetByEmail")
 	defer span.End()
 
 	return s.store.GetByEmail(ctx, query)
