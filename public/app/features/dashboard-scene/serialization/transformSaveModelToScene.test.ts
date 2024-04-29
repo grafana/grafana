@@ -417,6 +417,20 @@ describe('transformSaveModelToScene', () => {
       expect(vizPanel.state.hoverHeader).toEqual(true);
     });
 
+    it('should initalize the VizPanel with min interval set', () => {
+      const panel = {
+        title: '',
+        type: 'test-plugin',
+        gridPos: { x: 0, y: 0, w: 12, h: 8 },
+        interval: '20m',
+      };
+
+      const { vizPanel } = buildGridItemForTest(panel);
+
+      const queryRunner = getQueryRunnerFor(vizPanel);
+      expect(queryRunner?.state.minInterval).toBe('20m');
+    });
+
     it('should set PanelTimeRange when timeFrom or timeShift is present', () => {
       const panel = {
         type: 'test-plugin',

@@ -281,7 +281,7 @@ function vizPanelDataToPanel(
 
   const panel: Pick<
     Panel,
-    'datasource' | 'targets' | 'maxDataPoints' | 'transformations' | 'cacheTimeout' | 'queryCachingTTL'
+    'datasource' | 'targets' | 'maxDataPoints' | 'transformations' | 'cacheTimeout' | 'queryCachingTTL' | 'interval'
   > = {};
   const queryRunner = getQueryRunnerFor(vizPanel);
 
@@ -296,6 +296,9 @@ function vizPanelDataToPanel(
 
     if (queryRunner.state.queryCachingTTL) {
       panel.queryCachingTTL = queryRunner.state.queryCachingTTL;
+    }
+    if (queryRunner.state.minInterval) {
+      panel.interval = queryRunner.state.minInterval;
     }
   }
 
