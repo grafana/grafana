@@ -2,7 +2,7 @@ import { lastValueFrom } from 'rxjs';
 
 import { getBackendSrv } from '@grafana/runtime';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { RuleIdentifier, RuleNamespace } from 'app/types/unified-alerting';
+import { RuleGroup, RuleIdentifier, RuleNamespace } from 'app/types/unified-alerting';
 import { PromRuleGroupDTO, PromRulesResponse } from 'app/types/unified-alerting-dto';
 
 import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
@@ -102,23 +102,20 @@ export const groupRulesByFileName = (groups: PromRuleGroupDTO[], dataSourceName:
 
   return Object.values(nsMap);
 };
-export const ungroupRulesByFileName = (namespaces?: RuleNamespace[]): PromRuleGroupDTO[] => {
-  let groups: PromRuleGroupDTO[] = [];
-
-  namespaces?.forEach((namespace) => {
-    namespace.groups.forEach((group) => {
-      const promGroup: PromRuleGroupDTO = {
-        name: group.name,
-        file: namespace.name,
-        rules: group.rules,
-        interval: group.interval,
-      };
-      groups.push(promGroup);
-    });
-  });
-
-  return groups;
+export const ungroupRulesByFileName = (namespaces: RuleNamespace[] = []): PromRuleGroupDTO[] => {
+  return namespaces?.flatMap((namespace) =>
+    namespace.groups.flatMap((group) => ruleGroupToPromRuleGroupDTO(group, namespace.name))
+  );
 };
+
+function ruleGroupToPromRuleGroupDTO(group: RuleGroup, namespace: string): PromRuleGroupDTO {
+  return {
+    name: group.name,
+    file: namespace,
+    rules: group.rules,
+    interval: group.interval,
+  };
+}
 export async function fetchRules(
   dataSourceName: string,
   filter?: FetchPromRulesFilter,
