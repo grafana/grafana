@@ -217,7 +217,7 @@ describe('MetricsModal', () => {
 
     const nativeHistogram = await screen.getByText('new_histogram');
 
-    expect(nativeHistogram).toBeInTheDocument;
+    expect(nativeHistogram).toBeInTheDocument();
   });
 });
 
