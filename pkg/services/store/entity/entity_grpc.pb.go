@@ -26,7 +26,7 @@ const (
 	EntityStore_History_FullMethodName   = "/entity.EntityStore/History"
 	EntityStore_List_FullMethodName      = "/entity.EntityStore/List"
 	EntityStore_Watch_FullMethodName     = "/entity.EntityStore/Watch"
-	EntityStore_IsHealthy_FullMethodName = "/entity.EntityStore/isHealthy"
+	EntityStore_IsHealthy_FullMethodName = "/entity.EntityStore/IsHealthy"
 )
 
 // EntityStoreClient is the client API for EntityStore service.
@@ -383,7 +383,7 @@ var EntityStore_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _EntityStore_List_Handler,
 		},
 		{
-			MethodName: "isHealthy",
+			MethodName: "IsHealthy",
 			Handler:    _EntityStore_IsHealthy_Handler,
 		},
 	},
