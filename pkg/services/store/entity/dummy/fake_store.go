@@ -16,6 +16,10 @@ func ProvideFakeEntityServer() entity.EntityStoreServer {
 
 type fakeEntityStore struct{}
 
+func (i fakeEntityStore) IsHealthy(ctx context.Context, r *entity.HealthRequest) (*entity.HealthResponse, error) {
+	return nil, fmt.Errorf("unimplemented")
+}
+
 func (i fakeEntityStore) Create(ctx context.Context, r *entity.CreateEntityRequest) (*entity.CreateEntityResponse, error) {
 	return nil, fmt.Errorf("unimplemented")
 }
