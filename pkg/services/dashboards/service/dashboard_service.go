@@ -391,13 +391,16 @@ func (dr *DashboardServiceImpl) SaveDashboard(ctx context.Context, dto *dashboar
 		}
 
 		if len(tupleKeys) > 0 {
-			dr.zClient.Write(ctx, &openfgav1.WriteRequest{
+			_, err := dr.zClient.Write(ctx, &openfgav1.WriteRequest{
 				StoreId:              dr.zClient.MustStoreID(ctx),
 				AuthorizationModelId: dr.zClient.AuthorizationModelID,
 				Writes: &openfgav1.WriteRequestWrites{
 					TupleKeys: tupleKeys,
 				},
 			})
+			if err != nil {
+				dr.log.Error("failed to write tuple keys", "error", err)
+			}
 		}
 	}
 
