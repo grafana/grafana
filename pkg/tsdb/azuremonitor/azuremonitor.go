@@ -158,7 +158,6 @@ func (s *Service) getDataSourceFromPluginReq(ctx context.Context, req *backend.Q
 }
 
 func (s *Service) newQueryMux() *datasource.QueryTypeMux {
-	fromAlert := "FromAlert"
 	mux := datasource.NewQueryTypeMux()
 	for dsType := range s.executors {
 		// Make a copy of the string to keep the reference after the iterator
@@ -173,7 +172,8 @@ func (s *Service) newQueryMux() *datasource.QueryTypeMux {
 			if !ok {
 				return nil, fmt.Errorf("missing service for %s", dst)
 			}
-			_, fromAlert := req.Headers[fromAlert]
+			// FromAlert header is defined in pkg/services/ngalert/models/constants.go
+			fromAlert := req.Headers["FromAlert"] == "true"
 			return executor.ExecuteTimeSeriesQuery(ctx, req.Queries, dsInfo, service.HTTPClient, service.URL, fromAlert)
 		})
 	}
