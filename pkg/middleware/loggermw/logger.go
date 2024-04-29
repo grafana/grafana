@@ -154,12 +154,12 @@ func errorLogParams(err error) []any {
 	}
 }
 
-type sensQueryCheck struct {
+type queryCheck struct {
 	key     string
 	checker func(v url.Values) bool
 }
 
-var sensitiveQueryChecks = [...]sensQueryCheck{
+var sensitiveQueryChecks = [...]queryCheck{
 	{
 		key: "auth_token",
 		checker: func(v url.Values) bool {
