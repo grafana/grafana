@@ -71,10 +71,6 @@ func (f *FakeUserService) UpdateLastSeenAt(ctx context.Context, cmd *user.Update
 	return f.ExpectedError
 }
 
-func (f *FakeUserService) SetUsingOrg(ctx context.Context, cmd *user.SetUsingOrgCommand) error {
-	return f.ExpectedSetUsingOrgError
-}
-
 func (f *FakeUserService) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
 	return f.GetSignedInUser(ctx, query)
 }
@@ -101,10 +97,6 @@ func (f *FakeUserService) BatchDisableUsers(ctx context.Context, cmd *user.Batch
 	if f.BatchDisableUsersFn != nil {
 		return f.BatchDisableUsersFn(ctx, cmd)
 	}
-	return f.ExpectedError
-}
-
-func (f *FakeUserService) SetUserHelpFlag(ctx context.Context, cmd *user.SetUserHelpFlagCommand) error {
 	return f.ExpectedError
 }
 

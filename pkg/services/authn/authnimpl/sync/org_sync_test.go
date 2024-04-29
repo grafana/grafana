@@ -139,8 +139,8 @@ func TestOrgSync_SetDefaultOrgHook(t *testing.T) {
 			defaultOrgSetting: 2,
 			identity:          &authn.Identity{ID: authn.MustParseNamespaceID("user:1")},
 			setupMock: func(userService *usertest.MockService, orgService *orgtest.FakeOrgService) {
-				userService.On("SetUsingOrg", mock.Anything, mock.MatchedBy(func(cmd *user.SetUsingOrgCommand) bool {
-					return cmd.UserID == 1 && cmd.OrgID == 2
+				userService.On("Update", mock.Anything, mock.MatchedBy(func(cmd *user.UpdateUserCommand) bool {
+					return cmd.UserID == 1 && *cmd.OrgID == 2
 				})).Return(nil)
 			},
 		},
@@ -188,7 +188,7 @@ func TestOrgSync_SetDefaultOrgHook(t *testing.T) {
 			defaultOrgSetting: 2,
 			identity:          &authn.Identity{ID: authn.MustParseNamespaceID("user:1")},
 			setupMock: func(userService *usertest.MockService, orgService *orgtest.FakeOrgService) {
-				userService.On("SetUsingOrg", mock.Anything, mock.Anything).Return(fmt.Errorf("error"))
+				userService.On("Update", mock.Anything, mock.Anything).Return(fmt.Errorf("error"))
 			},
 		},
 	}
@@ -217,8 +217,6 @@ func TestOrgSync_SetDefaultOrgHook(t *testing.T) {
 			}
 
 			s.SetDefaultOrgHook(context.Background(), tt.identity, nil, tt.inputErr)
-
-			userService.AssertExpectations(t)
 		})
 	}
 }

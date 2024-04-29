@@ -39,7 +39,7 @@ type User struct {
 	Company       string
 	EmailVerified bool
 	Theme         string
-	HelpFlags1    HelpFlags1
+	HelpFlags1    HelpFlags1 `xorm:"help_flags1"`
 	IsDisabled    bool
 
 	IsAdmin          bool
@@ -86,17 +86,16 @@ type UpdateUserCommand struct {
 	IsDisabled     *bool `json:"-"`
 	EmailVerified  *bool `json:"-"`
 	IsGrafanaAdmin *bool `json:"-"`
-
-	Password    *Password `json:"-"`
+	// If password is included it will be validated, hashed and updated for user.
+	Password *Password `json:"-"`
+	// If old password is included it will be validated against users current password.
 	OldPassword *Password `json:"-"`
+	// If OrgID is included update current org for user
+	OrgID      *int64      `json:"-"`
+	HelpFlags1 *HelpFlags1 `json:"-"`
 }
 
 type UpdateUserLastSeenAtCommand struct {
-	UserID int64
-	OrgID  int64
-}
-
-type SetUsingOrgCommand struct {
 	UserID int64
 	OrgID  int64
 }
@@ -177,11 +176,6 @@ func (auth *AuthModuleConversion) ToDB() ([]byte, error) {
 type BatchDisableUsersCommand struct {
 	UserIDs    []int64 `xorm:"user_ids"`
 	IsDisabled bool
-}
-
-type SetUserHelpFlagCommand struct {
-	HelpFlags1 HelpFlags1
-	UserID     int64 `xorm:"user_id"`
 }
 
 type GetSignedInUserQuery struct {
