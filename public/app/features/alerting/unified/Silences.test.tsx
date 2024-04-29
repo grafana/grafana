@@ -1,11 +1,15 @@
 import React from 'react';
-import { render, waitFor, userEvent } from 'test/test-utils';
+import { render, waitFor, userEvent, screen } from 'test/test-utils';
 import { byLabelText, byPlaceholderText, byRole, byTestId, byText } from 'testing-library-selector';
 
 import { dateTime } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService, setDataSourceSrv } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
+import {
+  MOCK_DATASOURCE_UID_BROKEN_ALERTMANAGER,
+  MOCK_DATASOURCE_NAME_BROKEN_ALERTMANAGER,
+} from 'app/features/alerting/unified/mocks/datasources';
 import { waitForServerRequest } from 'app/features/alerting/unified/mocks/server/events';
 import { silenceCreateHandler } from 'app/features/alerting/unified/mocks/silences';
 import { MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
@@ -38,6 +42,11 @@ const renderSilences = (location = '/alerting/silences/') => {
 const dataSources = {
   am: mockDataSource({
     name: 'Alertmanager',
+    type: DataSourceType.Alertmanager,
+  }),
+  [MOCK_DATASOURCE_NAME_BROKEN_ALERTMANAGER]: mockDataSource({
+    uid: MOCK_DATASOURCE_UID_BROKEN_ALERTMANAGER,
+    name: MOCK_DATASOURCE_NAME_BROKEN_ALERTMANAGER,
     type: DataSourceType.Alertmanager,
   }),
 };
@@ -99,6 +108,10 @@ const addAdditionalMatcher = async () => {
 };
 
 setupMswServer();
+
+beforeEach(() => {
+  setupDataSources(dataSources.am, dataSources[MOCK_DATASOURCE_NAME_BROKEN_ALERTMANAGER]);
+});
 
 describe('Silences', () => {
   beforeAll(resetMocks);
@@ -185,6 +198,11 @@ describe('Silences', () => {
 
     expect(ui.addSilenceButton.query()).not.toBeInTheDocument();
   });
+
+  it('handles error case when broken alertmanager is used', async () => {
+    renderSilences(`/alerting/silences?alertmanager=${encodeURIComponent(MOCK_DATASOURCE_NAME_BROKEN_ALERTMANAGER)}`);
+    expect(await screen.findByText(/error loading silences/i)).toBeInTheDocument();
+  });
 });
 
 describe('Silence create/edit', () => {
@@ -194,7 +212,6 @@ describe('Silence create/edit', () => {
 
   beforeEach(() => {
     setUserLogged(true);
-    setupDataSources(dataSources.am);
   });
 
   it('Should not render createdBy if user is logged in and has a name', async () => {

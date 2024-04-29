@@ -1,13 +1,19 @@
 import { HttpResponse, http } from 'msw';
 
 import { mockSilences } from 'app/features/alerting/unified/mocks';
+import { MOCK_DATASOURCE_UID_BROKEN_ALERTMANAGER } from 'app/features/alerting/unified/mocks/datasources';
 
 //////////////
 // Silences //
 //////////////
 
 export const silencesListHandler = (silences = mockSilences) =>
-  http.get('/api/alertmanager/:datasourceUid/api/v2/silences', () => HttpResponse.json(silences));
+  http.get<{ datasourceUid: string }>('/api/alertmanager/:datasourceUid/api/v2/silences', ({ params }) => {
+    if (params.datasourceUid === MOCK_DATASOURCE_UID_BROKEN_ALERTMANAGER) {
+      return HttpResponse.json({ traceId: '' }, { status: 502 });
+    }
+    return HttpResponse.json(silences);
+  });
 
 export const silenceGetHandler = () =>
   http.get<{ uuid: string }>('/api/alertmanager/:datasourceUid/api/v2/silence/:uuid', ({ params }) => {
