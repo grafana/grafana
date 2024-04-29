@@ -52,7 +52,8 @@ export const SettingsProvider = (props: PropsWithChildren) => {
   const [enableGrafanaManagedAlerts, disableGrafanaManagedAlerts, enableOrDisableHandlingGrafanaManagedAlertsState] =
     useEnableOrDisableHandlingGrafanaManagedAlerts();
 
-  const externalAlertmanagersWithStatus = useExternalDataSourceAlertmanagers();
+  // we will alwayw refetch because a user could edit a data source and come back to this page
+  const externalAlertmanagersWithStatus = useExternalDataSourceAlertmanagers({ refetchOnMountOrArgChange: true });
 
   const interestedInternal = isInternalAlertmanagerInterestedInAlerts(configuration);
   if (interestedInternal) {

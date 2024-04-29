@@ -15,13 +15,22 @@ export interface ExternalAlertmanagerDataSourceWithStatus {
   status: ConnectionStatus;
 }
 
+interface UseExternalDataSourceAlertmanagersProps {
+  refetchOnMountOrArgChange?: boolean;
+}
+
 /**
  * Returns all configured Alertmanager data sources and their connection status with the internal ruler
  */
-export function useExternalDataSourceAlertmanagers(): ExternalAlertmanagerDataSourceWithStatus[] {
+export function useExternalDataSourceAlertmanagers({
+  refetchOnMountOrArgChange = false,
+}: UseExternalDataSourceAlertmanagersProps = {}): ExternalAlertmanagerDataSourceWithStatus[] {
   // firstly we'll fetch the settings for all datasources and filter for "alertmanager" type
   const { alertmanagerDataSources } = dataSourcesApi.endpoints.getAllDataSourceSettings.useQuery(undefined, {
     refetchOnReconnect: true,
+    // we will refetch the list of data sources every time the component is rendered so we always show fresh data after a user
+    // may have made changes to a data source and came back to the list
+    refetchOnMountOrArgChange,
     selectFromResult: (result) => {
       const alertmanagerDataSources = result.currentData?.filter(isAlertmanagerDataSource) ?? [];
       return { ...result, alertmanagerDataSources };
@@ -29,10 +38,9 @@ export function useExternalDataSourceAlertmanagers(): ExternalAlertmanagerDataSo
   });
 
   // we'll also fetch the configuration for which Alertmanagers we are forwarding Grafana-managed alerts too
-  // @TODO use polling when we have one or more alertmanagers in pending state
   const { currentData: externalAlertmanagers } = alertmanagerApi.endpoints.getExternalAlertmanagers.useQuery(
     undefined,
-    { refetchOnReconnect: true }
+    { refetchOnReconnect: true, refetchOnMountOrArgChange }
   );
 
   if (!alertmanagerDataSources) {
