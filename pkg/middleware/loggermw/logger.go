@@ -154,8 +154,36 @@ func errorLogParams(err error) []any {
 	}
 }
 
-var sensitiveQueryStrings = [...]string{
-	"auth_token",
+type sensQueryCheck struct {
+	key     string
+	checker func(v url.Values) bool
+}
+
+var sensitiveQueryChecks = [...]sensQueryCheck{
+	{
+		key: "auth_token",
+		checker: func(v url.Values) bool {
+			return v.Has("auth_token")
+		},
+	},
+	{
+		key: "X-Amz-Signature",
+		checker: func(v url.Values) bool {
+			return v.Has("X-Amz-Signature")
+		},
+	},
+	{
+		key: "X-Goog-Signature",
+		checker: func(v url.Values) bool {
+			return v.Has("X-Goog-Signature")
+		},
+	},
+	{
+		key: "sig",
+		checker: func(v url.Values) bool {
+			return v.Has("sig") && v.Has("sv")
+		},
+	},
 }
 
 func SanitizeURL(s string) (string, error) {
@@ -170,8 +198,10 @@ func SanitizeURL(s string) (string, error) {
 
 	// strip out sensitive query strings
 	values := u.Query()
-	for _, query := range sensitiveQueryStrings {
-		values.Del(query)
+	for _, check := range sensitiveQueryChecks {
+		if check.checker(values) {
+			values.Del(check.key)
+		}
 	}
 	u.RawQuery = values.Encode()
 
