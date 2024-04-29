@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { cloneDeep } from 'lodash';
 import React from 'react';
@@ -252,6 +252,18 @@ describe('DashboardScenePage', () => {
     await userEvent.click(panelAMenu);
     const editMenuItem = await screen.findAllByText('Edit');
     expect(editMenuItem).toHaveLength(1);
+  });
+
+  describe('home page', () => {
+    it('should not show controls', async () => {
+      getDashboardScenePageStateManager().clearDashboardCache();
+      loadDashboardMock.mockClear();
+      loadDashboardMock.mockResolvedValue({ dashboard: { panels: [] }, meta: {} });
+
+      setup();
+
+      await waitFor(() => expect(screen.queryByText('Refresh')).not.toBeInTheDocument());
+    });
   });
 });
 
