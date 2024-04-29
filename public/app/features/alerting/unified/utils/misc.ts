@@ -232,7 +232,17 @@ export function isErrorLike(error: unknown): error is Error {
 export function stringifyErrorLike(error: unknown): string {
   const fetchError = isFetchError(error);
   if (fetchError) {
-    return error.data.message;
+    if (error.message) {
+      return error.message;
+    }
+    if ('message' in error.data && typeof error.data.message === 'string') {
+      return error.data.message;
+    }
+    if (error.statusText) {
+      return error.statusText;
+    }
+
+    return String(error.status) || 'Unknown error';
   }
 
   return isErrorLike(error) ? error.message : String(error);
