@@ -16,7 +16,7 @@ import { ShareLibraryPanel } from './ShareLibraryPanel';
 import { ShareLink } from './ShareLink';
 import { ShareSnapshot } from './ShareSnapshot';
 import { ShareModalTabModel } from './types';
-import { shareDashboardType } from './utils';
+import { getTrackingSource, shareDashboardType } from './utils';
 
 const customDashboardTabs: ShareModalTabModel[] = [];
 const customPanelTabs: ShareModalTabModel[] = [];
@@ -104,6 +104,7 @@ class UnthemedShareModal extends React.Component<Props, State> {
     this.setState((prevState) => ({ ...prevState, activeTab: t.value }));
     DashboardInteractions.sharingTabChanged({
       item: t.value,
+      shareResource: getTrackingSource(this.props.panel),
     });
   };
 
