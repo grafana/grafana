@@ -1,5 +1,5 @@
 import { Observable, from } from 'rxjs';
-import { catchError, concatMap, map } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 
 import { AlertState, AlertStateInfo } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -65,42 +65,46 @@ export class UnifiedAlertStatesWorker implements DashboardQueryRunnerWorker {
           ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
           dashboardUid: dashboard.uid,
         })
-      ).then((response: { data: RuleNamespace[] }) => response);
+      );
       return (await promRules).data;
     };
 
-    return from(fetchData()).pipe(
-      concatMap((namespaces: RuleNamespace[]) => ungroupRulesByFileName(namespaces)),
-      map((group: PromRuleGroupDTO) => {
+    const res: Observable<PromRuleGroupDTO[]> = from<Promise<RuleNamespace[]>>(fetchData()).pipe(
+      map((namespaces: RuleNamespace[]) => ungroupRulesByFileName(namespaces))
+    );
+
+    return res.pipe(
+      map((groups: PromRuleGroupDTO[]) => {
         this.hasAlertRules[dashboard.uid] = false;
         const panelIdToAlertState: Record<number, AlertStateInfo> = {};
-        // result.data.groups.forEach((group) =>
-        group.rules.forEach((rule) => {
-          if (isAlertingRule(rule) && rule.annotations && rule.annotations[Annotation.panelID]) {
-            this.hasAlertRules[dashboard.uid] = true;
-            const panelId = Number(rule.annotations[Annotation.panelID]);
-            const state = promAlertStateToAlertState(rule.state);
+        groups.forEach((group) =>
+          group.rules.forEach((rule) => {
+            if (isAlertingRule(rule) && rule.annotations && rule.annotations[Annotation.panelID]) {
+              this.hasAlertRules[dashboard.uid] = true;
+              const panelId = Number(rule.annotations[Annotation.panelID]);
+              const state = promAlertStateToAlertState(rule.state);
 
-            // there can be multiple alerts per panel, so we make sure we get the most severe state:
-            // alerting > pending > ok
-            if (!panelIdToAlertState[panelId]) {
-              panelIdToAlertState[panelId] = {
-                state,
-                id: Object.keys(panelIdToAlertState).length,
-                panelId,
-                dashboardId: dashboard.id,
-              };
-            } else if (state === AlertState.Alerting && panelIdToAlertState[panelId].state !== AlertState.Alerting) {
-              panelIdToAlertState[panelId].state = AlertState.Alerting;
-            } else if (
-              state === AlertState.Pending &&
-              panelIdToAlertState[panelId].state !== AlertState.Alerting &&
-              panelIdToAlertState[panelId].state !== AlertState.Pending
-            ) {
-              panelIdToAlertState[panelId].state = AlertState.Pending;
+              // there can be multiple alerts per panel, so we make sure we get the most severe state:
+              // alerting > pending > ok
+              if (!panelIdToAlertState[panelId]) {
+                panelIdToAlertState[panelId] = {
+                  state,
+                  id: Object.keys(panelIdToAlertState).length,
+                  panelId,
+                  dashboardId: dashboard.id,
+                };
+              } else if (state === AlertState.Alerting && panelIdToAlertState[panelId].state !== AlertState.Alerting) {
+                panelIdToAlertState[panelId].state = AlertState.Alerting;
+              } else if (
+                state === AlertState.Pending &&
+                panelIdToAlertState[panelId].state !== AlertState.Alerting &&
+                panelIdToAlertState[panelId].state !== AlertState.Pending
+              ) {
+                panelIdToAlertState[panelId].state = AlertState.Pending;
+              }
             }
-          }
-        });
+          })
+        );
         return { alertStates: Object.values(panelIdToAlertState), annotations: [] };
       }),
       catchError(handleDashboardQueryRunnerWorkerError)
