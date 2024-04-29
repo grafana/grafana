@@ -61,7 +61,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
 
   return (
     <div className={cx(styles.controls, meta.isEmbedded && styles.embedded)}>
-      <Stack grow={1} wrap={'wrap'}>
+      <Stack grow={1} wrap={'wrap'} className={styles.stack}>
         {variableControls.map((c) => (
           <c.Component model={c} key={c.state.key} />
         ))}
@@ -84,6 +84,7 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     controls: css({
       display: 'flex',
+      label: 'controls',
       alignItems: 'flex-start',
       flex: '100%',
       gap: theme.spacing(1),
@@ -103,6 +104,9 @@ function getStyles(theme: GrafanaTheme2) {
     embedded: css({
       background: 'unset',
       position: 'unset',
+    }),
+    stack: css({
+      overflow: 'hidden',
     }),
   };
 }
