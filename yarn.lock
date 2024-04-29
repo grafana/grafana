@@ -3796,9 +3796,19 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+<<<<<<< HEAD
 "@grafana/scenes@npm:^4.12.2":
   version: 4.12.2
   resolution: "@grafana/scenes@npm:4.12.2"
+||||||| 0140dfdddf8
+"@grafana/scenes@npm:^4.12.0":
+  version: 4.12.0
+  resolution: "@grafana/scenes@npm:4.12.0"
+=======
+"@grafana/scenes@npm:^4.13.0":
+  version: 4.13.0
+  resolution: "@grafana/scenes@npm:4.13.0"
+>>>>>>> c4cfee8d9661b522e3fbf6c9b84576a455c6199b
   dependencies:
     "@grafana/e2e-selectors": "npm:10.3.3"
     react-grid-layout: "npm:1.3.4"
@@ -3812,7 +3822,13 @@ __metadata:
     "@grafana/ui": ^10.0.3
     react: ^18.0.0
     react-dom: ^18.0.0
+<<<<<<< HEAD
   checksum: 10/6f974ad4c29373847f48b530145dd9ce5d34744364c8422302ab68b7d2279bb18fc187e06831131a494a7fbf6a9ee4e58314f939b9eac0f881443f0b7787933e
+||||||| 0140dfdddf8
+  checksum: 10/d59564176f432e947d88e1c25dc901dd424aa61b4a0fa91b5f30704ec1da698b0c67b3c0a79caf112df83a0b84b583a8732d157a7eec87cd43cdbb4949007d3f
+=======
+  checksum: 10/2785516164ff557b325b7425861f2aee895656ae635d9e9e6b9c882229f75ea19fa0f9402d4e827efcc46103918aa130f236ec850913e56dadc06f1ffeefb1f9
+>>>>>>> c4cfee8d9661b522e3fbf6c9b84576a455c6199b
   languageName: node
   linkType: hard
 
@@ -17879,7 +17895,13 @@ __metadata:
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/saga-icons": "workspace:*"
+<<<<<<< HEAD
     "@grafana/scenes": "npm:^4.12.2"
+||||||| 0140dfdddf8
+    "@grafana/scenes": "npm:^4.12.0"
+=======
+    "@grafana/scenes": "npm:^4.13.0"
+>>>>>>> c4cfee8d9661b522e3fbf6c9b84576a455c6199b
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/tsconfig": "npm:^1.3.0-rc1"

@@ -139,10 +139,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       }
 
       if (datasource && dsSettings) {
-        this.setState({
-          datasource,
-          dsSettings,
-        });
+        this.setState({ datasource, dsSettings });
 
         storeLastUsedDataSourceInLocalStorage(
           {
