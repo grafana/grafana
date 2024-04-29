@@ -24,6 +24,7 @@ import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
 import { PanelEditor, buildPanelEditScene } from '../panel-edit/PanelEditor';
 import ShareButton from '../sharing/ShareButton/ShareButton';
+import ExportButton from '../sharing/ExportButton/ExportButton';
 import { ShareModal } from '../sharing/ShareModal';
 import { DashboardInteractions } from '../utils/interactions';
 import { DynamicDashNavButtonModel, dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
@@ -571,6 +572,12 @@ export function ToolbarActions({ dashboard }: Props) {
         </ButtonGroup>
       );
     },
+  });
+
+  toolbarActions.push({
+    group: 'new-export-dashboard-button',
+    condition: uid && !isEditing && !meta.isSnapshot && !isPlaying,
+    render: () => <ExportButton key="new-export-dashboard-button" dashboard={dashboard} />,
   });
 
   const actionElements: React.ReactNode[] = [];
