@@ -8,7 +8,9 @@ import (
 	"path"
 
 	"github.com/spf13/pflag"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/client-go/tools/clientcmd"
@@ -17,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/apiserver/builder"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	grafanaAPIServer "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	standaloneoptions "github.com/grafana/grafana/pkg/services/apiserver/standalone/options"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
@@ -26,6 +27,11 @@ import (
 
 const (
 	dataPath = "data/grafana-apiserver" // same as grafana core
+)
+
+var (
+	Scheme = runtime.NewScheme()
+	Codecs = serializer.NewCodecFactory(Scheme)
 )
 
 // APIServerOptions contains the state for the apiserver
@@ -47,7 +53,7 @@ func newAPIServerOptions(out, errOut io.Writer) *APIServerOptions {
 		logger:  logger,
 		StdOut:  out,
 		StdErr:  errOut,
-		Options: standaloneoptions.New(logger, grafanaAPIServer.Codecs.LegacyCodec()),
+		Options: standaloneoptions.New(logger),
 	}
 }
 
@@ -67,7 +73,7 @@ func (o *APIServerOptions) loadAPIGroupBuilders(ctx context.Context, tracer trac
 
 	// Install schemas
 	for _, b := range o.builders {
-		if err := b.InstallSchema(grafanaAPIServer.Scheme); err != nil {
+		if err := b.InstallSchema(Scheme); err != nil {
 			return err
 		}
 	}
@@ -95,7 +101,7 @@ func (o *APIServerOptions) Config() (*genericapiserver.RecommendedConfig, error)
 		o.Options.RecommendedOptions.CoreAPI = nil
 	}
 
-	serverConfig := genericapiserver.NewRecommendedConfig(grafanaAPIServer.Codecs)
+	serverConfig := genericapiserver.NewRecommendedConfig(Codecs)
 
 	if err := o.Options.ApplyTo(serverConfig); err != nil {
 		return nil, fmt.Errorf("failed to apply options to server config: %w", err)
@@ -113,7 +119,7 @@ func (o *APIServerOptions) Config() (*genericapiserver.RecommendedConfig, error)
 
 	// Add OpenAPI specs for each group+version
 	err := builder.SetupConfig(
-		grafanaAPIServer.Scheme,
+		Scheme,
 		serverConfig,
 		o.builders,
 		setting.BuildStamp,
@@ -162,7 +168,7 @@ func (o *APIServerOptions) RunAPIServer(config *genericapiserver.RecommendedConf
 	}
 
 	// Install the API Group+version
-	err = builder.InstallAPIs(grafanaAPIServer.Scheme, grafanaAPIServer.Codecs, server, config.RESTOptionsGetter, o.builders, true)
+	err = builder.InstallAPIs(Scheme, Codecs, server, config.RESTOptionsGetter, o.builders, true)
 	if err != nil {
 		return err
 	}

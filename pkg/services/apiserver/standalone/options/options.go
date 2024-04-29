@@ -1,10 +1,10 @@
 package options
 
 import (
+	"github.com/grafana/grafana-app-sdk/apiserver"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/spf13/pflag"
-	"k8s.io/apimachinery/pkg/runtime"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	genericoptions "k8s.io/apiserver/pkg/server/options"
 )
@@ -17,11 +17,12 @@ type Options struct {
 	MetricsOptions     *MetricsOptions
 }
 
-func New(logger log.Logger, codec runtime.Codec) *Options {
+func New(logger log.Logger, groups ...*apiserver.ResourceGroup) *Options {
+	embeddedOptions := options.NewOptions(groups...)
 	return &Options{
 		LoggingOptions:     NewLoggingOptions(logger),
-		ExtraOptions:       options.NewExtraOptions(),
-		RecommendedOptions: options.NewRecommendedOptions(codec),
+		ExtraOptions:       embeddedOptions.ExtraOptions,
+		RecommendedOptions: embeddedOptions.APIServerOptions.RecommendedOptions,
 		TracingOptions:     NewTracingOptions(logger),
 		MetricsOptions:     NewMetrcicsOptions(logger),
 	}

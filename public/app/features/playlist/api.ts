@@ -1,4 +1,5 @@
 import { lastValueFrom } from 'rxjs';
+import { v4 as uuidv4 } from 'uuid';
 
 import { DataQueryRequest, DataFrameView } from '@grafana/data';
 import { getBackendSrv, config } from '@grafana/runtime';
@@ -84,6 +85,9 @@ class K8sAPI implements PlaylistAPI {
   }
 
   playlistAsK8sResource = (playlist: Playlist): ResourceForCreate<PlaylistSpec> => {
+    if (!playlist.uid) {
+      playlist.uid = uuidv4();
+    }
     return {
       metadata: {
         name: playlist.uid, // uid as k8s name
