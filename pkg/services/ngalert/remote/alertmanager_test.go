@@ -53,10 +53,6 @@ var (
 	defaultGrafanaConfig = setting.GetAlertmanagerDefaultConfiguration()
 )
 
-var (
-	defaultGrafanaConfig = setting.GetAlertmanagerDefaultConfiguration()
-)
-
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }

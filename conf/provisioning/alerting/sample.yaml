@@ -1,73 +1,73 @@
-apiVersion: 1
+# apiVersion: 1
 
-groups:
-  - orgId: 1
-    name: my_rule_group
-    folder: my_first_folder
-    interval: 60s
-    rules:
-      - uid: my_id_1
-        title: my_first_rule
-        condition: A
-        data:
-          - refId: A
-            datasourceUid: '__expr__'
-            model:
-              conditions:
-                - evaluator:
-                    params:
-                      - 3
-                    type: gt
-                  operator:
-                    type: and
-                  query:
-                    params:
-                      - A
-                  reducer:
-                    type: last
-                  type: query
-              datasource:
-                type: __expr__
-                uid: '__expr__'
-              expression: 1==0
-              intervalMs: 1000
-              maxDataPoints: 43200
-              refId: A
-              type: math
-        dashboardUid: my_dashboard
-        panelId: 123
-        noDataState: Alerting
-        executionErrorState: Alerting
-        for: 60s
-        annotations:
-          some_key: some_value
-        labels:
-          team: sre_team_1
-        isPaused: false
+# groups:
+#   - orgId: 1
+#     name: my_rule_group
+#     folder: my_first_folder
+#     interval: 60s
+#     rules:
+#       - uid: my_id_1
+#         title: my_first_rule
+#         condition: A
+#         data:
+#           - refId: A
+#             datasourceUid: '__expr__'
+#             model:
+#               conditions:
+#                 - evaluator:
+#                     params:
+#                       - 3
+#                     type: gt
+#                   operator:
+#                     type: and
+#                   query:
+#                     params:
+#                       - A
+#                   reducer:
+#                     type: last
+#                   type: query
+#               datasource:
+#                 type: __expr__
+#                 uid: '__expr__'
+#               expression: 1==0
+#               intervalMs: 1000
+#               maxDataPoints: 43200
+#               refId: A
+#               type: math
+#         dashboardUid: my_dashboard
+#         panelId: 123
+#         noDataState: Alerting
+#         executionErrorState: Alerting
+#         for: 60s
+#         annotations:
+#           some_key: some_value
+#         labels:
+#           team: sre_team_1
+#         isPaused: false
 
-contactPoints:
-  - orgId: 1
-    name: cp_1
-    receivers:
-      - uid: first_uid
-        type: prometheus-alertmanager
-        settings:
-          url: http://test:9000
+# contactPoints:
+#   - orgId: 1
+#     name: cp_1
+#     receivers:
+#       - uid: first_uid
+#         type: prometheus-alertmanager
+#         settings:
+#           url: http://test:9000
 
-policies:
-  - orgId: 1
-    receiver: grafana-default-email
-    group_by:
-      - grafana_folder
-      - alertname
-    matchers:
-      - alertname = Watchdog
-      - severity =~ "warning|critical"
-    group_wait: 30s
-    group_interval: 5m
-    repeat_interval: 4h
-    routes:
-      - receiver: cp_1
+# policies:
+#   - orgId: 1
+#     receiver: grafana-default-email
+#     group_by:
+#       - grafana_folder
+#       - alertname
+#     matchers:
+#       - alertname = Watchdog
+#       - severity =~ "warning|critical"
+#     group_wait: 30s
+#     group_interval: 5m
+#     repeat_interval: 4h
+#     routes:
+#       - receiver: cp_1
 
 # # List of receivers that should be deleted
 # deleteContactPoints:
@@ -140,7 +140,6 @@ policies:
 #  - orgId: 1
 #    # <string, required> name of the template, must be unique
 #    name: my_first_template
-
 
 # # List of mute time intervals to import or update
 # muteTimes:
