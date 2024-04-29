@@ -49,6 +49,16 @@ func (s *AccessControlStore) SynchronizeUserData(ctx context.Context, zanzanaSer
 		return err
 	}
 
+	// Sync Folder relations
+	if err := s.SyncFolderRelations(ctx, cl); err != nil {
+		return err
+	}
+
+	// Sync Dashboard relations
+	if err := s.SyncDashboardRelations(ctx, cl); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -427,4 +437,129 @@ func (s *AccessControlStore) SyncManagedRolePermissions(ctx context.Context, cl 
 
 	logger.Info("Synchronizing managed role permissions", "permissions", len(rolePermissionKeys))
 	return batchWrite(ctx, rolePermissionKeys, cl)
+}
+
+func (s *AccessControlStore) SyncFolderRelations(ctx context.Context, cl *zclient.GRPCClient) error {
+	tupleKeys := map[string]*openfgav1.TupleKey{}
+	logger := log.New("accesscontrol.syncFolderRelations")
+
+	query := `SELECT id, uid, org_id, title, description, parent_uid FROM folder`
+	type folder struct {
+		Id          int64  `xorm:"id"`
+		Uid         string `xorm:"uid"`
+		OrgId       int64  `xorm:"org_id"`
+		Title       string `xorm:"title"`
+		Description string `xorm:"description"`
+		ParentUid   string `xorm:"parent_uid"`
+	}
+
+	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+		rows, err := sess.SQL(query).Rows(new(folder))
+		if err != nil {
+			return err
+		}
+		defer func() {
+			if err := rows.Close(); err != nil {
+				logger.Error("Failed to close rows", "error", err)
+			}
+		}()
+
+		for rows.Next() {
+			folderRow := folder{}
+			if err := rows.Scan(&folderRow); err != nil {
+				return err
+			}
+
+			orgKey := "org:" + strconv.FormatInt(folderRow.OrgId, 10)
+			folderKey := "folder:" + folderRow.Uid
+			parentFolderKey := "folder:" + folderRow.ParentUid
+
+			// Define relations based on the org and parent folder
+			orgFolderKey := &openfgav1.TupleKey{
+				User:     orgKey,
+				Relation: "org",
+				Object:   folderKey,
+			}
+			tupleKeys[orgFolderKey.User+orgFolderKey.Relation+orgFolderKey.Object] = orgFolderKey
+
+			if folderRow.ParentUid != "" {
+				parentFolderKey := &openfgav1.TupleKey{
+					User:     parentFolderKey,
+					Relation: "parent",
+					Object:   folderKey,
+				}
+				tupleKeys[parentFolderKey.User+parentFolderKey.Relation+parentFolderKey.Object] = parentFolderKey
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	logger.Info("Synchronizing folder relations", "relations", len(tupleKeys))
+	return batchWrite(ctx, tupleKeys, cl)
+}
+
+func (s *AccessControlStore) SyncDashboardRelations(ctx context.Context, cl *zclient.GRPCClient) error {
+	tupleKeys := map[string]*openfgav1.TupleKey{}
+	logger := log.New("accesscontrol.syncDashboardRelations")
+
+	query := `SELECT id, uid, org_id, title, folder_uid FROM dashboard WHERE is_folder = 0`
+	type dashboard struct {
+		Id        int64  `xorm:"id"`
+		Uid       string `xorm:"uid"`
+		OrgId     int64  `xorm:"org_id"`
+		Title     string `xorm:"title"`
+		FolderUid string `xorm:"folder_uid"`
+	}
+
+	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+		rows, err := sess.SQL(query).Rows(new(dashboard))
+		if err != nil {
+			return err
+		}
+		defer func() {
+			if err := rows.Close(); err != nil {
+				logger.Error("Failed to close rows", "error", err)
+			}
+		}()
+
+		for rows.Next() {
+			dashboardRow := dashboard{}
+			if err := rows.Scan(&dashboardRow); err != nil {
+				return err
+			}
+
+			orgKey := "org:" + strconv.FormatInt(dashboardRow.OrgId, 10)
+			dashboardKey := "dashboard:" + dashboardRow.Uid
+			folderKey := "folder:" + dashboardRow.FolderUid
+
+			// Define relations based on the org and parent folder
+			orgDashboardKey := &openfgav1.TupleKey{
+				User:     orgKey,
+				Relation: "org",
+				Object:   dashboardKey,
+			}
+			tupleKeys[orgDashboardKey.User+orgDashboardKey.Relation+orgDashboardKey.Object] = orgDashboardKey
+
+			if dashboardRow.FolderUid != "" {
+				parentDashboardKey := &openfgav1.TupleKey{
+					User:     folderKey,
+					Relation: "folder",
+					Object:   dashboardKey,
+				}
+				tupleKeys[parentDashboardKey.User+parentDashboardKey.Relation+parentDashboardKey.Object] = parentDashboardKey
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	logger.Info("Synchronizing dashboard relations", "relations", len(tupleKeys))
+	return batchWrite(ctx, tupleKeys, cl)
 }

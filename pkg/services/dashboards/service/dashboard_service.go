@@ -385,7 +385,7 @@ func (dr *DashboardServiceImpl) SaveDashboard(ctx context.Context, dto *dashboar
 		if dash.FolderUID != "" {
 			tupleKeys = append(tupleKeys, &openfgav1.TupleKey{
 				User:     "folder:" + dash.FolderUID,
-				Relation: "parent",
+				Relation: "folder",
 				Object:   "dashboard:" + dash.UID,
 			})
 		}
