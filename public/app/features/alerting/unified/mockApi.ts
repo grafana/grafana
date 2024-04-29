@@ -424,10 +424,10 @@ export function mockDashboardApi(server: SetupServer) {
   };
 }
 
+const server = setupServer();
+
 // Creates a MSW server and sets up beforeAll, afterAll and beforeEach handlers for it
 export function setupMswServer() {
-  const server = setupServer();
-
   beforeAll(() => {
     setBackendSrv(backendSrv);
     server.listen({ onUnhandledRequest: 'error' });
@@ -443,3 +443,5 @@ export function setupMswServer() {
 
   return server;
 }
+
+export default server;

@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -50,20 +49,8 @@ func (s *Service) GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsBy
 	return s.store.GetIDsByUser(ctx, query)
 }
 
-func (s *Service) AddTeamMember(ctx context.Context, userID, orgID, teamID int64, isExternal bool, permission dashboardaccess.PermissionType) error {
-	return s.store.AddMember(ctx, userID, orgID, teamID, isExternal, permission)
-}
-
-func (s *Service) UpdateTeamMember(ctx context.Context, cmd *team.UpdateTeamMemberCommand) error {
-	return s.store.UpdateMember(ctx, cmd)
-}
-
 func (s *Service) IsTeamMember(orgId int64, teamId int64, userId int64) (bool, error) {
 	return s.store.IsMember(orgId, teamId, userId)
-}
-
-func (s *Service) RemoveTeamMember(ctx context.Context, cmd *team.RemoveTeamMemberCommand) error {
-	return s.store.RemoveMember(ctx, cmd)
 }
 
 func (s *Service) RemoveUsersMemberships(ctx context.Context, userID int64) error {
