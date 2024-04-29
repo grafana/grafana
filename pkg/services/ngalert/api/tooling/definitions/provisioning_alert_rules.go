@@ -292,6 +292,7 @@ type RelativeTimeRangeExport struct {
 
 // AlertRuleNotificationSettingsExport is the provisioned export of models.NotificationSettings.
 type AlertRuleNotificationSettingsExport struct {
+	// Terraform provider uses `contact_point`, so export the field with that name in HCL.
 	Receiver string `yaml:"receiver,omitempty" json:"receiver,omitempty" hcl:"contact_point"`
 
 	GroupBy           []string `yaml:"group_by,omitempty" json:"group_by,omitempty" hcl:"group_by"`
