@@ -35,15 +35,15 @@ The following concepts are key to your understanding of how Grafana Alerting wor
 
 ### Alert rules
 
-An [alert rule][alert-rules] consists of one or more queries and expressions that select the data you want to measure. It also contains a condition, which is the threshold that an alert rule must meet or exceed in order to fire.
+An [alert rule][alert-rules] consists of one or more queries and expressions that select the data you want to measure. It also contains a condition, which is the threshold that an alert rule must meet or exceed to fire.
 
 Add labels to uniquely identify your alert rule and configure alert routing. Labels link alert rules to notification policies, so you can easily manage which policy should handle which alerts and who gets notified.
 
-Once alert rules are created, they go through various states and transitions.
+After alert rules are created, they go through various states and transitions.
 
 ### Alert instances
 
-Each alert rule can produce multiple alert instances (also known as alerts) - one alert instance for each time series. This is exceptionally powerful as it allows us to observe multiple series in a single expression.
+Each alert rule can produce multiple alert instances (also known as alerts) - one alert instance for each time series. This is exceptionally powerful as it allows you to observe multiple series in a single expression.
 
 ```promql
 sum by(cpu) (
@@ -51,7 +51,7 @@ sum by(cpu) (
 )
 ```
 
-A rule using the PromQL expression above creates as many alert instances as the amount of CPUs we are observing after the first evaluation, enabling a single rule to report the status of each CPU.
+A rule using the PromQL expression above creates as many alert instances as the amount of CPUs after the first evaluation, enabling a single rule to report the status of each CPU.
 
 {{< figure src="/static/img/docs/alerting/unified/multi-dimensional-alert.png" caption="Multiple alert instances from a single alert rule" >}}
 
