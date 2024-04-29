@@ -158,7 +158,7 @@ func (s *AccessControlStore) GetTeamsPermissions(ctx context.Context, query acce
 			SELECT tr.role_id, tr.team_id FROM team_role as tr
 			WHERE tr.team_id IN(?` + strings.Repeat(", ?", len(teams)-1) + `)
 			  AND tr.org_id = ?
-		) as all_role ON role.id = all_role.role_id;
+		) as all_role ON role.id = all_role.role_id
 		`
 
 		params := make([]any, 0)
