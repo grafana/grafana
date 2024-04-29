@@ -218,7 +218,7 @@ func (ss *sqlStore) LoginConflict(ctx context.Context, login, email string) erro
 
 func (ss *sqlStore) loginConflict(sess *db.Session, login, email string) error {
 	users := make([]user.User, 0)
-	where := "LOWER(email)=LOWER(?) OR LOWER(login)=LOWER(?)"
+	where := "email=? OR login=?"
 	login = strings.ToLower(login)
 	email = strings.ToLower(email)
 
