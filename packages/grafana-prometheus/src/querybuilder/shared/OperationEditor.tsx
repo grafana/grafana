@@ -238,7 +238,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderRadius: theme.shape.radius.default,
       marginBottom: theme.spacing(1),
       position: 'relative',
-      transition: 'all 0.5s ease-in 0s',
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: 'all 0.5s ease-in 0s',
+      },
       height: '100%',
     }),
     cardError: css({

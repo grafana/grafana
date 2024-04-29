@@ -100,9 +100,11 @@ export const getStyles = (theme: GrafanaTheme2) => {
       background: theme.colors.background.secondary,
       borderRadius: theme.shape.radius.default,
       padding: theme.spacing(3),
-      transition: theme.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {
-        duration: theme.transitions.duration.short,
-      }),
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {
+          duration: theme.transitions.duration.short,
+        }),
+      },
 
       '&:hover': {
         background: theme.colors.emphasize(theme.colors.background.secondary, 0.03),

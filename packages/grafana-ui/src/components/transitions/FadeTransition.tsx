@@ -23,7 +23,7 @@ export function FadeTransition(props: Props) {
   );
 }
 
-const getStyles = (_theme: GrafanaTheme2, duration: number) => ({
+const getStyles = (theme: GrafanaTheme2, duration: number) => ({
   enter: css({
     label: 'enter',
     opacity: 0,
@@ -31,7 +31,9 @@ const getStyles = (_theme: GrafanaTheme2, duration: number) => ({
   enterActive: css({
     label: 'enterActive',
     opacity: 1,
-    transition: `opacity ${duration}ms ease-out`,
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition: `opacity ${duration}ms ease-out`,
+    },
   }),
   exit: css({
     label: 'exit',
@@ -40,6 +42,8 @@ const getStyles = (_theme: GrafanaTheme2, duration: number) => ({
   exitActive: css({
     label: 'exitActive',
     opacity: 0,
-    transition: `opacity ${duration}ms ease-out`,
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition: `opacity ${duration}ms ease-out`,
+    },
   }),
 });

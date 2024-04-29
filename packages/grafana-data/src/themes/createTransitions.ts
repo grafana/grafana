@@ -53,6 +53,12 @@ export function create(props: string | string[] = ['all'], options: CreateTransi
     .join(',');
 }
 
+type ReducedMotionProps = 'no-preference' | 'reduce';
+
+export function handleMotion(...props: ReducedMotionProps[]) {
+  return props.map((prop) => `@media (prefers-reduced-motion: ${prop})`).join(',');
+}
+
 export function getAutoHeightDuration(height: number) {
   if (!height) {
     return 0;
@@ -74,6 +80,7 @@ export interface ThemeTransitions {
   duration: typeof duration;
   easing: typeof easing;
   getAutoHeightDuration: typeof getAutoHeightDuration;
+  handleMotion: typeof handleMotion;
 }
 
 /** @internal */
@@ -83,5 +90,6 @@ export function createTransitions(): ThemeTransitions {
     duration,
     easing,
     getAutoHeightDuration,
+    handleMotion,
   };
 }

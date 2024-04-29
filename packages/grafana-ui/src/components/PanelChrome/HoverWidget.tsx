@@ -66,7 +66,9 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     container: css({
       label: 'hover-container-widget',
-      transition: `all .1s linear`,
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: `all .1s linear`,
+      },
       display: 'flex',
       position: 'absolute',
       zIndex: 1,

@@ -120,7 +120,9 @@ const getLabelStyles = (theme: GrafanaTheme2) => ({
     fontWeight: theme.typography.fontWeightMedium,
     backgroundColor: theme.colors.primary.shade,
     color: theme.colors.text.primary,
-    animation: 'pulse 3s ease-out 0s infinite normal forwards',
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      animation: 'pulse 3s ease-out 0s infinite normal forwards',
+    },
     '@keyframes pulse': {
       '0%': {
         color: theme.colors.text.primary,

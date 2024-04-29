@@ -133,18 +133,22 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     mainButton: css({
       opacity: 1,
-      transition: theme.transitions.create(['opacity'], {
-        duration: theme.transitions.duration.shortest,
-        easing: theme.transitions.easing.easeOut,
-      }),
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: theme.transitions.create(['opacity'], {
+          duration: theme.transitions.duration.shortest,
+          easing: theme.transitions.easing.easeOut,
+        }),
+      },
       zIndex: 2,
     }),
     mainButtonHide: css({
       opacity: 0,
-      transition: theme.transitions.create(['opacity', 'visibility'], {
-        duration: theme.transitions.duration.shortest,
-        easing: theme.transitions.easing.easeIn,
-      }),
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: theme.transitions.create(['opacity', 'visibility'], {
+          duration: theme.transitions.duration.shortest,
+          easing: theme.transitions.easing.easeIn,
+        }),
+      },
       visibility: 'hidden',
       zIndex: 0,
     }),
@@ -164,19 +168,23 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       opacity: 1,
       transform: 'translateX(0)',
-      transition: theme.transitions.create(['opacity', 'transform'], {
-        duration: theme.transitions.duration.shortest,
-        easing: theme.transitions.easing.easeOut,
-      }),
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: theme.transitions.create(['opacity', 'transform'], {
+          duration: theme.transitions.duration.shortest,
+          easing: theme.transitions.easing.easeOut,
+        }),
+      },
       zIndex: 1,
     }),
     confirmButtonHide: css({
       opacity: 0,
       transform: 'translateX(100%)',
-      transition: theme.transitions.create(['opacity', 'transform', 'visibility'], {
-        duration: theme.transitions.duration.shortest,
-        easing: theme.transitions.easing.easeIn,
-      }),
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: theme.transitions.create(['opacity', 'transform', 'visibility'], {
+          duration: theme.transitions.duration.shortest,
+          easing: theme.transitions.easing.easeIn,
+        }),
+      },
       visibility: 'hidden',
     }),
   };

@@ -37,7 +37,9 @@ export function buildTooltipTheme(
       color: tooltipText,
       fontSize: theme.typography.bodySmall.fontSize,
       padding: theme.spacing(tooltipPadding.topBottom, tooltipPadding.rightLeft),
-      transition: 'opacity 0.3s',
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: 'opacity 0.3s',
+      },
       zIndex: theme.zIndex.tooltip,
       maxWidth: '400px',
       overflowWrap: 'break-word',
