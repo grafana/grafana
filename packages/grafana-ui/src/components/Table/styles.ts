@@ -263,7 +263,9 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
       display: 'inline-block',
       background: resizerColor,
       opacity: 0,
-      transition: 'opacity 0.2s ease-in-out',
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: 'opacity 0.2s ease-in-out',
+      },
       width: '8px',
       height: '100%',
       position: 'absolute',
