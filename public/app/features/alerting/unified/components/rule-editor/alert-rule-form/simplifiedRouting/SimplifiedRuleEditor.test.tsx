@@ -259,6 +259,7 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
       expect(mocks.api.setRulerRuleGroup).not.toHaveBeenCalled();
     });
   });
+
   it('can create new grafana managed alert when using simplified routing and selecting a contact point', async () => {
     const contactPointsAvailable: ContactPointWithMetadata[] = [
       {
@@ -275,7 +276,7 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
             settings: {},
           },
         ],
-        numberOfPolicies: 0,
+        policies: [],
       },
     ];
     mocks.useContactPointsWithStatus.mockReturnValue({
