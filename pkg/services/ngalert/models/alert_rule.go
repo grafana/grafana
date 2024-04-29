@@ -517,10 +517,10 @@ func (alertRule *AlertRule) ValidateAlertRule(cfg setting.UnifiedAlertingSetting
 	}
 
 	if alertRule.Record != "" {
-		return fmt.Errorf("%w: Storing recording rules is not yet allowed.", ErrAlertRuleFailedValidation)
+		return fmt.Errorf("%w: storing recording rules is not yet allowed", ErrAlertRuleFailedValidation)
 	}
 	if alertRule.RecordFrom != "" {
-		return fmt.Errorf("%w: Storing recording rules is not yet allowed.", ErrAlertRuleFailedValidation)
+		return fmt.Errorf("%w: storing recording rules is not yet allowed", ErrAlertRuleFailedValidation)
 	}
 
 	if len(alertRule.NotificationSettings) > 0 {
