@@ -292,7 +292,7 @@ type RelativeTimeRangeExport struct {
 
 // AlertRuleNotificationSettingsExport is the provisioned export of models.NotificationSettings.
 type AlertRuleNotificationSettingsExport struct {
-	Receiver string `yaml:"receiver,omitempty" json:"receiver,omitempty" hcl:"receiver"`
+	Receiver string `yaml:"receiver,omitempty" json:"receiver,omitempty" hcl:"contact_point"`
 
 	GroupBy           []string `yaml:"group_by,omitempty" json:"group_by,omitempty" hcl:"group_by"`
 	GroupWait         *string  `yaml:"group_wait,omitempty" json:"group_wait,omitempty" hcl:"group_wait,optional"`
