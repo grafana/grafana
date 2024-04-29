@@ -1320,8 +1320,8 @@ func TestBuildMetricRequest(t *testing.T) {
 }
 
 func TestBuildAnonymousUser(t *testing.T) {
-	sqlStore := db.InitTestDB(t)
-	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotatest.New(false, nil))
+	sqlStore, cfg := db.InitTestDBWithCfg(t)
+	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotatest.New(false, nil))
 	require.NoError(t, err)
 	dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]interface{}{}, nil)
 	features := featuremgmt.WithFeatures()

@@ -38,8 +38,8 @@ export const UnsupportedDataSourcesAlert = ({ unsupportedDataSources }: { unsupp
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  unsupportedDataSourceDescription: css`
-    color: ${theme.colors.text.secondary};
-    margin-bottom: ${theme.spacing(1)};
-  `,
+  unsupportedDataSourceDescription: css({
+    color: theme.colors.text.secondary,
+    marginBottom: theme.spacing(1),
+  }),
 });
