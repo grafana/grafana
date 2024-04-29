@@ -584,11 +584,11 @@
     "toolbar": {
       "aria-label": "Explore toolbar",
       "copy-link": "Copy URL",
-      "copy-link-abs-time": "Copy Absolute Shortened URL",
+      "copy-link-abs-time": "Copy absolute URL",
       "copy-links-absolute-category": "Time-sync URL links (share with time range intact)",
       "copy-links-normal-category": "Normal URL links",
       "copy-shortened-link": "Copy shortened URL",
-      "copy-shortened-link-abs-time": "Copy Absolute Shortened URL",
+      "copy-shortened-link-abs-time": "Copy absolute shortened URL",
       "copy-shortened-link-menu": "Open copy link options",
       "refresh-picker-cancel": "Cancel",
       "refresh-picker-run": "Run query",
