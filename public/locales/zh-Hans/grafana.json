@@ -380,7 +380,7 @@
     "annotations": {
       "title": "注释"
     },
-    "dashboard-delete-button": "删除仪表板",
+    "dashboard-delete-button": "",
     "general": {
       "auto-refresh-description": "",
       "auto-refresh-label": "自动刷新",
@@ -467,6 +467,7 @@
       "newest-first": "最新在前",
       "oldest-first": "最早在前",
       "query-history": "查询历史记录",
+      "query-library": "",
       "settings": "设置",
       "starred": "已加星标"
     },
