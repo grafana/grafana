@@ -26,7 +26,7 @@ var ScopeDashboardBindingResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 )
 
 var ScopeNodeResourceInfo = common.NewResourceInfo(GROUP, VERSION,
-	"scopenode", "scopenodes", "ScopeNode",
+	"scopenodes", "scopenode", "ScopeNode",
 	func() runtime.Object { return &ScopeNode{} },
 	func() runtime.Object { return &ScopeNodeList{} },
 )

@@ -46,22 +46,38 @@ func TestIntegrationScopes(t *testing.T) {
 			"apiVersion": "v1",
 			"groupVersion": "scope.grafana.app/v0alpha1",
 			"resources": [
-			  {
-				"name": "scopedashboardbindings",
-				"singularName": "scopedashboardbinding",
+				{
+					"name": "scopedashboardbindings",
+					"singularName": "scopedashboardbinding",
+					"namespaced": true,
+					"kind": "ScopeDashboardBinding",
+					"verbs": [
+					  "create",
+					  "delete",
+					  "deletecollection",
+					  "get",
+					  "list",
+					  "patch",
+					  "update",
+					  "watch"
+					]
+				  },{
+				"name": "scopenodes",
+				"singularName": "scopenode",
 				"namespaced": true,
-				"kind": "ScopeDashboardBinding",
+				"kind": "ScopeNode",
 				"verbs": [
-				  "create",
-				  "delete",
-				  "deletecollection",
-				  "get",
-				  "list",
-				  "patch",
-				  "update",
-				  "watch"
+					"create",
+					"delete",
+					"deletecollection",
+					"get",
+					"list",
+					"patch",
+					"update",
+					"watch"
 				]
 			  },
+			  
 			  {
 				"name": "scopes",
 				"singularName": "scope",
@@ -77,23 +93,8 @@ func TestIntegrationScopes(t *testing.T) {
 				  "update",
 				  "watch"
 				]
-			  },
-			  {
-				"name": "scopeNodes",
-				"singularName": "scopeNode",
-				"namespaced": true,
-				"kind": "scopeNode",
-				"verbs": [
-				  "create",
-				  "delete",
-				  "deletecollection",
-				  "get",
-				  "list",
-				  "patch",
-				  "update",
-				  "watch"
-				]
 			  }
+			  
 			]
 		  }`, string(v1Disco))
 	})
