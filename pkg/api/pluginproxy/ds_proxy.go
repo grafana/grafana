@@ -19,6 +19,7 @@ import (
 	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -304,7 +305,10 @@ func (proxy *DataSourceProxy) validateRequest() error {
 			continue
 		}
 
-		routeEval := route.Evaluator()
+		var routeEval accesscontrol.Evaluator
+		if route.ReqAction != "" {
+			routeEval = accesscontrol.EvalPermission(route.ReqAction)
+		}
 		switch {
 		case routeEval != nil:
 			if ok := routeEval.Evaluate(proxy.ctx.GetPermissions()); !ok {
