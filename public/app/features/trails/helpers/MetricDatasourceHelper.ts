@@ -1,7 +1,7 @@
 import { DataSourceApi } from '@grafana/data';
 import { PromMetricsMetadata, PromMetricsMetadataItem } from '@grafana/prometheus';
 import PromQlLanguageProvider from '@grafana/prometheus/src/language_provider';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 
 import { DataTrail } from '../DataTrail';
 import { VAR_DATASOURCE_EXPR } from '../shared';
@@ -36,7 +36,7 @@ export class MetricDatasourceHelper {
 
     if (ds.languageProvider instanceof PromQlLanguageProvider) {
       if (!ds.languageProvider.metricsMetadata) {
-        await ds.languageProvider.start();
+        await ds.languageProvider.loadMetricsMetadata();
       }
 
       return ds.languageProvider.metricsMetadata!;
