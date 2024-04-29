@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
@@ -25,6 +26,7 @@ func TestUserService(t *testing.T) {
 		orgService:   orgService,
 		cacheService: localcache.ProvideService(),
 		teamService:  &teamtest.FakeService{},
+		tracer:       tracing.InitializeTracerForTest(),
 	}
 	userService.cfg = setting.NewCfg()
 
@@ -149,7 +151,10 @@ func TestUserService(t *testing.T) {
 
 func TestService_Update(t *testing.T) {
 	setup := func(opts ...func(svc *Service)) *Service {
-		service := &Service{store: &FakeUserStore{}}
+		service := &Service{
+			store:  &FakeUserStore{},
+			tracer: tracing.InitializeTracerForTest(),
+		}
 		for _, o := range opts {
 			o(service)
 		}
@@ -201,6 +206,33 @@ func TestService_Update(t *testing.T) {
 		})
 		err := service.Update(context.Background(), &user.UpdateUserCommand{UserID: 2, OrgID: &orgID})
 		require.Error(t, err)
+	})
+}
+
+func TestUpdateLastSeenAt(t *testing.T) {
+	userStore := newUserStoreFake()
+	orgService := orgtest.NewOrgServiceFake()
+	userService := Service{
+		store:        userStore,
+		orgService:   orgService,
+		cacheService: localcache.ProvideService(),
+		teamService:  &teamtest.FakeService{},
+		tracer:       tracing.InitializeTracerForTest(),
+	}
+	userService.cfg = setting.NewCfg()
+
+	t.Run("update last seen at", func(t *testing.T) {
+		userStore.ExpectedSignedInUser = &user.SignedInUser{UserID: 1, OrgID: 1, Email: "email", Login: "login", Name: "name", LastSeenAt: time.Now().Add(-10 * time.Minute)}
+		err := userService.UpdateLastSeenAt(context.Background(), &user.UpdateUserLastSeenAtCommand{UserID: 1, OrgID: 1})
+		require.NoError(t, err)
+	})
+
+	userService.cacheService.Flush()
+
+	t.Run("do not update last seen at", func(t *testing.T) {
+		userStore.ExpectedSignedInUser = &user.SignedInUser{UserID: 1, OrgID: 1, Email: "email", Login: "login", Name: "name", LastSeenAt: time.Now().Add(-1 * time.Minute)}
+		err := userService.UpdateLastSeenAt(context.Background(), &user.UpdateUserLastSeenAtCommand{UserID: 1, OrgID: 1})
+		require.ErrorIs(t, err, user.ErrLastSeenUpToDate, err)
 	})
 }
 
@@ -302,30 +334,4 @@ func (f *FakeUserStore) Count(ctx context.Context) (int64, error) {
 
 func (f *FakeUserStore) CountUserAccountsWithEmptyRole(ctx context.Context) (int64, error) {
 	return f.ExpectedCountUserAccountsWithEmptyRoles, nil
-}
-
-func TestUpdateLastSeenAt(t *testing.T) {
-	userStore := newUserStoreFake()
-	orgService := orgtest.NewOrgServiceFake()
-	userService := Service{
-		store:        userStore,
-		orgService:   orgService,
-		cacheService: localcache.ProvideService(),
-		teamService:  &teamtest.FakeService{},
-	}
-	userService.cfg = setting.NewCfg()
-
-	t.Run("update last seen at", func(t *testing.T) {
-		userStore.ExpectedSignedInUser = &user.SignedInUser{UserID: 1, OrgID: 1, Email: "email", Login: "login", Name: "name", LastSeenAt: time.Now().Add(-10 * time.Minute)}
-		err := userService.UpdateLastSeenAt(context.Background(), &user.UpdateUserLastSeenAtCommand{UserID: 1, OrgID: 1})
-		require.NoError(t, err)
-	})
-
-	userService.cacheService.Flush()
-
-	t.Run("do not update last seen at", func(t *testing.T) {
-		userStore.ExpectedSignedInUser = &user.SignedInUser{UserID: 1, OrgID: 1, Email: "email", Login: "login", Name: "name", LastSeenAt: time.Now().Add(-1 * time.Minute)}
-		err := userService.UpdateLastSeenAt(context.Background(), &user.UpdateUserLastSeenAtCommand{UserID: 1, OrgID: 1})
-		require.ErrorIs(t, err, user.ErrLastSeenUpToDate, err)
-	})
 }

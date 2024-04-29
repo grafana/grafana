@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -27,6 +28,7 @@ type Service struct {
 	teamService  team.Service
 	cacheService *localcache.CacheService
 	cfg          *setting.Cfg
+	tracer       tracing.Tracer
 }
 
 func ProvideService(
@@ -34,9 +36,8 @@ func ProvideService(
 	orgService org.Service,
 	cfg *setting.Cfg,
 	teamService team.Service,
-	cacheService *localcache.CacheService,
-	quotaService quota.Service,
-	bundleRegistry supportbundles.Service,
+	cacheService *localcache.CacheService, tracer tracing.Tracer,
+	quotaService quota.Service, bundleRegistry supportbundles.Service,
 ) (user.Service, error) {
 	store := ProvideStore(db, cfg)
 	s := &Service{
@@ -45,6 +46,7 @@ func ProvideService(
 		cfg:          cfg,
 		teamService:  teamService,
 		cacheService: cacheService,
+		tracer:       tracer,
 	}
 
 	defaultLimits, err := readQuotaConfig(cfg)
