@@ -3362,7 +3362,6 @@ __metadata:
     uplot: "npm:1.6.30"
     xss: "npm:^1.0.14"
   peerDependencies:
-    "@reduxjs/toolkit": 1.9.5
     react: ^18.0.0
     react-dom: ^18.0.0
   languageName: unknown
