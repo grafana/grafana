@@ -23,7 +23,6 @@ export const AddLibraryPanelContents = ({ panel, initialFolderUid, onDismiss }: 
   const [debouncedPanelName, setDebouncedPanelName] = useState(panel.title);
   const [waiting, setWaiting] = useState(false);
 
-  console.log('folderUid', folderUid);
   useEffect(() => setWaiting(true), [panelName]);
   useDebounce(() => setDebouncedPanelName(panelName), 350, [panelName]);
 
