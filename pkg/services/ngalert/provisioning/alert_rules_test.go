@@ -551,7 +551,7 @@ func TestCreateAlertRule(t *testing.T) {
 	u := &user.SignedInUser{OrgID: orgID}
 	groupKey := models.GenerateGroupKey(orgID)
 	groupIntervalSeconds := int64(30)
-	gen := models.NewAlertRuleGenerator()
+	gen := models.RuleGen
 	rules := gen.With(gen.WithGroupKey(groupKey), gen.WithIntervalSeconds(groupIntervalSeconds)).GenerateManyRef(3)
 	groupProvenance := models.ProvenanceAPI
 
@@ -798,7 +798,7 @@ func TestUpdateAlertRule(t *testing.T) {
 	u := &user.SignedInUser{OrgID: orgID}
 	groupKey := models.GenerateGroupKey(orgID)
 	groupIntervalSeconds := int64(30)
-	gen := models.NewAlertRuleGenerator()
+	gen := models.RuleGen
 	rules := gen.With(gen.WithGroupKey(groupKey), gen.WithIntervalSeconds(groupIntervalSeconds)).GenerateManyRef(3)
 	groupProvenance := models.ProvenanceAPI
 
@@ -901,7 +901,7 @@ func TestDeleteAlertRule(t *testing.T) {
 	u := &user.SignedInUser{OrgID: orgID}
 	groupKey := models.GenerateGroupKey(orgID)
 	groupIntervalSeconds := int64(30)
-	gen := models.NewAlertRuleGenerator()
+	gen := models.RuleGen
 	rules := gen.With(gen.WithGroupKey(groupKey), gen.WithIntervalSeconds(groupIntervalSeconds)).GenerateManyRef(3)
 	groupProvenance := models.ProvenanceAPI
 
@@ -993,7 +993,7 @@ func TestGetAlertRule(t *testing.T) {
 	orgID := rand.Int63()
 	u := &user.SignedInUser{OrgID: orgID}
 	groupKey := models.GenerateGroupKey(orgID)
-	gen := models.NewAlertRuleGenerator()
+	gen := models.RuleGen
 	rules := gen.With(gen.WithGroupKey(groupKey)).GenerateManyRef(3)
 	rule := rules[0]
 	expectedProvenance := models.ProvenanceAPI
@@ -1122,7 +1122,7 @@ func TestGetRuleGroup(t *testing.T) {
 	u := &user.SignedInUser{OrgID: orgID}
 	groupKey := models.GenerateGroupKey(orgID)
 	intervalSeconds := int64(30)
-	gen := models.NewAlertRuleGenerator()
+	gen := models.RuleGen
 	rules := gen.With(gen.WithGroupKey(groupKey), gen.WithIntervalSeconds(intervalSeconds)).GenerateManyRef(3)
 	derefRules := make([]models.AlertRule, 0, len(rules))
 	for _, rule := range rules {
@@ -1231,7 +1231,7 @@ func TestGetAlertRules(t *testing.T) {
 	u := &user.SignedInUser{OrgID: orgID}
 	groupKey1 := models.GenerateGroupKey(orgID)
 	groupKey2 := models.GenerateGroupKey(orgID)
-	gen := models.NewAlertRuleGenerator()
+	gen := models.RuleGen
 	rules1 := gen.With(gen.WithGroupKey(groupKey1), gen.WithUniqueGroupIndex()).GenerateManyRef(3)
 	models.RulesGroup(rules1).SortByGroupIndex()
 	rules2 := gen.With(gen.WithGroupKey(groupKey2), gen.WithUniqueGroupIndex()).GenerateManyRef(4)
@@ -1331,7 +1331,7 @@ func TestReplaceGroup(t *testing.T) {
 	u := &user.SignedInUser{OrgID: orgID}
 	groupKey := models.GenerateGroupKey(orgID)
 	groupIntervalSeconds := int64(30)
-	gen := models.NewAlertRuleGenerator()
+	gen := models.RuleGen
 	rules := gen.With(gen.WithGroupKey(groupKey), gen.WithIntervalSeconds(groupIntervalSeconds)).GenerateManyRef(3)
 	groupProvenance := models.ProvenanceAPI
 
@@ -1445,7 +1445,7 @@ func TestDeleteRuleGroup(t *testing.T) {
 	u := &user.SignedInUser{OrgID: orgID}
 	groupKey := models.GenerateGroupKey(orgID)
 	groupIntervalSeconds := int64(30)
-	gen := models.NewAlertRuleGenerator()
+	gen := models.RuleGen
 	rules := gen.With(gen.WithGroupKey(groupKey), gen.WithIntervalSeconds(groupIntervalSeconds)).GenerateManyRef(3)
 	groupProvenance := models.ProvenanceAPI
 

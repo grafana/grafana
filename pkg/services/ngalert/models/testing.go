@@ -22,7 +22,11 @@ import (
 var (
 	RuleMuts = AlertRuleMutators{}
 	NSMuts   = NotificationSettingsMutators{}
-	RuleGen  = NewAlertRuleGenerator()
+	RuleGen  = &AlertRuleGenerator{
+		mutators: []AlertRuleMutator{
+			RuleMuts.WithUniqueUID(), RuleMuts.WithUniqueTitle(),
+		},
+	}
 )
 
 type AlertRuleMutator func(r *AlertRule)
@@ -30,15 +34,6 @@ type AlertRuleMutator func(r *AlertRule)
 type AlertRuleGenerator struct {
 	AlertRuleMutators
 	mutators []AlertRuleMutator
-}
-
-func NewAlertRuleGenerator() *AlertRuleGenerator {
-	return &AlertRuleGenerator{
-		AlertRuleMutators: RuleMuts,
-		mutators: []AlertRuleMutator{
-			RuleMuts.WithUniqueUID(), RuleMuts.WithUniqueTitle(),
-		},
-	}
 }
 
 func (g *AlertRuleGenerator) With(mutators ...AlertRuleMutator) *AlertRuleGenerator {

@@ -28,7 +28,7 @@ import (
 )
 
 func TestAlertRule(t *testing.T) {
-	gen := models.NewAlertRuleGenerator()
+	gen := models.RuleGen
 	type evalResponse struct {
 		success     bool
 		droppedEval *Evaluation
@@ -247,7 +247,7 @@ func blankRuleForTests(ctx context.Context) *alertRule {
 }
 
 func TestRuleRoutine(t *testing.T) {
-	gen := models.NewAlertRuleGenerator()
+	gen := models.RuleGen
 	createSchedule := func(
 		evalAppliedChan chan time.Time,
 		senderMock *SyncAlertsSenderMock,

@@ -48,7 +48,7 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 		FolderService: setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures()),
 		Logger:        &logtest.Fake{},
 	}
-	gen := models.NewAlertRuleGenerator()
+	gen := models.RuleGen
 	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval))
 
 	t.Run("should increase version", func(t *testing.T) {
@@ -104,7 +104,7 @@ func TestIntegrationUpdateAlertRulesWithUniqueConstraintViolation(t *testing.T) 
 		Logger:        &logtest.Fake{},
 	}
 
-	gen := models.NewAlertRuleGenerator()
+	gen := models.RuleGen
 	createRuleInFolder := func(title string, orgID int64, namespaceUID string) *models.AlertRule {
 		gen := gen.With(
 			gen.WithOrgID(orgID),
@@ -361,7 +361,7 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 		FeatureToggles: featuremgmt.WithFeatures(),
 	}
 
-	gen := models.NewAlertRuleGenerator()
+	gen := models.RuleGen
 	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval), gen.WithUniqueOrgID())
 
 	rule1 := createRule(t, store, gen)
@@ -610,7 +610,7 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		Cfg:           cfg.UnifiedAlerting,
 	}
 
-	gen := models.NewAlertRuleGenerator()
+	gen := models.RuleGen
 	rules := gen.With(
 		gen.WithOrgID(orgID),
 		gen.WithIntervalMatching(store.Cfg.BaseInterval),
@@ -686,7 +686,7 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 
 	receiverName := "receiver\"-" + uuid.NewString()
 
-	gen := models.NewAlertRuleGenerator()
+	gen := models.RuleGen
 	gen = gen.With(gen.WithOrgID(1), gen.WithIntervalMatching(store.Cfg.BaseInterval))
 	rules := gen.GenerateManyRef(3)
 	receiveRules := gen.With(gen.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithReceiver(receiverName)))).GenerateManyRef(3)
@@ -763,7 +763,7 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 	}
 
 	receiverName := `receiver%"-👍'test`
-	gen := models.NewAlertRuleGenerator()
+	gen := models.RuleGen
 	gen = gen.With(gen.WithOrgID(1), gen.WithIntervalMatching(store.Cfg.BaseInterval))
 
 	rulesWithNotifications := gen.With(
@@ -814,7 +814,7 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 func createRule(t *testing.T, store *DBstore, generator *models.AlertRuleGenerator) *models.AlertRule {
 	t.Helper()
 	if generator == nil {
-		generator = models.NewAlertRuleGenerator().With(models.RuleMuts.WithIntervalMatching(store.Cfg.BaseInterval))
+		generator = models.RuleGen.With(models.RuleMuts.WithIntervalMatching(store.Cfg.BaseInterval))
 	}
 	rule := generator.GenerateRef()
 	err := store.SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {

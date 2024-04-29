@@ -209,7 +209,7 @@ func TestExportRules(t *testing.T) {
 		RuleGroup:    "HAS-ACCESS-1",
 	}
 
-	gen := ngmodels.NewAlertRuleGenerator()
+	gen := ngmodels.RuleGen
 	accessQuery := gen.GenerateQuery()
 	noAccessQuery := gen.GenerateQuery()
 

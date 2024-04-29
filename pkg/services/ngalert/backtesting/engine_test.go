@@ -189,7 +189,7 @@ func TestEvaluatorTest(t *testing.T) {
 			return manager
 		},
 	}
-	gen := models.NewAlertRuleGenerator()
+	gen := models.RuleGen
 	rule := gen.With(gen.WithInterval(time.Second)).GenerateRef()
 	ruleInterval := time.Duration(rule.IntervalSeconds) * time.Second
 

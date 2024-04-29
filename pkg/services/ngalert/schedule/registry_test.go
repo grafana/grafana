@@ -78,7 +78,7 @@ func TestSchedulableAlertRulesRegistry(t *testing.T) {
 }
 
 func TestSchedulableAlertRulesRegistry_set(t *testing.T) {
-	gen := models.NewAlertRuleGenerator()
+	gen := models.RuleGen
 	initialRules := gen.GenerateManyRef(100)
 	init := make(map[models.AlertRuleKey]*models.AlertRule, len(initialRules))
 	for _, rule := range initialRules {
@@ -129,7 +129,7 @@ func TestSchedulableAlertRulesRegistry_set(t *testing.T) {
 }
 
 func TestRuleWithFolderFingerprint(t *testing.T) {
-	rule := models.NewAlertRuleGenerator().GenerateRef()
+	rule := models.RuleGen.GenerateRef()
 	title := uuid.NewString()
 	f := ruleWithFolder{rule: rule, folderTitle: title}.Fingerprint()
 	t.Run("should calculate a fingerprint", func(t *testing.T) {

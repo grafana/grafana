@@ -285,7 +285,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 
 	timeNow = func() time.Time { return time.Date(2022, 3, 10, 14, 0, 0, 0, time.UTC) }
 	orgID := int64(1)
-	gen := ngmodels.NewAlertRuleGenerator()
+	gen := ngmodels.RuleGen
 	gen = gen.With(gen.WithOrgID(orgID))
 	queryPermissions := map[int64]map[string][]string{1: {datasources.ActionQuery: {datasources.ScopeAll}}}
 
@@ -496,7 +496,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			ruleStore := fakes.NewRuleStore(t)
 			fakeAIM := NewFakeAlertInstanceManager(t)
 			groupKey := ngmodels.GenerateGroupKey(orgID)
-			gen := ngmodels.NewAlertRuleGenerator()
+			gen := ngmodels.RuleGen
 			rules := gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex()).GenerateManyRef(5, 10)
 			ruleStore.PutRule(context.Background(), rules...)
 
@@ -1278,7 +1278,7 @@ func setupAPI(t *testing.T) (*fakes.RuleStore, *fakeAlertInstanceManager, Promet
 func generateRuleAndInstanceWithQuery(t *testing.T, orgID int64, fakeAIM *fakeAlertInstanceManager, fakeStore *fakes.RuleStore, query ngmodels.AlertRuleMutator) {
 	t.Helper()
 
-	gen := ngmodels.NewAlertRuleGenerator()
+	gen := ngmodels.RuleGen
 	r := gen.With(gen.WithOrgID(orgID), asFixture(), query).GenerateRef()
 
 	fakeAIM.GenerateAlertInstances(orgID, r.UID, 1, func(s *state.State) *state.State {

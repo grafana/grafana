@@ -174,7 +174,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 		})
 
 		t.Run("should return Forbidden if user cannot query a data source", func(t *testing.T) {
-			gen := models.NewAlertRuleGenerator()
+			gen := models.RuleGen
 			data1 := gen.GenerateQuery()
 			data2 := gen.GenerateQuery()
 
@@ -201,7 +201,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 		})
 
 		t.Run("should return 200 if user can query all data sources", func(t *testing.T) {
-			gen := models.NewAlertRuleGenerator()
+			gen := models.RuleGen
 			data1 := gen.GenerateQuery()
 			data2 := gen.GenerateQuery()
 
@@ -255,7 +255,7 @@ func TestRouteEvalQueries(t *testing.T) {
 		}
 
 		t.Run("should return Forbidden if user cannot query a data source", func(t *testing.T) {
-			g := models.NewAlertRuleGenerator()
+			g := models.RuleGen
 			data1 := g.GenerateQuery()
 			data2 := g.GenerateQuery()
 

@@ -1509,7 +1509,7 @@ func TestProcessEvalResults(t *testing.T) {
 		}
 		statePersister := state.NewSyncStatePersisiter(log.New("ngalert.state.manager.persist"), cfg)
 		st := state.NewManager(cfg, statePersister)
-		rule := models.NewAlertRuleGenerator().GenerateRef()
+		rule := models.RuleGen.GenerateRef()
 		var results = eval.GenerateResults(rand.Intn(4)+1, eval.ResultGen(eval.WithEvaluatedAt(clk.Now())))
 
 		states := st.ProcessEvalResults(context.Background(), clk.Now(), rule, results, make(data.Labels))
@@ -1744,7 +1744,7 @@ func TestStaleResults(t *testing.T) {
 	}
 	st := state.NewManager(cfg, state.NewNoopPersister())
 
-	gen := models.NewAlertRuleGenerator()
+	gen := models.RuleGen
 	rule := gen.With(gen.WithFor(0)).GenerateRef()
 
 	initResults := eval.Results{

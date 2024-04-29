@@ -101,7 +101,7 @@ func TestProcessTicks(t *testing.T) {
 	}
 
 	tick := time.Time{}
-	gen := models.NewAlertRuleGenerator()
+	gen := models.RuleGen
 	// create alert rule under main org with one second interval
 	alertRule1 := gen.With(gen.WithOrgID(mainOrgID), gen.WithInterval(cfg.BaseInterval), gen.WithTitle("rule-1")).GenerateRef()
 	ruleStore.PutRule(ctx, alertRule1)
@@ -361,7 +361,7 @@ func TestSchedule_deleteAlertRule(t *testing.T) {
 		t.Run("it should stop evaluation loop and remove the controller from registry", func(t *testing.T) {
 			sch := setupScheduler(t, nil, nil, nil, nil, nil)
 			ruleFactory := ruleFactoryFromScheduler(sch)
-			rule := models.NewAlertRuleGenerator().GenerateRef()
+			rule := models.RuleGen.GenerateRef()
 			key := rule.GetKey()
 			info, _ := sch.registry.getOrCreate(context.Background(), key, ruleFactory)
 			sch.deleteAlertRule(key)

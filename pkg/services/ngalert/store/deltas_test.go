@@ -19,7 +19,7 @@ import (
 
 func TestCalculateChanges(t *testing.T) {
 	orgId := int64(rand.Int31())
-	gen := models.NewAlertRuleGenerator()
+	gen := models.RuleGen
 
 	t.Run("detects alerts that need to be added", func(t *testing.T) {
 		fakeStore := fakes.NewRuleStore(t)
@@ -289,7 +289,7 @@ func TestCalculateChanges(t *testing.T) {
 
 func TestCalculateAutomaticChanges(t *testing.T) {
 	orgID := rand.Int63()
-	gen := models.NewAlertRuleGenerator()
+	gen := models.RuleGen
 
 	t.Run("should mark all rules in affected groups", func(t *testing.T) {
 		group := models.GenerateGroupKey(orgID)
@@ -424,7 +424,7 @@ func TestCalculateAutomaticChanges(t *testing.T) {
 }
 
 func TestCalculateRuleGroupDelete(t *testing.T) {
-	gen := models.NewAlertRuleGenerator()
+	gen := models.RuleGen
 	fakeStore := fakes.NewRuleStore(t)
 	groupKey := models.GenerateGroupKey(1)
 	otherRules := gen.With(gen.WithOrgID(groupKey.OrgID), gen.WithNamespaceUIDNotIn(groupKey.NamespaceUID)).GenerateManyRef(3)
@@ -455,7 +455,7 @@ func TestCalculateRuleGroupDelete(t *testing.T) {
 }
 
 func TestCalculateRuleDelete(t *testing.T) {
-	gen := models.NewAlertRuleGenerator()
+	gen := models.RuleGen
 	fakeStore := fakes.NewRuleStore(t)
 	rule := gen.GenerateRef()
 	otherRules := gen.With(gen.WithOrgID(rule.OrgID), gen.WithNamespaceUIDNotIn(rule.NamespaceUID)).GenerateManyRef(3)
@@ -488,7 +488,7 @@ func TestCalculateRuleDelete(t *testing.T) {
 }
 
 func TestCalculateRuleUpdate(t *testing.T) {
-	gen := models.NewAlertRuleGenerator()
+	gen := models.RuleGen
 	fakeStore := fakes.NewRuleStore(t)
 	rule := gen.GenerateRef()
 	otherRules := gen.With(gen.WithOrgID(rule.OrgID), gen.WithNamespaceUIDNotIn(rule.NamespaceUID)).GenerateManyRef(3)
@@ -558,7 +558,7 @@ func TestCalculateRuleUpdate(t *testing.T) {
 }
 
 func TestCalculateRuleCreate(t *testing.T) {
-	gen := models.NewAlertRuleGenerator()
+	gen := models.RuleGen
 	t.Run("when a rule refers to a new group", func(t *testing.T) {
 		fakeStore := fakes.NewRuleStore(t)
 		rule := gen.GenerateRef()

@@ -59,8 +59,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			"title": "Dashboard 2",
 		}),
 	})
-	gen := ngmodels.NewAlertRuleGenerator()
-	gen = gen.With(gen.WithOrgID(1))
+	gen := ngmodels.RuleGen.With(ngmodels.RuleGen.WithOrgID(1))
 
 	dashboardRules := map[string][]*ngmodels.AlertRule{
 		dashboard1.UID: {
@@ -590,7 +589,7 @@ func createAlertRule(t *testing.T, sql db.DB, title string, generator *ngmodels.
 	t.Helper()
 
 	if generator == nil {
-		g := ngmodels.NewAlertRuleGenerator()
+		g := ngmodels.RuleGen
 		generator = g.With(g.WithTitle(title), g.WithDashboardAndPanel(nil, nil), g.WithOrgID(1))
 	}
 
@@ -635,7 +634,7 @@ func createAlertRuleFromDashboard(t *testing.T, sql db.DB, title string, dashboa
 	*panelID = 123
 
 	if generator == nil {
-		g := ngmodels.NewAlertRuleGenerator()
+		g := ngmodels.RuleGen
 		generator = g.With(g.WithTitle(title), g.WithDashboardAndPanel(&dashboard.UID, panelID), g.WithOrgID(1))
 	}
 

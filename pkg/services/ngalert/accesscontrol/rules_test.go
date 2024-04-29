@@ -92,7 +92,7 @@ func createUserWithPermissions(permissions map[string][]string) identity.Request
 func TestAuthorizeRuleChanges(t *testing.T) {
 	groupKey := models.GenerateGroupKey(rand.Int63())
 	namespaceIdScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(groupKey.NamespaceUID)
-	gen := models.NewAlertRuleGenerator()
+	gen := models.RuleGen
 	genWithGroupKey := gen.With(gen.WithGroupKey(groupKey))
 
 	testCases := []struct {
@@ -373,7 +373,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 }
 
 func TestCheckDatasourcePermissionsForRule(t *testing.T) {
-	rule := models.NewAlertRuleGenerator().GenerateRef()
+	rule := models.RuleGen.GenerateRef()
 
 	expressionByType := models.GenerateAlertQuery()
 	expressionByType.QueryType = expr.DatasourceType
@@ -436,7 +436,7 @@ func TestCheckDatasourcePermissionsForRule(t *testing.T) {
 
 func Test_authorizeAccessToRuleGroup(t *testing.T) {
 	t.Run("should return true if user has access to all datasources of all rules in group", func(t *testing.T) {
-		rules := models.NewAlertRuleGenerator().GenerateManyRef(1, 5)
+		rules := models.RuleGen.GenerateManyRef(1, 5)
 		var scopes []string
 		for _, rule := range rules {
 			for _, query := range rule.Data {
@@ -464,7 +464,7 @@ func Test_authorizeAccessToRuleGroup(t *testing.T) {
 	})
 	t.Run("should return false if user does not have access to at least one rule in group", func(t *testing.T) {
 		f := &folder.Folder{UID: "test-folder"}
-		gen := models.NewAlertRuleGenerator()
+		gen := models.RuleGen
 		genWithFolder := gen.With(gen.WithNamespace(f))
 		rules := genWithFolder.GenerateManyRef(1, 5)
 		var scopes []string

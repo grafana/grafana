@@ -10,7 +10,7 @@ import (
 )
 
 func TestJitter(t *testing.T) {
-	gen := ngmodels.NewAlertRuleGenerator()
+	gen := ngmodels.RuleGen
 	genWithInterval10to600 := gen.With(gen.WithIntervalBetween(10, 600))
 	t.Run("when strategy is JitterNever", func(t *testing.T) {
 		t.Run("offset is always zero", func(t *testing.T) {

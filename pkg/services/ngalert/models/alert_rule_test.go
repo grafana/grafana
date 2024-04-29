@@ -524,7 +524,7 @@ func TestDiff(t *testing.T) {
 	})
 
 	t.Run("should detect changes in Annotations", func(t *testing.T) {
-		rule1 := NewAlertRuleGenerator().GenerateRef()
+		rule1 := RuleGen.GenerateRef()
 		rule2 := CopyRule(rule1)
 
 		rule1.Annotations = map[string]string{
@@ -561,7 +561,7 @@ func TestDiff(t *testing.T) {
 	})
 
 	t.Run("should not see difference between nil and empty Labels", func(t *testing.T) {
-		rule1 := NewAlertRuleGenerator().GenerateRef()
+		rule1 := RuleGen.GenerateRef()
 		rule1.Annotations = make(map[string]string)
 		rule2 := CopyRule(rule1)
 		rule2.Annotations = nil
@@ -571,7 +571,7 @@ func TestDiff(t *testing.T) {
 	})
 
 	t.Run("should detect changes in Labels", func(t *testing.T) {
-		rule1 := NewAlertRuleGenerator().GenerateRef()
+		rule1 := RuleGen.GenerateRef()
 		rule2 := CopyRule(rule1)
 
 		rule1.Labels = map[string]string{
@@ -608,7 +608,7 @@ func TestDiff(t *testing.T) {
 	})
 
 	t.Run("should detect changes in Data", func(t *testing.T) {
-		rule1 := NewAlertRuleGenerator().GenerateRef()
+		rule1 := RuleGen.GenerateRef()
 		rule2 := CopyRule(rule1)
 
 		query1 := AlertQuery{
@@ -705,7 +705,7 @@ func TestDiff(t *testing.T) {
 	})
 
 	t.Run("should detect changes in NotificationSettings", func(t *testing.T) {
-		rule1 := NewAlertRuleGenerator().GenerateRef()
+		rule1 := RuleGen.GenerateRef()
 
 		baseSettings := NotificationSettingsGen(NSMuts.WithGroupBy("test1", "test2"))()
 		rule1.NotificationSettings = []NotificationSettings{baseSettings}
@@ -843,7 +843,7 @@ func TestSortByGroupIndex(t *testing.T) {
 	})
 
 	t.Run("should sort by ID if same GroupIndex", func(t *testing.T) {
-		rules := NewAlertRuleGenerator().With(
+		rules := RuleGen.With(
 			RuleMuts.WithUniqueID(),
 			RuleMuts.WithGroupIndex(rand.Int()),
 		).GenerateManyRef(5, 20)

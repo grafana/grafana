@@ -29,7 +29,7 @@ func Test_subscribeToFolderChanges(t *testing.T) {
 		UID:   util.GenerateShortUID(),
 		Title: "Folder" + util.GenerateShortUID(),
 	}
-	gen := models.NewAlertRuleGenerator()
+	gen := models.RuleGen
 	rules := gen.With(gen.WithOrgID(orgID), gen.WithNamespace(folder)).GenerateManyRef(5)
 
 	bus := bus.ProvideBus(tracing.InitializeTracerForTest())

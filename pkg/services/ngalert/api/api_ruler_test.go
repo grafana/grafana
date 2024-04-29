@@ -66,8 +66,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 
 	orgID := rand.Int63()
 	folder := randFolder()
-	gen := models.NewAlertRuleGenerator()
-	gen = gen.With(gen.WithOrgID(orgID))
+	gen := models.RuleGen.With(models.RuleGen.WithOrgID(orgID))
 
 	initFakeRuleStore := func(t *testing.T) *fakes.RuleStore {
 		ruleStore := fakes.NewRuleStore(t)
@@ -195,7 +194,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 }
 
 func TestRouteGetNamespaceRulesConfig(t *testing.T) {
-	gen := models.NewAlertRuleGenerator()
+	gen := models.RuleGen
 	t.Run("fine-grained access is enabled", func(t *testing.T) {
 		t.Run("should return rules for which user has access to data source", func(t *testing.T) {
 			orgID := rand.Int63()
@@ -320,7 +319,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 }
 
 func TestRouteGetRulesConfig(t *testing.T) {
-	gen := models.NewAlertRuleGenerator()
+	gen := models.RuleGen
 	t.Run("fine-grained access is enabled", func(t *testing.T) {
 		t.Run("should check access to data source", func(t *testing.T) {
 			orgID := rand.Int63()
@@ -405,7 +404,7 @@ func TestRouteGetRulesConfig(t *testing.T) {
 }
 
 func TestRouteGetRulesGroupConfig(t *testing.T) {
-	gen := models.NewAlertRuleGenerator()
+	gen := models.RuleGen
 	t.Run("fine-grained access is enabled", func(t *testing.T) {
 		t.Run("should check access to data source", func(t *testing.T) {
 			orgID := rand.Int63()
@@ -489,7 +488,7 @@ func TestVerifyProvisionedRulesNotAffected(t *testing.T) {
 	orgID := rand.Int63()
 	group := models.GenerateGroupKey(orgID)
 	affectedGroups := make(map[models.AlertRuleGroupKey]models.RulesGroup)
-	gen := models.NewAlertRuleGenerator()
+	gen := models.RuleGen
 	var allRules []*models.AlertRule
 	{
 		rules := gen.With(gen.WithGroupKey(group)).GenerateManyRef(1, 4)
@@ -548,7 +547,7 @@ func TestVerifyProvisionedRulesNotAffected(t *testing.T) {
 }
 
 func TestValidateQueries(t *testing.T) {
-	gen := models.NewAlertRuleGenerator()
+	gen := models.RuleGen
 	delta := store.GroupDelta{
 		New: []*models.AlertRule{
 			gen.With(gen.WithCondition("New")).GenerateRef(),

@@ -129,7 +129,7 @@ func createTestAnnotationSutWithStore(t *testing.T, annotations AnnotationStore)
 	met := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
 	rules := fakes.NewRuleStore(t)
 	rules.Rules[1] = []*models.AlertRule{
-		models.NewAlertRuleGenerator().With(models.RuleMuts.WithOrgID(1), withUID("my-rule")).GenerateRef(),
+		models.RuleGen.With(models.RuleMuts.WithOrgID(1), withUID("my-rule")).GenerateRef(),
 	}
 	return NewAnnotationBackend(annotations, rules, met)
 }
@@ -139,7 +139,7 @@ func createTestAnnotationBackendSutWithMetrics(t *testing.T, met *metrics.Histor
 	fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
 	rules := fakes.NewRuleStore(t)
 	rules.Rules[1] = []*models.AlertRule{
-		models.NewAlertRuleGenerator().With(models.RuleMuts.WithOrgID(1), withUID("my-rule")).GenerateRef(),
+		models.RuleGen.With(models.RuleMuts.WithOrgID(1), withUID("my-rule")).GenerateRef(),
 	}
 	dbs := &dashboards.FakeDashboardService{}
 	dbs.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil)
@@ -151,7 +151,7 @@ func createFailingAnnotationSut(t *testing.T, met *metrics.Historian) *Annotatio
 	fakeAnnoRepo := &failingAnnotationRepo{}
 	rules := fakes.NewRuleStore(t)
 	rules.Rules[1] = []*models.AlertRule{
-		models.NewAlertRuleGenerator().With(models.RuleMuts.WithOrgID(1), withUID("my-rule")).GenerateRef(),
+		models.RuleGen.With(models.RuleMuts.WithOrgID(1), withUID("my-rule")).GenerateRef(),
 	}
 	dbs := &dashboards.FakeDashboardService{}
 	dbs.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil)
