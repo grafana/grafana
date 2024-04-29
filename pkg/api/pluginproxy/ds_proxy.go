@@ -305,19 +305,8 @@ func (proxy *DataSourceProxy) validateRequest() error {
 			continue
 		}
 
-		var routeEval accesscontrol.Evaluator
-		if route.ReqAction != "" {
-			routeEval = accesscontrol.EvalPermission(route.ReqAction)
-		}
-		switch {
-		case routeEval != nil:
-			if ok := routeEval.Evaluate(proxy.ctx.GetPermissions()); !ok {
-				return errors.New("plugin proxy route access denied")
-			}
-		case route.ReqRole.IsValid():
-			if !proxy.ctx.HasUserRole(route.ReqRole) {
-				return errors.New("plugin proxy route access denied")
-			}
+		if !proxy.hasAccessToRoute(route) {
+			return errors.New("plugin proxy route access denied")
 		}
 
 		proxy.matchedRoute = route
@@ -338,6 +327,22 @@ func (proxy *DataSourceProxy) validateRequest() error {
 	}
 
 	return nil
+}
+
+func (proxy *DataSourceProxy) hasAccessToRoute(route *plugins.Route) bool {
+	useRBAC := proxy.features.IsEnabled(proxy.ctx.Req.Context(), featuremgmt.FlagAccessControlOnCall) && route.ReqAction != ""
+	if useRBAC {
+		routeEval := accesscontrol.EvalPermission(route.ReqAction)
+		ok := routeEval.Evaluate(proxy.ctx.GetPermissions())
+		if !ok {
+			proxy.ctx.Logger.Debug("plugin route is covered by RBAC, user doesn't have access", "route", proxy.ctx.Req.URL.Path)
+		}
+		return ok
+	}
+	if route.ReqRole.IsValid() {
+		return proxy.ctx.HasUserRole(route.ReqRole)
+	}
+	return true
 }
 
 func (proxy *DataSourceProxy) logRequest() {
