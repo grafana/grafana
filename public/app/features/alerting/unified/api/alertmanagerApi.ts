@@ -79,6 +79,7 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
           params,
         };
       },
+      providesTags: ['AlertmanagerAlerts'],
     }),
 
     getAlertmanagerAlertGroups: build.query<AlertmanagerGroup[], { amSourceName: string }>({

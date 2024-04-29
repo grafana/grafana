@@ -3,10 +3,8 @@ import { combineReducers } from 'redux';
 import { createAsyncMapSlice, createAsyncSlice } from '../utils/redux';
 
 import {
-  createOrUpdateSilenceAction,
   deleteAlertManagerConfigAction,
   fetchAlertGroupsAction,
-  fetchAmAlertsAction,
   fetchEditableRuleAction,
   fetchFolderAction,
   fetchGrafanaAnnotationsAction,
@@ -14,7 +12,6 @@ import {
   fetchPromRulesAction,
   fetchRulerRulesAction,
   fetchRulesSourceBuildInfoAction,
-  fetchSilencesAction,
   saveRuleFormAction,
   testReceiversAction,
   updateAlertManagerConfigAction,
@@ -30,8 +27,6 @@ export const reducer = combineReducers({
   promRules: createAsyncMapSlice('promRules', fetchPromRulesAction, ({ rulesSourceName }) => rulesSourceName).reducer,
   rulerRules: createAsyncMapSlice('rulerRules', fetchRulerRulesAction, ({ rulesSourceName }) => rulesSourceName)
     .reducer,
-  silences: createAsyncMapSlice('silences', fetchSilencesAction, (alertManagerSourceName) => alertManagerSourceName)
-    .reducer,
   ruleForm: combineReducers({
     saveRule: createAsyncSlice('saveRule', saveRuleFormAction).reducer,
     existingRule: createAsyncSlice('existingRule', fetchEditableRuleAction).reducer,
@@ -39,9 +34,6 @@ export const reducer = combineReducers({
   grafanaNotifiers: createAsyncSlice('grafanaNotifiers', fetchGrafanaNotifiersAction).reducer,
   saveAMConfig: createAsyncSlice('saveAMConfig', updateAlertManagerConfigAction).reducer,
   deleteAMConfig: createAsyncSlice('deleteAMConfig', deleteAlertManagerConfigAction).reducer,
-  updateSilence: createAsyncSlice('updateSilence', createOrUpdateSilenceAction).reducer,
-  amAlerts: createAsyncMapSlice('amAlerts', fetchAmAlertsAction, (alertManagerSourceName) => alertManagerSourceName)
-    .reducer,
   folders: createAsyncMapSlice('folders', fetchFolderAction, (uid) => uid).reducer,
   amAlertGroups: createAsyncMapSlice(
     'amAlertGroups',
