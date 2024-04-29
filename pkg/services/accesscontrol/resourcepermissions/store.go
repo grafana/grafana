@@ -742,24 +742,24 @@ type ActionSet struct {
 
 // InMemoryActionSets is an in-memory implementation of the ActionSetService.
 type InMemoryActionSets struct {
-	log                 log.Logger
-	actionSetsToActions map[string][]string
-	actionsToActionSets map[string][]string
+	log                log.Logger
+	actionSetToActions map[string][]string
+	actionToActionSets map[string][]string
 }
 
 // NewActionSetService returns a new instance of InMemoryActionSetService.
 func NewActionSetService(a *acimpl.AccessControl) ActionSetService {
 	actionSets := &InMemoryActionSets{
-		log:                 log.New("resourcepermissions.actionsets"),
-		actionSetsToActions: make(map[string][]string),
-		actionsToActionSets: make(map[string][]string),
+		log:                log.New("resourcepermissions.actionsets"),
+		actionSetToActions: make(map[string][]string),
+		actionToActionSets: make(map[string][]string),
 	}
 	a.RegisterActionResolver(actionSets)
 	return actionSets
 }
 
 func (s *InMemoryActionSets) Resolve(action string) []string {
-	actionSets := s.actionsToActionSets[action]
+	actionSets := s.actionToActionSets[action]
 	sets := make([]string, 0, len(actionSets))
 
 	for _, actionSet := range actionSets {
@@ -776,7 +776,7 @@ func (s *InMemoryActionSets) Resolve(action string) []string {
 
 // GetActionSet returns the action set for the given action.
 func (s *InMemoryActionSets) GetActionSet(actionName string) []string {
-	actionSet, ok := s.actionSetsToActions[actionName]
+	actionSet, ok := s.actionSetToActions[actionName]
 	if !ok {
 		return nil
 	}
@@ -790,13 +790,13 @@ func (s *InMemoryActionSets) StoreActionSet(resource, permission string, actions
 		Action:  name,
 		Actions: actions,
 	}
-	s.actionSetsToActions[actionSet.Action] = actions
+	s.actionSetToActions[actionSet.Action] = actions
 
 	for _, action := range actions {
-		if _, ok := s.actionsToActionSets[action]; !ok {
-			s.actionsToActionSets[action] = []string{}
+		if _, ok := s.actionToActionSets[action]; !ok {
+			s.actionToActionSets[action] = []string{}
 		}
-		s.actionsToActionSets[action] = append(s.actionsToActionSets[action], actionSet.Action)
+		s.actionToActionSets[action] = append(s.actionToActionSets[action], actionSet.Action)
 	}
 
 	s.log.Debug("stored action set actionname \n", actionSet.Action)
