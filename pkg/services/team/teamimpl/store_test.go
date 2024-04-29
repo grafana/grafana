@@ -74,9 +74,9 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 					require.NoError(t, err)
 					userIds = append(userIds, usr.ID)
 				}
-				team1, err = teamSvc.CreateTeam("group1 name", "test1@test.com", testOrgID)
+				team1, err = teamSvc.CreateTeam(context.Background(), "group1 name", "test1@test.com", testOrgID)
 				require.NoError(t, err)
-				team2, err = teamSvc.CreateTeam("group2 name", "test2@test.com", testOrgID)
+				team2, err = teamSvc.CreateTeam(context.Background(), "group2 name", "test2@test.com", testOrgID)
 				require.NoError(t, err)
 			}
 			setup()
@@ -530,7 +530,7 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 
 	// Seed 10 teams
 	for i := 1; i <= 10; i++ {
-		_, err := teamSvc.CreateTeam(fmt.Sprintf("team-%d", i), fmt.Sprintf("team-%d@example.org", i), 1)
+		_, err := teamSvc.CreateTeam(context.Background(), fmt.Sprintf("team-%d", i), fmt.Sprintf("team-%d@example.org", i), 1)
 		require.NoError(t, err)
 	}
 
@@ -564,9 +564,9 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 	setup := func(store db.DB, cfg *setting.Cfg) {
 		teamSvc, err := ProvideService(store, cfg, tracing.InitializeTracerForTest())
 		require.NoError(t, err)
-		team1, errCreateTeam := teamSvc.CreateTeam("group1 name", "test1@example.org", testOrgID)
+		team1, errCreateTeam := teamSvc.CreateTeam(context.Background(), "group1 name", "test1@example.org", testOrgID)
 		require.NoError(t, errCreateTeam)
-		team2, errCreateTeam := teamSvc.CreateTeam("group2 name", "test2@example.org", testOrgID)
+		team2, errCreateTeam := teamSvc.CreateTeam(context.Background(), "group2 name", "test2@example.org", testOrgID)
 		require.NoError(t, errCreateTeam)
 		quotaService := quotaimpl.ProvideService(store, cfg)
 		orgSvc, err := orgimpl.ProvideService(store, cfg, quotaService)

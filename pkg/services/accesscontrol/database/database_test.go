@@ -324,7 +324,7 @@ func createUserAndTeam(t *testing.T, store db.DB, userSrv user.Service, teamSvc 
 	})
 	require.NoError(t, err)
 
-	team, err := teamSvc.CreateTeam("team", "", orgID)
+	team, err := teamSvc.CreateTeam(context.Background(), "team", "", orgID)
 	require.NoError(t, err)
 
 	err = store.WithDbSession(context.Background(), func(sess *db.Session) error {
@@ -374,7 +374,7 @@ func createUsersAndTeams(t *testing.T, store db.DB, svcs helperServices, orgID i
 			continue
 		}
 
-		team, err := svcs.teamSvc.CreateTeam(fmt.Sprintf("team%v", i+1), "", orgID)
+		team, err := svcs.teamSvc.CreateTeam(context.Background(), fmt.Sprintf("team%v", i+1), "", orgID)
 		require.NoError(t, err)
 
 		err = store.WithDbSession(context.Background(), func(sess *db.Session) error {

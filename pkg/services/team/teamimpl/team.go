@@ -29,8 +29,8 @@ func ProvideService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer) (team.Ser
 	}, nil
 }
 
-func (s *Service) CreateTeam(name, email string, orgID int64) (team.Team, error) {
-	_, span := s.tracer.Start(context.Background(), "team.CreateTeam", trace.WithAttributes(
+func (s *Service) CreateTeam(ctx context.Context, name, email string, orgID int64) (team.Team, error) {
+	_, span := s.tracer.Start(ctx, "team.CreateTeam", trace.WithAttributes(
 		attribute.Int64("orgID", orgID),
 		attribute.String("name", name),
 	))
@@ -92,8 +92,8 @@ func (s *Service) GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsBy
 	return s.store.GetIDsByUser(ctx, query)
 }
 
-func (s *Service) IsTeamMember(orgId int64, teamId int64, userId int64) (bool, error) {
-	_, span := s.tracer.Start(context.Background(), "team.IsTeamMember", trace.WithAttributes(
+func (s *Service) IsTeamMember(ctx context.Context, orgId int64, teamId int64, userId int64) (bool, error) {
+	_, span := s.tracer.Start(ctx, "team.IsTeamMember", trace.WithAttributes(
 		attribute.Int64("orgID", orgId),
 		attribute.Int64("teamID", teamId),
 		attribute.Int64("userID", userId),

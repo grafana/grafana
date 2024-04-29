@@ -639,7 +639,7 @@ func TestIntegrationMergeUser(t *testing.T) {
 		sqlStore := db.InitTestDB(t)
 		teamSvc, err := teamimpl.ProvideService(sqlStore, setting.NewCfg(), tracing.InitializeTracerForTest())
 		require.NoError(t, err)
-		team1, err := teamSvc.CreateTeam("team1 name", "", 1)
+		team1, err := teamSvc.CreateTeam(context.Background(), "team1 name", "", 1)
 		require.NoError(t, err)
 		const testOrgID int64 = 1
 

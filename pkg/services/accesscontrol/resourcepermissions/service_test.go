@@ -99,7 +99,7 @@ func TestService_SetTeamPermission(t *testing.T) {
 			})
 
 			// seed team
-			team, err := teamSvc.CreateTeam("test", "test@test.com", 1)
+			team, err := teamSvc.CreateTeam(context.Background(), "test", "test@test.com", 1)
 			require.NoError(t, err)
 
 			var hookCalled bool
@@ -218,7 +218,7 @@ func TestService_SetPermissions(t *testing.T) {
 			require.NoError(t, err)
 			_, err = usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "user", OrgID: 1})
 			require.NoError(t, err)
-			_, err = teamSvc.CreateTeam("team", "", 1)
+			_, err = teamSvc.CreateTeam(context.Background(), "team", "", 1)
 			require.NoError(t, err)
 
 			permissions, err := service.SetPermissions(context.Background(), 1, "1", tt.commands...)
