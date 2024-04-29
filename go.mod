@@ -53,7 +53,7 @@ require (
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.0.1 // @grafana/partner-datasources
 	github.com/grafana/grafana-plugin-sdk-go v0.222.0 // @grafana/plugins-platform-backend
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/backend-platform
-	github.com/hashicorp/go-hclog v1.6.2 // @grafana/plugins-platform-backend
+	github.com/hashicorp/go-hclog v1.6.3 // @grafana/plugins-platform-backend
 	github.com/hashicorp/go-plugin v1.6.0 // @grafana/plugins-platform-backend
 	github.com/hashicorp/go-version v1.6.0 // @grafana/backend-platform
 	github.com/hashicorp/hcl/v2 v2.17.0 // @grafana/alerting-squad-backend
@@ -78,24 +78,33 @@ require (
 	github.com/prometheus/client_model v0.5.0 // @grafana/backend-platform
 	github.com/prometheus/common v0.46.0 // @grafana/alerting-squad-backend
 	github.com/prometheus/prometheus v1.8.2-0.20221021121301-51a44e6657c3 // @grafana/alerting-squad-backend
+	github.com/redis/go-redis/v9 v9.1.0 // @grafana/alerting-squad-backend
 	github.com/robfig/cron/v3 v3.0.1 // @grafana/backend-platform
 	github.com/russellhaering/goxmldsig v1.4.0 // @grafana/backend-platform
-	github.com/scottlepp/go-duck v0.0.15 // @grafana/grafana-app-platform-squad
+	github.com/scottlepp/go-duck v0.0.19 // @grafana/grafana-app-platform-squad
+	github.com/spf13/cobra v1.8.0 // @grafana/grafana-app-platform-squad
+	github.com/spf13/pflag v1.0.5 // @grafana-app-platform-squad
+	github.com/spyzhov/ajson v0.9.0 // @grafana/grafana-app-platform-squad
 	github.com/stretchr/testify v1.9.0 // @grafana/backend-platform
 	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf // @grafana/backend-platform
 	github.com/ua-parser/uap-go v0.0.0-20211112212520-00c877edfe0f // @grafana/backend-platform
 	github.com/uber/jaeger-client-go v2.30.0+incompatible // indirect
+	github.com/urfave/cli v1.22.14 // @grafana/grafana-backend-group
 	github.com/urfave/cli/v2 v2.25.0 // @grafana/backend-platform
 	github.com/vectordotdev/go-datemath v0.1.1-0.20220323213446-f3954d0b18ae // @grafana/backend-platform
+	github.com/wk8/go-ordered-map v1.0.0 // @grafana/grafana-backend-group
+	github.com/xlab/treeprint v1.2.0 // @grafana/observability-traces-and-profiling
+	github.com/xwb1989/sqlparser v0.0.0-20180606152119-120387863bf2 // @grafana/grafana-app-platform-squad
 	github.com/yudai/gojsondiff v1.0.0 // @grafana/backend-platform
-	go.opentelemetry.io/collector/pdata v1.0.1 // @grafana/backend-platform
+	go.opentelemetry.io/collector/pdata v1.5.0 // @grafana/backend-platform
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.49.0 // @grafana/plugins-platform-backend
 	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.49.0 // @grafana/grafana-operator-experience-squad
 	go.opentelemetry.io/otel/exporters/jaeger v1.10.0 // @grafana/backend-platform
 	go.opentelemetry.io/otel/sdk v1.24.0 // @grafana/backend-platform
 	go.opentelemetry.io/otel/trace v1.24.0 // @grafana/backend-platform
 	golang.org/x/crypto v0.21.0 // @grafana/backend-platform
 	golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb // @grafana/alerting-squad-backend
-	golang.org/x/net v0.22.0 // @grafana/oss-big-tent @grafana/partner-datasources
+	golang.org/x/net v0.23.0 // @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/oauth2 v0.18.0 // @grafana/grafana-authnz-team
 	golang.org/x/sync v0.6.0 // @grafana/alerting-squad-backend
 	golang.org/x/time v0.5.0 // @grafana/backend-platform
@@ -227,8 +236,6 @@ require (
 	github.com/huandu/xstrings v1.3.2 // @grafana/partner-datasources
 	github.com/jmoiron/sqlx v1.3.5 // @grafana/backend-platform
 	github.com/matryer/is v1.4.0 // @grafana/grafana-as-code
-	github.com/urfave/cli v1.22.14 // @grafana/backend-platform
-	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.49.0 // @grafana/plugins-platform-backend
 	go.opentelemetry.io/contrib/propagators/jaeger v1.22.0 // @grafana/backend-platform
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.24.0 // @grafana/backend-platform
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.24.0 // @grafana/backend-platform
@@ -246,14 +253,12 @@ require (
 	github.com/grafana/dataplane/sdata v0.0.7 // @grafana/observability-metrics
 	github.com/grafana/tempo v1.5.1-0.20230524121406-1dc1bfe7085b // @grafana/observability-traces-and-profiling
 	github.com/microsoft/go-mssqldb v1.6.1-0.20240214161942-b65008136246 // @grafana/grafana-bi-squad
-	github.com/redis/go-redis/v9 v9.1.0 // @grafana/alerting-squad-backend
 	go.opentelemetry.io/contrib/samplers/jaegerremote v0.18.0 // @grafana/backend-platform
 	golang.org/x/mod v0.14.0 // @grafana/backend-platform
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b // @grafana/partner-datasources
 )
 
 require (
-	github.com/spf13/cobra v1.8.0 // @grafana/grafana-app-platform-squad
 	go.opentelemetry.io/otel v1.24.0 // @grafana/backend-platform
 	k8s.io/api v0.29.2 // @grafana/grafana-app-platform-squad
 	k8s.io/apimachinery v0.29.2 // @grafana/grafana-app-platform-squad
@@ -341,7 +346,6 @@ require (
 	github.com/segmentio/asm v1.2.0 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
-	github.com/spf13/pflag v1.0.5 // @grafana-app-platform-squad
 	github.com/stoewer/go-strcase v1.3.0 // indirect
 	github.com/unknwon/bra v0.0.0-20200517080246-1e3013ecaff8 // indirect
 	github.com/unknwon/com v1.0.1 // indirect
@@ -419,8 +423,6 @@ require (
 	github.com/mschoch/smat v0.2.0 // indirect
 	github.com/pierrec/lz4/v4 v4.1.18 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
-	github.com/wk8/go-ordered-map v1.0.0 // @grafana/backend-platform
-	github.com/xlab/treeprint v1.2.0 // @grafana/observability-traces-and-profiling
 	go.opentelemetry.io/proto/otlp v1.1.0 // indirect
 )
 
@@ -434,8 +436,6 @@ require (
 )
 
 require k8s.io/code-generator v0.29.1 // @grafana/grafana-app-platform-squad
-
-require github.com/spyzhov/ajson v0.9.0 // @grafana/grafana-app-platform-squad
 
 require github.com/fullstorydev/grpchan v1.1.1 // @grafana/backend-platform
 
@@ -466,7 +466,6 @@ require (
 	github.com/mithrandie/go-file/v2 v2.1.0 // indirect
 	github.com/mithrandie/go-text v1.5.4 // indirect
 	github.com/mithrandie/ternary v1.1.1 // indirect
-	github.com/xwb1989/sqlparser v0.0.0-20180606152119-120387863bf2 // @grafana/grafana-app-platform-squad
 )
 
 require github.com/getkin/kin-openapi v0.120.0 // @grafana/grafana-as-code
