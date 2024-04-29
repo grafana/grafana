@@ -100,8 +100,6 @@ func TestBlock(t *testing.T) {
 		ac := acmock.New()
 		api := &API{AccessControl: ac, Cfg: &setting.Cfg{UnifiedAlerting: setting.UnifiedAlertingSettings{BlockProvisioningWriteOps: true}}}
 
-		server := web.New()
-
 		for path, methods := range paths {
 			path := swaggerSpec.Spec().BasePath + path
 			for _, method := range methods {
@@ -115,19 +113,19 @@ func TestBlock(t *testing.T) {
 				}
 
 				h := api.block(method, path)
-				if shouldBeBlocked {
-					t.Log(method, path, "should be blocked")
-					require.NotNil(t, h)
-					server.Use(h)
-					request, err := http.NewRequest(method, path, nil)
-					assert.NoError(t, err)
-					recorder := httptest.NewRecorder()
+				require.NotNil(t, h)
 
-					server.ServeHTTP(recorder, request)
-					require.Equal(t, http.StatusForbidden, recorder.Code)
+				server := web.New()
+				server.Use(h)
+				request, err := http.NewRequest(method, path, nil)
+				assert.NoError(t, err)
+				recorder := httptest.NewRecorder()
+				server.ServeHTTP(recorder, request)
+
+				if shouldBeBlocked {
+					assert.Equal(t, http.StatusForbidden, recorder.Code, "%s %s expected status code should be 403", method, path)
 				} else {
-					t.Log(method, path, "should not be blocked")
-					require.Nil(t, h, "%s %s should not be blocked", method, path)
+					assert.NotEqual(t, http.StatusForbidden, recorder.Code, "%s %s expected status code should not be 403", method, path)
 				}
 			}
 		}
@@ -137,11 +135,20 @@ func TestBlock(t *testing.T) {
 		ac := acmock.New()
 		api := &API{AccessControl: ac, Cfg: &setting.Cfg{UnifiedAlerting: setting.UnifiedAlertingSettings{BlockProvisioningWriteOps: false}}}
 
+		server := web.New()
 		for path, methods := range paths {
 			path := swaggerSpec.Spec().BasePath + path
 			for _, method := range methods {
 				h := api.block(method, path)
-				require.Nil(t, h, "%s %s should not be blocked", method, path)
+				require.NotNil(t, h)
+
+				server.Use(h)
+				request, err := http.NewRequest(method, path, nil)
+				assert.NoError(t, err)
+				recorder := httptest.NewRecorder()
+				server.ServeHTTP(recorder, request)
+
+				assert.NotEqual(t, http.StatusForbidden, recorder.Code, "expected status code to not be 403 for %s %s", method, path)
 			}
 		}
 	})
