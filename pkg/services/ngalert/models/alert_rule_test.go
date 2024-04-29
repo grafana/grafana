@@ -133,7 +133,6 @@ func TestErrStateFromString(t *testing.T) {
 }
 
 func TestSetDashboardAndPanelFromAnnotations(t *testing.T) {
-	gen := NewAlertRuleGenerator()
 	testCases := []struct {
 		name                 string
 		annotations          map[string]string
@@ -198,7 +197,7 @@ func TestSetDashboardAndPanelFromAnnotations(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			rule := gen.With(
+			rule := RuleGen.With(
 				RuleMuts.WithDashboardAndPanel(nil, nil),
 				RuleMuts.WithAnnotations(tc.annotations),
 			).Generate()
@@ -212,7 +211,6 @@ func TestSetDashboardAndPanelFromAnnotations(t *testing.T) {
 }
 
 func TestPatchPartialAlertRule(t *testing.T) {
-	gen := NewAlertRuleGenerator()
 	t.Run("patches", func(t *testing.T) {
 		testCases := []struct {
 			name    string
@@ -257,7 +255,7 @@ func TestPatchPartialAlertRule(t *testing.T) {
 			},
 		}
 
-		gen := gen.With(
+		gen := RuleGen.With(
 			RuleMuts.WithFor(time.Duration(rand.Int63n(1000) + 1)),
 		)
 
@@ -346,9 +344,9 @@ func TestPatchPartialAlertRule(t *testing.T) {
 			},
 		}
 
-		gen := gen.With(
-			gen.WithUniqueID(),
-			gen.WithFor(time.Duration(rand.Int63n(1000)+1)),
+		gen := RuleGen.With(
+			RuleMuts.WithUniqueID(),
+			RuleMuts.WithFor(time.Duration(rand.Int63n(1000)+1)),
 		)
 
 		for _, testCase := range testCases {
@@ -375,17 +373,15 @@ func TestPatchPartialAlertRule(t *testing.T) {
 }
 
 func TestDiff(t *testing.T) {
-	gen := NewAlertRuleGenerator()
-
 	t.Run("should return nil if there is no diff", func(t *testing.T) {
-		rule1 := NewAlertRuleGenerator().GenerateRef()
+		rule1 := RuleGen.GenerateRef()
 		rule2 := CopyRule(rule1)
 		result := rule1.Diff(rule2)
 		require.Emptyf(t, result, "expected diff to be empty. rule1: %#v, rule2: %#v\ndiff: %s", rule1, rule2, result)
 	})
 
 	t.Run("should respect fields to ignore", func(t *testing.T) {
-		rule1 := NewAlertRuleGenerator().GenerateRef()
+		rule1 := RuleGen.GenerateRef()
 		rule2 := CopyRule(rule1)
 		rule2.ID = rule1.ID/2 + 1
 		rule2.Version = rule1.Version/2 + 1
@@ -395,8 +391,8 @@ func TestDiff(t *testing.T) {
 	})
 
 	t.Run("should find diff in simple fields", func(t *testing.T) {
-		rule1 := gen.GenerateRef()
-		rule2 := gen.GenerateRef()
+		rule1 := RuleGen.GenerateRef()
+		rule2 := RuleGen.GenerateRef()
 
 		diffs := rule1.Diff(rule2, "Data", "Annotations", "Labels", "NotificationSettings") // these fields will be tested separately
 
@@ -518,7 +514,7 @@ func TestDiff(t *testing.T) {
 	})
 
 	t.Run("should not see difference between nil and empty Annotations", func(t *testing.T) {
-		rule1 := NewAlertRuleGenerator().GenerateRef()
+		rule1 := RuleGen.GenerateRef()
 		rule1.Annotations = make(map[string]string)
 		rule2 := CopyRule(rule1)
 		rule2.Annotations = nil
@@ -834,7 +830,7 @@ func TestSortByGroupIndex(t *testing.T) {
 	}
 
 	t.Run("should sort rules by GroupIndex", func(t *testing.T) {
-		rules := NewAlertRuleGenerator().With(
+		rules := RuleGen.With(
 			RuleMuts.WithUniqueGroupIndex(),
 		).GenerateManyRef(5, 20)
 		ensureNotSorted(t, rules, func(i, j int) bool {

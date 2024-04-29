@@ -22,7 +22,7 @@ import (
 var (
 	RuleMuts = AlertRuleMutators{}
 	NSMuts   = NotificationSettingsMutators{}
-	gen      = NewAlertRuleGenerator()
+	RuleGen  = NewAlertRuleGenerator()
 )
 
 type AlertRuleMutator func(r *AlertRule)
@@ -264,9 +264,7 @@ func (a *AlertRuleMutators) WithNamespaceUID(namespaceUID string) AlertRuleMutat
 }
 
 func (a *AlertRuleMutators) WithNamespace(namespace *folder.Folder) AlertRuleMutator {
-	return func(rule *AlertRule) {
-		rule.NamespaceUID = namespace.UID
-	}
+	return a.WithNamespaceUID(namespace.UID)
 }
 
 func (a *AlertRuleMutators) WithInterval(interval time.Duration) AlertRuleMutator {
@@ -469,11 +467,11 @@ func (g *AlertRuleGenerator) GenerateLabels(min, max int, prefix string) data.La
 }
 
 func GenerateAlertLabels(count int, prefix string) data.Labels {
-	return gen.GenerateLabels(count, count, prefix)
+	return RuleGen.GenerateLabels(count, count, prefix)
 }
 
 func GenerateAlertQuery() AlertQuery {
-	return gen.GenerateQuery()
+	return RuleGen.GenerateQuery()
 }
 
 func (g *AlertRuleGenerator) GenerateQuery() AlertQuery {
