@@ -296,13 +296,13 @@ export class AnnoListPanel extends PureComponent<Props, State> {
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
-  noneFound: css`
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: calc(100% - 30px);
-  `,
+  noneFound: css({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    height: 'calc(100% - 30px)',
+  }),
   filter: css({
     alignItems: 'center',
     display: 'flex',
