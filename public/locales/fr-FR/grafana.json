@@ -385,7 +385,7 @@
     "annotations": {
       "title": "Annotations"
     },
-    "dashboard-delete-button": "Supprimer le tableau de bord",
+    "dashboard-delete-button": "",
     "general": {
       "auto-refresh-description": "",
       "auto-refresh-label": "Actualisation automatique",
@@ -472,6 +472,7 @@
       "newest-first": "Plus récent en premier",
       "oldest-first": "Plus ancien en premier",
       "query-history": "Historique des requêtes",
+      "query-library": "",
       "settings": "Paramètres",
       "starred": "Favoris"
     },
