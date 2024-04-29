@@ -1219,6 +1219,12 @@ var (
 			FrontendOnly:   false,
 			AllowSelfServe: false,
 		},
+		{
+			Name:        "autofixDSUID",
+			Description: "Automatically migrates invalid datasource UIDs",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPluginsPlatformSquad,
+		},
 	}
 )
 

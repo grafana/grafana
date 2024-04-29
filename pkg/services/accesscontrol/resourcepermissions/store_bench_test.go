@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datasourcesService "github.com/grafana/grafana/pkg/services/datasources/service"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
@@ -90,7 +91,7 @@ func GenerateDatasourcePermissions(b *testing.B, db db.DB, cfg *setting.Cfg, ac 
 			Access: datasources.DS_ACCESS_DIRECT,
 			URL:    "http://test",
 		}
-		dsStore := datasourcesService.CreateStore(db, log.New("publicdashboards.test"))
+		dsStore := datasourcesService.CreateStore(db, log.New("publicdashboards.test"), featuremgmt.WithFeatures())
 		dataSource, _ := dsStore.AddDataSource(context.Background(), addDSCommand)
 		dataSources = append(dataSources, dataSource.ID)
 	}

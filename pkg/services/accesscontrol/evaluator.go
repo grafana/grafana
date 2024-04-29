@@ -34,6 +34,9 @@ type permissionEvaluator struct {
 }
 
 func (p permissionEvaluator) Evaluate(permissions map[string][]string) bool {
+	if p.Action == "datasources:read" {
+		fmt.Println("stop")
+	}
 	userScopes, ok := permissions[p.Action]
 	if !ok {
 		return false

@@ -658,4 +658,8 @@ const (
 	// FlagQueryLibrary
 	// Enables Query Library feature in Explore
 	FlagQueryLibrary = "queryLibrary"
+
+	// FlagAutofixDSUID
+	// Automatically migrates invalid datasource UIDs
+	FlagAutofixDSUID = "autofixDSUID"
 )

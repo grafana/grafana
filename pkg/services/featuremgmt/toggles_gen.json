@@ -2103,6 +2103,18 @@
         "stage": "experimental",
         "codeowner": "@grafana/explore-squad"
       }
+    },
+    {
+      "metadata": {
+        "name": "autofixDSUID",
+        "resourceVersion": "1714386506243",
+        "creationTimestamp": "2024-04-29T10:28:26Z"
+      },
+      "spec": {
+        "description": "Automatically migrates invalid datasource UIDs",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend"
+      }
     }
   ]
 }

@@ -49,7 +49,7 @@ func TestMigrate(t *testing.T) {
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		migService := SetupTestDataSourceSecretMigrationService(t, sqlStore, kvStore, secretsStore, false)
-		ds := dsservice.CreateStore(sqlStore, log.NewNopLogger())
+		ds := dsservice.CreateStore(sqlStore, log.NewNopLogger(), featuremgmt.WithFeatures())
 		dataSourceName := "Test"
 		dataSourceOrg := int64(1)
 		_, err := ds.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
@@ -113,7 +113,7 @@ func TestMigrate(t *testing.T) {
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		migService := SetupTestDataSourceSecretMigrationService(t, sqlStore, kvStore, secretsStore, true)
-		ds := dsservice.CreateStore(sqlStore, log.NewNopLogger())
+		ds := dsservice.CreateStore(sqlStore, log.NewNopLogger(), featuremgmt.WithFeatures())
 		dataSourceName := "Test"
 		dataSourceOrg := int64(1)
 
@@ -180,7 +180,7 @@ func TestMigrate(t *testing.T) {
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		migService := SetupTestDataSourceSecretMigrationService(t, sqlStore, kvStore, secretsStore, false)
-		ds := dsservice.CreateStore(sqlStore, log.NewNopLogger())
+		ds := dsservice.CreateStore(sqlStore, log.NewNopLogger(), featuremgmt.WithFeatures())
 
 		dataSourceName := "Test"
 		dataSourceOrg := int64(1)
@@ -271,7 +271,7 @@ func TestMigrate(t *testing.T) {
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		migService := SetupTestDataSourceSecretMigrationService(t, sqlStore, kvStore, secretsStore, true)
-		ds := dsservice.CreateStore(sqlStore, log.NewNopLogger())
+		ds := dsservice.CreateStore(sqlStore, log.NewNopLogger(), featuremgmt.WithFeatures())
 
 		dataSourceName := "Test"
 		dataSourceOrg := int64(1)

@@ -27,11 +27,6 @@ import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 
 import { importDataSourcePlugin } from './plugin_loader';
 
-const MaxUIDLength = 40;
-const validUIDChars = `a-zA-Z0-9\\-\\_`;
-const validUIDRegex = new RegExp(`^[${validUIDChars}]*$`);
-const validUIDReplacer = new RegExp(`[^${validUIDChars}]`, 'g');
-
 export class DatasourceSrv implements DataSourceService {
   private datasources: Record<string, DataSourceApi> = {}; // UID
   private settingsMapByName: Record<string, DataSourceInstanceSettings> = {};
@@ -63,28 +58,9 @@ export class DatasourceSrv implements DataSourceService {
     this.settingsMapByUid[ExpressionDatasourceUID] = expressionInstanceSettings;
   }
 
-  private validUID(uid: string): boolean {
-    return uid.length < MaxUIDLength && validUIDRegex.test(uid);
-  }
-
-  private autofixUID(uid: string): string {
-    if (uid.length > MaxUIDLength) {
-      uid = uid.substring(0, MaxUIDLength);
-    }
-    return uid.replace(validUIDReplacer, '-');
-  }
-
   getDataSourceSettingsByUid(uid: string): DataSourceInstanceSettings | undefined {
     if (!uid) {
       return undefined;
-    }
-    if (!this.validUID(uid)) {
-      const fixedUID = this.autofixUID(uid);
-      // Check if the datasource is stored with the fixed UID
-      if (this.settingsMapByUid[fixedUID]) {
-        console.warn('Invalid datasource UID: ', uid, '. Please update it with: ', fixedUID);
-        return this.settingsMapByUid[fixedUID];
-      }
     }
     return this.settingsMapByUid[uid];
   }
