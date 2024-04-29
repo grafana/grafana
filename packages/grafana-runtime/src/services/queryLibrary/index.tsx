@@ -1,4 +1,4 @@
-import { ApiProvider } from '@reduxjs/toolkit/query/react';
+import { ApiProvider } from '@reduxjs/toolkit/dist/query/react';
 import React, { PropsWithChildren } from 'react';
 
 import { createQueryLibraryApi } from './api/factory';
