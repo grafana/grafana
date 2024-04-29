@@ -13,7 +13,7 @@ import (
 
 func TestHealthCheck(t *testing.T) {
 	t.Run("will return healthy when store is initialized", func(t *testing.T) {
-		stub := &entityStoreStub{initialized: true}
+		stub := &entityStoreStub{healthy: true}
 		svc, err := ProvideHealthService(stub)
 		require.NoError(t, err)
 
@@ -25,7 +25,7 @@ func TestHealthCheck(t *testing.T) {
 	})
 
 	t.Run("will return unhealthy when store is not initialized", func(t *testing.T) {
-		stub := &entityStoreStub{initialized: false}
+		stub := &entityStoreStub{healthy: false}
 		svc, err := ProvideHealthService(stub)
 		require.NoError(t, err)
 
@@ -39,7 +39,7 @@ func TestHealthCheck(t *testing.T) {
 
 func TestHealthWatch(t *testing.T) {
 	t.Run("will return healthy when store is initialized", func(t *testing.T) {
-		stub := &entityStoreStub{initialized: true}
+		stub := &entityStoreStub{healthy: true}
 		svc, err := ProvideHealthService(stub)
 		require.NoError(t, err)
 
@@ -52,7 +52,7 @@ func TestHealthWatch(t *testing.T) {
 	})
 
 	t.Run("will return unhealthy when store is not initialized", func(t *testing.T) {
-		stub := &entityStoreStub{initialized: false}
+		stub := &entityStoreStub{healthy: false}
 		svc, err := ProvideHealthService(stub)
 		require.NoError(t, err)
 
@@ -65,17 +65,18 @@ func TestHealthWatch(t *testing.T) {
 	})
 }
 
-var _ InitializableEntityServer = &entityStoreStub{}
+var _ EntityStoreServer = &entityStoreStub{}
 
 type entityStoreStub struct {
-	initialized bool
+	healthy bool
 }
 
-func (s *entityStoreStub) Init() error {
-	if s.initialized {
-		return nil
+func (s *entityStoreStub) IsHealthy(ctx context.Context, req *HealthRequest) (*HealthResponse, error) {
+	if s.healthy {
+		return &HealthResponse{Healthy: s.healthy}, nil
+	} else {
+		return nil, errors.New("not healthy")
 	}
-	return errors.New("init error")
 }
 
 // Implement the EntityStoreServer methods

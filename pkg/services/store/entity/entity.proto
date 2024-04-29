@@ -436,6 +436,16 @@ message EntityExternalReference {
   string identifier = 3;
 }
 
+//-----------------------------------------------
+// Health
+//-----------------------------------------------
+
+message HealthRequest {}
+
+message HealthResponse {
+  bool healthy = 1;
+}
+
 
 //-----------------------------------------------
 // Storage interface
@@ -450,4 +460,5 @@ service EntityStore {
   rpc History(EntityHistoryRequest) returns (EntityHistoryResponse);
   rpc List(EntityListRequest) returns (EntityListResponse);
   rpc Watch(stream EntityWatchRequest) returns (stream EntityWatchResponse);
+  rpc isHealthy(HealthRequest) returns (HealthResponse);
 }

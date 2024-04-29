@@ -130,6 +130,14 @@ func (s *sqlEntityServer) Init() error {
 	return nil
 }
 
+func (s *sqlEntityServer) IsHealthy(ctx context.Context, r *entity.HealthRequest) (*entity.HealthResponse, error) {
+	if err := s.Init(); err != nil {
+		return nil, err
+	}
+
+	return &entity.HealthResponse{Healthy: true}, nil
+}
+
 func (s *sqlEntityServer) Stop() {
 	s.cancel()
 }
