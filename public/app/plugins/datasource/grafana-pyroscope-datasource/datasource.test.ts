@@ -5,26 +5,13 @@ import {
   PluginMetaInfo,
   PluginType,
   DataSourceJsonData,
+  makeTimeRange,
 } from '@grafana/data';
-import { setPluginExtensionsHook, getBackendSrv, setBackendSrv, getTemplateSrv } from '@grafana/runtime';
+import { setPluginExtensionsHook, getBackendSrv, setBackendSrv, TemplateSrv } from '@grafana/runtime';
 
 import { defaultPyroscopeQueryType } from './dataquery.gen';
 import { normalizeQuery, PyroscopeDataSource } from './datasource';
 import { Query } from './types';
-
-jest.mock('@grafana/runtime', () => {
-  const actual = jest.requireActual('@grafana/runtime');
-  return {
-    ...actual,
-    getTemplateSrv: () => {
-      return {
-        replace: (query: string): string => {
-          return query.replace(/\$var/g, 'interpolated');
-        },
-      };
-    },
-  };
-});
 
 /** The datasource QueryEditor fetches datasource settings to send to the extension's `configure` method */
 export function mockFetchPyroscopeDatasourceSettings(
@@ -46,16 +33,21 @@ export function mockFetchPyroscopeDatasourceSettings(
   });
 }
 
-describe('Pyroscope data source', () => {
-  let ds: PyroscopeDataSource;
-  beforeEach(() => {
-    mockFetchPyroscopeDatasourceSettings();
-    setPluginExtensionsHook(() => ({ extensions: [], isLoading: false })); // No extensions
-    ds = new PyroscopeDataSource(defaultSettings);
-  });
+function setupDatasource() {
+  mockFetchPyroscopeDatasourceSettings();
+  setPluginExtensionsHook(() => ({ extensions: [], isLoading: false })); // No extensions
+  const templateSrv = {
+    replace: (query: string): string => {
+      return query.replace(/\$var/g, 'interpolated');
+    },
+  } as unknown as TemplateSrv;
+  return new PyroscopeDataSource(defaultSettings, templateSrv);
+}
 
+describe('Pyroscope data source', () => {
   describe('importing queries', () => {
     it('keeps all labels and values', async () => {
+      const ds = setupDatasource();
       const queries = await ds.importFromAbstractQueries([
         {
           refId: 'A',
@@ -71,6 +63,7 @@ describe('Pyroscope data source', () => {
 
   describe('exporting queries', () => {
     it('keeps all labels and values', async () => {
+      const ds = setupDatasource();
       const queries = await ds.exportToAbstractQueries([
         {
           refId: 'A',
@@ -93,10 +86,8 @@ describe('Pyroscope data source', () => {
   });
 
   describe('applyTemplateVariables', () => {
-    const templateSrv = getTemplateSrv();
-
     it('should not update labelSelector if there are no template variables', () => {
-      ds = new PyroscopeDataSource(defaultSettings, templateSrv);
+      const ds = setupDatasource();
       const query = ds.applyTemplateVariables(defaultQuery({ labelSelector: `no var`, profileTypeId: 'no var' }), {});
       expect(query).toMatchObject({
         labelSelector: `no var`,
@@ -105,13 +96,37 @@ describe('Pyroscope data source', () => {
     });
 
     it('should update labelSelector if there are template variables', () => {
-      ds = new PyroscopeDataSource(defaultSettings, templateSrv);
+      const ds = setupDatasource();
       const query = ds.applyTemplateVariables(
         defaultQuery({ labelSelector: `{$var="$var"}`, profileTypeId: '$var' }),
         {}
       );
       expect(query).toMatchObject({ labelSelector: `{interpolated="interpolated"}`, profileTypeId: 'interpolated' });
     });
+  });
+
+  it('implements ad hoc variable support for keys', async () => {
+    const ds = setupDatasource();
+    jest.spyOn(ds, 'getResource').mockImplementationOnce(async (cb) => ['foo', 'bar', 'baz']);
+    const keys = await ds.getTagKeys({
+      filters: [],
+      timeRange: makeTimeRange('2024-01-01T00:00:00', '2024-01-01T01:00:00'),
+    });
+    expect(keys).toEqual(['foo', 'bar', 'baz'].map((v) => ({ text: v })));
+  });
+
+  it('implements ad hoc variable support for values', async () => {
+    const ds = setupDatasource();
+    jest.spyOn(ds, 'getResource').mockImplementationOnce(async (path, params) => {
+      expect(params?.label).toEqual('foo');
+      return ['xyz', 'tuv'];
+    });
+    const keys = await ds.getTagValues({
+      key: 'foo',
+      filters: [],
+      timeRange: makeTimeRange('2024-01-01T00:00:00', '2024-01-01T01:00:00'),
+    });
+    expect(keys).toEqual(['xyz', 'tuv'].map((v) => ({ text: v })));
   });
 });
 
