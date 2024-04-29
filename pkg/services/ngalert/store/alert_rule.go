@@ -169,7 +169,7 @@ func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRu
 			for i := range newRules {
 				if _, err := sess.Insert(&newRules[i]); err != nil {
 					if st.SQLStore.GetDialect().IsUniqueConstraintViolation(err) {
-						return ngmodels.ErrAlertRuleConflict(newRules[i], ngmodels.ErrAlertRuleUniqueConstraintViolation)
+						return ruleConstraintViolationToErr(newRules[i], err)
 					}
 					return fmt.Errorf("failed to create new rules: %w", err)
 				}
@@ -215,7 +215,7 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateR
 			if updated, err := sess.ID(r.Existing.ID).AllCols().Update(r.New); err != nil || updated == 0 {
 				if err != nil {
 					if st.SQLStore.GetDialect().IsUniqueConstraintViolation(err) {
-						return ngmodels.ErrAlertRuleConflict(r.New, ngmodels.ErrAlertRuleUniqueConstraintViolation)
+						return ruleConstraintViolationToErr(r.New, err)
 					}
 					return fmt.Errorf("failed to update rule [%s] %s: %w", r.New.UID, r.New.Title, err)
 				}
@@ -757,4 +757,15 @@ func (st DBstore) RenameReceiverInNotificationSettings(ctx context.Context, orgI
 		})
 	}
 	return len(updates), st.UpdateAlertRules(ctx, updates)
+}
+
+func ruleConstraintViolationToErr(rule ngmodels.AlertRule, err error) error {
+	msg := err.Error()
+	if strings.Contains(msg, "UQE_alert_rule_org_id_namespace_uid_title") || strings.Contains(msg, "alert_rule.org_id, alert_rule.namespace_uid, alert_rule.title") {
+		return ngmodels.ErrAlertRuleConflict(rule, ngmodels.ErrAlertRuleUniqueConstraintViolation)
+	} else if strings.Contains(msg, "UQE_alert_rule_org_id_uid") || strings.Contains(msg, "alert_rule.org_id, alert_rule.uid") {
+		return ngmodels.ErrAlertRuleConflict(rule, errors.New("rule UID under the same organisation should be unique"))
+	} else {
+		return ngmodels.ErrAlertRuleConflict(rule, err)
+	}
 }
