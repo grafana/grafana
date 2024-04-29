@@ -25,6 +25,14 @@
       "user": "Nutzer"
     }
   },
+  "annotations": {
+    "empty-state": {
+      "button-title": "",
+      "info-box-content": "",
+      "info-box-content-2": "",
+      "title": ""
+    }
+  },
   "api-keys": {
     "empty-state": {
       "message": ""
@@ -71,6 +79,12 @@
       "select-all-header-checkbox": "Alle auswählen",
       "select-checkbox": "Auswählen",
       "tags-column": "Tags"
+    },
+    "empty-state": {
+      "button-title": "",
+      "pro-tip": "",
+      "title": "",
+      "title-folder": ""
     },
     "folder-actions-button": {
       "delete": "Löschen",
@@ -158,6 +172,11 @@
       "label-required": "Dieses Feld ist erforderlich.",
       "sub-text": "<0>Text definieren, der die Korrelation beschreibt.</0>",
       "title": "Korrelationsbezeichnung definieren (Schritt 1 von 3)"
+    },
+    "empty-state": {
+      "button-title": "",
+      "pro-tip": "",
+      "title": ""
     },
     "list": {
       "delete": "Korrelation löschen",
@@ -355,11 +374,18 @@
       "validation-required": "Benötigt ein Dashboard JSON-Modell"
     }
   },
+  "dashboard-links": {
+    "empty-state": {
+      "button-title": "",
+      "info-box-content": "",
+      "title": ""
+    }
+  },
   "dashboard-settings": {
     "annotations": {
       "title": "Anmerkungen"
     },
-    "dashboard-delete-button": "Dashboard löschen",
+    "dashboard-delete-button": "",
     "general": {
       "auto-refresh-description": "",
       "auto-refresh-label": "Automatisch aktualisieren",
@@ -405,6 +431,13 @@
       "title": "Versionen"
     }
   },
+  "data-source-list": {
+    "empty-state": {
+      "button-title": "",
+      "pro-tip": "",
+      "title": ""
+    }
+  },
   "data-source-picker": {
     "add-new-data-source": "Neue Datenquelle konfigurieren",
     "built-in-list": {
@@ -439,6 +472,7 @@
       "newest-first": "Neueste zuerst",
       "oldest-first": "Älteste zuerst",
       "query-history": "Abfrageverlauf",
+      "query-library": "",
       "settings": "Einstellungen",
       "starred": "Hervorgehoben"
     },
@@ -657,6 +691,10 @@
     },
     "add-widget": {
       "title": "Panel aus Panel-Bibliothek hinzufügen"
+    },
+    "empty-state": {
+      "message": "",
+      "more-info": ""
     }
   },
   "library-panels": {
@@ -1163,6 +1201,10 @@
     "title": "Das Neueste aus dem Blog"
   },
   "notifications": {
+    "empty-state": {
+      "description": "",
+      "title": ""
+    },
     "starred-dashboard": "Dashboard markiert",
     "unstarred-dashboard": "Dashboard nicht markiert"
   },
@@ -1226,9 +1268,8 @@
       "confirm-text": "Löschen"
     },
     "empty": {
-      "button": "Playlist erstellen",
-      "pro-tip": "Sie können Playlists verwenden, um Dashboards auf TV-Geräten ohne Benutzersteuerung zu steuern",
-      "pro-tip-link-title": "Mehr erfahren",
+      "button": "",
+      "pro-tip": "",
       "title": "Es gibt noch keine Playlists erstellt"
     }
   },
@@ -1342,6 +1383,10 @@
       "orphaned-title": "<0>Verwaistes öffentliches Dashboard</0>",
       "orphaned-tooltip": "Das verlinkte Dashboard wurde bereits gelöscht"
     },
+    "empty-state": {
+      "message": "",
+      "more-info": ""
+    },
     "toggle": {
       "pause-sharing-toggle-text": "Teilen pausieren"
     }
@@ -1446,7 +1491,10 @@
   },
   "service-accounts": {
     "empty-state": {
-      "message": ""
+      "button-title": "",
+      "message": "",
+      "more-info": "",
+      "title": ""
     }
   },
   "share-modal": {
@@ -1566,7 +1614,17 @@
     },
     "title": "Einstellungen"
   },
+  "silences": {
+    "empty-state": {
+      "button-title": "",
+      "title": ""
+    }
+  },
   "snapshot": {
+    "empty-state": {
+      "message": "",
+      "more-info": ""
+    },
     "external-badge": "Extern",
     "name-column-header": "Name",
     "url-column-header": "Snapshot url",
@@ -1579,7 +1637,10 @@
   },
   "teams": {
     "empty-state": {
-      "message": ""
+      "button-title": "",
+      "message": "",
+      "pro-tip": "",
+      "title": ""
     }
   },
   "time-picker": {
@@ -1700,6 +1761,14 @@
     },
     "textbox": {
       "placeholder": "Variablenwert eingeben"
+    }
+  },
+  "variables": {
+    "empty-state": {
+      "button-title": "",
+      "info-box-content": "",
+      "info-box-content-2": "",
+      "title": ""
     }
   }
 }
