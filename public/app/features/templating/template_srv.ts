@@ -253,7 +253,8 @@ export class TemplateSrv implements BaseTemplateSrv {
         scopedVars.__sceneObject.value,
         target,
         scopedVars,
-        format as string | VariableCustomFormatterFn | undefined
+        format as string | VariableCustomFormatterFn | undefined,
+        interpolations
       );
     }
 
@@ -263,7 +264,8 @@ export class TemplateSrv implements BaseTemplateSrv {
         window.__grafanaSceneContext,
         target,
         scopedVars,
-        format as string | VariableCustomFormatterFn | undefined
+        format as string | VariableCustomFormatterFn | undefined,
+        interpolations
       );
     }
 
