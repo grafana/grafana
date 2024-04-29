@@ -28,6 +28,7 @@ body:
     attributes:
       label: Use case
       description: Describe any key requirements or data you would need surfaced, ideally including why they are useful for you.
+      placeholder: My team uses ACME_DB as the application database to monitor our produciton workloads, so we'd like to alert on it and visualize ACME_DB data next to our logs and traces in Grafana.
     validations:
       required: true
   - type: checkboxes
