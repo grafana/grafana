@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/middleware/loggermw"
 	"github.com/grafana/grafana/pkg/plugins"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -346,13 +347,19 @@ func (proxy *DataSourceProxy) logRequest() {
 
 	panelPluginId := proxy.ctx.Req.Header.Get("X-Panel-Plugin-Id")
 
+	uri, err := loggermw.SanitizeURL(proxy.ctx.Req.RequestURI)
+	if err == nil {
+		proxy.ctx.Logger.Warn("Could not sanitize RequestURI due to: %e", err)
+		uri = ""
+	}
+
 	ctxLogger := logger.FromContext(proxy.ctx.Req.Context())
 	ctxLogger.Info("Proxying incoming request",
 		"userid", proxy.ctx.UserID,
 		"orgid", proxy.ctx.OrgID,
 		"username", proxy.ctx.Login,
 		"datasource", proxy.ds.Type,
-		"uri", proxy.ctx.Req.RequestURI,
+		"uri", uri,
 		"method", proxy.ctx.Req.Method,
 		"panelPluginId", panelPluginId,
 		"body", body)
