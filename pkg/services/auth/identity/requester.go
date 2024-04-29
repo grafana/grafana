@@ -1,24 +1,11 @@
 package identity
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/models/roletype"
 )
-
-const (
-	NamespaceUser           = "user"
-	NamespaceAPIKey         = "api-key"
-	NamespaceServiceAccount = "service-account"
-	NamespaceAnonymous      = "anonymous"
-	NamespaceRenderService  = "render"
-	NamespaceAccessPolicy   = "access-policy"
-)
-
-var ErrNotIntIdentifier = errors.New("identifier is not an int64")
-var ErrIdentifierNotInitialized = errors.New("identifier is not initialized")
 
 type Requester interface {
 	// GetID returns namespaced id for the entity
@@ -53,9 +40,12 @@ type Requester interface {
 	// DEPRECATED: GetOrgName returns the name of the active organization.
 	// Retrieve the organization name from the organization service instead of using this method.
 	GetOrgName() string
+	// GetAuthID returns external id for entity.
+	GetAuthID() string
+	// GetAuthenticatedBy returns the authentication method used to authenticate the entity.
+	GetAuthenticatedBy() string
 	// IsAuthenticatedBy returns true if entity was authenticated by any of supplied providers.
 	IsAuthenticatedBy(providers ...string) bool
-
 	// IsNil returns true if the identity is nil
 	// FIXME: remove this method once all services are using an interface
 	IsNil() bool
@@ -69,8 +59,6 @@ type Requester interface {
 	GetCacheKey() string
 	// HasUniqueId returns true if the entity has a unique id
 	HasUniqueId() bool
-	// AuthenticatedBy returns the authentication method used to authenticate the entity.
-	GetAuthenticatedBy() string
 	// GetIDToken returns a signed token representing the identity that can be forwarded to plugins and external services.
 	// Will only be set when featuremgmt.FlagIdForwarding is enabled.
 	GetIDToken() string

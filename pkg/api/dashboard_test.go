@@ -814,9 +814,9 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 	features := featuremgmt.WithFeatures()
 	var err error
 	if dashboardStore == nil {
-		sql := db.InitTestDB(t)
+		sql, cfg := db.InitTestDBWithCfg(t)
 		quotaService := quotatest.New(false, nil)
-		dashboardStore, err = database.ProvideDashboardStore(sql, sql.Cfg, features, tagimpl.ProvideService(sql), quotaService)
+		dashboardStore, err = database.ProvideDashboardStore(sql, cfg, features, tagimpl.ProvideService(sql), quotaService)
 		require.NoError(t, err)
 	}
 
@@ -1035,7 +1035,7 @@ func (m *mockLibraryPanelService) ConnectLibraryPanelsForDashboard(c context.Con
 	return nil
 }
 
-func (m *mockLibraryPanelService) ImportLibraryPanelsForDashboard(c context.Context, signedInUser identity.Requester, libraryPanels *simplejson.Json, panels []any, folderID int64) error {
+func (m *mockLibraryPanelService) ImportLibraryPanelsForDashboard(c context.Context, signedInUser identity.Requester, libraryPanels *simplejson.Json, panels []any, folderID int64, folderUID string) error {
 	return nil
 }
 

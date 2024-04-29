@@ -37,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/anonstore"
@@ -132,6 +133,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
 	"github.com/grafana/grafana/pkg/services/stats/statsimpl"
 	"github.com/grafana/grafana/pkg/services/store"
+	entityStore "github.com/grafana/grafana/pkg/services/store/entity"
 	entityDB "github.com/grafana/grafana/pkg/services/store/entity/db"
 	"github.com/grafana/grafana/pkg/services/store/entity/db/dbimpl"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
@@ -336,6 +338,7 @@ var wireBasicSet = wire.NewSet(
 	dbimpl.ProvideEntityDB,
 	wire.Bind(new(entityDB.EntityDBInterface), new(*dbimpl.EntityDB)),
 	sqlstash.ProvideSQLEntityServer,
+	wire.Bind(new(entityStore.EntityStoreServer), new(sqlstash.SqlEntityServer)),
 	resolver.ProvideEntityReferenceResolver,
 	teamimpl.ProvideService,
 	teamapi.ProvideTeamAPI,
@@ -377,6 +380,7 @@ var wireBasicSet = wire.NewSet(
 	// Kubernetes API server
 	grafanaapiserver.WireSet,
 	apiregistry.WireSet,
+	resourcepermissions.NewActionSetService,
 )
 
 var wireSet = wire.NewSet(

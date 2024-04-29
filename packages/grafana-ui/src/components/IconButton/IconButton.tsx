@@ -143,9 +143,11 @@ const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVari
         height: `${hoverSize}px`,
         borderRadius: theme.shape.radius.default,
         content: '""',
-        transitionDuration: '0.2s',
-        transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
-        transitionProperty: 'opacity',
+        [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+          transitionDuration: '0.2s',
+          transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
+          transitionProperty: 'opacity',
+        },
       },
 
       '&:focus, &:focus-visible': getFocusStyles(theme),
