@@ -3790,6 +3790,7 @@ __metadata:
     tslib: "npm:2.6.2"
     typescript: "npm:5.4.5"
   peerDependencies:
+    "@reduxjs/toolkit": 1.9.5
     react: ^18.0.0
     react-dom: ^18.0.0
   languageName: unknown
