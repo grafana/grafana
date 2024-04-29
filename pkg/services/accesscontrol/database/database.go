@@ -7,12 +7,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/embedserver"
-
-	zclient "github.com/grafana/zanzana/pkg/service/client"
-	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 )
 
 const (
@@ -352,112 +347,4 @@ func (s *AccessControlStore) DeleteTeamPermissions(ctx context.Context, orgID, t
 		return nil
 	})
 	return err
-}
-
-func (s *AccessControlStore) SynchronizeUserData(ctx context.Context, zanzanaService *embedserver.Service) error {
-	cl, err := zanzanaService.GetClient(ctx, "1")
-	if err != nil {
-		return err
-	}
-
-	// Sync org memberships
-	if err := s.syncOrgMembership(ctx, cl); err != nil {
-		return err
-	}
-
-	// Sync Team memberships
-
-	// Sync Managed permissions
-
-	return nil
-}
-
-func (s *AccessControlStore) syncOrgMembership(ctx context.Context, cl *zclient.GRPCClient) error {
-	tupleKeys := map[string]*openfgav1.TupleKey{}
-	logger := log.New("accesscontrol.syncOrgs")
-
-	// should we use UID as the user identifier?
-	query := `SELECT user_id, org_id, role FROM org_user`
-	type membership struct {
-		OrgId  int64  `xorm:"org_id"`
-		UserId int64  `xorm:"user_id"`
-		Role   string `xorm:"role"`
-	}
-	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
-		rows, err := sess.SQL(query).Rows(new(membership))
-		if err != nil {
-			return err
-		}
-		defer func() {
-			if err := rows.Close(); err != nil {
-				logger.Error("Failed to close rows", "error", err)
-			}
-		}()
-
-		for rows.Next() {
-			memb := membership{}
-			if err := rows.Scan(&memb); err != nil {
-				return err
-			}
-
-			// membership
-			key := &openfgav1.TupleKey{
-				User:     "user:" + strconv.FormatInt(memb.UserId, 10), // "user:1"
-				Relation: "member",
-				Object:   "org:" + strconv.FormatInt(memb.OrgId, 10), // "org:1
-			}
-
-			// basic role
-			tupleKeys[key.User+key.Relation+key.Object] = key
-
-			key = &openfgav1.TupleKey{
-				User:     "user:" + strconv.FormatInt(memb.UserId, 10), // "user:1"
-				Relation: "assignee",
-				Object:   zclient.GenerateBasicRoleResource(memb.Role, memb.OrgId), // "role:basic_admin_1"
-			}
-
-			// basic role
-			tupleKeys[key.User+key.Relation+key.Object] = key
-		}
-
-		return nil
-	})
-	if err != nil {
-		return err
-	}
-
-	logger.Info("Synchronizing org membership", "userOrgMapCount", len(tupleKeys))
-	// Convert map to slice
-	flatTuples := make([]*openfgav1.TupleKey, 0, len(tupleKeys))
-	for _, v := range tupleKeys {
-		flatTuples = append(flatTuples, v)
-	}
-
-	// Define batch size
-	batchSize := 100
-
-	// Write in batches
-	for i := 0; i < len(flatTuples); i += batchSize {
-		end := i + batchSize
-
-		// Ensure not to go beyond slice bounds
-		if end > len(flatTuples) {
-			end = len(flatTuples)
-		}
-
-		_, err := cl.Write(ctx, &openfgav1.WriteRequest{
-			StoreId:              cl.MustStoreID(ctx),
-			AuthorizationModelId: cl.AuthorizationModelID,
-			Writes: &openfgav1.WriteRequestWrites{
-				TupleKeys: flatTuples[i:end],
-			},
-		})
-
-		if err != nil {
-			// Handle error
-			return err
-		}
-	}
-
-	return nil
 }

@@ -242,7 +242,10 @@ func (s *Service) RegisterFixedRoles(ctx context.Context) error {
 	}
 
 	// move somewhere else
-	s.synchronizeUserData(ctx)
+	if err := s.synchronizeUserData(ctx); err != nil {
+		s.log.Error("Failed to sync user data", "error", err)
+		return err
+	}
 
 	return nil
 }

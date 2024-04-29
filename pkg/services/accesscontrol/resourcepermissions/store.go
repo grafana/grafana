@@ -252,7 +252,8 @@ func (s *store) setResourcePermission(
 		return nil, err
 	}
 
-	tuples := make([]*openfgav1.TupleKey, 0, len(cmd.Actions))
+	writeTuples := make([]*openfgav1.TupleKey, 0, len(cmd.Actions))
+	deleteTuples := make([]*openfgav1.TupleKeyWithoutCondition, 0, len(cmd.Actions))
 
 	rawSQL := `SELECT p.* FROM permission as p INNER JOIN role r on r.id = p.role_id WHERE r.id = ? AND p.scope = ?`
 
@@ -264,21 +265,20 @@ func (s *store) setResourcePermission(
 
 	missing := make(map[string]struct{}, len(cmd.Actions))
 	for _, a := range cmd.Actions {
-		// IMPLEMENT this
+		missing[a] = struct{}{}
+		// Fixme: this should be handled in lib
 		container := zclient.FolderContainer
 		if cmd.Resource != "folders" {
 			container = ""
 		}
+		// Fixme: don't need to always write everything
 		relation, object := zclient.ConvertToRelationObject(a, scope, cmd.ResourceID, container)
-		tuples = append(tuples, &openfgav1.TupleKey{
-			User:      "role:" + role.UID,
-			Relation:  relation,
-			Object:    object,
-			Condition: &openfgav1.RelationshipCondition{},
-		})
-
 		s.logger.Debug("Adding permission to tuple", "role", role.UID, "relation", relation, "object", object)
-		missing[a] = struct{}{}
+		writeTuples = append(writeTuples, &openfgav1.TupleKey{
+			User:     "role:" + role.UID + "#assignee",
+			Relation: relation,
+			Object:   object,
+		})
 	}
 
 	var remove []int64
@@ -287,6 +287,17 @@ func (s *store) setResourcePermission(
 			delete(missing, p.Action)
 		} else if !ok {
 			remove = append(remove, p.ID)
+			container := zclient.FolderContainer
+			if cmd.Resource != "folders" { // this should be handled in lib
+				container = ""
+			}
+			relation, object := zclient.ConvertToRelationObject(p.Action, scope, cmd.ResourceID, container)
+			s.logger.Debug("Adding permission to tuple", "role", role.UID, "relation", relation, "object", object)
+			deleteTuples = append(deleteTuples, &openfgav1.TupleKeyWithoutCondition{
+				User:     "role:" + role.UID + "#assignee",
+				Relation: relation,
+				Object:   object,
+			})
 		}
 	}
 
@@ -298,13 +309,17 @@ func (s *store) setResourcePermission(
 		return nil, err
 	}
 
-	_, err = s.zClient.Write(context.Background(), &openfgav1.WriteRequest{
+	writeReq := &openfgav1.WriteRequest{
 		StoreId:              s.zClient.MustStoreID(context.Background()),
 		AuthorizationModelId: s.zClient.AuthorizationModelID,
-		Writes: &openfgav1.WriteRequestWrites{
-			TupleKeys: tuples,
-		},
-	})
+	}
+	if len(writeTuples) != 0 {
+		writeReq.Writes = &openfgav1.WriteRequestWrites{TupleKeys: writeTuples}
+	}
+	if len(deleteTuples) != 0 {
+		writeReq.Deletes = &openfgav1.WriteRequestDeletes{TupleKeys: deleteTuples}
+	}
+	_, err = s.zClient.Write(context.Background(), writeReq)
 	if err != nil {
 		return nil, err
 	}
@@ -618,7 +633,7 @@ func (s *store) teamAdder(sess *db.Session, orgID, teamID int64) roleAdder {
 			Writes: &openfgav1.WriteRequestWrites{
 				TupleKeys: []*openfgav1.TupleKey{
 					{
-						User:     "team:" + strconv.FormatInt(teamID, 10),
+						User:     "team:" + strconv.FormatInt(teamID, 10) + "#member",
 						Relation: "assignee",
 						Object:   "role:" + role.UID,
 					},
@@ -655,7 +670,7 @@ func (s *store) builtInRoleAdder(sess *db.Session, orgID int64, builtinRole stri
 			Writes: &openfgav1.WriteRequestWrites{
 				TupleKeys: []*openfgav1.TupleKey{
 					{
-						User:     zclient.GenerateBasicRoleResource(builtinRole, orgID),
+						User:     zclient.GenerateBasicRoleResource(builtinRole, orgID) + "#assignee",
 						Relation: "assignee",
 						Object:   "role:" + role.UID,
 					},
@@ -693,6 +708,21 @@ func (s *store) getOrCreateManagedRole(sess *db.Session, orgID int64, name strin
 		if err := add(&role); err != nil {
 			return nil, err
 		}
+
+		// Scope role to org
+		_, err = s.zClient.Write(context.Background(), &openfgav1.WriteRequest{
+			StoreId:              s.zClient.MustStoreID(context.Background()),
+			AuthorizationModelId: s.zClient.AuthorizationModelID,
+			Writes: &openfgav1.WriteRequestWrites{
+				TupleKeys: []*openfgav1.TupleKey{
+					{
+						User:     "org:" + strconv.FormatInt(orgID, 10),
+						Relation: "org",
+						Object:   "role:" + role.UID,
+					},
+				},
+			},
+		})
 	}
 
 	if err != nil {
