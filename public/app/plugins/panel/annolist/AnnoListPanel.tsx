@@ -146,10 +146,10 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     const params = {
       from: this._timeOffset(anno.time, options.navigateBefore, true),
       to: this._timeOffset(anno.timeEnd ?? anno.time, options.navigateAfter, false),
-      viewPanel: options.navigateToPanel ? anno.panelId : undefined,
+      viewPanel: options.navigateToPanel && anno.panelId ? anno.panelId : undefined,
     };
 
-    if (current?.uid === anno.dashboardUID) {
+    if (!anno.dashboardUID || current?.uid === anno.dashboardUID) {
       locationService.partial(params);
       return;
     }
