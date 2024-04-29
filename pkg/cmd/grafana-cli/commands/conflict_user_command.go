@@ -69,7 +69,15 @@ func initializeConflictResolver(cmd *utils.ContextCommandLine, f Formatter, ctx 
 		return nil, fmt.Errorf("%v: %w", "failed to get user service", err)
 	}
 	routing := routing.ProvideRegister()
-	acService, err := acimpl.ProvideService(cfg, s, routing, nil, nil, features)
+	tracingCfg, err := tracing.ProvideTracingConfig(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("%v: %w", "failed to initialize tracer config", err)
+	}
+	tracer, err := tracing.ProvideService(tracingCfg)
+	if err != nil {
+		return nil, fmt.Errorf("%v: %w", "failed to initialize tracer service", err)
+	}
+	acService, err := acimpl.ProvideService(cfg, s, routing, nil, nil, features, tracer)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to get access control", err)
 	}
