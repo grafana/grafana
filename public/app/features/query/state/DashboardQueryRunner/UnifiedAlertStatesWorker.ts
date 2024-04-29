@@ -66,11 +66,7 @@ export class UnifiedAlertStatesWorker implements DashboardQueryRunnerWorker {
           dashboardUid: dashboard.uid,
         })
       );
-      const result = await promRules;
-      if (result.error) {
-        return emptyResult();
-      }
-      return result.data;
+      return (await promRules).data;
     };
 
     const res: Observable<PromRuleGroupDTO[]> = from(fetchData()).pipe(

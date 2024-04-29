@@ -195,20 +195,19 @@ describe('UnifiedAlertStatesWorker', () => {
       });
     });
   });
-  // not sure how to test this use case as now we are using dispatch instead of getBackendSrv
-  // describe('when run is called with correct props and request is cancelled', () => {
-  //   silenceConsoleOutput();
-  //   it('then it should return the correct results', async () => {
-  //     const { options, dispatchMock } = getTestContext();
+  describe('when run is called with correct props and request is cancelled', () => {
+    silenceConsoleOutput();
+    it('then it should return the correct results', async () => {
+      const { options, dispatchMock } = getTestContext();
+      dispatchMock.mockResolvedValue({ error: { message: 'Get error' } });
 
-  //     await expect(worker.work(options)).toEmitValuesWith((received) => {
-  //       expect(received).toHaveLength(1);
-  //       const results = received[0];
-  //       expect(results).toEqual({ alertStates: [], annotations: [] });
-  //       expect(dispatchMock).not.toHaveBeenCalled();
-  //     });
-  //   });
-  // });
+      await expect(worker.work(options)).toEmitValuesWith((received) => {
+        expect(received).toHaveLength(1);
+        const results = received[0];
+        expect(results).toEqual({ alertStates: [], annotations: [] });
+      });
+    });
+  });
 });
 
 describe('UnifiedAlertStateWorker with RBAC', () => {
