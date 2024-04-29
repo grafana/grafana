@@ -259,8 +259,8 @@ export const ConnectionSVG = ({
                   if (index < vertices.length - 1) {
                     // Not also the last point
                     const nextVertex = vertices[index + 1];
-                    Xn = nextVertex.x * xDist + x1;
-                    Yn = nextVertex.y * yDist + y1;
+                    Xn = nextVertex.x * xDist + xStart;
+                    Yn = nextVertex.y * yDist + yStart;
                   }
 
                   // Length of next segment
