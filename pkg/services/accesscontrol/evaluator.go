@@ -14,11 +14,6 @@ import (
 
 var logger = log.New("accesscontrol.evaluator")
 
-type ActionScopePair struct {
-	Action string
-	Scope  string
-}
-
 type Evaluator interface {
 	// Evaluate permissions that are grouped by action
 	Evaluate(permissions map[string][]string) bool
@@ -26,8 +21,6 @@ type Evaluator interface {
 	// MutateScopes executes a sequence of ScopeModifier functions on all embedded scopes of an evaluator and returns a new Evaluator
 	MutateScopes(ctx context.Context, mutate ScopeAttributeMutator) (Evaluator, error)
 	// String returns a string representation of permission required by the evaluator
-
-	Pairs() []ActionScopePair
 
 	fmt.Stringer
 	fmt.GoStringer
@@ -163,15 +156,6 @@ func (p permissionEvaluator) MutateScopes(ctx context.Context, mutate ScopeAttri
 	return EvalPermission(p.Action, scopes...), nil
 }
 
-// TODO: Move computation to constructor
-func (a permissionEvaluator) Pairs() []ActionScopePair {
-	pairs := make([]ActionScopePair, 0, len(a.Scopes))
-	for _, scope := range a.Scopes {
-		pairs = append(pairs, ActionScopePair{a.Action, scope})
-	}
-	return pairs
-}
-
 func (p permissionEvaluator) String() string {
 	return p.Action
 }
@@ -251,14 +235,6 @@ func (a allEvaluator) GoString() string {
 	return fmt.Sprintf("all(%s)", strings.Join(permissions, " "))
 }
 
-func (a allEvaluator) Pairs() []ActionScopePair {
-	pairs := make([]ActionScopePair, 1)
-	for _, e := range a.allOf {
-		pairs = append(pairs, e.Pairs()...)
-	}
-	return pairs
-}
-
 var _ Evaluator = new(anyEvaluator)
 
 // EvalAny returns evaluator that requires at least one of passed evaluators to evaluate to true
@@ -311,14 +287,6 @@ func (a anyEvaluator) MutateScopes(ctx context.Context, mutate ScopeAttributeMut
 	}
 
 	return EvalAny(modified...), nil
-}
-
-func (a anyEvaluator) Pairs() []ActionScopePair {
-	pairs := make([]ActionScopePair, 1)
-	for _, e := range a.anyOf {
-		pairs = append(pairs, e.Pairs()...)
-	}
-	return pairs
 }
 
 func (a anyEvaluator) String() string {
