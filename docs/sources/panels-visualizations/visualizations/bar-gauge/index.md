@@ -136,6 +136,10 @@ Automatically show y-axis scrollbar when there's a large amount of data.
 This option only applies when bar size is set to manual.
 {{% /admonition %}}
 
+## Thresholds
+
+{{< docs/shared lookup="visualizations/thresholds-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ## Value mappings
 
 {{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}

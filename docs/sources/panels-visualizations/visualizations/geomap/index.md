@@ -614,6 +614,10 @@ Displays debug information in the upper right corner. This can be useful for deb
 - **None** displays tooltips only when a data point is clicked.
 - **Details** displays tooltips when a mouse pointer hovers over a data point.
 
+## Thresholds
+
+{{< docs/shared lookup="visualizations/thresholds-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ## Value mappings
 
 {{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
