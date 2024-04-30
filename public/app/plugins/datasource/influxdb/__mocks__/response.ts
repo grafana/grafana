@@ -1,108 +1,5 @@
-import { of } from 'rxjs';
-
-import {
-  AdHocVariableFilter,
-  DataQueryRequest,
-  DataSourceInstanceSettings,
-  dateTime,
-  FieldType,
-  PluginType,
-  ScopedVars,
-} from '@grafana/data';
-import {
-  BackendDataSourceResponse,
-  FetchResponse,
-  getBackendSrv,
-  setBackendSrv,
-  VariableInterpolation,
-} from '@grafana/runtime';
-import { SQLQuery } from '@grafana/sql';
-
-import { TemplateSrv } from '../../../features/templating/template_srv';
-
-import InfluxDatasource from './datasource';
-import { InfluxOptions, InfluxQuery, InfluxVersion } from './types';
-
-const getAdhocFiltersMock = jest.fn().mockImplementation(() => []);
-const replaceMock = jest.fn().mockImplementation((a: string, ...rest: unknown[]) => a);
-
-export const templateSrvStub = {
-  getAdhocFilters: getAdhocFiltersMock,
-  replace: replaceMock,
-} as unknown as TemplateSrv;
-
-export function mockTemplateSrv(
-  getAdhocFiltersMock: (datasourceName: string) => AdHocVariableFilter[],
-  replaceMock: (
-    target?: string,
-    scopedVars?: ScopedVars,
-    format?: string | Function | undefined,
-    interpolations?: VariableInterpolation[]
-  ) => string
-): TemplateSrv {
-  return {
-    getAdhocFilters: getAdhocFiltersMock,
-    replace: replaceMock,
-  } as unknown as TemplateSrv;
-}
-
-export function mockBackendService(response: FetchResponse) {
-  const fetchMock = jest.fn().mockReturnValue(of(response));
-  const origBackendSrv = getBackendSrv();
-  setBackendSrv({
-    ...origBackendSrv,
-    fetch: fetchMock,
-  });
-  return fetchMock;
-}
-
-export function getMockInfluxDS(
-  instanceSettings: DataSourceInstanceSettings<InfluxOptions> = getMockDSInstanceSettings(),
-  templateSrv: TemplateSrv = templateSrvStub
-): InfluxDatasource {
-  return new InfluxDatasource(instanceSettings, templateSrv);
-}
-
-export function getMockDSInstanceSettings(
-  overrideJsonData?: Partial<InfluxOptions>
-): DataSourceInstanceSettings<InfluxOptions> {
-  return {
-    id: 123,
-    url: 'proxied',
-    access: 'proxy',
-    name: 'influxDb',
-    readOnly: false,
-    uid: 'influxdb-test',
-    type: 'influxdb',
-    meta: {
-      id: 'influxdb-meta',
-      type: PluginType.datasource,
-      name: 'influxdb-test',
-      info: {
-        author: {
-          name: 'observability-metrics',
-        },
-        version: 'v0.0.1',
-        description: 'test',
-        links: [],
-        logos: {
-          large: '',
-          small: '',
-        },
-        updated: '',
-        screenshots: [],
-      },
-      module: '',
-      baseUrl: '',
-    },
-    jsonData: {
-      version: InfluxVersion.InfluxQL,
-      httpMode: 'POST',
-      dbName: 'site',
-      ...(overrideJsonData ? overrideJsonData : {}),
-    },
-  };
-}
+import { FieldType } from '@grafana/data';
+import { BackendDataSourceResponse, FetchResponse } from '@grafana/runtime';
 
 export const mockInfluxFetchResponse = (
   overrides?: Partial<FetchResponse<BackendDataSourceResponse>>
@@ -133,6 +30,7 @@ export const mockInfluxFetchResponse = (
     ...overrides,
   };
 };
+
 export const mockInfluxTSDBQueryResponse = [
   {
     schema: {
@@ -220,6 +118,33 @@ export const mockInfluxTSDBQueryResponse = [
   },
 ];
 
+export const metricFindQueryResponse = {
+  config: {
+    url: 'mock-response-url',
+  },
+  headers: new Headers(),
+  ok: false,
+  redirected: false,
+  status: 0,
+  statusText: '',
+  type: 'basic',
+  url: '',
+  data: {
+    status: 'success',
+    results: [
+      {
+        series: [
+          {
+            name: 'measurement',
+            columns: ['name'],
+            values: [['cpu']],
+          },
+        ],
+      },
+    ],
+  },
+};
+
 export const mockInfluxRetentionPolicyResponse = [
   {
     schema: {
@@ -229,101 +154,6 @@ export const mockInfluxRetentionPolicyResponse = [
     data: { values: [['autogen', 'bar', '5m_avg', '1m_avg', 'default']] },
   },
 ];
-
-type QueryType = InfluxQuery & SQLQuery;
-
-export const mockInfluxQueryRequest = (targets?: QueryType[]): DataQueryRequest<QueryType> => {
-  return {
-    app: 'explore',
-    interval: '1m',
-    intervalMs: 60000,
-    range: {
-      from: dateTime(0),
-      to: dateTime(10),
-      raw: { from: dateTime(0), to: dateTime(10) },
-    },
-    rangeRaw: {
-      from: dateTime(0),
-      to: dateTime(10),
-    },
-    requestId: '',
-    scopedVars: {},
-    startTime: 0,
-    targets: targets ?? mockTargets(),
-    timezone: '',
-  };
-};
-
-export const mockTargets = (): QueryType[] => {
-  return [
-    {
-      refId: 'A',
-      datasource: {
-        type: 'influxdb',
-        uid: 'vA4bkHenk',
-      },
-      policy: 'default',
-      resultFormat: 'time_series',
-      orderByTime: 'ASC',
-      tags: [],
-      groupBy: [
-        {
-          type: 'time',
-          params: ['$__interval'],
-        },
-        {
-          type: 'fill',
-          params: ['null'],
-        },
-      ],
-      select: [
-        [
-          {
-            type: 'field',
-            params: ['value'],
-          },
-          {
-            type: 'mean',
-            params: [],
-          },
-        ],
-      ],
-      measurement: 'cpu',
-    },
-  ];
-};
-
-export const mockInfluxQueryWithTemplateVars = (adhocFilters: AdHocVariableFilter[]): InfluxQuery => ({
-  refId: 'x',
-  alias: '$interpolationVar',
-  measurement: '$interpolationVar',
-  policy: '$interpolationVar',
-  limit: '$interpolationVar',
-  slimit: '$interpolationVar',
-  tz: '$interpolationVar',
-  tags: [
-    {
-      key: 'cpu',
-      operator: '=~',
-      value: '/^$interpolationVar,$interpolationVar2$/',
-    },
-  ],
-  groupBy: [
-    {
-      params: ['$interpolationVar'],
-      type: 'tag',
-    },
-  ],
-  select: [
-    [
-      {
-        params: ['$interpolationVar'],
-        type: 'field',
-      },
-    ],
-  ],
-  adhocFilters,
-});
 
 export const mockInfluxSQLFetchResponse: FetchResponse<BackendDataSourceResponse> = {
   config: {
@@ -426,6 +256,54 @@ export const mockInfluxSQLVariableFetchResponse: FetchResponse<BackendDataSource
             },
             data: {
               values: [['airSensors', 'cpu', 'disk', 'diskio', 'kernel', 'mem', 'processes', 'swap', 'system']],
+            },
+          },
+        ],
+      },
+    },
+  },
+};
+
+export const mockMetricFindQueryResponse = {
+  data: {
+    results: {
+      metricFindQuery: {
+        status: 200,
+        frames: [
+          {
+            schema: {
+              name: 'NoneNone',
+              refId: 'metricFindQuery',
+              fields: [
+                {
+                  name: 'Value',
+                  type: 'string',
+                  typeInfo: {
+                    frame: 'string',
+                  },
+                },
+              ],
+            },
+            data: {
+              values: [['test-t2-1', 'test-t2-10']],
+            },
+          },
+          {
+            schema: {
+              name: 'some-other',
+              refId: 'metricFindQuery',
+              fields: [
+                {
+                  name: 'Value',
+                  type: 'string',
+                  typeInfo: {
+                    frame: 'string',
+                  },
+                },
+              ],
+            },
+            data: {
+              values: [['test-t2-1', 'test-t2-10', 'test-t2-2', 'test-t2-3', 'test-t2-4']],
             },
           },
         ],
