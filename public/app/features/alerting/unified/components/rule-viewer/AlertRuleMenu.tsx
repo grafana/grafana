@@ -58,6 +58,8 @@ const AlertRuleMenu = ({
 
   const ruleExtensionLinks = useRulePluginLinkExtension(rule);
 
+  const extensionsAvailable = ruleExtensionLinks.length > 0;
+
   /**
    * Since Incident isn't available as an open-source product we shouldn't show it for Open-Source licenced editions of Grafana.
    * We should show it in development mode
@@ -93,7 +95,7 @@ const AlertRuleMenu = ({
           childItems={[<ExportMenuItem key="export-with-modifications" identifier={identifier} />]}
         />
       )}
-      {ruleExtensionLinks.length > 0 && (
+      {extensionsAvailable && (
         <>
           <Menu.Divider />
           {ruleExtensionLinks.map((extension) => (
@@ -118,6 +120,7 @@ const AlertRuleMenu = ({
     showDivider,
     showCopyLinkButton,
     canExport,
+    extensionsAvailable,
     canDelete,
   ].some(Boolean);
 

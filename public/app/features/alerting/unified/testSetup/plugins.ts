@@ -7,10 +7,8 @@ import { pluginsHandler } from '../mocks/plugins';
 
 export function setupPlugins(plugins: Record<string, PluginMeta>): { apiHandlers: RequestHandler[] } {
   const pluginsArray = Object.values(plugins);
-  console.log(pluginsArray);
 
   pluginsArray.forEach((plugin) => {
-    console.log(plugin);
     config.apps[plugin.id] = {
       id: plugin.id,
       path: plugin.baseUrl,
