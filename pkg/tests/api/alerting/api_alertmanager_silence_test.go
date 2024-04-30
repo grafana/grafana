@@ -97,7 +97,7 @@ func TestIntegrationSilenceAuth(t *testing.T) {
 	testCases := []struct {
 		name             string
 		orgRole          org.RoleType // default RoleNone
-		permissions      []accesscontrol.Permission
+		permissions      []resourcepermissions.SetResourcePermissionCommand
 		defaultAllowed   bool                                  // Default allowed/forbidden for actions not in statusExceptions.
 		statusExceptions map[silenceType]map[silenceAction]int // Exceptions to defaultAllowed.
 		listContents     []silenceType                         // nil = forbidden.
@@ -132,8 +132,8 @@ func TestIntegrationSilenceAuth(t *testing.T) {
 		// RBAC
 		{
 			name: "Global read",
-			permissions: []accesscontrol.Permission{
-				{Action: accesscontrol.ActionAlertingInstanceRead},
+			permissions: []resourcepermissions.SetResourcePermissionCommand{
+				{Actions: []string{accesscontrol.ActionAlertingInstanceRead}},
 			},
 			statusExceptions: map[silenceType]map[silenceAction]int{
 				generalSilence:       {readSilence: http.StatusOK},
@@ -144,9 +144,11 @@ func TestIntegrationSilenceAuth(t *testing.T) {
 		},
 		{
 			name: "Global read + create permissions",
-			permissions: []accesscontrol.Permission{
-				{Action: accesscontrol.ActionAlertingInstanceRead},
-				{Action: accesscontrol.ActionAlertingInstanceCreate},
+			permissions: []resourcepermissions.SetResourcePermissionCommand{
+				{Actions: []string{
+					accesscontrol.ActionAlertingInstanceRead,
+					accesscontrol.ActionAlertingInstanceCreate,
+				}},
 			},
 			defaultAllowed: true,
 			statusExceptions: map[silenceType]map[silenceAction]int{
@@ -158,9 +160,11 @@ func TestIntegrationSilenceAuth(t *testing.T) {
 		},
 		{
 			name: "Global read + update permissions",
-			permissions: []accesscontrol.Permission{
-				{Action: accesscontrol.ActionAlertingInstanceRead},
-				{Action: accesscontrol.ActionAlertingInstanceUpdate},
+			permissions: []resourcepermissions.SetResourcePermissionCommand{
+				{Actions: []string{
+					accesscontrol.ActionAlertingInstanceRead,
+					accesscontrol.ActionAlertingInstanceUpdate,
+				}},
 			},
 			defaultAllowed: true,
 			statusExceptions: map[silenceType]map[silenceAction]int{
@@ -172,25 +176,29 @@ func TestIntegrationSilenceAuth(t *testing.T) {
 		},
 		{
 			name: "Global read + update + create permissions",
-			permissions: []accesscontrol.Permission{
-				{Action: accesscontrol.ActionAlertingInstanceRead},
-				{Action: accesscontrol.ActionAlertingInstanceUpdate},
-				{Action: accesscontrol.ActionAlertingInstanceCreate},
+			permissions: []resourcepermissions.SetResourcePermissionCommand{
+				{Actions: []string{
+					accesscontrol.ActionAlertingInstanceRead,
+					accesscontrol.ActionAlertingInstanceUpdate,
+					accesscontrol.ActionAlertingInstanceCreate,
+				}},
 			},
 			defaultAllowed: true,
 			listContents:   []silenceType{generalSilence, ruleSilenceInFolder1, ruleSilenceInFolder2},
 		},
 		{
 			name: "Global update + create permissions, missing read",
-			permissions: []accesscontrol.Permission{
-				{Action: accesscontrol.ActionAlertingInstanceUpdate},
-				{Action: accesscontrol.ActionAlertingInstanceCreate},
+			permissions: []resourcepermissions.SetResourcePermissionCommand{
+				{Actions: []string{
+					accesscontrol.ActionAlertingInstanceUpdate,
+					accesscontrol.ActionAlertingInstanceCreate,
+				}},
 			},
 		},
 		{
 			name: "Silence read in folder1",
-			permissions: []accesscontrol.Permission{
-				{Action: accesscontrol.ActionAlertingSilencesRead, Kind: "folders", Attribute: "uid", Identifier: f1.UID},
+			permissions: []resourcepermissions.SetResourcePermissionCommand{
+				{Actions: []string{accesscontrol.ActionAlertingSilencesRead}, Resource: "folders", ResourceAttribute: "uid", ResourceID: f1.UID},
 			},
 			statusExceptions: map[silenceType]map[silenceAction]int{
 				generalSilence:       {readSilence: http.StatusOK},
@@ -200,8 +208,8 @@ func TestIntegrationSilenceAuth(t *testing.T) {
 		},
 		{
 			name: "Silence read in folder2",
-			permissions: []accesscontrol.Permission{
-				{Action: accesscontrol.ActionAlertingSilencesRead, Kind: "folders", Attribute: "uid", Identifier: f2.UID},
+			permissions: []resourcepermissions.SetResourcePermissionCommand{
+				{Actions: []string{accesscontrol.ActionAlertingSilencesRead}, Resource: "folders", ResourceAttribute: "uid", ResourceID: f2.UID},
 			},
 			statusExceptions: map[silenceType]map[silenceAction]int{
 				generalSilence:       {readSilence: http.StatusOK},
@@ -211,9 +219,11 @@ func TestIntegrationSilenceAuth(t *testing.T) {
 		},
 		{
 			name: "Silence read + create in folder1",
-			permissions: []accesscontrol.Permission{
-				{Action: accesscontrol.ActionAlertingSilencesRead, Kind: "folders", Attribute: "uid", Identifier: f1.UID},
-				{Action: accesscontrol.ActionAlertingSilencesCreate, Kind: "folders", Attribute: "uid", Identifier: f1.UID},
+			permissions: []resourcepermissions.SetResourcePermissionCommand{
+				{Actions: []string{
+					accesscontrol.ActionAlertingSilencesRead,
+					accesscontrol.ActionAlertingSilencesCreate,
+				}, Resource: "folders", ResourceAttribute: "uid", ResourceID: f1.UID},
 			},
 			statusExceptions: map[silenceType]map[silenceAction]int{
 				generalSilence:       {readSilence: http.StatusOK},
@@ -223,9 +233,11 @@ func TestIntegrationSilenceAuth(t *testing.T) {
 		},
 		{
 			name: "Silence read + write in folder1",
-			permissions: []accesscontrol.Permission{
-				{Action: accesscontrol.ActionAlertingSilencesRead, Kind: "folders", Attribute: "uid", Identifier: f1.UID},
-				{Action: accesscontrol.ActionAlertingSilencesWrite, Kind: "folders", Attribute: "uid", Identifier: f1.UID},
+			permissions: []resourcepermissions.SetResourcePermissionCommand{
+				{Actions: []string{
+					accesscontrol.ActionAlertingSilencesRead,
+					accesscontrol.ActionAlertingSilencesWrite,
+				}, Resource: "folders", ResourceAttribute: "uid", ResourceID: f1.UID},
 			},
 			statusExceptions: map[silenceType]map[silenceAction]int{
 				generalSilence:       {readSilence: http.StatusOK},
@@ -235,10 +247,12 @@ func TestIntegrationSilenceAuth(t *testing.T) {
 		},
 		{
 			name: "Silence read + write + create in folder1",
-			permissions: []accesscontrol.Permission{
-				{Action: accesscontrol.ActionAlertingSilencesRead, Kind: "folders", Attribute: "uid", Identifier: f1.UID},
-				{Action: accesscontrol.ActionAlertingSilencesWrite, Kind: "folders", Attribute: "uid", Identifier: f1.UID},
-				{Action: accesscontrol.ActionAlertingSilencesCreate, Kind: "folders", Attribute: "uid", Identifier: f1.UID},
+			permissions: []resourcepermissions.SetResourcePermissionCommand{
+				{Actions: []string{
+					accesscontrol.ActionAlertingSilencesRead,
+					accesscontrol.ActionAlertingSilencesWrite,
+					accesscontrol.ActionAlertingSilencesCreate,
+				}, Resource: "folders", ResourceAttribute: "uid", ResourceID: f1.UID},
 			},
 			statusExceptions: map[silenceType]map[silenceAction]int{
 				generalSilence:       {readSilence: http.StatusOK},
@@ -248,10 +262,12 @@ func TestIntegrationSilenceAuth(t *testing.T) {
 		},
 		{
 			name: "Silence read + write + create in other folder",
-			permissions: []accesscontrol.Permission{
-				{Action: accesscontrol.ActionAlertingSilencesRead, Kind: "folders", Attribute: "uid", Identifier: "unknown"},
-				{Action: accesscontrol.ActionAlertingSilencesWrite, Kind: "folders", Attribute: "uid", Identifier: "unknown"},
-				{Action: accesscontrol.ActionAlertingSilencesCreate, Kind: "folders", Attribute: "uid", Identifier: "unknown"},
+			permissions: []resourcepermissions.SetResourcePermissionCommand{
+				{Actions: []string{
+					accesscontrol.ActionAlertingSilencesRead,
+					accesscontrol.ActionAlertingSilencesWrite,
+					accesscontrol.ActionAlertingSilencesCreate,
+				}, Resource: "folders", ResourceAttribute: "uid", ResourceID: "unknown"},
 			},
 			statusExceptions: map[silenceType]map[silenceAction]int{
 				generalSilence: {readSilence: http.StatusOK},
@@ -278,7 +294,7 @@ func TestIntegrationSilenceAuth(t *testing.T) {
 			// Set permissions.
 			asService := resourcepermissions.NewActionSetService()
 			permissionsStore := resourcepermissions.NewStore(env.SQLStore, featuremgmt.WithFeatures(), &asService)
-			for _, cmd := range toSetResourcePermissionCommand(tt.permissions) {
+			for _, cmd := range tt.permissions {
 				_, err := permissionsStore.SetUserResourcePermission(
 					context.Background(),
 					1,
@@ -389,26 +405,4 @@ func TestIntegrationSilenceAuth(t *testing.T) {
 			})
 		})
 	}
-}
-
-func toSetResourcePermissionCommand(permissions []accesscontrol.Permission) []resourcepermissions.SetResourcePermissionCommand {
-	cmds := make(map[string]*resourcepermissions.SetResourcePermissionCommand)
-	for _, p := range permissions {
-		scope := accesscontrol.Scope(p.Kind, p.Attribute, p.Identifier)
-		if _, ok := cmds[scope]; !ok {
-			cmd := resourcepermissions.SetResourcePermissionCommand{
-				Resource:          p.Kind,
-				ResourceID:        p.Identifier,
-				ResourceAttribute: p.Attribute,
-			}
-			cmds[scope] = &cmd
-		}
-		cmds[scope].Actions = append(cmds[scope].Actions, p.Action)
-	}
-
-	var result []resourcepermissions.SetResourcePermissionCommand
-	for _, cmd := range cmds {
-		result = append(result, *cmd)
-	}
-	return result
 }
