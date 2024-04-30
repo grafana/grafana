@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import React from 'react';
+import { Unsubscribable } from 'rxjs';
 
 import {
   DataSourceApi,
@@ -34,10 +35,11 @@ import { updateQueries } from 'app/features/query/state/updateQueries';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupOptions } from 'app/types';
 
+import { jsonDiff } from '../saving/getDashboardChanges';
 import { DashboardGridItem, RepeatDirection } from '../scene/DashboardGridItem';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelTimeRange, PanelTimeRangeState } from '../scene/PanelTimeRange';
-import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
+import { gridItemToPanel, vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
 export interface VizPanelManagerState extends SceneObjectState {
@@ -49,6 +51,7 @@ export interface VizPanelManagerState extends SceneObjectState {
   repeat?: string;
   repeatDirection?: RepeatDirection;
   maxPerRow?: number;
+  isDirty?: boolean;
 }
 
 export enum DisplayMode {
@@ -63,6 +66,8 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     string,
     { options: DeepPartial<{}>; fieldConfig: FieldConfigSource<DeepPartial<{}>> } | undefined
   > = {};
+
+  private _changeSubs: Unsubscribable[] = [];
 
   public constructor(state: VizPanelManagerState) {
     super(state);
@@ -93,8 +98,35 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     });
   }
 
+  private compareToSource() {
+    const diff = jsonDiff(vizPanelToPanel(this.state.sourcePanel.resolve()), vizPanelToPanel(this.state.panel));
+    const diffCount = Object.values(diff).reduce((acc, cur) => acc + cur.length, 0);
+    return diffCount > 0;
+  }
+
+  private _setUpChangeSubs() {
+    this._changeSubs.push(
+      this.state.panel.subscribeToState(() => {
+        this.setState({ isDirty: this.compareToSource() });
+      })
+    );
+    this._changeSubs.push(
+      this.queryRunner.subscribeToState(() => {
+        this.setState({ isDirty: this.compareToSource() });
+      })
+    );
+    this._changeSubs.push(
+      this.dataTransformer.subscribeToState(() => {
+        this.setState({ isDirty: this.compareToSource() });
+      })
+    );
+
+    return () => this._changeSubs.forEach((s) => s.unsubscribe());
+  }
+
   private _onActivate() {
     this.loadDataSource();
+    return this._setUpChangeSubs();
   }
 
   private async loadDataSource() {

@@ -3,7 +3,7 @@ import { compare } from 'fast-json-patch';
 import jsonMap from 'json-source-map';
 
 import type { AdHocVariableModel, TypedVariableModel } from '@grafana/data';
-import type { Dashboard, VariableOption } from '@grafana/schema';
+import type { Dashboard, Panel, VariableOption } from '@grafana/schema';
 
 export function get(obj: any, keys: string[]) {
   try {
@@ -115,7 +115,7 @@ export type Diff = {
 
 export type Diffs = Record<string, Diff[]>;
 
-export const jsonDiff = (lhs: Dashboard, rhs: Dashboard): Diffs => {
+export const jsonDiff = (lhs: Dashboard | Panel, rhs: Dashboard | Panel): Diffs => {
   const diffs = compare(lhs, rhs);
   const lhsMap = jsonMap.stringify(lhs, null, 2);
   const rhsMap = jsonMap.stringify(rhs, null, 2);
