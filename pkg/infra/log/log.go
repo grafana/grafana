@@ -114,8 +114,11 @@ func (lm *logManager) initialize(loggers []logWithFilters) {
 func (lm *logManager) New(ctx ...any) *ConcreteLogger {
 	// First key-value could be "logger" and a logger name, that would be handled differently
 	// to allow per-logger filtering. Otherwise a simple concrete logger is returned.
-	if len(ctx) < 2 || ctx[0] != "logger" {
+	if len(ctx) < 2 {
 		return lm.ConcreteLogger
+	}
+	if ctx[0] != "logger" {
+		return newConcreteLogger(lm.ConcreteLogger, ctx...)
 	}
 
 	lm.mutex.Lock()
@@ -133,7 +136,10 @@ func (lm *logManager) New(ctx ...any) *ConcreteLogger {
 	}
 
 	if logger, exists := lm.loggersByName[loggerName]; exists {
-		return logger
+		if len(ctx) == 0 {
+			return logger
+		}
+		return newConcreteLogger(logger, ctx...)
 	}
 
 	if len(lm.logFilters) == 0 {
@@ -228,11 +234,11 @@ func (cl *ConcreteLogger) FromContext(ctx context.Context) Logger {
 }
 
 func (cl *ConcreteLogger) New(ctx ...any) *ConcreteLogger {
-	if len(ctx) == 0 {
-		return root.New()
+	if len(cl.ctx) == 0 {
+		return root.New(ctx...)
 	}
 
-	return root.New(append(cl.ctx, ctx...)...)
+	return newConcreteLogger(gokitlog.With(&cl.SwapLogger), ctx...)
 }
 
 // New creates a new logger.
