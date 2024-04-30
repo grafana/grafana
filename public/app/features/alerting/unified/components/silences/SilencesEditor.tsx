@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { isEqual, pickBy } from 'lodash';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useDebounce } from 'react-use';
 
@@ -13,27 +13,34 @@ import {
   isValidDate,
   parseDuration,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { Button, Field, FieldSet, Input, LinkButton, TextArea, useStyles2 } from '@grafana/ui';
-import { useCleanup } from 'app/core/hooks/useCleanup';
+import { config, isFetchError, locationService } from '@grafana/runtime';
+import {
+  Alert,
+  Button,
+  Field,
+  FieldSet,
+  Input,
+  LinkButton,
+  LoadingPlaceholder,
+  TextArea,
+  useStyles2,
+} from '@grafana/ui';
+import { alertSilencesApi } from 'app/features/alerting/unified/api/alertSilencesApi';
+import { getDatasourceAPIUid } from 'app/features/alerting/unified/utils/datasource';
 import { Matcher, MatcherOperator, Silence, SilenceCreatePayload } from 'app/plugins/datasource/alertmanager/types';
-import { useDispatch } from 'app/types';
 
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
-import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { createOrUpdateSilenceAction } from '../../state/actions';
 import { SilenceFormFields } from '../../types/silence-form';
 import { matcherFieldToMatcher, matcherToMatcherField } from '../../utils/alertmanager';
 import { parseQueryParamMatchers } from '../../utils/matchers';
 import { makeAMLink } from '../../utils/misc';
-import { initialAsyncRequestState } from '../../utils/redux';
 
 import MatchersField from './MatchersField';
 import { SilencePeriod } from './SilencePeriod';
 import { SilencedInstancesPreview } from './SilencedInstancesPreview';
 
 interface Props {
-  silence?: Silence;
+  silenceId?: string;
   alertManagerSourceName: string;
 }
 
@@ -97,24 +104,25 @@ const getDefaultFormValues = (searchParams: URLSearchParams, silence?: Silence):
   }
 };
 
-export const SilencesEditor = ({ silence, alertManagerSourceName }: Props) => {
+export const SilencesEditor = ({ silenceId, alertManagerSourceName }: Props) => {
+  // Use a lazy query to fetch the Silence info, as we may not always require this
+  // (e.g. if creating a new one from scratch, we don't need to fetch anything)
+  const [getSilence, { data: silence, isLoading: getSilenceIsLoading, error: errorGettingExistingSilence }] =
+    alertSilencesApi.endpoints.getSilence.useLazyQuery();
+  const [createSilence, { isLoading }] = alertSilencesApi.endpoints.createSilence.useMutation();
   const [urlSearchParams] = useURLSearchParams();
 
   const defaultValues = useMemo(() => getDefaultFormValues(urlSearchParams, silence), [silence, urlSearchParams]);
   const formAPI = useForm({ defaultValues });
-  const dispatch = useDispatch();
+
   const styles = useStyles2(getStyles);
   const [matchersForPreview, setMatchersForPreview] = useState<Matcher[]>(
     defaultValues.matchers.map(matcherFieldToMatcher)
   );
 
-  const { loading } = useUnifiedAlertingSelector((state) => state.updateSilence);
+  const { register, handleSubmit, formState, watch, setValue, clearErrors, reset } = formAPI;
 
-  useCleanup((state) => (state.unifiedAlerting.updateSilence = initialAsyncRequestState));
-
-  const { register, handleSubmit, formState, watch, setValue, clearErrors } = formAPI;
-
-  const onSubmit = (data: SilenceFormFields) => {
+  const onSubmit = async (data: SilenceFormFields) => {
     const { id, startsAt, endsAt, comment, createdBy, matchers: matchersFields } = data;
     const matchers = matchersFields.map(matcherFieldToMatcher);
     const payload = pickBy(
@@ -128,20 +136,30 @@ export const SilencesEditor = ({ silence, alertManagerSourceName }: Props) => {
       },
       (value) => !!value
     ) as SilenceCreatePayload;
-    dispatch(
-      createOrUpdateSilenceAction({
-        alertManagerSourceName,
-        payload,
-        exitOnSave: true,
-        successMessage: `Silence ${payload.id ? 'updated' : 'created'}`,
-      })
-    );
+    await createSilence({ datasourceUid: getDatasourceAPIUid(alertManagerSourceName), payload })
+      .unwrap()
+      .then(() => {
+        locationService.push(makeAMLink('/alerting/silences', alertManagerSourceName));
+      });
   };
 
   const duration = watch('duration');
   const startsAt = watch('startsAt');
   const endsAt = watch('endsAt');
   const matcherFields = watch('matchers');
+
+  useEffect(() => {
+    if (silence) {
+      // Allows the form to correctly initialise when an existing silence is fetch from the backend
+      reset(getDefaultFormValues(urlSearchParams, silence));
+    }
+  }, [reset, silence, urlSearchParams]);
+
+  useEffect(() => {
+    if (silenceId) {
+      getSilence({ id: silenceId, datasourceUid: getDatasourceAPIUid(alertManagerSourceName) });
+    }
+  }, [alertManagerSourceName, getSilence, silenceId]);
 
   // Keep duration and endsAt in sync
   const [prevDuration, setPrevDuration] = useState(duration);
@@ -183,10 +201,21 @@ export const SilencesEditor = ({ silence, alertManagerSourceName }: Props) => {
 
   const userLogged = Boolean(config.bootData.user.isSignedIn && config.bootData.user.name);
 
+  if (getSilenceIsLoading) {
+    return <LoadingPlaceholder text="Loading existing silence information..." />;
+  }
+
+  const existingSilenceNotFound =
+    isFetchError(errorGettingExistingSilence) && errorGettingExistingSilence.status === 404;
+
+  if (existingSilenceNotFound) {
+    return <Alert title={`Existing silence "${silenceId}" not found`} severity="warning" />;
+  }
+
   return (
     <FormProvider {...formAPI}>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <FieldSet label={`${silence ? 'Recreate silence' : 'Create silence'}`}>
+        <FieldSet>
           <div className={cx(styles.flexRow, styles.silencePeriod)}>
             <SilencePeriod />
             <Field
@@ -241,12 +270,12 @@ export const SilencesEditor = ({ silence, alertManagerSourceName }: Props) => {
           <SilencedInstancesPreview amSourceName={alertManagerSourceName} matchers={matchersForPreview} />
         </FieldSet>
         <div className={styles.flexRow}>
-          {loading && (
+          {isLoading && (
             <Button disabled={true} icon="spinner" variant="primary">
               Saving...
             </Button>
           )}
-          {!loading && <Button type="submit">Save silence</Button>}
+          {!isLoading && <Button type="submit">Save silence</Button>}
           <LinkButton href={makeAMLink('alerting/silences', alertManagerSourceName)} variant={'secondary'}>
             Cancel
           </LinkButton>
