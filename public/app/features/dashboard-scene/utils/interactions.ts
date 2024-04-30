@@ -20,6 +20,7 @@ export const DashboardInteractions = {
       | 'share'
       | 'createLibraryPanel'
       | 'unlinkLibraryPanel'
+      | 'replaceLibraryPanel'
       | 'duplicate'
       | 'copy'
       | 'remove'
