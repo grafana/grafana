@@ -7,7 +7,7 @@ import { components, InputProps } from 'react-select';
 export const CustomInput = (props: InputProps) => {
   let testId;
 
-  if ('data-testid' in props.selectProps) {
+  if ('data-testid' in props.selectProps && props.selectProps['data-testid']) {
     testId = props.selectProps['data-testid'] + '-input';
   }
 
