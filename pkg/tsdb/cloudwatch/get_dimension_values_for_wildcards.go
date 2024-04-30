@@ -69,7 +69,7 @@ func (e *cloudWatchExecutor) getDimensionValuesForWildcards(
 			}
 
 			query.Dimensions[dimensionKey] = newDimensions
-			if len(newDimensions) > 0 || query.MetricQueryType == models.MetricQueryTypeQuery {
+			if len(newDimensions) > 0 {
 				tagValueCache.Set(cacheKey, newDimensions, cache.DefaultExpiration)
 			}
 		}
