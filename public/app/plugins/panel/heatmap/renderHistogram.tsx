@@ -10,11 +10,12 @@ export function renderHistogram(
   let histCtx = can.current?.getContext('2d');
 
   if (histCtx != null) {
+    const barsGap = 1;
     let fromIdx = index;
 
-    while (xVals[fromIdx--] === xVals[index]) {}
-
-    fromIdx++;
+    while (xVals[fromIdx - 1] === xVals[index]) {
+      fromIdx--;
+    }
 
     let toIdx = fromIdx + yBucketCount;
 
@@ -37,16 +38,14 @@ export function renderHistogram(
 
       if (c > 0) {
         let pctY = c / maxCount;
-        let pctX = j / (yBucketCount + 1);
+        let pctX = j / yBucketCount;
 
         let p = i === index ? pHov : pRest;
 
-        p.rect(
-          Math.round(histCanWidth * pctX),
-          Math.round(histCanHeight * (1 - pctY)),
-          Math.round(histCanWidth / yBucketCount),
-          Math.round(histCanHeight * pctY)
-        );
+        const xCoord = histCanWidth * pctX + barsGap;
+        const width = histCanWidth / yBucketCount - barsGap;
+
+        p.rect(xCoord, Math.round(histCanHeight * (1 - pctY)), width, Math.round(histCanHeight * pctY));
       }
 
       i++;
