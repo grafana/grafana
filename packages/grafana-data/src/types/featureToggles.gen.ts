@@ -99,7 +99,6 @@ export interface FeatureToggles {
   awsAsyncQueryCaching?: boolean;
   permissionsFilterRemoveSubquery?: boolean;
   prometheusConfigOverhaulAuth?: boolean;
-  configurableSchedulerTick?: boolean;
   alertingNoDataErrorExecution?: boolean;
   angularDeprecationUI?: boolean;
   dashgpt?: boolean;

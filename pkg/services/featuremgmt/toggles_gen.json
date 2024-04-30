@@ -2002,7 +2002,8 @@
       "metadata": {
         "name": "configurableSchedulerTick",
         "resourceVersion": "1713545444177",
-        "creationTimestamp": "2024-04-19T16:50:44Z"
+        "creationTimestamp": "2024-04-19T16:50:44Z",
+        "deletionTimestamp": "2024-04-30T15:13:14Z"
       },
       "spec": {
         "description": "Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval",
