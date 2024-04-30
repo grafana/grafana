@@ -824,16 +824,8 @@ func TestIntegrationGetNamespacesByRuleUID(t *testing.T) {
 		Cfg:           cfg.UnifiedAlerting,
 	}
 
-	uniqueUids := &sync.Map{}
-	rules := models.GenerateAlertRules(5, models.AlertRuleGen(models.WithOrgID(1), withIntervalMatching(cfg.UnifiedAlerting.BaseInterval), models.WithUniqueUID(uniqueUids)))
-	deref := make([]models.AlertRule, 0, len(rules))
-	for _, rule := range rules {
-		r := *rule
-		r.ID = 0
-		deref = append(deref, r)
-	}
-
-	_, err := store.InsertAlertRules(context.Background(), deref)
+	rules := models.RuleGen.With(models.RuleMuts.WithOrgID(1)).GenerateMany(5)
+	_, err := store.InsertAlertRules(context.Background(), rules)
 	require.NoError(t, err)
 
 	uids := make([]string, 0, len(rules))
