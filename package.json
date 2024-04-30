@@ -229,6 +229,7 @@
     "typescript": "5.5.4",
     "vite": "5.1.5",
     "webpack": "5.95.0",
+    "webpack-cli": "5.1.4",
     "yaml": "^2.0.0",
     "yargs": "^17.5.1"
   },
