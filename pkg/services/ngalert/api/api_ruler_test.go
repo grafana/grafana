@@ -326,8 +326,9 @@ func TestRouteGetRuleByUID(t *testing.T) {
 		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
 		groupKey := models.GenerateGroupKey(orgID)
 		groupKey.NamespaceUID = folder.UID
+		gen := models.RuleGen.With(models.RuleGen.WithGroupKey(groupKey))
 
-		createdRules := models.GenerateAlertRules(3, models.AlertRuleGen(withGroupKey(groupKey), models.WithUniqueGroupIndex(), models.WithUniqueID()))
+		createdRules := gen.With(gen.WithUniqueGroupIndex(), gen.WithUniqueID()).GenerateManyRef(3)
 		require.Len(t, createdRules, 3)
 		ruleStore.PutRule(context.Background(), createdRules...)
 
@@ -354,8 +355,9 @@ func TestRouteGetRuleByUID(t *testing.T) {
 		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
 		groupKey := models.GenerateGroupKey(orgID)
 		groupKey.NamespaceUID = folder.UID
+		gen := models.RuleGen.With(models.RuleGen.WithGroupKey(groupKey))
 
-		createdRules := models.GenerateAlertRules(3, models.AlertRuleGen(withGroupKey(groupKey), models.WithUniqueGroupIndex(), models.WithUniqueID()))
+		createdRules := gen.With(gen.WithUniqueGroupIndex(), gen.WithUniqueID()).GenerateManyRef(3)
 		require.Len(t, createdRules, 3)
 		ruleStore.PutRule(context.Background(), createdRules...)
 
@@ -373,18 +375,17 @@ func TestRouteGetRuleByUID(t *testing.T) {
 		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
 		groupKey := models.GenerateGroupKey(orgID)
 		groupKey.NamespaceUID = folder.UID
+		gen := models.RuleGen.With(models.RuleGen.WithGroupKey(groupKey))
 
-		authorizedRule := models.GenerateAlertRules(1, models.AlertRuleGen(withGroupKey(groupKey), models.WithUniqueGroupIndex()))
-		require.Len(t, authorizedRule, 1)
-		ruleStore.PutRule(context.Background(), authorizedRule...)
+		authorizedRule := gen.With(gen.WithUniqueGroupIndex()).Generate()
+		ruleStore.PutRule(context.Background(), &authorizedRule)
 
-		unauthorizedRule := models.GenerateAlertRules(1, models.AlertRuleGen(withGroupKey(groupKey), models.WithUniqueGroupIndex()))
-		ruleStore.PutRule(context.Background(), unauthorizedRule...)
-		require.Len(t, unauthorizedRule, 1)
+		unauthorizedRule := gen.With(gen.WithUniqueGroupIndex()).Generate()
+		ruleStore.PutRule(context.Background(), &unauthorizedRule)
 
-		perms := createPermissionsForRules(authorizedRule, orgID)
+		perms := createPermissionsForRules([]*models.AlertRule{&authorizedRule}, orgID)
 		req := createRequestContextWithPerms(orgID, perms, nil)
-		response := createService(ruleStore).RouteGetRuleByUID(req, authorizedRule[0].UID)
+		response := createService(ruleStore).RouteGetRuleByUID(req, authorizedRule.UID)
 
 		require.Equal(t, http.StatusForbidden, response.Status())
 	})
