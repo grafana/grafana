@@ -59,7 +59,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 
 	providersList := ssosettings.AllOAuthProviders
 	if licensing.FeatureEnabled(social.SAMLProviderName) {
-		fbStrategies = append(fbStrategies, strategies.NewSAMLStrategy(settingsProvider))
+		fbStrategies = append(fbStrategies, strategies.NewSAMLStrategy(cfg))
 
 		if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsSAML) {
 			providersList = append(providersList, social.SAMLProviderName)
