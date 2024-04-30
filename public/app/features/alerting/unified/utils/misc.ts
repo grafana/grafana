@@ -5,7 +5,7 @@ import { GrafanaEdition } from '@grafana/data/src/types/config';
 import { config, isFetchError } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
 import { escapePathSeparators } from 'app/features/alerting/unified/utils/rule-id';
-import { alertInstanceKey } from 'app/features/alerting/unified/utils/rules';
+import { alertInstanceKey, isGrafanaRulerRule } from 'app/features/alerting/unified/utils/rules';
 import { SortOrder } from 'app/plugins/panel/alertlist/types';
 import { Alert, CombinedRule, FilterState, RulesSource, SilenceFilterState } from 'app/types/unified-alerting';
 import {
@@ -54,14 +54,16 @@ export function createMuteTimingLink(muteTimingName: string, alertManagerSourceN
   });
 }
 
-export function createShareLink(ruleSource: RulesSource, rule: CombinedRule): string {
+export function createShareLink(ruleSource: RulesSource, rule: CombinedRule): string | undefined {
   if (isCloudRulesSource(ruleSource)) {
     return createAbsoluteUrl(
       `/alerting/${encodeURIComponent(ruleSource.name)}/${encodeURIComponent(escapePathSeparators(rule.name))}/find`
     );
+  } else if (isGrafanaRulerRule(rule.rulerRule)) {
+    return createUrl(`/alerting/grafana/${rule.rulerRule.grafana_alert.uid}/view`);
   }
 
-  return window.location.href.split('?')[0];
+  return;
 }
 
 export function arrayToRecord(items: Array<{ key: string; value: string }>): Record<string, string> {

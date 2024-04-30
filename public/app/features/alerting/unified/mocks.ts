@@ -10,6 +10,8 @@ import {
   DataSourceJsonData,
   DataSourcePluginMeta,
   DataSourceRef,
+  PluginExtensionLink,
+  PluginExtensionTypes,
   PluginMeta,
   PluginType,
   ScopedVars,
@@ -707,6 +709,18 @@ export function getCloudRule(override?: Partial<CombinedRule>) {
   });
 }
 
+export function mockPluginLinkExtension(extension: Partial<PluginExtensionLink>): PluginExtensionLink {
+  return {
+    type: PluginExtensionTypes.link,
+    id: 'plugin-id',
+    pluginId: 'grafana-test-app',
+    title: 'Test plugin link',
+    description: 'Test plugin link',
+    path: '/test',
+    ...extension,
+  };
+}
+
 export function mockAlertWithState(state: GrafanaAlertState, labels?: {}): Alert {
   return { activeAt: '', annotations: {}, labels: labels || {}, state: state, value: '' };
 }
@@ -741,42 +755,27 @@ export function mockDashboardDto(
   };
 }
 
-export const onCallPluginMetaMock: PluginMeta = {
-  name: 'Grafana OnCall',
-  id: 'grafana-oncall-app',
-  type: PluginType.app,
-  module: 'plugins/grafana-oncall-app/module',
-  baseUrl: 'public/plugins/grafana-oncall-app',
-  info: {
-    author: { name: 'Grafana Labs' },
-    description: 'Grafana OnCall',
-    updated: '',
-    version: '',
-    links: [],
-    logos: {
-      small: '',
-      large: '',
+export const getMockPluginMeta: (id: string, name: string) => PluginMeta = (id, name) => {
+  return {
+    name,
+    id,
+    type: PluginType.app,
+    module: `plugins/${id}/module`,
+    baseUrl: `public/plugins/${id}`,
+    info: {
+      author: { name: 'Grafana Labs' },
+      description: name,
+      updated: '',
+      version: '',
+      links: [],
+      logos: {
+        small: '',
+        large: '',
+      },
+      screenshots: [],
     },
-    screenshots: [],
-  },
+  };
 };
 
-export const labelsPluginMetaMock: PluginMeta = {
-  name: 'Grafana IRM Labels',
-  id: 'grafana-labels-app',
-  type: PluginType.app,
-  module: 'plugins/grafana-labels-app/module',
-  baseUrl: 'public/plugins/grafana-labels-app',
-  info: {
-    author: { name: 'Grafana Labs' },
-    description: '',
-    updated: '',
-    version: '',
-    links: [],
-    logos: {
-      small: '',
-      large: '',
-    },
-    screenshots: [],
-  },
-};
+export const labelsPluginMetaMock = getMockPluginMeta('grafana-labels-app', 'Grafana IRM Labels');
+export const onCallPluginMetaMock = getMockPluginMeta('grafana-oncall-app', 'Grafana OnCall');
