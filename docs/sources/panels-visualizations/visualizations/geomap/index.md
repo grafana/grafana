@@ -603,14 +603,18 @@ Displays debug information in the upper right corner. This can be useful for deb
 - **None** displays tooltips only when a data point is clicked.
 - **Details** displays tooltips when a mouse pointer hovers over a data point.
 
+## Thresholds
+
+{{< docs/shared lookup="visualizations/thresholds-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ## Value mappings
 
 {{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 {{% docs/reference %}}
-[provisioning docs page]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning"
-[provisioning docs page]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning"
+[provisioning docs page]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/administration/provisioning"
+[provisioning docs page]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/administration/provisioning"
 
-[data format supported by the node graph visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/node-graph#data-api"
-[data format supported by the node graph visualization]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/node-graph#data-api"
+[data format supported by the node graph visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/node-graph#data-api"
+[data format supported by the node graph visualization]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/node-graph#data-api"
 {{% /docs/reference %}}

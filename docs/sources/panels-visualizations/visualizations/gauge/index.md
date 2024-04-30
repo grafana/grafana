@@ -105,6 +105,10 @@ Adjust the sizes of the gauge text.
 - **Title -** Enter a numeric value for the gauge title size.
 - **Value -** Enter a numeric value for the gauge value size.
 
+## Thresholds
+
+{{< docs/shared lookup="visualizations/thresholds-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ## Value mappings
 
 {{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
