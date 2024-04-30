@@ -8,7 +8,7 @@ import { createAndCopyDashboardShortLink } from '../../../../core/utils/shortLin
 import { SceneDrawerAsScene } from '../../../trails/Integrations/SceneDrawer';
 import { DashboardScene } from '../../scene/DashboardScene';
 
-import { ShareExternallyDrawer } from './ShareExternallyDrawer';
+import { ShareExternallyDrawer } from './share-externally/ShareExternallyDrawer';
 
 const newShareButtonSelector = e2eSelectors.pages.Dashboard.DashNav.newShareButton.menu;
 
@@ -23,7 +23,7 @@ export default function ShareMenu({ dashboard }: { dashboard: DashboardScene }) 
       size: 'md',
       closeOnMaskClick: false,
       scene: new ShareExternallyDrawer({ dashboardRef: dashboard.getRef() }),
-      onDismiss: () => dashboard.closeModal(),
+      onClose: dashboard.closeModal,
     });
 
     dashboard.showModal(drawer);

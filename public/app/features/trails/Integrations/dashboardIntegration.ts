@@ -112,7 +112,7 @@ function createClickHandler(item: QueryMetric, dashboard: DashboardScene, ds: Da
     const commonProps = createCommonEmbeddedTrailStateProps(item, dashboard, ds);
     const drawerScene = new SceneDrawerAsScene({
       ...commonProps,
-      onDismiss: () => dashboard.closeModal(),
+      onClose: () => dashboard.closeModal(),
     });
     reportExploreMetrics('exploration_started', { cause: 'dashboard_panel' });
     dashboard.showModal(drawerScene);
