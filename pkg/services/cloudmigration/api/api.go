@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -11,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -111,8 +111,10 @@ func (cma *CloudMigrationAPI) GetMigration(c *contextmodel.ReqContext) response.
 	ctx, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.GetMigration")
 	defer span.End()
 
-	// TODO LND Should we validate with ValidateUID()? validate for empty?
 	uid := web.Params(c.Req)[":uid"]
+	if err := util.ValidateUID(uid); err != nil {
+		return response.Error(http.StatusBadRequest, "invalid migration uid", err)
+	}
 
 	cloudMigration, err := cma.cloudMigrationService.GetMigration(ctx, uid)
 	if err != nil {
@@ -169,6 +171,10 @@ func (cma *CloudMigrationAPI) RunMigration(c *contextmodel.ReqContext) response.
 	defer span.End()
 
 	uid := web.Params(c.Req)[":uid"]
+	if err := util.ValidateUID(uid); err != nil {
+		return response.Error(http.StatusBadRequest, "invalid migration uid", err)
+	}
+
 	result, err := cma.cloudMigrationService.RunMigration(ctx, uid)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "migration run error", err)
@@ -198,7 +204,12 @@ func (cma *CloudMigrationAPI) GetMigrationRun(c *contextmodel.ReqContext) respon
 	ctx, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.GetMigrationRun")
 	defer span.End()
 
-	migrationStatus, err := cma.cloudMigrationService.GetMigrationStatus(ctx, web.Params(c.Req)[":runUID"])
+	runUid := web.Params(c.Req)[":runUID"]
+	if err := util.ValidateUID(runUid); err != nil {
+		return response.Error(http.StatusBadRequest, "invalid runUID", err)
+	}
+
+	migrationStatus, err := cma.cloudMigrationService.GetMigrationStatus(ctx, runUid)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "migration status error", err)
 	}
@@ -233,7 +244,12 @@ func (cma *CloudMigrationAPI) GetMigrationRunList(c *contextmodel.ReqContext) re
 	ctx, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.GetMigrationRunList")
 	defer span.End()
 
-	runList, err := cma.cloudMigrationService.GetMigrationRunList(ctx, web.Params(c.Req)[":uid"])
+	uid := web.Params(c.Req)[":uid"]
+	if err := util.ValidateUID(uid); err != nil {
+		return response.Error(http.StatusBadRequest, "invalid migration uid", err)
+	}
+
+	runList, err := cma.cloudMigrationService.GetMigrationRunList(ctx, uid)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "list migration status error", err)
 	}
@@ -263,9 +279,10 @@ func (cma *CloudMigrationAPI) DeleteMigration(c *contextmodel.ReqContext) respon
 	defer span.End()
 
 	uid := web.Params(c.Req)[":uid"]
-	if uid == "" {
-		return response.Error(http.StatusBadRequest, "missing migration uid", fmt.Errorf("missing migration uid"))
+	if err := util.ValidateUID(uid); err != nil {
+		return response.Error(http.StatusBadRequest, "invalid migration uid", err)
 	}
+
 	_, err := cma.cloudMigrationService.DeleteMigration(ctx, uid)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "migration delete error", err)
