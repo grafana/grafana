@@ -10,10 +10,10 @@ import (
 
 // SilenceService is the authenticated service for managing alertmanager silences.
 type SilenceService struct {
-	authz      SilenceAccessControlService
-	xact       transactionManager
-	log        log.Logger
-	stateStore SilenceStateStore
+	authz SilenceAccessControlService
+	xact  transactionManager
+	log   log.Logger
+	store SilenceStore
 }
 
 // SilenceAccessControlService provides access control for silences.
@@ -24,9 +24,9 @@ type SilenceAccessControlService interface {
 	AuthorizeUpdateSilence(ctx context.Context, user identity.Requester, silence *models.Silence) error
 }
 
-// SilenceStateStore is the interface for storing and retrieving silences. Currently, this is implemented by
+// SilenceStore is the interface for storing and retrieving silences. Currently, this is implemented by
 // MultiOrgAlertmanager but should eventually be replaced with an actual store.
-type SilenceStateStore interface {
+type SilenceStore interface {
 	ListSilences(ctx context.Context, orgID int64, filter []string) ([]*models.Silence, error)
 	GetSilence(ctx context.Context, orgID int64, id string) (*models.Silence, error)
 	CreateSilence(ctx context.Context, orgID int64, ps models.Silence) (string, error)
@@ -38,19 +38,19 @@ func NewSilenceService(
 	authz SilenceAccessControlService,
 	xact transactionManager,
 	log log.Logger,
-	stateStore SilenceStateStore,
+	store SilenceStore,
 ) *SilenceService {
 	return &SilenceService{
-		authz:      authz,
-		xact:       xact,
-		log:        log,
-		stateStore: stateStore,
+		authz: authz,
+		xact:  xact,
+		log:   log,
+		store: store,
 	}
 }
 
 // GetSilence retrieves a silence by its ID.
 func (s *SilenceService) GetSilence(ctx context.Context, user identity.Requester, silenceID string) (*models.Silence, error) {
-	gettableSilence, err := s.stateStore.GetSilence(ctx, user.GetOrgID(), silenceID)
+	gettableSilence, err := s.store.GetSilence(ctx, user.GetOrgID(), silenceID)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func (s *SilenceService) GetSilence(ctx context.Context, user identity.Requester
 // ListSilences retrieves all silences that match the given filter. This will include all rule-specific silences that
 // the user has access to as well as all general silences.
 func (s *SilenceService) ListSilences(ctx context.Context, user identity.Requester, filter []string) ([]*models.Silence, error) {
-	gettableSilences, err := s.stateStore.ListSilences(ctx, user.GetOrgID(), filter)
+	gettableSilences, err := s.store.ListSilences(ctx, user.GetOrgID(), filter)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +81,7 @@ func (s *SilenceService) CreateSilence(ctx context.Context, user identity.Reques
 		return "", err
 	}
 
-	silenceId, err := s.stateStore.CreateSilence(ctx, user.GetOrgID(), ps)
+	silenceId, err := s.store.CreateSilence(ctx, user.GetOrgID(), ps)
 	if err != nil {
 		return "", err
 	}
@@ -97,7 +97,7 @@ func (s *SilenceService) UpdateSilence(ctx context.Context, user identity.Reques
 		return "", err
 	}
 
-	silenceId, err := s.stateStore.UpdateSilence(ctx, user.GetOrgID(), ps)
+	silenceId, err := s.store.UpdateSilence(ctx, user.GetOrgID(), ps)
 	if err != nil {
 		return "", err
 	}
@@ -118,7 +118,7 @@ func (s *SilenceService) DeleteSilence(ctx context.Context, user identity.Reques
 		return err
 	}
 
-	err = s.stateStore.DeleteSilence(ctx, user.GetOrgID(), silenceID)
+	err = s.store.DeleteSilence(ctx, user.GetOrgID(), silenceID)
 	if err != nil {
 		return err
 	}
