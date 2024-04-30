@@ -131,7 +131,12 @@ func (s *sqlEntityServer) Init() error {
 }
 
 func (s *sqlEntityServer) IsHealthy(ctx context.Context, r *entity.HealthRequest) (*entity.HealthResponse, error) {
-	if err := s.Init(); err != nil {
+	sess, err := s.db.GetSession()
+	if err != nil {
+		return nil, err
+	}
+	_, err = sess.Query(ctx, "SELECT 1")
+	if err != nil {
 		return nil, err
 	}
 
