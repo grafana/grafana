@@ -54,6 +54,7 @@
     "@types/uuid": "10.0.0",
     "glob": "11.0.1",
     "react-select-event": "5.5.1",
+    "style-loader": "4.0.0",
     "ts-node": "10.9.2",
     "typescript": "5.7.3",
     "webpack": "5.97.1"
