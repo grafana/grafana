@@ -50,7 +50,7 @@ func (s *NoopServiceImpl) DeleteMigration(ctx context.Context, uid string) (*clo
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
-func (s *NoopServiceImpl) CreateMigrationRun(context.Context, *cloudmigration.CloudMigrationRun) (string, error) {
+func (s *NoopServiceImpl) CreateMigrationRun(context.Context, cloudmigration.CloudMigrationRun) (string, error) {
 	return "", cloudmigration.ErrInternalNotImplementedError
 }
 

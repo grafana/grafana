@@ -40,14 +40,20 @@ func (ss *sqlStore) GetMigrationByUID(ctx context.Context, uid string) (*cloudmi
 	return &cm, err
 }
 
-func (ss *sqlStore) CreateMigrationRun(ctx context.Context, cmr *cloudmigration.CloudMigrationRun) error {
-	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		if cmr.UID == "" {
-			cmr.UID = util.GenerateShortUID()
-		}
-		_, err := sess.Insert(cmr)
+func (ss *sqlStore) CreateMigrationRun(ctx context.Context, cmr cloudmigration.CloudMigrationRun) (string, error) {
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		cmr.Created = time.Now()
+		cmr.Updated = time.Now()
+		cmr.Finished = time.Now()
+		cmr.UID = util.GenerateShortUID()
+
+		_, err := sess.Insert(&cmr)
 		return err
 	})
+	if err != nil {
+		return "", err
+	}
+	return cmr.UID, nil
 }
 
 func (ss *sqlStore) CreateMigration(ctx context.Context, migration cloudmigration.CloudMigration) (*cloudmigration.CloudMigration, error) {
@@ -58,9 +64,7 @@ func (ss *sqlStore) CreateMigration(ctx context.Context, migration cloudmigratio
 	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		migration.Created = time.Now()
 		migration.Updated = time.Now()
-		if migration.UID == "" {
-			migration.UID = util.GenerateShortUID()
-		}
+		migration.UID = util.GenerateShortUID()
 
 		_, err := sess.Insert(&migration)
 		if err != nil {
