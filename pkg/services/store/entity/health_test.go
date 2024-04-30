@@ -12,8 +12,8 @@ import (
 )
 
 func TestHealthCheck(t *testing.T) {
-	t.Run("will return healthy when store is initialized", func(t *testing.T) {
-		stub := &entityStoreStub{healthy: true}
+	t.Run("will return serving response when healthy", func(t *testing.T) {
+		stub := &entityStoreStub{healthResponse: HealthCheckResponse_SERVING}
 		svc, err := ProvideHealthService(stub)
 		require.NoError(t, err)
 
@@ -24,8 +24,8 @@ func TestHealthCheck(t *testing.T) {
 		assert.Equal(t, grpc_health_v1.HealthCheckResponse_SERVING, res.Status)
 	})
 
-	t.Run("will return unhealthy when store is not initialized", func(t *testing.T) {
-		stub := &entityStoreStub{healthy: false}
+	t.Run("will return not serving response when not healthy", func(t *testing.T) {
+		stub := &entityStoreStub{healthResponse: HealthCheckResponse_NOT_SERVING}
 		svc, err := ProvideHealthService(stub)
 		require.NoError(t, err)
 
@@ -38,8 +38,8 @@ func TestHealthCheck(t *testing.T) {
 }
 
 func TestHealthWatch(t *testing.T) {
-	t.Run("will return healthy when store is initialized", func(t *testing.T) {
-		stub := &entityStoreStub{healthy: true}
+	t.Run("will return serving response when healthy", func(t *testing.T) {
+		stub := &entityStoreStub{healthResponse: HealthCheckResponse_SERVING}
 		svc, err := ProvideHealthService(stub)
 		require.NoError(t, err)
 
@@ -51,8 +51,8 @@ func TestHealthWatch(t *testing.T) {
 		assert.Equal(t, grpc_health_v1.HealthCheckResponse_SERVING, stream.status)
 	})
 
-	t.Run("will return unhealthy when store is not initialized", func(t *testing.T) {
-		stub := &entityStoreStub{healthy: false}
+	t.Run("will return not serving when not healthy", func(t *testing.T) {
+		stub := &entityStoreStub{healthResponse: HealthCheckResponse_NOT_SERVING}
 		svc, err := ProvideHealthService(stub)
 		require.NoError(t, err)
 
@@ -68,15 +68,16 @@ func TestHealthWatch(t *testing.T) {
 var _ EntityStoreServer = &entityStoreStub{}
 
 type entityStoreStub struct {
-	healthy bool
+	healthResponse HealthCheckResponse_ServingStatus
+	error          error
 }
 
-func (s *entityStoreStub) IsHealthy(ctx context.Context, req *HealthRequest) (*HealthResponse, error) {
-	if s.healthy {
-		return &HealthResponse{Healthy: s.healthy}, nil
-	} else {
-		return nil, errors.New("not healthy")
+func (s *entityStoreStub) IsHealthy(ctx context.Context, req *HealthCheckRequest) (*HealthCheckResponse, error) {
+	if s.error != nil {
+		return nil, s.error
 	}
+
+	return &HealthCheckResponse{Status: s.healthResponse}, nil
 }
 
 // Implement the EntityStoreServer methods

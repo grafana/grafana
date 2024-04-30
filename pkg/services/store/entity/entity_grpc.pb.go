@@ -40,7 +40,7 @@ type EntityStoreClient interface {
 	History(ctx context.Context, in *EntityHistoryRequest, opts ...grpc.CallOption) (*EntityHistoryResponse, error)
 	List(ctx context.Context, in *EntityListRequest, opts ...grpc.CallOption) (*EntityListResponse, error)
 	Watch(ctx context.Context, opts ...grpc.CallOption) (EntityStore_WatchClient, error)
-	IsHealthy(ctx context.Context, in *HealthRequest, opts ...grpc.CallOption) (*HealthResponse, error)
+	IsHealthy(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error)
 }
 
 type entityStoreClient struct {
@@ -136,8 +136,8 @@ func (x *entityStoreWatchClient) Recv() (*EntityWatchResponse, error) {
 	return m, nil
 }
 
-func (c *entityStoreClient) IsHealthy(ctx context.Context, in *HealthRequest, opts ...grpc.CallOption) (*HealthResponse, error) {
-	out := new(HealthResponse)
+func (c *entityStoreClient) IsHealthy(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error) {
+	out := new(HealthCheckResponse)
 	err := c.cc.Invoke(ctx, EntityStore_IsHealthy_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -156,7 +156,7 @@ type EntityStoreServer interface {
 	History(context.Context, *EntityHistoryRequest) (*EntityHistoryResponse, error)
 	List(context.Context, *EntityListRequest) (*EntityListResponse, error)
 	Watch(EntityStore_WatchServer) error
-	IsHealthy(context.Context, *HealthRequest) (*HealthResponse, error)
+	IsHealthy(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error)
 }
 
 // UnimplementedEntityStoreServer should be embedded to have forward compatible implementations.
@@ -184,7 +184,7 @@ func (UnimplementedEntityStoreServer) List(context.Context, *EntityListRequest) 
 func (UnimplementedEntityStoreServer) Watch(EntityStore_WatchServer) error {
 	return status.Errorf(codes.Unimplemented, "method Watch not implemented")
 }
-func (UnimplementedEntityStoreServer) IsHealthy(context.Context, *HealthRequest) (*HealthResponse, error) {
+func (UnimplementedEntityStoreServer) IsHealthy(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method IsHealthy not implemented")
 }
 
@@ -334,7 +334,7 @@ func (x *entityStoreWatchServer) Recv() (*EntityWatchRequest, error) {
 }
 
 func _EntityStore_IsHealthy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(HealthRequest)
+	in := new(HealthCheckRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -346,7 +346,7 @@ func _EntityStore_IsHealthy_Handler(srv interface{}, ctx context.Context, dec fu
 		FullMethod: EntityStore_IsHealthy_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EntityStoreServer).IsHealthy(ctx, req.(*HealthRequest))
+		return srv.(EntityStoreServer).IsHealthy(ctx, req.(*HealthCheckRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
