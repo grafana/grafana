@@ -5,6 +5,7 @@ import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { byRole } from 'testing-library-selector';
 
+import { setPluginExtensionsHook } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 import { CombinedRule } from 'app/types/unified-alerting';
 
@@ -18,6 +19,11 @@ jest.mock('../../hooks/useAbilities');
 const mocks = {
   useAlertRuleAbility: jest.mocked(useAlertRuleAbility),
 };
+
+setPluginExtensionsHook(() => ({
+  extensions: [],
+  isLoading: false,
+}));
 
 const ui = {
   actionButtons: {

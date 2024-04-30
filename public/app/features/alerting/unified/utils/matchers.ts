@@ -11,6 +11,8 @@ import { Matcher, MatcherOperator, ObjectMatcher, Route } from 'app/plugins/data
 
 import { Labels } from '../../../../types/unified-alerting-dto';
 
+import { isPrivateLabelKey } from './labels';
+
 const matcherOperators = [
   MatcherOperator.regex,
   MatcherOperator.notRegex,
@@ -91,9 +93,7 @@ export function parseQueryParamMatchers(matcherPairs: string[]): Matcher[] {
 }
 
 export const getMatcherQueryParams = (labels: Labels) => {
-  const validMatcherLabels = Object.entries(labels).filter(
-    ([labelKey]) => !(labelKey.startsWith('__') && labelKey.endsWith('__'))
-  );
+  const validMatcherLabels = Object.entries(labels).filter(([labelKey]) => !isPrivateLabelKey(labelKey));
 
   const matcherUrlParams = new URLSearchParams();
   validMatcherLabels.forEach(([labelKey, labelValue]) =>

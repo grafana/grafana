@@ -10,6 +10,8 @@ import {
   DataSourceJsonData,
   DataSourcePluginMeta,
   DataSourceRef,
+  PluginExtensionLink,
+  PluginExtensionTypes,
   PluginMeta,
   PluginType,
   ScopedVars,
@@ -705,6 +707,18 @@ export function getCloudRule(override?: Partial<CombinedRule>) {
     rulerRule: mockRulerAlertingRule(),
     ...override,
   });
+}
+
+export function mockPluginLinkExtension(extension: Partial<PluginExtensionLink>): PluginExtensionLink {
+  return {
+    type: PluginExtensionTypes.link,
+    id: 'plugin-id',
+    pluginId: 'grafana-test-app',
+    title: 'Test plugin link',
+    description: 'Test plugin link',
+    path: '/test',
+    ...extension,
+  };
 }
 
 export function mockAlertWithState(state: GrafanaAlertState, labels?: {}): Alert {
