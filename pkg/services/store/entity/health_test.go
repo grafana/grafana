@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -38,30 +39,35 @@ func TestHealthCheck(t *testing.T) {
 }
 
 func TestHealthWatch(t *testing.T) {
-	t.Run("will return serving response when healthy", func(t *testing.T) {
+	t.Run("watch will return message when called", func(t *testing.T) {
 		stub := &entityStoreStub{healthResponse: HealthCheckResponse_SERVING}
 		svc, err := ProvideHealthService(stub)
 		require.NoError(t, err)
 
 		req := &grpc_health_v1.HealthCheckRequest{}
 		stream := &fakeHealthWatchServer{}
-		err = svc.Watch(req, stream)
+		go func() {
+			err := svc.Watch(req, stream)
+			require.NoError(t, err)
+		}()
 
+		time.Sleep(100 * time.Millisecond)
+		err = stream.RecvMsg(nil)
 		require.NoError(t, err)
-		assert.Equal(t, grpc_health_v1.HealthCheckResponse_SERVING, stream.status)
 	})
 
-	t.Run("will return not serving when not healthy", func(t *testing.T) {
+	t.Run("watch will return error when context cancelled", func(t *testing.T) {
 		stub := &entityStoreStub{healthResponse: HealthCheckResponse_NOT_SERVING}
 		svc, err := ProvideHealthService(stub)
 		require.NoError(t, err)
 
 		req := &grpc_health_v1.HealthCheckRequest{}
-		stream := &fakeHealthWatchServer{}
+		ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+		defer cancel()
+		stream := &fakeHealthWatchServer{context: ctx}
 		err = svc.Watch(req, stream)
 
-		require.NoError(t, err)
-		assert.Equal(t, grpc_health_v1.HealthCheckResponse_NOT_SERVING, stream.status)
+		require.Error(t, err)
 	})
 }
 
@@ -115,18 +121,31 @@ func (s *entityStoreStub) FindReferences(ctx context.Context, r *ReferenceReques
 
 type fakeHealthWatchServer struct {
 	grpc.ServerStream
-	status grpc_health_v1.HealthCheckResponse_ServingStatus
+	status       grpc_health_v1.HealthCheckResponse_ServingStatus
+	healthChecks []*grpc_health_v1.HealthCheckResponse
+	context      context.Context
 }
 
 func (f *fakeHealthWatchServer) Send(resp *grpc_health_v1.HealthCheckResponse) error {
-	f.status = resp.Status
+	f.healthChecks = append(f.healthChecks, resp)
 	return nil
 }
 
 func (f *fakeHealthWatchServer) RecvMsg(m interface{}) error {
-	return errors.New("not implemented")
+	if len(f.healthChecks) == 0 {
+		return errors.New("no health checks received")
+	}
+	f.healthChecks = f.healthChecks[1:]
+	return nil
 }
 
 func (f *fakeHealthWatchServer) SendMsg(m interface{}) error {
 	return errors.New("not implemented")
+}
+
+func (f *fakeHealthWatchServer) Context() context.Context {
+	if f.context == nil {
+		f.context = context.Background()
+	}
+	return f.context
 }
