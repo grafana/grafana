@@ -118,7 +118,7 @@ The outcome of this template would print
 
 **Notification templates** represent the alternative approach to templating designed for reusing templates. Notifications are messages to inform users about events or conditions triggered by alerts. You can create reusable notification templates to customize the content and format of alert notifications. Variables, labels, or other context-specific details can be added to the templates to dynamically insert information like metric values.
 
-Here is the example of a notification template:
+Here is an example of a notification template:
 
 ```go
 { define "alerts.message" -}}
