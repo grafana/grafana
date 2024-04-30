@@ -7,6 +7,7 @@ import MenuItemPauseRule from 'app/features/alerting/unified/components/MenuItem
 import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
 
 import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
+import { useRulePluginLinkExtension } from '../../plugins/useRulePluginLinkExtensions';
 import { createShareLink, isLocalDevEnv, isOpenSourceEdition, makeRuleBasedSilenceLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
 import { createUrl } from '../../utils/url';
@@ -22,6 +23,7 @@ interface Props {
 
 export const useAlertRulePageActions = ({ handleDelete, handleDuplicateRule }: Props) => {
   const { rule, identifier } = useAlertRule();
+  const rulePluginLinkExtension = useRulePluginLinkExtension(rule);
 
   // check all abilities and permissions
   const [editSupported, editAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Update);
@@ -70,6 +72,20 @@ export const useAlertRulePageActions = ({ handleDelete, handleDuplicateRule }: P
               icon="download-alt"
               childItems={[<ExportMenuItem key="export-with-modifications" identifier={identifier} />]}
             />
+          )}
+          {rulePluginLinkExtension.length > 0 && (
+            <>
+              <Menu.Divider />
+              {rulePluginLinkExtension.map((extension) => (
+                <Menu.Item
+                  key={extension.id}
+                  label={extension.title}
+                  icon={extension.icon}
+                  onClick={extension.onClick}
+                  url={extension.path}
+                />
+              ))}
+            </>
           )}
           {canDelete && (
             <>

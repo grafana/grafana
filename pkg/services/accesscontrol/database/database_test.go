@@ -91,9 +91,9 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			store, permissionStore, sql, teamSvc, _ := setupTestEnv(t)
+			store, permissionStore, usrSvc, teamSvc, _ := setupTestEnv(t)
 
-			user, team := createUserAndTeam(t, store.sql, sql, teamSvc, tt.orgID)
+			user, team := createUserAndTeam(t, store.sql, usrSvc, teamSvc, tt.orgID)
 
 			for _, id := range tt.userPermissions {
 				_, err := permissionStore.SetUserResourcePermission(context.Background(), tt.orgID, accesscontrol.User{ID: user.ID}, rs.SetResourcePermissionCommand{
@@ -164,8 +164,8 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 
 func TestAccessControlStore_DeleteUserPermissions(t *testing.T) {
 	t.Run("expect permissions in all orgs to be deleted", func(t *testing.T) {
-		store, permissionsStore, sql, teamSvc, _ := setupTestEnv(t)
-		user, _ := createUserAndTeam(t, store.sql, sql, teamSvc, 1)
+		store, permissionsStore, usrSvc, teamSvc, _ := setupTestEnv(t)
+		user, _ := createUserAndTeam(t, store.sql, usrSvc, teamSvc, 1)
 
 		// generate permissions in org 1
 		_, err := permissionsStore.SetUserResourcePermission(context.Background(), 1, accesscontrol.User{ID: user.ID}, rs.SetResourcePermissionCommand{
@@ -204,8 +204,8 @@ func TestAccessControlStore_DeleteUserPermissions(t *testing.T) {
 	})
 
 	t.Run("expect permissions in org 1 to be deleted", func(t *testing.T) {
-		store, permissionsStore, sql, teamSvc, _ := setupTestEnv(t)
-		user, _ := createUserAndTeam(t, store.sql, sql, teamSvc, 1)
+		store, permissionsStore, usrSvc, teamSvc, _ := setupTestEnv(t)
+		user, _ := createUserAndTeam(t, store.sql, usrSvc, teamSvc, 1)
 
 		// generate permissions in org 1
 		_, err := permissionsStore.SetUserResourcePermission(context.Background(), 1, accesscontrol.User{ID: user.ID}, rs.SetResourcePermissionCommand{
@@ -246,8 +246,8 @@ func TestAccessControlStore_DeleteUserPermissions(t *testing.T) {
 
 func TestAccessControlStore_DeleteTeamPermissions(t *testing.T) {
 	t.Run("expect permissions related to team to be deleted", func(t *testing.T) {
-		store, permissionsStore, sql, teamSvc, _ := setupTestEnv(t)
-		user, team := createUserAndTeam(t, store.sql, sql, teamSvc, 1)
+		store, permissionsStore, usrSvc, teamSvc, _ := setupTestEnv(t)
+		user, team := createUserAndTeam(t, store.sql, usrSvc, teamSvc, 1)
 
 		// grant permission to the team
 		_, err := permissionsStore.SetTeamResourcePermission(context.Background(), 1, team.ID, rs.SetResourcePermissionCommand{
@@ -280,8 +280,8 @@ func TestAccessControlStore_DeleteTeamPermissions(t *testing.T) {
 		assert.Len(t, permissions, 0)
 	})
 	t.Run("expect permissions not related to team to be kept", func(t *testing.T) {
-		store, permissionsStore, sql, teamSvc, _ := setupTestEnv(t)
-		user, team := createUserAndTeam(t, store.sql, sql, teamSvc, 1)
+		store, permissionsStore, usrSvc, teamSvc, _ := setupTestEnv(t)
+		user, team := createUserAndTeam(t, store.sql, usrSvc, teamSvc, 1)
 
 		// grant permission to the team
 		_, err := permissionsStore.SetTeamResourcePermission(context.Background(), 1, team.ID, rs.SetResourcePermissionCommand{
@@ -409,7 +409,10 @@ func setupTestEnv(t testing.TB) (*AccessControlStore, rs.Store, user.Service, te
 	require.Equal(t, int64(1), orgID)
 	require.NoError(t, err)
 
-	userService, err := userimpl.ProvideService(sql, orgService, cfg, teamService, localcache.ProvideService(), quotatest.New(false, nil), supportbundlestest.NewFakeBundleService())
+	userService, err := userimpl.ProvideService(
+		sql, orgService, cfg, teamService, localcache.ProvideService(), tracing.InitializeTracerForTest(),
+		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
+	)
 	require.NoError(t, err)
 	return acstore, permissionStore, userService, teamService, orgService
 }
