@@ -464,10 +464,10 @@ function hashQuery(query: string) {
 }
 
 /*
-  This hook returns combined Grafana rules by dashpboard UID
+  This hook returns combined Grafana rules. Optionally, it can filter rules by dashboard UID and panel ID.
 */
-export function useCombinedRulesByDashboard(
-  dashboardUID: string,
+export function useCombinedRules(
+  dashboardUID?: string,
   panelId?: number
 ): {
   loading: boolean;
@@ -490,7 +490,7 @@ export function useCombinedRulesByDashboard(
     error: rulerRulesError,
   } = alertRuleApi.endpoints.rulerRules.useQuery({
     rulerConfig: grafanaRulerConfig,
-    filter: { dashboardUID: dashboardUID, panelId },
+    filter: { dashboardUID, panelId },
   });
 
   //---------

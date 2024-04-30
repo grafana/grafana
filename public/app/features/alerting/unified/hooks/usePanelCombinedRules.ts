@@ -1,6 +1,6 @@
 import { CombinedRule } from 'app/types/unified-alerting';
 
-import { useCombinedRulesByDashboard } from './useCombinedRuleNamespaces';
+import { useCombinedRules } from './useCombinedRuleNamespaces';
 
 interface Options {
   dashboardUID: string;
@@ -17,7 +17,7 @@ interface ReturnBag {
 }
 
 export function usePanelCombinedRules({ dashboardUID, panelId, poll = false }: Options): ReturnBag {
-  const { result: combinedNamespaces, loading, error } = useCombinedRulesByDashboard(dashboardUID, panelId);
+  const { result: combinedNamespaces, loading, error } = useCombinedRules(dashboardUID, panelId);
   const rules = combinedNamespaces ? combinedNamespaces.flatMap((ns) => ns.groups).flatMap((group) => group.rules) : [];
 
   return {
