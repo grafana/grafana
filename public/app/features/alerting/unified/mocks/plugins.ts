@@ -1,19 +1,11 @@
 import { http, HttpResponse } from 'msw';
 
 import { PluginMeta } from '@grafana/data';
-import { getMockPluginMeta } from 'app/features/alerting/unified/mocks';
+import { plugins } from 'app/features/alerting/unified/testSetup/plugins';
 
-export const pluginSettingsHandler = () =>
-  http.get<{ pluginId: string }>(`/api/plugins/:pluginId/settings`, ({ params }) => {
-    const { pluginId } = params;
-    const mockedPlugins: Record<string, PluginMeta> = {
-      'grafana-incident-app': getMockPluginMeta(pluginId, 'Grafana Incident'),
-    };
-
-    const pluginMeta = mockedPlugins[pluginId];
-    if (pluginMeta) {
-      return HttpResponse.json(pluginMeta);
-    }
-
-    return HttpResponse.json({ message: 'Plugin not found, no installed plugin with that id' }, { status: 404 });
-  });
+export const pluginsHandler = (pluginsRegistry: Record<string, PluginMeta> = plugins) =>
+  http.get<{ pluginId: string }>(`/api/plugins/:pluginId/settings`, ({ params: { pluginId } }) =>
+    pluginsRegistry[pluginId]
+      ? HttpResponse.json<PluginMeta>(pluginsRegistry[pluginId])
+      : HttpResponse.json({ message: 'Plugin not found, no installed plugin with that id' }, { status: 404 })
+  );

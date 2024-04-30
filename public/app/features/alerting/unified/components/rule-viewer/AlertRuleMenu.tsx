@@ -5,6 +5,7 @@ import { ComponentSize, Dropdown, Menu } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import MenuItemPauseRule from 'app/features/alerting/unified/components/MenuItemPauseRule';
 import MoreButton from 'app/features/alerting/unified/components/MoreButton';
+import { useRulePluginLinkExtension } from 'app/features/alerting/unified/plugins/useRulePluginLinkExtensions';
 import { isAlertingRule } from 'app/features/alerting/unified/utils/rules';
 import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
@@ -55,6 +56,8 @@ const AlertRuleMenu = ({
   const [exportSupported, exportAllowed] = useAlertRuleAbility(rule, AlertRuleAction.ModifyExport);
   const canExport = exportSupported && exportAllowed;
 
+  const ruleExtensionLinks = useRulePluginLinkExtension(rule);
+
   /**
    * Since Incident isn't available as an open-source product we shouldn't show it for Open-Source licenced editions of Grafana.
    * We should show it in development mode
@@ -89,6 +92,14 @@ const AlertRuleMenu = ({
           icon="download-alt"
           childItems={[<ExportMenuItem key="export-with-modifications" identifier={identifier} />]}
         />
+      )}
+      {ruleExtensionLinks.length > 0 && (
+        <>
+          <Menu.Divider />
+          {ruleExtensionLinks.map((extension) => (
+            <Menu.Item key={extension.id} label={extension.title} icon={extension.icon} onClick={extension.onClick} />
+          ))}
+        </>
       )}
       {canDelete && (
         <>
