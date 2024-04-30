@@ -22,7 +22,7 @@ export function Essentials({ onClose, essentialsConfig, stepsDone, totalStepsToD
   return (
     <ConfigurationTrackerDrawer
       title="Essentials"
-      subtitle="Complete basic recommended configuration to start using apps basic features"
+      subtitle="Complete the following configuration tasks"
       onClose={onClose}
     >
       <EssentialContent essentialContent={essentialsConfig} stepsDone={stepsDone} totalStepsToDo={totalStepsToDo} />

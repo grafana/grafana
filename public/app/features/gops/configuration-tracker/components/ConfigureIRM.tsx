@@ -44,7 +44,7 @@ export function ConfigureIRM() {
     return [
       {
         id: 1,
-        title: 'Connect data source to receive data',
+        title: 'Connect data source(s) to receive data',
         description: 'Before your start configuration you need to connect at least one datasource.',
         text: 'Configure IRM',
         actionButtonTitle: 'Connect',
@@ -54,9 +54,9 @@ export function ConfigureIRM() {
         id: 2,
         title: 'Essentials',
         titleIcon: 'star',
-        description: 'Complete the basic configuration to start using the apps',
+        description: 'Configure the features you need to start using Grafana IRM workflows',
         text: 'Configure IRM',
-        actionButtonTitle: 'View tasks',
+        actionButtonTitle: 'Start',
         stepsDone: stepsDone,
         totalStepsToDo: totalStepsToDo,
       },

@@ -173,11 +173,11 @@ export function useGetEssentialsConfiguration() {
     sections: [
       {
         title: 'Detect',
-        description: 'Configure alerting',
+        description: 'Configure Grafana Alerting',
         steps: [
           {
             title: 'Update default email contact point',
-            description: 'Make sure that you add a valid email to the existing default email contact point.',
+            description: 'Add a valid email to the default email contact point.',
             button: {
               type: 'openLink',
               url: '/alerting/notifications/receivers/grafana-default-email/edit?alertmanager=grafana',
@@ -255,7 +255,7 @@ export function useGetEssentialsConfiguration() {
         ],
       },
       {
-        title: 'Test your config',
+        title: 'Test your configuration',
         description: '',
         steps: [
           {
