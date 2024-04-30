@@ -62,10 +62,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 		}
 	}
 
-	opts := []grpc.ServerOption{
-		grpc.MaxRecvMsgSize(s.cfg.GRPCServerMaxRecvMsgSize),
-		grpc.MaxSendMsgSize(s.cfg.GRPCServerMaxSendMsgSize),
-	}
+	var opts []grpc.ServerOption
 
 	// Default auth is admin token check, but this can be overridden by
 	// services which implement ServiceAuthFuncOverride interface.
