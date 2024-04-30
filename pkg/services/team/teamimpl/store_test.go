@@ -51,8 +51,10 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 		quotaService := quotaimpl.ProvideService(sqlStore, cfg)
 		orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 		require.NoError(t, err)
-		userSvc, err := userimpl.ProvideService(sqlStore, orgSvc, cfg, teamSvc, nil, quotaService,
-			supportbundlestest.NewFakeBundleService())
+		userSvc, err := userimpl.ProvideService(
+			sqlStore, orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),
+			quotaService, supportbundlestest.NewFakeBundleService(),
+		)
 		require.NoError(t, err)
 
 		t.Run("Given saved users and two teams", func(t *testing.T) {
@@ -436,7 +438,10 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				quotaService := quotaimpl.ProvideService(sqlStore, cfg)
 				orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 				require.NoError(t, err)
-				userSvc, err := userimpl.ProvideService(sqlStore, orgSvc, cfg, teamSvc, nil, quotaService, supportbundlestest.NewFakeBundleService())
+				userSvc, err := userimpl.ProvideService(
+					sqlStore, orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),
+					quotaService, supportbundlestest.NewFakeBundleService(),
+				)
 				require.NoError(t, err)
 				setup()
 				userCmd = user.CreateUserCommand{
@@ -571,7 +576,10 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 		quotaService := quotaimpl.ProvideService(store, cfg)
 		orgSvc, err := orgimpl.ProvideService(store, cfg, quotaService)
 		require.NoError(t, err)
-		userSvc, err := userimpl.ProvideService(store, orgSvc, cfg, teamSvc, nil, quotaService, supportbundlestest.NewFakeBundleService())
+		userSvc, err := userimpl.ProvideService(
+			store, orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),
+			quotaService, supportbundlestest.NewFakeBundleService(),
+		)
 		require.NoError(t, err)
 
 		for i := 0; i < 4; i++ {

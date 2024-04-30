@@ -94,7 +94,10 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 	quotaService := ProvideService(sqlStore, cfg)
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	require.NoError(t, err)
-	userService, err := userimpl.ProvideService(sqlStore, orgService, cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
+	userService, err := userimpl.ProvideService(
+		sqlStore, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		quotaService, supportbundlestest.NewFakeBundleService(),
+	)
 	require.NoError(t, err)
 	setupEnv(t, sqlStore, cfg, b, quotaService)
 

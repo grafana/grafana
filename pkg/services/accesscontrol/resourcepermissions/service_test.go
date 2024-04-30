@@ -44,17 +44,13 @@ func TestService_SetUserPermission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, sql, cfg, _ := setupTestEnvironment(t, Options{
+			service, usrSvc, _ := setupTestEnvironment(t, Options{
 				Resource:             "dashboards",
 				Assignments:          Assignments{Users: true},
 				PermissionsToActions: nil,
 			})
 
 			// seed user
-			orgSvc, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
-			require.NoError(t, err)
-			usrSvc, err := userimpl.ProvideService(sql, orgSvc, cfg, nil, nil, &quotatest.FakeQuotaService{}, supportbundlestest.NewFakeBundleService())
-			require.NoError(t, err)
 			user, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "test", OrgID: 1})
 			require.NoError(t, err)
 
@@ -92,7 +88,7 @@ func TestService_SetTeamPermission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, _, _, teamSvc := setupTestEnvironment(t, Options{
+			service, _, teamSvc := setupTestEnvironment(t, Options{
 				Resource:             "dashboards",
 				Assignments:          Assignments{Teams: true},
 				PermissionsToActions: nil,
@@ -136,7 +132,7 @@ func TestService_SetBuiltInRolePermission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, _, _, _ := setupTestEnvironment(t, Options{
+			service, _, _ := setupTestEnvironment(t, Options{
 				Resource:             "dashboards",
 				Assignments:          Assignments{BuiltInRoles: true},
 				PermissionsToActions: nil,
@@ -209,14 +205,10 @@ func TestService_SetPermissions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, sql, cfg, teamSvc := setupTestEnvironment(t, tt.options)
+			service, usrSvc, teamSvc := setupTestEnvironment(t, tt.options)
 
 			// seed user
-			orgSvc, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
-			require.NoError(t, err)
-			usrSvc, err := userimpl.ProvideService(sql, orgSvc, cfg, nil, nil, &quotatest.FakeQuotaService{}, supportbundlestest.NewFakeBundleService())
-			require.NoError(t, err)
-			_, err = usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "user", OrgID: 1})
+			_, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "user", OrgID: 1})
 			require.NoError(t, err)
 			_, err = teamSvc.CreateTeam(context.Background(), "team", "", 1)
 			require.NoError(t, err)
@@ -232,15 +224,25 @@ func TestService_SetPermissions(t *testing.T) {
 	}
 }
 
-func setupTestEnvironment(t *testing.T, ops Options) (*Service, db.DB, *setting.Cfg, team.Service) {
+func setupTestEnvironment(t *testing.T, ops Options) (*Service, user.Service, team.Service) {
 	t.Helper()
 
 	sql := db.InitTestDB(t)
 	cfg := setting.NewCfg()
-	teamSvc, err := teamimpl.ProvideService(sql, cfg, tracing.InitializeTracerForTest())
+	tracer := tracing.InitializeTracerForTest()
+
+	teamSvc, err := teamimpl.ProvideService(sql, cfg, tracer)
 	require.NoError(t, err)
-	userSvc, err := userimpl.ProvideService(sql, nil, cfg, teamSvc, nil, quotatest.New(false, nil), supportbundlestest.NewFakeBundleService())
+
+	orgSvc, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
 	require.NoError(t, err)
+
+	userSvc, err := userimpl.ProvideService(
+		sql, orgSvc, cfg, teamSvc, nil, tracer,
+		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
+	)
+	require.NoError(t, err)
+
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
 	ac := acimpl.ProvideAccessControl(cfg)
@@ -251,5 +253,5 @@ func setupTestEnvironment(t *testing.T, ops Options) (*Service, db.DB, *setting.
 	)
 	require.NoError(t, err)
 
-	return service, sql, cfg, teamSvc
+	return service, userSvc, teamSvc
 }

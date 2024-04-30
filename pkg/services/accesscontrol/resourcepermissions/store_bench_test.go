@@ -147,7 +147,9 @@ func generateTeamsAndUsers(b *testing.B, store db.DB, cfg *setting.Cfg, users in
 	qs := quotatest.New(false, nil)
 	orgSvc, err := orgimpl.ProvideService(store, cfg, qs)
 	require.NoError(b, err)
-	usrSvc, err := userimpl.ProvideService(store, orgSvc, cfg, nil, nil, qs, supportbundlestest.NewFakeBundleService())
+	usrSvc, err := userimpl.ProvideService(
+		store, orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		qs, supportbundlestest.NewFakeBundleService())
 	require.NoError(b, err)
 	userIds := make([]int64, 0)
 	teamIds := make([]int64, 0)
