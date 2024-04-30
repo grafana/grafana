@@ -12,6 +12,7 @@ import { Receiver } from 'app/plugins/datasource/alertmanager/types';
 export interface StepButtonDto {
   type: 'openLink' | 'dropDown';
   url: string;
+  queryParams?: Record<string, string>;
   label: string;
   options?: Array<{ label: string; value: string }>;
   done?: boolean;
@@ -81,6 +82,19 @@ function useGetContactPoints() {
 
   const contactPoints = alertmanagerConfiguration.data?.alertmanager_config?.receivers ?? [];
   return contactPoints;
+}
+
+function useGetDefaultContactPoint() {
+  const alertmanagerConfiguration = alertmanagerApi.endpoints.getAlertmanagerConfiguration.useQuery(
+    GRAFANA_RULES_SOURCE_NAME,
+    {
+      refetchOnFocus: true,
+      refetchOnReconnect: true,
+      refetchOnMountOrArgChange: true,
+    }
+  );
+
+  return alertmanagerConfiguration.data?.alertmanager_config?.route?.receiver ?? '';
 }
 
 function useGetIncidentPluginConfig() {
@@ -165,6 +179,7 @@ function useOnCallChatOpsConnections() {
 
 export function useGetEssentialsConfiguration() {
   const contactPoints = useGetContactPoints();
+  const defaultContactPoint = useGetDefaultContactPoint();
   const incidentPluginConfig = useGetIncidentPluginConfig();
   const onCallOptions = useOnCallOptions();
   const chatOpsConnections = useOnCallChatOpsConnections();
@@ -180,7 +195,8 @@ export function useGetEssentialsConfiguration() {
             description: 'Add a valid email to the default email contact point.',
             button: {
               type: 'openLink',
-              url: '/alerting/notifications/receivers/grafana-default-email/edit?alertmanager=grafana',
+              url: `/alerting/notifications/receivers/${defaultContactPoint}/edit`,
+              queryParams: { alertmanager: 'grafana' },
               label: 'Edit',
               done: isContactPointReady(contactPoints),
             },
@@ -226,7 +242,8 @@ export function useGetEssentialsConfiguration() {
             description: 'Receive alerts and oncall notifications within your chat environment.',
             button: {
               type: 'openLink',
-              url: '/a/grafana-oncall-app/settings?tab=Slack',
+              url: '/a/grafana-oncall-app/settings',
+              queryParams: { tab: 'ChatOps', chatOpsTab: 'Slack' },
               label: 'Connect',
               done: chatOpsConnections.is_chatops_connected,
             },
@@ -273,7 +290,8 @@ export function useGetEssentialsConfiguration() {
             description: 'tbd',
             button: {
               type: 'openLink',
-              url: '/a/grafana-incident-app?declare=new&drill=1',
+              url: '/a/grafana-incident-app',
+              queryParams: { declare: 'new', drill: '1' },
               label: 'Start drill',
               done: incidentPluginConfig?.isIncidentCreated,
             },

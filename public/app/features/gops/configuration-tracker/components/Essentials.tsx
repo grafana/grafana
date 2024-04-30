@@ -93,14 +93,16 @@ function Step({ step }: StepProps) {
 interface StepButtonProps {
   type: 'openLink' | 'dropDown';
   url: string;
+  queryParams?: Record<string, string>;
   label: string;
   options?: Array<{ label: string; value: string }>;
   done?: boolean;
 }
 
-function StepButton({ type, url, label, options }: StepButtonProps) {
+function StepButton({ type, url, label, options, queryParams }: StepButtonProps) {
   const urlToGo = createUrl(url, {
     returnTo: location.pathname + location.search,
+    ...queryParams,
   });
   function onIntegrationClick(integrationId: string) {
     const urlToGoWithIntegration = createUrl(url + integrationId, {
