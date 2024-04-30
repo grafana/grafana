@@ -137,8 +137,9 @@ func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion
 		if err != nil {
 			return nil, err
 		}
-		legacyIndex := indexMap[accessor.GetName()]
-		legacyList[legacyIndex] = obj
+		if legacyIndex, ok := indexMap[accessor.GetName()]; ok {
+			legacyList[legacyIndex] = obj
+		}
 	}
 
 	if err = meta.SetList(ll, legacyList); err != nil {
