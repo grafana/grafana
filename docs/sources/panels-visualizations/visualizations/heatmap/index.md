@@ -117,7 +117,7 @@ This setting configures the axis value.
 
 When selected, the axis appears in reverse order.
 
-{{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA VERSION>" leveloffset="+2" >}}
+{{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+2" >}}
 
 ## Colors
 
@@ -172,7 +172,7 @@ When you set the **Tooltip mode** to **Single**, this option is displayed. This 
 
 ### Legend
 
-Choose whether you want to display the heatmap legend on the visualization.
+Choose whether you want to display the heatmap legend on the visualization by toggling the **Show legend** switch.
 
 ### Data links
 

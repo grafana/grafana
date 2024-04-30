@@ -165,7 +165,184 @@ describe('TrailStore', () => {
       // There should now be two trails
       expect(store.recent.length).toBe(2);
     });
+
+    test('deserializeTrail must show state of current step when not last step', () => {
+      const trailSerialized: SerializedTrail = {
+        history: [
+          history[0],
+          history[1],
+          {
+            ...history[1],
+            urlValues: {
+              ...history[1].urlValues,
+              metric: 'something_else',
+            },
+            parentIndex: 1,
+          },
+        ],
+        currentStep: 1,
+      };
+
+      // @ts-ignore #2341 -- deliberately access private method to construct trail object for testing purposes
+      const trail = getTrailStore()._deserializeTrail(trailSerialized);
+
+      //
+      expect(trail.state.metric).not.toEqual('something_else');
+      expect(trail.state.metric).toEqual(history[1].urlValues.metric);
+    });
   });
+
+  describe('Initialize store with one recent trail with non final current step', () => {
+    const history: SerializedTrail['history'] = [
+      {
+        urlValues: {
+          from: 'now-1h',
+          to: 'now',
+          'var-ds': 'ds',
+          'var-filters': [],
+          refresh: '',
+        },
+        type: 'start',
+        description: 'Test',
+        parentIndex: -1,
+      },
+      {
+        urlValues: {
+          metric: 'current_metric',
+          from: 'now-1h',
+          to: 'now',
+          'var-ds': 'ds',
+          'var-filters': [],
+          refresh: '',
+        },
+        type: 'metric',
+        description: 'Test',
+        parentIndex: 0,
+      },
+      {
+        urlValues: {
+          metric: 'final_metric',
+          from: 'now-1h',
+          to: 'now',
+          'var-ds': 'ds',
+          'var-filters': [],
+          refresh: '',
+        },
+        type: 'metric',
+        description: 'Test',
+        parentIndex: 1,
+      },
+    ];
+
+    beforeEach(() => {
+      localStorage.clear();
+      localStorage.setItem(RECENT_TRAILS_KEY, JSON.stringify([{ history, currentStep: 1 }]));
+      getTrailStore().load();
+    });
+
+    it('should accurately load recent trails', () => {
+      const store = getTrailStore();
+      expect(store.recent.length).toBe(1);
+      const trail = store.recent[0].resolve();
+      expect(trail.state.history.state.steps.length).toBe(3);
+      expect(trail.state.history.state.steps[0].type).toBe('start');
+      expect(trail.state.history.state.steps[1].type).toBe('metric');
+      expect(trail.state.history.state.steps[1].trailState.metric).toBe('current_metric');
+      expect(trail.state.history.state.steps[2].type).toBe('metric');
+      expect(trail.state.history.state.steps[2].trailState.metric).toBe('final_metric');
+      expect(trail.state.history.state.currentStep).toBe(1);
+    });
+
+    it('should have no bookmarked trails', () => {
+      const store = getTrailStore();
+      expect(store.bookmarks.length).toBe(0);
+    });
+
+    describe('Add a new recent trail with equivalent current step state', () => {
+      const store = getTrailStore();
+
+      const duplicateTrailSerialized: SerializedTrail = {
+        history: [
+          history[0],
+          history[1],
+          history[2],
+          {
+            ...history[2],
+            urlValues: {
+              ...history[1].urlValues,
+              metric: 'different_metric_in_the_middle',
+            },
+          },
+          {
+            ...history[1],
+          },
+        ],
+        currentStep: 4,
+      };
+
+      beforeEach(() => {
+        // We expect the initialized trail to be there
+        expect(store.recent.length).toBe(1);
+        expect(store.recent[0].resolve().state.history.state.steps.length).toBe(3);
+
+        // @ts-ignore #2341 -- deliberately access private method to construct trail object for testing purposes
+        const duplicateTrail = store._deserializeTrail(duplicateTrailSerialized);
+        store.setRecentTrail(duplicateTrail);
+      });
+
+      it('should still be only one recent trail', () => {
+        expect(store.recent.length).toBe(1);
+      });
+
+      it('it should only contain the new trail', () => {
+        const newRecentTrail = store.recent[0].resolve();
+        expect(newRecentTrail.state.history.state.steps.length).toBe(duplicateTrailSerialized.history.length);
+
+        // @ts-ignore #2341 -- deliberately access private method to construct trail object for testing purposes
+        const newRecent = store._serializeTrail(newRecentTrail);
+        expect(newRecent.currentStep).toBe(duplicateTrailSerialized.currentStep);
+        expect(newRecent.history.length).toBe(duplicateTrailSerialized.history.length);
+      });
+    });
+
+    it.each([
+      ['metric', 'different_metric'],
+      ['from', 'now-1y'],
+      ['to', 'now-30m'],
+      ['var-ds', '1234'],
+      ['var-groupby', 'job'],
+      ['var-filters', 'cluster|=|dev-eu-west-2'],
+    ])(`new recent trails with a different '%p' value should insert new entry`, (key, differentValue) => {
+      const store = getTrailStore();
+      // We expect the initialized trail to be there
+      expect(store.recent.length).toBe(1);
+
+      const differentTrailSerialized: SerializedTrail = {
+        history: [
+          history[0],
+          history[1],
+          history[2],
+          {
+            ...history[2],
+            urlValues: {
+              ...history[1].urlValues,
+              [key]: differentValue,
+            },
+            parentIndex: 1,
+          },
+        ],
+        currentStep: 3,
+      };
+
+      // @ts-ignore #2341 -- deliberately access private method to construct trail object for testing purposes
+      const differentTrail = store._deserializeTrail(differentTrailSerialized);
+      store.setRecentTrail(differentTrail);
+
+      // There should now be two trails
+      expect(store.recent.length).toBe(2);
+    });
+  });
+
   describe('Initialize store with one bookmark trail', () => {
     beforeEach(() => {
       localStorage.clear();
@@ -261,6 +438,113 @@ describe('TrailStore', () => {
 
       jest.advanceTimersByTime(2000);
 
+      expect(localStorage.getItem(BOOKMARKED_TRAILS_KEY)).toBe('[]');
+    });
+  });
+
+  describe('Initialize store with one bookmark trail not on final step', () => {
+    beforeEach(() => {
+      localStorage.clear();
+      localStorage.setItem(
+        BOOKMARKED_TRAILS_KEY,
+        JSON.stringify([
+          {
+            history: [
+              {
+                urlValues: {
+                  from: 'now-1h',
+                  to: 'now',
+                  'var-ds': 'prom-mock',
+                  'var-filters': [],
+                  refresh: '',
+                },
+                type: 'start',
+              },
+              {
+                urlValues: {
+                  metric: 'bookmarked_metric',
+                  from: 'now-1h',
+                  to: 'now',
+                  'var-ds': 'prom-mock',
+                  'var-filters': [],
+                  refresh: '',
+                },
+                type: 'time',
+              },
+              {
+                urlValues: {
+                  metric: 'some_other_metric',
+                  from: 'now-1h',
+                  to: 'now',
+                  'var-ds': 'prom-mock',
+                  'var-filters': [],
+                  refresh: '',
+                },
+                type: 'metric',
+              },
+            ],
+            currentStep: 1,
+          },
+        ])
+      );
+      getTrailStore().load();
+    });
+
+    const store = getTrailStore();
+
+    it('should have no recent trails', () => {
+      expect(store.recent.length).toBe(0);
+    });
+
+    it('should accurately load bookmarked trails', () => {
+      expect(store.bookmarks.length).toBe(1);
+      const trail = store.bookmarks[0].resolve();
+      expect(trail.state.history.state.steps.length).toBe(3);
+      expect(trail.state.history.state.steps[0].type).toBe('start');
+      expect(trail.state.history.state.steps[1].type).toBe('time');
+      expect(trail.state.history.state.steps[2].type).toBe('metric');
+    });
+
+    it('should save a new recent trail based on the bookmark', () => {
+      expect(store.recent.length).toBe(0);
+      const trail = store.bookmarks[0].resolve();
+      store.setRecentTrail(trail);
+      expect(store.recent.length).toBe(1);
+    });
+
+    it('should be able to obtain index of bookmark', () => {
+      const trail = store.bookmarks[0].resolve();
+      const index = store.getBookmarkIndex(trail);
+      expect(index).toBe(0);
+    });
+
+    it('index should be undefined for removed bookmarks', () => {
+      const trail = store.bookmarks[0].resolve();
+      store.removeBookmark(0);
+      const index = store.getBookmarkIndex(trail);
+      expect(index).toBe(undefined);
+    });
+
+    it('index should be undefined for a trail that has changed since it was bookmarked', () => {
+      const trail = store.bookmarks[0].resolve();
+      trail.setState({ metric: 'something_completely_different' });
+      const index = store.getBookmarkIndex(trail);
+      expect(index).toBe(undefined);
+    });
+
+    it('should be able to obtain index of a bookmark for a trail that changed back to bookmarked state', () => {
+      const trail = store.bookmarks[0].resolve();
+      trail.setState({ metric: 'something_completely_different' });
+      expect(store.getBookmarkIndex(trail)).toBe(undefined);
+      trail.setState({ metric: 'bookmarked_metric' });
+      expect(store.getBookmarkIndex(trail)).toBe(0);
+    });
+
+    it('should remove a bookmark', () => {
+      expect(store.bookmarks.length).toBe(1);
+      store.removeBookmark(0);
+      expect(store.bookmarks.length).toBe(0);
+      jest.advanceTimersByTime(2000);
       expect(localStorage.getItem(BOOKMARKED_TRAILS_KEY)).toBe('[]');
     });
   });
