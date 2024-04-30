@@ -25,6 +25,27 @@ labels:
     - oss
 title: Configure contact points
 weight: 410
+refs:
+  pagerduty:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/pager-duty/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/pager-duty/
+  webhook:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier/
+  slack:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-slack/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-slack/
+  oncall:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-oncall/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-oncall/
 ---
 
 # Configure contact points
@@ -112,33 +133,20 @@ Once configured, you can use integrations as part of your contact points to rece
 | Discord                  | `discord`                 |
 | Email                    | `email`                   |
 | Google Chat              | `googlechat`              |
-| [Grafana Oncall][oncall] | `oncall`                  |
+| [Grafana Oncall](ref:oncall) | `oncall`                  |
 | Hipchat                  | `hipchat`                 |
 | Kafka                    | `kafka`                   |
 | Line                     | `line`                    |
 | Microsoft Teams          | `teams`                   |
 | Opsgenie                 | `opsgenie`                |
-| [Pagerduty][pagerduty]   | `pagerduty`               |
+| [Pagerduty](ref:pagerduty)   | `pagerduty`               |
 | Prometheus Alertmanager  | `prometheus-alertmanager` |
 | Pushover                 | `pushover`                |
 | Sensu                    | `sensu`                   |
 | Sensu Go                 | `sensugo`                 |
-| [Slack][slack]           | `slack`                   |
+| [Slack](ref:slack)           | `slack`                   |
 | Telegram                 | `telegram`                |
 | Threema                  | `threema`                 |
 | VictorOps                | `victorops`               |
-| [Webhook][webhook]       | `webhook`                 |
+| [Webhook](ref:webhook)       | `webhook`                 |
 
-{{% docs/reference %}}
-[pagerduty]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/pager-duty"
-[pagerduty]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/pager-duty"
-
-[oncall]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-oncall"
-[oncall]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-oncall"
-
-[slack]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-slack"
-[slack]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-slack"
-
-[webhook]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier"
-[webhook]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier"
-{{% /docs/reference %}}
