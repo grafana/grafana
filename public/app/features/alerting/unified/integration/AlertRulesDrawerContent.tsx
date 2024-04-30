@@ -3,7 +3,7 @@ import React from 'react';
 import { LoadingPlaceholder } from '@grafana/ui';
 
 import { RulesTable } from '../components/rules/RulesTable';
-import { useCombinedRulesByDashboard } from '../hooks/useCombinedRule';
+import { useCombinedRulesByDashboard } from '../hooks/useCombinedRuleNamespaces';
 
 interface Props {
   dashboardUid: string;

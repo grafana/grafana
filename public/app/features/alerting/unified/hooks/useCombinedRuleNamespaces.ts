@@ -21,6 +21,7 @@ import {
   RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
 
+import { alertRuleApi } from '../api/alertRuleApi';
 import {
   getAllRulesSources,
   getRulesSourceByName,
@@ -36,6 +37,7 @@ import {
   isRecordingRulerRule,
 } from '../utils/rules';
 
+import { grafanaRulerConfig } from './useCombinedRule';
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 
 export interface CacheValue {
@@ -459,4 +461,93 @@ function hashQuery(query: string) {
   query = query.replace(/\s|\n/g, '');
   // labels matchers can be reordered, so sort the enitre string, esentially comparing just the character counts
   return query.split('').sort().join('');
+}
+
+/*
+  This hook returns combined Grafana rules by dashpboard UID
+*/
+export function useCombinedRulesByDashboard(
+  dashboardUID: string,
+  panelId?: number
+): {
+  loading: boolean;
+  result?: CombinedRuleNamespace[];
+  error?: unknown;
+} {
+  const {
+    currentData: promRuleNs,
+    isLoading: isLoadingPromRules,
+    error: promRuleNsError,
+  } = alertRuleApi.endpoints.prometheusRuleNamespaces.useQuery({
+    ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
+    dashboardUid: dashboardUID,
+    panelId,
+  });
+
+  const {
+    currentData: rulerRules,
+    isLoading: isLoadingRulerRules,
+    error: rulerRulesError,
+  } = alertRuleApi.endpoints.rulerRules.useQuery({
+    rulerConfig: grafanaRulerConfig,
+    filter: { dashboardUID: dashboardUID, panelId },
+  });
+
+  //---------
+  // cache results per rules source, so we only recalculate those for which results have actually changed
+  const cache = useRef<Record<string, CacheValue>>({});
+
+  const rulesSource = getRulesSourceByName(GRAFANA_RULES_SOURCE_NAME);
+
+  const rules = useMemo(() => {
+    if (!rulesSource) {
+      return [];
+    }
+
+    const cached = cache.current[GRAFANA_RULES_SOURCE_NAME];
+    if (cached && cached.promRules === promRuleNs && cached.rulerRules === rulerRules) {
+      return cached.result;
+    }
+    const namespaces: Record<string, CombinedRuleNamespace> = {};
+
+    // first get all the ruler rules from the data source
+    Object.entries(rulerRules || {}).forEach(([namespaceName, groups]) => {
+      const namespace: CombinedRuleNamespace = {
+        rulesSource,
+        name: namespaceName,
+        groups: [],
+      };
+
+      // We need to set the namespace_uid for grafana rules as it's required to obtain the rule's groups
+      // All rules from all groups have the same namespace_uid so we're taking the first one.
+      if (isGrafanaRulerRule(groups[0].rules[0])) {
+        namespace.uid = groups[0].rules[0].grafana_alert.namespace_uid;
+      }
+
+      namespaces[namespaceName] = namespace;
+      addRulerGroupsToCombinedNamespace(namespace, groups);
+    });
+
+    // then correlate with prometheus rules
+    promRuleNs?.forEach(({ name: namespaceName, groups }) => {
+      const ns = (namespaces[namespaceName] = namespaces[namespaceName] || {
+        rulesSource,
+        name: namespaceName,
+        groups: [],
+      });
+
+      addPromGroupsToCombinedNamespace(ns, groups);
+    });
+
+    const result = Object.values(namespaces);
+
+    cache.current[GRAFANA_RULES_SOURCE_NAME] = { promRules: promRuleNs, rulerRules, result };
+    return result;
+  }, [promRuleNs, rulerRules, rulesSource]);
+
+  return {
+    loading: isLoadingPromRules || isLoadingRulerRules,
+    error: promRuleNsError ?? rulerRulesError,
+    result: rules,
+  };
 }

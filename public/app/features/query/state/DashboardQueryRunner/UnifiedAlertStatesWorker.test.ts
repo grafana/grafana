@@ -106,7 +106,6 @@ describe('UnifiedAlertStatesWorker', () => {
   describe('when run repeatedly for the same dashboard and no alert rules are found', () => {
     const nameSpaces = [mockPromRuleNamespace({ groups: [] })];
     const { dispatchMock, options } = getTestContext();
-    //getMock.mockResolvedValue(getResults);
     dispatchMock.mockResolvedValue(nameSpaces);
     it('then canWork should start returning false', async () => {
       const worker = new UnifiedAlertStatesWorker();

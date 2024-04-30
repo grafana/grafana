@@ -1,6 +1,6 @@
 import { CombinedRule } from 'app/types/unified-alerting';
 
-import { useCombinedRulesByDashboard } from './useCombinedRule';
+import { useCombinedRulesByDashboard } from './useCombinedRuleNamespaces';
 
 interface Options {
   dashboardUID: string;
