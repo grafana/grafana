@@ -298,7 +298,7 @@ export function MetricSelect({
 
           if (prometheusMetricEncyclopedia) {
             setState({
-              // add the modal butoon option to the options
+              // add the modal button option to the options
               metrics: [...metricsModalOption, ...metrics],
               isLoading: undefined,
               // pass the initial metrics into the metrics explorer
