@@ -872,7 +872,10 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		ctx := appcontext.WithUser(context.Background(), usr)
 		orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 		require.NoError(t, err)
-		usrSvc, err := userimpl.ProvideService(sqlStore, orgSvc, cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
+		usrSvc, err := userimpl.ProvideService(
+			sqlStore, orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),
+			quotaService, supportbundlestest.NewFakeBundleService(),
+		)
 		require.NoError(t, err)
 		_, err = usrSvc.Create(context.Background(), &cmd)
 		require.NoError(t, err)

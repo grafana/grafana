@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { getTimeZone, NavModelItem } from '@grafana/data';
-import { Button, ConfirmModal, HorizontalGroup, IconButton } from '@grafana/ui';
+import { Button, ConfirmModal, IconButton, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -137,7 +137,7 @@ export const ServiceAccountPageUnconnected = ({
       <Page.Contents isLoading={isLoading}>
         <div>
           {serviceAccount && !serviceAccount.isExternal && (
-            <HorizontalGroup spacing="md" height="auto" justify="flex-end">
+            <Stack gap={2} height="auto" justifyContent="flex-end">
               <Button
                 type={'button'}
                 variant="destructive"
@@ -165,29 +165,29 @@ export const ServiceAccountPageUnconnected = ({
                   Disable service account
                 </Button>
               )}
-            </HorizontalGroup>
+            </Stack>
           )}
           {serviceAccount && serviceAccount.isExternal && (
-            <HorizontalGroup spacing="md" height="auto" justify="flex-end">
+            <Stack gap={2} height="auto" justifyContent="flex-end">
               <IconButton
                 disabled={true}
                 name="lock"
                 size="md"
                 tooltip={`This is a managed service account and cannot be modified.`}
               />
-            </HorizontalGroup>
+            </Stack>
           )}
           {serviceAccount && (
             <ServiceAccountProfile serviceAccount={serviceAccount} timeZone={timezone} onChange={onProfileChange} />
           )}
-          <HorizontalGroup justify="space-between" height="auto">
+          <Stack justifyContent="space-between" height="auto">
             <h3>Tokens</h3>
             {!serviceAccount.isExternal && (
               <Button onClick={() => setIsTokenModalOpen(true)} disabled={tokenActionsDisabled}>
                 Add service account token
               </Button>
             )}
-          </HorizontalGroup>
+          </Stack>
           {tokens && (
             <ServiceAccountTokensTable
               tokens={tokens}

@@ -23,6 +23,10 @@ export interface DataTrailsHistoryState extends SceneObjectState {
   steps: DataTrailHistoryStep[];
 }
 
+export function isDataTrailsHistoryState(state: SceneObjectState): state is DataTrailsHistoryState {
+  return 'currentStep' in state && 'steps' in state;
+}
+
 export interface DataTrailHistoryStep {
   description: string;
   type: TrailStepType;
