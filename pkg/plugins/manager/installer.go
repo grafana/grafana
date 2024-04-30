@@ -28,7 +28,7 @@ type PluginInstaller struct {
 	serviceRegistry      auth.ExternalServiceRegistry
 }
 
-func ProvideInstaller(cfg *config.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service,
+func ProvideInstaller(cfg *config.PluginManagementCfg, pluginRegistry registry.Service, pluginLoader loader.Service,
 	pluginRepo repo.Service, serviceRegistry auth.ExternalServiceRegistry) *PluginInstaller {
 	return New(pluginRegistry, pluginLoader, pluginRepo,
 		storage.FileSystem(log.NewPrettyLogger("installer.fs"), cfg.PluginsPath), storage.SimpleDirNameGeneratorFunc, serviceRegistry)
@@ -55,7 +55,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 	}
 
 	var pluginArchive *repo.PluginArchive
-	if plugin, exists := m.plugin(ctx, pluginID); exists {
+	if plugin, exists := m.plugin(ctx, pluginID, version); exists {
 		if plugin.IsCorePlugin() || plugin.IsBundledPlugin() {
 			return plugins.ErrInstallCorePlugin
 		}
@@ -84,7 +84,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 		}
 
 		// remove existing installation of plugin
-		err = m.Remove(ctx, plugin.ID)
+		err = m.Remove(ctx, plugin.ID, plugin.Info.Version)
 		if err != nil {
 			return err
 		}
@@ -139,8 +139,8 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 	return nil
 }
 
-func (m *PluginInstaller) Remove(ctx context.Context, pluginID string) error {
-	plugin, exists := m.plugin(ctx, pluginID)
+func (m *PluginInstaller) Remove(ctx context.Context, pluginID, version string) error {
+	plugin, exists := m.plugin(ctx, pluginID, version)
 	if !exists {
 		return plugins.ErrPluginNotInstalled
 	}
@@ -168,8 +168,8 @@ func (m *PluginInstaller) Remove(ctx context.Context, pluginID string) error {
 }
 
 // plugin finds a plugin with `pluginID` from the store
-func (m *PluginInstaller) plugin(ctx context.Context, pluginID string) (*plugins.Plugin, bool) {
-	p, exists := m.pluginRegistry.Plugin(ctx, pluginID)
+func (m *PluginInstaller) plugin(ctx context.Context, pluginID, pluginVersion string) (*plugins.Plugin, bool) {
+	p, exists := m.pluginRegistry.Plugin(ctx, pluginID, pluginVersion)
 	if !exists {
 		return nil, false
 	}

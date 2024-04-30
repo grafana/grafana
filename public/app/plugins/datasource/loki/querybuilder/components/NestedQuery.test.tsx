@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -71,7 +71,7 @@ describe('exit the nested query', () => {
   it('onRemove is called when clicking (x)', async () => {
     const props = createMockProps();
     render(<NestedQuery {...props} />);
-    fireEvent.click(await screen.findByLabelText('Remove nested query'));
+    await userEvent.click(await screen.findByLabelText('Remove nested query'));
     await waitFor(() => expect(props.onRemove).toHaveBeenCalledTimes(1));
   });
 });
@@ -80,8 +80,8 @@ describe('change operator', () => {
   it('onChange is called with the correct args', async () => {
     const props = createMockProps('/', 'on');
     render(<NestedQuery {...props} />);
-    userEvent.click(await screen.findByLabelText('Select operator'));
-    fireEvent.click(await screen.findByText('+'));
+    await userEvent.click(await screen.findByLabelText('Select operator'));
+    await userEvent.click(await screen.findByText('+'));
     await waitFor(() => expect(props.onChange).toHaveBeenCalledTimes(1));
     await waitFor(() =>
       expect(props.onChange).toHaveBeenCalledWith(0, {

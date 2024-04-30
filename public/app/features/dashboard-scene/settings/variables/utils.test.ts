@@ -1,5 +1,5 @@
 import { DataSourceApi } from '@grafana/data';
-import { setTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { config, setTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import {
   CustomVariable,
   ConstantVariable,
@@ -11,7 +11,7 @@ import {
   TextBoxVariable,
   SceneVariableSet,
 } from '@grafana/scenes';
-import { DataQuery, DataSourceJsonData, VariableType } from '@grafana/schema';
+import { DataQuery, DataSourceJsonData, VariableHide, VariableType } from '@grafana/schema';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 
@@ -36,6 +36,7 @@ import {
   getOptionDataSourceTypes,
   getNextAvailableId,
   getVariableDefault,
+  isSceneVariableInstance,
 } from './utils';
 
 const templateSrv = {
@@ -98,27 +99,86 @@ describe('isEditableVariableType', () => {
   });
 });
 
-describe('getVariableTypeSelectOptions', () => {
-  it('should contain all editable variable types', () => {
-    const options = getVariableTypeSelectOptions();
-    expect(options).toHaveLength(Object.keys(EDITABLE_VARIABLES).length);
+describe('isSceneVariableInstance', () => {
+  it.each([
+    CustomVariable,
+    QueryVariable,
+    ConstantVariable,
+    IntervalVariable,
+    DataSourceVariable,
+    AdHocFiltersVariable,
+    GroupByVariable,
+    TextBoxVariable,
+  ])('should return true for scene variable instances %s', (instanceType) => {
+    const variable = new instanceType({ name: 'MyVariable' });
+    expect(isSceneVariableInstance(variable)).toBe(true);
+  });
 
-    EDITABLE_VARIABLES_SELECT_ORDER.forEach((type) => {
-      expect(EDITABLE_VARIABLES).toHaveProperty(type);
+  it('should return false for non-scene variable instances', () => {
+    const variable = {
+      name: 'MyVariable',
+      type: 'query',
+    };
+    expect(variable).not.toBeInstanceOf(QueryVariable);
+  });
+});
+
+describe('getVariableTypeSelectOptions', () => {
+  describe('when groupByVariable is enabled', () => {
+    beforeAll(() => {
+      config.featureToggles.groupByVariable = true;
+    });
+
+    afterAll(() => {
+      config.featureToggles.groupByVariable = false;
+    });
+
+    it('should contain all editable variable types', () => {
+      const options = getVariableTypeSelectOptions();
+      expect(options).toHaveLength(Object.keys(EDITABLE_VARIABLES).length);
+
+      EDITABLE_VARIABLES_SELECT_ORDER.forEach((type) => {
+        expect(EDITABLE_VARIABLES).toHaveProperty(type);
+      });
+    });
+
+    it('should return an array of selectable values for editable variable types', () => {
+      const options = getVariableTypeSelectOptions();
+      expect(options).toHaveLength(8);
+
+      options.forEach((option, index) => {
+        const editableType = EDITABLE_VARIABLES_SELECT_ORDER[index];
+        const variableTypeConfig = EDITABLE_VARIABLES[editableType];
+
+        expect(option.value).toBe(editableType);
+        expect(option.label).toBe(variableTypeConfig.name);
+        expect(option.description).toBe(variableTypeConfig.description);
+      });
     });
   });
 
-  it('should return an array of selectable values for editable variable types', () => {
-    const options = getVariableTypeSelectOptions();
-    expect(options).toHaveLength(8);
+  describe('when groupByVariable is disabled', () => {
+    it('should contain all editable variable types except groupby', () => {
+      const options = getVariableTypeSelectOptions();
+      expect(options).toHaveLength(Object.keys(EDITABLE_VARIABLES).length - 1);
 
-    options.forEach((option, index) => {
-      const editableType = EDITABLE_VARIABLES_SELECT_ORDER[index];
-      const variableTypeConfig = EDITABLE_VARIABLES[editableType];
+      EDITABLE_VARIABLES_SELECT_ORDER.forEach((type) => {
+        expect(EDITABLE_VARIABLES).toHaveProperty(type);
+      });
+    });
 
-      expect(option.value).toBe(editableType);
-      expect(option.label).toBe(variableTypeConfig.name);
-      expect(option.description).toBe(variableTypeConfig.description);
+    it('should return an array of selectable values for editable variable types', () => {
+      const options = getVariableTypeSelectOptions();
+      expect(options).toHaveLength(7);
+
+      options.forEach((option, index) => {
+        const editableType = EDITABLE_VARIABLES_SELECT_ORDER[index];
+        const variableTypeConfig = EDITABLE_VARIABLES[editableType];
+
+        expect(option.value).toBe(editableType);
+        expect(option.label).toBe(variableTypeConfig.name);
+        expect(option.description).toBe(variableTypeConfig.description);
+      });
     });
   });
 });
@@ -166,17 +226,25 @@ describe('getVariableScene', () => {
   it.each([
     ['custom', CustomVariable],
     ['query', QueryVariable],
-    ['constant', ConstantVariable],
     ['interval', IntervalVariable],
     ['datasource', DataSourceVariable],
     ['adhoc', AdHocFiltersVariable],
     ['groupby', GroupByVariable],
     ['textbox', TextBoxVariable],
-  ])('should return the scene variable instance for the given editable variable type', () => {
+  ])('should return the scene variable instance for the given editable variable type', (type, instanceType) => {
     const initialState = { name: 'MyVariable' };
-    const sceneVariable = getVariableScene('custom', initialState);
-    expect(sceneVariable).toBeInstanceOf(CustomVariable);
+    const sceneVariable = getVariableScene(type as EditableVariableType, initialState);
+    expect(sceneVariable).toBeInstanceOf(instanceType);
     expect(sceneVariable.state.name).toBe(initialState.name);
+    expect(sceneVariable.state.hide).toBe(undefined);
+  });
+
+  it('should return the scene variable instance for the constant editable variable type', () => {
+    const initialState = { name: 'MyVariable' };
+    const sceneVariable = getVariableScene('constant' as EditableVariableType, initialState);
+    expect(sceneVariable).toBeInstanceOf(ConstantVariable);
+    expect(sceneVariable.state.name).toBe(initialState.name);
+    expect(sceneVariable.state.hide).toBe(VariableHide.hideVariable);
   });
 });
 

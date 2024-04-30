@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/variables.ts
 import { from, Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 
@@ -6,7 +7,7 @@ import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 import { PromVariableQueryEditor } from './components/VariableQueryEditor';
 import { PrometheusDatasource } from './datasource';
-import PrometheusMetricFindQuery from './metric_find_query';
+import { PrometheusMetricFindQuery } from './metric_find_query';
 import { PromVariableQuery } from './types';
 
 export class PrometheusVariableSupport extends CustomVariableSupport<PrometheusDatasource> {

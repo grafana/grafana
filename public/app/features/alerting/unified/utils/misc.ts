@@ -2,7 +2,7 @@ import { sortBy } from 'lodash';
 
 import { UrlQueryMap, Labels } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/src/types/config';
-import { config } from '@grafana/runtime';
+import { config, isFetchError } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
 import { escapePathSeparators } from 'app/features/alerting/unified/utils/rule-id';
 import { alertInstanceKey } from 'app/features/alerting/unified/utils/rules';
@@ -13,8 +13,6 @@ import {
   PromAlertingRuleState,
   mapStateWithReasonToBaseState,
 } from 'app/types/unified-alerting-dto';
-
-import { FolderDTO } from '../../../../types';
 
 import { ALERTMANAGER_NAME_QUERY_KEY } from './constants';
 import { getRulesSourceName, isCloudRulesSource } from './datasource';
@@ -149,8 +147,8 @@ export function makeFolderAlertsLink(folderUID: string, title: string): string {
   return createUrl(`/dashboards/f/${folderUID}/${title}/alerting`);
 }
 
-export function makeFolderSettingsLink(folder: FolderDTO): string {
-  return createUrl(`/dashboards/f/${folder.uid}/settings`);
+export function makeFolderSettingsLink(uid: string): string {
+  return createUrl(`/dashboards/f/${uid}/settings`);
 }
 
 export function makeDashboardLink(dashboardUID: string): string {
@@ -158,7 +156,8 @@ export function makeDashboardLink(dashboardUID: string): string {
 }
 
 export function makePanelLink(dashboardUID: string, panelId: string): string {
-  return createUrl(`/d/${encodeURIComponent(dashboardUID)}`, { viewPanel: panelId });
+  const panelParams = new URLSearchParams({ viewPanel: panelId });
+  return createUrl(`/d/${encodeURIComponent(dashboardUID)}`, panelParams);
 }
 
 // keep retrying fn if it's error passes shouldRetry(error) and timeout has not elapsed yet
@@ -227,9 +226,24 @@ export function isLocalDevEnv() {
 }
 
 export function isErrorLike(error: unknown): error is Error {
-  return 'message' in (error as Error);
+  return Boolean(error && typeof error === 'object' && 'message' in error);
 }
 
 export function stringifyErrorLike(error: unknown): string {
+  const fetchError = isFetchError(error);
+  if (fetchError) {
+    if (error.message) {
+      return error.message;
+    }
+    if ('message' in error.data && typeof error.data.message === 'string') {
+      return error.data.message;
+    }
+    if (error.statusText) {
+      return error.statusText;
+    }
+
+    return String(error.status) || 'Unknown error';
+  }
+
   return isErrorLike(error) ? error.message : String(error);
 }

@@ -4,6 +4,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { Observable } from 'rxjs';
 
 import { LoadingState, InternalTimeZones, getDefaultTimeRange } from '@grafana/data';
+import { InspectorStream } from 'app/core/services/backend_srv';
 
 import { ExploreQueryInspector } from './ExploreQueryInspector';
 
@@ -46,10 +47,10 @@ jest.mock('react-virtualized-auto-sizer', () => {
 
 const setup = (propOverrides = {}) => {
   const props: ExploreQueryInspectorProps = {
-    width: 100,
     exploreId: 'left',
     onClose: jest.fn(),
     timeZone: InternalTimeZones.utc,
+    isMixed: false,
     queryResponse: {
       state: LoadingState.Done,
       series: [],
@@ -143,22 +144,26 @@ describe('ExploreQueryInspector', () => {
   });
 });
 
-const response = (hideFromInspector = false) => ({
-  status: 1,
-  statusText: '',
-  ok: true,
-  headers: {},
-  redirected: false,
-  type: 'basic',
-  url: '',
-  request: {},
-  data: {
-    test: {
-      testKey: 'Very unique test value',
+const response = (hideFromInspector = false): InspectorStream => {
+  return {
+    response: {
+      status: 1,
+      statusText: '',
+      ok: true,
+      headers: new Headers(),
+      redirected: false,
+      type: 'basic',
+      url: '',
+      data: {
+        test: {
+          testKey: 'Very unique test value',
+        },
+      },
+      config: {
+        url: '',
+        hideFromInspector,
+      },
     },
-  },
-  config: {
-    url: '',
-    hideFromInspector,
-  },
-});
+    requestId: 'explore_left',
+  };
+};

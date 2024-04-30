@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -125,7 +126,8 @@ func Test_getOrCreate(t *testing.T) {
 	l := log.New("test")
 	c := newCache()
 
-	generateRule := models.AlertRuleGen(models.WithNotEmptyLabels(5, "rule-"))
+	gen := models.RuleGen
+	generateRule := gen.With(gen.WithNotEmptyLabels(5, "rule-")).GenerateRef
 
 	t.Run("should combine all labels", func(t *testing.T) {
 		rule := generateRule()
@@ -262,6 +264,61 @@ func Test_getOrCreate(t *testing.T) {
 
 		state := c.getOrCreate(context.Background(), l, rule, result, nil, url)
 		assert.Equal(t, map[string]float64{"B0": 1, "B1": 2}, state.Values)
+	})
+
+	t.Run("when result labels collide with system labels from LabelsUserCannotSpecify", func(t *testing.T) {
+		result := eval.Result{
+			Instance: models.GenerateAlertLabels(5, "result-"),
+		}
+		m := models.LabelsUserCannotSpecify
+		t.Cleanup(func() {
+			models.LabelsUserCannotSpecify = m
+		})
+
+		models.LabelsUserCannotSpecify = map[string]struct{}{
+			"__label1__": {},
+			"label2__":   {},
+			"__label3":   {},
+			"label4":     {},
+		}
+		result.Instance["__label1__"] = uuid.NewString()
+		result.Instance["label2__"] = uuid.NewString()
+		result.Instance["__label3"] = uuid.NewString()
+		result.Instance["label4"] = uuid.NewString()
+
+		rule := generateRule()
+
+		state := c.getOrCreate(context.Background(), l, rule, result, nil, url)
+
+		for key := range models.LabelsUserCannotSpecify {
+			assert.NotContains(t, state.Labels, key)
+		}
+		assert.Contains(t, state.Labels, "label1")
+		assert.Equal(t, state.Labels["label1"], result.Instance["__label1__"])
+
+		assert.Contains(t, state.Labels, "label2")
+		assert.Equal(t, state.Labels["label2"], result.Instance["label2__"])
+
+		assert.Contains(t, state.Labels, "label3")
+		assert.Equal(t, state.Labels["label3"], result.Instance["__label3"])
+
+		assert.Contains(t, state.Labels, "label4_user")
+		assert.Equal(t, state.Labels["label4_user"], result.Instance["label4"])
+
+		t.Run("should drop label if renamed collides with existing", func(t *testing.T) {
+			result.Instance["label1"] = uuid.NewString()
+			result.Instance["label1_user"] = uuid.NewString()
+			result.Instance["label4_user"] = uuid.NewString()
+
+			state = c.getOrCreate(context.Background(), l, rule, result, nil, url)
+			assert.NotContains(t, state.Labels, "__label1__")
+			assert.Contains(t, state.Labels, "label1")
+			assert.Equal(t, state.Labels["label1"], result.Instance["label1"])
+			assert.Equal(t, state.Labels["label1_user"], result.Instance["label1_user"])
+
+			assert.NotContains(t, state.Labels, "label4")
+			assert.Equal(t, state.Labels["label4_user"], result.Instance["label4_user"])
+		})
 	})
 }
 

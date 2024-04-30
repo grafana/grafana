@@ -54,14 +54,7 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
     : [panelFrameOptions, ...vizOptions];
 
   if (isSearching) {
-    mainBoxElements.push(
-      <RenderSearchHits
-        key="render-search-hits"
-        allOptions={allOptions}
-        overrides={justOverrides}
-        searchQuery={searchQuery}
-      />
-    );
+    mainBoxElements.push(renderSearchHits(allOptions, justOverrides, searchQuery));
 
     // If searching for angular panel, then we need to add notice that results are limited
     if (props.plugin.angularPanelCtrl) {
@@ -76,10 +69,10 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
       case OptionFilter.All:
         if (isPanelModelLibraryPanel(panel)) {
           // Library Panel options first
-          mainBoxElements.push(<libraryPanelOptions.Render key="library-panel-options" />);
+          mainBoxElements.push(libraryPanelOptions.render());
         }
         // Panel frame options second
-        mainBoxElements.push(<panelFrameOptions.Render key="panel-frame-options" />);
+        mainBoxElements.push(panelFrameOptions.render());
         // If angular add those options next
         if (props.plugin.angularPanelCtrl) {
           mainBoxElements.push(
@@ -88,16 +81,16 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
         }
         // Then add all panel and field defaults
         for (const item of vizOptions) {
-          mainBoxElements.push(<item.Render key={item.props.id} />);
+          mainBoxElements.push(item.render());
         }
 
         for (const item of justOverrides) {
-          mainBoxElements.push(<item.Render key={item.props.id} />);
+          mainBoxElements.push(item.render());
         }
         break;
       case OptionFilter.Overrides:
         for (const override of justOverrides) {
-          mainBoxElements.push(<override.Render key={override.props.id} />);
+          mainBoxElements.push(override.render());
         }
         break;
       case OptionFilter.Recent:
@@ -157,13 +150,11 @@ export enum OptionFilter {
   Recent = 'Recent',
 }
 
-interface RenderSearchHitsProps {
-  allOptions: OptionsPaneCategoryDescriptor[];
-  overrides: OptionsPaneCategoryDescriptor[];
-  searchQuery: string;
-}
-
-export function RenderSearchHits({ allOptions, overrides, searchQuery }: RenderSearchHitsProps) {
+export function renderSearchHits(
+  allOptions: OptionsPaneCategoryDescriptor[],
+  overrides: OptionsPaneCategoryDescriptor[],
+  searchQuery: string
+) {
   const engine = new OptionSearchEngine(allOptions, overrides);
   const { optionHits, totalCount, overrideHits } = engine.search(searchQuery);
 
@@ -177,63 +168,61 @@ export function RenderSearchHits({ allOptions, overrides, searchQuery }: RenderS
       >
         {optionHits.map((hit) => hit.render(searchQuery))}
       </OptionsPaneCategory>
-      {overrideHits.map((override) => (
-        <override.Render key={override.props.id} searchQuery={searchQuery} />
-      ))}
+      {overrideHits.map((override) => override.render(searchQuery))}
     </div>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 0;
+  wrapper: css({
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    flex: '1 1 0',
 
-    .search-fragment-highlight {
-      color: ${theme.colors.warning.text};
-      background: transparent;
-    }
-  `,
-  searchBox: css`
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-  `,
-  formRow: css`
-    margin-bottom: ${theme.spacing(1)};
-  `,
-  formBox: css`
-    padding: ${theme.spacing(1)};
-    background: ${theme.colors.background.primary};
-    border: 1px solid ${theme.components.panel.borderColor};
-    border-top-left-radius: ${theme.shape.borderRadius(1.5)};
-    border-bottom: none;
-  `,
-  closeButton: css`
-    margin-left: ${theme.spacing(1)};
-  `,
-  searchHits: css`
-    padding: ${theme.spacing(1, 1, 0, 1)};
-  `,
-  scrollWrapper: css`
-    flex-grow: 1;
-    min-height: 0;
-  `,
-  searchNotice: css`
-    font-size: ${theme.typography.size.sm};
-    color: ${theme.colors.text.secondary};
-    padding: ${theme.spacing(1)};
-    text-align: center;
-  `,
-  mainBox: css`
-    background: ${theme.colors.background.primary};
-    border: 1px solid ${theme.components.panel.borderColor};
-    border-top: none;
-    flex-grow: 1;
-  `,
-  angularDeprecationWrapper: css`
-    padding: ${theme.spacing(1)};
-  `,
+    '.search-fragment-highlight': {
+      color: theme.colors.warning.text,
+      background: 'transparent',
+    },
+  }),
+  searchBox: css({
+    display: 'flex',
+    flexDirection: 'column',
+    minHeight: 0,
+  }),
+  formRow: css({
+    marginBottom: theme.spacing(1),
+  }),
+  formBox: css({
+    padding: theme.spacing(1),
+    background: theme.colors.background.primary,
+    border: `1px solid ${theme.components.panel.borderColor}`,
+    borderTopLeftRadius: theme.shape.borderRadius(1.5),
+    borderBottom: 'none',
+  }),
+  closeButton: css({
+    marginLeft: theme.spacing(1),
+  }),
+  searchHits: css({
+    padding: theme.spacing(1, 1, 0, 1),
+  }),
+  scrollWrapper: css({
+    flexGrow: 1,
+    minHeight: 0,
+  }),
+  searchNotice: css({
+    fontSize: theme.typography.size.sm,
+    color: theme.colors.text.secondary,
+    padding: theme.spacing(1),
+    textAlign: 'center',
+  }),
+  mainBox: css({
+    background: theme.colors.background.primary,
+    border: `1px solid ${theme.components.panel.borderColor}`,
+    borderTop: 'none',
+    flexGrow: 1,
+  }),
+  angularDeprecationWrapper: css({
+    padding: theme.spacing(1),
+  }),
 });

@@ -37,6 +37,13 @@ import (
 //
 // Export the notification policy tree in provisioning file format.
 //
+//     Produces:
+//     - application/json
+//     - application/yaml
+//     - application/terraform+hcl
+//     - text/yaml
+//     - text/hcl
+//
 //     Responses:
 //       200: AlertingFileExport
 //       404: NotFound

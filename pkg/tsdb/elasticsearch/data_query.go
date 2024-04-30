@@ -23,20 +23,27 @@ const (
 )
 
 type elasticsearchDataQuery struct {
-	client      es.Client
-	dataQueries []backend.DataQuery
-	logger      log.Logger
-	ctx         context.Context
-	tracer      tracing.Tracer
+	client               es.Client
+	dataQueries          []backend.DataQuery
+	logger               log.Logger
+	ctx                  context.Context
+	tracer               tracing.Tracer
+	keepLabelsInResponse bool
 }
 
-var newElasticsearchDataQuery = func(ctx context.Context, client es.Client, dataQuery []backend.DataQuery, logger log.Logger, tracer tracing.Tracer) *elasticsearchDataQuery {
+var newElasticsearchDataQuery = func(ctx context.Context, client es.Client, req *backend.QueryDataRequest, logger log.Logger, tracer tracing.Tracer) *elasticsearchDataQuery {
+	_, fromAlert := req.Headers[headerFromAlert]
+	fromExpression := req.GetHTTPHeader(headerFromExpression) != ""
+
 	return &elasticsearchDataQuery{
 		client:      client,
-		dataQueries: dataQuery,
+		dataQueries: req.Queries,
 		logger:      logger,
 		ctx:         ctx,
 		tracer:      tracer,
+		// To maintain backward compatibility, it is necessary to keep labels in responses for alerting and expressions queries.
+		// Historically, these labels have been used in alerting rules and transformations.
+		keepLabelsInResponse: fromAlert || fromExpression,
 	}
 }
 
@@ -53,9 +60,9 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 
 	ms := e.client.MultiSearch()
 
-	from := e.dataQueries[0].TimeRange.From.UnixNano() / int64(time.Millisecond)
-	to := e.dataQueries[0].TimeRange.To.UnixNano() / int64(time.Millisecond)
 	for _, q := range queries {
+		from := q.TimeRange.From.UnixNano() / int64(time.Millisecond)
+		to := q.TimeRange.To.UnixNano() / int64(time.Millisecond)
 		if err := e.processQuery(q, ms, from, to); err != nil {
 			mq, _ := json.Marshal(q)
 			e.logger.Error("Failed to process query to multisearch request builder", "error", err, "query", string(mq), "queriesLength", len(queries), "duration", time.Since(start), "stage", es.StagePrepareRequest)
@@ -77,7 +84,7 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 		return errorsource.AddErrorToResponse(e.dataQueries[0].RefID, response, err), nil
 	}
 
-	return parseResponse(e.ctx, res.Responses, queries, e.client.GetConfiguredFields(), e.logger, e.tracer)
+	return parseResponse(e.ctx, res.Responses, queries, e.client.GetConfiguredFields(), e.keepLabelsInResponse, e.logger, e.tracer)
 }
 
 func (e *elasticsearchDataQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilder, from, to int64) error {
@@ -88,7 +95,7 @@ func (e *elasticsearchDataQuery) processQuery(q *Query, ms *es.MultiSearchReques
 	}
 
 	defaultTimeField := e.client.GetConfiguredFields().TimeField
-	b := ms.Search(q.Interval)
+	b := ms.Search(q.Interval, q.TimeRange)
 	b.Size(0)
 	filters := b.Query().Bool().Filter()
 	filters.AddDateRangeFilter(defaultTimeField, to, from, es.DateFormatEpochMS)

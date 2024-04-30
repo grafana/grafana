@@ -505,6 +505,9 @@ type MatcherConfig struct {
 
 // Dashboard panels are the basic visualization building blocks.
 type Panel struct {
+	// Sets panel queries cache timeout.
+	CacheTimeout *string `json:"cacheTimeout,omitempty"`
+
 	// Ref to a DataSource instance
 	Datasource *DataSourceRef `json:"datasource,omitempty"`
 
@@ -551,6 +554,9 @@ type Panel struct {
 
 	// The version of the plugin that is used for this panel. This is used to find the plugin to display the panel and to migrate old panel configs.
 	PluginVersion *string `json:"pluginVersion,omitempty"`
+
+	// Overrides the data source configured time-to-live for a query cache item in milliseconds
+	QueryCachingTTL *float32 `json:"queryCachingTTL,omitempty"`
 
 	// Name of template variable to repeat for.
 	Repeat *string `json:"repeat,omitempty"`
@@ -693,6 +699,9 @@ type Snapshot struct {
 
 	// OrgId org id of the snapshot
 	OrgId int `json:"orgId"`
+
+	// OriginalUrl original url, url of the dashboard that was snapshotted
+	OriginalUrl string `json:"originalUrl"`
 
 	// Updated last time when the snapshot was updated
 	Updated time.Time `json:"updated"`

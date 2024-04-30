@@ -41,7 +41,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
     super(instanceSettings);
     this.annotations = {
       QueryEditor: AnnotationQueryEditor,
-      prepareAnnotation(json: any): AnnotationQuery<GrafanaAnnotationQuery> {
+      prepareAnnotation(json): AnnotationQuery<GrafanaAnnotationQuery> {
         // Previously, these properties lived outside of target
         // This should handle migrating them
         json.target = json.target ?? {
@@ -216,7 +216,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
 
     if (target.type === GrafanaAnnotationType.Dashboard) {
       // if no dashboard id yet return
-      if (!options.dashboard.uid) {
+      if (!options.dashboard?.uid) {
         return Promise.resolve({ data: [] });
       }
       // filter by dashboard id

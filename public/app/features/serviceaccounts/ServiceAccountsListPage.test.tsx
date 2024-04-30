@@ -77,7 +77,7 @@ const getDefaultServiceAccount: () => ServiceAccountDTO = () => ({
 });
 
 describe('ServiceAccountsListPage tests', () => {
-  it('Should display list of service accounts', () => {
+  it('Should display list of service accounts', async () => {
     setup({
       serviceAccounts: [getDefaultServiceAccount()],
     });
@@ -153,7 +153,7 @@ describe('ServiceAccountsListPage tests', () => {
     });
 
     const user = userEvent.setup();
-    await user.click(screen.getByLabelText(/Delete service account/));
+    await user.click(screen.getByLabelText(`Delete service account ${getDefaultServiceAccount().name}`));
     await user.click(screen.getByRole('button', { name: 'Delete' }));
 
     expect(deleteServiceAccountMock).toHaveBeenCalledWith(42);

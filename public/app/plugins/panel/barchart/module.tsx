@@ -16,11 +16,13 @@ import { ThresholdsStyleEditor } from '../timeseries/ThresholdsStyleEditor';
 
 import { BarChartPanel } from './BarChartPanel';
 import { TickSpacingEditor } from './TickSpacingEditor';
+import { changeToBarChartPanelMigrationHandler } from './migrations';
 import { FieldConfig, Options, defaultFieldConfig, defaultOptions } from './panelcfg.gen';
 import { BarChartSuggestionsSupplier } from './suggestions';
 import { prepareBarChartDisplayValues } from './utils';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
+  .setPanelChangeHandler(changeToBarChartPanelMigrationHandler)
   .useFieldConfig({
     standardOptions: {
       [FieldConfigProperty.Color]: {
@@ -225,6 +227,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
         path: 'fullHighlight',
         name: 'Highlight full area on hover',
         defaultValue: defaultOptions.fullHighlight,
+        showIf: (c) => c.stacking === StackingMode.None,
       });
 
     builder.addFieldNamePicker({
@@ -233,10 +236,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
       description: 'Use the color value for a sibling field to color each bar value.',
     });
 
-    if (!context.options?.fullHighlight || context.options?.stacking === StackingMode.None) {
-      commonOptionsBuilder.addTooltipOptions(builder);
-    }
-
+    commonOptionsBuilder.addTooltipOptions(builder);
     commonOptionsBuilder.addLegendOptions(builder);
     commonOptionsBuilder.addTextSizeOptions(builder, false);
   })

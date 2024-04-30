@@ -81,6 +81,14 @@ export interface ModifyExportPayload {
   source_tenants?: string[] | undefined;
 }
 
+export interface AlertRuleUpdated {
+  message: string;
+  /**
+   * UIDs of rules updated from this request
+   */
+  updated: string[];
+}
+
 export const alertRuleApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
     preview: build.mutation<
@@ -172,6 +180,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
       transformResponse: (response: PromRulesResponse, _, args): RuleNamespace[] => {
         return groupRulesByFileName(response.data.groups, args.ruleSourceName);
       },
+      providesTags: ['CombinedAlertRule'],
     }),
 
     rulerRules: build.query<
@@ -182,6 +191,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         const { path, params } = rulerUrlBuilder(rulerConfig).rules(filter);
         return { url: path, params };
       },
+      providesTags: ['CombinedAlertRule'],
     }),
 
     // TODO This should be probably a separate ruler API file
@@ -193,6 +203,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         const { path, params } = rulerUrlBuilder(rulerConfig).namespaceGroup(namespace, group);
         return { url: path, params };
       },
+      providesTags: ['CombinedAlertRule'],
     }),
 
     exportRules: build.query<string, ExportRulesParams>({
@@ -254,6 +265,15 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         responseType: 'text',
       }),
       keepUnusedDataFor: 0,
+    }),
+
+    updateRule: build.mutation<AlertRuleUpdated, { nameSpaceUID: string; payload: ModifyExportPayload }>({
+      query: ({ payload, nameSpaceUID }) => ({
+        url: `/api/ruler/grafana/api/v1/rules/${nameSpaceUID}/`,
+        data: payload,
+        method: 'POST',
+      }),
+      invalidatesTags: ['CombinedAlertRule'],
     }),
   }),
 });

@@ -69,10 +69,6 @@ By default, the viewer organization role does not allow viewers to create dashbo
 
 This modification is useful for public Grafana installations where you want anonymous users to be able to edit panels and queries but not save or create new dashboards.
 
-{{% admonition type="note" %}}
-If you use Grafana Enterprise and customize users' permissions using RBAC, the RBAC permissions override the functionality enabled by the `viewers_can_edit` flag.
-{{% /admonition %}}
-
 ### Before you begin
 
 - Ensure that you have access to the Grafana server

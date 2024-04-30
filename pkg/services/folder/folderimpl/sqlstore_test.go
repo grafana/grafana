@@ -3,6 +3,7 @@ package folderimpl
 import (
 	"context"
 	"fmt"
+	"path"
 	"slices"
 	"sort"
 	"testing"
@@ -12,11 +13,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -28,10 +31,10 @@ func TestIntegrationCreate(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg)
+	db, cfg := sqlstore.InitTestDB(t)
+	folderStore := ProvideStore(db, cfg)
 
-	orgID := CreateOrg(t, db)
+	orgID := CreateOrg(t, db, cfg)
 
 	t.Run("creating a folder without providing a UID should fail", func(t *testing.T) {
 		_, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
@@ -148,10 +151,10 @@ func TestIntegrationDelete(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg)
+	db, cfg := sqlstore.InitTestDB(t)
+	folderStore := ProvideStore(db, cfg)
 
-	orgID := CreateOrg(t, db)
+	orgID := CreateOrg(t, db, cfg)
 
 	/*
 		t.Run("attempt to delete unknown folder should fail", func(t *testing.T) {
@@ -195,10 +198,10 @@ func TestIntegrationUpdate(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg)
+	db, cfg := sqlstore.InitTestDB(t)
+	folderStore := ProvideStore(db, cfg)
 
-	orgID := CreateOrg(t, db)
+	orgID := CreateOrg(t, db, cfg)
 
 	// create parent folder
 	parent, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
@@ -370,10 +373,10 @@ func TestIntegrationGet(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg)
+	db, cfg := sqlstore.InitTestDB(t)
+	folderStore := ProvideStore(db, cfg)
 
-	orgID := CreateOrg(t, db)
+	orgID := CreateOrg(t, db, cfg)
 
 	// create folder
 	uid1 := util.GenerateShortUID()
@@ -391,11 +394,7 @@ func TestIntegrationGet(t *testing.T) {
 		UID:         util.GenerateShortUID(),
 		ParentUID:   f.UID,
 	})
-
-	t.Cleanup(func() {
-		err := folderStore.Delete(context.Background(), []string{f.UID}, orgID)
-		require.NoError(t, err)
-	})
+	require.NoError(t, err)
 
 	t.Run("should gently fail in case of bad request", func(t *testing.T) {
 		_, err = folderStore.Get(context.Background(), folder.GetFolderQuery{})
@@ -466,6 +465,24 @@ func TestIntegrationGet(t *testing.T) {
 		assert.NotEmpty(t, ff.Updated)
 		assert.NotEmpty(t, ff.URL)
 	})
+
+	t.Run("get folder with fullpath should set fullpath as expected", func(t *testing.T) {
+		ff, err := folderStore.Get(context.Background(), folder.GetFolderQuery{
+			UID:          &subfolderWithSameName.UID,
+			OrgID:        orgID,
+			WithFullpath: true,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, subfolderWithSameName.UID, ff.UID)
+		assert.Equal(t, subfolderWithSameName.OrgID, ff.OrgID)
+		assert.Equal(t, subfolderWithSameName.Title, ff.Title)
+		assert.Equal(t, subfolderWithSameName.Description, ff.Description)
+		assert.Equal(t, path.Join(f.Title, subfolderWithSameName.Title), ff.Fullpath)
+		assert.Equal(t, f.UID, ff.ParentUID)
+		assert.NotEmpty(t, ff.Created)
+		assert.NotEmpty(t, ff.Updated)
+		assert.NotEmpty(t, ff.URL)
+	})
 }
 
 func TestIntegrationGetParents(t *testing.T) {
@@ -473,10 +490,10 @@ func TestIntegrationGetParents(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg)
+	db, cfg := sqlstore.InitTestDB(t)
+	folderStore := ProvideStore(db, cfg)
 
-	orgID := CreateOrg(t, db)
+	orgID := CreateOrg(t, db, cfg)
 
 	// create folder
 	uid1 := util.GenerateShortUID()
@@ -541,10 +558,10 @@ func TestIntegrationGetChildren(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg)
+	db, cfg := sqlstore.InitTestDB(t)
+	folderStore := ProvideStore(db, cfg)
 
-	orgID := CreateOrg(t, db)
+	orgID := CreateOrg(t, db, cfg)
 
 	// create folder
 	uid1 := util.GenerateShortUID()
@@ -721,10 +738,10 @@ func TestIntegrationGetHeight(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg)
+	db, cfg := sqlstore.InitTestDB(t)
+	folderStore := ProvideStore(db, cfg)
 
-	orgID := CreateOrg(t, db)
+	orgID := CreateOrg(t, db, cfg)
 
 	// create folder
 	uid1 := util.GenerateShortUID()
@@ -754,10 +771,10 @@ func TestIntegrationGetFolders(t *testing.T) {
 	}
 
 	foldersNum := 10
-	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg)
+	db, cfg := sqlstore.InitTestDB(t)
+	folderStore := ProvideStore(db, cfg)
 
-	orgID := CreateOrg(t, db)
+	orgID := CreateOrg(t, db, cfg)
 
 	// create folders
 	uids := make([]string, 0)
@@ -871,10 +888,10 @@ func TestIntegrationGetFolders(t *testing.T) {
 	})
 }
 
-func CreateOrg(t *testing.T, db *sqlstore.SQLStore) int64 {
+func CreateOrg(t *testing.T, db db.DB, cfg *setting.Cfg) int64 {
 	t.Helper()
 
-	orgService, err := orgimpl.ProvideService(db, db.Cfg, quotatest.New(false, nil))
+	orgService, err := orgimpl.ProvideService(db, cfg, quotatest.New(false, nil))
 	require.NoError(t, err)
 	orgID, err := orgService.GetOrCreate(context.Background(), "test-org")
 	require.NoError(t, err)

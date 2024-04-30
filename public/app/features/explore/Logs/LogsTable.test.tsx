@@ -164,7 +164,7 @@ describe('LogsTable', () => {
     });
   });
 
-  it('should not render `tsNs`', async () => {
+  it('should not render `tsNs` column', async () => {
     setup(undefined, getMockLokiFrame());
 
     await waitFor(() => {
@@ -172,6 +172,28 @@ describe('LogsTable', () => {
 
       expect(columns.length).toBe(0);
     });
+  });
+
+  it('should render numeric field aligned right', async () => {
+    setup(
+      {
+        columnsWithMeta: {
+          Time: { active: true, percentOfLinesWithLabel: 100, index: 0 },
+          line: { active: true, percentOfLinesWithLabel: 100, index: 1 },
+          tsNs: { active: true, percentOfLinesWithLabel: 100, index: 2 },
+        },
+      },
+      getMockLokiFrame()
+    );
+
+    await waitFor(() => {
+      const columns = screen.queryAllByRole('columnheader', { name: 'tsNs' });
+      expect(columns.length).toBe(1);
+    });
+
+    const cells = screen.queryAllByRole('cell');
+
+    expect(cells[cells.length - 1].style.textAlign).toBe('right');
   });
 
   it('should not render `labels`', async () => {

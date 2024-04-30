@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryCodeEditor.tsx
 import { css } from '@emotion/css';
 import React from 'react';
 
@@ -5,7 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2 } from '@grafana/ui';
 
-import PromQueryField from '../../components/PromQueryField';
+import { PromQueryField } from '../../components/PromQueryField';
 import { PromQueryEditorProps } from '../../components/types';
 
 import { PromQueryBuilderExplained } from './PromQueryBuilderExplained';

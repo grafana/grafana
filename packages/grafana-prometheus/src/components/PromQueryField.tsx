@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/PromQueryField.tsx
 import { cx } from '@emotion/css';
 import React, { ReactNode } from 'react';
 
@@ -48,7 +49,7 @@ interface PromQueryFieldState {
   hint: QueryHint | null;
 }
 
-class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryFieldState> {
+class PromQueryFieldClass extends React.PureComponent<PromQueryFieldProps, PromQueryFieldState> {
   declare languageProviderInitializationPromise: CancelablePromise<any>;
 
   constructor(props: PromQueryFieldProps) {
@@ -287,4 +288,4 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   }
 }
 
-export default withTheme2(PromQueryField);
+export const PromQueryField = withTheme2(PromQueryFieldClass);

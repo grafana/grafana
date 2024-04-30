@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	dsService "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
 type filterDatasourcesTestCase struct {
@@ -25,6 +26,10 @@ type filterDatasourcesTestCase struct {
 
 	expectedDataSources []string
 	expectErr           bool
+}
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
 }
 
 func TestFilter_Datasources(t *testing.T) {

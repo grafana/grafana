@@ -118,7 +118,7 @@ For additional information, refer to [Traces to metrics: Ad-hoc RED metrics in G
 When you use **Aggregate by**, the selections you make determine how the information is reported in the Table. Every combination that matches selections in your data is listed in the table.
 Each aggregate value, for example `intrinsic`:`name`, has a corresponding column in the results table.
 
-For example, **names** matching `GET /:endpoint` with a **span.http.user_agent** of `k6/0.46` appeared in 31,466 spans. Instead of being listed by traces and associated spans, the query results are grouped by the the selections in **Aggregate by**.
+For example, **names** matching `GET /:endpoint` with a **span.http.user_agent** of `k6/0.46` appeared in 31,466 spans. Instead of being listed by traces and associated spans, the query results are grouped by the selections in **Aggregate by**.
 
 The RED metrics are calculated for every name and user agent combination found in your data.
 

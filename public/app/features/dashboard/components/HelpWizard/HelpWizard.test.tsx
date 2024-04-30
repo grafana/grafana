@@ -31,6 +31,6 @@ function setup() {
 describe('SupportSnapshot', () => {
   it('Can render', async () => {
     setup();
-    expect(await screen.findByRole('button', { name: 'Dashboard (2.97 KiB)' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /Dashboard \([\d\.]+ KiB\)/ })).toBeInTheDocument();
   });
 });

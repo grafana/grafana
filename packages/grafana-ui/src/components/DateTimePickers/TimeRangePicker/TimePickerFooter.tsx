@@ -73,7 +73,12 @@ export const TimePickerFooter = (props: Props) => {
           <TimeZoneOffset timeZone={timeZone} timestamp={timestamp} />
         </div>
         <div className={style.spacer} />
-        <Button variant="secondary" onClick={onToggleChangeTimeSettings} size="sm">
+        <Button
+          data-testid={selectors.components.TimeZonePicker.changeTimeSettingsButton}
+          variant="secondary"
+          onClick={onToggleChangeTimeSettings}
+          size="sm"
+        >
           <Trans i18nKey="time-picker.footer.change-settings-button">Change time settings</Trans>
         </Button>
       </section>

@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
-	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
@@ -50,18 +49,6 @@ func TestUserService(t *testing.T) {
 
 	t.Run("get user by ID", func(t *testing.T) {
 		userService.cfg = setting.NewCfg()
-		userService.cfg.CaseInsensitiveLogin = false
-		userStore.ExpectedUser = &user.User{ID: 1, Email: "email", Login: "login", Name: "name"}
-		u, err := userService.GetByID(context.Background(), &user.GetUserByIDQuery{ID: 1})
-		require.NoError(t, err)
-		require.Equal(t, "login", u.Login)
-		require.Equal(t, "name", u.Name)
-		require.Equal(t, "email", u.Email)
-	})
-
-	t.Run("get user by ID with case insensitive login", func(t *testing.T) {
-		userService.cfg = setting.NewCfg()
-		userService.cfg.CaseInsensitiveLogin = true
 		userStore.ExpectedUser = &user.User{ID: 1, Email: "email", Login: "login", Name: "name"}
 		u, err := userService.GetByID(context.Background(), &user.GetUserByIDQuery{ID: 1})
 		require.NoError(t, err)
@@ -99,7 +86,6 @@ func TestUserService(t *testing.T) {
 	})
 
 	t.Run("GetByID - email conflict", func(t *testing.T) {
-		userService.cfg.CaseInsensitiveLogin = true
 		userStore.ExpectedError = errors.New("email conflict")
 		query := user.GetUserByIDQuery{}
 		_, err := userService.GetByID(context.Background(), &query)
@@ -140,66 +126,81 @@ func TestUserService(t *testing.T) {
 		assert.Equal(t, query2.OrgID, result2.OrgID)
 	})
 
-	t.Run("NewAnonymousSignedInUser", func(t *testing.T) {
-		t.Run("should error when anonymous access is disabled", func(t *testing.T) {
-			userService.cfg = setting.NewCfg()
-			userService.cfg.AnonymousEnabled = false
-			_, err := userService.NewAnonymousSignedInUser(context.Background())
-			require.Error(t, err)
+	t.Run("SignedInUserQuery with a different org", func(t *testing.T) {
+		query := user.GetSignedInUserQuery{UserID: 2}
+		userStore.ExpectedSignedInUser = &user.SignedInUser{
+			OrgID:   1,
+			Email:   "ac2@test.com",
+			Name:    "ac2 name",
+			Login:   "ac2",
+			OrgName: "ac1@test.com",
+		}
+		userStore.ExpectedError = nil
+		queryResult, err := userService.GetSignedInUser(context.Background(), &query)
+
+		require.NoError(t, err)
+		require.EqualValues(t, queryResult.OrgID, 1)
+		require.Equal(t, queryResult.Email, "ac2@test.com")
+		require.Equal(t, queryResult.Name, "ac2 name")
+		require.Equal(t, queryResult.Login, "ac2")
+		require.Equal(t, queryResult.OrgName, "ac1@test.com")
+	})
+}
+
+func TestService_Update(t *testing.T) {
+	setup := func(opts ...func(svc *Service)) *Service {
+		service := &Service{store: &FakeUserStore{}}
+		for _, o := range opts {
+			o(service)
+		}
+		return service
+	}
+
+	t.Run("should return error if old password does not match stored password", func(t *testing.T) {
+		service := setup(func(svc *Service) {
+			stored, err := user.Password("test").Hash("salt")
+			require.NoError(t, err)
+
+			svc.store = &FakeUserStore{ExpectedUser: &user.User{Password: stored, Salt: "salt"}}
 		})
 
-		t.Run("should return user when anonymous access is enabled and org is not set", func(t *testing.T) {
-			userService.cfg = setting.NewCfg()
-			userService.cfg.AnonymousEnabled = true
-			u, err := userService.NewAnonymousSignedInUser(context.Background())
+		err := service.Update(context.Background(), &user.UpdateUserCommand{
+			OldPassword: passwordPtr("test123"),
+		})
+		assert.ErrorIs(t, err, user.ErrPasswordMissmatch)
+	})
+
+	t.Run("should return error new password is not valid", func(t *testing.T) {
+		service := setup(func(svc *Service) {
+			stored, err := user.Password("test").Hash("salt")
 			require.NoError(t, err)
-			require.Equal(t, true, u.IsAnonymous)
-			require.Equal(t, int64(0), u.UserID)
-			require.Equal(t, "", u.OrgName)
-			require.Equal(t, roletype.RoleType(""), u.OrgRole)
+			svc.cfg = setting.NewCfg()
+			svc.store = &FakeUserStore{ExpectedUser: &user.User{Password: stored, Salt: "salt"}}
 		})
 
-		t.Run("should return user with org info when anonymous access is enabled and org is set", func(t *testing.T) {
-			userService.cfg = setting.NewCfg()
-			userService.cfg.AnonymousEnabled = true
-			userService.cfg.AnonymousOrgName = "anonymous"
-			userService.cfg.AnonymousOrgRole = "anonymous"
-			orgService.ExpectedOrg = &org.Org{Name: "anonymous", ID: 123}
-			u, err := userService.NewAnonymousSignedInUser(context.Background())
-			require.NoError(t, err)
-			require.Equal(t, true, u.IsAnonymous)
-			require.Equal(t, int64(0), u.UserID)
-			require.Equal(t, orgService.ExpectedOrg.ID, u.OrgID)
-			require.Equal(t, orgService.ExpectedOrg.Name, u.OrgName)
-			require.Equal(t, roletype.RoleType(userService.cfg.AnonymousOrgRole), u.OrgRole)
+		err := service.Update(context.Background(), &user.UpdateUserCommand{
+			OldPassword: passwordPtr("test"),
+			Password:    passwordPtr("asd"),
 		})
+		require.ErrorIs(t, err, user.ErrPasswordTooShort)
 	})
 
 	t.Run("Can set using org", func(t *testing.T) {
-		cmd := user.SetUsingOrgCommand{UserID: 2, OrgID: 1}
-		orgService.ExpectedUserOrgDTO = []*org.UserOrgDTO{{OrgID: 1}}
-		userStore.ExpectedError = nil
-		err := userService.SetUsingOrg(context.Background(), &cmd)
-		require.NoError(t, err)
-
-		t.Run("SignedInUserQuery with a different org", func(t *testing.T) {
-			query := user.GetSignedInUserQuery{UserID: 2}
-			userStore.ExpectedSignedInUser = &user.SignedInUser{
-				OrgID:   1,
-				Email:   "ac2@test.com",
-				Name:    "ac2 name",
-				Login:   "ac2",
-				OrgName: "ac1@test.com",
-			}
-			queryResult, err := userService.GetSignedInUser(context.Background(), &query)
-
-			require.NoError(t, err)
-			require.EqualValues(t, queryResult.OrgID, 1)
-			require.Equal(t, queryResult.Email, "ac2@test.com")
-			require.Equal(t, queryResult.Name, "ac2 name")
-			require.Equal(t, queryResult.Login, "ac2")
-			require.Equal(t, queryResult.OrgName, "ac1@test.com")
+		orgID := int64(1)
+		service := setup(func(svc *Service) {
+			svc.orgService = &orgtest.FakeOrgService{ExpectedUserOrgDTO: []*org.UserOrgDTO{{OrgID: orgID}}}
 		})
+		err := service.Update(context.Background(), &user.UpdateUserCommand{UserID: 2, OrgID: &orgID})
+		require.NoError(t, err)
+	})
+
+	t.Run("Cannot set using org when user is not member of it", func(t *testing.T) {
+		orgID := int64(1)
+		service := setup(func(svc *Service) {
+			svc.orgService = &orgtest.FakeOrgService{ExpectedUserOrgDTO: []*org.UserOrgDTO{{OrgID: 2}}}
+		})
+		err := service.Update(context.Background(), &user.UpdateUserCommand{UserID: 2, OrgID: &orgID})
+		require.Error(t, err)
 	})
 }
 
@@ -218,14 +219,14 @@ func TestMetrics(t *testing.T) {
 		userStore.ExpectedCountUserAccountsWithEmptyRoles = int64(1)
 
 		userService.cfg = setting.NewCfg()
-		userService.cfg.CaseInsensitiveLogin = true
+		userService.cfg.BasicAuthStrongPasswordPolicy = true
 
 		stats := userService.GetUsageStats(context.Background())
 		assert.NotEmpty(t, stats)
 
 		assert.Len(t, stats, 2, stats)
-		assert.Equal(t, 1, stats["stats.case_insensitive_login.count"])
 		assert.Equal(t, int64(1), stats["stats.user.role_none.count"])
+		assert.Equal(t, 1, stats["stats.password_policy.count"])
 	})
 }
 
@@ -243,20 +244,12 @@ func newUserStoreFake() *FakeUserStore {
 	return &FakeUserStore{}
 }
 
-func (f *FakeUserStore) Get(ctx context.Context, query *user.User) (*user.User, error) {
-	return f.ExpectedUser, f.ExpectedError
-}
-
 func (f *FakeUserStore) Insert(ctx context.Context, query *user.User) (int64, error) {
 	return 0, f.ExpectedError
 }
 
 func (f *FakeUserStore) Delete(ctx context.Context, userID int64) error {
 	return f.ExpectedDeleteUserError
-}
-
-func (f *FakeUserStore) GetNotServiceAccount(ctx context.Context, userID int64) (*user.User, error) {
-	return f.ExpectedUser, f.ExpectedError
 }
 
 func (f *FakeUserStore) GetByID(context.Context, int64) (*user.User, error) {
@@ -267,7 +260,7 @@ func (f *FakeUserStore) CaseInsensitiveLoginConflict(context.Context, string, st
 	return f.ExpectedError
 }
 
-func (f *FakeUserStore) LoginConflict(context.Context, string, string, bool) error {
+func (f *FakeUserStore) LoginConflict(context.Context, string, string) error {
 	return f.ExpectedError
 }
 
@@ -283,10 +276,6 @@ func (f *FakeUserStore) Update(ctx context.Context, cmd *user.UpdateUserCommand)
 	return f.ExpectedError
 }
 
-func (f *FakeUserStore) ChangePassword(ctx context.Context, cmd *user.ChangeUserPasswordCommand) error {
-	return f.ExpectedError
-}
-
 func (f *FakeUserStore) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLastSeenAtCommand) error {
 	return f.ExpectedError
 }
@@ -295,27 +284,11 @@ func (f *FakeUserStore) GetSignedInUser(ctx context.Context, query *user.GetSign
 	return f.ExpectedSignedInUser, f.ExpectedError
 }
 
-func (f *FakeUserStore) UpdateUser(ctx context.Context, user *user.User) error {
-	return f.ExpectedError
-}
-
 func (f *FakeUserStore) GetProfile(ctx context.Context, query *user.GetUserProfileQuery) (*user.UserProfileDTO, error) {
 	return f.ExpectedUserProfile, f.ExpectedError
 }
 
-func (f *FakeUserStore) SetHelpFlag(ctx context.Context, cmd *user.SetUserHelpFlagCommand) error {
-	return f.ExpectedError
-}
-
-func (f *FakeUserStore) UpdatePermissions(ctx context.Context, userID int64, isAdmin bool) error {
-	return f.ExpectedError
-}
-
 func (f *FakeUserStore) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisableUsersCommand) error {
-	return f.ExpectedError
-}
-
-func (f *FakeUserStore) Disable(ctx context.Context, cmd *user.DisableUserCommand) error {
 	return f.ExpectedError
 }
 

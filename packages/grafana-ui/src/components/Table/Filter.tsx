@@ -1,12 +1,13 @@
 import { css, cx } from '@emotion/css';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
-import { Field, GrafanaTheme2 } from '@grafana/data';
+import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
 
 import { Popover } from '..';
 import { useStyles2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 
+import { REGEX_OPERATOR } from './FilterList';
 import { FilterPopup } from './FilterPopup';
 import { TableStyles } from './styles';
 
@@ -23,6 +24,8 @@ export const Filter = ({ column, field, tableStyles }: Props) => {
   const filterEnabled = useMemo(() => Boolean(column.filterValue), [column.filterValue]);
   const onShowPopover = useCallback(() => setPopoverVisible(true), [setPopoverVisible]);
   const onClosePopover = useCallback(() => setPopoverVisible(false), [setPopoverVisible]);
+  const [searchFilter, setSearchFilter] = useState('');
+  const [operator, setOperator] = useState<SelectableValue<string>>(REGEX_OPERATOR);
 
   if (!field || !field.config.custom?.filterable) {
     return null;
@@ -37,7 +40,18 @@ export const Filter = ({ column, field, tableStyles }: Props) => {
       <Icon name="filter" />
       {isPopoverVisible && ref.current && (
         <Popover
-          content={<FilterPopup column={column} tableStyles={tableStyles} field={field} onClose={onClosePopover} />}
+          content={
+            <FilterPopup
+              column={column}
+              tableStyles={tableStyles}
+              field={field}
+              onClose={onClosePopover}
+              searchFilter={searchFilter}
+              setSearchFilter={setSearchFilter}
+              operator={operator}
+              setOperator={setOperator}
+            />
+          }
           placement="bottom-start"
           referenceElement={ref.current}
           show

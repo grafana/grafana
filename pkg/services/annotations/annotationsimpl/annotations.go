@@ -38,7 +38,7 @@ func ProvideService(
 	historianStore := loki.NewLokiHistorianStore(cfg.UnifiedAlerting.StateHistory, features, db, log.New("annotations.loki"))
 	if historianStore != nil {
 		l.Debug("Using composite read store")
-		read = NewCompositeStore(xormStore, historianStore)
+		read = NewCompositeStore(log.New("annotations.composite"), xormStore, historianStore)
 	} else {
 		l.Debug("Using xorm read store")
 		read = write
@@ -68,7 +68,7 @@ func (r *RepositoryImpl) Update(ctx context.Context, item *annotations.Item) err
 }
 
 func (r *RepositoryImpl) Find(ctx context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
-	resources, err := r.authZ.Authorize(ctx, query.OrgID, query.SignedInUser)
+	resources, err := r.authZ.Authorize(ctx, query.OrgID, query)
 	if err != nil {
 		return make([]*annotations.ItemDTO, 0), err
 	}

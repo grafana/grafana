@@ -24,6 +24,7 @@ expect_claims = {"iss": "http://env.grafana.local:8087/realms/grafana", "azp": "
 auto_sign_up = true
 role_attribute_path = contains(roles[*], 'grafanaadmin') && 'GrafanaAdmin' || contains(roles[*], 'admin') && 'Admin' || contains(roles[*], 'editor') && 'Editor' || 'Viewer'
 role_attribute_strict = false
+groups_attribute_path = groups[]
 allow_assign_grafana_admin = true
 ```
 

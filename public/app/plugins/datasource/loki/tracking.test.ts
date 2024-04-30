@@ -1,4 +1,4 @@
-import { DashboardLoadedEvent, DataQueryRequest, dateTime } from '@grafana/data';
+import { CoreApp, DashboardLoadedEvent, DataQueryRequest, dateTime } from '@grafana/data';
 import { QueryEditorMode } from '@grafana/experimental';
 import { reportInteraction } from '@grafana/runtime';
 
@@ -31,7 +31,7 @@ const originalRequest = {
     { expr: 'count_over_time({hidden="true"}[1m])', refId: 'C', ...baseTarget, hide: true },
   ],
   range,
-  app: 'explore',
+  app: CoreApp.Explore,
 } as DataQueryRequest<LokiQuery>;
 
 const requests: LokiGroupedRequest[] = [
@@ -64,37 +64,46 @@ beforeEach(() => {
   jest.mocked(reportInteraction).mockClear();
 });
 
-test('Tracks queries', () => {
-  trackQuery({ data: [] }, originalRequest, new Date());
+describe('Tracks queries', () => {
+  it('should track queries in Explore', () => {
+    trackQuery({ data: [] }, originalRequest, new Date());
+    expect(reportInteraction).toHaveBeenCalledWith('grafana_explore_loki_query_executed', {
+      bytes_processed: 0,
+      editor_mode: 'builder',
+      grafana_version: '1.0',
+      has_data: false,
+      has_error: false,
+      is_split: false,
+      legend: undefined,
+      line_limit: undefined,
+      obfuscated_query: 'count_over_time({Identifier=String}[1m])',
+      query_type: 'metric',
+      query_vector_type: undefined,
+      resolution: 1,
+      simultaneously_executed_query_count: 2,
+      simultaneously_hidden_query_count: 1,
+      time_range_from: '2023-02-08T05:00:00.000Z',
+      time_range_to: '2023-02-10T06:00:00.000Z',
+      time_taken: 0,
+      predefined_operations_applied: 'n/a',
+    });
+  });
 
-  expect(reportInteraction).toHaveBeenCalledWith('grafana_loki_query_executed', {
-    app: 'explore',
-    bytes_processed: 0,
-    editor_mode: 'builder',
-    grafana_version: '1.0',
-    has_data: false,
-    has_error: false,
-    is_split: false,
-    legend: undefined,
-    line_limit: undefined,
-    obfuscated_query: 'count_over_time({Identifier=String}[1m])',
-    query_type: 'metric',
-    query_vector_type: undefined,
-    resolution: 1,
-    simultaneously_executed_query_count: 2,
-    simultaneously_hidden_query_count: 1,
-    time_range_from: '2023-02-08T05:00:00.000Z',
-    time_range_to: '2023-02-10T06:00:00.000Z',
-    time_taken: 0,
-    predefined_operations_applied: 'n/a',
+  it('should not track queries if app is not Explore', () => {
+    trackQuery({ data: [] }, { ...originalRequest, app: CoreApp.PanelViewer }, new Date());
+    expect(reportInteraction).not.toHaveBeenCalled();
+  });
+
+  it('should not track queries if no app', () => {
+    trackQuery({ data: [] }, { ...originalRequest, app: '' }, new Date());
+    expect(reportInteraction).not.toHaveBeenCalled();
   });
 });
 
 test('Tracks predefined operations', () => {
   trackQuery({ data: [] }, originalRequest, new Date(), { predefinedOperations: 'count_over_time' });
 
-  expect(reportInteraction).toHaveBeenCalledWith('grafana_loki_query_executed', {
-    app: 'explore',
+  expect(reportInteraction).toHaveBeenCalledWith('grafana_explore_loki_query_executed', {
     bytes_processed: 0,
     editor_mode: 'builder',
     grafana_version: '1.0',
@@ -119,8 +128,7 @@ test('Tracks predefined operations', () => {
 test('Tracks grouped queries', () => {
   trackGroupedQueries({ data: [] }, requests, originalRequest, new Date());
 
-  expect(reportInteraction).toHaveBeenCalledWith('grafana_loki_query_executed', {
-    app: 'explore',
+  expect(reportInteraction).toHaveBeenCalledWith('grafana_explore_loki_query_executed', {
     bytes_processed: 0,
     editor_mode: 'builder',
     grafana_version: '1.0',
@@ -145,8 +153,7 @@ test('Tracks grouped queries', () => {
     predefined_operations_applied: 'n/a',
   });
 
-  expect(reportInteraction).toHaveBeenCalledWith('grafana_loki_query_executed', {
-    app: 'explore',
+  expect(reportInteraction).toHaveBeenCalledWith('grafana_explore_loki_query_executed', {
     bytes_processed: 0,
     editor_mode: 'builder',
     grafana_version: '1.0',

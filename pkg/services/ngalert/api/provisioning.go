@@ -135,3 +135,7 @@ func (f *ProvisioningApiHandler) handleRouteExportMuteTiming(ctx *contextmodel.R
 func (f *ProvisioningApiHandler) handleRouteExportMuteTimings(ctx *contextmodel.ReqContext) response.Response {
 	return f.svc.RouteGetMuteTimingsExport(ctx)
 }
+
+func (f *ProvisioningApiHandler) handleRouteDeleteAlertRuleGroup(ctx *contextmodel.ReqContext, folderUID, group string) response.Response {
+	return f.svc.RouteDeleteAlertRuleGroup(ctx, folderUID, group)
+}

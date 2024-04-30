@@ -2,6 +2,7 @@ package loader
 
 import (
 	"context"
+	"errors"
 	"sort"
 	"strings"
 	"time"
@@ -13,27 +14,42 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/initialization"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/termination"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/validation"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 )
 
 type Loader struct {
-	discovery   discovery.Discoverer
-	bootstrap   bootstrap.Bootstrapper
-	initializer initialization.Initializer
-	termination termination.Terminator
-	validation  validation.Validator
-	log         log.Logger
+	discovery    discovery.Discoverer
+	bootstrap    bootstrap.Bootstrapper
+	initializer  initialization.Initializer
+	termination  termination.Terminator
+	validation   validation.Validator
+	errorTracker pluginerrs.ErrorTracker
+	log          log.Logger
 }
 
 func New(discovery discovery.Discoverer, bootstrap bootstrap.Bootstrapper, validation validation.Validator,
-	initializer initialization.Initializer, termination termination.Terminator) *Loader {
+	initializer initialization.Initializer, termination termination.Terminator, errorTracker pluginerrs.ErrorTracker) *Loader {
 	return &Loader{
-		discovery:   discovery,
-		bootstrap:   bootstrap,
-		validation:  validation,
-		initializer: initializer,
-		termination: termination,
-		log:         log.New("plugin.loader"),
+		discovery:    discovery,
+		bootstrap:    bootstrap,
+		validation:   validation,
+		initializer:  initializer,
+		termination:  termination,
+		errorTracker: errorTracker,
+		log:          log.New("plugin.loader"),
 	}
+}
+
+func (l *Loader) recordError(ctx context.Context, p *plugins.Plugin, err error) {
+	var pErr *plugins.Error
+	if errors.As(err, &pErr) {
+		l.errorTracker.Record(ctx, pErr)
+		return
+	}
+	l.errorTracker.Record(ctx, &plugins.Error{
+		PluginID:  p.ID,
+		ErrorCode: plugins.ErrorCode(err.Error()),
+	})
 }
 
 func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
@@ -44,19 +60,42 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 		return nil, err
 	}
 
-	bootstrappedPlugins, err := l.bootstrap.Bootstrap(ctx, src, discoveredPlugins)
-	if err != nil {
-		return nil, err
+	bootstrappedPlugins := []*plugins.Plugin{}
+	for _, foundBundle := range discoveredPlugins {
+		bootstrappedPlugin, err := l.bootstrap.Bootstrap(ctx, src, foundBundle)
+		if err != nil {
+			l.errorTracker.Record(ctx, &plugins.Error{
+				PluginID:  foundBundle.Primary.JSONData.ID,
+				ErrorCode: plugins.ErrorCode(err.Error()),
+			})
+			continue
+		}
+		bootstrappedPlugins = append(bootstrappedPlugins, bootstrappedPlugin...)
 	}
 
-	validatedPlugins, err := l.validation.Validate(ctx, bootstrappedPlugins)
-	if err != nil {
-		return nil, err
+	validatedPlugins := []*plugins.Plugin{}
+	for _, bootstrappedPlugin := range bootstrappedPlugins {
+		err := l.validation.Validate(ctx, bootstrappedPlugin)
+		if err != nil {
+			l.recordError(ctx, bootstrappedPlugin, err)
+			continue
+		}
+		validatedPlugins = append(validatedPlugins, bootstrappedPlugin)
 	}
 
-	initializedPlugins, err := l.initializer.Initialize(ctx, validatedPlugins)
-	if err != nil {
-		return nil, err
+	initializedPlugins := []*plugins.Plugin{}
+	for _, validatedPlugin := range validatedPlugins {
+		initializedPlugin, err := l.initializer.Initialize(ctx, validatedPlugin)
+		if err != nil {
+			l.recordError(ctx, validatedPlugin, err)
+			continue
+		}
+		initializedPlugins = append(initializedPlugins, initializedPlugin)
+	}
+
+	// Clean errors from registry for initialized plugins
+	for _, p := range initializedPlugins {
+		l.errorTracker.Clear(ctx, p.ID)
 	}
 
 	end(initializedPlugins)

@@ -4,8 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/dskit/services"
-	"github.com/prometheus/client_golang/prometheus"
-
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/registry"
@@ -17,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/entity/grpc"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var (
@@ -51,13 +51,22 @@ type service struct {
 	tracing *tracing.TracingService
 
 	authenticator interceptors.Authenticator
+
+	log log.Logger
 }
 
 func ProvideService(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
+	log log.Logger,
 ) (*service, error) {
-	tracing, err := tracing.ProvideService(cfg)
+	tracingCfg, err := tracing.ProvideTracingConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+	tracingCfg.ServiceName = "unified-storage"
+
+	tracing, err := tracing.ProvideService(tracingCfg)
 	if err != nil {
 		return nil, err
 	}
@@ -71,6 +80,7 @@ func ProvideService(
 		stopCh:        make(chan struct{}),
 		authenticator: authn,
 		tracing:       tracing,
+		log:           log,
 	}
 
 	// This will be used when running as a dskit service
@@ -105,7 +115,7 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	store, err := sqlstash.ProvideSQLEntityServer(eDB)
+	store, err := sqlstash.ProvideSQLEntityServer(eDB, s.tracing)
 	if err != nil {
 		return err
 	}

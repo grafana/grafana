@@ -100,7 +100,7 @@ export const ServerStats = () => {
 };
 
 const getAnonymousStatsContent = (stats: ServerStat | null, config: GrafanaBootConfig) => {
-  if (!config.anonymousEnabled || !config.featureToggles.displayAnonymousStats || !stats?.activeDevices) {
+  if (!config.anonymousEnabled || !stats?.activeDevices) {
     return [];
   }
   if (!config.anonymousDeviceLimit) {

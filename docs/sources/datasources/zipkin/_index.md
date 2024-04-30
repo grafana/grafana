@@ -121,11 +121,6 @@ The following table describes the ways in which you can configure your trace to 
 
 ### Trace to metrics
 
-{{% admonition type="note" %}}
-This feature is behind the `traceToMetrics` [feature toggle][configure-grafana-feature-toggles].
-If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org/#support) to access this feature.
-{{% /admonition %}}
-
 The **Trace to metrics** setting configures the [trace to metrics feature](/blog/2022/08/18/new-in-grafana-9.1-trace-to-metrics-allows-users-to-navigate-from-a-trace-span-to-a-selected-data-source/) available when integrating Grafana with Zipkin.
 
 To configure trace to metrics:
@@ -197,7 +192,7 @@ datasources:
         filterByTraceID: false
         filterBySpanID: false
         customQuery: true
-        query: 'method="${__span.tags.method}"'
+        query: 'method="$${__span.tags.method}"'
       tracesToMetrics:
         datasourceUid: 'prom'
         spanStartTimeShift: '1h'

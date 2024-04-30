@@ -10,13 +10,12 @@ import {
 } from '@grafana/data';
 import { convertFieldType } from '@grafana/data/src/transformations/transformers/convertFieldType';
 import TableModel from 'app/core/TableModel';
-import flatten from 'app/core/utils/flatten';
 
 import { isMetricAggregationWithField } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import * as queryDef from './queryDef';
 import { ElasticsearchAggregation, ElasticsearchQuery, TopMetrics, ExtendedStatMetaType } from './types';
-import { describeMetric, getScriptValue } from './utils';
+import { describeMetric, flattenObject, getScriptValue } from './utils';
 
 const HIGHLIGHT_TAGS_EXP = `${queryDef.highlightTags.pre}([^@]+)${queryDef.highlightTags.post}`;
 type TopMetricMetric = Record<string, number>;
@@ -187,7 +186,7 @@ export class ElasticResponse {
     }
 
     // helper func to add values to value array
-    const addMetricValue = (values: any[], metricName: string, value: any) => {
+    const addMetricValue = (values: unknown[], metricName: string, value: unknown) => {
       table.addColumn({ text: metricName });
       values.push(value);
     };
@@ -678,7 +677,7 @@ const flattenHits = (hits: Doc[]): { docs: Array<Record<string, any>>; propNames
   let propNames: string[] = [];
 
   for (const hit of hits) {
-    const flattened = hit._source ? flatten(hit._source) : {};
+    const flattened = hit._source ? flattenObject(hit._source) : {};
     const doc = {
       _id: hit._id,
       _type: hit._type,

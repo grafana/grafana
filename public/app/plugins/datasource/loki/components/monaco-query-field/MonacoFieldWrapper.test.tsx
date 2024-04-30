@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 
 import { createLokiDatasource } from '../../__mocks__/datasource';
@@ -24,6 +24,8 @@ describe('MonacoFieldWrapper', () => {
   test('Renders with no errors', async () => {
     renderComponent();
 
-    expect(await screen.findByText('Loading...')).toBeInTheDocument();
+    await waitFor(async () => {
+      expect(await screen.findByText('Loading...')).toBeInTheDocument();
+    });
   });
 });

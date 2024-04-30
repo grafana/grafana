@@ -5,7 +5,8 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
-	"path"
+	"net/http"
+	"net/url"
 
 	"github.com/google/uuid"
 
@@ -19,6 +20,7 @@ import (
 
 const GrafanaRequestID = "X-Grafana-Request-Id"
 const GrafanaSignedRequestID = "X-Grafana-Signed-Request-Id"
+const XRealIPHeader = "X-Real-Ip"
 const GrafanaInternalRequest = "X-Grafana-Internal-Request"
 
 // NewHostedGrafanaACHeaderMiddleware creates a new plugins.ClientMiddleware that will
@@ -48,45 +50,69 @@ func (m *HostedGrafanaACHeaderMiddleware) applyGrafanaRequestIDHeader(ctx contex
 	}
 
 	// Check if the request is for a datasource that is allowed to have the header
-	target := pCtx.DataSourceInstanceSettings.URL
-
-	foundMatch := false
-	for _, allowedURL := range m.cfg.IPRangeACAllowedURLs {
-		if path.Clean(allowedURL) == path.Clean(target) {
-			foundMatch = true
-			break
-		}
+	dsURL := pCtx.DataSourceInstanceSettings.URL
+	dsBaseURL, err := url.Parse(dsURL)
+	if err != nil {
+		m.log.Debug("Failed to parse data source URL", "error", err)
+		return
 	}
-	if !foundMatch {
-		m.log.Debug("Data source URL not among the allow-listed URLs", "url", target)
+	if !IsRequestURLInAllowList(dsBaseURL, m.cfg) {
+		m.log.Debug("Data source URL not among the allow-listed URLs", "url", dsBaseURL.String())
 		return
 	}
 
+	var req *http.Request
+	reqCtx := contexthandler.FromContext(ctx)
+	if reqCtx != nil {
+		req = reqCtx.Req
+	}
+	for k, v := range GetGrafanaRequestIDHeaders(req, m.cfg, m.log) {
+		h.SetHTTPHeader(k, v)
+	}
+}
+
+func IsRequestURLInAllowList(url *url.URL, cfg *setting.Cfg) bool {
+	for _, allowedURL := range cfg.IPRangeACAllowedURLs {
+		// Only look at the scheme and host, ignore the path
+		if allowedURL.Host == url.Host && allowedURL.Scheme == url.Scheme {
+			return true
+		}
+	}
+	return false
+}
+
+func GetGrafanaRequestIDHeaders(req *http.Request, cfg *setting.Cfg, logger log.Logger) map[string]string {
 	// Generate a new Grafana request ID and sign it with the secret key
 	uid, err := uuid.NewRandom()
 	if err != nil {
-		m.log.Debug("Failed to generate Grafana request ID", "error", err)
-		return
+		logger.Debug("Failed to generate Grafana request ID", "error", err)
+		return nil
 	}
 	grafanaRequestID := uid.String()
 
-	hmac := hmac.New(sha256.New, []byte(m.cfg.IPRangeACSecretKey))
+	hmac := hmac.New(sha256.New, []byte(cfg.IPRangeACSecretKey))
 	if _, err := hmac.Write([]byte(grafanaRequestID)); err != nil {
-		m.log.Debug("Failed to sign IP range access control header", "error", err)
-		return
+		logger.Debug("Failed to sign IP range access control header", "error", err)
+		return nil
 	}
 	signedGrafanaRequestID := hex.EncodeToString(hmac.Sum(nil))
-	h.SetHTTPHeader(GrafanaSignedRequestID, signedGrafanaRequestID)
-	h.SetHTTPHeader(GrafanaRequestID, grafanaRequestID)
 
-	reqCtx := contexthandler.FromContext(ctx)
-	if reqCtx != nil && reqCtx.Req != nil {
-		remoteAddress := web.RemoteAddr(reqCtx.Req)
-		if remoteAddress != "" {
-			return
-		}
+	headers := make(map[string]string)
+	headers[GrafanaRequestID] = grafanaRequestID
+	headers[GrafanaSignedRequestID] = signedGrafanaRequestID
+
+	// If the remote address is not specified, treat the request as internal
+	remoteAddress := ""
+	if req != nil {
+		remoteAddress = web.RemoteAddr(req)
 	}
-	h.SetHTTPHeader(GrafanaInternalRequest, "true")
+	if remoteAddress != "" {
+		headers[XRealIPHeader] = remoteAddress
+	} else {
+		headers[GrafanaInternalRequest] = "true"
+	}
+
+	return headers
 }
 
 func (m *HostedGrafanaACHeaderMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {

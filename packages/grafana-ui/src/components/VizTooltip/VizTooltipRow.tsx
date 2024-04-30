@@ -8,9 +8,9 @@ import { InlineToast } from '../InlineToast/InlineToast';
 import { Tooltip } from '../Tooltip';
 
 import { ColorIndicatorPosition, VizTooltipColorIndicator } from './VizTooltipColorIndicator';
-import { ColorPlacement, LabelValue } from './types';
+import { ColorPlacement, VizTooltipItem } from './types';
 
-interface Props extends Omit<LabelValue, 'value'> {
+interface VizTooltipRowProps extends Omit<VizTooltipItem, 'value'> {
   value: string | number | null | ReactNode;
   justify?: string;
   isActive?: boolean; // for series list
@@ -36,7 +36,7 @@ export const VizTooltipRow = ({
   isActive = false,
   marginRight = '0px',
   isPinned,
-}: Props) => {
+}: VizTooltipRowProps) => {
   const styles = useStyles2(getStyles, justify, marginRight);
 
   const [showLabelTooltip, setShowLabelTooltip] = useState(false);

@@ -109,7 +109,15 @@
           }
         ],
         "no_data_state": "NoData",
-        "exec_err_state": "Alerting"
+        "exec_err_state": "Alerting",
+        "notification_settings":{
+          "receiver":"Test-Receiver",
+          "group_by":["alertname","grafana_folder","test"],
+          "group_wait":"1s",
+          "group_interval":"5s",
+          "repeat_interval":"5m",
+          "mute_time_intervals":["test-mute"]
+        }
       }
     }
   ]

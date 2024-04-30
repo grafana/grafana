@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/promQail/state/helpers.ts
 import { AnyAction } from 'redux';
 
 import { llms } from '@grafana/experimental';
@@ -8,6 +9,7 @@ import { getMetadataHelp, getMetadataType } from '../../../../language_provider'
 import { promQueryModeller } from '../../../PromQueryModeller';
 import { buildVisualQueryFromString } from '../../../parsing';
 import { PromVisualQuery } from '../../../types';
+import { updateInteraction } from '../PromQail';
 import {
   ExplainSystemPrompt,
   GetExplainUserPrompt,
@@ -17,13 +19,11 @@ import {
 } from '../prompts';
 import { Interaction, QuerySuggestion, SuggestionType } from '../types';
 
-import { createInteraction, stateSlice } from './state';
+import { createInteraction } from './state';
 import { getTemplateSuggestions } from './templates';
 
 const OPENAI_MODEL_NAME = 'gpt-3.5-turbo-1106';
 const promQLTemplatesCollection = 'grafana.promql.templates';
-// actions to update the state
-const { updateInteraction } = stateSlice.actions;
 
 interface TemplateSearchResult {
   description: string | null;

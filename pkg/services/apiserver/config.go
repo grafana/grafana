@@ -29,20 +29,29 @@ func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o
 
 	host := fmt.Sprintf("%s:%d", ip, port)
 
-	o.RecommendedOptions.Etcd.StorageConfig.Transport.ServerList = cfg.SectionWithEnvOverrides("grafana-apiserver").Key("etcd_servers").Strings(",")
+	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
+
+	o.RecommendedOptions.Etcd.StorageConfig.Transport.ServerList = apiserverCfg.Key("etcd_servers").Strings(",")
 
 	o.RecommendedOptions.SecureServing.BindAddress = ip
 	o.RecommendedOptions.SecureServing.BindPort = port
 	o.RecommendedOptions.Authentication.RemoteKubeConfigFileOptional = true
 	o.RecommendedOptions.Authorization.RemoteKubeConfigFileOptional = true
 
+	o.AggregatorOptions.ProxyClientCertFile = apiserverCfg.Key("proxy_client_cert_file").MustString("")
+	o.AggregatorOptions.ProxyClientKeyFile = apiserverCfg.Key("proxy_client_key_file").MustString("")
+
+	o.AggregatorOptions.APIServiceCABundleFile = apiserverCfg.Key("apiservice_ca_bundle_file").MustString("")
+	o.AggregatorOptions.RemoteServicesFile = apiserverCfg.Key("remote_services_file").MustString("")
+
 	o.RecommendedOptions.Admission = nil
 	o.RecommendedOptions.CoreAPI = nil
 
-	o.StorageOptions.StorageType = options.StorageType(cfg.SectionWithEnvOverrides("grafana-apiserver").Key("storage_type").MustString(string(options.StorageTypeLegacy)))
-	o.StorageOptions.DataPath = filepath.Join(cfg.DataPath, "grafana-apiserver")
+	o.StorageOptions.StorageType = options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeLegacy)))
+	o.StorageOptions.DataPath = apiserverCfg.Key("storage_path").MustString(filepath.Join(cfg.DataPath, "grafana-apiserver"))
+	o.StorageOptions.Address = apiserverCfg.Key("address").MustString(o.StorageOptions.Address)
 	o.ExtraOptions.DevMode = features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerEnsureKubectlAccess)
 	o.ExtraOptions.ExternalAddress = host
 	o.ExtraOptions.APIURL = apiURL
-	o.ExtraOptions.Verbosity = defaultLogLevel
+	o.ExtraOptions.Verbosity = apiserverCfg.Key("log_level").MustInt(defaultLogLevel)
 }

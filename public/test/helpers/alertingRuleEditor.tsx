@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react';
 import React from 'react';
 import { Route } from 'react-router-dom';
-import { byRole, byTestId } from 'testing-library-selector';
+import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
@@ -23,6 +23,11 @@ export const ui = {
     labelKey: (idx: number) => byTestId(`label-key-${idx}`),
     labelValue: (idx: number) => byTestId(`label-value-${idx}`),
     expr: byTestId('expr'),
+    simplifiedRouting: {
+      contactPointRouting: byRole('radio', { name: /select contact point/i }),
+      contactPoint: byTestId('contact-point-picker'),
+      routingOptions: byText(/muting, grouping and timings \(optional\)/i),
+    },
   },
   buttons: {
     saveAndExit: byRole('button', { name: 'Save rule and exit' }),

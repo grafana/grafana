@@ -1,16 +1,17 @@
 import { map, of } from 'rxjs';
 
-import { DataQueryRequest, DataSourceApi, LoadingState, PanelData } from '@grafana/data';
-import { SceneDataLayers, SceneGridItem, SceneGridLayout, SceneTimeRange } from '@grafana/scenes';
+import { AnnotationQuery, DataQueryRequest, DataSourceApi, LoadingState, PanelData } from '@grafana/data';
+import { SceneGridLayout, SceneTimeRange, dataLayers } from '@grafana/scenes';
 
-import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
+import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
+import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { activateFullSceneTree } from '../utils/test-utils';
 
-import { AnnotationsEditView } from './AnnotationsEditView';
+import { AnnotationsEditView, MoveDirection } from './AnnotationsEditView';
+import { newAnnotationName } from './annotations/AnnotationSettingsEdit';
 
-const getDataSourceSrvSpy = jest.fn();
 const runRequestMock = jest.fn().mockImplementation((ds: DataSourceApi, request: DataQueryRequest) => {
   const result: PanelData = {
     state: LoadingState.Loading,
@@ -31,12 +32,15 @@ const runRequestMock = jest.fn().mockImplementation((ds: DataSourceApi, request:
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => {
-    getDataSourceSrvSpy();
+    return {
+      getInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
+    };
   },
   getRunRequest: () => (ds: DataSourceApi, request: DataQueryRequest) => {
     return runRequestMock(ds, request);
   },
   config: {
+    ...jest.requireActual('@grafana/runtime').config,
     publicDashboardAccessToken: 'ac123',
   },
 }));
@@ -54,15 +58,81 @@ describe('AnnotationsEditView', () => {
       expect(annotationsView.getUrlKey()).toBe('annotations');
     });
 
-    it('should return the scene data layers', () => {
-      const dataLayers = annotationsView.getSceneDataLayers();
+    it('should add a new annotation and group it with the other annotations', () => {
+      const dataLayers = dashboardSceneGraph.getDataLayers(annotationsView.getDashboard());
 
-      expect(dataLayers).toBeInstanceOf(SceneDataLayers);
-      expect(dataLayers?.state.layers.length).toBe(2);
+      expect(dataLayers?.state.annotationLayers.length).toBe(1);
+
+      annotationsView.onNew();
+
+      expect(dataLayers?.state.annotationLayers.length).toBe(2);
+      expect(dataLayers?.state.annotationLayers[1].state.name).toBe(newAnnotationName);
+      expect(dataLayers?.state.annotationLayers[1].isActive).toBe(true);
     });
 
-    it('should return the annotations length', () => {
-      expect(annotationsView.getAnnotationsLength()).toBe(1);
+    it('should move an annotation up one position', () => {
+      const dataLayers = dashboardSceneGraph.getDataLayers(annotationsView.getDashboard());
+
+      annotationsView.onNew();
+
+      expect(dataLayers?.state.annotationLayers.length).toBe(2);
+      expect(dataLayers?.state.annotationLayers[0].state.name).toBe('test');
+
+      annotationsView.onMove(1, MoveDirection.UP);
+
+      expect(dataLayers?.state.annotationLayers.length).toBe(2);
+      expect(dataLayers?.state.annotationLayers[0].state.name).toBe(newAnnotationName);
+    });
+
+    it('should move an annotation down one position', () => {
+      const dataLayers = dashboardSceneGraph.getDataLayers(annotationsView.getDashboard());
+
+      annotationsView.onNew();
+
+      expect(dataLayers?.state.annotationLayers.length).toBe(2);
+      expect(dataLayers?.state.annotationLayers[0].state.name).toBe('test');
+
+      annotationsView.onMove(0, MoveDirection.DOWN);
+
+      expect(dataLayers?.state.annotationLayers.length).toBe(2);
+      expect(dataLayers?.state.annotationLayers[0].state.name).toBe(newAnnotationName);
+    });
+
+    it('should delete annotation at index', () => {
+      const dataLayers = dashboardSceneGraph.getDataLayers(annotationsView.getDashboard());
+
+      expect(dataLayers?.state.annotationLayers.length).toBe(1);
+
+      annotationsView.onDelete(0);
+
+      expect(dataLayers?.state.annotationLayers.length).toBe(0);
+    });
+
+    it('should update an annotation at index', () => {
+      const dataLayers = dashboardSceneGraph.getDataLayers(annotationsView.getDashboard());
+
+      expect(dataLayers?.state.annotationLayers[0].state.name).toBe('test');
+
+      const annotation: AnnotationQuery = {
+        ...(dataLayers?.state.annotationLayers[0] as dataLayers.AnnotationsDataLayer).state.query,
+      };
+
+      annotation.name = 'new name';
+      annotation.hide = true;
+      annotation.enable = false;
+      annotation.iconColor = 'blue';
+      annotationsView.onUpdate(annotation, 0);
+
+      expect(dataLayers?.state.annotationLayers.length).toBe(1);
+      expect(dataLayers?.state.annotationLayers[0].state.name).toBe('new name');
+      expect((dataLayers?.state.annotationLayers[0] as dataLayers.AnnotationsDataLayer).state.query.name).toBe(
+        'new name'
+      );
+      expect((dataLayers?.state.annotationLayers[0] as dataLayers.AnnotationsDataLayer).state.query.hide).toBe(true);
+      expect((dataLayers?.state.annotationLayers[0] as dataLayers.AnnotationsDataLayer).state.query.enable).toBe(false);
+      expect((dataLayers?.state.annotationLayers[0] as dataLayers.AnnotationsDataLayer).state.query.iconColor).toBe(
+        'blue'
+      );
     });
   });
 });
@@ -77,8 +147,8 @@ async function buildTestScene() {
     meta: {
       canEdit: true,
     },
-    $data: new SceneDataLayers({
-      layers: [
+    $data: new DashboardDataLayerSet({
+      annotationLayers: [
         new DashboardAnnotationsDataLayer({
           key: `annotations-test`,
           query: {
@@ -94,23 +164,10 @@ async function buildTestScene() {
           isEnabled: true,
           isHidden: false,
         }),
-        new AlertStatesDataLayer({
-          key: 'alert-states',
-          name: 'Alert States',
-        }),
       ],
     }),
     body: new SceneGridLayout({
-      children: [
-        new SceneGridItem({
-          key: 'griditem-1',
-          x: 0,
-          y: 0,
-          width: 10,
-          height: 12,
-          body: undefined,
-        }),
-      ],
+      children: [],
     }),
     editview: annotationsView,
   });

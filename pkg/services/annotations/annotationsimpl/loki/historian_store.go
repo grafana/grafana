@@ -69,8 +69,18 @@ func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, ft f
 	}
 }
 
+func (r *LokiHistorianStore) Type() string {
+	return "loki"
+}
+
 func (r *LokiHistorianStore) Get(ctx context.Context, query *annotations.ItemQuery, accessResources *accesscontrol.AccessResources) ([]*annotations.ItemDTO, error) {
 	if query.Type == "annotation" {
+		return make([]*annotations.ItemDTO, 0), nil
+	}
+
+	// if the query is filtering on tags, but not on a specific dashboard, we shouldn't query loki
+	// since state history won't have tags for annotations
+	if len(query.Tags) > 0 && query.DashboardID == 0 && query.DashboardUID == "" {
 		return make([]*annotations.ItemDTO, 0), nil
 	}
 
@@ -124,6 +134,7 @@ func (r *LokiHistorianStore) annotationsFromStream(stream historian.Stream, ac a
 		err := json.Unmarshal([]byte(sample.V), &entry)
 		if err != nil {
 			// bad data, skip
+			r.log.Debug("failed to unmarshal loki entry", "error", err, "entry", sample.V)
 			continue
 		}
 
@@ -135,6 +146,7 @@ func (r *LokiHistorianStore) annotationsFromStream(stream historian.Stream, ac a
 		transition, err := buildTransition(entry)
 		if err != nil {
 			// bad data, skip
+			r.log.Debug("failed to build transition", "error", err, "entry", entry)
 			continue
 		}
 
@@ -167,7 +179,7 @@ func (r *LokiHistorianStore) annotationsFromStream(stream historian.Stream, ac a
 }
 
 func (r *LokiHistorianStore) GetTags(ctx context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
-	return annotations.FindTagsResult{}, nil
+	return annotations.FindTagsResult{Tags: []*annotations.TagsDTO{}}, nil
 }
 
 // util
@@ -207,6 +219,10 @@ type number interface {
 
 // numericMap converts a simplejson map[string]any to a map[string]N, where N is numeric (int or float).
 func numericMap[N number](j *simplejson.Json) (map[string]N, error) {
+	if j == nil {
+		return nil, fmt.Errorf("unexpected nil value")
+	}
+
 	m, err := j.Map()
 	if err != nil {
 		return nil, err

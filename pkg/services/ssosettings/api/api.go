@@ -23,7 +23,7 @@ type Api struct {
 	Log                log.Logger
 	RouteRegister      routing.RouteRegister
 	AccessControl      ac.AccessControl
-	Features           *featuremgmt.FeatureManager
+	Features           featuremgmt.FeatureToggles
 	SSOSettingsService ssosettings.Service
 }
 
@@ -178,7 +178,7 @@ func (api *Api) updateProviderSettings(c *contextmodel.ReqContext) response.Resp
 
 	settings.Provider = key
 
-	err := api.SSOSettingsService.Upsert(c.Req.Context(), &settings)
+	err := api.SSOSettingsService.Upsert(c.Req.Context(), &settings, c.SignedInUser)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to update provider settings", err)
 	}

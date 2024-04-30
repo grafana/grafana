@@ -2,7 +2,7 @@ import React from 'react';
 
 import { CoreApp, DataSourceApi, DataSourceInstanceSettings, IconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import { SceneObjectBase, SceneComponentProps, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 import { Button, HorizontalGroup, Tab } from '@grafana/ui';
@@ -42,11 +42,19 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
 
   constructor(panelManager: VizPanelManager) {
     super({});
+
     this.TabComponent = (props: PanelDataTabHeaderProps) => {
       return QueriesTab({ ...props, model: this });
     };
 
     this._panelManager = panelManager;
+    this.addActivationHandler(this.onActivate.bind(this));
+  }
+
+  private onActivate() {
+    // This is to preserve SceneQueryRunner stays alive when switching between visualizations and table view
+    const deactivate = this._panelManager.queryRunner.activate();
+    return () => deactivate();
   }
 
   buildQueryOptions(): QueryGroupOptions {
@@ -72,9 +80,12 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     let queries: QueryGroupOptions['queries'] = queryRunner.state.queries;
 
     return {
-      // TODO
-      // cacheTimeout: dsSettings?.meta.queryOptions?.cacheTimeout ? panel.cacheTimeout : undefined,
-      // queryCachingTTL: dsSettings?.cachingConfig?.enabled ? panel.queryCachingTTL : undefined,
+      cacheTimeout: panelManager.state.dsSettings?.meta.queryOptions?.cacheTimeout
+        ? queryRunner.state.cacheTimeout
+        : undefined,
+      queryCachingTTL: panelManager.state.dsSettings?.cachingConfig?.enabled
+        ? queryRunner.state.queryCachingTTL
+        : undefined,
       dataSource: {
         default: panelManager.state.dsSettings?.isDefault,
         type: panelManager.state.dsSettings?.type,
@@ -117,7 +128,15 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
   newQuery(): Partial<DataQuery> {
     const { dsSettings, datasource } = this._panelManager.state;
 
-    const ds = !dsSettings?.meta.mixed ? dsSettings : datasource;
+    let ds;
+    if (!dsSettings?.meta.mixed) {
+      ds = dsSettings; // Use dsSettings if it is not mixed
+    } else if (!datasource?.meta.mixed) {
+      ds = datasource; // Use datasource if dsSettings is mixed but datasource is not
+    } else {
+      // Use default datasource if both are mixed or just datasource is mixed
+      ds = getDataSourceSrv().getInstanceSettings(config.defaultDatasource);
+    }
 
     return {
       ...datasource?.getDefaultQuery?.(CoreApp.PanelEditor),
@@ -168,7 +187,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
 
 function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQueriesTab>) {
   const { datasource, dsSettings } = model.panelManager.useState();
-  const { data } = model.panelManager.queryRunner.useState();
+  const { data, queries } = model.panelManager.queryRunner.useState();
 
   if (!datasource || !dsSettings || !data) {
     return null;
@@ -190,7 +209,7 @@ function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQue
 
       <QueryEditorRows
         data={data}
-        queries={model.getQueries()}
+        queries={queries}
         dsSettings={dsSettings}
         onAddQuery={model.onAddQuery}
         onQueriesChange={model.onQueriesChange}

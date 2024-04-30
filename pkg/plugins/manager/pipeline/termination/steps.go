@@ -54,7 +54,7 @@ func newDeregister(pluginRegistry registry.Service) *Deregister {
 
 // Deregister removes a plugin from the plugin registry.
 func (d *Deregister) Deregister(ctx context.Context, p *plugins.Plugin) error {
-	if err := d.pluginRegistry.Remove(ctx, p.ID); err != nil {
+	if err := d.pluginRegistry.Remove(ctx, p.ID, p.Info.Version); err != nil {
 		return err
 	}
 	d.log.Debug("Plugin unregistered", "pluginId", p.ID)

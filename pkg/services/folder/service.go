@@ -18,6 +18,7 @@ type Service interface {
 	// specificity (UID, ID, Title).
 	// When fetching a folder by Title, callers can optionally define a ParentUID.
 	// If ParentUID is not set then the folder will be fetched from the root level.
+	// If WithFullpath is true it computes also the full path of a folder.
 	Get(ctx context.Context, q *GetFolderQuery) (*Folder, error)
 
 	// Update is used to update a folder's UID, Title and Description. To change

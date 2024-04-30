@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/monaco-query-field/MonacoQueryField.tsx
 import { css } from '@emotion/css';
 import { parser } from '@prometheus-io/lezer-promql';
 import { debounce } from 'lodash';
@@ -13,7 +14,9 @@ import { Monaco, monacoTypes, ReactMonacoEditor, useTheme2 } from '@grafana/ui';
 import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
 import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider';
+import { DataProvider } from './monaco-completion-provider/data_provider';
 import { placeHolderScopedVars, validateQuery } from './monaco-completion-provider/validation';
+import { language, languageConfiguration } from './promql';
 
 const options: monacoTypes.editor.IStandaloneEditorConstructionOptions = {
   codeLens: false,
@@ -65,13 +68,13 @@ let PROMQL_SETUP_STARTED = false;
 function ensurePromQL(monaco: Monaco) {
   if (PROMQL_SETUP_STARTED === false) {
     PROMQL_SETUP_STARTED = true;
-    const { aliases, extensions, mimetypes, loader } = promLanguageDefinition;
+    const { aliases, extensions, mimetypes } = promLanguageDefinition;
     monaco.languages.register({ id: PROMQL_LANG_ID, aliases, extensions, mimetypes });
 
-    loader().then((mod) => {
-      monaco.languages.setMonarchTokensProvider(PROMQL_LANG_ID, mod.language);
-      monaco.languages.setLanguageConfiguration(PROMQL_LANG_ID, mod.languageConfiguration);
-    });
+    // @ts-ignore
+    monaco.languages.setMonarchTokensProvider(PROMQL_LANG_ID, language);
+    // @ts-ignore
+    monaco.languages.setLanguageConfiguration(PROMQL_LANG_ID, languageConfiguration);
   }
 }
 
@@ -142,41 +145,10 @@ const MonacoQueryField = (props: Props) => {
           editor.onDidFocusEditorText(() => {
             isEditorFocused.set(true);
           });
-
-          // we construct a DataProvider object
-          const getHistory = () =>
-            Promise.resolve(historyRef.current.map((h) => h.query.expr).filter((expr) => expr !== undefined));
-
-          const getAllMetricNames = () => {
-            const { metrics, metricsMetadata } = lpRef.current;
-            const result = metrics.map((m) => {
-              const metaItem = metricsMetadata?.[m];
-              return {
-                name: m,
-                help: metaItem?.help ?? '',
-                type: metaItem?.type ?? '',
-              };
-            });
-
-            return Promise.resolve(result);
-          };
-
-          const getAllLabelNames = () => Promise.resolve(lpRef.current.getLabelKeys());
-
-          const getLabelValues = (labelName: string) => lpRef.current.getLabelValues(labelName);
-
-          const getSeriesValues = lpRef.current.getSeriesValues;
-
-          const getSeriesLabels = lpRef.current.getSeriesLabels;
-
-          const dataProvider = {
-            getHistory,
-            getAllMetricNames,
-            getAllLabelNames,
-            getLabelValues,
-            getSeriesValues,
-            getSeriesLabels,
-          };
+          const dataProvider = new DataProvider({
+            historyProvider: historyRef.current,
+            languageProvider: lpRef.current,
+          });
           const completionProvider = getCompletionProvider(monaco, dataProvider);
 
           // completion-providers in monaco are not registered directly to editor-instances,
@@ -249,6 +221,13 @@ const MonacoQueryField = (props: Props) => {
             },
             'isEditorFocused' + id
           );
+
+          // Fixes Monaco capturing the search key binding and displaying a useless search box within the Editor.
+          // See https://github.com/grafana/grafana/issues/85850
+          monaco.editor.addKeybindingRule({
+            keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyF,
+            command: null,
+          });
 
           /* Something in this configuration of monaco doesn't bubble up [mod]+K, which the
                     command palette uses. Pass the event out of monaco manually

@@ -82,12 +82,14 @@ export function createAdhocVariable(input?: Partial<AdHocVariableModel>): AdHocV
 export function createGroupByVariable(input?: Partial<GroupByVariableModel>): GroupByVariableModel {
   return {
     ...createBaseVariableModel('groupby'),
+    query: '',
     datasource: {
       uid: 'abc-123',
       type: 'prometheus',
     },
-    groupByKeys: [],
     multi: true,
+    current: createVariableOption('job'),
+    options: [createVariableOption('job'), createVariableOption('instance')],
     ...input,
   };
 }

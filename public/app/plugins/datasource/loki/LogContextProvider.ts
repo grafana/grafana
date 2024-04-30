@@ -16,11 +16,10 @@ import {
   dateTime,
 } from '@grafana/data';
 import { LabelParser, LabelFilter, LineFilters, PipelineStage, Logfmt, Json } from '@grafana/lezer-logql';
-import { Labels } from '@grafana/schema';
 
 import { LokiContextUi } from './components/LokiContextUi';
 import { LokiDatasource, makeRequest, REF_ID_STARTER_LOG_ROW_CONTEXT } from './datasource';
-import { escapeLabelValueInExactSelector } from './languageUtils';
+import { escapeLabelValueInExactSelector, getLabelTypeFromFrame } from './languageUtils';
 import { addLabelToQuery, addParserToQuery } from './modifyQuery';
 import {
   getNodePositionsFromQuery,
@@ -29,7 +28,7 @@ import {
   isQueryWithParser,
 } from './queryUtils';
 import { sortDataFrameByTime, SortDirection } from './sortDataFrame';
-import { ContextFilter, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
+import { ContextFilter, LabelType, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
 
 export const LOKI_LOG_CONTEXT_PRESERVED_LABELS = 'lokiLogContextPreservedLabels';
 export const SHOULD_INCLUDE_PIPELINE_OPERATIONS = 'lokiLogContextShouldIncludePipelineOperations';
@@ -61,7 +60,7 @@ export class LogContextProvider {
     // to use the cached filters, we need to reinitialize them.
     if (this.cachedContextFilters.length === 0 || !cacheFilters) {
       const filters = (
-        await this.getInitContextFilters(row.labels, origQuery, {
+        await this.getInitContextFilters(row, origQuery, {
           from: dateTime(row.timeEpochMs),
           to: dateTime(row.timeEpochMs),
           raw: { from: dateTime(row.timeEpochMs), to: dateTime(row.timeEpochMs) },
@@ -223,7 +222,7 @@ export class LogContextProvider {
   processContextFiltersToExpr = (contextFilters: ContextFilter[], query: LokiQuery | undefined): string => {
     const labelFilters = contextFilters
       .map((filter) => {
-        if (!filter.fromParser && filter.enabled) {
+        if (!filter.nonIndexed && filter.enabled) {
           // escape backslashes in label as users can't escape them by themselves
           return `${filter.label}="${escapeLabelValueInExactSelector(filter.value)}"`;
         }
@@ -237,15 +236,26 @@ export class LogContextProvider {
 
     // We need to have original query to get parser and include parsed labels
     // We only add parser and parsed labels if there is only one parser in query
-    if (query && isQueryWithParser(query.expr).parserCount === 1) {
-      const parser = getParserFromQuery(query.expr);
-      if (parser) {
-        expr = addParserToQuery(expr, parser);
-        const parsedLabels = contextFilters.filter((filter) => filter.fromParser && filter.enabled);
-        for (const parsedLabel of parsedLabels) {
-          if (parsedLabel.enabled) {
-            expr = addLabelToQuery(expr, parsedLabel.label, '=', parsedLabel.value);
-          }
+    if (query) {
+      let hasParser = false;
+      if (isQueryWithParser(query.expr).parserCount === 1) {
+        hasParser = true;
+        const parser = getParserFromQuery(query.expr);
+        if (parser) {
+          expr = addParserToQuery(expr, parser);
+        }
+      }
+
+      const nonIndexedLabels = contextFilters.filter((filter) => filter.nonIndexed && filter.enabled);
+      for (const parsedLabel of nonIndexedLabels) {
+        if (parsedLabel.enabled) {
+          expr = addLabelToQuery(
+            expr,
+            parsedLabel.label,
+            '=',
+            parsedLabel.value,
+            hasParser ? LabelType.Parsed : LabelType.StructuredMetadata
+          );
         }
       }
     }
@@ -301,14 +311,15 @@ export class LogContextProvider {
   };
 
   getInitContextFilters = async (
-    labels: Labels,
+    row: LogRowModel,
     query?: LokiQuery,
     timeRange?: TimeRange
   ): Promise<{ contextFilters: ContextFilter[]; preservedFiltersApplied: boolean }> => {
     let preservedFiltersApplied = false;
-    if (!query || isEmpty(labels)) {
+    if (!query || isEmpty(row.labels)) {
       return { contextFilters: [], preservedFiltersApplied };
     }
+    const rowLabels = row.labels;
 
     // 1. First we need to get all labels from the log row's label
     // and correctly set parsed and not parsed labels
@@ -327,12 +338,12 @@ export class LogContextProvider {
     }
 
     const contextFilters: ContextFilter[] = [];
-    Object.entries(labels).forEach(([label, value]) => {
+    Object.entries(rowLabels).forEach(([label, value]) => {
       const filter: ContextFilter = {
         label,
         value: value,
         enabled: allLabels.includes(label),
-        fromParser: !allLabels.includes(label),
+        nonIndexed: getLabelTypeFromFrame(label, row.dataFrame, row.rowIndex) !== LabelType.Indexed,
       };
 
       contextFilters.push(filter);
@@ -368,7 +379,7 @@ export class LogContextProvider {
         return { ...contextFilter };
       });
 
-      const isAtLeastOneRealLabelEnabled = newContextFilters.some(({ enabled, fromParser }) => enabled && !fromParser);
+      const isAtLeastOneRealLabelEnabled = newContextFilters.some(({ enabled, nonIndexed }) => enabled && !nonIndexed);
       if (!isAtLeastOneRealLabelEnabled) {
         // If we end up with no real labels enabled, we need to reset the init filters
         return { contextFilters, preservedFiltersApplied };

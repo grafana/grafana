@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryBuilder.test.tsx
 import { getByText, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
@@ -11,7 +12,7 @@ import {
   QueryHint,
   TimeRange,
 } from '@grafana/data';
-import { TemplateSrv } from '@grafana/runtime';
+import { config, TemplateSrv } from '@grafana/runtime';
 
 import { PrometheusDatasource } from '../../datasource';
 import PromQlLanguageProvider from '../../language_provider';
@@ -59,6 +60,10 @@ const bugQuery: PromVisualQuery = {
   ],
 };
 
+afterEach(() => {
+  jest.restoreAllMocks();
+});
+
 describe('PromQueryBuilder', () => {
   it('shows empty just with metric selected', async () => {
     setup();
@@ -102,6 +107,28 @@ describe('PromQueryBuilder', () => {
     datasource.getVariables = jest.fn().mockReturnValue([]);
     await openMetricSelect(container);
     await waitFor(() => expect(datasource.getVariables).toBeCalled());
+  });
+
+  it('checks if the LLM plugin is enabled when the `prometheusPromQAIL` feature is enabled', async () => {
+    jest.replaceProperty(config, 'featureToggles', {
+      prometheusPromQAIL: true,
+    });
+    const mockIsLLMPluginEnabled = jest.fn();
+    mockIsLLMPluginEnabled.mockResolvedValue(true);
+    jest.spyOn(require('./promQail/state/helpers'), 'isLLMPluginEnabled').mockImplementation(mockIsLLMPluginEnabled);
+    setup();
+    await waitFor(() => expect(mockIsLLMPluginEnabled).toHaveBeenCalledTimes(1));
+  });
+
+  it('does not check if the LLM plugin is enabled when the `prometheusPromQAIL` feature is disabled', async () => {
+    jest.replaceProperty(config, 'featureToggles', {
+      prometheusPromQAIL: false,
+    });
+    const mockIsLLMPluginEnabled = jest.fn();
+    mockIsLLMPluginEnabled.mockResolvedValue(true);
+    jest.spyOn(require('./promQail/state/helpers'), 'isLLMPluginEnabled').mockImplementation(mockIsLLMPluginEnabled);
+    setup();
+    await waitFor(() => expect(mockIsLLMPluginEnabled).toHaveBeenCalledTimes(0));
   });
 
   // <LegacyPrometheus>

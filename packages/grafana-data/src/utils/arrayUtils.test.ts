@@ -1,6 +1,6 @@
 import { SortOrder } from '@grafana/schema';
 
-import { sortValues } from './arrayUtils';
+import { insertAfterImmutably, insertBeforeImmutably, sortValues } from './arrayUtils';
 
 describe('arrayUtils', () => {
   describe('sortValues', () => {
@@ -28,6 +28,54 @@ describe('arrayUtils', () => {
     `('$order', ({ order, testArray, expected }) => {
       const sorted = [...testArray].sort(sortValues(order));
       expect(sorted).toEqual(expected);
+    });
+  });
+
+  describe('insertBeforeImmutably', () => {
+    const original = [1, 2, 3];
+
+    it.each`
+      item | index | expected
+      ${4} | ${1}  | ${[1, 4, 2, 3]}
+      ${4} | ${2}  | ${[1, 2, 4, 3]}
+      ${0} | ${0}  | ${[0, 1, 2, 3]}
+    `('add $item before $index', ({ item, index, expected }) => {
+      const output = insertBeforeImmutably(original, item, index);
+      expect(output).toStrictEqual(expected);
+    });
+
+    it('should throw when out of bounds', () => {
+      expect(() => {
+        insertBeforeImmutably([], 1, -1);
+      }).toThrow();
+
+      expect(() => {
+        insertBeforeImmutably([], 1, 3);
+      }).toThrow();
+    });
+  });
+
+  describe('insertAfterImmutably', () => {
+    const original = [1, 2, 3];
+
+    it.each`
+      item | index | expected
+      ${4} | ${1}  | ${[1, 2, 4, 3]}
+      ${4} | ${0}  | ${[1, 4, 2, 3]}
+      ${4} | ${2}  | ${[1, 2, 3, 4]}
+    `('add $item after $index', ({ item, index, expected }) => {
+      const output = insertAfterImmutably(original, item, index);
+      expect(output).toStrictEqual(expected);
+    });
+
+    it('should throw when out of bounds', () => {
+      expect(() => {
+        insertAfterImmutably([], 1, -1);
+      }).toThrow();
+
+      expect(() => {
+        insertAfterImmutably([], 1, 3);
+      }).toThrow();
     });
   });
 });

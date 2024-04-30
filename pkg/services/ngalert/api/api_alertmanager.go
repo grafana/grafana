@@ -9,17 +9,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-openapi/strfmt"
 	alertingNotify "github.com/grafana/alerting/notify"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	authz "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -49,49 +48,12 @@ func (srv AlertmanagerSrv) RouteGetAMStatus(c *contextmodel.ReqContext) response
 		return errResp
 	}
 
-	return response.JSON(http.StatusOK, am.GetStatus())
-}
-
-func (srv AlertmanagerSrv) RouteCreateSilence(c *contextmodel.ReqContext, postableSilence apimodels.PostableSilence) response.Response {
-	err := postableSilence.Validate(strfmt.Default)
-	if err != nil {
-		srv.log.Error("Silence failed validation", "error", err)
-		return ErrResp(http.StatusBadRequest, err, "silence failed validation")
+	status := am.GetStatus()
+	if !c.SignedInUser.HasRole(org.RoleAdmin) {
+		notifier.RemoveAutogenConfigIfExists(status.Config.Route)
 	}
 
-	am, errResp := srv.AlertmanagerFor(c.SignedInUser.GetOrgID())
-	if errResp != nil {
-		return errResp
-	}
-
-	action := accesscontrol.ActionAlertingInstanceUpdate
-	if postableSilence.ID == "" {
-		action = accesscontrol.ActionAlertingInstanceCreate
-	}
-	evaluator := accesscontrol.EvalPermission(action)
-	if !accesscontrol.HasAccess(srv.ac, c)(evaluator) {
-		errAction := "update"
-		if postableSilence.ID == "" {
-			errAction = "create"
-		}
-		return response.Err(authz.NewAuthorizationErrorWithPermissions(fmt.Sprintf("%s silences", errAction), evaluator))
-	}
-
-	silenceID, err := am.CreateSilence(c.Req.Context(), &postableSilence)
-	if err != nil {
-		if errors.Is(err, alertingNotify.ErrSilenceNotFound) {
-			return ErrResp(http.StatusNotFound, err, "")
-		}
-
-		if errors.Is(err, alertingNotify.ErrCreateSilenceBadPayload) {
-			return ErrResp(http.StatusBadRequest, err, "")
-		}
-
-		return ErrResp(http.StatusInternalServerError, err, "failed to create silence")
-	}
-	return response.JSON(http.StatusAccepted, apimodels.PostSilencesOKBody{
-		SilenceID: silenceID,
-	})
+	return response.JSON(http.StatusOK, status)
 }
 
 func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *contextmodel.ReqContext) response.Response {
@@ -108,23 +70,9 @@ func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *contextmodel.ReqContext)
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "configuration deleted; the default is applied"})
 }
 
-func (srv AlertmanagerSrv) RouteDeleteSilence(c *contextmodel.ReqContext, silenceID string) response.Response {
-	am, errResp := srv.AlertmanagerFor(c.SignedInUser.GetOrgID())
-	if errResp != nil {
-		return errResp
-	}
-
-	if err := am.DeleteSilence(c.Req.Context(), silenceID); err != nil {
-		if errors.Is(err, alertingNotify.ErrSilenceNotFound) {
-			return ErrResp(http.StatusNotFound, err, "")
-		}
-		return ErrResp(http.StatusInternalServerError, err, "")
-	}
-	return response.JSON(http.StatusOK, util.DynMap{"message": "silence deleted"})
-}
-
 func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *contextmodel.ReqContext) response.Response {
-	config, err := srv.mam.GetAlertmanagerConfiguration(c.Req.Context(), c.SignedInUser.GetOrgID())
+	canSeeAutogen := c.SignedInUser.HasRole(org.RoleAdmin)
+	config, err := srv.mam.GetAlertmanagerConfiguration(c.Req.Context(), c.SignedInUser.GetOrgID(), canSeeAutogen)
 	if err != nil {
 		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 			return ErrResp(http.StatusNotFound, err, "")
@@ -197,40 +145,6 @@ func (srv AlertmanagerSrv) RouteGetAMAlerts(c *contextmodel.ReqContext) response
 	return response.JSON(http.StatusOK, alerts)
 }
 
-func (srv AlertmanagerSrv) RouteGetSilence(c *contextmodel.ReqContext, silenceID string) response.Response {
-	am, errResp := srv.AlertmanagerFor(c.SignedInUser.GetOrgID())
-	if errResp != nil {
-		return errResp
-	}
-
-	gettableSilence, err := am.GetSilence(c.Req.Context(), silenceID)
-	if err != nil {
-		if errors.Is(err, alertingNotify.ErrSilenceNotFound) {
-			return ErrResp(http.StatusNotFound, err, "")
-		}
-		// any other error here should be an unexpected failure and thus an internal error
-		return ErrResp(http.StatusInternalServerError, err, "")
-	}
-	return response.JSON(http.StatusOK, gettableSilence)
-}
-
-func (srv AlertmanagerSrv) RouteGetSilences(c *contextmodel.ReqContext) response.Response {
-	am, errResp := srv.AlertmanagerFor(c.SignedInUser.GetOrgID())
-	if errResp != nil {
-		return errResp
-	}
-
-	gettableSilences, err := am.ListSilences(c.Req.Context(), c.QueryStrings("filter"))
-	if err != nil {
-		if errors.Is(err, alertingNotify.ErrListSilencesBadPayload) {
-			return ErrResp(http.StatusBadRequest, err, "")
-		}
-		// any other error here should be an unexpected failure and thus an internal error
-		return ErrResp(http.StatusInternalServerError, err, "")
-	}
-	return response.JSON(http.StatusOK, gettableSilences)
-}
-
 func (srv AlertmanagerSrv) RoutePostGrafanaAlertingConfigHistoryActivate(c *contextmodel.ReqContext, id string) response.Response {
 	confId, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
@@ -264,7 +178,10 @@ func (srv AlertmanagerSrv) RoutePostGrafanaAlertingConfigHistoryActivate(c *cont
 }
 
 func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *contextmodel.ReqContext, body apimodels.PostableUserConfig) response.Response {
-	currentConfig, err := srv.mam.GetAlertmanagerConfiguration(c.Req.Context(), c.SignedInUser.GetOrgID())
+	// Remove autogenerated config from the user config before checking provenance guard and eventually saving it.
+	// TODO: This and provenance guard should be moved to the notifier package.
+	notifier.RemoveAutogenConfigIfExists(body.AlertmanagerConfig.Route)
+	currentConfig, err := srv.mam.GetAlertmanagerConfiguration(c.Req.Context(), c.SignedInUser.GetOrgID(), false)
 	// If a config is present and valid we proceed with the guard, otherwise we
 	// just bypass the guard which is okay as we are anyway in an invalid state.
 	if err == nil {
@@ -272,7 +189,7 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *contextmodel.ReqContext, b
 			return ErrResp(http.StatusBadRequest, err, "")
 		}
 	}
-	err = srv.mam.ApplyAlertmanagerConfiguration(c.Req.Context(), c.SignedInUser.GetOrgID(), body)
+	err = srv.mam.SaveAndApplyAlertmanagerConfiguration(c.Req.Context(), c.SignedInUser.GetOrgID(), body)
 	if err == nil {
 		return response.JSON(http.StatusAccepted, util.DynMap{"message": "configuration created"})
 	}
@@ -291,7 +208,7 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *contextmodel.ReqContext, b
 		return response.Error(http.StatusConflict, err.Error(), err)
 	}
 
-	return ErrResp(http.StatusInternalServerError, err, "")
+	return response.ErrOrFallback(http.StatusInternalServerError, err.Error(), err)
 }
 
 func (srv AlertmanagerSrv) RouteGetReceivers(c *contextmodel.ReqContext) response.Response {

@@ -21,6 +21,7 @@ func TestTemplateService(t *testing.T) {
 			GetsConfig(models.AlertConfiguration{
 				AlertmanagerConfiguration: configWithTemplates,
 			})
+		sut.provenanceStore.(*MockProvisioningStore).EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
 
 		result, err := sut.GetTemplates(context.Background(), 1)
 
@@ -413,7 +414,6 @@ var configWithTemplates = `
 				"uid": "",
 				"name": "email receiver",
 				"type": "email",
-				"isDefault": true,
 				"settings": {
 					"addresses": "<example@email.com>"
 				}
@@ -434,7 +434,6 @@ var brokenConfig = `
 				"uid": "abc",
 				"name": "default-email",
 				"type": "email",
-				"isDefault": true,
 				"settings": {}
 			}]
 		}]

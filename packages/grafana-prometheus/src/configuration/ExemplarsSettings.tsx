@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/configuration/ExemplarsSettings.tsx
 import { css } from '@emotion/css';
 import React from 'react';
 
@@ -8,7 +9,7 @@ import { Button, useTheme2 } from '@grafana/ui';
 import { ExemplarTraceIdDestination } from '../types';
 
 import { overhaulStyles } from './ConfigEditor';
-import ExemplarSetting from './ExemplarSetting';
+import { ExemplarSetting } from './ExemplarSetting';
 
 type Props = {
   options?: ExemplarTraceIdDestination[];

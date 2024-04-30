@@ -132,19 +132,21 @@ func TestSSOSettingsAPI_Update(t *testing.T) {
 				Settings: input.Settings,
 			}
 
+			signedInUser := &user.SignedInUser{
+				OrgRole:     org.RoleAdmin,
+				OrgID:       1,
+				Permissions: getPermissionsForActionAndScope(tt.action, tt.scope),
+			}
+
 			service := ssosettingstests.NewMockService(t)
 			if tt.expectedServiceCall {
-				service.On("Upsert", mock.Anything, &settings).Return(tt.expectedError).Once()
+				service.On("Upsert", mock.Anything, &settings, signedInUser).Return(tt.expectedError).Once()
 			}
 			server := setupTests(t, service)
 
 			path := fmt.Sprintf("/api/v1/sso-settings/%s", tt.key)
 			req := server.NewRequest(http.MethodPut, path, bytes.NewBufferString(tt.body))
-			webtest.RequestWithSignedInUser(req, &user.SignedInUser{
-				OrgRole:     org.RoleEditor,
-				OrgID:       1,
-				Permissions: getPermissionsForActionAndScope(tt.action, tt.scope),
-			})
+			webtest.RequestWithSignedInUser(req, signedInUser)
 			res, err := server.SendJSON(req)
 			require.NoError(t, err)
 
