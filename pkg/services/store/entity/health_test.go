@@ -121,7 +121,6 @@ func (s *entityStoreStub) FindReferences(ctx context.Context, r *ReferenceReques
 
 type fakeHealthWatchServer struct {
 	grpc.ServerStream
-	status       grpc_health_v1.HealthCheckResponse_ServingStatus
 	healthChecks []*grpc_health_v1.HealthCheckResponse
 	context      context.Context
 }
