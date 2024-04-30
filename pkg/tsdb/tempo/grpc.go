@@ -101,7 +101,7 @@ func getDialOpts(ctx context.Context, settings backend.DataSourceInstanceSetting
 			select {
 			case <-ctx.Done():
 				err := errors.New("context canceled")
-				logger.Error("Context has been canceled, aborting dialing", "error", err)	
+				logger.Error("Context has been canceled, aborting dialing", "error", err)
 				return nil, err
 			default:
 				logger.Debug("Context is still valid, proceeding with dialing")
