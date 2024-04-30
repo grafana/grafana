@@ -136,10 +136,7 @@ func (lm *logManager) New(ctx ...any) *ConcreteLogger {
 	}
 
 	if logger, exists := lm.loggersByName[loggerName]; exists {
-		if len(ctx) == 0 {
-			return logger
-		}
-		return newConcreteLogger(logger, ctx...)
+		return logger
 	}
 
 	if len(lm.logFilters) == 0 {
