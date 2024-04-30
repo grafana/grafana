@@ -75,6 +75,7 @@ list-mode = "lax"
 allow = [
   "github.com/grafana/grafana/pkg/apimachinery",
   "github.com/grafana/grafana/pkg/apiserver",
+  "github.com/grafana/grafana/pkg/services/apiserver/utils",
 ]
 deny = [
   { pkg = "github.com/grafana/grafana/pkg", desc = "apiserver is not allowed to import grafana core" }
