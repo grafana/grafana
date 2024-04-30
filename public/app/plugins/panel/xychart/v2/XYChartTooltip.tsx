@@ -40,7 +40,7 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, xySeries, dismiss, i
   const xField = series.x.field;
   const yField = series.y.field;
 
-  const sizeField = series.size?.field;
+  const sizeField = series.size.field;
   const colorField = series.color.field;
 
   let label = series.name.value;
