@@ -442,10 +442,8 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	if len(requirements.SortBy) > 0 {
 		req.Sort = requirements.SortBy
 	}
-	if len(requirements.ListOriginKey) > 0 {
-		// #TODO: figure out if there is support for multiple keys since
-		// the doc comments mention "limit to a specific key"
-		req.Key = requirements.ListOriginKey
+	if len(requirements.ListOriginKeys) > 0 {
+		req.OriginKeys = requirements.ListOriginKeys
 	}
 	if requirements.ListDeleted {
 		req.Deleted = true
