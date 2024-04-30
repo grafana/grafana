@@ -26,17 +26,17 @@ Next, create a notification policy which is a set of rules for where, when and h
 
 ## Alertmanagers
 
-Grafana uses Alertmanagers to send notifications for firing and resolved alerts. Grafana has its own Alertmanager, referred to as "Grafana" in the user interface, but also supports sending notifications from other Alertmanagers too, such as the [Prometheus Alertmanager](https://prometheus.io/docs/alerting/latest/alertmanager/). The Grafana Alertmanager uses notification policies and contact points to configure how and where a notification is sent; how often a notification should be sent; and whether alerts should all be sent in the same notification, sent in grouped notifications based on a set of labels, or as separate notifications.
+Grafana uses [Alertmanagers](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alertmanager/) to send notifications for firing and resolved alerts. Grafana has its own Alertmanager, referred to as "Grafana" in the user interface, but also supports sending notifications from other Alertmanagers too, such as the [Prometheus Alertmanager](https://prometheus.io/docs/alerting/latest/alertmanager/). The Grafana Alertmanager uses notification policies and contact points to configure how and where a notification is sent; how often a notification should be sent; and whether alerts should all be sent in the same notification, sent in grouped notifications based on a set of labels, or as separate notifications.
 
 ## Contact points
 
-Contact points contain the configuration for sending alert notifications, specifying destinations like email, Slack, OnCall, webhooks, and their notification messages. They allow the customization of notification messages and the use of notification templates.
+[Contact points][contact-points] contain the configuration for sending alert notifications, specifying destinations like email, Slack, OnCall, webhooks, and their notification messages. They allow the customization of notification messages and the use of notification templates.
 
 A contact point is a list of integrations, each sending a message to a specific destination. You can configure them via notification policies or alert rules.
 
 ## Notification policies
 
-Notification policies control when and where notifications are sent. A notification policy can choose to send all alerts together in the same notification, send alerts in grouped notifications based on a set of labels, or send alerts as separate notifications. You can configure each notification policy to control how often notifications should be sent as well as having one or more mute timings to inhibit notifications at certain times of the day and on certain days of the week.
+[Notification policies][notification-policies] control when and where notifications are sent. A notification policy can choose to send all alerts together in the same notification, send alerts in grouped notifications based on a set of labels, or send alerts as separate notifications. You can configure each notification policy to control how often notifications should be sent as well as having one or more mute timings to inhibit notifications at certain times of the day and on certain days of the week.
 
 Notification policies are organized in a tree structure where at the root of the tree there is a notification policy called the default policy. There can be only one default policy and the default policy cannot be deleted.
 
@@ -50,7 +50,7 @@ All alerts, irrespective of their labels, match the default policy. However, whe
 
 ## Notification templates
 
-You can customize notifications with templates. For example, templates can be used to change the subject and message of an email, or the title and message of notifications sent to Slack.
+You can customize notifications with [templates][templates-page]. For example, templates can be used to change the subject and message of an email, or the title and message of notifications sent to Slack.
 
 Templates are not limited to an individual integration or contact point, but instead can be used in a number of integrations in the same contact point and even integrations across different contact points. For example, a Grafana user can create a template called `custom_subject_or_title` and use it for both templating subjects in emails and titles of Slack messages without having to create two separate templates.
 
@@ -58,4 +58,15 @@ All notifications templates are written in [Go's templating language](https://pk
 
 ## Silences
 
-You can use silences to mute notifications from one or more firing rules. Silences do not stop alerts from firing or being resolved, or hide firing alerts in the user interface. A silence lasts as long as its duration, which can be configured in minutes, hours, days, months, or years.
+You can use [silences](https://grafana.com/docs/grafana/latest/alerting/manage-notifications/create-silence/) to mute notifications from one or more firing rules. Silences do not stop alerts from firing or being resolved, or hide firing alerts in the user interface. A silence lasts as long as its duration, which can be configured in minutes, hours, days, months, or years.
+
+{{% docs/reference %}}
+[notification-policies]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/notification-policies"
+[notification-policies]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/notification-policies"
+
+[contact-points]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/contact-points"
+[contact-points]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/contact-points"
+
+[templates-page]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/templates/"
+[templates-page]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/templates/"
+{{% /docs/reference %}}
