@@ -333,7 +333,7 @@ func (s *Service) RunMigration(ctx context.Context, uid string) (*cloudmigration
 	}
 
 	// save the result of the migration
-	runUID, err := s.SaveMigrationRun(ctx, &cloudmigration.CloudMigrationRun{
+	runUID, err := s.CreateMigrationRun(ctx, &cloudmigration.CloudMigrationRun{
 		CloudMigrationUID: migration.UID,
 		Result:            respData,
 	})
@@ -469,11 +469,11 @@ func (s *Service) getDashboards(ctx context.Context) ([]dashboards.Dashboard, er
 	return result, nil
 }
 
-func (s *Service) SaveMigrationRun(ctx context.Context, cmr *cloudmigration.CloudMigrationRun) (string, error) {
+func (s *Service) CreateMigrationRun(ctx context.Context, cmr *cloudmigration.CloudMigrationRun) (string, error) {
 	cmr.Created = time.Now()
 	cmr.Updated = time.Now()
 	cmr.Finished = time.Now()
-	err := s.store.SaveMigrationRun(ctx, cmr)
+	err := s.store.CreateMigrationRun(ctx, cmr)
 	if err != nil {
 		s.log.Error("Failed to save migration run", "err", err)
 		return "", err

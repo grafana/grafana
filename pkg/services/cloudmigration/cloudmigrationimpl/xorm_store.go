@@ -40,7 +40,7 @@ func (ss *sqlStore) GetMigrationByUID(ctx context.Context, uid string) (*cloudmi
 	return &cm, err
 }
 
-func (ss *sqlStore) SaveMigrationRun(ctx context.Context, cmr *cloudmigration.CloudMigrationRun) error {
+func (ss *sqlStore) CreateMigrationRun(ctx context.Context, cmr *cloudmigration.CloudMigrationRun) error {
 	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		if cmr.UID == "" {
 			cmr.UID = util.GenerateShortUID()
