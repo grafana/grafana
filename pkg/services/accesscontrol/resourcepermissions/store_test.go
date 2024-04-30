@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -527,7 +528,10 @@ func seedResourcePermissions(
 	orgID, err := orgService.GetOrCreate(context.Background(), "test")
 	require.NoError(t, err)
 
-	usrSvc, err := userimpl.ProvideService(sql, orgService, cfg, nil, nil, quotatest.New(false, nil), supportbundlestest.NewFakeBundleService())
+	usrSvc, err := userimpl.ProvideService(
+		sql, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
+	)
 	require.NoError(t, err)
 
 	create := func(login string, isServiceAccount bool) {

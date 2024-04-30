@@ -24,6 +24,7 @@ import { useDispatch } from 'app/types';
 import { CombinedRule, RuleIdentifier, RulesSource } from 'app/types/unified-alerting';
 
 import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
+import { useRulePluginLinkExtension } from '../../plugins/useRulePluginLinkExtensions';
 import { deleteRuleAction, fetchAllPromAndRulerRulesAction } from '../../state/actions';
 import { getRulesSourceName } from '../../utils/datasource';
 import { createShareLink, createViewLink } from '../../utils/misc';
@@ -58,6 +59,8 @@ export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
   const isViewMode = inViewMode(location.pathname);
 
   const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
+
+  const ruleExtensionLinks = useRulePluginLinkExtension(rule);
 
   const [editRuleSupported, editRuleAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Update);
   const [deleteRuleSupported, deleteRuleAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Delete);
@@ -178,10 +181,22 @@ export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
         />
       );
     }
+  }
 
-    if (canDeleteRule) {
-      moreActions.push(<Menu.Item label="Delete" icon="trash-alt" onClick={() => setRuleToDelete(rule)} />);
-    }
+  if (ruleExtensionLinks.length > 0) {
+    moreActions.push(
+      <Menu.Divider />,
+      ...ruleExtensionLinks.map((extension) => (
+        <Menu.Item key={extension.id} label={extension.title} icon={extension.icon} onClick={extension.onClick} />
+      ))
+    );
+  }
+
+  if (rulerRule && canDeleteRule) {
+    moreActions.push(
+      <Menu.Divider />,
+      <Menu.Item label="Delete" icon="trash-alt" destructive onClick={() => setRuleToDelete(rule)} />
+    );
   }
 
   if (buttons.length || moreActions.length) {

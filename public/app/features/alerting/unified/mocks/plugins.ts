@@ -1,17 +1,10 @@
 import { http, HttpResponse } from 'msw';
-import { SetupServer } from 'msw/lib/node';
 
 import { PluginMeta } from '@grafana/data';
 
-import { SupportedPlugin } from '../types/pluginBridges';
-
-export function mockPluginSettings(server: SetupServer, plugin: SupportedPlugin, response?: PluginMeta) {
-  server.use(
-    http.get(`/api/plugins/${plugin}/settings`, () => {
-      if (response) {
-        return HttpResponse.json(response);
-      }
-      return HttpResponse.json({}, { status: 404 });
-    })
+export const pluginsHandler = (pluginsRegistry: Map<string, PluginMeta>) =>
+  http.get<{ pluginId: string }>(`/api/plugins/:pluginId/settings`, ({ params: { pluginId } }) =>
+    pluginsRegistry.has(pluginId)
+      ? HttpResponse.json<PluginMeta>(pluginsRegistry.get(pluginId)!)
+      : HttpResponse.json({ message: 'Plugin not found, no installed plugin with that id' }, { status: 404 })
   );
-}
