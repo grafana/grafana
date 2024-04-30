@@ -3,10 +3,13 @@ import React from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState } from '@grafana/scenes';
-import { Alert, Label, Stack, Text } from '@grafana/ui';
+import { Label, Stack, Text } from '@grafana/ui';
 import { Select, useStyles2 } from '@grafana/ui/';
+import { PublicDashboardShareType } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 
 import { DashboardScene } from '../../../scene/DashboardScene';
+
+import { EmailSharingConfig } from './EmailSharingConfig';
 
 export interface ShareExternallyDrawerState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;
@@ -20,43 +23,38 @@ export class ShareExternallyDrawer extends SceneObjectBase<ShareExternallyDrawer
   }
 }
 
-const EMAIL_SHARING_URL = 'https://grafana.com/docs/grafana/latest/dashboards/dashboard-public/#email-sharing';
+const options = [
+  { label: 'Only specific people', value: PublicDashboardShareType.EMAIL, icon: 'users-alt' },
+  { label: 'Anyone with the link', value: PublicDashboardShareType.PUBLIC, icon: 'globe' },
+];
 
 function ShareExternallyDrawerRenderer({ model }: SceneComponentProps<ShareExternallyDrawer>) {
-  const [value, setValue] = React.useState<SelectableValue<string>>();
+  const [value, setValue] = React.useState<SelectableValue<PublicDashboardShareType>>(options[0]);
   const styles = useStyles2(getStyles);
 
-  const options = [
-    { label: 'Only specific people', value: 'email', icon: 'users-alt' },
-    { label: 'Anyone with the link', value: 'public', icon: 'globe' },
-  ];
+  const onCancel = () => {
+    model.state.dashboardRef.resolve().closeModal();
+  };
 
   return (
     <Stack direction="column" gap={2}>
-      <Label description="Only people with access can open with the link">Link access</Label>
-      <Stack direction="row" gap={1} alignItems="center">
-        <Select
-          options={options}
-          value={value}
-          onChange={(v) => {
-            setValue(v);
-          }}
-          defaultValue={options[0]}
-          className={styles.select}
-        />
-        <Text element="p" variant="bodySmall" color="disabled">
-          can access
-        </Text>
-      </Stack>
-      <Alert
-        title=""
-        severity="info"
-        buttonContent={<span>Learn more</span>}
-        onRemove={() => window.open(EMAIL_SHARING_URL, '_blank')}
-      >
-        Effective immediately, sharing public dashboards by email incurs a cost per active user. Going forward, you’ll
-        be prompted for payment whenever you add new users to your dashboard.
-      </Alert>
+      <div>
+        <Label description="Only people with access can open with the link">Link access</Label>
+        <Stack direction="row" gap={1} alignItems="center">
+          <Select
+            options={options}
+            value={value}
+            onChange={(v) => {
+              setValue(v);
+            }}
+            className={styles.select}
+          />
+          <Text element="p" variant="bodySmall" color="disabled">
+            can access
+          </Text>
+        </Stack>
+      </div>
+      {value.value === PublicDashboardShareType.EMAIL && <EmailSharingConfig onCancel={onCancel} />}
     </Stack>
   );
 }
