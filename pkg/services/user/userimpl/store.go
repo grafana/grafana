@@ -75,11 +75,6 @@ func (ss *sqlStore) Insert(ctx context.Context, cmd *user.User) (int64, error) {
 		return 0, err
 	}
 
-	// verify that user was created and cmd.ID was updated with the actual new userID
-	_, err = ss.getAnyUserType(ctx, cmd.ID)
-	if err != nil {
-		return 0, err
-	}
 	return cmd.ID, nil
 }
 
@@ -586,22 +581,6 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 		return err
 	})
 	return &result, err
-}
-
-// getAnyUserType searches for a user record by ID. The user account may be a service account.
-func (ss *sqlStore) getAnyUserType(ctx context.Context, userID int64) (*user.User, error) {
-	usr := user.User{ID: userID}
-	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		has, err := sess.Get(&usr)
-		if err != nil {
-			return err
-		}
-		if !has {
-			return user.ErrUserNotFound
-		}
-		return nil
-	})
-	return &usr, err
 }
 
 func setOptional[T any](v *T, add func(v T)) {
