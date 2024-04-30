@@ -20,7 +20,7 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({ url: `/cloudmigration/migration/${queryArg.uid}/run`, method: 'POST' }),
     }),
     getCloudMigrationRun: build.query<GetCloudMigrationRunApiResponse, GetCloudMigrationRunApiArg>({
-      query: (queryArg) => ({ url: `/cloudmigration/migration/${queryArg.uid}/run/${queryArg.runUid}` }),
+      query: (queryArg) => ({ url: `/cloudmigration/migration/run/${queryArg.runUid}` }),
     }),
     createCloudMigrationToken: build.mutation<CreateCloudMigrationTokenApiResponse, CreateCloudMigrationTokenApiArg>({
       query: () => ({ url: `/cloudmigration/token`, method: 'POST' }),
@@ -60,8 +60,6 @@ export type RunCloudMigrationApiArg = {
 };
 export type GetCloudMigrationRunApiResponse = /** status 200 (empty) */ MigrateDataResponseDto;
 export type GetCloudMigrationRunApiArg = {
-  /** UID of a migration */
-  uid: string;
   /** RunUID of a migration run */
   runUid: string;
 };

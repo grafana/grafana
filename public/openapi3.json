@@ -3533,7 +3533,7 @@
             "type": "array"
           },
           "Policies": {
-            "description": "Policies contains all policy identifiers included in the certificate.\nIn Go 1.22, encoding/gob cannot handle and ignores this field.",
+            "description": "Policies contains all policy identifiers included in the certificate.",
             "items": {
               "$ref": "#/components/schemas/OID"
             },
@@ -14986,6 +14986,40 @@
         ]
       }
     },
+    "/cloudmigration/migration/run/{runUID}": {
+      "get": {
+        "operationId": "getCloudMigrationRun",
+        "parameters": [
+          {
+            "description": "RunUID of a migration run",
+            "in": "path",
+            "name": "runUID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/cloudMigrationRunResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get the result of a single migration run.",
+        "tags": [
+          "migrations"
+        ]
+      }
+    },
     "/cloudmigration/migration/{uid}": {
       "delete": {
         "operationId": "deleteCloudMigration",
@@ -15112,49 +15146,6 @@
           }
         },
         "summary": "Trigger the run of a migration to the Grafana Cloud.",
-        "tags": [
-          "migrations"
-        ]
-      }
-    },
-    "/cloudmigration/migration/{uid}/run/{runUID}": {
-      "get": {
-        "operationId": "getCloudMigrationRun",
-        "parameters": [
-          {
-            "description": "UID of a migration",
-            "in": "path",
-            "name": "uid",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "description": "RunUID of a migration run",
-            "in": "path",
-            "name": "runUID",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/cloudMigrationRunResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Get the result of a single migration run.",
         "tags": [
           "migrations"
         ]

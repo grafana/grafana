@@ -46,7 +46,7 @@ function useGetLatestMigrationRun(migrationUid?: string) {
   const latestMigrationRun = listResult.data?.runs?.at(-1);
 
   const runResult = useGetCloudMigrationRunQuery(
-    latestMigrationRun?.uid && migrationUid ? { runUid: latestMigrationRun.uid, uid: migrationUid } : skipToken
+    latestMigrationRun?.uid && migrationUid ? { runUid: latestMigrationRun.uid } : skipToken
   );
 
   return {

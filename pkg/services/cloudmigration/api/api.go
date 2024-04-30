@@ -46,7 +46,7 @@ func (cma *CloudMigrationAPI) registerEndpoints() {
 		cloudMigrationRoute.Delete("/migration/:uid", routing.Wrap(cma.DeleteMigration))
 		cloudMigrationRoute.Post("/migration/:uid/run", routing.Wrap(cma.RunMigration))
 		cloudMigrationRoute.Get("/migration/:uid/run", routing.Wrap(cma.GetMigrationRunList))
-		cloudMigrationRoute.Get("/migration/:uid/run/:runUID", routing.Wrap(cma.GetMigrationRun))
+		cloudMigrationRoute.Get("/migration/run/:runUID", routing.Wrap(cma.GetMigrationRun))
 		cloudMigrationRoute.Post("/token", routing.Wrap(cma.CreateToken))
 	}, middleware.ReqOrgAdmin)
 }
@@ -185,7 +185,7 @@ type RunCloudMigrationRequest struct {
 	UID string `json:"uid"`
 }
 
-// swagger:route GET /cloudmigration/migration/{uid}/run/{runUID} migrations getCloudMigrationRun
+// swagger:route GET /cloudmigration/migration/run/{runUID} migrations getCloudMigrationRun
 //
 // Get the result of a single migration run.
 //
@@ -195,13 +195,9 @@ type RunCloudMigrationRequest struct {
 // 403: forbiddenError
 // 500: internalServerError
 func (cma *CloudMigrationAPI) GetMigrationRun(c *contextmodel.ReqContext) response.Response {
-	// TODO Parameter 'uid' is not actually used at the moment, since we just need the run UID.
-	// Will be cleaned in another PR
-
 	ctx, span := cma.tracer.Start(c.Req.Context(), "MigrationAPI.GetMigrationRun")
 	defer span.End()
 
-	// [OLD] migrationStatus, err := cma.cloudMigrationService.GetMigrationStatus(ctx, web.Params(c.Req)[":id"], web.Params(c.Req)[":runID"])
 	migrationStatus, err := cma.cloudMigrationService.GetMigrationStatus(ctx, web.Params(c.Req)[":runUID"])
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "migration status error", err)
@@ -218,11 +214,6 @@ func (cma *CloudMigrationAPI) GetMigrationRun(c *contextmodel.ReqContext) respon
 
 // swagger:parameters getCloudMigrationRun
 type GetMigrationRunParams struct {
-	// UID of a migration
-	//
-	// in: path
-	UID string `json:"uid"`
-
 	// RunUID of a migration run
 	//
 	// in: path
