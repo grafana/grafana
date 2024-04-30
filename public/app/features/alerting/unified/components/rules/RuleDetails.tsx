@@ -12,8 +12,8 @@ import { isNullDate } from '../../utils/time';
 import { AlertLabels } from '../AlertLabels';
 import { DetailsField } from '../DetailsField';
 
-import RuleDetailsButtons from './RuleDetailsActionButtons';
 import { RuleDetailsAnnotations } from './RuleDetailsAnnotations';
+import RuleDetailsButtons from './RuleDetailsButtons';
 import { RuleDetailsDataSources } from './RuleDetailsDataSources';
 import { RuleDetailsExpression } from './RuleDetailsExpression';
 import { RuleDetailsMatchingInstances } from './RuleDetailsMatchingInstances';
