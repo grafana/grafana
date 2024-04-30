@@ -452,6 +452,7 @@ export const Components = {
   QueryBuilder: {
     queryPatterns: 'data-testid Query patterns',
     labelSelect: 'data-testid Select label',
+    inputSelect: 'data-testid Select label-input',
     valueSelect: 'data-testid Select value',
     matchOperatorSelect: 'data-testid Select match operator',
   },
