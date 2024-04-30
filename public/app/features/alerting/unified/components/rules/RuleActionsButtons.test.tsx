@@ -1,6 +1,6 @@
 import { produce } from 'immer';
 import React from 'react';
-import { render, screen, userEvent, waitFor } from 'test/test-utils';
+import { render, screen, userEvent } from 'test/test-utils';
 import { byLabelText } from 'testing-library-selector';
 
 import { setPluginExtensionsHook } from '@grafana/runtime';
