@@ -7,7 +7,6 @@ import (
 	"time"
 
 	zclient "github.com/grafana/zanzana/pkg/service/client"
-	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -32,18 +31,18 @@ func ProvideAccessControl(cfg *setting.Cfg, embed *embedserver.Service) *AccessC
 	}
 }
 
-type evalResult struct {
-	runner    string
-	descision bool
-	err       error
-	duration  time.Duration
-}
-
 type AccessControl struct {
 	cfg       *setting.Cfg
 	log       log.Logger
 	resolvers accesscontrol.Resolvers
 	zclient   *zclient.GRPCClient
+}
+
+type evalResult struct {
+	runner    string
+	descision bool
+	err       error
+	duration  time.Duration
 }
 
 func (a *AccessControl) Evaluate(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
@@ -77,18 +76,24 @@ func (a *AccessControl) Evaluate(ctx context.Context, user identity.Requester, e
 	second := <-res
 	close(res)
 
-	if first.descision != second.descision {
-		a.log.Error("eval result diff", "first", first, "second", second)
-	} else {
-		a.log.Info("eval result", "first", first, "second", second)
-	}
-
-	grafanaResult := first
 	if second.runner == "grafana" {
-		grafanaResult = second
+		first, second = second, first
 	}
 
-	return grafanaResult.descision, grafanaResult.err
+	if first.descision != second.descision {
+		a.log.Error(
+			"eval result diff",
+			"grafana_desision", first.descision,
+			"zanana_descision", second.descision,
+			"grafana_ms", first.duration,
+			"zanzana_ms", second.duration,
+			"eval", evaluator.GoString(),
+		)
+	} else {
+		a.log.Info("eval: correct result", "grafana_ms", first.duration, "zanzana_ms", second.duration)
+	}
+
+	return first.descision, first.err
 }
 
 func (a *AccessControl) evalGrafana(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
@@ -130,35 +135,7 @@ func (a *AccessControl) evalZanzana(ctx context.Context, user identity.Requester
 		eval = evaluator
 	}
 
-	for _, pair := range eval.Pairs() {
-		a.log.Info("evaluator", eval.String())
-
-		if pair.Action == "" {
-			a.log.Error("empty evaluator")
-			continue
-		}
-
-		relation, object := zclient.ConvertToRelationObject(pair.Action, pair.Scope, strconv.FormatInt(user.GetOrgID(), 10), "org")
-		result, err := a.zclient.Check(ctx, &openfgav1.CheckRequest{
-			StoreId: a.zclient.MustStoreID(ctx),
-			TupleKey: &openfgav1.CheckRequestTupleKey{
-				User:     user.GetID(),
-				Relation: relation,
-				Object:   object,
-			},
-			AuthorizationModelId: a.zclient.AuthorizationModelID,
-		})
-
-		if err != nil {
-			return false, err
-		}
-
-		if !result.Allowed {
-			return false, nil
-		}
-	}
-
-	return true, nil
+	return eval.EvaluateZanzana(ctx, user.GetID(), strconv.FormatInt(user.GetOrgID(), 10), a.zclient)
 }
 
 func (a *AccessControl) RegisterScopeAttributeResolver(prefix string, resolver accesscontrol.ScopeAttributeResolver) {

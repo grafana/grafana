@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"strings"
 
+	zclient "github.com/grafana/zanzana/pkg/service/client"
+	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
@@ -19,6 +22,7 @@ type ActionScopePair struct {
 type Evaluator interface {
 	// Evaluate permissions that are grouped by action
 	Evaluate(permissions map[string][]string) bool
+	EvaluateZanzana(ctx context.Context, subject, containerID string, c *zclient.GRPCClient) (bool, error)
 	// MutateScopes executes a sequence of ScopeModifier functions on all embedded scopes of an evaluator and returns a new Evaluator
 	MutateScopes(ctx context.Context, mutate ScopeAttributeMutator) (Evaluator, error)
 	// String returns a string representation of permission required by the evaluator
@@ -88,6 +92,50 @@ func match(scope, target string) bool {
 	return scope == target
 }
 
+// EvaluateZanzana implements Evaluator.
+func (p permissionEvaluator) EvaluateZanzana(ctx context.Context, subject, containerID string, c *zclient.GRPCClient) (bool, error) {
+	// TODO: fix so this works properly.
+	// Right now we can get checks for action that don't have scopes
+	// or checks to just know if subject can perform action on any resource.
+	// Maybe this can be solved with a read request?
+	if len(p.Scopes) == 0 {
+		return check(ctx, p.Action, "", subject, containerID, c)
+	}
+
+	for _, target := range p.Scopes {
+		ok, err := check(ctx, p.Action, target, subject, containerID, c)
+		if err != nil {
+			return false, err
+		}
+
+		if ok {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+func check(ctx context.Context, action, scope, subject, containerID string, c *zclient.GRPCClient) (bool, error) {
+	// TODO: move this translation to constructor
+	relation, object := zclient.ConvertToRelationObject(action, scope, containerID, zclient.OrgContainer)
+	res, err := c.Check(ctx, &openfgav1.CheckRequest{
+		StoreId: c.MustStoreID(ctx),
+		TupleKey: &openfgav1.CheckRequestTupleKey{
+			User:     subject,
+			Relation: relation,
+			Object:   object,
+		},
+		AuthorizationModelId: c.AuthorizationModelID,
+	})
+
+	if err != nil {
+		return false, err
+	}
+
+	return res.Allowed, nil
+}
+
 func (p permissionEvaluator) MutateScopes(ctx context.Context, mutate ScopeAttributeMutator) (Evaluator, error) {
 	if p.Scopes == nil {
 		return EvalPermission(p.Action), nil
@@ -150,6 +198,17 @@ func (a allEvaluator) Evaluate(permissions map[string][]string) bool {
 		}
 	}
 	return true
+}
+
+// EvaluateZanzana implements Evaluator.
+func (a allEvaluator) EvaluateZanzana(ctx context.Context, subject, containerID string, c *zclient.GRPCClient) (bool, error) {
+	for _, e := range a.allOf {
+		ok, err := e.EvaluateZanzana(ctx, subject, containerID, c)
+		if !ok || err != nil {
+			return ok, err
+		}
+	}
+	return true, nil
 }
 
 func (a allEvaluator) MutateScopes(ctx context.Context, mutate ScopeAttributeMutator) (Evaluator, error) {
@@ -218,6 +277,17 @@ func (a anyEvaluator) Evaluate(permissions map[string][]string) bool {
 		}
 	}
 	return false
+}
+
+// EvaluateZanzana implements Evaluator.
+func (a anyEvaluator) EvaluateZanzana(ctx context.Context, subject, containerID string, c *zclient.GRPCClient) (bool, error) {
+	for _, e := range a.anyOf {
+		ok, err := e.EvaluateZanzana(ctx, subject, containerID, c)
+		if ok || err != nil {
+			return ok, err
+		}
+	}
+	return false, nil
 }
 
 func (a anyEvaluator) MutateScopes(ctx context.Context, mutate ScopeAttributeMutator) (Evaluator, error) {
