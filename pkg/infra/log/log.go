@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"sort"
@@ -111,15 +112,23 @@ func (lm *logManager) initialize(loggers []logWithFilters) {
 }
 
 func (lm *logManager) New(ctx ...any) *ConcreteLogger {
-	if len(ctx) == 0 {
+	// First key-value could be "logger" and a logger name, that would be handled differently
+	// to allow per-logger filtering. Otherwise a simple concrete logger is returned.
+	if len(ctx) < 2 || ctx[0] != "logger" {
 		return lm.ConcreteLogger
 	}
 
 	lm.mutex.Lock()
 	defer lm.mutex.Unlock()
 
-	loggerName, ok := ctx[1].(string)
-	if !ok {
+	// Logger name could be a string variable or an slog.Value()
+	loggerName := ""
+	switch v := ctx[1].(type) {
+	case string:
+		loggerName = v
+	case slog.Value:
+		loggerName = v.String()
+	default:
 		return lm.ConcreteLogger
 	}
 
@@ -220,10 +229,10 @@ func (cl *ConcreteLogger) FromContext(ctx context.Context) Logger {
 
 func (cl *ConcreteLogger) New(ctx ...any) *ConcreteLogger {
 	if len(ctx) == 0 {
-		root.New()
+		return root.New()
 	}
 
-	return newConcreteLogger(gokitlog.With(&cl.SwapLogger), ctx...)
+	return root.New(append(cl.ctx, ctx...)...)
 }
 
 // New creates a new logger.
