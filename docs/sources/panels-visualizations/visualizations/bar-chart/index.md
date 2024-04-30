@@ -151,15 +151,7 @@ Gradient color is generated based on the hue of the line color.
 
 ## Legend options
 
-Legend options control the series names and statistics that appear under or to the right of the graph.
-
-{{< docs/shared lookup="visualizations/legend-mode.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-### Legend calculations
-
-Choose which of the [standard calculations](ref:standard-calculations) to show in the legend. You can have more than one.
-
-For more information about the legend, refer to [Configure a legend](../configure-legend/).
+{{< docs/shared lookup="visualizations/legend-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Text size
 
@@ -214,3 +206,22 @@ Set a **Soft min** or **soft max** option for better control of Y-axis limits. B
 You can set standard min/max options to define hard limits of the Y-axis. For more information, refer to [Standard options definitions](ref:standard-options-definitions).
 
 {{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+2" >}}
+<<<<<<< HEAD
+=======
+
+## Value mappings
+
+{{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+{{% docs/reference %}}
+[Add a field override]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-overrides#add-a-field-override"
+[Add a field override]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-overrides#add-a-field-override"
+
+[standard calculations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/calculation-types"
+[standard calculations]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types"
+
+[Standard options definitions]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options#max"
+[Standard options definitions]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options#max"
+{{% /docs/reference %}}
+
+> > > > > > > dad30695945 (Docs: add legends shared content (#86814))

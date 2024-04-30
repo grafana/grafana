@@ -81,9 +81,7 @@ The following video guides you through the creation steps and common customizati
 
 ## Legend options
 
-Legend options control the series names and statistics that appear under or to the right of the visualization.
-
-{{< docs/shared lookup="visualizations/legend-mode.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+{{< docs/shared lookup="visualizations/legend-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Graph styles
 
@@ -327,3 +325,7 @@ The following image shows a line chart with the **Green-Yellow-Red (by value)** 
 The following image shows a bar chart with the **Green-Yellow-Red (by value)** color scheme option selected.
 
 {{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_bars.png" max-width="1200px" caption="Color scheme: Green-Yellow-Red" >}}
+
+## Value mappings
+
+{{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
