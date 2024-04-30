@@ -87,7 +87,7 @@ const AlertRuleMenu = ({
       {shouldShowDeclareIncidentButton && <DeclareIncidentMenuItem title={rule.name} url={''} />}
       {canDuplicate && <Menu.Item label="Duplicate" icon="copy" onClick={() => handleDuplicateRule(identifier)} />}
       {showDivider && <Menu.Divider />}
-      {showCopyLinkButton && <Menu.Item label="Copy link" icon="share-alt" onClick={() => copyToClipboard(shareUrl)} />}
+      {shareUrl && <Menu.Item label="Copy link" icon="share-alt" onClick={() => copyToClipboard(shareUrl)} />}
       {canExport && (
         <Menu.Item
           label="Export"
@@ -111,22 +111,6 @@ const AlertRuleMenu = ({
       )}
     </>
   );
-
-  const atLeastOneItem = [
-    canPause,
-    canSilence,
-    shouldShowDeclareIncidentButton,
-    canDuplicate,
-    showDivider,
-    showCopyLinkButton,
-    canExport,
-    extensionsAvailable,
-    canDelete,
-  ].some(Boolean);
-
-  if (!atLeastOneItem) {
-    return null;
-  }
 
   return (
     <Dropdown overlay={<Menu>{menuItems}</Menu>}>
