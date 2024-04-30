@@ -1,5 +1,5 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/MetricSelect.tsx
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import debounce from 'debounce-promise';
 import React, { RefCallback, useCallback, useState } from 'react';
 import Highlighter from 'react-highlight-words';
@@ -240,13 +240,8 @@ export function MetricSelect({
     return (
       <div
         {...innerProps}
-        className={cx(
-          stylesMenu.menu,
-          styles.customMenuContainer,
-          css`
-            max-height: ${Math.round(maxHeight * 0.9)}px;
-          `
-        )}
+        className={`${stylesMenu.menu} ${styles.customMenuContainer}`}
+        style={{ maxHeight: Math.round(maxHeight * 0.9) }}
         aria-label="Select options menu"
       >
         <CustomScrollbar
