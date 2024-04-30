@@ -10,9 +10,14 @@ export class PanelModelCompatibilityWrapper implements PanelModel {
   constructor(private _vizPanel: VizPanel) {}
 
   public get id() {
+    // console.log('this._vizPanel.parent', this._vizPanel.parent);
+    // console.log('this._vizPanel', this._vizPanel);
+
     const id = getPanelIdForVizPanel(
       this._vizPanel.parent instanceof LibraryVizPanel ? this._vizPanel.parent : this._vizPanel
     );
+
+    // console.log('id', id);
 
     if (isNaN(id)) {
       console.error('VizPanel key could not be translated to a legacy numeric panel id', this._vizPanel);

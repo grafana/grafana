@@ -30,7 +30,11 @@ export function getVizPanelKeyForPanelId(panelId: number) {
 }
 
 export function getPanelIdForVizPanel(panel: SceneObject): number {
-  return parseInt(panel.state.key!.replace('panel-', ''), 10);
+  // return parseInt(panel.state.key!.replace('panel-', ''), 10);
+
+  let key = ('panelKey' in panel.state ? panel.state.panelKey : panel.state.key) as string;
+
+  return parseInt(key.replace('panel-', ''), 10);
 }
 
 export function getPanelIdForLibraryVizPanel(panel: LibraryVizPanel): number {

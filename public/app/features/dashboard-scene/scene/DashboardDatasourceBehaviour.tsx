@@ -57,6 +57,9 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
       if (!(panel.parent instanceof LibraryVizPanel)) {
         throw new Error('Could not find SceneQueryRunner for panel');
       } else {
+        if (!panel.parent.isActive) {
+          panel.parent.activate();
+        }
         // Library panels load and create internal viz panel asynchroniously. Here we are subscribing to
         // library panel state, and run dashboard queries when the source panel query runner is ready.
         libraryPanelSub = panel.parent.subscribeToState((n, p) => {
