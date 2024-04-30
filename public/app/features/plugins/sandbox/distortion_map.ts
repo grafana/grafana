@@ -204,6 +204,9 @@ function distortInnerHTML(distortions: DistortionMap) {
     const pluginId = meta.id;
     return function innerHTMLDistortion(this: HTMLElement, ...args: string[]) {
       for (const arg of args) {
+        // NOTE: DOMPurify anti-tamper mechanism requires us to clone the string
+        // calling any method whatsoever on a string will cause the string to be tampered
+        // and DOMPurify will return empty strings
         const lowerCase = String(arg || '').toLowerCase();
         for (const forbiddenElement of forbiddenElements) {
           if (lowerCase.includes('<' + forbiddenElement)) {
