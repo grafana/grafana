@@ -127,8 +127,7 @@ export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton
           // Trigger a re-fetch of the rules table
           // TODO: Migrate rules table functionality to RTK Query, so we instead rely
           // on tag invalidation (or optimistic cache updates) for this
-          dispatch(fetchPromRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME, limitAlerts }));
-          dispatch(fetchRulerRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME }));
+          dispatch(fetchPromAndRulerRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME, limitAlerts }));
         }}
       />
       {deleteModal}
