@@ -706,8 +706,7 @@ func TestParseFormattedState(t *testing.T) {
 func TestGetRuleExtraLabels(t *testing.T) {
 	logger := log.New()
 
-	rule := ngmodels.AlertRuleGen()()
-	rule.NotificationSettings = nil
+	rule := ngmodels.RuleGen.With(ngmodels.RuleMuts.WithNoNotificationSettings()).GenerateRef()
 	folderTitle := uuid.NewString()
 
 	ns := ngmodels.NotificationSettings{

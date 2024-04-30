@@ -146,11 +146,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 	}
 
 	baseRuleWith := func(mutators ...ngmodels.AlertRuleMutator) *ngmodels.AlertRule {
-		r := ngmodels.CopyRule(baseRule)
-		for _, mutator := range mutators {
-			mutator(r)
-		}
-		return r
+		return ngmodels.CopyRule(baseRule, mutators...)
 	}
 
 	newEvaluation := func(evalTime time.Time, evalState eval.State) Evaluation {
@@ -397,7 +393,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 		},
 		{
 			desc:      "t1[1:alerting,2:normal] and 'for'>0 at t1",
-			alertRule: baseRuleWith(ngmodels.WithForNTimes(3)),
+			alertRule: baseRuleWith(ngmodels.RuleMuts.WithForNTimes(3)),
 			results: map[time.Time]eval.Results{
 				t1: {
 					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
@@ -483,7 +479,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 		},
 		{
 			desc:      "t1[1:alerting] t2[1:alerting] t3[1:alerting] and 'for'=2 at t1,t2,t3",
-			alertRule: baseRuleWith(ngmodels.WithForNTimes(2)),
+			alertRule: baseRuleWith(ngmodels.RuleMuts.WithForNTimes(2)),
 			results: map[time.Time]eval.Results{
 				t1: {
 					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
@@ -547,7 +543,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 		},
 		{
 			desc:      "t1[1:alerting], t2[1:normal] and 'for'=2 at t2",
-			alertRule: baseRuleWith(ngmodels.WithForNTimes(2)),
+			alertRule: baseRuleWith(ngmodels.RuleMuts.WithForNTimes(2)),
 			results: map[time.Time]eval.Results{
 				t1: {
 					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
@@ -740,7 +736,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 		},
 		{
 			desc:      "t1[{}:alerting] and 'for'>0  at t1",
-			alertRule: baseRuleWith(ngmodels.WithForNTimes(3)),
+			alertRule: baseRuleWith(ngmodels.RuleMuts.WithForNTimes(3)),
 			results: map[time.Time]eval.Results{
 				t1: {
 					newResult(eval.WithState(eval.Alerting)),
@@ -809,10 +805,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 
 	t.Run("no-data", func(t *testing.T) {
 		rules := map[ngmodels.NoDataState]*ngmodels.AlertRule{
-			ngmodels.NoData:   baseRuleWith(ngmodels.WithNoDataExecAs(ngmodels.NoData)),
-			ngmodels.Alerting: baseRuleWith(ngmodels.WithNoDataExecAs(ngmodels.Alerting)),
-			ngmodels.OK:       baseRuleWith(ngmodels.WithNoDataExecAs(ngmodels.OK)),
-			ngmodels.KeepLast: baseRuleWith(ngmodels.WithNoDataExecAs(ngmodels.KeepLast)),
+			ngmodels.NoData:   baseRuleWith(ngmodels.RuleMuts.WithNoDataExecAs(ngmodels.NoData)),
+			ngmodels.Alerting: baseRuleWith(ngmodels.RuleMuts.WithNoDataExecAs(ngmodels.Alerting)),
+			ngmodels.OK:       baseRuleWith(ngmodels.RuleMuts.WithNoDataExecAs(ngmodels.OK)),
+			ngmodels.KeepLast: baseRuleWith(ngmodels.RuleMuts.WithNoDataExecAs(ngmodels.KeepLast)),
 		}
 
 		type noDataTestCase struct {
@@ -829,10 +825,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 			for stateExec, rule := range rules {
 				r := rule
 				if len(tc.ruleMutators) > 0 {
-					r = ngmodels.CopyRule(r)
-					for _, mutateRule := range tc.ruleMutators {
-						mutateRule(r)
-					}
+					r = ngmodels.CopyRule(r, tc.ruleMutators...)
 				}
 				t.Run(fmt.Sprintf("execute as %s", stateExec), func(t *testing.T) {
 					expectedTransitions, ok := tc.expectedTransitionsApplyNoDataErrorToAllStates[stateExec]
@@ -1524,7 +1517,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 			},
 			{
 				desc:         "t1[1:normal,2:alerting] t2[NoData] t3[NoData] and 'for'=1 at t2*,t3",
-				ruleMutators: []ngmodels.AlertRuleMutator{ngmodels.WithForNTimes(1)},
+				ruleMutators: []ngmodels.AlertRuleMutator{ngmodels.RuleMuts.WithForNTimes(1)},
 				results: map[time.Time]eval.Results{
 					t1: {
 						newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
@@ -1953,7 +1946,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 			},
 			{
 				desc:         "t1[1:alerting] t2[NoData] t3[1:alerting] and 'for'=2 at t3",
-				ruleMutators: []ngmodels.AlertRuleMutator{ngmodels.WithForNTimes(2)},
+				ruleMutators: []ngmodels.AlertRuleMutator{ngmodels.RuleMuts.WithForNTimes(2)},
 				results: map[time.Time]eval.Results{
 					t1: {
 						newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
@@ -2678,7 +2671,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 			},
 			{
 				desc:         "t1[{}:alerting] t2[NoData] t3[{}:alerting] and 'for'=2 at t2*,t3",
-				ruleMutators: []ngmodels.AlertRuleMutator{ngmodels.WithForNTimes(2)},
+				ruleMutators: []ngmodels.AlertRuleMutator{ngmodels.RuleMuts.WithForNTimes(2)},
 				results: map[time.Time]eval.Results{
 					t1: {
 						newResult(eval.WithState(eval.Alerting)),
@@ -2850,10 +2843,10 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 
 	t.Run("error", func(t *testing.T) {
 		rules := map[ngmodels.ExecutionErrorState]*ngmodels.AlertRule{
-			ngmodels.ErrorErrState:    baseRuleWith(ngmodels.WithErrorExecAs(ngmodels.ErrorErrState)),
-			ngmodels.AlertingErrState: baseRuleWith(ngmodels.WithErrorExecAs(ngmodels.AlertingErrState)),
-			ngmodels.OkErrState:       baseRuleWith(ngmodels.WithErrorExecAs(ngmodels.OkErrState)),
-			ngmodels.KeepLastErrState: baseRuleWith(ngmodels.WithErrorExecAs(ngmodels.KeepLastErrState)),
+			ngmodels.ErrorErrState:    baseRuleWith(ngmodels.RuleMuts.WithErrorExecAs(ngmodels.ErrorErrState)),
+			ngmodels.AlertingErrState: baseRuleWith(ngmodels.RuleMuts.WithErrorExecAs(ngmodels.AlertingErrState)),
+			ngmodels.OkErrState:       baseRuleWith(ngmodels.RuleMuts.WithErrorExecAs(ngmodels.OkErrState)),
+			ngmodels.KeepLastErrState: baseRuleWith(ngmodels.RuleMuts.WithErrorExecAs(ngmodels.KeepLastErrState)),
 		}
 
 		cacheID := func(lbls data.Labels) string {
@@ -2879,10 +2872,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 			for stateExec, rule := range rules {
 				r := rule
 				if len(tc.ruleMutators) > 0 {
-					r = ngmodels.CopyRule(r)
-					for _, mutateRule := range tc.ruleMutators {
-						mutateRule(r)
-					}
+					r = ngmodels.CopyRule(r, tc.ruleMutators...)
 				}
 				t.Run(fmt.Sprintf("execute as %s", stateExec), func(t *testing.T) {
 					expectedTransitions, ok := tc.expectedTransitionsApplyNoDataErrorToAllStates[stateExec]
@@ -3084,7 +3074,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 			},
 			{
 				desc:         "t1[1:alerting] t2[QueryError] and 'for'=1 at t2",
-				ruleMutators: []ngmodels.AlertRuleMutator{ngmodels.WithForNTimes(1)},
+				ruleMutators: []ngmodels.AlertRuleMutator{ngmodels.RuleMuts.WithForNTimes(1)},
 				results: map[time.Time]eval.Results{
 					t1: {
 						newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
@@ -3630,7 +3620,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 			},
 			{
 				desc:         "t1[{}:alerting] t2[QueryError] and 'for'=1 at t1*,t2",
-				ruleMutators: []ngmodels.AlertRuleMutator{ngmodels.WithForNTimes(1)},
+				ruleMutators: []ngmodels.AlertRuleMutator{ngmodels.RuleMuts.WithForNTimes(1)},
 				results: map[time.Time]eval.Results{
 					t1: {
 						newResult(eval.WithState(eval.Alerting)),
@@ -3736,7 +3726,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 			},
 			{
 				desc:         "t1[{}:alerting] t2[QueryError] t3[{}:alerting] and 'for'=2 at t2,t3",
-				ruleMutators: []ngmodels.AlertRuleMutator{ngmodels.WithForNTimes(2)},
+				ruleMutators: []ngmodels.AlertRuleMutator{ngmodels.RuleMuts.WithForNTimes(2)},
 				results: map[time.Time]eval.Results{
 					t1: {
 						newResult(eval.WithState(eval.Alerting)),
