@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/alerting/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -104,15 +105,24 @@ func TestIntegrationSilenceAuth(t *testing.T) {
 	}{
 		// OSS Builtins
 		{
-			name:    "No permissions",
-			orgRole: org.RoleNone,
-		},
-		{
 			name:    "Viewer permissions",
 			orgRole: org.RoleViewer,
 			statusExceptions: map[silenceType]map[silenceAction]int{
 				generalSilence:       {readSilence: http.StatusOK},
 				ruleSilenceInFolder1: {readSilence: http.StatusOK},
+				ruleSilenceInFolder2: {readSilence: http.StatusOK},
+			},
+			listContents: []silenceType{generalSilence, ruleSilenceInFolder1, ruleSilenceInFolder2},
+		},
+		{
+			name:    "Viewer permissions with elevated access to folder1",
+			orgRole: org.RoleViewer,
+			permissions: []resourcepermissions.SetResourcePermissionCommand{
+				{Actions: ossaccesscontrol.FolderEditActions, Resource: "folders", ResourceAttribute: "uid", ResourceID: f1.UID},
+			},
+			statusExceptions: map[silenceType]map[silenceAction]int{
+				generalSilence:       {readSilence: http.StatusOK},
+				ruleSilenceInFolder1: {readSilence: http.StatusOK, updateSilence: http.StatusAccepted, createSilence: http.StatusAccepted, deleteSilence: http.StatusOK},
 				ruleSilenceInFolder2: {readSilence: http.StatusOK},
 			},
 			listContents: []silenceType{generalSilence, ruleSilenceInFolder1, ruleSilenceInFolder2},
@@ -130,6 +140,10 @@ func TestIntegrationSilenceAuth(t *testing.T) {
 			listContents:   []silenceType{generalSilence, ruleSilenceInFolder1, ruleSilenceInFolder2},
 		},
 		// RBAC
+		{
+			name:    "No permissions",
+			orgRole: org.RoleNone,
+		},
 		{
 			name: "Global read",
 			permissions: []resourcepermissions.SetResourcePermissionCommand{
