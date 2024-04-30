@@ -181,6 +181,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                   toggleCollapsed={() => toggleSection(item.id)}
                   isActive={shouldBeActive(item, activeSectionId, activeSectionChildId, sectionsExpanded)}
                   sectionId={item.id}
+                  color={item.color}
                 />
                 <div id={item.id} data-testid={`section-wrapper-${item.id}`}>
                   {item.children &&
@@ -216,6 +217,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                           tooltip={child.title}
                           isActive={shouldBeActive(child, activeSectionId, activeSectionChildId, sectionsExpanded)}
                           extraHighlight={child.highlight}
+                          color={child.color}
                         />
                       </div>
                     ))}

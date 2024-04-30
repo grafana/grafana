@@ -2,7 +2,7 @@ import { cx, css } from '@emotion/css';
 import React, { ButtonHTMLAttributes, useEffect, useRef, useState } from 'react';
 
 import { IconName, isIconName, GrafanaTheme2 } from '@grafana/data';
-import { Icon, useStyles2, Tooltip } from '@grafana/ui';
+import { Icon, Tooltip, useTheme2 } from '@grafana/ui';
 import { TooltipPlacement } from '@grafana/ui/src/components/Tooltip';
 
 type CommonProps = {
@@ -19,6 +19,7 @@ type CommonProps = {
   extraHighlight?: boolean;
   sectionId?: string;
   toggleCollapsed?: () => void;
+  color?: string;
 };
 
 export type ContentOutlineItemButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
@@ -37,9 +38,11 @@ export function ContentOutlineItemButton({
   extraHighlight,
   sectionId,
   toggleCollapsed,
+  color,
   ...rest
 }: ContentOutlineItemButtonProps) {
-  const styles = useStyles2(getStyles);
+  const theme = useTheme2();
+  const styles = getStyles(theme, color);
 
   const buttonStyles = cx(styles.button, className);
 
@@ -107,7 +110,7 @@ function OutlineIcon({ icon }: { icon: IconName | React.ReactNode }) {
   return icon;
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, color?: string) => {
   return {
     buttonContainer: css({
       position: 'relative',
@@ -158,7 +161,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'relative',
 
       '&::before': {
-        backgroundImage: theme.colors.gradients.brandVertical,
+        backgroundImage: color !== undefined ? 'none' : theme.colors.gradients.brandVertical,
+        backgroundColor: color !== undefined ? color : 'none',
         borderRadius: theme.shape.radius.default,
         content: '" "',
         display: 'block',
@@ -176,7 +180,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'relative',
 
       '&::before': {
-        backgroundImage: theme.colors.gradients.brandVertical,
+        backgroundImage: color !== undefined ? 'none' : theme.colors.gradients.brandVertical,
+        backgroundColor: color !== undefined ? color : 'none',
         borderRadius: theme.shape.radius.default,
         content: '" "',
         display: 'block',

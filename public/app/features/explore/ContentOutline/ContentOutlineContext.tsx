@@ -6,6 +6,7 @@ import { ContentOutlineItemBaseProps, ITEM_TYPES } from './ContentOutlineItem';
 export interface ContentOutlineItemContextProps extends ContentOutlineItemBaseProps {
   id: string;
   ref: HTMLElement | null;
+  color?: string;
   children?: ContentOutlineItemContextProps[];
 }
 

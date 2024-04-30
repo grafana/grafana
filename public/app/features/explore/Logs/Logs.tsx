@@ -48,13 +48,13 @@ import { mapMouseEventToMode } from '@grafana/ui/src/components/VizLegend/utils'
 import store from 'app/core/store';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
-import { getLogLevelFromKey, getLogLevelInfo } from 'app/features/logs/utils';
+import { getLogLevel, getLogLevelFromKey, getLogLevelInfo } from 'app/features/logs/utils';
 import { dispatch, getState } from 'app/store/store';
 
 import { ExploreItemState } from '../../../types';
 import { LogRows } from '../../logs/components/LogRows';
 import { LogRowContextModal } from '../../logs/components/log-context/LogRowContextModal';
-import { dedupLogRows, filterLogLevels } from '../../logs/logsModel';
+import { dedupLogRows, filterLogLevels, LogLevelColor } from '../../logs/logsModel';
 import { ContentOutlineContext } from '../ContentOutline/ContentOutlineContext';
 import { getUrlStateFromPaneState } from '../hooks/useStateSync';
 import { changePanelState } from '../state/explorePane';
@@ -216,6 +216,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
   }
 
   registerLogLevelsWithContentOutline = () => {
+    const levelsArr = Object.keys(LogLevelColor);
     const logVolumeDataFrames = new Set(this.props.logsVolumeData?.data);
     // TODO remove this once filtering multiple log volumes is supported
     const numberOfLogVolumes = this.getNumberOfLogVolumes();
@@ -227,30 +228,38 @@ class UnthemedLogs extends PureComponent<Props, State> {
     }
 
     // check if we have dataFrames that return the same level
-    const logLevelsArray: string[] = [];
+    const logLevelsArray: Array<{ levelStr: string; logLevel: LogLevel }> = [];
     logVolumeDataFrames.forEach((dataFrame) => {
       const { level } = getLogLevelInfo(dataFrame);
-      logLevelsArray.push(level);
+      logLevelsArray.push({ levelStr: level, logLevel: getLogLevel(level) });
     });
 
-    const logLevels = new Set(logLevelsArray);
+    //logLevelsArray.sort((a:string,b) )
+
+    const sortedLLArray = logLevelsArray.sort(
+      (a: { levelStr: string; logLevel: LogLevel }, b: { levelStr: string; logLevel: LogLevel }) => {
+        return levelsArr.indexOf(a.logLevel.toString()) > levelsArr.indexOf(b.logLevel.toString()) ? 1 : -1;
+      }
+    );
+
+    const logLevels = new Set(sortedLLArray);
 
     if (logLevels.size > 1 && this.props.logsVolumeEnabled && numberOfLogVolumes === 1) {
       logLevels.forEach((level) => {
         const allLevelsSelected = this.state.hiddenLogLevels.length === 0;
-        const currentLevelSelected = !this.state.hiddenLogLevels.find((hiddenLevel) => hiddenLevel === level);
-
+        const currentLevelSelected = !this.state.hiddenLogLevels.find((hiddenLevel) => hiddenLevel === level.levelStr);
         this.context?.register({
-          title: level,
+          title: level.levelStr,
           icon: 'gf-logs',
           panelId: 'Logs',
           level: 'child',
           type: 'filter',
           highlight: currentLevelSelected || allLevelsSelected,
           onClick: (e: React.MouseEvent) => {
-            this.toggleLegendRef.current?.(level, mapMouseEventToMode(e));
+            this.toggleLegendRef.current?.(level.levelStr, mapMouseEventToMode(e));
           },
           ref: null,
+          color: LogLevelColor[level.logLevel],
         });
       });
     }
