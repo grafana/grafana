@@ -56,7 +56,7 @@ export function MetricSelect({
   metricLookupDisabled,
   onBlur,
   variableEditor,
-}: MetricSelectProps) {
+}: Readonly<MetricSelectProps>) {
   const styles = useStyles2(getStyles);
   const [state, setState] = useState<{
     metrics?: SelectableValue[];
@@ -274,7 +274,7 @@ export function MetricSelect({
     return (
       <AsyncSelect
         data-testid={selectors.components.DataSource.Prometheus.queryEditor.builder.metricSelect}
-        isClearable={variableEditor ? true : false}
+        isClearable={variableEditor}
         inputId="prometheus-metric-select"
         className={styles.select}
         value={query.metric ? toOption(query.metric) : undefined}
@@ -333,7 +333,7 @@ export function MetricSelect({
         components={
           prometheusMetricEncyclopedia ? { Option: CustomOption, MenuList: CustomMenu } : { MenuList: CustomMenu }
         }
-        onBlur={onBlur ? onBlur : () => {}}
+        onBlur={onBlur}
       />
     );
   };
