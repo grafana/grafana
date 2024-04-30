@@ -101,7 +101,7 @@ module.exports = (env = {}) => {
       // but there's a bug with style-loader in dev mode that means it doesn't get picked up
       // see https://github.com/webpack-contrib/style-loader/issues/427
       // workaround is to use DefinePlugin to set the value
-      new webpack.DefinePlugin({
+      new DefinePlugin({
         __webpack_nonce__: 'window.nonce',
       }),
       parseInt(env.noTsCheck, 10)
