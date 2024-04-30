@@ -3688,7 +3688,7 @@
         "properties": {
           "runs": {
             "items": {
-              "$ref": "#/components/schemas/MigrateDataResponseListDTO"
+              "$ref": "#/components/schemas/MigrateDataResponseDTO"
             },
             "type": "array"
           }
@@ -6879,15 +6879,6 @@
           "refId",
           "status"
         ],
-        "type": "object"
-      },
-      "MigrateDataResponseListDTO": {
-        "properties": {
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          }
-        },
         "type": "object"
       },
       "MoveFolderCommand": {

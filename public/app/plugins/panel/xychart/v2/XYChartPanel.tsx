@@ -38,7 +38,7 @@ export const XYChartPanel2 = (props: Props2) => {
   let { builder, prepData } = useMemo(
     () => prepConfig(series, config.theme2),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [mapping, mappedSeries, props.data.structureRev, props.fieldConfig, props.options.tooltip]
+    [mapping, mappedSeries, props.data.structureRev, props.fieldConfig]
   );
 
   // generate data struct for uPlot mode: 2

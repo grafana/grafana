@@ -24,7 +24,7 @@ export interface Props {
 }
 
 function stripSeriesName(fieldName: string, seriesName: string) {
-  if (fieldName !== seriesName && fieldName.includes(' ')) {
+  if (fieldName.includes(' ')) {
     fieldName = fieldName.replace(seriesName, '').trim();
   }
 

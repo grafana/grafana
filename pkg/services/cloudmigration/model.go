@@ -68,7 +68,7 @@ func (r CloudMigrationRun) ToResponse() (*MigrateDataResponseDTO, error) {
 }
 
 type CloudMigrationRunList struct {
-	Runs []MigrateDataResponseListDTO `json:"runs"`
+	Runs []MigrateDataResponseDTO `json:"runs"`
 }
 
 // swagger:parameters createMigration
@@ -176,10 +176,6 @@ const (
 type MigrateDataResponseDTO struct {
 	RunUID string                       `json:"uid"`
 	Items  []MigrateDataResponseItemDTO `json:"items"`
-}
-
-type MigrateDataResponseListDTO struct {
-	RunID int64 `json:"id"`
 }
 
 type MigrateDataResponseItemDTO struct {
