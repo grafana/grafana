@@ -98,7 +98,7 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
   }
 
   return (
-    <DragDropContext onDragEnd={onDragEnd}>
+    <DragDropContext nonce={window.nonce} onDragEnd={onDragEnd}>
       <Droppable droppableId="sortable-fields-transformer" direction="vertical">
         {(provided) => (
           <div ref={provided.innerRef} {...provided.droppableProps}>

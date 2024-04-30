@@ -148,7 +148,7 @@ export class QueryRows extends PureComponent<Props> {
     const thresholdByRefId = getThresholdsForQueries([...queries, ...expressions], condition);
 
     return (
-      <DragDropContext onDragEnd={this.onDragEnd}>
+      <DragDropContext nonce={window.nonce} onDragEnd={this.onDragEnd}>
         <Droppable droppableId="alerting-queries" direction="vertical">
           {(provided) => {
             return (

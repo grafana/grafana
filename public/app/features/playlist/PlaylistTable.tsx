@@ -22,7 +22,7 @@ export const PlaylistTable = ({ items, deleteItem, moveItem }: Props) => {
 
   return (
     <FieldSet label={t('playlist-edit.form.table-heading', 'Dashboards')}>
-      <DragDropContext onDragEnd={onDragEnd}>
+      <DragDropContext nonce={window.nonce} onDragEnd={onDragEnd}>
         <Droppable droppableId="playlist-list" direction="vertical">
           {(provided) => {
             return (

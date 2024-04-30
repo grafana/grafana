@@ -99,7 +99,7 @@ export function ValueMappingsEditorModal({ value, onChange, onClose, showIconPic
               <th style={{ width: '1%' }}></th>
             </tr>
           </thead>
-          <DragDropContext onDragEnd={onDragEnd}>
+          <DragDropContext nonce={window.nonce} onDragEnd={onDragEnd}>
             <Droppable droppableId="sortable-field-mappings" direction="vertical">
               {(provided) => (
                 <tbody ref={provided.innerRef} {...provided.droppableProps}>

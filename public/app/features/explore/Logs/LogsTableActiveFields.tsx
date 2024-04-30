@@ -73,7 +73,7 @@ export const LogsTableActiveFields = (props: {
 
   if (labelKeys.length) {
     return (
-      <DragDropContext onDragEnd={onDragEnd}>
+      <DragDropContext nonce={window.nonce} onDragEnd={onDragEnd}>
         <Droppable droppableId="order-fields" direction="vertical">
           {(provided) => (
             <div className={styles.columnWrapper} {...provided.droppableProps} ref={provided.innerRef}>

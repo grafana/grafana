@@ -44,7 +44,7 @@ export const LayerDragDropList = <T extends LayerElement>({
   };
 
   return (
-    <DragDropContext onDragEnd={onDragEnd}>
+    <DragDropContext nonce={window.nonce} onDragEnd={onDragEnd}>
       <Droppable droppableId="droppable">
         {(provided, snapshot) => (
           <div {...provided.droppableProps} ref={provided.innerRef} data-testid={DATA_TEST_ID}>

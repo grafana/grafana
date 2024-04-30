@@ -160,7 +160,7 @@ function TransformationsEditor({ transformations, model, data }: TransformationE
   };
 
   return (
-    <DragDropContext onDragEnd={onDragEnd}>
+    <DragDropContext nonce={window.nonce} onDragEnd={onDragEnd}>
       <Droppable droppableId="transformations-list" direction="vertical">
         {(provided) => {
           return (

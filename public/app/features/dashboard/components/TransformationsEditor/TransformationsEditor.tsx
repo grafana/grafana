@@ -267,7 +267,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
     const { data, transformations } = this.state;
 
     return (
-      <DragDropContext onDragEnd={this.onDragEnd}>
+      <DragDropContext nonce={window.nonce} onDragEnd={this.onDragEnd}>
         <Droppable droppableId="transformations-list" direction="vertical">
           {(provided) => {
             return (
