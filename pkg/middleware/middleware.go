@@ -66,14 +66,6 @@ func AddDefaultResponseHeaders(cfg *setting.Cfg) web.Handler {
 	}
 }
 
-func AddAllowEmbeddingHeader() web.Handler {
-	return func(c *web.Context) {
-		c.Resp.Before(func(w web.ResponseWriter) {
-			w.Header().Set("X-Allow-Embedding", "allow")
-		})
-	}
-}
-
 // addSecurityHeaders adds HTTP(S) response headers that enable various security protections in the client's browser.
 func addSecurityHeaders(w web.ResponseWriter, cfg *setting.Cfg) {
 	if cfg.StrictTransportSecurity {

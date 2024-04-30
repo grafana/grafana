@@ -126,31 +126,81 @@ func TestUserService(t *testing.T) {
 		assert.Equal(t, query2.OrgID, result2.OrgID)
 	})
 
-	t.Run("Can set using org", func(t *testing.T) {
-		cmd := user.SetUsingOrgCommand{UserID: 2, OrgID: 1}
-		orgService.ExpectedUserOrgDTO = []*org.UserOrgDTO{{OrgID: 1}}
+	t.Run("SignedInUserQuery with a different org", func(t *testing.T) {
+		query := user.GetSignedInUserQuery{UserID: 2}
+		userStore.ExpectedSignedInUser = &user.SignedInUser{
+			OrgID:   1,
+			Email:   "ac2@test.com",
+			Name:    "ac2 name",
+			Login:   "ac2",
+			OrgName: "ac1@test.com",
+		}
 		userStore.ExpectedError = nil
-		err := userService.SetUsingOrg(context.Background(), &cmd)
+		queryResult, err := userService.GetSignedInUser(context.Background(), &query)
+
 		require.NoError(t, err)
+		require.EqualValues(t, queryResult.OrgID, 1)
+		require.Equal(t, queryResult.Email, "ac2@test.com")
+		require.Equal(t, queryResult.Name, "ac2 name")
+		require.Equal(t, queryResult.Login, "ac2")
+		require.Equal(t, queryResult.OrgName, "ac1@test.com")
+	})
+}
 
-		t.Run("SignedInUserQuery with a different org", func(t *testing.T) {
-			query := user.GetSignedInUserQuery{UserID: 2}
-			userStore.ExpectedSignedInUser = &user.SignedInUser{
-				OrgID:   1,
-				Email:   "ac2@test.com",
-				Name:    "ac2 name",
-				Login:   "ac2",
-				OrgName: "ac1@test.com",
-			}
-			queryResult, err := userService.GetSignedInUser(context.Background(), &query)
+func TestService_Update(t *testing.T) {
+	setup := func(opts ...func(svc *Service)) *Service {
+		service := &Service{store: &FakeUserStore{}}
+		for _, o := range opts {
+			o(service)
+		}
+		return service
+	}
 
+	t.Run("should return error if old password does not match stored password", func(t *testing.T) {
+		service := setup(func(svc *Service) {
+			stored, err := user.Password("test").Hash("salt")
 			require.NoError(t, err)
-			require.EqualValues(t, queryResult.OrgID, 1)
-			require.Equal(t, queryResult.Email, "ac2@test.com")
-			require.Equal(t, queryResult.Name, "ac2 name")
-			require.Equal(t, queryResult.Login, "ac2")
-			require.Equal(t, queryResult.OrgName, "ac1@test.com")
+
+			svc.store = &FakeUserStore{ExpectedUser: &user.User{Password: stored, Salt: "salt"}}
 		})
+
+		err := service.Update(context.Background(), &user.UpdateUserCommand{
+			OldPassword: passwordPtr("test123"),
+		})
+		assert.ErrorIs(t, err, user.ErrPasswordMissmatch)
+	})
+
+	t.Run("should return error new password is not valid", func(t *testing.T) {
+		service := setup(func(svc *Service) {
+			stored, err := user.Password("test").Hash("salt")
+			require.NoError(t, err)
+			svc.cfg = setting.NewCfg()
+			svc.store = &FakeUserStore{ExpectedUser: &user.User{Password: stored, Salt: "salt"}}
+		})
+
+		err := service.Update(context.Background(), &user.UpdateUserCommand{
+			OldPassword: passwordPtr("test"),
+			Password:    passwordPtr("asd"),
+		})
+		require.ErrorIs(t, err, user.ErrPasswordTooShort)
+	})
+
+	t.Run("Can set using org", func(t *testing.T) {
+		orgID := int64(1)
+		service := setup(func(svc *Service) {
+			svc.orgService = &orgtest.FakeOrgService{ExpectedUserOrgDTO: []*org.UserOrgDTO{{OrgID: orgID}}}
+		})
+		err := service.Update(context.Background(), &user.UpdateUserCommand{UserID: 2, OrgID: &orgID})
+		require.NoError(t, err)
+	})
+
+	t.Run("Cannot set using org when user is not member of it", func(t *testing.T) {
+		orgID := int64(1)
+		service := setup(func(svc *Service) {
+			svc.orgService = &orgtest.FakeOrgService{ExpectedUserOrgDTO: []*org.UserOrgDTO{{OrgID: 2}}}
+		})
+		err := service.Update(context.Background(), &user.UpdateUserCommand{UserID: 2, OrgID: &orgID})
+		require.Error(t, err)
 	})
 }
 
@@ -194,20 +244,12 @@ func newUserStoreFake() *FakeUserStore {
 	return &FakeUserStore{}
 }
 
-func (f *FakeUserStore) Get(ctx context.Context, query *user.User) (*user.User, error) {
-	return f.ExpectedUser, f.ExpectedError
-}
-
 func (f *FakeUserStore) Insert(ctx context.Context, query *user.User) (int64, error) {
 	return 0, f.ExpectedError
 }
 
 func (f *FakeUserStore) Delete(ctx context.Context, userID int64) error {
 	return f.ExpectedDeleteUserError
-}
-
-func (f *FakeUserStore) GetNotServiceAccount(ctx context.Context, userID int64) (*user.User, error) {
-	return f.ExpectedUser, f.ExpectedError
 }
 
 func (f *FakeUserStore) GetByID(context.Context, int64) (*user.User, error) {
@@ -234,10 +276,6 @@ func (f *FakeUserStore) Update(ctx context.Context, cmd *user.UpdateUserCommand)
 	return f.ExpectedError
 }
 
-func (f *FakeUserStore) ChangePassword(ctx context.Context, cmd *user.ChangeUserPasswordCommand) error {
-	return f.ExpectedError
-}
-
 func (f *FakeUserStore) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLastSeenAtCommand) error {
 	return f.ExpectedError
 }
@@ -246,20 +284,8 @@ func (f *FakeUserStore) GetSignedInUser(ctx context.Context, query *user.GetSign
 	return f.ExpectedSignedInUser, f.ExpectedError
 }
 
-func (f *FakeUserStore) UpdateUser(ctx context.Context, user *user.User) error {
-	return f.ExpectedError
-}
-
 func (f *FakeUserStore) GetProfile(ctx context.Context, query *user.GetUserProfileQuery) (*user.UserProfileDTO, error) {
 	return f.ExpectedUserProfile, f.ExpectedError
-}
-
-func (f *FakeUserStore) SetHelpFlag(ctx context.Context, cmd *user.SetUserHelpFlagCommand) error {
-	return f.ExpectedError
-}
-
-func (f *FakeUserStore) UpdatePermissions(ctx context.Context, userID int64, isAdmin bool) error {
-	return f.ExpectedError
 }
 
 func (f *FakeUserStore) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisableUsersCommand) error {

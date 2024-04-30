@@ -497,7 +497,13 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
               </Button>
             )}
             {!isPreviewLoading && (
-              <Button icon="sync" type="button" onClick={() => runQueriesPreview()} disabled={emptyQueries}>
+              <Button
+                data-testid={selectors.components.AlertRules.previewButton}
+                icon="sync"
+                type="button"
+                onClick={() => runQueriesPreview()}
+                disabled={emptyQueries}
+              >
                 Preview
               </Button>
             )}
