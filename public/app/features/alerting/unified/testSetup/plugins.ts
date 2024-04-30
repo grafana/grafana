@@ -3,7 +3,7 @@ import { RequestHandler } from 'msw';
 import { PluginMeta, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { pluginsHandler } from '../mocks/server/handlers';
+import { pluginsHandler } from '../mocks/plugins';
 
 export function setupPlugins(...plugins: PluginMeta[]): { apiHandlers: RequestHandler[] } {
   const pluginsRegistry = new Map<string, PluginMeta>();

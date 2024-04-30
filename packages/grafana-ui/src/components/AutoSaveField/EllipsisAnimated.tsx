@@ -1,6 +1,8 @@
 import { css, keyframes } from '@emotion/css';
 import React from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
+
 import { useStyles2 } from '../../themes';
 
 export const EllipsisAnimated = React.memo(() => {
@@ -16,19 +18,25 @@ export const EllipsisAnimated = React.memo(() => {
 
 EllipsisAnimated.displayName = 'EllipsisAnimated';
 
-const getStyles = () => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     ellipsis: css({
       display: 'inline',
     }),
     firstDot: css({
-      animation: `${firstDot} 2s linear infinite`,
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        animation: `${firstDot} 2s linear infinite`,
+      },
     }),
     secondDot: css({
-      animation: `${secondDot} 2s linear infinite`,
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        animation: `${secondDot} 2s linear infinite`,
+      },
     }),
     thirdDot: css({
-      animation: `${thirdDot} 2s linear infinite`,
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        animation: `${thirdDot} 2s linear infinite`,
+      },
     }),
   };
 };

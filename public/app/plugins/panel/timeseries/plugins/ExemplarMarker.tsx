@@ -307,7 +307,9 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme2) => {
     marble: css({
       display: 'block',
       opacity: 0.5,
-      transition: 'transform 0.15s ease-out',
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: 'transform 0.15s ease-out',
+      },
     }),
     activeMarble: css({
       transform: 'scale(1.3)',

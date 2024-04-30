@@ -1,18 +1,30 @@
 /**
- * Contains definitions for all handlers that are required for test rendering of components within Alerting
+ * Contains all handlers that are required for test rendering of components within Alerting
  */
 
-import { HttpResponse, http } from 'msw';
+import {
+  alertmanagerAlertsListHandler,
+  alertmanagerChoiceHandler,
+} from 'app/features/alerting/unified/mocks/alertmanagerApi';
+import { datasourceBuildInfoHandler } from 'app/features/alerting/unified/mocks/datasources';
+import {
+  silenceCreateHandler,
+  silenceGetHandler,
+  silencesListHandler,
+} from 'app/features/alerting/unified/mocks/silences';
 
-import { PluginMeta } from '@grafana/data';
-import { defaultAlertmanagerChoiceResponse } from 'app/features/alerting/unified/mocks/alertmanagerApi';
+/**
+ * All mock handlers that are required across Alerting tests
+ */
+const allHandlers = [
+  alertmanagerChoiceHandler(),
+  alertmanagerAlertsListHandler(),
 
-export const alertmanagerChoiceHandler = (response = defaultAlertmanagerChoiceResponse) =>
-  http.get('/api/v1/ngalert', () => HttpResponse.json(response));
+  silencesListHandler(),
+  silenceGetHandler(),
+  silenceCreateHandler(),
 
-export const pluginsHandler = (pluginsRegistry: Map<string, PluginMeta>) =>
-  http.get<{ pluginId: string }>(`/api/plugins/:pluginId/settings`, ({ params: { pluginId } }) =>
-    pluginsRegistry.has(pluginId)
-      ? HttpResponse.json<PluginMeta>(pluginsRegistry.get(pluginId)!)
-      : HttpResponse.json({ message: 'Plugin not found, no installed plugin with that id' }, { status: 404 })
-  );
+  datasourceBuildInfoHandler(),
+];
+
+export default allHandlers;

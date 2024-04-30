@@ -32,16 +32,17 @@ func New(cfg *setting.Cfg, validator validations.PluginRequestValidator, tracer 
 		RedirectLimitMiddleware(validator),
 	}
 
-	if cfg.SigV4AuthEnabled {
-		middlewares = append(middlewares, awssdk.SigV4Middleware(cfg.SigV4VerboseLogging))
-	}
-
 	if httpLoggingEnabled(cfg.PluginSettings) {
 		middlewares = append(middlewares, HTTPLoggerMiddleware(cfg.PluginSettings))
 	}
 
 	if cfg.IPRangeACEnabled {
 		middlewares = append(middlewares, GrafanaRequestIDHeaderMiddleware(cfg, logger))
+	}
+
+	// SigV4 signing should be performed after all headers are added
+	if cfg.SigV4AuthEnabled {
+		middlewares = append(middlewares, awssdk.SigV4Middleware(cfg.SigV4VerboseLogging))
 	}
 
 	setDefaultTimeoutOptions(cfg)

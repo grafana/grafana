@@ -5,7 +5,7 @@ import { AlertmanagersChoiceResponse } from 'app/features/alerting/unified/api/a
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 
-import { alertmanagerChoiceHandler } from '../../../mocks/server/handlers';
+import { alertmanagerChoiceHandler } from '../../../mocks/alertmanagerApi';
 
 const alertmanagerChoiceMockedResponse: AlertmanagersChoiceResponse = {
   alertmanagersChoice: AlertmanagerChoice.Internal,
