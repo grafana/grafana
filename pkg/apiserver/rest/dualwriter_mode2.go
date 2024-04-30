@@ -93,24 +93,30 @@ func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion
 		return nil, err
 	}
 
-	keys := []string{}
-	// #TODO: refactor so that we aren't iterating through legacyList twice
-	for _, obj := range legacyList {
-		accessor, err := utils.MetaAccessor(obj)
+	originKeys := []string{}
+	indexMap := map[string]int{}
+	for i, obj := range legacyList {
+		metaAccessor, err := utils.MetaAccessor(obj)
 		if err != nil {
 			return nil, err
 		}
-		keys = append(keys, accessor.GetOriginKey())
+		originKeys = append(originKeys, metaAccessor.GetOriginKey())
+
+		accessor, err := meta.Accessor(obj)
+		if err != nil {
+			return nil, err
+		}
+		// Record the index of each LegacyStorage object so it can later be replaced by
+		// an equivalent Storage object if it exists.
+		indexMap[accessor.GetName()] = i
 	}
 
-	newSelector := labels.NewSelector()
-	// #TODO: additionally specify originSource as a requirement
-	r, err := labels.NewRequirement(utils.AnnoKeyOriginKey, selection.In, keys)
+	r, err := labels.NewRequirement(utils.AnnoKeyOriginKey, selection.In, originKeys)
 	if err != nil {
 		return nil, err
 	}
 	optionsStorage := metainternalversion.ListOptions{
-		LabelSelector: newSelector.Add(*r),
+		LabelSelector: labels.NewSelector().Add(*r),
 	}
 
 	sl, err := d.Storage.List(ctx, &optionsStorage)
@@ -122,24 +128,13 @@ func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion
 		return nil, err
 	}
 
-	m := map[string]int{}
-	for i, obj := range storageList {
+	for _, obj := range storageList {
 		accessor, err := meta.Accessor(obj)
 		if err != nil {
 			return nil, err
 		}
-		m[accessor.GetName()] = i
-	}
-
-	for i, obj := range legacyList {
-		accessor, err := meta.Accessor(obj)
-		if err != nil {
-			return nil, err
-		}
-		// Replace the LegacyStorage object if there's a corresponding entry in Storage.
-		if index, ok := m[accessor.GetName()]; ok {
-			legacyList[i] = storageList[index]
-		}
+		legacyIndex := indexMap[accessor.GetName()]
+		legacyList[legacyIndex] = obj
 	}
 
 	if err = meta.SetList(ll, legacyList); err != nil {
