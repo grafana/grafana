@@ -9,7 +9,7 @@ import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasou
 import { isCloudRuleIdentifier, isPrometheusRuleIdentifier } from '../utils/rules';
 
 export interface FetchPromRulesFilter {
-  dashboardUID: string;
+  dashboardUID?: string;
   panelId?: number;
 }
 

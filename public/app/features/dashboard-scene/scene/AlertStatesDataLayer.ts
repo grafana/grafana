@@ -72,17 +72,16 @@ export class AlertStatesDataLayer
       return;
     }
     const fetchData: () => Promise<RuleNamespace[]> = async () => {
-      const promRules = dispatch(
+      const promRules = await dispatch(
         alertRuleApi.endpoints.prometheusRuleNamespaces.initiate({
           ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
           dashboardUid: uid,
         })
       );
-      const result = await promRules;
-      if (result.error) {
+      if (promRules.error) {
         throw new Error(`Unexpected alert rules response.`);
       }
-      return result.data;
+      return promRules.data;
     };
     const res: Observable<PromRuleGroupDTO[]> = from(fetchData()).pipe(
       map((namespaces: RuleNamespace[]) => ungroupRulesByFileName(namespaces))
