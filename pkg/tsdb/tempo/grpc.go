@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"net"
 	"net/url"
@@ -97,6 +98,14 @@ func getDialOpts(ctx context.Context, settings backend.DataSourceInstanceSetting
 		logger.Debug("gRPC dialer instantiated. Appending gRPC dialer to dial options")
 		dialOps = append(dialOps, grpc.WithContextDialer(func(ctx context.Context, host string) (net.Conn, error) {
 			logger.Debug("Dialing secure socks proxy", "host", host)
+			select {
+			case <-ctx.Done():
+				err := errors.New("context canceled")
+				logger.Error("Context has been canceled, aborting dialing", "error", err)	
+				return nil, err
+			default:
+				logger.Debug("Context is still valid, proceeding with dialing")
+			}
 			conn, err := dialer.Dial("tcp", host)
 			if err != nil {
 				logger.Error("Error dialing secure socks proxy", "error", err)
