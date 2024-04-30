@@ -1,4 +1,4 @@
-import { BaseQueryFn } from '@reduxjs/toolkit/src/query/baseQueryTypes';
+import { BaseQueryFn } from '@reduxjs/toolkit/query/react';
 import { lastValueFrom } from 'rxjs';
 
 import { getBackendSrv, isFetchError } from '../../backendSrv';
