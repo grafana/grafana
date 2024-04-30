@@ -28,6 +28,9 @@ func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o
 	}
 
 	host := fmt.Sprintf("%s:%d", ip, port)
+	if ip.To16() != nil {
+		host = fmt.Sprintf("[%s]:%d", ip, port)
+	}
 
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 
