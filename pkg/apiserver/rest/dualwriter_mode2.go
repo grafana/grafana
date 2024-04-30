@@ -111,6 +111,10 @@ func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion
 		indexMap[accessor.GetName()] = i
 	}
 
+	if len(originKeys) == 0 {
+		return ll, nil
+	}
+
 	r, err := labels.NewRequirement(utils.AnnoKeyOriginKey, selection.In, originKeys)
 	if err != nil {
 		return nil, err
