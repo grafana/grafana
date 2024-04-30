@@ -59,7 +59,7 @@ Labels and annotations contain information about an alert. Labels are used to di
 Label templates are applied in the alert rule itself (i.e. in the Configure labels and notifications section of an alert).
 
 {{<admonition type="note">}}
-Think about templating labels when you need to improve or change how alerts are uniquely identified. This is especially helpful if the labels you get from your query aren't detailed enough. Keep in mind that, it's better to keep long sentences for summaries and descriptions. Also, avoid using the query's value in labels because it might cause Grafana to create many alerts when you actually only need one.
+Think about templating labels when you need to improve or change how alerts are uniquely identified. This is especially helpful if the labels you get from your query aren't detailed enough. Keep in mind that it's better to keep long sentences for summaries and descriptions. Also, avoid using the query's value in labels because it may result in the creation of many alerts when you actually only need one.
 {{</admonition>}}
 
 Templating can be applied by using variables and functions. These variables can represent dynamic values retrieved from your data queries.
