@@ -117,6 +117,15 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
     }
   }
 
+  const urlTooltip = (url: string) => {
+    return (
+      <>
+        <div>http.url or http.target or http.path</div>
+        <div>({url})</div>
+      </>
+    );
+  };
+
   return (
     <header className={styles.header}>
       <div className={styles.titleRow}>
@@ -143,7 +152,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
             </Tooltip>
           )}
           {url && url.length > 0 && (
-            <Tooltip content={'http.url or http.target or http.path'} interactive={true}>
+            <Tooltip content={urlTooltip(url[0].value)} interactive={true}>
               <span className={styles.url}>{url[0].value}</span>
             </Tooltip>
           )}
