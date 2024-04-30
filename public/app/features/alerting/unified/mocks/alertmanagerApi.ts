@@ -18,14 +18,15 @@ export const defaultGrafanaAlertingConfigurationStatusResponse: GrafanaAlertingC
   numExternalAlertmanagers: 0,
 };
 
-export const alertmanagerChoiceHandler = (response = defaultGrafanaAlertingConfigurationStatusResponse) =>
-  http.get('/api/v1/ngalert', () => HttpResponse.json(response));
+export const grafanaAlertingConfigurationStatusHandler = (
+  response = defaultGrafanaAlertingConfigurationStatusResponse
+) => http.get('/api/v1/ngalert', () => HttpResponse.json(response));
 
 export function mockAlertmanagerChoiceResponse(
   server: SetupServer,
   response: GrafanaAlertingConfigurationStatusResponse
 ) {
-  server.use(alertmanagerChoiceHandler(response));
+  server.use(grafanaAlertingConfigurationStatusHandler(response));
 }
 
 export const emptyExternalAlertmanagersResponse: ExternalAlertmanagersStatusResponse = {

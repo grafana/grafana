@@ -4,7 +4,7 @@
 
 import {
   alertmanagerAlertsListHandler,
-  alertmanagerChoiceHandler,
+  grafanaAlertingConfigurationStatusHandler,
 } from 'app/features/alerting/unified/mocks/alertmanagerApi';
 import { datasourceBuildInfoHandler } from 'app/features/alerting/unified/mocks/datasources';
 import {
@@ -17,7 +17,7 @@ import {
  * All mock handlers that are required across Alerting tests
  */
 const allHandlers = [
-  alertmanagerChoiceHandler(),
+  grafanaAlertingConfigurationStatusHandler(),
   alertmanagerAlertsListHandler(),
 
   silencesListHandler(),

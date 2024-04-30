@@ -11,9 +11,12 @@ import { CombinedRule, RuleHealth, RuleIdentifier } from 'app/types/unified-aler
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { defaultPageNav } from '../../RuleViewer';
+import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { Annotation } from '../../utils/constants';
 import { makeDashboardLink, makePanelLink } from '../../utils/misc';
 import {
+  RulePluginOrigin,
+  getRulePluginOrigin,
   isAlertingRule,
   isFederatedRuleGroup,
   isGrafanaRulerRule,
@@ -73,6 +76,7 @@ const RuleViewer = () => {
   const isPaused = isGrafanaRulerRule(rule.rulerRule) && isGrafanaRulerRulePaused(rule.rulerRule);
 
   const showError = hasError && !isPaused;
+  const ruleOrigin = getRulePluginOrigin(rule);
 
   const summary = annotations[Annotation.summary];
 
@@ -88,6 +92,7 @@ const RuleViewer = () => {
           state={isAlertType ? promRule.state : undefined}
           health={rule.promRule?.health}
           ruleType={rule.promRule?.type}
+          ruleOrigin={ruleOrigin}
         />
       )}
       actions={actions}
@@ -223,15 +228,17 @@ interface TitleProps {
   state?: PromAlertingRuleState;
   health?: RuleHealth;
   ruleType?: PromRuleType;
+  ruleOrigin?: RulePluginOrigin;
 }
 
-export const Title = ({ name, paused = false, state, health, ruleType }: TitleProps) => {
+export const Title = ({ name, paused = false, state, health, ruleType, ruleOrigin }: TitleProps) => {
   const styles = useStyles2(getStyles);
   const isRecordingRule = ruleType === PromRuleType.Recording;
 
   return (
     <div className={styles.title}>
       <LinkButton variant="secondary" icon="angle-left" href="/alerting/list" />
+      {ruleOrigin && <PluginOriginBadge pluginId={ruleOrigin.pluginId} />}
       <Text variant="h1" truncate>
         {name}
       </Text>
