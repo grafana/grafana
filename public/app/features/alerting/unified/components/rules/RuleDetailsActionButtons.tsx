@@ -245,13 +245,13 @@ function shouldShowDeclareIncidentButton() {
 }
 
 export const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    padding: 0 0 ${theme.spacing(2)} 0;
-    gap: ${theme.spacing(1)};
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    border-bottom: solid 1px ${theme.colors.border.medium};
-  `,
+  wrapper: css({
+    padding: `0 0 ${theme.spacing(2)} 0`,
+    gap: theme.spacing(1),
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    borderBottom: `solid 1px ${theme.colors.border.medium}`,
+  }),
 });

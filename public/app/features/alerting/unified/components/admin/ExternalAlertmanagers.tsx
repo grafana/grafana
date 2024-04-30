@@ -82,18 +82,18 @@ export const ExternalAlertmanagers = () => {
 };
 
 export const getStyles = (theme: GrafanaTheme2) => ({
-  url: css`
-    margin-right: ${theme.spacing(1)};
-  `,
-  actions: css`
-    margin-top: ${theme.spacing(2)};
-    display: flex;
-    justify-content: flex-end;
-  `,
-  table: css`
-    margin-bottom: ${theme.spacing(2)};
-  `,
-  amChoice: css`
-    margin-bottom: ${theme.spacing(4)};
-  `,
+  url: css({
+    marginRight: theme.spacing(1),
+  }),
+  actions: css({
+    marginTop: theme.spacing(2),
+    display: 'flex',
+    justifyContent: 'flex-end',
+  }),
+  table: css({
+    marginBottom: theme.spacing(2),
+  }),
+  amChoice: css({
+    marginBottom: theme.spacing(4),
+  }),
 });

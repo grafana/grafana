@@ -101,24 +101,24 @@ export function ExternalAMdataSourceCard({ alertmanager, inactive }: ExternalAMd
 }
 
 export const getStyles = (theme: GrafanaTheme2) => ({
-  muted: css`
-    font-size: ${theme.typography.bodySmall.fontSize};
-    line-height: ${theme.typography.bodySmall.lineHeight};
-    color: ${theme.colors.text.secondary};
-  `,
-  externalHeading: css`
-    justify-content: flex-start;
-  `,
-  externalWarningIcon: css`
-    margin: ${theme.spacing(0, 1)};
-    fill: ${theme.colors.warning.main};
-  `,
-  externalDs: css`
-    display: grid;
-    gap: ${theme.spacing(1)};
-    padding: ${theme.spacing(2, 0)};
-  `,
-  externalDsCTA: css`
-    margin: ${theme.spacing(2, 0)};
-  `,
+  muted: css({
+    fontSize: theme.typography.bodySmall.fontSize,
+    lineHeight: theme.typography.bodySmall.lineHeight,
+    color: theme.colors.text.secondary,
+  }),
+  externalHeading: css({
+    justifyContent: 'flex-start',
+  }),
+  externalWarningIcon: css({
+    margin: theme.spacing(0, 1),
+    fill: theme.colors.warning.main,
+  }),
+  externalDs: css({
+    display: 'grid',
+    gap: theme.spacing(1),
+    padding: theme.spacing(2, 0),
+  }),
+  externalDsCTA: css({
+    margin: theme.spacing(2, 0),
+  }),
 });

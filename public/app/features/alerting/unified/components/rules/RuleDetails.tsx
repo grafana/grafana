@@ -111,21 +111,21 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
 };
 
 export const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    display: flex;
-    flex-direction: row;
+  wrapper: css({
+    display: 'flex',
+    flexDirection: 'row',
 
-    ${theme.breakpoints.down('md')} {
-      flex-direction: column;
-    }
-  `,
-  leftSide: css`
-    flex: 1;
-  `,
-  rightSide: css`
-    ${theme.breakpoints.up('md')} {
-      padding-left: 90px;
-      width: 300px;
-    }
-  `,
+    [theme.breakpoints.down('md')]: {
+      flexDirection: 'column',
+    },
+  }),
+  leftSide: css({
+    flex: 1,
+  }),
+  rightSide: css({
+    [theme.breakpoints.up('md')]: {
+      paddingLeft: '90px',
+      width: '300px',
+    },
+  }),
 });

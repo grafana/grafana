@@ -247,7 +247,7 @@ function inViewMode(pathname: string): boolean {
 }
 
 export const getStyles = (theme: GrafanaTheme2) => ({
-  button: css`
-    padding: 0 ${theme.spacing(2)};
-  `,
+  button: css({
+    padding: `0 ${theme.spacing(2)}`,
+  }),
 });

@@ -119,7 +119,7 @@ export default function AlertmanagerConfig(): JSX.Element {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    margin-bottom: ${theme.spacing(4)};
-  `,
+  container: css({
+    marginBottom: theme.spacing(4),
+  }),
 });

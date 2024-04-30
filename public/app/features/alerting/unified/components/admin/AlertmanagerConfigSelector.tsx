@@ -103,8 +103,8 @@ export default function AlertmanagerConfigSelector({
   );
 }
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    margin-top: ${theme.spacing(2)};
-    margin-bottom: ${theme.spacing(2)};
-  `,
+  container: css({
+    marginTop: theme.spacing(2),
+    marginBottom: theme.spacing(2),
+  }),
 });
