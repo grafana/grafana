@@ -9,18 +9,14 @@ import {
   DataSourceApi,
   DataSourceJsonData,
   DataSourceRef,
-  DataTransformerConfig,
   FieldType,
   LoadingState,
   PanelData,
   TimeRange,
-  standardTransformersRegistry,
   toDataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { SceneDataTransformer, SceneQueryRunner } from '@grafana/scenes';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 import { DashboardDataDTO } from 'app/types';
@@ -33,31 +29,32 @@ import { testDashboard } from '../testfiles/testDashboard';
 
 import { PanelDataQueriesTab, PanelDataQueriesTabRendered } from './PanelDataQueriesTab';
 
-function createModelMock(
-  panelData: PanelData,
-  transformations?: DataTransformerConfig[],
-  onChangeTransformationsMock?: Function
-) {
-  return {
-    getDataTransformer: () => new SceneDataTransformer({ data: panelData, transformations: transformations || [] }),
-    getQueryRunner: () => new SceneQueryRunner({ queries: [], data: panelData }),
-    onChangeTransformations: onChangeTransformationsMock,
-  } as unknown as PanelDataQueriesTab;
-}
+async function createModelMock() {
+  const panelManager = setupVizPanelManger('panel-1');
+  panelManager.activate();
+  await Promise.resolve();
+  const queryTabModel = new PanelDataQueriesTab(panelManager);
 
-const mockData = {
-  timeRange: {} as unknown as TimeRange,
-  state: {} as unknown as LoadingState,
-  series: [
-    toDataFrame({
-      name: 'A',
-      fields: [
-        { name: 'time', type: FieldType.time, values: [100, 200, 300] },
-        { name: 'values', type: FieldType.number, values: [1, 2, 3] },
+  // mock queryRunner data state
+  jest.spyOn(queryTabModel.queryRunner, 'state', 'get').mockReturnValue({
+    ...queryTabModel.queryRunner.state,
+    data: {
+      state: LoadingState.Done,
+      series: [
+        toDataFrame({
+          name: 'A',
+          fields: [
+            { name: 'time', type: FieldType.time, values: [100, 200, 300] },
+            { name: 'values', type: FieldType.number, values: [1, 2, 3] },
+          ],
+        }),
       ],
-    }),
-  ],
-};
+      timeRange: {} as TimeRange,
+    },
+  });
+
+  return queryTabModel;
+}
 const runRequestMock = jest.fn().mockImplementation((ds: DataSourceApi, request: DataQueryRequest) => {
   const result: PanelData = {
     state: LoadingState.Loading,
@@ -68,7 +65,15 @@ const runRequestMock = jest.fn().mockImplementation((ds: DataSourceApi, request:
   return of([]).pipe(
     map(() => {
       result.state = LoadingState.Done;
-      result.series = [];
+      result.series = [
+        toDataFrame({
+          name: 'A',
+          fields: [
+            { name: 'time', type: FieldType.time, values: [100, 200, 300] },
+            { name: 'values', type: FieldType.number, values: [1, 2, 3] },
+          ],
+        }),
+      ];
 
       return result;
     })
@@ -130,6 +135,11 @@ const instance1SettingsMock = {
   type: 'grafana-testdata-datasource',
   meta: {
     id: 'grafana-testdata-datasource',
+    info: {
+      logos: {
+        small: 'test-logo.png',
+      },
+    },
   },
 };
 
@@ -162,6 +172,7 @@ const MixedDs = {
   type: 'datasource',
   meta: {
     id: 'grafana',
+    mixed: true,
   },
 };
 
@@ -172,6 +183,7 @@ const MixedDsSettingsMock = {
   type: 'datasource',
   meta: {
     id: 'grafana',
+    mixed: true,
   },
 };
 
@@ -225,6 +237,9 @@ jest.mock('@grafana/runtime', () => ({
   }),
   locationService: {
     partial: jest.fn(),
+    getSearchObject: jest.fn().mockReturnValue({
+      firstPanel: false,
+    }),
   },
   config: {
     ...jest.requireActual('@grafana/runtime').config,
@@ -255,128 +270,68 @@ describe('PanelDataQueriesModel', () => {
 
     const model = new PanelDataQueriesTab(vizPanelManager);
     expect(vizPanelManager.state.datasource?.uid).toBe('-- Mixed --');
+    expect(model.queryRunner.state.datasource?.uid).toBe('-- Mixed --');
     model.addQueryClick();
-    console.log('model state', vizPanelManager.state);
+
     expect(model.queryRunner.state.queries).toHaveLength(2);
     expect(model.queryRunner.state.queries[1].refId).toBe('B');
     expect(model.queryRunner.state.queries[1].hide).toBe(false);
-    expect(model.queryRunner.state.queries[1].datasource).toEqual({
-      type: 'grafana-testdata-datasource',
-      uid: 'gdev-testdata',
-    });
+    expect(model.queryRunner.state.queries[1].datasource?.uid).toBe('gdev-testdata');
   });
 });
 
-// describe('PanelDataTransformationsTab', () => {
-//   standardTransformersRegistry.setInit(getStandardTransformers);
-//
-//   it('renders empty message when there are no transformations', async () => {
-//     const modelMock = createModelMock({} as PanelData);
-//     render(<PanelDataQueriesTabRendered model={modelMock}></PanelDataQueriesTabRendered>);
-//
-//     await screen.findByTestId(selectors.components.Transforms.noTransformationsMessage);
-//   });
-//
-//   it('renders transformations when there are transformations', async () => {
-//     const modelMock = createModelMock(mockData, [
-//       {
-//         id: 'calculateField',
-//         options: {},
-//       },
-//     ]);
-//     render(<PanelDataQueriesTabRendered model={modelMock}></PanelDataQueriesTabRendered>);
-//
-//     await screen.findByText('1 - Add field from calculation');
-//   });
-//
-//   it('shows show the transformation selection drawer', async () => {
-//     const modelMock = createModelMock(mockData);
-//     render(<PanelDataQueriesTabRendered model={modelMock}></PanelDataQueriesTabRendered>);
-//     const addButton = await screen.findByTestId(selectors.components.Transforms.addTransformationButton);
-//     await userEvent.click(addButton);
-//     await screen.findByTestId(selectors.components.Transforms.searchInput);
-//   });
-//
-//   it('adds a transformation when a transformation is clicked in the drawer and there are no previous transformations', async () => {
-//     const onChangeTransformation = jest.fn();
-//     const modelMock = createModelMock(mockData, [], onChangeTransformation);
-//     render(<PanelDataQueriesTabRendered model={modelMock}></PanelDataQueriesTabRendered>);
-//     const addButton = await screen.findByTestId(selectors.components.Transforms.addTransformationButton);
-//     await userEvent.click(addButton);
-//     const transformationCard = await screen.findByTestId(
-//       selectors.components.TransformTab.newTransform('Add field from calculation')
-//     );
-//     const button = transformationCard.getElementsByTagName('button').item(0);
-//     await userEvent.click(button!);
-//
-//     expect(onChangeTransformation).toHaveBeenCalledWith([{ id: 'calculateField', options: {} }]);
-//   });
-//
-//   it('adds a transformation when a transformation is clicked in the drawer and there are transformations', async () => {
-//     const onChangeTransformation = jest.fn();
-//     const modelMock = createModelMock(
-//       mockData,
-//       [
-//         {
-//           id: 'calculateField',
-//           options: {},
-//         },
-//       ],
-//       onChangeTransformation
-//     );
-//     render(<PanelDataQueriesTabRendered model={modelMock}></PanelDataQueriesTabRendered>);
-//     const addButton = await screen.findByTestId(selectors.components.Transforms.addTransformationButton);
-//     await userEvent.click(addButton);
-//     const transformationCard = await screen.findByTestId(
-//       selectors.components.TransformTab.newTransform('Add field from calculation')
-//     );
-//     const button = transformationCard.getElementsByTagName('button').item(0);
-//     await userEvent.click(button!);
-//     expect(onChangeTransformation).toHaveBeenCalledWith([
-//       { id: 'calculateField', options: {} },
-//       { id: 'calculateField', options: {} },
-//     ]);
-//   });
-//
-//   it('deletes all transformations', async () => {
-//     const onChangeTransformation = jest.fn();
-//     const modelMock = createModelMock(
-//       mockData,
-//       [
-//         {
-//           id: 'calculateField',
-//           options: {},
-//         },
-//       ],
-//       onChangeTransformation
-//     );
-//     render(<PanelDataQueriesTabRendered model={modelMock}></PanelDataQueriesTabRendered>);
-//     const removeButton = await screen.findByTestId(selectors.components.Transforms.removeAllTransformationsButton);
-//     await userEvent.click(removeButton);
-//     const confirmButton = await screen.findByTestId(selectors.pages.ConfirmModal.delete);
-//     await userEvent.click(confirmButton);
-//
-//     expect(onChangeTransformation).toHaveBeenCalledWith([]);
-//   });
-//
-//   it('can filter transformations in the drawer', async () => {
-//     const modelMock = createModelMock(mockData);
-//     render(<PanelDataQueriesTabRendered model={modelMock}></PanelDataQueriesTabRendered>);
-//     const addButton = await screen.findByTestId(selectors.components.Transforms.addTransformationButton);
-//     await userEvent.click(addButton);
-//
-//     const searchInput = await screen.findByTestId(selectors.components.Transforms.searchInput);
-//
-//     await screen.findByTestId(selectors.components.TransformTab.newTransform('Reduce'));
-//
-//     await userEvent.type(searchInput, 'add field');
-//
-//     await screen.findByTestId(selectors.components.TransformTab.newTransform('Add field from calculation'));
-//     const reduce = screen.queryByTestId(selectors.components.TransformTab.newTransform('Reduce'));
-//     expect(reduce).toBeNull();
-//   });
-// });
-//
+describe('PanelDataQueriesTab', () => {
+  it('renders query group top section', async () => {
+    const modelMock = await createModelMock();
+
+    render(<PanelDataQueriesTabRendered model={modelMock}></PanelDataQueriesTabRendered>);
+    await screen.findByTestId(selectors.components.QueryTab.queryGroupTopSection);
+  });
+
+  it('renders queries rows when queries are set', async () => {
+    const modelMock = await createModelMock();
+    render(<PanelDataQueriesTabRendered model={modelMock}></PanelDataQueriesTabRendered>);
+
+    await screen.findByTestId('query-editor-rows');
+    expect(screen.getAllByTestId('query-editor-row')).toHaveLength(1);
+  });
+
+  it('allow to add a new query when user clicks on add new', async () => {
+    const modelMock = await createModelMock();
+    jest.spyOn(modelMock, 'addQueryClick');
+    jest.spyOn(modelMock, 'onQueriesChange');
+    render(<PanelDataQueriesTabRendered model={modelMock}></PanelDataQueriesTabRendered>);
+
+    await screen.findByTestId(selectors.components.QueryTab.addQuery);
+    await userEvent.click(screen.getByTestId(selectors.components.QueryTab.addQuery));
+
+    const expectedQueries = [
+      {
+        datasource: { type: 'grafana-testdata-datasource', uid: 'gdev-testdata' },
+        refId: 'A',
+        scenarioId: 'random_walk',
+        seriesCount: 1,
+      },
+      { datasource: { type: 'grafana-testdata-datasource', uid: 'gdev-testdata' }, hide: false, refId: 'B' },
+    ];
+
+    expect(modelMock.addQueryClick).toHaveBeenCalled();
+    expect(modelMock.onQueriesChange).toHaveBeenCalledWith(expectedQueries);
+  });
+
+  it('allow to remove a query when user clicks on remove', async () => {
+    const modelMock = await createModelMock();
+    jest.spyOn(modelMock, 'addQueryClick');
+    jest.spyOn(modelMock, 'onQueriesChange');
+    render(<PanelDataQueriesTabRendered model={modelMock}></PanelDataQueriesTabRendered>);
+
+    await screen.findByTestId('data-testid Remove query');
+    await userEvent.click(screen.getByTestId('data-testid Remove query'));
+
+    expect(modelMock.onQueriesChange).toHaveBeenCalledWith([]);
+  });
+});
+
 const setupVizPanelManger = (panelId: string) => {
   const scene = transformSaveModelToScene({ dashboard: testDashboard as unknown as DashboardDataDTO, meta: {} });
   const panel = findVizPanelByKey(scene, panelId)!;

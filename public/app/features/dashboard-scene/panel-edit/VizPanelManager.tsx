@@ -78,7 +78,6 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
 
     const gridItem = sourcePanel?.parent instanceof LibraryVizPanel ? sourcePanel.parent.parent : sourcePanel?.parent;
 
-    console.log('gridItem what is it', gridItem);
     if (!(gridItem instanceof DashboardGridItem)) {
       console.error('VizPanel is not a child of a dashboard grid item');
       throw new Error('VizPanel is not a child of a dashboard grid item');
