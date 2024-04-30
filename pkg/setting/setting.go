@@ -100,6 +100,7 @@ type Cfg struct {
 	AppSubURL         string
 	InstanceName      string
 	ServeFromSubPath  bool
+	FrontendDevServer string
 	StaticRootPath    string
 	Protocol          Scheme
 	SocketGid         int
