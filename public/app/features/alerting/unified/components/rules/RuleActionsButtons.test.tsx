@@ -3,6 +3,7 @@ import React from 'react';
 import { render, screen, userEvent, waitFor } from 'test/test-utils';
 import { byLabelText } from 'testing-library-selector';
 
+import { setPluginExtensionsHook } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { RuleActionsButtons } from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
@@ -51,6 +52,11 @@ const getMenuContents = async () => {
   return [...allMenuItems, ...allLinkItems];
 };
 
+setPluginExtensionsHook(() => ({
+  extensions: [],
+  isLoading: false,
+}));
+
 describe('RuleActionsButtons', () => {
   it('renders correct options for grafana managed rule', async () => {
     const user = userEvent.setup();
@@ -93,14 +99,17 @@ describe('RuleActionsButtons', () => {
     expect(await getMenuContents()).toMatchSnapshot();
   });
 
-  it('renders no "More" menu when there are no items to display', async () => {
+  it('renders minimal "More" menu when appropriate', async () => {
+    const user = userEvent.setup();
     grantNoPermissions();
 
     const mockRule = getGrafanaRule({ promRule: mockPromAlertingRule({ state: PromAlertingRuleState.Inactive }) });
 
     render(<RuleActionsButtons rule={mockRule} rulesSource="grafana" />);
 
-    await waitFor(() => expect(ui.moreButton.query()).not.toBeInTheDocument());
+    await user.click(await ui.moreButton.find());
+
+    expect(await getMenuContents()).toMatchSnapshot();
   });
 
   it('does not allow deletion when rule is provisioned', async () => {

@@ -2,20 +2,27 @@
 
 exports[`RuleActionsButtons renders correct options for Cloud rule 1`] = `
 [
-  "Declare incident",
   "Duplicate",
+  "Copy link",
   "Delete",
+  "Declare incident",
 ]
 `;
 
 exports[`RuleActionsButtons renders correct options for grafana managed rule 1`] = `
 [
   "Pause evaluation",
-  "Declare incident",
   "Duplicate",
   "Copy link",
   "Export",
   "Delete",
   "Silence notifications",
+  "Declare incident",
+]
+`;
+
+exports[`RuleActionsButtons renders minimal "More" menu when appropriate 1`] = `
+[
+  "Copy link",
 ]
 `;

@@ -5,10 +5,8 @@ import { config } from '@grafana/runtime';
 
 import { pluginsHandler } from '../mocks/plugins';
 
-export function setupPlugins(plugins: Record<string, PluginMeta>): { apiHandlers: RequestHandler[] } {
-  const pluginsArray = Object.values(plugins);
-
-  pluginsArray.forEach((plugin) => {
+export function setupPlugins(plugins: PluginMeta[]): { apiHandlers: RequestHandler[] } {
+  plugins.forEach((plugin) => {
     config.apps[plugin.id] = {
       id: plugin.id,
       path: plugin.baseUrl,
@@ -23,8 +21,8 @@ export function setupPlugins(plugins: Record<string, PluginMeta>): { apiHandlers
   };
 }
 
-export const plugins: Record<string, PluginMeta> = {
-  slo: {
+export const plugins: PluginMeta[] = [
+  {
     id: 'grafana-slo-app',
     name: 'SLO dashboard',
     type: PluginType.app,
@@ -47,7 +45,7 @@ export const plugins: Record<string, PluginMeta> = {
     module: 'public/plugins/grafana-slo-app/module.js',
     baseUrl: 'public/plugins/grafana-slo-app',
   },
-  incident: {
+  {
     id: 'grafana-incident-app',
     name: 'Incident management',
     type: PluginType.app,
@@ -70,7 +68,7 @@ export const plugins: Record<string, PluginMeta> = {
     module: 'public/plugins/grafana-incident-app/module.js',
     baseUrl: 'public/plugins/grafana-incident-app',
   },
-  asserts: {
+  {
     id: 'grafana-asserts-app',
     name: 'Asserts',
     type: PluginType.app,
@@ -93,4 +91,4 @@ export const plugins: Record<string, PluginMeta> = {
     module: 'public/plugins/grafana-asserts-app/module.js',
     baseUrl: 'public/plugins/grafana-asserts-app',
   },
-};
+];

@@ -71,7 +71,7 @@ const AlertRuleMenu = ({
   const shareUrl = createShareLink(rule.namespace.rulesSource, rule);
 
   const showDivider =
-    [canSilence, shouldShowDeclareIncidentButton, canDuplicate].some(Boolean) &&
+    [canPause, canSilence, shouldShowDeclareIncidentButton, canDuplicate].some(Boolean) &&
     [showCopyLinkButton, canExport].some(Boolean);
 
   const menuItems = (
