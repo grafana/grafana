@@ -480,7 +480,8 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 			return nil, fmt.Errorf("invalid remote loki configuration: %w", err)
 		}
 		req := historian.NewRequester()
-		backend := historian.NewRemoteLokiBackend(lcfg, req, met)
+		lokiBackendLogger := log.New("ngalert.state.historian", "backend", "loki")
+		backend := historian.NewRemoteLokiBackend(lokiBackendLogger, lcfg, req, met)
 
 		testConnCtx, cancelFunc := context.WithTimeout(ctx, 10*time.Second)
 		defer cancelFunc()
