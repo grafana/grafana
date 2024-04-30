@@ -47,6 +47,9 @@ func initConflictCfg(cmd *utils.ContextCommandLine) (*setting.Cfg, tracing.Trace
 	}
 
 	features, err := featuremgmt.ProvideManagerService(cfg)
+	if err != nil {
+		return nil, nil, nil, err
+	}
 
 	tracingCfg, err := tracing.ProvideTracingConfig(cfg)
 	if err != nil {

@@ -102,6 +102,7 @@ func TestUserService(t *testing.T) {
 			orgService:   orgService,
 			cacheService: localcache.ProvideService(),
 			teamService:  teamtest.NewFakeService(),
+			tracer:       tracing.InitializeTracerForTest(),
 		}
 		usr := &user.SignedInUser{
 			OrgID:       1,
@@ -245,6 +246,7 @@ func TestMetrics(t *testing.T) {
 		orgService:   orgService,
 		cacheService: localcache.ProvideService(),
 		teamService:  &teamtest.FakeService{},
+		tracer:       tracing.InitializeTracerForTest(),
 	}
 
 	t.Run("update user with role None", func(t *testing.T) {
