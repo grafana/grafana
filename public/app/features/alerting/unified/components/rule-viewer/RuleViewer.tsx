@@ -7,6 +7,7 @@ import { Alert, LinkButton, Stack, TabContent, Text, TextLink, useStyles2 } from
 import { PageInfoItem } from 'app/core/components/Page/types';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
+import { RuleActionsButtons } from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import { CombinedRule, RuleHealth, RuleIdentifier } from 'app/types/unified-alerting';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
@@ -31,8 +32,6 @@ import { WithReturnButton } from '../WithReturnButton';
 import { decodeGrafanaNamespace } from '../expressions/util';
 import { RedirectToCloneRule } from '../rules/CloneRule';
 
-import { useAlertRulePageActions } from './Actions';
-import { useDeleteModal } from './DeleteModal';
 import { FederatedRuleWarning } from './FederatedRuleWarning';
 import PausedBadge from './PausedBadge';
 import { useAlertRule } from './RuleContext';
@@ -59,12 +58,6 @@ const RuleViewer = () => {
   // we want to be able to show a modal if the rule has been provisioned explain the limitations
   // of duplicating provisioned alert rules
   const [duplicateRuleIdentifier, setDuplicateRuleIdentifier] = useState<RuleIdentifier>();
-
-  const [deleteModal, showDeleteModal] = useDeleteModal();
-  const actions = useAlertRulePageActions({
-    handleDuplicateRule: setDuplicateRuleIdentifier,
-    handleDelete: showDeleteModal,
-  });
 
   const { annotations, promRule } = rule;
   const hasError = isErrorHealth(rule.promRule?.health);
@@ -95,7 +88,7 @@ const RuleViewer = () => {
           ruleOrigin={ruleOrigin}
         />
       )}
-      actions={actions}
+      actions={<RuleActionsButtons rule={rule} showCopyLinkButton rulesSource={rule.namespace.rulesSource} />}
       info={createMetadata(rule)}
       subTitle={
         <Stack direction="column">
@@ -128,7 +121,6 @@ const RuleViewer = () => {
           {activeTab === ActiveTab.Details && <Details rule={rule} />}
         </TabContent>
       </Stack>
-      {deleteModal}
       {duplicateRuleIdentifier && (
         <RedirectToCloneRule
           redirectTo={true}

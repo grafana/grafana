@@ -266,7 +266,7 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean, showNe
       label: 'Actions',
       // eslint-disable-next-line react/display-name
       renderCell: ({ data: rule }) => {
-        return <RuleActionsButtons rule={rule} rulesSource={rule.namespace.rulesSource} />;
+        return <RuleActionsButtons compact showViewButton rule={rule} rulesSource={rule.namespace.rulesSource} />;
       },
       size: '200px',
     });

@@ -69,6 +69,7 @@ export enum AlertRuleAction {
   Explore = 'explore-alert-rule',
   Silence = 'silence-alert-rule',
   ModifyExport = 'modify-export-rule',
+  Pause = 'pause-alert-rule',
 }
 
 // this enum lists all of the actions we can perform within alerting in general, not linked to a specific
@@ -178,6 +179,7 @@ export function useAllAlertRuleAbilities(rule: CombinedRule): Abilities<AlertRul
     [AlertRuleAction.Explore]: toAbility(AlwaysSupported, AccessControlAction.DataSourcesExplore),
     [AlertRuleAction.Silence]: canSilence,
     [AlertRuleAction.ModifyExport]: [isGrafanaManagedAlertRule, exportAllowed],
+    [AlertRuleAction.Pause]: [MaybeSupportedUnlessImmutable && isGrafanaManagedAlertRule, isEditable ?? false],
   };
 
   return abilities;

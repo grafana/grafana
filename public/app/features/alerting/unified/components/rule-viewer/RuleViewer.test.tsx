@@ -46,15 +46,15 @@ const ELEMENTS = {
         delete: byRole('menuitem', { name: /Delete/i }),
       },
       pluginActions: {
-        sloDashboard: byRole('link', { name: /SLO dashboard/i }),
+        sloDashboard: byRole('menuitem', { name: /SLO dashboard/i }),
         declareIncident: byRole('link', { name: /Declare incident/i }),
-        assertsWorkbench: byRole('link', { name: /Open workbench/i }),
+        assertsWorkbench: byRole('menuitem', { name: /Open workbench/i }),
       },
     },
   },
 };
 
-const { apiHandlers: pluginApiHandlers } = setupPlugins(plugins.slo, plugins.incident, plugins.asserts);
+const { apiHandlers: pluginApiHandlers } = setupPlugins(plugins);
 
 const server = createMockGrafanaServer(...pluginApiHandlers);
 
