@@ -217,7 +217,7 @@ class Portal extends PureComponent<React.PropsWithChildren<PortalProps>, {}> {
     super(props);
     const { index = 0, origin = 'query', style } = props;
     this.node = document.createElement('div');
-    this.node.setAttribute('style', style);
+    this.node.style.cssText = style;
     this.node.classList.add(`slate-typeahead`, `slate-typeahead-${origin}-${index}`);
     document.body.appendChild(this.node);
   }
@@ -228,7 +228,7 @@ class Portal extends PureComponent<React.PropsWithChildren<PortalProps>, {}> {
 
   render() {
     if (this.props.isOpen) {
-      this.node.setAttribute('style', this.props.style);
+      this.node.style.cssText = this.props.style;
       this.node.classList.add(`slate-typeahead--open`);
       return ReactDOM.createPortal(this.props.children, this.node);
     } else {

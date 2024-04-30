@@ -89,7 +89,7 @@ export const SceneTransformWrapper = ({ scene, children: sceneDiv }: SceneTransf
   };
 
   // Set panel content overflow to hidden to prevent canvas content from overflowing
-  scene.div?.parentElement?.parentElement?.parentElement?.parentElement?.setAttribute('style', `overflow: hidden`);
+  scene.div?.parentElement?.parentElement?.parentElement?.parentElement?.style.setProperty('overflow', 'hidden');
 
   return (
     <TransformWrapper

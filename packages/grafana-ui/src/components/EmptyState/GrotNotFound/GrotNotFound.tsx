@@ -24,8 +24,8 @@ export const GrotNotFound = ({ width = 'auto', height }: Props) => {
 
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
-      const grotArm = svgRef.current?.querySelector('#grot-not-found-arm');
-      const grotMagnifier = svgRef.current?.querySelector('#grot-not-found-magnifier');
+      const grotArm = svgRef.current?.querySelector<SVGElement>('#grot-not-found-arm');
+      const grotMagnifier = svgRef.current?.querySelector<SVGElement>('#grot-not-found-magnifier');
 
       const { clientX, clientY } = event;
       const { innerWidth, innerHeight } = window;
@@ -35,8 +35,10 @@ export const GrotNotFound = ({ width = 'auto', height }: Props) => {
       const translation = getIntermediateValue(widthRatio, MIN_ARM_TRANSLATION, MAX_ARM_TRANSLATION);
 
       window.requestAnimationFrame(() => {
-        grotArm?.setAttribute('style', `transform: rotate(${rotation}deg) translateX(${translation}%)`);
-        grotMagnifier?.setAttribute('style', `transform: rotate(${rotation}deg) translateX(${translation}%)`);
+        if (grotArm && grotMagnifier) {
+          grotArm.style.setProperty('transform', `rotate(${rotation}deg) translateX(${translation}%)`);
+          grotMagnifier.style.setProperty('transform', `rotate(${rotation}deg) translateX(${translation}%)`);
+        }
       });
     };
 
