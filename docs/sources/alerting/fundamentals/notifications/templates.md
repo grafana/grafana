@@ -149,9 +149,9 @@ This is the message you would receive in your contact point:
 
 Once the template is created, you need to make reference to it in your **Contact point** (in the Optional [contact point] settings) .
 
-{{ <admonition type=”note”> }}
+{{<admonition type="note">}}
 It's not recommended to include individual alert information within notification templates. Instead, it's more effective to incorporate such details within the rule using labels and annotations.
-{{ </admonition> }}
+{{</admonition>}}
 
 {{% docs/reference %}}
 [variables-label-annotation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templating-labels-annotations"
