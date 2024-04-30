@@ -15,8 +15,8 @@ import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { Annotation } from '../../utils/constants';
 import { makeDashboardLink, makePanelLink } from '../../utils/misc';
 import {
-  RuleOrigin,
-  getRuleOrigin,
+  RulePluginOrigin,
+  getRulePluginOrigin,
   isAlertingRule,
   isFederatedRuleGroup,
   isGrafanaRulerRule,
@@ -76,7 +76,7 @@ const RuleViewer = () => {
   const isPaused = isGrafanaRulerRule(rule.rulerRule) && isGrafanaRulerRulePaused(rule.rulerRule);
 
   const showError = hasError && !isPaused;
-  const ruleOrigin = getRuleOrigin(rule);
+  const ruleOrigin = getRulePluginOrigin(rule);
 
   const summary = annotations[Annotation.summary];
 
@@ -228,7 +228,7 @@ interface TitleProps {
   state?: PromAlertingRuleState;
   health?: RuleHealth;
   ruleType?: PromRuleType;
-  ruleOrigin?: RuleOrigin;
+  ruleOrigin?: RulePluginOrigin;
 }
 
 export const Title = ({ name, paused = false, state, health, ruleType, ruleOrigin }: TitleProps) => {

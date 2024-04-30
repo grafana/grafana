@@ -18,7 +18,7 @@ import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { Annotation } from '../../utils/constants';
-import { getRuleOrigin, isGrafanaRulerRule, isGrafanaRulerRulePaused } from '../../utils/rules';
+import { getRulePluginOrigin, isGrafanaRulerRule, isGrafanaRulerRulePaused } from '../../utils/rules';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { DynamicTableWithGuidelines } from '../DynamicTableWithGuidelines';
 import { ProvisioningBadge } from '../Provisioning';
@@ -182,7 +182,7 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean, showNe
         renderCell: ({ data: rule }) => {
           const rulerRule = rule.rulerRule;
 
-          const originMeta = getRuleOrigin(rule);
+          const originMeta = getRulePluginOrigin(rule);
           if (originMeta) {
             return <PluginOriginBadge pluginId={originMeta.pluginId} />;
           }

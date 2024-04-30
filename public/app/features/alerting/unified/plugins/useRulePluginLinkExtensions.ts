@@ -5,7 +5,7 @@ import { usePluginLinkExtensions } from '@grafana/runtime';
 import { CombinedRule } from 'app/types/unified-alerting';
 import { PromRuleType } from 'app/types/unified-alerting-dto';
 
-import { getRuleOrigin } from '../utils/rules';
+import { getRulePluginOrigin } from '../utils/rules';
 
 interface BaseRuleExtensionContext {
   name: string;
@@ -25,7 +25,7 @@ export function useRulePluginLinkExtension(rule: CombinedRule) {
   const ruleExtensionPoint = useRuleExtensionPoint(rule);
   const { extensions } = usePluginLinkExtensions(ruleExtensionPoint);
 
-  const ruleOrigin = getRuleOrigin(rule);
+  const ruleOrigin = getRulePluginOrigin(rule);
   const ruleType = rule.promRule?.type;
   if (!ruleOrigin || !ruleType) {
     return [];
