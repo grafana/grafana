@@ -13067,7 +13067,7 @@
         "runs": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/MigrateDataResponseDTO"
+            "$ref": "#/definitions/MigrateDataResponseListDTO"
           }
         }
       }
@@ -16256,6 +16256,15 @@
             "DATASOURCE",
             "FOLDER"
           ]
+        }
+      }
+    },
+    "MigrateDataResponseListDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
