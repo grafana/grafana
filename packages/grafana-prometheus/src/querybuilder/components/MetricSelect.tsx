@@ -1,5 +1,5 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/MetricSelect.tsx
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import debounce from 'debounce-promise';
 import React, { RefCallback, useCallback, useState } from 'react';
 import Highlighter from 'react-highlight-words';
@@ -240,11 +240,22 @@ export function MetricSelect({
     return (
       <div
         {...innerProps}
-        className={`${stylesMenu.menu} ${styles.customMenuContainer}`}
-        style={{ maxHeight }}
+        className={cx(
+          stylesMenu.menu,
+          styles.customMenuContainer,
+          css`
+            max-height: ${Math.round(maxHeight * 0.9)}px;
+          `
+        )}
         aria-label="Select options menu"
       >
-        <CustomScrollbar scrollRefCallback={innerRef} autoHide={false} autoHeightMax="inherit" hideHorizontalTrack>
+        <CustomScrollbar
+          scrollRefCallback={innerRef}
+          autoHide={false}
+          autoHeightMax="inherit"
+          hideHorizontalTrack
+          showScrollIndicators
+        >
           {children}
         </CustomScrollbar>
         {optionsLoaded && (
@@ -271,6 +282,7 @@ export function MetricSelect({
         allowCustomValue
         formatOptionLabel={formatOptionLabel}
         filterOption={customFilterOption}
+        minMenuHeight={250}
         onOpenMenu={async () => {
           if (metricLookupDisabled) {
             return;
@@ -303,7 +315,7 @@ export function MetricSelect({
         }}
         loadOptions={metricLookupDisabled ? metricLookupDisabledSearch : debouncedSearch}
         isLoading={state.isLoading}
-        defaultOptions={state.metrics}
+        defaultOptions={state.metrics ?? Array.from(new Array(25), () => ({ value: '' }))} // We need empty values when `state.metrics` is falsy in order for the select to correctly determine top/bottom placement
         onChange={(input) => {
           const value = input?.value;
           if (value) {
@@ -405,6 +417,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex-direction: column;
     background: ${theme.colors.background.primary};
     box-shadow: ${theme.shadows.z3};
+    border-style: solid;
+    border-color: ${theme.colors.border.weak};
+    border-radius: ${theme.shape.radius.default};
   `,
 });
 
