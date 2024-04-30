@@ -72,9 +72,9 @@ describe('Loki query builder', () => {
     // Add labels to remove error
     e2e.components.QueryBuilder.labelSelect().should('be.visible').click();
     // wait until labels are loaded and set on the component before starting to type
-    e2e.components.QueryBuilder.labelSelect().children('div').children('input').type('i');
+    e2e.components.QueryBuilder.inputSelect().type('i');
     cy.wait('@labelsRequest');
-    e2e.components.QueryBuilder.labelSelect().children('div').children('input').type('nstance{enter}');
+    e2e.components.QueryBuilder.inputSelect().type('nstance{enter}');
     e2e.components.QueryBuilder.matchOperatorSelect()
       .should('be.visible')
       .click({ force: true })
