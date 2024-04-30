@@ -3,7 +3,7 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { useStyles2, HorizontalGroup, IconButton, Tooltip, Icon } from '@grafana/ui';
+import { useStyles2, IconButton, Tooltip, Icon, Stack } from '@grafana/ui';
 
 import { testIds } from '../../components/LokiQueryEditor';
 import { LokiQueryField } from '../../components/LokiQueryField';
@@ -49,7 +49,7 @@ export function LokiQueryCodeEditor({
             {lokiFormatQuery && (
               <div className={styles.buttonGroup}>
                 <div>
-                  <HorizontalGroup spacing="sm">
+                  <Stack gap={1}>
                     <IconButton
                       onClick={onClickFormatQueryButton}
                       name="brackets-curly"
@@ -59,7 +59,7 @@ export function LokiQueryCodeEditor({
                     <Tooltip content={`Use ctrl/cmd + z to undo`}>
                       <Icon className={styles.hint} name="keyboard" />
                     </Tooltip>
-                  </HorizontalGroup>
+                  </Stack>
                 </div>
               </div>
             )}

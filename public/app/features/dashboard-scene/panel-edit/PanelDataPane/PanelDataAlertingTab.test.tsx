@@ -6,7 +6,7 @@ import { byTestId } from 'testing-library-selector';
 
 import { DataSourceApi } from '@grafana/data';
 import { PromOptions, PrometheusDatasource } from '@grafana/prometheus';
-import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { locationService, setDataSourceSrv, setPluginExtensionsHook } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { fetchRules } from 'app/features/alerting/unified/api/prometheus';
 import { fetchRulerRules } from 'app/features/alerting/unified/api/ruler';
@@ -47,6 +47,11 @@ jest.mock('app/features/alerting/unified/api/ruler');
 
 jest.spyOn(config, 'getAllDataSources');
 jest.spyOn(ruleActionButtons, 'matchesWidth').mockReturnValue(false);
+
+setPluginExtensionsHook(() => ({
+  extensions: [],
+  isLoading: false,
+}));
 
 const dataSources = {
   prometheus: mockDataSource<PromOptions>({
