@@ -62,6 +62,7 @@ func (s *healthServer) Watch(req *grpc_health_v1.HealthCheckRequest, stream grpc
 			continue
 		}
 
+		currHealth = h.Status.Number()
 		// send the new health status
 		err = stream.Send(&grpc_health_v1.HealthCheckResponse{
 			Status: grpc_health_v1.HealthCheckResponse_ServingStatus(h.Status.Number()),
