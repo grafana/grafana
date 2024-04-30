@@ -59,11 +59,10 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 	supportBundles supportbundles.Service,
 	r prometheus.Registerer,
-	slogHandler slog.Handler,
 ) folder.Service {
 	store := ProvideStore(db)
 	srv := &Service{
-		log:                  slog.New(slogHandler).With("logger", "folder-service"),
+		log:                  slog.Default().With("logger", "folder-service"),
 		dashboardStore:       dashboardStore,
 		dashboardFolderStore: folderStore,
 		store:                store,

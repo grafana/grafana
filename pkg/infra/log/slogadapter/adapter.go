@@ -13,6 +13,12 @@ type slogHandler struct {
 	log.Logger
 }
 
+func init() {
+	// Lots of New's here: Default = slog.Logger <- slog.Handler <- infra/log.Logger
+	slog.SetDefault(slog.New(New(log.New())))
+}
+
+// Provide is a helper method to be used with Wire, however most services should use slog.Default()
 func Provide() slog.Handler { return New(log.New()) }
 
 // NewSLogHandler returns a new slog.Handler that logs to the given log.Logger.
