@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
+	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
