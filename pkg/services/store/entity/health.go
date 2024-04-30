@@ -2,6 +2,7 @@ package entity
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
@@ -47,28 +48,41 @@ func (s *healthServer) Watch(req *grpc_health_v1.HealthCheckRequest, stream grpc
 		return err
 	}
 
+	// send initial health status
+	err = stream.Send(&grpc_health_v1.HealthCheckResponse{
+		Status: grpc_health_v1.HealthCheckResponse_ServingStatus(h.Status.Number()),
+	})
+	if err != nil {
+		return err
+	}
+
 	currHealth := h.Status.Number()
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
 	for {
-		time.Sleep(5 * time.Second)
+		select {
+		case <-ticker.C:
+			// get current health status
+			h, err := s.entityServer.IsHealthy(stream.Context(), &HealthCheckRequest{})
+			if err != nil {
+				return err
+			}
 
-		// get current health status
-		h, err := s.entityServer.IsHealthy(stream.Context(), &HealthCheckRequest{})
-		if err != nil {
-			return err
-		}
+			// if health status has not changed, continue
+			if h.Status.Number() == currHealth {
+				continue
+			}
 
-		// if health status has not changed, continue
-		if h.Status.Number() == currHealth {
-			continue
-		}
-
-		currHealth = h.Status.Number()
-		// send the new health status
-		err = stream.Send(&grpc_health_v1.HealthCheckResponse{
-			Status: grpc_health_v1.HealthCheckResponse_ServingStatus(h.Status.Number()),
-		})
-		if err != nil {
-			return err
+			// send the new health status
+			currHealth = h.Status.Number()
+			err = stream.Send(&grpc_health_v1.HealthCheckResponse{
+				Status: grpc_health_v1.HealthCheckResponse_ServingStatus(h.Status.Number()),
+			})
+			if err != nil {
+				return err
+			}
+		case <-stream.Context().Done():
+			return errors.New("stream closed, context cancelled")
 		}
 	}
 }
