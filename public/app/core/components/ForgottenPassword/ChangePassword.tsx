@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
-import { Tooltip, Field, VerticalGroup, Button, Alert, useStyles2 } from '@grafana/ui';
+import { Tooltip, Field, Button, Alert, useStyles2, Stack } from '@grafana/ui';
 
 import { getStyles } from '../Login/LoginForm';
 import { PasswordField } from '../PasswordField/PasswordField';
@@ -81,7 +81,7 @@ export const ChangePassword = ({ onSubmit, onSkip, showDefaultPasswordWarning }:
           autoComplete="new-password"
         />
       </Field>
-      <VerticalGroup>
+      <Stack direction="column">
         <Button type="submit" className={styles.submitButton}>
           Submit
         </Button>
@@ -96,7 +96,7 @@ export const ChangePassword = ({ onSubmit, onSkip, showDefaultPasswordWarning }:
             </Button>
           </Tooltip>
         )}
-      </VerticalGroup>
+      </Stack>
     </form>
   );
 };

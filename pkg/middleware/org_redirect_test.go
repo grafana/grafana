@@ -55,7 +55,7 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 
 	middlewareScenario(t, "when setting an invalid org for user", func(t *testing.T, sc *scenarioContext) {
 		sc.withIdentity(&authn.Identity{})
-		sc.userService.ExpectedSetUsingOrgError = fmt.Errorf("")
+		sc.userService.ExpectedError = fmt.Errorf("")
 
 		sc.m.Get("/", sc.defaultHandler)
 		sc.fakeReq("GET", "/?orgId=1").exec()
