@@ -470,10 +470,12 @@ type Cfg struct {
 	RBACSingleOrganization bool
 
 	// GRPC Server.
-	GRPCServerNetwork       string
-	GRPCServerAddress       string
-	GRPCServerTLSConfig     *tls.Config
-	GRPCServerEnableLogging bool // log request and response of each unary gRPC call
+	GRPCServerNetwork        string
+	GRPCServerAddress        string
+	GRPCServerTLSConfig      *tls.Config
+	GRPCServerEnableLogging  bool // log request and response of each unary gRPC call
+	GRPCServerMaxRecvMsgSize int
+	GRPCServerMaxSendMsgSize int
 
 	CustomResponseHeaders map[string]string
 
@@ -1769,6 +1771,8 @@ func readGRPCServerSettings(cfg *Cfg, iniFile *ini.File) error {
 	cfg.GRPCServerNetwork = valueAsString(server, "network", "tcp")
 	cfg.GRPCServerAddress = valueAsString(server, "address", "")
 	cfg.GRPCServerEnableLogging = server.Key("enable_logging").MustBool(false)
+	cfg.GRPCServerMaxRecvMsgSize = server.Key("max_recv_msg_size").MustInt(0)
+	cfg.GRPCServerMaxSendMsgSize = server.Key("max_send_msg_size").MustInt(0)
 	switch cfg.GRPCServerNetwork {
 	case "unix":
 		if cfg.GRPCServerAddress != "" {
