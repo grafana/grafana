@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
@@ -47,7 +48,7 @@ var (
 func ProvideTeamPermissions(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB,
 	ac accesscontrol.AccessControl, license licensing.Licensing, service accesscontrol.Service,
-	teamService team.Service, userService user.Service,
+	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
 ) (*TeamPermissionsService, error) {
 	options := resourcepermissions.Options{
 		Resource:          "teams",
@@ -103,7 +104,7 @@ func ProvideTeamPermissions(
 		},
 	}
 
-	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService)
+	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, actionSetService)
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +143,7 @@ func getDashboardAdminActions(features featuremgmt.FeatureToggles) []string {
 func ProvideDashboardPermissions(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
 	license licensing.Licensing, dashboardStore dashboards.Store, folderService folder.Service, service accesscontrol.Service,
-	teamService team.Service, userService user.Service,
+	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
 ) (*DashboardPermissionsService, error) {
 	getDashboard := func(ctx context.Context, orgID int64, resourceID string) (*dashboards.Dashboard, error) {
 		query := &dashboards.GetDashboardQuery{UID: resourceID, OrgID: orgID}
@@ -207,7 +208,7 @@ func ProvideDashboardPermissions(
 		RoleGroup:      "Dashboards",
 	}
 
-	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService)
+	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, actionSetService)
 	if err != nil {
 		return nil, err
 	}
@@ -218,7 +219,7 @@ type FolderPermissionsService struct {
 	*resourcepermissions.Service
 }
 
-var FolderViewActions = []string{dashboards.ActionFoldersRead, accesscontrol.ActionAlertingRuleRead, libraryelements.ActionLibraryPanelsRead}
+var FolderViewActions = []string{dashboards.ActionFoldersRead, accesscontrol.ActionAlertingRuleRead, libraryelements.ActionLibraryPanelsRead, accesscontrol.ActionAlertingSilencesRead}
 var FolderEditActions = append(FolderViewActions, []string{
 	dashboards.ActionFoldersWrite,
 	dashboards.ActionFoldersDelete,
@@ -226,6 +227,8 @@ var FolderEditActions = append(FolderViewActions, []string{
 	accesscontrol.ActionAlertingRuleCreate,
 	accesscontrol.ActionAlertingRuleUpdate,
 	accesscontrol.ActionAlertingRuleDelete,
+	accesscontrol.ActionAlertingSilencesCreate,
+	accesscontrol.ActionAlertingSilencesWrite,
 	libraryelements.ActionLibraryPanelsCreate,
 	libraryelements.ActionLibraryPanelsWrite,
 	libraryelements.ActionLibraryPanelsDelete,
@@ -235,7 +238,7 @@ var FolderAdminActions = append(FolderEditActions, []string{dashboards.ActionFol
 func ProvideFolderPermissions(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, accesscontrol accesscontrol.AccessControl,
 	license licensing.Licensing, dashboardStore dashboards.Store, folderService folder.Service, service accesscontrol.Service,
-	teamService team.Service, userService user.Service,
+	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
 ) (*FolderPermissionsService, error) {
 	options := resourcepermissions.Options{
 		Resource:          "folders",
@@ -271,20 +274,31 @@ func ProvideFolderPermissions(
 		WriterRoleName: "Folder permission writer",
 		RoleGroup:      "Folders",
 	}
-	srv, err := resourcepermissions.New(cfg, options, features, router, license, accesscontrol, service, sql, teamService, userService)
+	srv, err := resourcepermissions.New(cfg, options, features, router, license, accesscontrol, service, sql, teamService, userService, actionSetService)
 	if err != nil {
 		return nil, err
 	}
 	return &FolderPermissionsService{srv}, nil
 }
 
-func ProvideDatasourcePermissionsService() *DatasourcePermissionsService {
-	return &DatasourcePermissionsService{}
+// DatasourceQueryActions contains permissions to read information
+// about a data source and submit arbitrary queries to it.
+var DatasourceQueryActions = []string{
+	datasources.ActionRead,
+	datasources.ActionQuery,
+}
+
+func ProvideDatasourcePermissionsService(features featuremgmt.FeatureToggles, db db.DB, actionSetService resourcepermissions.ActionSetService) *DatasourcePermissionsService {
+	return &DatasourcePermissionsService{
+		store: resourcepermissions.NewStore(db, features, &actionSetService),
+	}
 }
 
 var _ accesscontrol.DatasourcePermissionsService = new(DatasourcePermissionsService)
 
-type DatasourcePermissionsService struct{}
+type DatasourcePermissionsService struct {
+	store resourcepermissions.Store
+}
 
 func (e DatasourcePermissionsService) GetPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]accesscontrol.ResourcePermission, error) {
 	return nil, nil
@@ -302,12 +316,39 @@ func (e DatasourcePermissionsService) SetBuiltInRolePermission(ctx context.Conte
 	return nil, nil
 }
 
+// SetPermissions sets managed permissions for a datasource in OSS. This ensures that Viewers and Editors maintain query access to a data source
+// if an OSS/unlicensed instance is upgraded to Enterprise/licensed.
+// https://github.com/grafana/identity-access-team/issues/672
 func (e DatasourcePermissionsService) SetPermissions(ctx context.Context, orgID int64, resourceID string, commands ...accesscontrol.SetResourcePermissionCommand) ([]accesscontrol.ResourcePermission, error) {
-	return nil, nil
+	var dbCommands []resourcepermissions.SetResourcePermissionsCommand
+	for _, cmd := range commands {
+		// Only set query permissions for built-in roles
+		if cmd.Permission != "Query" || cmd.BuiltinRole == "" {
+			continue
+		}
+		actions := DatasourceQueryActions
+
+		dbCommands = append(dbCommands, resourcepermissions.SetResourcePermissionsCommand{
+			BuiltinRole: cmd.BuiltinRole,
+			SetResourcePermissionCommand: resourcepermissions.SetResourcePermissionCommand{
+				Actions:           actions,
+				Resource:          datasources.ScopeRoot,
+				ResourceID:        resourceID,
+				ResourceAttribute: "uid",
+				Permission:        cmd.Permission,
+			},
+		})
+	}
+
+	return e.store.SetResourcePermissions(ctx, orgID, dbCommands, resourcepermissions.ResourceHooks{})
 }
 
 func (e DatasourcePermissionsService) DeleteResourcePermissions(ctx context.Context, orgID int64, resourceID string) error {
-	return nil
+	return e.store.DeleteResourcePermissions(ctx, orgID, &resourcepermissions.DeleteResourcePermissionsCmd{
+		Resource:          datasources.ScopeRoot,
+		ResourceAttribute: "uid",
+		ResourceID:        resourceID,
+	})
 }
 
 func (e DatasourcePermissionsService) MapActions(permission accesscontrol.ResourcePermission) string {
@@ -335,7 +376,7 @@ type ServiceAccountPermissionsService struct {
 func ProvideServiceAccountPermissions(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
 	license licensing.Licensing, serviceAccountRetrieverService *retriever.Service, service accesscontrol.Service,
-	teamService team.Service, userService user.Service,
+	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
 ) (*ServiceAccountPermissionsService, error) {
 	options := resourcepermissions.Options{
 		Resource:          "serviceaccounts",
@@ -362,7 +403,7 @@ func ProvideServiceAccountPermissions(
 		RoleGroup:      "Service accounts",
 	}
 
-	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService)
+	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, actionSetService)
 	if err != nil {
 		return nil, err
 	}

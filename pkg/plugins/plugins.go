@@ -44,12 +44,12 @@ type Plugin struct {
 	Pinned          bool
 
 	// Signature fields
-	Signature      SignatureStatus
-	SignatureType  SignatureType
-	SignatureOrg   string
-	Parent         *Plugin
-	Children       []*Plugin
-	SignatureError *SignatureError
+	Signature     SignatureStatus
+	SignatureType SignatureType
+	SignatureOrg  string
+	Parent        *Plugin
+	Children      []*Plugin
+	Error         *Error
 
 	// SystemJS fields
 	Module  string
@@ -202,10 +202,6 @@ type Route struct {
 	TokenAuth    *JWTTokenAuth   `json:"tokenAuth"`
 	JwtTokenAuth *JWTTokenAuth   `json:"jwtTokenAuth"`
 	Body         json.RawMessage `json:"body"`
-}
-
-func (r *Route) RequiresRBACAction() bool {
-	return r.ReqAction != ""
 }
 
 // Header describes an HTTP header that is forwarded with

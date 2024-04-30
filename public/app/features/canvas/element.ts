@@ -61,6 +61,8 @@ export interface CanvasConnection {
   vertices?: ConnectionCoordinates[];
   radius?: ScaleDimensionConfig;
   direction?: ConnectionDirection;
+  sourceOriginal?: ConnectionCoordinates;
+  targetOriginal?: ConnectionCoordinates;
   // See https://github.com/anseki/leader-line#options for more examples of more properties
 }
 
@@ -99,6 +101,12 @@ export interface CanvasElementItem<TConfig = any, TData = any> extends RegistryI
 
   /** Optional config to customize what standard element editor options are available for the item */
   standardEditorConfig?: StandardEditorConfig;
+
+  /** Custom connection anchor coordinates, like for svg elements such as triangle, cloud, etc */
+  customConnectionAnchors?: Array<{
+    x: number;
+    y: number;
+  }>;
 }
 
 export const defaultBgColor = '#D9D9D9';

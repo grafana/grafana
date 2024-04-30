@@ -1779,6 +1779,16 @@ Enable or disable the Query history. Default is `enabled`.
 
 <hr>
 
+## [short_links]
+
+Configures settings around the short link feature.
+
+### expire_time
+
+Short links which are never accessed are considered expired or stale, and will be deleted as cleanup. Set the expiration time in days. Default is `7` days. Maximum is `365` days, and setting above the maximum will have `365` set instead. Setting `0` means the short links will be cleaned up approximately every 10 minutes.
+
+<hr>
+
 ## [metrics]
 
 For detailed instructions, refer to [Internal Grafana metrics]({{< relref "../set-up-grafana-monitoring" >}}).
@@ -1925,7 +1935,7 @@ Configure general parameters shared between OpenTelemetry providers.
 
 Comma-separated list of attributes to include in all new spans, such as `key1:value1,key2:value2`.
 
-Can be set with the environment variable `OTEL_RESOURCE_ATTRIBUTES` (use `=` instead of `:` with the environment variable).
+Can be set or overridden with the environment variable `OTEL_RESOURCE_ATTRIBUTES` (use `=` instead of `:` with the environment variable). The service name can be set or overridden using attributes or with the environment variable `OTEL_SERVICE_NAME`.
 
 ### sampler_type
 

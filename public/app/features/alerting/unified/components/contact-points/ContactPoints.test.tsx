@@ -1,10 +1,11 @@
 import { render, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { noop } from 'lodash';
-import React, { PropsWithChildren } from 'react';
+import React, { ComponentProps, PropsWithChildren } from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { locationService } from '@grafana/runtime';
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 
@@ -20,6 +21,7 @@ import setupMimirFlavoredServer, { MIMIR_DATASOURCE_UID } from './__mocks__/mimi
 import setupVanillaAlertmanagerFlavoredServer, {
   VANILLA_ALERTMANAGER_DATASOURCE_UID,
 } from './__mocks__/vanillaAlertmanagerServer';
+import { RouteReference } from './utils';
 
 /**
  * There are lots of ways in which we test our pages and components. Here's my opinionated approach to testing them.
@@ -39,7 +41,26 @@ import setupVanillaAlertmanagerFlavoredServer, {
  */
 const server = setupMswServer();
 
+const renderWithProvider = (
+  providerProps?: Partial<ComponentProps<typeof AlertmanagerProvider>>,
+  contactPointProps?: Partial<ComponentProps<typeof ContactPoints>>
+) =>
+  render(
+    <TestProvider>
+      <AlertmanagerProvider accessType={'notification'} {...providerProps}>
+        <ContactPoints {...contactPointProps} />
+      </AlertmanagerProvider>
+    </TestProvider>
+  );
+
 describe('contact points', () => {
+  beforeEach(() => {
+    // The location service is stateful between tests - `TestProvider` uses the same instance between each test
+    // and this results in the query params being persisted between tests
+    // To get round this for now, we can push "/" onto the history so there are no query params
+    locationService.push('/');
+  });
+
   describe('Contact points with Grafana managed alertmanager', () => {
     beforeEach(() => {
       grantUserPermissions([
@@ -50,13 +71,37 @@ describe('contact points', () => {
       setupGrafanaManagedServer(server);
     });
 
+    describe('tabs behaviour', () => {
+      test('loads contact points tab', async () => {
+        locationService.push('/?tab=contact_points');
+        renderWithProvider();
+
+        expect(await screen.findByText(/add contact point/i)).toBeInTheDocument();
+      });
+
+      test('loads templates tab', async () => {
+        locationService.push('/?tab=templates');
+        renderWithProvider();
+
+        expect(await screen.findByText(/add notification template/i)).toBeInTheDocument();
+      });
+
+      test('defaults to contact points tab with invalid query param', async () => {
+        locationService.push('/?tab=foo_bar');
+        renderWithProvider();
+
+        expect(await screen.findByText(/add contact point/i)).toBeInTheDocument();
+      });
+
+      test('defaults to contact points tab with no query param', async () => {
+        renderWithProvider();
+
+        expect(await screen.findByText(/add contact point/i)).toBeInTheDocument();
+      });
+    });
+
     it('should show / hide loading states, have all actions enabled', async () => {
-      render(
-        <AlertmanagerProvider accessType={'notification'}>
-          <ContactPoints />
-        </AlertmanagerProvider>,
-        { wrapper: TestProvider }
-      );
+      renderWithProvider();
 
       await waitFor(async () => {
         expect(screen.getByText('Loading...')).toBeInTheDocument();
@@ -95,12 +140,7 @@ describe('contact points', () => {
     it('should disable certain actions if the user has no write permissions', async () => {
       grantUserPermissions([AccessControlAction.AlertingNotificationsRead]);
 
-      render(
-        <AlertmanagerProvider accessType={'notification'}>
-          <ContactPoints />
-        </AlertmanagerProvider>,
-        { wrapper: TestProvider }
-      );
+      renderWithProvider();
 
       // wait for loading to be done
       await waitFor(async () => {
@@ -124,7 +164,7 @@ describe('contact points', () => {
       // check if all of the delete buttons are disabled
       for await (const button of moreButtons) {
         await userEvent.click(button);
-        const deleteButton = await screen.queryByRole('menuitem', { name: 'delete' });
+        const deleteButton = screen.queryByRole('menuitem', { name: 'delete' });
         expect(deleteButton).toBeDisabled();
         // click outside the menu to close it otherwise we can't interact with the rest of the page
         await userEvent.click(document.body);
@@ -185,13 +225,19 @@ describe('contact points', () => {
       expect(deleteButton).toBeDisabled();
     });
 
-    it('should disable delete when contact point is linked to at least one notification policy', async () => {
-      render(
-        <ContactPoint name={'my-contact-point'} provisioned={true} receivers={[]} policies={1} onDelete={noop} />,
+    it('should disable delete when contact point is linked to at least one normal notification policy', async () => {
+      const policies: RouteReference[] = [
         {
-          wrapper,
-        }
-      );
+          receiver: 'my-contact-point',
+          route: {
+            type: 'normal',
+          },
+        },
+      ];
+
+      render(<ContactPoint name={'my-contact-point'} receivers={[]} policies={policies} onDelete={noop} />, {
+        wrapper,
+      });
 
       expect(screen.getByRole('link', { name: 'is used by 1 notification policy' })).toBeInTheDocument();
 
@@ -202,13 +248,29 @@ describe('contact points', () => {
       expect(deleteButton).toBeDisabled();
     });
 
+    it('should not disable delete when contact point is linked only to auto-generated notification policy', async () => {
+      const policies: RouteReference[] = [
+        {
+          receiver: 'my-contact-point',
+          route: {
+            type: 'auto-generated',
+          },
+        },
+      ];
+
+      render(<ContactPoint name={'my-contact-point'} receivers={[]} policies={policies} onDelete={noop} />, {
+        wrapper,
+      });
+
+      const moreActions = screen.getByRole('button', { name: 'more-actions' });
+      await userEvent.click(moreActions);
+
+      const deleteButton = screen.getByRole('menuitem', { name: /delete/i });
+      expect(deleteButton).not.toBeDisabled();
+    });
+
     it('should be able to search', async () => {
-      render(
-        <AlertmanagerProvider accessType={'notification'}>
-          <ContactPoints />
-        </AlertmanagerProvider>,
-        { wrapper: TestProvider }
-      );
+      renderWithProvider();
 
       const searchInput = screen.getByRole('textbox', { name: 'search contact points' });
       await userEvent.type(searchInput, 'slack');
@@ -246,13 +308,7 @@ describe('contact points', () => {
     });
 
     it('should show / hide loading states, have the right actions enabled', async () => {
-      render(
-        <TestProvider>
-          <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={MIMIR_DATASOURCE_UID}>
-            <ContactPoints />
-          </AlertmanagerProvider>
-        </TestProvider>
-      );
+      renderWithProvider({ alertmanagerSourceName: MIMIR_DATASOURCE_UID });
 
       await waitFor(async () => {
         expect(screen.getByText('Loading...')).toBeInTheDocument();
@@ -289,9 +345,6 @@ describe('contact points', () => {
   describe('Vanilla Alertmanager ', () => {
     beforeEach(() => {
       setupVanillaAlertmanagerFlavoredServer(server);
-    });
-
-    beforeAll(() => {
       grantUserPermissions([
         AccessControlAction.AlertingNotificationsExternalRead,
         AccessControlAction.AlertingNotificationsExternalWrite,

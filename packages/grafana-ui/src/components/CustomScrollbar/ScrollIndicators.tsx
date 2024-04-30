@@ -65,7 +65,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       pointerEvents: 'none',
       position: 'absolute',
       right: 0,
-      transition: theme.transitions.create('opacity'),
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create('opacity'),
+      },
       zIndex: 1,
     }),
     scrollTopIndicator: css({

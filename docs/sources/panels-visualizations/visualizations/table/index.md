@@ -35,6 +35,8 @@ The following video provides a visual walkthrough of the options you can set in 
 
 {{< youtube id="PCY7O8EJeJY" >}}
 
+{{< docs/play title="Table Visualizations in Grafana" url="https://play.grafana.org/d/OhR1ID6Mk/" >}}
+
 ## Annotation and alert support
 
 Annotations and alerts are not currently supported in tables.
@@ -231,6 +233,10 @@ The system applies the calculation to all numeric fields if you do not select a 
 ### Count rows
 
 If you want to show the number of rows in the dataset instead of the number of values in the selected fields, select the **Count** calculation and enable **Count rows**.
+
+## Value mappings
+
+{{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 {{% docs/reference %}}
 [calculations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/calculation-types"
