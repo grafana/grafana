@@ -82,7 +82,7 @@ func (tapi *TeamAPI) addTeamMember(c *contextmodel.ReqContext) response.Response
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
-	isTeamMember, err := tapi.teamService.IsTeamMember(c.SignedInUser.GetOrgID(), teamID, cmd.UserID)
+	isTeamMember, err := tapi.teamService.IsTeamMember(c.Req.Context(), c.SignedInUser.GetOrgID(), teamID, cmd.UserID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to add team member.", err)
 	}
@@ -125,7 +125,7 @@ func (tapi *TeamAPI) updateTeamMember(c *contextmodel.ReqContext) response.Respo
 	}
 	orgId := c.SignedInUser.GetOrgID()
 
-	isTeamMember, err := tapi.teamService.IsTeamMember(orgId, teamId, userId)
+	isTeamMember, err := tapi.teamService.IsTeamMember(c.Req.Context(), orgId, teamId, userId)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to update team member.", err)
 	}

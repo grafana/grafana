@@ -4,7 +4,6 @@ import React, { CSSProperties } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
-import { handleReducedMotion } from '../../utils/handleReducedMotion';
 
 export interface LoadingBarProps {
   width: number;
@@ -33,7 +32,7 @@ export function LoadingBar({ width, delay = DEFAULT_ANIMATION_DELAY, ariaLabel =
   );
 }
 
-const getStyles = (_theme: GrafanaTheme2, delay: number, duration: number) => {
+const getStyles = (theme: GrafanaTheme2, delay: number, duration: number) => {
   const animation = keyframes({
     '0%': {
       transform: 'translateX(-100%)',
@@ -50,20 +49,23 @@ const getStyles = (_theme: GrafanaTheme2, delay: number, duration: number) => {
       height: 1,
       background: 'linear-gradient(90deg, rgba(110, 159, 255, 0) 0%, #6E9FFF 80.75%, rgba(110, 159, 255, 0) 100%)',
       transform: 'translateX(-100%)',
-      animationName: animation,
-      // an initial delay to prevent the loader from showing if the response is faster than the delay
-      animationDelay: `${delay}ms`,
-      animationTimingFunction: 'linear',
-      animationIterationCount: 'infinite',
       willChange: 'transform',
-      ...handleReducedMotion(
-        {
-          animationDuration: `${duration}ms`,
-        },
-        {
-          animationDuration: `${4 * duration}ms`,
-        }
-      ),
+      [theme.transitions.handleMotion('no-preference')]: {
+        animationName: animation,
+        // an initial delay to prevent the loader from showing if the response is faster than the delay
+        animationDelay: `${delay}ms`,
+        animationTimingFunction: 'linear',
+        animationIterationCount: 'infinite',
+        animationDuration: `${duration}ms`,
+      },
+      [theme.transitions.handleMotion('reduce')]: {
+        animationName: animation,
+        // an initial delay to prevent the loader from showing if the response is faster than the delay
+        animationDelay: `${delay}ms`,
+        animationTimingFunction: 'linear',
+        animationIterationCount: 'infinite',
+        animationDuration: `${4 * duration}ms`,
+      },
     }),
   };
 };

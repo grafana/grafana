@@ -25,6 +25,7 @@ import (
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
@@ -392,7 +393,7 @@ func (c K8sTestHelper) createTestUsers(orgName string) OrgUsers {
 	c.env.Cfg.AutoAssignOrg = true
 	c.env.Cfg.AutoAssignOrgId = int(orgId)
 
-	teamSvc, err := teamimpl.ProvideService(store, c.env.Cfg)
+	teamSvc, err := teamimpl.ProvideService(store, c.env.Cfg, tracing.InitializeTracerForTest())
 	require.NoError(c.t, err)
 
 	cache := localcache.ProvideService()

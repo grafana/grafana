@@ -4303,6 +4303,155 @@
         }
       }
     },
+    "/datasources/{dataSourceUID}/cache": {
+      "get": {
+        "description": "get cache config for a single data source",
+        "tags": [
+          "enterprise"
+        ],
+        "operationId": "getDataSourceCacheConfig",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "dataSourceUID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CacheConfigResponse",
+            "schema": {
+              "$ref": "#/definitions/CacheConfigResponse"
+            }
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "description": "set cache config for a single data source",
+        "tags": [
+          "enterprise"
+        ],
+        "operationId": "setDataSourceCacheConfig",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "dataSourceUID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CacheConfigSetter"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CacheConfigResponse",
+            "schema": {
+              "$ref": "#/definitions/CacheConfigResponse"
+            }
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/datasources/{dataSourceUID}/cache/clean": {
+      "post": {
+        "description": "clean cache for a single data source",
+        "tags": [
+          "enterprise"
+        ],
+        "operationId": "cleanDataSourceCache",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "dataSourceUID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CacheConfigResponse",
+            "schema": {
+              "$ref": "#/definitions/CacheConfigResponse"
+            }
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/datasources/{dataSourceUID}/cache/disable": {
+      "post": {
+        "description": "disable cache for a single data source",
+        "tags": [
+          "enterprise"
+        ],
+        "operationId": "disableDataSourceCache",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "dataSourceUID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CacheConfigResponse",
+            "schema": {
+              "$ref": "#/definitions/CacheConfigResponse"
+            }
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/datasources/{dataSourceUID}/cache/enable": {
+      "post": {
+        "description": "enable cache for a single data source",
+        "tags": [
+          "enterprise"
+        ],
+        "operationId": "enableDataSourceCache",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "dataSourceUID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CacheConfigResponse",
+            "schema": {
+              "$ref": "#/definitions/CacheConfigResponse"
+            }
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/datasources/{id}": {
       "get": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).\n\nPlease refer to [updated API](#/datasources/getDataSourceByUID) instead",
@@ -12477,6 +12626,123 @@
         },
         "username_file": {
           "type": "string"
+        }
+      }
+    },
+    "CacheConfig": {
+      "description": "Config defines the internal representation of a cache configuration, including fields not set by the API caller",
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "dataSourceID": {
+          "description": "Fields that can be set by the API caller - read/write",
+          "type": "integer",
+          "format": "int64"
+        },
+        "dataSourceUID": {
+          "type": "string"
+        },
+        "defaultTTLMs": {
+          "description": "These are returned by the HTTP API, but are managed internally - read-only\nNote: 'created' and 'updated' are special properties managed automatically by xorm, but we are setting them manually",
+          "type": "integer",
+          "format": "int64"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "ttlQueriesMs": {
+          "description": "TTL MS, or \"time to live\", is how long a cached item will stay in the cache before it is removed (in milliseconds)",
+          "type": "integer",
+          "format": "int64"
+        },
+        "ttlResourcesMs": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "useDefaultTTL": {
+          "description": "If UseDefaultTTL is enabled, then the TTLQueriesMS and TTLResourcesMS in this object is always sent as the default TTL located in grafana.ini",
+          "type": "boolean"
+        }
+      }
+    },
+    "CacheConfigResponse": {
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "dataSourceID": {
+          "description": "Fields that can be set by the API caller - read/write",
+          "type": "integer",
+          "format": "int64"
+        },
+        "dataSourceUID": {
+          "type": "string"
+        },
+        "defaultTTLMs": {
+          "description": "These are returned by the HTTP API, but are managed internally - read-only\nNote: 'created' and 'updated' are special properties managed automatically by xorm, but we are setting them manually",
+          "type": "integer",
+          "format": "int64"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": "string"
+        },
+        "ttlQueriesMs": {
+          "description": "TTL MS, or \"time to live\", is how long a cached item will stay in the cache before it is removed (in milliseconds)",
+          "type": "integer",
+          "format": "int64"
+        },
+        "ttlResourcesMs": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "useDefaultTTL": {
+          "description": "If UseDefaultTTL is enabled, then the TTLQueriesMS and TTLResourcesMS in this object is always sent as the default TTL located in grafana.ini",
+          "type": "boolean"
+        }
+      }
+    },
+    "CacheConfigSetter": {
+      "description": "ConfigSetter defines the cache parameters that users can configure per datasource\nThis is only intended to be consumed by the SetCache HTTP Handler",
+      "type": "object",
+      "properties": {
+        "dataSourceID": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "dataSourceUID": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "ttlQueriesMs": {
+          "description": "TTL MS, or \"time to live\", is how long a cached item will stay in the cache before it is removed (in milliseconds)",
+          "type": "integer",
+          "format": "int64"
+        },
+        "ttlResourcesMs": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "useDefaultTTL": {
+          "description": "If UseDefaultTTL is enabled, then the TTLQueriesMS and TTLResourcesMS in this object is always sent as the default TTL located in grafana.ini",
+          "type": "boolean"
         }
       }
     },
