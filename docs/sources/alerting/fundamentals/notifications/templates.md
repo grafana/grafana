@@ -139,7 +139,7 @@ Here is the example of a notification template:
 {{ end }}
 ```
 
-The message you would receive in your contact point:
+This is the message you would receive in your contact point:
 
             1 firing alert(s)
             - The database server db1 has exceeded 75% of available disk space. Disk space used is 76%, please resize the disk size within the next 24 hours
