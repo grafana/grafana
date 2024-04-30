@@ -26,7 +26,7 @@ Next, create a notification policy which is a set of rules for where, when and h
 
 ## Alertmanagers
 
-Grafana uses [Alertmanagers][alertmanager_] to send notifications for firing and resolved alerts. Grafana has its own Alertmanager, referred to as "Grafana" in the user interface, but also supports sending notifications from other Alertmanagers too, such as the [Prometheus Alertmanager](https://prometheus.io/docs/alerting/latest/alertmanager/). The Grafana Alertmanager uses notification policies and contact points to configure how and where a notification is sent; how often a notification should be sent; and whether alerts should all be sent in the same notification, sent in grouped notifications based on a set of labels, or as separate notifications.
+Grafana uses [Alertmanagers][alertmanager-page] to send notifications for firing and resolved alerts. Grafana has its own Alertmanager, referred to as "Grafana" in the user interface, but also supports sending notifications from other Alertmanagers too, such as the [Prometheus Alertmanager](https://prometheus.io/docs/alerting/latest/alertmanager/). The Grafana Alertmanager uses notification policies and contact points to configure how and where a notification is sent; how often a notification should be sent; and whether alerts should all be sent in the same notification, sent in grouped notifications based on a set of labels, or as separate notifications.
 
 ## Contact points
 
@@ -50,7 +50,7 @@ All alerts, irrespective of their labels, match the default policy. However, whe
 
 ## Notification templates
 
-You can customize notifications with [templates][templates_]. For example, templates can be used to change the subject and message of an email, or the title and message of notifications sent to Slack.
+You can customize notifications with [templates][templates-page]. For example, templates can be used to change the subject and message of an email, or the title and message of notifications sent to Slack.
 
 Templates are not limited to an individual integration or contact point, but instead can be used in a number of integrations in the same contact point and even integrations across different contact points. For example, a Grafana user can create a template called `custom_subject_or_title` and use it for both templating subjects in emails and titles of Slack messages without having to create two separate templates.
 
@@ -58,7 +58,7 @@ All notifications templates are written in [Go's templating language](https://pk
 
 ## Silences
 
-You can use [silences][silences_] to mute notifications from one or more firing rules. Silences do not stop alerts from firing or being resolved, or hide firing alerts in the user interface. A silence lasts as long as its duration, which can be configured in minutes, hours, days, months, or years.
+You can use [silences][silences-page] to mute notifications from one or more firing rules. Silences do not stop alerts from firing or being resolved, or hide firing alerts in the user interface. A silence lasts as long as its duration, which can be configured in minutes, hours, days, months, or years.
 
 
 
@@ -69,12 +69,12 @@ You can use [silences][silences_] to mute notifications from one or more firing 
 [contact-points]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/contact-points"
 [contact-points]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/contact-points"
 
-[alertmanager_]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alertmanager/"
-[alertmanager_]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alertmanager/"
+[alertmanager-page]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alertmanager/"
+[alertmanager-page]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alertmanager/"
 
-[templates_]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/templates/"
-[templates_]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/templates/"
+[templates-page]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/templates/"
+[templates-page]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/templates/"
 
-[silences_]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/create-silence/"
-[silences_]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-silence/"
+[silences-page]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/create-silence/"
+[silences-page]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-silence/"
 {{% /docs/reference %}}
