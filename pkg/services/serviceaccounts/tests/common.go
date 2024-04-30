@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -44,7 +45,10 @@ func SetupUserServiceAccount(t *testing.T, db db.DB, cfg *setting.Cfg, testUser 
 	quotaService := quotaimpl.ProvideService(db, cfg)
 	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
 	require.NoError(t, err)
-	usrSvc, err := userimpl.ProvideService(db, orgService, cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
+	usrSvc, err := userimpl.ProvideService(
+		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		quotaService, supportbundlestest.NewFakeBundleService(),
+	)
 	require.NoError(t, err)
 
 	org, err := orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{
@@ -111,7 +115,10 @@ func SetupUsersServiceAccounts(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, t
 	quotaService := quotaimpl.ProvideService(sqlStore, cfg)
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	require.NoError(t, err)
-	usrSvc, err := userimpl.ProvideService(sqlStore, orgService, cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
+	usrSvc, err := userimpl.ProvideService(
+		sqlStore, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		quotaService, supportbundlestest.NewFakeBundleService(),
+	)
 	require.NoError(t, err)
 
 	org, err := orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{
