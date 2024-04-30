@@ -98,23 +98,17 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     });
   }
 
-  private compareToSource() {
+  private compareToSource = () => {
     const diff = jsonDiff(vizPanelToPanel(this.state.sourcePanel.resolve()), vizPanelToPanel(this.state.panel));
     const diffCount = Object.values(diff).reduce((acc, cur) => acc + cur.length, 0);
-    return diffCount > 0;
-  }
+    return this.setState({ isDirty: diffCount > 0 });
+  };
 
   private _setUpChangeSubs() {
     this._changeSubs = [
-      this.state.panel.subscribeToState(() => {
-        this.setState({ isDirty: this.compareToSource() });
-      }),
-      this.queryRunner.subscribeToState(() => {
-        this.setState({ isDirty: this.compareToSource() });
-      }),
-      this.dataTransformer.subscribeToState(() => {
-        this.setState({ isDirty: this.compareToSource() });
-      }),
+      this.state.panel.subscribeToState(this.compareToSource),
+      this.queryRunner.subscribeToState(this.compareToSource),
+      this.dataTransformer.subscribeToState(this.compareToSource),
     ];
     return () => this._changeSubs.forEach((s) => s.unsubscribe());
   }
