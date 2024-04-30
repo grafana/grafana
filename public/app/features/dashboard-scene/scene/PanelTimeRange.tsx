@@ -39,8 +39,8 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
       this.subscribeToState((n, p) => {
         // Listen to own changes and update time info when required
         if (n.timeFrom !== p.timeFrom || n.timeShift !== p.timeShift) {
-          const { timeInfo } = this.getTimeOverride(this.getAncestorTimeRange().state.value);
-          this.setState({ timeInfo });
+          const { timeInfo, timeRange } = this.getTimeOverride(this.getAncestorTimeRange().state.value);
+          this.setState({ timeInfo, value: timeRange });
         }
       })
     );

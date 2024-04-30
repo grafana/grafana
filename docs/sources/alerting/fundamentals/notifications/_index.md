@@ -18,7 +18,7 @@ weight: 110
 
 # Notifications
 
-Choosing how, when, and where to send your alert notifications is an important part of setting up your alerting system. These decisions will have a direct impact on your ability to resolve issues quickly and not miss anything important.
+Choosing how, when, and where to send your alert notifications is an important part of setting up your alerting system. These decisions have a direct impact on your ability to resolve issues quickly and not miss anything important.
 
 As a first step, define your contact points; where to send your alert notifications to. A contact point is a set of one or more integrations that are used to deliver notifications. Add notification templates to contact points for reuse and consistent messaging in your notifications.
 
@@ -58,4 +58,4 @@ All notifications templates are written in [Go's templating language](https://pk
 
 ## Silences
 
-You can use silences to mute notifications from one or more firing rules. Silences do not stop alerts from firing or being resolved, or hide firing alerts in the user interface. A silence lasts as long as its duration which can be configured in minutes, hours, days, months or years.
+You can use silences to mute notifications from one or more firing rules. Silences do not stop alerts from firing or being resolved, or hide firing alerts in the user interface. A silence lasts as long as its duration, which can be configured in minutes, hours, days, months, or years.

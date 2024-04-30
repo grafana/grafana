@@ -16,11 +16,10 @@ import {
   dateTime,
 } from '@grafana/data';
 import { LabelParser, LabelFilter, LineFilters, PipelineStage, Logfmt, Json } from '@grafana/lezer-logql';
-import { Labels } from '@grafana/schema';
 
 import { LokiContextUi } from './components/LokiContextUi';
 import { LokiDatasource, makeRequest, REF_ID_STARTER_LOG_ROW_CONTEXT } from './datasource';
-import { escapeLabelValueInExactSelector } from './languageUtils';
+import { escapeLabelValueInExactSelector, getLabelTypeFromFrame } from './languageUtils';
 import { addLabelToQuery, addParserToQuery } from './modifyQuery';
 import {
   getNodePositionsFromQuery,
@@ -61,7 +60,7 @@ export class LogContextProvider {
     // to use the cached filters, we need to reinitialize them.
     if (this.cachedContextFilters.length === 0 || !cacheFilters) {
       const filters = (
-        await this.getInitContextFilters(row.labels, origQuery, {
+        await this.getInitContextFilters(row, origQuery, {
           from: dateTime(row.timeEpochMs),
           to: dateTime(row.timeEpochMs),
           raw: { from: dateTime(row.timeEpochMs), to: dateTime(row.timeEpochMs) },
@@ -312,14 +311,15 @@ export class LogContextProvider {
   };
 
   getInitContextFilters = async (
-    labels: Labels,
+    row: LogRowModel,
     query?: LokiQuery,
     timeRange?: TimeRange
   ): Promise<{ contextFilters: ContextFilter[]; preservedFiltersApplied: boolean }> => {
     let preservedFiltersApplied = false;
-    if (!query || isEmpty(labels)) {
+    if (!query || isEmpty(row.labels)) {
       return { contextFilters: [], preservedFiltersApplied };
     }
+    const rowLabels = row.labels;
 
     // 1. First we need to get all labels from the log row's label
     // and correctly set parsed and not parsed labels
@@ -338,12 +338,12 @@ export class LogContextProvider {
     }
 
     const contextFilters: ContextFilter[] = [];
-    Object.entries(labels).forEach(([label, value]) => {
+    Object.entries(rowLabels).forEach(([label, value]) => {
       const filter: ContextFilter = {
         label,
         value: value,
         enabled: allLabels.includes(label),
-        nonIndexed: !allLabels.includes(label),
+        nonIndexed: getLabelTypeFromFrame(label, row.dataFrame, row.rowIndex) !== LabelType.Indexed,
       };
 
       contextFilters.push(filter);

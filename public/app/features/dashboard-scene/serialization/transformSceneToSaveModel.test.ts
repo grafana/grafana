@@ -258,6 +258,13 @@ describe('transformSceneToSaveModel', () => {
       expect(saveModel.transparent).toBe(true);
     });
 
+    it('interval', () => {
+      const gridItem = buildGridItemFromPanelSchema({ interval: '20m' });
+      const saveModel = gridItemToPanel(gridItem);
+
+      expect(saveModel.interval).toBe('20m');
+    });
+
     it('With angular options', () => {
       const gridItem = buildGridItemFromPanelSchema({});
       const vizPanel = gridItem.state.body as VizPanel;
