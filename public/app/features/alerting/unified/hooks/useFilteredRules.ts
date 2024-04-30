@@ -76,6 +76,8 @@ export function useRulesFilter() {
   return { filterState, hasActiveFilters, searchQuery, setSearchQuery, updateFilters };
 }
 
+const infoThresh = Infinity;
+
 export const useFilteredRules = (namespaces: CombinedRuleNamespace[], filterState: RulesFilter) => {
   return useMemo(() => {
     const filteredRules = filterRules(namespaces, filterState);
@@ -109,6 +111,9 @@ const ufuzzy = new uFuzzy({
   intraSub: 1,
   intraTrn: 1,
   intraDel: 1,
+  // split search terms only on whitespace, this will significantly reduce the amount of regex permutations to test
+  // and is important for performance with large amount of rules and large needle
+  interSplit: '[w ]',
 });
 
 export const filterRules = (
@@ -129,7 +134,12 @@ export const filterRules = (
   if (namespaceFilter) {
     const namespaceHaystack = filteredNamespaces.map((ns) => ns.name);
 
-    const [idxs, info, order] = ufuzzy.search(namespaceHaystack, namespaceFilter);
+    const [idxs, info, order] = ufuzzy.search(
+      namespaceHaystack,
+      namespaceFilter,
+      getOutOfOrderLimit(namespaceFilter),
+      infoThresh
+    );
     if (info && order) {
       filteredNamespaces = order.map((idx) => filteredNamespaces[info.idx[idx]]);
     } else if (idxs) {
@@ -148,7 +158,12 @@ const reduceNamespaces = (filterState: RulesFilter) => {
 
     if (groupNameFilter) {
       const groupsHaystack = filteredGroups.map((g) => g.name);
-      const [idxs, info, order] = ufuzzy.search(groupsHaystack, groupNameFilter);
+      const [idxs, info, order] = ufuzzy.search(
+        groupsHaystack,
+        groupNameFilter,
+        getOutOfOrderLimit(groupNameFilter),
+        infoThresh
+      );
       if (info && order) {
         filteredGroups = order.map((idx) => filteredGroups[info.idx[idx]]);
       } else if (idxs) {
@@ -178,7 +193,12 @@ const reduceGroups = (filterState: RulesFilter) => {
 
     if (ruleNameQuery) {
       const rulesHaystack = filteredRules.map((r) => r.name);
-      const [idxs, info, order] = ufuzzy.search(rulesHaystack, ruleNameQuery);
+      const [idxs, info, order] = ufuzzy.search(
+        rulesHaystack,
+        ruleNameQuery,
+        getOutOfOrderLimit(ruleNameQuery),
+        infoThresh
+      );
       if (info && order) {
         filteredRules = order.map((idx) => filteredRules[info.idx[idx]]);
       } else if (idxs) {
@@ -274,6 +294,13 @@ const reduceGroups = (filterState: RulesFilter) => {
     return groupAcc;
   };
 };
+
+// apply an outOfOrder limit which helps to limit the number of permutations to search for
+// and prevents the browser from hanging
+function getOutOfOrderLimit(searchTerm: string) {
+  const termCount = ufuzzy.split(searchTerm).length;
+  return termCount < 5 ? 4 : 0;
+}
 
 function looseParseMatcher(matcherQuery: string): Matcher | undefined {
   try {
