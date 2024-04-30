@@ -89,11 +89,21 @@ if (process.env.NODE_ENV === 'development') {
 //
 // require.context doesn't work in jest, so we don't even attempt to load enterprise translations...
 if (process.env.NODE_ENV !== 'test') {
-  const extensionRequireContext = require.context('../../', true, /app\/extensions\/locales\/localeExtensions/);
-  if (extensionRequireContext.keys().includes('app/extensions/locales/localeExtensions')) {
-    const { LOCALE_EXTENSIONS, ENTERPRISE_I18N_NAMESPACE } = extensionRequireContext(
-      'app/extensions/locales/localeExtensions'
-    );
+  type LocaleExtensionExports = {
+    LOCALE_EXTENSIONS: Record<string, LocaleFileLoader | undefined>;
+    ENTERPRISE_I18N_NAMESPACE: 'string';
+  };
+
+  const localeExtensionImports: Record<string, LocaleExtensionExports> = import.meta.glob(
+    '../../app/extensions/locales/localeExtensions.ts',
+    {
+      eager: true,
+    }
+  );
+  const localeExtensionExports = Object.values(localeExtensionImports);
+
+  if (localeExtensionExports.length > 0) {
+    const { LOCALE_EXTENSIONS, ENTERPRISE_I18N_NAMESPACE } = localeExtensionExports[0];
 
     for (const language of LANGUAGES) {
       const localeLoader = LOCALE_EXTENSIONS[language.code];
