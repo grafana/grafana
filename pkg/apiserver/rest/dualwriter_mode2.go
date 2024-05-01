@@ -3,11 +3,14 @@ package rest
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"
 )
@@ -90,7 +93,37 @@ func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion
 		return nil, err
 	}
 
-	sl, err := d.Storage.List(ctx, options)
+	originKeys := []string{}
+	indexMap := map[string]int{}
+	for i, obj := range legacyList {
+		metaAccessor, err := utils.MetaAccessor(obj)
+		if err != nil {
+			return nil, err
+		}
+		originKeys = append(originKeys, metaAccessor.GetOriginKey())
+
+		accessor, err := meta.Accessor(obj)
+		if err != nil {
+			return nil, err
+		}
+		// Record the index of each LegacyStorage object so it can later be replaced by
+		// an equivalent Storage object if it exists.
+		indexMap[accessor.GetName()] = i
+	}
+
+	if len(originKeys) == 0 {
+		return ll, nil
+	}
+
+	r, err := labels.NewRequirement(utils.AnnoKeyOriginKey, selection.In, originKeys)
+	if err != nil {
+		return nil, err
+	}
+	optionsStorage := metainternalversion.ListOptions{
+		LabelSelector: labels.NewSelector().Add(*r),
+	}
+
+	sl, err := d.Storage.List(ctx, &optionsStorage)
 	if err != nil {
 		return nil, err
 	}
@@ -99,23 +132,13 @@ func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion
 		return nil, err
 	}
 
-	m := map[string]int{}
-	for i, obj := range storageList {
+	for _, obj := range storageList {
 		accessor, err := meta.Accessor(obj)
 		if err != nil {
 			return nil, err
 		}
-		m[accessor.GetName()] = i
-	}
-
-	for i, obj := range legacyList {
-		accessor, err := meta.Accessor(obj)
-		if err != nil {
-			return nil, err
-		}
-		// Replace the LegacyStorage object if there's a corresponding entry in Storage.
-		if index, ok := m[accessor.GetName()]; ok {
-			legacyList[i] = storageList[index]
+		if legacyIndex, ok := indexMap[accessor.GetName()]; ok {
+			legacyList[legacyIndex] = obj
 		}
 	}
 
