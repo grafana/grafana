@@ -7,7 +7,6 @@ import { useStyles2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 import { ComponentSize } from '../../types';
 import { IconName, IconSize, IconType } from '../../types/icon';
-import { handleReducedMotion } from '../../utils/handleReducedMotion';
 import { Icon } from '../Icon/Icon';
 import { getSvgSize } from '../Icon/utils';
 import { TooltipPlacement, PopoverContent, Tooltip } from '../Tooltip';
@@ -144,11 +143,11 @@ const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVari
         height: `${hoverSize}px`,
         borderRadius: theme.shape.radius.default,
         content: '""',
-        ...handleReducedMotion({
+        [theme.transitions.handleMotion('no-preference', 'reduce')]: {
           transitionDuration: '0.2s',
           transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
           transitionProperty: 'opacity',
-        }),
+        },
       },
 
       '&:focus, &:focus-visible': getFocusStyles(theme),

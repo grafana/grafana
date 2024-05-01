@@ -35,10 +35,10 @@ An alert rule can be in either of the following states:
 | **Pending** | At least one alert instances returned by the evaluation engine is `Pending`.                       |
 | **Firing**  | At least one alert instances returned by the evaluation engine is `Firing`.                        |
 
-The alert rule state is determined by the “worst case” state of the alert instances produced. For example, if one alert instance is firing, the alert rule state will also be firing.
+The alert rule state is determined by the “worst case” state of the alert instances produced. For example, if one alert instance is firing, the alert rule state is also firing.
 
 {{% admonition type="note" %}}
-Alerts will transition first to `pending` and then `firing`, thus it will take at least two evaluation cycles before an alert is fired.
+Alerts transition first to `pending` and then `firing`, thus it takes at least two evaluation cycles before an alert is fired.
 {{% /admonition %}}
 
 ## Alert instance state
@@ -55,11 +55,11 @@ An alert instance can be in either of the following states:
 
 ## Keep last state
 
-An alert rule can be configured to keep the last state when a `NoData` and/or `Error` state is encountered. This will both prevent alerts from firing, and from resolving and re-firing. Just like normal evaluation, the alert rule will transition from `Pending` to `Firing` after the pending period has elapsed.
+An alert rule can be configured to keep the last state when a `NoData` and/or `Error` state is encountered. This both prevents alerts from firing, and from resolving and re-firing. Just like normal evaluation, the alert rule transitions from `Pending` to `Firing` after the pending period has elapsed.
 
 ## Alert rule health
 
-An alert rule can have one the following health statuses:
+An alert rule can have one of the following health statuses:
 
 | State                  | Description                                                                                              |
 | ---------------------- | -------------------------------------------------------------------------------------------------------- |
@@ -70,7 +70,7 @@ An alert rule can have one the following health statuses:
 
 ## Special alerts for `NoData` and `Error`
 
-When evaluation of an alert rule produces state `NoData` or `Error`, Grafana Alerting will generate alert instances that have the following additional labels:
+When evaluation of an alert rule produces state `NoData` or `Error`, Grafana Alerting generates alert instances that have the following additional labels:
 
 | Label              | Description                                                            |
 | ------------------ | ---------------------------------------------------------------------- |

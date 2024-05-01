@@ -72,11 +72,26 @@ func (fam *RemotePrimaryForkedAlertmanager) GetStatus() apimodels.GettableStatus
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) CreateSilence(ctx context.Context, silence *apimodels.PostableSilence) (string, error) {
-	return fam.remote.CreateSilence(ctx, silence)
+	uid, err := fam.remote.CreateSilence(ctx, silence)
+	if err != nil {
+		return "", err
+	}
+
+	silence.ID = uid
+	if _, err := fam.internal.CreateSilence(ctx, silence); err != nil {
+		fam.log.Error("Error creating silence in the internal Alertmanager", "err", err, "silence", silence)
+	}
+	return uid, nil
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) DeleteSilence(ctx context.Context, id string) error {
-	return fam.remote.DeleteSilence(ctx, id)
+	if err := fam.remote.DeleteSilence(ctx, id); err != nil {
+		return err
+	}
+	if err := fam.internal.DeleteSilence(ctx, id); err != nil {
+		fam.log.Error("Error deleting silence in the internal Alertmanager", "err", err, "id", id)
+	}
+	return nil
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) GetSilence(ctx context.Context, id string) (apimodels.GettableSilence, error) {

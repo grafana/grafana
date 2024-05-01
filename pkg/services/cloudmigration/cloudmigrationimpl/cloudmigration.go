@@ -497,17 +497,11 @@ func (s *Service) GetMigrationRunList(ctx context.Context, migrationID string) (
 		return nil, fmt.Errorf("retrieving migration statuses from db: %w", err)
 	}
 
-	runList := &cloudmigration.CloudMigrationRunList{Runs: []cloudmigration.MigrateDataResponseDTO{}}
+	runList := &cloudmigration.CloudMigrationRunList{Runs: []cloudmigration.MigrateDataResponseListDTO{}}
 	for _, s := range runs {
-		// attempt to bind the raw result to a list of response item DTOs
-		r := cloudmigration.MigrateDataResponseDTO{
-			Items: []cloudmigration.MigrateDataResponseItemDTO{},
-		}
-		if err := json.Unmarshal(s.Result, &r); err != nil {
-			return nil, fmt.Errorf("error unmarshalling migration response items: %w", err)
-		}
-		r.RunID = s.ID
-		runList.Runs = append(runList.Runs, r)
+		runList.Runs = append(runList.Runs, cloudmigration.MigrateDataResponseListDTO{
+			RunID: s.ID,
+		})
 	}
 
 	return runList, nil

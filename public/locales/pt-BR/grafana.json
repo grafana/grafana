@@ -385,7 +385,7 @@
     "annotations": {
       "title": "Anotações"
     },
-    "dashboard-delete-button": "Excluir painel de controle",
+    "dashboard-delete-button": "",
     "general": {
       "auto-refresh-description": "",
       "auto-refresh-label": "Atualização automática",
@@ -472,6 +472,7 @@
       "newest-first": "Mais recentes primeiro",
       "oldest-first": "Mais antigos primeiro",
       "query-history": "Histórico de consultas",
+      "query-library": "",
       "settings": "Configurações",
       "starred": "Favorito"
     },

@@ -14,7 +14,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-	authidentity "github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/setting"
@@ -150,14 +149,13 @@ func (c *Proxy) Hook(ctx context.Context, identity *authn.Identity, r *authn.Req
 		return nil
 	}
 
-	namespace, identifier := identity.GetNamespacedID()
-	if namespace != authn.NamespaceUser {
+	if !identity.ID.IsNamespace(authn.NamespaceUser) {
 		return nil
 	}
 
-	id, err := authidentity.IntIdentifier(namespace, identifier)
+	id, err := identity.ID.ParseInt()
 	if err != nil {
-		c.log.Warn("Failed to cache proxy user", "error", err, "userId", identifier, "err", err)
+		c.log.Warn("Failed to cache proxy user", "error", err, "userId", identity.ID.ID(), "err", err)
 		return nil
 	}
 
