@@ -57,7 +57,7 @@ func TestXxx(t *testing.T) {
 	assert.Equal(t, 0, len(tables))
 }
 
-func TestParseTable(t *testing.T) {
+func TestParseSubquery(t *testing.T) {
 	sql := "select * from (select * from people limit 1)"
 	tables, err := TablesList((sql))
 	assert.Nil(t, err)
