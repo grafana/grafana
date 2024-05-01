@@ -34,12 +34,20 @@ const (
 
 func ProvideExtendedJWT(userService user.Service, cfg *setting.Cfg,
 	signingKeys signingkeys.Service) *ExtendedJWT {
-	verifier := authlib.NewVerifier[ExtendedJWTClaims](authlib.IDVerifierConfig{
+	verifier := authlib.NewVerifier[ExtendedJWTClaims](authlib.VerifierConfig{
 		SigningKeysURL: cfg.ExtJWTAuth.JWKSUrl,
 		AllowedAudiences: []string{
 			cfg.ExtJWTAuth.ExpectAudience,
 		},
-	})
+	}, authlib.TokenTypeAccess)
+
+	// The generic parameter is likely incorrect for ID Tokens
+	idTokenVerifier := authlib.NewVerifier[ExtendedJWTClaims](authlib.VerifierConfig{
+		SigningKeysURL: cfg.ExtJWTAuth.JWKSUrl,
+		AllowedAudiences: []string{
+			cfg.ExtJWTAuth.ExpectAudience,
+		},
+	}, authlib.TokenTypeID)
 
 	return &ExtendedJWT{
 		cfg:         cfg,
@@ -47,15 +55,18 @@ func ProvideExtendedJWT(userService user.Service, cfg *setting.Cfg,
 		userService: userService,
 		signingKeys: signingKeys,
 		verifier:    verifier,
+
+		idTokenVerifier: idTokenVerifier,
 	}
 }
 
 type ExtendedJWT struct {
-	cfg         *setting.Cfg
-	log         log.Logger
-	userService user.Service
-	signingKeys signingkeys.Service
-	verifier    authlib.Verifier[ExtendedJWTClaims]
+	cfg             *setting.Cfg
+	log             log.Logger
+	userService     user.Service
+	signingKeys     signingkeys.Service
+	verifier        authlib.Verifier[ExtendedJWTClaims]
+	idTokenVerifier authlib.Verifier[ExtendedJWTClaims]
 }
 
 type ExtendedJWTClaims struct {
@@ -79,7 +90,7 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 
 	idToken := s.retrieveAuthorizationToken(r.HTTPRequest)
 	if idToken != "" {
-		idTokenClaims, err := s.verifyRFC9068Token(ctx, idToken, "jwt")
+		idTokenClaims, err := s.verifyRFC9068Token(ctx, idToken, authlib.TokenTypeID)
 		if err != nil {
 			s.log.Error("Failed to verify id token", "error", err)
 			return nil, errJWTInvalid.Errorf("Failed to verify id token: %w", err)
@@ -235,7 +246,13 @@ func (s *ExtendedJWT) verifyRFC9068Token(ctx context.Context, rawToken string, t
 		return nil, fmt.Errorf("missing 'kid' field from the header")
 	}
 
-	claims, err := s.verifier.Verify(ctx, rawToken)
+	var claims *authlib.Claims[ExtendedJWTClaims]
+	if typ == authlib.TokenTypeID {
+		claims, err = s.idTokenVerifier.Verify(ctx, rawToken)
+	} else {
+		claims, err = s.verifier.Verify(ctx, rawToken)
+	}
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to verify JWT: %w", err)
 	}
@@ -251,7 +268,6 @@ func (s *ExtendedJWT) verifyRFC9068Token(ctx context.Context, rawToken string, t
 	if claims.IssuedAt == nil {
 		return nil, fmt.Errorf("missing 'iat' claim")
 	}
-
 	return &claims.Rest, nil
 }
 
