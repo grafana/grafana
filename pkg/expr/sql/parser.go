@@ -27,6 +27,11 @@ func TablesList(rawSQL string) ([]string, error) {
 			t.Format(buf)
 			table := buf.String()
 			if table != "dual" && !strings.HasPrefix(table, "(") {
+				if strings.Contains(table, " as") {
+					name := stripAlias(table)
+					tables = append(tables, name)
+					continue
+				}
 				tables = append(tables, buf.String())
 			}
 		}
@@ -37,6 +42,17 @@ func TablesList(rawSQL string) ([]string, error) {
 		return parseTables(rawSQL)
 	}
 	return tables, nil
+}
+
+func stripAlias(table string) string {
+	tableParts := []string{}
+	for _, part := range strings.Split(table, " ") {
+		if part == "as" {
+			break
+		}
+		tableParts = append(tableParts, part)
+	}
+	return strings.Join(tableParts, " ")
 }
 
 // uses a simple tokenizer
@@ -67,7 +83,9 @@ func parseTables(rawSQL string) ([]string, error) {
 			t = strings.TrimSpace(t)
 
 			if takeNext {
-				tables = append(tables, token)
+				if !existsInList(token, tables) {
+					tables = append(tables, token)
+				}
 				checkNext = false
 				takeNext = false
 				continue
@@ -82,7 +100,9 @@ func parseTables(rawSQL string) ([]string, error) {
 					for _, v := range values {
 						v := strings.TrimSpace(v)
 						if v != "" {
-							tables = append(tables, v)
+							if !existsInList(token, tables) {
+								tables = append(tables, token)
+							}
 						} else {
 							takeNext = true
 							break
@@ -90,7 +110,9 @@ func parseTables(rawSQL string) ([]string, error) {
 					}
 					continue
 				}
-				tables = append(tables, token)
+				if !existsInList(token, tables) {
+					tables = append(tables, token)
+				}
 				checkNext = false
 			}
 			if t == "FROM" {
@@ -100,4 +122,13 @@ func parseTables(rawSQL string) ([]string, error) {
 		return tables, nil
 	}
 	return nil, errors.New("not a select statement")
+}
+
+func existsInList(table string, list []string) bool {
+	for _, t := range list {
+		if t == table {
+			return true
+		}
+	}
+	return false
 }
