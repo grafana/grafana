@@ -70,6 +70,23 @@ func SearchJSONForStringAttr(attributePath string, data any) (string, error) {
 	return "", nil
 }
 
+// SearchJSONForIntAttr searches for a specific attribute in a JSON object and returns a bool.
+// The attributePath parameter is a string that specifies the path to the attribute.
+// The data parameter is the JSON object that we're searching. It can be a byte slice or a go type.
+func SearchJSONForBoolAttr(attributePath string, data any) (bool, error) {
+	val, err := searchJSONForAttr(attributePath, data)
+	if err != nil {
+		return false, err
+	}
+
+	boolVal, ok := val.(bool)
+	if ok {
+		return boolVal, nil
+	}
+
+	return false, nil
+}
+
 // searchJSONForAttr searches for a specific attribute in a JSON object.
 // The attributePath parameter is a string that specifies the path to the attribute.
 // The data parameter is the JSON object that we're searching.

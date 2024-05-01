@@ -95,10 +95,10 @@ func TestSearchJSONForEmail(t *testing.T) {
 		{
 			Name: "Given a simple user info JSON response and valid JMES path",
 			UserInfoJSONResponse: []byte(`{
-	"attributes": {
-		"email": "grafana@localhost"
-	}
-}`),
+				"attributes": {
+					"email": "grafana@localhost"
+				}
+			}`),
 			EmailAttributePath: "attributes.email",
 			ExpectedResult:     "grafana@localhost",
 		},
@@ -115,25 +115,25 @@ func TestSearchJSONForEmail(t *testing.T) {
 		{
 			Name: "Given a user info JSON response with e-mails array and valid JMES path",
 			UserInfoJSONResponse: []byte(`{
-	"attributes": {
-		"emails": ["grafana@localhost", "admin@localhost"]
-	}
-}`),
+				"attributes": {
+					"emails": ["grafana@localhost", "admin@localhost"]
+				}
+			}`),
 			EmailAttributePath: "attributes.emails[0]",
 			ExpectedResult:     "grafana@localhost",
 		},
 		{
 			Name: "Given a nested user info JSON response and valid JMES path",
 			UserInfoJSONResponse: []byte(`{
-	"identities": [
-		{
-			"userId": "grafana@localhost"
-		},
-		{
-			"userId": "admin@localhost"
-		}
-	]
-}`),
+				"identities": [
+					{
+						"userId": "grafana@localhost"
+					},
+					{
+						"userId": "admin@localhost"
+					}
+				]
+			}`),
 			EmailAttributePath: "identities[0].userId",
 			ExpectedResult:     "grafana@localhost",
 		},
@@ -150,6 +150,52 @@ func TestSearchJSONForEmail(t *testing.T) {
 				require.ErrorIs(t, err, test.ExpectedError)
 			}
 			require.Equal(t, test.ExpectedResult, actualResult)
+		})
+	}
+}
+
+func TestSearchJSONForBoolAttr(t *testing.T) {
+	tests := []struct {
+		name          string
+		data          []byte
+		path          string
+		expectedValue bool
+		err           bool
+	}{
+		{
+			name: "should parse and find the boolean value of attribute",
+			data: []byte(`{
+				"attribute": true
+			}`),
+			path:          "attribute",
+			expectedValue: true,
+		},
+		{
+			name: "should return false if the attribute is a false string",
+			data: []byte(`{
+				"attribute": "false"
+			}`),
+			path: "attribute",
+		},
+		{
+			name: "should return error if the payload is not parseable",
+			data: []byte(`{
+				"attribute"
+			}`),
+			path: "attribute",
+			err:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			response, err := util.SearchJSONForBoolAttr(tt.path, tt.data)
+			if tt.err {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+			require.Equal(t, tt.expectedValue, response)
 		})
 	}
 }
