@@ -33,6 +33,7 @@ import 'vendor/flot/jquery.flot.gauge';
 import * as grafanaData from '@grafana/data';
 import * as grafanaRuntime from '@grafana/runtime';
 import * as grafanaUIraw from '@grafana/ui';
+import * as EmotionInstance from 'app/EmotionInstance';
 import TableModel from 'app/core/TableModel';
 import config from 'app/core/config';
 import { appEvents, contextSrv } from 'app/core/core';
@@ -66,7 +67,7 @@ const jQueryFlotDeps = [
 ].reduce((acc, flotDep) => ({ ...acc, [flotDep]: { fakeDep: 1 } }), {});
 
 export const sharedDependenciesMap: Record<string, System.Module> = {
-  '@emotion/css': emotion,
+  '@emotion/css': EmotionInstance,
   '@emotion/react': emotionReact,
   '@grafana/data': grafanaData,
   '@grafana/runtime': grafanaRuntime,
