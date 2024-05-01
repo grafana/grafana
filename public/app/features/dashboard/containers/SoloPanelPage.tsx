@@ -86,7 +86,7 @@ export class SoloPanelPage extends Component<Props, State> {
 
     // Here we are checking if the panelId has changed and if so we need to update the panel
     if (!prevProps.queryParams || prevProps.queryParams.panelId !== queryParams.panelId) {
-      const panel = dashboard.getPanelByUrlId(this.getPanelId());
+      const panel = dashboard.getPanelByUrlId(this.getPanelId().toString());
 
       if (!panel) {
         this.setState({ notFound: true });

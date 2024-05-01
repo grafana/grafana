@@ -20,8 +20,9 @@ import {
   toDataFrameDTO,
   toUtc,
   TypedVariableModel,
+  VariableWithOptions,
 } from '@grafana/data';
-import { RefreshEvent, getTemplateSrv } from '@grafana/runtime';
+import { RefreshEvent } from '@grafana/runtime';
 import { VizLegendOptions } from '@grafana/schema';
 import {
   ErrorBoundary,
@@ -53,6 +54,7 @@ import { PanelLoadTimeMonitor } from './PanelLoadTimeMonitor';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 import { liveTimer } from './liveTimer';
 import { PanelOptionsLogger } from './panelOptionsLogger';
+import { getTemplateSrv } from 'app/features/templating/template_srv';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -240,9 +242,9 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     // receive message from parent window
     const receiveMessage = (event: {
       data: {
-        panelId?: String;
-        variables?: Array<{ key: String; value: String }>;
-        timeRange?: { from: String; to: String };
+        panelId?: string;
+        variables?: Array<{ key: string; value: never }>;
+        timeRange?: AbsoluteTimeRange;
       };
     }) => {
       // receive variables from parent window
@@ -251,10 +253,10 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         const srv = getTemplateSrv();
         const variables = srv.getVariables();
         const newVariables: TypedVariableModel[] = [];
-        let tmp: TypedVariableModel;
-        let newV: TypedVariableModel;
+        let tmp: VariableWithOptions & TypedVariableModel | undefined;
+        let newV: VariableWithOptions & TypedVariableModel;
         change.forEach((c) => {
-          tmp = variables.find((v) => v.name === c.key);
+          tmp = variables.find((v) => v.name === c.key) as VariableWithOptions & TypedVariableModel;
           if (tmp !== undefined) {
             newV = { ...tmp };
             newV.current = { ...tmp.current, value: c.value };

@@ -4,6 +4,7 @@ import Drop from 'tether-drop';
 
 import { locationSearchToObject, navigationLogger, reportPageview } from '@grafana/runtime';
 import { ErrorBoundary } from '@grafana/ui';
+import { AbsoluteTimeRange } from '@grafana/data';
 
 import { useGrafana } from '../context/GrafanaContext';
 
@@ -46,9 +47,9 @@ export function GrafanaRoute(props: Props) {
   useEffect(() => {
     const receiveMessage = (event: {
       data: {
-        panelId?: String;
-        variables?: Array<{ key: String; value: String }>;
-        timeRange?: { from: String; to: String };
+        panelId?: number;
+        variables?: Array<{ key: string; value: string }>;
+        timeRange?: AbsoluteTimeRange;
       };
     }) => {
       if (event.data.panelId !== undefined) {
