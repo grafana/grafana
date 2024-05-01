@@ -104,11 +104,9 @@ Controls line width of state regions.
 
 Controls the opacity of state regions.
 
-## Value mappings
+## Standard options
 
-To assign colors to boolean or string values, use the [Value mappings][].
-
-{{< figure src="/static/img/docs/v8/value_mappings_side_editor.png" max-width="300px" caption="Value mappings side editor" >}}
+{{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Legend options
 
@@ -125,6 +123,8 @@ To assign colors to boolean or string values, use the [Value mappings][].
 ## Value mappings
 
 {{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+{{< figure src="/static/img/docs/v8/value_mappings_side_editor.png" max-width="300px" caption="Value mappings side editor" >}}
 
 {{% docs/reference %}}
 [Value mappings]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-value-mappings"
