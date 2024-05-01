@@ -769,6 +769,7 @@ func (s *InMemoryActionSets) Resolve(action string) []string {
 		if prefix != "folders" {
 			continue
 		}
+		sets = append(sets, actionSet)
 	}
 
 	return sets
@@ -799,7 +800,7 @@ func (s *InMemoryActionSets) StoreActionSet(resource, permission string, actions
 		s.actionToActionSets[action] = append(s.actionToActionSets[action], actionSet.Action)
 	}
 
-	s.log.Debug("stored action set actionname \n", actionSet.Action)
+	s.log.Debug("stored action set", "action set name", actionSet.Action)
 }
 
 // GetActionSetName function creates an action set from a list of actions and stores it inmemory.

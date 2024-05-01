@@ -91,6 +91,9 @@ func getScopeCacheKey(orgID int64, scope string) string {
 
 func (s *Resolvers) GetActionSetResolver() ActionSetResolver {
 	return func(ctx context.Context, action string) []string {
+		if s.actionResolver == nil {
+			return []string{action}
+		}
 		actionSetActions := s.actionResolver.Resolve(action)
 		actions := append(actionSetActions, action)
 		s.log.Debug("Resolved action", "action", action, "resolved_actions", actions)

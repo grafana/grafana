@@ -249,7 +249,7 @@ func (a anyEvaluator) AppendActionSets(ctx context.Context, resolve ActionSetRes
 		evals = append(evals, resolvedSets)
 	}
 
-	return EvalAll(evals...)
+	return EvalAny(evals...)
 }
 
 func (a anyEvaluator) String() string {
