@@ -245,6 +245,8 @@ export const availableIconsIndex = {
   'wrap-text': true,
   rss: true,
   x: true,
+  'add-user': true,
+  attach: true,
 };
 
 export type IconName = keyof typeof availableIconsIndex;
