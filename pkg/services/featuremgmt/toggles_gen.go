@@ -140,7 +140,7 @@ const (
 	FlagAccessControlOnCall = "accessControlOnCall"
 
 	// FlagNestedFolders
-	// Enable folder nesting
+	// Enable folder nesting for dashboards and alerts. Note that managed alert rules aren&#39;t supported for nested folders. This feature is only supported for test and development environments.
 	FlagNestedFolders = "nestedFolders"
 
 	// FlagNestedFolderPicker
