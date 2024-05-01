@@ -56,36 +56,6 @@ func (u *SignedInUser) NameOrFallback() string {
 	return u.Email
 }
 
-// TODO: There's a need to remove this struct since it creates a circular dependency
-
-// DEPRECATED: This function uses `UserDisplayDTO` model which we want to remove
-// In order to retrieve the user URL, we need the dto library. However, adding
-// the dto library to the user service creates a circular dependency
-func (u *SignedInUser) ToUserDisplayDTO() *UserDisplayDTO {
-	return &UserDisplayDTO{
-		ID:    u.UserID,
-		UID:   u.UserUID,
-		Login: u.Login,
-		Name:  u.Name,
-		// AvatarURL: dtos.GetGravatarUrl(u.GetEmail()),
-	}
-}
-
-// Static function to parse a requester into a UserDisplayDTO
-func NewUserDisplayDTOFromRequester(requester identity.Requester) (*UserDisplayDTO, error) {
-	userID := int64(0)
-	namespaceID, identifier := requester.GetNamespacedID()
-	if namespaceID == identity.NamespaceUser || namespaceID == identity.NamespaceServiceAccount {
-		userID, _ = identity.IntIdentifier(namespaceID, identifier)
-	}
-
-	return &UserDisplayDTO{
-		ID:    userID,
-		Login: requester.GetLogin(),
-		Name:  requester.GetDisplayName(),
-	}, nil
-}
-
 func (u *SignedInUser) HasRole(role roletype.RoleType) bool {
 	if u.IsGrafanaAdmin {
 		return true
@@ -217,6 +187,11 @@ func (u *SignedInUser) GetID() identity.NamespaceID {
 func (u *SignedInUser) GetNamespacedID() (string, string) {
 	id := u.GetID()
 	return id.Namespace(), id.ID()
+}
+
+// GetUserUID returns user uid for the entity
+func (u *SignedInUser) GetUserUID() string {
+	return u.UserUID
 }
 
 func (u *SignedInUser) GetAuthID() string {

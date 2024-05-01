@@ -71,6 +71,8 @@ type Identity struct {
 	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
 	// Will only be set when featuremgmt.FlagIdForwarding is enabled.
 	IDToken string
+	// UserUID is the unique identifier for the entity in the Grafana database.
+	UserUID string
 }
 
 func (i *Identity) GetID() NamespaceID {
@@ -79,6 +81,10 @@ func (i *Identity) GetID() NamespaceID {
 
 func (i *Identity) GetNamespacedID() (namespace string, identifier string) {
 	return i.ID.Namespace(), i.ID.ID()
+}
+
+func (i *Identity) GetUserUID() string {
+	return i.UserUID
 }
 
 func (i *Identity) GetAuthID() string {
