@@ -241,15 +241,15 @@ You can customize the following standard options:
 
 To learn more, refer to [Configure standard options][].
 
+## Data links
+
+{{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ## Other visualization options
 
 ### Panel options
 
 Learn about [panel options][] that you can set for a visualization.
-
-### Data links
-
-Learn about [data links][] that you can set for a visualization.
 
 ### Field overrides
 
