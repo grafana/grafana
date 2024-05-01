@@ -1,4 +1,4 @@
-import uPlot from 'uplot';
+import uPlot, { Padding } from 'uplot';
 
 import {
   DataFrame,
@@ -8,12 +8,16 @@ import {
   GrafanaTheme2,
   cacheFieldDisplayNames,
   formattedValueToString,
+  getFieldColorModeForField,
+  getFieldSeriesColor,
   outerJoinDataFrames,
 } from '@grafana/data';
 import { decoupleHideFromState } from '@grafana/data/src/field/fieldState';
 import {
   AxisColorMode,
   AxisPlacement,
+  FieldColorModeId,
+  GraphGradientMode,
   GraphThresholdsStyleMode,
   GraphTransform,
   ScaleDistribution,
@@ -34,8 +38,9 @@ import { getStackingGroups } from '@grafana/ui/src/components/uPlot/utils';
 
 import { setClassicPaletteIdxs } from '../timeseries/utils';
 
-import { BarsOptions } from './bars';
-import { Options } from './panelcfg.gen';
+import { BarsOptions, getConfig } from './bars';
+import { FieldConfig, Options, defaultFieldConfig } from './panelcfg.gen';
+// import { isLegendOrdered } from './utils';
 
 export function prepSeries(
   frames: DataFrame[],
@@ -133,12 +138,13 @@ export function prepSeries(
 
 interface PrepConfigOpts {
   series: DataFrame[];
+  color?: Field | null;
   theme: GrafanaTheme2;
   timeZone: TimeZone;
   options: Options;
 }
 
-export const prepConfig = ({ series, theme, timeZone, options }: PrepConfigOpts) => {
+export const prepConfig = ({ series, color, theme, timeZone, options }: PrepConfigOpts) => {
   let {
     orientation,
     showValue,
@@ -154,8 +160,8 @@ export const prepConfig = ({ series, theme, timeZone, options }: PrepConfigOpts)
     legend,
     fullHighlight,
   } = options;
-
-  const frame = series[0];
+  // this and color is kept up to date by returned prepData()
+  let frame = series[0];
 
   const builder = new UPlotConfigBuilder();
 
@@ -174,6 +180,52 @@ export const prepConfig = ({ series, theme, timeZone, options }: PrepConfigOpts)
   if (frame.fields.length === 2) {
     groupWidth = barWidth;
     barWidth = 1;
+  }
+
+  const rawValue = (seriesIdx: number, valueIdx: number) => {
+    return frame.fields[seriesIdx].values[valueIdx];
+  };
+
+  // Color by value
+  let getColor: ((seriesIdx: number, valueIdx: number) => string) | undefined = undefined;
+
+  let fillOpacity = 1;
+
+  if (color != null) {
+    const disp = color.display!;
+    fillOpacity = (color.config.custom.fillOpacity ?? 100) / 100;
+    // gradientMode? ignore?
+    getColor = (seriesIdx: number, valueIdx: number) => disp(color!.values[valueIdx]).color!;
+  } else {
+    const hasPerBarColor = frame.fields.some((f) => {
+      const fromThresholds =
+        f.config.custom?.gradientMode === GraphGradientMode.Scheme &&
+        f.config.color?.mode === FieldColorModeId.Thresholds;
+
+      return (
+        fromThresholds ||
+        f.config.mappings?.some((m) => {
+          // ValueToText mappings have a different format, where all of them are grouped into an object keyed by value
+          if (m.type === 'value') {
+            // === MappingType.ValueToText
+            return Object.values(m.options).some((result) => result.color != null);
+          }
+          return m.options.result.color != null;
+        })
+      );
+    });
+
+    if (hasPerBarColor) {
+      // use opacity from first numeric field
+      let opacityField = frame.fields.find((f) => f.type === FieldType.number)!;
+
+      fillOpacity = (opacityField.config.custom.fillOpacity ?? 100) / 100;
+
+      getColor = (seriesIdx: number, valueIdx: number) => {
+        let field = frame.fields[seriesIdx];
+        return field.display!(field.values[valueIdx]).color!;
+      };
+    }
   }
 
   const opts: BarsOptions = {
@@ -252,14 +304,14 @@ export const prepConfig = ({ series, theme, timeZone, options }: PrepConfigOpts)
     show: xFieldAxisShow,
   });
 
-  let seriesIndex = 0;
-  const legendOrdered = isLegendOrdered(legend);
+  // let seriesIndex = 0;
+  // const legendOrdered = isLegendOrdered(legend);
 
   // iterate the y values
   for (let i = 1; i < frame.fields.length; i++) {
     const field = frame.fields[i];
 
-    seriesIndex++;
+    // seriesIndex++;
 
     const customConfig: FieldConfig = { ...defaultFieldConfig, ...field.config.custom };
 
@@ -316,14 +368,14 @@ export const prepConfig = ({ series, theme, timeZone, options }: PrepConfigOpts)
 
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config
       // PlotLegend currently gets unfiltered DataFrame[], so index must be into that field array, not the prepped frame's which we're iterating here
-      dataFrameFieldIndex: {
-        fieldIndex: legendOrdered
-          ? i
-          : allFrames[0].fields.findIndex(
-              (f) => f.type === FieldType.number && f.state?.seriesIndex === seriesIndex - 1
-            ),
-        frameIndex: 0,
-      },
+      // dataFrameFieldIndex: {
+      //   fieldIndex: legendOrdered
+      //     ? i
+      //     : allFrames[0].fields.findIndex(
+      //         (f) => f.type === FieldType.number && f.state?.seriesIndex === seriesIndex - 1
+      //       ),
+      //   frameIndex: 0,
+      // },
     });
 
     // The builder will manage unique scaleKeys and combine where appropriate
@@ -384,7 +436,16 @@ export const prepConfig = ({ series, theme, timeZone, options }: PrepConfigOpts)
 
   builder.setStackingGroups(stackingGroups);
 
-  return builder;
+  return {
+    builder,
+    prepData: (_series: DataFrame[], _color?: Field | null) => {
+      series = _series;
+      frame = series[0];
+      color = _color;
+
+      return config.prepData(series, builder.getStackingGroups());
+    },
+  };
 };
 
 function shortenValue(value: string, length: number) {
