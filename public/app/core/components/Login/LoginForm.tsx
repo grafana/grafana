@@ -42,7 +42,7 @@ export const LoginForm = ({ children, onSubmit, isLoggingIn, passwordHint, login
             id={usernameId}
             autoFocus
             autoCapitalize="none"
-            placeholder={loginHint}
+            placeholder={loginHint || t('login.form.username-placeholder', 'email or username')}
             data-testid={selectors.pages.Login.username}
           />
         </Field>
@@ -55,7 +55,7 @@ export const LoginForm = ({ children, onSubmit, isLoggingIn, passwordHint, login
             {...register('password', { required: t('login.form.password-required', 'Password is required') })}
             id={passwordId}
             autoComplete="current-password"
-            placeholder={passwordHint}
+            placeholder={passwordHint || t('login.form.password-placeholder', 'password')}
           />
         </Field>
         <Button

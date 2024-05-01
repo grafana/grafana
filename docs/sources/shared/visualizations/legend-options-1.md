@@ -1,14 +1,12 @@
 ---
-title: Legend mode and legend placement
+title: Legend options
 comments: |
   There are two legend shared files to cover the most common combinations of options. 
   Using two shared files ensures that content remains consistent across visualizations that share the same options and users don't have to figure out which options apply to a specific visualization when reading that content. 
-  This file is used in the following visualizations: state timeline, status history
+  This file is used in the following visualizations: bar chart, candlestick, histogram, time series, trend, xy chart
 ---
 
-When the legend option is enabled it can show either the value mappings or the threshold brackets. To show the value mappings in the legend, it's important that the **Color scheme** as referenced in [Color scheme](../../configure-standard-options#color-scheme) is set to **Single color** or **Classic palette**. To see the threshold brackets in the legend set the **Color scheme** to **From thresholds**.
-
-For more information about the legend, refer to [Configure a legend](../configure-legend/).
+Legend options control the series names and statistics that appear under or to the right of the graph. For more information about the legend, refer to [Configure a legend](../configure-legend/).
 
 ### Visibility
 
@@ -31,3 +29,7 @@ Choose where to display the legend.
 #### Width
 
 Control how wide the legend is when placed on the right side of the visualization. This option is only displayed if you set the legend placement to **Right**.
+
+### Values
+
+Choose which of the [standard calculations](../../query-transform-data/calculation-types/) to show in the legend. You can have more than one.
