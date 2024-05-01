@@ -344,7 +344,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     return queryFn(requestParams).pipe(
       map((response) => {
         if (response.errors) {
-          throw response.errors[0];
+          throw new Error(response.errors[0].message);
         }
         return response.data
       }),
