@@ -250,6 +250,11 @@ func (by AlertsBy) TopK(alerts []Alert, k int) []Alert {
 	// which is important for sorting alerts, as the comparison function is
 	// very expensive.
 
+	// If k is zero or less, return nothing.
+	if k < 1 {
+		return []Alert{}
+	}
+
 	// The heap must be in ascending order, so that the root of the heap is
 	// the current smallest element.
 	byAscending := func(a1, a2 *Alert) bool { return by(a2, a1) }

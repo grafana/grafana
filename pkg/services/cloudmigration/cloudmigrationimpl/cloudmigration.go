@@ -84,7 +84,6 @@ func ProvideService(
 		cfg:              cfg,
 		features:         features,
 		dsService:        dsService,
-		gcomService:      gcom.New(gcom.Config{ApiURL: cfg.GrafanaComAPIURL, Token: cfg.CloudMigration.GcomAPIToken}),
 		tracer:           tracer,
 		metrics:          newMetrics(),
 		secretsService:   secretsService,
@@ -93,12 +92,20 @@ func ProvideService(
 	}
 	s.api = api.RegisterApi(routeRegister, s, tracer)
 
-	// get CMS path from the config
-	domain, err := s.parseCloudMigrationConfig()
-	if err != nil {
-		return nil, fmt.Errorf("config parse error: %w", err)
+	if !cfg.CloudMigration.IsDeveloperMode {
+		// get CMS path from the config
+		domain, err := s.parseCloudMigrationConfig()
+		if err != nil {
+			return nil, fmt.Errorf("config parse error: %w", err)
+		}
+		s.cmsClient = cmsclient.NewCMSClient(domain)
+
+		s.gcomService = gcom.New(gcom.Config{ApiURL: cfg.GrafanaComAPIURL, Token: cfg.CloudMigration.GcomAPIToken})
+	} else {
+		s.cmsClient = cmsclient.NewInMemoryClient()
+		s.gcomService = &gcomStub{map[string]gcom.AccessPolicy{}}
+		s.cfg.StackID = "12345"
 	}
-	s.cmsClient = cmsclient.NewCMSClient(domain)
 
 	if err := s.registerMetrics(prom, s.metrics); err != nil {
 		s.log.Warn("error registering prom metrics", "error", err.Error())
@@ -490,17 +497,11 @@ func (s *Service) GetMigrationRunList(ctx context.Context, migrationID string) (
 		return nil, fmt.Errorf("retrieving migration statuses from db: %w", err)
 	}
 
-	runList := &cloudmigration.CloudMigrationRunList{Runs: []cloudmigration.MigrateDataResponseDTO{}}
+	runList := &cloudmigration.CloudMigrationRunList{Runs: []cloudmigration.MigrateDataResponseListDTO{}}
 	for _, s := range runs {
-		// attempt to bind the raw result to a list of response item DTOs
-		r := cloudmigration.MigrateDataResponseDTO{
-			Items: []cloudmigration.MigrateDataResponseItemDTO{},
-		}
-		if err := json.Unmarshal(s.Result, &r); err != nil {
-			return nil, fmt.Errorf("error unmarshalling migration response items: %w", err)
-		}
-		r.RunID = s.ID
-		runList.Runs = append(runList.Runs, r)
+		runList.Runs = append(runList.Runs, cloudmigration.MigrateDataResponseListDTO{
+			RunID: s.ID,
+		})
 	}
 
 	return runList, nil

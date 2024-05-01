@@ -60,7 +60,13 @@ import {
   useContactPointsWithStatus,
   useDeleteContactPoint,
 } from './useContactPoints';
-import { ContactPointWithMetadata, getReceiverDescription, isProvisioned, ReceiverConfigWithMetadata } from './utils';
+import {
+  ContactPointWithMetadata,
+  getReceiverDescription,
+  isProvisioned,
+  ReceiverConfigWithMetadata,
+  RouteReference,
+} from './utils';
 
 export enum ActiveTab {
   ContactPoints = 'contact_points',
@@ -243,7 +249,7 @@ const ContactPointsList = ({
     <>
       {pageItems.map((contactPoint, index) => {
         const provisioned = isProvisioned(contactPoint);
-        const policies = contactPoint.numberOfPolicies;
+        const policies = contactPoint.policies ?? [];
         const key = `${contactPoint.name}-${index}`;
 
         return (
@@ -304,7 +310,7 @@ interface ContactPointProps {
   disabled?: boolean;
   provisioned?: boolean;
   receivers: ReceiverConfigWithMetadata[];
-  policies?: number;
+  policies?: RouteReference[];
   onDelete: (name: string) => void;
 }
 
@@ -313,7 +319,7 @@ export const ContactPoint = ({
   disabled = false,
   provisioned = false,
   receivers,
-  policies = 0,
+  policies = [],
   onDelete,
 }: ContactPointProps) => {
   const styles = useStyles2(getStyles);
@@ -367,12 +373,12 @@ interface ContactPointHeaderProps {
   name: string;
   disabled?: boolean;
   provisioned?: boolean;
-  policies?: number;
+  policies?: RouteReference[];
   onDelete: (name: string) => void;
 }
 
 const ContactPointHeader = (props: ContactPointHeaderProps) => {
-  const { name, disabled = false, provisioned = false, policies = 0, onDelete } = props;
+  const { name, disabled = false, provisioned = false, policies = [], onDelete } = props;
   const styles = useStyles2(getStyles);
 
   const [exportSupported, exportAllowed] = useAlertmanagerAbility(AlertmanagerAction.ExportContactPoint);
@@ -381,9 +387,12 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
 
   const [ExportDrawer, openExportDrawer] = useExportContactPoint();
 
-  const isReferencedByPolicies = policies > 0;
+  const numberOfPolicies = policies.length;
+  const isReferencedByAnyPolicy = numberOfPolicies > 0;
+  const isReferencedByRegularPolicies = policies.some((ref) => ref.route.type !== 'auto-generated');
+
   const canEdit = editSupported && editAllowed && !provisioned;
-  const canDelete = deleteSupported && deleteAllowed && !provisioned && policies === 0;
+  const canDelete = deleteSupported && deleteAllowed && !provisioned && !isReferencedByRegularPolicies;
 
   const menuActions: JSX.Element[] = [];
 
@@ -407,7 +416,7 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
     menuActions.push(
       <ConditionalWrap
         key="delete-contact-point"
-        shouldWrap={isReferencedByPolicies}
+        shouldWrap={!canDelete}
         wrap={(children) => (
           <Tooltip content="Contact point is currently in use by one or more notification policies" placement="top">
             <span>{children}</span>
@@ -434,15 +443,15 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
             {name}
           </Text>
         </Stack>
-        {isReferencedByPolicies && (
+        {isReferencedByAnyPolicy && (
           <MetaText>
             <Link to={createUrl('/alerting/routes', { contactPoint: name })}>
-              is used by <Strong>{policies}</Strong> {pluralize('notification policy', policies)}
+              is used by <Strong>{numberOfPolicies}</Strong> {pluralize('notification policy', numberOfPolicies)}
             </Link>
           </MetaText>
         )}
         {provisioned && <ProvisioningBadge />}
-        {!isReferencedByPolicies && <UnusedContactPointBadge />}
+        {!isReferencedByAnyPolicy && <UnusedContactPointBadge />}
         <Spacer />
         <LinkButton
           tooltipPlacement="top"
