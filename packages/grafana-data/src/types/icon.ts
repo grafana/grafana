@@ -246,7 +246,7 @@ export const availableIconsIndex = {
   rss: true,
   x: true,
   'add-user': true,
-  'clip-attach': true,
+  attach: true,
 };
 
 export type IconName = keyof typeof availableIconsIndex;
