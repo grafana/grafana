@@ -109,7 +109,7 @@ describe('The FileDropzone component', () => {
 
     expect(await screen.findByText('ping.json')).toBeInTheDocument();
     expect(fileReaderSpy).not.toBeCalled();
-    expect(onDrop).toBeCalledWith([fileToUpload], [], expect.anything());
+    expect(onDrop).toHaveBeenCalledWith([fileToUpload], [], expect.anything());
   });
 
   it('should show children inside the dropzone', () => {

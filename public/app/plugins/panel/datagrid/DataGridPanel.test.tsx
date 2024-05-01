@@ -306,7 +306,7 @@ describe('DataGrid', () => {
 
       fireEvent.blur(columnInput);
 
-      expect(spy).toBeCalledWith(
+      expect(spy).toHaveBeenCalledWith(
         expect.objectContaining({
           fields: expect.arrayContaining([
             expect.objectContaining({

@@ -24,7 +24,7 @@ describe('VariableSupport', () => {
       vs.query(getDefaultRequest({ type: 'label', profileTypeId: 'profile:type:3', refId: 'A' }))
     );
     expect(resp.data).toEqual([{ text: 'foo' }, { text: 'bar' }, { text: 'baz' }]);
-    expect(mock.getLabelNames).toBeCalledWith(
+    expect(mock.getLabelNames).toHaveBeenCalledWith(
       '{__profile_type__="profile:type:3"}',
       expect.any(Number),
       expect.any(Number)
@@ -38,7 +38,7 @@ describe('VariableSupport', () => {
       vs.query(getDefaultRequest({ type: 'labelValue', labelName: 'foo', profileTypeId: 'profile:type:3', refId: 'A' }))
     );
     expect(resp.data).toEqual([{ text: 'val1' }, { text: 'val2' }, { text: 'val3' }]);
-    expect(mock.getLabelValues).toBeCalledWith(
+    expect(mock.getLabelValues).toHaveBeenCalledWith(
       '{__profile_type__="profile:type:3"}',
       'foo',
       expect.any(Number),

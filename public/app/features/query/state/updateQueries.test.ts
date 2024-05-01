@@ -419,8 +419,8 @@ describe('updateQueries with import', () => {
         oldUidDSWithAbstract as any
       );
 
-      expect(exportSpy).toBeCalledWith(queries);
-      expect(importSpy).toBeCalledWith(queries.map((q) => ({ ...q, exported: true })));
+      expect(exportSpy).toHaveBeenCalledWith(queries);
+      expect(importSpy).toHaveBeenCalledWith(queries.map((q) => ({ ...q, exported: true })));
 
       expect(updated).toMatchInlineSnapshot(`
         [
@@ -543,7 +543,7 @@ describe('updateQueries with import', () => {
 
       const updated = await updateQueries(newUidDSWithImport, newUidDSWithImport.uid, queries, oldUidDS);
 
-      expect(importSpy).toBeCalledWith(queries, { uid: 'old-uid', type: 'old-type', meta: { id: 'old-type' } });
+      expect(importSpy).toHaveBeenCalledWith(queries, { uid: 'old-uid', type: 'old-type', meta: { id: 'old-type' } });
 
       expect(updated).toMatchInlineSnapshot(`
         [
