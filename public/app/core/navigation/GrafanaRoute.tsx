@@ -45,8 +45,14 @@ export function GrafanaRoute(props: Props) {
 
   // receive panelId from parent window
   useEffect(() => {
-    const receiveMessage = (event: any) => {
-      if (event.data.panelId != undefined) {
+    const receiveMessage = (event: {
+      data: {
+        panelId?: String,
+        variables?: Array<{ key: String, value: String }>,
+        timeRange?: { from: String, to: String }
+      }
+    }) => {
+      if (event.data.panelId !== undefined) {
         setPanelId(event.data.panelId);
       };
     };

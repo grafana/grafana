@@ -238,9 +238,15 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     liveTimer.listen(this);
 
     // receive message from parent window
-    const receiveMessage = (event: any) => {
+    const receiveMessage = (event: {
+      data: {
+        panelId?: String,
+        variables?: Array<{ key: String, value: String }>,
+        timeRange?: { from: String, to: String }
+      }
+    }) => {
       // receive variables from parent window
-      if (event.data.variables != undefined) {
+      if (event.data.variables !== undefined) {
         const change = event.data.variables;
         const srv = getTemplateSrv();
         const variables = srv.getVariables();
@@ -249,7 +255,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         let newV: TypedVariableModel;
         change.forEach((c) => {
           tmp = variables.find((v) => v.name === c.key);
-          if (tmp != undefined) {
+          if (tmp !== undefined) {
             newV = { ...tmp };
             newV.current = { ...tmp.current, value: c.value };
             newVariables.push(newV);
@@ -261,7 +267,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         }
       }
       // receive timeRange from parent window
-      if (event.data.timeRange != undefined) {
+      if (event.data.timeRange !== undefined) {
         this.onChangeTimeRange(event.data.timeRange);
       }
     };
