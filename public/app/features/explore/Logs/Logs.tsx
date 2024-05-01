@@ -144,6 +144,9 @@ const getDefaultVisualisationType = (): LogsVisualisationType => {
   if (visualisationType === 'table') {
     return 'table';
   }
+  if (visualisationType === 'logs') {
+    return 'logs';
+  }
   return 'logs';
 };
 
