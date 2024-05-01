@@ -190,7 +190,6 @@ const getStyles = (theme: GrafanaTheme2, color?: string) => {
         transform: 'translateX(-50%)',
         width: theme.spacing(0.5),
         left: '2px',
-        opacity: 0.3,
       },
     }),
   };
