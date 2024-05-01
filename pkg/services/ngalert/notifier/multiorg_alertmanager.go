@@ -448,7 +448,7 @@ func (moa *MultiOrgAlertmanager) ListSilences(ctx context.Context, orgID int64, 
 		}
 		return nil, WithPublicError(ErrSilenceInternal.Errorf("failed to list silences: %w", err))
 	}
-	return GettableSilencesToModelGettableSilences(silences), nil
+	return GettableSilencesToSilences(silences), nil
 }
 
 // GetSilence gets a silence for the organization and silence id provided. Currently, this is a pass-through to the
@@ -470,7 +470,7 @@ func (moa *MultiOrgAlertmanager) GetSilence(ctx context.Context, orgID int64, id
 		return nil, WithPublicError(ErrSilenceInternal.Errorf("failed to get silence: %w", err))
 	}
 
-	return GettableSilenceToModelGettableSilence(s), nil
+	return GettableSilenceToSilence(s), nil
 }
 
 // CreateSilence creates a silence in the Alertmanager for the organization provided, returning the silence ID. It will
@@ -485,7 +485,7 @@ func (moa *MultiOrgAlertmanager) CreateSilence(ctx context.Context, orgID int64,
 	}
 
 	// Need to create the silence in the AM first to get the silence ID.
-	silenceID, err := orgAM.CreateSilence(ctx, SilenceToNotifyPostableSilence(ps))
+	silenceID, err := orgAM.CreateSilence(ctx, SilenceToPostableSilence(ps))
 	if err != nil {
 		if errors.Is(err, alertingNotify.ErrSilenceNotFound) {
 			return "", WithPublicError(ErrSilenceNotFound.Errorf("silence %v not found", ps.ID))

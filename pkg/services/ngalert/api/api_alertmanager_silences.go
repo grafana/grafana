@@ -29,7 +29,7 @@ func (srv AlertmanagerSrv) RouteGetSilence(c *contextmodel.ReqContext, silenceID
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get silence", err)
 	}
-	return response.JSON(http.StatusOK, GettableSilenceToAPIGettableSilence(*silence))
+	return response.JSON(http.StatusOK, SilenceToGettableSilence(*silence))
 }
 
 // RouteGetSilences is the silence list GET endpoint for Grafana AM.
@@ -38,7 +38,7 @@ func (srv AlertmanagerSrv) RouteGetSilences(c *contextmodel.ReqContext) response
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to list silence", err)
 	}
-	return response.JSON(http.StatusOK, GettableSilencesToAPIGettableSilences(silences))
+	return response.JSON(http.StatusOK, SilencesToGettableSilences(silences))
 }
 
 // RouteCreateSilence is the silence POST (create + update) endpoint for Grafana AM.
@@ -52,7 +52,7 @@ func (srv AlertmanagerSrv) RouteCreateSilence(c *contextmodel.ReqContext, postab
 	if postableSilence.ID == "" {
 		action = srv.silenceSvc.CreateSilence
 	}
-	silenceID, err := action(c.Req.Context(), c.SignedInUser, PostableSilenceToModelPostableSilence(postableSilence))
+	silenceID, err := action(c.Req.Context(), c.SignedInUser, PostableSilenceToSilence(postableSilence))
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to create/update silence", err)
 	}

@@ -126,20 +126,20 @@ func ToTemplateDefinitions(cfg *apimodels.PostableUserConfig) []alertingTemplate
 
 // Silence-specific compat functions to convert between grafana/alerting and model types.
 
-func GettableSilenceToModelGettableSilence(s alertingNotify.GettableSilence) *models.Silence {
+func GettableSilenceToSilence(s alertingNotify.GettableSilence) *models.Silence {
 	sil := models.Silence(s)
 	return &sil
 }
 
-func GettableSilencesToModelGettableSilences(silences alertingNotify.GettableSilences) []*models.Silence {
+func GettableSilencesToSilences(silences alertingNotify.GettableSilences) []*models.Silence {
 	res := make([]*models.Silence, 0, len(silences))
 	for _, sil := range silences {
-		res = append(res, GettableSilenceToModelGettableSilence(*sil))
+		res = append(res, GettableSilenceToSilence(*sil))
 	}
 	return res
 }
 
-func SilenceToNotifyPostableSilence(s models.Silence) *alertingNotify.PostableSilence {
+func SilenceToPostableSilence(s models.Silence) *alertingNotify.PostableSilence {
 	var id string
 	if s.ID != nil {
 		id = *s.ID
