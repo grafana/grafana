@@ -246,6 +246,10 @@ If you want to show the number of rows in the dataset instead of the number of v
 
 {{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
+## Field overrides
+
+{{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 {{% docs/reference %}}
 [calculations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/calculation-types"
 [calculations]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types"

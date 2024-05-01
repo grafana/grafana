@@ -130,6 +130,10 @@ To assign colors to boolean or string values, use the [Value mappings][].
 
 {{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
+## Field overrides
+
+{{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 {{% docs/reference %}}
 [Value mappings]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-value-mappings"
 [Value mappings]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-value-mappings"
