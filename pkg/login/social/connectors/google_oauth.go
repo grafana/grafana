@@ -17,6 +17,7 @@ import (
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -25,10 +26,16 @@ const (
 	googleIAMGroupsEndpoint = "https://content-cloudidentity.googleapis.com/v1/groups/-/memberships:searchDirectGroups"
 	googleIAMScope          = "https://www.googleapis.com/auth/cloud-identity.groups.readonly"
 	validateHDKey           = "validate_hd"
+	gcipNameLookup          = "gcip_name_lookup"
+	gcipEmailLookup         = "gcip_email_lookup"
+	gcipEmailVerifiedLookup = "gcip_email_verified_lookup"
 )
 
 var ExtraGoogleSettingKeys = map[string]ExtraKeyInfo{
-	validateHDKey: {Type: Bool, DefaultValue: true},
+	validateHDKey:           {Type: Bool, DefaultValue: true},
+	gcipNameLookup:          {Type: String, DefaultValue: ""},
+	gcipEmailLookup:         {Type: String, DefaultValue: ""},
+	gcipEmailVerifiedLookup: {Type: String, DefaultValue: ""},
 }
 
 var _ social.SocialConnector = (*SocialGoogle)(nil)
@@ -36,7 +43,10 @@ var _ ssosettings.Reloadable = (*SocialGoogle)(nil)
 
 type SocialGoogle struct {
 	*SocialBase
-	validateHD bool
+	gcipNameLookup          string
+	gcipEmailLookup         string
+	gcipEmailVerifiedLookup string
+	validateHD              bool
 }
 
 type googleUserData struct {
@@ -50,8 +60,11 @@ type googleUserData struct {
 
 func NewGoogleProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGoogle {
 	provider := &SocialGoogle{
-		SocialBase: newSocialBase(social.GoogleProviderName, info, features, cfg),
-		validateHD: MustBool(info.Extra[validateHDKey], true),
+		SocialBase:              newSocialBase(social.GoogleProviderName, info, features, cfg),
+		gcipNameLookup:          info.Extra[gcipNameLookup],
+		gcipEmailLookup:         info.Extra[gcipEmailLookup],
+		gcipEmailVerifiedLookup: info.Extra[gcipEmailVerifiedLookup],
+		validateHD:              MustBool(info.Extra[validateHDKey], true),
 	}
 
 	if strings.HasPrefix(info.ApiUrl, legacyAPIURL) {
@@ -105,7 +118,7 @@ func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token 
 	s.reloadMutex.RLock()
 	defer s.reloadMutex.RUnlock()
 
-	data, errToken := s.extractFromToken(ctx, client, token)
+	data, errToken := s.extractFromToken(token)
 	if errToken != nil {
 		return nil, errToken
 	}
@@ -220,7 +233,7 @@ func (s *SocialGoogle) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) 
 	return s.SocialBase.Config.AuthCodeURL(state, opts...)
 }
 
-func (s *SocialGoogle) extractFromToken(ctx context.Context, client *http.Client, token *oauth2.Token) (*googleUserData, error) {
+func (s *SocialGoogle) extractFromToken(token *oauth2.Token) (*googleUserData, error) {
 	s.log.Debug("Extracting user info from OAuth token")
 
 	idToken := token.Extra("id_token")
@@ -244,6 +257,34 @@ func (s *SocialGoogle) extractFromToken(ctx context.Context, client *http.Client
 		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}
 
+	if s.gcipEmailLookup != "" && s.gcipEmailVerifiedLookup != "" {
+		// email lookup in gcip attributes with JMESPath
+		email, err := jmesPathStringLookupInGCIP(rawJSON, s.gcipEmailLookup)
+		if err != nil {
+			return nil, err
+		}
+
+		data.Email = email
+
+		// email_verified lookup in gcip attributes with JMESPath
+		emailVerified, err := jmesPathBooleanLookupInGCIPBool(rawJSON, s.gcipEmailVerifiedLookup)
+		if err != nil {
+			return nil, err
+		}
+
+		data.EmailVerified = emailVerified
+	}
+
+	if s.gcipNameLookup != "" {
+		// name lookup in gcip attributes with JMESPath
+		name, err := jmesPathStringLookupInGCIP(rawJSON, s.gcipNameLookup)
+		if err != nil {
+			return nil, err
+		}
+
+		data.Name = name
+	}
+
 	data.rawJSON = rawJSON
 
 	return &data, nil
@@ -258,6 +299,40 @@ type googleGroupResp struct {
 		DisplayName string `json:"displayName"`
 	} `json:"memberships"`
 	NextPageToken string `json:"nextPageToken"`
+}
+
+func jmesPathStringLookupInGCIP(rawJson []byte, jmespath string) (string, error) {
+	var googleUserData struct {
+		GCIP string `json:"gcip"`
+	}
+	if err := json.Unmarshal(rawJson, &googleUserData); err != nil {
+		return "", err
+	}
+
+	// lookup attributes with JMESPath
+	result, err := util.SearchJSONForStringAttr(jmespath, []byte(googleUserData.GCIP))
+	if err != nil {
+		return "", err
+	}
+
+	return result, nil
+}
+
+func jmesPathBooleanLookupInGCIPBool(rawJson []byte, jmespath string) (bool, error) {
+	var googleUserData struct {
+		GCIP string `json:"gcip"`
+	}
+	if err := json.Unmarshal(rawJson, &googleUserData); err != nil {
+		return false, err
+	}
+
+	// lookup attributes with JMESPath
+	result, err := util.SearchJSONForBoolAttr(jmespath, []byte(googleUserData.GCIP))
+	if err != nil {
+		return false, err
+	}
+
+	return result, nil
 }
 
 func (s *SocialGoogle) retrieveGroups(ctx context.Context, client *http.Client, userData *googleUserData) ([]string, error) {

@@ -223,6 +223,62 @@ func (f *roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) 
 	return f.fn(req)
 }
 
+func generateToken(t *testing.T, cl jwt.Claims, sig jose.Signer) *oauth2.Token {
+	idMap := map[string]any{
+		"email":          "test@example.com",
+		"name":           "Test User",
+		"hd":             "example.com",
+		"email_verified": true,
+	}
+	raw, err := jwt.Signed(sig).Claims(cl).Claims(idMap).CompactSerialize()
+	require.NoError(t, err)
+
+	return (&oauth2.Token{
+		AccessToken: "fake_token",
+	}).WithExtra(map[string]any{"id_token": raw})
+}
+
+// generateTokenWithGCIP generates a token with a Google Cloud Identity Platform (GCIP) payload.
+// This is used to test the GCIP-specific features of the Google OAuth provider.
+// This example was taken from
+// https://cloud.google.com/iap/docs/signed-headers-howto#controlling_access_with_sign_in_attributes
+func generateTokenWithGCIP(t *testing.T, cl jwt.Claims, sig jose.Signer) *oauth2.Token {
+	idMap := map[string]any{
+		"email": "test@example.com",
+		"name":  "this is my name",
+		"gcip": `{
+			"auth_time": 1553219869,
+			"email": "demo_user@gmail.com",
+			"email_verified": true,
+			"firebase": {
+				"identities": {
+					"email": [
+						"demo_user@gmail.com"
+					],
+					"saml.myProvider": [
+						"demo_user@gmail.com"
+					]
+				},
+				"sign_in_attributes": {
+					"firstname": "John",
+					"group": "test group",
+					"role": "admin",
+					"lastname": "Doe"
+				},
+				"sign_in_provider": "saml.myProvider",
+				"tenant": "my_tenant_id"
+			},
+			"sub": "gZG0yELPypZElTmAT9I55prjHg63"
+		}`,
+	}
+	raw, err := jwt.Signed(sig).Claims(cl).Claims(idMap).CompactSerialize()
+	require.NoError(t, err)
+
+	return (&oauth2.Token{
+		AccessToken: "fake_token",
+	}).WithExtra(map[string]any{"id_token": raw})
+}
+
 func TestSocialGoogle_UserInfo(t *testing.T) {
 	cl := jwt.Claims{
 		Subject:   "88888888888888",
@@ -233,21 +289,10 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 
 	sig, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.HS256, Key: []byte("secret")}, (&jose.SignerOptions{}).WithType("JWT"))
 	require.NoError(t, err)
-	idMap := map[string]any{
-		"email":          "test@example.com",
-		"name":           "Test User",
-		"hd":             "example.com",
-		"email_verified": true,
-	}
 
-	raw, err := jwt.Signed(sig).Claims(cl).Claims(idMap).CompactSerialize()
-	require.NoError(t, err)
-
-	tokenWithID := (&oauth2.Token{
-		AccessToken: "fake_token",
-	}).WithExtra(map[string]any{"id_token": raw})
-
+	tokenWithID := generateToken(t, cl, sig)
 	tokenWithoutID := &oauth2.Token{}
+	tokenWithGCIP := generateTokenWithGCIP(t, cl, sig)
 
 	type fields struct {
 		Scopes                  []string
@@ -265,6 +310,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 	tests := []struct {
 		name       string
 		fields     fields
+		extra      map[string]string
 		args       args
 		wantData   *social.BasicUserInfo
 		wantErr    bool
@@ -638,21 +684,56 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "gcip jmespath lookup with groups",
+			fields: fields{
+				Scopes:            []string{"https://www.googleapis.com/auth/cloud-identity.groups.readonly"},
+				roleAttributePath: "contains(groups[*], 'test-group@google.com') && 'Editor'",
+			},
+			args: args{
+				token: tokenWithGCIP,
+				client: &http.Client{
+					Transport: &roundTripperFunc{
+						fn: func(req *http.Request) (*http.Response, error) {
+							return httptest.NewRecorder().Result(), nil
+						},
+					},
+				},
+			},
+			extra: map[string]string{
+				"gcip_email_lookup":          "firebase.identities.email[0]",
+				"gcip_name_lookup":           "firebase.sign_in_attributes.firstname",
+				"gcip_email_verified_lookup": "email_verified",
+			},
+			wantData: &social.BasicUserInfo{
+				Id:    "88888888888888",
+				Login: "demo_user@gmail.com",
+				Email: "demo_user@gmail.com",
+				Name:  "John",
+				Role:  "Viewer",
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			oauthInfo := social.OAuthInfo{
+				ApiUrl:                  tt.fields.apiURL,
+				Scopes:                  tt.fields.Scopes,
+				AllowedGroups:           tt.fields.allowedGroups,
+				AllowSignup:             false,
+				RoleAttributePath:       tt.fields.roleAttributePath,
+				RoleAttributeStrict:     tt.fields.roleAttributeStrict,
+				AllowAssignGrafanaAdmin: tt.fields.allowAssignGrafanaAdmin,
+				SkipOrgRoleSync:         tt.fields.skipOrgRoleSync,
+			}
+
+			if tt.extra != nil {
+				oauthInfo.Extra = tt.extra
+			}
+
 			s := NewGoogleProvider(
-				&social.OAuthInfo{
-					ApiUrl:                  tt.fields.apiURL,
-					Scopes:                  tt.fields.Scopes,
-					AllowedGroups:           tt.fields.allowedGroups,
-					AllowSignup:             false,
-					RoleAttributePath:       tt.fields.roleAttributePath,
-					RoleAttributeStrict:     tt.fields.roleAttributeStrict,
-					AllowAssignGrafanaAdmin: tt.fields.allowAssignGrafanaAdmin,
-					SkipOrgRoleSync:         tt.fields.skipOrgRoleSync,
-				},
+				&oauthInfo,
 				&setting.Cfg{},
 				&ssosettingstests.MockService{},
 				featuremgmt.WithFeatures())
