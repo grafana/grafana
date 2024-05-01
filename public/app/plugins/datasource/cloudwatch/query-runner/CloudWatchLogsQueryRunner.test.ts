@@ -9,6 +9,7 @@ import {
   dateTime,
   DataQueryRequest,
   LogRowContextQueryDirection,
+  KeyValue,
 } from '@grafana/data';
 
 import {
@@ -24,6 +25,7 @@ import { CloudWatchLogsQuery, LogAction, StartQueryRequest } from '../types';
 import * as rxjsUtils from '../utils/rxjs/increasingInterval';
 
 import { LOG_IDENTIFIER_INTERNAL, LOGSTREAM_IDENTIFIER_INTERNAL } from './CloudWatchLogsQueryRunner';
+import { DataResponse, toDataQueryResponse } from '@grafana/runtime';
 
 jest.mock('@grafana/data', () => ({
   ...jest.requireActual('@grafana/data'),
@@ -327,6 +329,19 @@ describe('CloudWatchLogsQueryRunner', () => {
 
       expect(queryMock.mock.calls[0][0].skipQueryCache).toBe(true);
       expect(queryMock.mock.calls[0][0]).toEqual(expect.objectContaining({ range: { from, to, raw: { from, to } } }));
+    });
+
+    it('should return an error if the request fails', async () => {
+      const { runner, queryMock } = setupMockedLogsQueryRunner({ data: { results:  { "A" : { error: 'your syntax was bad' }} } });
+
+      try {
+        await lastValueFrom(
+          runner.makeLogActionRequest('StartQuery', [genMockCloudWatchLogsRequest()], queryMock)
+        );
+        throw new Error("Make log action request should have thrown an error")
+      } catch (err: { message: string }) {
+        expect(err.message).toEqual('your syntax was bad');
+      }
     });
   });
 });
