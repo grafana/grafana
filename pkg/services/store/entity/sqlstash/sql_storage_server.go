@@ -1300,6 +1300,12 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 		rvSubQuery.AddWhere("("+strings.Join(where, " OR ")+")", args...)
 	}
 
+	if len(r.OriginKeys) > 0 {
+		entityQuery.AddWhereIn("origin_key", ToAnyList(r.OriginKeys))
+		rvMaxQuery.AddWhereIn("origin_key", ToAnyList(r.OriginKeys))
+		rvSubQuery.AddWhereIn("origin_key", ToAnyList(r.OriginKeys))
+	}
+
 	// get the maximum resource version and count of entities
 	type RVMaxRow struct {
 		Rv  int64 `db:"rv"`
