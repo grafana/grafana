@@ -41,12 +41,12 @@ function useGetLatestMigrationDestination() {
   };
 }
 
-function useGetLatestMigrationRun(migrationId?: number) {
-  const listResult = useGetCloudMigrationRunListQuery(migrationId ? { id: migrationId } : skipToken);
+function useGetLatestMigrationRun(migrationUid?: string) {
+  const listResult = useGetCloudMigrationRunListQuery(migrationUid ? { uid: migrationUid } : skipToken);
   const latestMigrationRun = listResult.data?.runs?.at(-1);
 
   const runResult = useGetCloudMigrationRunQuery(
-    latestMigrationRun?.id && migrationId ? { runId: latestMigrationRun.id, id: migrationId } : skipToken
+    latestMigrationRun?.uid && migrationUid ? { runUid: latestMigrationRun.uid } : skipToken
   );
 
   return {
@@ -64,7 +64,7 @@ function useGetLatestMigrationRun(migrationId?: number) {
 
 export const Page = () => {
   const migrationDestination = useGetLatestMigrationDestination();
-  const lastMigrationRun = useGetLatestMigrationRun(migrationDestination.data?.id);
+  const lastMigrationRun = useGetLatestMigrationRun(migrationDestination.data?.uid);
   const [performRunMigration, runMigrationResult] = useRunCloudMigrationMutation();
   const [performDisconnect, disconnectResult] = useDeleteCloudMigrationMutation();
 
@@ -79,16 +79,16 @@ export const Page = () => {
   const resources = lastMigrationRun.data?.items;
 
   const handleDisconnect = useCallback(() => {
-    if (migrationDestination.data?.id) {
+    if (migrationDestination.data?.uid) {
       performDisconnect({
-        id: migrationDestination.data.id,
+        uid: migrationDestination.data.uid,
       });
     }
-  }, [migrationDestination.data?.id, performDisconnect]);
+  }, [migrationDestination.data?.uid, performDisconnect]);
 
   const handleStartMigration = useCallback(() => {
-    if (migrationDestination.data?.id) {
-      performRunMigration({ id: migrationDestination.data?.id });
+    if (migrationDestination.data?.uid) {
+      performRunMigration({ uid: migrationDestination.data?.uid });
     }
   }, [performRunMigration, migrationDestination]);
 

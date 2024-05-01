@@ -16,9 +16,10 @@ var (
 	ErrMigrationNotDeleted         = errutil.Internal("cloudmigrations.migrationNotDeleted", errutil.WithPublicMessage("Migration not deleted"))
 )
 
-// cloud migration api dtos
+// CloudMigration api dtos
 type CloudMigration struct {
 	ID          int64     `json:"id" xorm:"pk autoincr 'id'"`
+	UID         string    `json:"uid" xorm:"uid"`
 	AuthToken   string    `json:"-"`
 	Stack       string    `json:"stack"`
 	StackID     int       `json:"stackID" xorm:"stack_id"`
@@ -48,7 +49,8 @@ type MigratedResource struct {
 
 type CloudMigrationRun struct {
 	ID                int64     `json:"id" xorm:"pk autoincr 'id'"`
-	CloudMigrationUID string    `json:"uid" xorm:"cloud_migration_uid"`
+	UID               string    `json:"uid" xorm:"uid"`
+	CloudMigrationUID string    `json:"migrationUid" xorm:"cloud_migration_uid"`
 	Result            []byte    `json:"result"` //store raw cms response body
 	Created           time.Time `json:"created"`
 	Updated           time.Time `json:"updated"`
@@ -61,7 +63,7 @@ func (r CloudMigrationRun) ToResponse() (*MigrateDataResponseDTO, error) {
 	if err != nil {
 		return nil, errors.New("could not parse result of run")
 	}
-	result.RunID = r.ID
+	result.RunUID = r.UID
 	return &result, nil
 }
 
@@ -81,7 +83,7 @@ type CloudMigrationRequest struct {
 }
 
 type CloudMigrationResponse struct {
-	ID      int64     `json:"id"`
+	UID     string    `json:"uid"`
 	Stack   string    `json:"stack"`
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`
@@ -172,12 +174,12 @@ const (
 )
 
 type MigrateDataResponseDTO struct {
-	RunID int64                        `json:"id"`
-	Items []MigrateDataResponseItemDTO `json:"items"`
+	RunUID string                       `json:"uid"`
+	Items  []MigrateDataResponseItemDTO `json:"items"`
 }
 
 type MigrateDataResponseListDTO struct {
-	RunID int64 `json:"id"`
+	RunUID string `json:"uid"`
 }
 
 type MigrateDataResponseItemDTO struct {
