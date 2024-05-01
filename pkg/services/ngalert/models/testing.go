@@ -909,8 +909,17 @@ func (n NotificationSettingsMutators) WithMuteTimeIntervals(muteTimeIntervals ..
 
 // Silences
 
+// CopySilenceWith creates a deep copy of Silence and then applies mutators to it.
+func CopySilenceWith(s Silence, mutators ...Mutator[Silence]) Silence {
+	c := CopySilence(s)
+	for _, mutator := range mutators {
+		mutator(&c)
+	}
+	return c
+}
+
 // CopySilence creates a deep copy of Silence.
-func CopySilence(s Silence, mutators ...Mutator[Silence]) Silence {
+func CopySilence(s Silence) Silence {
 	c := Silence{
 		Silence: amv2.Silence{},
 	}
@@ -940,9 +949,6 @@ func CopySilence(s Silence, mutators ...Mutator[Silence]) Silence {
 		c.Silence.Matchers = CopyMatchers(s.Silence.Matchers)
 	}
 
-	for _, mutator := range mutators {
-		mutator(&c)
-	}
 	return c
 }
 

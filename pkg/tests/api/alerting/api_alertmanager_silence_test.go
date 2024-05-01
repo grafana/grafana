@@ -385,7 +385,7 @@ func TestIntegrationSilenceAuth(t *testing.T) {
 				filterLabel := util.GenerateShortUID()
 				for sType, gen := range silenceGens {
 					genWithFilterLabels := func() ngmodels.Silence {
-						return ngmodels.CopySilence(gen(), ngmodels.SilenceMuts.WithMatcher(filterLabel, filterLabel, labels.MatchEqual))
+						return ngmodels.CopySilenceWith(gen(), ngmodels.SilenceMuts.WithMatcher(filterLabel, filterLabel, labels.MatchEqual))
 					}
 					silence := persistSilence(genWithFilterLabels)
 					ids[sType] = silence.ID
