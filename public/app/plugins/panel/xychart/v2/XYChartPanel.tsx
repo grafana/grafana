@@ -61,6 +61,10 @@ export const XYChartPanel2 = (props: Props2) => {
 
   // TODO: React.memo()
   const renderLegend = () => {
+    if (!props.options.legend.showLegend) {
+      return null;
+    }
+
     const items: VizLegendItem[] = [];
     const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
     const theme = config.theme2;
