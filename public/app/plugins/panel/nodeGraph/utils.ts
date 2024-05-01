@@ -433,6 +433,7 @@ function nodesFrame() {
       ...value,
       name: key,
     })),
+    meta: { preferredVisualisationType: 'nodeGraph' },
   });
 }
 
@@ -480,6 +481,7 @@ function edgesFrame() {
       ...value,
       name: key,
     })),
+    meta: { preferredVisualisationType: 'nodeGraph' },
   });
 }
 

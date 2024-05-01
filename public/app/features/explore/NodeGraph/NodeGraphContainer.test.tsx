@@ -50,6 +50,7 @@ const nodes = new MutableDataFrame({
     ['secondaryStat', ['1047.29ms (99.82%)']],
     ['color', [0.9982395121342127]],
   ]),
+  meta: { preferredVisualisationType: 'nodeGraph' },
 });
 
 function toFields(fields: Array<[string, unknown[]]>) {
