@@ -11,6 +11,8 @@ import { getGraphFrame } from './utils';
  */
 export function useCategorizeFrames(series: DataFrame[]) {
   return useMemo(() => {
-    return getGraphFrame(series);
+    return getGraphFrame(
+      series.filter((singleSeries) => singleSeries.meta?.preferredVisualisationType === 'nodeGraph')
+    );
   }, [series]);
 }
