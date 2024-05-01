@@ -269,7 +269,7 @@ export function MetricSelect({
     return (
       <AsyncSelect
         data-testid={selectors.components.DataSource.Prometheus.queryEditor.builder.metricSelect}
-        isClearable={variableEditor}
+        isClearable={Boolean(variableEditor)}
         inputId="prometheus-metric-select"
         className={styles.select}
         value={query.metric ? toOption(query.metric) : undefined}
