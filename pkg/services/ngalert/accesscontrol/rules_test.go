@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -157,7 +156,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					ruleDelete: {
 						namespaceIdScope,
 					},
-					datasources.ActionQuery: getDatasourceScopesForRules(c.AffectedGroups[c.GroupKey]),
+					datasources.ActionQuery: getDatasourceScopesForRules(c.Delete),
 				}
 			},
 		},
@@ -189,9 +188,9 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				}
 			},
 			permissions: func(c *store.GroupDelta) map[string][]string {
-				scopes := getDatasourceScopesForRules(append(c.AffectedGroups[c.GroupKey], mapUpdates(c.Update, func(update store.RuleDelta) *models.AlertRule {
+				scopes := getDatasourceScopesForRules(mapUpdates(c.Update, func(update store.RuleDelta) *models.AlertRule {
 					return update.New
-				})...))
+				}))
 				return map[string][]string{
 					ruleRead: {
 						namespaceIdScope,
@@ -235,15 +234,9 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				}
 			},
 			permissions: func(c *store.GroupDelta) map[string][]string {
-				dsScopes := getDatasourceScopesForRules(
-					append(append(append(c.AffectedGroups[c.GroupKey],
-						mapUpdates(c.Update, func(update store.RuleDelta) *models.AlertRule {
-							return update.New
-						})...,
-					), mapUpdates(c.Update, func(update store.RuleDelta) *models.AlertRule {
-						return update.Existing
-					})...), c.AffectedGroups[groupKey]...),
-				)
+				dsScopes := getDatasourceScopesForRules(mapUpdates(c.Update, func(update store.RuleDelta) *models.AlertRule {
+					return update.New
+				}))
 
 				var deleteScopes []string
 				for key := range c.AffectedGroups {
@@ -302,17 +295,17 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					for _, query := range update.New.Data {
 						scopes[datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID)] = struct{}{}
 					}
-					for _, query := range update.Existing.Data {
-						scopes[datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID)] = struct{}{}
-					}
+					// for _, query := range update.Existing.Data {
+					// 	scopes[datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID)] = struct{}{}
+					// }
 				}
-				for _, rules := range c.AffectedGroups {
-					for _, rule := range rules {
-						for _, query := range rule.Data {
-							scopes[datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID)] = struct{}{}
-						}
-					}
-				}
+				// for _, rules := range c.AffectedGroups {
+				// 	for _, rule := range rules {
+				// 		for _, query := range rule.Data {
+				// 			scopes[datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID)] = struct{}{}
+				// 		}
+				// 	}
+				// }
 
 				dsScopes := make([]string, 0, len(scopes))
 				for key := range scopes {
@@ -435,14 +428,8 @@ func TestCheckDatasourcePermissionsForRule(t *testing.T) {
 }
 
 func Test_authorizeAccessToRuleGroup(t *testing.T) {
-	t.Run("should return true if user has access to all datasources of all rules in group", func(t *testing.T) {
+	t.Run("should return true if user has namespace permissions", func(t *testing.T) {
 		rules := models.RuleGen.GenerateManyRef(1, 5)
-		var scopes []string
-		for _, rule := range rules {
-			for _, query := range rule.Data {
-				scopes = append(scopes, datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID))
-			}
-		}
 		namespaceScopes := make([]string, 0)
 		for _, rule := range rules {
 			namespaceScopes = append(namespaceScopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(rule.NamespaceUID))
@@ -450,7 +437,6 @@ func Test_authorizeAccessToRuleGroup(t *testing.T) {
 		permissions := map[string][]string{
 			ruleRead:                     namespaceScopes,
 			dashboards.ActionFoldersRead: namespaceScopes,
-			datasources.ActionQuery:      scopes,
 		}
 		ac := &recordingAccessControlFake{}
 		svc := RuleService{
@@ -462,32 +448,19 @@ func Test_authorizeAccessToRuleGroup(t *testing.T) {
 		require.NoError(t, result)
 		require.NotEmpty(t, ac.EvaluateRecordings)
 	})
-	t.Run("should return false if user does not have access to at least one rule in group", func(t *testing.T) {
-		f := &folder.Folder{UID: "test-folder"}
-		gen := models.RuleGen
-		genWithFolder := gen.With(gen.WithNamespace(f))
-		rules := genWithFolder.GenerateManyRef(1, 5)
-		var scopes []string
-		for _, rule := range rules {
-			for _, query := range rule.Data {
-				scopes = append(scopes, datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID))
-			}
-		}
+
+	t.Run("should return false if user does not have namespace permissions", func(t *testing.T) {
+		rules := models.RuleGen.GenerateManyRef(1, 5)
+		namespaceScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID("INVALID-NAMESPACE")
 		permissions := map[string][]string{
-			ruleRead: {
-				dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID),
-			},
-			dashboards.ActionFoldersRead: {
-				dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID),
-			},
-			datasources.ActionQuery: scopes,
+			ruleRead:                     []string{namespaceScope},
+			dashboards.ActionFoldersRead: []string{namespaceScope},
 		}
-
-		rule := genWithFolder.GenerateRef()
-		rules = append(rules, rule)
-
-		ac := &recordingAccessControlFake{}
-
+		ac := &recordingAccessControlFake{
+			Callback: func(user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
+				return false, nil
+			},
+		}
 		svc := RuleService{
 			genericService{ac: ac},
 		}
@@ -495,5 +468,6 @@ func Test_authorizeAccessToRuleGroup(t *testing.T) {
 		result := svc.AuthorizeAccessToRuleGroup(context.Background(), createUserWithPermissions(permissions), rules)
 
 		require.Error(t, result)
+		require.NotEmpty(t, ac.EvaluateRecordings)
 	})
 }

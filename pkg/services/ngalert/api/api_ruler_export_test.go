@@ -303,6 +303,17 @@ func TestExportRules(t *testing.T) {
 			expectedRules: []*ngmodels.AlertRule{hasAccess1[0]},
 		},
 		{
+			title: "return single rule when group not accessible but rule is",
+			params: url.Values{
+				"ruleUid": []string{noAccessRule.UID},
+			},
+			expectedStatus: 200,
+			expectedHeaders: http.Header{
+				"Content-Type": []string{"text/yaml"},
+			},
+			expectedRules: []*ngmodels.AlertRule{noAccessRule},
+		},
+		{
 			title: "fail if group and many folders",
 			params: url.Values{
 				"folderUid": []string{hasAccessKey1.NamespaceUID, hasAccessKey2.NamespaceUID},
@@ -340,13 +351,6 @@ func TestExportRules(t *testing.T) {
 			params: url.Values{
 				"folderUid": []string{noAccessKey1.NamespaceUID},
 				"group":     []string{noAccessKey1.RuleGroup},
-			},
-			expectedStatus: http.StatusForbidden,
-		},
-		{
-			title: "forbidden if rule's group is not accessible",
-			params: url.Values{
-				"ruleUid": []string{noAccessRule.UID},
 			},
 			expectedStatus: http.StatusForbidden,
 		},

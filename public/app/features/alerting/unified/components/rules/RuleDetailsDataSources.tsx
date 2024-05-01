@@ -27,18 +27,21 @@ export function RuleDetailsDataSources(props: Props): JSX.Element | null {
 
     if (isGrafanaRulerRule(rule.rulerRule)) {
       const { data } = rule.rulerRule.grafana_alert;
-      const unique = data.reduce<Record<string, { name: string; icon?: string }>>((dataSources, query) => {
-        const ds = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
+      if (data != null) {
+        const unique = data.reduce<Record<string, { name: string; icon?: string }>>((dataSources, query) => {
+          const ds = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
 
-        if (!ds || ds.uid === ExpressionDatasourceUID) {
+          if (!ds || ds.uid === ExpressionDatasourceUID) {
+            return dataSources;
+          }
+
+          dataSources[ds.name] = { name: ds.name, icon: ds.meta.info.logos.small };
           return dataSources;
-        }
+        }, {});
 
-        dataSources[ds.name] = { name: ds.name, icon: ds.meta.info.logos.small };
-        return dataSources;
-      }, {});
-
-      return Object.values(unique);
+        return Object.values(unique);
+      }
+      return [];
     }
 
     return [];

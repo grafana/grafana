@@ -128,7 +128,13 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceU
 			}
 			uid := make([]string, 0, len(rules))
 			for _, rule := range rules {
-				uid = append(uid, rule.UID)
+				canQuery, err := srv.authz.HasDatasourceAccessForRule(ctx, c.SignedInUser, rule)
+				if err != nil {
+					return err
+				}
+				if canQuery {
+					uid = append(uid, rule.UID)
+				}
 			}
 			rulesToDelete = append(rulesToDelete, uid...)
 		}
@@ -180,7 +186,11 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *contextmodel.ReqContext, nam
 	result := apimodels.NamespaceConfigResponse{}
 
 	for groupKey, rules := range ruleGroups {
-		result[namespace.Fullpath] = append(result[namespace.Fullpath], toGettableRuleGroupConfig(groupKey.RuleGroup, rules, provenanceRecords))
+		groupConfig, err := srv.toAuthorizedGettableRuleGroupConfig(c.Req.Context(), c.SignedInUser, groupKey.RuleGroup, rules, provenanceRecords)
+		if err != nil {
+			return ErrResp(http.StatusInternalServerError, err, "failed to get rule group")
+		}
+		result[namespace.Fullpath] = append(result[namespace.Fullpath], groupConfig)
 	}
 
 	return response.JSON(http.StatusAccepted, result)
@@ -208,9 +218,13 @@ func (srv RulerSrv) RouteGetRulesGroupConfig(c *contextmodel.ReqContext, namespa
 		return ErrResp(http.StatusInternalServerError, err, "failed to get group alert rules")
 	}
 
+	groupConfig, err := srv.toAuthorizedGettableRuleGroupConfig(c.Req.Context(), c.SignedInUser, ruleGroup, rules, provenanceRecords)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "failed to get rule group")
+	}
 	result := apimodels.RuleGroupConfigResponse{
 		// nolint:staticcheck
-		GettableRuleGroupConfig: toGettableRuleGroupConfig(ruleGroup, rules, provenanceRecords),
+		GettableRuleGroupConfig: groupConfig,
 	}
 	return response.JSON(http.StatusAccepted, result)
 }
@@ -258,7 +272,11 @@ func (srv RulerSrv) RouteGetRulesConfig(c *contextmodel.ReqContext) response.Res
 			srv.log.Error("Namespace not visible to the user", "user", id, "userNamespace", userNamespace, "namespace", groupKey.NamespaceUID)
 			continue
 		}
-		result[folder.Fullpath] = append(result[folder.Fullpath], toGettableRuleGroupConfig(groupKey.RuleGroup, rules, provenanceRecords))
+		groupConfig, err := srv.toAuthorizedGettableRuleGroupConfig(c.Req.Context(), c.SignedInUser, groupKey.RuleGroup, rules, provenanceRecords)
+		if err != nil {
+			return ErrResp(http.StatusInternalServerError, err, "failed to get rule group")
+		}
+		result[folder.Fullpath] = append(result[folder.Fullpath], groupConfig)
 	}
 	return response.JSON(http.StatusOK, result)
 }
@@ -466,7 +484,13 @@ func changesToResponse(finalChanges *store.GroupDelta) response.Response {
 	return response.JSON(http.StatusAccepted, body)
 }
 
-func toGettableRuleGroupConfig(groupName string, rules ngmodels.RulesGroup, provenanceRecords map[string]ngmodels.Provenance) apimodels.GettableRuleGroupConfig {
+func (srv RulerSrv) toAuthorizedGettableRuleGroupConfig(
+	ctx context.Context,
+	user identity.Requester,
+	groupName string,
+	rules ngmodels.RulesGroup,
+	provenanceRecords map[string]ngmodels.Provenance,
+) (apimodels.GettableRuleGroupConfig, error) {
 	rules.SortByGroupIndex()
 	ruleNodes := make([]apimodels.GettableExtendedRuleNode, 0, len(rules))
 	var interval time.Duration
@@ -474,48 +498,67 @@ func toGettableRuleGroupConfig(groupName string, rules ngmodels.RulesGroup, prov
 		interval = time.Duration(rules[0].IntervalSeconds) * time.Second
 	}
 	for _, r := range rules {
-		ruleNodes = append(ruleNodes, toGettableExtendedRuleNode(*r, provenanceRecords))
+		node, err := srv.toAuthorizedGettableExtendedRuleNode(ctx, user, *r, provenanceRecords)
+		if err != nil {
+			return apimodels.GettableRuleGroupConfig{}, err
+		}
+		ruleNodes = append(ruleNodes, node)
 	}
 	return apimodels.GettableRuleGroupConfig{
 		Name:     groupName,
 		Interval: model.Duration(interval),
 		Rules:    ruleNodes,
-	}
+	}, nil
 }
 
-func toGettableExtendedRuleNode(r ngmodels.AlertRule, provenanceRecords map[string]ngmodels.Provenance) apimodels.GettableExtendedRuleNode {
+func (srv RulerSrv) toAuthorizedGettableExtendedRuleNode(
+	ctx context.Context,
+	user identity.Requester,
+	r ngmodels.AlertRule,
+	provenanceRecords map[string]ngmodels.Provenance,
+) (apimodels.GettableExtendedRuleNode, error) {
 	provenance := ngmodels.ProvenanceNone
 	if prov, exists := provenanceRecords[r.ResourceID()]; exists {
 		provenance = prov
 	}
-
-	gettableExtendedRuleNode := apimodels.GettableExtendedRuleNode{
-		GrafanaManagedAlert: &apimodels.GettableGrafanaRule{
-			ID:                   r.ID,
-			OrgID:                r.OrgID,
-			Title:                r.Title,
-			Condition:            r.Condition,
-			Data:                 ApiAlertQueriesFromAlertQueries(r.Data),
-			Updated:              r.Updated,
-			IntervalSeconds:      r.IntervalSeconds,
-			Version:              r.Version,
-			UID:                  r.UID,
-			NamespaceUID:         r.NamespaceUID,
-			RuleGroup:            r.RuleGroup,
-			NoDataState:          apimodels.NoDataState(r.NoDataState),
-			ExecErrState:         apimodels.ExecutionErrorState(r.ExecErrState),
-			Provenance:           apimodels.Provenance(provenance),
-			IsPaused:             r.IsPaused,
-			NotificationSettings: AlertRuleNotificationSettingsFromNotificationSettings(r.NotificationSettings),
-		},
+	alert := &apimodels.GettableGrafanaRule{
+		ID:                   r.ID,
+		OrgID:                r.OrgID,
+		Title:                r.Title,
+		Updated:              r.Updated,
+		IntervalSeconds:      r.IntervalSeconds,
+		Version:              r.Version,
+		UID:                  r.UID,
+		NamespaceUID:         r.NamespaceUID,
+		RuleGroup:            r.RuleGroup,
+		NoDataState:          apimodels.NoDataState(r.NoDataState),
+		ExecErrState:         apimodels.ExecutionErrorState(r.ExecErrState),
+		Provenance:           apimodels.Provenance(provenance),
+		IsPaused:             r.IsPaused,
+		NotificationSettings: AlertRuleNotificationSettingsFromNotificationSettings(r.NotificationSettings),
 	}
+
+	hasQueryAccess, err := srv.authz.HasDatasourceAccessForRule(ctx, user, &r)
+	if err != nil {
+		return apimodels.GettableExtendedRuleNode{}, err
+	}
+	if hasQueryAccess {
+		alert.Data = ApiAlertQueriesFromAlertQueries(r.Data)
+		alert.Condition = r.Condition
+	}
+
 	forDuration := model.Duration(r.For)
-	gettableExtendedRuleNode.ApiRuleNode = &apimodels.ApiRuleNode{
+	apiRuleNode := &apimodels.ApiRuleNode{
 		For:         &forDuration,
 		Annotations: r.Annotations,
 		Labels:      r.Labels,
 	}
-	return gettableExtendedRuleNode
+
+	gettableExtendedRuleNode := apimodels.GettableExtendedRuleNode{
+		GrafanaManagedAlert: alert,
+		ApiRuleNode:         apiRuleNode,
+	}
+	return gettableExtendedRuleNode, nil
 }
 
 func toNamespaceErrorResponse(err error) response.Response {

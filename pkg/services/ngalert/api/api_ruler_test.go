@@ -80,7 +80,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 		t.Run("and group argument is empty", func(t *testing.T) {
 			t.Run("return Forbidden if user is not authorized to access any group in the folder", func(t *testing.T) {
 				ruleStore := initFakeRuleStore(t)
-				ruleStore.PutRule(context.Background(), gen.With(gen.WithNamespace(folder)).GenerateManyRef(1, 5)...)
+				ruleStore.PutRule(context.Background(), gen.With(gen.WithNamespace(folder)).GenerateManyRef(3)...)
 
 				request := createRequestContextWithPerms(orgID, map[int64]map[string][]string{}, nil)
 
@@ -149,7 +149,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 			})
 		})
 		t.Run("and group argument is not empty", func(t *testing.T) {
-			t.Run("return Forbidden if user is not authorized to access the group", func(t *testing.T) {
+			t.Run("delete only rules to which user has query permissions", func(t *testing.T) {
 				ruleStore := initFakeRuleStore(t)
 
 				groupGen := gen.With(gen.WithNamespace(folder), gen.WithSameGroup())
@@ -164,9 +164,8 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 
 				response := createService(ruleStore).RouteDeleteAlertRules(requestCtx, folder.UID, authorizedRulesInGroup[0].RuleGroup)
 
-				require.Equalf(t, http.StatusForbidden, response.Status(), "Expected 403 but got %d: %v", response.Status(), string(response.Body()))
-				deleteCommands := getRecordedCommand(ruleStore)
-				require.Empty(t, deleteCommands)
+				require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
+				assertRulesDeleted(t, authorizedRulesInGroup, ruleStore)
 			})
 			t.Run("return 400 if group is provisioned", func(t *testing.T) {
 				ruleStore := initFakeRuleStore(t)
@@ -196,17 +195,22 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 	gen := models.RuleGen
 	t.Run("fine-grained access is enabled", func(t *testing.T) {
-		t.Run("should return rules for which user has access to data source", func(t *testing.T) {
+		t.Run("should only include `data` for rules which user has access to data source", func(t *testing.T) {
 			orgID := rand.Int63()
 			folder := randFolder()
 			ruleStore := fakes.NewRuleStore(t)
 			ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
 			folderGen := gen.With(gen.WithOrgID(orgID), gen.WithNamespace(folder))
-			expectedRules := folderGen.GenerateManyRef(2, 6)
-			ruleStore.PutRule(context.Background(), expectedRules...)
-			ruleStore.PutRule(context.Background(), folderGen.GenerateManyRef(2, 6)...)
+			fullAccessRules := folderGen.GenerateManyRef(2, 6)
+			partialAccessRules := folderGen.GenerateManyRef(2, 6)
 
-			permissions := createPermissionsForRules(expectedRules, orgID)
+			groupRules := make([]*models.AlertRule, len(fullAccessRules)+len(partialAccessRules))
+			copy(groupRules, fullAccessRules)
+			copy(groupRules[len(fullAccessRules):], partialAccessRules)
+
+			ruleStore.PutRule(context.Background(), groupRules...)
+
+			permissions := createPermissionsForRules(fullAccessRules, orgID)
 			req := createRequestContextWithPerms(orgID, permissions, nil)
 
 			response := createService(ruleStore).RouteGetNamespaceRulesConfig(req, folder.UID)
@@ -219,10 +223,18 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 				require.Equal(t, folder.Fullpath, namespace)
 				for _, group := range groups {
 				grouploop:
-					for _, actualRule := range group.Rules {
-						for i, expected := range expectedRules {
+					for i, actualRule := range group.Rules {
+						for _, expected := range fullAccessRules {
 							if actualRule.GrafanaManagedAlert.UID == expected.UID {
-								expectedRules = append(expectedRules[:i], expectedRules[i+1:]...)
+								require.NotNil(t, actualRule.GrafanaManagedAlert.Data)
+								groupRules = append(groupRules[:i], groupRules[i+1:]...)
+								continue grouploop
+							}
+						}
+						for _, expected := range partialAccessRules {
+							if actualRule.GrafanaManagedAlert.UID == expected.UID {
+								require.Nil(t, actualRule.GrafanaManagedAlert.Data)
+								groupRules = append(groupRules[:i], groupRules[i+1:]...)
 								continue grouploop
 							}
 						}
@@ -230,7 +242,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 					}
 				}
 			}
-			assert.Emptyf(t, expectedRules, "not all expected rules were returned")
+			require.Empty(t, groupRules, "not all rules were returned")
 		})
 	})
 	t.Run("should return the provenance of the alert rules", func(t *testing.T) {
@@ -417,17 +429,29 @@ func TestRouteGetRulesGroupConfig(t *testing.T) {
 			expectedRules := gen.With(gen.WithGroupKey(groupKey)).GenerateManyRef(2, 6)
 			ruleStore.PutRule(context.Background(), expectedRules...)
 
-			t.Run("and return Forbidden if user does not have access one of rules", func(t *testing.T) {
+			t.Run("and return partial rule if user does not have access to one of rules", func(t *testing.T) {
 				permissions := createPermissionsForRules(expectedRules[1:], orgID)
 				request := createRequestContextWithPerms(orgID, permissions, map[string]string{
 					":Namespace": folder.UID,
 					":Groupname": groupKey.RuleGroup,
 				})
 				response := createService(ruleStore).RouteGetRulesGroupConfig(request, folder.UID, groupKey.RuleGroup)
-				require.Equal(t, http.StatusForbidden, response.Status())
+
+				result := &apimodels.RuleGroupConfigResponse{}
+				require.NoError(t, json.Unmarshal(response.Body(), result))
+				require.NotNil(t, result)
+				require.Len(t, result.Rules, len(expectedRules))
+				foundPartial := false
+				for _, rule := range result.Rules {
+					if rule.GrafanaManagedAlert.Data == nil {
+						foundPartial = true
+						break
+					}
+				}
+				require.True(t, foundPartial, "Expected one rule to be partial")
 			})
 
-			t.Run("and return rules if user has access to all of them", func(t *testing.T) {
+			t.Run("and return full rules if user has access to all of them", func(t *testing.T) {
 				permissions := createPermissionsForRules(expectedRules, orgID)
 				request := createRequestContextWithPerms(orgID, permissions, map[string]string{
 					":Namespace": folder.UID,
@@ -440,6 +464,9 @@ func TestRouteGetRulesGroupConfig(t *testing.T) {
 				require.NoError(t, json.Unmarshal(response.Body(), result))
 				require.NotNil(t, result)
 				require.Len(t, result.Rules, len(expectedRules))
+				for _, rule := range result.Rules {
+					require.NotNil(t, rule.GrafanaManagedAlert.Data)
+				}
 			})
 		})
 	})

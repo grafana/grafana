@@ -107,6 +107,10 @@ func (srv RulerSrv) getRuleWithFolderTitleByRuleUid(c *contextmodel.ReqContext, 
 	if err != nil {
 		return ngmodels.AlertRuleGroupWithFolderTitle{}, err
 	}
+	err = srv.authz.AuthorizeDatasourceAccessForRule(c.Req.Context(), c.SignedInUser, &rule)
+	if err != nil {
+		return ngmodels.AlertRuleGroupWithFolderTitle{}, err
+	}
 	namespace, err := srv.store.GetNamespaceByUID(c.Req.Context(), rule.NamespaceUID, c.SignedInUser.GetOrgID(), c.SignedInUser)
 	if err != nil {
 		return ngmodels.AlertRuleGroupWithFolderTitle{}, errors.Join(errFolderAccess, err)
@@ -126,6 +130,12 @@ func (srv RulerSrv) getRuleGroupWithFolderTitle(c *contextmodel.ReqContext, rule
 	}
 	if len(rules) == 0 {
 		return ngmodels.AlertRuleGroupWithFolderTitle{}, ngmodels.ErrAlertRuleNotFound
+	}
+	for _, rule := range rules {
+		err := srv.authz.AuthorizeDatasourceAccessForRule(c.Req.Context(), c.SignedInUser, rule)
+		if err != nil {
+			return ngmodels.AlertRuleGroupWithFolderTitle{}, err
+		}
 	}
 	return ngmodels.NewAlertRuleGroupWithFolderTitleFromRulesGroup(ruleGroupKey, rules, namespace.Title), nil
 }
@@ -162,11 +172,21 @@ func (srv RulerSrv) getRulesWithFolderTitleInFolders(c *contextmodel.ReqContext,
 	}
 
 	result := make([]ngmodels.AlertRuleGroupWithFolderTitle, 0, len(rulesByGroup))
+GROUP_LOOP:
 	for groupKey, rulesGroup := range rulesByGroup {
 		namespace, ok := folders[groupKey.NamespaceUID]
 		if !ok {
 			continue // user does not have access
 		}
+
+		for _, rule := range rulesGroup {
+			if queryAccess, err := srv.authz.HasDatasourceAccessForRule(c.Req.Context(), c.SignedInUser, rule); err != nil {
+				return nil, err
+			} else if !queryAccess {
+				continue GROUP_LOOP // user does not have query access to all rules in the group
+			}
+		}
+
 		result = append(result, ngmodels.NewAlertRuleGroupWithFolderTitleFromRulesGroup(groupKey, rulesGroup, namespace.Title))
 	}
 	return result, nil
