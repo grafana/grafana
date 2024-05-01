@@ -99,7 +99,7 @@ func buildSearchExpression(query *models.CloudWatchQuery, stat string) string {
 	}
 	sort.Strings(keys)
 	for _, key := range keys {
-		values := escapeDoubleQuotes(knownDimensions[key])
+		values := escapeQuotes(knownDimensions[key])
 		valueExpression := join(values, " OR ", `"`, `"`)
 		if len(knownDimensions[key]) > 1 {
 			valueExpression = fmt.Sprintf(`(%s)`, valueExpression)
@@ -150,10 +150,11 @@ func buildSearchExpressionLabel(query *models.CloudWatchQuery) string {
 	return label
 }
 
-func escapeDoubleQuotes(arr []string) []string {
+func escapeQuotes(arr []string) []string {
 	result := []string{}
 	for _, value := range arr {
 		value = strings.ReplaceAll(value, `"`, `\"`)
+		value = strings.ReplaceAll(value, `'`, `\'`)
 		result = append(result, value)
 	}
 
