@@ -1,6 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+
+import { SceneObjectStateChangedEvent } from '@grafana/scenes';
 
 import { DataTrail } from '../DataTrail';
+import { isDataTrailsHistoryState } from '../DataTrailsHistory';
+import { reportExploreMetrics } from '../interactions';
 
 import { getTrailStore } from './TrailStore';
 
@@ -13,6 +17,18 @@ export function useBookmarkState(trail: DataTrail) {
 
   const [bookmarkIndex, setBookmarkIndex] = useState(indexOnRender);
 
+  useEffect(() => {
+    const sub = trail.subscribeToEvent(SceneObjectStateChangedEvent, ({ payload: { prevState, newState } }) => {
+      if (isDataTrailsHistoryState(prevState) && isDataTrailsHistoryState(newState)) {
+        if (newState.steps.length > prevState.steps.length) {
+          // When we add new steps, we need to re-evaluate whether or not it is still a bookmark
+          setBookmarkIndex(getTrailStore().getBookmarkIndex(trail));
+        }
+      }
+    });
+    return () => sub.unsubscribe();
+  }, [trail]);
+
   // Check if index changed and force a re-render
   if (indexOnRender !== bookmarkIndex) {
     setBookmarkIndex(indexOnRender);
@@ -21,6 +37,7 @@ export function useBookmarkState(trail: DataTrail) {
   const isBookmarked = bookmarkIndex != null;
 
   const toggleBookmark = () => {
+    reportExploreMetrics('bookmark_changed', { action: isBookmarked ? 'toggled_off' : 'toggled_on' });
     if (isBookmarked) {
       let indexToRemove = getBookmarkIndex();
       while (indexToRemove != null) {

@@ -1,4 +1,5 @@
 import { CoreApp, LoadingState, getDefaultTimeRange } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import {
   sceneGraph,
   SceneGridLayout,
@@ -71,6 +72,12 @@ jest.mock('app/features/playlist/PlaylistSrv', () => ({
     stop: jest.fn(),
   },
 }));
+
+jest.mock('app/features/manage-dashboards/state/actions', () => ({
+  ...jest.requireActual('app/features/manage-dashboards/state/actions'),
+  deleteDashboard: jest.fn().mockResolvedValue({}),
+}));
+
 const worker = createWorker();
 mockResultsOfDetectChangesWorker({ hasChanges: true, hasTimeChanges: false, hasVariableValueChanges: false });
 
@@ -99,6 +106,27 @@ describe('DashboardScene', () => {
 
         // @ts-expect-error it is a private property
         expect(scene._changesWorker).toBeUndefined();
+      });
+    });
+
+    describe('Given new dashboard in edit mode', () => {
+      it('when saving it should clear isNew state', () => {
+        const scene = buildTestScene({
+          meta: { isNew: true },
+        });
+
+        scene.activate();
+        scene.onEnterEditMode();
+        scene.saveCompleted({} as Dashboard, {
+          id: 1,
+          slug: 'slug',
+          uid: 'dash-1',
+          url: 'sss',
+          version: 2,
+          status: 'aaa',
+        });
+
+        expect(scene.state.meta.isNew).toBeFalsy();
       });
     });
 
@@ -670,21 +698,6 @@ describe('DashboardScene', () => {
         expect(scene.state.hasCopiedPanel).toBe(false);
       });
 
-      it('Should create a new add library panel widget', () => {
-        scene.exitEditMode({ skipConfirm: true });
-        expect(scene.state.isEditing).toBe(false);
-
-        scene.onCreateLibPanelWidget();
-
-        const body = scene.state.body as SceneGridLayout;
-        const gridItem = body.state.children[0] as DashboardGridItem;
-
-        expect(scene.state.isEditing).toBe(true);
-        expect(body.state.children.length).toBe(6);
-        expect(gridItem.state.body!.state.key).toBe('panel-7');
-        expect(gridItem.state.y).toBe(0);
-      });
-
       it('Should remove a panel', () => {
         const vizPanel = ((scene.state.body as SceneGridLayout).state.children[0] as DashboardGridItem).state.body;
         scene.removePanel(vizPanel as VizPanel);
@@ -875,6 +888,18 @@ describe('DashboardScene', () => {
         expect(body.state.children.length).toBe(1);
         expect(gridItem.state.body).toBeInstanceOf(VizPanel);
       });
+    });
+  });
+
+  describe('Deleting dashboard', () => {
+    it('Should mark it non dirty before navigating to root', async () => {
+      const scene = buildTestScene();
+      scene.setState({ isDirty: true });
+
+      locationService.push('/d/adsdas');
+      await scene.deleteDashboard();
+
+      expect(scene.state.isDirty).toBe(false);
     });
   });
 

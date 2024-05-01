@@ -4,7 +4,17 @@ import React, { useEffect, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
-import { Button, ButtonGroup, Dropdown, Icon, Menu, ToolbarButton, ToolbarButtonRow, useStyles2 } from '@grafana/ui';
+import {
+  Badge,
+  Button,
+  ButtonGroup,
+  Dropdown,
+  Icon,
+  Menu,
+  ToolbarButton,
+  ToolbarButtonRow,
+  useStyles2,
+} from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
 import { contextSrv } from 'app/core/core';
@@ -51,7 +61,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   const canSaveAs = contextSrv.hasEditPermissionInFolders;
   const toolbarActions: ToolbarAction[] = [];
-  const buttonWithExtraMargin = useStyles2(getStyles);
+  const styles = useStyles2(getStyles);
   const isEditingPanel = Boolean(editPanel);
   const isViewingPanel = Boolean(viewPanelScene);
   const isEditingLibraryPanel = useEditingLibraryPanel(editPanel);
@@ -79,6 +89,7 @@ export function ToolbarActions({ dashboard }: Props) {
             <Icon name={meta.isStarred ? 'favorite' : 'star'} size="lg" type={meta.isStarred ? 'mono' : 'default'} />
           }
           key="star-dashboard-button"
+          data-testid={selectors.components.NavToolbar.markAsFavorite}
           onClick={() => {
             DashboardInteractions.toolbarFavoritesClick();
             dashboard.onStarDashboard();
@@ -87,6 +98,24 @@ export function ToolbarActions({ dashboard }: Props) {
       );
     },
   });
+
+  if (meta.publicDashboardEnabled) {
+    toolbarActions.push({
+      group: 'icon-actions',
+      condition: uid && Boolean(meta.canStar) && isShowingDashboard && !isEditing,
+      render: () => {
+        return (
+          <Badge
+            color="blue"
+            text="Public"
+            key="public-dashboard-button-badge"
+            className={styles.publicBadge}
+            data-testid={selectors.pages.Dashboard.DashNav.publicDashboardTag}
+          />
+        );
+      },
+    });
+  }
 
   const isDevEnv = config.buildInfo.env === 'development';
 
@@ -148,7 +177,7 @@ export function ToolbarActions({ dashboard }: Props) {
               testId={selectors.pages.AddDashboard.itemButton('Add new panel from panel library menu item')}
               label={t('dashboard.add-menu.import', 'Import from library')}
               onClick={() => {
-                dashboard.onCreateLibPanelWidget();
+                dashboard.onShowAddLibraryPanelDrawer();
                 DashboardInteractions.toolbarAddButtonClicked({ item: 'add_library_panel' });
               }}
             />
@@ -246,6 +275,7 @@ export function ToolbarActions({ dashboard }: Props) {
         variant="secondary"
         size="sm"
         icon="arrow-left"
+        data-testid={selectors.components.NavToolbar.editDashboard.backToDashboardButton}
       >
         Back to dashboard
       </Button>
@@ -266,6 +296,7 @@ export function ToolbarActions({ dashboard }: Props) {
         variant="secondary"
         size="sm"
         icon="arrow-left"
+        data-testid={selectors.components.NavToolbar.editDashboard.backToDashboardButton}
       >
         Back to dashboard
       </Button>
@@ -280,12 +311,13 @@ export function ToolbarActions({ dashboard }: Props) {
         key="share-dashboard-button"
         tooltip={t('dashboard.toolbar.share', 'Share dashboard')}
         size="sm"
-        className={buttonWithExtraMargin}
+        className={styles.buttonWithExtraMargin}
         fill="outline"
         onClick={() => {
           DashboardInteractions.toolbarShareClick();
           dashboard.showModal(new ShareModal({ dashboardRef: dashboard.getRef() }));
         }}
+        data-testid={selectors.components.NavToolbar.shareDashboard}
       >
         Share
       </Button>
@@ -302,9 +334,10 @@ export function ToolbarActions({ dashboard }: Props) {
         }}
         tooltip="Enter edit mode"
         key="edit"
-        className={buttonWithExtraMargin}
+        className={styles.buttonWithExtraMargin}
         variant="primary"
         size="sm"
+        data-testid={selectors.components.NavToolbar.editDashboard.editButton}
       >
         Edit
       </Button>
@@ -324,6 +357,7 @@ export function ToolbarActions({ dashboard }: Props) {
         size="sm"
         key="settings"
         variant="secondary"
+        data-testid={selectors.components.NavToolbar.editDashboard.settingsButton}
       >
         Settings
       </Button>
@@ -341,6 +375,7 @@ export function ToolbarActions({ dashboard }: Props) {
         key="discard"
         fill="text"
         variant="primary"
+        data-testid={selectors.components.NavToolbar.editDashboard.exitButton}
       >
         Exit edit
       </Button>
@@ -358,6 +393,7 @@ export function ToolbarActions({ dashboard }: Props) {
         key="discard"
         fill="outline"
         variant="destructive"
+        data-testid={selectors.components.NavToolbar.editDashboard.discardChangesButton}
       >
         Discard panel changes
       </Button>
@@ -375,6 +411,7 @@ export function ToolbarActions({ dashboard }: Props) {
         key="discardLibraryPanel"
         fill="outline"
         variant="destructive"
+        data-testid={selectors.components.NavToolbar.editDashboard.discardChangesButton}
       >
         Discard library panel changes
       </Button>
@@ -392,6 +429,7 @@ export function ToolbarActions({ dashboard }: Props) {
         key="unlinkLibraryPanel"
         fill="outline"
         variant="secondary"
+        data-testid={selectors.components.NavToolbar.editDashboard.unlinkLibraryPanelButton}
       >
         Unlink library panel
       </Button>
@@ -409,6 +447,7 @@ export function ToolbarActions({ dashboard }: Props) {
         key="saveLibraryPanel"
         fill="outline"
         variant="primary"
+        data-testid={selectors.components.NavToolbar.editDashboard.saveLibraryPanelButton}
       >
         Save library panel
       </Button>
@@ -427,11 +466,12 @@ export function ToolbarActions({ dashboard }: Props) {
               DashboardInteractions.toolbarSaveClick();
               dashboard.openSaveDrawer({});
             }}
-            className={buttonWithExtraMargin}
+            className={styles.buttonWithExtraMargin}
             tooltip="Save changes"
             key="save"
             size="sm"
             variant={'primary'}
+            data-testid={selectors.components.NavToolbar.editDashboard.saveButton}
           >
             Save dashboard
           </Button>
@@ -446,7 +486,7 @@ export function ToolbarActions({ dashboard }: Props) {
               DashboardInteractions.toolbarSaveClick();
               dashboard.openSaveDrawer({ saveAsCopy: true });
             }}
-            className={buttonWithExtraMargin}
+            className={styles.buttonWithExtraMargin}
             tooltip="Save as copy"
             key="save"
             size="sm"
@@ -480,7 +520,7 @@ export function ToolbarActions({ dashboard }: Props) {
       );
 
       return (
-        <ButtonGroup className={buttonWithExtraMargin} key="save">
+        <ButtonGroup className={styles.buttonWithExtraMargin} key="save">
           <Button
             onClick={() => {
               DashboardInteractions.toolbarSaveClick();
@@ -488,6 +528,7 @@ export function ToolbarActions({ dashboard }: Props) {
             }}
             tooltip="Save changes"
             size="sm"
+            data-testid={selectors.components.NavToolbar.editDashboard.saveButton}
             variant={isDirty ? 'primary' : 'secondary'}
           >
             Save dashboard
@@ -565,5 +606,14 @@ interface ToolbarAction {
 }
 
 function getStyles(theme: GrafanaTheme2) {
-  return css({ margin: theme.spacing(0, 0.5) });
+  return {
+    buttonWithExtraMargin: css({
+      margin: theme.spacing(0, 0.5),
+    }),
+    publicBadge: css({
+      color: 'grey',
+      backgroundColor: 'transparent',
+      border: '1px solid',
+    }),
+  };
 }

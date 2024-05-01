@@ -151,6 +151,10 @@ function getRowContentHeight(panels: SceneGridItemLike[]): number {
   let maxY = 0;
   let minY = Number.MAX_VALUE;
 
+  if (panels.length === 0) {
+    return 0;
+  }
+
   for (const panel of panels) {
     if (panel.state.y! + panel.state.height! > maxY) {
       maxY = panel.state.y! + panel.state.height!;
