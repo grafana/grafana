@@ -230,6 +230,10 @@ The transform option is only available as an override.
 
 {{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+2" >}}
 
+## Field overrides
+
+{{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ## Other visualization options
 
 ### Panel options
@@ -243,10 +247,6 @@ Learn about [standard options][] that you can set for a visualization.
 ### Data links
 
 Learn about [data links][] that you can set for a visualization.
-
-### Field overrides
-
-Learn about [field overrides][Configure field overrides] that you can set for a visualization.
 
 {{% docs/reference %}}
 [Color scheme]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options#color-scheme"
