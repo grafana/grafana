@@ -58,12 +58,12 @@ func parseTables(rawSQL string) ([]string, error) {
 		tokens := strings.Split(rawSQL, " ")
 		checkNext := false
 		takeNext := false
-		for _, t := range tokens {
-			t = strings.ToUpper(t)
+		for _, token := range tokens {
+			t := strings.ToUpper(token)
 			t = strings.TrimSpace(t)
 
 			if takeNext {
-				tables = append(tables, t)
+				tables = append(tables, token)
 				checkNext = false
 				takeNext = false
 				continue
@@ -74,7 +74,7 @@ func parseTables(rawSQL string) ([]string, error) {
 					continue
 				}
 				if strings.Contains(t, ",") {
-					values := strings.Split(t, ",")
+					values := strings.Split(token, ",")
 					for _, v := range values {
 						v := strings.TrimSpace(v)
 						if v != "" {
@@ -86,7 +86,7 @@ func parseTables(rawSQL string) ([]string, error) {
 					}
 					continue
 				}
-				tables = append(tables, t)
+				tables = append(tables, token)
 				checkNext = false
 			}
 			if t == "FROM" {
