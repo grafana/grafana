@@ -26,12 +26,15 @@ func TablesList(rawSQL string) ([]string, error) {
 			buf := sqlparser.NewTrackedBuffer(nil)
 			t.Format(buf)
 			table := buf.String()
-			if table != "dual" {
+			if table != "dual" && !strings.HasPrefix(table, "(") {
 				tables = append(tables, buf.String())
 			}
 		}
 	default:
-		return nil, errors.New("not a select statement")
+		return parseTables(rawSQL)
+	}
+	if len(tables) == 0 {
+		return parseTables(rawSQL)
 	}
 	return tables, nil
 }
