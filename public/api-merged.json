@@ -12898,7 +12898,8 @@
           }
         },
         "Policies": {
-          "description": "Policies contains all policy identifiers included in the certificate.\nIn Go 1.22, encoding/gob cannot handle and ignores this field.",          "type": "array",
+          "description": "Policies contains all policy identifiers included in the certificate.",
+          "type": "array",
           "items": {
             "$ref": "#/definitions/OID"
           }
