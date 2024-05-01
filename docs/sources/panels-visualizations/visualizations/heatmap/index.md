@@ -164,6 +164,10 @@ Choose whether you want to display the heatmap legend on the visualization by to
 
 {{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
+### Field overrides
+
+{{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ### Exemplars
 
 Set the color used to show exemplar data.
