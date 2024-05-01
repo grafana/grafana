@@ -207,6 +207,7 @@
     "postcss-reporter": "7.1.0",
     "postcss-scss": "4.0.9",
     "prettier": "3.2.5",
+    "pseudoizer": "^0.1.0",
     "react-refresh": "0.14.0",
     "react-select-event": "5.5.1",
     "react-test-renderer": "18.2.0",
