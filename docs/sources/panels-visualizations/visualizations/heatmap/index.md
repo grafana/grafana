@@ -160,6 +160,10 @@ Use these settings to refine your visualization.
 
 Choose whether you want to display the heatmap legend on the visualization by toggling the **Show legend** switch.
 
+### Data links
+
+{{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ### Exemplars
 
 Set the color used to show exemplar data.
