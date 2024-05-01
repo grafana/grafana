@@ -89,6 +89,7 @@ export function ToolbarActions({ dashboard }: Props) {
             <Icon name={meta.isStarred ? 'favorite' : 'star'} size="lg" type={meta.isStarred ? 'mono' : 'default'} />
           }
           key="star-dashboard-button"
+          data-testid={selectors.components.NavToolbar.markAsFavorite}
           onClick={() => {
             DashboardInteractions.toolbarFavoritesClick();
             dashboard.onStarDashboard();
@@ -274,6 +275,7 @@ export function ToolbarActions({ dashboard }: Props) {
         variant="secondary"
         size="sm"
         icon="arrow-left"
+        data-testid={selectors.components.NavToolbar.editDashboard.backToDashboardButton}
       >
         Back to dashboard
       </Button>
@@ -294,6 +296,7 @@ export function ToolbarActions({ dashboard }: Props) {
         variant="secondary"
         size="sm"
         icon="arrow-left"
+        data-testid={selectors.components.NavToolbar.editDashboard.backToDashboardButton}
       >
         Back to dashboard
       </Button>
@@ -314,6 +317,7 @@ export function ToolbarActions({ dashboard }: Props) {
           DashboardInteractions.toolbarShareClick();
           dashboard.showModal(new ShareModal({ dashboardRef: dashboard.getRef() }));
         }}
+        data-testid={selectors.components.NavToolbar.shareDashboard}
       >
         Share
       </Button>
@@ -333,6 +337,7 @@ export function ToolbarActions({ dashboard }: Props) {
         className={styles.buttonWithExtraMargin}
         variant="primary"
         size="sm"
+        data-testid={selectors.components.NavToolbar.editDashboard.editButton}
       >
         Edit
       </Button>
@@ -352,6 +357,7 @@ export function ToolbarActions({ dashboard }: Props) {
         size="sm"
         key="settings"
         variant="secondary"
+        data-testid={selectors.components.NavToolbar.editDashboard.settingsButton}
       >
         Settings
       </Button>
@@ -369,6 +375,7 @@ export function ToolbarActions({ dashboard }: Props) {
         key="discard"
         fill="text"
         variant="primary"
+        data-testid={selectors.components.NavToolbar.editDashboard.exitButton}
       >
         Exit edit
       </Button>
@@ -386,6 +393,7 @@ export function ToolbarActions({ dashboard }: Props) {
         key="discard"
         fill="outline"
         variant="destructive"
+        data-testid={selectors.components.NavToolbar.editDashboard.discardChangesButton}
       >
         Discard panel changes
       </Button>
@@ -403,6 +411,7 @@ export function ToolbarActions({ dashboard }: Props) {
         key="discardLibraryPanel"
         fill="outline"
         variant="destructive"
+        data-testid={selectors.components.NavToolbar.editDashboard.discardChangesButton}
       >
         Discard library panel changes
       </Button>
@@ -420,6 +429,7 @@ export function ToolbarActions({ dashboard }: Props) {
         key="unlinkLibraryPanel"
         fill="outline"
         variant="secondary"
+        data-testid={selectors.components.NavToolbar.editDashboard.unlinkLibraryPanelButton}
       >
         Unlink library panel
       </Button>
@@ -437,6 +447,7 @@ export function ToolbarActions({ dashboard }: Props) {
         key="saveLibraryPanel"
         fill="outline"
         variant="primary"
+        data-testid={selectors.components.NavToolbar.editDashboard.saveLibraryPanelButton}
       >
         Save library panel
       </Button>
@@ -460,6 +471,7 @@ export function ToolbarActions({ dashboard }: Props) {
             key="save"
             size="sm"
             variant={'primary'}
+            data-testid={selectors.components.NavToolbar.editDashboard.saveButton}
           >
             Save dashboard
           </Button>
@@ -516,6 +528,7 @@ export function ToolbarActions({ dashboard }: Props) {
             }}
             tooltip="Save changes"
             size="sm"
+            data-testid={selectors.components.NavToolbar.editDashboard.saveButton}
             variant={isDirty ? 'primary' : 'secondary'}
           >
             Save dashboard

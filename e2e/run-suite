@@ -27,6 +27,7 @@ declare -A env=(
 
 testFilesForSingleSuite="*.spec.ts"
 rootForEnterpriseSuite="./e2e/extensions-suite"
+rootForScenesSuite="./e2e/scenes"
 
 declare -A cypressConfig=(
   [screenshotsFolder]=./e2e/"${args[0]}"/screenshots
@@ -53,6 +54,7 @@ case "$1" in
         echo "Dev mode"
         CMD="cypress open"
         ;;
+
     "benchmark")
         echo "Benchmark"
         PARAMS="--headed --no-runner-ui"
@@ -85,6 +87,13 @@ case "$1" in
         ;;
     "")
         ;;
+   "scenes")
+      env[SCENES]=true
+      cypressConfig[specPattern]=$rootForScenesSuite/*/$testFilesForSingleSuite
+      cypressConfig[video]=false
+      # CMD="cypress open"
+      ;;
+
     *)
         cypressConfig[specPattern]=./e2e/"${args[0]}"/$testFilesForSingleSuite
         cypressConfig[video]=${args[1]}
