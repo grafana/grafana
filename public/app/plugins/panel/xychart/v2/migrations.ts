@@ -245,8 +245,6 @@ function migrateOptions(panel: PanelModel): Options {
     series: newSeries,
   };
 
-  custDefaults.pointSize = custDefaults.pointSize.fixed;
-
   // panel.fieldConfig = {
   //   defaults,
   //   overrides,
