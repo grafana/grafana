@@ -727,10 +727,12 @@
     "forgot-password": "Főřģőŧ yőūř päşşŵőřđ?",
     "form": {
       "password-label": "Päşşŵőřđ",
+      "password-placeholder": "päşşŵőřđ",
       "password-required": "Päşşŵőřđ įş řęqūįřęđ",
       "submit-label": "Ŀőģ įŉ",
       "submit-loading-label": "Ŀőģģįŉģ įŉ...",
       "username-label": "Ēmäįľ őř ūşęřŉämę",
+      "username-placeholder": "ęmäįľ őř ūşęřŉämę",
       "username-required": "Ēmäįľ őř ūşęřŉämę įş řęqūįřęđ"
     },
     "services": {
