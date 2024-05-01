@@ -147,6 +147,9 @@ const getDefaultVisualisationType = (): LogsVisualisationType => {
   if (visualisationType === 'logs') {
     return 'logs';
   }
+  if (config.featureToggles.logsExploreTableDefaultVisualization) {
+    return 'table';
+  }
   return 'logs';
 };
 
