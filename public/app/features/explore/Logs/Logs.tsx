@@ -234,8 +234,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
       logLevelsArray.push({ levelStr: level, logLevel: getLogLevel(level) });
     });
 
-    //logLevelsArray.sort((a:string,b) )
-
     const sortedLLArray = logLevelsArray.sort(
       (a: { levelStr: string; logLevel: LogLevel }, b: { levelStr: string; logLevel: LogLevel }) => {
         return levelsArr.indexOf(a.logLevel.toString()) > levelsArr.indexOf(b.logLevel.toString()) ? 1 : -1;
