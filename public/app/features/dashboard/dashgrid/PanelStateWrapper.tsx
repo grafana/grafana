@@ -240,10 +240,10 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     // receive message from parent window
     const receiveMessage = (event: {
       data: {
-        panelId?: String,
-        variables?: Array<{ key: String, value: String }>,
-        timeRange?: { from: String, to: String }
-      }
+        panelId?: String;
+        variables?: Array<{ key: String; value: String }>;
+        timeRange?: { from: String; to: String };
+      };
     }) => {
       // receive variables from parent window
       if (event.data.variables !== undefined) {
@@ -277,7 +277,6 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     return () => {
       window.removeEventListener('message', receiveMessage);
     };
-
   }
 
   componentWillUnmount() {

@@ -17,7 +17,6 @@ export function GrafanaRoute(props: Props) {
   const { chrome, keybindings } = useGrafana();
   let [panelId, setPanelId] = useState(locationSearchToObject(props.location.search).panelId);
 
-
   chrome.setMatchedRoute(props.route);
 
   useLayoutEffect(() => {
@@ -47,14 +46,14 @@ export function GrafanaRoute(props: Props) {
   useEffect(() => {
     const receiveMessage = (event: {
       data: {
-        panelId?: String,
-        variables?: Array<{ key: String, value: String }>,
-        timeRange?: { from: String, to: String }
-      }
+        panelId?: String;
+        variables?: Array<{ key: String; value: String }>;
+        timeRange?: { from: String; to: String };
+      };
     }) => {
       if (event.data.panelId !== undefined) {
         setPanelId(event.data.panelId);
-      };
+      }
     };
 
     window.addEventListener('message', receiveMessage);
@@ -75,7 +74,10 @@ export function GrafanaRoute(props: Props) {
 
         return (
           <Suspense fallback={<GrafanaRouteLoading />}>
-            <props.route.component {...props} queryParams={{ ...locationSearchToObject(props.location.search), panelId }} />
+            <props.route.component
+              {...props}
+              queryParams={{ ...locationSearchToObject(props.location.search), panelId }}
+            />
           </Suspense>
         );
       }}
