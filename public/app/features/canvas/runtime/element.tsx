@@ -209,7 +209,7 @@ export class ElementState implements LayerElement {
         // wrapper div element (this.div) doesn't re-render (has static `key` property),
         // so we have to clean styles manually;
         for (const key in this.dataStyle) {
-          this.div.style.setProperty(key, '');
+          this.div.style.removeProperty(key);
         }
       }
     }
