@@ -615,6 +615,10 @@ Displays debug information in the upper right corner. This can be useful for deb
 
 {{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
+## Field overrides
+
+{{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 {{% docs/reference %}}
 [provisioning docs page]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/administration/provisioning"
 [provisioning docs page]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/administration/provisioning"
