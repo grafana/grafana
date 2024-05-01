@@ -53,6 +53,7 @@ func parse(rawSQL string) ([]string, error) {
 
 func parseTables(rawSQL string) ([]string, error) {
 	checkSql := strings.ToUpper(rawSQL)
+	rawSQL = strings.ReplaceAll(rawSQL, "\n", " ")
 	if strings.HasPrefix(checkSql, "SELECT") || strings.HasPrefix(rawSQL, "WITH") {
 		tables := []string{}
 		tokens := strings.Split(rawSQL, " ")
