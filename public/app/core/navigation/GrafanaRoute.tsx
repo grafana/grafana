@@ -2,9 +2,9 @@ import React, { Suspense, useEffect, useLayoutEffect, useState } from 'react';
 // @ts-ignore
 import Drop from 'tether-drop';
 
+import { AbsoluteTimeRange } from '@grafana/data';
 import { locationSearchToObject, navigationLogger, reportPageview } from '@grafana/runtime';
 import { ErrorBoundary } from '@grafana/ui';
-import { AbsoluteTimeRange } from '@grafana/data';
 
 import { useGrafana } from '../context/GrafanaContext';
 
