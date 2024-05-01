@@ -1,7 +1,15 @@
 import { css } from '@emotion/css';
 import React, { useMemo } from 'react';
 
-import { PanelProps } from '@grafana/data';
+import {
+  DisplayProcessor,
+  DisplayValue,
+  fieldReducers,
+  getDisplayProcessor,
+  PanelProps,
+  reduceField,
+  ReducerID,
+} from '@grafana/data';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import { config } from '@grafana/runtime';
 import {
@@ -54,6 +62,8 @@ export const XYChartPanel2 = (props: Props2) => {
   // TODO: React.memo()
   const renderLegend = () => {
     const items: VizLegendItem[] = [];
+    const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
+    const theme = config.theme2;
 
     series.forEach((s, idx) => {
       let yField = s.y.field;
@@ -68,17 +78,82 @@ export const XYChartPanel2 = (props: Props2) => {
           getItemKey: () => `${idx}-${s.name.value}`,
           fieldName: yField.state?.displayName ?? yField.name,
           disabled: yField.state?.hideFrom?.viz ?? false,
+          getDisplayValues: () => {
+            const calcs = props.options.legend.calcs;
+
+            if (!calcs?.length) {
+              return [];
+            }
+
+            const fmt = yField.display ?? defaultFormatter;
+            let countFormatter: DisplayProcessor | null = null;
+
+            const fieldCalcs = reduceField({
+              field: yField,
+              reducers: calcs,
+            });
+
+            return calcs.map<DisplayValue>((reducerId) => {
+              const fieldReducer = fieldReducers.get(reducerId);
+              let formatter = fmt;
+
+              if (fieldReducer.id === ReducerID.diffperc) {
+                formatter = getDisplayProcessor({
+                  field: {
+                    ...yField,
+                    config: {
+                      ...yField.config,
+                      unit: 'percent',
+                    },
+                  },
+                  theme,
+                });
+              }
+
+              if (
+                fieldReducer.id === ReducerID.count ||
+                fieldReducer.id === ReducerID.changeCount ||
+                fieldReducer.id === ReducerID.distinctCount
+              ) {
+                if (!countFormatter) {
+                  countFormatter = getDisplayProcessor({
+                    field: {
+                      ...yField,
+                      config: {
+                        ...yField.config,
+                        unit: 'none',
+                      },
+                    },
+                    theme,
+                  });
+                }
+                formatter = countFormatter;
+              }
+
+              return {
+                ...formatter(fieldCalcs[reducerId]),
+                title: fieldReducer.name,
+                description: fieldReducer.description,
+              };
+            });
+          },
         });
       }
     });
 
-    // sort series by calcs? table mode?
-
-    const { placement, displayMode, width } = props.options.legend;
+    const { placement, displayMode, width, sortBy, sortDesc } = props.options.legend;
 
     return (
       <VizLayout.Legend placement={placement} width={width}>
-        <VizLegend className={styles.legend} placement={placement} items={items} displayMode={displayMode} />
+        <VizLegend
+          className={styles.legend}
+          placement={placement}
+          items={items}
+          displayMode={displayMode}
+          sortBy={sortBy}
+          sortDesc={sortDesc}
+          isSortable={true}
+        />
       </VizLayout.Legend>
     );
   };
