@@ -18,6 +18,13 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
+func TestIsHealthy(t *testing.T) {
+	s := setUpTestServer(t)
+
+	_, err := s.IsHealthy(context.Background(), &entity.HealthCheckRequest{})
+	require.NoError(t, err)
+}
+
 func TestCreate(t *testing.T) {
 	s := setUpTestServer(t)
 
