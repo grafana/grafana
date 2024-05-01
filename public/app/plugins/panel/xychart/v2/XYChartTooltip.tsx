@@ -40,6 +40,9 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, xySeries, dismiss, i
   const xField = series.x.field;
   const yField = series.y.field;
 
+  const sizeField = series.size.field;
+  const colorField = series.color.field;
+
   let label = series.name.value;
 
   let seriesColor = series.color.fixed;
@@ -67,6 +70,21 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, xySeries, dismiss, i
       value: fmt(yField, yField.values[rowIndex]),
     },
   ];
+
+  // mapped fields for size/color
+  if (sizeField != null) {
+    contentItems.push({
+      label: stripSeriesName(sizeField.state?.displayName ?? sizeField.name, label),
+      value: fmt(sizeField, sizeField.values[rowIndex]),
+    });
+  }
+
+  if (colorField != null) {
+    contentItems.push({
+      label: stripSeriesName(colorField.state?.displayName ?? colorField.name, label),
+      value: fmt(colorField, colorField.values[rowIndex]),
+    });
+  }
 
   series._rest.forEach((field) => {
     contentItems.push({

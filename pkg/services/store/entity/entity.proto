@@ -310,6 +310,9 @@ message EntityListRequest {
 
   // list deleted entities instead of active ones
   bool deleted = 12;
+
+  // Limit to a set of origin keys (empty is all)
+  repeated string origin_keys = 13;
 }
 
 message ReferenceRequest {
