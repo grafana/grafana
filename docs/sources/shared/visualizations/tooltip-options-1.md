@@ -1,5 +1,5 @@
 ---
-title: Tooltip mode
+title: Tooltip options
 comments: |
   There are two tooltip shared files, tooltip-options-1.md and tooltip-options-2.md, to cover the most common combinations of options. 
   Using two shared files ensures that content remains consistent across visualizations that share the same options and users don't have to figure out which options apply to a specific visualization when reading that content. 

@@ -26,7 +26,7 @@ weight: 80
 
 # Configure data links
 
-Data links allow you to provide more granular context to your links. You can create links that include the series name or even the value under the cursor. For example, if your visualization shows four servers, you can add a data link to one or two of them. You can also link panels using data links.
+Data links allow you to link to other panels, dashboards, and external resources while maintaining the context of the source panel. You can create links that include the series name or even the value under the cursor. For example, if your visualization shows four servers, you can add a data link to one or two of them.
 
 The link itself is accessible in different ways depending on the visualization. For the time series visualization you need to click a data point or line:
 
