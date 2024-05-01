@@ -232,14 +232,14 @@ The transform option is only available as an override.
 
 ## Standard options
 
-**Standard options** in the panel editor pane let you change how field data is displayed in your visualizations. When you set a standard option, the change is applied to all fields or series. For more granular control over the display of fields, refer to [Configure overrides](../../configure-overrides/).
+**Standard options** in the panel editor pane let you change how field data is displayed in your visualizations. When you set a standard option, the change is applied to all fields or series. For more granular control over the display of fields, refer to [Configure field overrides][].
 
 You can customize the following standard options:
 
 - **Field min/max** - Enable **Field min/max** to have Grafana calculate the min or max of each field individually, based on the minimum or maximum value of the field.
 - **Color scheme** - Set single or multiple colors for your entire visualization.
 
-To learn more, refer to [Configure standard options](../../configure-standard-options/).
+To learn more, refer to [Configure standard options][].
 
 ## Other visualization options
 
