@@ -289,7 +289,7 @@ var (
 		},
 		{
 			Name:        "nestedFolders",
-			Description: "Enable folder nesting",
+			Description: "Enable folder nesting for dashboards and alerts. Note that managed alert rules aren't supported for nested folders. This feature is only supported for test and development environments.",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaBackendPlatformSquad,
 			Created:     time.Date(2022, time.October, 22, 12, 0, 0, 0, time.UTC),
