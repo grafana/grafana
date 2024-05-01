@@ -57,7 +57,7 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 	}
 
 	ident := &authn.Identity{
-		ID:           authn.NamespacedID(authn.NamespaceUser, token.UserId),
+		ID:           authn.NewNamespaceIDUnchecked(authn.NamespaceUser, token.UserId),
 		SessionToken: token,
 		ClientParams: authn.ClientParams{
 			FetchSyncedUser: true,
@@ -76,6 +76,10 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 	ident.AuthID = info.AuthId
 	ident.AuthenticatedBy = info.AuthModule
 	return ident, nil
+}
+
+func (s *Session) IsEnabled() bool {
+	return true
 }
 
 func (s *Session) Test(ctx context.Context, r *authn.Request) bool {

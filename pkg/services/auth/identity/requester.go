@@ -1,24 +1,11 @@
 package identity
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/models/roletype"
 )
-
-const (
-	NamespaceUser           = "user"
-	NamespaceAPIKey         = "api-key"
-	NamespaceServiceAccount = "service-account"
-	NamespaceAnonymous      = "anonymous"
-	NamespaceRenderService  = "render"
-	NamespaceAccessPolicy   = "access-policy"
-)
-
-var ErrNotIntIdentifier = errors.New("identifier is not an int64")
-var ErrIdentifierNotInitialized = errors.New("identifier is not initialized")
 
 type Requester interface {
 	// GetID returns namespaced id for the entity

@@ -1,4 +1,3 @@
-import 'whatwg-fetch';
 import { fireEvent, render, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import React from 'react';
@@ -57,7 +56,6 @@ export const renderSharePublicDashboard = async (
 
   const newProps = Object.assign(
     {
-      panel: mockPanel,
       dashboard: mockDashboard,
       onDismiss: () => {},
     },

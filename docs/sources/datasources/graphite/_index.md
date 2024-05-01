@@ -27,6 +27,8 @@ Only users with the organization administrator role can add data sources.
 
 Once you've added the Graphite data source, you can [configure it](#configure-the-data-source) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor" >}}) when they [build dashboards][build-dashboards] and use [Explore][explore].
 
+{{< docs/play title="Graphite: Sample Website Dashboard" url="https://play.grafana.org/d/000000003/" >}}
+
 ## Configure the data source
 
 To configure basic settings for the data source, complete the following steps:

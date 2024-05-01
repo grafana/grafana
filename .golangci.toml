@@ -60,6 +60,8 @@ files = [
   "**/pkg/tsdb/azuremonitor/**/*",
   "**/pkg/tsdb/cloud-monitoring/*",
   "**/pkg/tsdb/cloud-monitoring/**/*",
+  "**/pkg/tsdb/mysql/*",
+  "**/pkg/tsdb/mysql/**/*",
   "**/pkg/tsdb/parca/*",
   "**/pkg/tsdb/parca/**/*",
   "**/pkg/tsdb/tempo/*",
@@ -179,6 +181,13 @@ text = "SA1019: http.CloseNotifier"
 [[issues.exclude-rules]]
 linters = ["staticcheck"]
 text = "SA1019: strings.Title"
+
+# go.opentelemetry.io/otel/exporters/jaeger" is deprecated: This module is no longer supported. OpenTelemetry dropped support for Jaeger exporter in July 2023.
+# Jaeger officially accepts and recommends using OTLP.
+# Use [go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp] or [go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc] instead.
+[[issues.exclude-rules]]
+linters = ["staticcheck"]
+text = "SA1019: \"go.opentelemetry.io/otel/exporters/jaeger\""
 
 [[issues.exclude-rules]]
 linters = ["staticcheck"]

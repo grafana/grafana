@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/core/utils/query.ts
 import { DataQuery } from '@grafana/data';
 
 export const getNextRefIdChar = (queries: DataQuery[]): string => {

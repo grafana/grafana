@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/authn"
-	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/services/signingkeys/signingkeystest"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -167,7 +166,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			orgID:   1,
 			want: &authn.Identity{OrgID: 1, OrgName: "",
 				OrgRoles: map[int64]roletype.RoleType(nil),
-				ID:       "access-policy:this-uid", Login: "", Name: "", Email: "",
+				ID:       authn.MustParseNamespaceID("access-policy:this-uid"), Login: "", Name: "", Email: "",
 				IsGrafanaAdmin: (*bool)(nil), AuthenticatedBy: "extendedjwt",
 				AuthID: "access-policy:this-uid", IsDisabled: false, HelpFlags1: 0x0,
 				LastSeenAt: time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC),
@@ -176,8 +175,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				ClientParams: authn.ClientParams{SyncUser: false,
 					AllowSignUp: false, EnableUser: false, FetchSyncedUser: false,
 					SyncTeams: false, SyncOrgRoles: false, CacheAuthProxyKey: "",
-					LookUpParams: login.UserLookupParams{UserID: (*int64)(nil),
-						Email: (*string)(nil), Login: (*string)(nil)}, SyncPermissions: true,
+					SyncPermissions:        true,
 					FetchPermissionsParams: authn.FetchPermissionsParams{ActionsLookup: []string(nil), Roles: []string{"fixed:folders:reader"}}},
 				Permissions: map[int64]map[string][]string(nil), IDToken: ""},
 			wantErr: nil,
@@ -198,7 +196,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				}
 			},
 			want: &authn.Identity{OrgID: 1, OrgName: "",
-				OrgRoles: map[int64]roletype.RoleType(nil), ID: "user:2",
+				OrgRoles: map[int64]roletype.RoleType(nil), ID: authn.MustParseNamespaceID("user:2"),
 				Login: "", Name: "", Email: "",
 				IsGrafanaAdmin: (*bool)(nil), AuthenticatedBy: "extendedjwt",
 				AuthID: "access-policy:this-uid", IsDisabled: false, HelpFlags1: 0x0,
@@ -208,7 +206,6 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				ClientParams: authn.ClientParams{SyncUser: false, AllowSignUp: false,
 					EnableUser: false, FetchSyncedUser: true, SyncTeams: false,
 					SyncOrgRoles: false, CacheAuthProxyKey: "",
-					LookUpParams:    login.UserLookupParams{UserID: (*int64)(nil), Email: (*string)(nil), Login: (*string)(nil)},
 					SyncPermissions: true,
 					FetchPermissionsParams: authn.FetchPermissionsParams{ActionsLookup: []string{"dashboards:create",
 						"folders:read", "datasources:explore", "datasources.insights:read"},

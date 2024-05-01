@@ -6,8 +6,6 @@ import { TestProvider } from 'test/helpers/TestProvider';
 
 import { PayloadEditor, RESET_TO_DEFAULT } from './PayloadEditor';
 
-import 'whatwg-fetch';
-
 const DEFAULT_PAYLOAD = `[
   {
     "annotations": {
