@@ -1,5 +1,6 @@
 import {
   InterpolateFunction,
+  LinkModel,
   PanelMenuItem,
   PanelPlugin,
   PluginExtensionPanelContext,
@@ -331,13 +332,16 @@ export function getPanelLinks(panel: VizPanel) {
 
   const panelLinks = linkSupplier.getLinks(interpolate);
 
-  return panelLinks.map((panelLink) => ({
-    ...panelLink,
-    onClick: (e: any, origin: any) => {
-      DashboardInteractions.panelLinkClicked({ has_multiple_links: panelLinks.length > 1 });
-      panelLink.onClick?.(e, origin);
-    },
-  }));
+  return panelLinks.map((panelLink) => {
+    const updatedLink: LinkModel<VizPanel> = {
+      ...panelLink,
+      onClick: (e, origin) => {
+        DashboardInteractions.panelLinkClicked({ has_multiple_links: panelLinks.length > 1 });
+        panelLink.onClick?.(e, origin);
+      },
+    };
+    return updatedLink;
+  });
 }
 
 function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): PluginExtensionPanelContext {
