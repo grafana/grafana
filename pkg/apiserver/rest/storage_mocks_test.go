@@ -50,7 +50,7 @@ func (m legacyStoreMock) List(ctx context.Context, options *metainternalversion.
 	return args.Get(0).(runtime.Object), args.Error(1)
 }
 
-func (s legacyStoreMock) NewList() runtime.Object {
+func (m legacyStoreMock) NewList() runtime.Object {
 	return nil
 }
 
@@ -114,7 +114,7 @@ func (m storageMock) List(ctx context.Context, options *metainternalversion.List
 	return args.Get(0).(runtime.Object), args.Error(1)
 }
 
-func (s storageMock) NewList() runtime.Object {
+func (m storageMock) NewList() runtime.Object {
 	return nil
 }
 
