@@ -134,6 +134,10 @@ The candlestick visualization is based on the time series visualization. It can 
 
 {{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
+## Field overrides
+
+{{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 {{% docs/reference %}}
 [time series visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series"
 [time series visualization]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/time-series"
