@@ -232,6 +232,21 @@ shellcheck: $(SH_FILES) ## Run checks for shell scripts.
 TAG_SUFFIX=$(if $(WIRE_TAGS)!=oss,-$(WIRE_TAGS))
 PLATFORM=linux/amd64
 
+build-docker-full-local:
+	@echo "build docker container"
+	tar -ch . | \
+	docker buildx build - \
+	-f Dockerfile.local \
+	--platform $(PLATFORM) \
+	--build-arg BINGO=false \
+	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
+	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
+	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
+	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
+	--tag 406095609952.dkr.ecr.us-east-1.amazonaws.com/grafana-x:dev-$(TAG_SUFFIX) \
+	--load \
+	$(DOCKER_BUILD_ARGS)
+
 build-docker-full: ## Build Docker image for development.
 	@echo "build docker container"
 	tar -ch . | \
