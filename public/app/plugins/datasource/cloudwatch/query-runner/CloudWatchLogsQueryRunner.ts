@@ -342,7 +342,12 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     };
 
     return queryFn(requestParams).pipe(
-      map((response) => response.data),
+      map((response) => {
+        if (response.errors) {
+          throw response.errors[0];
+        }
+        return response.data
+      }),
       catchError((err: FetchError) => {
         if (config.featureToggles.datasourceQueryMultiStatus && err.status === 207) {
           throw err;
