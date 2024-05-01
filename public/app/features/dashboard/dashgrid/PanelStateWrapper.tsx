@@ -253,7 +253,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         const srv = getTemplateSrv();
         const variables = srv.getVariables();
         const newVariables: TypedVariableModel[] = [];
-        let tmp: VariableWithOptions & TypedVariableModel | undefined;
+        let tmp: (VariableWithOptions & TypedVariableModel) | undefined;
         let newV: VariableWithOptions & TypedVariableModel;
         change.forEach((c) => {
           tmp = variables.find((v) => v.name === c.key) as VariableWithOptions & TypedVariableModel;
