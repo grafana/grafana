@@ -174,6 +174,10 @@ When you set the **Tooltip mode** to **Single**, this option is displayed. This 
 
 Choose whether you want to display the heatmap legend on the visualization by toggling the **Show legend** switch.
 
+### Data links
+
+{{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ### Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}

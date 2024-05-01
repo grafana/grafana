@@ -110,7 +110,7 @@ If your data can't be mapped to these dimensions for some reason (for example, b
 
 ![Open, High, Low, and Close fields in the panel editor](/media/docs/grafana/panels-visualizations/screenshot-olhc-options-10.3.png)
 
-## Additional fields
+### Additional fields
 
 The candlestick visualization is based on the time series visualization. It can visualize additional data dimensions beyond open, high, low, close, and volume The **Include** and **Ignore** options allow it to visualize other included data such as simple moving averages, Bollinger bands and more, using the same styles and configurations available in the [time series][time series visualization] visualization.
 
@@ -121,6 +121,10 @@ The candlestick visualization is based on the time series visualization. It can 
 ## Tooltip options
 
 {{< docs/shared lookup="visualizations/tooltip-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Data links
+
+{{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Thresholds
 
