@@ -419,7 +419,8 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     this.setState(stateUpdate);
   };
 
-  onOptionsChange = (options: any) => {
+  //Change from any to object to pass betterer test
+  onOptionsChange = (options: object) => {
     this.props.panel.updateOptions(options);
   };
 
