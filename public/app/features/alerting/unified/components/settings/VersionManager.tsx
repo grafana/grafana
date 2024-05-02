@@ -93,11 +93,12 @@ const AlertmanagerConfigurationVersionManager = ({
 
   // with this function we'll compute the diff with the previous version; that way the user can get some idea of how many lines where changed in each update that was applied
   const previousVersions: ConfigWithDiff[] = historicalConfigs.map((config, index) => {
-    const priorConfig = historicalConfigs[index + 1];
+    const latestConfig = historicalConfigs[0];
+    const priorConfig = historicalConfigs[index];
 
     return {
       ...config,
-      diff: priorConfig ? computeConfigDiff(priorConfig, config) : { added: 0, removed: 0 },
+      diff: priorConfig ? computeConfigDiff(config, latestConfig) : { added: 0, removed: 0 },
     };
   });
 
@@ -116,16 +117,23 @@ const AlertmanagerConfigurationVersionManager = ({
     {
       id: 'diff',
       disableGrow: true,
-      cell: ({ value }) => (
-        <Stack alignItems="baseline" gap={0.5}>
-          <Text color="success" variant="bodySmall">
-            +{value.added}
-          </Text>
-          <Text color="error" variant="bodySmall">
-            -{value.removed}
-          </Text>
-        </Stack>
-      ),
+      cell: ({ row, value }) => {
+        const isLatestConfiguration = row.index === 0;
+        if (isLatestConfiguration) {
+          return null;
+        }
+
+        return (
+          <Stack alignItems="baseline" gap={0.5}>
+            <Text color="success" variant="bodySmall">
+              +{value.added}
+            </Text>
+            <Text color="error" variant="bodySmall">
+              -{value.removed}
+            </Text>
+          </Stack>
+        );
+      },
     },
     {
       id: 'actions',
@@ -239,7 +247,11 @@ function CompareVersions({ left, right, disabled = false, onCancel, onConfirm }:
   return (
     <div className={styles.drawerWrapper}>
       <div className={styles.diffWrapper}>
-        <DiffViewer newValue={left} oldValue={right} />
+        {/*
+          we're hiding the line numbers because the historical snapshots will have certain parts of the config hidden (ex. auto-generated policies)
+          so the line numbers will not match up with what you can see in the JSON modal tab
+        */}
+        <DiffViewer newValue={left} oldValue={right} hideLineNumbers={true} />
       </div>
       <Stack direction="row" alignItems="center">
         <Spacer />
@@ -293,14 +305,14 @@ function computeConfigDiff(json1: AlertManagerCortexConfig, json2: AlertManagerC
     .values()
     .flatMap()
     .filter((operation) => operation.op === 'add' || operation.op === 'replace' || operation.op === 'move')
-    .size()
+    .sumBy((operation) => operation.endLineNumber - operation.startLineNumber + 1)
     .value();
 
   const removed = chain(diff)
     .values()
     .flatMap()
     .filter((operation) => operation.op === 'remove' || operation.op === 'replace')
-    .size()
+    .sumBy((operation) => operation.endLineNumber - operation.startLineNumber + 1)
     .value();
 
   return {
