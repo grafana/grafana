@@ -27,6 +27,10 @@ XY charts provide a way to visualize arbitrary x and y values in a graph so that
 
 You can use any type of tabular data with at least two numeric fields in an xy chart. This type of visualization doesn't require time data.
 
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ## XY chart options
 
 ### Series mapping
@@ -248,12 +252,6 @@ To learn more, refer to [Configure standard options][].
 ## Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-## Other visualization options
-
-### Panel options
-
-Learn about [panel options][] that you can set for a visualization.
 
 {{% docs/reference %}}
 [Color scheme]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options#color-scheme"
