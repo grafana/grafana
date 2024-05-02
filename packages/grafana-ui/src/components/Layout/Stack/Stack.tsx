@@ -8,7 +8,7 @@ import { AlignItems, Direction, FlexProps, JustifyContent, Wrap } from '../types
 import { ResponsiveProp, getResponsiveStyle } from '../utils/responsiveness';
 import { getSizeStyles, SizeProps } from '../utils/styles';
 
-interface StackProps extends FlexProps, SizeProps, Omit<React.HTMLAttributes<HTMLElement>, 'style' | 'className'> {
+interface StackProps extends FlexProps, SizeProps, Omit<React.HTMLAttributes<HTMLElement>, 'className' | 'style'> {
   gap?: ResponsiveProp<ThemeSpacingTokens>;
   alignItems?: ResponsiveProp<AlignItems>;
   justifyContent?: ResponsiveProp<JustifyContent>;
