@@ -62,18 +62,16 @@ func (a *AccessControl) Evaluate(ctx context.Context, user identity.Requester, e
 	res := make(chan evalResult, 2)
 	go func() {
 		start := time.Now()
-		hasAccess, err := a.evalGrafana(ctx, user, evaluator)
-		res <- evalResult{"grafana", hasAccess, err, time.Since(start)}
-	}()
-
-	go func() {
-		start := time.Now()
 		hasAccess, err := a.evalZanzana(ctx, user, evaluator)
 		res <- evalResult{"zanzana", hasAccess, err, time.Since(start)}
 	}()
 
-	first := <-res
-	second := <-res
+	go func() {
+		start := time.Now()
+		hasAccess, err := a.evalGrafana(ctx, user, evaluator)
+		res <- evalResult{"grafana", hasAccess, err, time.Since(start)}
+	}()
+	first, second := <-res, <-res
 	close(res)
 
 	if second.runner == "grafana" {

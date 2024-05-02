@@ -471,7 +471,7 @@ require github.com/getkin/kin-openapi v0.120.0 // @grafana/grafana-as-code
 require github.com/grafana/authlib v0.0.0-20240328140636-a7388d0bac72 // @grafana/identity-access-team
 
 require (
-	github.com/grafana/zanzana v0.0.0-20240429160431-e1c2d2ef6a59
+	github.com/grafana/zanzana v0.0.0-20240430080414-5268ff1192b8
 	github.com/openfga/api/proto v0.0.0-20240318145204-66b9e5cb403c
 )
 
