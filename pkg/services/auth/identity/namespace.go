@@ -18,8 +18,20 @@ const (
 	NamespaceEmpty          Namespace = ""
 )
 
+<<<<<<< HEAD
 func (n Namespace) String() string {
 	return string(n)
+=======
+var AnonymousNamespaceID = NewNamespaceID(NamespaceAnonymous, 0)
+
+var namespaceLookup = map[string]struct{}{
+	NamespaceUser:           {},
+	NamespaceAPIKey:         {},
+	NamespaceServiceAccount: {},
+	NamespaceAnonymous:      {},
+	NamespaceRenderService:  {},
+	NamespaceAccessPolicy:   {},
+>>>>>>> be378ea23b3 (Fix function)
 }
 
 func ParseNamespace(str string) (Namespace, error) {
