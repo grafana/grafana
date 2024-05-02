@@ -139,14 +139,14 @@ export function prepSeries(
 interface PrepConfigOpts {
   series: DataFrame[];
   color?: Field | null;
-  theme: GrafanaTheme2;
-  timeZone: TimeZone;
+  orientation: VizOrientation;
   options: Options;
+  timeZone: TimeZone;
+  theme: GrafanaTheme2;
 }
 
-export const prepConfig = ({ series, color, theme, timeZone, options }: PrepConfigOpts) => {
+export const prepConfig = ({ series, color, orientation, options, timeZone, theme }: PrepConfigOpts) => {
   let {
-    orientation,
     showValue,
     groupWidth,
     barWidth,
@@ -174,7 +174,7 @@ export const prepConfig = ({ series, color, theme, timeZone, options }: PrepConf
   };
 
   // bar orientation -> x scale orientation & direction
-  const vizOrientation = getBarCharScaleOrientation(orientation);
+  const vizOrientation = getScaleOrientation(orientation);
 
   // Use bar width when only one field
   if (frame.fields.length === 2) {
@@ -504,7 +504,7 @@ function getRotationPadding(
   ];
 }
 
-function getBarCharScaleOrientation(orientation: VizOrientation) {
+function getScaleOrientation(orientation: VizOrientation) {
   if (orientation === VizOrientation.Vertical) {
     return {
       xOri: ScaleOrientation.Horizontal,

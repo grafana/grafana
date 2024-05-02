@@ -78,7 +78,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
     () => {
       console.log('invaidate!');
 
-      return prepConfig({ series: info.series!, color: info.color, theme, timeZone, options });
+      return prepConfig({ series: info.series!, color: info.color, orientation, options, timeZone, theme });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
