@@ -31,7 +31,7 @@ You can use a flame graph visualization if you need to:
 - Diagnose the root cause of any performance degradation.
 - Analyze the behavior of complex systems, including distributed systems or microservices architectures.
 
-To know more about how Grafana Pyroscope visualizes flame graphs, refer to [Flame graphs: Visualizing performance data](https://grafana.com/docs/pyroscope/latest/view-and-analyze-profile-data/flamegraphs/).
+To learn more about how Grafana Pyroscope visualizes flame graphs, refer to [Flame graphs: Visualizing performance data](https://grafana.com/docs/pyroscope/latest/view-and-analyze-profile-data/flamegraphs/).
 
 ## Configure a flame graph visualization
 
