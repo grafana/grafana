@@ -252,7 +252,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
           panelId: 'Logs',
           level: 'child',
           type: 'filter',
-          highlight: currentLevelSelected || allLevelsSelected,
+          highlight: currentLevelSelected && !allLevelsSelected,
           onClick: (e: React.MouseEvent) => {
             this.toggleLegendRef.current?.(level.levelStr, mapMouseEventToMode(e));
           },
