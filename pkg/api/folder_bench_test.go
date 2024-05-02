@@ -458,7 +458,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 	folderStore := folderimpl.ProvideDashboardFolderStore(sc.db)
 
 	ac := acimpl.ProvideAccessControl(sc.cfg)
-	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sc.cfg, dashStore, folderStore, sc.db, features, supportbundlestest.NewFakeBundleService(), nil)
+	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderStore, sc.db, features, supportbundlestest.NewFakeBundleService(), nil)
 
 	cfg := setting.NewCfg()
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(

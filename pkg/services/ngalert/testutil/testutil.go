@@ -26,7 +26,7 @@ import (
 
 func SetupFolderService(tb testing.TB, cfg *setting.Cfg, db db.DB, dashboardStore dashboards.Store, folderStore *folderimpl.DashboardFolderStoreImpl, bus *bus.InProcBus, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl) folder.Service {
 	tb.Helper()
-	return folderimpl.ProvideService(ac, bus, cfg, dashboardStore, folderStore, db, features, supportbundlestest.NewFakeBundleService(), nil)
+	return folderimpl.ProvideService(ac, bus, dashboardStore, folderStore, db, features, supportbundlestest.NewFakeBundleService(), nil)
 }
 
 func SetupDashboardService(tb testing.TB, sqlStore db.DB, fs *folderimpl.DashboardFolderStoreImpl, cfg *setting.Cfg) (*dashboardservice.DashboardServiceImpl, dashboards.Store) {

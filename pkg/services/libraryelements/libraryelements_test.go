@@ -327,7 +327,7 @@ func createFolder(t *testing.T, sc scenarioContext, title string) *folder.Folder
 	require.NoError(t, err)
 
 	folderStore := folderimpl.ProvideDashboardFolderStore(sc.sqlStore)
-	s := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardStore, folderStore, sc.sqlStore, features, supportbundlestest.NewFakeBundleService(), nil)
+	s := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sc.sqlStore, features, supportbundlestest.NewFakeBundleService(), nil)
 	t.Logf("Creating folder with title and UID %q", title)
 	ctx := appcontext.WithUser(context.Background(), &sc.user)
 	folder, err := s.Create(ctx, &folder.CreateFolderCommand{
@@ -461,7 +461,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			Cfg:           cfg,
 			features:      featuremgmt.WithFeatures(),
 			SQLStore:      sqlStore,
-			folderService: folderimpl.ProvideService(ac, bus.ProvideBus(tracer), cfg, dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil),
+			folderService: folderimpl.ProvideService(ac, bus.ProvideBus(tracer), dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil),
 		}
 
 		// deliberate difference between signed in user and user in db to make it crystal clear
