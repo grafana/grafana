@@ -155,7 +155,7 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
 LinkButton.displayName = 'LinkButton';
 
 interface IconRendererProps {
-  icon?: IconName | React.ReactElement<{ className?: string }>;
+  icon?: IconName | React.ReactElement<{ className?: string; size?: ComponentSize }>;
   size: ComponentSize;
   className: string;
 }
@@ -163,6 +163,7 @@ const IconRenderer = ({ icon, size, className }: IconRendererProps) => {
   if (React.isValidElement(icon)) {
     return React.cloneElement(icon, {
       className,
+      size,
     });
   }
   if (isIconName(icon)) {
