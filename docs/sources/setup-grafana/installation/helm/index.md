@@ -196,7 +196,7 @@ By modifying the values in the `values.yaml` file, you can tailor the deployment
 
 In order to make any configuration changes, download the `values.yaml` file from the Grafana Helm Charts repository:
 
-https://github.com/grafana/helm-charts/edit/main/charts/grafana/values.yaml
+https://github.com/grafana/helm-charts/blob/main/charts/grafana/values.yaml
 
 {{% admonition type="note" %}}
 Depending on your use case requirements, you can use a single YAML file that contains your configuration changes or you can create multiple YAML files.
