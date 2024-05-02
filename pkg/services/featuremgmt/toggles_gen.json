@@ -2106,6 +2106,22 @@
         "stage": "experimental",
         "codeowner": "@grafana/explore-squad"
       }
+    },
+    {
+      "metadata": {
+        "name": "logsExploreTableDefaultVisualization",
+        "resourceVersion": "1714583478121",
+        "creationTimestamp": "2024-05-01T17:05:57Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-05-01 17:11:18.121837 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Sets the logs table as default visualisation in logs explore",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true
+      }
     }
   ]
 }

@@ -177,6 +177,7 @@ Experimental features might be changed or removed without prior notice.
 | `accessActionSets`                          | Introduces action sets for resource permissions                                                                                                                                                                                                                                   |
 | `disableNumericMetricsSortingInExpressions` | In server-side expressions, disable the sorting of numeric-kind metrics by their metric name or labels.                                                                                                                                                                           |
 | `queryLibrary`                              | Enables Query Library feature in Explore                                                                                                                                                                                                                                          |
+| `logsExploreTableDefaultVisualization`      | Sets the logs table as default visualisation in logs explore                                                                                                                                                                                                                      |
 
 ## Development feature toggles
 
