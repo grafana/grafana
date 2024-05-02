@@ -412,9 +412,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex-direction: column;
     background: ${theme.colors.background.primary};
     box-shadow: ${theme.shadows.z3};
-    border-style: solid;
-    border-color: ${theme.colors.border.weak};
-    border-radius: ${theme.shape.radius.default};
   `,
 });
 
