@@ -3,12 +3,11 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { Button, Dropdown, Icon, LinkButton, Menu, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Drawer, Dropdown, Icon, LinkButton, Menu, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { createUrl } from 'app/features/alerting/unified/utils/url';
 
 import { SectionDto, SectionDtoStep, SectionsDto } from '../hooks/irmHooks';
 
-import { ConfigurationTrackerDrawer } from './ConfigurationTrackerDrawer';
 import { ProgressBar, StepsStatus } from './ProgressBar';
 
 export interface EssentialsProps {
@@ -20,13 +19,9 @@ export interface EssentialsProps {
 
 export function Essentials({ onClose, essentialsConfig, stepsDone, totalStepsToDo }: EssentialsProps) {
   return (
-    <ConfigurationTrackerDrawer
-      title="Essentials"
-      subtitle="Complete the following configuration tasks"
-      onClose={onClose}
-    >
+    <Drawer title="Essentials" subtitle="Complete the following configuration tasks" onClose={onClose}>
       <EssentialContent essentialContent={essentialsConfig} stepsDone={stepsDone} totalStepsToDo={totalStepsToDo} />
-    </ConfigurationTrackerDrawer>
+    </Drawer>
   );
 }
 
