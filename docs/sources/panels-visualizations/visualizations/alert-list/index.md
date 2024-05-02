@@ -28,6 +28,10 @@ Use alert lists to display your alerts. You can configure the list to show the c
 
 Customize your visualization using the following settings.
 
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ## Options
 
 - **Group mode -** Choose between "Default grouping" to show alert instances grouped by their alert rule, or "Custom grouping" to group alert instances by a custom set of labels.
