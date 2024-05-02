@@ -72,9 +72,7 @@ func getTables(te sqlparser.TableExpr) []string {
 
 func unknownExpr(te sqlparser.TableExpr) []string {
 	tables := []string{}
-	buf := sqlparser.NewTrackedBuffer(nil)
-	te.Format(buf)
-	fromClause := buf.String()
+	fromClause := nodeValue(te)
 	upperFromClause := strings.ToUpper(fromClause)
 	if strings.Contains(upperFromClause, "JOIN") {
 		return extractTablesFrom(fromClause)
