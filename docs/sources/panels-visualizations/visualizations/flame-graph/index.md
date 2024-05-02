@@ -37,7 +37,7 @@ To know more about how Grafana Pyroscope visualizes flame graphs, refer to [Flam
 
 Once you’ve created a [dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/), the following video shows you how to configure a flame graph visualization:
 
-<!-- video TBA here -->
+{{< youtube id="VEvK0JkPlOY" >}}
 
 ## Supported data formats
 
@@ -57,8 +57,6 @@ Required fields:
 ### Example
 
 The following table is an example of the type of data you need for a flame graph visualization and how it should be formatted:
-
-#### Time-series table
 
 | level | value    | self   | label                                     |
 | ----- | -------- | ------ | ----------------------------------------- |
