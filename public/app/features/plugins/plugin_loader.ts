@@ -28,13 +28,14 @@ SystemJS.addImportMap({ imports });
 
 const systemJSPrototype: SystemJSWithLoaderHooks = SystemJS.constructor.prototype;
 
-// This instructs SystemJS to load a assets using fetch and eval if it returns a truthy value, otherwise it will load the plugin using a script tag.
-// We only want to fetch and eval plugins that are hosted on a CDN or are Angular plugins.
+// This instructs SystemJS to load plugin assets using fetch and eval if it returns a truthy value, otherwise
+// it will load the plugin using a script tag. We only want to fetch and eval files that are
+// hosted on a CDN, are related to Angular plugins or are not js files.
 systemJSPrototype.shouldFetch = function (url) {
   const pluginInfo = getPluginFromCache(url);
-  const moduleTypesRegEx = /^[^#?]+\.(css|html|json|wasm)([?#].*)?$/;
+  const jsTypeRegEx = /^[^#?]+\.(js)([?#].*)?$/;
 
-  return moduleTypesRegEx.test(url) || isHostedOnCDN(url) || Boolean(pluginInfo?.isAngular);
+  return isHostedOnCDN(url) || Boolean(pluginInfo?.isAngular) || !jsTypeRegEx.test(url);
 };
 
 const originalImport = systemJSPrototype.import;
