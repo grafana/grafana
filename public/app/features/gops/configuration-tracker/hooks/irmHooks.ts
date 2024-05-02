@@ -277,7 +277,7 @@ export function useGetEssentialsConfiguration() {
         steps: [
           {
             title: 'Send OnCall demo alert',
-            description: 'tbd',
+            description: 'In the integration page, click Send demo alert, to review your notification',
             button: {
               type: 'dropDown',
               url: '/a/grafana-oncall-app/integrations/',
@@ -287,13 +287,12 @@ export function useGetEssentialsConfiguration() {
           },
           {
             title: 'Create Incident drill',
-            description: 'tbd',
+            description: 'Practice solving an Incident',
             button: {
               type: 'openLink',
               url: '/a/grafana-incident-app',
               queryParams: { declare: 'new', drill: '1' },
               label: 'Start drill',
-              done: incidentPluginConfig?.isIncidentCreated,
             },
           },
         ],
