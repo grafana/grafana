@@ -185,7 +185,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
   }
 }
 
-function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQueriesTab>) {
+export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQueriesTab>) {
   const { datasource, dsSettings } = model.panelManager.useState();
   const { data, queries } = model.panelManager.queryRunner.useState();
 
@@ -232,7 +232,7 @@ function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQue
             icon="plus"
             onClick={model.onAddExpressionClick}
             variant="secondary"
-            data-testid="query-tab-add-expression"
+            data-testid={selectors.components.QueryTab.addExpression}
           >
             <span>Expression&nbsp;</span>
           </Button>
