@@ -20,7 +20,7 @@ type CommonProps = {
   size?: ComponentSize;
   variant?: ButtonVariant;
   fill?: ButtonFill;
-  icon?: IconName | React.ReactNode;
+  icon?: IconName | React.ReactElement;
   className?: string;
   children?: React.ReactNode;
   fullWidth?: boolean;
@@ -155,20 +155,21 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
 LinkButton.displayName = 'LinkButton';
 
 interface IconRendererProps {
-  icon: IconName | React.ReactNode;
+  icon?: IconName | React.ReactElement<{ className?: string }>;
   size: ComponentSize;
   className: string;
 }
 const IconRenderer = ({ icon, size, className }: IconRendererProps) => {
-  if (!icon) {
-    return null;
+  if (React.isValidElement(icon)) {
+    return React.cloneElement(icon, {
+      className,
+    });
   }
   if (isIconName(icon)) {
     return <Icon name={icon} size={size} className={className} />;
   }
-  return React.cloneElement(icon as React.ReactElement, {
-    className,
-  });
+
+  return null;
 };
 
 export interface StyleProps {
