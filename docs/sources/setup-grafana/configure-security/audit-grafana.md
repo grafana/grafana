@@ -335,7 +335,7 @@ Furthermore, you can also record `GET` requests. See below how to configure it.
 
 | Action         | Distinguishing fields          |
 | -------------- | ------------------------------ |
-| POST request   | `{"action": "action"}`         |
+| POST request   | `{"action": "post-action"}`    |
 | PATCH request  | `{"action": "partial-update"}` |
 | PUT request    | `{"action": "update"}`         |
 | DELETE request | `{"action": "delete"}`         |
