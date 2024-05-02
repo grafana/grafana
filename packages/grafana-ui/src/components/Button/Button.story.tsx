@@ -1,8 +1,6 @@
 import { StoryFn } from '@storybook/react';
 import React from 'react';
 
-import { Cloud } from '@grafana/saga-icons';
-
 import { ComponentSize } from '../../types';
 import { Card } from '../Card/Card';
 import { Stack } from '../Layout/Stack/Stack';
@@ -60,11 +58,11 @@ export const Examples: StoryFn<typeof Button> = () => {
       ))}
       <Stack alignItems="center" gap={3}>
         <div>With icon and text</div>
-        <Button icon={<Cloud />} size="sm">
+        <Button icon="cloud" size="sm">
           Configure
         </Button>
-        <Button icon={<Cloud />}>Configure</Button>
-        <Button icon={<Cloud />} size="lg">
+        <Button icon="cloud">Configure</Button>
+        <Button icon="cloud" size="lg">
           Configure
         </Button>
       </Stack>
