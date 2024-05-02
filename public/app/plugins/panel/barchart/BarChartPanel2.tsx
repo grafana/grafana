@@ -124,30 +124,29 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
     >
       {(vizWidth, vizHeight) => (
         <UPlotChart config={builder!} data={plotData} width={vizWidth} height={vizHeight}>
-          {/* {props.options.tooltip.mode !== TooltipDisplayMode.None && (
+          {props.options.tooltip.mode !== TooltipDisplayMode.None && (
             <TooltipPlugin2
               config={builder}
+              maxWidth={options.tooltip.maxWidth}
               hoverMode={
                 options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
               }
               render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2) => {
-                // TODO: render _rest fields that are not hideFrom.tooltip
                 return (
                   <TimeSeriesTooltip
-                    frames={series}
-                    seriesFrame={series![0]}
+                    series={info.series![0]}
+                    _rest={info._rest}
                     dataIdxs={dataIdxs}
                     seriesIdx={seriesIdx}
                     mode={options.tooltip.mode}
                     sortOrder={options.tooltip.sort}
                     isPinned={isPinned}
+                    maxHeight={options.tooltip.maxHeight}
                   />
                 );
               }}
-              maxWidth={options.tooltip.maxWidth}
-              maxHeight={options.tooltip.maxHeight}
             />
-          )} */}
+          )}
         </UPlotChart>
       )}
     </VizLayout>
