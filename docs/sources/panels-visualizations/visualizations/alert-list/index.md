@@ -71,6 +71,6 @@ Choose which alert states to display in this visualization.
 - Error
 
 {{% docs/reference %}}
-[Grafana Alerting overview]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting"
-[Grafana Alerting overview]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting"
+[Grafana Alerting overview]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting"
+[Grafana Alerting overview]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting"
 {{% /docs/reference %}}

@@ -64,9 +64,9 @@ to the embedded text.
 [Variables][] in the content will be expanded for display.
 
 {{% docs/reference %}}
-[disable_sanitize_html]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#disable_sanitize_html"
-[disable_sanitize_html]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#disable_sanitize_html"
+[disable_sanitize_html]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana#disable_sanitize_html"
+[disable_sanitize_html]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana#disable_sanitize_html"
 
-[Variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/variable-syntax"
-[Variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/variable-syntax"
+[Variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax"
+[Variables]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/variables/variable-syntax"
 {{% /docs/reference %}}

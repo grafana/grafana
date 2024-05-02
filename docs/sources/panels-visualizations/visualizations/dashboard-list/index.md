@@ -55,6 +55,6 @@ These options only apply if the **Search** option is selected.
 > **Note:** When multiple tags and strings appear, the dashboard list displays those matching _all_ conditions.
 
 {{% docs/reference %}}
-[Dashboard URL variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/create-dashboard-url-variables"
-[Dashboard URL variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/create-dashboard-url-variables"
+[Dashboard URL variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard-url-variables"
+[Dashboard URL variables]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/build-dashboards/create-dashboard-url-variables"
 {{% /docs/reference %}}

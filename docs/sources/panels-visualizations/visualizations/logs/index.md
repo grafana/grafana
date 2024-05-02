@@ -66,6 +66,6 @@ Use these settings to refine your visualization:
 - **Order -** Display results in descending or ascending time order. The default is **Descending**, showing the newest logs first. Set to **Ascending** to show the oldest log lines first.
 
 {{% docs/reference %}}
-[supported log levels and mappings of log level abbreviation and expressions]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore/logs-integration#log-level"
-[supported log levels and mappings of log level abbreviation and expressions]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore/logs-integration#log-level"
+[supported log levels and mappings of log level abbreviation and expressions]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/explore/logs-integration#log-level"
+[supported log levels and mappings of log level abbreviation and expressions]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/explore/logs-integration#log-level"
 {{% /docs/reference %}}
