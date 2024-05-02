@@ -322,8 +322,8 @@ func (e DatasourcePermissionsService) SetBuiltInRolePermission(ctx context.Conte
 func (e DatasourcePermissionsService) SetPermissions(ctx context.Context, orgID int64, resourceID string, commands ...accesscontrol.SetResourcePermissionCommand) ([]accesscontrol.ResourcePermission, error) {
 	var dbCommands []resourcepermissions.SetResourcePermissionsCommand
 	for _, cmd := range commands {
-		// Only set query permissions for built-in roles
-		if cmd.Permission != "Query" || cmd.BuiltinRole == "" {
+		// Only set query permissions for built-in roles; do not set permissions for data sources with * as UID, as this would grant wildcard permissions
+		if cmd.Permission != "Query" || cmd.BuiltinRole == "" || resourceID == "*" {
 			continue
 		}
 		actions := DatasourceQueryActions
