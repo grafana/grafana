@@ -64,6 +64,10 @@ type Interactions = {
       // The special metric step type that is created when the user de-selects the current metric
       | 'metric-clear'
     );
+    // Which step index was clicked on
+    step: number;
+    // The total number of steps currently in the trail
+    numberOfSteps: number;
   };
   // User clicks on tab to change the action view
   metric_action_view_changed: { view: ActionViewType };
