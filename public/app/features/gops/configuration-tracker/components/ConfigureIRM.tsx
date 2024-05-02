@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Card, Icon, IconName, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Card, Icon, IconName, Stack, Text, useStyles2 } from '@grafana/ui';
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { fetchAllPromBuildInfoAction } from 'app/features/alerting/unified/state/actions';
 import {
@@ -21,12 +21,16 @@ interface DataConfiguration {
   id: number;
   title: string;
   description: string;
-  text: string;
   actionButtonTitle: string;
   isDone?: boolean;
   stepsDone?: number;
   totalStepsToDo?: number;
   titleIcon?: IconName;
+}
+
+export enum ConfigurationStepsEnum {
+  CONNECT_DATASOURCE,
+  ESSENTIALS,
 }
 
 export function ConfigureIRM() {
@@ -40,22 +44,28 @@ export function ConfigureIRM() {
 
   const [essentialsOpen, setEssentialsOpen] = useState(false);
   const { essentialContent, stepsDone, totalStepsToDo } = useGetEssentialsConfiguration();
+
   const configuration: DataConfiguration[] = useMemo(() => {
-    return [
-      {
-        id: 1,
-        title: 'Connect data source(s) to receive data',
-        description: 'Before your start configuration you need to connect at least one datasource.',
-        text: 'Configure IRM',
-        actionButtonTitle: 'Connect',
+    function getConnectDataSourceConfiguration() {
+      const description = dataSourceCompatibleWithAlerting
+        ? 'You have connected datasource.'
+        : 'Connect at least one data source to start receiving data.';
+      const actionButtonTitle = dataSourceCompatibleWithAlerting ? 'View' : 'Connect';
+      return {
+        id: ConfigurationStepsEnum.CONNECT_DATASOURCE,
+        title: 'Connect data source',
+        description,
+        actionButtonTitle,
         isDone: dataSourceCompatibleWithAlerting,
-      },
+      };
+    }
+    return [
+      getConnectDataSourceConfiguration(),
       {
-        id: 2,
+        id: ConfigurationStepsEnum.ESSENTIALS,
         title: 'Essentials',
         titleIcon: 'star',
         description: 'Configure the features you need to start using Grafana IRM workflows',
-        text: 'Configure IRM',
         actionButtonTitle: 'Start',
         stepsDone: stepsDone,
         totalStepsToDo: totalStepsToDo,
@@ -63,12 +73,16 @@ export function ConfigureIRM() {
     ];
   }, [dataSourceCompatibleWithAlerting, stepsDone, totalStepsToDo]);
 
-  const handleActionClick = (configID: number) => {
+  const handleActionClick = (configID: number, isDone?: boolean) => {
     switch (configID) {
-      case 1:
-        history.push(DATASOURCES_ROUTES.New);
+      case ConfigurationStepsEnum.CONNECT_DATASOURCE:
+        if (isDone) {
+          history.push(DATASOURCES_ROUTES.List);
+        } else {
+          history.push(DATASOURCES_ROUTES.New);
+        }
         break;
-      case 2:
+      case ConfigurationStepsEnum.ESSENTIALS:
         setEssentialsOpen(true);
         break;
       default:
@@ -77,56 +91,62 @@ export function ConfigureIRM() {
   };
 
   return (
-    <section className={styles.container}>
-      {configuration.map((config) => {
-        return (
-          <Card key={config.id}>
-            <Card.Heading className={styles.title}>
-              <div className={styles.essentialsTitle}>
-                <Stack direction={'row'} gap={1}>
-                  {config.title}
-                  {config.titleIcon && <Icon name={config.titleIcon} />}
-                  {config.isDone && <Icon name="check-circle" color="green" size="lg" />}
+    <>
+      <Text element="h4" variant="h4">
+        {' '}
+        Configure
+      </Text>
+      <section className={styles.container}>
+        {configuration.map((config) => {
+          return (
+            <Card key={config.id}>
+              <Card.Heading className={styles.title}>
+                <div className={styles.essentialsTitle}>
+                  <Stack direction={'row'} gap={1}>
+                    {config.title}
+                    {config.titleIcon && <Icon name={config.titleIcon} />}
+                    {config.isDone && <Icon name="check-circle" color="green" size="lg" />}
+                  </Stack>
+                  {config.stepsDone && config.totalStepsToDo && (
+                    <Stack direction="row" gap={1}>
+                      <StepsStatus stepsDone={config.stepsDone} totalStepsToDo={config.totalStepsToDo} />
+                      complete
+                    </Stack>
+                  )}
+                </div>
+              </Card.Heading>
+              <Card.Description className={styles.description}>
+                <Stack direction={'column'}>
+                  {config.description}
+                  {config.stepsDone && config.totalStepsToDo && (
+                    <ProgressBar stepsDone={config.stepsDone} totalStepsToDo={config.totalStepsToDo} />
+                  )}
                 </Stack>
-                {config.stepsDone && config.totalStepsToDo && (
-                  <Stack direction="row" gap={1}>
-                    <StepsStatus stepsDone={config.stepsDone} totalStepsToDo={config.totalStepsToDo} />
-                    complete
-                  </Stack>
-                )}
-              </div>
-            </Card.Heading>
-            {!config.isDone && (
-              <>
-                <Card.Description className={styles.description}>
-                  <Stack direction={'column'}>
-                    {config.description}
-                    {config.stepsDone && config.totalStepsToDo && (
-                      <ProgressBar stepsDone={config.stepsDone} totalStepsToDo={config.totalStepsToDo} />
-                    )}
-                  </Stack>
-                </Card.Description>
-                <Card.Actions>
-                  <Button variant="secondary" onClick={() => handleActionClick(config.id)}>
-                    {config.actionButtonTitle}
-                  </Button>
-                </Card.Actions>
-              </>
-            )}
-          </Card>
-        );
-      })}
-      {essentialsOpen && (
-        <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={GRAFANA_RULES_SOURCE_NAME}>
-          <Essentials
-            onClose={() => setEssentialsOpen(false)}
-            essentialsConfig={essentialContent}
-            stepsDone={stepsDone}
-            totalStepsToDo={totalStepsToDo}
-          />
-        </AlertmanagerProvider>
-      )}
-    </section>
+              </Card.Description>
+              <Card.Actions>
+                <Button variant="secondary" onClick={() => handleActionClick(config.id, config.isDone)}>
+                  {config.actionButtonTitle}
+                </Button>
+              </Card.Actions>
+            </Card>
+          );
+        })}
+        {essentialsOpen && (
+          <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={GRAFANA_RULES_SOURCE_NAME}>
+            <Essentials
+              onClose={() => setEssentialsOpen(false)}
+              essentialsConfig={essentialContent}
+              stepsDone={stepsDone}
+              totalStepsToDo={totalStepsToDo}
+            />
+          </AlertmanagerProvider>
+        )}
+      </section>
+      <Text element="h4" variant="h4">
+        {' '}
+        IRM apps
+      </Text>
+    </>
   );
 }
 
