@@ -470,6 +470,14 @@ func (hs *HTTPServer) GetAnnotationByID(c *contextmodel.ReqContext) response.Res
 		annotation.AvatarURL = dtos.GetGravatarUrl(hs.Cfg, annotation.Email)
 	}
 
+	if annotation.DashboardID != 0 {
+		query := dashboards.GetDashboardQuery{ID: annotation.DashboardID, OrgID: c.SignedInUser.GetOrgID()}
+		queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
+		if err == nil && queryResult != nil {
+			annotation.DashboardUID = &queryResult.UID
+		}
+	}
+
 	return response.JSON(http.StatusOK, annotation)
 }
 
