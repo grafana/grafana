@@ -95,6 +95,10 @@ The data is converted as follows:
 
 {{< figure src="/static/img/docs/status-history-panel/status_history.png" max-width="1025px" alt="A status history panel with two time columns showing the status of two servers" >}}
 
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ## Status history options
 
 Use these options to refine the visualization.

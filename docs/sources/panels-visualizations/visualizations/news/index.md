@@ -18,7 +18,7 @@ title: News
 weight: 100
 ---
 
-## News
+# News
 
 The news visualization displays an RSS feed. By default, it displays articles from the Grafana Labs blog, but you can change this by entering a different RSS feed URL.
 
@@ -43,6 +43,10 @@ If you're unable to display an RSS feed using the news visualization, you can tr
 ## Supported data formats
 
 The news visualization supports RSS and Atom feeds.
+
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## News options
 

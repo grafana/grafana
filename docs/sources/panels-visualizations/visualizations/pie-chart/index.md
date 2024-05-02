@@ -29,6 +29,10 @@ Pie charts display reduced series, or values in a series, from one or more queri
 
 {{< docs/play title="Grafana Bar Charts and Pie Charts" url="https://play.grafana.org/d/ktMs4D6Mk/" >}}
 
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ## Value options
 
 Use the following options to refine the value in your visualization.

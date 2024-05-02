@@ -140,3 +140,7 @@ Optional fields:
 | icon          | string        | Name of the icon to show inside the node instead of the default stats. Only Grafana built in icons are allowed (see the available icons [here](https://developers.grafana.com/ui/latest/index.html?path=/story/docs-overview-icon--icons-overview)).                                                                                                                      |
 | nodeRadius    | number        | Radius value in pixels. Used to manage node size.                                                                                                                                                                                                                                                                                                                         |
 | highlighted   | boolean       | Sets whether the node should be highlighted. Useful for example to represent a specific path in the graph by highlighting several nodes and edges. Default: `false`                                                                                                                                                                                                       |
+
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}

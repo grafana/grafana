@@ -75,6 +75,10 @@ The following video guides you through the creation steps and common customizati
 
 {{< docs/play title="Time Series Visualizations in Grafana" url="https://play.grafana.org/d/000000016/" >}}
 
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ## Tooltip options
 
 Tooltip options control the information overlay that appears when you hover over data points in the graph.

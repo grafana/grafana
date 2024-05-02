@@ -102,6 +102,10 @@ You can use the [**Text mode**](#text-mode) to control how the text is displayed
 
 The panel automatically adjusts the layout depending on available width and height in the dashboard. It automatically hides the graph (sparkline) if the panel becomes too small.
 
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ## Value options
 
 Use the following options to refine how your visualization displays its values:
