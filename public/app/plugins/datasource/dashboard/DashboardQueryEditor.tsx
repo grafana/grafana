@@ -9,6 +9,7 @@ import { Field, Select, useStyles2, Spinner, RadioButtonGroup, Stack, InlineSwit
 import config from 'app/core/config';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { PanelModel } from 'app/features/dashboard/state';
+import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { filterPanelDataToQuery } from 'app/features/query/components/QueryEditorRow';
 
@@ -19,6 +20,14 @@ import { DashboardQuery, ResultInfo, SHARED_DASHBOARD_QUERY } from './types';
 
 function getQueryDisplayText(query: DataQuery): string {
   return JSON.stringify(query);
+}
+
+function isPanelInEdit(panelId: number, panelInEditId?: number) {
+  let idToCompareWith = panelInEditId;
+  if (window.__grafanaSceneContext && window.__grafanaSceneContext instanceof DashboardScene) {
+    idToCompareWith = window.__grafanaSceneContext.state.editPanel?.state.panelId;
+  }
+  return panelId === idToCompareWith;
 }
 
 interface Props extends QueryEditorProps<DashboardDatasource, DashboardQuery> {}
@@ -112,7 +121,7 @@ export function DashboardQueryEditor({ data, query, onChange, onRunQuery }: Prop
           (panel) =>
             config.panels[panel.type] &&
             panel.targets &&
-            panel.id !== dashboard.panelInEdit?.id &&
+            !isPanelInEdit(panel.id, dashboard.panelInEdit?.id) &&
             panel.datasource?.uid !== SHARED_DASHBOARD_QUERY
         )
         .map((panel) => ({
