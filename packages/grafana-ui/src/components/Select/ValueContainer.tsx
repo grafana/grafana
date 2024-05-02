@@ -33,11 +33,10 @@ class UnthemedValueContainer extends Component<any & { theme: GrafanaTheme2 }> {
     const noWrap = this.props.selectProps?.noMultiValueWrap && !this.props.selectProps?.menuIsOpen;
     const styles = getSelectStyles(theme);
     const dataTestid = selectProps['data-testid'];
-    const className = cx(
-      styles.valueContainer,
-      isMulti && styles.valueContainerMulti,
-      noWrap && styles.valueContainerMultiNoWrap
-    );
+    const className = cx(styles.valueContainer, {
+      [styles.valueContainerMulti]: isMulti && !noWrap,
+      [styles.valueContainerMultiNoWrap]: isMulti && noWrap,
+    });
 
     return (
       <div data-testid={dataTestid} className={className}>
