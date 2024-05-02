@@ -1220,6 +1220,13 @@ var (
 			FrontendOnly:   false,
 			AllowSelfServe: false,
 		},
+		{
+			Name:         "logsExploreTableDefaultVisualization",
+			Description:  "Sets the logs table as default visualisation in logs explore",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityLogsSquad,
+			FrontendOnly: true,
+		},
 	}
 )
 
