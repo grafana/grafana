@@ -23,6 +23,10 @@ export interface DataTrailsHistoryState extends SceneObjectState {
   steps: DataTrailHistoryStep[];
 }
 
+export function isDataTrailsHistoryState(state: SceneObjectState): state is DataTrailsHistoryState {
+  return 'currentStep' in state && 'steps' in state;
+}
+
 export interface DataTrailHistoryStep {
   description: string;
   type: TrailStepType;
@@ -127,7 +131,7 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
     const step = this.state.steps[stepIndex];
     const type = step.type === 'metric' && step.trailState.metric === undefined ? 'metric-clear' : step.type;
 
-    reportExploreMetrics('history_step_clicked', { type });
+    reportExploreMetrics('history_step_clicked', { type, step: stepIndex, numberOfSteps: this.state.steps.length });
 
     this.stepTransitionInProgress = true;
     this.setState({ currentStep: stepIndex });

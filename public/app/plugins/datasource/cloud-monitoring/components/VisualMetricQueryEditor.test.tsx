@@ -89,7 +89,7 @@ describe('VisualMetricQueryEditor', () => {
     await act(async () => {
       await select(service, 'Srv', { container: document.body });
     });
-    expect(onChange).toBeCalledWith(
+    expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({ filters: ['metric.type', '=', mockMetricDescriptor.type] })
     );
   });
@@ -128,7 +128,7 @@ describe('VisualMetricQueryEditor', () => {
     await act(async () => {
       await select(metricName, 'metricName_test', { container: document.body });
     });
-    expect(onChange).toBeCalledWith(
+    expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({ filters: ['metric.type', '=', mockMetricDescriptor.type] })
     );
   });
@@ -209,7 +209,7 @@ describe('VisualMetricQueryEditor', () => {
     await act(async () => {
       await select(service, 'Srv 2', { container: document.body });
     });
-    expect(onChange).toBeCalledWith(expect.objectContaining({ filters: ['metric.type', '=', 'type2'] }));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ filters: ['metric.type', '=', 'type2'] }));
     expect(query).toEqual(defaultQuery);
     expect(screen.queryByText('metric.test_label')).not.toBeInTheDocument();
   });
@@ -261,7 +261,7 @@ describe('VisualMetricQueryEditor', () => {
     await act(async () => {
       await select(metric, 'metricName2', { container: document.body });
     });
-    expect(onChange).toBeCalledWith(
+    expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({ filters: ['metric.test_label', '=', 'test', 'AND', 'metric.type', '=', 'type2'] })
     );
     expect(query).toEqual(defaultQuery);

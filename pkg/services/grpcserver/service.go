@@ -8,8 +8,7 @@ import (
 	"github.com/grafana/dskit/instrument"
 	"github.com/grafana/dskit/middleware"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
+	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -67,22 +66,18 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 
 	// Default auth is admin token check, but this can be overridden by
 	// services which implement ServiceAuthFuncOverride interface.
-	// See https://github.com/grpc-ecosystem/go-grpc-middleware/blob/master/auth/auth.go#L30.
+	// See https://github.com/grpc-ecosystem/go-grpc-middleware/blob/main/interceptors/auth/auth.go#L30.
 	opts = append(opts, []grpc.ServerOption{
-		grpc.UnaryInterceptor(
-			grpc_middleware.ChainUnaryServer(
-				grpcAuth.UnaryServerInterceptor(authenticator.Authenticate),
-				interceptors.TracingUnaryInterceptor(tracer),
-				interceptors.LoggingUnaryInterceptor(s.cfg, s.logger), // needs to be registered after tracing interceptor to get trace id
-				middleware.UnaryServerInstrumentInterceptor(grpcRequestDuration),
-			),
+		grpc.ChainUnaryInterceptor(
+			grpcAuth.UnaryServerInterceptor(authenticator.Authenticate),
+			interceptors.TracingUnaryInterceptor(tracer),
+			interceptors.LoggingUnaryInterceptor(s.cfg, s.logger), // needs to be registered after tracing interceptor to get trace id
+			middleware.UnaryServerInstrumentInterceptor(grpcRequestDuration),
 		),
-		grpc.StreamInterceptor(
-			grpc_middleware.ChainStreamServer(
-				interceptors.TracingStreamInterceptor(tracer),
-				grpcAuth.StreamServerInterceptor(authenticator.Authenticate),
-				middleware.StreamServerInstrumentInterceptor(grpcRequestDuration),
-			),
+		grpc.ChainStreamInterceptor(
+			interceptors.TracingStreamInterceptor(tracer),
+			grpcAuth.StreamServerInterceptor(authenticator.Authenticate),
+			middleware.StreamServerInstrumentInterceptor(grpcRequestDuration),
 		),
 	}...)
 
@@ -90,12 +85,20 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 		opts = append(opts, grpc.Creds(credentials.NewTLS(cfg.GRPCServerTLSConfig)))
 	}
 
+	if s.cfg.GRPCServerMaxRecvMsgSize > 0 {
+		opts = append(opts, grpc.MaxRecvMsgSize(s.cfg.GRPCServerMaxRecvMsgSize))
+	}
+
+	if s.cfg.GRPCServerMaxSendMsgSize > 0 {
+		opts = append(opts, grpc.MaxSendMsgSize(s.cfg.GRPCServerMaxSendMsgSize))
+	}
+
 	s.server = grpc.NewServer(opts...)
 	return s, nil
 }
 
 func (s *gPRCServerService) Run(ctx context.Context) error {
-	s.logger.Info("Running GRPC server", "address", s.cfg.GRPCServerAddress, "network", s.cfg.GRPCServerNetwork, "tls", s.cfg.GRPCServerTLSConfig != nil)
+	s.logger.Info("Running GRPC server", "address", s.cfg.GRPCServerAddress, "network", s.cfg.GRPCServerNetwork, "tls", s.cfg.GRPCServerTLSConfig != nil, "max_recv_msg_size", s.cfg.GRPCServerMaxRecvMsgSize, "max_send_msg_size", s.cfg.GRPCServerMaxSendMsgSize)
 
 	listener, err := net.Listen(s.cfg.GRPCServerNetwork, s.cfg.GRPCServerAddress)
 	if err != nil {

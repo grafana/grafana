@@ -260,7 +260,7 @@ func (s *Service) RedirectURL(ctx context.Context, client string, r *authn.Reque
 	return redirectClient.RedirectURL(ctx, r)
 }
 
-func (s *Service) Logout(ctx context.Context, user identity.Requester, sessionToken *auth.UserToken) (*authn.Redirect, error) {
+func (s *Service) Logout(ctx context.Context, user authn.Requester, sessionToken *auth.UserToken) (*authn.Redirect, error) {
 	ctx, span := s.tracer.Start(ctx, "authn.Logout")
 	defer span.End()
 
@@ -308,18 +308,13 @@ Default:
 	return redirect, nil
 }
 
-func (s *Service) ResolveIdentity(ctx context.Context, orgID int64, namespaceID string) (*authn.Identity, error) {
+func (s *Service) ResolveIdentity(ctx context.Context, orgID int64, namespaceID authn.NamespaceID) (*authn.Identity, error) {
 	r := &authn.Request{}
 	r.OrgID = orgID
 	// hack to not update last seen
 	r.SetMeta(authn.MetaKeyIsLogin, "true")
 
-	id, err := authn.ParseNamespaceID(namespaceID)
-	if err != nil {
-		return nil, err
-	}
-
-	identity, err := s.resolveIdenity(ctx, orgID, id)
+	identity, err := s.resolveIdenity(ctx, orgID, namespaceID)
 	if err != nil {
 		return nil, err
 	}
