@@ -1,5 +1,5 @@
 import { PanelPlugin, PanelPluginMeta, PluginType } from '@grafana/data';
-import { SceneGridLayout, VizPanel } from '@grafana/scenes';
+import { SceneDataTransformer, SceneGridLayout, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import * as libAPI from 'app/features/library-panels/state/api';
 
 import { DashboardGridItem } from '../scene/DashboardGridItem';

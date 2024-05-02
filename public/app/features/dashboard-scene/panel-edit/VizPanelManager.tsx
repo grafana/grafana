@@ -105,11 +105,14 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
   };
 
   private _setUpChangeSubs() {
-    this._changeSubs = [
-      this.state.panel.subscribeToState(this._updateDirty),
-      this.queryRunner.subscribeToState(this._updateDirty),
-      this.dataTransformer.subscribeToState(this._updateDirty),
-    ];
+    this._changeSubs = [this.state.panel.subscribeToState(this._updateDirty)];
+
+    if (this.state.panel.state.$data) {
+      this._changeSubs.concat([
+        this.queryRunner.subscribeToState(this._updateDirty),
+        this.dataTransformer.subscribeToState(this._updateDirty),
+      ]);
+    }
     return () => this._changeSubs.forEach((s) => s.unsubscribe());
   }
 
