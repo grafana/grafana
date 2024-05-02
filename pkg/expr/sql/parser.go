@@ -101,7 +101,7 @@ func parseTables(rawSQL string) ([]string, error) {
 						v := strings.TrimSpace(v)
 						if v != "" {
 							if !existsInList(token, tables) {
-								tables = append(tables, token)
+								tables = append(tables, v)
 							}
 						} else {
 							takeNext = true
