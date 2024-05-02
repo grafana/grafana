@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestAccessControl_Evaluate(t *testing.T) {
@@ -143,7 +144,11 @@ func TestAccessControl_Evaluate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets))
+			cfg := setting.NewCfg()
+			cfg.IsFeatureToggleEnabled = func(ft string) bool {
+				return ft == featuremgmt.FlagAccessActionSets
+			}
+			ac := acimpl.ProvideAccessControl(cfg)
 
 			if tt.scopeResolver != nil {
 				ac.RegisterScopeAttributeResolver(tt.resolverPrefix, tt.scopeResolver)
