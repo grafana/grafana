@@ -5,7 +5,7 @@ import { GrafanaTheme2, isIconName, ThemeRichColor } from '@grafana/data';
 
 import { useTheme2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
-import { ComponentSize } from '../../types';
+import { ComponentSize, IconSize, IconType } from '../../types';
 import { IconName } from '../../types/icon';
 import { getPropertiesForButtonSize } from '../Forms/commonStyles';
 import { Icon } from '../Icon/Icon';
@@ -155,11 +155,12 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
 LinkButton.displayName = 'LinkButton';
 
 interface IconRendererProps {
-  icon?: IconName | React.ReactElement<{ className?: string; size?: ComponentSize }>;
-  size: ComponentSize;
-  className: string;
+  icon?: IconName | React.ReactElement<{ className?: string; size?: IconSize }>;
+  size?: IconSize;
+  className?: string;
+  iconType?: IconType;
 }
-const IconRenderer = ({ icon, size, className }: IconRendererProps) => {
+export const IconRenderer = ({ icon, size, className, iconType }: IconRendererProps) => {
   if (React.isValidElement(icon)) {
     return React.cloneElement(icon, {
       className,
@@ -167,7 +168,7 @@ const IconRenderer = ({ icon, size, className }: IconRendererProps) => {
     });
   }
   if (isIconName(icon)) {
-    return <Icon name={icon} size={size} className={className} />;
+    return <Icon name={icon} size={size} className={className} type={iconType} />;
   }
 
   return null;
