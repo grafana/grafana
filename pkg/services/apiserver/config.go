@@ -5,7 +5,6 @@ import (
 	"net"
 	"path/filepath"
 	"strconv"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -14,10 +13,9 @@ import (
 
 func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o *options.Options) error {
 	defaultLogLevel := 0
-	ipStr := strings.TrimSuffix(strings.TrimPrefix(cfg.HTTPAddr, "["), "]")
-	ip := net.ParseIP(ipStr)
+	ip := net.ParseIP(cfg.HTTPAddr)
 	if ip == nil {
-		return fmt.Errorf("invalid IP address: %s", ipStr)
+		return fmt.Errorf("invalid IP address: %s", cfg.HTTPAddr)
 	}
 	apiURL := cfg.AppURL
 	port, err := strconv.Atoi(cfg.HTTPPort)
@@ -32,7 +30,7 @@ func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o
 		apiURL = fmt.Sprintf("https://%s:%d", ip, port)
 	}
 
-	host := net.JoinHostPort(ipStr, strconv.Itoa(port))
+	host := net.JoinHostPort(cfg.HTTPAddr, strconv.Itoa(port))
 
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 
