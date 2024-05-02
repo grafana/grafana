@@ -65,11 +65,6 @@ type FrontendSettingsLicenseInfoDTO struct {
 	AppUrl      *string `json:"appUrl,omitempty"`
 }
 
-type FrontendSettingsAzureCloudDTO struct {
-	Name        string `json:"name"`
-	DisplayName string `json:"displayName"`
-}
-
 type FrontendSettingsAzureDTO struct {
 	Cloud                                  string                      `json:"cloud"`
 	Clouds                                 []azsettings.AzureCloudInfo `json:"clouds"`
