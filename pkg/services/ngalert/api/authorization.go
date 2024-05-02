@@ -40,6 +40,11 @@ func (api *API) authorize(method, path string) web.Handler {
 	case http.MethodGet + "/api/ruler/grafana/api/v1/rules",
 		http.MethodGet + "/api/ruler/grafana/api/v1/export/rules":
 		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
+	case http.MethodGet + "/api/ruler/grafana/api/v1/rule/{RuleUID}":
+		eval = ac.EvalAll(
+			ac.EvalPermission(ac.ActionAlertingRuleRead),
+			ac.EvalPermission(dashboards.ActionFoldersRead),
+		)
 	case http.MethodPost + "/api/ruler/grafana/api/v1/rules/{Namespace}/export":
 		scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))
 		// more granular permissions are enforced by the handler via "authorizeRuleChanges"

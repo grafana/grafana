@@ -263,6 +263,29 @@ func (srv RulerSrv) RouteGetRulesConfig(c *contextmodel.ReqContext) response.Res
 	return response.JSON(http.StatusOK, result)
 }
 
+// RouteGetRuleByUID returns the alert rule with the given UID
+func (srv RulerSrv) RouteGetRuleByUID(c *contextmodel.ReqContext, ruleUID string) response.Response {
+	ctx := c.Req.Context()
+	orgID := c.SignedInUser.GetOrgID()
+
+	rule, err := srv.getAuthorizedRuleByUid(ctx, c, ruleUID)
+	if err != nil {
+		if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
+			return response.Empty(http.StatusNotFound)
+		}
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get rule by UID", err)
+	}
+
+	provenance, err := srv.provenanceStore.GetProvenance(ctx, &rule, orgID)
+	if err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get rule provenance", err)
+	}
+
+	result := toGettableExtendedRuleNode(rule, map[string]ngmodels.Provenance{rule.ResourceID(): provenance})
+
+	return response.JSON(http.StatusOK, result)
+}
+
 func (srv RulerSrv) RoutePostNameRulesConfig(c *contextmodel.ReqContext, ruleGroupConfig apimodels.PostableRuleGroupConfig, namespaceUID string) response.Response {
 	namespace, err := srv.store.GetNamespaceByUID(c.Req.Context(), namespaceUID, c.SignedInUser.GetOrgID(), c.SignedInUser)
 	if err != nil {

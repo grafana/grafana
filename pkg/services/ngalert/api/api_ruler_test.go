@@ -318,6 +318,79 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 	})
 }
 
+func TestRouteGetRuleByUID(t *testing.T) {
+	t.Run("rule is successfully fetched with the correct UID", func(t *testing.T) {
+		orgID := rand.Int63()
+		folder := randFolder()
+		ruleStore := fakes.NewRuleStore(t)
+		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
+		groupKey := models.GenerateGroupKey(orgID)
+		groupKey.NamespaceUID = folder.UID
+		gen := models.RuleGen.With(models.RuleGen.WithGroupKey(groupKey))
+
+		createdRules := gen.With(gen.WithUniqueGroupIndex(), gen.WithUniqueID()).GenerateManyRef(3)
+		require.Len(t, createdRules, 3)
+		ruleStore.PutRule(context.Background(), createdRules...)
+
+		perms := createPermissionsForRules(createdRules, orgID)
+		req := createRequestContextWithPerms(orgID, perms, nil)
+
+		expectedRule := createdRules[1]
+		response := createService(ruleStore).RouteGetRuleByUID(req, expectedRule.UID)
+
+		require.Equal(t, http.StatusOK, response.Status())
+		result := &apimodels.GettableExtendedRuleNode{}
+		require.NoError(t, json.Unmarshal(response.Body(), result))
+		require.NotNil(t, result)
+
+		require.Equal(t, expectedRule.UID, result.GrafanaManagedAlert.UID)
+		require.Equal(t, expectedRule.RuleGroup, result.GrafanaManagedAlert.RuleGroup)
+		require.Equal(t, expectedRule.Title, result.GrafanaManagedAlert.Title)
+	})
+
+	t.Run("error when fetching rule with non-existent UID", func(t *testing.T) {
+		orgID := rand.Int63()
+		folder := randFolder()
+		ruleStore := fakes.NewRuleStore(t)
+		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
+		groupKey := models.GenerateGroupKey(orgID)
+		groupKey.NamespaceUID = folder.UID
+		gen := models.RuleGen.With(models.RuleGen.WithGroupKey(groupKey))
+
+		createdRules := gen.With(gen.WithUniqueGroupIndex(), gen.WithUniqueID()).GenerateManyRef(3)
+		require.Len(t, createdRules, 3)
+		ruleStore.PutRule(context.Background(), createdRules...)
+
+		perms := createPermissionsForRules(createdRules, orgID)
+		req := createRequestContextWithPerms(orgID, perms, nil)
+		response := createService(ruleStore).RouteGetRuleByUID(req, "foobar")
+
+		require.Equal(t, http.StatusNotFound, response.Status())
+	})
+
+	t.Run("error due to user not being authorized to view a rule in the group", func(t *testing.T) {
+		orgID := rand.Int63()
+		folder := randFolder()
+		ruleStore := fakes.NewRuleStore(t)
+		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
+		groupKey := models.GenerateGroupKey(orgID)
+		groupKey.NamespaceUID = folder.UID
+		gen := models.RuleGen.With(models.RuleGen.WithGroupKey(groupKey))
+
+		authorizedRule := gen.With(gen.WithUniqueGroupIndex()).Generate()
+		ruleStore.PutRule(context.Background(), &authorizedRule)
+
+		unauthorizedRule := gen.With(gen.WithUniqueGroupIndex()).Generate()
+		ruleStore.PutRule(context.Background(), &unauthorizedRule)
+
+		perms := createPermissionsForRules([]*models.AlertRule{&authorizedRule}, orgID)
+		req := createRequestContextWithPerms(orgID, perms, nil)
+		response := createService(ruleStore).RouteGetRuleByUID(req, authorizedRule.UID)
+
+		require.Equal(t, http.StatusForbidden, response.Status())
+	})
+}
+
 func TestRouteGetRulesConfig(t *testing.T) {
 	gen := models.RuleGen
 	t.Run("fine-grained access is enabled", func(t *testing.T) {
