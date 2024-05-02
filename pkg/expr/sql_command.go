@@ -74,7 +74,11 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 
 	allFrames := []*data.Frame{}
 	for _, ref := range gr.varsToQuery {
-		results := vars[ref]
+		results, ok := vars[ref]
+		if !ok {
+			logger.Warn("no results found for", "ref", ref)
+			continue
+		}
 		frames := results.Values.AsDataFrames(ref)
 		allFrames = append(allFrames, frames...)
 	}
