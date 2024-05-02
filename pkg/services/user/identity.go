@@ -2,7 +2,6 @@ package user
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models/roletype"
@@ -40,7 +39,7 @@ type SignedInUser struct {
 	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
 	// Will only be set when featuremgmt.FlagIdForwarding is enabled.
 	IDToken      string `json:"-" xorm:"-"`
-	NamespacedID string
+	NamespacedID identity.NamespaceID
 }
 
 func (u *SignedInUser) ShouldUpdateLastSeenAt() bool {
@@ -196,7 +195,7 @@ func (u *SignedInUser) GetOrgRole() roletype.RoleType {
 }
 
 // GetID returns namespaced id for the entity
-func (u *SignedInUser) GetID() string {
+func (u *SignedInUser) GetID() identity.NamespaceID {
 	switch {
 	case u.ApiKeyID != 0:
 		return namespacedID(identity.NamespaceAPIKey, u.ApiKeyID)
@@ -205,7 +204,7 @@ func (u *SignedInUser) GetID() string {
 	case u.UserID > 0:
 		return namespacedID(identity.NamespaceUser, u.UserID)
 	case u.IsAnonymous:
-		return identity.NamespaceAnonymous + ":"
+		return namespacedID(identity.NamespaceAnonymous, 0)
 	case u.AuthenticatedBy == "render" && u.UserID == 0:
 		return namespacedID(identity.NamespaceRenderService, 0)
 	}
@@ -216,13 +215,8 @@ func (u *SignedInUser) GetID() string {
 // GetNamespacedID returns the namespace and ID of the active entity
 // The namespace is one of the constants defined in pkg/services/auth/identity
 func (u *SignedInUser) GetNamespacedID() (string, string) {
-	parts := strings.Split(u.GetID(), ":")
-	// Safety: GetID always returns a ':' separated string
-	if len(parts) != 2 {
-		return "", ""
-	}
-
-	return parts[0], parts[1]
+	id := u.GetID()
+	return id.Namespace(), id.ID()
 }
 
 func (u *SignedInUser) GetAuthID() string {
@@ -267,6 +261,6 @@ func (u *SignedInUser) GetIDToken() string {
 	return u.IDToken
 }
 
-func namespacedID(namespace string, id int64) string {
-	return fmt.Sprintf("%s:%d", namespace, id)
+func namespacedID(namespace string, id int64) identity.NamespaceID {
+	return identity.NewNamespaceIDUnchecked(namespace, id)
 }
