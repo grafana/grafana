@@ -50,6 +50,16 @@ const (
 	chinaConsoleURL   = "console.amazonaws.cn"
 )
 
+type SQLExpressionGroupBy struct {
+	Expressions []dataquery.QueryEditorGroupByExpression `json:"expressions"`
+	Type        dataquery.QueryEditorArrayExpressionType `json:"type"`
+}
+
+type sqlExpression struct {
+	dataquery.SQLExpression
+	GroupBy *SQLExpressionGroupBy `json:"groupBy,omitempty"`
+}
+
 type CloudWatchQuery struct {
 	logger            log.Logger
 	RefId             string
@@ -59,6 +69,7 @@ type CloudWatchQuery struct {
 	MetricName        string
 	Statistic         string
 	Expression        string
+	Sql               sqlExpression
 	SqlExpression     string
 	ReturnData        bool
 	Dimensions        map[string][]string
@@ -210,8 +221,9 @@ var validMetricDataID = regexp.MustCompile(`^[a-z][a-zA-Z0-9_]*$`)
 
 type metricsDataQuery struct {
 	dataquery.CloudWatchMetricsQuery
-	Type              string `json:"type"`
-	TimezoneUTCOffset string `json:"timezoneUTCOffset"`
+	Sql               *sqlExpression `json:"sql,omitempty"`
+	Type              string         `json:"type"`
+	TimezoneUTCOffset string         `json:"timezoneUTCOffset"`
 }
 
 // ParseMetricDataQueries decodes the metric data queries json, validates, sets default values and returns an array of CloudWatchQueries.
@@ -252,6 +264,10 @@ func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time
 
 		if mdq.MetricQueryType != nil {
 			cwQuery.MetricQueryType = *mdq.MetricQueryType
+		}
+
+		if mdq.Sql != nil {
+			cwQuery.Sql = *mdq.Sql
 		}
 
 		if mdq.SqlExpression != nil {

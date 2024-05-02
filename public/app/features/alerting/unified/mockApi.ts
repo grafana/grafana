@@ -5,6 +5,7 @@ import { setupServer, SetupServer } from 'msw/node';
 import { DataSourceInstanceSettings, PluginMeta } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
 import { AlertRuleUpdated } from 'app/features/alerting/unified/api/alertRuleApi';
+import allHandlers from 'app/features/alerting/unified/mocks/server/handlers';
 import { DashboardDTO, FolderDTO, NotifierDTO, OrgUser } from 'app/types';
 import {
   PromBuildInfoResponse,
@@ -424,10 +425,10 @@ export function mockDashboardApi(server: SetupServer) {
   };
 }
 
+const server = setupServer(...allHandlers);
+
 // Creates a MSW server and sets up beforeAll, afterAll and beforeEach handlers for it
 export function setupMswServer() {
-  const server = setupServer();
-
   beforeAll(() => {
     setBackendSrv(backendSrv);
     server.listen({ onUnhandledRequest: 'error' });
@@ -443,3 +444,5 @@ export function setupMswServer() {
 
   return server;
 }
+
+export default server;

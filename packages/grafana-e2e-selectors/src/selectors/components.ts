@@ -215,25 +215,30 @@ export const Components = {
       rcContentWrapper: () => '.rc-drawer-content-wrapper',
       subtitle: 'data-testid drawer subtitle',
     },
+    DashboardSaveDrawer: {
+      saveButton: 'data-testid Save dashboard drawer button',
+      saveAsButton: 'data-testid Save as dashboard drawer button',
+      saveAsTitleInput: 'Save dashboard title field',
+    },
   },
   PanelEditor: {
     General: {
-      content: 'Panel editor content',
+      content: 'data-testid Panel editor content',
     },
     OptionsPane: {
-      content: 'Panel editor option pane content',
+      content: 'data-testid Panel editor option pane content',
       select: 'Panel editor option pane select',
       fieldLabel: (type: string) => `${type} field property editor`,
       fieldInput: (title: string) => `data-testid Panel editor option pane field input ${title}`,
     },
     // not sure about the naming *DataPane*
     DataPane: {
-      content: 'Panel editor data pane content',
+      content: 'data-testid Panel editor data pane content',
     },
     applyButton: 'data-testid Apply changes and go back to dashboard',
     toggleVizPicker: 'data-testid toggle-viz-picker',
     toggleVizOptions: 'data-testid toggle-viz-options',
-    toggleTableView: 'toggle-table-view',
+    toggleTableView: 'data-testid toggle-table-view',
 
     // [Geomap] Map controls
     showZoomField: 'Map controls Show zoom control field property editor',
@@ -252,7 +257,7 @@ export const Components = {
       content: 'Panel inspector Stats content',
     },
     Json: {
-      content: 'Panel inspector Json content',
+      content: 'data-testid Panel inspector Json content',
     },
     Query: {
       content: 'Panel inspector Query content',
@@ -300,6 +305,15 @@ export const Components = {
     groupToggle: 'data-testid group-collapse-toggle',
     toggle: 'data-testid collapse-toggle',
     expandedContent: 'data-testid expanded-content',
+    previewButton: 'data-testid alert-rule preview-button',
+    ruleNameField: 'data-testid alert-rule name-field',
+    newFolderButton: 'data-testid alert-rule new-folder-button',
+    newFolderNameField: 'data-testid alert-rule name-folder-name-field',
+    newFolderNameCreateButton: 'data-testid alert-rule name-folder-name-create-button',
+    newEvaluationGroupButton: 'data-testid alert-rule new-evaluation-group-button',
+    newEvaluationGroupName: 'data-testid alert-rule new-evaluation-group-name',
+    newEvaluationGroupInterval: 'data-testid alert-rule new-evaluation-group-interval',
+    newEvaluationGroupCreate: 'data-testid alert-rule new-evaluation-group-create-button',
   },
   Alert: {
     /**
@@ -364,7 +378,25 @@ export const Components = {
   },
   NavToolbar: {
     container: 'data-testid Nav toolbar',
+    shareDashboard: 'data-testid Share dashboard',
+    markAsFavorite: 'data-testid Mark as favorite',
+    editDashboard: {
+      editButton: 'data-testid Edit dashboard button',
+      saveButton: 'data-testid Save dashboard button',
+      exitButton: 'data-testid Exit edit mode button',
+      settingsButton: 'data-testid Dashboard settings',
+      addRowButton: 'data-testid Add row button',
+      addLibraryPanelButton: 'data-testid Add a panel from the panel library button',
+      addVisualizationButton: 'data-testid Add new visualization menu item',
+      pastePanelButton: 'data-testid Paste panel button',
+      discardChangesButton: 'data-testid Discard changes button',
+      discardLibraryPanelButton: 'data-testid Discard library panel button',
+      unlinkLibraryPanelButton: 'data-testid Unlink library panel button',
+      saveLibraryPanelButton: 'data-testid Save library panel button',
+      backToDashboardButton: 'data-testid Back to dashboard button',
+    },
   },
+
   PageToolbar: {
     container: () => '.page-toolbar',
     item: (tooltip: string) => `${tooltip}`,
@@ -377,8 +409,9 @@ export const Components = {
     backArrow: 'data-testid Go Back',
   },
   OptionsGroup: {
-    group: (title?: string) => (title ? `Options group ${title}` : 'Options group'),
-    toggle: (title?: string) => (title ? `Options group ${title} toggle` : 'Options group toggle'),
+    group: (title?: string) => (title ? `data-testid Options group ${title}` : 'data-testid Options group'),
+    toggle: (title?: string) =>
+      title ? `data-testid Options group ${title} toggle` : 'data-testid Options group toggle',
   },
   PluginVisualization: {
     item: (title: string) => `Plugin visualization item ${title}`,
@@ -442,6 +475,7 @@ export const Components = {
   QueryBuilder: {
     queryPatterns: 'data-testid Query patterns',
     labelSelect: 'data-testid Select label',
+    inputSelect: 'data-testid Select label-input',
     valueSelect: 'data-testid Select value',
     matchOperatorSelect: 'data-testid Select match operator',
   },
@@ -535,8 +569,8 @@ export const Components = {
     variableOption: 'data-testid variable-option',
   },
   Annotations: {
-    annotationsTypeInput: 'annotations-type-input',
-    annotationsChoosePanelInput: 'choose-panels-input',
+    annotationsTypeInput: 'data-testid annotations-type-input',
+    annotationsChoosePanelInput: 'data-testid choose-panels-input',
     editor: {
       testButton: 'data-testid annotations-test-button',
       resultContainer: 'data-testid annotations-query-result-container',

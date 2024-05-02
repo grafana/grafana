@@ -1179,7 +1179,7 @@
                   "type": "string"
                 },
                 "settings": {
-                  "additionalProperties": false,
+                  "additionalProperties": {},
                   "type": "object"
                 },
                 "source": {
@@ -1459,7 +1459,7 @@
                     "type": "string"
                   },
                   "settings": {
-                    "additionalProperties": false,
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   "source": {
@@ -2482,7 +2482,7 @@
             "type": "string"
           },
           "model": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "type": "object"
           },
           "queryType": {
@@ -3253,6 +3253,123 @@
         "title": "BasicAuth contains basic HTTP authentication credentials.",
         "type": "object"
       },
+      "CacheConfig": {
+        "description": "Config defines the internal representation of a cache configuration, including fields not set by the API caller",
+        "properties": {
+          "created": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "dataSourceID": {
+            "description": "Fields that can be set by the API caller - read/write",
+            "format": "int64",
+            "type": "integer"
+          },
+          "dataSourceUID": {
+            "type": "string"
+          },
+          "defaultTTLMs": {
+            "description": "These are returned by the HTTP API, but are managed internally - read-only\nNote: 'created' and 'updated' are special properties managed automatically by xorm, but we are setting them manually",
+            "format": "int64",
+            "type": "integer"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "ttlQueriesMs": {
+            "description": "TTL MS, or \"time to live\", is how long a cached item will stay in the cache before it is removed (in milliseconds)",
+            "format": "int64",
+            "type": "integer"
+          },
+          "ttlResourcesMs": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "updated": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "useDefaultTTL": {
+            "description": "If UseDefaultTTL is enabled, then the TTLQueriesMS and TTLResourcesMS in this object is always sent as the default TTL located in grafana.ini",
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "CacheConfigResponse": {
+        "properties": {
+          "created": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "dataSourceID": {
+            "description": "Fields that can be set by the API caller - read/write",
+            "format": "int64",
+            "type": "integer"
+          },
+          "dataSourceUID": {
+            "type": "string"
+          },
+          "defaultTTLMs": {
+            "description": "These are returned by the HTTP API, but are managed internally - read-only\nNote: 'created' and 'updated' are special properties managed automatically by xorm, but we are setting them manually",
+            "format": "int64",
+            "type": "integer"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "ttlQueriesMs": {
+            "description": "TTL MS, or \"time to live\", is how long a cached item will stay in the cache before it is removed (in milliseconds)",
+            "format": "int64",
+            "type": "integer"
+          },
+          "ttlResourcesMs": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "updated": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "useDefaultTTL": {
+            "description": "If UseDefaultTTL is enabled, then the TTLQueriesMS and TTLResourcesMS in this object is always sent as the default TTL located in grafana.ini",
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "CacheConfigSetter": {
+        "description": "ConfigSetter defines the cache parameters that users can configure per datasource\nThis is only intended to be consumed by the SetCache HTTP Handler",
+        "properties": {
+          "dataSourceID": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "dataSourceUID": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "ttlQueriesMs": {
+            "description": "TTL MS, or \"time to live\", is how long a cached item will stay in the cache before it is removed (in milliseconds)",
+            "format": "int64",
+            "type": "integer"
+          },
+          "ttlResourcesMs": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "useDefaultTTL": {
+            "description": "If UseDefaultTTL is enabled, then the TTLQueriesMS and TTLResourcesMS in this object is always sent as the default TTL located in grafana.ini",
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
       "CalculateDiffTarget": {
         "properties": {
           "dashboardId": {
@@ -3415,7 +3532,15 @@
             },
             "type": "array"
           },
+          "Policies": {
+            "description": "Policies contains all policy identifiers included in the certificate.\nIn Go 1.22, encoding/gob cannot handle and ignores this field.",
+            "items": {
+              "$ref": "#/components/schemas/OID"
+            },
+            "type": "array"
+          },
           "PolicyIdentifiers": {
+            "description": "PolicyIdentifiers contains asn1.ObjectIdentifiers, the components\nof which are limited to int32. If a certificate contains a policy which\ncannot be represented by asn1.ObjectIdentifier, it will not be included in\nPolicyIdentifiers, but will be present in Policies, which contains all parsed\npolicy OIDs.",
             "items": {
               "$ref": "#/components/schemas/ObjectIdentifier"
             },
@@ -3546,11 +3671,10 @@
             "format": "date-time",
             "type": "string"
           },
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
           "stack": {
+            "type": "string"
+          },
+          "uid": {
             "type": "string"
           },
           "updated": {
@@ -3564,7 +3688,7 @@
         "properties": {
           "runs": {
             "items": {
-              "$ref": "#/components/schemas/MigrateDataResponseDTO"
+              "$ref": "#/components/schemas/MigrateDataResponseListDTO"
             },
             "type": "array"
           }
@@ -3641,15 +3765,15 @@
       "CookiePreferences": {
         "properties": {
           "analytics": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "type": "object"
           },
           "functional": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "type": "object"
           },
           "performance": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "type": "object"
           }
         },
@@ -3711,7 +3835,7 @@
             "type": "string"
           },
           "target": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "description": "Target data query",
             "example": {
               "prop1": "value1",
@@ -3744,7 +3868,7 @@
             "type": "string"
           },
           "target": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "description": "Target data query",
             "example": {
               "prop1": "value1",
@@ -5044,12 +5168,12 @@
       "FieldConfig": {
         "properties": {
           "color": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "description": "Map values to a display color\nNOTE: this interface is under development in the frontend... so simple map for now",
             "type": "object"
           },
           "custom": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "description": "Panel Specific Values",
             "type": "object"
           },
@@ -6086,7 +6210,7 @@
         "type": "object"
       },
       "IPMask": {
-        "description": "See type IPNet and func ParseCIDR for details.",
+        "description": "See type [IPNet] and func [ParseCIDR] for details.",
         "items": {
           "format": "uint8",
           "type": "integer"
@@ -6714,15 +6838,14 @@
       },
       "MigrateDataResponseDTO": {
         "properties": {
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
           "items": {
             "items": {
               "$ref": "#/components/schemas/MigrateDataResponseItemDTO"
             },
             "type": "array"
+          },
+          "uid": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -6756,6 +6879,14 @@
           "refId",
           "status"
         ],
+        "type": "object"
+      },
+      "MigrateDataResponseListDTO": {
+        "properties": {
+          "uid": {
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "MoveFolderCommand": {
@@ -6810,7 +6941,7 @@
         "type": "array"
       },
       "Name": {
-        "description": "Name represents an X.509 distinguished name. This only includes the common\nelements of a DN. Note that Name is only an approximation of the X.509\nstructure. If an accurate representation is needed, asn1.Unmarshal the raw\nsubject or issuer as an RDNSequence.",
+        "description": "Name represents an X.509 distinguished name. This only includes the common\nelements of a DN. Note that Name is only an approximation of the X.509\nstructure. If an accurate representation is needed, asn1.Unmarshal the raw\nsubject or issuer as an [RDNSequence].",
         "properties": {
           "Country": {
             "items": {
@@ -7046,6 +7177,10 @@
           }
         },
         "title": "OAuth2 is the oauth2 client configuration.",
+        "type": "object"
+      },
+      "OID": {
+        "title": "An OID represents an ASN.1 OBJECT IDENTIFIER.",
         "type": "object"
       },
       "ObjectIdentifier": {
@@ -8336,7 +8471,7 @@
         "description": "PublicError is derived from Error and only contains information\navailable to the end user.",
         "properties": {
           "extra": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "type": "object"
           },
           "message": {
@@ -8517,12 +8652,12 @@
         "description": "The embedded FieldConfig's display name must be set.\nIt corresponds to the QueryResultMetaStat on the frontend (https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/types/data.ts#L53).",
         "properties": {
           "color": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "description": "Map values to a display color\nNOTE: this interface is under development in the frontend... so simple map for now",
             "type": "object"
           },
           "custom": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "description": "Panel Specific Values",
             "type": "object"
           },
@@ -8760,7 +8895,7 @@
           },
           "queries": {
             "items": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "type": "object"
             },
             "type": "array"
@@ -10841,7 +10976,7 @@
         "type": "object"
       },
       "URL": {
-        "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the EscapedPath method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
+        "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nThe Host field contains the host and port subcomponents of the URL.\nWhen the port is present, it is separated from the host with a colon.\nWhen the host is an IPv6 address, it must be enclosed in square brackets:\n\"[fe80::1]:80\". The [net.JoinHostPort] function combines a host and port\ninto a string suitable for the Host field, adding square brackets to\nthe host when necessary.\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the [URL.EscapedPath] method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
         "properties": {
           "ForceQuery": {
             "type": "boolean"
@@ -10884,7 +11019,7 @@
         "description": "Unstructured allows objects that do not have Golang structs registered to be manipulated\ngenerically.",
         "properties": {
           "Object": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "description": "Object is a JSON compatible map with string, float, int, bool, []interface{},\nor map[string]interface{} children.",
             "type": "object"
           }
@@ -11479,7 +11614,7 @@
         "type": "object"
       },
       "Userinfo": {
-        "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
+        "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a [URL]. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
         "type": "object"
       },
       "ValidationError": {
@@ -12114,7 +12249,7 @@
         "description": "PublicError is derived from Error and only contains information\navailable to the end user.",
         "properties": {
           "extra": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "description": "Extra Additional information about the error",
             "type": "object"
           },
@@ -14859,18 +14994,51 @@
         ]
       }
     },
-    "/cloudmigration/migration/{id}": {
+    "/cloudmigration/migration/run/{runUID}": {
+      "get": {
+        "operationId": "getCloudMigrationRun",
+        "parameters": [
+          {
+            "description": "RunUID of a migration run",
+            "in": "path",
+            "name": "runUID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/cloudMigrationRunResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get the result of a single migration run.",
+        "tags": [
+          "migrations"
+        ]
+      }
+    },
+    "/cloudmigration/migration/{uid}": {
       "delete": {
         "operationId": "deleteCloudMigration",
         "parameters": [
           {
-            "description": "ID of an migration",
+            "description": "UID of a migration",
             "in": "path",
-            "name": "id",
+            "name": "uid",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -14895,13 +15063,12 @@
         "operationId": "getCloudMigration",
         "parameters": [
           {
-            "description": "ID of an migration",
+            "description": "UID of a migration",
             "in": "path",
-            "name": "id",
+            "name": "uid",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -14925,18 +15092,17 @@
         ]
       }
     },
-    "/cloudmigration/migration/{id}/run": {
+    "/cloudmigration/migration/{uid}/run": {
       "get": {
         "operationId": "getCloudMigrationRunList",
         "parameters": [
           {
-            "description": "ID of an migration",
+            "description": "UID of a migration",
             "in": "path",
-            "name": "id",
+            "name": "uid",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -14964,13 +15130,12 @@
         "operationId": "runCloudMigration",
         "parameters": [
           {
-            "description": "ID of an migration",
+            "description": "UID of a migration",
             "in": "path",
-            "name": "id",
+            "name": "uid",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -14989,51 +15154,6 @@
           }
         },
         "summary": "Trigger the run of a migration to the Grafana Cloud.",
-        "tags": [
-          "migrations"
-        ]
-      }
-    },
-    "/cloudmigration/migration/{id}/run/{runID}": {
-      "get": {
-        "operationId": "getCloudMigrationRun",
-        "parameters": [
-          {
-            "description": "ID of an migration",
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          },
-          {
-            "description": "Run ID of a migration run",
-            "in": "path",
-            "name": "runID",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/cloudMigrationRunResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Get the result of a single migration run.",
         "tags": [
           "migrations"
         ]
@@ -16961,6 +17081,188 @@
         "summary": "Fetch data source resources.",
         "tags": [
           "datasources"
+        ]
+      }
+    },
+    "/datasources/{dataSourceUID}/cache": {
+      "get": {
+        "description": "get cache config for a single data source",
+        "operationId": "getDataSourceCacheConfig",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dataSourceUID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CacheConfigResponse"
+                }
+              }
+            },
+            "description": "CacheConfigResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "tags": [
+          "enterprise"
+        ]
+      },
+      "post": {
+        "description": "set cache config for a single data source",
+        "operationId": "setDataSourceCacheConfig",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dataSourceUID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CacheConfigSetter"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CacheConfigResponse"
+                }
+              }
+            },
+            "description": "CacheConfigResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "tags": [
+          "enterprise"
+        ]
+      }
+    },
+    "/datasources/{dataSourceUID}/cache/clean": {
+      "post": {
+        "description": "clean cache for a single data source",
+        "operationId": "cleanDataSourceCache",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dataSourceUID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CacheConfigResponse"
+                }
+              }
+            },
+            "description": "CacheConfigResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "tags": [
+          "enterprise"
+        ]
+      }
+    },
+    "/datasources/{dataSourceUID}/cache/disable": {
+      "post": {
+        "description": "disable cache for a single data source",
+        "operationId": "disableDataSourceCache",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dataSourceUID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CacheConfigResponse"
+                }
+              }
+            },
+            "description": "CacheConfigResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "tags": [
+          "enterprise"
+        ]
+      }
+    },
+    "/datasources/{dataSourceUID}/cache/enable": {
+      "post": {
+        "description": "enable cache for a single data source",
+        "operationId": "enableDataSourceCache",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dataSourceUID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CacheConfigResponse"
+                }
+              }
+            },
+            "description": "CacheConfigResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "tags": [
+          "enterprise"
         ]
       }
     },
@@ -24669,7 +24971,7 @@
                     "type": "string"
                   },
                   "settings": {
-                    "additionalProperties": false,
+                    "additionalProperties": {},
                     "type": "object"
                   }
                 },

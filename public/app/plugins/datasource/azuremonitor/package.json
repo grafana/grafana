@@ -18,6 +18,8 @@
     "monaco-editor": "0.34.1",
     "prismjs": "1.29.0",
     "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-select": "5.8.0",
     "react-use": "17.5.0",
     "rxjs": "7.8.1",
     "tslib": "2.6.2"
@@ -25,6 +27,7 @@
   "devDependencies": {
     "@grafana/e2e-selectors": "11.1.0-pre",
     "@grafana/plugin-configs": "11.1.0-pre",
+    "@testing-library/dom": "10.0.0",
     "@testing-library/react": "15.0.2",
     "@testing-library/user-event": "14.5.2",
     "@types/jest": "29.5.12",
@@ -32,6 +35,7 @@
     "@types/node": "20.12.7",
     "@types/prismjs": "1.26.3",
     "@types/react": "18.2.79",
+    "@types/react-dom": "18.2.25",
     "@types/testing-library__jest-dom": "5.14.9",
     "react-select-event": "5.5.1",
     "ts-node": "10.9.2",

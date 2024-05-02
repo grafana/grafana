@@ -114,8 +114,21 @@ func (f *accessControlDashboardPermissionFilter) Where() (string, []any) {
 	return f.where.string, f.where.params
 }
 
+// Check if user has no permissions required for search to skip expensive query
+func (f *accessControlDashboardPermissionFilter) hasRequiredActions() bool {
+	permissions := f.user.GetPermissions()
+	requiredActions := append(f.folderActions, f.dashboardActions...)
+	for _, action := range requiredActions {
+		if _, ok := permissions[action]; ok {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (f *accessControlDashboardPermissionFilter) buildClauses() {
-	if f.user == nil || f.user.IsNil() || len(f.user.GetPermissions()) == 0 {
+	if f.user == nil || f.user.IsNil() || !f.hasRequiredActions() {
 		f.where = clause{string: "(1 = 0)"}
 		return
 	}
