@@ -76,6 +76,10 @@ The data is converted as follows:
 
 {{< figure src="/static/img/docs/candlestick-panel/candlestick.png" max-width="1065px" alt="A candlestick visualization showing the price movements of specific asset." >}}
 
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ## Mode
 
 The mode options allow you to toggle which dimensions are used for the visualization.

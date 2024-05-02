@@ -147,3 +147,7 @@ You should now see a list of matching traces in the table visualization. While s
 {{< figure src="/static/img/docs/panels/traces/screenshot-traces-trace-link.png" caption="Selecting the trace link" >}}
 
 {{< figure src="/static/img/docs/panels/traces/screenshot-traces-trace-link-follow.png" caption="Follow the trace link populates the trace ID and displays the traces view" >}}
+
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}

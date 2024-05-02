@@ -33,6 +33,10 @@ This panel can show one or more bar gauges depending on how many series, rows, o
 
 {{< docs/play title="Bar Gauge" url="https://play.grafana.org/d/vmie2cmWz/" >}}
 
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ## Value options
 
 Use the following options to refine how your visualization displays the value:
