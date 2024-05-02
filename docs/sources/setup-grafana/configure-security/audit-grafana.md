@@ -269,6 +269,12 @@ external group.
 
 \* `resources` may also contain a third item with `"type":` set to `"user"` or `"team"`.
 
+#### Data source query
+
+| Action           | Distinguishing fields                                        |
+| ---------------- | ------------------------------------------------------------ |
+| Query datasource | `{"action": "query", "resources": [{"type": "datasource"}]}` |
+
 #### Reporting
 
 | Action                    | Distinguishing fields                                                            |
