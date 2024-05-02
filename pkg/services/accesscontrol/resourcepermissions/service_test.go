@@ -243,11 +243,11 @@ func setupTestEnvironment(t *testing.T, ops Options) (*Service, db.DB, *setting.
 	require.NoError(t, err)
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
-	ac := acimpl.ProvideAccessControl(cfg)
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	acService := &actest.FakeService{}
 	service, err := New(
 		cfg, ops, featuremgmt.WithFeatures(), routing.NewRouteRegister(), license,
-		ac, acService, sql, teamSvc, userSvc, NewActionSetService(),
+		ac, acService, sql, teamSvc, userSvc, NewActionSetService(ac),
 	)
 	require.NoError(t, err)
 

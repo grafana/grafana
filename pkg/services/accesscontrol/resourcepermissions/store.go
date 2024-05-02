@@ -764,9 +764,9 @@ func (s *InMemoryActionSets) Resolve(action string) []string {
 
 	for _, actionSet := range actionSets {
 		prefix := strings.Split(actionSet, ":")[0]
-		// Only use action sets for folders for now
+		// Only use action sets for folders and dashboards for now
 		// We need to verify that action sets for other resources do not share names with actions (eg, `datasources:query`)
-		if prefix != "folders" {
+		if prefix != "folders" && prefix != "dashboards" {
 			continue
 		}
 		sets = append(sets, actionSet)
