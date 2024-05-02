@@ -61,26 +61,31 @@ func getTables(te sqlparser.TableExpr) []string {
 		tables = append(tables, joinTables(v)...)
 		return tables
 	case *sqlparser.ParenTableExpr:
-		tx := v.Exprs
-		for _, e := range tx {
+		for _, e := range v.Exprs {
 			tables = getTables(e)
 		}
 	default:
-		buf := sqlparser.NewTrackedBuffer(nil)
-		te.Format(buf)
-		fromClause := buf.String()
-		upperFromClause := strings.ToUpper(fromClause)
-		if strings.Contains(upperFromClause, "JOIN") {
-			return extractTablesFrom(fromClause)
+		tables = append(tables, unknownExpr(te)...)
+	}
+	return tables
+}
+
+func unknownExpr(te sqlparser.TableExpr) []string {
+	tables := []string{}
+	buf := sqlparser.NewTrackedBuffer(nil)
+	te.Format(buf)
+	fromClause := buf.String()
+	upperFromClause := strings.ToUpper(fromClause)
+	if strings.Contains(upperFromClause, "JOIN") {
+		return extractTablesFrom(fromClause)
+	}
+	if upperFromClause != "DUAL" && !strings.HasPrefix(fromClause, "(") {
+		if strings.Contains(upperFromClause, " AS") {
+			name := stripAlias(fromClause)
+			tables = append(tables, name)
+			return tables
 		}
-		if upperFromClause != "DUAL" && !strings.HasPrefix(fromClause, "(") {
-			if strings.Contains(upperFromClause, " AS") {
-				name := stripAlias(fromClause)
-				tables = append(tables, name)
-				return tables
-			}
-			tables = append(tables, fromClause)
-		}
+		tables = append(tables, fromClause)
 	}
 	return tables
 }
