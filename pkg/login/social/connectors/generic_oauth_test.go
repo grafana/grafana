@@ -36,7 +36,6 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 		OrgAttributePath        string
 		OrgMapping              []string
 		ExpectedEmail           string
-		ExpectedRole            org.RoleType
 		ExpectedOrgRoles        map[int64]org.RoleType
 		ExpectedError           error
 		ExpectedGrafanaAdmin    *bool
@@ -49,7 +48,6 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			},
 			RoleAttributePath: "role",
 			ExpectedEmail:     "john.doe@example.com",
-			ExpectedRole:      "Admin",
 			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleAdmin},
 		},
 		{
@@ -60,7 +58,6 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			},
 			RoleAttributePath: "",
 			ExpectedEmail:     "john.doe@example.com",
-			ExpectedRole:      "Viewer",
 			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleViewer},
 		},
 		{
@@ -71,7 +68,6 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			},
 			RoleAttributePath: "invalid_path",
 			ExpectedEmail:     "john.doe@example.com",
-			ExpectedRole:      "Viewer",
 			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleViewer},
 		},
 		{
@@ -82,7 +78,6 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			},
 			RoleAttributePath: "role",
 			ExpectedEmail:     "john.doe@example.com",
-			ExpectedRole:      "Admin",
 			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleAdmin},
 		},
 		{
@@ -92,7 +87,6 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			},
 			RoleAttributePath: "",
 			ExpectedEmail:     "john.doe@example.com",
-			ExpectedRole:      "Viewer",
 			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleViewer},
 		},
 		{
@@ -102,14 +96,12 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			},
 			RoleAttributePath: "role",
 			ExpectedEmail:     "john.doe@example.com",
-			ExpectedRole:      "Viewer",
 			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleViewer},
 		},
 		{
 			Name:              "Given no id_token, a valid role path, no API response, no data",
 			RoleAttributePath: "role",
 			ExpectedEmail:     "",
-			ExpectedRole:      "Viewer",
 			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleViewer},
 		},
 		{
@@ -124,7 +116,6 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			},
 			RoleAttributePath: "role",
 			ExpectedEmail:     "john.doe@example.com",
-			ExpectedRole:      "Admin",
 			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleAdmin},
 		},
 		{
@@ -140,7 +131,6 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			},
 			RoleAttributePath:    "role",
 			ExpectedEmail:        "john.doe@example.com",
-			ExpectedRole:         "Admin",
 			ExpectedGrafanaAdmin: nil,
 			ExpectedOrgRoles:     map[int64]org.RoleType{2: org.RoleAdmin},
 		},
@@ -157,7 +147,6 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			},
 			RoleAttributePath:    "role",
 			ExpectedEmail:        "john.doe@example.com",
-			ExpectedRole:         "Admin",
 			ExpectedGrafanaAdmin: trueBoolPtr(),
 			ExpectedOrgRoles:     map[int64]org.RoleType{2: org.RoleAdmin},
 		},
@@ -173,7 +162,6 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			},
 			RoleAttributePath: "invalid_path",
 			ExpectedEmail:     "john.doe@example.com",
-			ExpectedRole:      "Viewer",
 			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleViewer},
 		},
 		{
@@ -187,7 +175,6 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			},
 			RoleAttributePath: "role",
 			ExpectedEmail:     "from_response@example.com",
-			ExpectedRole:      "Admin",
 			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleAdmin},
 		},
 		{
@@ -201,7 +188,6 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			},
 			RoleAttributePath: "role",
 			ExpectedEmail:     "john.doe@example.com",
-			ExpectedRole:      "Viewer",
 			ExpectedError:     nil,
 			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleViewer},
 		},
@@ -214,7 +200,6 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			},
 			RoleAttributePath: "contains(info.roles[*], 'dev') && 'Editor'",
 			ExpectedEmail:     "john.doe@example.com",
-			ExpectedRole:      "Editor",
 			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleEditor},
 		},
 		{
@@ -230,7 +215,6 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			},
 			RoleAttributePath: "contains(info.roles[*], 'SRE') && 'Admin'",
 			ExpectedEmail:     "john.doe@example.com",
-			ExpectedRole:      "Admin",
 			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleAdmin},
 		},
 		{
@@ -246,7 +230,6 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			},
 			RoleAttributePath: "contains(info.roles[*], 'SRE') && 'Admin'",
 			ExpectedEmail:     "john.doe@example.com",
-			ExpectedRole:      "Admin",
 			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleAdmin},
 		},
 		{
@@ -263,7 +246,6 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			},
 			RoleAttributePath: "contains(info.roles[*], 'SRE') && 'Admin' || contains(info.roles[*], 'dev') && 'Editor' || 'Viewer'",
 			ExpectedEmail:     "john.doe@example.com",
-			ExpectedRole:      "Editor",
 			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleEditor},
 		},
 		{
@@ -281,7 +263,6 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			},
 			RoleAttributePath: "contains(info.roles[*], 'SRE') && 'Admin' || contains(info.roles[*], 'dev') && 'Editor' || 'Viewer'",
 			ExpectedEmail:     "john.doe@example.com",
-			ExpectedRole:      "",
 			ExpectedOrgRoles:  nil,
 		},
 		{
@@ -299,11 +280,10 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			ExpectedEmail:     "john.doe@example.com",
 			OrgAttributePath:  "info.roles",
 			OrgMapping:        []string{"SRE:2:Viewer", "engineering:3:Editor"},
-			ExpectedRole:      "Admin",
 			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleAdmin, 3: org.RoleAdmin},
 		},
 		{
-			Name:                    "Given a valid id_token, a valid advanced JMESPath role path, a valid advanced JMESPath org roles path, a valid API response, prefer ID ken",
+			Name:                    "Given a valid id_token, a valid advanced JMESPath role path, a valid advanced JMESPath org roles path, a valid API response, prefer ID token",
 			SkipOrgRoleSync:         false,
 			AllowAssignGrafanaAdmin: false,
 			ResponseBody:            map[string]any{"info": map[string]any{"roles": []string{"engineering", "SRE"}}},
@@ -315,8 +295,103 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			OrgAttributePath:  "info.roles",
 			OrgMapping:        []string{"dev:org_dev:Viewer", "engineering:org_engineering:Editor"},
 			ExpectedEmail:     "john.doe@example.com",
-			ExpectedRole:      "Viewer",
 			ExpectedOrgRoles:  map[int64]org.RoleType{4: org.RoleViewer, 5: org.RoleEditor},
+		},
+		{
+			Name:                    "Should not fail when the evaluated role is invalid, role_attribute_strict is set to true and evaluated org roles are not empty",
+			SkipOrgRoleSync:         false,
+			AllowAssignGrafanaAdmin: false,
+			ResponseBody:            map[string]any{"info": map[string]any{"roles": []string{"engineering", "SRE"}}},
+			OAuth2Extra: map[string]any{
+				// { "email": "john.doe@example.com",
+				//   "info": { "roles": [ "dev", "engineering" ] }}
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg"},
+			RoleAttributePath:   "'Invalid'",
+			RoleAttributeStrict: true,
+			OrgAttributePath:    "info.roles",
+			OrgMapping:          []string{"dev:org_dev:Viewer", "engineering:org_engineering:Editor"},
+			ExpectedEmail:       "john.doe@example.com",
+			ExpectedOrgRoles:    map[int64]org.RoleType{4: org.RoleViewer, 5: org.RoleEditor},
+		},
+		{
+			Name:                    "Should not fail when the evaluated role is valid, role_attribute_strict is set to true and evaluated org roles are empty",
+			SkipOrgRoleSync:         false,
+			AllowAssignGrafanaAdmin: false,
+			ResponseBody:            map[string]any{"info": map[string]any{"roles": []string{"engineering", "SRE"}}},
+			OAuth2Extra: map[string]any{
+				// { "email": "john.doe@example.com",
+				//   "info": { "roles": [ "dev", "engineering" ] }}
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg"},
+			RoleAttributePath:   "'Editor'",
+			RoleAttributeStrict: true,
+			OrgAttributePath:    "info.roles",
+			OrgMapping:          []string{"notmatching:org_dev:Viewer", "notmatching:org_engineering:Editor"},
+			ExpectedEmail:       "john.doe@example.com",
+			ExpectedOrgRoles:    map[int64]org.RoleType{2: org.RoleEditor},
+		},
+		{
+			Name:                    "Should not fail when role_attribute path is empty, role_attribute_strict is set to true and evaluated org roles are not empty",
+			SkipOrgRoleSync:         false,
+			AllowAssignGrafanaAdmin: false,
+			ResponseBody:            map[string]any{"info": map[string]any{"roles": []string{"engineering", "SRE"}}},
+			OAuth2Extra: map[string]any{
+				// { "email": "john.doe@example.com",
+				//   "info": { "roles": [ "dev", "engineering" ] }}
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg"},
+			RoleAttributePath:   "",
+			RoleAttributeStrict: true,
+			OrgAttributePath:    "info.roles",
+			OrgMapping:          []string{"dev:org_dev:Viewer", "engineering:org_engineering:Editor"},
+			ExpectedEmail:       "john.doe@example.com",
+			ExpectedOrgRoles:    map[int64]org.RoleType{4: org.RoleViewer, 5: org.RoleEditor},
+		},
+		{
+			Name:                    "Should fail when role_attribute_path is empty, role_attribute_strict is set to true and org_mapping is empty",
+			SkipOrgRoleSync:         false,
+			AllowAssignGrafanaAdmin: false,
+			ResponseBody:            map[string]any{"info": map[string]any{"roles": []string{"engineering", "SRE"}}},
+			OAuth2Extra: map[string]any{
+				// { "email": "john.doe@example.com",
+				//   "info": { "roles": [ "dev", "engineering" ] }}
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg"},
+			RoleAttributePath:   "",
+			RoleAttributeStrict: true,
+			OrgAttributePath:    "info.invalid",
+			OrgMapping:          []string{},
+			ExpectedEmail:       "john.doe@example.com",
+			ExpectedError:       errRoleAttributeStrictViolation,
+		},
+		{
+			Name:                    "Should fail when role_attribute path is empty, role_attribute_strict is set to true and evaluated org roles are empty",
+			SkipOrgRoleSync:         false,
+			AllowAssignGrafanaAdmin: false,
+			ResponseBody:            map[string]any{"info": map[string]any{"roles": []string{"engineering", "SRE"}}},
+			OAuth2Extra: map[string]any{
+				// { "email": "john.doe@example.com",
+				//   "info": { "roles": [ "dev", "engineering" ] }}
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg"},
+			RoleAttributePath:   "",
+			RoleAttributeStrict: true,
+			OrgAttributePath:    "info.invalid",
+			OrgMapping:          []string{"dev:org_dev:Viewer", "engineering:org_engineering:Editor"},
+			ExpectedEmail:       "john.doe@example.com",
+			ExpectedError:       errRoleAttributeStrictViolation,
+		},
+		{
+			Name:                    "Should fail when role_attribute path is empty, role_attribute_strict is set to true and evaluated org roles are empty",
+			SkipOrgRoleSync:         false,
+			AllowAssignGrafanaAdmin: false,
+			ResponseBody:            map[string]any{"info": map[string]any{"roles": []string{"engineering", "SRE"}}},
+			OAuth2Extra: map[string]any{
+				// { "email": "john.doe@example.com",
+				//   "info": { "roles": [ "dev", "engineering" ] }}
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg"},
+			RoleAttributePath:   "",
+			RoleAttributeStrict: true,
+			OrgAttributePath:    "info.invalid",
+			OrgMapping:          []string{"dev:org_dev:Viewer", "engineering:org_engineering:Editor"},
+			ExpectedEmail:       "john.doe@example.com",
+			ExpectedError:       errRoleAttributeStrictViolation,
 		},
 	}
 
@@ -325,10 +400,11 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 		AutoAssignOrgId:   2,
 		AutoAssignOrgRole: string(org.RoleViewer),
 	}
+	orgRoleMapper := ProvideOrgRoleMapper(cfg, &orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "org_dev"}, {ID: 5, Name: "org_engineering"}}})
 	provider := NewGenericOAuthProvider(&social.OAuthInfo{
 		EmailAttributePath: "email",
 	}, cfg,
-		ProvideOrgRoleMapper(cfg, &orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "org_dev"}, {ID: 5, Name: "org_engineering"}}}),
+		orgRoleMapper,
 		&ssosettingstests.MockService{},
 		featuremgmt.WithFeatures())
 
@@ -336,6 +412,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 		provider.info.RoleAttributePath = tc.RoleAttributePath
 		provider.info.OrgAttributePath = tc.OrgAttributePath
 		provider.info.OrgMapping = tc.OrgMapping
+		provider.orgMapping = orgRoleMapper.ParseOrgMappingSettings(context.Background(), tc.OrgMapping, tc.RoleAttributeStrict)
 		provider.info.AllowAssignGrafanaAdmin = tc.AllowAssignGrafanaAdmin
 		provider.info.SkipOrgRoleSync = tc.SkipOrgRoleSync
 		provider.info.RoleAttributeStrict = tc.RoleAttributeStrict
@@ -366,7 +443,6 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, tc.ExpectedEmail, actualResult.Email)
 			require.Equal(t, tc.ExpectedEmail, actualResult.Login)
-			require.Equal(t, tc.ExpectedRole, actualResult.Role)
 			require.Equal(t, tc.ExpectedOrgRoles, actualResult.OrgRoles)
 			require.Equal(t, tc.ExpectedGrafanaAdmin, actualResult.IsGrafanaAdmin)
 		})

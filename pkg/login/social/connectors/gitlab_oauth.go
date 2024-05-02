@@ -94,7 +94,7 @@ func (s *SocialGitlab) Reload(ctx context.Context, settings ssoModels.SSOSetting
 	s.reloadMutex.Lock()
 	defer s.reloadMutex.Unlock()
 
-	s.updateInfo(social.GitlabProviderName, newInfo)
+	s.updateInfo(ctx, social.GitlabProviderName, newInfo)
 
 	return nil
 }

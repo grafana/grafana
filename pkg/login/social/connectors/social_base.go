@@ -35,6 +35,7 @@ type SocialBase struct {
 	log           log.Logger
 	features      featuremgmt.FeatureToggles
 	orgRoleMapper *OrgRoleMapper
+	orgMapping    map[string]map[int64]org.RoleType
 }
 
 func newSocialBase(name string,
@@ -53,12 +54,14 @@ func newSocialBase(name string,
 		features:      features,
 		cfg:           cfg,
 		orgRoleMapper: orgRoleMapper,
+		orgMapping:    orgRoleMapper.ParseOrgMappingSettings(context.Background(), info.OrgMapping, info.RoleAttributeStrict),
 	}
 }
 
-func (s *SocialBase) updateInfo(name string, info *social.OAuthInfo) {
+func (s *SocialBase) updateInfo(ctx context.Context, name string, info *social.OAuthInfo) {
 	s.Config = createOAuthConfig(info, s.cfg, name)
 	s.info = info
+	s.orgMapping = s.orgRoleMapper.ParseOrgMappingSettings(ctx, info.OrgMapping, info.RoleAttributeStrict)
 }
 
 type groupStruct struct {
@@ -131,9 +134,9 @@ func (s *SocialBase) getBaseSupportBundleContent(bf *bytes.Buffer) error {
 
 func (s *SocialBase) extractRoleAndAdminOptional(rawJSON []byte, groups []string) (org.RoleType, bool, error) {
 	if s.info.RoleAttributePath == "" {
-		if s.info.RoleAttributeStrict {
-			return "", false, errRoleAttributePathNotSet.Errorf("role_attribute_path not set and role_attribute_strict is set")
-		}
+		// if s.info.RoleAttributeStrict {
+		// 	return "", false, errRoleAttributePathNotSet.Errorf("role_attribute_path not set and role_attribute_strict is set")
+		// }
 		return "", false, nil
 	}
 
@@ -176,7 +179,7 @@ func (s *SocialBase) searchRole(rawJSON []byte, groups []string) (org.RoleType, 
 }
 
 func (s *SocialBase) extractOrgRoles(ctx context.Context, orgs []string, directlyMappedRole org.RoleType) (map[int64]org.RoleType, error) {
-	return s.orgRoleMapper.MapOrgRoles(ctx, orgs, s.info.OrgMapping, directlyMappedRole)
+	return s.orgRoleMapper.MapOrgRoles(ctx, orgs, s.orgMapping, directlyMappedRole, s.info.RoleAttributeStrict), nil
 }
 
 func (s *SocialBase) extractOrgs(rawJSON []byte) ([]string, error) {

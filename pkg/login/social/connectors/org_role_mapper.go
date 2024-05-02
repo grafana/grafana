@@ -27,20 +27,48 @@ func ProvideOrgRoleMapper(cfg *setting.Cfg, orgService org.Service) *OrgRoleMapp
 	}
 }
 
-func (m *OrgRoleMapper) MapOrgRoles(ctx context.Context, externalOrgs []string, orgMappingSettings []string, directlyMappedRole org.RoleType) (map[int64]org.RoleType, error) {
-	orgMapping := m.splitOrgMappingSettings(ctx, orgMappingSettings)
+// MapOrgRoles maps the external orgs/groups to Grafana orgs and roles. It returns a  map or orgID to role.
+//
+// externalOrgs: list of external orgs/groups
+//
+// orgMapping: mapping configuration from external orgs to Grafana orgs and roles. This is an internal representation of the `org_mapping` setting.
+// Use `ParseOrgMappingSettings` to convert the raw setting to this format.
+//
+// directlyMappedRole: role that is directly mapped to the user
+//
+// roleStrict: if true, either the evaluated role from orgMapping or the directlyMappedRole must be a valid role.
+func (m *OrgRoleMapper) MapOrgRoles(
+	ctx context.Context,
+	externalOrgs []string,
+	orgMapping map[string]map[int64]org.RoleType,
+	directlyMappedRole org.RoleType,
+	roleStrict bool,
+) map[int64]org.RoleType {
+	if len(orgMapping) == 0 && !isValidRole(directlyMappedRole) && roleStrict {
+		// No org mappings are configured and the directly mapped role is not set and roleStrict is enabled
+		return nil
+	}
 
 	userOrgRoles := getMappedOrgRoles(externalOrgs, orgMapping)
 
-	m.handleGlobalOrgMapping(userOrgRoles)
+	if err := m.handleGlobalOrgMapping(userOrgRoles); err != nil {
+		// Cannot map global org roles, return nil (prevent resetting asignments)
+		return nil
+	}
 
 	if len(userOrgRoles) == 0 {
-		userOrgRoles = m.GetDefaultOrgMapping(directlyMappedRole)
+		if roleStrict && !isValidRole(directlyMappedRole) {
+			// No org mapping found and roleStrict is enabled
+			return nil
+		}
+
+		// No org mapping found
+		return m.GetDefaultOrgMapping(directlyMappedRole)
 	}
 
 	if directlyMappedRole == "" {
 		m.logger.Debug("No direct role mapping found")
-		return userOrgRoles, nil
+		return userOrgRoles
 	}
 
 	m.logger.Debug("Direct role mapping found", "role", directlyMappedRole)
@@ -50,7 +78,7 @@ func (m *OrgRoleMapper) MapOrgRoles(ctx context.Context, externalOrgs []string, 
 		userOrgRoles[orgID] = getTopRole(directlyMappedRole, role)
 	}
 
-	return userOrgRoles, nil
+	return userOrgRoles
 }
 
 func (m *OrgRoleMapper) GetDefaultOrgMapping(directlyMappedRole org.RoleType) map[int64]org.RoleType {
@@ -70,18 +98,19 @@ func (m *OrgRoleMapper) GetDefaultOrgMapping(directlyMappedRole org.RoleType) ma
 	return orgRoles
 }
 
-func (m *OrgRoleMapper) handleGlobalOrgMapping(orgRoles map[int64]org.RoleType) {
+func (m *OrgRoleMapper) handleGlobalOrgMapping(orgRoles map[int64]org.RoleType) error {
 	// No global role mapping => return
 	globalRole, ok := orgRoles[MapperMatchAllOrgID]
 	if !ok {
-		return
+		return nil
 	}
 
 	allOrgIDs, err := m.getAllOrgs()
 	if err != nil {
 		// Prevent resetting assignments
-		orgRoles = map[int64]org.RoleType{}
+		clear(orgRoles)
 		m.logger.Warn("error fetching all orgs, removing org mapping to prevent org sync")
+		return err
 	}
 
 	// Remove the global role mapping
@@ -91,9 +120,14 @@ func (m *OrgRoleMapper) handleGlobalOrgMapping(orgRoles map[int64]org.RoleType) 
 	for orgID := range allOrgIDs {
 		orgRoles[orgID] = getTopRole(orgRoles[orgID], globalRole)
 	}
+
+	return nil
 }
 
-func (m *OrgRoleMapper) splitOrgMappingSettings(ctx context.Context, mappings []string) map[string]map[int64]org.RoleType {
+// FIXME: Consider introducing a struct to represent the org mapping settings
+// ParseOrgMappingSettings parses the `org_mapping` setting and returns an internal representation of the mapping.
+// If the roleStrict is enabled, the mapping should contain a valid role for each org.
+func (m *OrgRoleMapper) ParseOrgMappingSettings(ctx context.Context, mappings []string, roleStrict bool) map[string]map[int64]org.RoleType {
 	res := map[string]map[int64]org.RoleType{}
 
 	for _, v := range mappings {
@@ -104,8 +138,8 @@ func (m *OrgRoleMapper) splitOrgMappingSettings(ctx context.Context, mappings []
 				res, getErr := m.orgService.GetByName(ctx, &org.GetOrgByNameQuery{Name: kv[1]})
 
 				if getErr != nil {
-					// ignore not existing org
-					m.logger.Warn("Could not fetch organization. Skipping.", "mapping", fmt.Sprintf("%v", v))
+					// skip in case of error
+					m.logger.Warn("Could not fetch organization. Skipping.", "err", getErr, "mapping", fmt.Sprintf("%v", v), "org", kv[1])
 					continue
 				}
 				orgID, err = int(res.ID), nil
@@ -114,6 +148,11 @@ func (m *OrgRoleMapper) splitOrgMappingSettings(ctx context.Context, mappings []
 				orgID, err = MapperMatchAllOrgID, nil
 			}
 			if err == nil {
+				if roleStrict && (len(kv) < 3 || !org.RoleType(kv[2]).IsValid()) {
+					m.logger.Warn("Skipping org mapping due to missing or invalid role in mapping when roleStrict is enabled.", "mapping", fmt.Sprintf("%v", v))
+					continue
+				}
+
 				orga := kv[0]
 				if res[orga] == nil {
 					res[orga] = map[int64]org.RoleType{}
@@ -182,4 +221,8 @@ func getTopRole(currRole org.RoleType, otherRole org.RoleType) org.RoleType {
 	}
 
 	return otherRole
+}
+
+func isValidRole(role org.RoleType) bool {
+	return role != "" && role.IsValid()
 }

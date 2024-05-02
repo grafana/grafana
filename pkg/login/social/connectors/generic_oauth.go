@@ -123,7 +123,7 @@ func (s *SocialGenericOAuth) Reload(ctx context.Context, settings ssoModels.SSOS
 	s.reloadMutex.Lock()
 	defer s.reloadMutex.Unlock()
 
-	s.updateInfo(social.GenericOAuthProviderName, newInfo)
+	s.updateInfo(ctx, social.GenericOAuthProviderName, newInfo)
 
 	s.teamsUrl = newInfo.TeamsUrl
 	s.emailAttributeName = newInfo.EmailAttributeName
@@ -293,16 +293,10 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 		}
 	}
 
-	if userInfo.Role == "" && !s.info.SkipOrgRoleSync {
-		if s.info.RoleAttributeStrict {
-			return nil, errRoleAttributeStrictViolation.Errorf("idP did not return a role attribute")
-		}
-		userInfo.Role = s.defaultRole()
-	}
-
 	if s.info.RoleAttributeStrict && !s.info.SkipOrgRoleSync {
-		// If RoleAttributeStrict is set then OrgMapping must not be used
-		userInfo.OrgRoles = s.orgRoleMapper.GetDefaultOrgMapping(userInfo.Role)
+		if len(userInfo.OrgRoles) == 0 {
+			return nil, errRoleAttributeStrictViolation.Errorf("could not evaluate any valid roles using IdP provided data")
+		}
 	}
 
 	if s.info.AllowAssignGrafanaAdmin && s.info.SkipOrgRoleSync {
