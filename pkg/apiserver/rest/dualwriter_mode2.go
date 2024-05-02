@@ -3,11 +3,14 @@ package rest
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"
 )
@@ -35,21 +38,23 @@ func (d *DualWriterMode2) Create(ctx context.Context, obj runtime.Object, create
 		return created, err
 	}
 
-	c, err := enrichObject(obj, created)
+	accessorCreated, err := meta.Accessor(created)
 	if err != nil {
 		return created, err
 	}
 
-	accessor, err := meta.Accessor(c)
+	accessorOld, err := meta.Accessor(obj)
 	if err != nil {
 		return created, err
 	}
+
+	enrichObject(accessorOld, accessorCreated)
 
 	// create method expects an empty resource version
-	accessor.SetResourceVersion("")
-	accessor.SetUID("")
+	accessorCreated.SetResourceVersion("")
+	accessorCreated.SetUID("")
 
-	rsp, err := d.Storage.Create(ctx, c, createValidation, options)
+	rsp, err := d.Storage.Create(ctx, created, createValidation, options)
 	if err != nil {
 		klog.FromContext(ctx).Error(err, "unable to create object in Storage", "mode", 2)
 	}
@@ -88,7 +93,37 @@ func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion
 		return nil, err
 	}
 
-	sl, err := d.Storage.List(ctx, options)
+	originKeys := []string{}
+	indexMap := map[string]int{}
+	for i, obj := range legacyList {
+		metaAccessor, err := utils.MetaAccessor(obj)
+		if err != nil {
+			return nil, err
+		}
+		originKeys = append(originKeys, metaAccessor.GetOriginKey())
+
+		accessor, err := meta.Accessor(obj)
+		if err != nil {
+			return nil, err
+		}
+		// Record the index of each LegacyStorage object so it can later be replaced by
+		// an equivalent Storage object if it exists.
+		indexMap[accessor.GetName()] = i
+	}
+
+	if len(originKeys) == 0 {
+		return ll, nil
+	}
+
+	r, err := labels.NewRequirement(utils.AnnoKeyOriginKey, selection.In, originKeys)
+	if err != nil {
+		return nil, err
+	}
+	optionsStorage := metainternalversion.ListOptions{
+		LabelSelector: labels.NewSelector().Add(*r),
+	}
+
+	sl, err := d.Storage.List(ctx, &optionsStorage)
 	if err != nil {
 		return nil, err
 	}
@@ -97,23 +132,13 @@ func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion
 		return nil, err
 	}
 
-	m := map[string]int{}
-	for i, obj := range storageList {
+	for _, obj := range storageList {
 		accessor, err := meta.Accessor(obj)
 		if err != nil {
 			return nil, err
 		}
-		m[accessor.GetName()] = i
-	}
-
-	for i, obj := range legacyList {
-		accessor, err := meta.Accessor(obj)
-		if err != nil {
-			return nil, err
-		}
-		// Replace the LegacyStorage object if there's a corresponding entry in Storage.
-		if index, ok := m[accessor.GetName()]; ok {
-			legacyList[i] = storageList[index]
+		if legacyIndex, ok := indexMap[accessor.GetName()]; ok {
+			legacyList[legacyIndex] = obj
 		}
 	}
 
@@ -144,6 +169,16 @@ func (d *DualWriterMode2) DeleteCollection(ctx context.Context, deleteValidation
 	return res, err
 }
 
+func enrichObject(accessorO, accessorC metav1.Object) {
+	accessorC.SetLabels(accessorO.GetLabels())
+
+	ac := accessorC.GetAnnotations()
+	for k, v := range accessorO.GetAnnotations() {
+		ac[k] = v
+	}
+	accessorC.SetAnnotations(ac)
+}
+
 func (d *DualWriterMode2) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	legacy, ok := d.Legacy.(rest.GracefulDeleter)
 	if !ok {
@@ -168,23 +203,64 @@ func (d *DualWriterMode2) Delete(ctx context.Context, name string, deleteValidat
 	return deletedLS, async, err
 }
 
-func enrichObject(orig, copy runtime.Object) (runtime.Object, error) {
-	accessorC, err := meta.Accessor(copy)
+// Update overrides the generic behavior of the Storage and writes first to the legacy storage and then to storage.
+func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	legacy, ok := d.Legacy.(rest.Updater)
+	if !ok {
+		return nil, false, errDualWriterUpdaterMissing
+	}
+
+	var notFound bool
+
+	// get old and new (updated) object so they can be stored in legacy store
+	old, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
-		return nil, err
+		if !apierrors.IsNotFound(err) {
+			klog.FromContext(ctx).Error(err, "could not get object", "mode", Mode2)
+			return nil, false, err
+		}
+		klog.FromContext(ctx).Error(err, "object not found for update, creating one", "mode", Mode2)
+		notFound = true
 	}
-	accessorO, err := meta.Accessor(orig)
+
+	// obj can be populated in case it's found or empty in case it's not found
+	updated, err := objInfo.UpdatedObject(ctx, old)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
-	accessorC.SetLabels(accessorO.GetLabels())
-
-	ac := accessorC.GetAnnotations()
-	for k, v := range accessorO.GetAnnotations() {
-		ac[k] = v
+	obj, created, err := legacy.Update(ctx, name, &updateWrapper{upstream: objInfo, updated: updated}, createValidation, updateValidation, forceAllowCreate, options)
+	if err != nil {
+		klog.FromContext(ctx).Error(err, "could not update in legacy storage", "mode", Mode2)
+		return obj, created, err
 	}
-	accessorC.SetAnnotations(ac)
 
-	return copy, nil
+	if notFound {
+		return d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+	}
+
+	accessor, err := meta.Accessor(obj)
+	if err != nil {
+		return nil, false, err
+	}
+
+	// only if object exists
+	accessorOld, err := meta.Accessor(old)
+	if err != nil {
+		return nil, false, err
+	}
+
+	enrichObject(accessorOld, accessor)
+
+	// keep the same UID and resource_version
+	accessor.SetResourceVersion(accessorOld.GetResourceVersion())
+	accessor.SetUID(accessorOld.GetUID())
+	objInfo = &updateWrapper{
+		upstream: objInfo,
+		updated:  obj,
+	}
+
+	// TODO: relies on GuaranteedUpdate creating the object if
+	// it doesn't exist: https://github.com/grafana/grafana/pull/85206
+	return d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 }

@@ -1,4 +1,3 @@
-import 'whatwg-fetch';
 import { advanceTo } from 'jest-date-mock';
 import { map, of } from 'rxjs';
 
@@ -257,6 +256,13 @@ describe('transformSceneToSaveModel', () => {
       const saveModel = gridItemToPanel(gridItem);
 
       expect(saveModel.transparent).toBe(true);
+    });
+
+    it('interval', () => {
+      const gridItem = buildGridItemFromPanelSchema({ interval: '20m' });
+      const saveModel = gridItemToPanel(gridItem);
+
+      expect(saveModel.interval).toBe('20m');
     });
 
     it('With angular options', () => {
