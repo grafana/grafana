@@ -1,8 +1,11 @@
 import { StoryFn } from '@storybook/react';
 import React from 'react';
 
+import { Ai, Cloud } from '@grafana/saga-icons';
+
 import { ComponentSize } from '../../types';
 import { Card } from '../Card/Card';
+import { Icon } from '../Icon/Icon';
 import { Stack } from '../Layout/Stack/Stack';
 
 import { allButtonVariants, allButtonFills, Button, ButtonProps } from './Button';
@@ -58,13 +61,10 @@ export const Examples: StoryFn<typeof Button> = () => {
       ))}
       <Stack alignItems="center" gap={3}>
         <div>With icon and text</div>
-        <Button icon="cloud" size="sm">
-          Configure
-        </Button>
-        <Button icon="cloud">Configure</Button>
-        <Button icon="cloud" size="lg">
-          Configure
-        </Button>
+        <Button icon={<Cloud size={'sm'} />}>Configure</Button>
+        <Button icon={'ai'}>Configure</Button>
+        <Button icon={<Ai size={'lg'} />}>Configure</Button>
+        <Icon name={'paragraph'} />
       </Stack>
       <div />
       <div />

@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import React, { AnchorHTMLAttributes, ButtonHTMLAttributes } from 'react';
 
-import { GrafanaTheme2, ThemeRichColor } from '@grafana/data';
+import { GrafanaTheme2, isIconName, ThemeRichColor } from '@grafana/data';
 
 import { useTheme2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
@@ -20,7 +20,7 @@ type CommonProps = {
   size?: ComponentSize;
   variant?: ButtonVariant;
   fill?: ButtonFill;
-  icon?: IconName;
+  icon?: IconName | React.ReactNode;
   className?: string;
   children?: React.ReactNode;
   fullWidth?: boolean;
@@ -59,12 +59,23 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       fullWidth,
       iconOnly: !children,
     });
+    const renderIcon = () => {
+      if (!icon) {
+        return null;
+      }
+      if (isIconName(icon)) {
+        return <Icon name={icon} size={size} className={styles.icon} />;
+      }
+      return React.cloneElement(icon as React.ReactElement, {
+        className: styles.icon,
+      });
+    };
 
     // In order to standardise Button please always consider using IconButton when you need a button with an icon only
     // When using tooltip, ref is forwarded to Tooltip component instead for https://github.com/grafana/grafana/issues/65632
     const button = (
       <button className={cx(styles.button, className)} type={type} {...otherProps} ref={tooltip ? undefined : ref}>
-        {icon && <Icon name={icon} size={size} className={styles.icon} />}
+        {renderIcon()}
         {children && <span className={styles.content}>{children}</span>}
       </button>
     );
