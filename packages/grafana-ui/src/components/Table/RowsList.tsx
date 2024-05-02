@@ -254,7 +254,7 @@ export const RowsList = (props: RowsListProps) => {
             <ExpandedRow
               nestedData={nestedDataField}
               tableStyles={tableStyles}
-              // Using `row.index` ensures that we pick the correct row from the original data frame even when rows in 
+              // Using `row.index` ensures that we pick the correct row from the original data frame even when rows in
               // the table are sorted, since `row.index` does not change when sorting.
               rowIndex={row.index}
               width={width}
