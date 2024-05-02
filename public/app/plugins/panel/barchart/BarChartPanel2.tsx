@@ -120,7 +120,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
     <VizLayout
       width={props.width}
       height={props.height}
-      // legend={<BarChartLegend frame={info.series![0]} options={legend} colorField={info.color} />}
+      legend={<BarChartLegend frame={info.series![0]} colorField={info.color} {...legend} />}
     >
       {(vizWidth, vizHeight) => (
         <UPlotChart config={builder!} data={plotData} width={vizWidth} height={vizHeight}>
