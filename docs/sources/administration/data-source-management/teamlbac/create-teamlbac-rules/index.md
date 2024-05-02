@@ -126,11 +126,11 @@ A user that is not part of Team A and part of Team B, that is `Editor` or `Viewe
 
 ### Task 6: User A is Admin and part of Team B
 
-We have team B, user A is part of Team B and has an `Admin`.
+We have team B, user A is part of Team B and has an `Admin` basic role.
 
 - Team B has no roles assigned
-- Team B has Query permissions to Datasource Loki
+- Team B has Query permissions to data source Loki
 
-- Team B has rule `{ project_id="project-something-102461" }`
+- Team B has a rule `{ project_id="project-dev" }`
 
-User A may only query Datasource Loki where `{ project_id="project-something-102461" }` and no other logs on the data source.
+User A may only access logs for data source Loki that match `{ project_id="project-dev" }` and no other logs on the data source.
