@@ -18,9 +18,6 @@ replace github.com/prometheus/prometheus => github.com/prometheus/prometheus v0.
 // Update when github.com/deepmap/oapi-codegen/v2 is updated to support later versions.
 replace github.com/getkin/kin-openapi => github.com/getkin/kin-openapi v0.122.0
 
-// TODO: remove after merge of https://github.com/grafana/authlib/pull/23
-replace github.com/grafana/authlib => /Users/charandas/go/src/github.com/grafana/authlib
-
 require (
 	buf.build/gen/go/parca-dev/parca/bufbuild/connect-go v1.4.1-20221222094228-8b1d3d0f62e6.1 // @grafana/observability-traces-and-profiling
 	buf.build/gen/go/parca-dev/parca/protocolbuffers/go v1.33.0-20240414232344-9ca06271cb73.1 // @grafana/observability-traces-and-profiling
@@ -90,7 +87,7 @@ require (
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/alerting v0.0.0-20240424080142-bb4f4f429d36 // @grafana/alerting-squad-backend
-	github.com/grafana/authlib v0.0.0-20240328140636-a7388d0bac72 // @grafana/identity-access-team
+	github.com/grafana/authlib v0.0.0-20240502072536-25f51be05e9a // @grafana/identity-access-team
 	github.com/grafana/codejen v0.0.3 // @grafana/dataviz-squad
 	github.com/grafana/cuetsy v0.1.11 // @grafana/grafana-as-code
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
