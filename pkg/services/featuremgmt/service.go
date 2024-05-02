@@ -1,8 +1,11 @@
 package featuremgmt
 
 import (
+	"sort"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
@@ -56,6 +59,9 @@ func ProvideManagerService(cfg *setting.Cfg) (*FeatureManager, error) {
 
 	// update the values
 	mgmt.update()
+
+	// Log the enabled feature toggles at startup
+	mgmt.log.Info("FeatureToggles", "enabled", sort.StringSlice(maps.Keys(mgmt.enabled)))
 
 	// Minimum approach to avoid circular dependency
 	// nolint:staticcheck
