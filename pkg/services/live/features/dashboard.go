@@ -42,10 +42,14 @@ func newUserDisplayDTOFromRequester(requester identity.Requester) *userDisplayDT
 	if namespaceID == identity.NamespaceUser || namespaceID == identity.NamespaceServiceAccount {
 		userID, _ = identity.IntIdentifier(namespaceID, identifier)
 	}
+	namespaceID, uid := requester.GetNamespacedUID()
+	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
+		uid = ""
+	}
 
 	return &userDisplayDTO{
 		ID:    userID,
-		UID:   requester.GetUserUID(),
+		UID:   uid,
 		Login: requester.GetLogin(),
 		Name:  requester.GetDisplayName(),
 	}

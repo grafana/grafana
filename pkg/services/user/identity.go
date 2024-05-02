@@ -2,6 +2,7 @@ package user
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models/roletype"
@@ -166,32 +167,52 @@ func (u *SignedInUser) GetOrgRole() roletype.RoleType {
 
 // GetID returns namespaced id for the entity
 func (u *SignedInUser) GetID() identity.NamespaceID {
-	switch {
-	case u.ApiKeyID != 0:
-		return namespacedID(identity.NamespaceAPIKey, u.ApiKeyID)
-	case u.IsServiceAccount:
-		return namespacedID(identity.NamespaceServiceAccount, u.UserID)
-	case u.UserID > 0:
-		return namespacedID(identity.NamespaceUser, u.UserID)
-	case u.IsAnonymous:
-		return namespacedID(identity.NamespaceAnonymous, 0)
-	case u.AuthenticatedBy == "render" && u.UserID == 0:
-		return namespacedID(identity.NamespaceRenderService, 0)
-	}
-
-	return u.NamespacedID
+	ns, id := u.GetNamespacedID()
+	return identity.NewNamespaceIDString(ns, id)
 }
 
 // GetNamespacedID returns the namespace and ID of the active entity
 // The namespace is one of the constants defined in pkg/services/auth/identity
-func (u *SignedInUser) GetNamespacedID() (string, string) {
-	id := u.GetID()
-	return id.Namespace(), id.ID()
+func (u *SignedInUser) GetNamespacedID() (identity.Namespace, string) {
+	switch {
+	case u.ApiKeyID != 0:
+		return identity.NamespaceAPIKey, strconv.FormatInt(u.ApiKeyID, 10)
+	case u.IsServiceAccount:
+		return identity.NamespaceServiceAccount, strconv.FormatInt(u.UserID, 10)
+	case u.UserID > 0:
+		return identity.NamespaceUser, strconv.FormatInt(u.UserID, 10)
+	case u.IsAnonymous:
+		return identity.NamespaceAnonymous, "0"
+	case u.AuthenticatedBy == "render" && u.UserID == 0:
+		return identity.NamespaceRenderService, "0"
+	}
+
+	return u.NamespacedID.Namespace(), u.NamespacedID.ID()
 }
 
-// GetUserUID returns user uid for the entity
-func (u *SignedInUser) GetUserUID() string {
-	return u.UserUID
+// GetUID returns namespaced uid for the entity
+func (u *SignedInUser) GetUID() identity.NamespaceID {
+	ns, uid := u.GetNamespacedUID()
+	return identity.NewNamespaceIDString(ns, uid)
+}
+
+// GetNamespacedUID returns the namespace and UID of the active entity
+// The namespace is one of the constants defined in pkg/services/auth/identity
+func (u *SignedInUser) GetNamespacedUID() (identity.Namespace, string) {
+	switch {
+	case u.ApiKeyID != 0:
+		return identity.NamespaceAPIKey, fmt.Sprint(u.ApiKeyID)
+	case u.IsServiceAccount:
+		return identity.NamespaceServiceAccount, u.UserUID
+	case u.UserID > 0:
+		return identity.NamespaceUser, u.UserUID
+	case u.IsAnonymous:
+		return identity.NamespaceAnonymous, ""
+	case u.AuthenticatedBy == "render" && u.UserID == 0:
+		return identity.NamespaceRenderService, ""
+	}
+
+	return identity.NamespaceEmpty, ""
 }
 
 func (u *SignedInUser) GetAuthID() string {
@@ -234,8 +255,4 @@ func (u *SignedInUser) GetDisplayName() string {
 
 func (u *SignedInUser) GetIDToken() string {
 	return u.IDToken
-}
-
-func namespacedID(namespace string, id int64) identity.NamespaceID {
-	return identity.NewNamespaceIDUnchecked(namespace, id)
 }

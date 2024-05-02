@@ -79,12 +79,17 @@ func (i *Identity) GetID() NamespaceID {
 	return i.ID
 }
 
-func (i *Identity) GetNamespacedID() (namespace string, identifier string) {
+func (i *Identity) GetNamespacedID() (namespace identity.Namespace, identifier string) {
 	return i.ID.Namespace(), i.ID.ID()
 }
 
-func (i *Identity) GetUserUID() string {
-	return i.UserUID
+func (i *Identity) GetUID() NamespaceID {
+	ns, uid := i.GetNamespacedUID()
+	return identity.NewNamespaceIDString(ns, uid)
+}
+
+func (i *Identity) GetNamespacedUID() (namespace identity.Namespace, identifier string) {
+	return i.ID.Namespace(), i.UserUID
 }
 
 func (i *Identity) GetAuthID() string {
