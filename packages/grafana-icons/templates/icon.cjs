@@ -4,6 +4,7 @@
 const modifyJSX = (jsx) => {
   jsx.openingElement.name.name = 'IconBase';
   jsx.openingElement.attributes = [
+    ...jsx.openingElement.attributes,
     {
       type: 'JSXSpreadAttribute',
       argument: {

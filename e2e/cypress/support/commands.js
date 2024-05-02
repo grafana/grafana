@@ -26,3 +26,9 @@ Cypress.Commands.add('startBenchmarking', (testName) => {
 Cypress.Commands.add('stopBenchmarking', (testName, appStats) => {
   return cy.task('stopBenchmarking', { testName, appStats });
 });
+
+Cypress.Commands.add('setLocalStorage', (key, value) => {
+  cy.window().then((win) => {
+    win.localStorage.setItem(key, value);
+  });
+});

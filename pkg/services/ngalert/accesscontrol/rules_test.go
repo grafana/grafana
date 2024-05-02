@@ -92,6 +92,8 @@ func createUserWithPermissions(permissions map[string][]string) identity.Request
 func TestAuthorizeRuleChanges(t *testing.T) {
 	groupKey := models.GenerateGroupKey(rand.Int63())
 	namespaceIdScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(groupKey.NamespaceUID)
+	gen := models.RuleGen
+	genWithGroupKey := gen.With(gen.WithGroupKey(groupKey))
 
 	testCases := []struct {
 		name        string
@@ -103,7 +105,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 			changes: func() *store.GroupDelta {
 				return &store.GroupDelta{
 					GroupKey: groupKey,
-					New:      models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(models.WithGroupKey(groupKey))),
+					New:      genWithGroupKey.GenerateManyRef(1, 5),
 					Update:   nil,
 					Delete:   nil,
 				}
@@ -132,8 +134,8 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 		{
 			name: "if there are rules to delete it should check delete action and query for datasource",
 			changes: func() *store.GroupDelta {
-				rules := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(models.WithGroupKey(groupKey)))
-				rules2 := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(models.WithGroupKey(groupKey)))
+				rules := genWithGroupKey.GenerateManyRef(1, 5)
+				rules2 := genWithGroupKey.GenerateManyRef(1, 5)
 				return &store.GroupDelta{
 					GroupKey: groupKey,
 					AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
@@ -162,8 +164,8 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 		{
 			name: "if there are rules to update within the same namespace it should check update action and access to datasource",
 			changes: func() *store.GroupDelta {
-				rules1 := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(models.WithGroupKey(groupKey)))
-				rules := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(models.WithGroupKey(groupKey)))
+				rules1 := genWithGroupKey.GenerateManyRef(1, 5)
+				rules := genWithGroupKey.GenerateManyRef(1, 5)
 				updates := make([]store.RuleDelta, 0, len(rules))
 
 				for _, rule := range rules {
@@ -207,18 +209,14 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 		{
 			name: "if there are rules that are moved between namespaces it should check delete+add action and access to group where rules come from",
 			changes: func() *store.GroupDelta {
-				rules1 := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(models.WithGroupKey(groupKey)))
-				rules := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(models.WithGroupKey(groupKey)))
+				rules1 := genWithGroupKey.GenerateManyRef(1, 5)
+				rules := genWithGroupKey.GenerateManyRef(1, 5)
 
 				targetGroupKey := models.GenerateGroupKey(groupKey.OrgID)
 
 				updates := make([]store.RuleDelta, 0, len(rules))
 				for _, rule := range rules {
-					cp := models.CopyRule(rule)
-					models.WithGroupKey(targetGroupKey)(cp)
-					cp.Data = []models.AlertQuery{
-						models.GenerateAlertQuery(),
-					}
+					cp := models.CopyRule(rule, gen.WithGroupKey(targetGroupKey), gen.WithQuery(gen.GenerateQuery()))
 
 					updates = append(updates, store.RuleDelta{
 						Existing: rule,
@@ -269,8 +267,8 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					NamespaceUID: groupKey.NamespaceUID,
 					RuleGroup:    util.GenerateShortUID(),
 				}
-				sourceGroup := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(models.WithGroupKey(groupKey)))
-				targetGroup := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(models.WithGroupKey(targetGroupKey)))
+				sourceGroup := genWithGroupKey.GenerateManyRef(1, 5)
+				targetGroup := gen.With(gen.WithGroupKey(targetGroupKey)).GenerateManyRef(1, 5)
 
 				updates := make([]store.RuleDelta, 0, len(sourceGroup))
 				toCopy := len(sourceGroup)
@@ -279,11 +277,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				}
 				for i := 0; i < toCopy; i++ {
 					rule := sourceGroup[0]
-					cp := models.CopyRule(rule)
-					models.WithGroupKey(targetGroupKey)(cp)
-					cp.Data = []models.AlertQuery{
-						models.GenerateAlertQuery(),
-					}
+					cp := models.CopyRule(rule, gen.WithGroupKey(targetGroupKey), gen.WithQuery(models.GenerateAlertQuery()))
 
 					updates = append(updates, store.RuleDelta{
 						Existing: rule,
@@ -379,7 +373,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 }
 
 func TestCheckDatasourcePermissionsForRule(t *testing.T) {
-	rule := models.AlertRuleGen()()
+	rule := models.RuleGen.GenerateRef()
 
 	expressionByType := models.GenerateAlertQuery()
 	expressionByType.QueryType = expr.DatasourceType
@@ -442,7 +436,7 @@ func TestCheckDatasourcePermissionsForRule(t *testing.T) {
 
 func Test_authorizeAccessToRuleGroup(t *testing.T) {
 	t.Run("should return true if user has access to all datasources of all rules in group", func(t *testing.T) {
-		rules := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen())
+		rules := models.RuleGen.GenerateManyRef(1, 5)
 		var scopes []string
 		for _, rule := range rules {
 			for _, query := range rule.Data {
@@ -470,7 +464,9 @@ func Test_authorizeAccessToRuleGroup(t *testing.T) {
 	})
 	t.Run("should return false if user does not have access to at least one rule in group", func(t *testing.T) {
 		f := &folder.Folder{UID: "test-folder"}
-		rules := models.GenerateAlertRules(rand.Intn(4)+1, models.AlertRuleGen(models.WithNamespace(f)))
+		gen := models.RuleGen
+		genWithFolder := gen.With(gen.WithNamespace(f))
+		rules := genWithFolder.GenerateManyRef(1, 5)
 		var scopes []string
 		for _, rule := range rules {
 			for _, query := range rule.Data {
@@ -487,7 +483,7 @@ func Test_authorizeAccessToRuleGroup(t *testing.T) {
 			datasources.ActionQuery: scopes,
 		}
 
-		rule := models.AlertRuleGen(models.WithNamespace(f))()
+		rule := genWithFolder.GenerateRef()
 		rules = append(rules, rule)
 
 		ac := &recordingAccessControlFake{}
