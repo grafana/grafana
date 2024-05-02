@@ -59,7 +59,7 @@ describe('LokiQueryBuilder', () => {
     const labels = screen.getByText(/Label filters/);
     const selects = getAllByRole(getSelectParent(labels)!, 'combobox');
     await userEvent.click(selects[3]);
-    expect(props.datasource.languageProvider.fetchSeriesLabels).toBeCalledWith('{baz="bar"}', {
+    expect(props.datasource.languageProvider.fetchSeriesLabels).toHaveBeenCalledWith('{baz="bar"}', {
       timeRange: mockTimeRange,
     });
     await waitFor(() => expect(screen.getByText('job')).toBeInTheDocument());
@@ -82,7 +82,9 @@ describe('LokiQueryBuilder', () => {
     const labels = screen.getByText(/Label filters/);
     const selects = getAllByRole(getSelectParent(labels)!, 'combobox');
     await userEvent.click(selects[5]);
-    expect(props.datasource.languageProvider.fetchLabelValues).toBeCalledWith('job', { timeRange: mockTimeRange });
+    expect(props.datasource.languageProvider.fetchLabelValues).toHaveBeenCalledWith('job', {
+      timeRange: mockTimeRange,
+    });
     expect(props.datasource.languageProvider.fetchSeriesLabels).not.toBeCalled();
   });
 
@@ -103,7 +105,9 @@ describe('LokiQueryBuilder', () => {
     const labels = screen.getByText(/Label filters/);
     const selects = getAllByRole(getSelectParent(labels)!, 'combobox');
     await userEvent.click(selects[5]);
-    expect(props.datasource.languageProvider.fetchLabelValues).toBeCalledWith('job', { timeRange: mockTimeRange });
+    expect(props.datasource.languageProvider.fetchLabelValues).toHaveBeenCalledWith('job', {
+      timeRange: mockTimeRange,
+    });
     expect(props.datasource.languageProvider.fetchSeriesLabels).not.toBeCalled();
   });
 
@@ -124,7 +128,7 @@ describe('LokiQueryBuilder', () => {
     const labels = screen.getByText(/Label filters/);
     const selects = getAllByRole(getSelectParent(labels)!, 'combobox');
     await userEvent.click(selects[3]);
-    expect(props.datasource.languageProvider.fetchLabels).toBeCalledWith({ timeRange: mockTimeRange });
+    expect(props.datasource.languageProvider.fetchLabels).toHaveBeenCalledWith({ timeRange: mockTimeRange });
     expect(props.datasource.languageProvider.fetchSeriesLabels).not.toBeCalled();
   });
 
@@ -145,7 +149,7 @@ describe('LokiQueryBuilder', () => {
     const labels = screen.getByText(/Label filters/);
     const selects = getAllByRole(getSelectParent(labels)!, 'combobox');
     await userEvent.click(selects[5]);
-    expect(props.datasource.languageProvider.fetchSeriesLabels).toBeCalledWith('{cluster=~"cluster1|cluster2"}', {
+    expect(props.datasource.languageProvider.fetchSeriesLabels).toHaveBeenCalledWith('{cluster=~"cluster1|cluster2"}', {
       timeRange: mockTimeRange,
     });
     expect(props.datasource.languageProvider.fetchLabelValues).not.toBeCalled();

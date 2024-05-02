@@ -58,7 +58,7 @@ describe('ValueMappingsEditorModal', () => {
       await userEvent.click(screen.getAllByTestId('remove-value-mapping')[0]);
       await userEvent.click(screen.getByText('Update'));
 
-      expect(onChangeSpy).toBeCalledWith([
+      expect(onChangeSpy).toHaveBeenCalledWith([
         {
           type: MappingType.RangeToText,
           options: {
@@ -94,7 +94,7 @@ describe('ValueMappingsEditorModal', () => {
       await userEvent.type(screen.getAllByPlaceholderText('Optional display text')[2], 'display');
       await userEvent.click(screen.getByText('Update'));
 
-      expect(onChangeSpy).toBeCalledWith([
+      expect(onChangeSpy).toHaveBeenCalledWith([
         {
           type: MappingType.ValueToText,
           options: {
@@ -146,7 +146,7 @@ describe('ValueMappingsEditorModal', () => {
 
       await userEvent.click(screen.getByText('Update'));
 
-      expect(onChangeSpy).toBeCalledWith([
+      expect(onChangeSpy).toHaveBeenCalledWith([
         {
           type: MappingType.RangeToText,
           options: {
@@ -182,7 +182,7 @@ describe('ValueMappingsEditorModal', () => {
 
       await userEvent.click(screen.getByText('Update'));
 
-      expect(onChangeSpy).toBeCalledWith([
+      expect(onChangeSpy).toHaveBeenCalledWith([
         {
           type: MappingType.RegexToText,
           options: {
