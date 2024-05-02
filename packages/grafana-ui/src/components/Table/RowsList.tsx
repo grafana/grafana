@@ -254,9 +254,8 @@ export const RowsList = (props: RowsListProps) => {
             <ExpandedRow
               nestedData={nestedDataField}
               tableStyles={tableStyles}
-              // We need to use `row.index` instead of `index` to select the correct row when rows get sorted.
-              // `row.index` is the index of the row in the original data frame, while `index` changes when rows get sorted and
-              // would make the ExpandedRow compoment pick the wrong data from the original data frame.
+              // Using `row.index` ensures that we pick the correct row from the original data frame even when rows in 
+              // the table are sorted, since `row.index` does not change when sorting.
               rowIndex={row.index}
               width={width}
               cellHeight={cellHeight}
