@@ -54,11 +54,11 @@ describe('Browse list of plugins', () => {
       ]);
 
       await waitFor(() => expect(queryByText('Plugin 1')).toBeInTheDocument());
-      expect(queryByText('Plugin 2')).toBeInTheDocument();      
-      
-      // Plugins which are not installed should still be listed    
+      expect(queryByText('Plugin 2')).toBeInTheDocument();
+
+      // Plugins which are not installed should still be listed
       expect(queryByText('Plugin 3')).toBeInTheDocument();
-      
+
       // Core plugins should still be listed
       expect(queryByText('Plugin 4')).toBeInTheDocument();
     });
