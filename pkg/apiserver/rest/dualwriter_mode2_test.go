@@ -5,22 +5,35 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/selection"
+	"k8s.io/apiserver/pkg/apis/example"
 )
 
 var createFn = func(context.Context, runtime.Object) error { return nil }
-var exampleOption = &metainternalversion.ListOptions{
-	TypeMeta: metav1.TypeMeta{
-		APIVersion: "v1",
-		Kind:       "foo",
+
+var exampleOption = &metainternalversion.ListOptions{}
+
+var legacyItem = example.Pod{
+	TypeMeta: metav1.TypeMeta{},
+	ObjectMeta: metav1.ObjectMeta{
+		Name:            "foo",
+		ResourceVersion: "1",
+		Annotations: map[string]string{
+			"grafana.app/originKey": "1",
+		},
 	},
+	Spec:   example.PodSpec{},
+	Status: example.PodStatus{},
 }
 
 func TestMode2_Create(t *testing.T) {
@@ -157,9 +170,24 @@ func TestMode2_Get(t *testing.T) {
 }
 
 func TestMode2_List(t *testing.T) {
+	storageItem := legacyItem.DeepCopy()
+	storageItem.Labels = map[string]string{"exampleLabel": "value"}
+
+	legacyList := example.PodList{Items: []example.Pod{legacyItem}}
+	storageList := example.PodList{Items: []example.Pod{*storageItem}}
+	expectedList := storageList.DeepCopy()
+
+	r, err := labels.NewRequirement(utils.AnnoKeyOriginKey, selection.In, []string{"1"})
+	assert.NoError(t, err)
+	storageOptions := &metainternalversion.ListOptions{
+		LabelSelector: labels.NewSelector().Add(*r),
+		TypeMeta:      metav1.TypeMeta{},
+	}
+
 	type testCase struct {
 		name           string
-		input          *metainternalversion.ListOptions
+		inputLegacy    *metainternalversion.ListOptions
+		inputStorage   *metainternalversion.ListOptions
 		setupLegacyFn  func(m *mock.Mock, input *metainternalversion.ListOptions)
 		setupStorageFn func(m *mock.Mock, input *metainternalversion.ListOptions)
 		wantErr        bool
@@ -167,15 +195,15 @@ func TestMode2_List(t *testing.T) {
 	tests :=
 		[]testCase{
 			{
-				name:  "error when legacy list is not implmented",
-				input: exampleOption,
+				name:         "object present in both Storage and LegacyStorage",
+				inputLegacy:  exampleOption,
+				inputStorage: storageOptions,
 				setupLegacyFn: func(m *mock.Mock, input *metainternalversion.ListOptions) {
-					m.On("List", context.Background(), input).Return(exampleObj, nil)
+					m.On("List", context.Background(), input).Return(&legacyList, nil)
 				},
 				setupStorageFn: func(m *mock.Mock, input *metainternalversion.ListOptions) {
-					m.On("List", context.Background(), input).Return(exampleObj, nil)
+					m.On("List", context.Background(), input).Return(&storageList, nil)
 				},
-				wantErr: true,
 			},
 		}
 
@@ -188,10 +216,10 @@ func TestMode2_List(t *testing.T) {
 		us := storageMock{m, s}
 
 		if tt.setupLegacyFn != nil {
-			tt.setupLegacyFn(m, tt.input)
+			tt.setupLegacyFn(m, tt.inputLegacy)
 		}
 		if tt.setupStorageFn != nil {
-			tt.setupStorageFn(m, tt.input)
+			tt.setupStorageFn(m, tt.inputStorage)
 		}
 
 		dw := SelectDualWriter(Mode2, ls, us)
@@ -203,7 +231,7 @@ func TestMode2_List(t *testing.T) {
 			continue
 		}
 
-		assert.Equal(t, obj, exampleObj)
+		assert.Equal(t, expectedList, obj)
 	}
 }
 
@@ -301,46 +329,63 @@ func TestMode2_Delete(t *testing.T) {
 }
 
 func TestMode2_DeleteCollection(t *testing.T) {
+	storageItem := legacyItem.DeepCopy()
+	storageItem.Labels = map[string]string{"exampleLabel": "value"}
+
+	legacyList := example.PodList{Items: []example.Pod{legacyItem}}
+	storageList := example.PodList{Items: []example.Pod{*storageItem}}
+	expectedList := storageList.DeepCopy()
+
+	r, err := labels.NewRequirement(utils.AnnoKeyOriginKey, selection.In, []string{"1"})
+	assert.NoError(t, err)
+	storageOptions := &metainternalversion.ListOptions{
+		LabelSelector: labels.NewSelector().Add(*r),
+		TypeMeta:      metav1.TypeMeta{},
+	}
+
 	type testCase struct {
 		name           string
-		input          *metav1.DeleteOptions
-		setupLegacyFn  func(m *mock.Mock, input *metav1.DeleteOptions)
-		setupStorageFn func(m *mock.Mock, input *metav1.DeleteOptions)
+		legacyInput    *metainternalversion.ListOptions
+		storageInput   *metainternalversion.ListOptions
+		setupLegacyFn  func(m *mock.Mock, input *metainternalversion.ListOptions)
+		setupStorageFn func(m *mock.Mock, input *metainternalversion.ListOptions)
 		wantErr        bool
+		expectedList   *example.PodList
 	}
 	tests :=
 		[]testCase{
 			{
-				name:  "deleting a collection in both stores",
-				input: &metav1.DeleteOptions{TypeMeta: metav1.TypeMeta{Kind: "foo"}},
-				setupLegacyFn: func(m *mock.Mock, input *metav1.DeleteOptions) {
-					m.On("DeleteCollection", context.Background(), mock.Anything, input, mock.Anything).Return(exampleObj, nil)
+				name:         "deleting a collection in both stores",
+				legacyInput:  exampleOption,
+				storageInput: storageOptions,
+				setupLegacyFn: func(m *mock.Mock, input *metainternalversion.ListOptions) {
+					m.On("DeleteCollection", context.Background(), mock.Anything, mock.Anything, input).Return(&legacyList, nil)
 				},
-				setupStorageFn: func(m *mock.Mock, input *metav1.DeleteOptions) {
-					m.On("DeleteCollection", context.Background(), mock.Anything, input, mock.Anything).Return(exampleObj, nil)
+				setupStorageFn: func(m *mock.Mock, input *metainternalversion.ListOptions) {
+					m.On("DeleteCollection", context.Background(), mock.Anything, mock.Anything, input).Return(&storageList, nil)
 				},
+				expectedList: expectedList,
 			},
 			{
-				name:  "error deleting a collection in the storage when legacy store is successful",
-				input: &metav1.DeleteOptions{TypeMeta: metav1.TypeMeta{Kind: "fail"}},
-				setupLegacyFn: func(m *mock.Mock, input *metav1.DeleteOptions) {
-					m.On("DeleteCollection", context.Background(), mock.Anything, &metav1.DeleteOptions{TypeMeta: metav1.TypeMeta{Kind: "foo"}}, mock.Anything).Return(exampleObj, nil)
+				name: "error deleting a collection in the storage when legacy store is successful",
+				setupLegacyFn: func(m *mock.Mock, input *metainternalversion.ListOptions) {
+					m.On("DeleteCollection", context.Background(), mock.Anything, mock.Anything, input).Return(exampleObj, nil)
 				},
-				setupStorageFn: func(m *mock.Mock, input *metav1.DeleteOptions) {
-					m.On("DeleteCollection", context.Background(), mock.Anything, input, mock.Anything).Return(nil, errors.New("error"))
+				setupStorageFn: func(m *mock.Mock, input *metainternalversion.ListOptions) {
+					m.On("DeleteCollection", context.Background(), mock.Anything, mock.Anything, input).Return(nil, errors.New("error"))
 				},
-				wantErr: true,
+				wantErr:      true,
+				expectedList: &example.PodList{},
 			},
 			{
-				name:  "error deleting a collection when error in both stores",
-				input: &metav1.DeleteOptions{TypeMeta: metav1.TypeMeta{Kind: "fail"}},
-				setupLegacyFn: func(m *mock.Mock, input *metav1.DeleteOptions) {
-					m.On("DeleteCollection", context.Background(), mock.Anything, input, mock.Anything).Return(nil, errors.New("error"))
+				name: "deleting a collection when error in both stores",
+				setupLegacyFn: func(m *mock.Mock, input *metainternalversion.ListOptions) {
+					m.On("DeleteCollection", context.Background(), mock.Anything, mock.Anything, input).Return(&example.PodList{}, errors.New("error"))
 				},
-				setupStorageFn: func(m *mock.Mock, input *metav1.DeleteOptions) {
-					m.On("DeleteCollection", context.Background(), mock.Anything, input, mock.Anything).Return(nil, errors.New("error"))
+				setupStorageFn: func(m *mock.Mock, input *metainternalversion.ListOptions) {
+					m.On("DeleteCollection", context.Background(), mock.Anything, mock.Anything, input).Return(&example.PodList{}, errors.New("error"))
 				},
-				wantErr: true,
+				expectedList: &example.PodList{},
 			},
 		}
 
@@ -353,23 +398,22 @@ func TestMode2_DeleteCollection(t *testing.T) {
 		us := storageMock{m, s}
 
 		if tt.setupLegacyFn != nil {
-			tt.setupLegacyFn(m, tt.input)
+			tt.setupLegacyFn(m, tt.legacyInput)
 		}
 		if tt.setupStorageFn != nil {
-			tt.setupStorageFn(m, tt.input)
+			tt.setupStorageFn(m, tt.storageInput)
 		}
 
 		dw := SelectDualWriter(Mode2, ls, us)
 
-		obj, err := dw.DeleteCollection(context.Background(), func(ctx context.Context, obj runtime.Object) error { return nil }, tt.input, &metainternalversion.ListOptions{})
+		obj, err := dw.DeleteCollection(context.Background(), func(ctx context.Context, obj runtime.Object) error { return nil }, &metav1.DeleteOptions{}, tt.legacyInput)
 
 		if tt.wantErr {
 			assert.Error(t, err)
 			continue
 		}
 
-		assert.Equal(t, obj, exampleObj)
-		assert.NotEqual(t, obj, anotherObj)
+		assert.Equal(t, tt.expectedList, obj)
 	}
 }
 

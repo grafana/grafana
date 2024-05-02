@@ -93,34 +93,15 @@ func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion
 		return nil, err
 	}
 
-	originKeys := []string{}
-	indexMap := map[string]int{}
-	for i, obj := range legacyList {
-		metaAccessor, err := utils.MetaAccessor(obj)
-		if err != nil {
-			return nil, err
-		}
-		originKeys = append(originKeys, metaAccessor.GetOriginKey())
-
-		accessor, err := meta.Accessor(obj)
-		if err != nil {
-			return nil, err
-		}
-		// Record the index of each LegacyStorage object so it can later be replaced by
-		// an equivalent Storage object if it exists.
-		indexMap[accessor.GetName()] = i
-	}
-
-	if len(originKeys) == 0 {
-		return ll, nil
-	}
-
-	r, err := labels.NewRequirement(utils.AnnoKeyOriginKey, selection.In, originKeys)
+	// Record the index of each LegacyStorage object so it can later be replaced by
+	// an equivalent Storage object if it exists.
+	optionsStorage, indexMap, err := parseList(legacyList)
 	if err != nil {
 		return nil, err
 	}
-	optionsStorage := metainternalversion.ListOptions{
-		LabelSelector: labels.NewSelector().Add(*r),
+
+	if optionsStorage.LabelSelector == nil {
+		return ll, nil
 	}
 
 	sl, err := d.Storage.List(ctx, &optionsStorage)
@@ -155,28 +136,30 @@ func (d *DualWriterMode2) DeleteCollection(ctx context.Context, deleteValidation
 		return nil, errDualWriterCollectionDeleterMissing
 	}
 
-	// #TODO: figure out how to handle partial deletions
 	deleted, err := legacy.DeleteCollection(ctx, deleteValidation, options, listOptions)
 	if err != nil {
 		klog.FromContext(ctx).Error(err, "failed to delete collection successfully from legacy storage", "deletedObjects", deleted)
 	}
-
-	res, err := d.Storage.DeleteCollection(ctx, deleteValidation, options, listOptions)
+	legacyList, err := meta.ExtractList(deleted)
 	if err != nil {
-		klog.FromContext(ctx).Error(err, "failed to delete collection successfully from Storage", "deletedObjects", deleted)
+		return nil, err
+	}
+
+	// Only the items deleted by the legacy DeleteCollection call are selected for deletion by Storage.
+	optionsStorage, _, err := parseList(legacyList)
+	if err != nil {
+		return nil, err
+	}
+	if optionsStorage.LabelSelector == nil {
+		return deleted, nil
+	}
+
+	res, err := d.Storage.DeleteCollection(ctx, deleteValidation, options, &optionsStorage)
+	if err != nil {
+		klog.FromContext(ctx).Error(err, "failed to delete collection successfully from Storage", "deletedObjects", res)
 	}
 
 	return res, err
-}
-
-func enrichObject(accessorO, accessorC metav1.Object) {
-	accessorC.SetLabels(accessorO.GetLabels())
-
-	ac := accessorC.GetAnnotations()
-	for k, v := range accessorO.GetAnnotations() {
-		ac[k] = v
-	}
-	accessorC.SetAnnotations(ac)
 }
 
 func (d *DualWriterMode2) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
@@ -263,4 +246,46 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 	// TODO: relies on GuaranteedUpdate creating the object if
 	// it doesn't exist: https://github.com/grafana/grafana/pull/85206
 	return d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+}
+
+func parseList(legacyList []runtime.Object) (metainternalversion.ListOptions, map[string]int, error) {
+	options := metainternalversion.ListOptions{}
+	originKeys := []string{}
+	indexMap := map[string]int{}
+
+	for i, obj := range legacyList {
+		metaAccessor, err := utils.MetaAccessor(obj)
+		if err != nil {
+			return options, nil, err
+		}
+		originKeys = append(originKeys, metaAccessor.GetOriginKey())
+
+		accessor, err := meta.Accessor(obj)
+		if err != nil {
+			return options, nil, err
+		}
+		indexMap[accessor.GetName()] = i
+	}
+
+	if len(originKeys) == 0 {
+		return options, nil, nil
+	}
+
+	r, err := labels.NewRequirement(utils.AnnoKeyOriginKey, selection.In, originKeys)
+	if err != nil {
+		return options, nil, err
+	}
+	options.LabelSelector = labels.NewSelector().Add(*r)
+
+	return options, indexMap, nil
+}
+
+func enrichObject(accessorO, accessorC metav1.Object) {
+	accessorC.SetLabels(accessorO.GetLabels())
+
+	ac := accessorC.GetAnnotations()
+	for k, v := range accessorO.GetAnnotations() {
+		ac[k] = v
+	}
+	accessorC.SetAnnotations(ac)
 }

@@ -154,7 +154,7 @@ func TestMode1_List(t *testing.T) {
 			{
 				name: "error when listing an object in the legacy store is not implemented",
 				setupLegacyFn: func(m *mock.Mock) {
-					m.On("List", context.Background(), mock.Anything).Return(nil, errors.New("error"))
+					m.On("List", context.Background(), mock.Anything).Return(&example.PodList{}, errors.New("error"))
 				},
 			},
 			// TODO: legacy list is missing
@@ -183,8 +183,6 @@ func TestMode1_List(t *testing.T) {
 			assert.Error(t, err)
 			continue
 		}
-
-		us.AssertNotCalled(t, "List", context.Background(), &metainternalversion.ListOptions{})
 	}
 }
 
