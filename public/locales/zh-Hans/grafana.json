@@ -721,10 +721,12 @@
     "forgot-password": "忘记密码？",
     "form": {
       "password-label": "密码",
+      "password-placeholder": "",
       "password-required": "必须输入密码",
       "submit-label": "登录",
       "submit-loading-label": "正在登录...",
       "username-label": "电子邮箱或用户名",
+      "username-placeholder": "",
       "username-required": "电子邮箱或用户名是必填项"
     },
     "services": {

@@ -727,10 +727,12 @@
     "forgot-password": "Esqueceu sua senha?",
     "form": {
       "password-label": "Senha",
+      "password-placeholder": "",
       "password-required": "A senha é obrigatória",
       "submit-label": "Fazer login",
       "submit-loading-label": "Fazendo login...",
       "username-label": "E-mail ou nome de usuário",
+      "username-placeholder": "",
       "username-required": "O e-mail ou nome de usuário é obrigatório"
     },
     "services": {

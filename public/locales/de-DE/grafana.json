@@ -727,10 +727,12 @@
     "forgot-password": "Passwort vergessen?",
     "form": {
       "password-label": "Passwort",
+      "password-placeholder": "",
       "password-required": "Passwort ist erforderlich",
       "submit-label": "Einloggen",
       "submit-loading-label": "Einloggen...",
       "username-label": "E-Mail oder Benutzername",
+      "username-placeholder": "",
       "username-required": "E-Mail oder Benutzername ist erforderlich"
     },
     "services": {
