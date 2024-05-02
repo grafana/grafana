@@ -13,6 +13,11 @@ import {
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 import { useDispatch } from 'app/types';
 
+import {
+  trackCloseIrmConfigurationEssentials,
+  trackIrmMainPageView,
+  trackOpenIrmConfigurationEssentials,
+} from '../Analytics';
 import { useGetEssentialsConfiguration } from '../hooks/irmHooks';
 
 import { Essentials } from './Essentials';
@@ -40,10 +45,19 @@ export function ConfigureIRM() {
   useEffect(() => {
     dispatchReduxAction(fetchAllPromBuildInfoAction());
   }, [dispatchReduxAction]);
+  // track only once when the component is mounted
+  useEffect(() => {
+    trackIrmMainPageView({ essentialStepsDone: 0, essentialStepsToDo: 0 });
+  }, []);
   const dataSourceCompatibleWithAlerting = Boolean(getFirstCompatibleDataSource()); // we need at least one datasource compatible with alerting
 
   const [essentialsOpen, setEssentialsOpen] = useState(false);
-  const { essentialContent, stepsDone, totalStepsToDo } = useGetEssentialsConfiguration();
+
+  const {
+    essentialContent,
+    stepsDone: essentialStepsDone,
+    totalStepsToDo: essentialStepsToDo,
+  } = useGetEssentialsConfiguration();
 
   const configuration: DataConfiguration[] = useMemo(() => {
     function getConnectDataSourceConfiguration() {
@@ -67,11 +81,11 @@ export function ConfigureIRM() {
         titleIcon: 'star',
         description: 'Configure the features you need to start using Grafana IRM workflows',
         actionButtonTitle: 'Start',
-        stepsDone: stepsDone,
-        totalStepsToDo: totalStepsToDo,
+        stepsDone: essentialStepsDone,
+        totalStepsToDo: essentialStepsToDo,
       },
     ];
-  }, [dataSourceCompatibleWithAlerting, stepsDone, totalStepsToDo]);
+  }, [dataSourceCompatibleWithAlerting, essentialStepsDone, essentialStepsToDo]);
 
   const handleActionClick = (configID: number, isDone?: boolean) => {
     switch (configID) {
@@ -84,11 +98,17 @@ export function ConfigureIRM() {
         break;
       case ConfigurationStepsEnum.ESSENTIALS:
         setEssentialsOpen(true);
+        trackOpenIrmConfigurationEssentials({ essentialStepsDone, essentialStepsToDo });
         break;
       default:
         return;
     }
   };
+
+  function onCloseEssentials() {
+    setEssentialsOpen(false);
+    trackCloseIrmConfigurationEssentials({ essentialStepsDone, essentialStepsToDo });
+  }
 
   return (
     <>
@@ -134,10 +154,10 @@ export function ConfigureIRM() {
         {essentialsOpen && (
           <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={GRAFANA_RULES_SOURCE_NAME}>
             <Essentials
-              onClose={() => setEssentialsOpen(false)}
+              onClose={onCloseEssentials}
               essentialsConfig={essentialContent}
-              stepsDone={stepsDone}
-              totalStepsToDo={totalStepsToDo}
+              stepsDone={essentialStepsDone}
+              totalStepsToDo={essentialStepsToDo}
             />
           </AlertmanagerProvider>
         )}
