@@ -41,7 +41,7 @@ func ParseNamespace(str string) (Namespace, error) {
 	}
 }
 
-var AnonymousNamespaceID = MustNewNamespaceID(NamespaceAnonymous, 0)
+var AnonymousNamespaceID = NewNamespaceID(NamespaceAnonymous, 0)
 
 func ParseNamespaceID(str string) (NamespaceID, error) {
 	var namespaceID NamespaceID
@@ -72,27 +72,7 @@ func MustParseNamespaceID(str string) NamespaceID {
 	return namespaceID
 }
 
-// NewNamespaceID creates a new NamespaceID, will fail for invalid namespace.
-func NewNamespaceID(namespace Namespace, id int64) (NamespaceID, error) {
-	return NamespaceID{
-		id:        strconv.FormatInt(id, 10),
-		namespace: namespace,
-	}, nil
-}
-
-// MustNewNamespaceID creates a new NamespaceID, will panic for invalid namespace.
-// Suitable to use in tests or when we can guarantee that we pass a correct format.
-func MustNewNamespaceID(namespace Namespace, id int64) NamespaceID {
-	namespaceID, err := NewNamespaceID(namespace, id)
-	if err != nil {
-		panic(err)
-	}
-	return namespaceID
-}
-
-// NewNamespaceIDUnchecked creates a new NamespaceID without checking if namespace is valid.
-// It us up to the caller to ensure that namespace is valid.
-func NewNamespaceIDUnchecked(namespace Namespace, id int64) NamespaceID {
+func NewNamespaceID(namespace Namespace, id int64) NamespaceID {
 	return NamespaceID{
 		id:        strconv.FormatInt(id, 10),
 		namespace: namespace,
