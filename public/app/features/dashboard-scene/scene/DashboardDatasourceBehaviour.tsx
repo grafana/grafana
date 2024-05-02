@@ -1,6 +1,12 @@
 import { Unsubscribable } from 'rxjs';
 
-import { SceneObjectBase, SceneObjectState, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import {
+  CancelActivationHandler,
+  SceneObjectBase,
+  SceneObjectState,
+  SceneQueryRunner,
+  VizPanel,
+} from '@grafana/scenes';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 
 import { findVizPanelByKey, getDashboardSceneFor, getQueryRunnerFor, getVizPanelKeyForPanelId } from '../utils/utils';
@@ -53,10 +59,15 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
 
     const sourcePanelQueryRunner = getQueryRunnerFor(panel);
 
+    let parentLibPanelCleanUp: undefined | CancelActivationHandler;
+
     if (!sourcePanelQueryRunner) {
       if (!(panel.parent instanceof LibraryVizPanel)) {
         throw new Error('Could not find SceneQueryRunner for panel');
       } else {
+        if (!panel.parent.isActive) {
+          parentLibPanelCleanUp = panel.parent.activate();
+        }
         // Library panels load and create internal viz panel asynchroniously. Here we are subscribing to
         // library panel state, and run dashboard queries when the source panel query runner is ready.
         libraryPanelSub = panel.parent.subscribeToState((n, p) => {
@@ -73,6 +84,9 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
       this.prevRequestId = sourcePanelQueryRunner?.state.data?.request?.requestId;
       if (libraryPanelSub) {
         libraryPanelSub.unsubscribe();
+      }
+      if (parentLibPanelCleanUp) {
+        parentLibPanelCleanUp();
       }
     };
   }
