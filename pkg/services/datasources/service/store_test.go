@@ -98,7 +98,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			require.IsType(t, datasources.ErrDataSourceUidExists, err)
 		})
 
-		t.Run("autocorrects a wrong uid", func(t *testing.T) {
+		t.Run("fails to create a datasource with an invalid uid", func(t *testing.T) {
 			db := db.InitTestDB(t)
 			ss := SqlStore{
 				db:       db,
@@ -107,9 +107,8 @@ func TestIntegrationDataAccess(t *testing.T) {
 			}
 			cmd := defaultAddDatasourceCommand
 			cmd.UID = "test/uid"
-			res, err := ss.AddDataSource(context.Background(), &cmd)
-			require.NoError(t, err)
-			require.Equal(t, "test-uid", res.UID)
+			_, err := ss.AddDataSource(context.Background(), &cmd)
+			require.ErrorContains(t, err, "invalid format of UID")
 		})
 
 		t.Run("fires an event when the datasource is added", func(t *testing.T) {

@@ -260,7 +260,7 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 		} else if err := util.ValidateUID(cmd.UID); err != nil {
 			logDeprecatedInvalidDsUid(ss.logger, cmd.UID, cmd.Name, "create", err)
 			if ss.features != nil && ss.features.IsEnabled(ctx, featuremgmt.FlagAutofixDSUID) {
-				cmd.UID = util.AutofixUID(cmd.UID)
+				return fmt.Errorf("invalid UID for datasource %s: %w", cmd.Name, err)
 			}
 		}
 
