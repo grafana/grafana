@@ -18,6 +18,10 @@ import { getRuleHealth, isAlertingRule, isGrafanaRulerRule, isPromRuleType } fro
 import { calculateGroupTotals, calculateRuleFilteredTotals, calculateRuleTotals } from './useCombinedRuleNamespaces';
 import { useURLSearchParams } from './useURLSearchParams';
 
+// if the search term is longer than MAX_NEEDLE_SIZE we disable Levenshtein distance
+const MAX_NEEDLE_SIZE = 25;
+const INFO_THRESHOLD = Infinity;
+
 export function useRulesFilter() {
   const [queryParams, updateQueryParams] = useURLSearchParams();
   const searchQuery = queryParams.get('search') ?? '';
@@ -76,8 +80,6 @@ export function useRulesFilter() {
   return { filterState, hasActiveFilters, searchQuery, setSearchQuery, updateFilters };
 }
 
-const infoThresh = Infinity;
-
 export const useFilteredRules = (namespaces: CombinedRuleNamespace[], filterState: RulesFilter) => {
   return useMemo(() => {
     const filteredRules = filterRules(namespaces, filterState);
@@ -105,14 +107,17 @@ export const useFilteredRules = (namespaces: CombinedRuleNamespace[], filterStat
 // Options details can be found here https://github.com/leeoniya/uFuzzy#options
 // The following configuration complies with Damerau-Levenshtein distance
 // https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance
-const ufuzzy = new uFuzzy({
+const ufuzzyWithDistance = new uFuzzy({
   intraMode: 1,
-  intraIns: 1,
-  intraSub: 1,
-  intraTrn: 1,
-  intraDel: 1,
   // split search terms only on whitespace, this will significantly reduce the amount of regex permutations to test
   // and is important for performance with large amount of rules and large needle
+  interSplit: '\\s+',
+});
+
+// we will use this ufuzzy instance for very long search terms to disable Levenshtein distance – this will help with performance
+// as it will avoid creating a very complex regular expression
+const ufuzzyStrict = new uFuzzy({
+  intraMode: 0,
   interSplit: '\\s+',
 });
 
@@ -134,11 +139,12 @@ export const filterRules = (
   if (namespaceFilter) {
     const namespaceHaystack = filteredNamespaces.map((ns) => ns.name);
 
+    const ufuzzy = getSearchInstance(namespaceFilter);
     const [idxs, info, order] = ufuzzy.search(
       namespaceHaystack,
       namespaceFilter,
       getOutOfOrderLimit(namespaceFilter),
-      infoThresh
+      INFO_THRESHOLD
     );
     if (info && order) {
       filteredNamespaces = order.map((idx) => filteredNamespaces[info.idx[idx]]);
@@ -158,11 +164,13 @@ const reduceNamespaces = (filterState: RulesFilter) => {
 
     if (groupNameFilter) {
       const groupsHaystack = filteredGroups.map((g) => g.name);
+      const ufuzzy = getSearchInstance(groupNameFilter);
+
       const [idxs, info, order] = ufuzzy.search(
         groupsHaystack,
         groupNameFilter,
         getOutOfOrderLimit(groupNameFilter),
-        infoThresh
+        INFO_THRESHOLD
       );
       if (info && order) {
         filteredGroups = order.map((idx) => filteredGroups[info.idx[idx]]);
@@ -193,11 +201,13 @@ const reduceGroups = (filterState: RulesFilter) => {
 
     if (ruleNameQuery) {
       const rulesHaystack = filteredRules.map((r) => r.name);
+      const ufuzzy = getSearchInstance(ruleNameQuery);
+
       const [idxs, info, order] = ufuzzy.search(
         rulesHaystack,
         ruleNameQuery,
         getOutOfOrderLimit(ruleNameQuery),
-        infoThresh
+        INFO_THRESHOLD
       );
       if (info && order) {
         filteredRules = order.map((idx) => filteredRules[info.idx[idx]]);
@@ -298,6 +308,8 @@ const reduceGroups = (filterState: RulesFilter) => {
 // apply an outOfOrder limit which helps to limit the number of permutations to search for
 // and prevents the browser from hanging
 function getOutOfOrderLimit(searchTerm: string) {
+  const ufuzzy = getSearchInstance(searchTerm);
+
   const termCount = ufuzzy.split(searchTerm).length;
   return termCount < 5 ? 4 : 0;
 }
@@ -309,6 +321,12 @@ function looseParseMatcher(matcherQuery: string): Matcher | undefined {
     // Try to createa a matcher than matches all values for a given key
     return { name: matcherQuery, value: '', isRegex: true, isEqual: true };
   }
+}
+
+// determine which search instance to use, very long search terms should match without checking for Levenshtein distance
+function getSearchInstance(searchTerm: string): uFuzzy {
+  const searchTermExeedsMaxNeedleSize = searchTerm.length > MAX_NEEDLE_SIZE;
+  return searchTermExeedsMaxNeedleSize ? ufuzzyStrict : ufuzzyWithDistance;
 }
 
 const isQueryingDataSource = (rulerRule: RulerGrafanaRuleDTO, filterState: RulesFilter): boolean => {
