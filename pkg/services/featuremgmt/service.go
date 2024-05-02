@@ -61,7 +61,13 @@ func ProvideManagerService(cfg *setting.Cfg) (*FeatureManager, error) {
 	mgmt.update()
 
 	// Log the enabled feature toggles at startup
-	mgmt.log.Info("FeatureToggles", "enabled", sort.StringSlice(maps.Keys(mgmt.enabled)))
+	enabled := sort.StringSlice(maps.Keys(mgmt.enabled))
+	logctx := make([]any, len(enabled)*2)
+	for i, k := range enabled {
+		logctx[(i * 2)] = k
+		logctx[(i*2)+1] = true
+	}
+	mgmt.log.Info("FeatureToggles", logctx...)
 
 	// Minimum approach to avoid circular dependency
 	// nolint:staticcheck
