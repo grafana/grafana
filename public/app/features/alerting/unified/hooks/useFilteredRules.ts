@@ -104,23 +104,6 @@ export const useFilteredRules = (namespaces: CombinedRuleNamespace[], filterStat
   }, [namespaces, filterState]);
 };
 
-// Options details can be found here https://github.com/leeoniya/uFuzzy#options
-// The following configuration complies with Damerau-Levenshtein distance
-// https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance
-const ufuzzyWithDistance = new uFuzzy({
-  intraMode: 1,
-  // split search terms only on whitespace, this will significantly reduce the amount of regex permutations to test
-  // and is important for performance with large amount of rules and large needle
-  interSplit: '\\s+',
-});
-
-// we will use this ufuzzy instance for very long search terms to disable Levenshtein distance – this will help with performance
-// as it will avoid creating a very complex regular expression
-const ufuzzyStrict = new uFuzzy({
-  intraMode: 0,
-  interSplit: '\\s+',
-});
-
 export const filterRules = (
   namespaces: CombinedRuleNamespace[],
   filterState: RulesFilter = { dataSourceNames: [], labels: [], freeFormWords: [] }
@@ -326,7 +309,18 @@ function looseParseMatcher(matcherQuery: string): Matcher | undefined {
 // determine which search instance to use, very long search terms should match without checking for Levenshtein distance
 function getSearchInstance(searchTerm: string): uFuzzy {
   const searchTermExeedsMaxNeedleSize = searchTerm.length > MAX_NEEDLE_SIZE;
-  return searchTermExeedsMaxNeedleSize ? ufuzzyStrict : ufuzzyWithDistance;
+
+  // Options details can be found here https://github.com/leeoniya/uFuzzy#options
+  // The following configuration complies with Damerau-Levenshtein distance
+  // https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance
+  return new uFuzzy({
+    // we will disable Levenshtein distance for very long search terms – this will help with performance
+    // as it will avoid creating a very complex regular expression
+    intraMode: searchTermExeedsMaxNeedleSize ? 0 : 1,
+    // split search terms only on whitespace, this will significantly reduce the amount of regex permutations to test
+    // and is important for performance with large amount of rules and large needle
+    interSplit: '\\s+',
+  });
 }
 
 const isQueryingDataSource = (rulerRule: RulerGrafanaRuleDTO, filterState: RulesFilter): boolean => {
