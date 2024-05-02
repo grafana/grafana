@@ -174,7 +174,13 @@ func SelectableScopeDashboardBindingFields(obj *scope.ScopeDashboardBinding) fie
 }
 
 func SelectableScopeNodeFields(obj *scope.ScopeNode) fields.Set {
+	parentName := ""
+
+	if obj.Spec.ParentName != nil {
+		parentName = *obj.Spec.ParentName
+	}
+
 	return generic.MergeFieldsSets(generic.ObjectMetaFieldsSet(&obj.ObjectMeta, false), fields.Set{
-		"spec.parentName": obj.Spec.ParentName,
+		"spec.parentName": parentName,
 	})
 }
