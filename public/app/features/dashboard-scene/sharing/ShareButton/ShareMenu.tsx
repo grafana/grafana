@@ -23,7 +23,7 @@ export default function ShareMenu({ dashboard }: { dashboard: DashboardScene }) 
       size: 'md',
       closeOnMaskClick: false,
       scene: new ShareExternallyDrawer({ dashboardRef: dashboard.getRef() }),
-      onClose: dashboard.closeModal,
+      onClose: () => dashboard.closeModal(),
     });
 
     dashboard.showModal(drawer);

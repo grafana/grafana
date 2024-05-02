@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { config, featureEnabled } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState } from '@grafana/scenes';
 import { Label, Stack, Text } from '@grafana/ui';
 import { Select, useStyles2 } from '@grafana/ui/';
@@ -9,7 +10,8 @@ import { PublicDashboardShareType } from 'app/features/dashboard/components/Shar
 
 import { DashboardScene } from '../../../scene/DashboardScene';
 
-import { EmailSharingConfig } from './EmailSharingConfig';
+import { EmailSharing } from './EmailShare/EmailSharing';
+import { PublicConfiguration } from './PublicShare/PublicConfiguration';
 
 export interface ShareExternallyDrawerState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;
@@ -23,17 +25,23 @@ export class ShareExternallyDrawer extends SceneObjectBase<ShareExternallyDrawer
   }
 }
 
-const options = [
-  { label: 'Only specific people', value: PublicDashboardShareType.EMAIL, icon: 'users-alt' },
-  { label: 'Anyone with the link', value: PublicDashboardShareType.PUBLIC, icon: 'globe' },
-];
+const hasEmailSharingEnabled =
+  !!config.featureToggles.publicDashboardsEmailSharing && featureEnabled('publicDashboardsEmailSharing');
+
+const options = [{ label: 'Anyone with the link', value: PublicDashboardShareType.PUBLIC, icon: 'globe' }];
+
+if (hasEmailSharingEnabled) {
+  options.unshift({ label: 'Only specific people', value: PublicDashboardShareType.EMAIL, icon: 'users-alt' });
+}
 
 function ShareExternallyDrawerRenderer({ model }: SceneComponentProps<ShareExternallyDrawer>) {
   const [value, setValue] = React.useState<SelectableValue<PublicDashboardShareType>>(options[0]);
   const styles = useStyles2(getStyles);
 
+  const dashboard = model.state.dashboardRef.resolve();
+
   const onCancel = () => {
-    model.state.dashboardRef.resolve().closeModal();
+    dashboard.closeModal();
   };
 
   return (
@@ -54,7 +62,10 @@ function ShareExternallyDrawerRenderer({ model }: SceneComponentProps<ShareExter
           </Text>
         </Stack>
       </div>
-      {value.value === PublicDashboardShareType.EMAIL && <EmailSharingConfig onCancel={onCancel} />}
+      {hasEmailSharingEnabled && value.value === PublicDashboardShareType.EMAIL && (
+        <EmailSharing dashboard={dashboard} onCancel={onCancel} />
+      )}
+      {value.value === PublicDashboardShareType.PUBLIC && <PublicConfiguration onCancel={onCancel} />}
     </Stack>
   );
 }

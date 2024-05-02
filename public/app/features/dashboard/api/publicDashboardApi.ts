@@ -43,7 +43,9 @@ const backendSrvBaseQuery =
     }
   };
 
-const getConfigError = (err: unknown) => ({ error: isFetchError(err) && err.status !== 404 ? err : null });
+const getConfigError = (err: unknown) => ({
+  error: isFetchError(err) && err.data.messageId !== 'publicdashboards.notFound' ? err : null,
+});
 
 export const publicDashboardApi = createApi({
   reducerPath: 'publicDashboardApi',

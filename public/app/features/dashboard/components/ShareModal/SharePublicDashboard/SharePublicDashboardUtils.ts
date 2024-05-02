@@ -17,6 +17,7 @@ export interface PublicDashboardSettings {
   annotationsEnabled: boolean;
   isEnabled: boolean;
   timeSelectionEnabled: boolean;
+  share: PublicDashboardShareType;
 }
 
 export interface PublicDashboard extends PublicDashboardSettings {
@@ -24,7 +25,6 @@ export interface PublicDashboard extends PublicDashboardSettings {
   uid: string;
   dashboardUid: string;
   timeSettings?: object;
-  share: PublicDashboardShareType;
   recipients?: Array<{ uid: string; recipient: string }>;
 }
 
