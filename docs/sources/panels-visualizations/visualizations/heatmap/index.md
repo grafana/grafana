@@ -60,6 +60,10 @@ The data is converted as follows:
 
 {{< figure src="/static/img/docs/heatmap-panel/heatmap.png" max-width="1025px" alt="A heatmap visualization showing the random walk distribution over time" >}}
 
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ## Heatmap options
 
 ### Calculate from data
@@ -173,6 +177,14 @@ When you set the **Tooltip mode** to **Single**, this option is displayed. This 
 ### Legend
 
 Choose whether you want to display the heatmap legend on the visualization by toggling the **Show legend** switch.
+
+### Data links
+
+{{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Field overrides
+
+{{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ### Exemplars
 
