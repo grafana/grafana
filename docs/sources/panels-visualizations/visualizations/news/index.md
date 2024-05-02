@@ -18,7 +18,7 @@ title: News
 weight: 100
 ---
 
-## News
+# News
 
 The news visualization displays an RSS feed. By default, it displays articles from the Grafana Labs blog, and users can change this by entering a different RSS feed URL.
 
