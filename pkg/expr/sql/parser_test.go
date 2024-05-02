@@ -65,3 +65,27 @@ func TestParseSubquery(t *testing.T) {
 	assert.Equal(t, 1, len(tables))
 	assert.Equal(t, "people", tables[0])
 }
+
+func TestJoin(t *testing.T) {
+	sql := `select * from A
+	JOIN B ON A.name = B.name
+	LIMIT 10`
+	tables, err := TablesList((sql))
+	assert.Nil(t, err)
+
+	assert.Equal(t, 2, len(tables))
+	assert.Equal(t, "A", tables[0])
+	assert.Equal(t, "B", tables[1])
+}
+
+func TestRightJoin(t *testing.T) {
+	sql := `select * from A
+	RIGHT JOIN B ON A.name = B.name
+	LIMIT 10`
+	tables, err := TablesList((sql))
+	assert.Nil(t, err)
+
+	assert.Equal(t, 2, len(tables))
+	assert.Equal(t, "A", tables[0])
+	assert.Equal(t, "B", tables[1])
+}

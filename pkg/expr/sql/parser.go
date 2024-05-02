@@ -9,6 +9,7 @@ import (
 )
 
 // TablesList returns a list of tables for the sql statement
+// TODO: should we just return all query refs instead of trying to parse them from the sql?
 func TablesList(rawSQL string) ([]string, error) {
 	stmt, err := sqlparser.Parse(rawSQL)
 	if err != nil {
@@ -22,17 +23,21 @@ func TablesList(rawSQL string) ([]string, error) {
 	tables := []string{}
 	switch kind := stmt.(type) {
 	case *sqlparser.Select:
-		for _, t := range kind.From {
+		for _, from := range kind.From {
 			buf := sqlparser.NewTrackedBuffer(nil)
-			t.Format(buf)
-			table := buf.String()
-			if table != "dual" && !strings.HasPrefix(table, "(") {
-				if strings.Contains(table, " as") {
-					name := stripAlias(table)
+			from.Format(buf)
+			fromClause := buf.String()
+			upperFromClause := strings.ToUpper(fromClause)
+			if strings.Contains(upperFromClause, "JOIN") {
+				return extractTablesFrom(fromClause), nil
+			}
+			if upperFromClause != "DUAL" && !strings.HasPrefix(fromClause, "(") {
+				if strings.Contains(upperFromClause, " AS") {
+					name := stripAlias(fromClause)
 					tables = append(tables, name)
 					continue
 				}
-				tables = append(tables, buf.String())
+				tables = append(tables, fromClause)
 			}
 		}
 	default:
@@ -44,10 +49,31 @@ func TablesList(rawSQL string) ([]string, error) {
 	return tables, nil
 }
 
+func extractTablesFrom(stmt string) []string {
+	// example: A join B on A.name = B.name
+	tables := []string{}
+	parts := strings.Split(stmt, " ")
+	for _, part := range parts {
+		part = strings.ToUpper(part)
+		if isJoin(part) {
+			continue
+		}
+		if strings.Contains(part, "ON") {
+			break
+		}
+		if part != "" {
+			if !existsInList(part, tables) {
+				tables = append(tables, part)
+			}
+		}
+	}
+	return tables
+}
+
 func stripAlias(table string) string {
 	tableParts := []string{}
 	for _, part := range strings.Split(table, " ") {
-		if part == "as" {
+		if strings.ToUpper(part) == "AS" {
 			break
 		}
 		tableParts = append(tableParts, part)
@@ -73,6 +99,7 @@ func parse(rawSQL string) ([]string, error) {
 func parseTables(rawSQL string) ([]string, error) {
 	checkSql := strings.ToUpper(rawSQL)
 	rawSQL = strings.ReplaceAll(rawSQL, "\n", " ")
+	rawSQL = strings.ReplaceAll(rawSQL, "\r", " ")
 	if strings.HasPrefix(checkSql, "SELECT") || strings.HasPrefix(rawSQL, "WITH") {
 		tables := []string{}
 		tokens := strings.Split(rawSQL, " ")
@@ -127,6 +154,18 @@ func parseTables(rawSQL string) ([]string, error) {
 func existsInList(table string, list []string) bool {
 	for _, t := range list {
 		if t == table {
+			return true
+		}
+	}
+	return false
+}
+
+var joins = []string{"JOIN", "INNER", "LEFT", "RIGHT", "FULL", "OUTER"}
+
+func isJoin(token string) bool {
+	token = strings.ToUpper(token)
+	for _, join := range joins {
+		if token == join {
 			return true
 		}
 	}
