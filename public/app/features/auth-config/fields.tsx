@@ -122,7 +122,15 @@ export const sectionFields: Section = {
     {
       name: 'User mapping',
       id: 'user',
-      fields: ['roleAttributePath', 'roleAttributeStrict', 'allowAssignGrafanaAdmin', 'skipOrgRoleSync'],
+      fields: [
+        'roleAttributePath',
+        'roleAttributeStrict',
+        'allowAssignGrafanaAdmin',
+        'skipOrgRoleSync',
+        'gcipNameLookup',
+        'gcipEmailLookup',
+        'gcipEmailValidationLookup',
+      ],
     },
     {
       name: 'Extra security measures',
@@ -595,6 +603,21 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       description:
         'If enabled, Grafana will match the Hosted Domain retrieved from the Google ID Token against the Allowed Domains list specified by the user.',
       type: 'checkbox',
+    },
+    gcipNameLookup: {
+      label: 'GCIP name lookup',
+      description: 'If enabled, Grafana will override the user name with the name retrieved from the Google Cloud Identity Platform with a JMESPath expression.',
+      type: 'text',
+    },
+    gcipEmailLookup: {
+      label: 'GCIP email lookup',
+      description: 'If enabled, Grafana will override the user email with the email retrieved from the Google Cloud Identity Platform with a JMESPath expression.',
+      type: 'text',
+    },
+    gcipEmailValidationLookup: {
+      label: 'GCIP email validation lookup',
+      description: 'If enabled, Grafana will lookup for the email validation attribute within the Google Cloud Identity Platform payload to flag the email as validated.',
+      type: 'text',
     },
   };
 }

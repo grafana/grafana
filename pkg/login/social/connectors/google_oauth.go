@@ -109,6 +109,9 @@ func (s *SocialGoogle) Reload(ctx context.Context, settings ssoModels.SSOSetting
 	defer s.reloadMutex.Unlock()
 
 	s.updateInfo(social.GoogleProviderName, newInfo)
+	s.gcipNameLookup = newInfo.Extra[gcipNameLookup]
+	s.gcipEmailLookup = newInfo.Extra[gcipEmailLookup]
+	s.gcipEmailVerifiedLookup = newInfo.Extra[gcipEmailVerifiedLookup]
 	s.validateHD = MustBool(newInfo.Extra[validateHDKey], true)
 
 	return nil

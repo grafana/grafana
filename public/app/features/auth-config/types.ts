@@ -57,6 +57,9 @@ export type SSOProviderSettingsBase = {
   forceUseGraphApi?: boolean;
   // For Google
   validateHd?: boolean;
+  gcipNameLookup?: string;
+  gcipEmailLookup?: string;
+  gcipEmailValidationLookup?: string;
 };
 
 // SSO data received from the API and sent to it
