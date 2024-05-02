@@ -662,4 +662,8 @@ const (
 	// FlagAutofixDSUID
 	// Automatically migrates invalid datasource UIDs
 	FlagAutofixDSUID = "autofixDSUID"
+
+	// FlagLogsExploreTableDefaultVisualization
+	// Sets the logs table as default visualisation in logs explore
+	FlagLogsExploreTableDefaultVisualization = "logsExploreTableDefaultVisualization"
 )

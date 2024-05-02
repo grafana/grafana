@@ -163,3 +163,4 @@ disableNumericMetricsSortingInExpressions,experimental,@grafana/observability-me
 grafanaManagedRecordingRules,experimental,@grafana/alerting-squad,false,false,false
 queryLibrary,experimental,@grafana/explore-squad,false,false,false
 autofixDSUID,experimental,@grafana/plugins-platform-backend,false,false,false
+logsExploreTableDefaultVisualization,experimental,@grafana/observability-logs,false,false,true

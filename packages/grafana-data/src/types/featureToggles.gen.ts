@@ -182,4 +182,5 @@ export interface FeatureToggles {
   grafanaManagedRecordingRules?: boolean;
   queryLibrary?: boolean;
   autofixDSUID?: boolean;
+  logsExploreTableDefaultVisualization?: boolean;
 }
