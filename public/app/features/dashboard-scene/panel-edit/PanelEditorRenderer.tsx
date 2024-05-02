@@ -212,7 +212,6 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 0,
       gridArea: 'controls',
       padding: theme.spacing(2, 0, 2, 2),
-      overflow: 'hidden',
     }),
     controlsWrapperWithScopes: css({
       padding: theme.spacing(2, 0),
