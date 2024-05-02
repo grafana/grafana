@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
-import { debounce } from 'lodash';
-import React, { useCallback } from 'react';
+import { debounce, isEqual } from 'lodash';
+import React from 'react';
 
 import { GrafanaTheme2, RawTimeRange } from '@grafana/data';
+import { isFetchError } from '@grafana/runtime';
 import {
   PanelBuilders,
   SceneComponentProps,
@@ -10,7 +11,6 @@ import {
   SceneCSSGridLayout,
   SceneFlexItem,
   sceneGraph,
-  SceneObject,
   SceneObjectBase,
   SceneObjectRef,
   SceneObjectState,
@@ -32,6 +32,7 @@ import { getMetricNames } from './api';
 import { getPreviewPanelFor } from './previewPanel';
 import { sortRelatedMetrics } from './relatedMetrics';
 import { createJSRegExpFromSearchTerms, deriveSearchTermsFromInput, getMetricSearchTerms } from './util';
+import { DataTrailHistory } from '../DataTrailsHistory';
 import {
   getVariablesWithMetricConstant,
   MetricSelectedEvent,
@@ -64,7 +65,7 @@ export interface MetricSelectSceneState extends SceneObjectState {
 const ROW_PREVIEW_HEIGHT = '175px';
 const ROW_CARD_HEIGHT = '64px';
 
-const MAX_METRIC_NAMES = 50;
+const MAX_METRIC_NAMES = 1024;
 
 export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
   private previewCache: Record<string, MetricPanel> = {};
@@ -104,9 +105,9 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       this.ignoreNextUpdate = true;
     }
 
-    const trail = getTrailFor(this);
+    this._updateSearchQueryFromSearchTerms();
 
-    this.setState({ searchQuery: getMetricSearchTerms(trail).join(' ') });
+    const trail = getTrailFor(this);
 
     this._subs.add(
       trail.subscribeToEvent(MetricSelectedEvent, (event) => {
@@ -136,6 +137,9 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
               return;
             }
           }
+        } else if (evt.payload.changedObject instanceof DataTrailHistory) {
+          // If the history changes, our search terms might need an update
+          this._updateSearchQueryFromSearchTerms();
         }
       })
     );
@@ -149,6 +153,10 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     this._refreshMetricNames();
   }
 
+  private _updateSearchQueryFromSearchTerms() {
+    this.setState({ searchQuery: getMetricSearchTerms(getTrailFor(this)).join(' ') });
+  }
+
   private async _refreshMetricNames() {
     const trail = getTrailFor(this);
     const timeRange: RawTimeRange | undefined = trail.state.$timeRange?.state;
@@ -160,22 +168,34 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     const match = sceneGraph.interpolate(trail, '{${filters}${metricSearch:filter}}');
     const datasourceUid = sceneGraph.interpolate(trail, VAR_DATASOURCE_EXPR);
     this.setState({ metricNamesLoading: true, metricNamesError: undefined, metricNamesWarning: undefined });
-    const response = await getMetricNames(datasourceUid, timeRange, match, MAX_METRIC_NAMES);
-    const metricNamesLoading = false;
-    const searchRegex = createJSRegExpFromSearchTerms(getMetricSearchTerms(trail));
-    const metricNames = searchRegex
-      ? response.data.filter((metric) => !searchRegex || searchRegex.test(metric))
-      : response.data;
 
-    const metricNamesWarning = response.limitReached
-      ? `There are too many different metric names in this data source. ` +
-        `Only the first ${MAX_METRIC_NAMES} metrics will be considered ` +
-        `(i.e., from "${metricNames[0]}" to "${metricNames.at(-1)}"). ` +
-        `Try entering some search terms or label filters to narrow down the number of metric names returned.`
-      : undefined;
+    try {
+      const response = await getMetricNames(datasourceUid, timeRange, match, MAX_METRIC_NAMES);
+      const searchRegex = createJSRegExpFromSearchTerms(getMetricSearchTerms(trail));
+      const metricNames = searchRegex
+        ? response.data.filter((metric) => !searchRegex || searchRegex.test(metric))
+        : response.data;
 
-    // TODO handle metricNamesError
-    this.setState({ metricNames, metricNamesLoading, metricNamesWarning });
+      const metricNamesWarning = response.limitReached
+        ? `There are too many different metric names in this data source. ` +
+          `Only the first ${MAX_METRIC_NAMES} metrics will be considered ` +
+          `(i.e., from "${metricNames[0]}" to "${metricNames.at(-1)}"). ` +
+          `Try entering some search terms or label filters to narrow down the number of metric names returned.`
+        : undefined;
+
+      this.setState({ metricNames, metricNamesLoading: false, metricNamesWarning, metricNamesError: response.error });
+    } catch (err: unknown) {
+      let error = 'Unknown error';
+      if (isFetchError(err)) {
+        if (err.cancelled) {
+          error = 'Request cancelled';
+        } else if (err.statusText) {
+          error = err.statusText;
+        }
+      }
+
+      this.setState({ metricNames: undefined, metricNamesLoading: false, metricNamesError: error });
+    }
   }
 
   private sortedPreviewMetrics() {
@@ -314,7 +334,10 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     const searchTermsVariable = sceneGraph.lookupVariable(VAR_METRIC_SEARCH_TERMS, this);
     if (searchTermsVariable instanceof MetricSearchTermsVariable) {
       const terms = deriveSearchTermsFromInput(this.state.searchQuery || '');
-      searchTermsVariable.updateTerms(terms);
+
+      if (!isEqual(searchTermsVariable.state.terms, terms)) {
+        searchTermsVariable.updateTerms(terms);
+      }
     }
   }, 1000);
 
@@ -403,19 +426,4 @@ function getStyles(theme: GrafanaTheme2) {
       marginBottom: 0,
     }),
   };
-}
-
-function useVariableStatus(name: string, sceneObject: SceneObject) {
-  const variable = sceneGraph.lookupVariable(name, sceneObject);
-
-  const useVariableState = useCallback(() => {
-    if (variable) {
-      return variable.useState();
-    }
-    return undefined;
-  }, [variable]);
-
-  const { error, loading } = useVariableState() || {};
-
-  return { isLoading: !!loading, error };
 }

@@ -32,8 +32,6 @@ export class MetricSearchTermsVariable
       hide: VariableHide.hideVariable,
       skipUrlSync: false,
       terms: [],
-
-      // this.addActivationHandler(this._onActivate)
       ...state,
     });
   }

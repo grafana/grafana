@@ -187,7 +187,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       })
     );
 
-    // TODO check if this ruins the flow pre enableUrlSync
+    // Signal that the search terms variable has changed
     const searchTermsVariable = sceneGraph.lookupVariable(VAR_METRIC_SEARCH_TERMS, this);
     if (searchTermsVariable instanceof MetricSearchTermsVariable) {
       searchTermsVariable.publishEvent(new SceneVariableValueChangedEvent(searchTermsVariable), true);
