@@ -1,5 +1,5 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import { Alert, Box, Button, Stack } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
@@ -12,6 +12,7 @@ import {
   useRunCloudMigrationMutation,
 } from '../api';
 
+import { DisconnectModal } from './DisconnectModal';
 import { EmptyState } from './EmptyState/EmptyState';
 import { MigrationInfo } from './MigrationInfo';
 import { ResourcesTable } from './ResourcesTable';
@@ -41,12 +42,12 @@ function useGetLatestMigrationDestination() {
   };
 }
 
-function useGetLatestMigrationRun(migrationId?: number) {
-  const listResult = useGetCloudMigrationRunListQuery(migrationId ? { id: migrationId } : skipToken);
+function useGetLatestMigrationRun(migrationUid?: string) {
+  const listResult = useGetCloudMigrationRunListQuery(migrationUid ? { uid: migrationUid } : skipToken);
   const latestMigrationRun = listResult.data?.runs?.at(-1);
 
   const runResult = useGetCloudMigrationRunQuery(
-    latestMigrationRun?.id && migrationId ? { runId: latestMigrationRun.id, id: migrationId } : skipToken
+    latestMigrationRun?.uid && migrationUid ? { runUid: latestMigrationRun.uid } : skipToken
   );
 
   return {
@@ -63,8 +64,9 @@ function useGetLatestMigrationRun(migrationId?: number) {
 }
 
 export const Page = () => {
+  const [disconnectModalOpen, setDisconnectModalOpen] = useState(false);
   const migrationDestination = useGetLatestMigrationDestination();
-  const lastMigrationRun = useGetLatestMigrationRun(migrationDestination.data?.id);
+  const lastMigrationRun = useGetLatestMigrationRun(migrationDestination.data?.uid);
   const [performRunMigration, runMigrationResult] = useRunCloudMigrationMutation();
   const [performDisconnect, disconnectResult] = useDeleteCloudMigrationMutation();
 
@@ -77,18 +79,22 @@ export const Page = () => {
     disconnectResult.isLoading;
 
   const resources = lastMigrationRun.data?.items;
+  const migrationDestUID = migrationDestination.data?.uid;
 
-  const handleDisconnect = useCallback(() => {
-    if (migrationDestination.data?.id) {
-      performDisconnect({
-        id: migrationDestination.data.id,
-      });
+  const handleDisconnect = useCallback(async () => {
+    if (!migrationDestUID) {
+      return;
     }
-  }, [migrationDestination.data?.id, performDisconnect]);
+
+    const resp = await performDisconnect({ uid: migrationDestUID });
+    if (!('error' in resp)) {
+      setDisconnectModalOpen(false);
+    }
+  }, [migrationDestUID, performDisconnect]);
 
   const handleStartMigration = useCallback(() => {
-    if (migrationDestination.data?.id) {
-      performRunMigration({ id: migrationDestination.data?.id });
+    if (migrationDestination.data?.uid) {
+      performRunMigration({ uid: migrationDestination.data?.uid });
     }
   }, [performRunMigration, migrationDestination]);
 
@@ -147,7 +153,7 @@ export const Page = () => {
                   {migrationMeta.stack}{' '}
                   <Button
                     disabled={isBusy}
-                    onClick={handleDisconnect}
+                    onClick={() => setDisconnectModalOpen(true)}
                     variant="secondary"
                     size="sm"
                     icon={disconnectResult.isLoading ? 'spinner' : undefined}
@@ -171,7 +177,13 @@ export const Page = () => {
         {resources && <ResourcesTable resources={resources} />}
       </Stack>
 
-      {/* <DisconnectModal isOpen={isDisconnecting} onDismiss={() => setIsDisconnecting(false)} /> */}
+      <DisconnectModal
+        isOpen={disconnectModalOpen}
+        isLoading={disconnectResult.isLoading}
+        isError={disconnectResult.isError}
+        onDisconnectConfirm={handleDisconnect}
+        onDismiss={() => setDisconnectModalOpen(false)}
+      />
     </>
   );
 };

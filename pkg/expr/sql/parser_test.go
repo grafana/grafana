@@ -11,7 +11,7 @@ func TestParse(t *testing.T) {
 	tables, err := parseTables((sql))
 	assert.Nil(t, err)
 
-	assert.Equal(t, "FOO", tables[0])
+	assert.Equal(t, "foo", tables[0])
 }
 
 func TestParseWithComma(t *testing.T) {
@@ -19,8 +19,8 @@ func TestParseWithComma(t *testing.T) {
 	tables, err := parseTables((sql))
 	assert.Nil(t, err)
 
-	assert.Equal(t, "FOO", tables[0])
-	assert.Equal(t, "BAR", tables[1])
+	assert.Equal(t, "foo", tables[0])
+	assert.Equal(t, "bar", tables[1])
 }
 
 func TestParseWithCommas(t *testing.T) {
@@ -28,9 +28,9 @@ func TestParseWithCommas(t *testing.T) {
 	tables, err := parseTables((sql))
 	assert.Nil(t, err)
 
-	assert.Equal(t, "FOO", tables[0])
-	assert.Equal(t, "BAR", tables[1])
-	assert.Equal(t, "BAZ", tables[2])
+	assert.Equal(t, "foo", tables[0])
+	assert.Equal(t, "bar", tables[1])
+	assert.Equal(t, "baz", tables[2])
 }
 
 func TestArray(t *testing.T) {
@@ -55,4 +55,13 @@ func TestXxx(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, 0, len(tables))
+}
+
+func TestParseSubquery(t *testing.T) {
+	sql := "select * from (select * from people limit 1)"
+	tables, err := TablesList((sql))
+	assert.Nil(t, err)
+
+	assert.Equal(t, 1, len(tables))
+	assert.Equal(t, "people", tables[0])
 }
