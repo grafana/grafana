@@ -113,7 +113,7 @@ const ufuzzy = new uFuzzy({
   intraDel: 1,
   // split search terms only on whitespace, this will significantly reduce the amount of regex permutations to test
   // and is important for performance with large amount of rules and large needle
-  interSplit: '[w ]',
+  interSplit: '\\s+',
 });
 
 export const filterRules = (
