@@ -69,6 +69,7 @@ import {
   setRulerRuleGroup,
 } from '../api/ruler';
 import { encodeGrafanaNamespace } from '../components/expressions/util';
+import { RulesFilter } from '../search/rulesSearchParser';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 import { addDefaultsToAlertmanagerConfig, removeMuteTimingFromRoute } from '../utils/alertmanager';
 import {
@@ -308,7 +309,8 @@ interface FetchPromRulesRulesActionProps {
 
 export function fetchAllPromAndRulerRulesAction(
   force = false,
-  options: FetchPromRulesRulesActionProps = {}
+  options: FetchPromRulesRulesActionProps = {},
+  rulesFilter?: RulesFilter
 ): ThunkResult<Promise<void>> {
   return async (dispatch, getStore) => {
     const allStartLoadingTs = performance.now();
@@ -319,8 +321,12 @@ export function fetchAllPromAndRulerRulesAction(
 
         const { promRules, rulerRules, dataSources } = getStore().unifiedAlerting;
         const dataSourceConfig = dataSources[rulesSourceName].result;
+        const shouldLoad =
+          rulesFilter?.dataSourceNames.length == 0 ||
+          rulesFilter?.dataSourceNames.includes(rulesSourceName) ||
+          rulesSourceName == GRAFANA_RULES_SOURCE_NAME;
 
-        if (!dataSourceConfig) {
+        if (!dataSourceConfig || !shouldLoad) {
           return;
         }
 

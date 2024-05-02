@@ -81,7 +81,7 @@ const RuleList = withErrorBoundary(
     // Trigger data refresh only when the RULE_LIST_POLL_INTERVAL_MS elapsed since the previous load FINISHED
     const [_, fetchRules] = useAsyncFn(async () => {
       if (!loading) {
-        await dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts }));
+        await dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts }, filterState));
       }
     }, [loading, limitAlerts, dispatch]);
 
@@ -91,8 +91,8 @@ const RuleList = withErrorBoundary(
 
     // fetch rules, then poll every RULE_LIST_POLL_INTERVAL_MS
     useEffect(() => {
-      dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts }));
-    }, [dispatch, limitAlerts]);
+      dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts }, filterState));
+    }, [dispatch, limitAlerts, filterState]);
     useInterval(fetchRules, RULE_LIST_POLL_INTERVAL_MS);
 
     // Show splash only when we loaded all of the data sources and none of them has alerts
