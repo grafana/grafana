@@ -1,15 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useMemo } from 'react';
 
-import {
-  DisplayProcessor,
-  DisplayValue,
-  fieldReducers,
-  getDisplayProcessor,
-  PanelProps,
-  reduceField,
-  ReducerID,
-} from '@grafana/data';
+import { PanelProps } from '@grafana/data';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import { config } from '@grafana/runtime';
 import {
@@ -22,6 +14,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
+import { getDisplayValuesForCalcs } from '@grafana/ui/src/components/uPlot/utils';
 
 import { XYChartTooltip } from './XYChartTooltip';
 import { Options } from './panelcfg.gen';
@@ -66,8 +59,6 @@ export const XYChartPanel2 = (props: Props2) => {
     }
 
     const items: VizLegendItem[] = [];
-    const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
-    const theme = config.theme2;
 
     series.forEach((s, idx) => {
       let yField = s.y.field;
@@ -82,65 +73,7 @@ export const XYChartPanel2 = (props: Props2) => {
           getItemKey: () => `${idx}-${s.name.value}`,
           fieldName: yField.state?.displayName ?? yField.name,
           disabled: yField.state?.hideFrom?.viz ?? false,
-          getDisplayValues: () => {
-            const calcs = props.options.legend.calcs;
-
-            if (!calcs?.length) {
-              return [];
-            }
-
-            const fmt = yField.display ?? defaultFormatter;
-            let countFormatter: DisplayProcessor | null = null;
-
-            const fieldCalcs = reduceField({
-              field: yField,
-              reducers: calcs,
-            });
-
-            return calcs.map<DisplayValue>((reducerId) => {
-              const fieldReducer = fieldReducers.get(reducerId);
-              let formatter = fmt;
-
-              if (fieldReducer.id === ReducerID.diffperc) {
-                formatter = getDisplayProcessor({
-                  field: {
-                    ...yField,
-                    config: {
-                      ...yField.config,
-                      unit: 'percent',
-                    },
-                  },
-                  theme,
-                });
-              }
-
-              if (
-                fieldReducer.id === ReducerID.count ||
-                fieldReducer.id === ReducerID.changeCount ||
-                fieldReducer.id === ReducerID.distinctCount
-              ) {
-                if (!countFormatter) {
-                  countFormatter = getDisplayProcessor({
-                    field: {
-                      ...yField,
-                      config: {
-                        ...yField.config,
-                        unit: 'none',
-                      },
-                    },
-                    theme,
-                  });
-                }
-                formatter = countFormatter;
-              }
-
-              return {
-                ...formatter(fieldCalcs[reducerId]),
-                title: fieldReducer.name,
-                description: fieldReducer.description,
-              };
-            });
-          },
+          getDisplayValues: () => getDisplayValuesForCalcs(props.options.legend.calcs, yField),
         });
       }
     });
