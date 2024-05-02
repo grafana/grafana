@@ -27,6 +27,10 @@ XY charts provide a way to visualize arbitrary x and y values in a graph so that
 
 You can use any type of tabular data with at least two numeric fields in an xy chart. This type of visualization doesn't require time data.
 
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ## XY chart options
 
 ### Series mapping
@@ -230,23 +234,24 @@ The transform option is only available as an override.
 
 {{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+2" >}}
 
-## Other visualization options
+## Standard options
 
-### Panel options
+**Standard options** in the panel editor pane let you change how field data is displayed in your visualizations. When you set a standard option, the change is applied to all fields or series. For more granular control over the display of fields, refer to [Configure field overrides][].
 
-Learn about [panel options][] that you can set for a visualization.
+You can customize the following standard options:
 
-### Standard options
+- **Field min/max** - Enable **Field min/max** to have Grafana calculate the min or max of each field individually, based on the minimum or maximum value of the field.
+- **Color scheme** - Set single or multiple colors for your entire visualization.
 
-Learn about [standard options][] that you can set for a visualization.
+To learn more, refer to [Configure standard options][].
 
-### Data links
+## Data links
 
-Learn about [data links][] that you can set for a visualization.
+{{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-### Field overrides
+## Field overrides
 
-Learn about [field overrides][Configure field overrides] that you can set for a visualization.
+{{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 {{% docs/reference %}}
 [Color scheme]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options#color-scheme"
