@@ -97,6 +97,16 @@ func (ni NamespaceID) ID() string {
 	return ni.id
 }
 
+// UserID will try to parse and int64 identifier if namespace is either user or service-account.
+// For all other namespaces '0' will be returned.
+func (ni NamespaceID) UserID() (int64, error) {
+	if ni.IsNamespace(NamespaceUser, NamespaceServiceAccount) {
+		return ni.ParseInt()
+	}
+	return 0, nil
+}
+
+// ParseInt will try to parse the id as an int64 identifier.
 func (ni NamespaceID) ParseInt() (int64, error) {
 	return strconv.ParseInt(ni.id, 10, 64)
 }
