@@ -56,7 +56,7 @@ export function MetricSelect({
   metricLookupDisabled,
   onBlur,
   variableEditor,
-}: MetricSelectProps) {
+}: Readonly<MetricSelectProps>) {
   const styles = useStyles2(getStyles);
   const [state, setState] = useState<{
     metrics?: SelectableValue[];
@@ -241,10 +241,16 @@ export function MetricSelect({
       <div
         {...innerProps}
         className={`${stylesMenu.menu} ${styles.customMenuContainer}`}
-        style={{ maxHeight }}
+        style={{ maxHeight: Math.round(maxHeight * 0.9) }}
         aria-label="Select options menu"
       >
-        <CustomScrollbar scrollRefCallback={innerRef} autoHide={false} autoHeightMax="inherit" hideHorizontalTrack>
+        <CustomScrollbar
+          scrollRefCallback={innerRef}
+          autoHide={false}
+          autoHeightMax="inherit"
+          hideHorizontalTrack
+          showScrollIndicators
+        >
           {children}
         </CustomScrollbar>
         {optionsLoaded && (
@@ -263,7 +269,7 @@ export function MetricSelect({
     return (
       <AsyncSelect
         data-testid={selectors.components.DataSource.Prometheus.queryEditor.builder.metricSelect}
-        isClearable={variableEditor ? true : false}
+        isClearable={Boolean(variableEditor)}
         inputId="prometheus-metric-select"
         className={styles.select}
         value={query.metric ? toOption(query.metric) : undefined}
@@ -271,6 +277,7 @@ export function MetricSelect({
         allowCustomValue
         formatOptionLabel={formatOptionLabel}
         filterOption={customFilterOption}
+        minMenuHeight={250}
         onOpenMenu={async () => {
           if (metricLookupDisabled) {
             return;
@@ -286,7 +293,7 @@ export function MetricSelect({
 
           if (prometheusMetricEncyclopedia) {
             setState({
-              // add the modal butoon option to the options
+              // add the modal button option to the options
               metrics: [...metricsModalOption, ...metrics],
               isLoading: undefined,
               // pass the initial metrics into the metrics explorer
@@ -303,7 +310,7 @@ export function MetricSelect({
         }}
         loadOptions={metricLookupDisabled ? metricLookupDisabledSearch : debouncedSearch}
         isLoading={state.isLoading}
-        defaultOptions={state.metrics}
+        defaultOptions={state.metrics ?? Array.from(new Array(25), () => ({ value: '' }))} // We need empty values when `state.metrics` is falsy in order for the select to correctly determine top/bottom placement
         onChange={(input) => {
           const value = input?.value;
           if (value) {
@@ -321,7 +328,7 @@ export function MetricSelect({
         components={
           prometheusMetricEncyclopedia ? { Option: CustomOption, MenuList: CustomMenu } : { MenuList: CustomMenu }
         }
-        onBlur={onBlur ? onBlur : () => {}}
+        onBlur={onBlur}
       />
     );
   };
