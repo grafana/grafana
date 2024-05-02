@@ -30,10 +30,8 @@ import {
   AdHocFiltersVariable,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { trackDashboardLoaded } from 'app/features/dashboard/utils/tracking';
 import { DashboardDTO } from 'app/types';
 
-import { AddLibraryPanelWidget } from '../scene/AddLibraryPanelWidget';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
@@ -112,18 +110,6 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridI
           currentRowPanels = [];
         }
       }
-    } else if (panel.type === 'add-library-panel') {
-      const gridItem = buildGridItemForLibraryPanelWidget(panel);
-
-      if (!gridItem) {
-        continue;
-      }
-
-      if (currentRow) {
-        currentRowPanels.push(gridItem);
-      } else {
-        panels.push(gridItem);
-      }
     } else if (panel.libraryPanel?.uid && !('model' in panel.libraryPanel)) {
       const gridItem = buildGridItemForLibPanel(panel);
 
@@ -170,15 +156,7 @@ function createRowFromPanelModel(row: PanelModel, content: SceneGridItemLike[]):
           saveModel = new PanelModel(saveModel);
         }
 
-        if (saveModel.type === 'add-library-panel') {
-          const gridItem = buildGridItemForLibraryPanelWidget(saveModel);
-
-          if (!gridItem) {
-            throw new Error('Failed to build grid item for library panel widget');
-          }
-
-          return gridItem;
-        } else if (saveModel.libraryPanel?.uid && !('model' in saveModel.libraryPanel)) {
+        if (saveModel.libraryPanel?.uid && !('model' in saveModel.libraryPanel)) {
           const gridItem = buildGridItemForLibPanel(saveModel);
 
           if (!gridItem) {
@@ -305,7 +283,6 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       }),
       new behaviors.SceneQueryController(),
       registerDashboardMacro,
-      registerDashboardSceneTracking(oldModel),
       registerPanelInteractionsReporter,
       new behaviors.LiveNowTimer({ enabled: oldModel.liveNow }),
     ],
@@ -413,9 +390,20 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       hide: variable.hide,
     });
   } else if (variable.type === 'textbox') {
+    let val;
+    if (!variable?.current?.value) {
+      val = variable.query;
+    } else {
+      if (typeof variable.current.value === 'string') {
+        val = variable.current.value;
+      } else {
+        val = variable.current.value[0];
+      }
+    }
+
     return new TextBoxVariable({
       ...commonProperties,
-      value: variable?.current?.value?.[0] ?? variable.query,
+      value: val,
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
     });
@@ -433,24 +421,6 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
   } else {
     throw new Error(`Scenes: Unsupported variable type ${variable.type}`);
   }
-}
-
-export function buildGridItemForLibraryPanelWidget(panel: PanelModel) {
-  if (panel.type !== 'add-library-panel') {
-    return null;
-  }
-
-  const body = new AddLibraryPanelWidget({
-    key: getVizPanelKeyForPanelId(panel.id),
-  });
-
-  return new DashboardGridItem({
-    body,
-    y: panel.gridPos.y,
-    x: panel.gridPos.x,
-    width: panel.gridPos.w,
-    height: panel.gridPos.h,
-  });
 }
 
 export function buildGridItemForLibPanel(panel: PanelModel) {
@@ -543,18 +513,6 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     ...repeatOptions,
     $behaviors: [hoverHeaderOffsetBehavior],
   });
-}
-
-function registerDashboardSceneTracking(model: DashboardModel) {
-  return () => {
-    const unsetDashboardInteractionsScenesContext = DashboardInteractions.setScenesContext();
-
-    trackDashboardLoaded(model, model.version);
-
-    return () => {
-      unsetDashboardInteractionsScenesContext();
-    };
-  };
 }
 
 function registerPanelInteractionsReporter(scene: DashboardScene) {

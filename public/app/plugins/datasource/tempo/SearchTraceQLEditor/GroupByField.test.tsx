@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
+import { initTemplateSrv } from '../test_utils';
 import { TempoQuery } from '../types';
 
 import { GroupByField } from './GroupByField';
@@ -40,6 +41,8 @@ describe('GroupByField', () => {
     // Need to use delay: null here to work with fakeTimers
     // see https://github.com/testing-library/user-event/issues/833
     user = userEvent.setup({ delay: null });
+
+    initTemplateSrv([{ name: 'templateVariable1' }, { name: 'templateVariable2' }], {});
   });
 
   afterEach(() => {
@@ -130,6 +133,23 @@ describe('GroupByField', () => {
       const groupByFilter = query.groupBy?.find((f) => f.id === 'group-by-id');
       expect(groupByFilter).not.toBeNull();
       expect(groupByFilter?.tag).toBe('http.method');
+    }
+  });
+
+  it('should allow selecting template variables', async () => {
+    const { container } = render(
+      <GroupByField datasource={datasource} query={query} onChange={onChange} isTagsLoading={false} />
+    );
+
+    const tagSelect = container.querySelector(`input[aria-label="Select tag for filter 1"]`);
+    expect(tagSelect).not.toBeNull();
+    expect(tagSelect).toBeInTheDocument();
+
+    if (tagSelect) {
+      await user.click(tagSelect);
+      jest.advanceTimersByTime(1000);
+      expect(await screen.findByText('$templateVariable1')).toBeInTheDocument();
+      expect(await screen.findByText('$templateVariable2')).toBeInTheDocument();
     }
   });
 });

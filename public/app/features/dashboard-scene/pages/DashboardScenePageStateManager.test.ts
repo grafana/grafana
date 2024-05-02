@@ -1,6 +1,6 @@
 import { advanceBy } from 'jest-date-mock';
 
-import { locationService } from '@grafana/runtime';
+import { BackendSrv, locationService, setBackendSrv } from '@grafana/runtime';
 import { getUrlSyncManager } from '@grafana/scenes';
 import store from 'app/core/store';
 import { DASHBOARD_FROM_LS_KEY } from 'app/features/dashboard/state/initDashboard';
@@ -39,6 +39,18 @@ describe('DashboardScenePageStateManager', () => {
       expect(loader.state.dashboard).toBeUndefined();
       expect(loader.state.isLoading).toBe(false);
       expect(loader.state.loadError).toBe('Error: Dashboard not found');
+    });
+
+    it('should handle home dashboard redirect', async () => {
+      setBackendSrv({
+        get: () => Promise.resolve({ redirectUri: '/d/asd' }),
+      } as unknown as BackendSrv);
+
+      const loader = new DashboardScenePageStateManager({});
+      await loader.loadDashboard({ uid: '', route: DashboardRoutes.Home });
+
+      expect(loader.state.dashboard).toBeUndefined();
+      expect(loader.state.loadError).toBeUndefined();
     });
 
     it('shoud fetch dashboard from local storage and remove it after if it exists', async () => {

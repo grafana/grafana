@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math/rand"
 	"net/http"
 	"testing"
 	"time"
@@ -21,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -283,10 +281,12 @@ func withLabels(labels data.Labels) forEachState {
 }
 
 func TestRouteGetRuleStatuses(t *testing.T) {
-	t.Skip() // TODO: Flaky test: https://github.com/grafana/grafana/issues/69146
+	//	t.Skip() // TODO: Flaky test: https://github.com/grafana/grafana/issues/69146
 
 	timeNow = func() time.Time { return time.Date(2022, 3, 10, 14, 0, 0, 0, time.UTC) }
 	orgID := int64(1)
+	gen := ngmodels.RuleGen
+	gen = gen.With(gen.WithOrgID(orgID))
 	queryPermissions := map[int64]map[string][]string{1: {datasources.ActionQuery: {datasources.ScopeAll}}}
 
 	req, err := http.NewRequest("GET", "/api/v1/rules", nil)
@@ -363,7 +363,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		}
 	}
 }
-`, folder.Title), string(r.Body()))
+`, folder.Fullpath), string(r.Body()))
 	})
 
 	t.Run("with the inclusion of internal Labels", func(t *testing.T) {
@@ -429,7 +429,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		}
 	}
 }
-`, folder.Title), string(r.Body()))
+`, folder.Fullpath), string(r.Body()))
 	})
 
 	t.Run("with a rule that has multiple queries", func(t *testing.T) {
@@ -488,7 +488,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		}
 	}
 }
-`, folder.Title), string(r.Body()))
+`, folder.Fullpath), string(r.Body()))
 	})
 
 	t.Run("with many rules in a group", func(t *testing.T) {
@@ -496,7 +496,8 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			ruleStore := fakes.NewRuleStore(t)
 			fakeAIM := NewFakeAlertInstanceManager(t)
 			groupKey := ngmodels.GenerateGroupKey(orgID)
-			_, rules := ngmodels.GenerateUniqueAlertRules(rand.Intn(5)+5, ngmodels.AlertRuleGen(withGroupKey(groupKey), ngmodels.WithUniqueGroupIndex()))
+			gen := ngmodels.RuleGen
+			rules := gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex()).GenerateManyRef(5, 10)
 			ruleStore.PutRule(context.Background(), rules...)
 
 			api := PrometheusSrv{
@@ -539,20 +540,19 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			ruleStore := fakes.NewRuleStore(t)
 			fakeAIM := NewFakeAlertInstanceManager(t)
 
-			rules := ngmodels.GenerateAlertRules(rand.Intn(4)+2, ngmodels.AlertRuleGen(withOrgID(orgID)))
+			rules := gen.GenerateManyRef(2, 6)
 			ruleStore.PutRule(context.Background(), rules...)
-			ruleStore.PutRule(context.Background(), ngmodels.GenerateAlertRules(rand.Intn(4)+2, ngmodels.AlertRuleGen(withOrgID(orgID)))...)
+			ruleStore.PutRule(context.Background(), gen.GenerateManyRef(2, 6)...)
 
 			api := PrometheusSrv{
 				log:     log.NewNopLogger(),
 				manager: fakeAIM,
 				store:   ruleStore,
-				authz:   &fakeRuleAccessControlService{},
+				authz:   accesscontrol.NewRuleService(acimpl.ProvideAccessControl(setting.NewCfg())),
 			}
 
 			c := &contextmodel.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &user.SignedInUser{OrgID: orgID, Permissions: createPermissionsForRules(rules, orgID)}}
 
-			//c.SignedInUser.Permissions[1] = createPermissionsForRules(rules)
 			response := api.RouteGetRuleStatuses(c)
 			require.Equal(t, http.StatusOK, response.Status())
 			result := &apimodels.RuleResponse{}
@@ -576,9 +576,11 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 	t.Run("test totals are expected", func(t *testing.T) {
 		fakeStore, fakeAIM, api := setupAPI(t)
 		// Create rules in the same Rule Group to keep assertions simple
-		rules := ngmodels.GenerateAlertRules(3, ngmodels.AlertRuleGen(withOrgID(orgID), withGroup("Rule-Group-1"), withNamespace(&folder.Folder{
-			Title: "Folder-1",
-		})))
+		rules := gen.With(gen.WithGroupKey(ngmodels.AlertRuleGroupKey{
+			RuleGroup:    "Rule-Group-1",
+			NamespaceUID: "Folder-1",
+			OrgID:        orgID,
+		})).GenerateManyRef(3)
 		// Need to sort these so we add alerts to the rules as ordered in the response
 		ngmodels.AlertRulesBy(ngmodels.AlertRulesByIndex).Sort(rules)
 		// The last two rules will have errors, however the first will be alerting
@@ -636,7 +638,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 	t.Run("test time of first firing alert", func(t *testing.T) {
 		fakeStore, fakeAIM, api := setupAPI(t)
 		// Create rules in the same Rule Group to keep assertions simple
-		rules := ngmodels.GenerateAlertRules(1, ngmodels.AlertRuleGen(withOrgID(orgID)))
+		rules := gen.GenerateManyRef(1)
 		fakeStore.PutRule(context.Background(), rules...)
 
 		getRuleResponse := func() apimodels.RuleResponse {
@@ -692,7 +694,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 	t.Run("test with limit on Rule Groups", func(t *testing.T) {
 		fakeStore, _, api := setupAPI(t)
 
-		rules := ngmodels.GenerateAlertRules(2, ngmodels.AlertRuleGen(withOrgID(orgID)))
+		rules := gen.GenerateManyRef(2)
 		fakeStore.PutRule(context.Background(), rules...)
 
 		t.Run("first without limit", func(t *testing.T) {
@@ -764,7 +766,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 
 	t.Run("test with limit rules", func(t *testing.T) {
 		fakeStore, _, api := setupAPI(t)
-		rules := ngmodels.GenerateAlertRules(2, ngmodels.AlertRuleGen(withOrgID(orgID), withGroup("Rule-Group-1")))
+		rules := gen.With(gen.WithGroupName("Rule-Group-1")).GenerateManyRef(2)
 		fakeStore.PutRule(context.Background(), rules...)
 
 		t.Run("first without limit", func(t *testing.T) {
@@ -837,7 +839,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 
 	t.Run("test with limit alerts", func(t *testing.T) {
 		fakeStore, fakeAIM, api := setupAPI(t)
-		rules := ngmodels.GenerateAlertRules(2, ngmodels.AlertRuleGen(withOrgID(orgID), withGroup("Rule-Group-1")))
+		rules := gen.With(gen.WithGroupName("Rule-Group-1")).GenerateManyRef(2)
 		fakeStore.PutRule(context.Background(), rules...)
 		// create a normal and firing alert for each rule
 		for _, r := range rules {
@@ -924,11 +926,15 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 	})
 
 	t.Run("test with filters on state", func(t *testing.T) {
+		t.Skip() // TODO: Flaky test: https://github.com/grafana/grafana/issues/69146
+
 		fakeStore, fakeAIM, api := setupAPI(t)
 		// create two rules in the same Rule Group to keep assertions simple
-		rules := ngmodels.GenerateAlertRules(3, ngmodels.AlertRuleGen(withOrgID(orgID), withGroup("Rule-Group-1"), withNamespace(&folder.Folder{
-			Title: "Folder-1",
-		})))
+		rules := gen.With(gen.WithGroupKey(ngmodels.AlertRuleGroupKey{
+			NamespaceUID: "Folder-1",
+			RuleGroup:    "Rule-Group-1",
+			OrgID:        orgID,
+		})).GenerateManyRef(2)
 		// Need to sort these so we add alerts to the rules as ordered in the response
 		ngmodels.AlertRulesBy(ngmodels.AlertRulesByIndex).Sort(rules)
 		// The last two rules will have errors, however the first will be alerting
@@ -1083,9 +1089,11 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 	t.Run("test with matcher on labels", func(t *testing.T) {
 		fakeStore, fakeAIM, api := setupAPI(t)
 		// create two rules in the same Rule Group to keep assertions simple
-		rules := ngmodels.GenerateAlertRules(1, ngmodels.AlertRuleGen(withOrgID(orgID), withGroup("Rule-Group-1"), withNamespace(&folder.Folder{
-			Title: "Folder-1",
-		})))
+		rules := gen.With(gen.WithGroupKey(ngmodels.AlertRuleGroupKey{
+			NamespaceUID: "Folder-1",
+			RuleGroup:    "Rule-Group-1",
+			OrgID:        orgID,
+		})).GenerateManyRef(1)
 		fakeStore.PutRule(context.Background(), rules...)
 
 		// create a normal and alerting state for each rule
@@ -1255,23 +1263,25 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 func setupAPI(t *testing.T) (*fakes.RuleStore, *fakeAlertInstanceManager, PrometheusSrv) {
 	fakeStore := fakes.NewRuleStore(t)
 	fakeAIM := NewFakeAlertInstanceManager(t)
+	fakeAuthz := &fakeRuleAccessControlService{}
 
 	api := PrometheusSrv{
 		log:     log.NewNopLogger(),
 		manager: fakeAIM,
 		store:   fakeStore,
-		authz:   accesscontrol.NewRuleService(acimpl.ProvideAccessControl(setting.NewCfg())),
+		authz:   fakeAuthz,
 	}
 
 	return fakeStore, fakeAIM, api
 }
 
-func generateRuleAndInstanceWithQuery(t *testing.T, orgID int64, fakeAIM *fakeAlertInstanceManager, fakeStore *fakes.RuleStore, query func(r *ngmodels.AlertRule)) {
+func generateRuleAndInstanceWithQuery(t *testing.T, orgID int64, fakeAIM *fakeAlertInstanceManager, fakeStore *fakes.RuleStore, query ngmodels.AlertRuleMutator) {
 	t.Helper()
 
-	rules := ngmodels.GenerateAlertRules(1, ngmodels.AlertRuleGen(withOrgID(orgID), asFixture(), query))
+	gen := ngmodels.RuleGen
+	r := gen.With(gen.WithOrgID(orgID), asFixture(), query).GenerateRef()
 
-	fakeAIM.GenerateAlertInstances(orgID, rules[0].UID, 1, func(s *state.State) *state.State {
+	fakeAIM.GenerateAlertInstances(orgID, r.UID, 1, func(s *state.State) *state.State {
 		s.Labels = data.Labels{
 			"job":                            "prometheus",
 			alertingModels.NamespaceUIDLabel: "test_namespace_uid",
@@ -1281,14 +1291,12 @@ func generateRuleAndInstanceWithQuery(t *testing.T, orgID int64, fakeAIM *fakeAl
 		return s
 	})
 
-	for _, r := range rules {
-		fakeStore.PutRule(context.Background(), r)
-	}
+	fakeStore.PutRule(context.Background(), r)
 }
 
 // asFixture removes variable values of the alert rule.
 // we're not too interested in variability of the rule in this scenario.
-func asFixture() func(r *ngmodels.AlertRule) {
+func asFixture() ngmodels.AlertRuleMutator {
 	return func(r *ngmodels.AlertRule) {
 		r.Title = "AlwaysFiring"
 		r.NamespaceUID = "namespaceUID"
@@ -1304,7 +1312,7 @@ func asFixture() func(r *ngmodels.AlertRule) {
 	}
 }
 
-func withClassicConditionSingleQuery() func(r *ngmodels.AlertRule) {
+func withClassicConditionSingleQuery() ngmodels.AlertRuleMutator {
 	return func(r *ngmodels.AlertRule) {
 		queries := []ngmodels.AlertQuery{
 			{
@@ -1326,7 +1334,7 @@ func withClassicConditionSingleQuery() func(r *ngmodels.AlertRule) {
 	}
 }
 
-func withExpressionsMultiQuery() func(r *ngmodels.AlertRule) {
+func withExpressionsMultiQuery() ngmodels.AlertRuleMutator {
 	return func(r *ngmodels.AlertRule) {
 		queries := []ngmodels.AlertQuery{
 			{

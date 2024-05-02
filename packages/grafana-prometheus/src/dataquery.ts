@@ -1,4 +1,5 @@
-import { ScopeSpec } from '@grafana/data';
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/dataquery.ts
+import { ScopeSpec, ScopeSpecFilter } from '@grafana/data';
 import * as common from '@grafana/schema';
 
 export enum QueryEditorMode {
@@ -43,4 +44,5 @@ export interface Prometheus extends common.DataQuery {
    */
   range?: boolean;
   scope?: ScopeSpec;
+  adhocFilters?: ScopeSpecFilter[];
 }
