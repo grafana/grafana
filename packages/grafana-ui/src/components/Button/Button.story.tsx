@@ -62,8 +62,8 @@ export const Examples: StoryFn<typeof Button> = () => {
       <Stack alignItems="center" gap={3}>
         <div>With icon and text</div>
         <Button icon={<Cloud size={'sm'} />}>Configure</Button>
-        <Button icon={'ai'}>Configure</Button>
-        <Button icon={<Ai size={'lg'} />}>Configure</Button>
+        <Button icon={<Cloud />}>Configure</Button>
+        <Button icon={<Cloud size={'lg'} />}>Configure</Button>
         <Icon name={'paragraph'} />
       </Stack>
       <div />

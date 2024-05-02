@@ -59,23 +59,12 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       fullWidth,
       iconOnly: !children,
     });
-    const renderIcon = () => {
-      if (!icon) {
-        return null;
-      }
-      if (isIconName(icon)) {
-        return <Icon name={icon} size={size} className={styles.icon} />;
-      }
-      return React.cloneElement(icon as React.ReactElement, {
-        className: styles.icon,
-      });
-    };
 
     // In order to standardise Button please always consider using IconButton when you need a button with an icon only
     // When using tooltip, ref is forwarded to Tooltip component instead for https://github.com/grafana/grafana/issues/65632
     const button = (
       <button className={cx(styles.button, className)} type={type} {...otherProps} ref={tooltip ? undefined : ref}>
-        {renderIcon()}
+        <IconRenderer icon={icon} size={size} className={styles.icon} />
         {children && <span className={styles.content}>{children}</span>}
       </button>
     );
@@ -146,7 +135,7 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
         aria-disabled={disabled}
         ref={tooltip ? undefined : ref}
       >
-        {icon && <Icon name={icon} size={size} className={styles.icon} />}
+        <IconRenderer icon={icon} size={size} className={styles.icon} />
         {children && <span className={styles.content}>{children}</span>}
       </a>
     );
@@ -164,6 +153,23 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
 );
 
 LinkButton.displayName = 'LinkButton';
+
+interface IconRendererProps {
+  icon: IconName | React.ReactNode;
+  size: ComponentSize;
+  className: string;
+}
+const IconRenderer = ({ icon, size, className }: IconRendererProps) => {
+  if (!icon) {
+    return null;
+  }
+  if (isIconName(icon)) {
+    return <Icon name={icon} size={size} className={className} />;
+  }
+  return React.cloneElement(icon as React.ReactElement, {
+    className,
+  });
+};
 
 export interface StyleProps {
   size: ComponentSize;
