@@ -9,10 +9,14 @@ import (
 
 	"xorm.io/xorm"
 
+	zclient "github.com/grafana/zanzana/pkg/service/client"
+	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/embedserver"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -34,6 +38,7 @@ type dashboardStore struct {
 	log        log.Logger
 	features   featuremgmt.FeatureToggles
 	tagService tag.Service
+	zClient    *zclient.GRPCClient
 }
 
 // SQL bean helper to save tags
@@ -46,8 +51,20 @@ type dashboardTag struct {
 // DashboardStore implements the Store interface
 var _ dashboards.Store = (*dashboardStore)(nil)
 
-func ProvideDashboardStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tagService tag.Service, quotaService quota.Service) (dashboards.Store, error) {
-	s := &dashboardStore{store: sqlStore, cfg: cfg, log: log.New("dashboard-store"), features: features, tagService: tagService}
+func ProvideDashboardStore(sqlStore db.DB, cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles, tagService tag.Service,
+	quotaService quota.Service, embedService *embedserver.Service) (dashboards.Store, error) {
+	zClient, err := embedService.GetClient(context.Background(), "1")
+	if err != nil {
+		return nil, err
+	}
+
+	s := &dashboardStore{store: sqlStore,
+		cfg:        cfg,
+		log:        log.New("dashboard-store"),
+		features:   features,
+		zClient:    zClient,
+		tagService: tagService}
 
 	defaultLimits, err := readQuotaConfig(cfg)
 	if err != nil {
@@ -745,7 +762,156 @@ func (d *dashboardStore) GetDashboards(ctx context.Context, query *dashboards.Ge
 	return dashboards, nil
 }
 
+type evalResult struct {
+	runner    string
+	searchRes []dashboards.DashboardSearchProjection
+	err       error
+	duration  time.Duration
+}
+
 func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+	res := make(chan evalResult, 2)
+	go func() {
+		start := time.Now()
+		dashRes, err := d.findDashboardsZanzana(ctx, query)
+		res <- evalResult{"zanzana", dashRes, err, time.Since(start)}
+	}()
+
+	go func() {
+		start := time.Now()
+		dashRes, err := d.findDashboards(ctx, query)
+		res <- evalResult{"grafana", dashRes, err, time.Since(start)}
+	}()
+
+	first, second := <-res, <-res
+	close(res)
+
+	if second.runner == "grafana" {
+		first, second = second, first
+	}
+
+	if len(first.searchRes) != len(second.searchRes) {
+		d.log.Error(
+			"eval result diff",
+			"grafana_res", first.searchRes,
+			"zanana_res", second.searchRes,
+			"grafana_ms", first.duration,
+			"zanzana_ms", second.duration,
+		)
+	} else {
+		d.log.Info("eval: correct result", "grafana_ms", first.duration, "zanzana_ms", second.duration)
+	}
+
+	return first.searchRes, first.err
+}
+
+func (d *dashboardStore) findDashboardsZanzana(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+	filters := []any{}
+	filters = append(filters, query.Filters...)
+
+	var orgID int64
+	if query.OrgId != 0 {
+		orgID = query.OrgId
+		filters = append(filters, searchstore.OrgFilter{OrgId: orgID})
+	} else if query.SignedInUser.GetOrgID() != 0 {
+		orgID = query.SignedInUser.GetOrgID()
+		filters = append(filters, searchstore.OrgFilter{OrgId: orgID})
+	}
+
+	if len(query.Tags) > 0 {
+		filters = append(filters, searchstore.TagsFilter{Tags: query.Tags})
+	}
+
+	if len(query.DashboardUIDs) > 0 {
+		filters = append(filters, searchstore.DashboardFilter{UIDs: query.DashboardUIDs})
+	} else if len(query.DashboardIds) > 0 {
+		filters = append(filters, searchstore.DashboardIDFilter{IDs: query.DashboardIds})
+	}
+
+	if len(query.Title) > 0 {
+		filters = append(filters, searchstore.TitleFilter{Dialect: d.store.GetDialect(), Title: query.Title})
+	}
+
+	if len(query.Type) > 0 {
+		filters = append(filters, searchstore.TypeFilter{Dialect: d.store.GetDialect(), Type: query.Type})
+	}
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
+	// nolint:staticcheck
+	if len(query.FolderIds) > 0 {
+		filters = append(filters, searchstore.FolderFilter{IDs: query.FolderIds})
+	}
+
+	if len(query.FolderUIDs) > 0 {
+		filters = append(filters, searchstore.FolderUIDFilter{
+			Dialect:              d.store.GetDialect(),
+			OrgID:                orgID,
+			UIDs:                 query.FolderUIDs,
+			NestedFoldersEnabled: d.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders),
+		})
+	}
+
+	var res []dashboards.DashboardSearchProjection
+	sb := &searchstore.Builder{Dialect: d.store.GetDialect(), Filters: filters, Features: d.features}
+
+	limit := query.Limit
+	if limit < 1 {
+		limit = 1000
+	}
+
+	page := query.Page
+	if page < 1 {
+		page = 1
+	}
+
+	sql, params := sb.ToSQL(limit, page)
+
+	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
+		rows, err := sess.SQL(sql, params...).Rows(&dashboards.DashboardSearchProjection{})
+		if err != nil {
+			return err
+		}
+
+		for rows.Next() {
+			var row dashboards.DashboardSearchProjection
+			if err := rows.Scan(&row); err != nil {
+				return err
+			}
+
+			object := "dashboard:" + row.UID
+			if row.IsFolder {
+				object = "folder:" + row.UID
+			}
+
+			key := &openfgav1.CheckRequestTupleKey{
+				User:     query.SignedInUser.GetID(),
+				Relation: "read",
+				Object:   object,
+			}
+
+			checkRes, err := d.zClient.Check(ctx, &openfgav1.CheckRequest{
+				StoreId:              d.zClient.MustStoreID(ctx),
+				AuthorizationModelId: d.zClient.AuthorizationModelID,
+				TupleKey:             key,
+			})
+			if err != nil {
+				return err
+			}
+
+			if checkRes.Allowed {
+				res = append(res, row)
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func (d *dashboardStore) findDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
 	recursiveQueriesAreSupported, err := d.store.RecursiveQueriesAreSupported()
 	if err != nil {
 		return nil, err
