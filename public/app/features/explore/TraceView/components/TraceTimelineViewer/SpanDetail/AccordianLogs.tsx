@@ -65,7 +65,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 export type AccordianLogsProps = {
   interactive?: boolean;
   isOpen: boolean;
-  linksGetter: ((pairs: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
+  linksGetter?: ((pairs: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
   logs: TraceLog[];
   onItemToggle?: (log: TraceLog) => void;
   onToggle?: () => void;

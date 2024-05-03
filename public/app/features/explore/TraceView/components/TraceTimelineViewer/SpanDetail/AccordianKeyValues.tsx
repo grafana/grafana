@@ -94,7 +94,7 @@ export type AccordianKeyValuesProps = {
   interactive?: boolean;
   isOpen: boolean;
   label: string;
-  linksGetter: ((pairs: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
+  linksGetter?: ((pairs: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
   onToggle?: null | (() => void);
 };
 

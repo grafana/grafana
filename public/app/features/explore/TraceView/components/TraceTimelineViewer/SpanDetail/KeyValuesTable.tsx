@@ -108,7 +108,7 @@ export const LinkValue = ({ href, title = '', children }: PropsWithChildren<Link
 
 export type KeyValuesTableProps = {
   data: TraceKeyValuePair[];
-  linksGetter: ((pairs: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
+  linksGetter?: ((pairs: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
 };
 
 export default function KeyValuesTable(props: KeyValuesTableProps) {
