@@ -12,7 +12,14 @@ type DiffTitleProps = {
   title: string;
 };
 
-const replaceDiff: Diff = { op: 'replace', originalValue: undefined, path: [''], value: undefined, startLineNumber: 0 };
+const replaceDiff: Diff = {
+  op: 'replace',
+  originalValue: undefined,
+  path: [''],
+  value: undefined,
+  startLineNumber: 0,
+  endLineNumber: 0,
+};
 
 export const DiffTitle = ({ diff, title }: DiffTitleProps) => {
   const styles = useStyles2(getDiffTitleStyles);
