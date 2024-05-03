@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { featureEnabled } from '@grafana/runtime';
-import { Badge, PluginSignatureBadge, Stack, TextLink, useStyles2 } from '@grafana/ui';
+import { Badge, PluginSignatureBadge, Stack, useStyles2 } from '@grafana/ui';
 
 import { CatalogPlugin } from '../../types';
 
@@ -27,13 +27,6 @@ export function PluginEnterpriseBadge({ plugin }: Props): React.ReactElement {
         color="blue"
         className={customBadgeStyles}
       />
-      <TextLink
-        external={true}
-        inline={false}
-        href={`https://grafana.com/grafana/plugins/${plugin.id}?utm_source=grafana_catalog_learn_more`}
-      >
-        Learn more
-      </TextLink>
     </Stack>
   );
 }
