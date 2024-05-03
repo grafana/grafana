@@ -3,7 +3,6 @@ import { AdHocFiltersVariable, getUrlSyncManager, sceneGraph } from '@grafana/sc
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 
 import { MockDataSourceSrv, mockDataSource } from '../../alerting/unified/mocks';
-import { activateFullSceneTree } from '../../dashboard-scene/utils/test-utils';
 import { DataTrail } from '../DataTrail';
 import { BOOKMARKED_TRAILS_KEY, RECENT_TRAILS_KEY, VAR_FILTERS } from '../shared';
 
