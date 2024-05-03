@@ -32,7 +32,7 @@ export function DataTrailCard({ trail, onSelect, onDelete }: Props) {
     <Card onClick={onClick} className={styles.card}>
       <Card.Heading>{getMetricName(trail.state.metric)}</Card.Heading>
       <div className={styles.description}>
-        <Stack gap={1.5}>
+        <Stack gap={1.5} wrap="wrap">
           {filters.map((f) => (
             <Tag key={f.key} name={`${f.key}: ${f.value}`} colorIndex={12} />
           ))}
