@@ -157,7 +157,7 @@ export interface BackendSrv {
    * wrap the Observable returned by fetch with the lastValueFrom function, or use the get|delete|post|patch|put methods.
    * This method is going to be private from Grafana 10.
    */
-  request<T = any>(options: BackendSrvRequest): Promise<T>;
+  request<T = unknown>(options: BackendSrvRequest): Promise<T>;
 
   /**
    * Special function used to communicate with datasources that will emit core
@@ -167,7 +167,7 @@ export interface BackendSrv {
    *
    * @deprecated Use the fetch function instead
    */
-  datasourceRequest<T = any>(options: BackendSrvRequest): Promise<FetchResponse<T>>;
+  datasourceRequest<T = unknown>(options: BackendSrvRequest): Promise<FetchResponse<T>>;
 
   /**
    * Observable http request interface

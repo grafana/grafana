@@ -42,6 +42,11 @@ export const plugin = new PanelPlugin<Options>(DashList)
         name: 'Show headings',
         defaultValue: defaultOptions.showHeadings,
       })
+      .addBooleanSwitch({
+        path: 'showFolderNames',
+        name: 'Show folder names',
+        defaultValue: defaultOptions.showFolderNames,
+      })
       .addNumberInput({
         path: 'maxItems',
         name: 'Max items',

@@ -147,6 +147,12 @@ const getDefaultVisualisationType = (): LogsVisualisationType => {
   if (visualisationType === 'table') {
     return 'table';
   }
+  if (visualisationType === 'logs') {
+    return 'logs';
+  }
+  if (config.featureToggles.logsExploreTableDefaultVisualization) {
+    return 'table';
+  }
   return 'logs';
 };
 
@@ -366,6 +372,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     reportInteraction('grafana_explore_logs_visualisation_changed', {
       newVisualizationType: visualisation,
       datasourceType: this.props.datasourceType ?? 'unknown',
+      defaultVisualisationType: config.featureToggles.logsExploreTableDefaultVisualization ? 'table' : 'logs',
     });
   };
 
