@@ -20,6 +20,7 @@ describe('LinkButton', () => {
 
     expect(linkElem).toHaveAttribute('href', href);
     expect(linkElem).not.toHaveAttribute('aria-disabled');
+    expect(linkElem).not.toHaveAttribute('tabindex');
   });
 
   it('Applies a11y compliant settings for disabled state', () => {
@@ -35,5 +36,6 @@ describe('LinkButton', () => {
     expect(linkElem).not.toHaveAttribute('href');
     expect(linkElem).toHaveAttribute('role', 'link');
     expect(linkElem).toHaveAttribute('aria-disabled', 'true');
+    expect(linkElem).toHaveAttribute('tabindex', '0');
   });
 });

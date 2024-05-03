@@ -133,6 +133,7 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
         className={linkButtonStyles}
         {...otherProps}
         aria-disabled={disabled}
+        tabIndex={disabled ? 0 : undefined}
         role={disabled ? 'link' : undefined}
         href={disabled ? undefined : href}
         ref={tooltip ? undefined : ref}
