@@ -43,9 +43,9 @@ export const Pages = {
   AddDashboard: {
     url: '/dashboard/new',
     itemButton: (title: string) => `data-testid ${title}`,
-    addNewPanel: 'Add new panel',
-    addNewRow: 'Add new row',
-    addNewPanelLibrary: 'Add new panel from panel library',
+    addNewPanel: 'data-testid Add new panel',
+    addNewRow: 'data-testid Add new row',
+    addNewPanelLibrary: 'data-testid Add new panel from panel library',
   },
   Dashboard: {
     url: (uid: string) => `/d/${uid}`,
@@ -57,6 +57,7 @@ export const Pages = {
       navV2: 'data-testid Dashboard navigation',
       publicDashboardTag: 'data-testid public dashboard tag',
       shareButton: 'data-testid share-button',
+      scrollContainer: 'data-testid Dashboard canvas scroll container',
       playlistControls: {
         prev: 'data-testid playlist previous dashboard button',
         stop: 'data-testid playlist stop dashboard button',
@@ -83,7 +84,7 @@ export const Pages = {
         close: 'data-testid dashboard-settings-close',
       },
       General: {
-        deleteDashBoard: 'Dashboard settings page delete dashboard button',
+        deleteDashBoard: 'data-testid Dashboard settings page delete dashboard button',
         sectionItems: (item: string) => `Dashboard settings section item ${item}`,
         saveDashBoard: 'Dashboard settings aside actions Save button',
         saveAsDashBoard: 'Dashboard settings aside actions Save As button',
@@ -103,11 +104,11 @@ export const Pages = {
           annotations: 'data-testid list-annotations',
         },
         Settings: {
-          name: 'Annotations settings name input',
+          name: 'data-testid Annotations settings name input',
         },
         NewAnnotation: {
           panelFilterSelect: 'data-testid annotations-panel-filter',
-          showInLabel: 'show-in-label',
+          showInLabel: 'data-testid show-in-label',
           previewInDashboard: 'data-testid annotations-preview',
           delete: 'data-testid annotations-delete',
           apply: 'data-testid annotations-apply',
@@ -257,6 +258,9 @@ export const Pages = {
         DeleteEmail: 'data-testid public dashboard delete email button',
         ReshareLink: 'data-testid public dashboard reshare link button',
       },
+    },
+    PublicDashboardScene: {
+      Tab: 'Tab Public Dashboard',
     },
   },
   PublicDashboard: {

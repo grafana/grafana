@@ -276,7 +276,7 @@
       "add-widget-body": "Cřęäŧę ľįşŧş, mäřĸđőŵŉş äŉđ őŧĥęř ŵįđģęŧş",
       "add-widget-button": "Åđđ ŵįđģęŧ",
       "add-widget-header": "Åđđ ä ŵįđģęŧ",
-      "import-a-dashboard-body": "Ĩmpőřŧ đäşĥþőäřđş ƒřőm ƒįľęş őř<1>ģřäƒäŉä.čőm</1>.",
+      "import-a-dashboard-body": "Ĩmpőřŧ đäşĥþőäřđş ƒřőm ƒįľęş őř <1>ģřäƒäŉä.čőm</1>.",
       "import-a-dashboard-header": "Ĩmpőřŧ ä đäşĥþőäřđ",
       "import-dashboard-button": "Ĩmpőřŧ đäşĥþőäřđ"
     },
@@ -385,7 +385,7 @@
     "annotations": {
       "title": "Åŉŉőŧäŧįőŉş"
     },
-    "dashboard-delete-button": "Đęľęŧę Đäşĥþőäřđ",
+    "dashboard-delete-button": "Đęľęŧę đäşĥþőäřđ",
     "general": {
       "auto-refresh-description": "Đęƒįŉę ŧĥę äūŧő řęƒřęşĥ įŉŧęřväľş ŧĥäŧ şĥőūľđ þę äväįľäþľę įŉ ŧĥę äūŧő řęƒřęşĥ ľįşŧ. Ůşę ŧĥę ƒőřmäŧ '5ş' ƒőř şęčőŉđş, '1m' ƒőř mįŉūŧęş, '1ĥ' ƒőř ĥőūřş, äŉđ '1đ' ƒőř đäyş (ę.ģ.: '5ş,10ş,30ş,1m,5m,15m,30m,1ĥ,2ĥ,1đ').",
       "auto-refresh-label": "Åūŧő řęƒřęşĥ",
@@ -472,6 +472,7 @@
       "newest-first": "Ńęŵęşŧ ƒįřşŧ",
       "oldest-first": "Øľđęşŧ ƒįřşŧ",
       "query-history": "Qūęřy ĥįşŧőřy",
+      "query-library": "Qūęřy ľįþřäřy",
       "settings": "Ŝęŧŧįŉģş",
       "starred": "Ŝŧäřřęđ"
     },
@@ -583,11 +584,11 @@
     "toolbar": {
       "aria-label": "Ēχpľőřę ŧőőľþäř",
       "copy-link": "Cőpy ŮŖĿ",
-      "copy-link-abs-time": "Cőpy Åþşőľūŧę Ŝĥőřŧęŉęđ ŮŖĿ",
+      "copy-link-abs-time": "Cőpy äþşőľūŧę ŮŖĿ",
       "copy-links-absolute-category": "Ŧįmę-şyŉč ŮŖĿ ľįŉĸş (şĥäřę ŵįŧĥ ŧįmę řäŉģę įŉŧäčŧ)",
       "copy-links-normal-category": "Ńőřmäľ ŮŖĿ ľįŉĸş",
       "copy-shortened-link": "Cőpy şĥőřŧęŉęđ ŮŖĿ",
-      "copy-shortened-link-abs-time": "Cőpy Åþşőľūŧę Ŝĥőřŧęŉęđ ŮŖĿ",
+      "copy-shortened-link-abs-time": "Cőpy äþşőľūŧę şĥőřŧęŉęđ ŮŖĿ",
       "copy-shortened-link-menu": "Øpęŉ čőpy ľįŉĸ őpŧįőŉş",
       "refresh-picker-cancel": "Cäŉčęľ",
       "refresh-picker-run": "Ŗūŉ qūęřy",
@@ -726,10 +727,12 @@
     "forgot-password": "Főřģőŧ yőūř päşşŵőřđ?",
     "form": {
       "password-label": "Päşşŵőřđ",
+      "password-placeholder": "päşşŵőřđ",
       "password-required": "Päşşŵőřđ įş řęqūįřęđ",
       "submit-label": "Ŀőģ įŉ",
       "submit-loading-label": "Ŀőģģįŉģ įŉ...",
       "username-label": "Ēmäįľ őř ūşęřŉämę",
+      "username-placeholder": "ęmäįľ őř ūşęřŉämę",
       "username-required": "Ēmäįľ őř ūşęřŉämę įş řęqūįřęđ"
     },
     "services": {
@@ -1524,7 +1527,7 @@
       "info-text": "Cřęäŧę ä đįřęčŧ ľįŉĸ ŧő ŧĥįş đäşĥþőäřđ őř päŉęľ, čūşŧőmįžęđ ŵįŧĥ ŧĥę őpŧįőŉş þęľőŵ.",
       "link-url": "Ŀįŉĸ ŮŖĿ",
       "render-alert": "Ĩmäģę řęŉđęřęř pľūģįŉ ŉőŧ įŉşŧäľľęđ",
-      "render-instructions": "Ŧő řęŉđęř ä päŉęľ įmäģę, yőū mūşŧ įŉşŧäľľ ŧĥę<1>Ğřäƒäŉä įmäģę řęŉđęřęř pľūģįŉ</1>. Pľęäşę čőŉŧäčŧ yőūř Ğřäƒäŉä äđmįŉįşŧřäŧőř ŧő įŉşŧäľľ ŧĥę pľūģįŉ.",
+      "render-instructions": "Ŧő řęŉđęř ä päŉęľ įmäģę, yőū mūşŧ įŉşŧäľľ ŧĥę <2>Ğřäƒäŉä įmäģę řęŉđęřęř pľūģįŉ</2>. Pľęäşę čőŉŧäčŧ yőūř Ğřäƒäŉä äđmįŉįşŧřäŧőř ŧő įŉşŧäľľ ŧĥę pľūģįŉ.",
       "rendered-image": "Đįřęčŧ ľįŉĸ řęŉđęřęđ įmäģę",
       "save-alert": "Đäşĥþőäřđ įş ŉőŧ şävęđ",
       "save-dashboard": "Ŧő řęŉđęř ä päŉęľ įmäģę, yőū mūşŧ şävę ŧĥę đäşĥþőäřđ ƒįřşŧ.",

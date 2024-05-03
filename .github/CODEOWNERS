@@ -313,7 +313,6 @@
 /e2e/plugin-e2e/plugin-e2e-api-tests/ @grafana/plugins-platform-frontend
 /packages/ @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend
 /packages/grafana-e2e-selectors/ @grafana/grafana-frontend-platform
-/packages/grafana-e2e/ @grafana/grafana-frontend-platform
 /packages/grafana-ui/.storybook/ @grafana/plugins-platform-frontend
 /packages/grafana-ui/src/components/ @grafana/grafana-frontend-platform
 /packages/grafana-ui/src/components/DateTimePickers/ @grafana/grafana-frontend-platform
@@ -696,6 +695,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/i18n-crowdin-upload.yml @grafana/grafana-frontend-platform
 /.github/workflows/i18n-crowdin-download.yml @grafana/grafana-frontend-platform
 /.github/workflows/pr-go-workspace-check.yml @grafana/grafana-app-platform-squad
+/.github/workflows/run-scenes-e2e.yml @grafana/dashboards-squad
 
 # Generated files not requiring owner approval
 /packages/grafana-data/src/types/featureToggles.gen.ts @grafanabot
