@@ -301,10 +301,10 @@ export function ToolbarActions({ dashboard }: Props) {
     ),
   });
 
+  const showShareButton = uid && !isEditing && !meta.isSnapshot && !isPlaying;
   toolbarActions.push({
     group: 'main-buttons',
-    condition:
-      !config.featureToggles.newDashboardSharingComponent && uid && !isEditing && !meta.isSnapshot && !isPlaying,
+    condition: !config.featureToggles.newDashboardSharingComponent && showShareButton,
     render: () => (
       <Button
         key="share-dashboard-button"
@@ -344,8 +344,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'new-share-dashboard-button',
-    condition:
-      config.featureToggles.newDashboardSharingComponent && uid && !isEditing && !meta.isSnapshot && !isPlaying,
+    condition: config.featureToggles.newDashboardSharingComponent && showShareButton,
     render: () => <ShareButton key="new-share-dashboard-button" dashboard={dashboard} />,
   });
 

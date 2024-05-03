@@ -116,7 +116,7 @@ describe('NavToolbarActions', () => {
       setup();
 
       expect(screen.queryByTestId(selectors.pages.Dashboard.DashNav.shareButton)).not.toBeInTheDocument();
-      const newShareButton = await screen.findByTestId(selectors.pages.Dashboard.DashNav.newShareButton.container);
+      const newShareButton = screen.getByTestId(selectors.pages.Dashboard.DashNav.newShareButton.container);
       expect(newShareButton).toBeInTheDocument();
     });
   });
