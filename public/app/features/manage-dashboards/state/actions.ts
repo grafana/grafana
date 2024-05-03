@@ -212,7 +212,7 @@ export function importDashboard(importDashboardForm: ImportDashboardDTO): ThunkR
       });
     });
 
-    importDashboardForm.constants?.forEach((constant: any, index: number) => {
+    importDashboardForm.constants?.forEach((constant, index) => {
       const input = inputs.constants[index];
 
       inputsToPersist.push({

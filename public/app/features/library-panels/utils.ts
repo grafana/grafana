@@ -1,7 +1,7 @@
 import { PanelModel } from '../dashboard/state';
 
 import { addLibraryPanel, updateLibraryPanel } from './state/api';
-import { LibraryElementDTO } from './types';
+import { LibraryElementDTO, PanelModelWithLibraryPanel } from './types';
 
 export async function saveAndRefreshLibraryPanel(panel: PanelModel, folderUid: string): Promise<LibraryElementDTO> {
   const panelSaveModel = toPanelSaveModel(panel);
@@ -34,7 +34,7 @@ function updatePanelModelWithUpdate(panel: PanelModel, updated: LibraryElementDT
   panel.refresh();
 }
 
-function saveOrUpdateLibraryPanel(panel: any, folderUid: string): Promise<LibraryElementDTO> {
+function saveOrUpdateLibraryPanel(panel: PanelModelWithLibraryPanel, folderUid: string): Promise<LibraryElementDTO> {
   if (!panel.libraryPanel) {
     return Promise.reject();
   }

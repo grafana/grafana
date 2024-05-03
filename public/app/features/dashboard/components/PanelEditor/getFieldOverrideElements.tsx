@@ -105,7 +105,7 @@ export function getFieldOverrideCategories(
       },
     });
 
-    const onMatcherConfigChange = (options: any) => {
+    const onMatcherConfigChange = (options: unknown) => {
       override.matcher.options = options;
       onOverrideChange(idx, override);
     };
