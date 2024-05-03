@@ -120,6 +120,27 @@ func TestAccessControl_Evaluate(t *testing.T) {
 			expected: true,
 		},
 		{
+			desc: "expect user to not have access with eval all evaluator with resolvers when not all permissions resolve to permissions that the user has",
+			user: user.SignedInUser{
+				OrgID: 1,
+				Permissions: map[int64]map[string][]string{
+					1: {"folders:edit": {"folders:uid:test_folder"}},
+				},
+			},
+			evaluator: accesscontrol.EvalAll(
+				accesscontrol.EvalPermission(dashboards.ActionDashboardsWrite, "datasources:uid:test_ds"),
+				accesscontrol.EvalPermission(dashboards.ActionDashboardsWrite, "dashboards:uid:test_dashboard"),
+			),
+			actionSets: map[string][]string{
+				"folders:edit": {dashboards.ActionFoldersWrite, dashboards.ActionFoldersRead, dashboards.ActionDashboardsWrite, dashboards.ActionDashboardsRead},
+			},
+			resolverPrefix: "dashboards:uid:",
+			scopeResolver: accesscontrol.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, scope string) ([]string, error) {
+				return []string{"folders:uid:test_folder"}, nil
+			}),
+			expected: false,
+		},
+		{
 			desc: "expect user to have access with eval any evaluator when resolver translates scopes, as well as expands actions to action sets",
 			user: user.SignedInUser{
 				OrgID: 1,
