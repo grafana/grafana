@@ -96,7 +96,6 @@ func (s *ExtendedJWT) authenticateAsUser(idTokenClaims *authlib.Claims[authlib.I
 	// compare the incoming namespace claim against what namespaceMapper returns
 	if allowedNamespace := s.namespaceMapper(s.getDefaultOrgID()); idTokenClaims.Rest.Namespace != allowedNamespace {
 		return nil, errJWTDisallowedNamespaceClaim
-
 	}
 	// since id token claims can never have a wildcard ("*") namespace claim, the below comparison effectively
 	// disallows wildcard claims in access tokens here in Grafana (they are only meant for service layer)
