@@ -3334,7 +3334,7 @@ __metadata:
     glob: "npm:10.3.12"
     i18next: "npm:^23.0.0"
     lodash: "npm:4.17.21"
-    lru-cache: "npm:10.2.0"
+    lru-cache: "npm:10.2.2"
     monaco-editor: "npm:0.34.1"
     prismjs: "npm:1.29.0"
     react: "npm:18.2.0"
@@ -3817,7 +3817,7 @@ __metadata:
     jest-environment-jsdom: "npm:29.7.0"
     jest-matcher-utils: "npm:29.7.0"
     lodash: "npm:4.17.21"
-    lru-cache: "npm:10.2.0"
+    lru-cache: "npm:10.2.2"
     marked: "npm:12.0.2"
     marked-mangle: "npm:1.1.7"
     moment: "npm:2.30.1"
@@ -18335,7 +18335,7 @@ __metadata:
     leven: "npm:^4.0.0"
     lodash: "npm:4.17.21"
     logfmt: "npm:^1.3.2"
-    lru-cache: "npm:10.2.0"
+    lru-cache: "npm:10.2.2"
     lru-memoize: "npm:^1.1.0"
     lucene: "npm:^2.1.1"
     marked: "npm:12.0.2"
@@ -21869,10 +21869,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lru-cache@npm:10.2.0, lru-cache@npm:^10.0.1, lru-cache@npm:^10.2.0":
-  version: 10.2.0
-  resolution: "lru-cache@npm:10.2.0"
-  checksum: 10/502ec42c3309c0eae1ce41afca471f831c278566d45a5273a0c51102dee31e0e250a62fa9029c3370988df33a14188a38e682c16143b794de78668de3643e302
+"lru-cache@npm:10.2.2, lru-cache@npm:^10.0.1, lru-cache@npm:^10.2.0":
+  version: 10.2.2
+  resolution: "lru-cache@npm:10.2.2"
+  checksum: 10/ff1a496d30b5eaec2c9079080965bb0cede203cf878371f7033a007f1e54cd4aa13cc8abf7ccec4c994a83a22ed5476e83a55bb57cc07e6c1547a42937e42c37
   languageName: node
   linkType: hard
 
