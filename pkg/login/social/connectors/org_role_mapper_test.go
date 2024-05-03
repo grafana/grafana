@@ -139,8 +139,8 @@ func TestExternalOrgRoleMapper_MapOrgRoles(t *testing.T) {
 	mapper := ProvideOrgRoleMapper(cfg, orgService)
 
 	for _, tc := range testCases {
-		orgMapping := mapper.ParseOrgMappingSettings(context.Background(), tc.orgMappingSettings, false)
-		actual := mapper.MapOrgRoles(context.Background(), tc.externalOrgs, orgMapping, tc.directlyMappedRole, false)
+		mappingCfg := mapper.ParseOrgMappingSettings(context.Background(), tc.orgMappingSettings, false)
+		actual := mapper.MapOrgRoles(context.Background(), mappingCfg, tc.externalOrgs, tc.directlyMappedRole)
 
 		assert.EqualValues(t, tc.expected, actual)
 	}

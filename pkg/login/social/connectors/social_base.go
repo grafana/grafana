@@ -35,7 +35,7 @@ type SocialBase struct {
 	log           log.Logger
 	features      featuremgmt.FeatureToggles
 	orgRoleMapper *OrgRoleMapper
-	orgMapping    map[string]map[int64]org.RoleType
+	orgMappingCfg *MappingConfiguration
 }
 
 func newSocialBase(name string,
@@ -54,14 +54,14 @@ func newSocialBase(name string,
 		features:      features,
 		cfg:           cfg,
 		orgRoleMapper: orgRoleMapper,
-		orgMapping:    orgRoleMapper.ParseOrgMappingSettings(context.Background(), info.OrgMapping, info.RoleAttributeStrict),
+		orgMappingCfg: orgRoleMapper.ParseOrgMappingSettings(context.Background(), info.OrgMapping, info.RoleAttributeStrict),
 	}
 }
 
 func (s *SocialBase) updateInfo(ctx context.Context, name string, info *social.OAuthInfo) {
 	s.Config = createOAuthConfig(info, s.cfg, name)
 	s.info = info
-	s.orgMapping = s.orgRoleMapper.ParseOrgMappingSettings(ctx, info.OrgMapping, info.RoleAttributeStrict)
+	s.orgMappingCfg = s.orgRoleMapper.ParseOrgMappingSettings(ctx, info.OrgMapping, info.RoleAttributeStrict)
 }
 
 type groupStruct struct {
@@ -179,7 +179,7 @@ func (s *SocialBase) searchRole(rawJSON []byte, groups []string) (org.RoleType, 
 }
 
 func (s *SocialBase) extractOrgRoles(ctx context.Context, orgs []string, directlyMappedRole org.RoleType) (map[int64]org.RoleType, error) {
-	return s.orgRoleMapper.MapOrgRoles(ctx, orgs, s.orgMapping, directlyMappedRole, s.info.RoleAttributeStrict), nil
+	return s.orgRoleMapper.MapOrgRoles(ctx, s.orgMappingCfg, orgs, directlyMappedRole), nil
 }
 
 func (s *SocialBase) extractOrgs(rawJSON []byte) ([]string, error) {

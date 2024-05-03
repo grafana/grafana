@@ -412,7 +412,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 		provider.info.RoleAttributePath = tc.RoleAttributePath
 		provider.info.OrgAttributePath = tc.OrgAttributePath
 		provider.info.OrgMapping = tc.OrgMapping
-		provider.orgMapping = orgRoleMapper.ParseOrgMappingSettings(context.Background(), tc.OrgMapping, tc.RoleAttributeStrict)
+		provider.orgMappingCfg = orgRoleMapper.ParseOrgMappingSettings(context.Background(), tc.OrgMapping, tc.RoleAttributeStrict)
 		provider.info.AllowAssignGrafanaAdmin = tc.AllowAssignGrafanaAdmin
 		provider.info.SkipOrgRoleSync = tc.SkipOrgRoleSync
 		provider.info.RoleAttributeStrict = tc.RoleAttributeStrict
