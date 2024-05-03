@@ -89,3 +89,42 @@ func TestRightJoin(t *testing.T) {
 	assert.Equal(t, "A", tables[0])
 	assert.Equal(t, "B", tables[1])
 }
+
+func TestAliasWithJoin(t *testing.T) {
+	sql := `select * from A as X
+	RIGHT JOIN B ON A.name = X.name
+	LIMIT 10`
+	tables, err := TablesList((sql))
+	assert.Nil(t, err)
+
+	assert.Equal(t, 2, len(tables))
+	assert.Equal(t, "A", tables[0])
+	assert.Equal(t, "B", tables[1])
+}
+
+func TestAlias(t *testing.T) {
+	sql := `select * from A as X LIMIT 10`
+	tables, err := TablesList((sql))
+	assert.Nil(t, err)
+
+	assert.Equal(t, 1, len(tables))
+	assert.Equal(t, "A", tables[0])
+}
+
+func TestParens(t *testing.T) {
+	sql := `SELECT  t1.Col1,
+	t2.Col1,
+	t3.Col1
+	FROM    table1 AS t1
+	LEFT JOIN	(
+	table2 AS t2
+	INNER JOIN table3 AS t3 ON t3.Col1 = t2.Col1
+	) ON t2.Col1 = t1.Col1;`
+	tables, err := TablesList((sql))
+	assert.Nil(t, err)
+
+	assert.Equal(t, 3, len(tables))
+	assert.Equal(t, "table1", tables[0])
+	assert.Equal(t, "table2", tables[1])
+	assert.Equal(t, "table3", tables[2])
+}
