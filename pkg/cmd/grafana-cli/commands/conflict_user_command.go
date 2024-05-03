@@ -83,11 +83,9 @@ func initializeConflictResolver(cmd *utils.ContextCommandLine, f Formatter, ctx 
 		return nil, fmt.Errorf("%v: %w", "failed to get user service", err)
 	}
 	routing := routing.ProvideRegister()
-	tracingCfg, err := tracing.ProvideTracingConfig(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to initialize tracer config", err)
 	}
-	tracer, err := tracing.ProvideService(tracingCfg)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to initialize tracer service", err)
 	}
