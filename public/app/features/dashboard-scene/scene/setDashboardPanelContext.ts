@@ -160,6 +160,7 @@ export function getAdHocFilterVariableFor(scene: DashboardScene, ds: DataSourceR
   const newVariable = new AdHocFiltersVariable({
     name: 'Filters',
     datasource: ds,
+    useQueriesAsFilterForOptions: true,
   });
 
   // Add it to the scene
