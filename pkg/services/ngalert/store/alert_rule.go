@@ -11,6 +11,8 @@ import (
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 
+	"xorm.io/xorm"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
@@ -23,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/util"
-	"xorm.io/xorm"
 )
 
 // AlertRuleMaxTitleLength is the maximum length of the alert rule title
@@ -768,4 +769,21 @@ func ruleConstraintViolationToErr(rule ngmodels.AlertRule, err error) error {
 	} else {
 		return ngmodels.ErrAlertRuleConflict(rule, err)
 	}
+}
+
+// GetNamespacesByRuleUID returns a map of rule UIDs to their namespace UID.
+func (st DBstore) GetNamespacesByRuleUID(ctx context.Context, orgID int64, uids ...string) (map[string]string, error) {
+	result := make(map[string]string)
+	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		var rules []ngmodels.AlertRule
+		err := sess.Table(ngmodels.AlertRule{}).Select("uid, namespace_uid").Where("org_id = ?", orgID).In("uid", uids).Find(&rules)
+		if err != nil {
+			return err
+		}
+		for _, rule := range rules {
+			result[rule.UID] = rule.NamespaceUID
+		}
+		return nil
+	})
+	return result, err
 }

@@ -28,10 +28,11 @@ const (
 )
 
 type AlertmanagerSrv struct {
-	log    log.Logger
-	ac     accesscontrol.AccessControl
-	mam    *notifier.MultiOrgAlertmanager
-	crypto notifier.Crypto
+	log        log.Logger
+	ac         accesscontrol.AccessControl
+	mam        *notifier.MultiOrgAlertmanager
+	crypto     notifier.Crypto
+	silenceSvc SilenceService
 }
 
 type UnknownReceiverError struct {
