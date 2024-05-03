@@ -9,7 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 var (
@@ -64,6 +64,7 @@ type LegacyStorage interface {
 type DualWriter struct {
 	Storage
 	Legacy LegacyStorage
+	Log    klog.Logger
 }
 
 var errDualWriterCreaterMissing = errors.New("legacy storage rest.Creater is missing")
@@ -72,10 +73,8 @@ var errDualWriterDeleterMissing = errors.New("legacy storage rest.GracefulDelete
 var errDualWriterCollectionDeleterMissing = errors.New("legacy storage rest.CollectionDeleter is missing")
 var errDualWriterUpdaterMissing = errors.New("legacy storage rest.Updater is missing")
 
-type DualWriterMode int
-
 const (
-	Mode1 DualWriterMode = iota
+	Mode1 = iota
 	Mode2
 	Mode3
 	Mode4
@@ -87,12 +86,7 @@ var CurrentMode = Mode2
 
 // NewDualWriter returns a new DualWriter.
 func NewDualWriter(legacy LegacyStorage, storage Storage) *DualWriter {
-	//TODO: replace this with
-	// SelectDualWriter(CurrentMode, legacy, storage)
-	return &DualWriter{
-		Storage: storage,
-		Legacy:  legacy,
-	}
+	return SelectDualWriter(CurrentMode, legacy, storage)
 }
 
 // Create overrides the default behavior of the Storage and writes to both the LegacyStorage and Storage.
@@ -213,7 +207,7 @@ func (u *updateWrapper) UpdatedObject(ctx context.Context, oldObj runtime.Object
 	return u.updated, nil
 }
 
-func SelectDualWriter(mode DualWriterMode, legacy LegacyStorage, storage Storage) Storage {
+func SelectDualWriter(mode int, legacy LegacyStorage, storage Storage) *DualWriter {
 	switch mode {
 	case Mode1:
 		return NewDualWriterMode1(legacy, storage)

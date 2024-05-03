@@ -7,16 +7,18 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/klog/v2"
 )
 
 type DualWriterMode4 struct {
-	DualWriter
+	*DualWriter
 }
 
 // NewDualWriterMode4 returns a new DualWriter in mode 4.
 // Mode 4 represents writing and reading from Storage.
-func NewDualWriterMode4(legacy LegacyStorage, storage Storage) *DualWriterMode4 {
-	return &DualWriterMode4{*NewDualWriter(legacy, storage)}
+func NewDualWriterMode4(legacy LegacyStorage, storage Storage) *DualWriter {
+	dw := &DualWriterMode4{&DualWriter{Legacy: legacy, Storage: storage, Log: klog.NewKlogr()}}
+	return dw.DualWriter
 }
 
 // #TODO remove all DualWriterMode4 methods once we remove the generic DualWriter implementation

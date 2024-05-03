@@ -12,13 +12,14 @@ import (
 )
 
 type DualWriterMode3 struct {
-	DualWriter
+	*DualWriter
 }
 
 // NewDualWriterMode3 returns a new DualWriter in mode 3.
 // Mode 3 represents writing to LegacyStorage and Storage and reading from Storage.
-func NewDualWriterMode3(legacy LegacyStorage, storage Storage) *DualWriterMode3 {
-	return &DualWriterMode3{*NewDualWriter(legacy, storage)}
+func NewDualWriterMode3(legacy LegacyStorage, storage Storage) *DualWriter {
+	dw := &DualWriterMode3{&DualWriter{Legacy: legacy, Storage: storage, Log: klog.NewKlogr()}}
+	return dw.DualWriter
 }
 
 // Create overrides the behavior of the generic DualWriter and writes to LegacyStorage and Storage.
