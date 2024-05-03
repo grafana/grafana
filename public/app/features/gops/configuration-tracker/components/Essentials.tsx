@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, LinkButton, Menu, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { createUrl } from 'app/features/alerting/unified/utils/url';
 
@@ -43,8 +42,10 @@ export function EssentialContent({
     </Stack>
   );
 }
-
-function Section({ section }: { section: SectionDto }) {
+interface SectionProps {
+  section: SectionDto;
+}
+function Section({ section }: SectionProps) {
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.wrapper}>
@@ -87,24 +88,21 @@ function Step({ step }: StepProps) {
 
 interface StepButtonProps {
   type: 'openLink' | 'dropDown';
-  url: string;
+  url?: string;
   queryParams?: Record<string, string>;
   label: string;
   options?: Array<{ label: string; value: string }>;
   done?: boolean;
+  onClickOption?: (value: string) => void;
 }
 
-function StepButton({ type, url, label, options, queryParams }: StepButtonProps) {
-  const urlToGo = createUrl(url, {
-    returnTo: location.pathname + location.search,
-    ...queryParams,
-  });
-  function onIntegrationClick(integrationId: string) {
-    const urlToGoWithIntegration = createUrl(url + integrationId, {
-      returnTo: location.pathname + location.search,
-    });
-    locationService.push(urlToGoWithIntegration);
-  }
+function StepButton({ type, url, label, options, queryParams, onClickOption }: StepButtonProps) {
+  const urlToGo = url
+    ? createUrl(url, {
+        returnTo: location.pathname + location.search,
+        ...queryParams,
+      })
+    : '';
   switch (type) {
     case 'openLink':
       return (
@@ -118,7 +116,13 @@ function StepButton({ type, url, label, options, queryParams }: StepButtonProps)
           overlay={
             <Menu>
               {options?.map((option) => (
-                <Menu.Item label={option.label} onClick={() => onIntegrationClick(option.value)} key={option.label} />
+                <Menu.Item
+                  label={option.label}
+                  key={option.value}
+                  onClick={() => {
+                    onClickOption?.(option.value);
+                  }}
+                />
               ))}
             </Menu>
           }
