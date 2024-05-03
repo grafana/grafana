@@ -1,21 +1,23 @@
 import { useEffect, useState } from 'react';
 
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, locationService } from '@grafana/runtime';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
 import { onCallApi } from 'app/features/alerting/unified/api/onCallApi';
 import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { createUrl } from 'app/features/alerting/unified/utils/url';
 import { Receiver } from 'app/plugins/datasource/alertmanager/types';
 
 export interface StepButtonDto {
   type: 'openLink' | 'dropDown';
-  url: string;
   queryParams?: Record<string, string>;
   label: string;
   options?: Array<{ label: string; value: string }>;
   done?: boolean;
+  url?: string; // only for openLink
+  onClickOption?: (value: string) => void; // only for dropDown
 }
 export interface SectionDtoStep {
   title: string;
@@ -189,6 +191,12 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
   const incidentPluginConfig = useGetIncidentPluginConfig();
   const onCallOptions = useOnCallOptions();
   const chatOpsConnections = useOnCallChatOpsConnections();
+  function onIntegrationClick(integrationId: string, url: string) {
+    const urlToGoWithIntegration = createUrl(url + integrationId, {
+      returnTo: location.pathname + location.search,
+    });
+    locationService.push(urlToGoWithIntegration);
+  }
 
   const essentialContent: SectionsDto = {
     sections: [
@@ -286,9 +294,9 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
             description: 'In the integration page, click Send demo alert, to review your notification',
             button: {
               type: 'dropDown',
-              url: '/a/grafana-oncall-app/integrations/',
               label: 'Select integration',
               options: onCallOptions,
+              onClickOption: (value) => onIntegrationClick(value, '/a/grafana-oncall-app/integrations/'),
             },
           },
           {
