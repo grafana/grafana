@@ -23,6 +23,7 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
 import { PanelEditor } from '../panel-edit/PanelEditor';
+import ShareButton from '../sharing/ShareButton/ShareButton';
 import { ShareModal } from '../sharing/ShareModal';
 import { DashboardInteractions } from '../utils/interactions';
 import { DynamicDashNavButtonModel, dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
@@ -303,9 +304,10 @@ export function ToolbarActions({ dashboard }: Props) {
     ),
   });
 
+  const showShareButton = uid && !isEditing && !meta.isSnapshot && !isPlaying;
   toolbarActions.push({
     group: 'main-buttons',
-    condition: uid && !isEditing && !meta.isSnapshot && !isPlaying,
+    condition: !config.featureToggles.newDashboardSharingComponent && showShareButton,
     render: () => (
       <Button
         key="share-dashboard-button"
@@ -335,13 +337,19 @@ export function ToolbarActions({ dashboard }: Props) {
         tooltip="Enter edit mode"
         key="edit"
         className={styles.buttonWithExtraMargin}
-        variant="primary"
+        variant={config.featureToggles.newDashboardSharingComponent ? 'secondary' : 'primary'}
         size="sm"
         data-testid={selectors.components.NavToolbar.editDashboard.editButton}
       >
         Edit
       </Button>
     ),
+  });
+
+  toolbarActions.push({
+    group: 'new-share-dashboard-button',
+    condition: config.featureToggles.newDashboardSharingComponent && showShareButton,
+    render: () => <ShareButton key="new-share-dashboard-button" dashboard={dashboard} />,
   });
 
   toolbarActions.push({
