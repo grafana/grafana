@@ -138,7 +138,7 @@ export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton
       {deleteModal}
       {isGrafanaRulerRule(rule.rulerRule) && showSilenceDrawer && (
         <AlertmanagerProvider accessType="instance">
-          <SilencesDrawer rule={rule} alertManagerSourceName={sourceName} onClose={() => setShowSilenceDrawer(false)} />
+          <SilencesDrawer rule={rule} onClose={() => setShowSilenceDrawer(false)} />
         </AlertmanagerProvider>
       )}
       {redirectToClone?.identifier && (
