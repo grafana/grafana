@@ -11,4 +11,11 @@ export const getStyles = ({ v1: { spacing, typography, colors } }: GrafanaTheme2
     font-size: ${typography.size.xs};
     color: ${colors.textFaint};
   `,
+  tableWrapper: css`
+    /* Actions Column */
+    table thead tr th:last-child {
+      max-width: fit-content;
+      width: 275px;
+    }
+  `,
 });

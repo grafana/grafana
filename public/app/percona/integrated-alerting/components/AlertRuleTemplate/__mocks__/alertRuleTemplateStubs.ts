@@ -129,6 +129,33 @@ export const templateStubs: Template[] = [
     ],
     expr: '',
   },
+  {
+    name: 'template_6',
+    created_at: '2020-11-25T16:53:39.366Z',
+    source: SourceDescription.USER_API,
+    summary: 'MySQL database down',
+    yaml: 'yaml file content',
+    params: [
+      {
+        name: 'template-6-threshold',
+        type: TemplateParamType.FLOAT,
+        unit: TemplateParamUnit.PERCENTAGE,
+        summary: 'a threshold',
+        float: {
+          hasDefault: true,
+          hasMin: false,
+          hasMax: false,
+          default: 12,
+        },
+      },
+    ],
+    expr: 'template_6_expression',
+    severity: 'SEVERITY_CRITICAL',
+    for: '10s',
+    annotations: {
+      summary: 'template_6_alert_sample',
+    },
+  },
 ];
 
 export const formattedTemplateStubs: FormattedTemplate[] = formatTemplates(templateStubs);

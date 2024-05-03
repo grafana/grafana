@@ -71,7 +71,6 @@ export const AlertRuleTemplate: FC = () => {
       {
         Header: nameColumn,
         accessor: 'summary',
-        width: '60%',
       },
       {
         Header: sourceColumn,
@@ -125,13 +124,7 @@ export const AlertRuleTemplate: FC = () => {
     <Page
       navModel={navModel}
       actions={
-        <Button
-          size="md"
-          icon="plus-square"
-          fill="text"
-          onClick={handleAddButton}
-          data-testid="alert-rule-template-add-modal-button"
-        >
+        <Button size="md" fill="text" onClick={handleAddButton} data-testid="alert-rule-template-add-modal-button">
           {Messages.alertRuleTemplate.addAction}
         </Button>
       }
@@ -143,25 +136,27 @@ export const AlertRuleTemplate: FC = () => {
             setVisible={setAddModalVisible}
             getAlertRuleTemplates={getAlertRuleTemplates}
           />
-          <Table
-            showPagination
-            totalItems={totalItems}
-            totalPages={totalPages}
-            pageSize={pageSize}
-            pageIndex={pageIndex}
-            onPaginationChanged={handlePaginationChanged}
-            data={data}
-            columns={columns}
-            pendingRequest={pendingRequest}
-            emptyMessage={
-              <EmptyListCTA
-                title={Messages.alertRuleTemplate.table.noCreated}
-                buttonIcon="bell"
-                buttonTitle={Messages.alertRuleTemplate.table.newAlertRuleTemplate}
-                onClick={handleAddButton}
-              />
-            }
-          />
+          <div className={styles.tableWrapper}>
+            <Table
+              showPagination
+              totalItems={totalItems}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              pageIndex={pageIndex}
+              onPaginationChanged={handlePaginationChanged}
+              data={data}
+              columns={columns}
+              pendingRequest={pendingRequest}
+              emptyMessage={
+                <EmptyListCTA
+                  title={Messages.alertRuleTemplate.table.noCreated}
+                  buttonIcon="bell"
+                  buttonTitle={Messages.alertRuleTemplate.table.newAlertRuleTemplate}
+                  onClick={handleAddButton}
+                />
+              }
+            />
+          </div>
         </FeatureLoader>
       </Page.Contents>
     </Page>

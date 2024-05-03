@@ -12,8 +12,6 @@ import { RuleFormType } from '../../../types/rule-form';
 
 import { GrafanaManagedRuleType } from './GrafanaManagedAlert';
 import { MimirFlavoredType } from './MimirOrLokiAlert';
-import { TemplatedAlertRuleType } from './TemplatedAlert';
-
 interface RuleTypePickerProps {
   onChange: (value: RuleFormType) => void;
   selected: RuleFormType;
@@ -23,10 +21,6 @@ interface RuleTypePickerProps {
 const RuleTypePicker = ({ selected, onChange, enabledTypes }: RuleTypePickerProps) => {
   const rulesSourcesWithRuler = useRulesSourcesWithRuler();
   const hasLotexDatasources = !isEmpty(rulesSourcesWithRuler);
-  // @PERCONA
-  // Simplified conditions by adding these two consts below
-  const showTemplateRuleDisclaimer = enabledTypes.includes(RuleFormType.templated);
-  const showGrafanaManagedRuleDisclaimer = !showTemplateRuleDisclaimer && enabledTypes.includes(RuleFormType.grafana);
 
   useEffect(() => {
     dispatch(fetchAllPromBuildInfoAction());
@@ -41,10 +35,6 @@ const RuleTypePicker = ({ selected, onChange, enabledTypes }: RuleTypePickerProp
   return (
     <>
       <Stack direction="row" gap={2}>
-        {/* @PERCONA */}
-        {enabledTypes.includes(RuleFormType.templated) && (
-          <TemplatedAlertRuleType selected={selected === RuleFormType.templated} onClick={onChange} />
-        )}
         {enabledTypes.includes(RuleFormType.grafana) && (
           <GrafanaManagedRuleType selected={selected === RuleFormType.grafana} onClick={handleChange} />
         )}
@@ -56,11 +46,7 @@ const RuleTypePicker = ({ selected, onChange, enabledTypes }: RuleTypePickerProp
           />
         )}
       </Stack>
-      {showTemplateRuleDisclaimer && (
-        <small className={styles.meta}>Select &ldquo;Percona templated&rdquo; for an easier alert rule setup.</small>
-      )}
-      {/* First condition shouldn't occur, just a safety measure */}
-      {!showTemplateRuleDisclaimer && showGrafanaManagedRuleDisclaimer && (
+      {enabledTypes.includes(RuleFormType.grafana) && (
         <small className={styles.meta}>
           Select &ldquo;Grafana managed&rdquo; unless you have a Mimir, Loki or Cortex data source with the Ruler API
           enabled.

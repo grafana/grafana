@@ -493,6 +493,15 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/alerting/new-from-template',
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "IntegratedAlertingNewFromTemplate" */ 'app/percona/integrated-alerting/components/AlertRuleFromTemplate/AlertRuleFromTemplate'
+          )
+      ),
+    },
+    {
       path: '/alerting/alert-rule-templates',
       component: SafeDynamicImport(
         () =>

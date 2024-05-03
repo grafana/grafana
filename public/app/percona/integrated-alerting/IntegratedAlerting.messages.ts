@@ -42,7 +42,7 @@ export const Messages = {
     },
   },
   alertRuleTemplate: {
-    addAction: 'Add',
+    addAction: 'Add template',
     addSuccess: 'Alert rule template successfully added',
     addModal: {
       confirm: 'Add',

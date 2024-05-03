@@ -6,8 +6,8 @@ import { SelectableValue } from '@grafana/data';
 import { Button, Field, FieldArray, Input, useStyles2, Select, Label } from '@grafana/ui';
 import { AlertRuleFilterType } from 'app/percona/shared/core';
 
-import { Messages } from './TemplateStep.messages';
-import { getStyles } from './TemplateStep.styles';
+import { Messages } from './TemplateForm.messages';
+import { getStyles } from './TemplateForm.styles';
 
 const TemplateFiltersField: FC = () => {
   const styles = useStyles2(getStyles);

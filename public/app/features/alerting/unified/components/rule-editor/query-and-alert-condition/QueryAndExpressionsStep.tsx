@@ -338,19 +338,12 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
 
   const onClickSwitch = useCallback(() => {
     const typeInForm = getValues('type');
-
-    console.log({ typeInForm });
-
     if (typeInForm === RuleFormType.cloudAlerting) {
       setValue('type', RuleFormType.grafana);
       setValue('dataSourceName', null); // set data source name back to "null"
 
       prevExpressions.length > 0 && restoreExpressionsInQueries();
       prevCondition && setValue('condition', prevCondition);
-
-      // @PERCONA
-    } else if (typeInForm === RuleFormType.templated) {
-      setValue('type', RuleFormType.templated);
     } else {
       setValue('type', RuleFormType.cloudAlerting);
       // dataSourceName is used only by Mimir/Loki alerting and recording rules

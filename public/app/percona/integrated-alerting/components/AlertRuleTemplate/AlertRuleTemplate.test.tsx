@@ -74,7 +74,7 @@ describe('AlertRuleTemplate', () => {
     await waitForElementToBeRemoved(() => screen.getByTestId('table-loading'));
 
     expect(screen.getByTestId('table-thead').querySelectorAll('tr')).toHaveLength(1);
-    expect(screen.getByTestId('table-tbody').querySelectorAll('tr')).toHaveLength(5);
+    expect(screen.getByTestId('table-tbody').querySelectorAll('tr')).toHaveLength(6);
     expect(screen.queryByTestId('table-no-data')).not.toBeInTheDocument();
   });
 

@@ -5,8 +5,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 export const getStyles = ({ spacing }: GrafanaTheme2) => ({
   actionsWrapper: css`
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    gap: 10px;
   `,
   button: css`
     margin-right: 0;

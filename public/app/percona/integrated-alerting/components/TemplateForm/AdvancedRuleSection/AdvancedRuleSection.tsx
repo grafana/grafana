@@ -3,7 +3,7 @@ import React, { FC, useState } from 'react';
 import { Collapse, useStyles } from '@grafana/ui';
 import { Label } from 'app/percona/shared/components/Form/Label';
 
-import { Messages } from '../TemplateStep.messages';
+import { Messages } from '../TemplateForm.messages';
 
 import { getStyles } from './AdvancedRuleSection.styles';
 import { AdvancedRuleSectionProps } from './AdvancedRuleSection.types';

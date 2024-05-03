@@ -1,8 +1,7 @@
 import { cx } from '@emotion/css';
 import React, { FC, useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
 
-import { IconButton, Tooltip, useStyles2 } from '@grafana/ui';
+import { IconButton, LinkButton, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { SourceDescription } from '../AlertRuleTemplate.types';
 import { DeleteRuleTemplateModal } from '../DeleteRuleTemplateModal/DeleteRuleTemplateModal';
@@ -23,41 +22,41 @@ export const AlertRuleTemplateActions: FC<AlertRuleTemplateActionsProps> = ({ te
   return (
     <div className={styles.actionsWrapper}>
       <Tooltip placement="top" content="Create alert rule from this template">
-        <Link
-          to={`/alerting/new?returnTo=%2Falerting%2Falert-rule-templates&template=${template.name}`}
-          className={styles.actionLink}
+        <LinkButton
+          icon="plus"
+          fill="text"
+          href={`/alerting/new-from-template?returnTo=%2Falerting%2Falert-rule-templates&template=${template.name}`}
+          data-testid="create-from-template-button"
         >
-          <IconButton
-            data-testid="create-from-template-button"
-            aria-label="Create from template"
-            name="plus"
-            size="lg"
-            className={styles.button}
-          />
-        </Link>
+          Create alert rule
+        </LinkButton>
       </Tooltip>
-      <Tooltip placement="top" content="Edit">
-        <IconButton
-          data-testid="edit-template-button"
-          aria-label="Edit template"
-          name="pen"
-          size="lg"
-          className={cx(styles.button, styles.editButton)}
-          disabled={isActionDisabled}
-          onClick={() => setEditModalVisible(true)}
-        />
-      </Tooltip>
-      <Tooltip placement="top" content="Delete">
-        <IconButton
-          data-testid="delete-template-button"
-          aria-label="Delete template"
-          name="times"
-          size="xl"
-          className={cx(styles.button)}
-          disabled={isActionDisabled}
-          onClick={() => setDeleteModalVisible(true)}
-        />
-      </Tooltip>
+      {!isActionDisabled && (
+        <>
+          <Tooltip placement="top" content="Edit">
+            <IconButton
+              data-testid="edit-template-button"
+              aria-label="Edit template"
+              name="pen"
+              size="lg"
+              className={cx(styles.button, styles.editButton)}
+              disabled={isActionDisabled}
+              onClick={() => setEditModalVisible(true)}
+            />
+          </Tooltip>
+          <Tooltip placement="top" content="Delete">
+            <IconButton
+              data-testid="delete-template-button"
+              aria-label="Delete template"
+              name="times"
+              size="xl"
+              className={cx(styles.button)}
+              disabled={isActionDisabled}
+              onClick={() => setDeleteModalVisible(true)}
+            />
+          </Tooltip>
+        </>
+      )}
       <EditAlertRuleTemplateModal
         yaml={yaml}
         name={name}

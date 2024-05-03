@@ -13,7 +13,7 @@ describe('AlertRuleTemplateActions', () => {
   it('should render component correctly', () => {
     render(
       <Router history={locationService.getHistory()}>
-        <AlertRuleTemplateActions template={formattedTemplateStubs[0]} getAlertRuleTemplates={jest.fn()} />
+        <AlertRuleTemplateActions template={formattedTemplateStubs[5]} getAlertRuleTemplates={jest.fn()} />
       </Router>
     );
 
@@ -24,7 +24,7 @@ describe('AlertRuleTemplateActions', () => {
   it('should open edit modal when clicking edit button', () => {
     render(
       <Router history={locationService.getHistory()}>
-        <AlertRuleTemplateActions template={formattedTemplateStubs[1]} getAlertRuleTemplates={jest.fn()} />
+        <AlertRuleTemplateActions template={formattedTemplateStubs[5]} getAlertRuleTemplates={jest.fn()} />
       </Router>
     );
     const button = screen.getByTestId('edit-template-button');
@@ -35,7 +35,7 @@ describe('AlertRuleTemplateActions', () => {
   it('should open delete modal when clicking delete button', () => {
     render(
       <Router history={locationService.getHistory()}>
-        <AlertRuleTemplateActions template={formattedTemplateStubs[1]} getAlertRuleTemplates={jest.fn()} />
+        <AlertRuleTemplateActions template={formattedTemplateStubs[5]} getAlertRuleTemplates={jest.fn()} />
       </Router>
     );
 
@@ -45,45 +45,45 @@ describe('AlertRuleTemplateActions', () => {
     expect(screen.findByTestId('confirm-delete-modal-button')).toBeTruthy();
   });
 
-  it('should disable edit and delete buttons when template is built-in', () => {
+  it('should not show edit and delete buttons when template is built-in', () => {
     render(
       <Router history={locationService.getHistory()}>
         <AlertRuleTemplateActions template={formattedTemplateStubs[0]} getAlertRuleTemplates={jest.fn()} />
       </Router>
     );
 
-    const editButton = screen.getByTestId('edit-template-button');
-    const deleteButton = screen.getByTestId('delete-template-button');
+    const editButton = screen.queryByTestId('edit-template-button');
+    const deleteButton = screen.queryByTestId('delete-template-button');
 
-    expect(editButton).toBeDisabled();
-    expect(deleteButton).toBeDisabled();
+    expect(editButton).toBeNull();
+    expect(deleteButton).toBeNull();
   });
 
-  it('should disable edit and delete buttons when template is from a file', () => {
+  it('should not show edit and delete buttons when template is from a file', () => {
     render(
       <Router history={locationService.getHistory()}>
         <AlertRuleTemplateActions template={formattedTemplateStubs[2]} getAlertRuleTemplates={jest.fn()} />
       </Router>
     );
 
-    const editButton = screen.getByTestId('edit-template-button');
-    const deleteButton = screen.getByTestId('delete-template-button');
+    const editButton = screen.queryByTestId('edit-template-button');
+    const deleteButton = screen.queryByTestId('delete-template-button');
 
-    expect(editButton).toBeDisabled();
-    expect(deleteButton).toBeDisabled();
+    expect(editButton).toBeNull();
+    expect(deleteButton).toBeNull();
   });
 
-  it('should disable edit and delete buttons when Portal is the template source', () => {
+  it('should not show edit and delete buttons when Portal is the template source', () => {
     render(
       <Router history={locationService.getHistory()}>
         <AlertRuleTemplateActions template={formattedTemplateStubs[4]} getAlertRuleTemplates={jest.fn()} />
       </Router>
     );
 
-    const editButton = screen.getByTestId('edit-template-button');
-    const deleteButton = screen.getByTestId('delete-template-button');
+    const editButton = screen.queryByTestId('edit-template-button');
+    const deleteButton = screen.queryByTestId('delete-template-button');
 
-    expect(editButton).toBeDisabled();
-    expect(deleteButton).toBeDisabled();
+    expect(editButton).toBeNull();
+    expect(deleteButton).toBeNull();
   });
 });

@@ -11,8 +11,7 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { getPerconaSettings } from 'app/percona/shared/core/selectors';
-import { useDispatch, useSelector } from 'app/types';
+import { useDispatch } from 'app/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 
 import { LogMessages, logInfo, trackNewAlerRuleFormError } from '../../../Analytics';
@@ -38,7 +37,6 @@ import { GrafanaEvaluationBehavior } from '../GrafanaEvaluationBehavior';
 import { NotificationsStep } from '../NotificationsStep';
 import { RecordingRulesNameSpaceAndGroupStep } from '../RecordingRulesNameSpaceAndGroupStep';
 import { RuleInspector } from '../RuleInspector';
-import { TemplateStep } from '../TemplateStep/TemplateStep';
 import { QueryAndExpressionsStep } from '../query-and-alert-condition/QueryAndExpressionsStep';
 import { translateRouteParamToRuleType } from '../util';
 
@@ -54,7 +52,6 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const [queryParams] = useQueryParams();
   const [showEditYaml, setShowEditYaml] = useState(false);
   const [evaluateEvery, setEvaluateEvery] = useState(existing?.group.interval ?? MINUTE);
-  const { result } = useSelector(getPerconaSettings);
 
   const routeParams = useParams<{ type: string; id: string }>();
   const ruleType = translateRouteParamToRuleType(routeParams.type);
@@ -76,23 +73,14 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       return formValuesFromQueryParams(queryParams['defaults'], ruleType);
     }
 
-    const type = ruleType
-      ? ruleType
-      : result && !!result.alertingEnabled
-        ? RuleFormType.templated
-        : RuleFormType.grafana;
-
     return {
       ...getDefaultFormValues(),
       condition: 'C',
       queries: getDefaultQueries(),
+      type: ruleType || RuleFormType.grafana,
       evaluateEvery: evaluateEvery,
-      // @PERCONA
-      // Set templated as default
-      type,
-      group: result && !!result.alertingEnabled ? 'default-alert-group' : '',
     };
-  }, [existing, prefill, queryParams, evaluateEvery, ruleType, result]);
+  }, [existing, prefill, queryParams, evaluateEvery, ruleType]);
 
   const formAPI = useForm<RuleFormValues>({
     mode: 'onSubmit',
@@ -106,8 +94,6 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const dataSourceName = watch('dataSourceName');
 
   const showDataSourceDependantStep = Boolean(type && (type === RuleFormType.grafana || !!dataSourceName));
-  // @PERCONA
-  const showTemplateStep = type === RuleFormType.templated;
 
   const submitState = useUnifiedAlertingSelector((state) => state.ruleForm.saveRule) || initialAsyncRequestState;
   useCleanup((state) => (state.unifiedAlerting.ruleForm.saveRule = initialAsyncRequestState));
@@ -245,8 +231,6 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
               <AlertRuleNameInput />
               {/* Step 2 */}
               <QueryAndExpressionsStep editingExistingRule={!!existing} onDataChange={checkAlertCondition} />
-              {/* @PERCONA */}
-              {showTemplateStep && <TemplateStep />}
               {/* Step 3-4-5 */}
               {showDataSourceDependantStep && (
                 <>

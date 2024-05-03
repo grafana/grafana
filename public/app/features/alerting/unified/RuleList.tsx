@@ -4,8 +4,9 @@ import { useLocation } from 'react-router-dom';
 import { useAsyncFn, useInterval } from 'react-use';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
-import { Button, LinkButton, useStyles2, withErrorBoundary } from '@grafana/ui';
+import { Button, LinkButton, Stack, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { usePerconaAlertingEnabled } from 'app/percona/integrated-alerting/hooks';
 import { useDispatch } from 'app/types';
 
 import { CombinedRuleNamespace } from '../../../types/unified-alerting';
@@ -165,6 +166,7 @@ export default RuleList;
 export function CreateAlertButton() {
   const [createRuleSupported, createRuleAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
   const [createCloudRuleSupported, createCloudRuleAllowed] = useAlertingAbility(AlertingAction.CreateExternalAlertRule);
+  const perconaAlertingEnabled = usePerconaAlertingEnabled();
 
   const location = useLocation();
 
@@ -174,13 +176,25 @@ export function CreateAlertButton() {
 
   if (canCreateGrafanaRules || canCreateCloudRules) {
     return (
-      <LinkButton
-        href={urlUtil.renderUrl('alerting/new/alerting', { returnTo: location.pathname + location.search })}
-        icon="plus"
-        onClick={() => logInfo(LogMessages.alertRuleFromScratch)}
-      >
-        New alert rule
-      </LinkButton>
+      <Stack>
+        {perconaAlertingEnabled && (
+          <LinkButton
+            href={urlUtil.renderUrl('alerting/new-from-template', { returnTo: location.pathname + location.search })}
+            icon="plus"
+            onClick={() => logInfo(LogMessages.alertRuleFromScratch)}
+          >
+            New alert rule from template
+          </LinkButton>
+        )}
+        <LinkButton
+          variant={perconaAlertingEnabled ? 'secondary' : 'primary'}
+          href={urlUtil.renderUrl('alerting/new/alerting', { returnTo: location.pathname + location.search })}
+          icon="plus"
+          onClick={() => logInfo(LogMessages.alertRuleFromScratch)}
+        >
+          New alert rule
+        </LinkButton>
+      </Stack>
     );
   }
   return null;

@@ -85,8 +85,6 @@ export function SmartAlertTypeDetector({
   const [ruleFormType] = getValues(['type']);
   const canSwitch = getCanSwitch({ queries, ruleFormType, rulesSourcesWithRuler });
 
-  console.log(ruleFormType);
-
   const options = [
     { label: 'Grafana-managed', value: RuleFormType.grafana },
     { label: 'Data source-managed', value: RuleFormType.cloudAlerting },
