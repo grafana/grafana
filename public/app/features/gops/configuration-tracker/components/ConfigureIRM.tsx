@@ -13,11 +13,11 @@ import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 
 import { IRMInteractionNames, trackIrmConfigurationTrackerEvent } from '../Analytics';
 import { useGetEssentialsConfiguration } from '../hooks/irmHooks';
-import { useGetConfiguration } from '../hooks/useGetConfiguration';
+import { useGetConfigurationForUI } from '../hooks/useGetConfiguration';
 
 import { ConfigCard } from './ConfigCard';
 import { Essentials } from './Essentials';
-export interface DataConfiguration {
+export interface IRMCardConfiguration {
   id: number;
   title: string;
   description: string;
@@ -57,7 +57,7 @@ export function ConfigureIRM() {
   // get all the configuration data
   const dataSourceConfigurationData = useGetDataSourceConfiguration();
   const essentialsConfigurationData = useGetEssentialsConfiguration();
-  const configuration: DataConfiguration[] = useGetConfiguration({
+  const configuration: IRMCardConfiguration[] = useGetConfigurationForUI({
     dataSourceConfigurationData,
     essentialsConfigurationData,
   });
