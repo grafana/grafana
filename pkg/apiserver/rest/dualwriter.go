@@ -64,6 +64,8 @@ type DualWriter interface {
 	LegacyStorage
 }
 
+type DualWrite struct{ DualWriter }
+
 var errDualWriterCreaterMissing = errors.New("legacy storage rest.Creater is missing")
 var errDualWriterListerMissing = errors.New("legacy storage rest.Lister is missing")
 var errDualWriterDeleterMissing = errors.New("legacy storage rest.GracefulDeleter is missing")
@@ -82,7 +84,7 @@ var CurrentMode = Mode2
 // #TODO make CurrentMode customisable and specific to each entity
 
 // NewDualWriter returns a new DualWriter.
-func NewDualWriter(legacy LegacyStorage, storage Storage) DualWriter {
+func NewDualWriter(legacy LegacyStorage, storage Storage) DualWrite {
 	return selectDualWriter(CurrentMode, legacy, storage)
 }
 
@@ -104,17 +106,22 @@ func (u *updateWrapper) UpdatedObject(ctx context.Context, oldObj runtime.Object
 	return u.updated, nil
 }
 
-func selectDualWriter(mode int, legacy LegacyStorage, storage Storage) DualWriter {
+func selectDualWriter(mode int, legacy LegacyStorage, storage Storage) DualWrite {
 	switch mode {
 	case Mode1:
-		return NewDualWriterMode1(legacy, storage)
+		dw := NewDualWriterMode1(legacy, storage)
+		return DualWrite{dw}
 	case Mode2:
-		return NewDualWriterMode2(legacy, storage)
+		dw := NewDualWriterMode2(legacy, storage)
+		return DualWrite{dw}
 	case Mode3:
-		return NewDualWriterMode3(legacy, storage)
+		dw := NewDualWriterMode3(legacy, storage)
+		return DualWrite{dw}
 	case Mode4:
-		return NewDualWriterMode4(legacy, storage)
+		dw := NewDualWriterMode4(legacy, storage)
+		return DualWrite{dw}
 	default:
-		return NewDualWriterMode2(legacy, storage)
+		dw := NewDualWriterMode2(legacy, storage)
+		return DualWrite{dw}
 	}
 }

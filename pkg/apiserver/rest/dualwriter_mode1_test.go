@@ -66,11 +66,8 @@ func TestMode1_Create(t *testing.T) {
 		}
 
 		dw := selectDualWriter(Mode1, ls, us)
-		assert.IsType(t, &DualWriterMode1{}, dw)
 
-		mode1 := dw.(*DualWriterMode1)
-
-		obj, err := mode1.Create(context.Background(), tt.input, func(context.Context, runtime.Object) error { return nil }, &metav1.CreateOptions{})
+		obj, err := dw.Create(context.Background(), tt.input, func(context.Context, runtime.Object) error { return nil }, &metav1.CreateOptions{})
 
 		if tt.wantErr {
 			assert.Error(t, err)
@@ -130,11 +127,8 @@ func TestMode1_Get(t *testing.T) {
 		}
 
 		dw := selectDualWriter(Mode1, ls, us)
-		assert.IsType(t, &DualWriterMode1{}, dw)
 
-		mode1 := dw.(*DualWriterMode1)
-
-		obj, err := mode1.Get(context.Background(), tt.input, &metav1.GetOptions{})
+		obj, err := dw.Get(context.Background(), tt.input, &metav1.GetOptions{})
 
 		if tt.wantErr {
 			assert.Error(t, err)
@@ -182,11 +176,8 @@ func TestMode1_List(t *testing.T) {
 		}
 
 		dw := selectDualWriter(Mode1, ls, us)
-		assert.IsType(t, &DualWriterMode1{}, dw)
 
-		mode1 := dw.(*DualWriterMode1)
-
-		_, err := mode1.List(context.Background(), &metainternalversion.ListOptions{})
+		_, err := dw.List(context.Background(), &metainternalversion.ListOptions{})
 
 		if tt.wantErr {
 			assert.Error(t, err)
@@ -238,11 +229,8 @@ func TestMode1_Delete(t *testing.T) {
 		}
 
 		dw := selectDualWriter(Mode1, ls, us)
-		assert.IsType(t, &DualWriterMode1{}, dw)
 
-		mode1 := dw.(*DualWriterMode1)
-
-		obj, _, err := mode1.Delete(context.Background(), tt.input, func(ctx context.Context, obj runtime.Object) error { return nil }, &metav1.DeleteOptions{})
+		obj, _, err := dw.Delete(context.Background(), tt.input, func(ctx context.Context, obj runtime.Object) error { return nil }, &metav1.DeleteOptions{})
 
 		if tt.wantErr {
 			assert.Error(t, err)
@@ -298,11 +286,8 @@ func TestMode1_DeleteCollection(t *testing.T) {
 		}
 
 		dw := selectDualWriter(Mode1, ls, us)
-		assert.IsType(t, &DualWriterMode1{}, dw)
 
-		mode1 := dw.(*DualWriterMode1)
-
-		obj, err := mode1.DeleteCollection(context.Background(), func(ctx context.Context, obj runtime.Object) error { return nil }, tt.input, &metainternalversion.ListOptions{})
+		obj, err := dw.DeleteCollection(context.Background(), func(ctx context.Context, obj runtime.Object) error { return nil }, tt.input, &metainternalversion.ListOptions{})
 
 		if tt.wantErr {
 			assert.Error(t, err)
@@ -375,11 +360,8 @@ func TestMode1_Update(t *testing.T) {
 		}
 
 		dw := selectDualWriter(Mode1, ls, us)
-		assert.IsType(t, &DualWriterMode1{}, dw)
 
-		mode1 := dw.(*DualWriterMode1)
-
-		obj, _, err := mode1.Update(context.Background(), tt.input, UpdatedObjInfoObj{}, func(ctx context.Context, obj runtime.Object) error { return nil }, func(ctx context.Context, obj, old runtime.Object) error { return nil }, false, &metav1.UpdateOptions{})
+		obj, _, err := dw.Update(context.Background(), tt.input, UpdatedObjInfoObj{}, func(ctx context.Context, obj runtime.Object) error { return nil }, func(ctx context.Context, obj, old runtime.Object) error { return nil }, false, &metav1.UpdateOptions{})
 
 		if tt.wantErr {
 			assert.Error(t, err)
