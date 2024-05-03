@@ -507,7 +507,8 @@ func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 	require.Equal(t, 0, len(silences))
 
 	// Creating a silence should succeed.
-	testSilence := notifier.GenSilence("test")
+	gen := ngmodels.SilenceGen(ngmodels.SilenceMuts.WithEmptyId())
+	testSilence := notifier.SilenceToPostableSilence(gen())
 	id, err := am.CreateSilence(context.Background(), testSilence)
 	require.NoError(t, err)
 	require.NotEmpty(t, id)
@@ -523,7 +524,7 @@ func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 	require.Error(t, err)
 
 	// After creating another silence, the total amount should be 2.
-	testSilence2 := notifier.GenSilence("test")
+	testSilence2 := notifier.SilenceToPostableSilence(gen())
 	id, err = am.CreateSilence(context.Background(), testSilence2)
 	require.NoError(t, err)
 	require.NotEmpty(t, id)
@@ -546,7 +547,7 @@ func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 		if *s.ID == testSilence.ID {
 			require.Equal(t, *s.Status.State, "expired")
 		} else {
-			require.Equal(t, *s.Status.State, "pending")
+			require.Equal(t, *s.Status.State, "active")
 		}
 	}
 
