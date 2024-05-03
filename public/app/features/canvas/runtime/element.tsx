@@ -488,17 +488,12 @@ export class ElementState implements LayerElement {
     event.target.style.transform = event.transform;
   };
 
-  applyRotate = (event: OnRotate, isGroupEvent = false) => {
-    const absoluteRotationDegree = event.absoluteRotation;
+  applyRotate = (event: OnRotate) => {
     const rotationDelta = event.delta;
     const placement = this.options.placement!;
     const placementRotation = placement.rotation ?? 0;
 
-    console.log(absoluteRotationDegree, event.delta);
-    // If the apply rotate originates from a group event, the rotation is based on the group box's rotation
-    // To address this we adjust the element's rotation by the group box's rotation vs overriding it with group box's rotation
-    // const calculatedRotation = placementRotation + rotationDelta;
-    const calculatedRotation = isGroupEvent ? placementRotation + rotationDelta : absoluteRotationDegree;
+    const calculatedRotation = placementRotation + rotationDelta;
 
     // Ensure rotation is between 0 and 360
     placement.rotation = calculatedRotation - Math.floor(calculatedRotation / 360) * 360;

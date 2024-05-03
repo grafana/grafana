@@ -467,7 +467,7 @@ export class Scene {
         for (let event of e.events) {
           const targetedElement = this.findElementByTarget(event.target);
           if (targetedElement) {
-            targetedElement.applyRotate(event, true);
+            targetedElement.applyRotate(event);
           }
         }
       })
