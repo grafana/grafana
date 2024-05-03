@@ -277,10 +277,10 @@ export function useAlertmanagerAbilities(actions: AlertmanagerAction[]): Ability
 function useCanSilence(rulesSource: RulesSource): [boolean, boolean] {
   const isGrafanaManagedRule = rulesSource === GRAFANA_RULES_SOURCE_NAME;
 
-  const { useGetAlertmanagerChoiceStatusQuery } = alertmanagerApi;
-  const { currentData: amConfigStatus, isLoading } = useGetAlertmanagerChoiceStatusQuery(undefined, {
-    skip: !isGrafanaManagedRule,
-  });
+  const { currentData: amConfigStatus, isLoading } =
+    alertmanagerApi.endpoints.getGrafanaAlertingConfigurationStatus.useQuery(undefined, {
+      skip: !isGrafanaManagedRule,
+    });
 
   // we don't support silencing when the rule is not a Grafana managed rule
   // we simply don't know what Alertmanager the ruler is sending alerts to

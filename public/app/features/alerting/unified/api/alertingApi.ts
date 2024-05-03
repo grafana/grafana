@@ -33,8 +33,9 @@ export const alertingApi = createApi({
   reducerPath: 'alertingApi',
   baseQuery: backendSrvBaseQuery(),
   tagTypes: [
-    'AlertmanagerChoice',
+    'AlertingConfiguration',
     'AlertmanagerConfiguration',
+    'AlertmanagerConnectionStatus',
     'AlertmanagerAlerts',
     'AlertmanagerSilences',
     'OnCallIntegrations',

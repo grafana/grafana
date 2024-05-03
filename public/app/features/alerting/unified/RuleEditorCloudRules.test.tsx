@@ -15,7 +15,7 @@ import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor
 import { mockApi, mockFeatureDiscoveryApi, setupMswServer } from './mockApi';
 import { grantUserPermissions, labelsPluginMetaMock, mockDataSource } from './mocks';
 import {
-  defaultAlertmanagerChoiceResponse,
+  defaultGrafanaAlertingConfigurationStatusResponse,
   emptyExternalAlertmanagersResponse,
   mockAlertmanagerChoiceResponse,
   mockAlertmanagersResponse,
@@ -55,7 +55,7 @@ setupDataSources(dataSources.default);
 const server = setupMswServer();
 
 mockFeatureDiscoveryApi(server).discoverDsFeatures(dataSources.default, buildInfoResponse.mimir);
-mockAlertmanagerChoiceResponse(server, defaultAlertmanagerChoiceResponse);
+mockAlertmanagerChoiceResponse(server, defaultGrafanaAlertingConfigurationStatusResponse);
 mockAlertmanagersResponse(server, emptyExternalAlertmanagersResponse);
 mockApi(server).eval({ results: {} });
 mockApi(server).plugins.getPluginSettings({ ...labelsPluginMetaMock, enabled: false });

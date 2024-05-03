@@ -71,6 +71,12 @@ export function getExternalDsAlertManagers() {
   return getAlertManagerDataSources().filter((ds) => ds.jsonData.handleGrafanaManagedAlerts);
 }
 
+export function isAlertmanagerDataSourceInterestedInAlerts(
+  dataSourceSettings: DataSourceSettings<AlertManagerDataSourceJsonData>
+) {
+  return dataSourceSettings.jsonData.handleGrafanaManagedAlerts === true;
+}
+
 const grafanaAlertManagerDataSource: AlertManagerDataSource = {
   name: GRAFANA_RULES_SOURCE_NAME,
   imgUrl: 'public/img/grafana_icon.svg',
@@ -105,7 +111,7 @@ export function useGetAlertManagerDataSourcesByPermissionAndConfig(
   const internalDSAlertManagers = allAlertManagersByPermission.availableInternalDataSources;
 
   //get current alerting configuration
-  const { currentData: amConfigStatus } = alertmanagerApi.useGetAlertmanagerChoiceStatusQuery(undefined);
+  const { currentData: amConfigStatus } = alertmanagerApi.endpoints.getGrafanaAlertingConfigurationStatus.useQuery();
 
   const alertmanagerChoice = amConfigStatus?.alertmanagersChoice;
 
@@ -202,6 +208,10 @@ export function isVanillaPrometheusAlertManagerDataSource(name: string): boolean
     name !== GRAFANA_RULES_SOURCE_NAME &&
     getAlertmanagerDataSourceByName(name)?.jsonData?.implementation === AlertManagerImplementation.prometheus
   );
+}
+
+export function isProvisionedDataSource(name: string): boolean {
+  return getAlertmanagerDataSourceByName(name)?.readOnly === true;
 }
 
 export function isGrafanaRulesSource(

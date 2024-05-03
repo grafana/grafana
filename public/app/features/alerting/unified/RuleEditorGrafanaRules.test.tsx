@@ -10,7 +10,7 @@ import { setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { mockApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import {
-  defaultAlertmanagerChoiceResponse,
+  defaultGrafanaAlertingConfigurationStatusResponse,
   mockAlertmanagerChoiceResponse,
 } from 'app/features/alerting/unified/mocks/alertmanagerApi';
 import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
@@ -72,7 +72,7 @@ const server = setupMswServer();
 describe('RuleEditor grafana managed rules', () => {
   beforeEach(() => {
     mockApi(server).eval({ results: {} });
-    mockAlertmanagerChoiceResponse(server, defaultAlertmanagerChoiceResponse);
+    mockAlertmanagerChoiceResponse(server, defaultGrafanaAlertingConfigurationStatusResponse);
     jest.clearAllMocks();
     contextSrv.isEditor = true;
     contextSrv.hasEditPermissionInFolders = true;

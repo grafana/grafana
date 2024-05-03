@@ -80,6 +80,18 @@ export function withPromRulesMetadataLogging<TFunc extends (...args: any[]) => P
   };
 }
 
+type FormErrors = Record<string, Partial<{ message: string; type: string | number }>>;
+export function reportFormErrors(errors: FormErrors) {
+  Object.entries(errors).forEach(([field, error]) => {
+    const message = error.message ?? 'unknown error';
+    const type = String(error.type) ?? 'unknown';
+
+    const errorObject = new Error(message);
+
+    logError(errorObject, { field, type });
+  });
+}
+
 function getPromRulesMetadata(promRules: RuleNamespace[]) {
   const namespacesCount = promRules.length;
   const groupsCount = promRules.flatMap((ns) => ns.groups).length;

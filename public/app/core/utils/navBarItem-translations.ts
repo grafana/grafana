@@ -75,7 +75,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'groups':
       return t('nav.alerting-groups.title', 'Groups');
     case 'alerting-admin':
-      return t('nav.alerting-admin.title', 'Admin');
+      return t('nav.alerting-admin.title', 'Settings');
     case 'cfg':
       return t('nav.config.title', 'Administration');
     case 'cfg/general':
@@ -213,6 +213,11 @@ export function getNavSubTitle(navId: string | undefined) {
         'nav.alerting-upgrade.subtitle',
         'Upgrade your existing legacy alerts and notification channels to the new Grafana Alerting'
       );
+    case 'alerting-admin':
+      return t(
+        'nav.alerting-admin.subtitle',
+        'Manage Alertmanager configurations and configure where alert instances generated from Grafana managed alert rules are sent'
+      );
     case 'alert-list':
       return t('nav.alerting-list.subtitle', 'Rules that determine whether an alert will fire');
     case 'receivers':
@@ -260,7 +265,7 @@ export function getNavSubTitle(navId: string | undefined) {
     case 'admin':
       return t(
         'nav.admin.subtitle',
-        'Manage server-wide settings and access to resources such as organizations, users, and licenses'
+        'Manage Alertmanager configurations and configure where alert instances generated from Grafana managed alert rules are sent'
       );
     case 'cfg/general':
       return t('nav.config-general.subtitle', 'Manage default preferences and settings across Grafana');
