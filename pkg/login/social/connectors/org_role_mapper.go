@@ -19,9 +19,12 @@ type OrgRoleMapper struct {
 	orgService org.Service
 }
 
+// MappingConfiguration represents the mapping configuration from external orgs to Grafana orgs and roles.
+// orgMapping: mapping from external orgs to Grafana orgs and roles
+// strictRoleMapping: if true, the mapper ensuers that the evaluated role from orgMapping or the directlyMappedRole is a valid role, otherwise it will return nil.
 type MappingConfiguration struct {
-	orgMapping map[string]map[int64]org.RoleType
-	roleStrict bool
+	orgMapping        map[string]map[int64]org.RoleType
+	strictRoleMapping bool
 }
 
 func ProvideOrgRoleMapper(cfg *setting.Cfg, orgService org.Service) *OrgRoleMapper {
@@ -34,21 +37,18 @@ func ProvideOrgRoleMapper(cfg *setting.Cfg, orgService org.Service) *OrgRoleMapp
 
 // MapOrgRoles maps the external orgs/groups to Grafana orgs and roles. It returns a  map or orgID to role.
 //
+// mappingCfg: mapping configuration from external orgs to Grafana orgs and roles. Use `ParseOrgMappingSettings` to convert the raw setting to this format.
+//
 // externalOrgs: list of external orgs/groups
 //
-// orgMapping: mapping configuration from external orgs to Grafana orgs and roles. This is an internal representation of the `org_mapping` setting.
-// Use `ParseOrgMappingSettings` to convert the raw setting to this format.
-//
 // directlyMappedRole: role that is directly mapped to the user
-//
-// roleStrict: if true, either the evaluated role from orgMapping or the directlyMappedRole must be a valid role.
 func (m *OrgRoleMapper) MapOrgRoles(
 	ctx context.Context,
 	mappingCfg *MappingConfiguration,
 	externalOrgs []string,
 	directlyMappedRole org.RoleType,
 ) map[int64]org.RoleType {
-	if len(mappingCfg.orgMapping) == 0 && !isValidRole(directlyMappedRole) && mappingCfg.roleStrict {
+	if len(mappingCfg.orgMapping) == 0 && !isValidRole(directlyMappedRole) && mappingCfg.strictRoleMapping {
 		// No org mappings are configured and the directly mapped role is not set and roleStrict is enabled
 		return nil
 	}
@@ -61,7 +61,7 @@ func (m *OrgRoleMapper) MapOrgRoles(
 	}
 
 	if len(userOrgRoles) == 0 {
-		if mappingCfg.roleStrict && !isValidRole(directlyMappedRole) {
+		if mappingCfg.strictRoleMapping && !isValidRole(directlyMappedRole) {
 			// No org mapping found and roleStrict is enabled
 			return nil
 		}
@@ -153,8 +153,9 @@ func (m *OrgRoleMapper) ParseOrgMappingSettings(ctx context.Context, mappings []
 			}
 			if err == nil {
 				if roleStrict && (len(kv) < 3 || !org.RoleType(kv[2]).IsValid()) {
+					// Return empty mapping if at least one org mapping is invalid (missing role, invalid role)
 					m.logger.Warn("Skipping org mapping due to missing or invalid role in mapping when roleStrict is enabled.", "mapping", fmt.Sprintf("%v", v))
-					continue
+					return &MappingConfiguration{orgMapping: map[string]map[int64]org.RoleType{}, strictRoleMapping: roleStrict}
 				}
 
 				orga := kv[0]
@@ -171,7 +172,7 @@ func (m *OrgRoleMapper) ParseOrgMappingSettings(ctx context.Context, mappings []
 		}
 	}
 
-	return &MappingConfiguration{orgMapping: res, roleStrict: roleStrict}
+	return &MappingConfiguration{orgMapping: res, strictRoleMapping: roleStrict}
 }
 
 func (m *OrgRoleMapper) getAllOrgs() (map[int64]bool, error) {
