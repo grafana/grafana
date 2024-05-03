@@ -5,12 +5,12 @@ import { SceneTimeRangeLike, VizPanel } from '@grafana/scenes';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/utils';
 
+import { SceneDrawerAsScene } from '../../dashboard-scene/SceneDrawer';
 import { DashboardScene } from '../../dashboard-scene/scene/DashboardScene';
 import { MetricScene } from '../MetricScene';
 import { reportExploreMetrics } from '../interactions';
 
 import { DataTrailEmbedded, DataTrailEmbeddedState } from './DataTrailEmbedded';
-import { SceneDrawerAsScene } from './SceneDrawer';
 import { QueryMetric, getQueryMetrics } from './getQueryMetrics';
 import { createAdHocFilters, getQueryMetricLabel, getTimeRangeFromDashboard } from './utils';
 
@@ -112,7 +112,7 @@ function createClickHandler(item: QueryMetric, dashboard: DashboardScene, ds: Da
     const commonProps = createCommonEmbeddedTrailStateProps(item, dashboard, ds);
     const drawerScene = new SceneDrawerAsScene({
       ...commonProps,
-      onDismiss: () => dashboard.closeModal(),
+      onClose: () => dashboard.closeModal(),
     });
     reportExploreMetrics('exploration_started', { cause: 'dashboard_panel' });
     dashboard.showModal(drawerScene);
