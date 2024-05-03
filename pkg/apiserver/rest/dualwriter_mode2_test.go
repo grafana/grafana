@@ -13,25 +13,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apiserver/pkg/apis/example"
 )
 
 var createFn = func(context.Context, runtime.Object) error { return nil }
 
 var exampleOption = &metainternalversion.ListOptions{}
-
-var legacyItem = example.Pod{
-	TypeMeta: metav1.TypeMeta{},
-	ObjectMeta: metav1.ObjectMeta{
-		Name:            "foo",
-		ResourceVersion: "1",
-		Annotations: map[string]string{
-			"grafana.app/originKey": "1",
-		},
-	},
-	Spec:   example.PodSpec{},
-	Status: example.PodStatus{},
-}
 
 func TestMode2_Create(t *testing.T) {
 	type testCase struct {
