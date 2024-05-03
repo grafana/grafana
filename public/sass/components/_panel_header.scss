@@ -1,5 +1,3 @@
-$panel-header-no-title-zindex: 1;
-
 .panel-header {
   &:hover {
     transition: background-color 0.1s ease-in-out;
@@ -93,73 +91,6 @@ $panel-header-no-title-zindex: 1;
 .panel-menu {
   top: 25px;
   left: -100px;
-}
-
-.panel-info-corner-inner {
-  width: 0;
-  height: 0;
-  position: absolute;
-  left: 0;
-  bottom: 0;
-}
-
-@mixin panel-corner-color($corner-bg) {
-  .panel-info-corner-inner {
-    border-left: $panel-header-height solid $corner-bg;
-    border-right: none;
-    border-bottom: $panel-header-height solid transparent;
-  }
-}
-
-.panel-info-corner {
-  background: none;
-  border: none;
-  color: $text-muted;
-  cursor: pointer;
-  position: absolute;
-  display: none;
-  left: 0;
-  width: $panel-header-height;
-  height: $panel-header-height;
-  z-index: $panel-header-no-title-zindex + 1;
-  top: 0;
-
-  .fa {
-    position: absolute;
-    top: 6px;
-    left: 6px;
-    font-size: 75%;
-    z-index: $panel-header-no-title-zindex + 2;
-  }
-
-  &--info {
-    display: block;
-    @include panel-corner-color(lighten($panel-corner, 6%));
-
-    .fa:before {
-      content: '\f129';
-    }
-  }
-
-  &--links {
-    display: block;
-    @include panel-corner-color(lighten($panel-corner, 6%));
-    .fa {
-      left: 4px;
-    }
-    .fa:before {
-      content: '\f08e';
-    }
-  }
-
-  &--error {
-    display: block;
-    color: $white;
-    @include panel-corner-color($popover-error-bg);
-    .fa:before {
-      content: '\f12a';
-    }
-  }
 }
 
 .panel-info-content {
