@@ -8,10 +8,9 @@ import (
 	"strings"
 
 	"github.com/go-jose/go-jose/v3/jwt"
-
 	authlib "github.com/grafana/authlib/authn"
-
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
@@ -49,6 +48,7 @@ func ProvideExtendedJWT(userService user.Service, cfg *setting.Cfg,
 		userService:         userService,
 		signingKeys:         signingKeys,
 		accessTokenVerifier: verifier,
+		namespaceMapper:     request.GetNamespaceMapper(cfg),
 
 		idTokenVerifier: idTokenVerifier,
 	}
@@ -61,6 +61,7 @@ type ExtendedJWT struct {
 	signingKeys         signingkeys.Service
 	accessTokenVerifier authlib.Verifier[authlib.AccessTokenClaims]
 	idTokenVerifier     authlib.Verifier[authlib.IDTokenClaims]
+	namespaceMapper     request.NamespaceMapper
 }
 
 func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
@@ -68,8 +69,8 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 
 	claims, err := s.accessTokenVerifier.Verify(ctx, jwtToken)
 	if err != nil {
-		s.log.Error("Failed to verify JWT", "error", err)
-		return nil, errJWTInvalid.Errorf("Failed to verify JWT: %w", err)
+		s.log.Error("Failed to verify access token", "error", err)
+		return nil, errJWTInvalid.Errorf("Failed to verify access token: %w", err)
 	}
 
 	idToken := s.retrieveAuthorizationToken(r.HTTPRequest)
@@ -92,9 +93,17 @@ func (s *ExtendedJWT) IsEnabled() bool {
 
 func (s *ExtendedJWT) authenticateAsUser(idTokenClaims *authlib.Claims[authlib.IDTokenClaims],
 	accessTokenClaims *authlib.Claims[authlib.AccessTokenClaims]) (*authn.Identity, error) {
-	// Only allow token pairs with matching namespace through
+
+	// compare the incoming namespace claim against what namespaceMapper returns
+	if allowedNamespace := s.namespaceMapper(s.getDefaultOrgID()); idTokenClaims.Rest.Namespace != allowedNamespace {
+		return nil, errJWTDisallowedNamespaceClaim
+
+	}
+
+	// since id token claims can never have a wildcard ("*") namespace claim, the below comparison effectively
+	// disallows wildcard claims in access tokens here in Grafana (they are only meant for service layer)
 	if accessTokenClaims.Rest.Namespace != idTokenClaims.Rest.Namespace {
-		return nil, errJWTNamespaceMismatch.Errorf("id token namespace: %s, access token namespace: %s", idTokenClaims.Rest.Namespace, accessTokenClaims.Rest.Namespace)
+		return nil, errJWTMismatchedNamespaceClaims.Errorf("id token namespace: %s, access token namespace: %s", idTokenClaims.Rest.Namespace, accessTokenClaims.Rest.Namespace)
 	}
 
 	// Only allow access policies to impersonate
@@ -132,6 +141,11 @@ func (s *ExtendedJWT) authenticateAsService(claims *authlib.Claims[authlib.Acces
 	if !strings.HasPrefix(claims.Subject, fmt.Sprintf("%s:", authn.NamespaceAccessPolicy)) {
 		s.log.Error("Invalid subject", "subject", claims.Subject)
 		return nil, errJWTInvalid.Errorf("Failed to parse sub: %s", "invalid subject format")
+	}
+
+	// same as asUser, disallows wildcard claims in access tokens here in Grafana (they are only meant for service layer)
+	if allowedNamespace := s.namespaceMapper(s.getDefaultOrgID()); claims.Rest.Namespace != allowedNamespace {
+		return nil, errJWTDisallowedNamespaceClaim
 	}
 
 	id, err := authn.ParseNamespaceID(claims.Subject)

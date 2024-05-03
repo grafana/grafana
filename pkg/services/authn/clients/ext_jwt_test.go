@@ -47,7 +47,7 @@ var (
 			Scopes:               []string{"profile", "groups"},
 			DelegatedPermissions: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
 			Permissions:          []string{"fixed:folders:reader"},
-			Namespace:            "org-1",
+			Namespace:            "default", // org ID of 1 is special and translates to default
 		},
 	}
 	validIDPayload = JWTIDTokenClaims{
@@ -61,7 +61,20 @@ var (
 		},
 		Rest: authlib.IDTokenClaims{
 			AuthenticatedBy: "extended_jwt",
-			Namespace:       "org-1",
+			Namespace:       "default", // org ID of 1 is special and translates to default
+		},
+	}
+	validPayloadWildcardNamespace = JWTAccessTokenClaims{
+		Claims: &jwt.Claims{
+			Issuer:   "http://localhost:3000",
+			Subject:  "access-policy:this-uid",
+			Audience: jwt.Audience{"http://localhost:3000"},
+			ID:       "1234567890",
+			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
+		},
+		Rest: authlib.AccessTokenClaims{
+			Namespace: "*",
 		},
 	}
 	mismatchingNamespaceIDPayload = JWTIDTokenClaims{
@@ -245,7 +258,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name:      "fail authentication as user",
+			name:      "fail authentication as user when access token namespace claim doesn't match id token namespace",
 			payload:   &validPayload,
 			idPayload: &mismatchingNamespaceIDPayload,
 			orgID:     1,
@@ -259,7 +272,24 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 					Login:   "johndoe",
 				}
 			},
-			wantErr: errJWTNamespaceMismatch.Errorf("id token namespace: %s, access token namespace: %s", mismatchingNamespaceIDPayload.Rest.Namespace, validPayload.Rest.Namespace),
+			wantErr: errJWTMismatchedNamespaceClaims.Errorf("id token namespace: %s, access token namespace: %s", mismatchingNamespaceIDPayload.Rest.Namespace, validPayload.Rest.Namespace),
+		},
+		{
+			name:      "fail authentication as user when id token namespace claim doesn't match allowed namespace",
+			payload:   &validPayloadWildcardNamespace,
+			idPayload: &validIDPayload,
+			orgID:     1,
+			initTestEnv: func(env *testEnv) {
+				env.userSvc.ExpectedSignedInUser = &user.SignedInUser{
+					UserID:  2,
+					OrgID:   1,
+					OrgRole: roletype.RoleAdmin,
+					Name:    "John Doe",
+					Email:   "johndoe@grafana.com",
+					Login:   "johndoe",
+				}
+			},
+			wantErr: errJWTDisallowedNamespaceClaim,
 		},
 		{
 			name: "should return error when the subject is not an access-policy",
@@ -498,6 +528,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 func setupTestCtx(cfg *setting.Cfg) *testEnv {
 	if cfg == nil {
 		cfg = &setting.Cfg{
+			// default org set up by the authenticator is 1
 			ExtJWTAuth: setting.ExtJWTSettings{
 				Enabled:        true,
 				ExpectIssuer:   "http://localhost:3000",
