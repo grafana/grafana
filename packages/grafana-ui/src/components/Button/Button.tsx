@@ -1,11 +1,11 @@
 import { css, cx } from '@emotion/css';
 import React, { AnchorHTMLAttributes, ButtonHTMLAttributes } from 'react';
 
-import { GrafanaTheme2, ThemeRichColor } from '@grafana/data';
+import { GrafanaTheme2, isIconName, ThemeRichColor } from '@grafana/data';
 
 import { useTheme2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
-import { ComponentSize } from '../../types';
+import { ComponentSize, IconSize, IconType } from '../../types';
 import { IconName } from '../../types/icon';
 import { getPropertiesForButtonSize } from '../Forms/commonStyles';
 import { Icon } from '../Icon/Icon';
@@ -20,7 +20,7 @@ type CommonProps = {
   size?: ComponentSize;
   variant?: ButtonVariant;
   fill?: ButtonFill;
-  icon?: IconName;
+  icon?: IconName | React.ReactElement;
   className?: string;
   children?: React.ReactNode;
   fullWidth?: boolean;
@@ -64,7 +64,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     // When using tooltip, ref is forwarded to Tooltip component instead for https://github.com/grafana/grafana/issues/65632
     const button = (
       <button className={cx(styles.button, className)} type={type} {...otherProps} ref={tooltip ? undefined : ref}>
-        {icon && <Icon name={icon} size={size} className={styles.icon} />}
+        <IconRenderer icon={icon} size={size} className={styles.icon} />
         {children && <span className={styles.content}>{children}</span>}
       </button>
     );
@@ -135,7 +135,7 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
         aria-disabled={disabled}
         ref={tooltip ? undefined : ref}
       >
-        {icon && <Icon name={icon} size={size} className={styles.icon} />}
+        <IconRenderer icon={icon} size={size} className={styles.icon} />
         {children && <span className={styles.content}>{children}</span>}
       </a>
     );
@@ -153,6 +153,26 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
 );
 
 LinkButton.displayName = 'LinkButton';
+
+interface IconRendererProps {
+  icon?: IconName | React.ReactElement<{ className?: string; size?: IconSize }>;
+  size?: IconSize;
+  className?: string;
+  iconType?: IconType;
+}
+export const IconRenderer = ({ icon, size, className, iconType }: IconRendererProps) => {
+  if (React.isValidElement(icon)) {
+    return React.cloneElement(icon, {
+      className,
+      size,
+    });
+  }
+  if (isIconName(icon)) {
+    return <Icon name={icon} size={size} className={className} type={iconType} />;
+  }
+
+  return null;
+};
 
 export interface StyleProps {
   size: ComponentSize;
