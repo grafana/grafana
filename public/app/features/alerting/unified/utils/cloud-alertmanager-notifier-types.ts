@@ -29,6 +29,25 @@ const tlsConfigOption: NotificationChannelOption = option('tls_config', 'TLS con
   ],
 });
 
+const oauth2ConfigOption: NotificationChannelOption = option('oauth2', 'OAuth2', 'Configures the OAuth2 settings.', {
+  element: 'subform',
+  subformOptions: [
+    option('client_id', 'Client ID', 'The OAuth2 client ID', { required: true }),
+    option('client_secret', 'Client secret', 'The OAuth2 client secret', { required: true }),
+    // ths "client_secret_file" is not allowed for security reasons in Mimir / Cloud Alertmanager so we also disable it for OSS Alertmanager – sorry!
+    // option(
+    //   'client_secret_file',
+    //   'Client secret file',
+    //   'OAuth2 client secret file location. Mutually exclusive with client_secret.',
+    // ),
+    option('token_url', 'Token URL', 'The OAuth2 token exchange URL', { required: true }),
+    option('scopes', 'Scopes', 'Comma-separated list of scopes', {
+      element: 'string_array',
+    }),
+    option('endpoint_params', 'Additional parameters', '', { element: 'key_value_map' }),
+  ],
+});
+
 const httpConfigOption: NotificationChannelOption = option(
   'http_config',
   'HTTP Config',
@@ -45,6 +64,7 @@ const httpConfigOption: NotificationChannelOption = option(
       option('proxy_url', 'Proxy URL', 'Optional proxy URL.'),
       basicAuthOption,
       tlsConfigOption,
+      oauth2ConfigOption,
     ],
   }
 );
