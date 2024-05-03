@@ -133,8 +133,7 @@ func (m *OrgRoleMapper) ParseOrgMappingSettings(ctx context.Context, mappings []
 
 	for _, v := range mappings {
 		kv := strings.Split(v, ":")
-		if len(kv) > 3 {
-			// Log and skip the mapping if the format is invalid
+		if !isValidOrgMappingFormat(kv) {
 			m.logger.Error("Skipping org mapping due to invalid format.", "mapping", fmt.Sprintf("%v", v))
 			if roleStrict {
 				// Return empty mapping if the mapping format is invalied and roleStrict is enabled
@@ -142,45 +141,52 @@ func (m *OrgRoleMapper) ParseOrgMappingSettings(ctx context.Context, mappings []
 			}
 			continue
 		}
-		if len(kv) > 1 {
-			orgID, err := strconv.Atoi(kv[1])
-			if err != nil && kv[1] != "*" {
-				res, getErr := m.orgService.GetByName(ctx, &org.GetOrgByNameQuery{Name: kv[1]})
 
-				if getErr != nil {
-					// skip in case of error
-					m.logger.Warn("Could not fetch organization. Skipping.", "err", getErr, "mapping", fmt.Sprintf("%v", v), "org", kv[1])
-					if roleStrict {
-						// Return empty mapping if at least one org name cannot be resolved when roleStrict is enabled
-						return &MappingConfiguration{orgMapping: map[string]map[int64]org.RoleType{}, strictRoleMapping: roleStrict}
-					}
-					continue
-				}
-				orgID = int(res.ID)
-			}
-			if kv[1] == "*" {
-				orgID = mapperMatchAllOrgID
-			}
-			if roleStrict && (len(kv) < 3 || !org.RoleType(kv[2]).IsValid()) {
-				// Return empty mapping if at least one org mapping is invalid (missing role, invalid role)
-				m.logger.Warn("Skipping org mapping due to missing or invalid role in mapping when roleStrict is enabled.", "mapping", fmt.Sprintf("%v", v))
+		orgID, err := m.getOrgIDForInternalMapping(ctx, kv[1])
+		if err != nil {
+			m.logger.Warn("Could not fetch OrgID. Skipping.", "err", err, "mapping", fmt.Sprintf("%v", v), "org", kv[1])
+			if roleStrict {
+				// Return empty mapping if at least one org name cannot be resolved when roleStrict is enabled
 				return &MappingConfiguration{orgMapping: map[string]map[int64]org.RoleType{}, strictRoleMapping: roleStrict}
 			}
-
-			orga := kv[0]
-			if res[orga] == nil {
-				res[orga] = map[int64]org.RoleType{}
-			}
-
-			if len(kv) > 2 && org.RoleType(kv[2]).IsValid() {
-				res[orga][int64(orgID)] = org.RoleType(kv[2])
-			} else {
-				res[orga][int64(orgID)] = org.RoleViewer
-			}
+			continue
 		}
+
+		if roleStrict && (len(kv) < 3 || !org.RoleType(kv[2]).IsValid()) {
+			// Return empty mapping if at least one org mapping is invalid (missing role, invalid role)
+			m.logger.Warn("Skipping org mapping due to missing or invalid role in mapping when roleStrict is enabled.", "mapping", fmt.Sprintf("%v", v))
+			return &MappingConfiguration{orgMapping: map[string]map[int64]org.RoleType{}, strictRoleMapping: roleStrict}
+		}
+
+		orga := kv[0]
+		if res[orga] == nil {
+			res[orga] = map[int64]org.RoleType{}
+		}
+
+		res[orga][int64(orgID)] = getRoleForInternalOrgMapping(kv)
 	}
 
 	return &MappingConfiguration{orgMapping: res, strictRoleMapping: roleStrict}
+}
+
+func (m *OrgRoleMapper) getOrgIDForInternalMapping(ctx context.Context, orgIdCfg string) (int, error) {
+	if orgIdCfg == "*" {
+		return mapperMatchAllOrgID, nil
+	}
+
+	orgID, err := strconv.Atoi(orgIdCfg)
+	if err != nil {
+		res, getErr := m.orgService.GetByName(ctx, &org.GetOrgByNameQuery{Name: orgIdCfg})
+
+		if getErr != nil {
+			// skip in case of error
+			m.logger.Warn("Could not fetch organization. Skipping.", "err", err, "org", orgIdCfg)
+			return 0, getErr
+		}
+		orgID = int(res.ID)
+	}
+
+	return orgID, nil
 }
 
 func (m *OrgRoleMapper) getAllOrgs() (map[int64]bool, error) {
@@ -195,6 +201,18 @@ func (m *OrgRoleMapper) getAllOrgs() (map[int64]bool, error) {
 		allOrgIDs[org.ID] = true
 	}
 	return allOrgIDs, nil
+}
+
+func getRoleForInternalOrgMapping(kv []string) org.RoleType {
+	if len(kv) > 2 && org.RoleType(kv[2]).IsValid() {
+		return org.RoleType(kv[2])
+	}
+
+	return org.RoleViewer
+}
+
+func isValidOrgMappingFormat(kv []string) bool {
+	return len(kv) > 1 && len(kv) < 4
 }
 
 func getMappedOrgRoles(externalOrgs []string, orgMapping map[string]map[int64]org.RoleType) map[int64]org.RoleType {
