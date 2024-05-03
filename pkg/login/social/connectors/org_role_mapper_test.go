@@ -76,7 +76,7 @@ func TestOrgRoleMapper_MapOrgRoles(t *testing.T) {
 			expected:           nil,
 		},
 		{
-			name:               "should map the direclty mapped role to default org if the org mapping is invalid and strict role mapping is enabled",
+			name:               "should map the directly mapped role to default org if the org mapping is invalid and strict role mapping is enabled",
 			externalOrgs:       []string{"First"},
 			orgMappingSettings: []string{"First:1:SuperEditor"},
 			directlyMappedRole: "Editor",
