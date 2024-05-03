@@ -95,7 +95,7 @@ export class PanelHeaderCorner extends Component<Props> {
     }
 
     if (infoMode === InfoMode.Info || infoMode === InfoMode.Links) {
-      return <PanelInfoCorner infoMode={InfoMode.Links} content={this.getInfoContent} />;
+      return <PanelInfoCorner infoMode={infoMode} content={this.getInfoContent} />;
     }
 
     return null;
@@ -116,13 +116,19 @@ function PanelInfoCorner({ infoMode, content, onClick }: PanelInfoCornerProps) {
   const styles = useStyles2(getStyles);
   const mode = infoMode.toLowerCase() as Lowercase<keyof typeof InfoMode>;
 
+  const iconModeStyles = {
+    [InfoMode.Error]: styles.error,
+    [InfoMode.Info]: '',
+    [InfoMode.Links]: styles.links,
+  };
+
   return (
     <Tooltip content={content} placement="top-start" theme={theme} interactive>
       <button type="button" className={cx(styles.infoCorner)} onClick={onClick} aria-label={ariaLabel}>
         <Icon
           name={iconMap[infoMode]}
-          size={mode === 'links' ? 'sm' : 'lg'}
-          className={cx(styles.icon, { [styles.iconError]: mode === 'error', [styles.iconLinks]: mode === 'links' })}
+          size={infoMode === InfoMode.Links ? 'sm' : 'lg'}
+          className={cx(styles.icon, iconModeStyles[infoMode])}
         />
         <span className={cx(styles.inner, styles[mode])} />
       </button>
@@ -170,7 +176,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderLeft: `${theme.spacing(4)} solid ${theme.colors.background.secondary}`,
       borderRight: 'none',
       borderBottom: `${theme.spacing(4)} solid transparent`,
-      left: theme.spacing(0.5),
+      left: 0,
     }),
     error: css({
       display: 'block',
