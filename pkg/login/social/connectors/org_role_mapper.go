@@ -48,9 +48,9 @@ func (m *OrgRoleMapper) MapOrgRoles(
 	externalOrgs []string,
 	directlyMappedRole org.RoleType,
 ) map[int64]org.RoleType {
-	if len(mappingCfg.orgMapping) == 0 && !isValidRole(directlyMappedRole) && mappingCfg.strictRoleMapping {
-		// No org mappings are configured and the directly mapped role is not set and roleStrict is enabled
-		return nil
+	if len(mappingCfg.orgMapping) == 0  {
+		// Org mapping is not configured
+		return m.GetDefaultOrgMapping(mappingCfg.strictRoleMapping, directlyMappedRole)
 	}
 
 	userOrgRoles := getMappedOrgRoles(externalOrgs, mappingCfg.orgMapping)
@@ -61,13 +61,7 @@ func (m *OrgRoleMapper) MapOrgRoles(
 	}
 
 	if len(userOrgRoles) == 0 {
-		if mappingCfg.strictRoleMapping && !isValidRole(directlyMappedRole) {
-			// No org mapping found and roleStrict is enabled
-			return nil
-		}
-
-		// No org mapping found, return default org mappping based on directlyMappedRole
-		return m.GetDefaultOrgMapping(directlyMappedRole)
+		return m.GetDefaultOrgMapping(mappingCfg.strictRoleMapping, directlyMappedRole)
 	}
 
 	if directlyMappedRole == "" {
@@ -85,7 +79,11 @@ func (m *OrgRoleMapper) MapOrgRoles(
 	return userOrgRoles
 }
 
-func (m *OrgRoleMapper) GetDefaultOrgMapping(directlyMappedRole org.RoleType) map[int64]org.RoleType {
+func (m *OrgRoleMapper) GetDefaultOrgMapping(strictRoleMapping bool, directlyMappedRole org.RoleType) map[int64]org.RoleType {
+	if  strictRoleMapping && !directlyMappedRole.IsValid() {
+		m.logger.Debug("Prevent default org role mapping, role attribute strict requested")
+		return nil
+	} 
 	orgRoles := make(map[int64]org.RoleType, 0)
 
 	orgID := int64(1)
