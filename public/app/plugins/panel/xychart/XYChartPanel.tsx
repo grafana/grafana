@@ -10,6 +10,7 @@ import {
   TooltipPlugin2,
   UPlotChart,
   UPlotConfigBuilder,
+  useTheme2,
   VizLayout,
   VizLegend,
   VizLegendItem,
@@ -26,6 +27,8 @@ import { ScatterSeries } from './types';
 type Props = PanelProps<Options>;
 
 export const XYChartPanel = (props: Props) => {
+  const theme = useTheme2();
+
   const [error, setError] = useState<string | undefined>();
   const [series, setSeries] = useState<ScatterSeries[]>([]);
   const [builder, setBuilder] = useState<UPlotConfigBuilder | undefined>();
@@ -70,7 +73,7 @@ export const XYChartPanel = (props: Props) => {
       if (frame) {
         for (const item of s.legend()) {
           const field = s.y(frame);
-          item.getDisplayValues = () => getDisplayValuesForCalcs(props.options.legend.calcs, field);
+          item.getDisplayValues = () => getDisplayValuesForCalcs(props.options.legend.calcs, field, theme);
           item.disabled = !(s.show ?? true);
 
           if (props.options.seriesMapping === SeriesMapping.Manual) {

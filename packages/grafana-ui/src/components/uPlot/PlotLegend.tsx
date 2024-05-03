@@ -69,7 +69,7 @@ export const PlotLegend = React.memo(
           color: seriesColor,
           label,
           yAxis: axisPlacement === AxisPlacement.Left || axisPlacement === AxisPlacement.Bottom ? 1 : 2,
-          getDisplayValues: () => getDisplayValuesForCalcs(calcs, field),
+          getDisplayValues: () => getDisplayValuesForCalcs(calcs, field, theme),
           getItemKey: () => `${label}-${fieldIndex.frameIndex}-${fieldIndex.fieldIndex}`,
         };
       })

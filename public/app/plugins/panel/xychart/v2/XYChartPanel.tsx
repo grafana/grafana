@@ -12,6 +12,7 @@ import {
   VizLegend,
   VizLegendItem,
   useStyles2,
+  useTheme2,
 } from '@grafana/ui';
 import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { getDisplayValuesForCalcs } from '@grafana/ui/src/components/uPlot/utils';
@@ -25,6 +26,7 @@ type Props2 = PanelProps<Options>;
 
 export const XYChartPanel2 = (props: Props2) => {
   const styles = useStyles2(getStyles);
+  const theme = useTheme2();
 
   let { mapping, series: mappedSeries } = props.options;
 
@@ -73,7 +75,7 @@ export const XYChartPanel2 = (props: Props2) => {
           getItemKey: () => `${idx}-${s.name.value}`,
           fieldName: yField.state?.displayName ?? yField.name,
           disabled: yField.state?.hideFrom?.viz ?? false,
-          getDisplayValues: () => getDisplayValuesForCalcs(props.options.legend.calcs, yField),
+          getDisplayValues: () => getDisplayValuesForCalcs(props.options.legend.calcs, yField, theme),
         });
       }
     });

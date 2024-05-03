@@ -9,10 +9,10 @@ import {
   fieldReducers,
   FieldType,
   getDisplayProcessor,
+  GrafanaTheme2,
   reduceField,
   ReducerID,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { BarAlignment, GraphDrawStyle, GraphTransform, LineInterpolation, StackingMode } from '@grafana/schema';
 
 import { attachDebugger } from '../../utils';
@@ -404,14 +404,12 @@ function hasNegSample(data: unknown[], samples = 100) {
   return false;
 }
 
-export const getDisplayValuesForCalcs = (calcs: string[], field: Field) => {
+export const getDisplayValuesForCalcs = (calcs: string[], field: Field, theme: GrafanaTheme2) => {
   if (!calcs?.length) {
     return [];
   }
 
   const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
-  const theme = config.theme2;
-
   const fmt = field.display ?? defaultFormatter;
   let countFormatter: DisplayProcessor | null = null;
 
