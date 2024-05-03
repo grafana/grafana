@@ -136,10 +136,9 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 	folderWildcards := accesscontrol.WildcardsFromPrefix(dashboards.ScopeFoldersPrefix)
 
 	userID := int64(0)
-	namespaceID, identifier := f.user.GetNamespacedID()
-	switch namespaceID {
-	case identity.NamespaceUser, identity.NamespaceServiceAccount:
-		userID, _ = identity.IntIdentifier(namespaceID, identifier)
+	namespace, identifier := f.user.GetNamespacedID()
+	if namespace == identity.NamespaceUser || namespace == identity.NamespaceServiceAccount {
+		userID, _ = identity.IntIdentifier(namespace, identifier)
 	}
 
 	orgID := f.user.GetOrgID()
