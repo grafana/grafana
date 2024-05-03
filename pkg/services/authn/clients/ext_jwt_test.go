@@ -47,6 +47,7 @@ var (
 			Scopes:               []string{"profile", "groups"},
 			DelegatedPermissions: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
 			Permissions:          []string{"fixed:folders:reader"},
+			Namespace:            "org-1",
 		},
 	}
 	validIDPayload = JWTIDTokenClaims{
@@ -60,6 +61,21 @@ var (
 		},
 		Rest: authlib.IDTokenClaims{
 			AuthenticatedBy: "extended_jwt",
+			Namespace:       "org-1",
+		},
+	}
+	mismatchingNamespaceIDPayload = JWTIDTokenClaims{
+		Claims: &jwt.Claims{
+			Issuer:   "http://localhost:3000",
+			Subject:  "user:2",
+			Audience: jwt.Audience{"http://localhost:3000"},
+			ID:       "1234567890",
+			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
+		},
+		Rest: authlib.IDTokenClaims{
+			AuthenticatedBy: "extended_jwt",
+			Namespace:       "org-2",
 		},
 	}
 	pk, _ = rsa.GenerateKey(rand.Reader, 4096)
@@ -227,6 +243,23 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 						"folders:read", "datasources:explore", "datasources.insights:read"},
 						Roles: []string(nil)}}, Permissions: map[int64]map[string][]string(nil), IDToken: ""},
 			wantErr: nil,
+		},
+		{
+			name:      "fail authentication as user",
+			payload:   &validPayload,
+			idPayload: &mismatchingNamespaceIDPayload,
+			orgID:     1,
+			initTestEnv: func(env *testEnv) {
+				env.userSvc.ExpectedSignedInUser = &user.SignedInUser{
+					UserID:  2,
+					OrgID:   1,
+					OrgRole: roletype.RoleAdmin,
+					Name:    "John Doe",
+					Email:   "johndoe@grafana.com",
+					Login:   "johndoe",
+				}
+			},
+			wantErr: errJWTNamespaceMismatch.Errorf("id token namespace: %s, access token namespace: %s", mismatchingNamespaceIDPayload.Rest.Namespace, validPayload.Rest.Namespace),
 		},
 		{
 			name: "should return error when the subject is not an access-policy",

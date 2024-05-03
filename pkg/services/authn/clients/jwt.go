@@ -27,6 +27,8 @@ var (
 		"jwt.missing_claim", errutil.WithPublicMessage("Missing mandatory claim in JWT"))
 	errJWTInvalidRole = errutil.Forbidden(
 		"jwt.invalid_role", errutil.WithPublicMessage("Invalid Role in claim"))
+	errJWTNamespaceMismatch = errutil.Forbidden(
+		"jwt.invalid_role", errutil.WithPublicMessage("Namespace claims didn't match between id token and access token"))
 )
 
 func ProvideJWT(jwtService auth.JWTVerifierService, cfg *setting.Cfg) *JWT {

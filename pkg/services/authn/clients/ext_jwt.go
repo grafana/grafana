@@ -92,6 +92,11 @@ func (s *ExtendedJWT) IsEnabled() bool {
 
 func (s *ExtendedJWT) authenticateAsUser(idTokenClaims *authlib.Claims[authlib.IDTokenClaims],
 	accessTokenClaims *authlib.Claims[authlib.AccessTokenClaims]) (*authn.Identity, error) {
+	// Only allow token pairs with matching namespace through
+	if accessTokenClaims.Rest.Namespace != idTokenClaims.Rest.Namespace {
+		return nil, errJWTNamespaceMismatch.Errorf("id token namespace: %s, access token namespace: %s", idTokenClaims.Rest.Namespace, accessTokenClaims.Rest.Namespace)
+	}
+
 	// Only allow access policies to impersonate
 	if !strings.HasPrefix(accessTokenClaims.Subject, fmt.Sprintf("%s:", authn.NamespaceAccessPolicy)) {
 		s.log.Error("Invalid subject", "subject", accessTokenClaims.Subject)
