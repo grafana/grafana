@@ -3,6 +3,7 @@ package notifier
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
@@ -16,7 +17,7 @@ func (am *alertmanager) GetStatus(_ context.Context) (apimodels.GettableStatus, 
 	}
 
 	if err := json.Unmarshal(status, config); err != nil {
-		am.logger.Error("Unable to unmarshal alertmanager config", "err", err)
+		return apimodels.GettableStatus{}, fmt.Errorf("unable to unmarshal alertmanager config: %w", err)
 	}
 
 	return *apimodels.NewGettableStatus(&config.AlertmanagerConfig), nil
