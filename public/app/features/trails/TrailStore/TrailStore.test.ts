@@ -65,7 +65,7 @@ describe('TrailStore', () => {
     });
   });
 
-  describe('Initialize store with one recent trail', () => {
+  describe('Initialize store with one recent trail with final current step', () => {
     const history: SerializedTrail['history'] = [
       {
         urlValues: {
@@ -318,7 +318,8 @@ describe('TrailStore', () => {
         trail = store.recent[0].resolve();
         const urlState = getUrlSyncManager().getUrlState(trail);
         locationService.partial(urlState);
-        activateFullSceneTree(trail);
+        trail.activate();
+        trail.state.history.activate();
         getFilterVar(trail).setState({ filters: [{ key: 'zone', operator: '=', value: 'a' }] });
       });
 
@@ -369,7 +370,8 @@ describe('TrailStore', () => {
         trail = store.recent[0].resolve();
         const urlState = getUrlSyncManager().getUrlState(trail);
         locationService.partial(urlState);
-        activateFullSceneTree(trail);
+        trail.activate();
+        trail.state.history.activate();
         trail.state.$timeRange?.setState({ from: 'now-15m' });
       });
 
