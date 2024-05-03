@@ -499,6 +499,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/angular/ @torkelo
 /public/app/app.ts @grafana/frontend-ops
 /public/app/dev.ts @grafana/frontend-ops
+/public/app/emotionInstance.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/metrics.ts @grafana/plugins-platform-frontend
 /public/app/index.ts @grafana/frontend-ops
 /public/app/AppWrapper.tsx @grafana/frontend-ops
