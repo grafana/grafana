@@ -1,6 +1,6 @@
 import server from 'app/features/alerting/unified/mockApi';
 import { mockFolder } from 'app/features/alerting/unified/mocks';
-import { alertmanagerChoiceHandler } from 'app/features/alerting/unified/mocks/alertmanagerApi';
+import { grafanaAlertingConfigurationStatusHandler } from 'app/features/alerting/unified/mocks/alertmanagerApi';
 import { folderHandler } from 'app/features/alerting/unified/mocks/folders';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { FolderDTO } from 'app/types';
@@ -14,7 +14,7 @@ export const setAlertmanagerChoices = (alertmanagersChoice: AlertmanagerChoice, 
     alertmanagersChoice,
     numExternalAlertmanagers,
   };
-  server.use(alertmanagerChoiceHandler(response));
+  server.use(grafanaAlertingConfigurationStatusHandler(response));
 };
 
 /**

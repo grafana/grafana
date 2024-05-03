@@ -180,6 +180,7 @@ Experimental features might be changed or removed without prior notice.
 | `queryLibrary`                              | Enables Query Library feature in Explore                                                                                                                                                                                                                                          |
 | `autofixDSUID`                              | Automatically migrates invalid datasource UIDs                                                                                                                                                                                                                                    |
 | `logsExploreTableDefaultVisualization`      | Sets the logs table as default visualisation in logs explore                                                                                                                                                                                                                      |
+| `newDashboardSharingComponent`              | Enables the new sharing drawer design                                                                                                                                                                                                                                             |
 
 ## Development feature toggles
 

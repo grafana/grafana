@@ -3334,7 +3334,7 @@ __metadata:
     glob: "npm:10.3.12"
     i18next: "npm:^23.0.0"
     lodash: "npm:4.17.21"
-    lru-cache: "npm:10.2.0"
+    lru-cache: "npm:10.2.2"
     monaco-editor: "npm:0.34.1"
     prismjs: "npm:1.29.0"
     react: "npm:18.2.0"
@@ -3817,7 +3817,7 @@ __metadata:
     jest-environment-jsdom: "npm:29.7.0"
     jest-matcher-utils: "npm:29.7.0"
     lodash: "npm:4.17.21"
-    lru-cache: "npm:10.2.0"
+    lru-cache: "npm:10.2.2"
     marked: "npm:12.0.2"
     marked-mangle: "npm:1.1.7"
     moment: "npm:2.30.1"
@@ -18335,7 +18335,7 @@ __metadata:
     leven: "npm:^4.0.0"
     lodash: "npm:4.17.21"
     logfmt: "npm:^1.3.2"
-    lru-cache: "npm:10.2.0"
+    lru-cache: "npm:10.2.2"
     lru-memoize: "npm:^1.1.0"
     lucene: "npm:^2.1.1"
     marked: "npm:12.0.2"
@@ -18369,7 +18369,7 @@ __metadata:
     rc-slider: "npm:10.6.2"
     rc-time-picker: "npm:3.7.3"
     rc-tree: "npm:5.8.5"
-    re-resizable: "npm:6.9.14"
+    re-resizable: "npm:6.9.16"
     react: "npm:18.2.0"
     react-beautiful-dnd: "npm:13.1.1"
     react-diff-viewer: "npm:^3.1.1"
@@ -18408,7 +18408,7 @@ __metadata:
     regenerator-runtime: "npm:0.14.1"
     reselect: "npm:4.1.8"
     rimraf: "npm:5.0.5"
-    rudder-sdk-js: "npm:2.48.6"
+    rudder-sdk-js: "npm:2.48.7"
     rxjs: "npm:7.8.1"
     sass: "npm:1.75.0"
     sass-loader: "npm:14.2.1"
@@ -21869,10 +21869,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lru-cache@npm:10.2.0, lru-cache@npm:^10.0.1, lru-cache@npm:^10.2.0":
-  version: 10.2.0
-  resolution: "lru-cache@npm:10.2.0"
-  checksum: 10/502ec42c3309c0eae1ce41afca471f831c278566d45a5273a0c51102dee31e0e250a62fa9029c3370988df33a14188a38e682c16143b794de78668de3643e302
+"lru-cache@npm:10.2.2, lru-cache@npm:^10.0.1, lru-cache@npm:^10.2.0":
+  version: 10.2.2
+  resolution: "lru-cache@npm:10.2.2"
+  checksum: 10/ff1a496d30b5eaec2c9079080965bb0cede203cf878371f7033a007f1e54cd4aa13cc8abf7ccec4c994a83a22ed5476e83a55bb57cc07e6c1547a42937e42c37
   languageName: node
   linkType: hard
 
@@ -25727,13 +25727,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"re-resizable@npm:6.9.14":
-  version: 6.9.14
-  resolution: "re-resizable@npm:6.9.14"
+"re-resizable@npm:6.9.16":
+  version: 6.9.16
+  resolution: "re-resizable@npm:6.9.16"
   peerDependencies:
     react: ^16.13.1 || ^17.0.0 || ^18.0.0
     react-dom: ^16.13.1 || ^17.0.0 || ^18.0.0
-  checksum: 10/eb3c40ead7f0db3bac6971cc15efd660ed403018db4a44e084392f248199244a6400ff3f741b2a1aa897bb5ede498d9e72c3d580a6f3acf06819639a0d943d26
+  checksum: 10/9cd141e115303b743a4fdb5af43341ca270d31e7e1cb6aafb039313438e3a78e6433266595c55171dd775c61ee586323b6e8c3c209b81e9b0fd71e38a39bbf99
   languageName: node
   linkType: hard
 
@@ -27483,13 +27483,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rudder-sdk-js@npm:2.48.6":
-  version: 2.48.6
-  resolution: "rudder-sdk-js@npm:2.48.6"
+"rudder-sdk-js@npm:2.48.7":
+  version: 2.48.7
+  resolution: "rudder-sdk-js@npm:2.48.7"
   dependencies:
     "@segment/localstorage-retry": "npm:1.3.0"
     component-emitter: "npm:2.0.0"
-  checksum: 10/972030e22265c469b122ede4dc275bd0e4c9be3f6e520125252bf83504e4215143a23a633bcaedddcb9b615f7c13813ee02e23a22b85bdb4e6b4ff7984c85737
+  checksum: 10/de1309744a7525c1eb15c7b7b900427c35635c4ef9f514298fe022e18fd748b9a496cfc080246fe3d8c0f72bccbfadfadf2d4d0866ae3bb9c12be63db9b6ada0
   languageName: node
   linkType: hard
 
@@ -31591,11 +31591,11 @@ __metadata:
   linkType: hard
 
 "yaml@npm:^2.0.0, yaml@npm:^2.3.4":
-  version: 2.4.1
-  resolution: "yaml@npm:2.4.1"
+  version: 2.4.2
+  resolution: "yaml@npm:2.4.2"
   bin:
     yaml: bin.mjs
-  checksum: 10/2c54fd69ef59126758ae710f9756405a7d41abcbb61aca894250d0e81e76057c14dc9bb00a9528f72f99b8f24077f694a6f7fd09cdd6711fcec2eebfbb5df409
+  checksum: 10/6eafbcd68dead734035f6f72af21bd820c29214caf7d8e40c595671a3c908535cef8092b9660a1c055c5833aa148aa640e0c5fa4adb5af2dacd6d28296ccd81c
   languageName: node
   linkType: hard
 
