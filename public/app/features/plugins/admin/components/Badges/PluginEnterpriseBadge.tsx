@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { featureEnabled } from '@grafana/runtime';
-import { Badge, Button, HorizontalGroup, PluginSignatureBadge, useStyles2 } from '@grafana/ui';
+import { Badge, Button, PluginSignatureBadge, Stack, useStyles2 } from '@grafana/ui';
 
 import { CatalogPlugin } from '../../types';
 
@@ -25,12 +25,12 @@ export function PluginEnterpriseBadge({ plugin }: Props): React.ReactElement {
   }
 
   return (
-    <HorizontalGroup>
+    <Stack wrap={'wrap'}>
       <PluginSignatureBadge status={plugin.signature} />
-      <Badge icon="lock" text="Enterprise" color="blue" className={customBadgeStyles} />
+      <Badge icon="lock" role="img" aria-label="lock icon" text="Enterprise" color="blue" className={customBadgeStyles} />
       <Button size="sm" fill="text" icon="external-link-alt" onClick={onClick}>
         Learn more
       </Button>
-    </HorizontalGroup>
+    </Stack>
   );
 }
