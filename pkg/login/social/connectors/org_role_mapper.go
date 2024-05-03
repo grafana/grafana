@@ -48,7 +48,7 @@ func (m *OrgRoleMapper) MapOrgRoles(
 	externalOrgs []string,
 	directlyMappedRole org.RoleType,
 ) map[int64]org.RoleType {
-	if len(mappingCfg.orgMapping) == 0  {
+	if len(mappingCfg.orgMapping) == 0 {
 		// Org mapping is not configured
 		return m.GetDefaultOrgMapping(mappingCfg.strictRoleMapping, directlyMappedRole)
 	}
@@ -80,10 +80,10 @@ func (m *OrgRoleMapper) MapOrgRoles(
 }
 
 func (m *OrgRoleMapper) GetDefaultOrgMapping(strictRoleMapping bool, directlyMappedRole org.RoleType) map[int64]org.RoleType {
-	if  strictRoleMapping && !directlyMappedRole.IsValid() {
+	if strictRoleMapping && !directlyMappedRole.IsValid() {
 		m.logger.Debug("Prevent default org role mapping, role attribute strict requested")
 		return nil
-	} 
+	}
 	orgRoles := make(map[int64]org.RoleType, 0)
 
 	orgID := int64(1)
@@ -133,6 +133,15 @@ func (m *OrgRoleMapper) ParseOrgMappingSettings(ctx context.Context, mappings []
 
 	for _, v := range mappings {
 		kv := strings.Split(v, ":")
+		if len(kv) > 3 {
+			// Log and skip the mapping if the format is invalid
+			m.logger.Error("Skipping org mapping due to invalid format.", "mapping", fmt.Sprintf("%v", v))
+			if roleStrict {
+				// Return empty mapping if the mapping format is invalied and roleStrict is enabled
+				return &MappingConfiguration{orgMapping: map[string]map[int64]org.RoleType{}, strictRoleMapping: roleStrict}
+			}
+			continue
+		}
 		if len(kv) > 1 {
 			orgID, err := strconv.Atoi(kv[1])
 			if err != nil && kv[1] != "*" {
@@ -152,9 +161,9 @@ func (m *OrgRoleMapper) ParseOrgMappingSettings(ctx context.Context, mappings []
 			if kv[1] == "*" {
 				orgID = MapperMatchAllOrgID
 			}
-		if roleStrict && (len(kv) < 3 || !org.RoleType(kv[2]).IsValid()) {
+			if roleStrict && (len(kv) < 3 || !org.RoleType(kv[2]).IsValid()) {
 				// Return empty mapping if at least one org mapping is invalid (missing role, invalid role)
-				m.logger.Warn("Skipping org mapping due to missing or invalid role in mapping with roleStrict is enabled.", "mapping", fmt.Sprintf("%v", v))
+				m.logger.Warn("Skipping org mapping due to missing or invalid role in mapping when roleStrict is enabled.", "mapping", fmt.Sprintf("%v", v))
 				return &MappingConfiguration{orgMapping: map[string]map[int64]org.RoleType{}, strictRoleMapping: roleStrict}
 			}
 
@@ -225,8 +234,4 @@ func getTopRole(currRole org.RoleType, otherRole org.RoleType) org.RoleType {
 	}
 
 	return otherRole
-}
-
-func isValidRole(role org.RoleType) bool {
-	return role != "" && role.IsValid()
 }
