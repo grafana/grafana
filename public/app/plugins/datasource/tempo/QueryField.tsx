@@ -23,7 +23,10 @@ import { QueryEditor } from './traceql/QueryEditor';
 import { TempoQuery } from './types';
 import { migrateFromSearchToTraceQLSearch } from './utils';
 
-interface Props extends QueryEditorProps<TempoDatasource, TempoQuery>, Themeable2 {}
+interface Props extends QueryEditorProps<TempoDatasource, TempoQuery>, Themeable2 {
+  // should template variables be added to tag options. default true
+  addVariablesToOptions?: boolean;
+}
 interface State {
   uploadModalOpen: boolean;
 }
@@ -154,6 +157,7 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
             onBlur={this.props.onBlur}
             app={app}
             onClearResults={this.onClearResults}
+            addVariablesToOptions={this.props.addVariablesToOptions}
           />
         )}
         {query.queryType === 'serviceMap' && (

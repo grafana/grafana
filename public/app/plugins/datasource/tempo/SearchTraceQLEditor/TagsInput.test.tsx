@@ -126,6 +126,7 @@ describe('TagsInput', () => {
         staticTags={[]}
         isTagsLoading={false}
         query={''}
+        addVariablesToOptions={true}
       />
     );
   };
