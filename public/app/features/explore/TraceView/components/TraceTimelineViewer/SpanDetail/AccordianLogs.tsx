@@ -73,8 +73,16 @@ export type AccordianLogsProps = {
   timestamp: number;
 };
 
-export default function AccordianLogs(props: AccordianLogsProps) {
-  const { interactive, isOpen, linksGetter, logs, openedItems, onItemToggle, onToggle, timestamp } = props;
+export default function AccordianLogs({
+  interactive = true,
+  isOpen,
+  linksGetter,
+  logs,
+  openedItems,
+  onItemToggle,
+  onToggle,
+  timestamp,
+}: AccordianLogsProps) {
   let arrow: React.ReactNode | null = null;
   let HeaderComponent: 'span' | 'a' = 'span';
   let headerProps: {} | null = null;
@@ -122,11 +130,3 @@ export default function AccordianLogs(props: AccordianLogsProps) {
     </div>
   );
 }
-
-AccordianLogs.defaultProps = {
-  interactive: true,
-  linksGetter: undefined,
-  onItemToggle: undefined,
-  onToggle: undefined,
-  openedItems: undefined,
-};
