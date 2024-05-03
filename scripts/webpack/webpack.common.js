@@ -31,9 +31,10 @@ module.exports = {
       '@locker/near-membrane-dom/custom-devtools-formatter': require.resolve(
         '@locker/near-membrane-dom/custom-devtools-formatter.js'
       ),
-      // in order for the CSP to work, we need create our own emotion instance
-      // for now, just alias to the new instance
-      '@emotion/css$': path.resolve(__dirname, '../../public/app/EmotionInstance.tsx'),
+      // in order for emotion to work without unsafe-inline, we need create our own emotion instance
+      // rather than force everywhere to import from that instance, we instead
+      // alias any emotion/css import to our instance
+      '@emotion/css$': path.resolve(__dirname, '../../public/app/emotionInstance.ts'),
     },
     modules: [
       // default value

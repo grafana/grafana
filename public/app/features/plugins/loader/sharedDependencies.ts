@@ -33,7 +33,6 @@ import 'vendor/flot/jquery.flot.gauge';
 import * as grafanaData from '@grafana/data';
 import * as grafanaRuntime from '@grafana/runtime';
 import * as grafanaUIraw from '@grafana/ui';
-import * as EmotionInstance from 'app/EmotionInstance';
 import TableModel from 'app/core/TableModel';
 import config from 'app/core/config';
 import { appEvents, contextSrv } from 'app/core/core';
@@ -43,6 +42,7 @@ import TimeSeries from 'app/core/time_series2';
 import * as flatten from 'app/core/utils/flatten';
 import kbn from 'app/core/utils/kbn';
 import * as ticks from 'app/core/utils/ticks';
+import * as emotionInstance from 'app/emotionInstance';
 
 // Help the 6.4 to 6.5 migration
 // The base classes were moved from @grafana/ui to @grafana/data
@@ -67,7 +67,7 @@ const jQueryFlotDeps = [
 ].reduce((acc, flotDep) => ({ ...acc, [flotDep]: { fakeDep: 1 } }), {});
 
 export const sharedDependenciesMap: Record<string, System.Module> = {
-  '@emotion/css': EmotionInstance,
+  '@emotion/css': emotionInstance,
   '@emotion/react': emotionReact,
   '@grafana/data': grafanaData,
   '@grafana/runtime': grafanaRuntime,

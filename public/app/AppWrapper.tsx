@@ -30,7 +30,7 @@ interface AppWrapperProps {
 
 interface AppWrapperState {
   ready?: boolean;
-  myCache: EmotionCache;
+  emotionCache: EmotionCache;
 }
 
 /** Used by enterprise */
@@ -49,7 +49,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
   constructor(props: AppWrapperProps) {
     super(props);
     this.state = {
-      myCache: createCache({
+      emotionCache: createCache({
         key: 'css',
         nonce: window.nonce,
         container: document.head,
@@ -92,7 +92,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
 
   render() {
     const { app } = this.props;
-    const { myCache, ready } = this.state;
+    const { emotionCache, ready } = this.state;
 
     navigationLogger('AppWrapper', false, 'rendering');
 
@@ -104,7 +104,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
     };
 
     return (
-      <CacheProvider value={myCache}>
+      <CacheProvider value={emotionCache}>
         <Provider store={store}>
           <ErrorBoundaryAlert style="page">
             <GrafanaContext.Provider value={app.context}>
