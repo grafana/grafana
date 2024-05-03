@@ -36,7 +36,6 @@ func ProvideExtendedJWT(userService user.Service, cfg *setting.Cfg,
 		},
 	})
 
-	// The generic parameter is likely incorrect for ID Tokens
 	idTokenVerifier := authlib.NewIDTokenVerifier(authlib.VerifierConfig{
 		SigningKeysURL: cfg.ExtJWTAuth.JWKSUrl,
 		AllowedAudiences: []string{
