@@ -70,6 +70,7 @@ func parse(rawSQL string) ([]string, error) {
 	return nil, err
 }
 
+// parseTables uses a simple tokenizer to parse tables from a SQL statement
 func parseTables(rawSQL string) ([]string, error) {
 	checkSql := strings.ToUpper(rawSQL)
 	rawSQL = strings.ReplaceAll(rawSQL, "\n", " ")
