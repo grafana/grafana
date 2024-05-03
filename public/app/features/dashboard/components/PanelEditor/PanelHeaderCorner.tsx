@@ -121,9 +121,9 @@ function PanelInfoCorner({ infoMode, content, onClick }: PanelInfoCornerProps) {
         <Icon
           name={iconMap[infoMode]}
           size={infoMode === InfoMode.Links ? 'sm' : 'lg'}
-          className={cx(styles.icon, infoMode === InfoMode.Links ? styles.iconLinks : '')}
+          className={cx(styles.icon, { [styles.iconLinks]: infoMode === InfoMode.Links })}
         />
-        <span className={cx(styles.inner, infoMode === InfoMode.Error ? styles.error : '')} />
+        <span className={cx(styles.inner, { [styles.error]: infoMode === InfoMode.Error })} />
       </button>
     </Tooltip>
   );
@@ -141,7 +141,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'absolute',
       top: 0,
       left: 0,
-      zIndex: 3,
+      zIndex: 2,
       fill: theme.colors.text.maxContrast,
     }),
     iconLinks: css({
@@ -170,7 +170,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       top: 0,
       width: theme.spacing(4),
       height: theme.spacing(4),
-      zIndex: 11,
+      zIndex: 3,
     }),
   };
 };
