@@ -4,6 +4,7 @@ import (
 	"context"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -54,6 +55,7 @@ func (d *DualWriterMode3) Delete(ctx context.Context, name string, deleteValidat
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
 			klog.FromContext(ctx).Error(err, "could not delete from unified store", "mode", Mode3)
+			return deleted, async, err
 		}
 	}
 
@@ -65,4 +67,62 @@ func (d *DualWriterMode3) Delete(ctx context.Context, name string, deleteValidat
 	}
 
 	return deleted, async, err
+}
+
+// Update overrides the behavior of the generic DualWriter and writes first to Storage and then to LegacyStorage.
+func (d *DualWriterMode3) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	old, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
+	if err != nil {
+		return nil, false, err
+	}
+
+	updated, err := objInfo.UpdatedObject(ctx, old)
+	if err != nil {
+		return nil, false, err
+	}
+	objInfo = &updateWrapper{
+		upstream: objInfo,
+		updated:  updated,
+	}
+
+	obj, created, err := d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+	if err != nil {
+		klog.FromContext(ctx).Error(err, "could not write to US", "mode", Mode3)
+		return obj, created, err
+	}
+
+	legacy, ok := d.Legacy.(rest.Updater)
+	if !ok {
+		klog.FromContext(ctx).Error(errDualWriterUpdaterMissing, "legacy storage update not implemented")
+		return obj, created, err
+	}
+
+	_, _, errLeg := legacy.Update(ctx, name, &updateWrapper{
+		upstream: objInfo,
+		updated:  obj,
+	}, createValidation, updateValidation, forceAllowCreate, options)
+	if errLeg != nil {
+		klog.FromContext(ctx).Error(errLeg, "could not update object in legacy store", "mode", Mode3)
+	}
+	return obj, created, err
+}
+
+// DeleteCollection overrides the behavior of the generic DualWriter and deletes from both LegacyStorage and Storage.
+func (d *DualWriterMode3) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
+	legacy, ok := d.Legacy.(rest.CollectionDeleter)
+	if !ok {
+		return nil, errDualWriterCollectionDeleterMissing
+	}
+
+	// #TODO: figure out how to handle partial deletions
+	deleted, err := d.Storage.DeleteCollection(ctx, deleteValidation, options, listOptions)
+	if err != nil {
+		klog.FromContext(ctx).Error(err, "failed to delete collection successfully from Storage", "deletedObjects", deleted)
+	}
+
+	if deleted, err := legacy.DeleteCollection(ctx, deleteValidation, options, listOptions); err != nil {
+		klog.FromContext(ctx).Error(err, "failed to delete collection successfully from LegacyStorage", "deletedObjects", deleted)
+	}
+
+	return deleted, err
 }

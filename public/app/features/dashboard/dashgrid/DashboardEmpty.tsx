@@ -44,7 +44,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
   const onAddLibraryPanel = () => {
     DashboardInteractions.emptyDashboardButtonClicked({ item: 'import_from_library' });
     if (dashboard instanceof DashboardScene) {
-      dashboard.onCreateLibPanelWidget();
+      dashboard.onShowAddLibraryPanelDrawer();
     } else {
       onAddLibraryPanelImpl(dashboard);
     }
@@ -138,8 +138,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
                 <Box marginBottom={2}>
                   <Text element="p" textAlignment="center" color="secondary">
                     <Trans i18nKey="dashboard.empty.import-a-dashboard-body">
-                      Import dashboards from files or
-                      <a href="https://grafana.com/grafana/dashboards/">grafana.com</a>.
+                      Import dashboards from files or <a href="https://grafana.com/grafana/dashboards/">grafana.com</a>.
                     </Trans>
                   </Text>
                 </Box>

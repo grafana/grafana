@@ -217,11 +217,7 @@ export type AlertmanagerAlert = {
   generatorURL?: string;
   labels: { [key: string]: string };
   annotations: { [key: string]: string };
-  receivers: [
-    {
-      name: string;
-    },
-  ];
+  receivers: Array<{ name: string }>;
   fingerprint: string;
   status: {
     state: AlertState;
@@ -282,7 +278,7 @@ export interface TestReceiversResult {
   receivers: TestReceiversResultReceiver[];
 }
 
-export interface ExternalAlertmanagers {
+export interface ExternalAlertmanagersConnectionStatus {
   activeAlertManagers: AlertmanagerUrl[];
   droppedAlertManagers: AlertmanagerUrl[];
 }
@@ -291,8 +287,8 @@ export interface AlertmanagerUrl {
   url: string;
 }
 
-export interface ExternalAlertmanagersResponse {
-  data: ExternalAlertmanagers;
+export interface ExternalAlertmanagersStatusResponse {
+  data: ExternalAlertmanagersConnectionStatus;
 }
 
 export enum AlertmanagerChoice {
@@ -301,7 +297,7 @@ export enum AlertmanagerChoice {
   All = 'all',
 }
 
-export interface ExternalAlertmanagerConfig {
+export interface GrafanaAlertingConfiguration {
   alertmanagersChoice: AlertmanagerChoice;
 }
 
