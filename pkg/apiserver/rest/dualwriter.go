@@ -106,7 +106,7 @@ func (d *DualWriter) Create(ctx context.Context, obj runtime.Object, createValid
 
 		rsp, err := d.Storage.Create(ctx, created, createValidation, options)
 		if err != nil {
-			klog.Error("unable to create object in duplicate storage", "error", err)
+			d.Log.Error(err, "unable to create object in duplicate storage")
 		}
 		return rsp, err
 	}
