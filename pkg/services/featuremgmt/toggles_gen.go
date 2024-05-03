@@ -659,6 +659,10 @@ const (
 	// Enables Query Library feature in Explore
 	FlagQueryLibrary = "queryLibrary"
 
+	// FlagAutofixDSUID
+	// Automatically migrates invalid datasource UIDs
+	FlagAutofixDSUID = "autofixDSUID"
+
 	// FlagLogsExploreTableDefaultVisualization
 	// Sets the logs table as default visualisation in logs explore
 	FlagLogsExploreTableDefaultVisualization = "logsExploreTableDefaultVisualization"

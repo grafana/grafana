@@ -64,7 +64,7 @@ func ProvideService(
 	quotaService quota.Service, pluginStore pluginstore.Store,
 ) (*Service, error) {
 	dslogger := log.New("datasources")
-	store := &SqlStore{db: db, logger: dslogger}
+	store := &SqlStore{db: db, logger: dslogger, features: features}
 	s := &Service{
 		SQLStore:       store,
 		SecretsStore:   secretsStore,

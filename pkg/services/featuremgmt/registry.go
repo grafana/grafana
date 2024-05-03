@@ -1221,6 +1221,12 @@ var (
 			AllowSelfServe: false,
 		},
 		{
+			Name:        "autofixDSUID",
+			Description: "Automatically migrates invalid datasource UIDs",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPluginsPlatformSquad,
+		},
+		{
 			Name:         "logsExploreTableDefaultVisualization",
 			Description:  "Sets the logs table as default visualisation in logs explore",
 			Stage:        FeatureStageExperimental,
