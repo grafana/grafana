@@ -32,7 +32,7 @@ export function ConfigCard({ config, handleActionClick }: ConfigCardProps) {
           )}
         </div>
       </Card.Heading>
-      <Card.Description className={styles.description}>
+      <Card.Description>
         <Stack direction={'column'}>
           {config.description}
           {config.stepsDone && config.totalStepsToDo && (
@@ -54,12 +54,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     'justify-content': 'flex-start',
     alignItems: 'baseline',
     gap: theme.spacing(0.5),
-  }),
-  description: css({
-    WebkitLineClamp: 3,
-    WebkitBoxOrient: 'vertical',
-    display: '-webkit-box',
-    overflow: 'hidden',
   }),
   essentialsTitle: css({
     display: 'flex',
