@@ -114,17 +114,16 @@ function PanelInfoCorner({ infoMode, content, onClick }: PanelInfoCornerProps) {
   const theme = infoMode === InfoMode.Error ? 'error' : 'info';
   const ariaLabel = selectors.components.Panels.Panel.headerCornerInfo(infoMode.toLowerCase());
   const styles = useStyles2(getStyles);
-  const mode = infoMode.toLowerCase() as Lowercase<keyof typeof InfoMode>;
 
   return (
     <Tooltip content={content} placement="top-start" theme={theme} interactive>
-      <button type="button" className={cx(styles.infoCorner)} onClick={onClick} aria-label={ariaLabel}>
+      <button type="button" className={styles.infoCorner} onClick={onClick} aria-label={ariaLabel}>
         <Icon
           name={iconMap[infoMode]}
           size={infoMode === InfoMode.Links ? 'sm' : 'lg'}
           className={cx(styles.icon, infoMode === InfoMode.Links ? styles.iconLinks : '')}
         />
-        <span className={cx(styles.inner, styles[mode])} />
+        <span className={cx(styles.inner, infoMode === InfoMode.Error ? styles.error : '')} />
       </button>
     </Tooltip>
   );
@@ -138,7 +137,6 @@ const iconMap: Record<InfoMode, IconName> = {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    block: css({ display: 'block' }),
     icon: css({
       position: 'absolute',
       top: 0,
@@ -156,26 +154,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'absolute',
       left: 0,
       bottom: 0,
-    }),
-    info: css({
-      display: 'block',
-      borderLeft: `${theme.spacing(4)} solid ${theme.colors.background.secondary}`,
-      borderRight: 'none',
       borderBottom: `${theme.spacing(4)} solid transparent`,
-    }),
-    links: css({
-      display: 'block',
       borderLeft: `${theme.spacing(4)} solid ${theme.colors.background.secondary}`,
-      borderRight: 'none',
-      borderBottom: `${theme.spacing(4)} solid transparent`,
-      left: 0,
     }),
     error: css({
-      display: 'block',
-      borderLeft: `${theme.spacing(4)} solid ${theme.colors.error.main}`,
-      borderRight: 'none',
-      borderBottom: `${theme.spacing(4)} solid transparent`,
-      color: theme.colors.text.primary,
+      borderLeftColor: theme.colors.error.main,
     }),
     infoCorner: css({
       background: 'none',
