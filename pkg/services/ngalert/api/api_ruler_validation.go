@@ -110,8 +110,7 @@ func validateRuleNode(
 		ExecErrState:    errorState,
 		// Recording Rule fields will be implemented in the future.
 		// For now, no rules can be recording rules. So, we force these to be empty.
-		Record:     "",
-		RecordFrom: "",
+		Record: nil,
 	}
 
 	if ruleNode.GrafanaManagedAlert.NotificationSettings != nil {

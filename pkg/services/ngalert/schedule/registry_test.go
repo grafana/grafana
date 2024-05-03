@@ -192,8 +192,7 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 			RuleGroupIndex:  1,
 			NoDataState:     "test-nodata",
 			ExecErrState:    "test-err",
-			Record:          "my_metric",
-			RecordFrom:      "A",
+			Record:          &models.Record{Metric: "my_metric", From: "A"},
 			For:             12,
 			Annotations: map[string]string{
 				"key-annotation": "value-annotation",
@@ -232,8 +231,7 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 			RuleGroupIndex:  22,
 			NoDataState:     "test-nodata2",
 			ExecErrState:    "test-err2",
-			Record:          "my_metric2",
-			RecordFrom:      "B",
+			Record:          &models.Record{Metric: "my_metric2", From: "B"},
 			For:             1141,
 			Annotations: map[string]string{
 				"key-annotation2": "value-annotation",

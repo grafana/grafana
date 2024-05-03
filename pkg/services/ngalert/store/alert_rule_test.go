@@ -643,10 +643,9 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		require.Truef(t, found, "Rule with key %#v was not found in database", keyWithID)
 	}
 
-	t.Run("inserted alerting rules should have default recording rule fields on model", func(t *testing.T) {
+	t.Run("inserted alerting rules should have nil recording rule fields on model", func(t *testing.T) {
 		for _, rule := range dbRules {
-			require.Empty(t, rule.Record)
-			require.Empty(t, rule.RecordFrom)
+			require.Nil(t, rule.Record)
 		}
 	})
 
