@@ -313,7 +313,6 @@ export function ToolbarActions({ dashboard }: Props) {
         key="share-dashboard-button"
         tooltip={t('dashboard.toolbar.share', 'Share dashboard')}
         size="sm"
-        data-testid={selectors.pages.Dashboard.DashNav.shareButton}
         className={styles.buttonWithExtraMargin}
         fill="outline"
         onClick={() => {
