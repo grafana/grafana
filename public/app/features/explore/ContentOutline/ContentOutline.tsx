@@ -48,6 +48,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
   );
 
   const [sectionsExpanded, setSectionsExpanded] = useState(() => {
+    console.log('setSelectionsExpanded');
     return outlineItems.reduce((acc: { [key: string]: boolean }, item) => {
       acc[item.id] = false;
       return acc;
@@ -75,6 +76,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
   };
 
   const toggle = () => {
+    console.log('toggle');
     toggleContentOutlineExpanded();
     reportInteraction('explore_toolbar_contentoutline_clicked', {
       item: 'outline',
@@ -83,6 +85,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
   };
 
   const toggleSection = (itemId: string) => {
+    console.log('toggleSection', itemId);
     setSectionsExpanded((prev) => ({
       ...prev,
       [itemId]: !prev[itemId],
@@ -94,6 +97,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
   };
 
   useEffect(() => {
+    console.log('hook');
     let activeItem;
 
     for (const item of outlineItems) {
@@ -120,19 +124,13 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
       if (activeItem) {
         setActiveSectionId(activeItem.id);
         setActiveSectionChildId(undefined);
-        const hasActiveFilterChild = activeItem.children?.find((child) => child.type === 'filter' && child.highlight);
-
-        !hasActiveFilterChild &&
-          setSectionsExpanded((prev) => ({
-            ...prev,
-            [item.id]: false,
-          }));
         break;
       }
     }
   }, [outlineItems, verticalScroll]);
 
   const activateFilter = (filterId: string) => {
+    console.log('activateFilter');
     const activeParent = outlineItems.find((item) => {
       return item.children?.find((child) => child.id === filterId);
     });
@@ -141,6 +139,8 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
       scrollIntoView(activeParent.ref, activeParent.panelId, activeParent.customTopOffset);
     }
   };
+
+  console.log(sectionsExpanded);
 
   return (
     <PanelContainer className={styles.wrapper} id={panelId}>
