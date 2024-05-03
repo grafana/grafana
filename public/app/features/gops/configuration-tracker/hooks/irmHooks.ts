@@ -177,7 +177,13 @@ function useOnCallChatOpsConnections() {
   return { is_chatops_connected, is_integration_chatops_connected };
 }
 
-export function useGetEssentialsConfiguration() {
+export interface EssentialsConfigurationData {
+  essentialContent: SectionsDto;
+  stepsDone: number;
+  totalStepsToDo: number;
+}
+
+export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
   const contactPoints = useGetContactPoints();
   const defaultContactPoint = useGetDefaultContactPoint();
   const incidentPluginConfig = useGetIncidentPluginConfig();
