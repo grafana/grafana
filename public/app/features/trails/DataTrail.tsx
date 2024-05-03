@@ -218,7 +218,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       if (this.state.metric !== values.metric) {
         Object.assign(stateUpdate, this.getSceneUpdatesForNewMetricValue(values.metric));
       }
-    } else if (values.metric === null || values.metric === undefined) {
+    } else if (values.metric == null) {
       stateUpdate.metric = undefined;
       stateUpdate.topScene = new MetricSelectScene({});
     }
