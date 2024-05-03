@@ -141,7 +141,7 @@ func TestOrgRoleMapper_MapOrgRoles(t *testing.T) {
 			expected:           map[int64]org.RoleType{1: org.RoleEditor, 2: org.RoleEditor, 3: org.RoleEditor},
 		},
 		{
-			name:               "should map correctly when global org mapping is provided",
+			name:               "should map correctly when fallback org mapping is provided",
 			externalOrgs:       []string{"First", "Second", "Third"},
 			orgMappingSettings: []string{"First:1:Viewer", "*:1:Editor", "Second:2:Viewer"},
 			directlyMappedRole: "",

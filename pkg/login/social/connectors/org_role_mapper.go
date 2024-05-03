@@ -91,10 +91,9 @@ func (m *OrgRoleMapper) GetDefaultOrgMapping(strictRoleMapping bool, directlyMap
 		orgID = int64(m.cfg.AutoAssignOrgId)
 	}
 
-	if directlyMappedRole == "" || !directlyMappedRole.IsValid() {
+	orgRoles[orgID] = directlyMappedRole
+	if !directlyMappedRole.IsValid() {
 		orgRoles[orgID] = org.RoleType(m.cfg.AutoAssignOrgRole)
-	} else {
-		orgRoles[orgID] = directlyMappedRole
 	}
 
 	return orgRoles
