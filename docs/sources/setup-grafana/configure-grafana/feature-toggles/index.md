@@ -115,6 +115,7 @@ Experimental features might be changed or removed without prior notice.
 | `scenes`                                    | Experimental framework to build interactive dashboards                                                                                                                                                                                                                            |
 | `disableSecretsCompatibility`               | Disable duplicated secret storage in legacy tables                                                                                                                                                                                                                                |
 | `logRequestsInstrumentedAsUnknown`          | Logs the path for requests that are instrumented as unknown                                                                                                                                                                                                                       |
+| `unifiedStorage`                            | SQL-based k8s storage                                                                                                                                                                                                                                                             |
 | `showDashboardValidationWarnings`           | Show warnings when dashboards do not validate against the schema                                                                                                                                                                                                                  |
 | `mysqlAnsiQuotes`                           | Use double quotes to escape keyword in a MySQL query                                                                                                                                                                                                                              |
 | `alertingBacktesting`                       | Rule backtesting API for alerting                                                                                                                                                                                                                                                 |
@@ -185,7 +186,6 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 
 | Feature toggle name                    | Description                                                    |
 | -------------------------------------- | -------------------------------------------------------------- |
-| `unifiedStorage`                       | SQL-based k8s storage                                          |
 | `grafanaAPIServerWithExperimentalAPIs` | Register experimental APIs with the k8s API server             |
 | `grafanaAPIServerEnsureKubectlAccess`  | Start an additional https handler and write kubectl options    |
 | `panelTitleSearchInV1`                 | Enable searching for dashboards using panel title in search v1 |
