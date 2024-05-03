@@ -1,8 +1,8 @@
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import { AdHocFiltersVariable, sceneGraph } from '@grafana/scenes';
+import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 
 import { MockDataSourceSrv, mockDataSource } from '../alerting/unified/mocks';
-import { DataSourceType } from '../alerting/unified/utils/datasource';
 import { activateFullSceneTree } from '../dashboard-scene/utils/test-utils';
 
 import { DataTrail } from './DataTrail';
@@ -25,6 +25,22 @@ describe('DataTrail', () => {
   describe('Given starting non-embedded trail with url sync and no url state', () => {
     let trail: DataTrail;
     const preTrailUrl = '/';
+
+    function getFilterVar() {
+      const variable = sceneGraph.lookupVariable(VAR_FILTERS, trail);
+      if (variable instanceof AdHocFiltersVariable) {
+        return variable;
+      }
+      throw new Error('getFilterVar failed');
+    }
+
+    function getStepFilterVar(step: number) {
+      const variable = trail.state.history.state.steps[step].trailState.$variables?.getByName(VAR_FILTERS);
+      if (variable instanceof AdHocFiltersVariable) {
+        return variable;
+      }
+      throw new Error(`getStepFilterVar failed for step ${step}`);
+    }
 
     beforeEach(() => {
       trail = new DataTrail({});
@@ -198,22 +214,6 @@ describe('DataTrail', () => {
           });
         });
       });
-
-      function getFilterVar() {
-        const variable = sceneGraph.lookupVariable(VAR_FILTERS, trail);
-        if (variable instanceof AdHocFiltersVariable) {
-          return variable;
-        }
-        throw new Error('getFilterVar failed');
-      }
-
-      function getStepFilterVar(step: number) {
-        const variable = trail.state.history.state.steps[step].trailState.$variables?.getByName(VAR_FILTERS);
-        if (variable instanceof AdHocFiltersVariable) {
-          return variable;
-        }
-        throw new Error(`getStepFilterVar failed for step ${step}`);
-      }
 
       it('Should have default empty filter', () => {
         expect(getFilterVar().state.filters.length).toBe(0);
@@ -408,6 +408,72 @@ describe('DataTrail', () => {
 
         expect(locationService.getSearchObject().metric).toBe(undefined);
         expect(locationService.getSearch().has('metric')).toBe(false);
+      });
+    });
+
+    it('Filter should be empty', () => {
+      expect(getStepFilterVar(0).state.filters.length).toBe(0);
+    });
+
+    describe('And filter is added zone=a', () => {
+      beforeEach(() => {
+        getFilterVar().setState({ filters: [{ key: 'zone', operator: '=', value: 'a' }] });
+      });
+
+      it('Filter of trail should be zone=a', () => {
+        expect(getFilterVar().state.filters[0].key).toBe('zone');
+        expect(getFilterVar().state.filters[0].value).toBe('a');
+      });
+
+      it('Filter of step 1 should be zone=a', () => {
+        expect(getStepFilterVar(1).state.filters[0].key).toBe('zone');
+        expect(getStepFilterVar(1).state.filters[0].value).toBe('a');
+      });
+
+      it('Filter of step 0 should empty', () => {
+        expect(getStepFilterVar(0).state.filters.length).toBe(0);
+      });
+
+      describe('When returning to step 0', () => {
+        beforeEach(() => {
+          trail.state.history.goBackToStep(0);
+        });
+
+        it('Filter of trail should be empty', () => {
+          expect(getFilterVar().state.filters.length).toBe(0);
+        });
+      });
+    });
+
+    it('Time range `from` should be now-6h', () => {
+      expect(trail.state.$timeRange?.state.from).toBe('now-6h');
+    });
+
+    describe('And time range is changed to now-15m to now', () => {
+      beforeEach(() => {
+        trail.state.$timeRange?.setState({ from: 'now-15m' });
+      });
+
+      it('Time range `from` should be now-15m', () => {
+        expect(trail.state.$timeRange?.state.from).toBe('now-15m');
+      });
+
+      it('Time range `from` of step 1 should be now-15m', () => {
+        expect(trail.state.history.state.steps[1].trailState.$timeRange?.state.from).toBe('now-15m');
+      });
+
+      it('Time range `from` of step 0 should be now-6h', () => {
+        expect(trail.state.history.state.steps[0].trailState.$timeRange?.state.from).toBe('now-6h');
+      });
+
+      describe('When returning to step 0', () => {
+        beforeEach(() => {
+          trail.state.history.goBackToStep(0);
+        });
+
+        it('Time range `from` should be now-6h', () => {
+          expect(trail.state.$timeRange?.state.from).toBe('now-6h');
+        });
       });
     });
   });
