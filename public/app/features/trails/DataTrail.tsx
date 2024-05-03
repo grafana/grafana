@@ -94,8 +94,10 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     }
 
     // Disconnects the current step history state from the current state, to prevent changes affecting history state
-    const currentState = this.state.history.state.steps[this.state.history.state.currentStep].trailState;
-    this.restoreFromHistoryStep(currentState);
+    const currentState = this.state.history.state.steps[this.state.history.state.currentStep]?.trailState;
+    if (currentState) {
+      this.restoreFromHistoryStep(currentState);
+    }
 
     this.enableUrlSync();
 
