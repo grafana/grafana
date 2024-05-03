@@ -51,7 +51,7 @@ func TestOrgRoleMapper_MapOrgRoles(t *testing.T) {
 			expected:           map[int64]org.RoleType{1: org.RoleViewer},
 		},
 		{
-			name:               "should return nil when no org mapping settings are provided and directly mapped role is not set and strict mapping is enabled",
+			name:               "should return nil when no org mapping settings are provided and directly mapped role is not set and strict role mapping is enabled",
 			externalOrgs:       []string{},
 			orgMappingSettings: []string{},
 			directlyMappedRole: "",
@@ -59,7 +59,7 @@ func TestOrgRoleMapper_MapOrgRoles(t *testing.T) {
 			expected:           nil,
 		},
 		{
-			name:               "should return nil when org mapping doesn't match any of the external orgs and no directly mapped role is provided and strict mapping is enabled",
+			name:               "should return nil when org mapping doesn't match any of the external orgs and no directly mapped role is provided and strict role mapping is enabled",
 			externalOrgs:       []string{"First"},
 			orgMappingSettings: []string{"Second:1:Editor"},
 			directlyMappedRole: "",
@@ -68,7 +68,7 @@ func TestOrgRoleMapper_MapOrgRoles(t *testing.T) {
 		},
 		// In this case the parsed org mapping will be empty because the role is invalid
 		{
-			name:               "should return nil for the org if the specified role is invalid and role strict is enabled",
+			name:               "should return nil for the org if the specified role is invalid and strict role mapping is enabled",
 			externalOrgs:       []string{"First"},
 			orgMappingSettings: []string{"First:1:SuperEditor"},
 			directlyMappedRole: "",
@@ -76,7 +76,7 @@ func TestOrgRoleMapper_MapOrgRoles(t *testing.T) {
 			expected:           nil,
 		},
 		{
-			name:               "should map the direclty mapped role to default org if the org mapping is invalid and role strict is enabled",
+			name:               "should map the direclty mapped role to default org if the org mapping is invalid and strict role mapping is enabled",
 			externalOrgs:       []string{"First"},
 			orgMappingSettings: []string{"First:1:SuperEditor"},
 			directlyMappedRole: "Editor",
@@ -84,7 +84,7 @@ func TestOrgRoleMapper_MapOrgRoles(t *testing.T) {
 			expected:           map[int64]org.RoleType{2: org.RoleEditor},
 		},
 		{
-			name:               "should return nil if the org mapping contains at least one invalid setting and directly mapped role is empty and role strict is enabled",
+			name:               "should return nil if the org mapping contains at least one invalid setting and directly mapped role is empty and strict role mapping is enabled",
 			externalOrgs:       []string{"First"},
 			orgMappingSettings: []string{"First:1:SuperEditor", "First:1:Admin"},
 			directlyMappedRole: "",
@@ -210,61 +210,12 @@ func TestOrgRoleMapper_MapOrgRoles(t *testing.T) {
 	}
 }
 
-func TestOrgRoleMapper_MapOrgRoles_OrgNameResolution(t *testing.T) {
-	t.Skip()
-	testCases := []struct {
-		name             string
-		orgMapping       []string
-		setupMock        func(*orgtest.MockService)
-		expectedOrgRoles map[int64]org.RoleType
-	}{
-		{
-			name:       "should skip org mapping if org was not found or the resolution fails",
-			orgMapping: []string{"ExternalOrg1:First:Editor", "ExternalOrg1:NonExistent:Viewer"},
-			setupMock: func(orgService *orgtest.MockService) {
-				orgService.On("GetByName", mock.Anything, mock.MatchedBy(func(query *org.GetOrgByNameQuery) bool {
-					return query.Name == "First"
-				})).Return(&org.Org{ID: 1}, nil)
-				orgService.On("GetByName", mock.Anything, mock.Anything).Return(nil, assert.AnError)
-			},
-			expectedOrgRoles: map[int64]org.RoleType{1: org.RoleEditor}, // TODO: should this be nil or error?
-		},
-		{
-			name:       "should return nil when all of the org names are invalid",
-			orgMapping: []string{"ExternalOrg1:NonExistent1:Editor", "ExternalOrg1:NonExistent2:Viewer"},
-			setupMock: func(orgService *orgtest.MockService) {
-				orgService.On("GetByName", mock.Anything, mock.Anything).Return(nil, assert.AnError)
-			},
-			expectedOrgRoles: nil,
-		},
-	}
-
-	cfg := setting.NewCfg()
-	cfg.AutoAssignOrg = true
-	cfg.AutoAssignOrgId = 2
-	cfg.AutoAssignOrgRole = string(org.RoleViewer)
-
-	orgService := orgtest.NewMockService(t)
-	mapper := ProvideOrgRoleMapper(cfg, orgService)
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			orgService.ExpectedCalls = nil
-			tc.setupMock(orgService)
-
-			mappingCfg := mapper.ParseOrgMappingSettings(context.Background(), tc.orgMapping, false)
-			actual := mapper.MapOrgRoles(context.Background(), mappingCfg, []string{"ExternalOrg1"}, org.RoleViewer)
-
-			assert.EqualValues(t, tc.expectedOrgRoles, actual)
-		})
-	}
-}
-
 func TestOrgRoleMapper_ParseOrgMappingSettings(t *testing.T) {
 	testCases := []struct {
 		name       string
 		rawMapping []string
 		roleStrict bool
+		setupMock  func(*orgtest.MockService)
 		expected   *MappingConfiguration
 	}{
 		{
@@ -326,11 +277,44 @@ func TestOrgRoleMapper_ParseOrgMappingSettings(t *testing.T) {
 				strictRoleMapping: false,
 			},
 		},
+		{
+			name:       "should return empty mapping if at least one org was not found or the resolution failed and strict role mapping is enabled",
+			rawMapping: []string{"ExternalOrg1:First:Editor", "ExternalOrg1:NonExistent:Viewer"},
+			roleStrict: true,
+			setupMock: func(orgService *orgtest.MockService) {
+				orgService.On("GetByName", mock.Anything, mock.MatchedBy(func(query *org.GetOrgByNameQuery) bool {
+					return query.Name == "First"
+				})).Return(&org.Org{ID: 1}, nil)
+				orgService.On("GetByName", mock.Anything, mock.Anything).Return(nil, assert.AnError)
+			},
+			expected: &MappingConfiguration{
+				orgMapping:        map[string]map[int64]org.RoleType{},
+				strictRoleMapping: true,
+			},
+		},
+		{
+			name:       "should skip org mapping if org was not found or the resolution fails and strict role mapping is disabled",
+			rawMapping: []string{"ExternalOrg1:First:Editor", "ExternalOrg1:NonExistent:Viewer"},
+			roleStrict: false,
+			setupMock: func(orgService *orgtest.MockService) {
+				orgService.On("GetByName", mock.Anything, mock.MatchedBy(func(query *org.GetOrgByNameQuery) bool {
+					return query.Name == "First"
+				})).Return(&org.Org{ID: 1}, nil)
+				orgService.On("GetByName", mock.Anything, mock.Anything).Return(nil, assert.AnError)
+			},
+			expected: &MappingConfiguration{
+				orgMapping:        map[string]map[int64]org.RoleType{"ExternalOrg1": {1: org.RoleEditor}},
+				strictRoleMapping: false,
+			},
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := setting.NewCfg()
-			orgService := orgtest.NewOrgServiceFake()
+			orgService := orgtest.NewMockService(t)
+			if tc.setupMock != nil {
+				tc.setupMock(orgService)
+			}
 			mapper := ProvideOrgRoleMapper(cfg, orgService)
 
 			actual := mapper.ParseOrgMappingSettings(context.Background(), tc.rawMapping, tc.roleStrict)

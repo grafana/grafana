@@ -144,6 +144,10 @@ func (m *OrgRoleMapper) ParseOrgMappingSettings(ctx context.Context, mappings []
 				if getErr != nil {
 					// skip in case of error
 					m.logger.Warn("Could not fetch organization. Skipping.", "err", getErr, "mapping", fmt.Sprintf("%v", v), "org", kv[1])
+					if roleStrict {
+						// Return empty mapping if at least one org name cannot be resolved when roleStrict is enabled
+						return &MappingConfiguration{orgMapping: map[string]map[int64]org.RoleType{}, strictRoleMapping: roleStrict}
+					}
 					continue
 				}
 				orgID, err = int(res.ID), nil
