@@ -5,6 +5,7 @@ import { byText, byRole } from 'testing-library-selector';
 import { setBackendSrv, setPluginExtensionsHook } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { setFolderAccessControl } from 'app/features/alerting/unified/mocks/server/configure';
 import { AccessControlAction } from 'app/types';
 import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
 
@@ -38,7 +39,7 @@ const ELEMENTS = {
     more: {
       button: byRole('button', { name: /More/i }),
       actions: {
-        silence: byRole('link', { name: /Silence/i }),
+        silence: byRole('menuitem', { name: /Silence/i }),
         duplicate: byRole('menuitem', { name: /Duplicate/i }),
         copyLink: byRole('menuitem', { name: /Copy link/i }),
         export: byRole('menuitem', { name: /Export/i }),
@@ -103,6 +104,25 @@ describe('RuleViewer', () => {
       { uid: 'test1' }
     );
     const mockRuleIdentifier = ruleId.fromCombinedRule('grafana', mockRule);
+
+    beforeAll(() => {
+      grantUserPermissions([
+        AccessControlAction.AlertingRuleCreate,
+        AccessControlAction.AlertingRuleRead,
+        AccessControlAction.AlertingRuleUpdate,
+        AccessControlAction.AlertingRuleDelete,
+        AccessControlAction.AlertingInstanceCreate,
+      ]);
+      setBackendSrv(backendSrv);
+
+      setFolderAccessControl({
+        [AccessControlAction.AlertingRuleCreate]: true,
+        [AccessControlAction.AlertingRuleRead]: true,
+        [AccessControlAction.AlertingRuleUpdate]: true,
+        [AccessControlAction.AlertingRuleDelete]: true,
+        [AccessControlAction.AlertingInstanceCreate]: true,
+      });
+    });
 
     it('should render a Grafana managed alert rule', async () => {
       await renderRuleViewer(mockRule, mockRuleIdentifier);
