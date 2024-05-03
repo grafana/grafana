@@ -28,8 +28,13 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+type (
+	JWTAccessTokenClaims = authlib.Claims[authlib.AccessTokenClaims]
+	JWTIDTokenClaims     = authlib.Claims[authlib.IDTokenClaims]
+)
+
 var (
-	validPayload = authlib.Claims[authlib.AccessTokenClaims]{
+	validPayload = JWTAccessTokenClaims{
 		Claims: &jwt.Claims{
 			Issuer:   "http://localhost:3000",
 			Subject:  "access-policy:this-uid",
@@ -44,7 +49,7 @@ var (
 			Permissions:          []string{"fixed:folders:reader"},
 		},
 	}
-	validIDPayload = authlib.Claims[authlib.IDTokenClaims]{
+	validIDPayload = JWTIDTokenClaims{
 		Claims: &jwt.Claims{
 			Issuer:   "http://localhost:3000",
 			Subject:  "user:2",
@@ -63,22 +68,22 @@ var (
 var _ authlib.Verifier[authlib.IDTokenClaims] = &mockIDVerifier{}
 
 type mockIDVerifier struct {
-	Claims authlib.Claims[authlib.IDTokenClaims]
+	Claims JWTIDTokenClaims
 	Error  error
 }
 
-func (m *mockIDVerifier) Verify(ctx context.Context, token string) (*authlib.Claims[authlib.IDTokenClaims], error) {
+func (m *mockIDVerifier) Verify(ctx context.Context, token string) (*JWTIDTokenClaims, error) {
 	return &m.Claims, m.Error
 }
 
 var _ authlib.Verifier[authlib.AccessTokenClaims] = &mockVerifier{}
 
 type mockVerifier struct {
-	Claims authlib.Claims[authlib.AccessTokenClaims]
+	Claims JWTAccessTokenClaims
 	Error  error
 }
 
-func (m *mockVerifier) Verify(ctx context.Context, token string) (*authlib.Claims[authlib.AccessTokenClaims], error) {
+func (m *mockVerifier) Verify(ctx context.Context, token string) (*JWTAccessTokenClaims, error) {
 	return &m.Claims, m.Error
 }
 
@@ -163,8 +168,8 @@ func TestExtendedJWT_Test(t *testing.T) {
 func TestExtendedJWT_Authenticate(t *testing.T) {
 	type testCase struct {
 		name        string
-		payload     *authlib.Claims[authlib.AccessTokenClaims]
-		idPayload   *authlib.Claims[authlib.IDTokenClaims]
+		payload     *JWTAccessTokenClaims
+		idPayload   *JWTIDTokenClaims
 		orgID       int64
 		want        *authn.Identity
 		initTestEnv func(env *testEnv)
@@ -225,7 +230,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 		},
 		{
 			name: "should return error when the subject is not an access-policy",
-			payload: &authlib.Claims[authlib.AccessTokenClaims]{
+			payload: &JWTAccessTokenClaims{
 				Claims: &jwt.Claims{
 					Issuer:   "http://localhost:3000",
 					Subject:  "user:2",
@@ -283,8 +288,8 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 	type testCase struct {
 		name             string
-		payload          *authlib.Claims[authlib.AccessTokenClaims]
-		idPayload        *authlib.Claims[authlib.IDTokenClaims]
+		payload          *JWTAccessTokenClaims
+		idPayload        *JWTIDTokenClaims
 		alg              jose.SignatureAlgorithm
 		generateWrongTyp bool
 	}
@@ -292,7 +297,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 	testCases := []testCase{
 		{
 			name: "missing iss",
-			payload: &authlib.Claims[authlib.AccessTokenClaims]{
+			payload: &JWTAccessTokenClaims{
 				Claims: &jwt.Claims{
 					Subject:  "access-policy:this-uid",
 					Audience: jwt.Audience{"http://localhost:3000"},
@@ -307,7 +312,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 		},
 		{
 			name: "missing expiry",
-			payload: &authlib.Claims[authlib.AccessTokenClaims]{
+			payload: &JWTAccessTokenClaims{
 				Claims: &jwt.Claims{
 					Issuer:   "http://localhost:3000",
 					Subject:  "access-policy:this-uid",
@@ -322,7 +327,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 		},
 		{
 			name: "expired token",
-			payload: &authlib.Claims[authlib.AccessTokenClaims]{
+			payload: &JWTAccessTokenClaims{
 				Claims: &jwt.Claims{
 					Issuer:   "http://localhost:3000",
 					Subject:  "access-policy:this-uid",
@@ -338,7 +343,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 		},
 		{
 			name: "missing aud",
-			payload: &authlib.Claims[authlib.AccessTokenClaims]{
+			payload: &JWTAccessTokenClaims{
 				Claims: &jwt.Claims{
 					Issuer:   "http://localhost:3000",
 					Subject:  "access-policy:this-uid",
@@ -353,7 +358,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 		},
 		{
 			name: "wrong aud",
-			payload: &authlib.Claims[authlib.AccessTokenClaims]{
+			payload: &JWTAccessTokenClaims{
 				Claims: &jwt.Claims{
 					Issuer:   "http://localhost:3000",
 					Subject:  "access-policy:this-uid",
@@ -374,7 +379,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 		},
 		{
 			name: "missing sub",
-			payload: &authlib.Claims[authlib.AccessTokenClaims]{
+			payload: &JWTAccessTokenClaims{
 				Claims: &jwt.Claims{
 					Issuer:   "http://localhost:3000",
 					Audience: jwt.Audience{"http://localhost:3000"},
@@ -389,7 +394,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 		},
 		{
 			name: "missing iat",
-			payload: &authlib.Claims[authlib.AccessTokenClaims]{
+			payload: &JWTAccessTokenClaims{
 				Claims: &jwt.Claims{
 					Issuer:   "http://localhost:3000",
 					Subject:  "access-policy:this-uid",
@@ -404,7 +409,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 		},
 		{
 			name: "iat later than current time",
-			payload: &authlib.Claims[authlib.AccessTokenClaims]{
+			payload: &JWTAccessTokenClaims{
 				Claims: &jwt.Claims{
 					Issuer:   "http://localhost:3000",
 					Subject:  "access-policy:this-uid",
@@ -420,7 +425,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 		},
 		{
 			name: "unsupported alg",
-			payload: &authlib.Claims[authlib.AccessTokenClaims]{
+			payload: &JWTAccessTokenClaims{
 				Claims: &jwt.Claims{
 					Issuer:   "http://localhost:3000",
 					Subject:  "access-policy:this-uid",
@@ -488,7 +493,7 @@ type testEnv struct {
 	s       *ExtendedJWT
 }
 
-func generateToken(payload authlib.Claims[authlib.AccessTokenClaims], signingKey any, alg jose.SignatureAlgorithm) string {
+func generateToken(payload JWTAccessTokenClaims, signingKey any, alg jose.SignatureAlgorithm) string {
 	signer, _ := jose.NewSigner(jose.SigningKey{Algorithm: alg, Key: signingKey}, &jose.SignerOptions{
 		ExtraHeaders: map[jose.HeaderKey]any{
 			jose.HeaderType: authlib.TokenTypeAccess,
@@ -499,7 +504,7 @@ func generateToken(payload authlib.Claims[authlib.AccessTokenClaims], signingKey
 	return result
 }
 
-func generateIDToken(payload authlib.Claims[authlib.IDTokenClaims], signingKey any, alg jose.SignatureAlgorithm) string {
+func generateIDToken(payload JWTIDTokenClaims, signingKey any, alg jose.SignatureAlgorithm) string {
 	signer, _ := jose.NewSigner(jose.SigningKey{Algorithm: alg, Key: signingKey}, &jose.SignerOptions{
 		ExtraHeaders: map[jose.HeaderKey]any{
 			jose.HeaderType: authlib.TokenTypeID,
