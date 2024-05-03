@@ -18,8 +18,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func NewStore(sql db.DB, features featuremgmt.FeatureToggles, actionsetService *ActionSetService) *store {
-	return &store{sql, features, *actionsetService}
+func NewStore(sql db.DB, features featuremgmt.FeatureToggles, actionsetService ActionSetService) *store {
+	return &store{sql, features, actionsetService}
 }
 
 type store struct {

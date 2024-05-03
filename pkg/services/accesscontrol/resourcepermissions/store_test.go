@@ -566,7 +566,7 @@ func setupTestEnv(t testing.TB) (*store, db.DB, *setting.Cfg) {
 	sql, cfg := db.InitTestDBWithCfg(t)
 	ac := acimpl.ProvideAccessControl(setting.NewCfg())
 	asService := NewActionSetService(ac)
-	return NewStore(sql, featuremgmt.WithFeatures(), &asService), sql, cfg
+	return NewStore(sql, featuremgmt.WithFeatures(), asService), sql, cfg
 }
 
 func TestStore_IsInherited(t *testing.T) {

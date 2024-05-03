@@ -290,7 +290,7 @@ var DatasourceQueryActions = []string{
 
 func ProvideDatasourcePermissionsService(features featuremgmt.FeatureToggles, db db.DB, actionSetService resourcepermissions.ActionSetService) *DatasourcePermissionsService {
 	return &DatasourcePermissionsService{
-		store: resourcepermissions.NewStore(db, features, &actionSetService),
+		store: resourcepermissions.NewStore(db, features, actionSetService),
 	}
 }
 
