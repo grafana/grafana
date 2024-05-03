@@ -9,7 +9,11 @@ import { Alert, Button, CodeEditor, ConfirmModal, Stack, useStyles2 } from '@gra
 import { reportFormErrors } from '../../Analytics';
 import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { GRAFANA_RULES_SOURCE_NAME, isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
+import {
+  GRAFANA_RULES_SOURCE_NAME,
+  isProvisionedDataSource,
+  isVanillaPrometheusAlertManagerDataSource,
+} from '../../utils/datasource';
 import { Spacer } from '../Spacer';
 
 export interface FormValues {
@@ -28,7 +32,10 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss, onSave
   const { loading: isSaving, error: savingError } = useUnifiedAlertingSelector((state) => state.saveAMConfig);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
 
-  const readOnly = alertmanagerName ? isVanillaPrometheusAlertManagerDataSource(alertmanagerName) : false;
+  const immutableDataSource = alertmanagerName ? isVanillaPrometheusAlertManagerDataSource(alertmanagerName) : false;
+  const provisionedDataSource = isProvisionedDataSource(alertmanagerName);
+  const readOnly = immutableDataSource || provisionedDataSource;
+
   const isGrafanaManagedAlertmanager = alertmanagerName === GRAFANA_RULES_SOURCE_NAME;
   const styles = useStyles2(getStyles);
 
@@ -146,20 +153,22 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss, onSave
         </div>
       )}
 
-      {!readOnly && (
-        <Stack justifyContent="flex-end">
+      <Stack justifyContent="flex-end">
+        {!readOnly && (
           <Button variant="destructive" onClick={() => setShowResetConfirmation(true)} disabled={isOperating}>
             Reset
           </Button>
-          <Spacer />
-          <Button variant="secondary" onClick={() => onDismiss()} disabled={isOperating}>
-            Cancel
-          </Button>
+        )}
+        <Spacer />
+        <Button variant="secondary" onClick={() => onDismiss()} disabled={isOperating}>
+          Cancel
+        </Button>
+        {!readOnly && (
           <Button variant="primary" onClick={handleSave} disabled={isOperating}>
             Save
           </Button>
-        </Stack>
-      )}
+        )}
+      </Stack>
       <ConfirmModal
         isOpen={showResetConfirmation}
         title="Reset Alertmanager configuration"

@@ -1,161 +1,106 @@
-import { render, waitFor } from '@testing-library/react';
+import { waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { render } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors';
-import {
-  AlertManagerCortexConfig,
-  AlertManagerDataSourceJsonData,
-  AlertManagerImplementation,
-} from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 
-import {
-  fetchAlertManagerConfig,
-  deleteAlertManagerConfig,
-  updateAlertManagerConfig,
-  fetchStatus,
-} from '../../api/alertmanager';
-import {
-  grantUserPermissions,
-  mockDataSource,
-  someCloudAlertManagerConfig,
-  someCloudAlertManagerStatus,
-} from '../../mocks';
+import { setupMswServer } from '../../mockApi';
+import { grantUserPermissions } from '../../mocks';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
-import { getAllDataSources } from '../../utils/config';
-import { DataSourceType } from '../../utils/datasource';
 
 import AlertmanagerConfig from './AlertmanagerConfig';
+import {
+  EXTERNAL_VANILLA_ALERTMANAGER_UID,
+  PROVISIONED_VANILLA_ALERTMANAGER_UID,
+  setupGrafanaManagedServer,
+  setupVanillaAlertmanagerServer,
+} from './__mocks__/server';
 
-jest.mock('../../api/alertmanager');
-jest.mock('../../api/grafana');
-jest.mock('../../utils/config');
-
-const mocks = {
-  getAllDataSources: jest.mocked(getAllDataSources),
-
-  api: {
-    fetchConfig: jest.mocked(fetchAlertManagerConfig),
-    deleteAlertManagerConfig: jest.mocked(deleteAlertManagerConfig),
-    updateAlertManagerConfig: jest.mocked(updateAlertManagerConfig),
-    fetchStatus: jest.mocked(fetchStatus),
-  },
-};
-
-const renderConfigurationDrawer = (
+const renderConfiguration = (
   alertManagerSourceName: string,
   { onDismiss = jest.fn(), onSave = jest.fn(), onReset = jest.fn() }
-) => {
-  return render(
-    <TestProvider>
-      <AlertmanagerProvider accessType="instance">
-        <AlertmanagerConfig
-          alertmanagerName={alertManagerSourceName}
-          onDismiss={onDismiss}
-          onSave={onSave}
-          onReset={onReset}
-        />
-      </AlertmanagerProvider>
-    </TestProvider>
+) =>
+  render(
+    <AlertmanagerProvider accessType="instance">
+      <AlertmanagerConfig
+        alertmanagerName={alertManagerSourceName}
+        onDismiss={onDismiss}
+        onSave={onSave}
+        onReset={onReset}
+      />
+    </AlertmanagerProvider>
   );
-};
-
-const dataSources = {
-  alertManager: mockDataSource({
-    name: 'CloudManager',
-    type: DataSourceType.Alertmanager,
-  }),
-  promAlertManager: mockDataSource<AlertManagerDataSourceJsonData>({
-    name: 'PromManager',
-    type: DataSourceType.Alertmanager,
-    jsonData: {
-      implementation: AlertManagerImplementation.prometheus,
-    },
-  }),
-};
 
 const ui = {
-  confirmButton: byRole('button', { name: /Yes, reset configuration/ }),
   resetButton: byRole('button', { name: /Reset/ }),
+  resetConfirmButton: byRole('button', { name: /Yes, reset configuration/ }),
   saveButton: byRole('button', { name: /Save/ }),
+  cancelButton: byRole('button', { name: /Cancel/ }),
   configInput: byTestId(selectors.components.CodeEditor.container),
   readOnlyConfig: byTestId('readonly-config'),
 };
 
-describe.skip('Alerting Settings', () => {
+describe('Alerting Settings', () => {
+  const server = setupMswServer();
+
   beforeEach(() => {
+    setupGrafanaManagedServer(server);
     grantUserPermissions([AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingInstanceRead]);
   });
 
-  describe('Built-in Alertmanager', () => {});
+  it('should be able to reset alertmanager config', async () => {
+    const onReset = jest.fn();
+    renderConfiguration('grafana', { onReset });
 
-  describe('Vanilla Alertmanager', () => {});
+    await userEvent.click(await ui.resetButton.get());
 
-  describe('Mimir Alertmanager', () => {});
-
-  it('Reset alertmanager config', async () => {
-    mocks.api.fetchConfig.mockResolvedValue({
-      template_files: {
-        foo: 'bar',
-      },
-      alertmanager_config: {},
+    await waitFor(() => {
+      expect(ui.resetConfirmButton.query()).toBeInTheDocument();
     });
 
-    const onReset = jest.fn();
-    renderConfigurationDrawer(dataSources.alertManager.name, { onReset });
-
-    await userEvent.click(await ui.resetButton.find());
-    await userEvent.click(ui.confirmButton.get());
+    await userEvent.click(ui.resetConfirmButton.get());
 
     await waitFor(() => expect(onReset).toHaveBeenCalled());
-    expect(onReset.mock.lastCall).toMatchSnapshot();
-    await waitFor(() => {
-      expect(ui.confirmButton.get()).toBeInTheDocument();
-    });
+    expect(onReset).toHaveBeenLastCalledWith('grafana');
   });
 
-  it('Editable alertmanager config', async () => {
-    let savedConfig: AlertManagerCortexConfig | undefined = undefined;
+  it('should be able to cancel', async () => {
+    const onDismiss = jest.fn();
+    renderConfiguration('grafana', { onDismiss });
 
-    const defaultConfig = {
-      template_files: {},
-      alertmanager_config: {
-        route: {
-          receiver: 'old one',
-        },
-      },
-    };
+    await userEvent.click(await ui.cancelButton.get());
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+  });
+});
 
-    mocks.api.fetchConfig.mockImplementation(() => Promise.resolve(savedConfig ?? defaultConfig));
-    mocks.api.updateAlertManagerConfig.mockResolvedValue();
+describe('vanilla Alertmanager', () => {
+  const server = setupMswServer();
 
-    const onSave = jest.fn();
-    renderConfigurationDrawer(dataSources.alertManager.name, { onSave });
-
-    await ui.configInput.find();
-    await userEvent.click(ui.saveButton.get());
-
-    await waitFor(() => expect(onSave).toHaveBeenCalled());
-    expect(mocks.api.updateAlertManagerConfig.mock.lastCall).toMatchSnapshot();
-
-    await waitFor(() => expect(mocks.api.fetchConfig).toHaveBeenCalledTimes(2));
+  beforeEach(() => {
+    setupVanillaAlertmanagerServer(server);
+    grantUserPermissions([AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingInstanceRead]);
   });
 
-  it('Read-only when using Prometheus Alertmanager', async () => {
-    mocks.api.fetchStatus.mockResolvedValue({
-      ...someCloudAlertManagerStatus,
-      config: someCloudAlertManagerConfig.alertmanager_config,
-    });
-    renderConfigurationDrawer(dataSources.promAlertManager.name, {});
+  afterAll(() => {
+    jest.resetAllMocks();
+  });
 
-    await ui.readOnlyConfig.find();
-    expect(ui.resetButton.query()).not.toBeInTheDocument();
+  it('should be read-only when using vanilla Prometheus Alertmanager', async () => {
+    renderConfiguration(EXTERNAL_VANILLA_ALERTMANAGER_UID, {});
+
+    expect(ui.cancelButton.get()).toBeInTheDocument();
     expect(ui.saveButton.query()).not.toBeInTheDocument();
+    expect(ui.resetButton.query()).not.toBeInTheDocument();
+  });
 
-    expect(mocks.api.fetchConfig).not.toHaveBeenCalled();
-    expect(mocks.api.fetchStatus).toHaveBeenCalledTimes(1);
+  it('should be read-only when provisioned Alertmanager', async () => {
+    renderConfiguration(PROVISIONED_VANILLA_ALERTMANAGER_UID, {});
+
+    expect(ui.cancelButton.get()).toBeInTheDocument();
+    expect(ui.saveButton.query()).not.toBeInTheDocument();
+    expect(ui.resetButton.query()).not.toBeInTheDocument();
   });
 });
