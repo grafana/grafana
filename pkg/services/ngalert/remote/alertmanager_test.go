@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
+	"gopkg.in/yaml.v3"
 )
 
 const (
@@ -443,6 +444,39 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 	}
 }
 
+func TestIntegrationRemoteAlertmanagerGetStatus(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	amURL, ok := os.LookupEnv("AM_URL")
+	if !ok {
+		t.Skip("No Alertmanager URL provided")
+	}
+	tenantID := os.Getenv("AM_TENANT_ID")
+	password := os.Getenv("AM_PASSWORD")
+
+	cfg := AlertmanagerConfig{
+		OrgID:             1,
+		URL:               amURL,
+		TenantID:          tenantID,
+		BasicAuthPassword: password,
+	}
+
+	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
+	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, defaultGrafanaConfig, m)
+	require.NoError(t, err)
+
+	// We should get the default Cloud Alertmanager configuration.
+	ctx := context.Background()
+	status, err := am.GetStatus(ctx)
+	require.NoError(t, err)
+	b, err := yaml.Marshal(status.Config)
+	require.NoError(t, err)
+	require.YAMLEq(t, defaultCloudAMConfig, string(b))
+}
+
 func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -640,3 +674,25 @@ func genAlert(active bool, labels map[string]string) amv2.PostableAlert {
 		},
 	}
 }
+
+const defaultCloudAMConfig = `
+global:
+    resolve_timeout: 5m
+    http_config:
+        follow_redirects: true
+        enable_http2: true
+    smtp_hello: localhost
+    smtp_require_tls: true
+    pagerduty_url: https://events.pagerduty.com/v2/enqueue
+    opsgenie_api_url: https://api.opsgenie.com/
+    wechat_api_url: https://qyapi.weixin.qq.com/cgi-bin/
+    victorops_api_url: https://alert.victorops.com/integrations/generic/20131114/alert/
+    telegram_api_url: https://api.telegram.org
+    webex_api_url: https://webexapis.com/v1/messages
+route:
+    receiver: empty-receiver
+    continue: false
+templates: []
+receivers:
+    - name: empty-receiver
+`
