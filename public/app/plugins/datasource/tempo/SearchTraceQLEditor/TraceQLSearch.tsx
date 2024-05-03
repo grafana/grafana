@@ -219,7 +219,13 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
             />
           </InlineSearchField>
           {config.featureToggles.metricsSummary && (
-            <GroupByField datasource={datasource} onChange={onChange} query={query} isTagsLoading={isTagsLoading} />
+            <GroupByField
+              datasource={datasource}
+              onChange={onChange}
+              query={query}
+              isTagsLoading={isTagsLoading}
+              addVariablesToOptions={addVariablesToOptions}
+            />
           )}
         </div>
         <div className={styles.rawQueryContainer}>
