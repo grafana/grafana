@@ -30,24 +30,12 @@ describe('TrailStore', () => {
     jest.useFakeTimers();
 
     // Having the mock service set up is required for activating the loaded trails
-    // However it seems to cause;
-    // `SceneVariableSet updateAndValidate error { message: 'Datasource ${ds} was not found' }`
     setDataSourceSrv(
       new MockDataSourceSrv({
-        ds: mockDataSource({
+        prom: mockDataSource({
           name: 'Prometheus',
           type: DataSourceType.Prometheus,
           uid: 'ds',
-        }),
-        'cb3a3391-700f-4cc6-81be-a122488e93e6': mockDataSource({
-          name: 'Prometheus',
-          type: DataSourceType.Prometheus,
-          uid: 'cb3a3391-700f-4cc6-81be-a122488e93e6',
-        }),
-        'prom-mock': mockDataSource({
-          name: 'Prometheus',
-          type: DataSourceType.Prometheus,
-          uid: 'prom-mock',
         }),
       })
     );
