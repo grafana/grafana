@@ -19,6 +19,11 @@ type OrgRoleMapper struct {
 	orgService org.Service
 }
 
+type MappingConfiguration struct {
+	orgMapping map[string]map[int64]org.RoleType
+	roleStrict bool
+}
+
 func ProvideOrgRoleMapper(cfg *setting.Cfg, orgService org.Service) *OrgRoleMapper {
 	return &OrgRoleMapper{
 		cfg:        cfg,
@@ -30,23 +35,25 @@ func ProvideOrgRoleMapper(cfg *setting.Cfg, orgService org.Service) *OrgRoleMapp
 // MapOrgRoles maps the external orgs/groups to Grafana orgs and roles. It returns a  map or orgID to role.
 //
 // externalOrgs: list of external orgs/groups
+//
 // orgMapping: mapping configuration from external orgs to Grafana orgs and roles. This is an internal representation of the `org_mapping` setting.
 // Use `ParseOrgMappingSettings` to convert the raw setting to this format.
+//
 // directlyMappedRole: role that is directly mapped to the user
+//
 // roleStrict: if true, either the evaluated role from orgMapping or the directlyMappedRole must be a valid role.
 func (m *OrgRoleMapper) MapOrgRoles(
 	ctx context.Context,
+	mappingCfg *MappingConfiguration,
 	externalOrgs []string,
-	orgMapping map[string]map[int64]org.RoleType,
 	directlyMappedRole org.RoleType,
-	roleStrict bool,
 ) map[int64]org.RoleType {
-	if len(orgMapping) == 0 && !isValidRole(directlyMappedRole) && roleStrict {
+	if len(mappingCfg.orgMapping) == 0 && !isValidRole(directlyMappedRole) && mappingCfg.roleStrict {
 		// No org mappings are configured and the directly mapped role is not set and roleStrict is enabled
 		return nil
 	}
 
-	userOrgRoles := getMappedOrgRoles(externalOrgs, orgMapping)
+	userOrgRoles := getMappedOrgRoles(externalOrgs, mappingCfg.orgMapping)
 
 	if err := m.handleGlobalOrgMapping(userOrgRoles); err != nil {
 		// Cannot map global org roles, return nil (prevent resetting asignments)
@@ -54,7 +61,7 @@ func (m *OrgRoleMapper) MapOrgRoles(
 	}
 
 	if len(userOrgRoles) == 0 {
-		if roleStrict && !isValidRole(directlyMappedRole) {
+		if mappingCfg.roleStrict && !isValidRole(directlyMappedRole) {
 			// No org mapping found and roleStrict is enabled
 			return nil
 		}
@@ -124,7 +131,7 @@ func (m *OrgRoleMapper) handleGlobalOrgMapping(orgRoles map[int64]org.RoleType) 
 // FIXME: Consider introducing a struct to represent the org mapping settings
 // ParseOrgMappingSettings parses the `org_mapping` setting and returns an internal representation of the mapping.
 // If the roleStrict is enabled, the mapping should contain a valid role for each org.
-func (m *OrgRoleMapper) ParseOrgMappingSettings(ctx context.Context, mappings []string, roleStrict bool) map[string]map[int64]org.RoleType {
+func (m *OrgRoleMapper) ParseOrgMappingSettings(ctx context.Context, mappings []string, roleStrict bool) *MappingConfiguration {
 	res := map[string]map[int64]org.RoleType{}
 
 	for _, v := range mappings {
@@ -164,7 +171,7 @@ func (m *OrgRoleMapper) ParseOrgMappingSettings(ctx context.Context, mappings []
 		}
 	}
 
-	return res
+	return &MappingConfiguration{orgMapping: res, roleStrict: roleStrict}
 }
 
 func (m *OrgRoleMapper) getAllOrgs() (map[int64]bool, error) {
