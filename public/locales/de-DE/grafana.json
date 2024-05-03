@@ -128,7 +128,7 @@
       "light-theme": "Hell"
     },
     "empty-state": {
-      "message": ""
+      "message": "Keine Ergebnisse gefunden"
     },
     "search-box": {
       "placeholder": "Suche oder springe zu ..."
@@ -269,7 +269,7 @@
     "empty": {
       "add-library-panel-body": "Visualisierungen hinzufügen, die mit anderen Dashboards geteilt werden.",
       "add-library-panel-button": "Bibliotheksfenster hinzufügen",
-      "add-library-panel-header": "",
+      "add-library-panel-header": "Panel importieren",
       "add-visualization-body": "Wählen Sie eine Datenquelle aus und visualisieren und fragen Sie dann Ihre Daten mit Diagrammen, Statistiken und Tabellen ab oder erstellen Sie Listen, Markierungen und andere Widgets.",
       "add-visualization-button": "Visualisierung hinzufügen",
       "add-visualization-header": "Starten Sie Ihr neues Dashboard, indem Sie eine Visualisierung hinzufügen",
@@ -460,7 +460,7 @@
       "label": "Neue Datenquelle hinzufügen"
     },
     "empty-state": {
-      "message": ""
+      "message": "Keine Datenquellen gefunden"
     }
   },
   "explore": {
@@ -584,11 +584,11 @@
     "toolbar": {
       "aria-label": "Werkzeugleiste durchsuchen",
       "copy-link": "URL kopieren",
-      "copy-link-abs-time": "",
+      "copy-link-abs-time": "Absolute URL kopieren",
       "copy-links-absolute-category": "Zeitsynchronisierte URL-Links (Freigabe mit intaktem Zeitraum)",
       "copy-links-normal-category": "Normale URL-Links",
       "copy-shortened-link": "Gekürzte URL kopieren",
-      "copy-shortened-link-abs-time": "",
+      "copy-shortened-link-abs-time": "Absolut verkürzte URL kopieren",
       "copy-shortened-link-menu": "",
       "refresh-picker-cancel": "Abbrechen",
       "refresh-picker-run": "Abfrage ausführen",
@@ -702,7 +702,7 @@
       "message": ""
     },
     "modal": {
-      "button-cancel": "",
+      "button-cancel": "Abbrechen",
       "button-view-panel1": "Fenster in {{label}} anzeigen...",
       "button-view-panel2": "Fenster im Dashboard anzeigen...",
       "panel-not-linked": "Fenster ist nicht mit einem Dashboard verbunden. Fügen Sie das Fenster einem Dashboard hinzu und versuchen Sie es erneut.",
@@ -844,13 +844,13 @@
     "resource-type": {
       "dashboard": "Dashboard",
       "datasource": "Datenquelle",
-      "folder": "",
+      "folder": "Ordner",
       "unknown": "Unbekannt"
     },
     "summary": {
-      "disconnect": "",
+      "disconnect": "Verbindung trennen",
       "disconnect-error-description": "",
-      "disconnect-error-title": "",
+      "disconnect-error-title": "Es gab einen Fehler beim Trennen der Verbindung",
       "run-migration-error-description": "",
       "run-migration-error-title": "",
       "start-migration": "",
@@ -973,7 +973,7 @@
       "title": "Erstellen"
     },
     "create-alert": {
-      "title": ""
+      "title": "Neue Warnregel"
     },
     "create-dashboard": {
       "title": "Dashboard"
@@ -1563,7 +1563,7 @@
       "library-panel": "Bibliotheks-Panel",
       "link": "Link",
       "panel-embed": "Einbetten",
-      "public-dashboard": "",
+      "public-dashboard": "Öffentliches Dashboard",
       "public-dashboard-title": "Öffentliches Dashboard",
       "snapshot": "Schnappschuss"
     },
