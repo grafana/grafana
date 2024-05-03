@@ -27,7 +27,7 @@ func ProvideAccessControl(cfg *setting.Cfg, embed *embedserver.Service) *AccessC
 	}
 
 	return &AccessControl{
-		cfg, logger, accesscontrol.NewResolvers(logger), c,
+		cfg, logger, accesscontrol.NewResolvers(logger), c, embed,
 	}
 }
 
@@ -36,13 +36,14 @@ type AccessControl struct {
 	log       log.Logger
 	resolvers accesscontrol.Resolvers
 	zclient   *zclient.GRPCClient
+	zService  *embedserver.Service
 }
 
 type evalResult struct {
-	runner    string
-	descision bool
-	err       error
-	duration  time.Duration
+	runner   string
+	decision bool
+	err      error
+	duration time.Duration
 }
 
 func (a *AccessControl) Evaluate(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
@@ -57,6 +58,10 @@ func (a *AccessControl) Evaluate(ctx context.Context, user identity.Requester, e
 
 	if user.GetID() == "" {
 		return false, nil
+	}
+
+	if a.zService.Cfg.SingleRead {
+		return a.evalZanzana(ctx, user, evaluator)
 	}
 
 	res := make(chan evalResult, 2)
@@ -78,11 +83,11 @@ func (a *AccessControl) Evaluate(ctx context.Context, user identity.Requester, e
 		first, second = second, first
 	}
 
-	if first.descision != second.descision {
+	if first.decision != second.decision {
 		a.log.Error(
 			"eval result diff",
-			"grafana_desision", first.descision,
-			"zanana_descision", second.descision,
+			"grafana_desision", first.decision,
+			"zanana_descision", second.decision,
 			"grafana_ms", first.duration,
 			"zanzana_ms", second.duration,
 			"eval", evaluator.GoString(),
@@ -91,7 +96,11 @@ func (a *AccessControl) Evaluate(ctx context.Context, user identity.Requester, e
 		a.log.Info("eval: correct result", "grafana_ms", first.duration, "zanzana_ms", second.duration)
 	}
 
-	return first.descision, first.err
+	if a.zService.Cfg.EvaluationResult {
+		return second.decision, second.err
+	}
+
+	return first.decision, first.err
 }
 
 func (a *AccessControl) evalGrafana(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {

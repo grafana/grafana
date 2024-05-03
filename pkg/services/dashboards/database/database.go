@@ -39,6 +39,7 @@ type dashboardStore struct {
 	features   featuremgmt.FeatureToggles
 	tagService tag.Service
 	zClient    *zclient.GRPCClient
+	zService   *embedserver.Service
 }
 
 // SQL bean helper to save tags
@@ -64,6 +65,7 @@ func ProvideDashboardStore(sqlStore db.DB, cfg *setting.Cfg,
 		log:        log.New("dashboard-store"),
 		features:   features,
 		zClient:    zClient,
+		zService:   embedService,
 		tagService: tagService}
 
 	defaultLimits, err := readQuotaConfig(cfg)
@@ -771,6 +773,10 @@ type evalResult struct {
 
 func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
 	res := make(chan evalResult, 2)
+	if d.zService.Cfg.SingleRead {
+		return d.findDashboardsZanzana(ctx, query)
+	}
+
 	go func() {
 		start := time.Now()
 		dashRes, err := d.findDashboardsZanzana(ctx, query)
@@ -800,6 +806,10 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 		)
 	} else {
 		d.log.Info("eval: correct result", "grafana_ms", first.duration, "zanzana_ms", second.duration)
+	}
+
+	if d.zService.Cfg.DashboardReadResult {
+		return second.searchRes, second.err
 	}
 
 	return first.searchRes, first.err
