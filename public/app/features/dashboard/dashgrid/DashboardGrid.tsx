@@ -362,6 +362,8 @@ interface GrafanaGridItemProps extends React.HTMLAttributes<HTMLDivElement> {
   windowHeight: number;
   windowWidth: number;
   children: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  hasAttention: boolean;
+  setAttention: () => void;
 }
 
 /**
@@ -372,7 +374,7 @@ const GrafanaGridItem = React.forwardRef<HTMLDivElement, GrafanaGridItemProps>((
   let width = 100;
   let height = 100;
 
-  const { gridWidth, gridPos, isViewing, windowHeight, windowWidth, ...divProps } = props;
+  const { gridWidth, gridPos, isViewing, windowHeight, windowWidth, hasAttention, setAttention, ...divProps } = props;
   const style: CSSProperties = props.style ?? {};
 
   if (isViewing) {
@@ -402,7 +404,14 @@ const GrafanaGridItem = React.forwardRef<HTMLDivElement, GrafanaGridItemProps>((
 
   // props.children[0] is our main children. RGL adds the drag handle at props.children[1]
   return (
-    <div {...divProps} style={{ ...divProps.style }} ref={ref}>
+    <div
+      {...divProps}
+      style={{ ...divProps.style }}
+      data-attention={hasAttention}
+      onFocus={() => !hasAttention && setAttention()}
+      onMouseMove={() => !hasAttention && setAttention()}
+      ref={ref}
+    >
       {/* Pass width and height to children as render props */}
       {[props.children[0](width, height), props.children.slice(1)]}
     </div>
