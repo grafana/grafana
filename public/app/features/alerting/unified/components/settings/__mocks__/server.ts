@@ -73,8 +73,6 @@ export function setupVanillaAlertmanagerServer(server: SetupServerApi) {
     ...createAlertmanagerConfigurationHandlers(PROVISIONED_VANILLA_ALERTMANAGER_UID)
   );
 
-  debugger;
-
   return server;
 }
 
