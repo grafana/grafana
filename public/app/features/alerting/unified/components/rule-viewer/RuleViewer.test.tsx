@@ -4,6 +4,7 @@ import { byText, byRole } from 'testing-library-selector';
 
 import { setBackendSrv, setPluginExtensionsHook } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { AccessControlAction } from 'app/types';
 import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
 
@@ -15,14 +16,12 @@ import {
   mockPluginLinkExtension,
 } from '../../mocks';
 import { setupDataSources } from '../../testSetup/datasources';
-import { plugins, setupPlugins } from '../../testSetup/plugins';
 import { Annotation } from '../../utils/constants';
 import { DataSourceType } from '../../utils/datasource';
 import * as ruleId from '../../utils/rule-id';
 
 import { AlertRuleProvider } from './RuleContext';
 import RuleViewer from './RuleViewer';
-import { createMockGrafanaServer } from './__mocks__/server';
 
 // metadata and interactive elements
 const ELEMENTS = {
@@ -54,10 +53,7 @@ const ELEMENTS = {
   },
 };
 
-const { apiHandlers: pluginApiHandlers } = setupPlugins(plugins);
-
-const server = createMockGrafanaServer(...pluginApiHandlers);
-
+setupMswServer();
 setupDataSources(mockDataSource({ type: DataSourceType.Prometheus, name: 'mimir-1' }));
 setPluginExtensionsHook(() => ({
   extensions: [
@@ -80,14 +76,6 @@ beforeAll(() => {
     AccessControlAction.AlertingInstanceCreate,
   ]);
   setBackendSrv(backendSrv);
-});
-
-beforeEach(() => {
-  server.listen();
-});
-
-afterAll(() => {
-  server.close();
 });
 
 describe('RuleViewer', () => {
