@@ -361,7 +361,7 @@ export function ToolbarActions({ dashboard }: Props) {
         size="sm"
         data-testid={selectors.components.NavToolbar.editDashboard.editButton}
       >
-        Make Editable
+        Make editable
       </Button>
     ),
   });
