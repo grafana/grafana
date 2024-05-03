@@ -100,12 +100,53 @@ func newScopeDashboardBindingStorage(scheme *runtime.Scheme, optsGetter generic.
 	return &storage{Store: store}, nil
 }
 
+func newScopeNodeStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter) (*storage, error) {
+	strategy := grafanaregistry.NewStrategy(scheme)
+
+	resourceInfo := scope.ScopeNodeResourceInfo
+	store := &genericregistry.Store{
+		NewFunc:                   resourceInfo.NewFunc,
+		NewListFunc:               resourceInfo.NewListFunc,
+		PredicateFunc:             Matcher,
+		DefaultQualifiedResource:  resourceInfo.GroupResource(),
+		SingularQualifiedResource: resourceInfo.SingularGroupResource(),
+		TableConvertor: utils.NewTableConverter(
+			resourceInfo.GroupResource(),
+			[]metav1.TableColumnDefinition{
+				{Name: "Name", Type: "string", Format: "name"},
+				{Name: "Created At", Type: "date"},
+			},
+			func(obj any) ([]interface{}, error) {
+				m, ok := obj.(*scope.ScopeNode)
+				if !ok {
+					return nil, fmt.Errorf("expected scope node")
+				}
+				return []interface{}{
+					m.Name,
+					m.CreationTimestamp.UTC().Format(time.RFC3339),
+				}, nil
+			},
+		),
+		CreateStrategy: strategy,
+		UpdateStrategy: strategy,
+		DeleteStrategy: strategy,
+	}
+	options := &generic.StoreOptions{RESTOptions: optsGetter, AttrFunc: GetAttrs}
+	if err := store.CompleteWithOptions(options); err != nil {
+		return nil, err
+	}
+	return &storage{Store: store}, nil
+}
+
 func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
 	if s, ok := obj.(*scope.Scope); ok {
 		return labels.Set(s.Labels), SelectableScopeFields(s), nil
 	}
 	if s, ok := obj.(*scope.ScopeDashboardBinding); ok {
 		return labels.Set(s.Labels), SelectableScopeDashboardBindingFields(s), nil
+	}
+	if s, ok := obj.(*scope.ScopeNode); ok {
+		return labels.Set(s.Labels), SelectableScopeNodeFields(s), nil
 	}
 	return nil, nil, fmt.Errorf("not a scope or ScopeDashboardBinding object")
 }
@@ -129,5 +170,17 @@ func SelectableScopeFields(obj *scope.Scope) fields.Set {
 func SelectableScopeDashboardBindingFields(obj *scope.ScopeDashboardBinding) fields.Set {
 	return generic.MergeFieldsSets(generic.ObjectMetaFieldsSet(&obj.ObjectMeta, false), fields.Set{
 		"spec.scope": obj.Spec.Scope,
+	})
+}
+
+func SelectableScopeNodeFields(obj *scope.ScopeNode) fields.Set {
+	parentName := ""
+
+	if obj.Spec.ParentName != nil {
+		parentName = *obj.Spec.ParentName
+	}
+
+	return generic.MergeFieldsSets(generic.ObjectMetaFieldsSet(&obj.ObjectMeta, false), fields.Set{
+		"spec.parentName": parentName,
 	})
 }

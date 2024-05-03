@@ -18,6 +18,10 @@ exports[`AlertRule abilities should report no permissions while we are loading d
     false,
     false,
   ],
+  "pause-alert-rule": [
+    false,
+    false,
+  ],
   "silence-alert-rule": [
     false,
     false,
@@ -48,6 +52,10 @@ exports[`AlertRule abilities should report that all actions are supported for a 
     false,
   ],
   "modify-export-rule": [
+    true,
+    false,
+  ],
+  "pause-alert-rule": [
     true,
     false,
   ],

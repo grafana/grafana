@@ -73,8 +73,8 @@ type Identity struct {
 	IDToken string
 }
 
-func (i *Identity) GetID() string {
-	return i.ID.String()
+func (i *Identity) GetID() NamespaceID {
+	return i.ID
 }
 
 func (i *Identity) GetNamespacedID() (namespace string, identifier string) {
@@ -220,7 +220,7 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		Teams:           i.Teams,
 		Permissions:     i.Permissions,
 		IDToken:         i.IDToken,
-		NamespacedID:    i.ID.String(),
+		NamespacedID:    i.ID,
 	}
 
 	if namespace == NamespaceAPIKey {

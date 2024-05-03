@@ -155,7 +155,7 @@ const ui = {
     paused: byText(/^Paused/),
   },
   actionButtons: {
-    more: byRole('button', { name: 'More' }),
+    more: byRole('button', { name: /more-actions/ }),
   },
   moreActionItems: {
     pause: byRole('menuitem', { name: /pause evaluation/i }),
