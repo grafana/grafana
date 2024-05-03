@@ -437,14 +437,16 @@
     {
       "metadata": {
         "name": "unifiedStorage",
-        "resourceVersion": "1713545444177",
-        "creationTimestamp": "2024-04-19T16:50:44Z"
+        "resourceVersion": "1714723955745",
+        "creationTimestamp": "2024-04-19T16:50:44Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-05-03 08:12:35.745103 +0000 UTC"
+        }
       },
       "spec": {
         "description": "SQL-based k8s storage",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
-        "requiresDevMode": true,
         "requiresRestart": true
       }
     },
@@ -2109,6 +2111,18 @@
     },
     {
       "metadata": {
+        "name": "autofixDSUID",
+        "resourceVersion": "1714386506243",
+        "creationTimestamp": "2024-04-29T10:28:26Z"
+      },
+      "spec": {
+        "description": "Automatically migrates invalid datasource UIDs",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend"
+      }
+    },
+    {
+      "metadata": {
         "name": "logsExploreTableDefaultVisualization",
         "resourceVersion": "1714583478121",
         "creationTimestamp": "2024-05-01T17:05:57Z",
@@ -2120,6 +2134,19 @@
         "description": "Sets the logs table as default visualisation in logs explore",
         "stage": "experimental",
         "codeowner": "@grafana/observability-logs",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "newDashboardSharingComponent",
+        "resourceVersion": "1713982966391",
+        "creationTimestamp": "2024-04-24T18:22:46Z"
+      },
+      "spec": {
+        "description": "Enables the new sharing drawer design",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
         "frontend": true
       }
     }
