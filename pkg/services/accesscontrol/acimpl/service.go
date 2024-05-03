@@ -270,7 +270,7 @@ type GetPermissionsFn = func() ([]accesscontrol.Permission, error)
 
 // Generic method for getting various permissions from cache
 func (s *Service) getCachedPermissions(ctx context.Context, key string, getPermissionsFn GetPermissionsFn, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
-	ctx, span := s.tracer.Start(ctx, "authz.getCachedTeamsPermissions")
+	_, span := s.tracer.Start(ctx, "authz.getCachedTeamsPermissions")
 	defer span.End()
 
 	if !options.ReloadCache {
