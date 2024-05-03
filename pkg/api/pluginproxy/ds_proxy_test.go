@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
@@ -514,7 +515,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			&contextmodel.ReqContext{
 				SignedInUser: &user.SignedInUser{
 					Login:        "test_user",
-					NamespacedID: "user:1",
+					NamespacedID: authn.MustParseNamespaceID("user:1"),
 				},
 			},
 			&setting.Cfg{SendUserHeader: true},
