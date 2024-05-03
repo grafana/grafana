@@ -6819,18 +6819,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-types/button@npm:3.9.2":
-  version: 3.9.2
-  resolution: "@react-types/button@npm:3.9.2"
-  dependencies:
-    "@react-types/shared": "npm:^3.22.1"
-  peerDependencies:
-    react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0
-  checksum: 10/8393ba87dfd6ca73fedf8f7ab3567361f1d6057f640346f2a0cc631e9659ad7c1aa2ddb255e1df6b880d8f6cd209e8c9d1d01c73e2ee2a149f180d8ebaabf1db
-  languageName: node
-  linkType: hard
-
-"@react-types/button@npm:^3.9.3":
+"@react-types/button@npm:3.9.3, @react-types/button@npm:^3.9.3":
   version: 3.9.3
   resolution: "@react-types/button@npm:3.9.3"
   dependencies:
@@ -18197,7 +18186,7 @@ __metadata:
     "@react-aria/overlays": "npm:3.22.0"
     "@react-aria/utils": "npm:3.24.0"
     "@react-awesome-query-builder/ui": "npm:6.4.2"
-    "@react-types/button": "npm:3.9.2"
+    "@react-types/button": "npm:3.9.3"
     "@react-types/menu": "npm:3.9.7"
     "@react-types/overlays": "npm:3.8.5"
     "@react-types/shared": "npm:3.22.1"
