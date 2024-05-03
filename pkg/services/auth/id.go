@@ -24,5 +24,6 @@ type IDClaims struct {
 	jwt.Claims
 	Email           string `json:"email"`
 	EmailVerified   bool   `json:"email_verified"`
+	Namespace       string `json:"namespace,omitempty"`
 	AuthenticatedBy string `json:"authenticatedBy,omitempty"`
 }

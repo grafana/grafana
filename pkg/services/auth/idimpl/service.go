@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -35,7 +36,8 @@ func ProvideService(
 	s := &Service{
 		cfg: cfg, logger: log.New("id-service"),
 		signer: signer, cache: cache,
-		metrics: newMetrics(reg),
+		metrics:  newMetrics(reg),
+		nsMapper: request.GetNamespaceMapper(cfg),
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagIdForwarding) {
@@ -46,12 +48,13 @@ func ProvideService(
 }
 
 type Service struct {
-	cfg     *setting.Cfg
-	logger  log.Logger
-	signer  auth.IDSigner
-	cache   remotecache.CacheStorage
-	si      singleflight.Group
-	metrics *metrics
+	cfg      *setting.Cfg
+	logger   log.Logger
+	signer   auth.IDSigner
+	cache    remotecache.CacheStorage
+	si       singleflight.Group
+	metrics  *metrics
+	nsMapper request.NamespaceMapper
 }
 
 func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (string, error) {
@@ -83,6 +86,7 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 				Expiry:   jwt.NewNumericDate(now.Add(tokenTTL)),
 				IssuedAt: jwt.NewNumericDate(now),
 			},
+			Namespace: s.nsMapper(id.GetOrgID()),
 		}
 
 		if identity.IsNamespace(namespace, identity.NamespaceUser) {
