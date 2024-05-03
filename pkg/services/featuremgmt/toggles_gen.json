@@ -437,14 +437,16 @@
     {
       "metadata": {
         "name": "unifiedStorage",
-        "resourceVersion": "1713545444177",
-        "creationTimestamp": "2024-04-19T16:50:44Z"
+        "resourceVersion": "1714723955745",
+        "creationTimestamp": "2024-04-19T16:50:44Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-05-03 08:12:35.745103 +0000 UTC"
+        }
       },
       "spec": {
         "description": "SQL-based k8s storage",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
-        "requiresDevMode": true,
         "requiresRestart": true
       }
     },

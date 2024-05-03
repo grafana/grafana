@@ -243,7 +243,7 @@ func (s *service) start(ctx context.Context) error {
 
 	case grafanaapiserveroptions.StorageTypeUnified:
 		if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
-			return fmt.Errorf("unified storage requires the unifiedStorage feature flag (and app_mode = development)")
+			return fmt.Errorf("unified storage requires the unifiedStorage feature flag")
 		}
 
 		eDB, err := dbimpl.ProvideEntityDB(s.db, s.cfg, s.features)
