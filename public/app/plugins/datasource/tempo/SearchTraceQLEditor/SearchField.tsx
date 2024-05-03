@@ -47,9 +47,9 @@ const SearchField = ({
   hideTag,
   hideValue,
   query,
+  addVariablesToOptions,
   isMulti = true,
   allowCustomValue = true,
-  addVariablesToOptions = true,
 }: Props) => {
   const styles = useStyles2(getStyles);
   const [alertText, setAlertText] = useState<string>();

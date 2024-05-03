@@ -32,7 +32,7 @@ interface Props {
 
 const hardCodedFilterIds = ['min-duration', 'max-duration', 'status'];
 
-const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVariablesToOptions }: Props) => {
+const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVariablesToOptions = true }: Props) => {
   const styles = useStyles2(getStyles);
   const [alertText, setAlertText] = useState<string>();
   const [error, setError] = useState<Error | FetchError | null>(null);
