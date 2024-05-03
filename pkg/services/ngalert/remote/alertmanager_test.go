@@ -99,9 +99,10 @@ func TestNewAlertmanager(t *testing.T) {
 				URL:               test.url,
 				TenantID:          test.tenantID,
 				BasicAuthPassword: test.password,
+				DefaultConfig:     defaultGrafanaConfig,
 			}
 			m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-			am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, defaultGrafanaConfig, m)
+			am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, m)
 			if test.expErr != "" {
 				require.EqualError(tt, err, test.expErr)
 				return
@@ -152,9 +153,10 @@ func TestApplyConfig(t *testing.T) {
 	// A non-200 response should result in an error.
 	server := httptest.NewServer(errorHandler)
 	cfg := AlertmanagerConfig{
-		OrgID:    1,
-		TenantID: "test",
-		URL:      server.URL,
+		OrgID:         1,
+		TenantID:      "test",
+		URL:           server.URL,
+		DefaultConfig: defaultGrafanaConfig,
 	}
 
 	ctx := context.Background()
@@ -165,7 +167,7 @@ func TestApplyConfig(t *testing.T) {
 
 	// An error response from the remote Alertmanager should result in the readiness check failing.
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, fstore, secretsService.Decrypt, defaultGrafanaConfig, m)
+	am, err := NewAlertmanager(cfg, fstore, secretsService.Decrypt, m)
 	require.NoError(t, err)
 
 	config := &ngmodels.AlertConfiguration{
@@ -216,14 +218,14 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 	fstore := notifier.NewFileStore(1, ngfakes.NewFakeKVStore(t))
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
 	cfg := AlertmanagerConfig{
-		OrgID:    1,
-		TenantID: "test",
-		URL:      server.URL,
+		OrgID:         1,
+		TenantID:      "test",
+		URL:           server.URL,
+		DefaultConfig: defaultGrafanaConfig,
 	}
 	am, err := NewAlertmanager(cfg,
 		fstore,
 		decryptFn,
-		defaultGrafanaConfig,
 		m,
 	)
 	require.NoError(t, err)
@@ -298,6 +300,7 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 		URL:               amURL,
 		TenantID:          tenantID,
 		BasicAuthPassword: password,
+		DefaultConfig:     defaultGrafanaConfig,
 	}
 
 	testConfigHash := fmt.Sprintf("%x", md5.Sum([]byte(testGrafanaConfig)))
@@ -319,7 +322,7 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, fstore, secretsService.Decrypt, defaultGrafanaConfig, m)
+	am, err := NewAlertmanager(cfg, fstore, secretsService.Decrypt, m)
 	require.NoError(t, err)
 
 	encodedFullState, err := am.getFullState(ctx)
@@ -461,11 +464,12 @@ func TestIntegrationRemoteAlertmanagerGetStatus(t *testing.T) {
 		URL:               amURL,
 		TenantID:          tenantID,
 		BasicAuthPassword: password,
+		DefaultConfig:     defaultGrafanaConfig,
 	}
 
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, defaultGrafanaConfig, m)
+	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, m)
 	require.NoError(t, err)
 
 	// We should get the default Cloud Alertmanager configuration.
@@ -494,11 +498,12 @@ func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 		URL:               amURL,
 		TenantID:          tenantID,
 		BasicAuthPassword: password,
+		DefaultConfig:     defaultGrafanaConfig,
 	}
 
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, defaultGrafanaConfig, m)
+	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, m)
 	require.NoError(t, err)
 
 	// We should have no silences at first.
@@ -577,11 +582,12 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 		URL:               amURL,
 		TenantID:          tenantID,
 		BasicAuthPassword: password,
+		DefaultConfig:     defaultGrafanaConfig,
 	}
 
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, defaultGrafanaConfig, m)
+	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, m)
 	require.NoError(t, err)
 
 	// Wait until the Alertmanager is ready to send alerts.
@@ -645,11 +651,12 @@ func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {
 		URL:               amURL,
 		TenantID:          tenantID,
 		BasicAuthPassword: password,
+		DefaultConfig:     defaultGrafanaConfig,
 	}
 
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, defaultGrafanaConfig, m)
+	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, m)
 	require.NoError(t, err)
 
 	// We should start with the default config.
