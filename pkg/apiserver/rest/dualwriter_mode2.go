@@ -135,6 +135,7 @@ func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion
 func (d *DualWriterMode2) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
 	log := d.Log.WithValues("kind", options.Kind, "resourceVersion", listOptions.ResourceVersion)
 	ctx = klog.NewContext(ctx, log)
+
 	deleted, err := d.Legacy.DeleteCollection(ctx, deleteValidation, options, listOptions)
 	if err != nil {
 		log.WithValues("deleted", deleted).Error(err, "failed to delete collection successfully from legacy storage")
@@ -166,7 +167,6 @@ func (d *DualWriterMode2) DeleteCollection(ctx context.Context, deleteValidation
 func (d *DualWriterMode2) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	log := d.Log.WithValues("name", name)
 	ctx = klog.NewContext(ctx, log)
-
 	deletedLS, async, err := d.Legacy.Delete(ctx, name, deleteValidation, options)
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
