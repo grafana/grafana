@@ -1,9 +1,12 @@
+import { css, cx } from '@emotion/css';
 import React, { Component } from 'react';
 
-import { renderMarkdown, LinkModelSupplier, ScopedVars } from '@grafana/data';
+import { renderMarkdown, LinkModelSupplier, ScopedVars, IconName } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data/';
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService, getTemplateSrv } from '@grafana/runtime';
-import { Tooltip, PopoverContent } from '@grafana/ui';
+import { Tooltip, PopoverContent, Icon } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui/';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { InspectTab } from 'app/features/inspector/types';
@@ -79,21 +82,6 @@ export class PanelHeaderCorner extends Component<Props> {
     });
   };
 
-  renderCornerType(infoMode: InfoMode, content: PopoverContent, onClick?: () => void) {
-    const theme = infoMode === InfoMode.Error ? 'error' : 'info';
-    const className = `panel-info-corner panel-info-corner--${infoMode.toLowerCase()}`;
-    const ariaLabel = selectors.components.Panels.Panel.headerCornerInfo(infoMode.toLowerCase());
-
-    return (
-      <Tooltip content={content} placement="top-start" theme={theme} interactive>
-        <button type="button" className={className} onClick={onClick} aria-label={ariaLabel}>
-          <i aria-hidden className="fa" />
-          <span className="panel-info-corner-inner" />
-        </button>
-      </Tooltip>
-    );
-  }
-
   render() {
     const { error } = this.props;
     const infoMode: InfoMode | undefined = this.getInfoMode();
@@ -103,11 +91,11 @@ export class PanelHeaderCorner extends Component<Props> {
     }
 
     if (infoMode === InfoMode.Error && error) {
-      return this.renderCornerType(infoMode, error, this.onClickError);
+      return <PanelInfoCorner infoMode={infoMode} content={error} onClick={this.onClickError} />;
     }
 
     if (infoMode === InfoMode.Info || infoMode === InfoMode.Links) {
-      return this.renderCornerType(infoMode, this.getInfoContent);
+      return <PanelInfoCorner infoMode={InfoMode.Links} content={this.getInfoContent} />;
     }
 
     return null;
@@ -115,3 +103,93 @@ export class PanelHeaderCorner extends Component<Props> {
 }
 
 export default PanelHeaderCorner;
+
+interface PanelInfoCornerProps {
+  infoMode: InfoMode;
+  content: PopoverContent;
+  onClick?: () => void;
+}
+
+function PanelInfoCorner({ infoMode, content, onClick }: PanelInfoCornerProps) {
+  const theme = infoMode === InfoMode.Error ? 'error' : 'info';
+  const ariaLabel = selectors.components.Panels.Panel.headerCornerInfo(infoMode.toLowerCase());
+  const styles = useStyles2(getStyles);
+  const mode = infoMode.toLowerCase() as Lowercase<keyof typeof InfoMode>;
+
+  return (
+    <Tooltip content={content} placement="top-start" theme={theme} interactive>
+      <button type="button" className={cx(styles.infoCorner)} onClick={onClick} aria-label={ariaLabel}>
+        <Icon
+          name={iconMap[infoMode]}
+          size={mode === 'links' ? 'sm' : 'lg'}
+          className={cx(styles.icon, { [styles.iconError]: mode === 'error', [styles.iconLinks]: mode === 'links' })}
+        />
+        <span className={cx(styles.inner, styles[mode])} />
+      </button>
+    </Tooltip>
+  );
+}
+
+const iconMap: Record<InfoMode, IconName> = {
+  [InfoMode.Error]: 'exclamation',
+  [InfoMode.Info]: 'info',
+  [InfoMode.Links]: 'external-link-alt',
+};
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    block: css({ display: 'block' }),
+    icon: css({
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      zIndex: 3,
+    }),
+    iconError: css({
+      fill: theme.colors.text.primary,
+    }),
+    iconLinks: css({
+      left: theme.spacing(0.5),
+      top: theme.spacing(0.25),
+    }),
+    inner: css({
+      width: 0,
+      height: 0,
+      position: 'absolute',
+      left: 0,
+      bottom: 0,
+    }),
+    info: css({
+      display: 'block',
+      borderLeft: `${theme.spacing(4)} solid ${theme.colors.background.secondary}`,
+      borderRight: 'none',
+      borderBottom: `${theme.spacing(4)} solid transparent`,
+    }),
+    links: css({
+      display: 'block',
+      borderLeft: `${theme.spacing(4)} solid ${theme.colors.background.secondary}`,
+      borderRight: 'none',
+      borderBottom: `${theme.spacing(4)} solid transparent`,
+      left: theme.spacing(0.5),
+    }),
+    error: css({
+      display: 'block',
+      borderLeft: `${theme.spacing(4)} solid ${theme.colors.error.main}`,
+      borderRight: 'none',
+      borderBottom: `${theme.spacing(4)} solid transparent`,
+      color: theme.colors.text.primary,
+    }),
+    infoCorner: css({
+      background: 'none',
+      border: 'none',
+      color: theme.colors.text.secondary,
+      cursor: 'pointer',
+      position: 'absolute',
+      left: 0,
+      top: 0,
+      width: theme.spacing(4),
+      height: theme.spacing(4),
+      zIndex: 11,
+    }),
+  };
+};
