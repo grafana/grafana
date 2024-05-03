@@ -35,7 +35,6 @@ func (d *testDialer) HostName() string {
 var _ proxy.Dialer = (&testDialer{})
 
 func TestMSSQLProxyDriver(t *testing.T) {
-
 	t.Run("Connector should use dialer context that routes through the socks proxy to db", func(t *testing.T) {
 		host := "127.0.0.1"
 		cnnstr := fmt.Sprintf("server=%s;port=1433;user id=sa;password=yourStrong(!)Password;database=db", host)
