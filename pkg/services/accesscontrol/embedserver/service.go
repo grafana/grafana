@@ -49,7 +49,17 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*Ser
 	zapLogger := logger.MustNewLogger("text", "debug", "ISO8601")
 
 	ctx := context.Background()
-	srv, err := zanzanaService.NewService(ctx, zapLogger, nil)
+	// Read the database configuration
+	dbConfig, err := NewDatabaseConfig(cfg, features)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create the Zanzana service
+	srv, err := zanzanaService.NewService(ctx, zapLogger, nil, &zanzanaService.Config{
+		DBURI:  dbConfig.ConnectionString,
+		DBType: dbConfig.Type,
+	})
 	if err != nil {
 		return nil, err
 	}
