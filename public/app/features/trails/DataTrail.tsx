@@ -169,6 +169,11 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   public restoreFromHistoryStep(state: DataTrailState) {
     this.disableUrlSync();
 
+    if (!state.topScene && !state.metric) {
+      // If the top scene for an  is missing, correct it.
+      state.topScene = new MetricSelectScene({});
+    }
+
     this.setState(
       sceneUtils.cloneSceneObjectState(state, {
         history: this.state.history,
