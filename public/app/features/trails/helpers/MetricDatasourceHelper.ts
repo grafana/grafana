@@ -36,7 +36,7 @@ export class MetricDatasourceHelper {
 
     if (ds.languageProvider instanceof PrometheusLanguageProvider) {
       if (!ds.languageProvider.metricsMetadata) {
-        await ds.languageProvider.start();
+        await ds.languageProvider.loadMetricsMetadata();
       }
 
       return ds.languageProvider.metricsMetadata!;
