@@ -1,25 +1,4 @@
-import { RequestHandler } from 'msw';
-
 import { PluginMeta, PluginType } from '@grafana/data';
-import { config } from '@grafana/runtime';
-
-import { pluginsHandler } from '../mocks/plugins';
-
-export function setupPlugins(plugins: PluginMeta[]): { apiHandlers: RequestHandler[] } {
-  plugins.forEach((plugin) => {
-    config.apps[plugin.id] = {
-      id: plugin.id,
-      path: plugin.baseUrl,
-      preload: true,
-      version: plugin.info.version,
-      angular: plugin.angular ?? { detected: false, hideDeprecation: false },
-    };
-  });
-
-  return {
-    apiHandlers: [pluginsHandler(plugins)],
-  };
-}
 
 export const plugins: PluginMeta[] = [
   {
