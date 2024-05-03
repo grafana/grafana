@@ -55,6 +55,7 @@ export function ToolbarActions({ dashboard }: Props) {
     meta,
     editview,
     editPanel,
+    editable,
     hasCopiedPanel: copiedPanel,
   } = dashboard.useState();
   const { isPlaying } = playlistSrv.useState();
@@ -328,7 +329,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: !isEditing && dashboard.canEditDashboard() && !isViewingPanel && !isPlaying,
+    condition: !isEditing && dashboard.canEditDashboard() && !isViewingPanel && !isPlaying && editable,
     render: () => (
       <Button
         onClick={() => {
@@ -342,6 +343,27 @@ export function ToolbarActions({ dashboard }: Props) {
         data-testid={selectors.components.NavToolbar.editDashboard.editButton}
       >
         Edit
+      </Button>
+    ),
+  });
+
+  toolbarActions.push({
+    group: 'main-buttons',
+    condition: !isEditing && dashboard.canEditDashboard() && !isViewingPanel && !isPlaying && !editable,
+    render: () => (
+      <Button
+        onClick={() => {
+          dashboard.onEnterEditMode();
+          dashboard.setState({ editable: true, meta: { ...meta, canEdit: true } });
+        }}
+        tooltip="This dashboard was marked as read only"
+        key="edit"
+        className={styles.buttonWithExtraMargin}
+        variant="secondary"
+        size="sm"
+        data-testid={selectors.components.NavToolbar.editDashboard.editButton}
+      >
+        Make editable
       </Button>
     ),
   });
