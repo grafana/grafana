@@ -72,9 +72,6 @@ export function logp(value: number, base: number) {
  * Get decimal precision of number (3.14 => 2)
  */
 export function getPrecision(num: number): number {
-  if (isNaN(num)) {
-    return 0;
-  }
   const str = num.toString();
   return getStringPrecision(str);
 }
@@ -83,6 +80,10 @@ export function getPrecision(num: number): number {
  * Get decimal precision of number stored as a string ("3.14" => 2)
  */
 export function getStringPrecision(num: string): number {
+  if (isNaN(num as unknown as number)) {
+    return 0;
+  }
+
   const dotIndex = num.indexOf('.');
   if (dotIndex === -1) {
     return 0;
