@@ -7,19 +7,21 @@ import (
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"
 )
 
 type DualWriterMode3 struct {
-	*DualWriter
+	Legacy  LegacyStorage
+	Storage Storage
+	Log     klog.Logger
 }
 
 // NewDualWriterMode3 returns a new DualWriter in mode 3.
 // Mode 3 represents writing to LegacyStorage and Storage and reading from Storage.
-func NewDualWriterMode3(legacy LegacyStorage, storage Storage) *DualWriter {
-	dw := &DualWriterMode3{&DualWriter{Legacy: legacy, Storage: storage, Log: klog.NewKlogr().WithName("DualWriterMode3")}}
-	return dw.DualWriter
+func NewDualWriterMode3(legacy LegacyStorage, storage Storage) *DualWriterMode3 {
+	return &DualWriterMode3{Legacy: legacy, Storage: storage, Log: klog.NewKlogr().WithName("DualWriterMode3")}
 }
 
 // Create overrides the behavior of the generic DualWriter and writes to LegacyStorage and Storage.
@@ -135,4 +137,44 @@ func (d *DualWriterMode3) DeleteCollection(ctx context.Context, deleteValidation
 	}
 
 	return deleted, err
+}
+
+func (d *DualWriterMode3) Destroy() {
+	klog.Error("destroy not implemented")
+}
+
+func (d *DualWriterMode3) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
+	//TODO: implement List
+	klog.Error("List not implemented")
+	return nil, nil
+}
+
+func (d *DualWriterMode3) GetSingularName() string {
+	klog.Error("GetSingularName not implemented")
+	return ""
+}
+
+func (d *DualWriterMode3) NamespaceScoped() bool {
+	klog.Error("NamespaceScoped not implemented")
+	return false
+}
+
+func (d *DualWriterMode3) New() runtime.Object {
+	klog.Error("New not implemented")
+	return nil
+}
+
+func (d *DualWriterMode3) NewList() runtime.Object {
+	klog.Error("NewList not implemented")
+	return nil
+}
+
+func (d *DualWriterMode3) Watch(ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
+	klog.Error("Watch not implemented")
+	return nil, nil
+}
+
+func (d *DualWriterMode3) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+	klog.Error("ConvertToTable not implemented")
+	return nil, nil
 }

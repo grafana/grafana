@@ -6,19 +6,21 @@ import (
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"
 )
 
 type DualWriterMode1 struct {
-	*DualWriter
+	Legacy  LegacyStorage
+	Storage Storage
+	Log     klog.Logger
 }
 
 // NewDualWriterMode1 returns a new DualWriter in mode 1.
 // Mode 1 represents writing to and reading from LegacyStorage.
-func NewDualWriterMode1(legacy LegacyStorage, storage Storage) *DualWriter {
-	dw := &DualWriterMode1{&DualWriter{Legacy: legacy, Storage: storage, Log: klog.NewKlogr().WithName("DualWriterMode1")}}
-	return dw.DualWriter
+func NewDualWriterMode1(legacy LegacyStorage, storage Storage) *DualWriterMode1 {
+	return &DualWriterMode1{Legacy: legacy, Storage: storage, Log: klog.NewKlogr().WithName("DualWriterMode1")}
 }
 
 // Create overrides the behavior of the generic DualWriter and writes only to LegacyStorage.
@@ -80,4 +82,38 @@ func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.
 	}
 
 	return legacy.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+}
+
+func (d *DualWriterMode1) Destroy() {
+	klog.Error("destroy not implemented")
+}
+
+func (d *DualWriterMode1) GetSingularName() string {
+	klog.Error("GetSingularName not implemented")
+	return ""
+}
+
+func (d *DualWriterMode1) NamespaceScoped() bool {
+	klog.Error("NamespaceScoped not implemented")
+	return false
+}
+
+func (d *DualWriterMode1) New() runtime.Object {
+	klog.Error("New not implemented")
+	return nil
+}
+
+func (d *DualWriterMode1) NewList() runtime.Object {
+	klog.Error("NewList not implemented")
+	return nil
+}
+
+func (d *DualWriterMode1) Watch(ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
+	klog.Error("Watch not implemented")
+	return nil, nil
+}
+
+func (d *DualWriterMode1) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+	klog.Error("ConvertToTable not implemented")
+	return nil, nil
 }

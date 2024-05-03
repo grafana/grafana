@@ -11,19 +11,21 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/selection"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"
 )
 
 type DualWriterMode2 struct {
-	*DualWriter
+	Storage Storage
+	Legacy  LegacyStorage
+	Log     klog.Logger
 }
 
 // NewDualWriterMode2 returns a new DualWriter in mode 2.
 // Mode 2 represents writing to LegacyStorage and Storage and reading from LegacyStorage.
-func NewDualWriterMode2(legacy LegacyStorage, storage Storage) *DualWriter {
-	dw := &DualWriterMode2{&DualWriter{Legacy: legacy, Storage: storage, Log: klog.NewKlogr().WithName("DualWriterMode2")}}
-	return dw.DualWriter
+func NewDualWriterMode2(legacy LegacyStorage, storage Storage) *DualWriterMode2 {
+	return &DualWriterMode2{Legacy: legacy, Storage: storage, Log: klog.NewKlogr().WithName("DualWriterMode2")}
 }
 
 // Create overrides the behavior of the generic DualWriter and writes to LegacyStorage and Storage.
@@ -151,6 +153,7 @@ func (d *DualWriterMode2) DeleteCollection(ctx context.Context, deleteValidation
 	deleted, err := legacy.DeleteCollection(ctx, deleteValidation, options, listOptions)
 	if err != nil {
 		log.WithValues("deleted", deleted).Error(err, "failed to delete collection successfully from legacy storage")
+		return nil, err
 	}
 	legacyList, err := meta.ExtractList(deleted)
 	if err != nil {
@@ -263,6 +266,40 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 	// TODO: relies on GuaranteedUpdate creating the object if
 	// it doesn't exist: https://github.com/grafana/grafana/pull/85206
 	return d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+}
+
+func (d *DualWriterMode2) Destroy() {
+	klog.Error("destroy not implemented")
+}
+
+func (d *DualWriterMode2) GetSingularName() string {
+	klog.Error("GetSingularName not implemented")
+	return ""
+}
+
+func (d *DualWriterMode2) NamespaceScoped() bool {
+	klog.Error("NamespaceScoped not implemented")
+	return false
+}
+
+func (d *DualWriterMode2) New() runtime.Object {
+	klog.Error("New not implemented")
+	return nil
+}
+
+func (d *DualWriterMode2) NewList() runtime.Object {
+	klog.Error("NewList not implemented")
+	return nil
+}
+
+func (d *DualWriterMode2) Watch(ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
+	klog.Error("Watch not implemented")
+	return nil, nil
+}
+
+func (d *DualWriterMode2) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+	klog.Error("ConvertToTable not implemented")
+	return nil, nil
 }
 
 func parseList(legacyList []runtime.Object) (metainternalversion.ListOptions, map[string]int, error) {
