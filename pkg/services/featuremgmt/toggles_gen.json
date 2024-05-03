@@ -2111,6 +2111,18 @@
     },
     {
       "metadata": {
+        "name": "autofixDSUID",
+        "resourceVersion": "1714386506243",
+        "creationTimestamp": "2024-04-29T10:28:26Z"
+      },
+      "spec": {
+        "description": "Automatically migrates invalid datasource UIDs",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend"
+      }
+    },
+    {
+      "metadata": {
         "name": "logsExploreTableDefaultVisualization",
         "resourceVersion": "1714583478121",
         "creationTimestamp": "2024-05-01T17:05:57Z",

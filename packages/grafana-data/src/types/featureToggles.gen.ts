@@ -181,5 +181,6 @@ export interface FeatureToggles {
   disableNumericMetricsSortingInExpressions?: boolean;
   grafanaManagedRecordingRules?: boolean;
   queryLibrary?: boolean;
+  autofixDSUID?: boolean;
   logsExploreTableDefaultVisualization?: boolean;
 }
