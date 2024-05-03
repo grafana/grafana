@@ -474,7 +474,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     return (
       <ContentOutlineItem panelId="Node Graph" title="Node Graph" icon="code-branch">
         <NodeGraphContainer
-          dataFrames={this.memoizedGetNodeGraphDataFrames(queryResponse.series)}
+          dataFrames={this.memoizedGetNodeGraphDataFrames(queryResponse.nodeGraphFrames)}
           exploreId={exploreId}
           withTraceView={showTrace}
           datasourceType={datasourceType}
