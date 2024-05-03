@@ -73,3 +73,30 @@ type ScopeDashboardBindingList struct {
 
 	Items []ScopeDashboardBinding `json:"items,omitempty"`
 }
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type ScopeNode struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec ScopeNodeSpec `json:"spec,omitempty"`
+}
+
+type ScopeNodeSpec struct {
+	//+optional
+	ParentName   *string `json:"parentName"`
+	Title        string  `json:"title"`
+	Description  string  `json:"description"`
+	IsLeaf       bool    `json:"isLeaf"`
+	IsSelectable bool    `json:"isSelectable"`
+	LeafType     string  `json:"leafType"`
+	LeafName     string  `json:"leafName"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type ScopeNodeList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	Items []ScopeNode `json:"items,omitempty"`
+}

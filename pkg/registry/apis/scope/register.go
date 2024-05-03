@@ -82,6 +82,22 @@ func (b *ScopeAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		return err
 	}
 
+	err = scheme.AddFieldLabelConversionFunc(
+		scope.ScopeNodeResourceInfo.GroupVersionKind(),
+		func(label, value string) (string, string, error) {
+			fieldSet := SelectableScopeNodeFields(&scope.ScopeNode{})
+			for key := range fieldSet {
+				if label == key {
+					return label, value, nil
+				}
+			}
+			return "", "", fmt.Errorf("field label not supported for %s: %s", scope.ScopeNodeResourceInfo.GroupVersionKind(), label)
+		},
+	)
+	if err != nil {
+		return err
+	}
+
 	// This is required for --server-side apply
 	err = scope.AddKnownTypes(scope.InternalGroupVersion, scheme)
 	if err != nil {
@@ -102,6 +118,7 @@ func (b *ScopeAPIBuilder) GetAPIGroupInfo(
 
 	scopeResourceInfo := scope.ScopeResourceInfo
 	scopeDashboardResourceInfo := scope.ScopeDashboardBindingResourceInfo
+	scopeNodeResourceInfo := scope.ScopeNodeResourceInfo
 
 	storage := map[string]rest.Storage{}
 
@@ -116,6 +133,12 @@ func (b *ScopeAPIBuilder) GetAPIGroupInfo(
 		return nil, err
 	}
 	storage[scopeDashboardResourceInfo.StoragePath()] = scopeDashboardStorage
+
+	scopeNodeStorage, err := newScopeNodeStorage(scheme, optsGetter)
+	if err != nil {
+		return nil, err
+	}
+	storage[scopeNodeResourceInfo.StoragePath()] = scopeNodeStorage
 
 	apiGroupInfo.VersionedResourcesStorageMap[scope.VERSION] = storage
 	return &apiGroupInfo, nil
