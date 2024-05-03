@@ -104,7 +104,7 @@ Ensure deprecated endpoints are updated to new corresponding endpoints and depre
 
 #### Learn more
 
-The [Reporting documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/reporting/) lists all supported endpoints and fields.
+The [Reporting API documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/reporting/) lists all supported endpoints and fields.
 
 ### Change custom branding public dashboard footer behavior
 
