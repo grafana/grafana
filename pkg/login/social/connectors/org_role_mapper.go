@@ -148,28 +148,26 @@ func (m *OrgRoleMapper) ParseOrgMappingSettings(ctx context.Context, mappings []
 					}
 					continue
 				}
-				orgID, err = int(res.ID), nil
+				orgID = int(res.ID)
 			}
 			if kv[1] == "*" {
-				orgID, err = MapperMatchAllOrgID, nil
+				orgID = MapperMatchAllOrgID
 			}
-			if err == nil {
-				if roleStrict && (len(kv) < 3 || !org.RoleType(kv[2]).IsValid()) {
-					// Return empty mapping if at least one org mapping is invalid (missing role, invalid role)
-					m.logger.Warn("Skipping org mapping due to missing or invalid role in mapping when roleStrict is enabled.", "mapping", fmt.Sprintf("%v", v))
-					return &MappingConfiguration{orgMapping: map[string]map[int64]org.RoleType{}, strictRoleMapping: roleStrict}
-				}
+		if roleStrict && (len(kv) < 3 || !org.RoleType(kv[2]).IsValid()) {
+				// Return empty mapping if at least one org mapping is invalid (missing role, invalid role)
+				m.logger.Warn("Skipping org mapping due to missing or invalid role in mapping with roleStrict is enabled.", "mapping", fmt.Sprintf("%v", v))
+				return &MappingConfiguration{orgMapping: map[string]map[int64]org.RoleType{}, strictRoleMapping: roleStrict}
+			}
 
-				orga := kv[0]
-				if res[orga] == nil {
-					res[orga] = map[int64]org.RoleType{}
-				}
+			orga := kv[0]
+			if res[orga] == nil {
+				res[orga] = map[int64]org.RoleType{}
+			}
 
-				if len(kv) > 2 && org.RoleType(kv[2]).IsValid() {
-					res[orga][int64(orgID)] = org.RoleType(kv[2])
-				} else {
-					res[orga][int64(orgID)] = org.RoleViewer
-				}
+			if len(kv) > 2 && org.RoleType(kv[2]).IsValid() {
+				res[orga][int64(orgID)] = org.RoleType(kv[2])
+			} else {
+				res[orga][int64(orgID)] = org.RoleViewer
 			}
 		}
 	}
