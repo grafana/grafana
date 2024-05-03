@@ -462,6 +462,14 @@ export class Scene {
           targetedElement.applyRotate(event);
         }
       })
+      .on('rotateGroup', (e) => {
+        for (let event of e.events) {
+          const targetedElement = this.findElementByTarget(event.target);
+          if (targetedElement) {
+            targetedElement.applyRotate(event);
+          }
+        }
+      })
       .on('rotateEnd', () => {
         this.enableCustomables();
         // Update the editor with the new rotation
