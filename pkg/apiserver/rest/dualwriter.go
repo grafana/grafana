@@ -86,7 +86,7 @@ var CurrentMode = Mode2
 // change DualWriter signature to get the current mode as an argument
 
 // NewDualWriter returns a new DualWriter.
-func NewDualWriter(legacy LegacyStorage, storage Storage) DualWriter {
+func NewDualWriter(legacy LegacyStorage, storage Storage) DualWrite {
 	return selectDualWriter(CurrentMode, legacy, storage)
 }
 
