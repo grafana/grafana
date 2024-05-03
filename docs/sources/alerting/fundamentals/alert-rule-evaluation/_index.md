@@ -87,7 +87,7 @@ An alert instance is resolved when it transitions from the `Firing` to the `Norm
 | 03:00 (sixth evaluation)   | Not met   | Normal <sup>Resolved \*</sup> | 120s            |
 | 03:30 (seventh evaluation) | Not met   | Normal                        | 150s            |
 
-To learn more about the state changes of alert rules and instance, refer to [State and health of alert rules][alerts-state-health].
+To learn more about the state changes of alert rules and alert instances, refer to [State and health of alert rules][alerts-state-health].
 
 {{% docs/reference %}}
 
