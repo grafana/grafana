@@ -171,9 +171,9 @@ func (a allEvaluator) MutateScopes(ctx context.Context, mutate ScopeAttributeMut
 	return EvalAll(modified...), nil
 }
 
-func (p allEvaluator) AppendActionSets(ctx context.Context, resolve ActionSetResolver) Evaluator {
-	evals := make([]Evaluator, 0, len(p.allOf))
-	for _, e := range p.allOf {
+func (a allEvaluator) AppendActionSets(ctx context.Context, resolve ActionSetResolver) Evaluator {
+	evals := make([]Evaluator, 0, len(a.allOf))
+	for _, e := range a.allOf {
 		resolvedSets := e.AppendActionSets(ctx, resolve)
 		evals = append(evals, resolvedSets)
 	}

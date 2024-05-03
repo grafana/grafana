@@ -839,7 +839,6 @@ func TestStore_ResolveActionSet(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-
 			actionSets := store.actionSetService.Resolve(tt.action)
 			require.ElementsMatch(t, tt.expectedActionSets, actionSets)
 		})
