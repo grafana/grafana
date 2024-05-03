@@ -26,6 +26,7 @@ export function PluginEnterpriseBadge({ plugin }: Props): React.ReactElement {
         text="Enterprise"
         color="blue"
         className={customBadgeStyles}
+        title="Requires a Grafana Enterprise license"
       />
     </Stack>
   );
