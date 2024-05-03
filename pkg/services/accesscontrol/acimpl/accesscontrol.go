@@ -50,7 +50,7 @@ func (a *AccessControl) Evaluate(ctx context.Context, user identity.Requester, e
 	}
 
 	// TODO update this to use featuremgmt.FeatureToggles instead of checking the config
-	if a.cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccessActionSets) {
+	if a.cfg != nil && a.cfg.IsFeatureToggleEnabled != nil && a.cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccessActionSets) {
 		evaluator = evaluator.AppendActionSets(ctx, a.resolvers.GetActionSetResolver())
 	}
 
