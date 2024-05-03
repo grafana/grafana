@@ -1,7 +1,7 @@
 // useConfiguration.ts
 import { useMemo } from 'react';
 
-import { ConfigurationStepsEnum, DataSourceConfigurationData, IRMCardConfiguration } from '../components/ConfigureIRM';
+import { ConfigurationStepsEnum, DataSourceConfigurationData, IrmCardConfiguration } from '../components/ConfigureIRM';
 
 import { EssentialsConfigurationData } from './irmHooks';
 
@@ -13,7 +13,7 @@ interface UseConfigurationProps {
 export const useGetConfigurationForUI = ({
   dataSourceConfigurationData: { dataSourceCompatibleWithAlerting },
   essentialsConfigurationData: { stepsDone, totalStepsToDo },
-}: UseConfigurationProps): IRMCardConfiguration[] => {
+}: UseConfigurationProps): IrmCardConfiguration[] => {
   return useMemo(() => {
     function getConnectDataSourceConfiguration() {
       const description = dataSourceCompatibleWithAlerting
