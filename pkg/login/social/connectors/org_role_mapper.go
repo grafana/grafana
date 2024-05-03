@@ -21,7 +21,7 @@ type OrgRoleMapper struct {
 
 // MappingConfiguration represents the mapping configuration from external orgs to Grafana orgs and roles.
 // orgMapping: mapping from external orgs to Grafana orgs and roles
-// strictRoleMapping: if true, the mapper ensuers that the evaluated role from orgMapping or the directlyMappedRole is a valid role, otherwise it will return nil.
+// strictRoleMapping: if true, the mapper ensures that the evaluated role from orgMapping or the directlyMappedRole is a valid role, otherwise it will return nil.
 type MappingConfiguration struct {
 	orgMapping        map[string]map[int64]org.RoleType
 	strictRoleMapping bool
@@ -39,9 +39,9 @@ func ProvideOrgRoleMapper(cfg *setting.Cfg, orgService org.Service) *OrgRoleMapp
 //
 // mappingCfg: mapping configuration from external orgs to Grafana orgs and roles. Use `ParseOrgMappingSettings` to convert the raw setting to this format.
 //
-// externalOrgs: list of external orgs/groups
+// externalOrgs: list of orgs/groups from the provider
 //
-// directlyMappedRole: role that is directly mapped to the user
+// directlyMappedRole: role that is directly mapped to the user (ex: through `role_attribute_path`)
 func (m *OrgRoleMapper) MapOrgRoles(
 	ctx context.Context,
 	mappingCfg *MappingConfiguration,
