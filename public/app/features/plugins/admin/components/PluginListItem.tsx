@@ -152,7 +152,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       color: theme.colors.text.primary,
       margin: 0,
       wordBreak: 'normal',
-      overflowWrap: 'anywhere'
+      overflowWrap: 'anywhere',
     }),
   };
 };
