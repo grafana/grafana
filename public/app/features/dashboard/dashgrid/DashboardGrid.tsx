@@ -31,6 +31,7 @@ export interface Props {
 interface State {
   panelFilter?: RegExp;
   width: number;
+  attention?: number;
 }
 
 export class DashboardGrid extends PureComponent<Props, State> {
@@ -231,6 +232,10 @@ export class DashboardGrid extends PureComponent<Props, State> {
           windowHeight={this.windowHeight}
           windowWidth={this.windowWidth}
           isViewing={panel.isViewing}
+          hasAttention={panel.id === this.state.attention}
+          setAttention={() => {
+            this.setState({ attention: panel.id });
+          }}
         >
           {(width: number, height: number) => {
             return this.renderPanel(panel, width, height, isDashboardDraggable);
