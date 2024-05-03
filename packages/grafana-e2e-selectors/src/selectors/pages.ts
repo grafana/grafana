@@ -58,6 +58,15 @@ export const Pages = {
       publicDashboardTag: 'data-testid public dashboard tag',
       shareButton: 'data-testid share-button',
       scrollContainer: 'data-testid Dashboard canvas scroll container',
+      newShareButton: {
+        container: 'data-testid new share button',
+        shareLink: 'data-testid new share link-button',
+        arrowMenu: 'data-testid new share button arrow menu',
+        menu: {
+          container: 'data-testid new share button menu',
+          shareInternally: 'data-testid new share button share internally',
+        },
+      },
       playlistControls: {
         prev: 'data-testid playlist previous dashboard button',
         stop: 'data-testid playlist stop dashboard button',
