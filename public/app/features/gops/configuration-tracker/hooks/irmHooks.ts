@@ -10,13 +10,18 @@ import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/d
 import { createUrl } from 'app/features/alerting/unified/utils/url';
 import { Receiver } from 'app/plugins/datasource/alertmanager/types';
 
+interface UrlLink {
+  url: string;
+  queryParams?: Record<string, string>;
+}
 export interface StepButtonDto {
   type: 'openLink' | 'dropDown';
-  queryParams?: Record<string, string>;
   label: string;
-  options?: Array<{ label: string; value: string }>;
+  labelOnDone?: string;
   done?: boolean;
-  url?: string; // only for openLink
+  urlLink?: UrlLink; // only for openLink
+  urlLinkOnDone?: UrlLink; // only for openLink
+  options?: Array<{ label: string; value: string }>; // only for dropDown
   onClickOption?: (value: string) => void; // only for dropDown
 }
 export interface SectionDtoStep {
@@ -209,9 +214,15 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
             description: 'Add a valid email to the default email contact point.',
             button: {
               type: 'openLink',
-              url: `/alerting/notifications/receivers/${defaultContactPoint}/edit`,
-              queryParams: { alertmanager: 'grafana' },
+              urlLink: {
+                url: `/alerting/notifications/receivers/${defaultContactPoint}/edit`,
+                queryParams: { alertmanager: 'grafana' },
+              },
               label: 'Edit',
+              labelOnDone: 'View',
+              urlLinkOnDone: {
+                url: `/alerting/notifications`,
+              },
               done: isContactPointReady(contactPoints),
             },
           },
@@ -220,9 +231,15 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
             description: 'OnCall allows precisely manage your on-call strategy and use multiple channels to deliver',
             button: {
               type: 'openLink',
-              url: '/alerting/notifications/receivers/new',
+              urlLink: {
+                url: '/alerting/notifications/receivers/new',
+              },
               label: 'Connect',
               done: isOnCallContactPointReady(contactPoints),
+              urlLinkOnDone: {
+                url: '/alerting/notifications',
+              },
+              labelOnDone: 'View',
             },
           },
           {
@@ -230,8 +247,14 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
             description: 'Create an alert rule to monitor your system.',
             button: {
               type: 'openLink',
-              url: '/alerting/new',
+              urlLink: {
+                url: '/alerting/new',
+              },
               label: 'Create',
+              urlLinkOnDone: {
+                url: '/alerting/list',
+              },
+              labelOnDone: 'View',
               done: isCreateAlertRuleDone(),
             },
           },
@@ -246,8 +269,14 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
             description: 'Initialize the Incident plugin to declare and manage incidents.',
             button: {
               type: 'openLink',
-              url: '/a/grafana-incident-app/walkthrough/generate-key',
+              urlLink: {
+                url: '/a/grafana-incident-app/walkthrough/generate-key',
+              },
               label: 'Initialize',
+              urlLinkOnDone: {
+                url: '/a/grafana-incident-app',
+              },
+              labelOnDone: 'View',
               done: incidentPluginConfig?.isInstalled,
             },
           },
@@ -256,9 +285,16 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
             description: 'Receive alerts and oncall notifications within your chat environment.',
             button: {
               type: 'openLink',
-              url: '/a/grafana-oncall-app/settings',
-              queryParams: { tab: 'ChatOps', chatOpsTab: 'Slack' },
+              urlLink: {
+                url: '/a/grafana-oncall-app/settings',
+                queryParams: { tab: 'ChatOps', chatOpsTab: 'Slack' },
+              },
               label: 'Connect',
+              urlLinkOnDone: {
+                url: '/a/grafana-oncall-app/settings',
+                queryParams: { tab: 'ChatOps' },
+              },
+              labelOnDone: 'View',
               done: chatOpsConnections.is_chatops_connected,
             },
           },
@@ -268,8 +304,13 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
               'Automatically create an incident channel and manage incidents directly within your chat environment.',
             button: {
               type: 'openLink',
-              url: '/a/grafana-incident-app/integrations/grate.slack',
+              urlLink: {
+                url: '/a/grafana-incident-app/integrations/grate.slack',
+              },
               label: 'Connect',
+              urlLinkOnDone: {
+                url: '/a/grafana-incident-app/integrations',
+              },
               done: incidentPluginConfig?.isChatOpsInstalled,
             },
           },
@@ -278,8 +319,14 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
             description: 'Select ChatOps channels to route notifications',
             button: {
               type: 'openLink',
-              url: '/a/grafana-oncall-app/integrations/',
+              urlLink: {
+                url: '/a/grafana-oncall-app/integrations/',
+              },
               label: 'Add',
+              urlLinkOnDone: {
+                url: '/a/grafana-oncall-app/integrations/',
+              },
+              labelOnDone: 'View',
               done: chatOpsConnections.is_integration_chatops_connected,
             },
           },
@@ -304,8 +351,10 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
             description: 'Practice solving an Incident',
             button: {
               type: 'openLink',
-              url: '/a/grafana-incident-app',
-              queryParams: { declare: 'new', drill: '1' },
+              urlLink: {
+                url: '/a/grafana-incident-app',
+                queryParams: { declare: 'new', drill: '1' },
+              },
               label: 'Start drill',
             },
           },

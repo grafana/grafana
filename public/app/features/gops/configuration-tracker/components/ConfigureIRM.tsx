@@ -17,7 +17,7 @@ import { useGetConfigurationForUI } from '../hooks/useGetConfiguration';
 
 import { ConfigCard } from './ConfigCard';
 import { Essentials } from './Essentials';
-export interface IRMCardConfiguration {
+export interface IrmCardConfiguration {
   id: number;
   title: string;
   description: string;
@@ -57,7 +57,7 @@ export function ConfigureIRM() {
   // get all the configuration data
   const dataSourceConfigurationData = useGetDataSourceConfiguration();
   const essentialsConfigurationData = useGetEssentialsConfiguration();
-  const configuration: IRMCardConfiguration[] = useGetConfigurationForUI({
+  const configuration: IrmCardConfiguration[] = useGetConfigurationForUI({
     dataSourceConfigurationData,
     essentialsConfigurationData,
   });

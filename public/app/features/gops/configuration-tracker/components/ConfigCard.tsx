@@ -5,11 +5,11 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Card, Icon, Stack, useStyles2 } from '@grafana/ui';
 
-import { IRMCardConfiguration } from './ConfigureIRM';
+import { IrmCardConfiguration } from './ConfigureIRM';
 import { ProgressBar, StepsStatus } from './ProgressBar';
 
 interface ConfigCardProps {
-  config: IRMCardConfiguration;
+  config: IrmCardConfiguration;
   handleActionClick: (id: number, isDone: boolean | undefined) => void;
 }
 

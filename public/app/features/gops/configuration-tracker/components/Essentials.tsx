@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Drawer, Dropdown, Icon, LinkButton, Menu, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { createUrl } from 'app/features/alerting/unified/utils/url';
 
-import { SectionDto, SectionDtoStep, SectionsDto } from '../hooks/irmHooks';
+import { SectionDto, SectionDtoStep, SectionsDto, StepButtonDto } from '../hooks/irmHooks';
 
 import { ProgressBar, StepsStatus } from './ProgressBar';
 
@@ -81,34 +81,61 @@ function Step({ step }: StepProps) {
           <Icon name="question-circle" />
         </Tooltip>
       </Stack>
-      {!step.button.done && <StepButton {...step.button} data-testid="step-button" />}
+      <StepButton {...step.button} data-testid="step-button" />
     </Stack>
   );
 }
 
-interface StepButtonProps {
-  type: 'openLink' | 'dropDown';
-  url?: string;
-  queryParams?: Record<string, string>;
+interface LinkButtonProps {
+  urlLink?: { url: string; queryParams?: Record<string, string> };
   label: string;
-  options?: Array<{ label: string; value: string }>;
+  urlLinkOnDone?: { url: string; queryParams?: Record<string, string> };
+  labelOnDone?: string;
   done?: boolean;
-  onClickOption?: (value: string) => void;
 }
-
-function StepButton({ type, url, label, options, queryParams, onClickOption }: StepButtonProps) {
-  const urlToGo = url
-    ? createUrl(url, {
+function OpenLinkButton(props: LinkButtonProps) {
+  const { urlLink, label, urlLinkOnDone, labelOnDone, done } = props;
+  const urlToGoWhenNotDone = urlLink?.url
+    ? createUrl(urlLink.url, {
         returnTo: location.pathname + location.search,
-        ...queryParams,
+        ...urlLink.queryParams,
       })
     : '';
+  const urlToGoWhenDone = urlLinkOnDone?.url
+    ? createUrl(urlLinkOnDone.url, {
+        returnTo: location.pathname + location.search,
+        ...urlLinkOnDone.queryParams,
+      })
+    : '';
+  const urlToGo = done ? urlToGoWhenDone : urlToGoWhenNotDone;
+  return (
+    <LinkButton href={urlToGo} variant="secondary">
+      {done ? labelOnDone ?? label : label}
+    </LinkButton>
+  );
+}
+
+interface StepButtonProps extends StepButtonDto {}
+function StepButton({
+  type,
+  urlLink,
+  urlLinkOnDone: ulrLinkOnDone,
+  label,
+  labelOnDone,
+  options,
+  onClickOption,
+  done,
+}: StepButtonProps) {
   switch (type) {
     case 'openLink':
       return (
-        <LinkButton href={urlToGo} variant="secondary">
-          {label}
-        </LinkButton>
+        <OpenLinkButton
+          urlLink={urlLink}
+          label={label}
+          urlLinkOnDone={ulrLinkOnDone}
+          labelOnDone={labelOnDone}
+          done={done}
+        />
       );
     case 'dropDown':
       return (

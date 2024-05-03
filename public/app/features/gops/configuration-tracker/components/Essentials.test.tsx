@@ -18,7 +18,9 @@ function mockSectionsDto(): SectionsDto {
             description: 'description1',
             button: {
               type: 'openLink',
-              url: '/url1',
+              urlLink: {
+                url: '/url1',
+              },
               label: 'label1',
               done: true,
             },
@@ -28,7 +30,9 @@ function mockSectionsDto(): SectionsDto {
             description: 'description2',
             button: {
               type: 'openLink',
-              url: '/url2',
+              urlLink: {
+                url: '/url2',
+              },
               label: 'label2',
               done: false,
             },
@@ -38,7 +42,9 @@ function mockSectionsDto(): SectionsDto {
             description: 'description3',
             button: {
               type: 'openLink',
-              url: '/url3',
+              urlLink: {
+                url: '/url3',
+              },
               label: 'test',
             },
           },
