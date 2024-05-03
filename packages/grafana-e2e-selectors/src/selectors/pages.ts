@@ -57,6 +57,7 @@ export const Pages = {
       navV2: 'data-testid Dashboard navigation',
       publicDashboardTag: 'data-testid public dashboard tag',
       shareButton: 'data-testid share-button',
+      scrollContainer: 'data-testid Dashboard canvas scroll container',
       newShareButton: {
         container: 'data-testid new share button',
         shareLink: 'data-testid new share link-button',
@@ -266,6 +267,9 @@ export const Pages = {
         DeleteEmail: 'data-testid public dashboard delete email button',
         ReshareLink: 'data-testid public dashboard reshare link button',
       },
+    },
+    PublicDashboardScene: {
+      Tab: 'Tab Public Dashboard',
     },
   },
   PublicDashboard: {
