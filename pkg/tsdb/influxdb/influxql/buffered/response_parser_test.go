@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -34,9 +33,9 @@ func readJsonFile(filePath string) io.ReadCloser {
 	return io.NopCloser(strings.NewReader(string(bytes)))
 }
 
-func generateQuery(resFormat string, alias string) *models.Query {
+func generateQuery(query, resFormat, alias string) *models.Query {
 	return &models.Query{
-		RawQuery:     "Test raw query",
+		RawQuery:     query,
 		UseRawQuery:  true,
 		Alias:        alias,
 		ResultFormat: resFormat,
@@ -83,17 +82,35 @@ func TestReadInfluxAsTable(t *testing.T) {
 
 func runScenario(tf string, resultFormat string) func(t *testing.T) {
 	return func(t *testing.T) {
-		f, err := os.Open(path.Join(testPath, filepath.Clean(tf+".json")))
-		require.NoError(t, err)
+		f := readJsonFile(tf)
 
-		query := generateQuery(resultFormat, "")
+		query := generateQuery("Test raw query", resultFormat, "")
 
-		rsp := ResponseParse(io.NopCloser(f), 200, query)
-		require.NoError(t, rsp.Error)
-
-		fname := tf + "." + resultFormat + ".golden"
-		experimental.CheckGoldenJSONResponse(t, testPath, fname, rsp, shouldUpdate)
+		runQuery(t, f, tf, resultFormat, query)
 	}
+}
+
+func runQuery(t *testing.T, f io.ReadCloser, tf string, rf string, query *models.Query) {
+	rsp := ResponseParse(f, 200, query)
+
+	if strings.Contains(tf, "error") {
+		require.Error(t, rsp.Error)
+		return
+	}
+	require.NoError(t, rsp.Error)
+
+	fname := tf + "." + rf + ".golden"
+	experimental.CheckGoldenJSONResponse(t, testPath, fname, rsp, shouldUpdate)
+}
+
+func TestParsingAsTimeSeriesWithoutTimeColumn(t *testing.T) {
+	t.Run("cardinality", func(t *testing.T) {
+		f := readJsonFile("cardinality")
+
+		query := generateQuery(`SHOW TAG VALUES CARDINALITY with key = "host"`, "time_series", "")
+
+		runQuery(t, f, "cardinality", "time_series", query)
+	})
 }
 
 func TestInfluxdbResponseParser(t *testing.T) {
@@ -101,7 +118,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		result := ResponseParse(
 			io.NopCloser(strings.NewReader(`{ invalid }`)),
 			200,
-			generateQuery("time_series", ""),
+			generateQuery("Test raw query", "time_series", ""),
 		)
 
 		require.Nil(t, result.Frames)
@@ -132,7 +149,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		)
 
 		t.Run("should parse aliases", func(t *testing.T) {
-			result := ResponseParse(readJsonFile("response"), 200, generateQuery("time_sereies", "alias $m $measurement"))
+			result := ResponseParse(readJsonFile("response"), 200, generateQuery("Test raw query", "time_sereies", "alias $m $measurement"))
 
 			name := "alias cpu.upc cpu.upc"
 			testFrame.Name = name
@@ -141,7 +158,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
-			query := generateQuery("time_series", "alias $col")
+			query := generateQuery("Test raw query", "time_series", "alias $col")
 			query.Measurement = "10m"
 			result = ResponseParse(readJsonFile("response"), 200, query)
 			name = "alias mean"
@@ -162,7 +179,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
-			result = ResponseParse(readJsonFile("response"), 200, generateQuery("time_series", "alias $tag_datacenter"))
+			result = ResponseParse(readJsonFile("response"), 200, generateQuery("Test raw query", "time_series", "alias $tag_datacenter"))
 			name = "alias America"
 			testFrame.Name = name
 			newField = data.NewField("Value", labels, []*float64{
@@ -174,7 +191,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
-			result = ResponseParse(readJsonFile("response"), 200, generateQuery("time_series", "alias $tag_datacenter/$tag_datacenter"))
+			result = ResponseParse(readJsonFile("response"), 200, generateQuery("Test raw query", "time_series", "alias $tag_datacenter/$tag_datacenter"))
 			name = "alias America/America"
 			testFrame.Name = name
 			newField = data.NewField("Value", labels, []*float64{
@@ -186,7 +203,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
-			query = generateQuery("time_series", "alias [[col]]")
+			query = generateQuery("Test raw query", "time_series", "alias [[col]]")
 			query.Measurement = "10m"
 			result = ResponseParse(readJsonFile("response"), 200, query)
 			name = "alias mean"
@@ -196,7 +213,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
-			result = ResponseParse(readJsonFile("response"), 200, generateQuery("time_series", "alias $0 $1 $2 $3 $4"))
+			result = ResponseParse(readJsonFile("response"), 200, generateQuery("Test raw query", "time_series", "alias $0 $1 $2 $3 $4"))
 			name = "alias cpu upc $2 $3 $4"
 			testFrame.Name = name
 			testFrame.Fields[1].Config.DisplayNameFromDS = name
@@ -204,7 +221,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
-			result = ResponseParse(readJsonFile("response"), 200, generateQuery("time_series", "alias $0, $1 - $2 - $3, $4: something"))
+			result = ResponseParse(readJsonFile("response"), 200, generateQuery("Test raw query", "time_series", "alias $0, $1 - $2 - $3, $4: something"))
 			name = "alias cpu, upc - $2 - $3, $4: something"
 			testFrame.Name = name
 			testFrame.Fields[1].Config.DisplayNameFromDS = name
@@ -212,7 +229,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
-			result = ResponseParse(readJsonFile("response"), 200, generateQuery("time_series", "alias $1"))
+			result = ResponseParse(readJsonFile("response"), 200, generateQuery("Test raw query", "time_series", "alias $1"))
 			name = "alias upc"
 			testFrame.Name = name
 			testFrame.Fields[1].Config.DisplayNameFromDS = name
@@ -220,7 +237,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
-			result = ResponseParse(readJsonFile("response"), 200, generateQuery("time_series", "alias $5"))
+			result = ResponseParse(readJsonFile("response"), 200, generateQuery("Test raw query", "time_series", "alias $5"))
 			name = "alias $5"
 			testFrame.Name = name
 			testFrame.Fields[1].Config.DisplayNameFromDS = name
@@ -228,7 +245,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
-			result = ResponseParse(readJsonFile("response"), 200, generateQuery("time_series", "series alias"))
+			result = ResponseParse(readJsonFile("response"), 200, generateQuery("Test raw query", "time_series", "series alias"))
 			name = "series alias"
 			testFrame.Name = name
 			testFrame.Fields[1].Config.DisplayNameFromDS = name
@@ -236,7 +253,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
-			query = generateQuery("time_series", "alias [[m]] [[measurement]]")
+			query = generateQuery("Test raw query", "time_series", "alias [[m]] [[measurement]]")
 			query.Measurement = "10m"
 			result = ResponseParse(readJsonFile("response"), 200, query)
 			name = "alias cpu.upc cpu.upc"
@@ -246,7 +263,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
-			result = ResponseParse(readJsonFile("response"), 200, generateQuery("time_series", "alias [[tag_datacenter]]"))
+			result = ResponseParse(readJsonFile("response"), 200, generateQuery("Test raw query", "time_series", "alias [[tag_datacenter]]"))
 			name = "alias America"
 			testFrame.Name = name
 			testFrame.Fields[1].Config.DisplayNameFromDS = name
@@ -254,7 +271,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
-			result = ResponseParse(readJsonFile("response"), 200, generateQuery("time_series", "alias [[tag_dc.region.name]]"))
+			result = ResponseParse(readJsonFile("response"), 200, generateQuery("Test raw query", "time_series", "alias [[tag_dc.region.name]]"))
 			name = "alias Northeast"
 			testFrame.Name = name
 			testFrame.Fields[1].Config.DisplayNameFromDS = name
@@ -262,7 +279,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
-			result = ResponseParse(readJsonFile("response"), 200, generateQuery("time_series", "alias [[tag_cluster-name]]"))
+			result = ResponseParse(readJsonFile("response"), 200, generateQuery("Test raw query", "time_series", "alias [[tag_cluster-name]]"))
 			name = "alias Cluster"
 			testFrame.Name = name
 			testFrame.Fields[1].Config.DisplayNameFromDS = name
@@ -270,7 +287,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
-			result = ResponseParse(readJsonFile("response"), 200, generateQuery("time_series", "alias [[tag_/cluster/name/]]"))
+			result = ResponseParse(readJsonFile("response"), 200, generateQuery("Test raw query", "time_series", "alias [[tag_/cluster/name/]]"))
 			name = "alias Cluster/"
 			testFrame.Name = name
 			testFrame.Fields[1].Config.DisplayNameFromDS = name
@@ -278,7 +295,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
-			result = ResponseParse(readJsonFile("response"), 200, generateQuery("time_series", "alias [[tag_@cluster@name@]]"))
+			result = ResponseParse(readJsonFile("response"), 200, generateQuery("Test raw query", "time_series", "alias [[tag_@cluster@name@]]"))
 			name = "alias Cluster@"
 			testFrame.Name = name
 			testFrame.Fields[1].Config.DisplayNameFromDS = name
@@ -288,7 +305,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		})
 
 		t.Run("shouldn't parse aliases", func(t *testing.T) {
-			result := ResponseParse(readJsonFile("response"), 200, generateQuery("time_series", "alias words with no brackets"))
+			result := ResponseParse(readJsonFile("response"), 200, generateQuery("Test raw query", "time_series", "alias words with no brackets"))
 			name := "alias words with no brackets"
 			testFrame.Name = name
 			testFrame.Fields[1].Config.DisplayNameFromDS = name
@@ -296,7 +313,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
-			result = ResponseParse(readJsonFile("response"), 200, generateQuery("time_series", "alias Test 1.5"))
+			result = ResponseParse(readJsonFile("response"), 200, generateQuery("Test raw query", "time_series", "alias Test 1.5"))
 			name = "alias Test 1.5"
 			testFrame.Name = name
 			testFrame.Fields[1].Config.DisplayNameFromDS = name
@@ -304,7 +321,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
-			result = ResponseParse(readJsonFile("response"), 200, generateQuery("time_series", "alias Test -1"))
+			result = ResponseParse(readJsonFile("response"), 200, generateQuery("Test raw query", "time_series", "alias Test -1"))
 			name = "alias Test -1"
 			testFrame.Name = name
 			testFrame.Fields[1].Config.DisplayNameFromDS = name
@@ -315,13 +332,13 @@ func TestInfluxdbResponseParser(t *testing.T) {
 	})
 
 	t.Run("Influxdb response parser with errors", func(t *testing.T) {
-		result := ResponseParse(readJsonFile("error_response"), 200, generateQuery("time_series", ""))
+		result := ResponseParse(readJsonFile("error_response"), 200, generateQuery("Test raw query", "time_series", ""))
 
 		require.EqualError(t, result.Error, "query-timeout limit exceeded")
 	})
 
 	t.Run("Influxdb response parser with top-level error", func(t *testing.T) {
-		result := ResponseParse(readJsonFile("error_on_top_level_response"), 200, generateQuery("time_series", ""))
+		result := ResponseParse(readJsonFile("error_on_top_level_response"), 200, generateQuery("Test raw query", "time_series", ""))
 		require.Nil(t, result.Frames)
 		require.EqualError(t, result.Error, "error parsing query: found THING")
 	})
@@ -356,7 +373,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		)
 		testFrame.Meta = &data.FrameMeta{PreferredVisualization: util.GraphVisType, ExecutedQueryString: "Test raw query"}
 
-		result := ResponseParse(readJsonFile("invalid_timestamp_format"), 200, generateQuery("time_series", ""))
+		result := ResponseParse(readJsonFile("invalid_timestamp_format"), 200, generateQuery("Test raw query", "time_series", ""))
 
 		if diff := cmp.Diff(testFrame, result.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
