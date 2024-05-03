@@ -116,19 +116,13 @@ function PanelInfoCorner({ infoMode, content, onClick }: PanelInfoCornerProps) {
   const styles = useStyles2(getStyles);
   const mode = infoMode.toLowerCase() as Lowercase<keyof typeof InfoMode>;
 
-  const iconModeStyles = {
-    [InfoMode.Error]: styles.error,
-    [InfoMode.Info]: '',
-    [InfoMode.Links]: styles.links,
-  };
-
   return (
     <Tooltip content={content} placement="top-start" theme={theme} interactive>
       <button type="button" className={cx(styles.infoCorner)} onClick={onClick} aria-label={ariaLabel}>
         <Icon
           name={iconMap[infoMode]}
           size={infoMode === InfoMode.Links ? 'sm' : 'lg'}
-          className={cx(styles.icon, iconModeStyles[infoMode])}
+          className={cx(styles.icon, infoMode === InfoMode.Links ? styles.iconLinks : '')}
         />
         <span className={cx(styles.inner, styles[mode])} />
       </button>
@@ -150,9 +144,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       top: 0,
       left: 0,
       zIndex: 3,
-    }),
-    iconError: css({
-      fill: theme.colors.text.primary,
+      fill: theme.colors.text.maxContrast,
     }),
     iconLinks: css({
       left: theme.spacing(0.5),
