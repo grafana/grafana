@@ -33,6 +33,25 @@ export enum LogLevel {
   unknown = 'unknown',
 }
 
+// LogLevel: add syslog severity levels
+                          // syslog keyword:
+// @ts-ignore
+LogLevel[0] = 'critical'; // emerg
+// @ts-ignore
+LogLevel[1] = 'critical'; // alert
+// @ts-ignore
+LogLevel[2] = 'critical'; // crit
+// @ts-ignore
+LogLevel[3] = 'error';    // err
+// @ts-ignore
+LogLevel[4] = 'warning';  // warning
+// @ts-ignore
+LogLevel[5] = 'info';     // notice
+// @ts-ignore
+LogLevel[6] = 'info';     // info
+// @ts-ignore
+LogLevel[7] = 'debug';    // debug
+
 // Used for meta information such as common labels or returned log rows in logs view in Explore
 export enum LogsMetaKind {
   Number,
