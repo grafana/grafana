@@ -6,8 +6,6 @@ import {
   deleteAlertManagerConfigAction,
   fetchAlertGroupsAction,
   fetchEditableRuleAction,
-  fetchExternalAlertmanagersAction,
-  fetchExternalAlertmanagersConfigAction,
   fetchFolderAction,
   fetchGrafanaAnnotationsAction,
   fetchGrafanaNotifiersAction,
@@ -45,10 +43,6 @@ export const reducer = combineReducers({
   testReceivers: createAsyncSlice('testReceivers', testReceiversAction).reducer,
   updateLotexNamespaceAndGroup: createAsyncSlice('updateLotexNamespaceAndGroup', updateLotexNamespaceAndGroupAction)
     .reducer,
-  externalAlertmanagers: combineReducers({
-    alertmanagerConfig: createAsyncSlice('alertmanagerConfig', fetchExternalAlertmanagersConfigAction).reducer,
-    discoveredAlertmanagers: createAsyncSlice('discoveredAlertmanagers', fetchExternalAlertmanagersAction).reducer,
-  }),
   managedAlertStateHistory: createAsyncSlice('managedAlertStateHistory', fetchGrafanaAnnotationsAction).reducer,
 });
 
