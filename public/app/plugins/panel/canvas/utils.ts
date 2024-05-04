@@ -322,6 +322,9 @@ export function updateConnectionsForSource(element: ElementState, scene: Scene) 
     const connections = sourceConnections.filter((con) => con.targetName !== element.getName());
     connection.source.onChange({ ...connection.source.options, connections });
   });
+
+  // Update scene connection state to clear out old connections
+  scene.connections.updateState();
 }
 
 export const calculateCoordinates = (
