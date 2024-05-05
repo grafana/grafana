@@ -172,8 +172,22 @@ type Scope struct {
 	Matchers []*labels.Matcher
 }
 
+// This internal query struct is just like QueryModel, except it does not include:
+// sdkapi.CommonQueryProperties -- this avoids errors where the unused "datasource" property
+// may be either a string or DataSourceRef
+type internalQueryModel struct {
+	PrometheusQueryProperties `json:",inline"`
+	//sdkapi.CommonQueryProperties `json:",inline"`
+	IntervalMS float64 `json:"intervalMs,omitempty"`
+
+	// The following properties may be part of the request payload, however they are not saved in panel JSON
+	// Timezone offset to align start & end time on backend
+	UtcOffsetSec int64  `json:"utcOffsetSec,omitempty"`
+	Interval     string `json:"interval,omitempty"`
+}
+
 func Parse(span trace.Span, query backend.DataQuery, dsScrapeInterval string, intervalCalculator intervalv2.Calculator, fromAlert bool, enableScope bool) (*Query, error) {
-	model := &QueryModel{}
+	model := &internalQueryModel{}
 	if err := json.Unmarshal(query.JSON, model); err != nil {
 		return nil, err
 	}
