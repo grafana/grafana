@@ -58,6 +58,18 @@ const LogMessage = ({ hasAnsi, entry, highlights, styles }: LogMessageProps) => 
   return <>{entry}</>;
 };
 
+function extractFirstLine(input: string): string {
+  // Regular expression to match everything up to the first occurrence of '\r\n'
+  const regex = /^(.*?)(\r\n|$)/;
+  const match = input.match(regex);
+
+  if (match) {
+    return match[1];
+  } else {
+    return input;
+  }
+}
+
 const restructureLog = (line: string, prettifyLogMessage: boolean): string => {
   if (prettifyLogMessage) {
     try {
