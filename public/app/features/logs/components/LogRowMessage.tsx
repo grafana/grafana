@@ -12,6 +12,7 @@ export const MAX_CHARACTERS = 100000;
 
 interface Props {
   row: LogRowModel;
+  isExpanded: boolean;
   wrapLogMessage: boolean;
   prettifyLogMessage: boolean;
   app?: CoreApp;
@@ -70,20 +71,28 @@ function extractFirstLine(input: string): string {
   }
 }
 
-const restructureLog = (line: string, prettifyLogMessage: boolean): string => {
-  if (prettifyLogMessage) {
-    try {
-      return JSON.stringify(JSON.parse(line), undefined, 2);
-    } catch (error) {
-      return line;
-    }
+const restructureLog = (isExpanded:boolean, line: string, prettifyLogMessage: boolean): string => {
+  // if (prettifyLogMessage) {
+  //   try {
+  //     return JSON.stringify(JSON.parse(line), undefined, 2);
+  //   } catch (error) {
+  //     return line;
+  //   }
+  // }
+
+  console.log("is expanded 1", isExpanded);
+
+  if (isExpanded) {
+    return line;
   }
-  return line;
+
+  return extractFirstLine(line);
 };
 
 export const LogRowMessage = React.memo((props: Props) => {
   const {
     row,
+    isExpanded,
     wrapLogMessage,
     prettifyLogMessage,
     showContextToggle,
@@ -98,8 +107,9 @@ export const LogRowMessage = React.memo((props: Props) => {
     getRowContextQuery,
   } = props;
   const { hasAnsi, raw } = row;
-  const restructuredEntry = useMemo(() => restructureLog(raw, prettifyLogMessage), [raw, prettifyLogMessage]);
+  const restructuredEntry = useMemo(() => restructureLog(isExpanded, raw, prettifyLogMessage), [isExpanded, raw, prettifyLogMessage]);
   const shouldShowMenu = useMemo(() => mouseIsOver || pinned, [mouseIsOver, pinned]);
+  console.log("is expanded 2", isExpanded);
   return (
     <>
       {
