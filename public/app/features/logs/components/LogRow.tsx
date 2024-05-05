@@ -159,10 +159,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     }
   };
 
-  onExpandClick = () => {
-    console.log("Expand clicked");
-  }
-
   componentDidMount() {
     this.scrollToLogRow(this.state, true);
   }
@@ -265,7 +261,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             )}
           </td>
           {enableLogDetails && (
-            <td title={showDetails ? 'Hide log details' : 'See log details'} className={styles.logsRowToggleDetails} onClick={this.onExpandClick}>
+            <td title={showDetails ? 'Hide log details' : 'See log details'} className={styles.logsRowToggleDetails}>
               <Icon className={styles.topVerticalAlign} name={showDetails ? 'angle-down' : 'angle-right'} />
             </td>
           )}

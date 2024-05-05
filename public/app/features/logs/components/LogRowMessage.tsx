@@ -72,21 +72,19 @@ function extractFirstLine(input: string): string {
 }
 
 const restructureLog = (isExpanded:boolean, line: string, prettifyLogMessage: boolean): string => {
-  // if (prettifyLogMessage) {
-  //   try {
-  //     return JSON.stringify(JSON.parse(line), undefined, 2);
-  //   } catch (error) {
-  //     return line;
-  //   }
-  // }
-
-  console.log("is expanded 1", isExpanded);
-
-  if (isExpanded) {
-    return line;
+  if (!isExpanded) {
+    line = extractFirstLine(line);
   }
 
-  return extractFirstLine(line);
+  if (prettifyLogMessage) {
+    try {
+      return JSON.stringify(JSON.parse(line), undefined, 2);
+    } catch (error) {
+      return line;
+    }
+  }
+
+  return line;
 };
 
 export const LogRowMessage = React.memo((props: Props) => {
@@ -109,7 +107,6 @@ export const LogRowMessage = React.memo((props: Props) => {
   const { hasAnsi, raw } = row;
   const restructuredEntry = useMemo(() => restructureLog(isExpanded, raw, prettifyLogMessage), [isExpanded, raw, prettifyLogMessage]);
   const shouldShowMenu = useMemo(() => mouseIsOver || pinned, [mouseIsOver, pinned]);
-  console.log("is expanded 2", isExpanded);
   return (
     <>
       {
