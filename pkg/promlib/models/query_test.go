@@ -436,6 +436,25 @@ func TestParse(t *testing.T) {
 		require.Equal(t, "rate(ALERTS{job=\"test\" [135000]}) + rate(ALERTS{job=\"test\" [2m15s]})", res.Expr)
 	})
 
+	t.Run("parsing query model with legacy datasource reference", func(t *testing.T) {
+		timeRange := backend.TimeRange{
+			From: now,
+			To:   now.Add(48 * time.Hour),
+		}
+
+		// query with legacy datasource reference
+		q := queryContext(`{
+			"datasource": "hello",
+			"format": "time_series",
+			"intervalFactor": 1,
+			"refId": "A"
+		}`, timeRange, 2*time.Minute)
+
+		res, err := models.Parse(span, q, "15s", intervalCalculator, false, false)
+		require.NoError(t, err)
+		require.Equal(t, "A", res.RefId)
+	})
+
 	t.Run("parsing query model with ${__rate_interval_ms} and ${__rate_interval} variable", func(t *testing.T) {
 		timeRange := backend.TimeRange{
 			From: now,
