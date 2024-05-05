@@ -137,6 +137,8 @@ const (
 var safeResolution = 11000
 
 // QueryModel includes both the common and specific values
+// NOTE: this struct may have issues when decoding JSON that requires the special handling
+// registered in https://github.com/grafana/grafana-plugin-sdk-go/blob/v0.228.0/experimental/apis/data/v0alpha1/query.go#L298
 type QueryModel struct {
 	PrometheusQueryProperties    `json:",inline"`
 	sdkapi.CommonQueryProperties `json:",inline"`
