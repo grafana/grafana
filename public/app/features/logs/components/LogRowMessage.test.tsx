@@ -13,6 +13,7 @@ const setup = (propOverrides?: Partial<ComponentProps<typeof LogRowMessage>>, ro
   const styles = getLogRowStyles(theme);
   const props: ComponentProps<typeof LogRowMessage> = {
     wrapLogMessage: false,
+    isExpanded: false,
     row: createLogRow({ entry: 'test123', logLevel: LogLevel.error, timeEpochMs: 1546297200000, ...rowOverrides }),
     onOpenContext: () => {},
     prettifyLogMessage: false,
