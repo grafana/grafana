@@ -254,6 +254,7 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
 
   let joined: Array<Array<number | string | null | undefined>> = [];
 
+  // JEV: create inner option here?
   if (options.mode === JoinMode.outerTabular) {
     joined = joinOuterTabular(allData, originalFieldsOrderByFrame, originalFields.length, nullModes);
   } else {
@@ -410,10 +411,16 @@ function nullExpand(yVals: Array<number | null>, nullIdxs: number[], alignedLen:
   }
 }
 
+// JEV: Maybe create an inner join function?
+// JEV: this is used for the inner join and outer (time series) join as well
+
+
 // nullModes is a tables-matched array indicating how to treat nulls in each series
 export function join(tables: AlignedData[], nullModes?: number[][], mode: JoinMode = JoinMode.outer) {
   let xVals: Set<number>;
+  console.log(tables, 'tables');
 
+  // JEV: i don't think this is sufficient for an inner join
   if (mode === JoinMode.inner) {
     // @ts-ignore
     xVals = new Set(intersect(tables.map((t) => t[0])));
@@ -430,8 +437,10 @@ export function join(tables: AlignedData[], nullModes?: number[][], mode: JoinMo
       }
     }
   }
+  console.log(xVals, 'xVals');
 
   let data = [Array.from(xVals).sort((a, b) => a - b)];
+  console.log(data, 'data');
 
   let alignedLen = data[0].length;
 
