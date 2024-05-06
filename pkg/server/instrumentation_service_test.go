@@ -49,6 +49,8 @@ func TestIntegrationRunInstrumentationService(t *testing.T) {
 
 	res, err = client.Get("http://localhost:3000/debug/pprof/")
 	require.NoError(t, err)
+	err = res.Body.Close()
+	require.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode)
 
 	err = services.StopAndAwaitTerminated(ctx, s)
