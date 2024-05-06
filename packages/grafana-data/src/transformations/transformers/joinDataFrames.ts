@@ -257,7 +257,7 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
   // JEV: create inner option here?
   if (options.mode === JoinMode.outerTabular) {
     joined = joinOuterTabular(allData, originalFieldsOrderByFrame, originalFields.length, nullModes);
-  } else if (options.mode === JoinMode.inner) {
+  } else if (options.mode === JoinMode.innerTabular) {
     joined = joinInnerTabular(allData);
     console.log(joined, 'joined');
   } else {
