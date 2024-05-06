@@ -10,7 +10,7 @@
     "id": {
       "type": "string",
       "description": "Unique name of the plugin. If the plugin is published on grafana.com, then the plugin `id` has to follow the naming conventions.",
-      "pattern": "^[0-9a-z]+\\-([0-9a-z]+\\-)?(app|panel|datasource|secretsmanager)$"
+      "pattern": "^[0-9a-z]+\\-([0-9a-z]+\\-)*(app|panel|datasource|secretsmanager)$"
     },
     "type": {
       "type": "string",
