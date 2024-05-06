@@ -132,7 +132,7 @@ func (d *DualWriterMode3) DeleteCollection(ctx context.Context, deleteValidation
 	}
 
 	if deleted, err := legacy.DeleteCollection(ctx, deleteValidation, options, listOptions); err != nil {
-		log.WithValues("delted", deleted).Error(err, "failed to delete collection successfully from LegacyStorage")
+		log.WithValues("deleted", deleted).Error(err, "failed to delete collection successfully from LegacyStorage")
 	}
 
 	return deleted, err
