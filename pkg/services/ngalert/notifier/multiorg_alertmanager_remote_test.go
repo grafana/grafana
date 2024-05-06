@@ -122,7 +122,7 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 	// It should send config and state on an interval.
 	{
 		// Let's change the configuration and state.
-		_, err := configStore.SaveAlertmanagerConfiguration(ctx, &models.SaveAlertmanagerConfigurationCmd{
+		err := configStore.SaveAlertmanagerConfiguration(ctx, &models.SaveAlertmanagerConfigurationCmd{
 			AlertmanagerConfiguration: validConfig,
 			OrgID:                     1,
 			LastApplied:               time.Now().Unix(),

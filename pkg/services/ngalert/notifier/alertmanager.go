@@ -183,7 +183,7 @@ func (am *alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 			return
 		}
 
-		_, err = am.Store.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error {
+		err = am.Store.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error {
 			if am.withAutogen {
 				err := AddAutogenConfig(ctx, am.logger, am.Store, am.orgID, &cfg.AlertmanagerConfig, true)
 				if err != nil {
@@ -222,7 +222,7 @@ func (am *alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 			LastApplied:               time.Now().UTC().Unix(),
 		}
 
-		_, err = am.Store.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error {
+		err = am.Store.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error {
 			if am.withAutogen {
 				err := AddAutogenConfig(ctx, am.logger, am.Store, am.orgID, &cfg.AlertmanagerConfig, false)
 				if err != nil {
