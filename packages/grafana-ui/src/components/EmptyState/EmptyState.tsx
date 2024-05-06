@@ -49,7 +49,7 @@ export const EmptyState = ({
       <div className={styles.container}>
         {!hideImage && imageToShow}
         <Stack direction="column" alignItems="center">
-          <Text variant="h4" textAlignment="center">
+          <Text variant="h4" textAlignment="center" role={variant === 'not-found' ? 'alert' : undefined}>
             {message}
           </Text>
           {children && (
