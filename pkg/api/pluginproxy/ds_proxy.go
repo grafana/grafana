@@ -19,7 +19,6 @@ import (
 	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -305,8 +304,10 @@ func (proxy *DataSourceProxy) validateRequest() error {
 			continue
 		}
 
-		if !proxy.hasAccessToRoute(route) {
-			return errors.New("plugin proxy route access denied")
+		if route.ReqRole.IsValid() {
+			if !proxy.ctx.HasUserRole(route.ReqRole) {
+				return errors.New("plugin proxy route access denied")
+			}
 		}
 
 		proxy.matchedRoute = route
@@ -327,22 +328,6 @@ func (proxy *DataSourceProxy) validateRequest() error {
 	}
 
 	return nil
-}
-
-func (proxy *DataSourceProxy) hasAccessToRoute(route *plugins.Route) bool {
-	useRBAC := proxy.features.IsEnabled(proxy.ctx.Req.Context(), featuremgmt.FlagAccessControlOnCall) && route.ReqAction != ""
-	if useRBAC {
-		routeEval := accesscontrol.EvalPermission(route.ReqAction)
-		ok := routeEval.Evaluate(proxy.ctx.GetPermissions())
-		if !ok {
-			proxy.ctx.Logger.Debug("plugin route is covered by RBAC, user doesn't have access", "route", proxy.ctx.Req.URL.Path)
-		}
-		return ok
-	}
-	if route.ReqRole.IsValid() {
-		return proxy.ctx.HasUserRole(route.ReqRole)
-	}
-	return true
 }
 
 func (proxy *DataSourceProxy) logRequest() {
