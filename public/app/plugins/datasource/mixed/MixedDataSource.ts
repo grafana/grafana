@@ -66,7 +66,7 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
 
     // Using the templateSrv.replace function here with a custom formatter as that is the cleanest way
     // to access the raw value or value array of a variable.
-    getTemplateSrv().replace(
+    const datasourceUid = getTemplateSrv().replace(
       dsRef?.uid,
       request.scopedVars,
       (value: string | string[], variable: CustomFormatterVariable) => {
@@ -99,6 +99,16 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
         return '';
       }
     );
+
+    if (datasourceUid !== '') {
+      batches.push({
+        datasource: getDataSourceSrv().get(datasourceUid),
+        queries: cloneDeep(queries),
+        scopedVars: {
+          ...request.scopedVars,
+        },
+      });
+    }
 
     return batches;
   }
