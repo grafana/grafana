@@ -84,8 +84,8 @@ func (d *DualWriterMode2) Get(ctx context.Context, name string, options *metav1.
 // List overrides the behavior of the generic DualWriter.
 // It returns Storage entries if possible and falls back to LegacyStorage entries if not.
 func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
-	ctx = klog.NewContext(ctx, d.Log)
 	log := d.Log.WithValues("kind", options.Kind, "resourceVersion", options.ResourceVersion)
+	ctx = klog.NewContext(ctx, log)
 	legacy, ok := d.Legacy.(rest.Lister)
 	if !ok {
 		return nil, errDualWriterListerMissing
