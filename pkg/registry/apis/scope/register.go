@@ -154,7 +154,6 @@ func (b *ScopeAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 
 // Register additional routes with the server
 func (b *ScopeAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-
 	defs := scope.GetOpenAPIDefinitions(func(path string) spec.Ref { return spec.Ref{} })
 	scopeNodeSchema := defs["github.com/grafana/grafana/pkg/apis/scopes/v0alpha1.ScopeNodeSpec"].Schema
 
