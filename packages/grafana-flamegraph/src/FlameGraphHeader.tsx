@@ -129,15 +129,6 @@ function ColorSchemeButton(props: ColorSchemeButtonProps) {
     </Menu>
   );
 
-  if (props.isDiffMode) {
-    menu = (
-      <Menu>
-        <Menu.Item label="Default (green to red)" onClick={() => props.onChange(ColorSchemeDiff.Default)} />
-        <Menu.Item label="Color blind (blue to red)" onClick={() => props.onChange(ColorSchemeDiff.DiffColorBlind)} />
-      </Menu>
-    );
-  }
-
   // Show a bit different gradient as a way to indicate selected value
   const colorDotStyle =
     {
@@ -146,6 +137,25 @@ function ColorSchemeButton(props: ColorSchemeButtonProps) {
       [ColorSchemeDiff.DiffColorBlind]: styles.colorDotDiffColorBlind,
       [ColorSchemeDiff.Default]: styles.colorDotDiffDefault,
     }[props.value] || styles.colorDotByValue;
+
+  let contents = <span className={cx(styles.colorDot, colorDotStyle)} />;
+
+  if (props.isDiffMode) {
+    menu = (
+      <Menu>
+        <Menu.Item label="Default (green to red)" onClick={() => props.onChange(ColorSchemeDiff.Default)} />
+        <Menu.Item label="Color blind (blue to red)" onClick={() => props.onChange(ColorSchemeDiff.DiffColorBlind)} />
+      </Menu>
+    );
+
+    contents = (
+      <div className={cx(styles.colorDotDiff, colorDotStyle)}>
+        <div>-100% (removed)</div>
+        <div>0%</div>
+        <div>+100% (added)</div>
+      </div>
+    );
+  }
 
   return (
     <Dropdown overlay={menu}>
@@ -158,7 +168,7 @@ function ColorSchemeButton(props: ColorSchemeButtonProps) {
         className={styles.buttonSpacing}
         aria-label={'Change color scheme'}
       >
-        <span className={cx(styles.colorDot, colorDotStyle)} />
+        {contents}
       </Button>
     </Dropdown>
   );
@@ -221,17 +231,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justifyContent: 'space-between',
     width: '100%',
     top: 0,
+    gap: theme.spacing(1),
+    marginTop: theme.spacing(1),
   }),
   stickyHeader: css({
     zIndex: theme.zIndex.navbarFixed,
     position: 'sticky',
-    paddingBottom: theme.spacing(1),
-    paddingTop: theme.spacing(1),
     background: theme.colors.background.primary,
   }),
   inputContainer: css({
     label: 'inputContainer',
-    marginRight: '20px',
     flexGrow: 1,
     minWidth: '150px',
     maxWidth: '350px',
@@ -263,6 +272,21 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: '10px',
     // eslint-disable-next-line @grafana/no-border-radius-literal
     borderRadius: '50%',
+  }),
+  colorDotDiff: css({
+    label: 'colorDotDiff',
+    display: 'flex',
+    width: '200px',
+    height: '12px',
+    color: 'white',
+    fontSize: 9,
+    lineHeight: 1.3,
+    fontWeight: 300,
+    justifyContent: 'space-between',
+    padding: '0 2px',
+    // We have a specific sizing for this so probably makes sense to use hardcoded value here
+    // eslint-disable-next-line @grafana/no-border-radius-literal
+    borderRadius: '2px',
   }),
   colorDotByValue: css({
     label: 'colorDotByValue',
