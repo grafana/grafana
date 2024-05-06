@@ -33,7 +33,7 @@ const modes = [
     value: JoinMode.innerTabular,
     label: 'INNER (TABULAR)',
     description:
-      'Combine data from two tables whenever there are matching values in a field common to both tables. Non performant outer join best used for tabular(SQL like) data.',
+      'Combine data from two tables whenever there are matching values in a fiesld common to both tables. Non performant outer join best used for tabular(SQL like) data.',
   },
 ];
 
