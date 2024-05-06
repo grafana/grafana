@@ -47,7 +47,6 @@ export const LabelParamEditor = ({
   );
 };
 
-// TODO: add tests
 async function loadGroupByLabels(
   query: VisualQuery,
   datasource: DataSourceApi,
