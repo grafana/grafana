@@ -43,5 +43,7 @@ module.exports = function (fileInfo, api) {
       }
     });
 
-  return root.toSource({});
+  return root.toSource({
+    quote: 'single',
+  });
 };
