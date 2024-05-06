@@ -21,6 +21,7 @@ func (s *Service) synchronizeUserData(ctx context.Context) error {
 			// Ignore the error if it's a duplicate key error
 			err = nil
 			s.log.Warn("Ignoring duplicate key error while synchronizing user data. Can't run this migration twice", "error", err)
+		}
 	}
 	return err
 }

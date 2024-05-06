@@ -237,8 +237,14 @@ func (s *Service) RegisterFixedRoles(ctx context.Context) error {
 
 	err = cl.SeedRoles(ctx, roles, []int64{1})
 	if err != nil {
-		s.log.Error("Failed to seed roles", "error", err)
-		return err
+		if strings.Contains(err.Error(), "cannot write a tuple which already exists") {
+			// Ignore the error if it's a duplicate key error
+			err = nil
+			s.log.Warn("Ignoring duplicate key error while synchronizing user data. Can't run this migration twice", "error", err)
+		} else {
+			s.log.Error("Failed to seed roles", "error", err)
+			return err
+		}
 	}
 
 	// move somewhere else
