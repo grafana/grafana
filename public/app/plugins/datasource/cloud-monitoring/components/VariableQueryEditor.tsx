@@ -160,7 +160,7 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<Props, Var
   async onMetricTypeChange(metricType: string) {
     const state = {
       selectedMetricType: metricType,
-      ...(await this.getLabels(metricType, this.state.projectName)),
+      ...(await this.getLabels(getTemplateSrv().replace(metricType), this.state.projectName)),
     };
     this.setState(state, () => this.onPropsChange());
   }
@@ -278,6 +278,7 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<Props, Var
             />
           </>
         );
+      case MetricFindQueryTypes.Services:
       case MetricFindQueryTypes.SLOServices:
         return (
           <>

@@ -9,7 +9,7 @@ import { alertmanagerApi } from '../api/alertmanagerApi';
 import { useAlertmanager } from '../state/AlertmanagerContext';
 import { getInstancesPermissions, getNotificationsPermissions, getRulesPermissions } from '../utils/access-control';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
-import { isFederatedRuleGroup, isGrafanaRulerRule } from '../utils/rules';
+import { isFederatedRuleGroup, isGrafanaRulerRule, isPluginProvidedRule } from '../utils/rules';
 
 import { useIsRuleEditable } from './useIsRuleEditable';
 
@@ -69,6 +69,7 @@ export enum AlertRuleAction {
   Explore = 'explore-alert-rule',
   Silence = 'silence-alert-rule',
   ModifyExport = 'modify-export-rule',
+  Pause = 'pause-alert-rule',
 }
 
 // this enum lists all of the actions we can perform within alerting in general, not linked to a specific
@@ -147,9 +148,10 @@ export function useAllAlertRuleAbilities(rule: CombinedRule): Abilities<AlertRul
   const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
   const isFederated = isFederatedRuleGroup(rule.group);
   const isGrafanaManagedAlertRule = isGrafanaRulerRule(rule.rulerRule);
+  const isPluginProvided = isPluginProvidedRule(rule);
 
-  // if a rule is either provisioned or a federated rule, we don't allow it to be removed or edited
-  const immutableRule = isProvisioned || isFederated;
+  // if a rule is either provisioned, federated or provided by a plugin rule, we don't allow it to be removed or edited
+  const immutableRule = isProvisioned || isFederated || isPluginProvided;
 
   const {
     isEditable,
@@ -163,17 +165,21 @@ export function useAllAlertRuleAbilities(rule: CombinedRule): Abilities<AlertRul
   const MaybeSupported = loading ? NotSupported : isRulerAvailable;
   const MaybeSupportedUnlessImmutable = immutableRule ? NotSupported : MaybeSupported;
 
+  // Creating duplicates of plugin-provided rules does not seem to make a lot of sense
+  const duplicateSupported = isPluginProvided ? NotSupported : MaybeSupported;
+
   const rulesPermissions = getRulesPermissions(rulesSourceName);
   const canSilence = useCanSilence(rulesSource);
 
   const abilities: Abilities<AlertRuleAction> = {
-    [AlertRuleAction.Duplicate]: toAbility(MaybeSupported, rulesPermissions.create),
+    [AlertRuleAction.Duplicate]: toAbility(duplicateSupported, rulesPermissions.create),
     [AlertRuleAction.View]: toAbility(AlwaysSupported, rulesPermissions.read),
     [AlertRuleAction.Update]: [MaybeSupportedUnlessImmutable, isEditable ?? false],
     [AlertRuleAction.Delete]: [MaybeSupportedUnlessImmutable, isRemovable ?? false],
     [AlertRuleAction.Explore]: toAbility(AlwaysSupported, AccessControlAction.DataSourcesExplore),
     [AlertRuleAction.Silence]: canSilence,
     [AlertRuleAction.ModifyExport]: [isGrafanaManagedAlertRule, exportAllowed],
+    [AlertRuleAction.Pause]: [MaybeSupportedUnlessImmutable && isGrafanaManagedAlertRule, isEditable ?? false],
   };
 
   return abilities;
@@ -271,10 +277,10 @@ export function useAlertmanagerAbilities(actions: AlertmanagerAction[]): Ability
 function useCanSilence(rulesSource: RulesSource): [boolean, boolean] {
   const isGrafanaManagedRule = rulesSource === GRAFANA_RULES_SOURCE_NAME;
 
-  const { useGetAlertmanagerChoiceStatusQuery } = alertmanagerApi;
-  const { currentData: amConfigStatus, isLoading } = useGetAlertmanagerChoiceStatusQuery(undefined, {
-    skip: !isGrafanaManagedRule,
-  });
+  const { currentData: amConfigStatus, isLoading } =
+    alertmanagerApi.endpoints.getGrafanaAlertingConfigurationStatus.useQuery(undefined, {
+      skip: !isGrafanaManagedRule,
+    });
 
   // we don't support silencing when the rule is not a Grafana managed rule
   // we simply don't know what Alertmanager the ruler is sending alerts to

@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -527,7 +528,10 @@ func seedResourcePermissions(
 	orgID, err := orgService.GetOrCreate(context.Background(), "test")
 	require.NoError(t, err)
 
-	usrSvc, err := userimpl.ProvideService(sql, orgService, cfg, nil, nil, quotatest.New(false, nil), supportbundlestest.NewFakeBundleService())
+	usrSvc, err := userimpl.ProvideService(
+		sql, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
+	)
 	require.NoError(t, err)
 
 	create := func(login string, isServiceAccount bool) {
@@ -558,8 +562,9 @@ func seedResourcePermissions(
 }
 
 func setupTestEnv(t testing.TB) (*store, db.DB, *setting.Cfg) {
-	sql := db.InitTestDB(t)
-	return NewStore(sql, featuremgmt.WithFeatures()), sql, sql.Cfg
+	sql, cfg := db.InitTestDBWithCfg(t)
+	asService := NewActionSetService()
+	return NewStore(sql, featuremgmt.WithFeatures(), &asService), sql, cfg
 }
 
 func TestStore_IsInherited(t *testing.T) {
@@ -752,4 +757,51 @@ func retrievePermissionsHelper(store *store, t *testing.T) []orgPermission {
 
 	require.NoError(t, err)
 	return permissions
+}
+
+func TestStore_ResourcePermissionsActionSets(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	type actionSetTest struct {
+		desc      string
+		orgID     int64
+		actionSet ActionSet
+	}
+
+	tests := []actionSetTest{
+		{
+			desc:  "should be able to store actionset",
+			orgID: 1,
+			actionSet: ActionSet{
+				Actions: []string{"folders:read", "folders:write"},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			store, _, _ := setupTestEnv(t)
+			store.features = featuremgmt.WithFeatures([]any{featuremgmt.FlagAccessActionSets})
+
+			_, err := store.SetResourcePermissions(context.Background(), 1, []SetResourcePermissionsCommand{
+				{
+					User: accesscontrol.User{ID: 1},
+					SetResourcePermissionCommand: SetResourcePermissionCommand{
+						Actions:           tt.actionSet.Actions,
+						Resource:          "folders",
+						Permission:        "edit",
+						ResourceID:        "1",
+						ResourceAttribute: "uid",
+					},
+				},
+			}, ResourceHooks{})
+			require.NoError(t, err)
+
+			actionname := fmt.Sprintf("%s:%s", "folders", "edit")
+			actionSet := store.actionSetService.GetActionSet(actionname)
+			require.Equal(t, tt.actionSet.Actions, actionSet)
+		})
+	}
 }

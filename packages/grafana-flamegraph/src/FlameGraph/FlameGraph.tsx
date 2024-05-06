@@ -185,33 +185,32 @@ const FlameGraph = ({
 };
 
 const getStyles = () => ({
-  graph: css`
-    label: graph;
-    overflow: auto;
-    flex-grow: 1;
-    flex-basis: 50%;
-  `,
-  sandwichCanvasWrapper: css`
-    label: sandwichCanvasWrapper;
-    display: flex;
-    margin-bottom: ${PIXELS_PER_LEVEL / window.devicePixelRatio}px;
-  `,
-  sandwichMarker: css`
-    label: sandwichMarker;
-    writing-mode: vertical-lr;
-    transform: rotate(180deg);
-    overflow: hidden;
-    white-space: nowrap;
-  `,
-
-  sandwichMarkerCalees: css`
-    label: sandwichMarkerCalees;
-    text-align: right;
-  `,
-  sandwichMarkerIcon: css`
-    label: sandwichMarkerIcon;
-    vertical-align: baseline;
-  `,
+  graph: css({
+    label: 'graph',
+    overflow: 'auto',
+    flexGrow: 1,
+    flexBasis: '50%',
+  }),
+  sandwichCanvasWrapper: css({
+    label: 'sandwichCanvasWrapper',
+    display: 'flex',
+    marginBottom: `${PIXELS_PER_LEVEL / window.devicePixelRatio}px`,
+  }),
+  sandwichMarker: css({
+    label: 'sandwichMarker',
+    writingMode: 'vertical-lr',
+    transform: 'rotate(180deg)',
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
+  }),
+  sandwichMarkerCalees: css({
+    label: 'sandwichMarkerCalees',
+    textAlign: 'right',
+  }),
+  sandwichMarkerIcon: css({
+    label: 'sandwichMarkerIcon',
+    verticalAlign: 'baseline',
+  }),
 });
 
 export default FlameGraph;
