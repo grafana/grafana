@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { debounce } from 'lodash';
 import React from 'react';
 import { Unsubscribable } from 'rxjs';
 
@@ -99,21 +100,25 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     });
   }
 
-  private _updateDirty = (event: SceneObjectStateChangedEvent) => {
+  private _updateDirty = debounce(() => {
+    const diff = jsonDiff(vizPanelToPanel(this.state.sourcePanel.resolve()), vizPanelToPanel(this.state.panel));
+    const diffCount = Object.values(diff).reduce((acc, cur) => acc + cur.length, 0);
+    this.setState({ isDirty: diffCount > 0 });
+  }, 250);
+
+  private _handleStateChange = (event: SceneObjectStateChangedEvent) => {
     if (!Object.prototype.hasOwnProperty.call(event.payload.partialUpdate, 'data')) {
-      const diff = jsonDiff(vizPanelToPanel(this.state.sourcePanel.resolve()), vizPanelToPanel(this.state.panel));
-      const diffCount = Object.values(diff).reduce((acc, cur) => acc + cur.length, 0);
-      this.setState({ isDirty: diffCount > 0 });
+      this._updateDirty();
     }
   };
 
   private _setUpChangeSubs() {
-    this._changeSubs = [this.state.panel.subscribeToEvent(SceneObjectStateChangedEvent, this._updateDirty)];
+    this._changeSubs = [this.state.panel.subscribeToEvent(SceneObjectStateChangedEvent, this._handleStateChange)];
 
     if (this.state.panel.state.$data) {
       this._changeSubs.concat([
-        this.queryRunner.subscribeToEvent(SceneObjectStateChangedEvent, this._updateDirty),
-        this.dataTransformer.subscribeToEvent(SceneObjectStateChangedEvent, this._updateDirty),
+        this.queryRunner.subscribeToEvent(SceneObjectStateChangedEvent, this._handleStateChange),
+        this.dataTransformer.subscribeToEvent(SceneObjectStateChangedEvent, this._handleStateChange),
       ]);
     }
     return () => this._changeSubs.forEach((s) => s.unsubscribe());
