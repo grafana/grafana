@@ -8,7 +8,7 @@ import { EXPLAIN_LABEL_FILTER_CONTENT } from './LokiQueryBuilderExplained';
 import { LokiQueryCodeEditor } from './LokiQueryCodeEditor';
 
 const defaultQuery: LokiQuery = {
-  expr: '{job="bar}',
+  expr: '{job="bar"}',
   refId: 'A',
 };
 
