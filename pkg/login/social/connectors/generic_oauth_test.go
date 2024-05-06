@@ -27,6 +27,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 	provider := NewGenericOAuthProvider(&social.OAuthInfo{
 		EmailAttributePath: "email",
 	}, &setting.Cfg{},
+		nil,
 		&ssosettingstests.MockService{},
 		featuremgmt.WithFeatures())
 
@@ -297,7 +298,7 @@ func TestUserInfoSearchesForLogin(t *testing.T) {
 			Extra: map[string]string{
 				"login_attribute_path": "login",
 			},
-		}, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+		}, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 		tests := []struct {
 			Name               string
@@ -391,7 +392,7 @@ func TestUserInfoSearchesForName(t *testing.T) {
 			Extra: map[string]string{
 				"name_attribute_path": "name",
 			},
-		}, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+		}, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 		tests := []struct {
 			Name              string
@@ -532,7 +533,7 @@ func TestUserInfoSearchesForGroup(t *testing.T) {
 				provider := NewGenericOAuthProvider(&social.OAuthInfo{
 					GroupsAttributePath: test.groupsAttributePath,
 					ApiUrl:              ts.URL,
-				}, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+				}, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 				token := &oauth2.Token{
 					AccessToken:  "",
@@ -552,7 +553,7 @@ func TestUserInfoSearchesForGroup(t *testing.T) {
 func TestPayloadCompression(t *testing.T) {
 	provider := NewGenericOAuthProvider(&social.OAuthInfo{
 		EmailAttributePath: "email",
-	}, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+	}, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 	tests := []struct {
 		Name          string
@@ -707,7 +708,7 @@ func TestSocialGenericOAuth_InitializeExtraFields(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGenericOAuthProvider(tc.settings, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGenericOAuthProvider(tc.settings, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 			require.Equal(t, tc.want.nameAttributePath, s.nameAttributePath)
 			require.Equal(t, tc.want.loginAttributePath, s.loginAttributePath)
@@ -870,7 +871,7 @@ func TestSocialGenericOAuth_Validate(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGenericOAuthProvider(&social.OAuthInfo{}, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGenericOAuthProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 			if tc.requester == nil {
 				tc.requester = &user.SignedInUser{IsGrafanaAdmin: false}
@@ -950,7 +951,7 @@ func TestSocialGenericOAuth_Reload(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGenericOAuthProvider(tc.info, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGenericOAuthProvider(tc.info, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 			err := s.Reload(context.Background(), tc.settings)
 			if tc.expectError {
@@ -1048,7 +1049,7 @@ func TestGenericOAuth_Reload_ExtraFields(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGenericOAuthProvider(tc.info, setting.NewCfg(), &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGenericOAuthProvider(tc.info, setting.NewCfg(), nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 			err := s.Reload(context.Background(), tc.settings)
 			require.NoError(t, err)

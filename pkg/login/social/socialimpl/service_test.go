@@ -92,7 +92,7 @@ func TestSocialService_ProvideService(t *testing.T) {
 				tc.setup(t, env)
 			}
 
-			socialService := ProvideService(cfg, env.features, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeStore(t), ssoSettingsSvc)
+			socialService := ProvideService(cfg, env.features, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeStore(t), nil, ssoSettingsSvc)
 			require.Equal(t, tc.expectedSocialMapLength, len(socialService.socialMap))
 
 			genericOAuthInfo := socialService.GetOAuthInfoProvider("generic_oauth")
@@ -192,7 +192,7 @@ func TestSocialService_ProvideService_GrafanaComGrafanaNet(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.Raw = iniFile
 
-			socialService := ProvideService(cfg, featuremgmt.WithFeatures(), &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeStore(t), ssoSettingsSvc)
+			socialService := ProvideService(cfg, featuremgmt.WithFeatures(), &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeStore(t), nil, ssoSettingsSvc)
 			require.EqualValues(t, tc.expectedGrafanaComOAuthInfo, socialService.GetOAuthInfoProvider("grafana_com"))
 		})
 	}

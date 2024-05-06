@@ -54,9 +54,9 @@ type userData struct {
 	IsGrafanaAdmin *bool             `json:"-"`
 }
 
-func NewGitLabProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGitlab {
+func NewGitLabProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGitlab {
 	provider := &SocialGitlab{
-		SocialBase: newSocialBase(social.GitlabProviderName, info, features, cfg),
+		SocialBase: newSocialBase(social.GitlabProviderName, orgRoleMapper, info, features, cfg),
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
@@ -92,7 +92,7 @@ func (s *SocialGitlab) Reload(ctx context.Context, settings ssoModels.SSOSetting
 	s.reloadMutex.Lock()
 	defer s.reloadMutex.Unlock()
 
-	s.updateInfo(social.GitlabProviderName, newInfo)
+	s.updateInfo(ctx, social.GitlabProviderName, newInfo)
 
 	return nil
 }
