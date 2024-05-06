@@ -727,10 +727,12 @@
     "forgot-password": "¿Has olvidado tu contraseña?",
     "form": {
       "password-label": "Contraseña",
+      "password-placeholder": "",
       "password-required": "La contraseña es obligatoria",
       "submit-label": "Iniciar sesión",
       "submit-loading-label": "Iniciando sesión...",
       "username-label": "Correo o nombre de usuario",
+      "username-placeholder": "",
       "username-required": "El correo o el nombre de usuario es obligatorio"
     },
     "services": {
@@ -885,7 +887,8 @@
       "title": "Alertas"
     },
     "alerting-admin": {
-      "title": "Administrador"
+      "title": "",
+      "subtitle": ""
     },
     "alerting-am-routes": {
       "subtitle": "Determinar cómo se enrutan las alertas a los puntos de contacto",
