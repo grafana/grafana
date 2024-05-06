@@ -82,7 +82,7 @@ For Grafana Cloud, refer to the [instructions to manage a Grafana Cloud stack wi
 | [Notification policy tree][notification-policy] | [grafana_notification_policy](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/notification_policy) |
 | [Mute timings][mute-timings]                    | [grafana_mute_timing](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/mute_timing)                 |
 
-In this section, we'll create Terraform configurations for each alerting resource and demonstrate how to link them together.
+This section provides examples of Terraform configurations for each alerting resource and demonstrate how to link them together.
 
 ### Add alert rules
 
@@ -181,7 +181,7 @@ In this section, we'll create Terraform configurations for each alerting resourc
 
    - `<terraform_rule_group_name>` with the name of the alert rule group.
 
-   Note that the distinct Grafana resources are connected through `uid` values in their Terraform configurations. The `uid` value will be randomly generated when provisioning.
+   Note that the distinct Grafana resources are connected through `uid` values in their Terraform configurations. The `uid` value is randomly generated when provisioning.
 
    To link the alert rule group with its respective data source and folder in this example, replace the following field values:
 
@@ -212,7 +212,7 @@ In this section, we'll create Terraform configurations for each alerting resourc
 
    Replace the following field values:
 
-   - `<terraform_contact_point_name>` with the terraform name of the contact point. It will be used to reference the contact point in other Terraform resources.
+   - `<terraform_contact_point_name>` with the terraform name of the contact point. It is used to reference the contact point in other Terraform resources.
    - `<email_address>` with the email to receive alert notifications.
 
 1. Continue to add more Grafana resources or [use the Terraform CLI for provisioning](#provision-grafana-resources-with-terraform).
@@ -276,7 +276,7 @@ In this section, we'll create Terraform configurations for each alerting resourc
 
    Replace the following field values:
 
-   - `<terraform_mute_timing_name>` with the name of the Terraform resource. It will be used to reference the mute timing in the Terraform notification policy tree.
+   - `<terraform_mute_timing_name>` with the name of the Terraform resource. It is used to reference the mute timing in the Terraform notification policy tree.
 
 1. Continue to add more Grafana resources or [use the Terraform CLI for provisioning](#provision-grafana-resources-with-terraform).
 
@@ -286,13 +286,13 @@ In this section, we'll create Terraform configurations for each alerting resourc
 
 {{% admonition type="warning" %}}
 
-Since the policy tree is a single resource, provisioning the `grafana_notification_policy` resource will overwrite a policy tree created through any other means.
+Since the policy tree is a single resource, provisioning the `grafana_notification_policy` resource overwrites a policy tree created through any other means.
 
 {{< /admonition >}}
 
 1. Find the default notification policy tree. Alternatively, consider writing the resource in code as demonstrated in the example below.
 
-1. [Export][alerting_export] the notification policy tree in Terraform format. This exports it as [`grafana_notification_policy` Terraform resource](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/notification_policy)—edit it if necessary.
+2. [Export][alerting_export] the notification policy tree in Terraform format. This exports it as [`grafana_notification_policy` Terraform resource](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/notification_policy)—edit it if necessary.
 
    ```terraform
    resource "grafana_notification_policy" "my_policy_tree" {
@@ -314,7 +314,7 @@ Since the policy tree is a single resource, provisioning the `grafana_notificati
    - `<terraform_data_source_name>` with the terraform name of the previously defined contact point.
    - `<terraform_folder_name>` with the terraform name of the previously defined mute timing.
 
-1. Continue to add more Grafana resources or [use the Terraform CLI for provisioning](#provision-grafana-resources-with-terraform).
+3. Continue to add more Grafana resources or [use the Terraform CLI for provisioning](#provision-grafana-resources-with-terraform).
 
 ### Enable editing resources in the Grafana UI
 
@@ -368,7 +368,7 @@ To create the previous alerting resources in Grafana with the Terraform CLI, com
     Enter a value:
    ```
 
-   Once you have confirmed to proceed with the changes, Terraform will create the provisioned resources in Grafana!
+   After you have confirmed to proceed with the changes, Terraform creates the provisioned resources in Grafana.
 
    ```shell
    Apply complete! Resources: 4 added, 0 changed, 0 destroyed.
