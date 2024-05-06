@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/openfga/openfga/pkg/logger"
+	"go.uber.org/zap/zapcore"
 
 	"github.com/grafana/zanzana/pkg/schema"
 	zanzanaService "github.com/grafana/zanzana/pkg/service"
@@ -55,17 +56,14 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*Ser
 		return nil, err
 	}
 
-	// Set the database name
-	dbConfig.Name = "grafana_ac"
-	dbConfig.ConnectionString = ""
-
 	err = dbConfig.buildConnectionString(cfg, features)
 	if err != nil {
 		return nil, err
 	}
 
-	// WIP
-	dbConfig.ConnectionString = "grafana:password@tcp(127.0.0.1:3306)/grafana_ac?parseTime=true"
+	dbConfig.ConnectionString += "&parseTime=true"
+
+	zapLogger.Info("Database configuration", zapcore.Field{Key: "config", Type: zapcore.StringType, Interface: dbConfig.ConnectionString})
 
 	// Create the Zanzana service
 	srv, err := zanzanaService.NewService(ctx, zapLogger, nil, &zanzanaService.Config{

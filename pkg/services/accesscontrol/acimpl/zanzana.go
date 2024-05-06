@@ -3,6 +3,7 @@ package acimpl
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 )
@@ -14,5 +15,12 @@ func (s *Service) synchronizeUserData(ctx context.Context) error {
 		return errors.New("store is not an AccessControlStore")
 	}
 
-	return db.SynchronizeUserData(ctx, s.zanzana)
+	err := db.SynchronizeUserData(ctx, s.zanzana)
+	if err != nil {
+		if strings.Contains(err.Error(), "cannot write a tuple which already exists") {
+			// Ignore the error if it's a duplicate key error
+			err = nil
+			s.log.Warn("Ignoring duplicate key error while synchronizing user data. Can't run this migration twice", "error", err)
+	}
+	return err
 }
