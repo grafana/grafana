@@ -6,25 +6,42 @@ import (
 	"strings"
 )
 
+type Namespace string
+
 const (
-	NamespaceUser           = "user"
-	NamespaceAPIKey         = "api-key"
-	NamespaceServiceAccount = "service-account"
-	NamespaceAnonymous      = "anonymous"
-	NamespaceRenderService  = "render"
-	NamespaceAccessPolicy   = "access-policy"
+	NamespaceUser           Namespace = "user"
+	NamespaceAPIKey         Namespace = "api-key"
+	NamespaceServiceAccount Namespace = "service-account"
+	NamespaceAnonymous      Namespace = "anonymous"
+	NamespaceRenderService  Namespace = "render"
+	NamespaceAccessPolicy   Namespace = "access-policy"
+	NamespaceEmpty          Namespace = ""
 )
 
-var AnonymousNamespaceID = MustNewNamespaceID(NamespaceAnonymous, 0)
-
-var namespaceLookup = map[string]struct{}{
-	NamespaceUser:           {},
-	NamespaceAPIKey:         {},
-	NamespaceServiceAccount: {},
-	NamespaceAnonymous:      {},
-	NamespaceRenderService:  {},
-	NamespaceAccessPolicy:   {},
+func (n Namespace) String() string {
+	return string(n)
 }
+
+func ParseNamespace(str string) (Namespace, error) {
+	switch str {
+	case string(NamespaceUser):
+		return NamespaceUser, nil
+	case string(NamespaceAPIKey):
+		return NamespaceAPIKey, nil
+	case string(NamespaceServiceAccount):
+		return NamespaceServiceAccount, nil
+	case string(NamespaceAnonymous):
+		return NamespaceAnonymous, nil
+	case string(NamespaceRenderService):
+		return NamespaceRenderService, nil
+	case string(NamespaceAccessPolicy):
+		return NamespaceAccessPolicy, nil
+	default:
+		return "", ErrInvalidNamespaceID.Errorf("got invalid namespace %s", str)
+	}
+}
+
+var AnonymousNamespaceID = MustNewNamespaceID(NamespaceAnonymous, 0)
 
 func ParseNamespaceID(str string) (NamespaceID, error) {
 	var namespaceID NamespaceID
@@ -34,13 +51,12 @@ func ParseNamespaceID(str string) (NamespaceID, error) {
 		return namespaceID, ErrInvalidNamespaceID.Errorf("expected namespace id to have 2 parts")
 	}
 
-	namespace, id := parts[0], parts[1]
-
-	if _, ok := namespaceLookup[namespace]; !ok {
-		return namespaceID, ErrInvalidNamespaceID.Errorf("got invalid namespace %s", namespace)
+	namespace, err := ParseNamespace(parts[0])
+	if err != nil {
+		return namespaceID, err
 	}
 
-	namespaceID.id = id
+	namespaceID.id = parts[1]
 	namespaceID.namespace = namespace
 
 	return namespaceID, nil
@@ -57,19 +73,16 @@ func MustParseNamespaceID(str string) NamespaceID {
 }
 
 // NewNamespaceID creates a new NamespaceID, will fail for invalid namespace.
-func NewNamespaceID(namespace string, id int64) (NamespaceID, error) {
-	var namespaceID NamespaceID
-	if _, ok := namespaceLookup[namespace]; !ok {
-		return namespaceID, ErrInvalidNamespaceID.Errorf("got invalid namespace %s", namespace)
-	}
-	namespaceID.id = strconv.FormatInt(id, 10)
-	namespaceID.namespace = namespace
-	return namespaceID, nil
+func NewNamespaceID(namespace Namespace, id int64) (NamespaceID, error) {
+	return NamespaceID{
+		id:        strconv.FormatInt(id, 10),
+		namespace: namespace,
+	}, nil
 }
 
 // MustNewNamespaceID creates a new NamespaceID, will panic for invalid namespace.
 // Suitable to use in tests or when we can guarantee that we pass a correct format.
-func MustNewNamespaceID(namespace string, id int64) NamespaceID {
+func MustNewNamespaceID(namespace Namespace, id int64) NamespaceID {
 	namespaceID, err := NewNamespaceID(namespace, id)
 	if err != nil {
 		panic(err)
@@ -79,9 +92,17 @@ func MustNewNamespaceID(namespace string, id int64) NamespaceID {
 
 // NewNamespaceIDUnchecked creates a new NamespaceID without checking if namespace is valid.
 // It us up to the caller to ensure that namespace is valid.
-func NewNamespaceIDUnchecked(namespace string, id int64) NamespaceID {
+func NewNamespaceIDUnchecked(namespace Namespace, id int64) NamespaceID {
 	return NamespaceID{
 		id:        strconv.FormatInt(id, 10),
+		namespace: namespace,
+	}
+}
+
+// NewNamespaceIDString creates a new NamespaceID with a string id
+func NewNamespaceIDString(namespace Namespace, id string) NamespaceID {
+	return NamespaceID{
+		id:        id,
 		namespace: namespace,
 	}
 }
@@ -89,7 +110,7 @@ func NewNamespaceIDUnchecked(namespace string, id int64) NamespaceID {
 // FIXME: use this instead of encoded string through the codebase
 type NamespaceID struct {
 	id        string
-	namespace string
+	namespace Namespace
 }
 
 func (ni NamespaceID) ID() string {
@@ -100,11 +121,11 @@ func (ni NamespaceID) ParseInt() (int64, error) {
 	return strconv.ParseInt(ni.id, 10, 64)
 }
 
-func (ni NamespaceID) Namespace() string {
+func (ni NamespaceID) Namespace() Namespace {
 	return ni.namespace
 }
 
-func (ni NamespaceID) IsNamespace(expected ...string) bool {
+func (ni NamespaceID) IsNamespace(expected ...Namespace) bool {
 	return IsNamespace(ni.namespace, expected...)
 }
 

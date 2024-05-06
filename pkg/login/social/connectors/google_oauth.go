@@ -220,7 +220,7 @@ func (s *SocialGoogle) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) 
 	return s.SocialBase.Config.AuthCodeURL(state, opts...)
 }
 
-func (s *SocialGoogle) extractFromToken(ctx context.Context, client *http.Client, token *oauth2.Token) (*googleUserData, error) {
+func (s *SocialGoogle) extractFromToken(_ context.Context, _ *http.Client, token *oauth2.Token) (*googleUserData, error) {
 	s.log.Debug("Extracting user info from OAuth token")
 
 	idToken := token.Extra("id_token")
