@@ -380,7 +380,7 @@
     "annotations": {
       "title": "注释"
     },
-    "dashboard-delete-button": "删除仪表板",
+    "dashboard-delete-button": "",
     "general": {
       "auto-refresh-description": "",
       "auto-refresh-label": "自动刷新",
@@ -467,6 +467,7 @@
       "newest-first": "最新在前",
       "oldest-first": "最早在前",
       "query-history": "查询历史记录",
+      "query-library": "",
       "settings": "设置",
       "starred": "已加星标"
     },
@@ -720,10 +721,12 @@
     "forgot-password": "忘记密码？",
     "form": {
       "password-label": "密码",
+      "password-placeholder": "",
       "password-required": "必须输入密码",
       "submit-label": "登录",
       "submit-loading-label": "正在登录...",
       "username-label": "电子邮箱或用户名",
+      "username-placeholder": "",
       "username-required": "电子邮箱或用户名是必填项"
     },
     "services": {
@@ -878,7 +881,7 @@
       "title": "警报"
     },
     "alerting-admin": {
-      "title": "管理员"
+      "title": "设置"
     },
     "alerting-am-routes": {
       "subtitle": "确定警报如何路由到联络点",

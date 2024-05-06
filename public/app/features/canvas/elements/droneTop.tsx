@@ -180,9 +180,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   propellerCW: css({
+    // TODO: figure out what styles to apply when prefers-reduced-motion is set
+    // eslint-disable-next-line @grafana/no-unreduced-motion
     animationDirection: 'normal',
   }),
   propellerCCW: css({
+    // TODO: figure out what styles to apply when prefers-reduced-motion is set
+    // eslint-disable-next-line @grafana/no-unreduced-motion
     animationDirection: 'reverse',
   }),
 });
