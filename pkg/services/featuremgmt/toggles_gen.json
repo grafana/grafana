@@ -2136,6 +2136,19 @@
         "codeowner": "@grafana/observability-logs",
         "frontend": true
       }
+    },
+    {
+      "metadata": {
+        "name": "newDashboardSharingComponent",
+        "resourceVersion": "1713982966391",
+        "creationTimestamp": "2024-04-24T18:22:46Z"
+      },
+      "spec": {
+        "description": "Enables the new sharing drawer design",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "frontend": true
+      }
     }
   ]
 }
