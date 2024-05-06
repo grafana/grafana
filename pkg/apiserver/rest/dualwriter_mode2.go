@@ -273,15 +273,15 @@ func (d *DualWriterMode2) Destroy() {
 }
 
 func (d *DualWriterMode2) GetSingularName() string {
-	return d.Legacy.GetSingularName()
+	return d.Storage.GetSingularName()
 }
 
 func (d *DualWriterMode2) NamespaceScoped() bool {
-	return d.Legacy.NamespaceScoped()
+	return d.Storage.NamespaceScoped()
 }
 
 func (d *DualWriterMode2) New() runtime.Object {
-	return d.Legacy.New()
+	return d.Storage.New()
 }
 
 func (d *DualWriterMode2) NewList() runtime.Object {
@@ -289,7 +289,7 @@ func (d *DualWriterMode2) NewList() runtime.Object {
 }
 
 func (d *DualWriterMode2) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
-	return d.Legacy.ConvertToTable(ctx, object, tableOptions)
+	return d.Storage.ConvertToTable(ctx, object, tableOptions)
 }
 
 func parseList(legacyList []runtime.Object) (metainternalversion.ListOptions, map[string]int, error) {
