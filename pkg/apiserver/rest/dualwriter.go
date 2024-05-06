@@ -64,6 +64,8 @@ type DualWriter interface {
 	LegacyStorage
 }
 
+type DualWriterMode int
+
 var errDualWriterCreaterMissing = errors.New("legacy storage rest.Creater is missing")
 var errDualWriterListerMissing = errors.New("legacy storage rest.Lister is missing")
 var errDualWriterDeleterMissing = errors.New("legacy storage rest.GracefulDeleter is missing")
@@ -71,7 +73,7 @@ var errDualWriterCollectionDeleterMissing = errors.New("legacy storage rest.Coll
 var errDualWriterUpdaterMissing = errors.New("legacy storage rest.Updater is missing")
 
 const (
-	Mode1 = iota
+	Mode1 DualWriterMode = iota
 	Mode2
 	Mode3
 	Mode4
@@ -105,15 +107,19 @@ func (u *updateWrapper) UpdatedObject(ctx context.Context, oldObj runtime.Object
 	return u.updated, nil
 }
 
-func selectDualWriter(mode int, legacy LegacyStorage, storage Storage) DualWriter {
+func selectDualWriter(mode DualWriterMode, legacy LegacyStorage, storage Storage) DualWriter {
 	switch mode {
 	case Mode1:
+		// read and write only from legacy storage
 		return NewDualWriterMode1(legacy, storage)
 	case Mode2:
+		// write to both, read from storage but use legacy as backup
 		return NewDualWriterMode2(legacy, storage)
 	case Mode3:
+		// write to both, read from storage only
 		return NewDualWriterMode3(legacy, storage)
 	case Mode4:
+		// read and write only from storage
 		return NewDualWriterMode4(legacy, storage)
 	default:
 		return NewDualWriterMode1(legacy, storage)
