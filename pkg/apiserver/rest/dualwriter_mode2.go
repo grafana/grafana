@@ -11,7 +11,6 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/selection"
-	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"
 )
@@ -287,11 +286,6 @@ func (d *DualWriterMode2) New() runtime.Object {
 
 func (d *DualWriterMode2) NewList() runtime.Object {
 	return d.Storage.NewList()
-}
-
-func (d *DualWriterMode2) Watch(ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
-	klog.Error("Watch not implemented")
-	return nil, nil
 }
 
 func (d *DualWriterMode2) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {

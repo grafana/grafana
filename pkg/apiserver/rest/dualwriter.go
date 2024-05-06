@@ -22,11 +22,15 @@ var (
 // Storage is a storage implementation that satisfies the same interfaces as genericregistry.Store.
 type Storage interface {
 	rest.Storage
-	rest.StandardStorage
 	rest.Scoper
 	rest.TableConvertor
 	rest.SingularNameProvider
 	rest.Getter
+	// TODO: when watch is implemented, we can replace all the below with rest.StandardStorage
+	rest.Lister
+	rest.CreaterUpdater
+	rest.GracefulDeleter
+	rest.CollectionDeleter
 }
 
 // LegacyStorage is a storage implementation that writes to the Grafana SQL database.
