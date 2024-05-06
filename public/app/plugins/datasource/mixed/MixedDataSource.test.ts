@@ -2,7 +2,11 @@ import { lastValueFrom } from 'rxjs';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 import { DatasourceSrvMock, MockObservableDataSourceApi } from 'test/mocks/datasource_srv';
 
-import { DataQueryRequest, DataSourceInstanceSettings, LoadingState } from '@grafana/data';
+import { DataQueryRequest, DataSourceInstanceSettings, DataSourceRef, LoadingState } from '@grafana/data';
+import { DataSourceSrv, setDataSourceSrv, setTemplateSrv } from '@grafana/runtime';
+
+import { TemplateSrv } from '../../../features/templating/template_srv';
+import { queryBuilder } from '../../../features/variables/shared/testing/builders';
 
 import { MIXED_DATASOURCE_NAME } from './MixedDataSource';
 import { MixedDatasource } from './module';
@@ -21,13 +25,38 @@ const datasourceSrv = new DatasourceSrvMock(defaultDS, {
   ]),
 });
 
-const getDataSourceSrvMock = jest.fn().mockReturnValue(datasourceSrv);
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => getDataSourceSrvMock(),
-}));
+const variablesMock = [
+  queryBuilder().withId('test1').withName('test1').withCurrent('val1').build(),
+  queryBuilder()
+    .withId('ds')
+    .withName('ds')
+    .withCurrent(['B', 'C'], ['B', 'C'])
+    .withAllValue('')
+    .withMulti(true)
+    .withOptions('B', 'C')
+    .build(),
+];
+
 
 describe('MixedDatasource', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    setDataSourceSrv({
+      ...datasourceSrv,
+      get: (uid: DataSourceRef) => datasourceSrv.get(uid),
+      getInstanceSettings: jest.fn().mockReturnValue({ meta: {} }),
+      getList: jest.fn(),
+      reload: jest.fn(),
+    });
+
+    setTemplateSrv(
+      new TemplateSrv({
+        getVariables: () => variablesMock,
+        getVariableWithName: (name: string) => variablesMock.filter((v) => v.name === name)[0],
+        getFilteredVariables: jest.fn(),
+      })
+    );
+  });
   describe('with no errors', () => {
     it('direct query should return results', async () => {
       const ds = new MixedDatasource({} as DataSourceInstanceSettings);
@@ -79,6 +108,31 @@ describe('MixedDatasource', () => {
         expect(results[5].data).toEqual([]);
         expect(results[5].state).toEqual(LoadingState.Error);
         expect(results[5].error).toEqual({ message: 'DSD: syntax error near FROM' });
+      });
+    });
+  });
+
+  describe('with multi template variable', () => {
+    beforeAll(() => {
+      setDataSourceSrv({
+        getInstanceSettings() {
+          return {};
+        },
+      } as DataSourceSrv);
+    });
+
+    it('should run query for each datasource when there is a multi value template variable', async () => {
+      const ds = new MixedDatasource({} as DataSourceInstanceSettings);
+      const request = {
+        targets: [{ refId: 'AA', datasource: { uid: '$ds' } }],
+      } as DataQueryRequest;
+
+      await expect(ds.query(request)).toEmitValuesWith((results) => {
+        expect(results).toHaveLength(2);
+        expect(results[0].key).toBe('mixed-0-');
+        expect(results[0].state).toBe(LoadingState.Loading);
+        expect(results[1].key).toBe('mixed-1-');
+        expect(results[1].state).toBe(LoadingState.Done);
       });
     });
   });
