@@ -57,16 +57,26 @@ Query Parameters:
 **Example Response**:
 
 ```http
-HTTP/1.1 301
+HTTP/1.1 200
 Content-Type: application/json
-Location: /api/serviceaccounts/tokens
-
-""
+[
+  {
+    "id": 3,
+    "name": "API",
+    "role": "Admin"
+  },
+  {
+    "id": 1,
+    "name": "TestAdmin",
+    "role": "Admin",
+    "expiration": "2019-06-26T10:52:03+03:00"
+  }
+]
 ```
 
 ## Create API Key
 
-### DEPRECATED
+### PERMANENTLY MOVED
 
 `POST /api/auth/keys`
 
@@ -129,9 +139,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 **Example Response**:
 
 ```http
-HTTP/1.1 301
+HTTP/1.1 200
 Content-Type: application/json
-Location: /api/serviceaccounts/tokens
-
-""
+{"message":"API key deleted"}
 ```
