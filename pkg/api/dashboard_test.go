@@ -28,7 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -56,6 +55,7 @@ import (
 	publicdashboardModels "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/star/startest"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
@@ -478,7 +478,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				{SaveError: dashboards.ErrDashboardVersionMismatch, ExpectedStatusCode: http.StatusPreconditionFailed},
 				{SaveError: dashboards.ErrDashboardTitleEmpty, ExpectedStatusCode: http.StatusBadRequest},
 				{SaveError: dashboards.ErrDashboardFolderCannotHaveParent, ExpectedStatusCode: http.StatusBadRequest},
-				{SaveError: alerting.ValidationError{Reason: "Mu"}, ExpectedStatusCode: http.StatusUnprocessableEntity},
 				{SaveError: dashboards.ErrDashboardTypeMismatch, ExpectedStatusCode: http.StatusBadRequest},
 				{SaveError: dashboards.ErrDashboardFolderWithSameNameAsDashboard, ExpectedStatusCode: http.StatusBadRequest},
 				{SaveError: dashboards.ErrDashboardWithSameNameAsFolder, ExpectedStatusCode: http.StatusBadRequest},
@@ -815,9 +814,9 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 	features := featuremgmt.WithFeatures()
 	var err error
 	if dashboardStore == nil {
-		sql := db.InitTestDB(t)
+		sql, cfg := db.InitTestDBWithCfg(t)
 		quotaService := quotatest.New(false, nil)
-		dashboardStore, err = database.ProvideDashboardStore(sql, sql.Cfg, features, tagimpl.ProvideService(sql), quotaService)
+		dashboardStore, err = database.ProvideDashboardStore(sql, cfg, features, tagimpl.ProvideService(sql), quotaService)
 		require.NoError(t, err)
 	}
 
@@ -829,18 +828,18 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 	dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
 
 	folderSvc := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()),
-		cfg, dashboardStore, folderStore, db.InitTestDB(t), features, nil)
+		dashboardStore, folderStore, db.InitTestDB(t), features, supportbundlestest.NewFakeBundleService(), nil)
 
 	if dashboardService == nil {
 		dashboardService, err = service.ProvideDashboardServiceImpl(
-			cfg, dashboardStore, folderStore, nil, features, folderPermissions, dashboardPermissions,
+			cfg, dashboardStore, folderStore, features, folderPermissions, dashboardPermissions,
 			ac, folderSvc, nil,
 		)
 		require.NoError(t, err)
 	}
 
 	dashboardProvisioningService, err := service.ProvideDashboardServiceImpl(
-		cfg, dashboardStore, folderStore, nil, features, folderPermissions, dashboardPermissions,
+		cfg, dashboardStore, folderStore, features, folderPermissions, dashboardPermissions,
 		ac, folderSvc, nil,
 	)
 	require.NoError(t, err)
@@ -1036,7 +1035,7 @@ func (m *mockLibraryPanelService) ConnectLibraryPanelsForDashboard(c context.Con
 	return nil
 }
 
-func (m *mockLibraryPanelService) ImportLibraryPanelsForDashboard(c context.Context, signedInUser identity.Requester, libraryPanels *simplejson.Json, panels []any, folderID int64) error {
+func (m *mockLibraryPanelService) ImportLibraryPanelsForDashboard(c context.Context, signedInUser identity.Requester, libraryPanels *simplejson.Json, panels []any, folderID int64, folderUID string) error {
 	return nil
 }
 

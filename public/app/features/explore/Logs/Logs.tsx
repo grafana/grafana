@@ -144,6 +144,12 @@ const getDefaultVisualisationType = (): LogsVisualisationType => {
   if (visualisationType === 'table') {
     return 'table';
   }
+  if (visualisationType === 'logs') {
+    return 'logs';
+  }
+  if (config.featureToggles.logsExploreTableDefaultVisualization) {
+    return 'table';
+  }
   return 'logs';
 };
 
@@ -290,6 +296,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     reportInteraction('grafana_explore_logs_visualisation_changed', {
       newVisualizationType: visualisation,
       datasourceType: this.props.datasourceType ?? 'unknown',
+      defaultVisualisationType: config.featureToggles.logsExploreTableDefaultVisualization ? 'table' : 'logs',
     });
   };
 
@@ -437,6 +444,16 @@ class UnthemedLogs extends PureComponent<Props, State> {
     };
   };
 
+  getPreviousLog(row: LogRowModel, allLogs: LogRowModel[]): LogRowModel | null {
+    for (let i = allLogs.indexOf(row) - 1; i >= 0; i--) {
+      if (allLogs[i].timeEpochMs > row.timeEpochMs) {
+        return allLogs[i];
+      }
+    }
+
+    return null;
+  }
+
   getPermalinkRange(row: LogRowModel) {
     const range = {
       from: new Date(this.props.absoluteRange.from).toISOString(),
@@ -449,7 +466,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     // With infinite scrolling, the time range of the log line can be after the absolute range or beyond the request line limit, so we need to adjust
     // Look for the previous sibling log, and use its timestamp
     const allLogs = this.props.logRows.filter((logRow) => logRow.dataFrame.refId === row.dataFrame.refId);
-    const prevLog = allLogs[allLogs.indexOf(row) - 1];
+    const prevLog = this.getPreviousLog(row, allLogs);
 
     if (row.timeEpochMs > this.props.absoluteRange.to && !prevLog) {
       // Because there's no sibling and the current `to` is oldest than the log, we have no reference we can use for the interval

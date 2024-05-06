@@ -4,12 +4,13 @@ import (
 	"unicode"
 
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var (
-	ErrPasswordTooShort       = errutil.NewBase(errutil.StatusBadRequest, "password-policy-too-short", errutil.WithPublicMessage("New password is too short"))
-	ErrPasswordPolicyInfringe = errutil.NewBase(errutil.StatusBadRequest, "password-policy-infringe", errutil.WithPublicMessage("New password doesn't comply with the password policy"))
+	ErrPasswordTooShort       = errutil.BadRequest("password.password-policy-too-short", errutil.WithPublicMessage("New password is too short"))
+	ErrPasswordPolicyInfringe = errutil.BadRequest("password.password-policy-infringe", errutil.WithPublicMessage("New password doesn't comply with the password policy"))
 	MinPasswordLength         = 12
 )
 
@@ -26,19 +27,27 @@ func (p Password) Validate(config *setting.Cfg) error {
 	return ValidatePassword(string(p), config)
 }
 
+func (p Password) Hash(salt string) (Password, error) {
+	hashed, err := util.EncodePassword(string(p), salt)
+	if err != nil {
+		return "", err
+	}
+	return Password(hashed), nil
+}
+
 // ValidatePassword checks if a new password meets the required criteria based on the given configuration.
 // If BasicAuthStrongPasswordPolicy is disabled, it only checks for password length.
 // Otherwise, it ensures the password meets the minimum length requirement and contains at least one uppercase letter,
 // one lowercase letter, one number, and one symbol.
 func ValidatePassword(newPassword string, config *setting.Cfg) error {
 	if !config.BasicAuthStrongPasswordPolicy {
-		if len(newPassword) <= 4 {
-			return ErrPasswordTooShort
+		if len(newPassword) < 4 {
+			return ErrPasswordTooShort.Errorf("new password is too short")
 		}
 		return nil
 	}
 	if len(newPassword) < MinPasswordLength {
-		return ErrPasswordTooShort
+		return ErrPasswordPolicyInfringe.Errorf("new password is too short for the strong password policy")
 	}
 
 	hasUpperCase := false
@@ -67,5 +76,5 @@ func ValidatePassword(newPassword string, config *setting.Cfg) error {
 			return nil
 		}
 	}
-	return ErrPasswordPolicyInfringe
+	return ErrPasswordPolicyInfringe.Errorf("new password doesn't comply with the password policy")
 }

@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
@@ -16,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
@@ -44,17 +44,13 @@ func TestService_SetUserPermission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, sql, _ := setupTestEnvironment(t, Options{
+			service, usrSvc, _ := setupTestEnvironment(t, Options{
 				Resource:             "dashboards",
 				Assignments:          Assignments{Users: true},
 				PermissionsToActions: nil,
 			})
 
 			// seed user
-			orgSvc, err := orgimpl.ProvideService(sql, sql.Cfg, quotatest.New(false, nil))
-			require.NoError(t, err)
-			usrSvc, err := userimpl.ProvideService(sql, orgSvc, sql.Cfg, nil, nil, &quotatest.FakeQuotaService{}, supportbundlestest.NewFakeBundleService())
-			require.NoError(t, err)
 			user, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "test", OrgID: 1})
 			require.NoError(t, err)
 
@@ -99,7 +95,7 @@ func TestService_SetTeamPermission(t *testing.T) {
 			})
 
 			// seed team
-			team, err := teamSvc.CreateTeam("test", "test@test.com", 1)
+			team, err := teamSvc.CreateTeam(context.Background(), "test", "test@test.com", 1)
 			require.NoError(t, err)
 
 			var hookCalled bool
@@ -209,16 +205,12 @@ func TestService_SetPermissions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, sql, teamSvc := setupTestEnvironment(t, tt.options)
+			service, usrSvc, teamSvc := setupTestEnvironment(t, tt.options)
 
 			// seed user
-			orgSvc, err := orgimpl.ProvideService(sql, sql.Cfg, quotatest.New(false, nil))
+			_, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "user", OrgID: 1})
 			require.NoError(t, err)
-			usrSvc, err := userimpl.ProvideService(sql, orgSvc, sql.Cfg, nil, nil, &quotatest.FakeQuotaService{}, supportbundlestest.NewFakeBundleService())
-			require.NoError(t, err)
-			_, err = usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "user", OrgID: 1})
-			require.NoError(t, err)
-			_, err = teamSvc.CreateTeam("team", "", 1)
+			_, err = teamSvc.CreateTeam(context.Background(), "team", "", 1)
 			require.NoError(t, err)
 
 			permissions, err := service.SetPermissions(context.Background(), 1, "1", tt.commands...)
@@ -232,24 +224,34 @@ func TestService_SetPermissions(t *testing.T) {
 	}
 }
 
-func setupTestEnvironment(t *testing.T, ops Options) (*Service, *sqlstore.SQLStore, team.Service) {
+func setupTestEnvironment(t *testing.T, ops Options) (*Service, user.Service, team.Service) {
 	t.Helper()
 
 	sql := db.InitTestDB(t)
 	cfg := setting.NewCfg()
-	teamSvc, err := teamimpl.ProvideService(sql, cfg)
+	tracer := tracing.InitializeTracerForTest()
+
+	teamSvc, err := teamimpl.ProvideService(sql, cfg, tracer)
 	require.NoError(t, err)
-	userSvc, err := userimpl.ProvideService(sql, nil, cfg, teamSvc, nil, quotatest.New(false, nil), supportbundlestest.NewFakeBundleService())
+
+	orgSvc, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
 	require.NoError(t, err)
+
+	userSvc, err := userimpl.ProvideService(
+		sql, orgSvc, cfg, teamSvc, nil, tracer,
+		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
+	)
+	require.NoError(t, err)
+
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
 	ac := acimpl.ProvideAccessControl(cfg)
 	acService := &actest.FakeService{}
 	service, err := New(
 		cfg, ops, featuremgmt.WithFeatures(), routing.NewRouteRegister(), license,
-		ac, acService, sql, teamSvc, userSvc,
+		ac, acService, sql, teamSvc, userSvc, NewActionSetService(),
 	)
 	require.NoError(t, err)
 
-	return service, sql, teamSvc
+	return service, userSvc, teamSvc
 }

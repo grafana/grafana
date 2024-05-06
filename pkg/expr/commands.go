@@ -19,6 +19,7 @@ import (
 type Command interface {
 	NeedsVars() []string
 	Execute(ctx context.Context, now time.Time, vars mathexp.Vars, tracer tracing.Tracer) (mathexp.Results, error)
+	Type() string
 }
 
 // MathCommand is a command for a math expression such as "1 + $GA / 2"
@@ -73,6 +74,10 @@ func (gm *MathCommand) Execute(ctx context.Context, _ time.Time, vars mathexp.Va
 	span.SetAttributes(attribute.String("expression", gm.RawExpression))
 	defer span.End()
 	return gm.Expression.Execute(gm.refID, vars, tracer)
+}
+
+func (gm *MathCommand) Type() string {
+	return TypeMath.String()
 }
 
 // ReduceCommand is an expression command for reduction of a timeseries such as a min, mean, or max.
@@ -201,18 +206,22 @@ func (gr *ReduceCommand) Execute(ctx context.Context, _ time.Time, vars mathexp.
 	return newRes, nil
 }
 
+func (gr *ReduceCommand) Type() string {
+	return TypeReduce.String()
+}
+
 // ResampleCommand is an expression command for resampling of a timeseries.
 type ResampleCommand struct {
 	Window        time.Duration
 	VarToResample string
-	Downsampler   string
-	Upsampler     string
+	Downsampler   mathexp.ReducerID
+	Upsampler     mathexp.Upsampler
 	TimeRange     TimeRange
 	refID         string
 }
 
 // NewResampleCommand creates a new ResampleCMD.
-func NewResampleCommand(refID, rawWindow, varToResample string, downsampler string, upsampler string, tr TimeRange) (*ResampleCommand, error) {
+func NewResampleCommand(refID, rawWindow, varToResample string, downsampler mathexp.ReducerID, upsampler mathexp.Upsampler, tr TimeRange) (*ResampleCommand, error) {
 	// TODO: validate reducer here, before execution
 	window, err := gtime.ParseDuration(rawWindow)
 	if err != nil {
@@ -271,7 +280,11 @@ func UnmarshalResampleCommand(rn *rawNode) (*ResampleCommand, error) {
 		return nil, fmt.Errorf("expected resample downsampler to be a string, got type %T", upsampler)
 	}
 
-	return NewResampleCommand(rn.RefID, window, varToResample, downsampler, upsampler, rn.TimeRange)
+	return NewResampleCommand(rn.RefID, window,
+		varToResample,
+		mathexp.ReducerID(downsampler),
+		mathexp.Upsampler(upsampler),
+		rn.TimeRange)
 }
 
 // NeedsVars returns the variable names (refIds) that are dependencies
@@ -308,6 +321,10 @@ func (gr *ResampleCommand) Execute(ctx context.Context, now time.Time, vars math
 	return newRes, nil
 }
 
+func (gr *ResampleCommand) Type() string {
+	return TypeResample.String()
+}
+
 // CommandType is the type of the expression command.
 type CommandType int
 
@@ -324,6 +341,8 @@ const (
 	TypeClassicConditions
 	// TypeThreshold is the CMDType for checking if a threshold has been crossed
 	TypeThreshold
+	// TypeSQL is the CMDType for running SQL expressions
+	TypeSQL
 )
 
 func (gt CommandType) String() string {
@@ -336,6 +355,10 @@ func (gt CommandType) String() string {
 		return "resample"
 	case TypeClassicConditions:
 		return "classic_conditions"
+	case TypeThreshold:
+		return "threshold"
+	case TypeSQL:
+		return "sql"
 	default:
 		return "unknown"
 	}
@@ -354,6 +377,8 @@ func ParseCommandType(s string) (CommandType, error) {
 		return TypeClassicConditions, nil
 	case "threshold":
 		return TypeThreshold, nil
+	case "sql":
+		return TypeSQL, nil
 	default:
 		return TypeUnknown, fmt.Errorf("'%v' is not a recognized expression type", s)
 	}

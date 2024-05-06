@@ -52,7 +52,7 @@ To configure basic settings for the data source, complete the following steps:
 | **Default**         | Sets the data source that's pre-selected for new panels.                                                                                                                                                                                                                                                                                                           |
 | **Host**            | Sets the IP address/hostname and optional port of your MS SQL instance. Default port is 0, the driver default. You can specify multiple connection properties, such as `ApplicationIntent`, by separating each property with a semicolon (`;`).                                                                                                                    |
 | **Database**        | Sets the name of your MS SQL database.                                                                                                                                                                                                                                                                                                                             |
-| **Authentication**  | Sets the authentication mode, either using SQL Server Authentication or Windows Authentication (single sign-on for Windows users).                                                                                                                                                                                                                                 |
+| **Authentication**  | Sets the authentication mode, either using SQL Server authentication, Windows authentication (single sign-on for Windows users), Azure Active Directory authentication, or various forms of Windows Active Directory authentication.                                                                                                                               |
 | **User**            | Defines the database user's username.                                                                                                                                                                                                                                                                                                                              |
 | **Password**        | Defines the database user's password.                                                                                                                                                                                                                                                                                                                              |
 | **Encrypt**         | Determines whether or to which extent a secure SSL TCP/IP connection will be negotiated with the server. Options include: `disable` - data sent between client and server is not encrypted; `false` - data sent between client and server is not encrypted beyond the login packet; `true` - data sent between client and server is encrypted. Default is `false`. |
@@ -88,6 +88,18 @@ You can also override this setting in a dashboard panel under its data source op
 ### Connection timeout
 
 The **Connection timeout** setting defines the maximum number of seconds to wait for a connection to the database before timing out. Default is 0 for no timeout.
+
+### UDP Preference Limit
+
+The **UDP Preference Limit** setting defines the maximum size packet that the Kerberos libraries will attempt to send over a UDP connection before retrying with TCP. Default is 1 which means always use TCP.
+
+### DNS Lookup KDC
+
+The **DNS Lookup KDC** setting controls whether to [lookup KDC in DNS](https://web.mit.edu/kerberos/krb5-latest/doc/admin/realm_config.html#mapping-hostnames-onto-kerberos-realms). Default is true.
+
+### KRB5 config file path
+
+The **KRB5 config file path** stores the location of the `krb5` config file. Default is `/etc/krb5.conf`
 
 ### Database user permissions
 

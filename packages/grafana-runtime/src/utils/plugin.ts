@@ -1,9 +1,3 @@
-import 'systemjs/dist/system';
-// Add ability to load plugins bundled as AMD format
-import 'systemjs/dist/extras/amd';
-// Add ability to load plugins bundled as CJS format
-import 'systemjs-cjs-extra';
-
 import { PanelPlugin } from '@grafana/data';
 
 import { config } from '../config';
@@ -20,11 +14,6 @@ export interface PluginCssOptions {
 }
 
 /**
- * @internal
- */
-export const SystemJS = window.System;
-
-/**
  * Use this to load css for a Grafana plugin by specifying a {@link PluginCssOptions}
  * containing styling for the dark and the light theme.
  *
@@ -34,7 +23,7 @@ export const SystemJS = window.System;
 export async function loadPluginCss(options: PluginCssOptions): Promise<System.Module | void> {
   try {
     const cssPath = config.bootData.user.theme === 'light' ? options.light : options.dark;
-    return SystemJS.import(cssPath);
+    return window.System.import(cssPath);
   } catch (err) {
     console.error(err);
   }

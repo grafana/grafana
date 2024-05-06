@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/MetricSelect.tsx
 import { css } from '@emotion/css';
 import debounce from 'debounce-promise';
 import React, { RefCallback, useCallback, useState } from 'react';
@@ -55,10 +56,10 @@ export function MetricSelect({
   metricLookupDisabled,
   onBlur,
   variableEditor,
-}: MetricSelectProps) {
+}: Readonly<MetricSelectProps>) {
   const styles = useStyles2(getStyles);
   const [state, setState] = useState<{
-    metrics?: Array<SelectableValue<any>>;
+    metrics?: SelectableValue[];
     isLoading?: boolean;
     metricsModalOpen?: boolean;
     initialMetrics?: string[];
@@ -76,7 +77,7 @@ export function MetricSelect({
   ];
 
   const customFilterOption = useCallback(
-    (option: SelectableValue<any>, searchQuery: string) => {
+    (option: SelectableValue, searchQuery: string) => {
       const label = option.label ?? option.value;
       if (!label) {
         return false;
@@ -104,7 +105,7 @@ export function MetricSelect({
   );
 
   const formatOptionLabel = useCallback(
-    (option: SelectableValue<any>, meta: FormatOptionLabelMeta<any>) => {
+    (option: SelectableValue, meta: FormatOptionLabelMeta<any>) => {
       // For newly created custom value we don't want to add highlight
       if (option['__isNew__']) {
         return option.label;
@@ -240,10 +241,16 @@ export function MetricSelect({
       <div
         {...innerProps}
         className={`${stylesMenu.menu} ${styles.customMenuContainer}`}
-        style={{ maxHeight }}
+        style={{ maxHeight: Math.round(maxHeight * 0.9) }}
         aria-label="Select options menu"
       >
-        <CustomScrollbar scrollRefCallback={innerRef} autoHide={false} autoHeightMax="inherit" hideHorizontalTrack>
+        <CustomScrollbar
+          scrollRefCallback={innerRef}
+          autoHide={false}
+          autoHeightMax="inherit"
+          hideHorizontalTrack
+          showScrollIndicators
+        >
           {children}
         </CustomScrollbar>
         {optionsLoaded && (
@@ -262,7 +269,7 @@ export function MetricSelect({
     return (
       <AsyncSelect
         data-testid={selectors.components.DataSource.Prometheus.queryEditor.builder.metricSelect}
-        isClearable={variableEditor ? true : false}
+        isClearable={Boolean(variableEditor)}
         inputId="prometheus-metric-select"
         className={styles.select}
         value={query.metric ? toOption(query.metric) : undefined}
@@ -270,6 +277,7 @@ export function MetricSelect({
         allowCustomValue
         formatOptionLabel={formatOptionLabel}
         filterOption={customFilterOption}
+        minMenuHeight={250}
         onOpenMenu={async () => {
           if (metricLookupDisabled) {
             return;
@@ -285,7 +293,7 @@ export function MetricSelect({
 
           if (prometheusMetricEncyclopedia) {
             setState({
-              // add the modal butoon option to the options
+              // add the modal button option to the options
               metrics: [...metricsModalOption, ...metrics],
               isLoading: undefined,
               // pass the initial metrics into the metrics explorer
@@ -302,7 +310,7 @@ export function MetricSelect({
         }}
         loadOptions={metricLookupDisabled ? metricLookupDisabledSearch : debouncedSearch}
         isLoading={state.isLoading}
-        defaultOptions={state.metrics}
+        defaultOptions={state.metrics ?? Array.from(new Array(25), () => ({ value: '' }))} // We need empty values when `state.metrics` is falsy in order for the select to correctly determine top/bottom placement
         onChange={(input) => {
           const value = input?.value;
           if (value) {
@@ -320,7 +328,7 @@ export function MetricSelect({
         components={
           prometheusMetricEncyclopedia ? { Option: CustomOption, MenuList: CustomMenu } : { MenuList: CustomMenu }
         }
-        onBlur={onBlur ? onBlur : () => {}}
+        onBlur={onBlur}
       />
     );
   };

@@ -5,7 +5,7 @@ import { GrafanaEdition } from '@grafana/data/src/types/config';
 import { config, isFetchError } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
 import { escapePathSeparators } from 'app/features/alerting/unified/utils/rule-id';
-import { alertInstanceKey } from 'app/features/alerting/unified/utils/rules';
+import { alertInstanceKey, isGrafanaRulerRule } from 'app/features/alerting/unified/utils/rules';
 import { SortOrder } from 'app/plugins/panel/alertlist/types';
 import { Alert, CombinedRule, FilterState, RulesSource, SilenceFilterState } from 'app/types/unified-alerting';
 import {
@@ -13,8 +13,6 @@ import {
   PromAlertingRuleState,
   mapStateWithReasonToBaseState,
 } from 'app/types/unified-alerting-dto';
-
-import { FolderDTO } from '../../../../types';
 
 import { ALERTMANAGER_NAME_QUERY_KEY } from './constants';
 import { getRulesSourceName, isCloudRulesSource } from './datasource';
@@ -56,14 +54,16 @@ export function createMuteTimingLink(muteTimingName: string, alertManagerSourceN
   });
 }
 
-export function createShareLink(ruleSource: RulesSource, rule: CombinedRule): string {
+export function createShareLink(ruleSource: RulesSource, rule: CombinedRule): string | undefined {
   if (isCloudRulesSource(ruleSource)) {
     return createAbsoluteUrl(
       `/alerting/${encodeURIComponent(ruleSource.name)}/${encodeURIComponent(escapePathSeparators(rule.name))}/find`
     );
+  } else if (isGrafanaRulerRule(rule.rulerRule)) {
+    return createUrl(`/alerting/grafana/${rule.rulerRule.grafana_alert.uid}/view`);
   }
 
-  return window.location.href.split('?')[0];
+  return;
 }
 
 export function arrayToRecord(items: Array<{ key: string; value: string }>): Record<string, string> {
@@ -149,22 +149,16 @@ export function makeFolderAlertsLink(folderUID: string, title: string): string {
   return createUrl(`/dashboards/f/${folderUID}/${title}/alerting`);
 }
 
-export function makeFolderSettingsLink(folder: FolderDTO): string {
-  return createUrl(`/dashboards/f/${folder.uid}/settings`);
+export function makeFolderSettingsLink(uid: string): string {
+  return createUrl(`/dashboards/f/${uid}/settings`);
 }
 
 export function makeDashboardLink(dashboardUID: string): string {
   return createUrl(`/d/${encodeURIComponent(dashboardUID)}`);
 }
 
-type PanelLinkParams = {
-  viewPanel?: string;
-  editPanel?: string;
-  tab?: 'alert' | 'transform' | 'query';
-};
-
-export function makePanelLink(dashboardUID: string, panelId: string, queryParams: PanelLinkParams = {}): string {
-  const panelParams = new URLSearchParams(queryParams);
+export function makePanelLink(dashboardUID: string, panelId: string): string {
+  const panelParams = new URLSearchParams({ viewPanel: panelId });
   return createUrl(`/d/${encodeURIComponent(dashboardUID)}`, panelParams);
 }
 
@@ -234,13 +228,23 @@ export function isLocalDevEnv() {
 }
 
 export function isErrorLike(error: unknown): error is Error {
-  return 'message' in (error as Error);
+  return Boolean(error && typeof error === 'object' && 'message' in error);
 }
 
 export function stringifyErrorLike(error: unknown): string {
   const fetchError = isFetchError(error);
   if (fetchError) {
-    return error.data.message;
+    if (error.message) {
+      return error.message;
+    }
+    if ('message' in error.data && typeof error.data.message === 'string') {
+      return error.data.message;
+    }
+    if (error.statusText) {
+      return error.statusText;
+    }
+
+    return String(error.status) || 'Unknown error';
   }
 
   return isErrorLike(error) ? error.message : String(error);

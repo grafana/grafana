@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import React, { useEffect, useRef, useState } from 'react';
 
-import { Button, CustomScrollbar, HorizontalGroup, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, CustomScrollbar, Stack, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
 import { getSelectStyles } from '@grafana/ui/src/components/Select/getSelectStyles';
 import { OrgRole, Role } from 'app/types';
 
@@ -256,14 +256,14 @@ export const RolePickerMenu = ({
           ))}
         </CustomScrollbar>
         <div className={customStyles.menuButtonRow}>
-          <HorizontalGroup justify="flex-end">
+          <Stack justifyContent="flex-end">
             <Button size="sm" fill="text" onClick={onClearInternal} disabled={updateDisabled}>
               Clear all
             </Button>
             <Button size="sm" onClick={onUpdateInternal} disabled={updateDisabled}>
               {apply ? `Apply` : `Update`}
             </Button>
-          </HorizontalGroup>
+          </Stack>
         </div>
       </div>
       <div ref={subMenuNode} />

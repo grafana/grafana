@@ -15,7 +15,7 @@ weight: 600
 
 # Provision Grafana
 
-In previous versions of Grafana, you could only use the API for provisioning data sources and dashboards. But that required the service to be running before you started creating dashboards and you also needed to set up credentials for the HTTP API. In v5.0 we decided to improve this experience by adding a new active provisioning system that uses config files. This will make GitOps more natural as data sources and dashboards can be defined via files that can be version controlled. We hope to extend this system to later add support for users, orgs and alerts as well.
+In previous versions of Grafana, you could only use the API for provisioning data sources and dashboards. But that required the service to be running before you started creating dashboards and you also needed to set up credentials for the HTTP API. In v5.0 we decided to improve this experience by adding a new active provisioning system that uses config files. This will make GitOps more natural as data sources and dashboards can be defined via files that can be version controlled. We hope to extend this system to later add support for users and orgs as well.
 
 ## Config File
 
@@ -81,6 +81,14 @@ If the data source already exists, Grafana reconfigures it to match the provisio
 The configuration file can also list data sources to automatically delete, called `deleteDatasources`.
 Grafana deletes the data sources listed in `deleteDatasources` _before_ adding or updating those in the `datasources` list.
 
+You can configure Grafana to automatically delete provisioned data sources when they're removed from the provisioning file.
+To do so, add `prune: true` to the root of your provisioning file.
+With this configuration, Grafana also removes the provisioned data sources if you remove the provisioning file entirely.
+
+{{% admonition type="note" %}}
+The `prune` parameter is available in Grafana v11.1 and higher.
+{{% /admonition %}}
+
 ### Running multiple Grafana instances
 
 If you run multiple instances of Grafana, add a version number to each data source in the configuration and increase it when you update the configuration.
@@ -99,6 +107,10 @@ apiVersion: 1
 deleteDatasources:
   - name: Graphite
     orgId: 1
+
+# Mark provisioned data sources for deletion if they are no longer in a provisioning file.
+# It takes no effect if data sources are already listed in the deleteDatasources section.
+prune: true
 
 # List of data sources to insert/update depending on what's
 # available in the database.
@@ -426,78 +438,6 @@ This feature doesn't currently allow you to create nested folder structures, tha
 ## Alerting
 
 For information on provisioning Grafana Alerting, refer to [Provision Grafana Alerting resources]({{< relref "../../alerting/set-up/provision-alerting-resources/"  >}}).
-
-## Alert Notification Channels
-
-{{% admonition type="note" %}}
-Alert Notification Channels are part of legacy alerting, which is deprecated and will be removed in Grafana 10. Use the Provision contact points section in [Create and manage alerting resources using file provisioning]({{< relref "../../alerting/set-up/provision-alerting-resources/file-provisioning" >}}).
-{{% /admonition %}}
-
-Alert Notification Channels can be provisioned by adding one or more YAML config files in the [`provisioning/notifiers`](/administration/configuration/#provisioning) directory.
-
-Each config file can contain the following top-level fields:
-
-- `notifiers`, a list of alert notifications that will be added or updated during start up. If the notification channel already exists, Grafana will update it to match the configuration file.
-- `delete_notifiers`, a list of alert notifications to be deleted before inserting/updating those in the `notifiers` list.
-
-Provisioning looks up alert notifications by uid, and will update any existing notification with the provided uid.
-
-By default, exporting a dashboard as JSON will use a sequential identifier to refer to alert notifications. The field `uid` can be optionally specified to specify a string identifier for the alert name.
-
-```json
-{
-  ...
-      "alert": {
-        ...,
-        "conditions": [...],
-        "frequency": "24h",
-        "noDataState": "ok",
-        "notifications": [
-           {"uid": "notifier1"},
-           {"uid": "notifier2"},
-        ]
-      }
-  ...
-}
-```
-
-### Example Alert Notification Channels Config File
-
-```yaml
-notifiers:
-  - name: notification-channel-1
-    type: slack
-    uid: notifier1
-    # either
-    org_id: 2
-    # or
-    org_name: Main Org.
-    is_default: true
-    send_reminder: true
-    frequency: 1h
-    disable_resolve_message: false
-    # See `Supported Settings` section for settings supported for each
-    # alert notification type.
-    settings:
-      recipient: 'XXX'
-      uploadImage: true
-      token: 'xoxb' # legacy setting since Grafana v7.2 (stored non-encrypted)
-      url: https://slack.com # legacy setting since Grafana v7.2 (stored non-encrypted)
-    # Secure settings that will be encrypted in the database (supported since Grafana v7.2). See `Supported Settings` section for secure settings supported for each notifier.
-    secure_settings:
-      token: 'xoxb'
-      url: https://slack.com
-
-delete_notifiers:
-  - name: notification-channel-1
-    uid: notifier1
-    # either
-    org_id: 2
-    # or
-    org_name: Main Org.
-  - name: notification-channel-2
-    # default org_id: 1
-```
 
 ### Supported Settings
 

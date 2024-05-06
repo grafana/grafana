@@ -22,11 +22,11 @@ func (s *Storage) filePath(key string) string {
 	return fileName
 }
 
+// this is for constructing dirPath in a sanitized way provided you have
+// already calculated the key. In order to go in the other direction, from a file path
+// key to its dir, use the go standard library: filepath.Dir
 func (s *Storage) dirPath(key string) string {
-	// Replace backslashes with underscores to avoid creating bogus subdirectories
-	key = strings.Replace(key, "\\", "_", -1)
-	dirName := filepath.Join(s.root, filepath.Clean(key))
-	return dirName
+	return dirPath(s.root, key)
 }
 
 func writeFile(codec runtime.Codec, path string, obj runtime.Object) error {
@@ -82,6 +82,13 @@ func deleteFile(path string) error {
 func exists(filepath string) bool {
 	_, err := os.Stat(filepath)
 	return err == nil
+}
+
+func dirPath(root string, key string) string {
+	// Replace backslashes with underscores to avoid creating bogus subdirectories
+	key = strings.Replace(key, "\\", "_", -1)
+	dirName := filepath.Join(root, filepath.Clean(key))
+	return dirName
 }
 
 func ensureDir(dirname string) error {

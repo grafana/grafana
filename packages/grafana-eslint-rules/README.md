@@ -1,10 +1,10 @@
 # Grafana ESLint Rules
 
-This package contains custom eslint rules for use within the Grafana codebase only. They're extremley specific to our codebase, and are of little use to anyone else. They're not published to NPM, and are consumed through the Yarn workspace.
+This package contains custom eslint rules for use within the Grafana codebase only. They're extremely specific to our codebase, and are of little use to anyone else. They're not published to NPM, and are consumed through the Yarn workspace.
 
 ## Rules
 
-### `@grafana/no-aria-label-selectors`
+### `no-aria-label-selectors`
 
 Require aria-label JSX properties to not include selectors from the `@grafana/e2e-selectors` package.
 
@@ -12,12 +12,102 @@ Previously we hijacked the aria-label property to use as E2E selectors as an att
 
 Now, we prefer using data-testid for E2E selectors.
 
-### `@grafana/no-border-radius-literal`
+### `no-border-radius-literal`
 
 Check if border-radius theme tokens are used.
 
 To improve the consistency across Grafana we encourage devs to use tokens instead of custom values. In this case, we want the `borderRadius` to use the appropriate token such as `theme.shape.radius.default`, `theme.shape.radius.pill` or `theme.shape.radius.circle`.
 
-### `@grafana/theme-token-usage`
+### `no-unreduced-motion`
+
+Avoid direct use of `animation*` or `transition*` properties.
+
+To account for users with motion sensitivities, these should always be wrapped in a [`prefers-reduced-motion`](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion) media query.
+
+There is a `handleMotion` utility function exposed on the theme that can help with this.
+
+#### Examples
+
+```tsx
+// Bad ❌
+const getStyles = (theme: GrafanaTheme2) => ({
+  loading: css({
+    animationName: rotate,
+    animationDuration: '2s',
+    animationIterationCount: 'infinite',
+  }),
+});
+
+// Good ✅
+const getStyles = (theme: GrafanaTheme2) => ({
+  loading: css({
+    [theme.transitions.handleMotion('no-preference')]: {
+      animationName: rotate,
+      animationDuration: '2s',
+      animationIterationCount: 'infinite',
+    },
+    [theme.transitions.handleMotion('reduce')]: {
+      animationName: pulse,
+      animationDuration: '2s',
+      animationIterationCount: 'infinite',
+    },
+  }),
+});
+
+// Good ✅
+const getStyles = (theme: GrafanaTheme2) => ({
+  loading: css({
+    '@media (prefers-reduced-motion: no-preference)': {
+      animationName: rotate,
+      animationDuration: '2s',
+      animationIterationCount: 'infinite',
+    },
+    '@media (prefers-reduced-motion: reduce)': {
+      animationName: pulse,
+      animationDuration: '2s',
+      animationIterationCount: 'infinite',
+    },
+  }),
+});
+```
+
+Note we've switched the potentially sensitive rotating animation to a less intense pulse animation when `prefers-reduced-motion` is set.
+
+Animations that involve only non-moving properties, like opacity, color, and blurs, are unlikely to be problematic. In those cases, you still need to wrap the animation in a `prefers-reduced-motion` media query, but you can use the same animation for both cases:
+
+```tsx
+// Bad ❌
+const getStyles = (theme: GrafanaTheme2) => ({
+  card: css({
+    transition: theme.transitions.create(['background-color'], {
+      duration: theme.transitions.duration.short,
+    }),
+  }),
+});
+
+// Good ✅
+const getStyles = (theme: GrafanaTheme2) => ({
+  card: css({
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition: theme.transitions.create(['background-color'], {
+        duration: theme.transitions.duration.short,
+      }),
+    },
+  }),
+});
+
+// Good ✅
+const getStyles = (theme: GrafanaTheme2) => ({
+  card: css({
+    '@media (prefers-reduced-motion: no-preference), @media (prefers-reduced-motion: reduce)': {
+      transition: theme.transitions.create(['background-color'], {
+        duration: theme.transitions.duration.short,
+      }),
+    },
+  }),
+});
+```
+
+### `theme-token-usage`
 
 Used to find all instances of `theme` tokens being used in the codebase and emit the counts as metrics. Should **not** be used as an actual lint rule!

@@ -77,7 +77,7 @@ configuration overwrites on startup.
 4. In another tab, apply the manifests: 
   ```shell
   export KUBECONFIG=$PWD/data/grafana-apiserver/grafana.kubeconfig
-  kubectl apply -f ./pkg/services/apiserver/aggregator/examples/
+  kubectl apply -f ./pkg/services/apiserver/aggregator/examples/manual-test/
   # SAMPLE OUTPUT
   # apiservice.apiregistration.k8s.io/v0alpha1.example.grafana.app created
   # externalname.service.grafana.app/example-apiserver created
@@ -92,6 +92,8 @@ configuration overwrites on startup.
   go run ./pkg/cmd/grafana apiserver \
     --runtime-config=example.grafana.app/v0alpha1=true \
     --secure-port 7443 \
+    --tls-cert-file $PWD/data/grafana-aggregator/server.crt \
+    --tls-private-key-file $PWD/data/grafana-aggregator/server.key \ 
     --requestheader-client-ca-file=$PWD/data/grafana-aggregator/ca.crt \
     --requestheader-extra-headers-prefix=X-Remote-Extra- \
     --requestheader-group-headers=X-Remote-Group \
@@ -110,3 +112,16 @@ configuration overwrites on startup.
   ```shell
   kubectl delete -f ./pkg/services/apiserver/aggregator/examples/
   ```
+
+## Testing auto-registration of remote services locally
+
+A sample aggregation config for remote services is provided under [conf](../../../../conf/aggregation/apiservices.yaml). Provided, you have the following setup in your custom.ini, the apiserver will
+register your remotely running services on startup.
+
+```ini
+; in custom.ini
+; the bundle is only used when not in dev mode
+apiservice_ca_bundle_file = ./data/grafana-aggregator/ca.crt
+
+remote_services_file = ./pkg/services/apiserver/aggregator/examples/autoregister/apiservices.yaml
+```

@@ -30,6 +30,7 @@ export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
 export { ColorPickerInput } from './ColorPicker/ColorPickerInput';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
+export { EmptyState } from './EmptyState/EmptyState';
 export { UnitPicker } from './UnitPicker/UnitPicker';
 export { StatsPicker } from './StatsPicker/StatsPicker';
 export { RefreshPicker, defaultIntervals } from './RefreshPicker/RefreshPicker';
@@ -267,8 +268,6 @@ export { Divider } from './Divider/Divider';
 export { getDragStyles, type DragHandlePosition } from './DragHandle/DragHandle';
 export { useSplitter } from './Splitter/useSplitter';
 
-export { LayoutItemContext, type LayoutItemContextProps } from './Layout/LayoutItemContext';
-
 /** @deprecated Please use non-legacy versions of these components */
 const LegacyForms = {
   SecretFormField,
@@ -312,3 +311,6 @@ export { TimeSeries } from '../graveyard/TimeSeries/TimeSeries';
 export { useGraphNGContext } from '../graveyard/GraphNG/hooks';
 export { preparePlotFrame, buildScaleKey } from '../graveyard/GraphNG/utils';
 export { type GraphNGLegendEvent } from '../graveyard/GraphNG/types';
+
+export { ZoomPlugin } from '../graveyard/uPlot/plugins/ZoomPlugin';
+export { TooltipPlugin } from '../graveyard/uPlot/plugins/TooltipPlugin';

@@ -135,7 +135,7 @@ func Test_CheckHealth(t *testing.T) {
 
 	t.Run("successfully query metrics and logs", func(t *testing.T) {
 		client = fakeCheckHealthClient{}
-		executor := newExecutor(im, &fakeSessionCache{}, log.NewNullLogger())
+		executor := newExecutor(im, log.NewNullLogger())
 
 		resp, err := executor.CheckHealth(context.Background(), &backend.CheckHealthRequest{
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
@@ -154,7 +154,7 @@ func Test_CheckHealth(t *testing.T) {
 				return nil, fmt.Errorf("some logs query error")
 			}}
 
-		executor := newExecutor(im, &fakeSessionCache{}, log.NewNullLogger())
+		executor := newExecutor(im, log.NewNullLogger())
 
 		resp, err := executor.CheckHealth(context.Background(), &backend.CheckHealthRequest{
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
@@ -173,7 +173,7 @@ func Test_CheckHealth(t *testing.T) {
 				return fmt.Errorf("some list metrics error")
 			}}
 
-		executor := newExecutor(im, &fakeSessionCache{}, log.NewNullLogger())
+		executor := newExecutor(im, log.NewNullLogger())
 
 		resp, err := executor.CheckHealth(context.Background(), &backend.CheckHealthRequest{
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
@@ -188,10 +188,16 @@ func Test_CheckHealth(t *testing.T) {
 
 	t.Run("fail to get clients", func(t *testing.T) {
 		client = fakeCheckHealthClient{}
+		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return DataSource{
+				Settings: models.CloudWatchSettings{AWSDatasourceSettings: awsds.AWSDatasourceSettings{Region: "us-east-1"}},
+				sessions: &fakeSessionCache{getSession: func(c awsds.SessionConfig) (*session.Session, error) {
+					return nil, fmt.Errorf("some sessions error")
+				}},
+			}, nil
+		})
 
-		executor := newExecutor(im, &fakeSessionCache{getSession: func(c awsds.SessionConfig) (*session.Session, error) {
-			return nil, fmt.Errorf("some sessions error")
-		}}, log.NewNullLogger())
+		executor := newExecutor(im, log.NewNullLogger())
 
 		resp, err := executor.CheckHealth(context.Background(), &backend.CheckHealthRequest{
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
@@ -216,22 +222,25 @@ func TestNewSession_passes_authSettings(t *testing.T) {
 		SecureSocksDSProxyEnabled: true,
 	}
 	im := datasource.NewInstanceManager((func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return DataSource{Settings: models.CloudWatchSettings{
-			AWSDatasourceSettings: awsds.AWSDatasourceSettings{
-				Region: "us-east-1",
+		return DataSource{
+			Settings: models.CloudWatchSettings{
+				AWSDatasourceSettings: awsds.AWSDatasourceSettings{
+					Region: "us-east-1",
+				},
+				GrafanaSettings: expectedSettings,
 			},
-			GrafanaSettings: expectedSettings,
-		}}, nil
-	}))
-	executor := newExecutor(im, &fakeSessionCache{getSession: func(c awsds.SessionConfig) (*session.Session, error) {
-		assert.NotNil(t, c.AuthSettings)
-		assert.Equal(t, expectedSettings, *c.AuthSettings)
-		return &session.Session{
-			Config: &aws.Config{},
+			sessions: &fakeSessionCache{getSession: func(c awsds.SessionConfig) (*session.Session, error) {
+				assert.NotNil(t, c.AuthSettings)
+				assert.Equal(t, expectedSettings, *c.AuthSettings)
+				return &session.Session{
+					Config: &aws.Config{},
+				}, nil
+			}},
 		}, nil
-	}}, log.NewNullLogger())
+	}))
+	executor := newExecutor(im, log.NewNullLogger())
 
-	_, err := executor.newSession(context.Background(),
+	_, err := executor.newSessionFromContext(context.Background(),
 		backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}}, "us-east-1")
 	require.NoError(t, err)
 }
@@ -275,7 +284,7 @@ func TestQuery_ResourceRequest_DescribeLogGroups_with_CrossAccountQuerying(t *te
 			},
 		}
 
-		executor := newExecutor(im, &fakeSessionCache{}, log.NewNullLogger())
+		executor := newExecutor(im, log.NewNullLogger())
 		err := executor.CallResource(contextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), req, sender)
 		assert.NoError(t, err)
 

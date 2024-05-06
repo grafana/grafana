@@ -1043,7 +1043,7 @@ func (g *GrafanaLive) HandleInfoHTTP(ctx *contextmodel.ReqContext) response.Resp
 			"active": g.GrafanaScope.Dashboards.HasGitOpsObserver(ctx.SignedInUser.GetOrgID()),
 		})
 	}
-	return response.JSONStreaming(404, util.DynMap{
+	return response.JSONStreaming(http.StatusNotFound, util.DynMap{
 		"message": "Info is not supported for this channel",
 	})
 }

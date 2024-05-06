@@ -72,10 +72,36 @@ describe('formAmRouteToAmRoute', () => {
 
     // Assert
     expect(amRoute.matchers).toStrictEqual([
-      'foo="bar"',
-      'foo="bar\\"baz"',
-      'foo="bar\\\\baz"',
-      'foo="\\\\bar\\\\baz\\"\\\\"',
+      '"foo"="bar"',
+      '"foo"="bar\\"baz"',
+      '"foo"="bar\\\\baz"',
+      '"foo"="\\\\bar\\\\baz\\"\\\\"',
+    ]);
+  });
+
+  it('should quote and escape matcher names', () => {
+    // Arrange
+    const route: FormAmRoute = buildFormAmRoute({
+      id: '1',
+      object_matchers: [
+        { name: 'foo', operator: MatcherOperator.equal, value: 'bar' },
+        { name: 'foo with spaces', operator: MatcherOperator.equal, value: 'bar' },
+        { name: 'foo\\slash', operator: MatcherOperator.equal, value: 'bar' },
+        { name: 'foo"quote', operator: MatcherOperator.equal, value: 'bar' },
+        { name: 'fo\\o', operator: MatcherOperator.equal, value: 'ba\\r' },
+      ],
+    });
+
+    // Act
+    const amRoute = formAmRouteToAmRoute('mimir-am', route, { id: 'root' });
+
+    // Assert
+    expect(amRoute.matchers).toStrictEqual([
+      '"foo"="bar"',
+      '"foo with spaces"="bar"',
+      '"foo\\\\slash"="bar"',
+      '"foo\\"quote"="bar"',
+      '"fo\\\\o"="ba\\\\r"',
     ]);
   });
 
@@ -90,7 +116,7 @@ describe('formAmRouteToAmRoute', () => {
     const amRoute = formAmRouteToAmRoute('mimir-am', route, { id: 'root' });
 
     // Assert
-    expect(amRoute.matchers).toStrictEqual(['foo=""']);
+    expect(amRoute.matchers).toStrictEqual(['"foo"=""']);
   });
 
   it('should allow matchers with empty values for Grafana AM', () => {
@@ -171,6 +197,25 @@ describe('amRouteToFormAmRoute', () => {
       { name: 'foo', operator: MatcherOperator.equal, value: 'bar"baz' },
       { name: 'foo', operator: MatcherOperator.equal, value: 'bar\\baz' },
       { name: 'foo', operator: MatcherOperator.equal, value: '\\bar\\baz"\\' },
+    ]);
+  });
+
+  it('should unquote and unescape matcher names', () => {
+    // Arrange
+    const amRoute = buildAmRoute({
+      matchers: ['"foo"=bar', '"foo with spaces"=bar', '"foo\\\\slash"=bar', '"foo"quote"=bar', '"fo\\\\o"="ba\\\\r"'],
+    });
+
+    // Act
+    const formRoute = amRouteToFormAmRoute(amRoute);
+
+    // Assert
+    expect(formRoute.object_matchers).toStrictEqual([
+      { name: 'foo', operator: MatcherOperator.equal, value: 'bar' },
+      { name: 'foo with spaces', operator: MatcherOperator.equal, value: 'bar' },
+      { name: 'foo\\slash', operator: MatcherOperator.equal, value: 'bar' },
+      { name: 'foo"quote', operator: MatcherOperator.equal, value: 'bar' },
+      { name: 'fo\\o', operator: MatcherOperator.equal, value: 'ba\\r' },
     ]);
   });
 });

@@ -4,7 +4,15 @@ import { accessControlQueryParam } from 'app/core/utils/accessControl';
 
 import { API_ROOT, GCOM_API_ROOT, INSTANCE_API_ROOT } from './constants';
 import { isLocalPluginVisibleByConfig, isRemotePluginVisibleByConfig } from './helpers';
-import { LocalPlugin, RemotePlugin, CatalogPluginDetails, Version, PluginVersion, InstancePlugin } from './types';
+import {
+  LocalPlugin,
+  RemotePlugin,
+  CatalogPluginDetails,
+  Version,
+  PluginVersion,
+  InstancePlugin,
+  ProvisionedPlugin,
+} from './types';
 
 export async function getPluginDetails(id: string): Promise<CatalogPluginDetails> {
   const remote = await getRemotePlugin(id);
@@ -123,6 +131,14 @@ export async function getInstancePlugins(): Promise<InstancePlugin[]> {
   );
 
   return instancePlugins;
+}
+
+export async function getProvisionedPlugins(): Promise<ProvisionedPlugin[]> {
+  const { items: provisionedPlugins }: { items: Array<{ type: string }> } = await getBackendSrv().get(
+    `${INSTANCE_API_ROOT}/provisioned-plugins`
+  );
+
+  return provisionedPlugins.map((plugin) => ({ slug: plugin.type }));
 }
 
 export async function installPlugin(id: string) {

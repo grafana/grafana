@@ -1553,6 +1553,42 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 			t.Errorf("Unexpected Body: %v", cmp.Diff(string(body), expectedBody))
 		}
 	})
+
+	t.Run("correctly classifies resources as workspaces when matching criteria", func(t *testing.T) {
+		ds := AzureLogAnalyticsDatasource{}
+		req, err := ds.createRequest(ctx, url, &AzureLogAnalyticsQuery{
+			Resources:        []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/microsoft.operationalInsights/workSpaces/ws1", "microsoft.operationalInsights/workspaces/ws2"}, // Note different casings and partial paths
+			Query:            "Perf",
+			QueryType:        dataquery.AzureQueryTypeAzureLogAnalytics,
+			AppInsightsQuery: false,
+			DashboardTime:    false,
+		})
+		require.NoError(t, err)
+		expectedBody := `{"query":"Perf","workspaces":["/subscriptions/test-sub/resourceGroups/test-rg/providers/microsoft.operationalInsights/workSpaces/ws1","microsoft.operationalInsights/workspaces/ws2"]}` // Expecting resources to be classified as workspaces
+		body, err := io.ReadAll(req.Body)
+		require.NoError(t, err)
+		if !cmp.Equal(string(body), expectedBody) {
+			t.Errorf("Unexpected Body: %v", cmp.Diff(string(body), expectedBody))
+		}
+	})
+
+	t.Run("correctly passes multiple resources not classified as workspaces", func(t *testing.T) {
+		ds := AzureLogAnalyticsDatasource{}
+		req, err := ds.createRequest(ctx, url, &AzureLogAnalyticsQuery{
+			Resources:        []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/SomeOtherService/serviceInstances/r1", "/subscriptions/test-sub/resourceGroups/test-rg/providers/SomeOtherService/serviceInstances/r2"},
+			Query:            "Perf",
+			QueryType:        dataquery.AzureQueryTypeAzureLogAnalytics,
+			AppInsightsQuery: false,
+			DashboardTime:    false,
+		})
+		require.NoError(t, err)
+		expectedBody := `{"query":"Perf","resources":["/subscriptions/test-sub/resourceGroups/test-rg/providers/SomeOtherService/serviceInstances/r1","/subscriptions/test-sub/resourceGroups/test-rg/providers/SomeOtherService/serviceInstances/r2"]}`
+		body, err := io.ReadAll(req.Body)
+		require.NoError(t, err)
+		if !cmp.Equal(string(body), expectedBody) {
+			t.Errorf("Unexpected Body: %v", cmp.Diff(string(body), expectedBody))
+		}
+	})
 }
 
 func Test_executeQueryErrorWithDifferentLogAnalyticsCreds(t *testing.T) {

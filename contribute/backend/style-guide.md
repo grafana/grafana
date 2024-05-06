@@ -33,7 +33,7 @@ Tests must use the standard library, `testing`. For assertions, prefer using [te
 
 We have a [testsuite](https://github.com/grafana/grafana/tree/main/pkg/tests/testsuite) package which provides utilities for package-level setup and teardown.
 
-Currently this is just used to ensure that test databases are correctly set up and torn down, but it also provides a place we can attach future tasks.
+Currently, this is just used to ensure that test databases are correctly set up and torn down, but it also provides a place we can attach future tasks.
 
 Each package SHOULD include a [TestMain](https://pkg.go.dev/testing#hdr-Main) function that calls `testsuite.Run(m)`:
 
@@ -78,7 +78,7 @@ func TestIntegrationFoo(t *testing.T) {
 
 Use respectively [`assert.*`](https://github.com/stretchr/testify#assert-package) functions to make assertions that
 should _not_ halt the test ("soft checks") and [`require.*`](https://github.com/stretchr/testify#require-package)
-functions to make assertions that _should_ halt the test ("hard checks"). Typically you want to use the latter type of
+functions to make assertions that _should_ halt the test ("hard checks"). Typically, you want to use the latter type of
 check to assert that errors have or have not happened, since continuing the test after such an assertion fails is
 chaotic (the system under test will be in an undefined state) and you'll often have segfaults in practice.
 

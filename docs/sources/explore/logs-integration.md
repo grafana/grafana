@@ -21,6 +21,7 @@ Explore is a powerful tool for logging and log analysis. It allows you to invest
 - [Cloudwatch]({{< relref "../datasources/aws-cloudwatch" >}})
 - [InfluxDB]({{< relref "../datasources/influxdb" >}})
 - [Azure Monitor]({{< relref "../datasources/azure-monitor" >}})
+- [ClickHouse](https://github.com/grafana/clickhouse-datasource)
 
 With Explore, you can efficiently monitor, troubleshoot, and respond to incidents by analyzing your logs and identifying the root causes. It also helps you to correlate logs with other telemetry signals such as metrics, traces or profiles, by viewing them side-by-side.
 

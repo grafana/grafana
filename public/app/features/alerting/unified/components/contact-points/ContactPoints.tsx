@@ -25,14 +25,14 @@ import {
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
-import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
+import ConditionalWrap from 'app/features/alerting/unified/components/ConditionalWrap';
+import { useURLSearchParams } from 'app/features/alerting/unified/hooks/useURLSearchParams';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 import { GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
 import { GrafanaNotifierType, NotifierStatus } from 'app/types/alerting';
 
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { usePagination } from '../../hooks/usePagination';
-import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { INTEGRATION_ICONS } from '../../types/contact-points';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
@@ -60,19 +60,43 @@ import {
   useContactPointsWithStatus,
   useDeleteContactPoint,
 } from './useContactPoints';
-import { ContactPointWithMetadata, getReceiverDescription, isProvisioned, ReceiverConfigWithMetadata } from './utils';
+import {
+  ContactPointWithMetadata,
+  getReceiverDescription,
+  isProvisioned,
+  ReceiverConfigWithMetadata,
+  RouteReference,
+} from './utils';
 
-enum ActiveTab {
-  ContactPoints,
-  NotificationTemplates,
+export enum ActiveTab {
+  ContactPoints = 'contact_points',
+  NotificationTemplates = 'templates',
 }
 
 const DEFAULT_PAGE_SIZE = 10;
 
+const useTabQueryParam = () => {
+  const [queryParams, setQueryParams] = useURLSearchParams();
+  const param = useMemo(() => {
+    const queryParam = queryParams.get('tab');
+
+    if (!queryParam || !Object.values(ActiveTab).map(String).includes(queryParam)) {
+      return ActiveTab.ContactPoints;
+    }
+
+    return queryParam || ActiveTab.ContactPoints;
+  }, [queryParams]);
+
+  const setParam = (tab: ActiveTab) => setQueryParams({ tab });
+
+  return [param, setParam] as const;
+};
+
 const ContactPoints = () => {
   const { selectedAlertmanager } = useAlertmanager();
-  // TODO hook up to query params
-  const [activeTab, setActiveTab] = useState<ActiveTab>(ActiveTab.ContactPoints);
+  const [queryParams] = useURLSearchParams();
+  const [activeTab, setActiveTab] = useTabQueryParam();
+
   let { isLoading, error, contactPoints } = useContactPointsWithStatus();
   const { deleteTrigger, updateAlertmanagerState } = useDeleteContactPoint(selectedAlertmanager!);
   const [addContactPointSupported, addContactPointAllowed] = useAlertmanagerAbility(
@@ -81,12 +105,14 @@ const ContactPoints = () => {
   const [exportContactPointsSupported, exportContactPointsAllowed] = useAlertmanagerAbility(
     AlertmanagerAction.ExportContactPoint
   );
+  const [createTemplateSupported, createTemplateAllowed] = useAlertmanagerAbility(
+    AlertmanagerAction.CreateNotificationTemplate
+  );
 
   const [DeleteModal, showDeleteModal] = useDeleteContactPointModal(deleteTrigger, updateAlertmanagerState.isLoading);
   const [ExportDrawer, showExportDrawer] = useExportContactPoint();
 
-  const [searchParams] = useURLSearchParams();
-  const { search } = getContactPointsFilters(searchParams);
+  const search = queryParams.get('search');
 
   const showingContactPoints = activeTab === ActiveTab.ContactPoints;
   const showNotificationTemplates = activeTab === ActiveTab.NotificationTemplates;
@@ -177,9 +203,16 @@ const ContactPoints = () => {
                       Create notification templates to customize your notifications.
                     </Text>
                     <Spacer />
-                    <LinkButton icon="plus" variant="primary" href="/alerting/notifications/templates/new">
-                      Add notification template
-                    </LinkButton>
+                    {createTemplateSupported && (
+                      <LinkButton
+                        icon="plus"
+                        variant="primary"
+                        href="/alerting/notifications/templates/new"
+                        disabled={!createTemplateAllowed}
+                      >
+                        Add notification template
+                      </LinkButton>
+                    )}
                   </Stack>
                   <NotificationTemplates />
                 </>
@@ -196,7 +229,7 @@ const ContactPoints = () => {
 
 interface ContactPointsListProps {
   contactPoints: ContactPointWithMetadata[];
-  search?: string;
+  search?: string | null;
   disabled?: boolean;
   onDelete: (name: string) => void;
   pageSize?: number;
@@ -216,7 +249,7 @@ const ContactPointsList = ({
     <>
       {pageItems.map((contactPoint, index) => {
         const provisioned = isProvisioned(contactPoint);
-        const policies = contactPoint.numberOfPolicies;
+        const policies = contactPoint.policies ?? [];
         const key = `${contactPoint.name}-${index}`;
 
         return (
@@ -247,7 +280,7 @@ const fuzzyFinder = new uFuzzy({
 // let's search in two different haystacks, the name of the contact point and the type of the receiver(s)
 function useContactPointsSearch(
   contactPoints: ContactPointWithMetadata[],
-  search?: string
+  search?: string | null
 ): ContactPointWithMetadata[] {
   const nameHaystack = useMemo(() => {
     return contactPoints.map((contactPoint) => contactPoint.name);
@@ -277,7 +310,7 @@ interface ContactPointProps {
   disabled?: boolean;
   provisioned?: boolean;
   receivers: ReceiverConfigWithMetadata[];
-  policies?: number;
+  policies?: RouteReference[];
   onDelete: (name: string) => void;
 }
 
@@ -286,7 +319,7 @@ export const ContactPoint = ({
   disabled = false,
   provisioned = false,
   receivers,
-  policies = 0,
+  policies = [],
   onDelete,
 }: ContactPointProps) => {
   const styles = useStyles2(getStyles);
@@ -340,12 +373,12 @@ interface ContactPointHeaderProps {
   name: string;
   disabled?: boolean;
   provisioned?: boolean;
-  policies?: number;
+  policies?: RouteReference[];
   onDelete: (name: string) => void;
 }
 
 const ContactPointHeader = (props: ContactPointHeaderProps) => {
-  const { name, disabled = false, provisioned = false, policies = 0, onDelete } = props;
+  const { name, disabled = false, provisioned = false, policies = [], onDelete } = props;
   const styles = useStyles2(getStyles);
 
   const [exportSupported, exportAllowed] = useAlertmanagerAbility(AlertmanagerAction.ExportContactPoint);
@@ -354,9 +387,12 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
 
   const [ExportDrawer, openExportDrawer] = useExportContactPoint();
 
-  const isReferencedByPolicies = policies > 0;
+  const numberOfPolicies = policies.length;
+  const isReferencedByAnyPolicy = numberOfPolicies > 0;
+  const isReferencedByRegularPolicies = policies.some((ref) => ref.route.type !== 'auto-generated');
+
   const canEdit = editSupported && editAllowed && !provisioned;
-  const canDelete = deleteSupported && deleteAllowed && !provisioned && policies === 0;
+  const canDelete = deleteSupported && deleteAllowed && !provisioned && !isReferencedByRegularPolicies;
 
   const menuActions: JSX.Element[] = [];
 
@@ -380,7 +416,7 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
     menuActions.push(
       <ConditionalWrap
         key="delete-contact-point"
-        shouldWrap={isReferencedByPolicies}
+        shouldWrap={!canDelete}
         wrap={(children) => (
           <Tooltip content="Contact point is currently in use by one or more notification policies" placement="top">
             <span>{children}</span>
@@ -403,19 +439,19 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
     <div className={styles.headerWrapper}>
       <Stack direction="row" alignItems="center" gap={1}>
         <Stack alignItems="center" gap={1}>
-          <Text variant="body" weight="medium">
+          <Text element="h2" variant="body" weight="medium">
             {name}
           </Text>
         </Stack>
-        {isReferencedByPolicies && (
+        {isReferencedByAnyPolicy && (
           <MetaText>
             <Link to={createUrl('/alerting/routes', { contactPoint: name })}>
-              is used by <Strong>{policies}</Strong> {pluralize('notification policy', policies)}
+              is used by <Strong>{numberOfPolicies}</Strong> {pluralize('notification policy', numberOfPolicies)}
             </Link>
           </MetaText>
         )}
         {provisioned && <ProvisioningBadge />}
-        {!isReferencedByPolicies && <UnusedContactPointBadge />}
+        {!isReferencedByAnyPolicy && <UnusedContactPointBadge />}
         <Spacer />
         <LinkButton
           tooltipPlacement="top"
@@ -637,10 +673,6 @@ const useExportContactPoint = (): ExportProps => {
 
   return [drawer, handleOpen];
 };
-
-const getContactPointsFilters = (searchParams: URLSearchParams) => ({
-  search: searchParams.get('search') ?? undefined,
-});
 
 const getStyles = (theme: GrafanaTheme2) => ({
   contactPointWrapper: css({

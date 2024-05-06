@@ -78,6 +78,8 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
 
     // Update the state or the variables array
     this.getVariableSet().setState({ variables: updatedVariables });
+    // Remove editIndex otherwise switches to next variable in list
+    this.setState({ editIndex: undefined });
   };
 
   public getVariables() {
@@ -278,6 +280,8 @@ function VariableEditorSettingsView({
         onGoBack={onGoBack}
         onDelete={onDelete}
         onValidateVariableName={onValidateVariableName}
+        // force refresh when navigating using back/forward between variables
+        key={variable.state.key}
       />
     </Page>
   );

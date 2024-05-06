@@ -58,10 +58,6 @@ module.exports = {
       message: /^Critical dependency: the request of a dependency is an expression$/,
     },
   ],
-  stats: {
-    children: false,
-    source: false,
-  },
   plugins: [
     new webpack.NormalModuleReplacementPlugin(/^@grafana\/schema\/dist\/esm\/(.*)$/, (resource) => {
       resource.request = resource.request.replace('@grafana/schema/dist/esm', '@grafana/schema/src');

@@ -19,6 +19,12 @@ var DataSourceApiServerResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 	func() runtime.Object { return &DataSourceApiServerList{} },
 )
 
+var QueryTypeDefinitionResourceInfo = common.NewResourceInfo(GROUP, VERSION,
+	"querytypes", "querytype", "QueryTypeDefinition",
+	func() runtime.Object { return &QueryTypeDefinition{} },
+	func() runtime.Object { return &QueryTypeDefinitionList{} },
+)
+
 var (
 	// SchemeGroupVersion is group version used to register these objects
 	SchemeGroupVersion = schema.GroupVersion{Group: GROUP, Version: VERSION}

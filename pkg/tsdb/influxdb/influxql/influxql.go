@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/dskit/concurrency"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -20,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/influxql/buffered"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/influxql/querydata"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/utils"
 )
 
 const defaultRetentionPolicy = "default"
@@ -180,7 +180,7 @@ func execute(ctx context.Context, tracer trace.Tracer, dsInfo *models.Datasource
 		}
 	}()
 
-	_, endSpan := utils.StartTrace(ctx, tracer, "datasource.influxdb.influxql.parseResponse")
+	_, endSpan := startTrace(ctx, tracer, "datasource.influxdb.influxql.parseResponse")
 	defer endSpan()
 
 	var resp *backend.DataResponse
@@ -191,4 +191,15 @@ func execute(ctx context.Context, tracer trace.Tracer, dsInfo *models.Datasource
 		resp = buffered.ResponseParse(res.Body, res.StatusCode, query)
 	}
 	return *resp, nil
+}
+
+// startTrace setups a trace but does not panic if tracer is nil which helps with testing
+func startTrace(ctx context.Context, tracer trace.Tracer, name string, attributes ...attribute.KeyValue) (context.Context, func()) {
+	if tracer == nil {
+		return ctx, func() {}
+	}
+	ctx, span := tracer.Start(ctx, name, trace.WithAttributes(attributes...))
+	return ctx, func() {
+		span.End()
+	}
 }

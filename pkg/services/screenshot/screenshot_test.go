@@ -54,7 +54,7 @@ func TestHeadlessScreenshotService(t *testing.T) {
 		Height:          DefaultHeight,
 		Theme:           DefaultTheme,
 		Path:            "d-solo/foo/bar?from=now-6h&orgId=2&panelId=4&to=now-2h",
-		ConcurrentLimit: cfg.AlertingRenderLimit,
+		ConcurrentLimit: cfg.RendererConcurrentRequestLimit,
 	}
 
 	opts.From = "now-6h"

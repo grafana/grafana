@@ -1,10 +1,11 @@
-// Libraries
 import { css, cx } from '@emotion/css';
 import React, { useLayoutEffect } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { CustomScrollbar, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+
+import FlaggedScrollbar from '../FlaggedScroller';
 
 import { PageContents } from './PageContents';
 import { PageHeader } from './PageHeader';
@@ -52,7 +53,7 @@ export const Page: PageType = ({
   return (
     <div className={cx(styles.wrapper, className)} {...otherProps}>
       {layout === PageLayoutType.Standard && (
-        <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
+        <FlaggedScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
           <div className={styles.pageInner}>
             {pageHeaderNav && (
               <PageHeader
@@ -67,13 +68,15 @@ export const Page: PageType = ({
             {pageNav && pageNav.children && <PageTabs navItem={pageNav} />}
             <div className={styles.pageContent}>{children}</div>
           </div>
-        </CustomScrollbar>
+        </FlaggedScrollbar>
       )}
+
       {layout === PageLayoutType.Canvas && (
-        <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
+        <FlaggedScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
           <div className={styles.canvasContent}>{children}</div>
-        </CustomScrollbar>
+        </FlaggedScrollbar>
       )}
+
       {layout === PageLayoutType.Custom && children}
     </div>
   );
@@ -94,6 +97,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     pageContent: css({
       label: 'page-content',
       flexGrow: 1,
+    }),
+    primaryBg: css({
+      background: theme.colors.background.primary,
     }),
     pageInner: css({
       label: 'page-inner',

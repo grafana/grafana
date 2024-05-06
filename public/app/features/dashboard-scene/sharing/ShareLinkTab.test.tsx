@@ -6,13 +6,15 @@ import React from 'react';
 import { dateTime } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
-import { SceneGridItem, SceneGridLayout, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { SceneGridLayout, SceneTimeRange, VizPanel } from '@grafana/scenes';
 
+import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
 
 import { ShareLinkTab } from './ShareLinkTab';
 
 jest.mock('app/core/utils/shortLinks', () => ({
+  ...jest.requireActual('app/core/utils/shortLinks'),
   createShortLink: jest.fn().mockResolvedValue(`http://localhost:3000/goto/shortend-uid`),
 }));
 
@@ -105,7 +107,7 @@ function buildAndRenderScenario(options: ScenarioOptions) {
     $timeRange: new SceneTimeRange({}),
     body: new SceneGridLayout({
       children: [
-        new SceneGridItem({
+        new DashboardGridItem({
           key: 'griditem-1',
           x: 0,
           y: 0,

@@ -112,7 +112,7 @@ func TestService_DeclareFixedRoles(t *testing.T) {
 				},
 			},
 			wantErr: true,
-			err:     accesscontrol.ErrInvalidBuiltinRole,
+			err:     accesscontrol.ErrInvalidBuiltinRole.Build(accesscontrol.ErrInvalidBuiltinRoleData("WrongAdmin")),
 		},
 		{
 			name: "should add multiple registrations at once",
@@ -224,7 +224,7 @@ func TestService_DeclarePluginRoles(t *testing.T) {
 				},
 			},
 			wantErr: true,
-			err:     accesscontrol.ErrInvalidBuiltinRole,
+			err:     accesscontrol.ErrInvalidBuiltinRole.Build(accesscontrol.ErrInvalidBuiltinRoleData("WrongAdmin")),
 		},
 		{
 			name:     "should add multiple registrations at once",
@@ -754,8 +754,9 @@ func TestPermissionCacheKey(t *testing.T) {
 		{
 			name: "should return correct key for user",
 			signedInUser: &user.SignedInUser{
-				OrgID:  1,
-				UserID: 1,
+				OrgID:        1,
+				UserID:       1,
+				NamespacedID: identity.MustParseNamespaceID("user:1"),
 			},
 			expected: "rbac-permissions-1-user-1",
 		},
@@ -765,6 +766,7 @@ func TestPermissionCacheKey(t *testing.T) {
 				OrgID:            1,
 				ApiKeyID:         1,
 				IsServiceAccount: false,
+				NamespacedID:     identity.MustParseNamespaceID("user:1"),
 			},
 			expected: "rbac-permissions-1-api-key-1",
 		},
@@ -774,6 +776,7 @@ func TestPermissionCacheKey(t *testing.T) {
 				OrgID:            1,
 				UserID:           1,
 				IsServiceAccount: true,
+				NamespacedID:     identity.MustParseNamespaceID("service-account:1"),
 			},
 			expected: "rbac-permissions-1-service-account-1",
 		},
@@ -783,14 +786,16 @@ func TestPermissionCacheKey(t *testing.T) {
 				OrgID:            1,
 				UserID:           -1,
 				IsServiceAccount: true,
+				NamespacedID:     identity.MustParseNamespaceID("service-account:-1"),
 			},
 			expected: "rbac-permissions-1-service-account--1",
 		},
 		{
 			name: "should use org role if no unique id",
 			signedInUser: &user.SignedInUser{
-				OrgID:   1,
-				OrgRole: org.RoleNone,
+				OrgID:        1,
+				OrgRole:      org.RoleNone,
+				NamespacedID: identity.MustParseNamespaceID("user:1"),
 			},
 			expected: "rbac-permissions-1-user-None",
 		},
@@ -869,7 +874,7 @@ func TestService_SaveExternalServiceRole(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			ac := setupTestEnv(t)
-			ac.features = featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAuth, featuremgmt.FlagExternalServiceAccounts)
+			ac.features = featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAccounts)
 			for _, r := range tt.runs {
 				err := ac.SaveExternalServiceRole(ctx, r.cmd)
 				if r.wantErr {
@@ -915,7 +920,7 @@ func TestService_DeleteExternalServiceRole(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			ac := setupTestEnv(t)
-			ac.features = featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAuth, featuremgmt.FlagExternalServiceAccounts)
+			ac.features = featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAccounts)
 
 			if tt.initCmd != nil {
 				err := ac.SaveExternalServiceRole(ctx, *tt.initCmd)

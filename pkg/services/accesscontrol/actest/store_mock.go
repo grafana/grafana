@@ -51,6 +51,24 @@ func (_m *MockStore) DeleteUserPermissions(ctx context.Context, orgID int64, use
 	return r0
 }
 
+// DeleteTeamPermissions provides a mock function with given fields: ctx, orgID, teamID
+func (_m *MockStore) DeleteTeamPermissions(ctx context.Context, orgID int64, teamID int64) error {
+	ret := _m.Called(ctx, orgID, teamID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteTeamPermissions")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64, int64) error); ok {
+		r0 = rf(ctx, orgID, teamID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // GetUserPermissions provides a mock function with given fields: ctx, query
 func (_m *MockStore) GetUserPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error) {
 	ret := _m.Called(ctx, query)

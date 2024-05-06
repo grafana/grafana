@@ -1,9 +1,9 @@
-import { css } from '@emotion/css';
-import { subDays } from 'date-fns';
+import { css, cx } from '@emotion/css';
+import { addMinutes, subDays, subHours } from 'date-fns';
 import { Location } from 'history';
-import React, { useCallback, useEffect, useState } from 'react';
-import { FormProvider, useForm, useFormContext, Validate } from 'react-hook-form';
-import { useLocation } from 'react-router-dom';
+import React, { useRef, useState } from 'react';
+import { FormProvider, useForm, Validate } from 'react-hook-form';
+import { useToggle } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -11,28 +11,22 @@ import { isFetchError } from '@grafana/runtime';
 import {
   Alert,
   Button,
-  CollapsableSection,
-  Field,
   FieldSet,
   Input,
   LinkButton,
-  Spinner,
-  Tab,
-  TabsBar,
   useStyles2,
   Stack,
+  useSplitter,
+  Drawer,
+  InlineField,
+  Box,
 } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
-import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
+import { ActiveTab as ContactPointsActiveTabs } from 'app/features/alerting/unified/components/contact-points/ContactPoints';
+import { AlertManagerCortexConfig, TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
-import {
-  AlertField,
-  TemplatePreviewErrors,
-  TemplatePreviewResponse,
-  TemplatePreviewResult,
-  usePreviewTemplateMutation,
-} from '../../api/templateApi';
+import { AppChromeUpdate } from '../../../../../core/components/AppChrome/AppChromeUpdate';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { updateAlertManagerConfigAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
@@ -40,10 +34,12 @@ import { makeAMLink } from '../../utils/misc';
 import { initialAsyncRequestState } from '../../utils/redux';
 import { ensureDefine } from '../../utils/templates';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
+import { EditorColumnHeader } from '../contact-points/templates/EditorColumnHeader';
 
 import { PayloadEditor } from './PayloadEditor';
 import { TemplateDataDocs } from './TemplateDataDocs';
 import { TemplateEditor } from './TemplateEditor';
+import { TemplatePreview } from './TemplatePreview';
 import { snippets } from './editor/templateDataSuggestions';
 
 export interface TemplateFormValues {
@@ -64,35 +60,56 @@ interface Props {
 }
 export const isDuplicating = (location: Location) => location.pathname.endsWith('/duplicate');
 
-const DEFAULT_PAYLOAD = `[
-  {
-    "annotations": {
-      "summary": "Instance instance1 has been down for more than 5 minutes"
-    },
-    "labels": {
-      "instance": "instance1"
-    },
-    "startsAt": "${subDays(new Date(), 1).toISOString()}"
-  }]
-`;
-
+/**
+ * We're going for this type of layout, but with the ability to resize the columns.
+ * To achieve this, we're using the useSplitter hook from Grafana UI twice.
+ * The first hook is for the vertical splitter between the template editor and the payload editor.
+ * The second hook is for the horizontal splitter between the template editor and the preview.
+ * If we're using a vanilla Alertmanager source, we don't show the payload editor nor the preview but we still use the splitter at 100/0.
+ *
+ * ┌───────────────────┐┌───────────┐
+ * │ Template          ││ Preview   │
+ * │                   ││           │
+ * │                   ││           │
+ * │                   ││           │
+ * └───────────────────┘│           │
+ * ┌───────────────────┐│           │
+ * │ Payload           ││           │
+ * │                   ││           │
+ * │                   ││           │
+ * │                   ││           │
+ * └───────────────────┘└───────────┘
+ */
 export const TemplateForm = ({ existing, alertManagerSourceName, config, provenance }: Props) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
 
   useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
+  const formRef = useRef<HTMLFormElement>(null);
+  const isGrafanaAlertManager = alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME;
 
   const { loading, error } = useUnifiedAlertingSelector((state) => state.saveAMConfig);
 
-  const location = useLocation();
-  const isduplicating = isDuplicating(location);
+  const [cheatsheetOpened, toggleCheatsheetOpened] = useToggle(false);
 
-  const [payload, setPayload] = useState(DEFAULT_PAYLOAD);
+  const [payload, setPayload] = useState(defaultPayloadString);
   const [payloadFormatError, setPayloadFormatError] = useState<string | null>(null);
 
-  const [view, setView] = useState<'content' | 'preview'>('content');
+  // splitter for template and payload editor
+  const columnSplitter = useSplitter({
+    direction: 'column',
+    // if Grafana Alertmanager, split 50/50, otherwise 100/0 because there is no payload editor
+    initialSize: isGrafanaAlertManager ? 0.5 : 1,
+    dragPosition: 'middle',
+  });
 
-  const onPayloadError = () => setView('preview');
+  // splitter for template editor and preview
+  const rowSplitter = useSplitter({
+    direction: 'row',
+    // if Grafana Alertmanager, split 60/40, otherwise 100/0 because there is no preview
+    initialSize: isGrafanaAlertManager ? 0.6 : 1,
+    dragPosition: 'middle',
+  });
 
   const submit = (values: TemplateFormValues) => {
     // wrap content in "define" if it's not already wrapped, in case user did not do it/
@@ -130,6 +147,7 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
         oldConfig: config,
         successMessage: 'Template saved.',
         redirectPath: '/alerting/notifications',
+        redirectSearch: `tab=${ContactPointsActiveTabs.NotificationTemplates}`,
       })
     );
   };
@@ -152,115 +170,156 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
       ? true
       : 'Another template with this name already exists.';
   };
-  const isGrafanaAlertManager = alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME;
+
+  const actionButtons = (
+    <Stack>
+      <Button onClick={() => formRef.current?.requestSubmit()} variant="primary" size="sm" disabled={loading}>
+        Save
+      </Button>
+      <LinkButton
+        disabled={loading}
+        href={makeAMLink('alerting/notifications', alertManagerSourceName, {
+          tab: ContactPointsActiveTabs.NotificationTemplates,
+        })}
+        variant="secondary"
+        size="sm"
+      >
+        Cancel
+      </LinkButton>
+    </Stack>
+  );
 
   return (
-    <FormProvider {...formApi}>
-      <form onSubmit={handleSubmit(submit)}>
-        <h4>{existing && !isduplicating ? 'Edit notification template' : 'Create notification template'}</h4>
-        {error && (
-          <Alert severity="error" title="Error saving template">
-            {error.message || (isFetchError(error) && error.data?.message) || String(error)}
-          </Alert>
-        )}
-        {provenance && <ProvisioningAlert resource={ProvisionedResource.Template} />}
-        <FieldSet disabled={Boolean(provenance)}>
-          <Field label="Template name" error={errors?.name?.message} invalid={!!errors.name?.message} required>
-            <Input
-              {...register('name', {
-                required: { value: true, message: 'Required.' },
-                validate: { nameIsUnique: validateNameIsUnique },
-              })}
-              placeholder="Give your template a name"
-              width={42}
-              autoFocus={true}
-            />
-          </Field>
-          <TemplatingGuideline />
-          <div className={styles.editorsWrapper}>
-            <div className={styles.contentContainer}>
-              <TabsBar>
-                <Tab label="Content" active={view === 'content'} onChangeTab={() => setView('content')} />
-                {isGrafanaAlertManager && (
-                  <Tab label="Preview" active={view === 'preview'} onChangeTab={() => setView('preview')} />
-                )}
-              </TabsBar>
-              <div className={styles.contentContainerEditor}>
-                <AutoSizer>
-                  {({ width }) => (
+    <>
+      <FormProvider {...formApi}>
+        <AppChromeUpdate actions={actionButtons} />
+        <form onSubmit={handleSubmit(submit)} ref={formRef} className={styles.form}>
+          {/* error message */}
+          {error && (
+            <Alert severity="error" title="Error saving template">
+              {error.message || (isFetchError(error) && error.data?.message) || String(error)}
+            </Alert>
+          )}
+          {/* warning about provisioned template */}
+          {provenance && <ProvisioningAlert resource={ProvisionedResource.Template} />}
+
+          {/* name field for the template */}
+          <FieldSet disabled={Boolean(provenance)} className={styles.fieldset}>
+            <InlineField
+              label="Template name"
+              error={errors?.name?.message}
+              invalid={!!errors.name?.message}
+              required
+              className={styles.nameField}
+            >
+              <Input
+                {...register('name', {
+                  required: { value: true, message: 'Required.' },
+                  validate: { nameIsUnique: validateNameIsUnique },
+                })}
+                placeholder="Give your template a name"
+                width={42}
+                autoFocus={true}
+              />
+            </InlineField>
+
+            {/* editor layout */}
+            <div {...rowSplitter.containerProps} className={styles.contentContainer}>
+              <div {...rowSplitter.primaryProps}>
+                {/* template content and payload editor column – full height and half-width */}
+                <div {...columnSplitter.containerProps} className={styles.contentField}>
+                  {/* template editor */}
+                  <div {...columnSplitter.primaryProps}>
+                    {/* primaryProps will set "minHeight: min-content;" so we have to make sure to apply minHeight to the child */}
+                    <div className={cx(styles.flexColumn, styles.containerWithBorderAndRadius, styles.minEditorSize)}>
+                      <EditorColumnHeader
+                        label="Template"
+                        actions={
+                          <Button
+                            icon="question-circle"
+                            size="sm"
+                            fill="outline"
+                            variant="secondary"
+                            onClick={toggleCheatsheetOpened}
+                          >
+                            Help
+                          </Button>
+                        }
+                      />
+                      <Box flex={1}>
+                        <AutoSizer>
+                          {({ width, height }) => (
+                            <TemplateEditor
+                              value={getValues('content')}
+                              onBlur={(value) => setValue('content', value)}
+                              containerStyles={styles.editorContainer}
+                              width={width}
+                              height={height}
+                            />
+                          )}
+                        </AutoSizer>
+                      </Box>
+                    </div>
+                  </div>
+                  {/* payload editor – only available for Grafana Alertmanager */}
+                  {isGrafanaAlertManager && (
                     <>
-                      {view === 'content' ? (
-                        <div>
-                          <Field error={errors?.content?.message} invalid={!!errors.content?.message} required>
-                            <div className={styles.editWrapper}>
-                              <TemplateEditor
-                                value={getValues('content')}
-                                width={width}
-                                height={363}
-                                onBlur={(value) => setValue('content', value)}
-                              />
-                            </div>
-                          </Field>
-                          <div className={styles.buttons}>
-                            {loading && (
-                              <Button disabled={true} icon="spinner" variant="primary">
-                                Saving...
-                              </Button>
-                            )}
-                            {!loading && (
-                              <Button type="submit" variant="primary">
-                                Save template
-                              </Button>
-                            )}
-                            <LinkButton
-                              disabled={loading}
-                              href={makeAMLink('alerting/notifications', alertManagerSourceName)}
-                              variant="secondary"
-                              type="button"
-                            >
-                              Cancel
-                            </LinkButton>
-                          </div>
+                      <div {...columnSplitter.splitterProps} />
+                      <div {...columnSplitter.secondaryProps}>
+                        <div
+                          className={cx(
+                            styles.containerWithBorderAndRadius,
+                            styles.minEditorSize,
+                            styles.payloadEditor,
+                            styles.flexFull
+                          )}
+                        >
+                          <PayloadEditor
+                            payload={payload}
+                            defaultPayload={defaultPayloadString}
+                            setPayload={setPayload}
+                            setPayloadFormatError={setPayloadFormatError}
+                            payloadFormatError={payloadFormatError}
+                          />
                         </div>
-                      ) : (
-                        <TemplatePreview
-                          width={width}
-                          payload={payload}
-                          templateName={watch('name')}
-                          setPayloadFormatError={setPayloadFormatError}
-                          payloadFormatError={payloadFormatError}
-                        />
-                      )}
+                      </div>
                     </>
                   )}
-                </AutoSizer>
+                </div>
               </div>
+              {/* preview column – full height and half-width */}
+              {isGrafanaAlertManager && (
+                <>
+                  <div {...rowSplitter.secondaryProps}>
+                    <div {...rowSplitter.splitterProps}></div>
+                    <TemplatePreview
+                      payload={payload}
+                      templateName={watch('name')}
+                      setPayloadFormatError={setPayloadFormatError}
+                      payloadFormatError={payloadFormatError}
+                      className={cx(styles.templatePreview, styles.minEditorSize)}
+                    />
+                  </div>
+                </>
+              )}
             </div>
-            {isGrafanaAlertManager && (
-              <PayloadEditor
-                payload={payload}
-                setPayload={setPayload}
-                defaultPayload={DEFAULT_PAYLOAD}
-                setPayloadFormatError={setPayloadFormatError}
-                payloadFormatError={payloadFormatError}
-                onPayloadError={onPayloadError}
-              />
-            )}
-          </div>
-        </FieldSet>
-        <CollapsableSection label="Data cheat sheet" isOpen={false} className={styles.collapsableSection}>
-          <TemplateDataDocs />
-        </CollapsableSection>
-      </form>
-    </FormProvider>
+          </FieldSet>
+        </form>
+      </FormProvider>
+      {cheatsheetOpened && (
+        <Drawer title="Templating cheat sheet" onClose={toggleCheatsheetOpened} size="lg">
+          <TemplatingCheatSheet />
+        </Drawer>
+      )}
+    </>
   );
 };
 
-function TemplatingGuideline() {
+function TemplatingBasics() {
   const styles = useStyles2(getStyles);
 
   return (
-    <Alert title="Templating guideline" severity="info">
+    <Alert title="How to" severity="info">
       <Stack direction="row">
         <div>
           Grafana uses Go templating language to create notification messages.
@@ -280,7 +339,7 @@ function TemplatingGuideline() {
       </Stack>
 
       <div className={styles.snippets}>
-        To make templating easier, we provide a few snippets in the content editor to help you speed up your workflow.
+        For auto-completion of common templating code, type the following keywords in the content editor:
         <div className={styles.code}>
           {Object.values(snippets)
             .map((s) => s.label)
@@ -291,191 +350,125 @@ function TemplatingGuideline() {
   );
 }
 
-function getResultsToRender(results: TemplatePreviewResult[]) {
-  const filteredResults = results.filter((result) => result.text.trim().length > 0);
-
-  const moreThanOne = filteredResults.length > 1;
-
-  const preview = (result: TemplatePreviewResult) => {
-    const previewForLabel = `Preview for ${result.name}:`;
-    const separatorStart = '='.repeat(previewForLabel.length).concat('>');
-    const separatorEnd = '<'.concat('='.repeat(previewForLabel.length));
-    if (moreThanOne) {
-      return `${previewForLabel}\n${separatorStart}${result.text}${separatorEnd}\n`;
-    } else {
-      return `${separatorStart}${result.text}${separatorEnd}\n`;
-    }
-  };
-
-  return filteredResults
-    .map((result: TemplatePreviewResult) => {
-      return preview(result);
-    })
-    .join(`\n`);
-}
-
-function getErrorsToRender(results: TemplatePreviewErrors[]) {
-  return results
-    .map((result: TemplatePreviewErrors) => {
-      if (result.name) {
-        return `ERROR in ${result.name}:\n`.concat(`${result.kind}\n${result.message}\n`);
-      } else {
-        return `ERROR:\n${result.kind}\n${result.message}\n`;
-      }
-    })
-    .join(`\n`);
-}
-
-export const PREVIEW_NOT_AVAILABLE = 'Preview request failed. Check if the payload data has the correct structure.';
-
-function getPreviewTorender(
-  isPreviewError: boolean,
-  payloadFormatError: string | null,
-  data: TemplatePreviewResponse | undefined
-) {
-  // ERRORS IN JSON OR IN REQUEST (endpoint not available, for example)
-  const previewErrorRequest = isPreviewError ? PREVIEW_NOT_AVAILABLE : undefined;
-  const somethingWasWrong: boolean = isPreviewError || Boolean(payloadFormatError);
-  const errorToRender = payloadFormatError || previewErrorRequest;
-
-  //PREVIEW : RESULTS AND ERRORS
-  const previewResponseResults = data?.results;
-  const previewResponseErrors = data?.errors;
-
-  const previewResultsToRender = previewResponseResults ? getResultsToRender(previewResponseResults) : '';
-  const previewErrorsToRender = previewResponseErrors ? getErrorsToRender(previewResponseErrors) : '';
-
-  if (somethingWasWrong) {
-    return errorToRender;
-  } else {
-    return `${previewResultsToRender}\n${previewErrorsToRender}`;
-  }
-}
-
-export function TemplatePreview({
-  payload,
-  templateName,
-  payloadFormatError,
-  setPayloadFormatError,
-  width,
-}: {
-  payload: string;
-  templateName: string;
-  payloadFormatError: string | null;
-  setPayloadFormatError: (value: React.SetStateAction<string | null>) => void;
-  width: number;
-}) {
-  const styles = useStyles2(getStyles);
-
-  const { watch } = useFormContext<TemplateFormValues>();
-
-  const templateContent = watch('content');
-
-  const [trigger, { data, isError: isPreviewError, isLoading }] = usePreviewTemplateMutation();
-
-  const previewToRender = getPreviewTorender(isPreviewError, payloadFormatError, data);
-
-  const onPreview = useCallback(() => {
-    try {
-      const alertList: AlertField[] = JSON.parse(payload);
-      JSON.stringify([...alertList]); // check if it's iterable, in order to be able to add more data
-      trigger({ template: templateContent, alerts: alertList, name: templateName });
-      setPayloadFormatError(null);
-    } catch (e) {
-      setPayloadFormatError(e instanceof Error ? e.message : 'Invalid JSON.');
-    }
-  }, [templateContent, templateName, payload, setPayloadFormatError, trigger]);
-
-  useEffect(() => onPreview(), [onPreview]);
-
+function TemplatingCheatSheet() {
   return (
-    <div style={{ width: `${width}px` }} className={styles.preview.wrapper}>
-      {isLoading && (
-        <>
-          <Spinner inline={true} /> Loading preview...
-        </>
-      )}
-      <pre className={styles.preview.result} data-testid="payloadJSON">
-        {previewToRender}
-      </pre>
-      <Button onClick={onPreview} className={styles.preview.button} icon="arrow-up" type="button" variant="secondary">
-        Refresh preview
-      </Button>
-    </div>
+    <Stack direction="column" gap={1}>
+      <TemplatingBasics />
+      <TemplateDataDocs />
+    </Stack>
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  contentContainer: css`
-    flex: 1;
-    margin-bottom: ${theme.spacing(6)};
-  `,
-  contentContainerEditor: css`
-      flex:1;
-      display: flex;
-      padding-top: 10px;
-      gap: ${theme.spacing(2)};
-      flex-direction: row;
-      align-items: flex-start;
-      flex-wrap: wrap;
-      ${theme.breakpoints.up('xxl')} {
-        flex - wrap: nowrap;
-    }
-      min-width: 450px;
-      height: 363px;
-      `,
-  snippets: css`
-    margin-top: ${theme.spacing(2)};
-    font-size: ${theme.typography.bodySmall.fontSize};
-  `,
-  code: css`
-    color: ${theme.colors.text.secondary};
-    font-weight: ${theme.typography.fontWeightBold};
-  `,
-  buttons: css`
-    display: flex;
-    & > * + * {
-      margin-left: ${theme.spacing(1)};
-    }
-    margin-top: -7px;
-  `,
-  textarea: css`
-    max-width: 758px;
-  `,
-  editWrapper: css`
-      display: flex;
-      width: 100%
-      heigth:100%;
-      position: relative;
-      `,
-  toggle: css`
-      color: theme.colors.text.secondary,
-      marginRight: ${theme.spacing(1)}`,
-  preview: {
-    wrapper: css`
-      display: flex;
-      width: 100%
-      heigth:100%;
-      position: relative;
-      flex-direction: column;
-      `,
-    result: css`
-      width: 100%;
-      height: 363px;
+export const getStyles = (theme: GrafanaTheme2) => {
+  const narrowScreenQuery = theme.breakpoints.down('md');
+
+  return {
+    flexFull: css({
+      flex: 1,
+    }),
+    minEditorSize: css({
+      minHeight: 300,
+      minWidth: 300,
+    }),
+    payloadEditor: css({
+      minHeight: 0,
+    }),
+    containerWithBorderAndRadius: css({
+      borderRadius: theme.shape.radius.default,
+      border: `1px solid ${theme.colors.border.medium}`,
+    }),
+    flexColumn: css({
+      display: 'flex',
+      flex: 1,
+      flexDirection: 'column',
+    }),
+    form: css({
+      label: 'template-form',
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+    }),
+    fieldset: css({
+      label: 'template-fieldset',
+      flex: 1,
+      display: 'flex',
+      flexDirection: 'column',
+    }),
+    label: css({
+      margin: 0,
+    }),
+    nameField: css({
+      marginBottom: theme.spacing(1),
+    }),
+    contentContainer: css({
+      flex: 1,
+      display: 'flex',
+      flexDirection: 'row',
+    }),
+    contentField: css({
+      display: 'flex',
+      flexDirection: 'column',
+      flex: 1,
+      marginBottom: 0,
+    }),
+    templatePreview: css({
+      flex: 1,
+      display: 'flex',
+    }),
+    templatePayload: css({
+      flex: 1,
+    }),
+    editorContainer: css({
+      width: 'fit-content',
+      border: 'none',
+    }),
+    payloadCollapseButton: css({
+      backgroundColor: theme.colors.info.transparent,
+      margin: 0,
+      [narrowScreenQuery]: {
+        display: 'none',
+      },
+    }),
+    snippets: css`
+      margin-top: ${theme.spacing(2)};
+      font-size: ${theme.typography.bodySmall.fontSize};
     `,
-    button: css`
-      flex: none;
-      width: fit-content;
-      margin-top: -6px;
+    code: css`
+      color: ${theme.colors.text.secondary};
+      font-weight: ${theme.typography.fontWeightBold};
     `,
+  };
+};
+
+const defaultPayload: TestTemplateAlert[] = [
+  {
+    status: 'firing',
+    annotations: {
+      summary: 'Instance instance1 has been down for more than 5 minutes',
+    },
+    labels: {
+      alertname: 'InstanceDown',
+      instance: 'instance1',
+    },
+    startsAt: subDays(new Date(), 1).toISOString(),
+    endsAt: addMinutes(new Date(), 5).toISOString(),
+    fingerprint: 'a5331f0d5a9d81d4',
+    generatorURL: 'http://grafana.com/alerting/grafana/cdeqmlhvflz40f/view',
   },
-  collapsableSection: css`
-    width: fit-content;
-  `,
-  editorsWrapper: css`
-    display: flex;
-    flex: 1;
-    flex-wrap: wrap;
-    gap: ${theme.spacing(1)};
-  `,
-});
+  {
+    status: 'resolved',
+    annotations: {
+      summary: 'CPU usage above 90%',
+    },
+    labels: {
+      alertname: 'CpuUsage',
+      instance: 'instance1',
+    },
+    startsAt: subHours(new Date(), 4).toISOString(),
+    endsAt: new Date().toISOString(),
+    fingerprint: 'b77d941310f9d381',
+    generatorURL: 'http://grafana.com/alerting/grafana/oZSMdGj7z/view',
+  },
+];
+
+const defaultPayloadString = JSON.stringify(defaultPayload, null, 2);

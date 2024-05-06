@@ -41,11 +41,15 @@ func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o
 	o.AggregatorOptions.ProxyClientCertFile = apiserverCfg.Key("proxy_client_cert_file").MustString("")
 	o.AggregatorOptions.ProxyClientKeyFile = apiserverCfg.Key("proxy_client_key_file").MustString("")
 
+	o.AggregatorOptions.APIServiceCABundleFile = apiserverCfg.Key("apiservice_ca_bundle_file").MustString("")
+	o.AggregatorOptions.RemoteServicesFile = apiserverCfg.Key("remote_services_file").MustString("")
+
 	o.RecommendedOptions.Admission = nil
 	o.RecommendedOptions.CoreAPI = nil
 
 	o.StorageOptions.StorageType = options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeLegacy)))
-	o.StorageOptions.DataPath = filepath.Join(cfg.DataPath, "grafana-apiserver")
+	o.StorageOptions.DataPath = apiserverCfg.Key("storage_path").MustString(filepath.Join(cfg.DataPath, "grafana-apiserver"))
+	o.StorageOptions.Address = apiserverCfg.Key("address").MustString(o.StorageOptions.Address)
 	o.ExtraOptions.DevMode = features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerEnsureKubectlAccess)
 	o.ExtraOptions.ExternalAddress = host
 	o.ExtraOptions.APIURL = apiURL

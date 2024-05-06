@@ -8,6 +8,18 @@ import (
 	"github.com/prometheus/common/model"
 )
 
+// swagger:route Get /ruler/grafana/api/v1/rule/{RuleUID} ruler RouteGetRuleByUID
+//
+// Get rule by UID
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       202: GettableExtendedRuleNode
+//       403: ForbiddenError
+//       404: description: Not found.
+
 // swagger:route Get /ruler/grafana/api/v1/rules ruler RouteGetGrafanaRulesConfig
 //
 // List rule groups
@@ -24,9 +36,12 @@ import (
 //
 // List rules in provisioning format
 //
-//     Consumes:
+//     Produces:
 //     - application/json
 //     - application/yaml
+//     - application/terraform+hcl
+//     - text/yaml
+//     - text/hcl
 //
 //     Responses:
 //       200: AlertingFileExport
@@ -64,7 +79,13 @@ import (
 //
 //     Consumes:
 //     - application/json
+//
+//     Produces:
+//     - application/json
 //     - application/yaml
+//     - application/terraform+hcl
+//     - text/yaml
+//     - text/hcl
 //
 //     Responses:
 //       200: AlertingFileExport
@@ -195,6 +216,12 @@ type PathGetRulesParams struct {
 	DashboardUID string
 	// in: query
 	PanelID int64
+}
+
+// swagger:parameters RouteGetRuleByUID
+type PathGetRuleByUIDParams struct {
+	// in: path
+	RuleUID string
 }
 
 // swagger:model

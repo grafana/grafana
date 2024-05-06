@@ -169,9 +169,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
           },
         },
         defaultValue: '',
-        showIf: (cfg) =>
-          (cfg.footer?.show && !cfg.footer?.countRows) ||
-          (cfg.footer?.reducer?.length === 1 && cfg.footer?.reducer[0] !== ReducerID.count),
+        showIf: (cfg) => cfg.footer?.show && !cfg.footer?.countRows,
       })
       .addCustomEditor({
         id: 'footer.enablePagination',

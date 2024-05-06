@@ -13,7 +13,7 @@ import {
   TimeRange,
   hasTimeField,
 } from '@grafana/data';
-import { TableCellHeight } from '@grafana/schema';
+import { TableCellDisplayMode, TableCellHeight } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes';
 import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
@@ -22,8 +22,8 @@ import { usePanelContext } from '../PanelChrome';
 import { ExpandedRow, getExpandedRowHeight } from './ExpandedRow';
 import { TableCell } from './TableCell';
 import { TableStyles } from './styles';
-import { TableFilterActionCallback } from './types';
-import { calculateAroundPointThreshold, isPointTimeValAroundTableTimeVal } from './utils';
+import { CellColors, TableFieldOptions, TableFilterActionCallback } from './types';
+import { calculateAroundPointThreshold, getCellColors, isPointTimeValAroundTableTimeVal } from './utils';
 
 interface RowsListProps {
   data: DataFrame;
@@ -201,12 +201,30 @@ export const RowsList = (props: RowsListProps) => {
     [tableState.pageIndex, tableState.pageSize]
   );
 
+  let rowBg: Function | undefined = undefined;
+  for (const field of data.fields) {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const fieldOptions = field.config.custom as TableFieldOptions;
+
+    if (
+      fieldOptions !== undefined &&
+      fieldOptions.cellOptions !== undefined &&
+      fieldOptions.cellOptions.type === TableCellDisplayMode.ColorBackground &&
+      fieldOptions.cellOptions.applyToRow
+    ) {
+      rowBg = (rowIndex: number): CellColors => {
+        const display = field.display!(field.values.get(rowIndex));
+        const colors = getCellColors(tableStyles, fieldOptions.cellOptions, display);
+        return colors;
+      };
+    }
+  }
+
   const RenderRow = useCallback(
     ({ index, style, rowHighlightIndex }: { index: number; style: CSSProperties; rowHighlightIndex?: number }) => {
       const indexForPagination = rowIndexForPagination(index);
       const row = rows[indexForPagination];
       let additionalProps: React.HTMLAttributes<HTMLDivElement> = {};
-
       prepareRow(row);
 
       const expandedRowStyle = tableState.expanded[row.id] ? css({ '&:hover': { background: 'inherit' } }) : {};
@@ -217,6 +235,13 @@ export const RowsList = (props: RowsListProps) => {
           'aria-selected': 'true',
         };
       }
+
+      if (rowBg) {
+        const { bgColor, textColor } = rowBg(row.index);
+        style.background = bgColor;
+        style.color = textColor;
+      }
+
       return (
         <div
           {...row.getRowProps({ style, ...additionalProps })}
@@ -229,7 +254,9 @@ export const RowsList = (props: RowsListProps) => {
             <ExpandedRow
               nestedData={nestedDataField}
               tableStyles={tableStyles}
-              rowIndex={index}
+              // Using `row.index` ensures that we pick the correct row from the original data frame even when rows in
+              // the table are sorted, since `row.index` does not change when sorting.
+              rowIndex={row.index}
               width={width}
               cellHeight={cellHeight}
             />
@@ -244,6 +271,7 @@ export const RowsList = (props: RowsListProps) => {
               columnCount={row.cells.length}
               timeRange={timeRange}
               frame={data}
+              rowStyled={rowBg !== undefined}
             />
           ))}
         </div>
@@ -264,6 +292,7 @@ export const RowsList = (props: RowsListProps) => {
       theme.components.table.rowHoverBackground,
       timeRange,
       width,
+      rowBg,
     ]
   );
 
@@ -271,7 +300,7 @@ export const RowsList = (props: RowsListProps) => {
     const indexForPagination = rowIndexForPagination(index);
     const row = rows[indexForPagination];
     if (tableState.expanded[row.id] && nestedDataField) {
-      return getExpandedRowHeight(nestedDataField, index, tableStyles);
+      return getExpandedRowHeight(nestedDataField, row.index, tableStyles);
     }
 
     return tableStyles.rowHeight;

@@ -2,6 +2,7 @@ import React from 'react';
 import { useAsync } from 'react-use';
 
 import { SelectableValue, toOption } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Select } from '@grafana/ui';
 
 import { DB, ResourceSelectorProps } from '../types';
@@ -29,6 +30,7 @@ export const TableSelector = ({ db, dataset, table, className, onChange }: Table
       className={className}
       disabled={state.loading}
       aria-label="Table selector"
+      data-testid={selectors.components.SQLQueryEditor.headerTableSelector}
       value={table}
       options={state.value}
       onChange={onChange}

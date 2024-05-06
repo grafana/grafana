@@ -34,12 +34,13 @@ interface Props {
   deleteFilter: (f: TraceqlFilter) => void;
   filters: TraceqlFilter[];
   datasource: TempoDatasource;
-  setError: (error: FetchError) => void;
+  setError: (error: FetchError | null) => void;
   staticTags: Array<string | undefined>;
   isTagsLoading: boolean;
   hideValues?: boolean;
   requireTagAndValue?: boolean;
   query: string;
+  addVariablesToOptions?: boolean;
 }
 const TagsInput = ({
   updateFilter,
@@ -52,9 +53,9 @@ const TagsInput = ({
   hideValues,
   requireTagAndValue,
   query,
+  addVariablesToOptions,
 }: Props) => {
   const styles = useStyles2(getStyles);
-  const generateId = () => uuidv4().slice(0, 8);
   const handleOnAdd = useCallback(
     () => updateFilter({ id: generateId(), operator: '=', scope: TraceqlSearchScope.Span }),
     [updateFilter]
@@ -89,6 +90,7 @@ const TagsInput = ({
             isTagsLoading={isTagsLoading}
             hideValue={hideValues}
             query={query}
+            addVariablesToOptions={addVariablesToOptions}
           />
           {(validInput(f) || filters.length > 1) && (
             <AccessoryButton
@@ -117,3 +119,5 @@ const TagsInput = ({
 };
 
 export default TagsInput;
+
+export const generateId = () => uuidv4().slice(0, 8);

@@ -17,4 +17,4 @@ weight: 400
 
 # Use the HTTP API to manage alerting resources
 
-{{< docs/shared lookup="alerts/alerting_provisioning.md" source="grafana" version="latest" >}}
+{{< docs/shared lookup="alerts/alerting_provisioning.md" source="grafana" version="<GRAFANA_VERSION>" >}}

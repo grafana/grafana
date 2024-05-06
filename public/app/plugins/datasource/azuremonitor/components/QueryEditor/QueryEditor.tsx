@@ -2,11 +2,12 @@ import { css } from '@emotion/css';
 import { debounce } from 'lodash';
 import React, { useCallback, useMemo, useState } from 'react';
 
-import { QueryEditorProps } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { CoreApp, QueryEditorProps } from '@grafana/data';
+import { config, reportInteraction } from '@grafana/runtime';
 import { Alert, Button, CodeEditor, Space } from '@grafana/ui';
 
 import AzureMonitorDatasource from '../../datasource';
+import { selectors } from '../../e2e/selectors';
 import {
   AzureDataSourceJsonData,
   AzureMonitorErrorish,
@@ -19,9 +20,9 @@ import ArgQueryEditor from '../ArgQueryEditor';
 import LogsQueryEditor from '../LogsQueryEditor';
 import { AzureCheatSheetModal } from '../LogsQueryEditor/AzureCheatSheetModal';
 import NewMetricsQueryEditor from '../MetricsQueryEditor/MetricsQueryEditor';
-import { QueryHeader } from '../QueryHeader';
 import TracesQueryEditor from '../TracesQueryEditor';
 
+import { QueryHeader } from './QueryHeader';
 import usePreparedQuery from './usePreparedQuery';
 
 export type AzureMonitorQueryEditorProps = QueryEditorProps<
@@ -31,6 +32,7 @@ export type AzureMonitorQueryEditorProps = QueryEditorProps<
 >;
 
 const QueryEditor = ({
+  app,
   query: baseQuery,
   datasource,
   onChange,
@@ -57,6 +59,20 @@ const QueryEditor = ({
     label: 'Template Variables',
     options: datasource.getVariables().map((v) => ({ label: v, value: v })),
   };
+
+  const isAzureAuthenticated = config.bootData.user.authenticatedBy === 'oauth_azuread';
+
+  if (datasource.currentUserAuth) {
+    if (
+      app === CoreApp.UnifiedAlerting &&
+      (!config.azure.userIdentityFallbackCredentialsEnabled || !datasource.currentUserAuthFallbackAvailable)
+    ) {
+      return <UserAuthFallbackAlert />;
+    }
+    if (!isAzureAuthenticated) {
+      return <UserAuthAlert />;
+    }
+  }
 
   return (
     <div data-testid="azure-monitor-query-editor">
@@ -185,7 +201,7 @@ const EditorForQueryType = ({
             <>
               {type} was deprecated in Grafana 9. See the{' '}
               <a
-                href="https://grafana.com/docs/grafana/latest/datasources/azuremonitor/deprecated-application-insights/"
+                href="https://grafana.com/docs/grafana/latest/datasources/azure-monitor/#application-insights-and-insights-analytics-removed"
                 target="_blank"
                 rel="noreferrer"
               >
@@ -198,6 +214,47 @@ const EditorForQueryType = ({
         </Alert>
       );
   }
+};
+
+const UserAuthAlert = () => {
+  return (
+    <Alert title="Unsupported authentication provider" data-testid={selectors.components.queryEditor.userAuthAlert}>
+      <>
+        Usage of this data source requires you to be authenticated via Azure Entra (formerly Azure Active Directory).
+        Please review the{' '}
+        <a
+          href="https://grafana.com/docs/grafana/latest/datasources/azure-monitor/#configure-current-user-authentication"
+          target="_blank"
+          rel="noreferrer"
+        >
+          documentation
+        </a>{' '}
+        for more information.
+      </>
+    </Alert>
+  );
+};
+
+const UserAuthFallbackAlert = () => {
+  return (
+    <Alert
+      title="No fallback credentials available"
+      data-testid={selectors.components.queryEditor.userAuthFallbackAlert}
+    >
+      <>
+        Data source backend features (such as alerting) require service credentials to function. This data source is
+        configured without service credential fallback, or the fallback functionality is disabled. Please review the{' '}
+        <a
+          href="https://grafana.com/docs/grafana/latest/datasources/azure-monitor/#configure-current-user-authentication"
+          target="_blank"
+          rel="noreferrer"
+        >
+          documentation
+        </a>{' '}
+        for more information.
+      </>
+    </Alert>
+  );
 };
 
 export default QueryEditor;

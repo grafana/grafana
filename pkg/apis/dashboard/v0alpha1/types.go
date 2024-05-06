@@ -51,7 +51,7 @@ type DashboardSummaryList struct {
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type DashboardVersionsInfo struct {
+type DashboardVersionList struct {
 	metav1.TypeMeta `json:",inline"`
 	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
@@ -60,11 +60,20 @@ type DashboardVersionsInfo struct {
 }
 
 type DashboardVersionInfo struct {
-	Version       int    `json:"version"`
-	ParentVersion int    `json:"parentVersion,omitempty"`
-	Created       int64  `json:"created"`
-	Message       string `json:"message,omitempty"`
-	CreatedBy     string `json:"createdBy,omitempty"`
+	// The internal ID for this version (will be replaced with resourceVersion)
+	Version int `json:"version"`
+
+	// If the dashboard came from a previous version, it is set here
+	ParentVersion int `json:"parentVersion,omitempty"`
+
+	// The creation timestamp for this version
+	Created int64 `json:"created"`
+
+	// The user who created this version
+	CreatedBy string `json:"createdBy,omitempty"`
+
+	// Message passed while saving the version
+	Message string `json:"message,omitempty"`
 }
 
 // +k8s:conversion-gen:explicit-from=net/url.Values

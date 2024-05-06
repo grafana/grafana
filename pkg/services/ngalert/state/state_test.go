@@ -681,6 +681,15 @@ func TestParseFormattedState(t *testing.T) {
 		require.Equal(t, ngmodels.StateReasonMissingSeries, reason)
 	})
 
+	t.Run("should parse formatted state with concatenated reasons", func(t *testing.T) {
+		stateStr := "Normal (Error, KeepLast)"
+		s, reason, err := ParseFormattedState(stateStr)
+		require.NoError(t, err)
+
+		require.Equal(t, eval.Normal, s)
+		require.Equal(t, ngmodels.ConcatReasons(ngmodels.StateReasonError, ngmodels.StateReasonKeepLast), reason)
+	})
+
 	t.Run("should error on empty string", func(t *testing.T) {
 		stateStr := ""
 		_, _, err := ParseFormattedState(stateStr)
@@ -697,8 +706,7 @@ func TestParseFormattedState(t *testing.T) {
 func TestGetRuleExtraLabels(t *testing.T) {
 	logger := log.New()
 
-	rule := ngmodels.AlertRuleGen()()
-	rule.NotificationSettings = nil
+	rule := ngmodels.RuleGen.With(ngmodels.RuleMuts.WithNoNotificationSettings()).GenerateRef()
 	folderTitle := uuid.NewString()
 
 	ns := ngmodels.NotificationSettings{

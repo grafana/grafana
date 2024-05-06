@@ -36,10 +36,24 @@ export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEdito
   };
   const onDataSourceChange = (dsInstanceSettings: DataSourceInstanceSettings) => {
     const datasource: DataSourceRef = { uid: dsInstanceSettings.uid, type: dsInstanceSettings.type };
+
+    if (variable.state.datasource && variable.state.datasource.type !== datasource.type) {
+      variable.setState({ datasource, query: '', definition: '' });
+      return;
+    }
+
     variable.setState({ datasource });
   };
   const onQueryChange = (query: VariableQueryType) => {
-    variable.setState({ query });
+    let definition: string;
+    if (typeof query === 'string') {
+      definition = query;
+    } else if (query.hasOwnProperty('query') && typeof query.query === 'string') {
+      definition = query.query;
+    } else {
+      definition = '';
+    }
+    variable.setState({ query, definition });
     onRunQuery();
   };
 

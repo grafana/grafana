@@ -11,11 +11,13 @@ ACCESSIBILITY_ERRORS="$(grep -oP '\"errors\":(\d+),' pa11y-ci-results.json | gre
 DIRECTIVES="$(grep -r -o  directive public/app/ | wc -l)"
 CONTROLLERS="$(grep -r -oP 'class .*Ctrl' public/app/ | wc -l)"
 LEGACY_FORMS="$(grep -r -oP 'LegacyForms;' public/app | wc -l)"
+BARREL_IMPORTS="$(grep -r -oP '@todo: replace barrel import path' public/app | wc -l)"
 CLASSNAME_PROP="$(grep -r -o -E --include="*.ts*" "\.*.className=\W.*\W.*" public/app | wc -l)"
 EMOTION_IMPORTS="$(grep -r -o -E --include="*.ts*" --exclude="*.test*" "\{.*css.*\} from '@emotion/css'" public/app | wc -l)"
 TS_FILES="$(find public/app -type f -name "*.ts*" -not -name "*.test*" | wc -l)"
+SCSS_FILES="$(find public packages -name '*.scss' | wc -l)"
 
-TOTAL_BUNDLE="$(du -sk $BUILD_FOLDER | cut -f1)"
+TOTAL_BUNDLE="$(du -sk "$BUILD_FOLDER" | cut -f1)"
 OUTDATED_DEPENDENCIES="$(yarn outdated --all | grep -oP '[[:digit:]]+ *(?= dependencies are out of date)')"
 ## Disabled due to yarn PnP update breaking npm audit
 #VULNERABILITY_AUDIT="$(yarn npm audit --all --recursive --json)"
@@ -29,6 +31,7 @@ echo -e "Accessibility errors: $ACCESSIBILITY_ERRORS"
 echo -e "Directives: $DIRECTIVES"
 echo -e "Controllers: $CONTROLLERS"
 echo -e "Legacy forms: $LEGACY_FORMS"
+echo -e "Barrel imports: $BARREL_IMPORTS"
 echo -e "Total bundle folder size: $TOTAL_BUNDLE"
 echo -e "Total outdated dependencies: $OUTDATED_DEPENDENCIES"
 echo -e "Low vulnerabilities: $LOW_VULNERABILITIES"
@@ -38,6 +41,7 @@ echo -e "Critical vulnerabilities: $CRITICAL_VULNERABILITIES"
 echo -e "ClassName in props: $CLASSNAME_PROP"
 echo -e "@emotion/css imports: $EMOTION_IMPORTS"
 echo -e "Total TS files: $TS_FILES"
+echo -e "Total SCSS files: $SCSS_FILES"
 
 BETTERER_STATS=""
 while read -r name value
@@ -73,5 +77,6 @@ echo "Metrics: {
   \"grafana.ci-code.dependencies.outdated\": \"${OUTDATED_DEPENDENCIES}\",
   \"grafana.ci-code.props.className\": \"${CLASSNAME_PROP}\",
   \"grafana.ci-code.imports.emotion\": \"${EMOTION_IMPORTS}\",
-  \"grafana.ci-code.tsFiles\": \"${TS_FILES}\"
+  \"grafana.ci-code.tsFiles\": \"${TS_FILES}\",
+  \"grafana.ci-code.scssFiles\": \"${SCSS_FILES}\"
 }"

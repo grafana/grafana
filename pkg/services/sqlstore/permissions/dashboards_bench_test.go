@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -76,14 +77,14 @@ func setupBenchMark(b *testing.B, usr user.SignedInUser, features featuremgmt.Fe
 		nestingLevel = folder.MaxNestedFolderDepth
 	}
 
-	store := db.InitTestDB(b)
+	store, cfg := db.InitTestDBWithCfg(b)
 
 	quotaService := quotatest.New(false, nil)
 
-	dashboardWriteStore, err := database.ProvideDashboardStore(store, store.Cfg, features, tagimpl.ProvideService(store), quotaService)
+	dashboardWriteStore, err := database.ProvideDashboardStore(store, cfg, features, tagimpl.ProvideService(store), quotaService)
 	require.NoError(b, err)
 
-	folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), store.Cfg, dashboardWriteStore, folderimpl.ProvideDashboardFolderStore(store), store, features, nil)
+	folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardWriteStore, folderimpl.ProvideDashboardFolderStore(store), store, features, supportbundlestest.NewFakeBundleService(), nil)
 
 	origNewGuardian := guardian.New
 	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true, CanSaveValue: true})

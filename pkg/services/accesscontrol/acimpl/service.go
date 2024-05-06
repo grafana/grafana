@@ -41,6 +41,8 @@ var SharedWithMeFolderPermission = accesscontrol.Permission{
 	Scope:  dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.SharedWithMeFolderUID),
 }
 
+var OSSRolesPrefixes = []string{accesscontrol.ManagedRolePrefix, accesscontrol.ExternalServiceRolePrefix}
+
 func ProvideService(cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
 	accessControl accesscontrol.AccessControl, features featuremgmt.FeatureToggles) (*Service, error) {
 	service := ProvideOSSService(cfg, database.ProvideService(db), cache, features)
@@ -125,7 +127,7 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 		UserID:       userID,
 		Roles:        accesscontrol.GetOrgRoles(user),
 		TeamIDs:      user.GetTeams(),
-		RolePrefixes: []string{accesscontrol.ManagedRolePrefix, accesscontrol.ExternalServiceRolePrefix},
+		RolePrefixes: OSSRolesPrefixes,
 	})
 	if err != nil {
 		return nil, err
@@ -164,6 +166,10 @@ func (s *Service) ClearUserPermissionCache(user identity.Requester) {
 
 func (s *Service) DeleteUserPermissions(ctx context.Context, orgID int64, userID int64) error {
 	return s.store.DeleteUserPermissions(ctx, orgID, userID)
+}
+
+func (s *Service) DeleteTeamPermissions(ctx context.Context, orgID int64, teamID int64) error {
+	return s.store.DeleteTeamPermissions(ctx, orgID, teamID)
 }
 
 // DeclareFixedRoles allow the caller to declare, to the service, fixed roles and their assignments
@@ -233,6 +239,8 @@ func (s *Service) DeclarePluginRoles(ctx context.Context, ID, name string, regs 
 // SearchUsersPermissions returns all users' permissions filtered by action prefixes
 func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Requester,
 	options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
+	// Limit roles to available in OSS
+	options.RolePrefixes = OSSRolesPrefixes
 	if options.NamespacedID != "" {
 		userID, err := options.ComputeUserID()
 		if err != nil {
@@ -427,7 +435,7 @@ func PermissionMatchesSearchOptions(permission accesscontrol.Permission, searchO
 }
 
 func (s *Service) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol.SaveExternalServiceRoleCommand) error {
-	if !(s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAuth) || s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts)) {
+	if !s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
 		s.log.Debug("Registering an external service role is behind a feature flag, enable it to use this feature.")
 		return nil
 	}
@@ -440,7 +448,7 @@ func (s *Service) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol
 }
 
 func (s *Service) DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error {
-	if !(s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAuth) || s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts)) {
+	if !s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
 		s.log.Debug("Deleting an external service role is behind a feature flag, enable it to use this feature.")
 		return nil
 	}
@@ -452,4 +460,27 @@ func (s *Service) DeleteExternalServiceRole(ctx context.Context, externalService
 
 func (*Service) SyncUserRoles(ctx context.Context, orgID int64, cmd accesscontrol.SyncUserRolesCommand) error {
 	return nil
+}
+
+func (s *Service) GetRoleByName(ctx context.Context, orgID int64, roleName string) (*accesscontrol.RoleDTO, error) {
+	err := accesscontrol.ErrRoleNotFound
+	if _, ok := s.roles[roleName]; ok {
+		return nil, err
+	}
+
+	var role *accesscontrol.RoleDTO
+	s.registrations.Range(func(registration accesscontrol.RoleRegistration) bool {
+		if registration.Role.Name == roleName {
+			role = &accesscontrol.RoleDTO{
+				Name:        registration.Role.Name,
+				Permissions: registration.Role.Permissions,
+				DisplayName: registration.Role.DisplayName,
+				Description: registration.Role.Description,
+			}
+			err = nil
+			return false
+		}
+		return true
+	})
+	return role, err
 }
