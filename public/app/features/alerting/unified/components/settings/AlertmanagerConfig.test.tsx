@@ -14,7 +14,7 @@ import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import AlertmanagerConfig from './AlertmanagerConfig';
 import {
   EXTERNAL_VANILLA_ALERTMANAGER_UID,
-  PROVISIONED_VANILLA_ALERTMANAGER_UID,
+  PROVISIONED_MIMIR_ALERTMANAGER_UID,
   setupGrafanaManagedServer,
   setupVanillaAlertmanagerServer,
 } from './__mocks__/server';
@@ -96,11 +96,11 @@ describe('vanilla Alertmanager', () => {
     expect(ui.resetButton.query()).not.toBeInTheDocument();
   });
 
-  it('should be read-only when provisioned Alertmanager', async () => {
-    renderConfiguration(PROVISIONED_VANILLA_ALERTMANAGER_UID, {});
+  it('should not be read-only when Mimir Alertmanager', async () => {
+    renderConfiguration(PROVISIONED_MIMIR_ALERTMANAGER_UID, {});
 
     expect(ui.cancelButton.get()).toBeInTheDocument();
-    expect(ui.saveButton.query()).not.toBeInTheDocument();
-    expect(ui.resetButton.query()).not.toBeInTheDocument();
+    expect(ui.saveButton.get()).toBeInTheDocument();
+    expect(ui.resetButton.get()).toBeInTheDocument();
   });
 });

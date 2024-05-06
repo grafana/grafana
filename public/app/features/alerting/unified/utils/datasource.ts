@@ -210,8 +210,8 @@ export function isVanillaPrometheusAlertManagerDataSource(name: string): boolean
   );
 }
 
-export function isProvisionedDataSource(name: string): boolean {
-  return getAlertmanagerDataSourceByName(name)?.readOnly === true;
+export function isProvisionedDataSource(dataSource: DataSourceSettings): boolean {
+  return dataSource.readOnly === true;
 }
 
 export function isGrafanaRulesSource(

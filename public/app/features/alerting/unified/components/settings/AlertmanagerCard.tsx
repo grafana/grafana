@@ -76,6 +76,7 @@ export function AlertmanagerCard({
       {/* we'll use the "tags" area to append buttons and actions */}
       <Card.Tags>
         <Stack direction="row" gap={1}>
+          {/* ⚠️ provisioned Data sources cannot have their "enable" / "disable" actions but we should still allow editing of the configuration */}
           <Button onClick={onEditConfiguration} icon={readOnly ? 'eye' : 'edit'} variant="secondary" fill="outline">
             {readOnly ? 'View configuration' : 'Edit configuration'}
           </Button>

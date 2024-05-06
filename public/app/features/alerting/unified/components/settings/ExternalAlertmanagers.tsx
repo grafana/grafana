@@ -7,6 +7,7 @@ import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { ExternalAlertmanagerDataSourceWithStatus } from '../../hooks/useExternalAmSelector';
 import {
   isAlertmanagerDataSourceInterestedInAlerts,
+  isProvisionedDataSource,
   isVanillaPrometheusAlertManagerDataSource,
 } from '../../utils/datasource';
 import { createUrl } from '../../utils/url';
@@ -44,9 +45,9 @@ export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
         const { status } = alertmanager;
 
         const isReceiving = isReceivingGrafanaAlerts(alertmanager);
-        const isProvisioned = alertmanager.dataSourceSettings.readOnly === true;
-        const isReadOnly =
-          isProvisioned || isVanillaPrometheusAlertManagerDataSource(alertmanager.dataSourceSettings.name);
+        const isProvisioned = isProvisionedDataSource(alertmanager.dataSourceSettings);
+        const isReadOnly = isVanillaPrometheusAlertManagerDataSource(alertmanager.dataSourceSettings.name);
+
         const detailHref = createUrl(DATASOURCES_ROUTES.Edit.replace(/:uid/gi, uid));
 
         const handleEditConfiguration = () => onEditConfiguration(name);
