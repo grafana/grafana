@@ -25,16 +25,18 @@ We strongly advise using these recommended methods instead of direct API calls b
 
 ```ts
 /**
- * Fetch all label keys
- * This asynchronous function is designed to retrieve all available label keys from the data source.
+ * Fetch label keys using the best applicable endpoint.
+ *
+ * This asynchronous function returns all available label keys from the data source.
  * It returns a promise that resolves to an array of strings containing the label keys.
  *
- * @param options - (Optional) An object containing additional options - currently only time range.
+ * @param options - (Optional) An object containing additional options.
+ * @param options.streamSelector - (Optional) The stream selector to filter label keys. If not provided, all label keys are fetched.
  * @param options.timeRange - (Optional) The time range for which you want to retrieve label keys. If not provided, the default time range is used.
  * @returns A promise containing an array of label keys.
  * @throws An error if the fetch operation fails.
  */
-async function fetchLabels(options?: { timeRange?: TimeRange }): Promise<string[]>;
+async function fetchLabels(options?: { streamSelector?: string; timeRange?: TimeRange }): Promise<string[]>;
 
 /**
  * Example usage:
