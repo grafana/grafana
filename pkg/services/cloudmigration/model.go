@@ -117,10 +117,6 @@ type CreateAccessTokenResponse struct {
 	Token string
 }
 
-type CreateAccessTokenResponseDTO struct {
-	Token string `json:"token"`
-}
-
 type Base64EncodedTokenPayload struct {
 	Token    string
 	Instance Base64HGInstance
