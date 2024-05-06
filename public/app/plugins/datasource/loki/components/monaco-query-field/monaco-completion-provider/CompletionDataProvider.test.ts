@@ -75,6 +75,7 @@ describe('CompletionDataProvider', () => {
 
     completionProvider = new CompletionDataProvider(languageProvider, historyRef, mockTimeRange);
 
+    jest.spyOn(languageProvider, 'getLabelKeys').mockReturnValue(labelKeys);
     jest.spyOn(languageProvider, 'fetchLabels').mockResolvedValue(labelKeys);
     jest.spyOn(languageProvider, 'fetchLabelValues').mockResolvedValue(labelValues);
     jest.spyOn(languageProvider, 'getParserAndLabelKeys').mockResolvedValue(parserAndLabelKeys);

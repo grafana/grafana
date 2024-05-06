@@ -39,6 +39,12 @@ export class CompletionDataProvider {
   }
 
   async getLabelNames(otherLabels: Label[] = []) {
+    if (otherLabels.length === 0) {
+      // If there is no filtering, we use getLabelKeys because it has better caching
+      // and all labels should already be fetched
+      await this.languageProvider.start(this.timeRange);
+      return this.languageProvider.getLabelKeys();
+    }
     const possibleLabelNames = await this.languageProvider.fetchLabels({
       streamSelector: this.buildSelector(otherLabels),
       timeRange: this.timeRange,

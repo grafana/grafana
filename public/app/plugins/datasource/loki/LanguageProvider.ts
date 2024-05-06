@@ -16,6 +16,7 @@ import {
 import { ParserAndLabelKeysResult, LokiQuery, LokiQueryType, LabelType } from './types';
 
 const NS_IN_MS = 1000000;
+const EMPTY_SELECTOR = '{}';
 
 export default class LokiLanguageProvider extends LanguageProvider {
   labelKeys: string[];
@@ -251,9 +252,9 @@ export default class LokiLanguageProvider extends LanguageProvider {
     options?: { streamSelector?: string; timeRange?: TimeRange }
   ): Promise<string[]> {
     const label = encodeURIComponent(this.datasource.interpolateString(labelName));
-    // Loki don't allow empty streamSelector {}, so we should not send it.
+    // Loki doesn't allow empty streamSelector {}, so we should not send it.
     const streamParam =
-      options?.streamSelector && options.streamSelector !== '{}'
+      options?.streamSelector && options.streamSelector !== EMPTY_SELECTOR
         ? this.datasource.interpolateString(options.streamSelector)
         : undefined;
 
