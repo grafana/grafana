@@ -16,9 +16,12 @@ export function GrafanaAlertmanagerDeliveryWarning({ currentAlertmanager }: Graf
   const styles = useStyles2(getStyles);
   const viewingInternalAM = currentAlertmanager === GRAFANA_RULES_SOURCE_NAME;
 
-  const { currentData: amChoiceStatus } = alertmanagerApi.endpoints.getAlertmanagerChoiceStatus.useQuery(undefined, {
-    skip: !viewingInternalAM,
-  });
+  const { currentData: amChoiceStatus } = alertmanagerApi.endpoints.getGrafanaAlertingConfigurationStatus.useQuery(
+    undefined,
+    {
+      skip: !viewingInternalAM,
+    }
+  );
 
   const interactsWithExternalAMs =
     amChoiceStatus?.alertmanagersChoice &&
