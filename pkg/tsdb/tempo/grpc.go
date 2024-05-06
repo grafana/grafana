@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"net"
 	"net/url"
@@ -47,8 +46,7 @@ func newGrpcClient(ctx context.Context, settings backend.DataSourceInstanceSetti
 
 	dialOpts, err := getDialOpts(ctx, settings, opts)
 	if err != nil {
-		logger.Error("Error getting dial options", "error", err, "URL", settings.URL, "function", logEntrypoint())
-		return nil, err
+		return nil, fmt.Errorf("error getting dial options: %w", err)
 	}
 	clientConn, err := grpc.Dial(onlyHost, dialOpts...)
 	if err != nil {
@@ -86,28 +84,25 @@ func getDialOpts(ctx context.Context, settings backend.DataSourceInstanceSetting
 	// (https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/)
 	proxyClient, err := settings.ProxyClient(ctx)
 	if err != nil {
-		logger.Info("Proxy client cannot be retrieved. Not possible to check if secure socks proxy is enabled", "error", err)
-		return dialOps, errors.New("proxy client cannot be retrieved")
+		return dialOps, fmt.Errorf("proxy client cannot be retrieved, it is not possible to check if secure socks proxy is enabled: %w", err)
 	}
 	if proxyClient.SecureSocksProxyEnabled() { // secure socks proxy is behind a feature flag
 		dialer, err := proxyClient.NewSecureSocksProxyContextDialer()
 		if err != nil {
-			logger.Info("Failure in creating dialer", "error", err)
-			return dialOps, errors.New("dialer not created")
+			return dialOps, fmt.Errorf("failure in creating dialer: %w", err)
 		}
 		logger.Debug("gRPC dialer instantiated. Appending gRPC dialer to dial options")
 		dialOps = append(dialOps, grpc.WithContextDialer(func(ctx context.Context, host string) (net.Conn, error) {
 			logger.Debug("Dialing secure socks proxy", "host", host)
 			conn, err := dialer.Dial("tcp", host)
 			if err != nil {
-				logger.Info("Not possible to dial secure socks proxy", "error", err)
-				return conn, errors.New("dialing failed")
+				return conn, fmt.Errorf("not possible to dial secure socks proxy: %w", err)
 			}
 			select {
 			case <-ctx.Done():
-				err := errors.New("context canceled")
-				logger.Info("Context has been canceled", "error", err)
-				return conn, errors.New("context canceled")
+				logger.Debug("Context canceled")
+				 // We return `conn` anyway since we need to better test how context cancellation works
+				return conn, fmt.Errorf("context canceled: %w", err)
 			default:
 				logger.Debug("Context is still valid")
 			}
