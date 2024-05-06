@@ -120,6 +120,11 @@ export class TimeSrv {
       if (utcValue.isValid()) {
         return utcValue;
       }
+    } else if (value.length === 24) {
+      const utcValue = toUtc(value, 'YYYY-MM-DDTHH:mm:ss.SSSZ');
+      if (utcValue.isValid()) {
+        return utcValue;
+      }
     }
 
     if (!isNaN(Number(value))) {
