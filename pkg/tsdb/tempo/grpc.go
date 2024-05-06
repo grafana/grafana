@@ -84,19 +84,19 @@ func getDialOpts(ctx context.Context, settings backend.DataSourceInstanceSetting
 	// (https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/)
 	proxyClient, err := settings.ProxyClient(ctx)
 	if err != nil {
-		return dialOps, fmt.Errorf("proxy client cannot be retrieved, it is not possible to check if secure socks proxy is enabled: %w", err)
+		return nil, fmt.Errorf("proxy client cannot be retrieved, it is not possible to check if secure socks proxy is enabled: %w", err)
 	}
 	if proxyClient.SecureSocksProxyEnabled() { // secure socks proxy is behind a feature flag
 		dialer, err := proxyClient.NewSecureSocksProxyContextDialer()
 		if err != nil {
-			return dialOps, fmt.Errorf("failure in creating dialer: %w", err)
+			return nil, fmt.Errorf("failure in creating dialer: %w", err)
 		}
 		logger.Debug("gRPC dialer instantiated. Appending gRPC dialer to dial options")
 		dialOps = append(dialOps, grpc.WithContextDialer(func(ctx context.Context, host string) (net.Conn, error) {
 			logger.Debug("Dialing secure socks proxy", "host", host)
 			conn, err := dialer.Dial("tcp", host)
 			if err != nil {
-				return conn, fmt.Errorf("not possible to dial secure socks proxy: %w", err)
+				return nil, fmt.Errorf("not possible to dial secure socks proxy: %w", err)
 			}
 			select {
 			case <-ctx.Done():
