@@ -67,8 +67,8 @@ func (d *DualWriterMode2) Create(ctx context.Context, obj runtime.Object, create
 // Get overrides the behavior of the generic DualWriter.
 // It retrieves an object from Storage if possible, and if not it falls back to LegacyStorage.
 func (d *DualWriterMode2) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	ctx = klog.NewContext(ctx, d.Log)
 	log := d.Log.WithValues("name", name, "resourceVersion", options.ResourceVersion)
+	ctx = klog.NewContext(ctx, log)
 	s, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -142,8 +142,8 @@ func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion
 
 // DeleteCollection overrides the behavior of the generic DualWriter and deletes from both LegacyStorage and Storage.
 func (d *DualWriterMode2) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
-	ctx = klog.NewContext(ctx, d.Log)
 	log := d.Log.WithValues("kind", options.Kind, "resourceVersion", listOptions.ResourceVersion)
+	ctx = klog.NewContext(ctx, log)
 	legacy, ok := d.Legacy.(rest.CollectionDeleter)
 	if !ok {
 		return nil, errDualWriterCollectionDeleterMissing
@@ -178,8 +178,8 @@ func (d *DualWriterMode2) DeleteCollection(ctx context.Context, deleteValidation
 }
 
 func (d *DualWriterMode2) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	ctx = klog.NewContext(ctx, d.Log)
 	log := d.Log.WithValues("name", name)
+	ctx = klog.NewContext(ctx, log)
 	legacy, ok := d.Legacy.(rest.GracefulDeleter)
 	if !ok {
 		return nil, false, errDualWriterDeleterMissing
@@ -205,9 +205,9 @@ func (d *DualWriterMode2) Delete(ctx context.Context, name string, deleteValidat
 
 // Update overrides the generic behavior of the Storage and writes first to the legacy storage and then to storage.
 func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	ctx = klog.NewContext(ctx, d.Log)
 	var notFound bool
-	log := d.Log.WithValues("name", name, "created", notFound)
+	log := d.Log.WithValues("name", name)
+	ctx = klog.NewContext(ctx, log)
 	legacy, ok := d.Legacy.(rest.Updater)
 	if !ok {
 		return nil, false, errDualWriterUpdaterMissing
