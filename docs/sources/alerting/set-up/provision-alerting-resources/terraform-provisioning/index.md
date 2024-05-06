@@ -286,7 +286,7 @@ This section provides examples of Terraform configurations for each alerting res
 
 {{% admonition type="warning" %}}
 
-Since the policy tree is a single resource, provisioning the `grafana_notification_policy` resource  overwrites a policy tree created through any other means.
+Since the policy tree is a single resource, provisioning the `grafana_notification_policy` resource overwrites a policy tree created through any other means.
 
 {{< /admonition >}}
 
