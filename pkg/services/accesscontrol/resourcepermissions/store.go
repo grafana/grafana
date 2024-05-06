@@ -676,7 +676,7 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, resource, reso
 		permissions = append(permissions, p)
 	}
 
-	// If there are no missing actions for the resouce, we don't need to insert any prior actions
+	// If there are no missing actions for the resource, we don't need to insert any prior actions
 	// we still want to add the action set
 	if len(missingActions) == 0 {
 		if s.features.IsEnabled(context.TODO(), featuremgmt.FlagAccessActionSets) {
