@@ -3569,35 +3569,24 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/faro-core@npm:^1.3.6, @grafana/faro-core@npm:^1.6.0, @grafana/faro-core@npm:^1.7.0":
-  version: 1.7.0
-  resolution: "@grafana/faro-core@npm:1.7.0"
+"@grafana/faro-core@npm:^1.3.6, @grafana/faro-core@npm:^1.7.2":
+  version: 1.7.2
+  resolution: "@grafana/faro-core@npm:1.7.2"
   dependencies:
     "@opentelemetry/api": "npm:^1.7.0"
     "@opentelemetry/otlp-transformer": "npm:^0.48.0"
-  checksum: 10/4cad2a6c9a5b3c4c1ba1da98c239a2ba27486479e7f4d980ba95d2f823e5a16d853647502db41571d4a882c6165c4a0702ac07f8fa07b25f680f0e68e9672c5b
+  checksum: 10/4460a9160875af52da7f411c9407a58415378ae17e7f8dea2f5dc0c00f6ca2ca588b87b501d2f45477f106a20a6c3020dc9bc7855009ba8246da72012b645d54
   languageName: node
   linkType: hard
 
-"@grafana/faro-web-sdk@npm:1.6.0":
-  version: 1.6.0
-  resolution: "@grafana/faro-web-sdk@npm:1.6.0"
+"@grafana/faro-web-sdk@npm:1.7.2, @grafana/faro-web-sdk@npm:^1.3.6":
+  version: 1.7.2
+  resolution: "@grafana/faro-web-sdk@npm:1.7.2"
   dependencies:
-    "@grafana/faro-core": "npm:^1.6.0"
+    "@grafana/faro-core": "npm:^1.7.2"
     ua-parser-js: "npm:^1.0.32"
     web-vitals: "npm:^3.1.1"
-  checksum: 10/65db25703bd4f26bf7509ddf5bfa5a47df38e5a6a014612eb707a2475641baff95a27196f760ee68301347735b10006e0cf58e6f47fed553c2c01c264232e76f
-  languageName: node
-  linkType: hard
-
-"@grafana/faro-web-sdk@npm:^1.3.6":
-  version: 1.7.0
-  resolution: "@grafana/faro-web-sdk@npm:1.7.0"
-  dependencies:
-    "@grafana/faro-core": "npm:^1.7.0"
-    ua-parser-js: "npm:^1.0.32"
-    web-vitals: "npm:^3.1.1"
-  checksum: 10/f4d852d0cb1add37310e2f7b145bcb0ca243409eed8b3845ce4446bcd877a790573022e55dfa9a6bc71c82fbda5f0db452a5d05d9b56b4e294390b0a55d0087e
+  checksum: 10/5d30a928d1d30b8b4fdec76c3d8ab70bef7d418e0f13890f4897d82f4f3cc0be931a6af43acbdaa0454426c0a68f99ae92c3ca9aec9c64c27dca01161bae978d
   languageName: node
   linkType: hard
 
@@ -3767,7 +3756,7 @@ __metadata:
     "@grafana/data": "npm:11.1.0-pre"
     "@grafana/e2e-selectors": "npm:11.1.0-pre"
     "@grafana/experimental": "npm:1.7.10"
-    "@grafana/faro-web-sdk": "npm:1.6.0"
+    "@grafana/faro-web-sdk": "npm:1.7.2"
     "@grafana/runtime": "npm:11.1.0-pre"
     "@grafana/schema": "npm:11.1.0-pre"
     "@grafana/tsconfig": "npm:^1.3.0-rc1"
