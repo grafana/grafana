@@ -8,7 +8,7 @@ import { ThemeContext } from '@grafana/ui';
 
 import FlameGraph from './FlameGraph/FlameGraph';
 import { GetExtraContextMenuButtonsFunction } from './FlameGraph/FlameGraphContextMenu';
-import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
+import { CollapsedMap, FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import FlameGraphHeader from './FlameGraphHeader';
 import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer';
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
@@ -98,6 +98,7 @@ const FlameGraphContainer = ({
   const [textAlign, setTextAlign] = useState<TextAlign>('left');
   // This is a label of the item because in sandwich view we group all items by label and present a merged graph
   const [sandwichItem, setSandwichItem] = useState<string>();
+  const [collapsedMap, setCollapsedMap] = useState(new CollapsedMap());
 
   const theme = getTheme();
 
@@ -105,7 +106,10 @@ const FlameGraphContainer = ({
     if (!data) {
       return;
     }
-    return new FlameGraphDataContainer(data, { collapsing: !disableCollapsing }, theme);
+
+    const container = new FlameGraphDataContainer(data, { collapsing: !disableCollapsing }, theme);
+    setCollapsedMap(container.getCollapsedMap());
+    return container;
   }, [data, theme, disableCollapsing]);
   const [colorScheme, setColorScheme] = useColorScheme(dataContainer);
   const styles = getStyles(theme);
@@ -179,6 +183,8 @@ const FlameGraphContainer = ({
       getExtraContextMenuButtons={getExtraContextMenuButtons}
       selectedView={selectedView}
       search={search}
+      collapsedMap={collapsedMap}
+      setCollapsedMap={setCollapsedMap}
     />
   );
 
@@ -250,6 +256,8 @@ const FlameGraphContainer = ({
             extraHeaderElements={extraHeaderElements}
             vertical={vertical}
             isDiffMode={dataContainer.isDiffFlamegraph()}
+            setCollapsedMap={setCollapsedMap}
+            collapsedMap={collapsedMap}
           />
         )}
 

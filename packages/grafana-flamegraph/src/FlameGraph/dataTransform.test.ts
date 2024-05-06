@@ -1,6 +1,6 @@
 import { createDataFrame, FieldType } from '@grafana/data';
 
-import { CollapsedMapContainer, FlameGraphDataContainer, LevelItem, nestedSetToLevels } from './dataTransform';
+import { CollapsedMapBuilder, FlameGraphDataContainer, LevelItem, nestedSetToLevels } from './dataTransform';
 import { textToDataContainer } from './testHelpers';
 
 describe('nestedSetToLevels', () => {
@@ -126,7 +126,7 @@ describe('CollapsedMapContainer', () => {
   };
 
   it('groups items if they are within value threshold', () => {
-    const container = new CollapsedMapContainer();
+    const container = new CollapsedMapBuilder();
 
     const child2: LevelItem = {
       ...defaultItem,
@@ -147,13 +147,13 @@ describe('CollapsedMapContainer', () => {
 
     container.addItem(child1, parent);
     container.addItem(child2, child1);
-    expect(container.getMap().get(child1)).toMatchObject({ collapsed: true, items: [parent, child1, child2] });
-    expect(container.getMap().get(child2)).toMatchObject({ collapsed: true, items: [parent, child1, child2] });
-    expect(container.getMap().get(parent)).toMatchObject({ collapsed: true, items: [parent, child1, child2] });
+    expect(container.getCollapsedMap().get(child1)).toMatchObject({ collapsed: true, items: [parent, child1, child2] });
+    expect(container.getCollapsedMap().get(child2)).toMatchObject({ collapsed: true, items: [parent, child1, child2] });
+    expect(container.getCollapsedMap().get(parent)).toMatchObject({ collapsed: true, items: [parent, child1, child2] });
   });
 
   it("doesn't group items if they are outside value threshold", () => {
-    const container = new CollapsedMapContainer();
+    const container = new CollapsedMapBuilder();
 
     const parent: LevelItem = {
       ...defaultItem,
@@ -166,11 +166,11 @@ describe('CollapsedMapContainer', () => {
     };
 
     container.addItem(child, parent);
-    expect(container.getMap().size).toBe(0);
+    expect(container.getCollapsedMap().size).toBe(0);
   });
 
   it("doesn't group items if parent has multiple children", () => {
-    const container = new CollapsedMapContainer();
+    const container = new CollapsedMapBuilder();
 
     const child1: LevelItem = {
       ...defaultItem,
@@ -190,6 +190,6 @@ describe('CollapsedMapContainer', () => {
     };
 
     container.addItem(child1, parent);
-    expect(container.getMap().size).toBe(0);
+    expect(container.getCollapsedMap().size).toBe(0);
   });
 });
