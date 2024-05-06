@@ -120,15 +120,15 @@ export default class LokiLanguageProvider extends LanguageProvider {
   }
 
   /**
-   * Fetch label names using the best applicable endpoint.
+   * Fetch label keys using the best applicable endpoint.
    *
    * This asynchronous function returns all available label keys from the data source.
    * It returns a promise that resolves to an array of strings containing the label keys.
    *
    * @param options - (Optional) An object containing additional options.
-   * @param options.streamSelector - (Optional) The stream selector to filter label values. If not provided, all label values are fetched.
-   * @param options.timeRange - (Optional) The time range for which you want to retrieve label values. If not provided, the default time range is used.
-   * @returns A promise containing an array of label values.
+   * @param options.streamSelector - (Optional) The stream selector to filter label keys. If not provided, all label keys are fetched.
+   * @param options.timeRange - (Optional) The time range for which you want to retrieve label keys. If not provided, the default time range is used.
+   * @returns A promise containing an array of label keys.
    * @throws An error if the fetch operation fails.
    */
   async fetchLabels(options?: { streamSelector?: string; timeRange?: TimeRange }): Promise<string[]> {
