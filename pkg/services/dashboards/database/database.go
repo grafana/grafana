@@ -798,14 +798,14 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 
 	if len(first.searchRes) != len(second.searchRes) {
 		d.log.Error(
-			"eval result diff",
+			"search_eval result diff",
 			"grafana_res", first.searchRes,
 			"zanana_res", second.searchRes,
 			"grafana_ms", first.duration,
 			"zanzana_ms", second.duration,
 		)
 	} else {
-		d.log.Info("eval: correct result", "grafana_ms", first.duration, "zanzana_ms", second.duration)
+		d.log.Info("search_eval: correct result", "grafana_ms", first.duration, "zanzana_ms", second.duration, "result_len", len(first.searchRes))
 	}
 
 	if d.zService.Cfg.DashboardReadResult {
@@ -860,10 +860,9 @@ func (d *dashboardStore) findDashboardsZanzana(ctx context.Context, query *dashb
 		})
 	}
 
-	var res []dashboards.DashboardSearchProjection
 	sb := &searchstore.Builder{Dialect: d.store.GetDialect(), Filters: filters, Features: d.features}
 
-	limit := query.Limit
+	limit := int(query.Limit)
 	if limit < 1 {
 		limit = 1000
 	}
@@ -873,49 +872,70 @@ func (d *dashboardStore) findDashboardsZanzana(ctx context.Context, query *dashb
 		page = 1
 	}
 
-	sql, params := sb.ToSQL(limit, page)
-
-	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
-		rows, err := sess.SQL(sql, params...).Rows(&dashboards.DashboardSearchProjection{})
-		if err != nil {
-			return err
+	var res []dashboards.DashboardSearchProjection
+	var fetchedRows int64
+	for len(res) < limit {
+		// Fetch a batch of rows
+		batchSize := int64(limit - len(res))
+		if batchSize > 1000 {
+			batchSize = 1000
 		}
+		sql, params := sb.ToSQL(batchSize, fetchedRows/batchSize+1)
 
-		for rows.Next() {
-			var row dashboards.DashboardSearchProjection
-			if err := rows.Scan(&row); err != nil {
-				return err
-			}
-
-			object := "dashboard:" + row.UID
-			if row.IsFolder {
-				object = "folder:" + row.UID
-			}
-
-			key := &openfgav1.CheckRequestTupleKey{
-				User:     query.SignedInUser.GetID(),
-				Relation: "read",
-				Object:   object,
-			}
-
-			checkRes, err := d.zClient.Check(ctx, &openfgav1.CheckRequest{
-				StoreId:              d.zClient.MustStoreID(ctx),
-				AuthorizationModelId: d.zClient.AuthorizationModelID,
-				TupleKey:             key,
-			})
+		var rowsFetchedInThisBatch int64
+		err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
+			rows, err := sess.SQL(sql, params...).Rows(&dashboards.DashboardSearchProjection{})
 			if err != nil {
 				return err
 			}
 
-			if checkRes.Allowed {
-				res = append(res, row)
+			for rows.Next() {
+				var row dashboards.DashboardSearchProjection
+				if err := rows.Scan(&row); err != nil {
+					return err
+				}
+
+				object := "dashboard:" + row.UID
+				if row.IsFolder {
+					object = "folder:" + row.UID
+				}
+
+				key := &openfgav1.CheckRequestTupleKey{
+					User:     query.SignedInUser.GetID(),
+					Relation: "read",
+					Object:   object,
+				}
+
+				checkRes, err := d.zClient.Check(ctx, &openfgav1.CheckRequest{
+					StoreId:              d.zClient.MustStoreID(ctx),
+					AuthorizationModelId: d.zClient.AuthorizationModelID,
+					TupleKey:             key,
+				})
+				if err != nil {
+					return err
+				}
+
+				if checkRes.Allowed {
+					res = append(res, row)
+					if len(res) == int(limit) {
+						break
+					}
+				}
+				rowsFetchedInThisBatch++
 			}
+
+			return nil
+		})
+		if err != nil {
+			return nil, err
 		}
 
-		return nil
-	})
-	if err != nil {
-		return nil, err
+		fetchedRows += batchSize
+
+		// If the number of rows fetched in this batch is less than the batch size, break the loop
+		if rowsFetchedInThisBatch < batchSize {
+			break
+		}
 	}
 
 	return res, nil

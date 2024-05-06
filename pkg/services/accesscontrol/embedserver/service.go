@@ -55,6 +55,18 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*Ser
 		return nil, err
 	}
 
+	// Set the database name
+	dbConfig.Name = "grafana_ac"
+	dbConfig.ConnectionString = ""
+
+	err = dbConfig.buildConnectionString(cfg, features)
+	if err != nil {
+		return nil, err
+	}
+
+	// WIP
+	dbConfig.ConnectionString = "grafana:password@tcp(127.0.0.1:3306)/grafana_ac?parseTime=true"
+
 	// Create the Zanzana service
 	srv, err := zanzanaService.NewService(ctx, zapLogger, nil, &zanzanaService.Config{
 		DBURI:  dbConfig.ConnectionString,
