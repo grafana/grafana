@@ -121,7 +121,7 @@ func selectDualWriter(mode int, legacy LegacyStorage, storage Storage) DualWrite
 		dw := NewDualWriterMode4(legacy, storage)
 		return DualWrite{dw}
 	default:
-		dw := NewDualWriterMode2(legacy, storage)
+		dw := NewDualWriterMode1(legacy, storage)
 		return DualWrite{dw}
 	}
 }
