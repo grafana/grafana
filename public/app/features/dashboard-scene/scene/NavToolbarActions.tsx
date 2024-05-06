@@ -23,6 +23,7 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
 import { PanelEditor } from '../panel-edit/PanelEditor';
+import ShareButton from '../sharing/ShareButton/ShareButton';
 import { ShareModal } from '../sharing/ShareModal';
 import { DashboardInteractions } from '../utils/interactions';
 import { DynamicDashNavButtonModel, dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
@@ -54,6 +55,7 @@ export function ToolbarActions({ dashboard }: Props) {
     meta,
     editview,
     editPanel,
+    editable,
     hasCopiedPanel: copiedPanel,
   } = dashboard.useState();
   const { isPlaying } = playlistSrv.useState();
@@ -304,9 +306,10 @@ export function ToolbarActions({ dashboard }: Props) {
     ),
   });
 
+  const showShareButton = uid && !isEditing && !meta.isSnapshot && !isPlaying;
   toolbarActions.push({
     group: 'main-buttons',
-    condition: uid && !isEditing && !meta.isSnapshot && !isPlaying,
+    condition: !config.featureToggles.newDashboardSharingComponent && showShareButton,
     render: () => (
       <Button
         key="share-dashboard-button"
@@ -327,7 +330,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: !isEditing && dashboard.canEditDashboard() && !isViewingPanel && !isPlaying,
+    condition: !isEditing && dashboard.canEditDashboard() && !isViewingPanel && !isPlaying && editable,
     render: () => (
       <Button
         onClick={() => {
@@ -336,13 +339,40 @@ export function ToolbarActions({ dashboard }: Props) {
         tooltip="Enter edit mode"
         key="edit"
         className={styles.buttonWithExtraMargin}
-        variant="primary"
+        variant={config.featureToggles.newDashboardSharingComponent ? 'secondary' : 'primary'}
         size="sm"
         data-testid={selectors.components.NavToolbar.editDashboard.editButton}
       >
         Edit
       </Button>
     ),
+  });
+
+  toolbarActions.push({
+    group: 'main-buttons',
+    condition: !isEditing && dashboard.canEditDashboard() && !isViewingPanel && !isPlaying && !editable,
+    render: () => (
+      <Button
+        onClick={() => {
+          dashboard.onEnterEditMode();
+          dashboard.setState({ editable: true, meta: { ...meta, canEdit: true } });
+        }}
+        tooltip="This dashboard was marked as read only"
+        key="edit"
+        className={styles.buttonWithExtraMargin}
+        variant="secondary"
+        size="sm"
+        data-testid={selectors.components.NavToolbar.editDashboard.editButton}
+      >
+        Make editable
+      </Button>
+    ),
+  });
+
+  toolbarActions.push({
+    group: 'new-share-dashboard-button',
+    condition: config.featureToggles.newDashboardSharingComponent && showShareButton,
+    render: () => <ShareButton key="new-share-dashboard-button" dashboard={dashboard} />,
   });
 
   toolbarActions.push({
