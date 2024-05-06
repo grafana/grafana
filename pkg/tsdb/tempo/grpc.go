@@ -104,9 +104,8 @@ func getDialOpts(ctx context.Context, settings backend.DataSourceInstanceSetting
 				 // We return `conn` anyway since we need to better test how context cancellation works
 				return conn, fmt.Errorf("context canceled: %w", err)
 			default:
-				logger.Debug("Context is still valid")
+				return conn, nil
 			}
-			return conn, nil
 		}))
 	}
 
