@@ -6,8 +6,6 @@ import {
   AlertManagerCortexConfig,
   AlertmanagerGroup,
   AlertmanagerStatus,
-  ExternalAlertmanagerConfig,
-  ExternalAlertmanagersResponse,
   Receiver,
   TestReceiversAlert,
   TestReceiversPayload,
@@ -163,41 +161,4 @@ function getReceiverResultError(receiversResult: TestReceiversResult) {
         .map((receiver) => receiver.error ?? 'Unknown error.')
     )
     .join('; ');
-}
-
-export async function addAlertManagers(alertManagerConfig: ExternalAlertmanagerConfig): Promise<void> {
-  await lastValueFrom(
-    getBackendSrv().fetch({
-      method: 'POST',
-      data: alertManagerConfig,
-      url: '/api/v1/ngalert/admin_config',
-      showErrorAlert: false,
-      showSuccessAlert: false,
-    })
-  ).then(() => {
-    fetchExternalAlertmanagerConfig();
-  });
-}
-
-export async function fetchExternalAlertmanagers(): Promise<ExternalAlertmanagersResponse> {
-  const result = await lastValueFrom(
-    getBackendSrv().fetch<ExternalAlertmanagersResponse>({
-      method: 'GET',
-      url: '/api/v1/ngalert/alertmanagers',
-    })
-  );
-
-  return result.data;
-}
-
-export async function fetchExternalAlertmanagerConfig(): Promise<ExternalAlertmanagerConfig> {
-  const result = await lastValueFrom(
-    getBackendSrv().fetch<ExternalAlertmanagerConfig>({
-      method: 'GET',
-      url: '/api/v1/ngalert/admin_config',
-      showErrorAlert: false,
-    })
-  );
-
-  return result.data;
 }
