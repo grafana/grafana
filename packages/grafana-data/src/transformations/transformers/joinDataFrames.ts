@@ -375,29 +375,37 @@ function joinInnerTabular(tables: AlignedData[]): Array<Array<string | number | 
   };
 
   // Recursive function to perform the inner join
-  const joinTables = (currentTables: AlignedData[], currentIndex: number, currentRow: Array<string | number | null | undefined>) => {
-    if (currentTables.length === 0) {
-      // Base case: no more tables to join, add the current row to the result
+  const joinTables = (
+    currentTables: AlignedData[],
+    currentIndex: number,
+    currentRow: Array<string | number | null | undefined>
+  ) => {
+    if (currentIndex === currentTables.length) {
+      // Base case: all tables have been joined, add the current row to the result
       joinedTables.push(currentRow);
       return;
     }
 
-    const [currentTable, ...remainingTables] = currentTables;
+    const currentTable = currentTables[currentIndex];
     const [xValues, ...yValues] = currentTable;
 
     for (let i = 0; i < xValues.length; i++) {
-      const newRow = [...currentRow];
+      const value = getValue(xValues, i);
 
-      if (currentIndex === 0) {
-        newRow.push(getValue(xValues, i));
+      if (currentIndex === 0 || currentRow.includes(value)) {
+        const newRow = [...currentRow];
+
+        if (currentIndex === 0) {
+          newRow.push(value);
+        }
+
+        for (let j = 0; j < yValues.length; j++) {
+          newRow.push(getValue(yValues[j], i));
+        }
+
+        // Recursive call for the next table
+        joinTables(currentTables, currentIndex + 1, newRow);
       }
-
-      for (let j = 0; j < yValues.length; j++) {
-        newRow.push(getValue(yValues[j], i));
-      }
-
-      // Recursive call for the remaining tables
-      joinTables(remainingTables, currentIndex + 1, newRow);
     }
   };
 
@@ -405,7 +413,7 @@ function joinInnerTabular(tables: AlignedData[]): Array<Array<string | number | 
   joinTables(tables, 0, []);
 
   // Transpose the joined tables to get the desired output format
-  return joinedTables[0].map((_, colIndex) => joinedTables.map(row => row[colIndex]));
+  return joinedTables[0].map((_, colIndex) => joinedTables.map((row) => row[colIndex]));
 }
 
 //--------------------------------------------------------------------------------
