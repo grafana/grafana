@@ -2,10 +2,10 @@ package store
 
 import (
 	"context"
+	"log/slog"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/filestorage"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -42,7 +42,7 @@ type pathFilterFileGuardian struct {
 	user               *user.SignedInUser
 	prefix             string
 	pathFilterByAction map[string]filestorage.PathFilter
-	log                log.Logger
+	log                *slog.Logger
 }
 
 func (a *pathFilterFileGuardian) getPathFilter(action string) filestorage.PathFilter {

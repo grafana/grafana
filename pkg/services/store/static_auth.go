@@ -2,9 +2,9 @@ package store
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/grafana/grafana/pkg/infra/filestorage"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -14,12 +14,12 @@ func newStaticStorageAuthService(createPathFilterByAction createPathFilterByActi
 	return &staticStorageAuth{
 		denyAllFileGuardian:      &denyAllFileGuardian{},
 		createPathFilterByAction: createPathFilterByAction,
-		log:                      log.New("staticStorageAuthService"),
+		log:                      slog.Default().With("logger", "staticStorageAuthService"),
 	}
 }
 
 type staticStorageAuth struct {
-	log                      log.Logger
+	log                      *slog.Logger
 	denyAllFileGuardian      fileGuardian
 	createPathFilterByAction createPathFilterByAction
 }

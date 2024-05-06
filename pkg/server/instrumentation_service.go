@@ -2,23 +2,23 @@ package server
 
 import (
 	"context"
+	"log/slog"
 	"net"
 	"net/http"
 	"time"
 
 	"github.com/grafana/dskit/services"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type instrumentationService struct {
 	*services.BasicService
 	httpServ *http.Server
-	log      log.Logger
+	log      *slog.Logger
 	errChan  chan error
 }
 
-func NewInstrumentationService(log log.Logger) (*instrumentationService, error) {
+func NewInstrumentationService(log *slog.Logger) (*instrumentationService, error) {
 	s := &instrumentationService{log: log}
 	s.BasicService = services.NewBasicService(s.start, s.running, s.stop)
 	return s, nil

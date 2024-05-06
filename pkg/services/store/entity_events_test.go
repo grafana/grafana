@@ -2,13 +2,13 @@ package store
 
 import (
 	"context"
+	"log/slog"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 func saveEvent(ctx context.Context, sql db.DB, cmd SaveEventCmd) error {
@@ -32,7 +32,7 @@ func TestIntegrationEntityEventsService(t *testing.T) {
 	setup := func() *entityEventService {
 		return &entityEventService{
 			sql: db.InitTestDB(t),
-			log: log.New("entity-event-test"),
+			log: slog.Default().With("logger", "entity-event-test"),
 		}
 	}
 

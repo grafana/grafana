@@ -6,13 +6,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -23,7 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var grafanaStorageLogger = log.New("grafanaStorageLogger")
+var grafanaStorageLogger = slog.Default().With("logger", "grafanaStorageLogger")
 
 var ErrUnsupportedStorage = errors.New("storage does not support this operation")
 var ErrUploadInternalError = errors.New("upload internal error")

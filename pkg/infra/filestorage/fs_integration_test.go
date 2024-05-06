@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"log/slog"
 	"os"
 	"path"
 	"testing"
@@ -11,7 +12,6 @@ import (
 	"gocloud.dev/blob"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -49,14 +49,14 @@ const (
 )
 
 func runTests(createCases func() []fsTestCase, t *testing.T) {
-	var testLogger log.Logger
+	var testLogger *slog.Logger
 	var sqlStore db.DB
 	var filestorage FileStorage
 	var ctx context.Context
 	var tempDir string
 
 	commonSetup := func() {
-		testLogger = log.New("testStorageLogger")
+		testLogger = slog.Default().With("logger", "testStorageLogger")
 		ctx = context.Background()
 	}
 

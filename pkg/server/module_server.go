@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net"
 	"os"
 	"path/filepath"
@@ -11,7 +12,6 @@ import (
 
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/api"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	storageServer "github.com/grafana/grafana/pkg/services/store/entity/server"
@@ -42,7 +42,7 @@ func newModuleServer(opts Options, apiOpts api.ServerOptions, features featuremg
 		context:          rootCtx,
 		shutdownFn:       shutdownFn,
 		shutdownFinished: make(chan struct{}),
-		log:              log.New("base-server"),
+		log:              slog.Default().With("logger", "base-server"),
 		features:         features,
 		cfg:              cfg,
 		pidFile:          opts.PidFile,
@@ -64,7 +64,7 @@ type ModuleServer struct {
 	features         featuremgmt.FeatureToggles
 	context          context.Context
 	shutdownFn       context.CancelFunc
-	log              log.Logger
+	log              *slog.Logger
 	cfg              *setting.Cfg
 	shutdownOnce     sync.Once
 	shutdownFinished chan struct{}

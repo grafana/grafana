@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/hex"
+	"log/slog"
 	"reflect"
 
 	// can ignore because we don't need a cryptographically secure hash function
@@ -15,7 +16,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
@@ -46,7 +46,7 @@ type fileMeta struct {
 
 type dbFileStorage struct {
 	db  db.DB
-	log log.Logger
+	log *slog.Logger
 }
 
 func createPathHash(path string) (string, error) {
@@ -63,7 +63,7 @@ func createContentsHash(contents []byte) string {
 	return hex.EncodeToString(hash[:])
 }
 
-func NewDbStorage(log log.Logger, db db.DB, filter PathFilter, rootFolder string) FileStorage {
+func NewDbStorage(log *slog.Logger, db db.DB, filter PathFilter, rootFolder string) FileStorage {
 	return newWrapper(log, &dbFileStorage{
 		log: log,
 		db:  db,

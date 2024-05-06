@@ -2,9 +2,9 @@ package server
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/grafana/dskit/services"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/registry"
@@ -53,13 +53,13 @@ type service struct {
 
 	authenticator interceptors.Authenticator
 
-	log log.Logger
+	log *slog.Logger
 }
 
 func ProvideService(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
-	log log.Logger,
+	log *slog.Logger,
 ) (*service, error) {
 	tracingCfg, err := tracing.ProvideTracingConfig(cfg)
 	if err != nil {

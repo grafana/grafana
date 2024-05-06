@@ -5,14 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"strings"
 
 	"gocloud.dev/blob"
 	_ "gocloud.dev/blob/fileblob"
 	_ "gocloud.dev/blob/memblob"
 	"gocloud.dev/gcerrors"
-
-	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 const (
@@ -20,11 +19,11 @@ const (
 )
 
 type cdkBlobStorage struct {
-	log    log.Logger
+	log    *slog.Logger
 	bucket *blob.Bucket
 }
 
-func NewCdkBlobStorage(log log.Logger, bucket *blob.Bucket, rootFolder string, filter PathFilter) FileStorage {
+func NewCdkBlobStorage(log *slog.Logger, bucket *blob.Bucket, rootFolder string, filter PathFilter) FileStorage {
 	return newWrapper(log, &cdkBlobStorage{
 		log:    log,
 		bucket: bucket,

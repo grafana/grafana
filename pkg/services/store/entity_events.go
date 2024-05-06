@@ -3,10 +3,10 @@ package store
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -77,14 +77,14 @@ func ProvideEntityEventsService(cfg *setting.Cfg, sqlStore db.DB, features featu
 	return &entityEventService{
 		sql:           sqlStore,
 		features:      features,
-		log:           log.New("entity-events"),
+		log:           slog.Default().With("logger", "entity-events"),
 		eventHandlers: make([]EventHandler, 0),
 	}
 }
 
 type entityEventService struct {
 	sql           db.DB
-	log           log.Logger
+	log           *slog.Logger
 	features      featuremgmt.FeatureToggles
 	eventHandlers []EventHandler
 }

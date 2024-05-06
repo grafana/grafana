@@ -3,11 +3,11 @@ package filestorage
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"mime"
 	"path/filepath"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
@@ -16,7 +16,7 @@ var (
 )
 
 type wrapper struct {
-	log        log.Logger
+	log        *slog.Logger
 	wrapped    FileStorage
 	filter     PathFilter
 	rootFolder string
@@ -51,7 +51,7 @@ func (w wrappedPathFilter) asSQLFilter() accesscontrol.SQLFilter {
 	return sqlFilter
 }
 
-func newWrapper(log log.Logger, wrapped FileStorage, pathFilter PathFilter, rootFolder string) FileStorage {
+func newWrapper(log *slog.Logger, wrapped FileStorage, pathFilter PathFilter, rootFolder string) FileStorage {
 	var wrappedPathFilter PathFilter
 	if pathFilter != nil {
 		wrappedPathFilter = wrapPathFilter(pathFilter, rootFolder)
