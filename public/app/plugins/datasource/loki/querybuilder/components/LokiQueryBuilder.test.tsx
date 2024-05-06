@@ -82,7 +82,9 @@ describe('LokiQueryBuilder', () => {
     const labels = screen.getByText(/Label filters/);
     const selects = getAllByRole(getSelectParent(labels)!, 'combobox');
     await userEvent.click(selects[5]);
-    expect(props.datasource.languageProvider.fetchLabelValues).toHaveBeenCalledWith('job', { timeRange: mockTimeRange });
+    expect(props.datasource.languageProvider.fetchLabelValues).toHaveBeenCalledWith('job', {
+      timeRange: mockTimeRange,
+    });
   });
 
   it('no streamSelector in fetchLabelValues if preselected label have regex equality matcher with match everything value (.*)', async () => {
@@ -101,7 +103,9 @@ describe('LokiQueryBuilder', () => {
     const labels = screen.getByText(/Label filters/);
     const selects = getAllByRole(getSelectParent(labels)!, 'combobox');
     await userEvent.click(selects[5]);
-    expect(props.datasource.languageProvider.fetchLabelValues).toHaveBeenCalledWith('job', { timeRange: mockTimeRange });
+    expect(props.datasource.languageProvider.fetchLabelValues).toHaveBeenCalledWith('job', {
+      timeRange: mockTimeRange,
+    });
   });
 
   it('no streamSelector in fetchLabels if preselected label have regex equality matcher with match everything value (.*)', async () => {
@@ -159,11 +163,11 @@ describe('LokiQueryBuilder', () => {
     await waitFor(() => expect(screen.getByText('job')).toBeInTheDocument());
     await userEvent.click(screen.getByText('job'));
     await userEvent.click(selects[5]);
-    expect(props.datasource.languageProvider.fetchLabels).toBeCalledWith({
+    expect(props.datasource.languageProvider.fetchLabels).toHaveBeenCalledWith({
       streamSelector: '{baz="bar"}',
       timeRange: mockTimeRange,
     });
-    expect(props.datasource.languageProvider.fetchLabelValues).toBeCalledWith('job', {
+    expect(props.datasource.languageProvider.fetchLabelValues).toHaveBeenCalledWith('job', {
       streamSelector: '{baz="bar"}',
       timeRange: mockTimeRange,
     });

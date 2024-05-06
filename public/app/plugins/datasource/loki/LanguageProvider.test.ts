@@ -310,7 +310,7 @@ describe('Language completion provider', () => {
       const instance = new LanguageProvider(datasourceWithLabels);
       instance.request = jest.fn();
       await instance.fetchLabels({ timeRange: mockTimeRange });
-      expect(instance.request).toBeCalledWith('labels', datasourceWithLabels.getTimeRangeParams(mockTimeRange));
+      expect(instance.request).toHaveBeenCalledWith('labels', datasourceWithLabels.getTimeRangeParams(mockTimeRange));
     });
 
     it('should use series endpoint for request with stream selector', async () => {
