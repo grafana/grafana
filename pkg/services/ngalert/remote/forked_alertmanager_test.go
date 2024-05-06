@@ -712,6 +712,3 @@ type errConfigStore struct{}
 func (s *errConfigStore) GetLatestAlertmanagerConfiguration(context.Context, int64) (*models.AlertConfiguration, error) {
 	return nil, errors.New("test error")
 }
-func (s *errConfigStore) SaveAlertmanagerConfiguration(context.Context, *models.SaveAlertmanagerConfigurationCmd) error {
-	return errors.New("test error")
-}

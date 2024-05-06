@@ -16,7 +16,6 @@ import (
 
 type configStore interface {
 	GetLatestAlertmanagerConfiguration(ctx context.Context, orgID int64) (*models.AlertConfiguration, error)
-	SaveAlertmanagerConfiguration(context.Context, *models.SaveAlertmanagerConfigurationCmd) error
 }
 
 //go:generate mockery --name remoteAlertmanager --structname RemoteAlertmanagerMock --with-expecter --output mock --outpkg alertmanager_mock
