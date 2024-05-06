@@ -12,12 +12,13 @@ import (
 )
 
 func BenchmarkRuleWithFolderFingerprint(b *testing.B) {
-	rules := models.GenerateAlertRules(b.N, models.AlertRuleGen(func(rule *models.AlertRule) {
+	gen := models.RuleGen
+	rules := gen.With(func(rule *models.AlertRule) {
 		rule.Data = make([]models.AlertQuery, 0, 5)
 		for i := 0; i < rand.Intn(5)+1; i++ {
-			rule.Data = append(rule.Data, models.GenerateAlertQuery())
+			rule.Data = append(rule.Data, gen.GenerateQuery())
 		}
-	}))
+	}).GenerateManyRef(b.N)
 	folder := uuid.NewString()
 	b.ReportAllocs()
 	b.ResetTimer()

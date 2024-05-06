@@ -470,10 +470,12 @@ type Cfg struct {
 	RBACSingleOrganization bool
 
 	// GRPC Server.
-	GRPCServerNetwork       string
-	GRPCServerAddress       string
-	GRPCServerTLSConfig     *tls.Config
-	GRPCServerEnableLogging bool // log request and response of each unary gRPC call
+	GRPCServerNetwork        string
+	GRPCServerAddress        string
+	GRPCServerTLSConfig      *tls.Config
+	GRPCServerEnableLogging  bool // log request and response of each unary gRPC call
+	GRPCServerMaxRecvMsgSize int
+	GRPCServerMaxSendMsgSize int
 
 	CustomResponseHeaders map[string]string
 
@@ -574,6 +576,7 @@ func RedactedValue(key, value string) string {
 		"VAULT_TOKEN",
 		"CLIENT_SECRET",
 		"ENTERPRISE_LICENSE",
+		"GF_ENTITY_API_DB_PASS",
 	} {
 		if match, err := regexp.MatchString(pattern, uppercased); match && err == nil {
 			return RedactedPassword
@@ -1769,6 +1772,8 @@ func readGRPCServerSettings(cfg *Cfg, iniFile *ini.File) error {
 	cfg.GRPCServerNetwork = valueAsString(server, "network", "tcp")
 	cfg.GRPCServerAddress = valueAsString(server, "address", "")
 	cfg.GRPCServerEnableLogging = server.Key("enable_logging").MustBool(false)
+	cfg.GRPCServerMaxRecvMsgSize = server.Key("max_recv_msg_size").MustInt(0)
+	cfg.GRPCServerMaxSendMsgSize = server.Key("max_send_msg_size").MustInt(0)
 	switch cfg.GRPCServerNetwork {
 	case "unix":
 		if cfg.GRPCServerAddress != "" {

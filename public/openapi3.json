@@ -3671,11 +3671,10 @@
             "format": "date-time",
             "type": "string"
           },
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
           "stack": {
+            "type": "string"
+          },
+          "uid": {
             "type": "string"
           },
           "updated": {
@@ -3689,7 +3688,7 @@
         "properties": {
           "runs": {
             "items": {
-              "$ref": "#/components/schemas/MigrateDataResponseDTO"
+              "$ref": "#/components/schemas/MigrateDataResponseListDTO"
             },
             "type": "array"
           }
@@ -6839,15 +6838,14 @@
       },
       "MigrateDataResponseDTO": {
         "properties": {
-          "id": {
-            "format": "int64",
-            "type": "integer"
-          },
           "items": {
             "items": {
               "$ref": "#/components/schemas/MigrateDataResponseItemDTO"
             },
             "type": "array"
+          },
+          "uid": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -6881,6 +6879,14 @@
           "refId",
           "status"
         ],
+        "type": "object"
+      },
+      "MigrateDataResponseListDTO": {
+        "properties": {
+          "uid": {
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "MoveFolderCommand": {
@@ -11941,7 +11947,6 @@
         "type": "object"
       },
       "gettableAlert": {
-        "description": "GettableAlert gettable alert",
         "properties": {
           "annotations": {
             "$ref": "#/components/schemas/labelSet"
@@ -12003,6 +12008,7 @@
         "type": "array"
       },
       "gettableSilence": {
+        "description": "GettableSilence gettable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -12202,7 +12208,6 @@
         "type": "array"
       },
       "postableSilence": {
-        "description": "PostableSilence postable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -14988,18 +14993,51 @@
         ]
       }
     },
-    "/cloudmigration/migration/{id}": {
+    "/cloudmigration/migration/run/{runUID}": {
+      "get": {
+        "operationId": "getCloudMigrationRun",
+        "parameters": [
+          {
+            "description": "RunUID of a migration run",
+            "in": "path",
+            "name": "runUID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/cloudMigrationRunResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get the result of a single migration run.",
+        "tags": [
+          "migrations"
+        ]
+      }
+    },
+    "/cloudmigration/migration/{uid}": {
       "delete": {
         "operationId": "deleteCloudMigration",
         "parameters": [
           {
-            "description": "ID of an migration",
+            "description": "UID of a migration",
             "in": "path",
-            "name": "id",
+            "name": "uid",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -15024,13 +15062,12 @@
         "operationId": "getCloudMigration",
         "parameters": [
           {
-            "description": "ID of an migration",
+            "description": "UID of a migration",
             "in": "path",
-            "name": "id",
+            "name": "uid",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -15054,18 +15091,17 @@
         ]
       }
     },
-    "/cloudmigration/migration/{id}/run": {
+    "/cloudmigration/migration/{uid}/run": {
       "get": {
         "operationId": "getCloudMigrationRunList",
         "parameters": [
           {
-            "description": "ID of an migration",
+            "description": "UID of a migration",
             "in": "path",
-            "name": "id",
+            "name": "uid",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -15093,13 +15129,12 @@
         "operationId": "runCloudMigration",
         "parameters": [
           {
-            "description": "ID of an migration",
+            "description": "UID of a migration",
             "in": "path",
-            "name": "id",
+            "name": "uid",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -15118,51 +15153,6 @@
           }
         },
         "summary": "Trigger the run of a migration to the Grafana Cloud.",
-        "tags": [
-          "migrations"
-        ]
-      }
-    },
-    "/cloudmigration/migration/{id}/run/{runID}": {
-      "get": {
-        "operationId": "getCloudMigrationRun",
-        "parameters": [
-          {
-            "description": "ID of an migration",
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          },
-          {
-            "description": "Run ID of a migration run",
-            "in": "path",
-            "name": "runID",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/cloudMigrationRunResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Get the result of a single migration run.",
         "tags": [
           "migrations"
         ]
