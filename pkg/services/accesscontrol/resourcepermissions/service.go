@@ -66,7 +66,13 @@ func New(cfg *setting.Cfg,
 		for _, a := range actions {
 			actionSet[a] = struct{}{}
 		}
+
+		// Add action sets to the service
+		// this adds the action set to inmemory cache
 		actionSetService.StoreActionSet(options.Resource, permission, actions)
+
+		// Store the action set name for actions to the service
+		actionSet[actionSetService.GetActionSetName(options.Resource, permission)] = struct{}{}
 	}
 
 	// Sort all permissions based on action length. Will be used when mapping between actions to permissions
