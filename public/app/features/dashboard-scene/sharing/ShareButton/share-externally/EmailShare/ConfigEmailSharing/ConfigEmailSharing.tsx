@@ -8,10 +8,7 @@ import { Trans, t } from '@grafana/ui/src/utils/i18n';
 
 import { contextSrv } from '../../../../../../../core/core';
 import { AccessControlAction } from '../../../../../../../types/accessControl';
-import {
-  useAddRecipientMutation,
-  useGetPublicDashboardQuery,
-} from '../../../../../../dashboard/api/publicDashboardApi';
+import { publicDashboardApi, useAddRecipientMutation } from '../../../../../../dashboard/api/publicDashboardApi';
 import { validEmailRegex } from '../../../../../../dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { DashboardScene } from '../../../../../scene/DashboardScene';
 import { DashboardInteractions } from '../../../../../utils/interactions';
@@ -35,7 +32,9 @@ export const ConfigEmailSharing = ({ dashboard }: { dashboard: DashboardScene })
     mode: 'onSubmit',
   });
 
-  const { data: publicDashboard } = useGetPublicDashboardQuery(dashboard.state.uid!);
+  const { data: publicDashboard } = publicDashboardApi.endpoints?.getPublicDashboard.useQueryState(
+    dashboard.state.uid!
+  );
   const [addEmail, { isLoading: isAddEmailLoading }] = useAddRecipientMutation();
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
 
@@ -50,14 +49,13 @@ export const ConfigEmailSharing = ({ dashboard }: { dashboard: DashboardScene })
       <form onSubmit={handleSubmit(onSubmit)}>
         <FieldSet disabled={!hasWritePermissions}>
           <Field
-            label={t('public-dashboard.email-sharing.invite-field-label', 'Invite')}
-            description={t('public-dashboard.email-sharing.invite-field-desc', 'Invite people by email')}
+            label="Invite someone by email"
             error={errors.email?.message}
             invalid={!!errors.email?.message || undefined}
           >
             <Stack direction="row">
               <Input
-                placeholder="Email"
+                placeholder="Type in the recipient email address and press Enter"
                 autoCapitalize="none"
                 {...register('email', {
                   required: t('public-dashboard.email-sharing.input-required-email-text', 'Email is required'),

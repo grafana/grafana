@@ -9,7 +9,6 @@ import { useStyles2 } from '@grafana/ui/';
 import { contextSrv } from '../../../../../../core/services/context_srv';
 import { AccessControlAction } from '../../../../../../types';
 import { useCreatePublicDashboardMutation } from '../../../../../dashboard/api/publicDashboardApi';
-import { NoUpsertPermissionsAlert } from '../../../../../dashboard/components/ShareModal/SharePublicDashboard/ModalAlerts/NoUpsertPermissionsAlert';
 import { PublicDashboardShareType } from '../../../../../dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { DashboardScene } from '../../../../scene/DashboardScene';
 import { DashboardInteractions } from '../../../../utils/interactions';
@@ -45,17 +44,18 @@ export const CreateEmailSharing = ({
 
   return (
     <>
-      <Alert
-        title=""
-        severity="info"
-        buttonContent={<span>Learn more</span>}
-        onRemove={() => window.open(EMAIL_SHARING_URL, '_blank')}
-        bottomSpacing={0}
-      >
-        Effective immediately, sharing public dashboards by email incurs a cost per active user. Going forward, you’ll
-        be prompted for payment whenever you add new users to your dashboard.
-      </Alert>
-      {!hasWritePermissions && <NoUpsertPermissionsAlert mode="create" />}
+      {hasWritePermissions && (
+        <Alert
+          title=""
+          severity="info"
+          buttonContent={<span>Learn more</span>}
+          onRemove={() => window.open(EMAIL_SHARING_URL, '_blank')}
+          bottomSpacing={0}
+        >
+          Effective immediately, sharing public dashboards by email incurs a cost per active user. Going forward, you’ll
+          be prompted for payment whenever you add new users to your dashboard.
+        </Alert>
+      )}
       <form onSubmit={handleSubmit(onCreate)}>
         <FieldSet disabled={disableInputs}>
           <div className={styles.checkbox}>
