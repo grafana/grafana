@@ -425,7 +425,7 @@ describe('LogContextProvider', () => {
         expect(filters).toEqual([]);
       });
 
-      it('sshould call fetchLabels with stream selector if parser', async () => {
+      it('should call fetchLabels with stream selector if parser', async () => {
         await logContextProvider.getInitContextFilters(defaultLogRow, queryWithParser);
         expect(defaultLanguageProviderMock.fetchLabels).toBeCalledWith({ streamSelector: `{bar="baz"}` });
       });
