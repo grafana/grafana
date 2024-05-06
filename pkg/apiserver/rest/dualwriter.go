@@ -9,13 +9,13 @@ import (
 )
 
 var (
-	_ rest.Storage              = (*DualWrite)(nil)
-	_ rest.Scoper               = (*DualWrite)(nil)
-	_ rest.TableConvertor       = (*DualWrite)(nil)
-	_ rest.CreaterUpdater       = (*DualWrite)(nil)
-	_ rest.CollectionDeleter    = (*DualWrite)(nil)
-	_ rest.GracefulDeleter      = (*DualWrite)(nil)
-	_ rest.SingularNameProvider = (*DualWrite)(nil)
+	_ rest.Storage              = (DualWriter)(nil)
+	_ rest.Scoper               = (DualWriter)(nil)
+	_ rest.TableConvertor       = (DualWriter)(nil)
+	_ rest.CreaterUpdater       = (DualWriter)(nil)
+	_ rest.CollectionDeleter    = (DualWriter)(nil)
+	_ rest.GracefulDeleter      = (DualWriter)(nil)
+	_ rest.SingularNameProvider = (DualWriter)(nil)
 )
 
 // Storage is a storage implementation that satisfies the same interfaces as genericregistry.Store.
@@ -86,7 +86,7 @@ var CurrentMode = Mode2
 // change DualWriter signature to get the current mode as an argument
 
 // NewDualWriter returns a new DualWriter.
-func NewDualWriter(legacy LegacyStorage, storage Storage) DualWrite {
+func NewDualWriter(legacy LegacyStorage, storage Storage) DualWriter {
 	return selectDualWriter(CurrentMode, legacy, storage)
 }
 
