@@ -5,6 +5,7 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
@@ -25,7 +26,7 @@ jest.mock('app/features/playlist/PlaylistSrv', () => ({
 }));
 
 describe('NavToolbarActions', () => {
-  describe('Give an already saved dashboard', () => {
+  describe('Given an already saved dashboard', () => {
     it('Should show correct buttons when not in editing', async () => {
       setup();
 
@@ -35,7 +36,7 @@ describe('NavToolbarActions', () => {
       expect(await screen.findByText('Share')).toBeInTheDocument();
     });
 
-    it('Should the correct buttons when playing a playlist', async () => {
+    it('Should show the correct buttons when playing a playlist', async () => {
       jest.mocked(playlistSrv).useState.mockReturnValueOnce({ isPlaying: true });
       setup();
 
@@ -99,6 +100,24 @@ describe('NavToolbarActions', () => {
       expect(screen.queryByText(selectors.pages.Dashboard.DashNav.playlistControls.prev)).not.toBeInTheDocument();
       expect(screen.queryByText(selectors.pages.Dashboard.DashNav.playlistControls.stop)).not.toBeInTheDocument();
       expect(screen.queryByText(selectors.pages.Dashboard.DashNav.playlistControls.next)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Given new sharing button', () => {
+    it('Should show old share button when newDashboardSharingComponent FF is disabled', async () => {
+      setup();
+
+      expect(await screen.findByText('Share')).toBeInTheDocument();
+      const newShareButton = screen.queryByTestId(selectors.pages.Dashboard.DashNav.newShareButton.container);
+      expect(newShareButton).not.toBeInTheDocument();
+    });
+    it('Should show new share button when newDashboardSharingComponent FF is enabled', async () => {
+      config.featureToggles.newDashboardSharingComponent = true;
+      setup();
+
+      expect(screen.queryByTestId(selectors.pages.Dashboard.DashNav.shareButton)).not.toBeInTheDocument();
+      const newShareButton = screen.getByTestId(selectors.pages.Dashboard.DashNav.newShareButton.container);
+      expect(newShareButton).toBeInTheDocument();
     });
   });
 });
