@@ -10,13 +10,13 @@ import (
 )
 
 var (
-	_ rest.Storage              = (*DualWrite)(nil)
-	_ rest.Scoper               = (*DualWrite)(nil)
-	_ rest.TableConvertor       = (*DualWrite)(nil)
-	_ rest.CreaterUpdater       = (*DualWrite)(nil)
-	_ rest.CollectionDeleter    = (*DualWrite)(nil)
-	_ rest.GracefulDeleter      = (*DualWrite)(nil)
-	_ rest.SingularNameProvider = (*DualWrite)(nil)
+	_ rest.Storage              = (DualWriter)(nil)
+	_ rest.Scoper               = (DualWriter)(nil)
+	_ rest.TableConvertor       = (DualWriter)(nil)
+	_ rest.CreaterUpdater       = (DualWriter)(nil)
+	_ rest.CollectionDeleter    = (DualWriter)(nil)
+	_ rest.GracefulDeleter      = (DualWriter)(nil)
+	_ rest.SingularNameProvider = (DualWriter)(nil)
 )
 
 // Storage is a storage implementation that satisfies the same interfaces as genericregistry.Store.
@@ -64,7 +64,7 @@ type DualWriter interface {
 	LegacyStorage
 }
 
-type DualWrite struct{ DualWriter }
+// type DualWrite struct{ DualWriter }
 
 var errDualWriterCreaterMissing = errors.New("legacy storage rest.Creater is missing")
 var errDualWriterListerMissing = errors.New("legacy storage rest.Lister is missing")
@@ -84,7 +84,7 @@ var CurrentMode = Mode2
 // #TODO make CurrentMode customisable and specific to each entity
 
 // NewDualWriter returns a new DualWriter.
-func NewDualWriter(legacy LegacyStorage, storage Storage) DualWrite {
+func NewDualWriter(legacy LegacyStorage, storage Storage) DualWriter {
 	return selectDualWriter(CurrentMode, legacy, storage)
 }
 
@@ -106,22 +106,17 @@ func (u *updateWrapper) UpdatedObject(ctx context.Context, oldObj runtime.Object
 	return u.updated, nil
 }
 
-func selectDualWriter(mode int, legacy LegacyStorage, storage Storage) DualWrite {
+func selectDualWriter(mode int, legacy LegacyStorage, storage Storage) DualWriter {
 	switch mode {
 	case Mode1:
-		dw := NewDualWriterMode1(legacy, storage)
-		return DualWrite{dw}
+		return NewDualWriterMode1(legacy, storage)
 	case Mode2:
-		dw := NewDualWriterMode2(legacy, storage)
-		return DualWrite{dw}
+		return NewDualWriterMode2(legacy, storage)
 	case Mode3:
-		dw := NewDualWriterMode3(legacy, storage)
-		return DualWrite{dw}
+		return NewDualWriterMode3(legacy, storage)
 	case Mode4:
-		dw := NewDualWriterMode4(legacy, storage)
-		return DualWrite{dw}
+		return NewDualWriterMode4(legacy, storage)
 	default:
-		dw := NewDualWriterMode1(legacy, storage)
-		return DualWrite{dw}
+		return NewDualWriterMode1(legacy, storage)
 	}
 }

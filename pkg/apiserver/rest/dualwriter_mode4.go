@@ -56,27 +56,23 @@ func (d *DualWriterMode4) List(ctx context.Context, options *metainternalversion
 }
 
 func (d *DualWriterMode4) Destroy() {
-	klog.Error("destroy not implemented")
+	d.Storage.Destroy()
 }
 
 func (d *DualWriterMode4) GetSingularName() string {
-	klog.Error("GetSingularName not implemented")
-	return ""
+	return d.Storage.GetSingularName()
 }
 
 func (d *DualWriterMode4) NamespaceScoped() bool {
-	klog.Error("NamespaceScoped not implemented")
-	return false
+	return d.Storage.NamespaceScoped()
 }
 
 func (d *DualWriterMode4) New() runtime.Object {
-	klog.Error("New not implemented")
-	return nil
+	return d.Storage.New()
 }
 
 func (d *DualWriterMode4) NewList() runtime.Object {
-	klog.Error("NewList not implemented")
-	return nil
+	return d.Storage.NewList()
 }
 
 func (d *DualWriterMode4) Watch(ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
@@ -85,6 +81,5 @@ func (d *DualWriterMode4) Watch(ctx context.Context, options *metainternalversio
 }
 
 func (d *DualWriterMode4) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
-	klog.Error("ConvertToTable not implemented")
-	return nil, nil
+	return d.Storage.ConvertToTable(ctx, object, tableOptions)
 }

@@ -139,34 +139,31 @@ func (d *DualWriterMode3) DeleteCollection(ctx context.Context, deleteValidation
 	return deleted, err
 }
 
-func (d *DualWriterMode3) Destroy() {
-	klog.Error("destroy not implemented")
-}
-
 func (d *DualWriterMode3) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
 	//TODO: implement List
 	klog.Error("List not implemented")
 	return nil, nil
 }
 
+func (d *DualWriterMode3) Destroy() {
+	d.Storage.Destroy()
+	d.Legacy.Destroy()
+}
+
 func (d *DualWriterMode3) GetSingularName() string {
-	klog.Error("GetSingularName not implemented")
-	return ""
+	return d.Storage.GetSingularName()
 }
 
 func (d *DualWriterMode3) NamespaceScoped() bool {
-	klog.Error("NamespaceScoped not implemented")
-	return false
+	return d.Storage.NamespaceScoped()
 }
 
 func (d *DualWriterMode3) New() runtime.Object {
-	klog.Error("New not implemented")
-	return nil
+	return d.Storage.New()
 }
 
 func (d *DualWriterMode3) NewList() runtime.Object {
-	klog.Error("NewList not implemented")
-	return nil
+	return d.Storage.NewList()
 }
 
 func (d *DualWriterMode3) Watch(ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
@@ -175,6 +172,5 @@ func (d *DualWriterMode3) Watch(ctx context.Context, options *metainternalversio
 }
 
 func (d *DualWriterMode3) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
-	klog.Error("ConvertToTable not implemented")
-	return nil, nil
+	return d.Storage.ConvertToTable(ctx, object, tableOptions)
 }
