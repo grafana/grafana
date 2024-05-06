@@ -21,6 +21,7 @@ import {
   SceneObjectBase,
   SceneObjectRef,
   SceneObjectState,
+  SceneObjectStateChangedEvent,
   SceneQueryRunner,
   VizPanel,
   sceneUtils,
@@ -98,19 +99,21 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     });
   }
 
-  private _updateDirty = () => {
-    const diff = jsonDiff(vizPanelToPanel(this.state.sourcePanel.resolve()), vizPanelToPanel(this.state.panel));
-    const diffCount = Object.values(diff).reduce((acc, cur) => acc + cur.length, 0);
-    return this.setState({ isDirty: diffCount > 0 });
+  private _updateDirty = (event: SceneObjectStateChangedEvent) => {
+    if (!Object.prototype.hasOwnProperty.call(event.payload.partialUpdate, 'data')) {
+      const diff = jsonDiff(vizPanelToPanel(this.state.sourcePanel.resolve()), vizPanelToPanel(this.state.panel));
+      const diffCount = Object.values(diff).reduce((acc, cur) => acc + cur.length, 0);
+      this.setState({ isDirty: diffCount > 0 });
+    }
   };
 
   private _setUpChangeSubs() {
-    this._changeSubs = [this.state.panel.subscribeToState(this._updateDirty)];
+    this._changeSubs = [this.state.panel.subscribeToEvent(SceneObjectStateChangedEvent, this._updateDirty)];
 
     if (this.state.panel.state.$data) {
       this._changeSubs.concat([
-        this.queryRunner.subscribeToState(this._updateDirty),
-        this.dataTransformer.subscribeToState(this._updateDirty),
+        this.queryRunner.subscribeToEvent(SceneObjectStateChangedEvent, this._updateDirty),
+        this.dataTransformer.subscribeToEvent(SceneObjectStateChangedEvent, this._updateDirty),
       ]);
     }
     return () => this._changeSubs.forEach((s) => s.unsubscribe());
