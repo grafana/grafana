@@ -257,6 +257,9 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
   // JEV: create inner option here?
   if (options.mode === JoinMode.outerTabular) {
     joined = joinOuterTabular(allData, originalFieldsOrderByFrame, originalFields.length, nullModes);
+  } else if (options.mode === JoinMode.inner) {
+    joined = joinInnerTabular(allData);
+    console.log(joined, 'joined');
   } else {
     joined = join(allData, nullModes, options.mode);
   }
@@ -363,6 +366,48 @@ function joinOuterTabular(
   return data;
 }
 
+function joinInnerTabular(tables: AlignedData[]): Array<Array<string | number | null | undefined>> {
+  const joinedTables: Array<Array<string | number | null | undefined>> = [];
+
+  // Helper function to get the value at a specific index from an array or typed array
+  const getValue = (arr: number[] | TypedArray | Array<number | null | undefined>, index: number) => {
+    return arr instanceof Array ? arr[index] : arr.at(index);
+  };
+
+  // Recursive function to perform the inner join
+  const joinTables = (currentTables: AlignedData[], currentIndex: number, currentRow: Array<string | number | null | undefined>) => {
+    if (currentTables.length === 0) {
+      // Base case: no more tables to join, add the current row to the result
+      joinedTables.push(currentRow);
+      return;
+    }
+
+    const [currentTable, ...remainingTables] = currentTables;
+    const [xValues, ...yValues] = currentTable;
+
+    for (let i = 0; i < xValues.length; i++) {
+      const newRow = [...currentRow];
+
+      if (currentIndex === 0) {
+        newRow.push(getValue(xValues, i));
+      }
+
+      for (let j = 0; j < yValues.length; j++) {
+        newRow.push(getValue(yValues[j], i));
+      }
+
+      // Recursive call for the remaining tables
+      joinTables(remainingTables, currentIndex + 1, newRow);
+    }
+  };
+
+  // Start the recursive join process
+  joinTables(tables, 0, []);
+
+  // Transpose the joined tables to get the desired output format
+  return joinedTables[0].map((_, colIndex) => joinedTables.map(row => row[colIndex]));
+}
+
 //--------------------------------------------------------------------------------
 // Below here is copied from uplot (MIT License)
 // https://github.com/leeoniya/uPlot/blob/master/src/utils.js#L325
@@ -414,7 +459,6 @@ function nullExpand(yVals: Array<number | null>, nullIdxs: number[], alignedLen:
 // JEV: Maybe create an inner join function?
 // JEV: this is used for the inner join and outer (time series) join as well
 
-
 // nullModes is a tables-matched array indicating how to treat nulls in each series
 export function join(tables: AlignedData[], nullModes?: number[][], mode: JoinMode = JoinMode.outer) {
   let xVals: Set<number>;
@@ -424,6 +468,7 @@ export function join(tables: AlignedData[], nullModes?: number[][], mode: JoinMo
   if (mode === JoinMode.inner) {
     // @ts-ignore
     xVals = new Set(intersect(tables.map((t) => t[0])));
+    console.log(xVals, 'xVals');
   } else {
     xVals = new Set();
 
@@ -437,10 +482,10 @@ export function join(tables: AlignedData[], nullModes?: number[][], mode: JoinMo
       }
     }
   }
-  console.log(xVals, 'xVals');
+  // console.log(xVals, 'xVals');
 
   let data = [Array.from(xVals).sort((a, b) => a - b)];
-  console.log(data, 'data');
+  // console.log(data, 'data');
 
   let alignedLen = data[0].length;
 
@@ -486,6 +531,7 @@ export function join(tables: AlignedData[], nullModes?: number[][], mode: JoinMo
     }
   }
 
+  console.log(data, 'data');
   return data;
 }
 
@@ -532,3 +578,9 @@ export function isLikelyAscendingVector(data: any[], samples = 50) {
 
   return true;
 }
+
+// [
+//   ['Mithil', 'Mithil', 'Mithil', 'Mithil', 'Mithil', 'Mithil', 'Mithil', 'Mithil', 'Mithil', 'Mithil'],
+//   ['iPhone', 'Android', 'iPhone', 'Android', 'iPhone', 'Android', 'iPhone', 'Android', 'iPhone', 'Android'],
+//   ['Phone1', 'Phone1', 'Phone2', 'Phone2', 'Phone3', 'Phone3', 'Phone4', 'Phone4', 'Phone5', 'Phone5'],
+// ];
