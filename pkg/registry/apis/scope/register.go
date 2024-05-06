@@ -212,7 +212,11 @@ func findGETHandler(w http.ResponseWriter, req *http.Request) {
 	//query := req.URL.Query().Get("query")
 	//limit := req.URL.Query().Get("limit")
 
-	// fetch scopesnodes from the api server based on parent + query match on title.
+	/*
+		1. fetch scope nodes from the api server based on parent
+		2. filter titles based on the query param. strings.HasPrefix is a good enough for now.
+		3. Limit the response to the provided param.
+	*/
 
 	var results []scope.ScopeNode = nil
 
