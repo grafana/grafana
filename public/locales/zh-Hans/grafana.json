@@ -881,7 +881,8 @@
       "title": "警报"
     },
     "alerting-admin": {
-      "title": "设置"
+      "title": "",
+      "subtitle": ""
     },
     "alerting-am-routes": {
       "subtitle": "确定警报如何路由到联络点",

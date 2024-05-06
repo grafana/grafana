@@ -887,7 +887,8 @@
       "title": "Alertes"
     },
     "alerting-admin": {
-      "title": "Paramètres"
+      "title": "",
+      "subtitle": ""
     },
     "alerting-am-routes": {
       "subtitle": "Déterminer comment les alertes sont acheminées vers les points de contact",
