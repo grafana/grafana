@@ -5,11 +5,13 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig, splitVendorChunkPlugin, type PluginOption } from 'vite';
+import EnvironmentPlugin from 'vite-plugin-environment';
 
 const require = createRequire(import.meta.url);
+const shouldMinify = process.env.NO_MINIFY === '1' ? false : 'esbuild';
 
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   root: 'public',
   build: {
     // use manifest for backend integration in production
@@ -19,7 +21,7 @@ export default defineConfig({
     },
     outDir: 'build_tmp',
     assetsDir: 'public/build',
-    minify: 'esbuild',
+    minify: shouldMinify,
   },
   server: {
     // vite binds to ipv6 by default... and that doesn't work for me locally on mac...
@@ -30,6 +32,10 @@ export default defineConfig({
     react(),
     splitVendorChunkPlugin(),
     angularHtmlImport(),
+    EnvironmentPlugin({
+      // these are default values in case NODE_ENV is not set in the environment
+      NODE_ENV: command === 'build' ? 'production' : 'development',
+    }),
     { ...moveAssets(), apply: 'build' },
     { ...visualizer(), apply: 'build' } as PluginOption,
   ],
@@ -86,7 +92,7 @@ export default defineConfig({
       return { relative: true };
     },
   },
-});
+}));
 
 /**
  * This is a Vite plugin for handling angular templates.
