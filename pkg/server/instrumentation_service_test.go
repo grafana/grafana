@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestRunInstrumentationService(t *testing.T) {
+func TestIntegrationRunInstrumentationService(t *testing.T) {
 	s, err := NewInstrumentationService(log.New("test-logger"))
 	require.NoError(t, err)
 
@@ -46,6 +46,10 @@ func TestRunInstrumentationService(t *testing.T) {
 
 	err = res.Body.Close()
 	require.NoError(t, err)
+
+	res, err = client.Get("http://localhost:3000/debug/pprof/")
+	require.NoError(t, err)
+	assert.Equal(t, 200, res.StatusCode)
 
 	err = services.StopAndAwaitTerminated(ctx, s)
 	require.NoError(t, err)
