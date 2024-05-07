@@ -110,24 +110,30 @@ const MatchersField = ({ className, required }: Props) => {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    wrapper: css({
+      marginTop: theme.spacing(2),
+    }),
     row: css({
       display: 'flex',
       alignItems: 'flex-start',
       flexDirection: 'row',
       backgroundColor: theme.colors.background.secondary,
       padding: `${theme.spacing(1)} ${theme.spacing(1)} 0 ${theme.spacing(1)}`,
-      gap: theme.spacing(1),
+      '& > * + *': {
+        marginLeft: theme.spacing(2),
+      },
     }),
     removeButton: css({
       marginLeft: theme.spacing(1),
-      marginTop: theme.spacing(3),
+      marginTop: theme.spacing(2.5),
     }),
     matcherOptions: css({
       minWidth: '140px',
     }),
     matchers: css({
-      maxWidth: theme.breakpoints.values.sm,
+      maxWidth: `${theme.breakpoints.values.sm}px`,
       margin: `${theme.spacing(1)} 0`,
+      paddingTop: theme.spacing(0.5),
     }),
   };
 };

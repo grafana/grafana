@@ -66,7 +66,7 @@ export const AlertManagerPicker = ({ disabled = false, showOnlyReceving }: Props
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  field: css`
-    margin: 0;
-  `,
+  field: css({
+    margin: 0,
+  }),
 });

@@ -547,26 +547,26 @@ function TypeSelectorButton({ onClickType }: { onClickType: (type: ExpressionQue
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  addQueryButton: css`
-    width: fit-content;
-  `,
-  helpInfo: css`
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    width: fit-content;
-    font-weight: ${theme.typography.fontWeightMedium};
-    margin-left: ${theme.spacing(1)};
-    font-size: ${theme.typography.size.sm};
-    cursor: pointer;
-  `,
-  helpInfoText: css`
-    margin-left: ${theme.spacing(0.5)};
-    text-decoration: underline;
-  `,
-  infoLink: css`
-    color: ${theme.colors.text.link};
-  `,
+  addQueryButton: css({
+    width: 'fit-content',
+  }),
+  helpInfo: css({
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: 'fit-content',
+    fontWeight: theme.typography.fontWeightMedium,
+    marginLeft: theme.spacing(1),
+    fontSize: theme.typography.size.sm,
+    cursor: 'pointer',
+  }),
+  helpInfoText: css({
+    marginLeft: theme.spacing(0.5),
+    textDecoration: 'underline',
+  }),
+  infoLink: css({
+    color: theme.colors.text.link,
+  }),
 });
 
 const useSetExpressionAndDataSource = () => {
