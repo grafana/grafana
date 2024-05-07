@@ -91,15 +91,16 @@ Administrators can find the Plugin catalog at **Administration > Plugins and dat
 
 To browse for available plugins:
 
-1. In Grafana, click **Administration > Plugins and data > Plugins** in the side navigation menu to view installed and available plugins.
-1. Use the search to filter based on name, keywords, organization and other metadata.
+1. In Grafana, click **Administration > Plugins and data > Plugins** in the side navigation menu to view installed plugins.
+1. Click the **All** filter to browse all available plugins.
 1. Click the **Data sources**, **Panels**, or **Applications** buttons to filter by plugin type.
 
 ### Install a plugin
 
 To install a plugin:
 
-1. In Grafana, click **Administration > Plugins and data > Plugins** in the side navigation menu to view all plugins.
+1. In Grafana, click **Administration > Plugins and data > Plugins** in the side navigation menu to view installed plugins.
+1. Click the **All** filter to browse all available plugins.
 1. Browse and find a plugin.
 1. Click on the plugin logo.
 1. Click **Install**.
@@ -110,8 +111,7 @@ When the update is complete, you see a confirmation message that the installatio
 
 To update a plugin:
 
-1. In Grafana, click **Administration > Plugins and data > Plugins** in the side navigation menu to view all plugins.
-1. Click the **Installed** filter to show only installed plugins.
+1. In Grafana, click **Administration > Plugins and data > Plugins** in the side navigation menu to view installed plugins.
 1. Click on the plugin logo.
 1. Click **Update**.
 
@@ -121,8 +121,7 @@ When the update is complete, you see a confirmation message that the update was 
 
 To uninstall a plugin:
 
-1. In Grafana, click **Administration > Plugins and data > Plugins** in the side navigation menu to view all plugins.
-1. Click the **Installed** filter to show only installed plugins.
+1. In Grafana, click **Administration > Plugins and data > Plugins** in the side navigation menu to view installed plugins.
 1. Click on the plugin logo.
 1. Click **Uninstall**.
 
