@@ -114,13 +114,14 @@ export const TimeSeriesPanel = ({
                   }
 
                   const annotate = () => {
-                    const xVal = u.posToVal(u.cursor.left!, 'x');
+                    let xVal = u.posToVal(u.cursor.left!, 'x');
 
                     setNewAnnotationRange({ from: xVal, to: xVal });
                     dismiss();
                   };
 
                   return (
+                    // not sure it header time here works for annotations, since it's taken from nearest datapoint index
                     <TimeSeriesTooltip
                       frames={frames}
                       seriesFrame={alignedFrame}
