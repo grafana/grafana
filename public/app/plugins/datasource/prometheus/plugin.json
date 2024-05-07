@@ -44,25 +44,25 @@
       "method": "POST",
       "path": "/rules",
       "reqRole": "Editor",
-      "reqAction": "datasources:edit"
+      "reqAction": "datasources:write"
     },
     {
       "method": "DELETE",
       "path": "/rules",
       "reqRole": "Editor",
-      "reqAction": "datasources:edit"
+      "reqAction": "datasources:write"
     },
     {
       "method": "DELETE",
       "path": "/config/v1/rules",
       "reqRole": "Editor",
-      "reqAction": "datasources:edit"
+      "reqAction": "datasources:write"
     },
     {
       "method": "POST",
       "path": "/config/v1/rules",
       "reqRole": "Editor",
-      "reqAction": "datasources:edit"
+      "reqAction": "datasources:write"
     }
   ],
   "includes": [
