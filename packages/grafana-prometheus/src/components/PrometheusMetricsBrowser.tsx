@@ -150,8 +150,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
     width: '50%',
     right: 0,
     textAlign: 'right',
-    transition: 'opacity 100ms linear',
     opacity: 0,
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition: 'opacity 100ms linear',
+    },
   }),
   statusShowing: css({
     opacity: 1,
