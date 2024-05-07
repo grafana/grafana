@@ -33,7 +33,7 @@ const SilencesDrawer = ({ rule, onClose }: Props) => {
       <Stack gap={2} direction={'column'}>
         <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={selectedAlertmanager!} />
 
-        <AlertManagerPicker />
+        <AlertManagerPicker showOnlyReceving />
 
         <SilencesEditor
           ruleUid={ruleUid}
