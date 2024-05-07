@@ -2195,9 +2195,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "4"],
       [0, 0, 0, "Do not use any type assertions.", "5"]
     ],
-    "public/app/features/canvas/runtime/frame.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
     "public/app/features/canvas/runtime/scene.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
@@ -2205,14 +2202,13 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "3"]
     ],
     "public/app/features/canvas/types.ts:5381": [
-      [0, 0, 0, "Definition for rule \'@typescript-eslint/import/no-export-from-import\' was not found.", "0"],
-      [0, 0, 0, "Do not re-export imported variable (\`Placement\`)", "1"],
-      [0, 0, 0, "Do not re-export imported variable (\`Constraint\`)", "2"],
-      [0, 0, 0, "Do not re-export imported variable (\`HorizontalConstraint\`)", "3"],
-      [0, 0, 0, "Do not re-export imported variable (\`VerticalConstraint\`)", "4"],
-      [0, 0, 0, "Do not re-export imported variable (\`BackgroundImageSize\`)", "5"],
-      [0, 0, 0, "Do not re-export imported variable (\`LineConfig\`)", "6"],
-      [0, 0, 0, "Do not re-export imported variable (\`BackgroundConfig\`)", "7"]
+      [0, 0, 0, "Do not re-export imported variable (\`Placement\`)", "0"],
+      [0, 0, 0, "Do not re-export imported variable (\`Constraint\`)", "1"],
+      [0, 0, 0, "Do not re-export imported variable (\`HorizontalConstraint\`)", "2"],
+      [0, 0, 0, "Do not re-export imported variable (\`VerticalConstraint\`)", "3"],
+      [0, 0, 0, "Do not re-export imported variable (\`BackgroundImageSize\`)", "4"],
+      [0, 0, 0, "Do not re-export imported variable (\`LineConfig\`)", "5"],
+      [0, 0, 0, "Do not re-export imported variable (\`BackgroundConfig\`)", "6"]
     ],
     "public/app/features/connections/components/ConnectionsRedirectNotice/ConnectionsRedirectNotice.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
