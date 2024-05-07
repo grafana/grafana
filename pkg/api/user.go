@@ -36,7 +36,7 @@ func (hs *HTTPServer) GetSignedInUser(c *contextmodel.ReqContext) response.Respo
 		return response.JSON(http.StatusOK, user.UserProfileDTO{
 			IsGrafanaAdmin: c.SignedInUser.GetIsGrafanaAdmin(),
 			OrgID:          c.SignedInUser.GetOrgID(),
-			UID:            strings.Join([]string{namespace, identifier}, ":"),
+			UID:            c.SignedInUser.GetID().String(),
 			Name:           c.SignedInUser.NameOrFallback(),
 			Email:          c.SignedInUser.GetEmail(),
 			Login:          c.SignedInUser.GetLogin(),
