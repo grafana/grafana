@@ -256,7 +256,7 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
   if (options.mode === JoinMode.outerTabular) {
     joined = joinOuterTabular(allData, originalFieldsOrderByFrame, originalFields.length, nullModes);
   } else if (options.mode === JoinMode.inner) {
-    joined = joinInnerTabular(allData);
+    joined = joinInner(allData);
     console.log(joined, 'joined');
   } else {
     joined = join(allData, nullModes, options.mode);
@@ -381,7 +381,7 @@ function joinOuterTabular(
  *
  * @returns {Array<Array<string | number | null | undefined>>} The joined tables as an array of arrays, where each array represents a row in the joined table.
  */
-function joinInnerTabular(tables: AlignedData[]): Array<Array<string | number | null | undefined>> {
+function joinInner(tables: AlignedData[]): Array<Array<string | number | null | undefined>> {
   console.log(tables, 'tables');
   const joinedTables: Array<Array<string | number | null | undefined>> = [];
 
