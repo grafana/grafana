@@ -100,16 +100,15 @@ In the most recent versions of Grafana, the `plugin_admin_enabled` flag is enabl
 
 To browse for available plugins:
 
-1. While logged into Grafana as an administrator, click **Administration > Plugins and data > Plugins** in the side menu to view installed plugins.
-1. Click the **All** filter to browse all available plugins.
+1. While logged into Grafana as an administrator, click **Administration > Plugins and data > Plugins** in the side menu to view installed and available plugins.
+1. Use the search to filter based on name, keywords, organization and other metadata.
 1. Click the **Data sources**, **Panels**, or **Applications** buttons to filter by plugin type.
 
 ### Install a plugin
 
 To install a plugin:
 
-1. While logged into Grafana as an administrator, click **Administration > Plugins and data > Plugins** in the side menu to view installed plugins.
-1. Click the **All** filter to browse all available plugins.
+1. In Grafana, click **Administration > Plugins and data > Plugins** in the side navigation menu to view all plugins.
 1. Browse and find a plugin.
 1. Click the plugin's logo.
 1. Click **Install**.
@@ -120,7 +119,8 @@ When the update is complete, you'll see a confirmation message that the installa
 
 To update a plugin:
 
-1. While logged into Grafana as an administrator, click **Administration > Plugins and data > Plugins** in the side menu to view installed plugins.
+1. In Grafana, click **Administration > Plugins and data > Plugins** in the side navigation menu to view all plugins.
+1. Click the **Installed** filter to show only installed plugins.
 1. Click the plugin's logo.
 1. Click **Update**.
 
@@ -130,8 +130,9 @@ When the update is complete, you'll see a confirmation message that the update w
 
 To uninstall a plugin:
 
-1. While logged into Grafana as an administrator, click **Administration > Plugins and data > Plugins** in the side menu to view installed plugins.
+1. In Grafana, click **Administration > Plugins and data > Plugins** in the side navigation menu to view all plugins.
 1. Click the plugin's logo.
+1. Click the **Installed** filter to show only installed plugins.
 1. Click **Uninstall**.
 
 When the update is complete, you'll see a confirmation message that the uninstall was successful.
