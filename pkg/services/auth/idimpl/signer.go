@@ -54,7 +54,10 @@ func (s *LocalSigner) getSigner(ctx context.Context) (jose.Signer, error) {
 	}
 
 	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.ES256, Key: key}, &jose.SignerOptions{
-		ExtraHeaders: map[jose.HeaderKey]any{headerKeyID: id},
+		ExtraHeaders: map[jose.HeaderKey]any{
+			headerKeyID:     id,
+			jose.HeaderType: "jwt",
+		},
 	})
 
 	if err != nil {
