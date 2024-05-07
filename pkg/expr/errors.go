@@ -7,6 +7,8 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
+var ErrSeriesMustBeWide = errors.New("input data must be a wide series")
+
 var ConversionError = errutil.BadRequest("sse.readDataError").MustTemplate(
 	"[{{ .Public.refId }}] got error: {{ .Error }}",
 	errutil.WithPublic(
