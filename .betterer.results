@@ -1161,6 +1161,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
+    "public/app/emotion.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`@emotion/css/create-instance\`)", "0"]
+    ],
     "public/app/features/admin/LicenseChrome.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"],

@@ -21,6 +21,8 @@ module.exports = {
       // some of data source plugins use global Prism object to add the language definition
       // we want to have same Prism object in core and in grafana/ui
       prismjs: require.resolve('prismjs'),
+      '@emotion/css/create-instance': require.resolve('@emotion/css/create-instance'),
+      '@emotion/css': path.resolve(__dirname, '../../public/app/emotion.ts'),
       // some sub-dependencies use a different version of @emotion/react and generate warnings
       // in the browser about @emotion/react loaded twice. We want to only load it once
       '@emotion/react': require.resolve('@emotion/react'),

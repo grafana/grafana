@@ -11,7 +11,8 @@
     "incremental": true,
     "tsBuildInfoFile": "./tsconfig.tsbuildinfo",
     "paths": {
-      "@grafana/schema/dist/esm/*": ["../packages/grafana-schema/src/*"]
+      "@grafana/schema/dist/esm/*": ["../packages/grafana-schema/src/*"],
+      "@emotion/css": ["app/emotion.ts"]
     }
   },
   "extends": "@grafana/tsconfig/base.json",
