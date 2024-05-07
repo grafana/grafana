@@ -1,0 +1,122 @@
+.json-formatter-row {
+  font-family: monospace;
+
+  &,
+  a,
+  a:hover {
+    color: $json-explorer-default-color;
+    text-decoration: none;
+  }
+
+  .json-formatter-row {
+    margin-left: $space-md;
+  }
+
+  .json-formatter-children {
+    &.json-formatter-empty {
+      opacity: 0.5;
+      margin-left: $space-md;
+
+      &::after {
+        display: none;
+      }
+      &.json-formatter-object::after {
+        content: 'No properties';
+      }
+      &.json-formatter-array::after {
+        content: '[]';
+      }
+    }
+  }
+
+  .json-formatter-string {
+    color: $json-explorer-string-color;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    word-break: break-all;
+  }
+
+  .json-formatter-number {
+    color: $json-explorer-number-color;
+  }
+  .json-formatter-boolean {
+    color: $json-explorer-boolean-color;
+  }
+  .json-formatter-null {
+    color: $json-explorer-null-color;
+  }
+  .json-formatter-undefined {
+    color: $json-explorer-undefined-color;
+  }
+  .json-formatter-function {
+    color: $json-explorer-function-color;
+  }
+  .json-formatter-date {
+    background-color: fade($json-explorer-default-color, 5%);
+  }
+  .json-formatter-url {
+    text-decoration: underline;
+    color: $json-explorer-url-color;
+    cursor: pointer;
+  }
+
+  .json-formatter-bracket {
+    color: $json-explorer-bracket-color;
+  }
+  .json-formatter-key {
+    color: $json-explorer-key-color;
+    cursor: pointer;
+    padding-right: $space-xxs;
+    margin-right: 4px;
+  }
+
+  .json-formatter-constructor-name {
+    cursor: pointer;
+  }
+
+  .json-formatter-array-comma {
+    margin-right: 4px;
+  }
+
+  .json-formatter-toggler {
+    line-height: 16px;
+    font-size: $font-size-xs;
+    vertical-align: middle;
+    opacity: $json-explorer-toggler-opacity;
+    cursor: pointer;
+    padding-right: $space-xxs;
+
+    &::after {
+      display: inline-block;
+      transition: transform $json-explorer-rotate-time ease-in;
+      content: '►';
+    }
+  }
+
+  // Inline preview on hover (optional)
+  > a > .json-formatter-preview-text {
+    opacity: 0;
+    transition: opacity 0.15s ease-in;
+    font-style: italic;
+  }
+
+  &:hover > a > .json-formatter-preview-text {
+    opacity: 0.6;
+  }
+
+  // Open state
+  &.json-formatter-open {
+    > .json-formatter-toggler-link .json-formatter-toggler::after {
+      transform: rotate(90deg);
+    }
+    > .json-formatter-children::after {
+      display: inline-block;
+    }
+    > a > .json-formatter-preview-text {
+      display: none;
+    }
+    &.json-formatter-empty::after {
+      display: block;
+    }
+  }
+}
