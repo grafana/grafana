@@ -788,13 +788,13 @@ Use this transformation to merge multiple results into a single table, enabling 
 
 This is especially useful for converting multiple time series results into a single wide table with a shared time field.
 
-#### Inner join (for Time Series data)
+#### Inner join
 
 An inner join merges data from multiple tables where all tables share the same value from the selected field. This type of join excludes data where values do not match in every result.
 
 Use this transformation to combine the results from multiple queries (combining on a passed join field or the first time column) into one result, and drop rows where a successful join cannot occur.
 
-In the following example, two queries return table data. It is visualized as two separate tables before applying the inner join transformation.
+In the following example, two queries return Time Series data. It is visualized as two separate tables before applying the inner join transformation.
 
 **Query A:**
 
@@ -818,6 +818,38 @@ The result after applying the inner join transformation looks like the following
 | ------------------- | ------- | --------- | -------- | ------ |
 | 2020-07-07 11:34:20 | node    | 25260122  | server 1 | 15     |
 | 2020-07-07 11:24:20 | postgre | 123001233 | server 2 | 5      |
+
+This works in the same way for non-Time Series tabular data as well.
+
+**Students**
+
+| StudentID | Name     | Major            |
+| --------- | -------- | ---------------- |
+| 1         | John     | Computer Science |
+| 2         | Emily    | Mathematics      |
+| 3         | Michael  | Physics          |
+| 4         | Jennifer | Chemistry        |
+
+**Enrollments**
+
+| StudentID | CourseID | Grade |
+|-----------|----------|-------|
+| 1         | CS101    | A     |
+| 1         | CS102    | B     |
+| 2         | MATH201  | A     |
+| 3         | PHYS101  | B     |
+| 5         | HIST101  | B     |
+
+The result after applying the inner join transformation looks like the following:
+
+| StudentID | Name    | Major            | CourseID | Grade |
+| --------- | ------- | ---------------- | -------  | ----- |
+| 1         | John    | Computer Science | CS101    | A     |
+| 1         | John    | Computer Science | CS102    | B     |
+| 2         | Emily   | Mathematics      | MATH201  | A     |
+| 3         | Michael | Physics          | PHYS101  | B     |
+
+The inner join only includes rows where there is a match between the "StudentID" in both tables. In this case, the result does not include "Jennifer" from the "Students" table because there are no matching enrollments for her in the "Enrollments" table.
 
 #### Outer join (for Time Series data)
 
@@ -866,27 +898,37 @@ ${buildImageContent(
   'A table visualization showing results for multiple servers'
 )}
 
-#### Inner join (for tabular data)
+#### Outer join (for tabular/SQL data)
 
-#### Outer join (for tabular data)
+A tabular outer join combinings tables so that the result includes matched and unmatched rows from either or both tables.
 
-
-
-| Class    | Day       | Room |
-| -------- | --------- | ---- |
-| BIOLOGY  | Wednesday | 18   |
-| BIOLOGY  | Tuesday   | 72   |
-| BIOLOGY  | Monday    | 13   |
-| CALCULUS | Wednesday | 17   |
-| CALCULUS | Tuesday   | 71   |
-| CALCULUS | Monday    | 7    |
+| StudentID | Name      | Major            |
+| --------- | --------- | ---------------- |
+| 1         | John      | Computer Science |
+| 2         | Emily     | Mathematics      |
+| 3         | Michael   | Physics          |
+| 4         | Jennifer  | Chemistry        |
 
 Can now be joined with:
 
-| Class    | Room |
-| -------- | ---- |
-| BIOLOGY  | 103  |
-| CALCULUS | 95   |
+| StudentID | CourseID | Grade |
+| --------- | -------- | ----- |
+| 1         | CS101    | A     |
+| 1         | CS102    | B     |
+| 2         | MATH201  | A     |
+| 3         | PHYS101  | B     |
+| 5         | HIST101  | B     |
+
+The result after applying the outer join transformation looks like the following:
+
+| StudentID | Name     | Major            | CourseID | Grade |
+| --------- | -------- | ---------------- | -------- | ----- |
+| 1         | John     | Computer Science | CS101    | A     |
+| 1         | John     | Computer Science | CS102    | B     |
+| 2         | Emily    | Mathematics      | MATH201  | A     |
+| 3         | Michael  | Physics          | PHYS101  | B     |
+| 4         | Jennifer | Chemistry        | NULL     | NULL  |
+| 5         | NULL     | NULL             | HIST101  | B     |
 
 Combine and analyze data from various queries with table joining for a comprehensive view of your information.
   `;
