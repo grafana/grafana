@@ -95,6 +95,181 @@ func getApiURL(resourceOrWorkspace string, isAppInsightsQuery bool) string {
 	}
 }
 
+func buildLogAnalyticsQuery(query backend.DataQuery, dsInfo types.DatasourceInfo, appInsightsRegExp *regexp.Regexp) (*AzureLogAnalyticsQuery, error) {
+	queryJSONModel := types.LogJSONQuery{}
+	err := json.Unmarshal(query.JSON, &queryJSONModel)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode the Azure Log Analytics query object from JSON: %w", err)
+	}
+	resources := []string{}
+	var resourceOrWorkspace string
+	var queryString string
+	resultFormat := dataquery.ResultFormat(types.TimeSeries)
+	appInsightsQuery := false
+	dashboardTime := false
+	timeColumn := ""
+	azureLogAnalyticsTarget := queryJSONModel.AzureLogAnalytics
+
+	if azureLogAnalyticsTarget.ResultFormat != nil {
+		resultFormat = *azureLogAnalyticsTarget.ResultFormat
+	}
+
+	// Legacy queries only specify a Workspace GUID, which we need to use the old workspace-centric
+	// API URL for, and newer queries specifying a resource URI should use resource-centric API.
+	// However, legacy workspace queries using a `workspaces()` template variable will be resolved
+	// to a resource URI, so they should use the new resource-centric.
+	if len(azureLogAnalyticsTarget.Resources) > 0 {
+		resources = azureLogAnalyticsTarget.Resources
+		resourceOrWorkspace = azureLogAnalyticsTarget.Resources[0]
+		appInsightsQuery = appInsightsRegExp.Match([]byte(resourceOrWorkspace))
+	} else if azureLogAnalyticsTarget.Resource != nil && *azureLogAnalyticsTarget.Resource != "" {
+		resources = []string{*azureLogAnalyticsTarget.Resource}
+		resourceOrWorkspace = *azureLogAnalyticsTarget.Resource
+	} else if azureLogAnalyticsTarget.Workspace != nil {
+		resourceOrWorkspace = *azureLogAnalyticsTarget.Workspace
+	}
+
+	if azureLogAnalyticsTarget.Query != nil {
+		queryString = *azureLogAnalyticsTarget.Query
+	}
+
+	if azureLogAnalyticsTarget.DashboardTime != nil {
+		dashboardTime = *azureLogAnalyticsTarget.DashboardTime
+		if dashboardTime {
+			if azureLogAnalyticsTarget.TimeColumn != nil {
+				timeColumn = *azureLogAnalyticsTarget.TimeColumn
+			} else {
+				// Final fallback to TimeGenerated if no column is provided
+				timeColumn = "TimeGenerated"
+			}
+		}
+	}
+
+	apiURL := getApiURL(resourceOrWorkspace, appInsightsQuery)
+
+	rawQuery, err := macros.KqlInterpolate(query, dsInfo, queryString, "TimeGenerated")
+	if err != nil {
+		return nil, err
+	}
+
+	return &AzureLogAnalyticsQuery{
+		RefID:            query.RefID,
+		ResultFormat:     resultFormat,
+		URL:              apiURL,
+		JSON:             query.JSON,
+		TimeRange:        query.TimeRange,
+		Query:            rawQuery,
+		Resources:        resources,
+		QueryType:        dataquery.AzureQueryType(query.QueryType),
+		AppInsightsQuery: appInsightsQuery,
+		DashboardTime:    dashboardTime,
+		TimeColumn:       timeColumn,
+	}, nil
+}
+
+func buildAppInsightsQuery(ctx context.Context, query backend.DataQuery, dsInfo types.DatasourceInfo, appInsightsRegExp *regexp.Regexp) (*AzureLogAnalyticsQuery, error) {
+	var resultFormat dataquery.ResultFormat
+	dashboardTime := true
+	timeColumn := ""
+	queryJSONModel := types.TracesJSONQuery{}
+	err := json.Unmarshal(query.JSON, &queryJSONModel)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode the Azure Traces query object from JSON: %w", err)
+	}
+
+	azureTracesTarget := queryJSONModel.AzureTraces
+
+	if azureTracesTarget.ResultFormat == nil {
+		resultFormat = types.Table
+	} else {
+		resultFormat = *azureTracesTarget.ResultFormat
+		if resultFormat == "" {
+			resultFormat = types.Table
+		}
+	}
+
+	resources := azureTracesTarget.Resources
+	resourceOrWorkspace := azureTracesTarget.Resources[0]
+	appInsightsQuery := appInsightsRegExp.Match([]byte(resourceOrWorkspace))
+	resourcesMap := make(map[string]bool, 0)
+	if len(resources) > 1 {
+		for _, resource := range resources {
+			resourcesMap[strings.ToLower(resource)] = true
+		}
+		// Remove the base resource as that's where the query is run anyway
+		delete(resourcesMap, strings.ToLower(resourceOrWorkspace))
+	}
+
+	operationId := ""
+	if queryJSONModel.AzureTraces.OperationId != nil && *queryJSONModel.AzureTraces.OperationId != "" {
+		operationId = *queryJSONModel.AzureTraces.OperationId
+		resourcesMap, err = getCorrelationWorkspaces(ctx, resourceOrWorkspace, resourcesMap, dsInfo, operationId)
+		if err != nil {
+			return nil, fmt.Errorf("failed to retrieve correlation resources for operation ID - %s: %s", operationId, err)
+		}
+	}
+
+	queryResources := make([]string, 0)
+	for resource := range resourcesMap {
+		queryResources = append(queryResources, resource)
+	}
+	sort.Strings(queryResources)
+
+	queryString := buildTracesQuery(operationId, nil, queryJSONModel.AzureTraces.TraceTypes, queryJSONModel.AzureTraces.Filters, &resultFormat, queryResources)
+	traceExploreQuery := ""
+	traceParentExploreQuery := ""
+	traceLogsExploreQuery := ""
+	traceIdVariable := "${__data.fields.traceID}"
+	parentSpanIdVariable := "${__data.fields.parentSpanID}"
+	if operationId == "" {
+		traceExploreQuery = buildTracesQuery(traceIdVariable, nil, queryJSONModel.AzureTraces.TraceTypes, queryJSONModel.AzureTraces.Filters, &resultFormat, queryResources)
+		traceParentExploreQuery = buildTracesQuery(traceIdVariable, &parentSpanIdVariable, queryJSONModel.AzureTraces.TraceTypes, queryJSONModel.AzureTraces.Filters, &resultFormat, queryResources)
+		traceLogsExploreQuery = buildTracesLogsQuery(traceIdVariable, queryResources)
+	} else {
+		traceExploreQuery = queryString
+		traceParentExploreQuery = buildTracesQuery(operationId, &parentSpanIdVariable, queryJSONModel.AzureTraces.TraceTypes, queryJSONModel.AzureTraces.Filters, &resultFormat, queryResources)
+		traceLogsExploreQuery = buildTracesLogsQuery(operationId, queryResources)
+	}
+	traceExploreQuery, err = macros.KqlInterpolate(query, dsInfo, traceExploreQuery, "TimeGenerated")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create traces explore query: %s", err)
+	}
+	traceParentExploreQuery, err = macros.KqlInterpolate(query, dsInfo, traceParentExploreQuery, "TimeGenerated")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create parent span traces explore query: %s", err)
+	}
+	traceLogsExploreQuery, err = macros.KqlInterpolate(query, dsInfo, traceLogsExploreQuery, "TimeGenerated")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create traces logs explore query: %s", err)
+	}
+
+	apiURL := getApiURL(resourceOrWorkspace, appInsightsQuery)
+
+	rawQuery, err := macros.KqlInterpolate(query, dsInfo, queryString, "TimeGenerated")
+	if err != nil {
+		return nil, err
+	}
+
+	timeColumn = "timestamp"
+
+	return &AzureLogAnalyticsQuery{
+		RefID:                   query.RefID,
+		ResultFormat:            resultFormat,
+		URL:                     apiURL,
+		JSON:                    query.JSON,
+		TimeRange:               query.TimeRange,
+		Query:                   rawQuery,
+		Resources:               resources,
+		QueryType:               dataquery.AzureQueryType(query.QueryType),
+		TraceExploreQuery:       traceExploreQuery,
+		TraceParentExploreQuery: traceParentExploreQuery,
+		TraceLogsExploreQuery:   traceLogsExploreQuery,
+		AppInsightsQuery:        appInsightsQuery,
+		DashboardTime:           dashboardTime,
+		TimeColumn:              timeColumn,
+	}, nil
+}
+
 func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries []backend.DataQuery, dsInfo types.DatasourceInfo) ([]*AzureLogAnalyticsQuery, error) {
 	azureLogAnalyticsQueries := []*AzureLogAnalyticsQuery{}
 	appInsightsRegExp, err := regexp.Compile("providers/Microsoft.Insights/components")
@@ -114,125 +289,19 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries 
 		dashboardTime := false
 		timeColumn := ""
 		if query.QueryType == string(dataquery.AzureQueryTypeAzureLogAnalytics) {
-			queryJSONModel := types.LogJSONQuery{}
-			err := json.Unmarshal(query.JSON, &queryJSONModel)
+			azureLogAnalyticsQuery, err := buildLogAnalyticsQuery(query, dsInfo, appInsightsRegExp)
 			if err != nil {
-				return nil, fmt.Errorf("failed to decode the Azure Log Analytics query object from JSON: %w", err)
+				return nil, fmt.Errorf("failed to build azure log analytics query: %w", err)
 			}
-
-			azureLogAnalyticsTarget := queryJSONModel.AzureLogAnalytics
-
-			if azureLogAnalyticsTarget.ResultFormat != nil {
-				resultFormat = *azureLogAnalyticsTarget.ResultFormat
-			}
-			if resultFormat == "" {
-				resultFormat = types.TimeSeries
-			}
-
-			// Legacy queries only specify a Workspace GUID, which we need to use the old workspace-centric
-			// API URL for, and newer queries specifying a resource URI should use resource-centric API.
-			// However, legacy workspace queries using a `workspaces()` template variable will be resolved
-			// to a resource URI, so they should use the new resource-centric.
-			if len(azureLogAnalyticsTarget.Resources) > 0 {
-				resources = azureLogAnalyticsTarget.Resources
-				resourceOrWorkspace = azureLogAnalyticsTarget.Resources[0]
-				appInsightsQuery = appInsightsRegExp.Match([]byte(resourceOrWorkspace))
-			} else if azureLogAnalyticsTarget.Resource != nil && *azureLogAnalyticsTarget.Resource != "" {
-				resources = []string{*azureLogAnalyticsTarget.Resource}
-				resourceOrWorkspace = *azureLogAnalyticsTarget.Resource
-			} else if azureLogAnalyticsTarget.Workspace != nil {
-				resourceOrWorkspace = *azureLogAnalyticsTarget.Workspace
-			}
-
-			if azureLogAnalyticsTarget.Query != nil {
-				queryString = *azureLogAnalyticsTarget.Query
-			}
-
-			if azureLogAnalyticsTarget.DashboardTime != nil {
-				dashboardTime = *azureLogAnalyticsTarget.DashboardTime
-				if dashboardTime {
-					if azureLogAnalyticsTarget.TimeColumn != nil {
-						timeColumn = *azureLogAnalyticsTarget.TimeColumn
-					} else {
-						// Final fallback to TimeGenerated if no column is provided
-						timeColumn = "TimeGenerated"
-					}
-				}
-			}
+			azureLogAnalyticsQueries = append(azureLogAnalyticsQueries, azureLogAnalyticsQuery)
 		}
 
 		if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) {
-			queryJSONModel := types.TracesJSONQuery{}
-			err := json.Unmarshal(query.JSON, &queryJSONModel)
+			azureAppInsightsQuery, err := buildAppInsightsQuery(ctx, query, dsInfo, appInsightsRegExp)
 			if err != nil {
-				return nil, fmt.Errorf("failed to decode the Azure Traces query object from JSON: %w", err)
+				return nil, fmt.Errorf("failed to build azure application insights query: %w", err)
 			}
-
-			azureTracesTarget := queryJSONModel.AzureTraces
-
-			if azureTracesTarget.ResultFormat == nil {
-				resultFormat = types.Table
-			} else {
-				resultFormat = *azureTracesTarget.ResultFormat
-				if resultFormat == "" {
-					resultFormat = types.Table
-				}
-			}
-
-			resources = azureTracesTarget.Resources
-			resourceOrWorkspace = azureTracesTarget.Resources[0]
-			appInsightsQuery = appInsightsRegExp.Match([]byte(resourceOrWorkspace))
-			resourcesMap := make(map[string]bool, 0)
-			if len(resources) > 1 {
-				for _, resource := range resources {
-					resourcesMap[strings.ToLower(resource)] = true
-				}
-				// Remove the base resource as that's where the query is run anyway
-				delete(resourcesMap, strings.ToLower(resourceOrWorkspace))
-			}
-
-			operationId := ""
-			if queryJSONModel.AzureTraces.OperationId != nil && *queryJSONModel.AzureTraces.OperationId != "" {
-				operationId = *queryJSONModel.AzureTraces.OperationId
-				resourcesMap, err = getCorrelationWorkspaces(ctx, resourceOrWorkspace, resourcesMap, dsInfo, operationId)
-				if err != nil {
-					return nil, fmt.Errorf("failed to retrieve correlation resources for operation ID - %s: %s", operationId, err)
-				}
-			}
-
-			queryResources := make([]string, 0)
-			for resource := range resourcesMap {
-				queryResources = append(queryResources, resource)
-			}
-			sort.Strings(queryResources)
-
-			queryString = buildTracesQuery(operationId, nil, queryJSONModel.AzureTraces.TraceTypes, queryJSONModel.AzureTraces.Filters, &resultFormat, queryResources)
-			traceIdVariable := "${__data.fields.traceID}"
-			parentSpanIdVariable := "${__data.fields.parentSpanID}"
-			if operationId == "" {
-				traceExploreQuery = buildTracesQuery(traceIdVariable, nil, queryJSONModel.AzureTraces.TraceTypes, queryJSONModel.AzureTraces.Filters, &resultFormat, queryResources)
-				traceParentExploreQuery = buildTracesQuery(traceIdVariable, &parentSpanIdVariable, queryJSONModel.AzureTraces.TraceTypes, queryJSONModel.AzureTraces.Filters, &resultFormat, queryResources)
-				traceLogsExploreQuery = buildTracesLogsQuery(traceIdVariable, queryResources)
-			} else {
-				traceExploreQuery = queryString
-				traceParentExploreQuery = buildTracesQuery(operationId, &parentSpanIdVariable, queryJSONModel.AzureTraces.TraceTypes, queryJSONModel.AzureTraces.Filters, &resultFormat, queryResources)
-				traceLogsExploreQuery = buildTracesLogsQuery(operationId, queryResources)
-			}
-			traceExploreQuery, err = macros.KqlInterpolate(query, dsInfo, traceExploreQuery, "TimeGenerated")
-			if err != nil {
-				return nil, fmt.Errorf("failed to create traces explore query: %s", err)
-			}
-			traceParentExploreQuery, err = macros.KqlInterpolate(query, dsInfo, traceParentExploreQuery, "TimeGenerated")
-			if err != nil {
-				return nil, fmt.Errorf("failed to create parent span traces explore query: %s", err)
-			}
-			traceLogsExploreQuery, err = macros.KqlInterpolate(query, dsInfo, traceLogsExploreQuery, "TimeGenerated")
-			if err != nil {
-				return nil, fmt.Errorf("failed to create traces logs explore query: %s", err)
-			}
-
-			dashboardTime = true
-			timeColumn = "timestamp"
+			azureLogAnalyticsQueries = append(azureLogAnalyticsQueries, azureAppInsightsQuery)
 		}
 
 		apiURL := getApiURL(resourceOrWorkspace, appInsightsQuery)
