@@ -224,7 +224,7 @@ describe('align frames', () => {
       const out = joinDataFrames({
         frames: [tableData1, tableData2],
         joinBy: fieldMatchers.get(FieldMatcherID.byName).get('gender'),
-        mode: JoinMode.innerTabular,
+        mode: JoinMode.inner,
       })!;
       expect(
         out.fields.map((f) => ({
