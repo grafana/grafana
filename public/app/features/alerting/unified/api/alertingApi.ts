@@ -1,5 +1,4 @@
 import { BaseQueryFn, createApi } from '@reduxjs/toolkit/query/react';
-import { produce } from 'immer';
 import { lastValueFrom } from 'rxjs';
 
 import { AppEvents } from '@grafana/data';
@@ -29,14 +28,11 @@ export const backendSrvBaseQuery =
   (): BaseQueryFn<ExtendedBackendSrvRequest> =>
   async ({ successMessage, errorMessage, ...requestOptions }) => {
     try {
-      const modifiedRequestOptions = produce(requestOptions, (draft) => {
-        if (successMessage) {
-          draft.showSuccessAlert = false;
-        }
-        if (errorMessage) {
-          draft.showErrorAlert = false;
-        }
-      });
+      const modifiedRequestOptions: BackendSrvRequest = {
+        ...requestOptions,
+        ...(successMessage && { showSuccessAlert: false }),
+        ...(errorMessage && { showErrorAlert: false }),
+      };
 
       const requestStartTs = performance.now();
 
