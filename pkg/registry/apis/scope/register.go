@@ -146,6 +146,11 @@ func (b *ScopeAPIBuilder) GetAPIGroupInfo(
 	// so the standard k8s plumbing continues to work
 	storage["find"] = &findREST{scopeNodeStorage: scopeNodeStorage}
 
+	// Adds a rest.Connector
+	// NOTE! the server has a hardcoded rewrite filter that fills in a name
+	// so the standard k8s plumbing continues to work
+	storage["find_scope_dashboard"] = &findScopedDashboardsREST{scopeDashboardStorage: scopeDashboardStorage}
+
 	apiGroupInfo.VersionedResourcesStorageMap[scope.VERSION] = storage
 	return &apiGroupInfo, nil
 }
@@ -192,6 +197,33 @@ func (b *ScopeAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI
 		}
 		delete(oas.Paths.Paths, root+"namespaces/{namespace}/find/{name}")
 		oas.Paths.Paths[root+"namespaces/{namespace}/find"] = sub
+	}
+
+	findDashboardPath := oas.Paths.Paths[root+"namespaces/{namespace}/findscopeddashboard/{name}"]
+	if findDashboardPath != nil && sub.Get != nil {
+		sub.Parameters = []*spec3.Parameter{
+			{
+				ParameterProps: spec3.ParameterProps{
+					Name:        "namespace",
+					In:          "path",
+					Description: "object name and auth scope, such as for teams and projects",
+					Example:     "default",
+					Required:    true,
+				},
+			},
+		}
+		findDashboardPath.Get.Description = "Navigate the scopes tree"
+		findDashboardPath.Get.Parameters = []*spec3.Parameter{
+			{
+				ParameterProps: spec3.ParameterProps{
+					Name:        "parent",
+					In:          "query",
+					Description: "The parent scope node",
+				},
+			},
+		}
+		delete(oas.Paths.Paths, root+"namespaces/{namespace}/findscopeddashboard/{name}")
+		oas.Paths.Paths[root+"namespaces/{namespace}/findscopeddashboard"] = findDashboardPath
 	}
 
 	// The root API discovery list
