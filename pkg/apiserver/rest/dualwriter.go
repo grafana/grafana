@@ -2,7 +2,6 @@ package rest
 
 import (
 	"context"
-	"errors"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -38,6 +37,10 @@ type LegacyStorage interface {
 	rest.Storage
 	rest.Scoper
 	rest.SingularNameProvider
+	rest.CreaterUpdater
+	rest.Lister
+	rest.GracefulDeleter
+	rest.CollectionDeleter
 	rest.TableConvertor
 	rest.Getter
 }
@@ -69,12 +72,6 @@ type DualWriter interface {
 }
 
 type DualWriterMode int
-
-var errDualWriterCreaterMissing = errors.New("legacy storage rest.Creater is missing")
-var errDualWriterListerMissing = errors.New("legacy storage rest.Lister is missing")
-var errDualWriterDeleterMissing = errors.New("legacy storage rest.GracefulDeleter is missing")
-var errDualWriterCollectionDeleterMissing = errors.New("legacy storage rest.CollectionDeleter is missing")
-var errDualWriterUpdaterMissing = errors.New("legacy storage rest.Updater is missing")
 
 const (
 	Mode1 DualWriterMode = iota

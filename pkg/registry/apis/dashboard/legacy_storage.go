@@ -153,3 +153,8 @@ func (s *dashboardStorage) Get(ctx context.Context, name string, options *metav1
 
 	return s.access.GetDashboard(ctx, info.OrgID, name)
 }
+
+// GracefulDeleter
+func (s *dashboardStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+	return nil, fmt.Errorf("DeleteCollection for dashboards not implemented")
+}
