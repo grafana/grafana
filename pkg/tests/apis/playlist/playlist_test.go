@@ -72,6 +72,11 @@ func TestIntegrationPlaylist(t *testing.T) {
 			  ]
 			}
 		  ]`, disco)
+
+		// also verify the openapi
+		h.VerifyStaticOpenAPISpec(schema.GroupVersion{
+			Group: "playlist.grafana.app", Version: "v0alpha1",
+		}, "testdata/openapi.json")
 	})
 
 	t.Run("with k8s api flag", func(t *testing.T) {

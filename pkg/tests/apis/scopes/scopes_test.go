@@ -33,6 +33,12 @@ func TestIntegrationScopes(t *testing.T) {
 		},
 	})
 
+	t.Run("Check OpenAPI spec", func(t *testing.T) {
+		helper.VerifyStaticOpenAPISpec(schema.GroupVersion{
+			Group: "scope.grafana.app", Version: "v0alpha1",
+		}, "testdata/openapi.json")
+	})
+
 	t.Run("Check discovery client", func(t *testing.T) {
 		disco := helper.NewDiscoveryClient()
 		resources, err := disco.ServerResourcesForGroupVersion("scope.grafana.app/v0alpha1")

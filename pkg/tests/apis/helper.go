@@ -8,9 +8,11 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -268,6 +270,45 @@ func (c *K8sTestHelper) PutResource(user User, resource string, payload AnyResou
 		User:   user,
 		Body:   body,
 	}, &AnyResource{})
+}
+
+func (c *K8sTestHelper) VerifyStaticOpenAPISpec(gv schema.GroupVersion, fpath string) {
+	c.t.Helper()
+
+	path := fmt.Sprintf("/openapi/v3/apis/%s/%s", gv.Group, gv.Version)
+	rsp := DoRequest(c, RequestParams{
+		Method: http.MethodGet,
+		Path:   path,
+		User:   c.Org1.Admin,
+	}, &AnyResource{})
+
+	require.NotNil(c.t, rsp.Response)
+	require.Equal(c.t, 200, rsp.Response.StatusCode)
+
+	var prettyJSON bytes.Buffer
+	err := json.Indent(&prettyJSON, rsp.Body, "", "  ")
+	require.NoError(c.t, err)
+	pretty := prettyJSON.String()
+
+	// nolint:gosec
+	// We can ignore the gosec G304 warning since this is a test and the function is only called with explicit paths
+	body, err := os.ReadFile(fpath)
+	if err == nil {
+		if diff := cmp.Diff(pretty, string(body)); diff != "" {
+			str := fmt.Sprintf("body mismatch (-want +got):\n%s\n", diff)
+			err = fmt.Errorf(str)
+		}
+	}
+
+	if err != nil {
+		e2 := os.WriteFile(fpath, []byte(pretty), 0644)
+		if e2 != nil {
+			c.t.Errorf("error writing file: %s", e2.Error())
+		}
+		abs, _ := filepath.Abs(fpath)
+		c.t.Errorf("openapi spec has changed: %s (%s)", err.Error(), abs)
+		c.t.Fail()
+	}
 }
 
 func (c *K8sTestHelper) List(user User, namespace string, gvr schema.GroupVersionResource) AnyResourceListResponse {
