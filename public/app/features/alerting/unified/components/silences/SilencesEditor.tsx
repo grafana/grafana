@@ -31,7 +31,7 @@ import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/cons
 import { getDatasourceAPIUid } from 'app/features/alerting/unified/utils/datasource';
 import { MatcherOperator, SilenceCreatePayload } from 'app/plugins/datasource/alertmanager/types';
 
-import { MatcherFieldValue, SilenceFormFields } from '../../types/silence-form';
+import { SilenceFormFields } from '../../types/silence-form';
 import { matcherFieldToMatcher } from '../../utils/alertmanager';
 import { makeAMLink } from '../../utils/misc';
 
