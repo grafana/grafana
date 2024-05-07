@@ -64,7 +64,7 @@ func ProvideService(
 	quotaService quota.Service, pluginStore pluginstore.Store,
 ) (*Service, error) {
 	dslogger := log.New("datasources")
-	store := &SqlStore{db: db, logger: dslogger}
+	store := &SqlStore{db: db, logger: dslogger, features: features}
 	s := &Service{
 		SQLStore:       store,
 		SecretsStore:   secretsStore,
@@ -172,6 +172,10 @@ func (s *Service) GetDataSources(ctx context.Context, query *datasources.GetData
 
 func (s *Service) GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) (res []*datasources.DataSource, err error) {
 	return s.SQLStore.GetAllDataSources(ctx, query)
+}
+
+func (s *Service) GetPrunableProvisionedDataSources(ctx context.Context) (res []*datasources.DataSource, err error) {
+	return s.SQLStore.GetPrunableProvisionedDataSources(ctx)
 }
 
 func (s *Service) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) ([]*datasources.DataSource, error) {
@@ -591,7 +595,6 @@ func (s *Service) dsTLSOptions(ctx context.Context, ds *datasources.DataSource) 
 
 		if tlsClientAuth {
 			if val, exists, err := s.DecryptedValue(ctx, ds, "tlsClientCert"); err == nil {
-				fmt.Print("\n\n\n\n", val, exists, err, "\n\n\n\n")
 				if exists && len(val) > 0 {
 					opts.ClientCertificate = val
 				}

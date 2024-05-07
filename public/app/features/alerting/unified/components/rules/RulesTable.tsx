@@ -16,8 +16,9 @@ import { CombinedRule } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
 import { useHasRuler } from '../../hooks/useHasRuler';
+import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { Annotation } from '../../utils/constants';
-import { isGrafanaRulerRule, isGrafanaRulerRulePaused } from '../../utils/rules';
+import { getRulePluginOrigin, isGrafanaRulerRule, isGrafanaRulerRulePaused } from '../../utils/rules';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { DynamicTableWithGuidelines } from '../DynamicTableWithGuidelines';
 import { ProvisioningBadge } from '../Provisioning';
@@ -119,7 +120,11 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean, showNe
     const isValidLastEvaluation = rule.promRule?.lastEvaluation && isValidDate(rule.promRule.lastEvaluation);
     const isValidIntervalDuration = rule.group.interval && isValidDuration(rule.group.interval);
 
-    if (!isValidLastEvaluation || !isValidIntervalDuration || isGrafanaRulerRulePaused(rule)) {
+    if (
+      !isValidLastEvaluation ||
+      !isValidIntervalDuration ||
+      (isGrafanaRulerRule(rule.rulerRule) && isGrafanaRulerRulePaused(rule.rulerRule))
+    ) {
       return;
     }
 
@@ -157,7 +162,7 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean, showNe
 
           const isDeleting = !!(hasRuler(rulesSource) && rulerRulesLoaded(rulesSource) && promRule && !rulerRule);
           const isCreating = !!(hasRuler(rulesSource) && rulerRulesLoaded(rulesSource) && rulerRule && !promRule);
-          const isPaused = isGrafanaRulerRulePaused(rule);
+          const isPaused = isGrafanaRulerRule(rule.rulerRule) && isGrafanaRulerRulePaused(rule.rulerRule);
 
           return <RuleState rule={rule} isDeleting={isDeleting} isCreating={isCreating} isPaused={isPaused} />;
         },
@@ -171,13 +176,18 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean, showNe
         size: showNextEvaluationColumn ? 4 : 5,
       },
       {
-        id: 'provisioned',
+        id: 'metadata',
         label: '',
         // eslint-disable-next-line react/display-name
         renderCell: ({ data: rule }) => {
           const rulerRule = rule.rulerRule;
-          const isGrafanaManagedRule = isGrafanaRulerRule(rulerRule);
 
+          const originMeta = getRulePluginOrigin(rule);
+          if (originMeta) {
+            return <PluginOriginBadge pluginId={originMeta.pluginId} />;
+          }
+
+          const isGrafanaManagedRule = isGrafanaRulerRule(rulerRule);
           if (!isGrafanaManagedRule) {
             return null;
           }
@@ -256,7 +266,7 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean, showNe
       label: 'Actions',
       // eslint-disable-next-line react/display-name
       renderCell: ({ data: rule }) => {
-        return <RuleActionsButtons rule={rule} rulesSource={rule.namespace.rulesSource} />;
+        return <RuleActionsButtons compact showViewButton rule={rule} rulesSource={rule.namespace.rulesSource} />;
       },
       size: '200px',
     });

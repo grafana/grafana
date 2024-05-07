@@ -11,11 +11,10 @@ import { shareDashboardType } from 'app/features/dashboard/components/ShareModal
 import { DashboardModel } from 'app/features/dashboard/state';
 
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
+import { getVariablesCompatibility } from '../utils/getVariablesCompatibility';
 import { DashboardInteractions } from '../utils/interactions';
 
 import { SceneShareTabState } from './types';
-
-const exportExternallyTranslation = t('share-modal.export.share-externally-label', `Export for sharing externally`);
 
 interface ShareExportTabState extends SceneShareTabState {
   isSharingExternally?: boolean;
@@ -61,7 +60,13 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> {
     const saveModel = transformSceneToSaveModel(dashboardRef.resolve());
 
     const exportable = isSharingExternally
-      ? await this._exporter.makeExportable(new DashboardModel(saveModel))
+      ? await this._exporter.makeExportable(
+          new DashboardModel(saveModel, undefined, {
+            getVariablesFromState: () => {
+              return getVariablesCompatibility(window.__grafanaSceneContext);
+            },
+          })
+        )
       : saveModel;
 
     return exportable;
@@ -99,6 +104,8 @@ function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) 
 
     return '';
   }, [isViewingJSON]);
+
+  const exportExternallyTranslation = t('share-modal.export.share-externally-label', `Export for sharing externally`);
 
   return (
     <>

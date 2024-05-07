@@ -6,13 +6,24 @@ import { NavModelItem, UrlQueryValue } from '@grafana/data';
 import { Alert, LinkButton, Stack, TabContent, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { PageInfoItem } from 'app/core/components/Page/types';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
+import { RuleActionsButtons } from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import { CombinedRule, RuleHealth, RuleIdentifier } from 'app/types/unified-alerting';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { defaultPageNav } from '../../RuleViewer';
+import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { Annotation } from '../../utils/constants';
 import { makeDashboardLink, makePanelLink } from '../../utils/misc';
-import { isAlertingRule, isFederatedRuleGroup, isGrafanaRulerRule, isRecordingRule } from '../../utils/rules';
+import {
+  RulePluginOrigin,
+  getRulePluginOrigin,
+  isAlertingRule,
+  isFederatedRuleGroup,
+  isGrafanaRulerRule,
+  isGrafanaRulerRulePaused,
+  isRecordingRule,
+} from '../../utils/rules';
 import { createUrl } from '../../utils/url';
 import { AlertLabels } from '../AlertLabels';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
@@ -21,9 +32,8 @@ import { WithReturnButton } from '../WithReturnButton';
 import { decodeGrafanaNamespace } from '../expressions/util';
 import { RedirectToCloneRule } from '../rules/CloneRule';
 
-import { useAlertRulePageActions } from './Actions';
-import { useDeleteModal } from './DeleteModal';
 import { FederatedRuleWarning } from './FederatedRuleWarning';
+import PausedBadge from './PausedBadge';
 import { useAlertRule } from './RuleContext';
 import { RecordingBadge, StateBadge } from './StateBadges';
 import { Details } from './tabs/Details';
@@ -49,12 +59,6 @@ const RuleViewer = () => {
   // of duplicating provisioned alert rules
   const [duplicateRuleIdentifier, setDuplicateRuleIdentifier] = useState<RuleIdentifier>();
 
-  const [deleteModal, showDeleteModal] = useDeleteModal();
-  const actions = useAlertRulePageActions({
-    handleDuplicateRule: setDuplicateRuleIdentifier,
-    handleDelete: showDeleteModal,
-  });
-
   const { annotations, promRule } = rule;
   const hasError = isErrorHealth(rule.promRule?.health);
 
@@ -62,6 +66,10 @@ const RuleViewer = () => {
 
   const isFederatedRule = isFederatedRuleGroup(rule.group);
   const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
+  const isPaused = isGrafanaRulerRule(rule.rulerRule) && isGrafanaRulerRulePaused(rule.rulerRule);
+
+  const showError = hasError && !isPaused;
+  const ruleOrigin = getRulePluginOrigin(rule);
 
   const summary = annotations[Annotation.summary];
 
@@ -73,15 +81,18 @@ const RuleViewer = () => {
       renderTitle={(title) => (
         <Title
           name={title}
+          paused={isPaused}
           state={isAlertType ? promRule.state : undefined}
           health={rule.promRule?.health}
           ruleType={rule.promRule?.type}
+          ruleOrigin={ruleOrigin}
         />
       )}
-      actions={actions}
+      actions={<RuleActionsButtons rule={rule} showCopyLinkButton rulesSource={rule.namespace.rulesSource} />}
       info={createMetadata(rule)}
       subTitle={
         <Stack direction="column">
+          {isPaused && <InfoPausedRule />}
           {summary}
           {/* alerts and notifications and stuff */}
           {isFederatedRule && <FederatedRuleWarning />}
@@ -90,7 +101,7 @@ const RuleViewer = () => {
             <ProvisioningAlert resource={ProvisionedResource.AlertRule} bottomSpacing={0} topSpacing={2} />
           )}
           {/* error state */}
-          {hasError && (
+          {showError && (
             <Alert title="Something went wrong when evaluating this alert rule" bottomSpacing={0} topSpacing={2}>
               <pre style={{ marginBottom: 0 }}>
                 <code>{rule.promRule?.lastError ?? 'No error message'}</code>
@@ -110,8 +121,6 @@ const RuleViewer = () => {
           {activeTab === ActiveTab.Details && <Details rule={rule} />}
         </TabContent>
       </Stack>
-
-      {deleteModal}
       {duplicateRuleIdentifier && (
         <RedirectToCloneRule
           redirectTo={true}
@@ -206,25 +215,34 @@ export const createListFilterLink = (values: Array<[string, string]>) => {
 
 interface TitleProps {
   name: string;
+  paused?: boolean;
   // recording rules don't have a state
   state?: PromAlertingRuleState;
   health?: RuleHealth;
   ruleType?: PromRuleType;
+  ruleOrigin?: RulePluginOrigin;
 }
 
-export const Title = ({ name, state, health, ruleType }: TitleProps) => {
+export const Title = ({ name, paused = false, state, health, ruleType, ruleOrigin }: TitleProps) => {
   const styles = useStyles2(getStyles);
   const isRecordingRule = ruleType === PromRuleType.Recording;
 
   return (
     <div className={styles.title}>
       <LinkButton variant="secondary" icon="angle-left" href="/alerting/list" />
+      {ruleOrigin && <PluginOriginBadge pluginId={ruleOrigin.pluginId} />}
       <Text variant="h1" truncate>
         {name}
       </Text>
-      {/* recording rules won't have a state */}
-      {state && <StateBadge state={state} health={health} />}
-      {isRecordingRule && <RecordingBadge health={health} />}
+      {paused ? (
+        <PausedBadge />
+      ) : (
+        <>
+          {/* recording rules won't have a state */}
+          {state && <StateBadge state={state} health={health} />}
+          {isRecordingRule && <RecordingBadge health={health} />}
+        </>
+      )}
     </div>
   );
 };

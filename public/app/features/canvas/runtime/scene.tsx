@@ -436,6 +436,7 @@ export class Scene {
       // Setup rotatable
       rotatable: allowChanges,
       throttleRotate: 5,
+      rotationPosition: ['top', 'right'],
 
       // Setup snappable
       snappable: allowChanges,
@@ -460,6 +461,14 @@ export class Scene {
 
         if (targetedElement) {
           targetedElement.applyRotate(event);
+        }
+      })
+      .on('rotateGroup', (e) => {
+        for (let event of e.events) {
+          const targetedElement = this.findElementByTarget(event.target);
+          if (targetedElement) {
+            targetedElement.applyRotate(event);
+          }
         }
       })
       .on('rotateEnd', () => {

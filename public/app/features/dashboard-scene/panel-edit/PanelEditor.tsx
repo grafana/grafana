@@ -64,7 +64,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   }
 
   private _initDataPane(pluginId: string) {
-    const skipDataQuery = config.panels[pluginId].skipDataQuery;
+    const skipDataQuery = config.panels[pluginId]?.skipDataQuery;
 
     if (skipDataQuery && this.state.dataPane) {
       locationService.partial({ tab: null }, true);
@@ -136,7 +136,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     }
 
     panelRepeater.setState({
-      body: panelManager.getPanelCloneWithData(),
+      body: panelManager.state.panel.clone(),
       repeatDirection: panelManager.state.repeatDirection,
       variableName: panelManager.state.repeat,
       maxPerRow: panelManager.state.maxPerRow,

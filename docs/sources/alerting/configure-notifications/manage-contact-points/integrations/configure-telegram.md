@@ -72,7 +72,7 @@ Add the bot to a group chat by following the steps below. Once the bot is added 
 
 To create your Telegram integration in Grafana Alerting, complete the following steps.
 
-1. Navigate to **Alerts & IRM** -> **Alerting** -> **[Contact points][contact-point]**.
+1. Navigate to **Alerts & IRM** -> **Alerting** -> **Contact points**.
 1. Click **+ Add contact point**.
 1. Enter a contact point name.
 1. From the Integration list, select Telegram.
@@ -81,11 +81,9 @@ To create your Telegram integration in Grafana Alerting, complete the following 
 1. Click **Test** to check that your integration works.
 1. Click **Save contact point**.
 
-{{< figure src="/media/blog/telegram-grafana-alerting/telegram-grafana-alerting-contact-point-.png" alt="A screenshot showing how to save a new contact point in Grafana Alerting. " >}}
-
 ## Next steps
 
-To add the contact point and integration you created to your default [notification policy][notification-policy], complete the following steps.
+To add the contact point and integration you created to your default notification policy, complete the following steps.
 
 1. Navigate to **Alerts & IRM** -> **Alerting** -> **Notification policies**.
 1. In the **Default policy**, click the ellipsis icon (…) and then **Edit**.
@@ -93,16 +91,5 @@ To add the contact point and integration you created to your default [notificati
 1. Click **Update default policy**.
 
 {{<admonition type="note">}}
-If you have more than one contact point, add a new notification policy rather than edit the default one, so you can route specific alerts to Slack. For more information, refer to [Notification policies][nested-policy].
+If you have more than one contact point, add a new child notification policy rather than edit the default one, so you can route specific alerts to Telegram.
 {{</admonition>}}
-
-{{% docs/reference %}}
-[notification-policy]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notification-policies/notifications/"
-[notification-policy]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/notification-policies/"
-
-[contact-point]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/contact-points/"
-[contact-point]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/contact-points/"
-
-[nested-policy]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-notification-policy#add-new-nested-policy"
-[nested-policy]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-notification-policy#add-new-nested-policy"
-{{% /docs/reference %}}

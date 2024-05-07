@@ -1,36 +1,35 @@
-import React from 'react';
+import React, { useState } from 'react';
 
-import { Box, Button, ModalsController, Text } from '@grafana/ui';
+import { Box, Button, Text } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
-import { useConnectStackMutationMock, useGetStatusQueryMock } from '../../../mockAPI';
+import { useCreateMigrationMutation } from '../../../api';
 
 import { ConnectModal } from './ConnectModal';
 
 export const CallToAction = () => {
-  const [connectStack, connectResponse] = useConnectStackMutationMock();
-  const { isFetching } = useGetStatusQueryMock();
+  const [modalOpen, setModalOpen] = useState(false);
+  const [createMigration, createMigrationResponse] = useCreateMigrationMutation();
 
   return (
-    <ModalsController>
-      {({ showModal, hideModal }) => (
-        <Box display="flex" padding={5} gap={2} direction="column" alignItems="center" backgroundColor="secondary">
-          <Text variant="h3" textAlignment="center">
-            <Trans i18nKey="migrate-to-cloud.cta.header">Let us manage your Grafana stack</Trans>
-          </Text>
-          <Button
-            disabled={isFetching || connectResponse.isLoading}
-            onClick={() =>
-              showModal(ConnectModal, {
-                hideModal,
-                onConfirm: connectStack,
-              })
-            }
-          >
-            <Trans i18nKey="migrate-to-cloud.cta.button">Migrate this instance to Cloud</Trans>
-          </Button>
-        </Box>
-      )}
-    </ModalsController>
+    <>
+      <Box display="flex" padding={5} gap={2} direction="column" alignItems="center" backgroundColor="secondary">
+        <Text variant="h3" textAlignment="center">
+          <Trans i18nKey="migrate-to-cloud.cta.header">Let us manage your Grafana stack</Trans>
+        </Text>
+
+        <Button disabled={createMigrationResponse.isLoading} onClick={() => setModalOpen(true)}>
+          <Trans i18nKey="migrate-to-cloud.cta.button">Migrate this instance to Cloud</Trans>
+        </Button>
+      </Box>
+
+      <ConnectModal
+        isOpen={modalOpen}
+        isLoading={createMigrationResponse.isLoading}
+        isError={createMigrationResponse.isError}
+        onConfirm={createMigration}
+        hideModal={() => setModalOpen(false)}
+      />
+    </>
   );
 };

@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/PromExploreExtraField.tsx
 import { css, cx } from '@emotion/css';
 import { isEqual } from 'lodash';
 import React, { memo, useCallback } from 'react';
@@ -59,9 +60,9 @@ export const PromExploreExtraField = memo(({ query, datasource, onChange, onRunQ
         data-testid={promExploreExtraFieldTestIds.queryTypeField}
         className={cx(
           'gf-form explore-input-margin',
-          css`
-            flex-wrap: nowrap;
-          `
+          css({
+            flexWrap: 'nowrap',
+          })
         )}
         aria-label="Query type field"
       >
@@ -78,9 +79,9 @@ export const PromExploreExtraField = memo(({ query, datasource, onChange, onRunQ
         data-testid={promExploreExtraFieldTestIds.stepField}
         className={cx(
           'gf-form',
-          css`
-            flex-wrap: nowrap;
-          `
+          css({
+            flexWrap: 'nowrap',
+          })
         )}
         aria-label="Step field"
       >

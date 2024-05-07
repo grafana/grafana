@@ -27,6 +27,10 @@ var (
 		"jwt.missing_claim", errutil.WithPublicMessage("Missing mandatory claim in JWT"))
 	errJWTInvalidRole = errutil.Forbidden(
 		"jwt.invalid_role", errutil.WithPublicMessage("Invalid Role in claim"))
+	errJWTMismatchedNamespaceClaims = errutil.Unauthorized(
+		"jwt.namespace_mismatch", errutil.WithPublicMessage("Namespace claims didn't match between id token and access token"))
+	errJWTDisallowedNamespaceClaim = errutil.Unauthorized(
+		"jwt.namespace_mismatch", errutil.WithPublicMessage("Namespace claim doesn't allow access to requested namespace"))
 )
 
 func ProvideJWT(jwtService auth.JWTVerifierService, cfg *setting.Cfg) *JWT {
@@ -137,6 +141,10 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 	}
 
 	return id, nil
+}
+
+func (s *JWT) IsEnabled() bool {
+	return s.cfg.JWTAuth.Enabled
 }
 
 // remove sensitive query param

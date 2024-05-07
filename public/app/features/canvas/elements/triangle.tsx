@@ -53,8 +53,14 @@ const Triangle = (props: CanvasElementProps<CanvasElementConfig, CanvasElementDa
         />
         <polygon
           points="100,0 200,200 0,200"
-          className={styles.element}
           style={{ fill: data?.backgroundImage ? `url(#image-${uniqueId})` : data?.backgroundColor }}
+        />
+
+        {/* Border */}
+        <polygon
+          points="100,0 200,200 0,200"
+          clipPath={`url(#triangleClip-${uniqueId})`}
+          className={styles.elementBorder}
         />
       </svg>
 
@@ -94,6 +100,7 @@ export const triangleItem: CanvasElementItem = {
       height: options?.placement?.height ?? 138,
       top: options?.placement?.top,
       left: options?.placement?.left,
+      rotation: options?.placement?.rotation ?? 0,
     },
   }),
 
@@ -178,6 +185,29 @@ export const triangleItem: CanvasElementItem = {
         },
       });
   },
+
+  customConnectionAnchors: [
+    // points along the left edge
+    { x: -1, y: -1 }, // bottom left
+    { x: -0.8, y: -0.6 },
+    { x: -0.6, y: -0.2 },
+    { x: -0.4, y: 0.2 },
+    { x: -0.2, y: 0.6 },
+    { x: 0, y: 1 }, // top
+
+    // points along the right edge
+    { x: 0.2, y: 0.6 },
+    { x: 0.4, y: 0.2 },
+    { x: 0.6, y: -0.2 },
+    { x: 0.8, y: -0.6 },
+    { x: 1, y: -1 }, // bottom right
+
+    // points along the bottom edge
+    { x: 0.6, y: -1 },
+    { x: 0.2, y: -1 },
+    { x: -0.2, y: -1 },
+    { x: -0.6, y: -1 },
+  ],
 };
 
 const getStyles = (theme: GrafanaTheme2, data: CanvasElementData | undefined) => {
@@ -200,9 +230,11 @@ const getStyles = (theme: GrafanaTheme2, data: CanvasElementData | undefined) =>
       fontSize: `${data?.size}px`,
       color: data?.color,
     }),
-    element: css({
-      stroke: data?.borderColor,
-      strokeWidth: data?.borderWidth,
+    elementBorder: css({
+      fill: 'none',
+      stroke: data?.borderColor ?? 'none',
+      strokeWidth: data?.borderWidth ?? 0,
+      strokeLinejoin: 'round',
     }),
   };
 };

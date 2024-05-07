@@ -133,7 +133,7 @@ const getCellContent = (
       );
     case 'id':
       return (
-        <TextLink href={href} aria-label={ariaLabel} color="secondary">
+        <TextLink href={href} aria-label={ariaLabel} color="secondary" inline={false}>
           {original.login}
         </TextLink>
       );
@@ -141,14 +141,14 @@ const getCellContent = (
       return (
         <Stack alignItems="center">
           <Icon name="key-skeleton-alt" />
-          <TextLink href={href} aria-label={ariaLabel} color="primary">
+          <TextLink href={href} aria-label={ariaLabel} color="primary" inline={false}>
             {value || 'No tokens'}
           </TextLink>
         </Stack>
       );
     default:
       return (
-        <TextLink href={href} aria-label={ariaLabel} color="primary">
+        <TextLink href={href} aria-label={ariaLabel} color="primary" inline={false}>
           {value}
         </TextLink>
       );

@@ -264,7 +264,7 @@ export function buildEditRowModels(value: ValueMapping[]) {
     for (const mapping of value) {
       switch (mapping.type) {
         case MappingType.ValueToText:
-          for (const key of Object.keys(mapping.options)) {
+          for (const key in mapping.options) {
             editRows.push(
               createRow({
                 type: mapping.type,

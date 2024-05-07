@@ -412,7 +412,7 @@ export class LokiDatasource
         key: `loki-${liveTarget.refId}`,
         state: LoadingState.Streaming,
       })),
-      catchError((err: any) => {
+      catchError((err) => {
         return throwError(() => `Live tailing was stopped due to following error: ${err.reason}`);
       })
     );
@@ -680,16 +680,10 @@ export class LokiDatasource
       return [];
     }
 
-    // If we have stream selector, use /series endpoint
-    if (query.stream) {
-      const result = await this.languageProvider.fetchSeriesLabels(query.stream, { timeRange });
-      if (!result[query.label]) {
-        return [];
-      }
-      return result[query.label].map((value: string) => ({ text: value }));
-    }
-
-    const result = await this.languageProvider.fetchLabelValues(query.label, { timeRange });
+    const result = await this.languageProvider.fetchLabelValues(query.label, {
+      streamSelector: query.stream,
+      timeRange,
+    });
     return result.map((value: string) => ({ text: value }));
   }
 
@@ -1151,14 +1145,14 @@ export class LokiDatasource
 // NOTE: these two functions are very similar to the escapeLabelValueIn* functions
 // in language_utils.ts, but they are not exactly the same algorithm, and we found
 // no way to reuse one in the another or vice versa.
-export function lokiRegularEscape(value: any) {
+export function lokiRegularEscape<T>(value: T) {
   if (typeof value === 'string') {
     return value.replace(/'/g, "\\\\'");
   }
   return value;
 }
 
-export function lokiSpecialRegexEscape(value: any) {
+export function lokiSpecialRegexEscape<T>(value: T) {
   if (typeof value === 'string') {
     return lokiRegularEscape(value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]+?.()|]/g, '\\\\$&'));
   }

@@ -112,7 +112,7 @@ func (a *AnonDeviceService) untagDevice(ctx context.Context,
 
 	errD := a.anonStore.DeleteDevice(ctx, deviceID)
 	if errD != nil {
-		a.log.Debug("Failed to untag device", "error", err)
+		a.log.Debug("Failed to untag device", "error", errD)
 	}
 }
 

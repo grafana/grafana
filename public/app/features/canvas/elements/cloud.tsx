@@ -53,8 +53,14 @@ const Cloud = (props: CanvasElementProps<CanvasElementConfig, CanvasElementData>
         />
         <path
           d="M 23 13 C -1 13 -7 33 12.2 37 C -7 45.8 14.6 65 30.2 57 C 41 73 77 73 89 57 C 113 57 113 41 98 33 C 113 17 89 1 68 9 C 53 -3 29 -3 23 13 Z"
-          className={styles.element}
           style={{ fill: data?.backgroundImage ? `url(#image-${uniqueId})` : data?.backgroundColor }}
+        />
+
+        {/* Border */}
+        <path
+          d="M 23 13 C -1 13 -7 33 12.2 37 C -7 45.8 14.6 65 30.2 57 C 41 73 77 73 89 57 C 113 57 113 41 98 33 C 113 17 89 1 68 9 C 53 -3 29 -3 23 13 Z"
+          clipPath={`url(#cloudClip-${uniqueId})`}
+          className={styles.elementBorder}
         />
       </svg>
       <span className={styles.text}>{data?.text}</span>
@@ -93,6 +99,7 @@ export const cloudItem: CanvasElementItem = {
       height: options?.placement?.height ?? 70,
       top: options?.placement?.top,
       left: options?.placement?.left,
+      rotation: options?.placement?.rotation ?? 0,
     },
   }),
 
@@ -177,6 +184,24 @@ export const cloudItem: CanvasElementItem = {
         },
       });
   },
+
+  customConnectionAnchors: [
+    { x: -0.58, y: 0.63 }, // Top Left
+    { x: -0.22, y: 0.99 }, // Top Middle
+    { x: 0.235, y: 0.75 }, // Top Right
+
+    { x: 0.8, y: 0.6 }, // Right Top
+    { x: 0.785, y: 0.06 }, // Right Middle
+    { x: 0.91, y: -0.51 }, // Right Bottom
+
+    { x: 0.62, y: -0.635 }, // Bottom Right
+    { x: 0.05, y: -0.98 }, // Bottom Middle
+    { x: -0.45, y: -0.635 }, // Bottom Left
+
+    { x: -0.8, y: -0.58 }, // Left Bottom
+    { x: -0.78, y: -0.06 }, // Left Middle
+    { x: -0.9, y: 0.48 }, // Left Top
+  ],
 };
 
 const getStyles = (theme: GrafanaTheme2, data: CanvasElementData | undefined) => {
@@ -199,9 +224,11 @@ const getStyles = (theme: GrafanaTheme2, data: CanvasElementData | undefined) =>
       fontSize: `${data?.size}px`,
       color: data?.color,
     }),
-    element: css({
-      stroke: data?.borderColor,
-      strokeWidth: data?.borderWidth,
+    elementBorder: css({
+      fill: 'none',
+      stroke: data?.borderColor ?? 'none',
+      strokeWidth: data?.borderWidth ?? 0,
+      strokeLinejoin: 'round',
     }),
   };
 };
