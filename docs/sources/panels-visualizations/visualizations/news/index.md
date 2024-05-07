@@ -28,6 +28,8 @@ The news visualization displays an RSS feed. By default, it displays articles fr
 In version 8.5, we discontinued the "Use Proxy" option for Grafana news visualizations. As a result, RSS feeds that are not configured for request by Grafana's frontend (with the appropriate [CORS headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)) may not load.
 {{% /admonition %}}
 
+You can use a news visualization if you need to provide regular news and updates to your users.
+
 ## Configure a news visualization
 
 Once you’ve created a [dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/), enter the URL of an RSS in the [URL](#url) field in the News section. This visualization type does not accept any other queries, and users should not expect to be able to filter or query the RSS feed data in any way using this visualization.
@@ -55,4 +57,3 @@ The URL of RSS and Atom feeds.
 ### Show image
 
 Controls if the news social image is to be shown beside the text content.
-
