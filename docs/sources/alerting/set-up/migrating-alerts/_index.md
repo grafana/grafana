@@ -13,21 +13,37 @@ weight: 150
 
 # Upgrade Alerting
 
-{{% admonition type="note" %}}
-Legacy alerting will be removed in Grafana v11.0.0. We recommend that you upgrade to Grafana Alerting as soon as possible.
-For more information, refer to [Legacy alerting deprecation]({{< relref "./legacy-alerting-deprecation" >}}).
+{{% admonition type="warning" %}}
+Legacy alerting will be removed in Grafana v11.0.0. Grafana v10.4 is the last version that offers legacy alerting and the last version of Grafana where automatic alert upgrades will be available.
+
+Installing Grafana 11 before upgrading your legacy alerts will result in your existing alerts becoming inaccessible or lost.
+
+For more information, refer to [Legacy alerting removal: What you need to know about upgrading to Grafana Alerting](https://grafana.com/blog/2024/04/04/legacy-alerting-removal-what-you-need-to-know-about-upgrading-to-grafana-alerting/).
 {{% /admonition %}}
+
+## What happens if I don’t upgrade from legacy alerting to Grafana Alerting before installing Grafana 11?
+
+Attempting to upgrade to Grafana 11 while still having [legacy alerting explicitly enabled]({{< relref "#rolling-back-to-legacy-alerting" >}}) will result in Grafana not starting and an error message informing you to either:
+
+1. Downgrade to a version prior to Grafana 11 and then upgrade from legacy alerting to Grafana Alerting using one of the below [upgrade methods]({{< relref "#upgrade-methods" >}}).
+2. Confirm that you don't intend to upgrade your legacy alerts by [disabling legacy alerting]({{< relref "#enable-grafana-alerting" >}}) (optionally enable Grafana Alerting) in your configuration file.
+
+{{% admonition type="note" %}}
+Confirming that you don't intend to upgrade your legacy alerts and continuing the Grafana 11 installation may result in your legacy alerts becoming inaccessible or lost.
+
+Grafana will start with a blank alerting slate and you will need to recreate your alerts from scratch. The below automatic upgrade methods will not be available in Grafana 11.
+
+As of v11.0, a rolling back to v10.4 will likely restore your legacy alerts. However, this is not guaranteed to always remain the case in future versions.
+{{% /admonition %}}
+
+## Upgrade methods
 
 Grafana provides two methods for a seamless automatic upgrade of legacy alert rules and notification channels to Grafana Alerting:
 
 1. **Upgrade with Preview** (Recommended): Offers a safe and controlled preview environment where you can review and adjust your upgraded alerts before fully enabling Grafana Alerting.
 2. **Simple Upgrade**: One-step upgrade method for specific needs where a preview environment is not essential.
 
-{{% admonition type="note" %}}
-When upgrading with either method, your legacy dashboard alerts and notification channels are copied to a new format. This is non-destructive and can be [rolled back easily]({{< relref "#rolling-back-to-legacy-alerting" >}}).
-{{% /admonition %}}
-
-## Key Considerations
+### Key Considerations
 
 | Feature                     | Upgrade with Preview                                                                | Simple Upgrade                                       |
 | --------------------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------- |
@@ -38,7 +54,11 @@ When upgrading with either method, your legacy dashboard alerts and notification
 | **Provisioning Support**    | ☑️ Configure new as-code before upgrading, simultaneous provisioning                | ❌ No built-in provisioning support                  |
 | **Simplicity**              | ❌ May take longer to complete                                                      | ☑️ Fast, one-step process                            |
 | **Suited for:**             | ☑️ Complex setups, risk-averse environments, collaborative teams, heavy as-code use | ☑️ Simple setups, testing environments, large fleets |
-| **Version**                 | Grafana v10.3.0+                                                                    | Grafana v9.0.0+                                      |
+| **Version**                 | Grafana v10.3.0 -> v10.4.x                                                          | Grafana v9.0.0 -> v10.4.x                            |
+
+{{% admonition type="note" %}}
+When upgrading with either method, your legacy dashboard alerts and notification channels are copied to a new format. This is non-destructive and can be [rolled back easily]({{< relref "#rolling-back-to-legacy-alerting" >}}).
+{{% /admonition %}}
 
 ## Upgrade with Preview (Recommended)
 
@@ -177,6 +197,10 @@ There are some differences between Grafana Alerting and legacy dashboard alerts,
    - If the inherited dashboard permissions are different from the permissions of the folder, then the rule is moved to a new folder named after the original: `<Original folder name> - <Permission Hash>`.
    - If the inherited dashboard permissions are the same as the permissions of the folder, then the rule is moved to the original folder.
    - If the dashboard is in the `General` or `Dashboards` folder (i.e. no folder), then the rule is moved to a new `General Alerting - <Permission Hash>` folder.
+
+{{% admonition type="note" %}}
+When updating your as-code provisioning setup for Grafana Alerting, newly generated folders will have a different UID from their original.
+{{% /admonition %}}
 
 1. `NoData` and `Error` settings are upgraded as is to the corresponding settings in Grafana Alerting, except in two situations:
 
