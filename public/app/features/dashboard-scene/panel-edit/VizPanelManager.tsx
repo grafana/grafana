@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
 import React from 'react';
-import { Unsubscribable } from 'rxjs';
 
 import {
   DataSourceApi,
@@ -37,11 +36,12 @@ import { updateQueries } from 'app/features/query/state/updateQueries';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupOptions } from 'app/types';
 
+import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
+import { getPanelChanges } from '../saving/getDashboardChanges';
 import { DashboardGridItem, RepeatDirection } from '../scene/DashboardGridItem';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelTimeRange, PanelTimeRangeState } from '../scene/PanelTimeRange';
 import { gridItemToPanel, vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
-import { jsonDiff } from '../settings/version-history/utils';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
 export interface VizPanelManagerState extends SceneObjectState {
@@ -68,8 +68,6 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     string,
     { options: DeepPartial<{}>; fieldConfig: FieldConfigSource<DeepPartial<{}>> } | undefined
   > = {};
-
-  private _changeSubs: Unsubscribable[] = [];
 
   public constructor(state: VizPanelManagerState) {
     super(state);
@@ -100,34 +98,28 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     });
   }
 
-  private _updateDirty = debounce(() => {
-    const diff = jsonDiff(vizPanelToPanel(this.state.sourcePanel.resolve()), vizPanelToPanel(this.state.panel));
-    const diffCount = Object.values(diff).reduce((acc, cur) => acc + cur.length, 0);
-    this.setState({ isDirty: diffCount > 0 });
+  private _onActivate() {
+    this.loadDataSource();
+    const changesSub = this.subscribeToEvent(SceneObjectStateChangedEvent, this._handleStateChange);
+
+    return () => {
+      changesSub.unsubscribe();
+    };
+  }
+
+  private _detectPanelModelChanges = debounce(() => {
+    const { hasChanges } = getPanelChanges(
+      vizPanelToPanel(this.state.sourcePanel.resolve()),
+      vizPanelToPanel(this.state.panel)
+    );
+    this.setState({ isDirty: hasChanges });
   }, 250);
 
   private _handleStateChange = (event: SceneObjectStateChangedEvent) => {
-    if (!Object.prototype.hasOwnProperty.call(event.payload.partialUpdate, 'data')) {
-      this._updateDirty();
+    if (DashboardSceneChangeTracker.isUpdatingPersistedState(event)) {
+      this._detectPanelModelChanges();
     }
   };
-
-  private _setUpChangeSubs() {
-    this._changeSubs = [this.state.panel.subscribeToEvent(SceneObjectStateChangedEvent, this._handleStateChange)];
-
-    if (this.state.panel.state.$data) {
-      this._changeSubs.concat([
-        this.queryRunner.subscribeToEvent(SceneObjectStateChangedEvent, this._handleStateChange),
-        this.dataTransformer.subscribeToEvent(SceneObjectStateChangedEvent, this._handleStateChange),
-      ]);
-    }
-    return () => this._changeSubs.forEach((s) => s.unsubscribe());
-  }
-
-  private _onActivate() {
-    this.loadDataSource();
-    return this._setUpChangeSubs();
-  }
 
   private async loadDataSource() {
     const dataObj = this.state.panel.state.$data;
