@@ -21,7 +21,7 @@ weight: 750
 
 Plugins extend Grafana by adding capabilities that are not already present. There are plugins that add the ability to import data from diverse sources, that bundle data sources and panels, and that provide new visualization types for use in dashboards.
 
-To find new plugins, browse the Grafana plugins catalog which is available both [within Grafana](https://grafana.com/docs/grafana/latest/administration/plugin-management/#browse-plugins) and on the Grafana [website](/grafana/plugins/).
+To find new plugins, browse the Grafana plugins catalog which is available both [within Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/plugin-management/#browse-plugins) and on the Grafana [website](/grafana/plugins/).
 
 ### Install a plugin from the Grafana website
 
@@ -40,4 +40,4 @@ To find new plugins, browse the Grafana plugins catalog which is available both 
 
 ## Additional information
 
-For more information on Grafana plugins, refer to the [documentation](https://grafana.com/docs/grafana/latest/administration/plugin-management/).
+For more information on Grafana plugins, refer to [Plugin management](https://grafana.com/docs/grafana/latest/administration/plugin-management/).
