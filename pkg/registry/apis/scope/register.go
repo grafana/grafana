@@ -140,6 +140,8 @@ func (b *ScopeAPIBuilder) GetAPIGroupInfo(
 	}
 	storage[scopeNodeResourceInfo.StoragePath()] = scopeNodeStorage
 
+	//storage["query"] = newScopeQuery(scopeNodeStorage)
+
 	apiGroupInfo.VersionedResourcesStorageMap[scope.VERSION] = storage
 	return &apiGroupInfo, nil
 }
