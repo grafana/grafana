@@ -60,9 +60,7 @@ type TicksProps = {
   startTime?: number | TNil;
 };
 
-export default function Ticks(props: TicksProps) {
-  const { endTime, numTicks, showLabels, startTime } = props;
-
+export default function Ticks({ endTime = null, numTicks, showLabels = null, startTime = null }: TicksProps) {
   let labels: undefined | string[];
   if (showLabels) {
     labels = [];
@@ -95,9 +93,3 @@ export default function Ticks(props: TicksProps) {
   }
   return <div className={styles.Ticks}>{ticks}</div>;
 }
-
-Ticks.defaultProps = {
-  endTime: null,
-  showLabels: null,
-  startTime: null,
-};
