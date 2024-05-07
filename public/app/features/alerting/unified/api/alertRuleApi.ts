@@ -207,7 +207,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
       providesTags: ['CombinedAlertRule'],
     }),
 
-    getGrafanaAlertRule: build.query<RulerGrafanaRuleDTO, { uid: string; ruler?: string }>({
+    getAlertRule: build.query<RulerGrafanaRuleDTO, { uid: string; ruler?: string }>({
       query: ({ uid, ruler = GRAFANA_RULES_SOURCE_NAME }) => ({ url: `/api/ruler/${ruler}/api/v1/rule/${uid}` }),
     }),
 

@@ -66,7 +66,7 @@ export const ConnectedSilencesEditor = ({ silenceId, alertManagerSourceName }: C
     if (!silence) {
       return;
     }
-    const filteredMatchers = (silence.matchers || []).filter((m) => m.name !== MATCHER_ALERT_RULE_UID);
+    const filteredMatchers = silence.matchers?.filter((m) => m.name !== MATCHER_ALERT_RULE_UID);
     return getFormFieldsForSilence({ ...silence, matchers: filteredMatchers });
   }, [silence]);
 
@@ -106,22 +106,20 @@ export const SilencesEditor = ({
   ruleUid,
 }: SilencesEditorProps) => {
   const [createSilence, { isLoading }] = alertSilencesApi.endpoints.createSilence.useMutation();
-  const [getAlertByUid, { data: alertRule }] = alertRuleApi.endpoints.getGrafanaAlertRule.useLazyQuery();
+  const [getAlertRule, { data: alertRule }] = alertRuleApi.endpoints.getAlertRule.useLazyQuery();
   const formAPI = useForm({ defaultValues: formValues });
   const styles = useStyles2(getStyles);
 
   const { register, handleSubmit, formState, watch, setValue, clearErrors } = formAPI;
-  const duration = watch('duration');
-  const startsAt = watch('startsAt');
-  const endsAt = watch('endsAt');
-  const matchers: MatcherFieldValue[] = watch('matchers');
+
+  const [duration, startsAt, endsAt, matchers] = watch(['duration', 'startsAt', 'endsAt', 'matchers']);
 
   useEffect(() => {
     // If we have a UID, fetch the alert rule details so we can display the rule name
     if (ruleUid) {
-      getAlertByUid({ uid: ruleUid });
+      getAlertRule({ uid: ruleUid });
     }
-  }, [getAlertByUid, ruleUid]);
+  }, [getAlertRule, ruleUid]);
 
   /** Default action taken after creation or cancellation, if corresponding method is not defined */
   const defaultHandler = () => {
