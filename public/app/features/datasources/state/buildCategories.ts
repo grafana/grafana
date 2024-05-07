@@ -209,6 +209,12 @@ function getEnterprisePhantomPlugins(): DataSourcePluginMeta[] {
       name: 'PagerDuty',
       imgUrl: 'public/img/plugins/pagerduty.svg',
     }),
+    getPhantomPlugin({
+      id: 'grafana-catchpoint-datasource',
+      description: 'Catchpoint datasource',
+      name: 'Catchpoint',
+      imgUrl: 'public/img/plugins/catchpoint.svg',
+    }),
   ];
 }
 

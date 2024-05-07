@@ -76,6 +76,7 @@ With a Grafana Enterprise license, you also get access to premium data sources, 
 
 - [AppDynamics](/grafana/plugins/dlopes7-appdynamics-datasource)
 - [Azure Devops](/grafana/plugins/grafana-azuredevops-datasource)
+- [Catchpoint](/grafana/plugins/grafana-catchpoint-datasource)
 - [Databricks](/grafana/plugins/grafana-databricks-datasource)
 - [DataDog](/grafana/plugins/grafana-datadog-datasource)
 - [Databricks](/grafana/plugins/grafana-databricks-datasource/)
