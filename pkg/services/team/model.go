@@ -21,6 +21,8 @@ var (
 	ErrTeamMemberAlreadyAdded = errors.New("user is already added to this team")
 )
 
+const MemberPermissionName = "Member"
+
 // Team model
 type Team struct {
 	ID    int64  `json:"id" xorm:"pk autoincr 'id'"`
@@ -124,16 +126,10 @@ type TeamMember struct {
 
 type AddTeamMemberCommand struct {
 	UserID     int64                          `json:"userId" binding:"Required"`
-	OrgID      int64                          `json:"-"`
-	TeamID     int64                          `json:"-"`
-	External   bool                           `json:"-"`
 	Permission dashboardaccess.PermissionType `json:"-"`
 }
 
 type UpdateTeamMemberCommand struct {
-	UserID     int64                          `json:"-"`
-	OrgID      int64                          `json:"-"`
-	TeamID     int64                          `json:"-"`
 	Permission dashboardaccess.PermissionType `json:"permission"`
 }
 

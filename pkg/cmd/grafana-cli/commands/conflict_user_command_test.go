@@ -12,6 +12,7 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -636,9 +637,9 @@ func TestIntegrationMergeUser(t *testing.T) {
 	t.Run("should be able to merge user", func(t *testing.T) {
 		// Restore after destructive operation
 		sqlStore := db.InitTestDB(t)
-		teamSvc, err := teamimpl.ProvideService(sqlStore, setting.NewCfg())
+		teamSvc, err := teamimpl.ProvideService(sqlStore, setting.NewCfg(), tracing.InitializeTracerForTest())
 		require.NoError(t, err)
-		team1, err := teamSvc.CreateTeam("team1 name", "", 1)
+		team1, err := teamSvc.CreateTeam(context.Background(), "team1 name", "", 1)
 		require.NoError(t, err)
 		const testOrgID int64 = 1
 
@@ -705,14 +706,12 @@ func TestIntegrationMergeUser(t *testing.T) {
 					return user.ErrUserNotFound
 				}
 				require.NoError(t, err)
-				return nil
+				// this is the user we want to update to another team
+				return teamimpl.AddOrUpdateTeamMemberHook(sess, 1, testOrgID, team1.ID, false, 0)
 			})
 			if err != nil {
 				t.Error(err)
 			}
-			// this is the user we want to update to another team
-			err = teamSvc.AddTeamMember(context.Background(), 1, testOrgID, team1.ID, false, 0)
-			require.NoError(t, err)
 
 			// get users
 			conflictUsers, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
