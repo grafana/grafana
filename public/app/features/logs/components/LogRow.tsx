@@ -260,11 +260,14 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               </Tooltip>
             )}
           </td>
-          {enableLogDetails && (
-            <td title={showDetails ? 'Hide log details' : 'See log details'} className={styles.logsRowToggleDetails}>
+          <td
+            title={enableLogDetails ? (showDetails ? 'Hide log details' : 'See log details') : ''}
+            className={enableLogDetails ? styles.logsRowToggleDetails : ''}
+          >
+            {enableLogDetails && (
               <Icon className={styles.topVerticalAlign} name={showDetails ? 'angle-down' : 'angle-right'} />
-            </td>
-          )}
+            )}
+          </td>
           {showTime && <td className={styles.logsRowLocalTime}>{this.renderTimeStamp(row.timeEpochMs)}</td>}
           {showLabels && processedRow.uniqueLabels && (
             <td className={styles.logsRowLabels}>
