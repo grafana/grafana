@@ -2195,12 +2195,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "4"],
       [0, 0, 0, "Do not use any type assertions.", "5"]
     ],
-    "public/app/features/canvas/runtime/scene.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"],
-      [0, 0, 0, "Styles should be written using objects.", "3"]
-    ],
     "public/app/features/canvas/types.ts:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`Placement\`)", "0"],
       [0, 0, 0, "Do not re-export imported variable (\`Constraint\`)", "1"],
