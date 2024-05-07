@@ -31,7 +31,7 @@ TableFooterOptions: {
 // Auto mode table cell options
 TableAutoCellOptions: {
 	type: TableCellDisplayMode & "auto"
-	wrapText: bool
+	wrapText?: bool
 } @cuetsy(kind="interface")
 
 // Colored text cell options

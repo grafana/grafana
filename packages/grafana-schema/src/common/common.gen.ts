@@ -739,7 +739,7 @@ export const defaultTableFooterOptions: Partial<TableFooterOptions> = {
  */
 export interface TableAutoCellOptions {
   type: TableCellDisplayMode.Auto;
-  wrapText: boolean;
+  wrapText?: boolean;
 }
 
 /**
