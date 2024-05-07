@@ -55,7 +55,13 @@ func (d *DualWriterMode2) Create(ctx context.Context, obj runtime.Object, create
 
 	rsp, err := d.Storage.Create(ctx, created, createValidation, options)
 	if err != nil {
-		d.Log.WithValues("name", accessorCreated.GetName(), "resourceVersion", accessorCreated.GetResourceVersion()).Error(err, "unable to create object in duplicate storage")
+		name := accessorCreated.GetName()
+		// rolling back object creation in legacy storage
+		d.Log.WithValues("name", name, "resourceVersion", accessorCreated.GetResourceVersion()).Error(err, "unable to create object in storage")
+		_, _, errDel := d.Delete(ctx, name, nil, &metav1.DeleteOptions{})
+		if errDel != nil {
+			d.Log.WithValues("name", name).Error(errDel, "unable to delete object from legacy storage while rolling back")
+		}
 	}
 	return rsp, err
 }
@@ -138,9 +144,10 @@ func (d *DualWriterMode2) DeleteCollection(ctx context.Context, deleteValidation
 
 	deleted, err := d.Legacy.DeleteCollection(ctx, deleteValidation, options, listOptions)
 	if err != nil {
-		log.WithValues("deleted", deleted).Error(err, "failed to delete collection successfully from legacy storage")
+		log.WithValues("deletecollection", deleted).Error(err, "failed to delete collection from legacy storage")
 		return nil, err
 	}
+
 	legacyList, err := meta.ExtractList(deleted)
 	if err != nil {
 		log.Error(err, "unable to extract list from legacy storage")
@@ -158,7 +165,11 @@ func (d *DualWriterMode2) DeleteCollection(ctx context.Context, deleteValidation
 
 	res, err := d.Storage.DeleteCollection(ctx, deleteValidation, options, &optionsStorage)
 	if err != nil {
-		log.WithValues("deleted", res).Error(err, "failed to delete collection successfully from Storage")
+		log.WithValues("deletecollection", res).Error(err, "failed to delete collection from storage. Rolling back")
+		obj, errCreate := d.Create(ctx, deleted, func(context.Context, runtime.Object) error { return nil }, &metav1.CreateOptions{})
+		if errCreate != nil {
+			log.WithValues("deletecollection", obj).Error(errCreate, "failed to rollback delete collection in legacy storage")
+		}
 	}
 
 	return res, err
@@ -170,19 +181,23 @@ func (d *DualWriterMode2) Delete(ctx context.Context, name string, deleteValidat
 	deletedLS, async, err := d.Legacy.Delete(ctx, name, deleteValidation, options)
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
-			log.WithValues("objectList", deletedLS).Error(err, "could not delete from legacy store")
+			log.WithValues("delete", deletedLS).Error(err, "could not delete from legacy store")
 			return deletedLS, async, err
 		}
 	}
 
-	deletedS, _, errUS := d.Storage.Delete(ctx, name, deleteValidation, options)
+	deletedS, async, errUS := d.Storage.Delete(ctx, name, deleteValidation, options)
 	if errUS != nil {
 		if !apierrors.IsNotFound(errUS) {
-			log.WithValues("objectList", deletedS).Error(errUS, "could not delete from duplicate storage")
+			log.WithValues("delete", deletedS).Error(errUS, "could not delete from storage")
+			obj, errCreate := d.Create(ctx, deletedLS, func(context.Context, runtime.Object) error { return nil }, &metav1.CreateOptions{})
+			if errCreate != nil {
+				log.WithValues("delete", obj).Error(errCreate, "failed to rollback delete in legacy storage")
+				return deletedS, async, errUS
+			}
 		}
 	}
-
-	return deletedLS, async, err
+	return deletedLS, async, errUS
 }
 
 // Update overrides the generic behavior of the Storage and writes first to the legacy storage and then to storage.
@@ -240,9 +255,16 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 		updated:  obj,
 	}
 
-	// TODO: relies on GuaranteedUpdate creating the object if
-	// it doesn't exist: https://github.com/grafana/grafana/pull/85206
-	return d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+	obj, createdUS, errUS := d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+	if errUS != nil {
+		log.WithValues("object", obj).Error(err, "could not update in storage")
+		_, _, err := legacy.Update(ctx, name, &updateWrapper{upstream: objInfo, updated: old}, createValidation, updateValidation, forceAllowCreate, options)
+		if err != nil {
+			log.WithValues("object", obj).Error(err, "failed to rollback update in legacy storage")
+			return obj, createdUS, errUS
+		}
+	}
+	return obj, createdUS, errUS
 }
 
 func (d *DualWriterMode2) Destroy() {
