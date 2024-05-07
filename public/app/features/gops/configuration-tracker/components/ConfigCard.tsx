@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Card, Icon, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Icon, Stack, useStyles2 } from '@grafana/ui';
 
 import { IrmCardConfiguration } from './ConfigureIRM';
 import { ProgressBar, StepsStatus } from './ProgressBar';
@@ -16,50 +16,54 @@ interface ConfigCardProps {
 export function ConfigCard({ config, handleActionClick }: ConfigCardProps) {
   const styles = useStyles2(getStyles);
   return (
-    <Card>
-      <Card.Heading className={styles.title}>
-        <div className={styles.essentialsTitle}>
-          <Stack direction={'row'} gap={1}>
-            {config.title}
-            {config.titleIcon && <Icon name={config.titleIcon} />}
-            {config.isDone && <Icon name="check-circle" color="green" size="lg" />}
-          </Stack>
-          {config.stepsDone && config.totalStepsToDo && (
-            <Stack direction="row" gap={1}>
-              <StepsStatus stepsDone={config.stepsDone} totalStepsToDo={config.totalStepsToDo} />
-              complete
+    <Stack direction={'column'} gap={1} justifyContent={'space-around'}>
+      <div className={styles.cardContent}>
+        <Stack direction={'column'} gap={1}>
+          <div className={styles.cardTitle}>
+            <Stack direction={'row'} gap={1}>
+              {config.title}
+              {config.titleIcon && <Icon name={config.titleIcon} />}
+              {config.isDone && <Icon name="check-circle" color="green" size="lg" />}
             </Stack>
-          )}
-        </div>
-      </Card.Heading>
-      <Card.Description>
-        <Stack direction={'column'}>
-          {config.description}
-          {config.stepsDone && config.totalStepsToDo && (
-            <ProgressBar stepsDone={config.stepsDone} totalStepsToDo={config.totalStepsToDo} />
-          )}
+            {config.stepsDone && config.totalStepsToDo && (
+              <Stack direction="row" gap={1}>
+                <StepsStatus stepsDone={config.stepsDone} totalStepsToDo={config.totalStepsToDo} />
+                complete
+              </Stack>
+            )}
+          </div>
+          <Stack direction={'column'}>
+            {config.description}
+            {config.stepsDone && config.totalStepsToDo && (
+              <ProgressBar stepsDone={config.stepsDone} totalStepsToDo={config.totalStepsToDo} />
+            )}
+          </Stack>
         </Stack>
-      </Card.Description>
-      <Card.Actions>
-        <Button variant="secondary" onClick={() => handleActionClick(config.id, config.isDone)}>
-          {config.actionButtonTitle}
-        </Button>
-      </Card.Actions>
-    </Card>
+        <Stack direction={'row'} gap={1} justifyContent={'flex-start'} alignItems={'flex-end'}>
+          <Button variant="secondary" onClick={() => handleActionClick(config.id, config.isDone)}>
+            {config.actionButtonTitle}
+          </Button>
+        </Stack>
+      </div>
+    </Stack>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  title: css({
-    'justify-content': 'flex-start',
-    alignItems: 'baseline',
-    gap: theme.spacing(0.5),
-  }),
-  essentialsTitle: css({
+  cardTitle: css({
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     width: '100%',
+  }),
+  cardContent: css({
+    background: theme.colors.background.secondary,
+    padding: theme.spacing(2),
+    borderRadius: theme.shape.radius.default,
+    height: theme.spacing(20),
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
   }),
 });
