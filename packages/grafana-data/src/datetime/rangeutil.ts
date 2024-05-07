@@ -1,4 +1,4 @@
-import { each, has } from 'lodash';
+import { each } from 'lodash';
 
 import { RawTimeRange, TimeRange, TimeZone, IntervalValues, RelativeTimeRange, TimeOption } from '../types/time';
 
@@ -298,7 +298,7 @@ export function calculateInterval(range: TimeRange, resolution: number, lowLimit
 
 const interval_regex = /(-?\d+(?:\.\d+)?)(ms|[Mwdhmsy])/;
 // histogram & trends
-const intervals_in_seconds = {
+const intervals_in_seconds: Record<string, number> = {
   y: 31536000,
   M: 2592000,
   w: 604800,
@@ -329,14 +329,16 @@ export function describeInterval(str: string) {
     throw new Error(makeErrorMessage());
   }
 
-  const key = matches[2] as keyof typeof intervals_in_seconds;
-
-  if (!has(intervals_in_seconds, key)) {
+  const sec = intervals_in_seconds[matches[2]];
+  if (sec === undefined) {
+    // this can never happen, because above we
+    // already made sure the key is correct,
+    // but we handle it to be safe.
     throw new Error(makeErrorMessage());
   }
 
   return {
-    sec: intervals_in_seconds[key],
+    sec,
     type: matches[2],
     count: parseInt(matches[1], 10),
   };
