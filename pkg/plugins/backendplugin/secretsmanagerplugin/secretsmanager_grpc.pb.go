@@ -102,7 +102,7 @@ func (c *secretsManagerClient) GetAllSecrets(ctx context.Context, in *GetAllSecr
 }
 
 // SecretsManagerServer is the server API for SecretsManager service.
-// All implementations should embed UnimplementedSecretsManagerServer
+// All implementations must embed UnimplementedSecretsManagerServer
 // for forward compatibility
 type SecretsManagerServer interface {
 	GetSecret(context.Context, *GetSecretRequest) (*GetSecretResponse, error)
@@ -111,9 +111,10 @@ type SecretsManagerServer interface {
 	ListSecrets(context.Context, *ListSecretsRequest) (*ListSecretsResponse, error)
 	RenameSecret(context.Context, *RenameSecretRequest) (*RenameSecretResponse, error)
 	GetAllSecrets(context.Context, *GetAllSecretsRequest) (*GetAllSecretsResponse, error)
+	mustEmbedUnimplementedSecretsManagerServer()
 }
 
-// UnimplementedSecretsManagerServer should be embedded to have forward compatible implementations.
+// UnimplementedSecretsManagerServer must be embedded to have forward compatible implementations.
 type UnimplementedSecretsManagerServer struct {
 }
 
@@ -135,6 +136,7 @@ func (UnimplementedSecretsManagerServer) RenameSecret(context.Context, *RenameSe
 func (UnimplementedSecretsManagerServer) GetAllSecrets(context.Context, *GetAllSecretsRequest) (*GetAllSecretsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAllSecrets not implemented")
 }
+func (UnimplementedSecretsManagerServer) mustEmbedUnimplementedSecretsManagerServer() {}
 
 // UnsafeSecretsManagerServer may be embedded to opt out of forward compatibility for this service.
 // Use of this interface is not recommended, as added methods to SecretsManagerServer will

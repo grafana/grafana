@@ -4,5 +4,3 @@ plugins:
     out: pkg/plugins/backendplugin/pluginextensionv2
   - plugin: go-grpc
     out: pkg/plugins/backendplugin/pluginextensionv2
-    opt:
-      - require_unimplemented_servers=false

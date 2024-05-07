@@ -7,4 +7,3 @@ plugins:
     out: pkg/plugins/backendplugin/secretsmanagerplugin
     opt:
       - paths=source_relative
-      - require_unimplemented_servers=false

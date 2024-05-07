@@ -47,19 +47,21 @@ func (c *sanitizerClient) Sanitize(ctx context.Context, in *SanitizeRequest, opt
 }
 
 // SanitizerServer is the server API for Sanitizer service.
-// All implementations should embed UnimplementedSanitizerServer
+// All implementations must embed UnimplementedSanitizerServer
 // for forward compatibility
 type SanitizerServer interface {
 	Sanitize(context.Context, *SanitizeRequest) (*SanitizeResponse, error)
+	mustEmbedUnimplementedSanitizerServer()
 }
 
-// UnimplementedSanitizerServer should be embedded to have forward compatible implementations.
+// UnimplementedSanitizerServer must be embedded to have forward compatible implementations.
 type UnimplementedSanitizerServer struct {
 }
 
 func (UnimplementedSanitizerServer) Sanitize(context.Context, *SanitizeRequest) (*SanitizeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Sanitize not implemented")
 }
+func (UnimplementedSanitizerServer) mustEmbedUnimplementedSanitizerServer() {}
 
 // UnsafeSanitizerServer may be embedded to opt out of forward compatibility for this service.
 // Use of this interface is not recommended, as added methods to SanitizerServer will

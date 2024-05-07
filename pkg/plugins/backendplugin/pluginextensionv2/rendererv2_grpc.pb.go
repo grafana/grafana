@@ -58,14 +58,15 @@ func (c *rendererClient) RenderCSV(ctx context.Context, in *RenderCSVRequest, op
 }
 
 // RendererServer is the server API for Renderer service.
-// All implementations should embed UnimplementedRendererServer
+// All implementations must embed UnimplementedRendererServer
 // for forward compatibility
 type RendererServer interface {
 	Render(context.Context, *RenderRequest) (*RenderResponse, error)
 	RenderCSV(context.Context, *RenderCSVRequest) (*RenderCSVResponse, error)
+	mustEmbedUnimplementedRendererServer()
 }
 
-// UnimplementedRendererServer should be embedded to have forward compatible implementations.
+// UnimplementedRendererServer must be embedded to have forward compatible implementations.
 type UnimplementedRendererServer struct {
 }
 
@@ -75,6 +76,7 @@ func (UnimplementedRendererServer) Render(context.Context, *RenderRequest) (*Ren
 func (UnimplementedRendererServer) RenderCSV(context.Context, *RenderCSVRequest) (*RenderCSVResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RenderCSV not implemented")
 }
+func (UnimplementedRendererServer) mustEmbedUnimplementedRendererServer() {}
 
 // UnsafeRendererServer may be embedded to opt out of forward compatibility for this service.
 // Use of this interface is not recommended, as added methods to RendererServer will
