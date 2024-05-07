@@ -21,25 +21,22 @@ import (
 var _ authn.Client = new(ExtendedJWT)
 
 const (
-	rfc9068ShortMediaType          = "at+jwt"
-	extJWTAuthenticationHeaderName = "X-Access-Token"
-	extJWTAuthorizationHeaderName  = "X-Grafana-Id"
+	extJWTAuthenticationHeaderName  = "X-Access-Token"
+	extJWTAuthorizationHeaderName   = "X-Grafana-Id"
+	extJWTAccessTokenExpectAudience = "grafana"
 )
 
 func ProvideExtendedJWT(userService user.Service, cfg *setting.Cfg,
 	signingKeys signingkeys.Service) *ExtendedJWT {
 	verifier := authlib.NewAccessTokenVerifier(authlib.VerifierConfig{
-		SigningKeysURL: cfg.ExtJWTAuth.JWKSUrl,
-		AllowedAudiences: []string{
-			cfg.ExtJWTAuth.ExpectAudience,
-		},
+		SigningKeysURL:   cfg.ExtJWTAuth.JWKSUrl,
+		AllowedAudiences: []string{extJWTAccessTokenExpectAudience},
 	})
 
+	// For ID tokens, we explicitly do not validate audience, hence an empty AllowedAudiences
+	// Namespace claim will be checked
 	idTokenVerifier := authlib.NewIDTokenVerifier(authlib.VerifierConfig{
 		SigningKeysURL: cfg.ExtJWTAuth.JWKSUrl,
-		AllowedAudiences: []string{
-			cfg.ExtJWTAuth.ExpectAudience,
-		},
 	})
 
 	return &ExtendedJWT{

@@ -38,7 +38,7 @@ var (
 		Claims: &jwt.Claims{
 			Issuer:   "http://localhost:3000",
 			Subject:  "access-policy:this-uid",
-			Audience: jwt.Audience{"http://localhost:3000"},
+			Audience: jwt.Audience{extJWTAccessTokenExpectAudience},
 			ID:       "1234567890",
 			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
@@ -54,7 +54,7 @@ var (
 		Claims: &jwt.Claims{
 			Issuer:   "http://localhost:3000",
 			Subject:  "user:2",
-			Audience: jwt.Audience{"http://localhost:3000"},
+			Audience: jwt.Audience{"stack:1"},
 			ID:       "1234567890",
 			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
@@ -68,7 +68,7 @@ var (
 		Claims: &jwt.Claims{
 			Issuer:   "http://localhost:3000",
 			Subject:  "access-policy:this-uid",
-			Audience: jwt.Audience{"http://localhost:3000"},
+			Audience: jwt.Audience{extJWTAccessTokenExpectAudience},
 			ID:       "1234567890",
 			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
@@ -81,7 +81,7 @@ var (
 		Claims: &jwt.Claims{
 			Issuer:   "http://localhost:3000",
 			Subject:  "user:2",
-			Audience: jwt.Audience{"http://localhost:3000"},
+			Audience: jwt.Audience{"stack:1234"},
 			ID:       "1234567890",
 			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
@@ -530,9 +530,8 @@ func setupTestCtx(cfg *setting.Cfg) *testEnv {
 		cfg = &setting.Cfg{
 			// default org set up by the authenticator is 1
 			ExtJWTAuth: setting.ExtJWTSettings{
-				Enabled:        true,
-				ExpectIssuer:   "http://localhost:3000",
-				ExpectAudience: "http://localhost:3000",
+				Enabled:      true,
+				ExpectIssuer: "http://localhost:3000",
 			},
 		}
 	}
