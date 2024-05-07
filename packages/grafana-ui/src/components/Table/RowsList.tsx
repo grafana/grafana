@@ -262,12 +262,16 @@ export const RowsList = (props: RowsListProps) => {
         style.color = textColor;
       }
 
-      // console.log(row.values[1]);
 
+      // Get the text value
+      // TODO: Actually use configuration rather than using the second
+      // data value 🤫
       const textValue = row.values[1]
-      const bbox = getTextBoundingBox(textValue, headerGroups, osContext);
-      style.height = bbox?.height;
-      // console.log(bbox);
+
+      // Set cell height
+      const bbox = getTextBoundingBox(textValue, headerGroups, osContext, tableStyles.rowHeight);
+      style.height = bbox.height;
+
 
 
       return (
@@ -333,9 +337,8 @@ export const RowsList = (props: RowsListProps) => {
       return getExpandedRowHeight(nestedDataField, index, tableStyles);
     }
 
-    const bbox = getTextBoundingBox(row.values[1], headerGroups, osContext);
-
-    return bbox !== undefined ? bbox.height : tableStyles.rowHeight;
+    // TODO: short circuit this when we're not wrapping 🎁
+    return getTextBoundingBox(row.values[1], headerGroups, osContext, tableStyles.rowHeight).height;
   };
 
   const handleScroll: UIEventHandler = (event) => {
@@ -370,8 +373,10 @@ export const RowsList = (props: RowsListProps) => {
 /**
  * Calculate an esimated bounding box for a block
  * of text using an offscreen canvas.
+ * 
+ * TODO: Move this 🚚
  */
-function getTextBoundingBox(text: string, headerGroups: HeaderGroup[], osContext: OffscreenCanvasRenderingContext2D | null) {
+function getTextBoundingBox(text: string, headerGroups: HeaderGroup[], osContext: OffscreenCanvasRenderingContext2D | null, defaultRowHeight: number) {
   let width = 300;
   if (typeof headerGroups[0].headers[1].width === 'number') {
     width = headerGroups[0].headers[1].width;
@@ -380,21 +385,24 @@ function getTextBoundingBox(text: string, headerGroups: HeaderGroup[], osContext
     width = parseInt(headerGroups[0].headers[1].width, 10);
   }
 
-  // const width: number = parseInt(, 10);
+  // TODO: Get actual line height 😂
   const lineHeight = 42;
-  const measure = osContext.measureText(text);
+
+  if (osContext !== null) {
+    const measure = osContext.measureText(text);
+
+    if (measure) {
+      // Retreive an estimated number of lines
+      let lines = Math.ceil(measure.width / width)
+
+      // Estimated height would be lines multiplied
+      // by the line height
+      let height = lines * lineHeight;
 
 
-  if (measure) {
-    // Retreive an estimated number of lines
-    let lines = Math.ceil(measure.width / width)
-
-
-    // Estimated height would be lines multiplied
-    // by the line height
-    let height = lines * lineHeight;
-    // console.log(height);
-
-    return { width, height };
+      return { width, height };
+    }
   }
+
+  return { width, height: defaultRowHeight };
 }
