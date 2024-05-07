@@ -37,13 +37,13 @@ export const RuleListStateSection = ({ rules, state, defaultCollapsed = false }:
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  collapseToggle: css`
-    vertical-align: middle;
-  `,
-  header: css`
-    margin-top: ${theme.spacing(2)};
-  `,
-  rulesTable: css`
-    margin-top: ${theme.spacing(3)};
-  `,
+  collapseToggle: css({
+    verticalAlign: 'middle',
+  }),
+  header: css({
+    marginTop: theme.spacing(2),
+  }),
+  rulesTable: css({
+    marginTop: theme.spacing(3),
+  }),
 });

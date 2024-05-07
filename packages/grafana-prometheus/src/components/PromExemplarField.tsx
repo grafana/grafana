@@ -66,15 +66,15 @@ export function PromExemplarField({ datasource, onChange, query, ...rest }: Prop
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    eyeIcon: css`
-      margin-left: ${theme.spacing(2)};
-    `,
-    activeIcon: css`
-      color: ${theme.colors.primary.main};
-    `,
-    iconWrapper: css`
-      display: flex;
-      align-items: center;
-    `,
+    eyeIcon: css({
+      marginLeft: theme.spacing(2),
+    }),
+    activeIcon: css({
+      color: theme.colors.primary.main,
+    }),
+    iconWrapper: css({
+      display: 'flex',
+      alignItems: 'center',
+    }),
   };
 }

@@ -106,21 +106,21 @@ function useColumns(): Array<DynamicTableColumnProps<AlertmanagerAlert>> {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  table: css`
-    max-width: ${theme.breakpoints.values.lg}px;
-  `,
-  moreMatches: css`
-    margin-top: ${theme.spacing(1)};
-  `,
-  title: css`
-    display: flex;
-    align-items: center;
-  `,
-  badge: css`
-    margin-left: ${theme.spacing(1)};
-  `,
-  stateColumn: css`
-    display: flex;
-    align-items: center;
-  `,
+  table: css({
+    maxWidth: `${theme.breakpoints.values.lg}px`,
+  }),
+  moreMatches: css({
+    marginTop: theme.spacing(1),
+  }),
+  title: css({
+    display: 'flex',
+    alignItems: 'center',
+  }),
+  badge: css({
+    marginLeft: theme.spacing(1),
+  }),
+  stateColumn: css({
+    display: 'flex',
+    alignItems: 'center',
+  }),
 });
