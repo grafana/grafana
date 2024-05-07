@@ -31,8 +31,8 @@ You can use notification templates to:
 
 However, there are limitations. You cannot:
 
-- **Modify Visual Appearance**: Add HTML and CSS to email notifications for visual changes. Alter the design of notifications in messaging services like Slack and Microsoft Teams, such as adding custom blocks or adaptive cards.
-- **Manage Media and Data**: Adjust the number and size of images or their placement in notifications. Customize webhook data structure or format, including JSON fields or sending data in XML. Modify HTTP headers in webhooks beyond those in the contact point configuration.
+- Modify Visual Appearance: Add HTML and CSS to email notifications for visual changes. Alter the design of notifications in messaging services like Slack and Microsoft Teams, such as adding custom blocks or adaptive cards.
+- Manage Media and Data: Adjust the number and size of images or their placement in notifications. Customize webhook data structure or format, including JSON fields or sending data in XML. Modify HTTP headers in webhooks beyond those in the contact point configuration.
 
 ## Learn more
 
