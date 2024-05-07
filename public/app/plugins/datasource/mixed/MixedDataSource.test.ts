@@ -135,6 +135,28 @@ describe('MixedDatasource', () => {
         expect(results[1].state).toBe(LoadingState.Done);
       });
     });
+
+    it('should run query for picked datasource and template variable datasource', async () => {
+      const ds = new MixedDatasource({} as DataSourceInstanceSettings);
+      const request = {
+        targets: [
+          { refId: 'AA', datasource: { uid: '$ds' } },
+          { refId: 'BB', datasource: { uid: 'Loki' } },
+        ],
+      } as DataQueryRequest;
+
+      await expect(ds.query(request)).toEmitValuesWith((results) => {
+        expect(results).toHaveLength(4);
+        expect(results[0].key).toBe('mixed-0-');
+        expect(results[0].state).toBe(LoadingState.Loading);
+        expect(results[1].key).toBe('mixed-1-');
+        expect(results[1].state).toBe(LoadingState.Loading);
+        expect(results[2].key).toBe('mixed-2-A');
+        expect(results[2].state).toBe(LoadingState.Loading);
+        expect(results[3].key).toBe('mixed-2-B');
+        expect(results[3].state).toBe(LoadingState.Done);
+      });
+    });
   });
 
   it('should return both query results from the same data source', async () => {
