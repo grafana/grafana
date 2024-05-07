@@ -9,11 +9,7 @@ import { Alert, Button, CodeEditor, ConfirmModal, Stack, useStyles2 } from '@gra
 import { reportFormErrors } from '../../Analytics';
 import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import {
-  GRAFANA_RULES_SOURCE_NAME,
-  isProvisionedDataSource,
-  isVanillaPrometheusAlertManagerDataSource,
-} from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
 import { Spacer } from '../Spacer';
 
 export interface FormValues {
@@ -32,9 +28,9 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss, onSave
   const { loading: isSaving, error: savingError } = useUnifiedAlertingSelector((state) => state.saveAMConfig);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
 
+  // ⚠️ provisioned data sources should not prevent the configuration from being edited
   const immutableDataSource = alertmanagerName ? isVanillaPrometheusAlertManagerDataSource(alertmanagerName) : false;
-  const provisionedDataSource = isProvisionedDataSource(alertmanagerName);
-  const readOnly = immutableDataSource || provisionedDataSource;
+  const readOnly = immutableDataSource;
 
   const isGrafanaManagedAlertmanager = alertmanagerName === GRAFANA_RULES_SOURCE_NAME;
   const styles = useStyles2(getStyles);
