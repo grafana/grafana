@@ -26,7 +26,7 @@ export function ConfigCard({ config, handleActionClick }: ConfigCardProps) {
               {config.isDone && <Icon name="check-circle" color="green" size="lg" />}
             </Stack>
             {config.stepsDone && config.totalStepsToDo && (
-              <Stack direction="row" gap={1}>
+              <Stack direction="row" gap={0.5}>
                 <StepsStatus stepsDone={config.stepsDone} totalStepsToDo={config.totalStepsToDo} />
                 complete
               </Stack>
