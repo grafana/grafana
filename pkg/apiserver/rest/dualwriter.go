@@ -74,7 +74,7 @@ type DualWriter interface {
 type DualWriterMode int
 
 const (
-	Mode1 = iota
+	Mode1 DualWriterMode = iota
 	Mode2
 	Mode3
 	Mode4
