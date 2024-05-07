@@ -388,9 +388,7 @@ function joinInnerTabular(tables: AlignedData[]): Array<Array<string | number | 
   const joinedTables: Array<Array<string | number | null | undefined>> = [];
 
   // Helper function to get the value at a specific index from an array or typed array
-  const getValue = (arr: number[] | TypedArray | Array<number | null | undefined>, index: number) => {
-    return arr instanceof Array ? arr[index] : arr.at(index);
-  };
+  const getValue = (arr: number[] | TypedArray | Array<number | null | undefined>, index: number) => arr[index];
 
   // Recursive function to perform the inner join.
   const joinTables = (
