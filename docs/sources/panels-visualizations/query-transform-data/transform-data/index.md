@@ -39,7 +39,7 @@ labels:
     - enterprise
     - oss
 title: Transform data
-description: Use transformations to rename fields, join series/tabular data, apply mathematical operations, and more
+description: Use transformations to rename fields, join time series/SQL-like data, apply mathematical operations, and more
 weight: 100
 ---
 
@@ -48,7 +48,7 @@ weight: 100
 Transformations are a powerful way to manipulate data returned by a query before the system applies a visualization. Using transformations, you can:
 
 - Rename fields
-- Join time series and tabular data
+- Join time series/SQL-like data
 - Perform mathematical operations across queries
 - Use the output of one transformation as the input to another transformation
 
@@ -761,11 +761,11 @@ Use this transformation to merge multiple results into a single table, enabling 
 
 This is especially useful for converting multiple time series results into a single wide table with a shared time field.
 
-#### Inner join
+#### Inner join (for Time Series or SQL-like data)
 
 An inner join merges data from multiple tables where all tables share the same value from the selected field. This type of join excludes data where values do not match in every result.
 
-Use this transformation to combine the results from multiple queries (combining on a passed join field or the first time column) into one result, and drop rows where a successful join cannot occur.
+Use this transformation to combine the results from multiple queries (combining on a passed join field or the first time column) into one result, and drop rows where a successful join cannot occur. This is not optimized for large Time Series datasets.
 
 In the following example, two queries return Time Series data. It is visualized as two separate tables before applying the inner join transformation.
 
@@ -863,9 +863,9 @@ I applied a transformation to join the query results using the time field. Now I
 
 {{< figure src="/static/img/docs/transformations/join-fields-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" alt="A table visualization showing results for multiple servers" >}}
 
-#### Outer join (for tabular/SQL data)
+#### Outer join (for SQL-like data)
 
-A tabular outer join combinings tables so that the result includes matched and unmatched rows from either or both tables.
+A tabular outer join combining tables so that the result includes matched and unmatched rows from either or both tables.
 
 | StudentID | Name     | Major            |
 | --------- | -------- | ---------------- |

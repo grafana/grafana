@@ -788,11 +788,11 @@ Use this transformation to merge multiple results into a single table, enabling 
 
 This is especially useful for converting multiple time series results into a single wide table with a shared time field.
 
-#### Inner join
+#### Inner join (for Time Series or SQL-like data)
 
 An inner join merges data from multiple tables where all tables share the same value from the selected field. This type of join excludes data where values do not match in every result.
 
-Use this transformation to combine the results from multiple queries (combining on a passed join field or the first time column) into one result, and drop rows where a successful join cannot occur.
+Use this transformation to combine the results from multiple queries (combining on a passed join field or the first time column) into one result, and drop rows where a successful join cannot occur. This is not optimized for large Time Series datasets.
 
 In the following example, two queries return Time Series data. It is visualized as two separate tables before applying the inner join transformation.
 
@@ -898,9 +898,9 @@ ${buildImageContent(
   'A table visualization showing results for multiple servers'
 )}
 
-#### Outer join (for tabular/SQL data)
+#### Outer join (for SQL-like data)
 
-A tabular outer join combinings tables so that the result includes matched and unmatched rows from either or both tables.
+A tabular outer join combining tables so that the result includes matched and unmatched rows from either or both tables.
 
 | StudentID | Name      | Major            |
 | --------- | --------- | ---------------- |

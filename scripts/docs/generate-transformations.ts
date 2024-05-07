@@ -53,7 +53,7 @@ labels:
     - enterprise
     - oss
 title: Transform data
-description: Use transformations to rename fields, join series/tabular data, apply mathematical operations, and more
+description: Use transformations to rename fields, join time series/SQL-like data, apply mathematical operations, and more
 weight: 100
 ---`;
 
@@ -62,7 +62,7 @@ const templateIntroContent = `# Transform data
 Transformations are a powerful way to manipulate data returned by a query before the system applies a visualization. Using transformations, you can:
 
 - Rename fields
-- Join time series and tabular data
+- Join time series/SQL-like data
 - Perform mathematical operations across queries
 - Use the output of one transformation as the input to another transformation
 
