@@ -1,6 +1,7 @@
 /* Prometheus internal models */
 
 import { AlertState, DataSourceInstanceSettings } from '@grafana/data';
+import { PromOptions } from '@grafana/prometheus';
 
 import {
   Annotations,
@@ -89,7 +90,7 @@ export interface RulesSourceResult {
   namespaces?: RuleNamespace[];
 }
 
-export type RulesSource = DataSourceInstanceSettings | 'grafana';
+export type RulesSource = DataSourceInstanceSettings<PromOptions> | 'grafana';
 
 // combined prom and ruler result
 export interface CombinedRule {

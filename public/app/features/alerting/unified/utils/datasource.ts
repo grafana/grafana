@@ -45,6 +45,10 @@ export function getRulesDataSources() {
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
+export function getRulesSourceUniqueKey(rulesSource: RulesSource): string {
+  return isGrafanaRulesSource(rulesSource) ? 'grafana' : rulesSource.uid ?? rulesSource.id;
+}
+
 export function getRulesDataSource(rulesSourceName: string) {
   return getRulesDataSources().find((x) => x.name === rulesSourceName);
 }
