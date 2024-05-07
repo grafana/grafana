@@ -14871,13 +14871,27 @@
       "post": {
         "deprecated": true,
         "description": "Will return details of the created API key.",
-        "operationId": "api_keys",
+        "operationId": "addAPIkey",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddAPIKeyCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "Body"
+        },
         "responses": {
           "301": {
             "$ref": "#/components/responses/statusMovedPermanently"
           }
         },
-        "summary": "Creates an API key."
+        "summary": "Creates an API key.",
+        "tags": [
+          "api_keys"
+        ]
       }
     },
     "/auth/keys/{id}": {
