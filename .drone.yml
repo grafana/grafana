@@ -704,10 +704,10 @@ steps:
   - docker run --privileged --rm tonistiigi/binfmt --install all
   - /src/grafana-build artifacts -a docker:grafana:linux/amd64 -a docker:grafana:linux/amd64:ubuntu
     -a docker:grafana:linux/arm64 -a docker:grafana:linux/arm64:ubuntu --yarn-cache=$$YARN_CACHE_FOLDER
-    --build-id=$$DRONE_BUILD_NUMBER --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.19.1
-    --tag-format='{{ .version_base }}-{{ .buildID }}-{{ .arch }}' --grafana-dir=$$PWD
-    --ubuntu-tag-format='{{ .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}' >
-    docker.txt
+    --build-id=$$DRONE_BUILD_NUMBER --go-version=1.21.8 --ubuntu-base=ubuntu:22.04
+    --alpine-base=alpine:3.19.1 --tag-format='{{ .version_base }}-{{ .buildID }}-{{
+    .arch }}' --grafana-dir=$$PWD --ubuntu-tag-format='{{ .version_base }}-{{ .buildID
+    }}-ubuntu-{{ .arch }}' > docker.txt
   - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
   depends_on:
   - yarn-install
@@ -1937,10 +1937,10 @@ steps:
   - docker run --privileged --rm tonistiigi/binfmt --install all
   - /src/grafana-build artifacts -a docker:grafana:linux/amd64 -a docker:grafana:linux/amd64:ubuntu
     -a docker:grafana:linux/arm64 -a docker:grafana:linux/arm64:ubuntu --yarn-cache=$$YARN_CACHE_FOLDER
-    --build-id=$$DRONE_BUILD_NUMBER --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.19.1
-    --tag-format='{{ .version_base }}-{{ .buildID }}-{{ .arch }}' --grafana-dir=$$PWD
-    --ubuntu-tag-format='{{ .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}' >
-    docker.txt
+    --build-id=$$DRONE_BUILD_NUMBER --go-version=1.21.8 --ubuntu-base=ubuntu:22.04
+    --alpine-base=alpine:3.19.1 --tag-format='{{ .version_base }}-{{ .buildID }}-{{
+    .arch }}' --grafana-dir=$$PWD --ubuntu-tag-format='{{ .version_base }}-{{ .buildID
+    }}-ubuntu-{{ .arch }}' > docker.txt
   - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
   depends_on:
   - update-package-json-version
@@ -4607,6 +4607,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: ee01a64bbafebf6a6cb4df073148fa08cd3aa534888f79387d5eb38f2b1737b7
+hmac: e19fd2ac87c5d3a7ec093f6690c9c0b998b728b56fa688c1ea44564eb0646c60
 
 ...
