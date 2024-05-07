@@ -27,9 +27,6 @@
 @import 'utils/widths';
 @import 'utils/hacks';
 
-// LAYOUTS
-@import 'layout/lists';
-
 // COMPONENTS
 @import 'components/scrollbar';
 @import 'components/buttons';
@@ -41,7 +38,6 @@
 @import 'components/tags';
 @import 'components/panel_graph';
 @import 'components/submenu';
-@import 'components/panel_gettingstarted';
 @import 'components/panel_piechart';
 @import 'components/panel_pluginlist';
 @import 'components/panel_singlestat';
@@ -49,9 +45,7 @@
 @import 'components/panel_heatmap';
 @import 'components/tagsinput';
 @import 'components/tables_lists';
-@import 'components/search';
 @import 'components/gf-form';
-@import 'components/navbar';
 @import 'components/filter-controls';
 @import 'components/filter-list';
 @import 'components/filter-table';
@@ -66,13 +60,11 @@
 @import 'components/query_editor';
 @import 'components/tabbed_view';
 @import 'components/query_part';
-@import 'components/jsontree';
 @import 'components/edit_sidemenu';
 @import 'components/row';
 @import 'components/json_explorer';
 @import 'components/code_editor';
 @import 'components/dashboard_grid';
-@import 'components/dashboard_list';
 @import 'components/page_header';
 @import 'components/dashboard_settings';
 @import 'components/toolbar';
@@ -88,12 +80,9 @@
 // PAGES
 @import 'pages/login';
 @import 'pages/dashboard';
-@import 'pages/playlist';
 @import 'pages/admin';
 @import 'pages/alerting';
 @import 'pages/history';
-@import 'pages/signup';
 @import 'pages/errorpage';
 @import 'pages/explore';
-@import 'pages/plugins';
 @import 'components/view_states';
