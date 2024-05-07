@@ -28,12 +28,10 @@ const modes = [
     description:
       'Join on a field value with duplicated values. Non performant outer join best used for tabular(SQL like) data.',
   },
-  { value: JoinMode.inner, label: 'INNER', description: 'Drop rows that do not match a value in all tables.' },
   {
-    value: JoinMode.innerTabular,
-    label: 'INNER (TABULAR)',
-    description:
-      'Combine data from two tables whenever there are matching values in a fiesld common to both tables. Non performant outer join best used for tabular(SQL like) data.',
+    value: JoinMode.inner,
+    label: 'INNER',
+    description: 'Combine data from two tables whenever there are matching values in a fields common to both tables.',
   },
 ];
 

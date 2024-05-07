@@ -1,5 +1,3 @@
-import intersect from 'fast_array_intersect';
-
 import { getTimeField, sortDataFrame } from '../../dataframe';
 import { DataFrame, Field, FieldMatcher, FieldType, TIME_SERIES_VALUE_FIELD_NAME } from '../../types';
 import { fieldMatchers } from '../matchers';
@@ -257,7 +255,7 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
   // JEV: change this into a switch statement
   if (options.mode === JoinMode.outerTabular) {
     joined = joinOuterTabular(allData, originalFieldsOrderByFrame, originalFields.length, nullModes);
-  } else if (options.mode === JoinMode.innerTabular) {
+  } else if (options.mode === JoinMode.inner) {
     joined = joinInnerTabular(allData);
     console.log(joined, 'joined');
   } else {
@@ -488,22 +486,15 @@ function nullExpand(yVals: Array<number | null>, nullIdxs: number[], alignedLen:
 
 // nullModes is a tables-matched array indicating how to treat nulls in each series
 export function join(tables: AlignedData[], nullModes?: number[][], mode: JoinMode = JoinMode.outer) {
-  let xVals: Set<number>;
+  let xVals: Set<number> = new Set();
 
-  if (mode === JoinMode.inner) {
-    // @ts-ignore
-    xVals = new Set(intersect(tables.map((t) => t[0])));
-  } else {
-    xVals = new Set();
+  for (let ti = 0; ti < tables.length; ti++) {
+    let t = tables[ti];
+    let xs = t[0];
+    let len = xs.length;
 
-    for (let ti = 0; ti < tables.length; ti++) {
-      let t = tables[ti];
-      let xs = t[0];
-      let len = xs.length;
-
-      for (let i = 0; i < len; i++) {
-        xVals.add(xs[i]);
-      }
+    for (let i = 0; i < len; i++) {
+      xVals.add(xs[i]);
     }
   }
 
