@@ -28,9 +28,10 @@ import (
 
 var pathRewriters = []filters.PathRewriter{
 	{
-		Pattern: regexp.MustCompile(`(/apis/scope.grafana.app/.*/find)(/.*)`),
+		// TODO: this is a temporary hack to make rest.Connecter work with resource level routes
+		Pattern: regexp.MustCompile(`(/apis/scope.grafana.app/.*/find).*`),
 		ReplaceFunc: func(matches []string) string {
-			return matches[1]
+			return matches[1] + "/find"
 		},
 	},
 }
