@@ -16,11 +16,6 @@ import (
 )
 
 func TestIntegrationUpdateCorrelation(t *testing.T) {
-	// TODO: #82520 Possibly a flaky test
-	t.Skip()
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
 	ctx := NewTestEnv(t)
 
 	adminUser := ctx.createUser(user.CreateUserCommand{
