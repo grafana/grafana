@@ -144,7 +144,8 @@ func (tapi *TeamAPI) updateTeamMember(c *contextmodel.ReqContext) response.Respo
 
 // swagger:route PUT /teams/{team_id}/members teams setTeamMemberships
 //
-// Set team memberships. Clears the current team memberships, and set team members and admins based on the provided lists.
+// Set team memberships. Takes user emails, and updates team members and admins to the provided lists of users.
+// Any current team members and admins not in the provided lists will be removed.
 //
 // Responses:
 // 200: okResponse
