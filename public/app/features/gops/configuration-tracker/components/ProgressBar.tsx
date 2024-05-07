@@ -29,7 +29,6 @@ function getStyles(theme: GrafanaTheme2) {
       height: theme.spacing(2),
       borderRadius: theme.shape.borderRadius(8),
       backgroundColor: theme.colors.border.weak,
-      border: `1px solid ${theme.colors.border.strong}`,
       flex: 'auto',
     }),
     fillerStyles: (stepsDone: number) =>
