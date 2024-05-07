@@ -47,6 +47,10 @@ Click a column title to change the sort order from default to descending to asce
 
 ![Sort descending](/static/img/docs/tables/sort-descending.png 'Sort descending')
 
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ## Table options
 
 {{% admonition type="note" %}}
@@ -141,6 +145,10 @@ Additionally, labels displayed alongside of the gauges can be set to be colored 
 **Hidden**
 
 {{< figure src="/static/img/docs/tables/hidden-mode.png" max-width="500px" caption="Hide Label" class="docs-image--no-shadow" >}}
+
+### Data links
+
+If you've configured data links, when the cell type is **Auto** mode, the cell text becomes clickable. If you change the cell type to **Data links**, the cell text reflects the titles of the configured data links. To control the application of data link text more granularly use a **Cell option > Cell type > Data links** field override.
 
 ### JSON view
 

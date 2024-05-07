@@ -35,8 +35,7 @@ type Props = {
   wordRegexp?: RegExp;
 };
 
-export default function BreakableText(props: Props): React.ReactElement | null {
-  const { className, text, wordRegexp = WORD_RX } = props;
+export default function BreakableText({ text, className, wordRegexp = WORD_RX }: Props): React.ReactElement | null {
   const styles = useStyles2(getStyles);
   if (!text) {
     return null;
@@ -55,7 +54,3 @@ export default function BreakableText(props: Props): React.ReactElement | null {
   }
   return <>{spans}</>;
 }
-
-BreakableText.defaultProps = {
-  wordRegexp: WORD_RX,
-};
