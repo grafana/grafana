@@ -587,9 +587,3 @@ export function isLikelyAscendingVector(data: any[], samples = 50) {
 
   return true;
 }
-
-// [
-//   ['Mithil', 'Mithil', 'Mithil', 'Mithil', 'Mithil', 'Mithil', 'Mithil', 'Mithil', 'Mithil', 'Mithil'],
-//   ['iPhone', 'Android', 'iPhone', 'Android', 'iPhone', 'Android', 'iPhone', 'Android', 'iPhone', 'Android'],
-//   ['Phone1', 'Phone1', 'Phone2', 'Phone2', 'Phone3', 'Phone3', 'Phone4', 'Phone4', 'Phone5', 'Phone5'],
-// ];
