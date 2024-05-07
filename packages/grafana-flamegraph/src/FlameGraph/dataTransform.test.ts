@@ -1,6 +1,12 @@
 import { createDataFrame, FieldType } from '@grafana/data';
 
-import { CollapsedMapBuilder, FlameGraphDataContainer, LevelItem, nestedSetToLevels } from './dataTransform';
+import {
+  CollapsedMapBuilder,
+  FlameGraphDataContainer,
+  LevelItem,
+  nestedSetToLevels,
+  CollapsedMap,
+} from './dataTransform';
 import { textToDataContainer } from './testHelpers';
 
 describe('nestedSetToLevels', () => {
@@ -166,7 +172,7 @@ describe('CollapsedMapContainer', () => {
     };
 
     container.addItem(child, parent);
-    expect(container.getCollapsedMap().size).toBe(0);
+    expect(container.getCollapsedMap().size()).toBe(0);
   });
 
   it("doesn't group items if parent has multiple children", () => {
@@ -190,6 +196,52 @@ describe('CollapsedMapContainer', () => {
     };
 
     container.addItem(child1, parent);
-    expect(container.getCollapsedMap().size).toBe(0);
+    expect(container.getCollapsedMap().size()).toBe(0);
+  });
+});
+
+describe('CollapsedMap', () => {
+  function getMap() {
+    const container = textToDataContainer(`
+      [0///////////]
+      [1][3//][6///]
+      [2]     [9/]
+    `)!;
+
+    const items = container.getLevels();
+
+    return {
+      map: new CollapsedMap(
+        new Map([
+          [items[1][0], { items: [items[1][0], items[2][0]], collapsed: false }],
+          [items[1][2], { items: [items[1][2], items[2][1]], collapsed: true }],
+        ])
+      ),
+      items,
+    };
+  }
+
+  it('collapses and expands single item', () => {
+    const { map: collapsedMap, items } = getMap();
+    let newMap = collapsedMap.setCollapsedStatus(items[1][0], true);
+    expect(collapsedMap.get(items[1][0])?.collapsed).toBe(false);
+    expect(newMap.get(items[1][0])?.collapsed).toBe(true);
+
+    newMap = collapsedMap.setCollapsedStatus(items[1][2], false);
+    expect(collapsedMap.get(items[1][2])?.collapsed).toBe(true);
+    expect(newMap.get(items[1][2])?.collapsed).toBe(false);
+  });
+
+  it('collapses and expands all items', () => {
+    const { map: collapsedMap, items } = getMap();
+    let newMap = collapsedMap.setAllCollapsedStatus(true);
+    expect(collapsedMap.get(items[1][0])?.collapsed).toBe(false);
+    expect(newMap.get(items[1][0])?.collapsed).toBe(true);
+    expect(newMap.get(items[1][2])?.collapsed).toBe(true);
+
+    newMap = collapsedMap.setAllCollapsedStatus(false);
+    expect(collapsedMap.get(items[1][2])?.collapsed).toBe(true);
+    expect(newMap.get(items[1][0])?.collapsed).toBe(false);
+    expect(newMap.get(items[1][2])?.collapsed).toBe(false);
   });
 });

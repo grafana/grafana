@@ -108,6 +108,8 @@ export function nestedSetToLevels(
  * and to have a place for the methods to collapse/expand either single item or all the items.
  */
 export class CollapsedMap {
+  // The levelItem used as a key is the item that will always be rendered in the flame graph. The config.items are all
+  // the items that are in the group and if the config.collapsed is true they will be hidden.
   private map: Map<LevelItem, CollapseConfig> = new Map();
 
   constructor(map?: Map<LevelItem, CollapseConfig>) {
