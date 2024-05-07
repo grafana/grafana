@@ -433,6 +433,7 @@ export function buildGridItemForLibPanel(panel: PanelModel) {
     uid: panel.libraryPanel.uid,
     name: panel.libraryPanel.name,
     panelKey: getVizPanelKeyForPanelId(panel.id),
+    gridPos: panel.gridPos,
   });
 
   return new DashboardGridItem({
@@ -443,6 +444,7 @@ export function buildGridItemForLibPanel(panel: PanelModel) {
     height: panel.gridPos.h,
     itemHeight: panel.gridPos.h,
     body,
+    $behaviors: [hoverHeaderOffsetBehavior],
   });
 }
 
