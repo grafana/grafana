@@ -366,7 +366,76 @@ function joinOuterTabular(
   return data;
 }
 
+/**
+ * This function performs a sql-style inner join on tabular data.
+ * @param config Configuration object. Currently supports configuring dashboard time range, annotations, and variables (support dependant on type).
+ * @see{@link AddDashboardConfig}
+ *
+ * @example
+ * ```
+ * // Configuring a simple dashboard
+ * addDashboard({
+ *    timeRange: {
+ *      from: '2022-10-03 00:00:00',
+ *      to: '2022-10-03 23:59:59',
+ *      zone: 'Coordinated Universal Time',
+ *    },
+ *    title: 'Test Dashboard',
+ * })
+ * ```
+ *
+ * @example
+ * ```
+ * // Configuring a dashboard with annotations
+ * addDashboard({
+ *    title: 'Test Dashboard',
+ *    annotations: [
+ *      {
+ *        // This should match the datasource name
+ *        dataSource: 'azure-monitor',
+ *        name: 'Test Annotation',
+ *        dataSourceForm: () => {
+ *          // Insert steps to create annotation using datasource form
+ *        }
+ *      }
+ *    ]
+ * })
+ * ```
+ *
+ * @see{@link AddAnnotationConfig}
+ *
+ * @example
+ * ```
+ * // Configuring a dashboard with variables
+ * addDashboard({
+ *    title: 'Test Dashboard',
+ *    variables: [
+ *      {
+ *        name: 'test-query-variable',
+ *        label: 'Testing Query',
+ *        hide: '',
+ *        type: e2e.flows.VARIABLE_TYPE_QUERY,
+ *        dataSource: 'azure-monitor',
+ *        variableQueryForm: () => {
+ *          // Insert steps to create variable using datasource form
+ *        },
+ *      },
+ *      {
+ *        name: 'test-constant-variable',
+ *        label: 'Testing Constant',
+ *        type: e2e.flows.VARIABLE_TYPE_CONSTANT,
+ *        constantValue: 'constant',
+ *      }
+ *    ]
+ * })
+ * ```
+ *
+ * @see{@link AddVariableConfig}
+ *
+ * @see{@link https://github.com/grafana/grafana/blob/main/e2e/cloud-plugins-suite/azure-monitor.spec.ts Azure Monitor Tests for full examples}
+ */
 function joinInnerTabular(tables: AlignedData[]): Array<Array<string | number | null | undefined>> {
+  console.log(tables, 'tables');
   const joinedTables: Array<Array<string | number | null | undefined>> = [];
 
   // Helper function to get the value at a specific index from an array or typed array
@@ -374,14 +443,14 @@ function joinInnerTabular(tables: AlignedData[]): Array<Array<string | number | 
     return arr instanceof Array ? arr[index] : arr.at(index);
   };
 
-  // Recursive function to perform the inner join
+  // Recursive function to perform the inner join.
   const joinTables = (
     currentTables: AlignedData[],
     currentIndex: number,
     currentRow: Array<string | number | null | undefined>
   ) => {
     if (currentIndex === currentTables.length) {
-      // Base case: all tables have been joined, add the current row to the result
+      // Base case: all tables have been joined, add the current row to the final result.
       joinedTables.push(currentRow);
       return;
     }
@@ -411,6 +480,11 @@ function joinInnerTabular(tables: AlignedData[]): Array<Array<string | number | 
 
   // Start the recursive join process
   joinTables(tables, 0, []);
+
+  // Check if joinedTables is empty before transposing
+  if (joinedTables.length === 0) {
+    return [];
+  }
 
   // Transpose the joined tables to get the desired output format
   return joinedTables[0].map((_, colIndex) => joinedTables.map((row) => row[colIndex]));
