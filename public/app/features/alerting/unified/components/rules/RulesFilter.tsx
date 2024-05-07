@@ -5,7 +5,6 @@ import { useForm } from 'react-hook-form';
 import { DataSourceInstanceSettings, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, Field, Icon, Input, Label, RadioButtonGroup, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
-import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import {
@@ -16,6 +15,7 @@ import {
   trackRulesSearchInputInteraction,
 } from '../../Analytics';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
+import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { RuleHealth } from '../../search/rulesSearchParser';
 import { alertStateToReadable } from '../../utils/rules';
 import { HoverCard } from '../HoverCard';
@@ -68,9 +68,10 @@ const RuleStateOptions = Object.entries(PromAlertingRuleState).map(([key, value]
 
 const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => {
   const styles = useStyles2(getStyles);
-  const [queryParams, setQueryParams] = useQueryParams();
+  const [queryParams, updateQueryParams] = useURLSearchParams();
   const { filterState, hasActiveFilters, searchQuery, setSearchQuery, updateFilters } = useRulesFilter();
 
+  // const ruleOrigin = queryParams.get('ruleOrigin');
   // This key is used to force a rerender on the inputs when the filters are cleared
   const [filterKey, setFilterKey] = useState<number>(Math.floor(Math.random() * 100));
   const dataSourceKey = `dataSource-${filterKey}`;
@@ -133,7 +134,7 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
   };
 
   const handleViewChange = (view: string) => {
-    setQueryParams({ view });
+    updateQueryParams({ view });
     trackRulesListViewChange({ view });
   };
 
@@ -220,6 +221,17 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
               onChange={handleRuleHealthChange}
             />
           </div>
+          <div>
+            <Label>Rule origin</Label>
+            <RadioButtonGroup<'plugins'>
+              options={[
+                { label: 'All', value: undefined },
+                { label: 'Exclude plugins', value: 'plugins' },
+              ]}
+              value={filterState.hide}
+              onChange={(value) => updateFilters({ ...filterState, hide: value })}
+            />
+          </div>
         </Stack>
         <Stack direction="column" gap={1}>
           <Stack direction="row" gap={1}>
@@ -262,7 +274,7 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
               <Label>View as</Label>
               <RadioButtonGroup
                 options={ViewOptions}
-                value={String(queryParams['view'] ?? ViewOptions[0].value)}
+                value={queryParams.get('view') ?? ViewOptions[0].value}
                 onChange={handleViewChange}
               />
             </div>
