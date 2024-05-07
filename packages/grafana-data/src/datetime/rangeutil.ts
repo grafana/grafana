@@ -319,14 +319,13 @@ export function describeInterval(str: string) {
     };
   }
 
-  const makeErrorMessage = () =>
-    `Invalid interval string, has to be either unit-less or end with one of the following units: "${Object.keys(
-      intervals_in_seconds
-    ).join(', ')}"`;
-
   const matches = str.match(interval_regex);
   if (!matches) {
-    throw new Error(makeErrorMessage());
+    throw new Error(
+      `Invalid interval string, has to be either unit-less or end with one of the following units: "${Object.keys(
+        intervals_in_seconds
+      ).join(', ')}"`
+    );
   }
 
   const sec = intervals_in_seconds[matches[2]];
@@ -334,7 +333,7 @@ export function describeInterval(str: string) {
     // this can never happen, because above we
     // already made sure the key is correct,
     // but we handle it to be safe.
-    throw new Error(makeErrorMessage());
+    throw new Error('describeInterval failed: invalid interval string');
   }
 
   return {
