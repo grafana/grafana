@@ -2,7 +2,7 @@
 import jsonMap from 'json-source-map';
 
 import type { AdHocVariableModel, TypedVariableModel } from '@grafana/data';
-import { Dashboard, VariableOption } from '@grafana/schema';
+import { Dashboard, Panel, VariableOption } from '@grafana/schema';
 
 import { jsonDiff } from '../settings/version-history/utils';
 

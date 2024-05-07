@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
 import React from 'react';
-import { Unsubscribable } from 'rxjs';
 
 import {
   DataSourceApi,
@@ -43,7 +42,6 @@ import { DashboardGridItem, RepeatDirection } from '../scene/DashboardGridItem';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelTimeRange, PanelTimeRangeState } from '../scene/PanelTimeRange';
 import { gridItemToPanel, vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
-import { jsonDiff } from '../settings/version-history/utils';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
 export interface VizPanelManagerState extends SceneObjectState {
@@ -70,8 +68,6 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     string,
     { options: DeepPartial<{}>; fieldConfig: FieldConfigSource<DeepPartial<{}>> } | undefined
   > = {};
-
-  private _changeSubs: Unsubscribable[] = [];
 
   public constructor(state: VizPanelManagerState) {
     super(state);
