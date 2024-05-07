@@ -319,16 +319,24 @@ export function describeInterval(str: string) {
     };
   }
 
+  const makeErrorMessage = () =>
+    `Invalid interval string, has to be either unit-less or end with one of the following units: "${Object.keys(
+      intervals_in_seconds
+    ).join(', ')}"`;
+
   const matches = str.match(interval_regex);
-  if (!matches || !has(intervals_in_seconds, matches[2])) {
-    throw new Error(
-      `Invalid interval string, has to be either unit-less or end with one of the following units: "${Object.keys(
-        intervals_in_seconds
-      ).join(', ')}"`
-    );
+  if (!matches) {
+    throw new Error(makeErrorMessage());
   }
+
+  const key = matches[2] as keyof typeof intervals_in_seconds;
+
+  if (!has(intervals_in_seconds, key)) {
+    throw new Error(makeErrorMessage());
+  }
+
   return {
-    sec: intervals_in_seconds[matches[2] as keyof typeof intervals_in_seconds],
+    sec: intervals_in_seconds[key],
     type: matches[2],
     count: parseInt(matches[1], 10),
   };
