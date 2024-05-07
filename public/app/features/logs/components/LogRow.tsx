@@ -253,7 +253,9 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               {processedRow.duplicates && processedRow.duplicates > 0 ? `${processedRow.duplicates + 1}x` : null}
             </td>
           )}
-          <td className={hasError ? '' : `${levelStyles.logsRowLevelColor} ${styles.logsRowLevel}`}>
+          <td
+            className={hasError ? styles.logsRowWithError : `${levelStyles.logsRowLevelColor} ${styles.logsRowLevel}`}
+          >
             {hasError && (
               <Tooltip content={`Error: ${errorMessage}`} placement="right" theme="error">
                 <Icon className={styles.logIconError} name="exclamation-triangle" size="xs" />
