@@ -17,7 +17,7 @@ export const useGetConfigurationForUI = ({
   return useMemo(() => {
     function getConnectDataSourceConfiguration() {
       const description = dataSourceCompatibleWithAlerting
-        ? 'You have connected datasource.'
+        ? 'You have connected a datasource.'
         : 'Connect at least one data source to start receiving data.';
       const actionButtonTitle = dataSourceCompatibleWithAlerting ? 'View' : 'Connect';
       return {
