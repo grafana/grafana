@@ -67,20 +67,20 @@ export function AdditionalSettings(props: AdditionalSettingsProps) {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    settingsIcon: css`
-      color: ${theme.colors.text.secondary};
-    `,
-    selectItem: css`
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      padding: 4px 0;
-    `,
-    selectItemLabel: css`
-      margin: 0 0 0 ${theme.spacing(1)};
-      align-self: center;
-      color: ${theme.colors.text.secondary};
-      font-size: 12px;
-    `,
+    settingsIcon: css({
+      color: theme.colors.text.secondary,
+    }),
+    selectItem: css({
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: '4px 0',
+    }),
+    selectItemLabel: css({
+      margin: `0 0 0 ${theme.spacing(1)}`,
+      alignSelf: 'center',
+      color: theme.colors.text.secondary,
+      fontSize: '12px',
+    }),
   };
 }
