@@ -63,8 +63,8 @@ export function GrafanaAlertmanagerDeliveryWarning({ currentAlertmanager }: Graf
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  adminHint: css`
-    font-size: ${theme.typography.bodySmall.fontSize};
-    font-weight: ${theme.typography.bodySmall.fontWeight};
-  `,
+  adminHint: css({
+    fontSize: theme.typography.bodySmall.fontSize,
+    fontWeight: theme.typography.bodySmall.fontWeight,
+  }),
 });

@@ -79,16 +79,16 @@ export const AlertDetails = ({ alert, alertManagerSourceName }: AmNotificationsA
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  button: css`
-    & + & {
-      margin-left: ${theme.spacing(1)};
-    }
-  `,
-  actionsRow: css`
-    padding: ${theme.spacing(2, 0)} !important;
-    border-bottom: 1px solid ${theme.colors.border.medium};
-  `,
-  receivers: css`
-    padding: ${theme.spacing(1, 0)};
-  `,
+  button: css({
+    '& + &': {
+      marginLeft: theme.spacing(1),
+    },
+  }),
+  actionsRow: css({
+    padding: `${theme.spacing(2, 0)} !important`,
+    borderBottom: `1px solid ${theme.colors.border.medium}`,
+  }),
+  receivers: css({
+    padding: theme.spacing(1, 0),
+  }),
 });

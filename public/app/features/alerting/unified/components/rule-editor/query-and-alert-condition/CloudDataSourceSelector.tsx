@@ -60,16 +60,16 @@ export const CloudDataSourceSelector = ({ disabled, onChangeCloudDatasource }: C
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  formInput: css`
-    width: 330px;
-    & + & {
-      margin-left: ${theme.spacing(3)};
-    }
-  `,
-  flexRow: css`
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-start;
-    align-items: flex-end;
-  `,
+  formInput: css({
+    width: '330px',
+    '& + &': {
+      marginLeft: theme.spacing(3),
+    },
+  }),
+  flexRow: css({
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-end',
+  }),
 });

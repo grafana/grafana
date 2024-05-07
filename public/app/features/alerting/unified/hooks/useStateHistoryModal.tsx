@@ -76,16 +76,16 @@ function useStateHistoryModal() {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  modal: css`
-    width: 80%;
-    height: 80%;
-    min-width: 800px;
-  `,
-  modalContent: css`
-    height: 100%;
-    width: 100%;
-    padding: ${theme.spacing(2)};
-  `,
+  modal: css({
+    width: '80%',
+    height: '80%',
+    minWidth: '800px',
+  }),
+  modalContent: css({
+    height: '100%',
+    width: '100%',
+    padding: theme.spacing(2),
+  }),
 });
 
 export { useStateHistoryModal };

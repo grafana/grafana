@@ -108,31 +108,31 @@ const MatchersField = ({ className }: Props) => {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    wrapper: css`
-      margin-top: ${theme.spacing(2)};
-    `,
-    row: css`
-      display: flex;
-      align-items: flex-start;
-      flex-direction: row;
-      background-color: ${theme.colors.background.secondary};
-      padding: ${theme.spacing(1)} ${theme.spacing(1)} 0 ${theme.spacing(1)};
-      & > * + * {
-        margin-left: ${theme.spacing(2)};
-      }
-    `,
-    removeButton: css`
-      margin-left: ${theme.spacing(1)};
-      margin-top: ${theme.spacing(2.5)};
-    `,
-    matcherOptions: css`
-      min-width: 140px;
-    `,
-    matchers: css`
-      max-width: ${theme.breakpoints.values.sm}px;
-      margin: ${theme.spacing(1)} 0;
-      padding-top: ${theme.spacing(0.5)};
-    `,
+    wrapper: css({
+      marginTop: theme.spacing(2),
+    }),
+    row: css({
+      display: 'flex',
+      alignItems: 'flex-start',
+      flexDirection: 'row',
+      backgroundColor: theme.colors.background.secondary,
+      padding: `${theme.spacing(1)} ${theme.spacing(1)} 0 ${theme.spacing(1)}`,
+      '& > * + *': {
+        marginLeft: theme.spacing(2),
+      },
+    }),
+    removeButton: css({
+      marginLeft: theme.spacing(1),
+      marginTop: theme.spacing(2.5),
+    }),
+    matcherOptions: css({
+      minWidth: '140px',
+    }),
+    matchers: css({
+      maxWidth: `${theme.breakpoints.values.sm}px`,
+      margin: `${theme.spacing(1)} 0`,
+      paddingTop: theme.spacing(0.5),
+    }),
   };
 };
 

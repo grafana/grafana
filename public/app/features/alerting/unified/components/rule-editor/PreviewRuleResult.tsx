@@ -76,15 +76,15 @@ export function PreviewRuleResult(props: Props): React.ReactElement | null {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    container: css`
-      margin: ${theme.spacing(2)} 0;
-    `,
-    table: css`
-      flex: 1 1 auto;
-      height: 135px;
-      margin-top: ${theme.spacing(2)};
-      border: 1px solid ${theme.colors.border.medium};
-      border-radius: ${theme.shape.radius.default};
-    `,
+    container: css({
+      margin: `${theme.spacing(2)} 0`,
+    }),
+    table: css({
+      flex: '1 1 auto',
+      height: '135px',
+      marginTop: theme.spacing(2),
+      border: `1px solid ${theme.colors.border.medium}`,
+      borderRadius: theme.shape.radius.default,
+    }),
   };
 }

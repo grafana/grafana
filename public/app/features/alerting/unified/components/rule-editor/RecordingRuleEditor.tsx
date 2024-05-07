@@ -115,7 +115,7 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  vizWrapper: css`
-    margin: ${theme.spacing(1, 0)};
-  `,
+  vizWrapper: css({
+    margin: theme.spacing(1, 0),
+  }),
 });

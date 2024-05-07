@@ -77,15 +77,15 @@ export const PanelAlertTabContent = ({ dashboard, panel }: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  newButton: css`
-    margin-top: ${theme.spacing(3)};
-  `,
-  innerWrapper: css`
-    padding: ${theme.spacing(2)};
-  `,
-  noRulesWrapper: css`
-    margin: ${theme.spacing(2)};
-    background-color: ${theme.colors.background.secondary};
-    padding: ${theme.spacing(3)};
-  `,
+  newButton: css({
+    marginTop: theme.spacing(3),
+  }),
+  innerWrapper: css({
+    padding: theme.spacing(2),
+  }),
+  noRulesWrapper: css({
+    margin: theme.spacing(2),
+    backgroundColor: theme.colors.background.secondary,
+    padding: theme.spacing(3),
+  }),
 });

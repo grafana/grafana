@@ -68,9 +68,9 @@ function getStyles(theme: GrafanaTheme2) {
   const size = theme.spacing(2);
 
   return {
-    dataSourceIcon: css`
-      width: ${size};
-      height: ${size};
-    `,
+    dataSourceIcon: css({
+      width: size,
+      height: size,
+    }),
   };
 }

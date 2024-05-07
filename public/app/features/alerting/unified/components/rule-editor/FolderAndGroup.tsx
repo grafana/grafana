@@ -446,21 +446,21 @@ function EvaluationGroupCreationModal({
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    display: flex;
-    flex-direction: column;
-    align-items: baseline;
-    max-width: ${theme.breakpoints.values.lg}px;
-    justify-content: space-between;
-  `,
-  formInput: css`
-    flex-grow: 1;
-  `,
-  modal: css`
-    width: ${theme.breakpoints.values.sm}px;
-  `,
-  modalTitle: css`
-    color: ${theme.colors.text.secondary};
-    margin-bottom: ${theme.spacing(2)};
-  `,
+  container: css({
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'baseline',
+    maxWidth: `${theme.breakpoints.values.lg}px`,
+    justifyContent: 'space-between',
+  }),
+  formInput: css({
+    flexGrow: 1,
+  }),
+  modal: css({
+    width: `${theme.breakpoints.values.sm}px`,
+  }),
+  modalTitle: css({
+    color: theme.colors.text.secondary,
+    marginBottom: theme.spacing(2),
+  }),
 });

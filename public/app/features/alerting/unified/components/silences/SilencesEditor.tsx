@@ -286,27 +286,27 @@ export const SilencesEditor = ({ silenceId, alertManagerSourceName }: Props) => 
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  field: css`
-    margin: ${theme.spacing(1, 0)};
-  `,
-  textArea: css`
-    max-width: ${theme.breakpoints.values.sm}px;
-  `,
-  createdBy: css`
-    width: 200px;
-  `,
-  flexRow: css`
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-start;
+  field: css({
+    margin: theme.spacing(1, 0),
+  }),
+  textArea: css({
+    maxWidth: `${theme.breakpoints.values.sm}px`,
+  }),
+  createdBy: css({
+    width: '200px',
+  }),
+  flexRow: css({
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
 
-    & > * {
-      margin-right: ${theme.spacing(1)};
-    }
-  `,
-  silencePeriod: css`
-    max-width: ${theme.breakpoints.values.sm}px;
-  `,
+    '& > *': {
+      marginRight: theme.spacing(1),
+    },
+  }),
+  silencePeriod: css({
+    maxWidth: `${theme.breakpoints.values.sm}px`,
+  }),
 });
 
 export default SilencesEditor;

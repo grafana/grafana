@@ -62,45 +62,43 @@ const getStyles = (theme: GrafanaTheme2, color?: string, size?: string) => {
     size === 'md' ? `${theme.spacing(0.33)} ${theme.spacing(1)}` : `${theme.spacing(0.2)} ${theme.spacing(0.6)}`;
 
   return {
-    wrapper: css`
-      color: ${fontColor};
-      font-size: ${theme.typography.bodySmall.fontSize};
+    wrapper: css({
+      color: fontColor,
+      fontSize: theme.typography.bodySmall.fontSize,
 
-      border-radius: ${theme.shape.borderRadius(2)};
-    `,
+      borderRadius: theme.shape.borderRadius(2),
+    }),
     labelText: css({
       whiteSpace: 'nowrap',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       maxWidth: '300px',
     }),
-    label: css`
-      display: flex;
-      align-items: center;
-      color: inherit;
+    label: css({
+      display: 'flex',
+      alignItems: 'center',
+      color: 'inherit',
 
-      padding: ${padding};
-      background: ${backgroundColor};
+      padding: padding,
+      background: backgroundColor,
 
-      border: solid 1px ${borderColor};
-      border-top-left-radius: ${theme.shape.borderRadius(2)};
-      border-bottom-left-radius: ${theme.shape.borderRadius(2)};
-    `,
-    value: css`
-      color: inherit;
-      padding: ${padding};
-      background: ${valueBackgroundColor};
-
-      border: solid 1px ${borderColor};
-      border-left: none;
-      border-top-right-radius: ${theme.shape.borderRadius(2)};
-      border-bottom-right-radius: ${theme.shape.borderRadius(2)};
-
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 300px;
-    `,
+      border: `solid 1px ${borderColor}`,
+      borderTopLeftRadius: theme.shape.borderRadius(2),
+      borderBottomLeftRadius: theme.shape.borderRadius(2),
+    }),
+    value: css({
+      color: 'inherit',
+      padding: padding,
+      background: valueBackgroundColor,
+      border: `solid 1px ${borderColor}`,
+      borderLeft: 'none',
+      borderTopRightRadius: theme.shape.borderRadius(2),
+      borderBottomRightRadius: theme.shape.borderRadius(2),
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      maxWidth: '300px',
+    }),
   };
 };
 

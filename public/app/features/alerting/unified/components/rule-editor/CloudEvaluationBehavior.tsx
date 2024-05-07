@@ -62,16 +62,16 @@ export const CloudEvaluationBehavior = () => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  inlineField: css`
-    margin-bottom: 0;
-  `,
-  flexRow: css`
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-start;
-    align-items: flex-start;
-  `,
-  timeUnit: css`
-    margin-left: ${theme.spacing(0.5)};
-  `,
+  inlineField: css({
+    marginBottom: 0,
+  }),
+  flexRow: css({
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+  }),
+  timeUnit: css({
+    marginLeft: theme.spacing(0.5),
+  }),
 });

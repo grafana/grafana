@@ -209,16 +209,16 @@ export function ReceiverForm<R extends ChannelValues>({
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  heading: css`
-    margin: ${theme.spacing(4, 0)};
-  `,
-  buttons: css`
-    margin-top: ${theme.spacing(4)};
+  heading: css({
+    margin: theme.spacing(4, 0),
+  }),
+  buttons: css({
+    marginTop: theme.spacing(4),
 
-    & > * + * {
-      margin-left: ${theme.spacing(1)};
-    }
-  `,
+    '& > * + *': {
+      marginLeft: theme.spacing(1),
+    },
+  }),
 });
 
 function getErrorMessage(error: unknown) {

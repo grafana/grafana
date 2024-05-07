@@ -72,23 +72,23 @@ const getStyles = (theme: GrafanaTheme2) => ({
     const { color, borderColor } = getTagColorsFromName(label);
 
     return {
-      wrapper: css`
-        color: #fff;
-        background: ${color};
-        padding: ${theme.spacing(0.33)} ${theme.spacing(0.66)};
-        font-size: ${theme.typography.bodySmall.fontSize};
+      wrapper: css({
+        color: '#fff',
+        background: color,
+        padding: `${theme.spacing(0.33)} ${theme.spacing(0.66)}`,
+        fontSize: theme.typography.bodySmall.fontSize,
 
-        border: solid 1px ${borderColor};
-        border-radius: ${theme.shape.borderRadius(2)};
-      `,
+        border: `solid 1px ${borderColor}`,
+        borderRadius: theme.shape.borderRadius(2),
+      }),
     };
   },
-  metadata: css`
-    color: ${theme.colors.text.secondary};
+  metadata: css({
+    color: theme.colors.text.secondary,
 
-    font-size: ${theme.typography.bodySmall.fontSize};
-    font-weight: ${theme.typography.bodySmall.fontWeight};
-  `,
+    fontSize: theme.typography.bodySmall.fontSize,
+    fontWeight: theme.typography.bodySmall.fontWeight,
+  }),
 });
 
 export { Matchers };

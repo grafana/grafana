@@ -105,13 +105,13 @@ export const ExpressionEditor = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  preview: css`
-    padding: ${theme.spacing(2, 0)};
-    max-width: ${theme.breakpoints.values.xl}px;
-  `,
-  previewAlert: css`
-    margin: ${theme.spacing(1, 0)};
-  `,
+  preview: css({
+    padding: theme.spacing(2, 0),
+    maxWidth: `${theme.breakpoints.values.xl}px`,
+  }),
+  previewAlert: css({
+    margin: theme.spacing(1, 0),
+  }),
 });
 
 type QueryMappers<T extends DataQuery = DataQuery> = {

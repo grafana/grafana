@@ -63,18 +63,18 @@ export const AlertGroupFilter = ({ groups }: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    border-bottom: 1px solid ${theme.colors.border.medium};
-    margin-bottom: ${theme.spacing(3)};
-  `,
-  filterSection: css`
-    display: flex;
-    flex-direction: row;
-    margin-bottom: ${theme.spacing(3)};
-    gap: ${theme.spacing(1)};
-  `,
-  clearButton: css`
-    margin-left: ${theme.spacing(1)};
-    margin-top: 19px;
-  `,
+  wrapper: css({
+    borderBottom: `1px solid ${theme.colors.border.medium}`,
+    marginBottom: theme.spacing(3),
+  }),
+  filterSection: css({
+    display: 'flex',
+    flexDirection: 'row',
+    marginBottom: theme.spacing(3),
+    gap: theme.spacing(1),
+  }),
+  clearButton: css({
+    marginLeft: theme.spacing(1),
+    marginTop: '19px',
+  }),
 });
