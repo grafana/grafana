@@ -122,10 +122,17 @@ func TestApplyConfig(t *testing.T) {
 		w.WriteHeader(http.StatusInternalServerError)
 	})
 
-	var configSent client.UserGrafanaConfig
+	var sentConfig client.UserGrafanaConfig
+	var sentState struct {
+		State    string `json:"state"`
+		Promoted bool   `json:"promoted"`
+	}
 	okHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost && strings.Contains(r.URL.Path, "/config") {
-			require.NoError(t, json.NewDecoder(r.Body).Decode(&configSent))
+			require.NoError(t, json.NewDecoder(r.Body).Decode(&sentConfig))
+		}
+		if r.Method == http.MethodPost && strings.Contains(r.URL.Path, "/state") {
+			require.NoError(t, json.NewDecoder(r.Body).Decode(&sentState))
 		}
 		w.WriteHeader(http.StatusOK)
 	})
@@ -178,10 +185,16 @@ func TestApplyConfig(t *testing.T) {
 	require.True(t, am.Ready())
 
 	// The sent configuration should be unencrypted and promoted.
-	amCfg, err := json.Marshal(configSent.GrafanaAlertmanagerConfig)
+	amCfg, err := json.Marshal(sentConfig.GrafanaAlertmanagerConfig)
 	require.NoError(t, err)
 	require.JSONEq(t, testGrafanaConfigWithSecret, string(amCfg))
-	require.True(t, configSent.Promoted)
+	require.True(t, sentConfig.Promoted)
+
+	// The sent state should be promoted.
+	rawState, err := am.getFullState(ctx)
+	require.NoError(t, err)
+	require.True(t, sentState.Promoted)
+	require.Equal(t, rawState, sentState.State)
 
 	// If we already got a 200 status code response, we shouldn't make the HTTP request again.
 	server.Config.Handler = errorHandler

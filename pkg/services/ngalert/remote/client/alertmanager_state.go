@@ -16,6 +16,11 @@ type UserGrafanaState struct {
 	State string `json:"state"`
 }
 
+type postableUserGrafanaState struct {
+	State    string `json:"state"`
+	Promoted bool   `json:"promoted"`
+}
+
 func (mc *Mimir) GetGrafanaAlertmanagerState(ctx context.Context) (*UserGrafanaState, error) {
 	gs := &UserGrafanaState{}
 	response := successResponse{
@@ -36,8 +41,9 @@ func (mc *Mimir) GetGrafanaAlertmanagerState(ctx context.Context) (*UserGrafanaS
 }
 
 func (mc *Mimir) CreateGrafanaAlertmanagerState(ctx context.Context, state string) error {
-	payload, err := json.Marshal(&UserGrafanaState{
-		State: state,
+	payload, err := json.Marshal(&postableUserGrafanaState{
+		State:    state,
+		Promoted: mc.promoteConfig,
 	})
 	if err != nil {
 		return err
