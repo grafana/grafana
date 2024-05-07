@@ -27,7 +27,7 @@ Notification templates are not tied to specific contact point integrations, such
 
 You can use notification templates to:
 
-- **Customize Content**: Personalize the subject of an email or the title of a message. Modify text within notifications, like selecting or omitting certain labels, annotations, and links. Format text with bold and italic styles, and add or remove line breaks.
+- Customize content: Personalize the subject of an email or the title of a message. Modify text within notifications, like selecting or omitting certain labels, annotations, and links. Format text with bold and italic styles, and add or remove line breaks.
 
 However, there are limitations. You cannot:
 
