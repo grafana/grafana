@@ -23,7 +23,7 @@ export function SelectionOptionsForm({
   onAllValueChange,
 }: SelectionOptionsFormProps) {
   return (
-    <Stack direction="column" gap={2} height="inherit">
+    <Stack direction="column" gap={2} height="inherit" alignItems="start">
       <VariableCheckboxField
         value={multi}
         name="Multi-value"
