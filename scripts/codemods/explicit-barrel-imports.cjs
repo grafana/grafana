@@ -1,9 +1,7 @@
-const fs = require('fs');
 const path = require('path');
 
-const isBareSpecifier = (importPath) => {
-  return !importPath.startsWith('app/') && /^[^./]/.test(importPath);
-};
+const isBareSpecifier = (importPath) => !importPath.startsWith('app/') && /^[^./]/.test(importPath);
+const barrelFileNames = ['index.ts', 'index.tsx', 'index.js', 'index.jsx'];
 
 const resolvePath = (fileDir, importPath) => {
   if (importPath.startsWith('app/')) {
@@ -24,11 +22,7 @@ module.exports = function (fileInfo, api) {
     .filter((path) => !isBareSpecifier(path.node.source.value))
     .forEach((path) => {
       const resolvedPath = resolvePath(fileDir, path.node.source.value);
-      if (
-        resolvedPath.endsWith('index.ts') ||
-        resolvedPath.endsWith('index.tsx') ||
-        resolvedPath.endsWith('index.js')
-      ) {
+      if (barrelFileNames.some((barrelFileName) => resolvedPath.endsWith(barrelFileName))) {
         // Create a comment node
         const comment = j.commentLine(' @todo: replace barrel import path');
 
