@@ -162,6 +162,82 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 	}
 }
 
+type getTeamsPermissionsTestCase struct {
+	desc             string
+	orgID            int64
+	teamsPermissions [][]string
+	teamsToQuery     []int
+	expected         int
+}
+
+func TestAccessControlStore_GetTeamsPermissions(t *testing.T) {
+	tests := []getTeamsPermissionsTestCase{
+		{
+			desc:  "should successfully get team permissions",
+			orgID: 1,
+			teamsPermissions: [][]string{
+				{"100", "2"},
+				{"101", "3"},
+			},
+			teamsToQuery: []int{0, 1},
+			expected:     4,
+		},
+		{
+			desc:  "Should not get permissions for teams not listed in the query",
+			orgID: 1,
+			teamsPermissions: [][]string{
+				{"100", "2"},
+				{"101", "3"},
+			},
+			teamsToQuery: []int{0},
+			expected:     2,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			store, permissionStore, _, teamSvc, _ := setupTestEnv(t)
+
+			teams := make([]team.Team, 0)
+			for i := 0; i < len(tt.teamsPermissions); i++ {
+				team, err := teamSvc.CreateTeam(context.Background(), fmt.Sprintf("team-%v", i), "", tt.orgID)
+				require.NoError(t, err)
+				teams = append(teams, team)
+			}
+
+			for teamIDx, teamPermissions := range tt.teamsPermissions {
+				for _, id := range teamPermissions {
+					team := teams[teamIDx]
+					_, err := permissionStore.SetTeamResourcePermission(context.Background(), tt.orgID, team.ID, rs.SetResourcePermissionCommand{
+						Actions:    []string{"dashboards:read"},
+						Resource:   "dashboards",
+						ResourceID: id,
+					}, nil)
+					require.NoError(t, err)
+				}
+			}
+
+			teamIDs := make([]int64, 0)
+			for _, teamIDx := range tt.teamsToQuery {
+				if teamIDx < len(teams) {
+					teamIDs = append(teamIDs, teams[teamIDx].ID)
+				}
+			}
+
+			teamsPermissions, err := store.GetTeamsPermissions(context.Background(), accesscontrol.GetUserPermissionsQuery{
+				TeamIDs: teamIDs,
+				OrgID:   tt.orgID,
+			})
+			require.NoError(t, err)
+
+			permissions := make([]accesscontrol.Permission, 0)
+			for _, teamPermissions := range teamsPermissions {
+				permissions = append(permissions, teamPermissions...)
+			}
+			assert.Len(t, permissions, tt.expected)
+		})
+	}
+}
+
 func TestAccessControlStore_DeleteUserPermissions(t *testing.T) {
 	t.Run("expect permissions in all orgs to be deleted", func(t *testing.T) {
 		store, permissionsStore, usrSvc, teamSvc, _ := setupTestEnv(t)
