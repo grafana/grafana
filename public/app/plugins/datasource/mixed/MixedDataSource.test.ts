@@ -37,7 +37,6 @@ const variablesMock = [
     .build(),
 ];
 
-
 describe('MixedDatasource', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -57,6 +56,7 @@ describe('MixedDatasource', () => {
       })
     );
   });
+
   describe('with no errors', () => {
     it('direct query should return results', async () => {
       const ds = new MixedDatasource({} as DataSourceInstanceSettings);
