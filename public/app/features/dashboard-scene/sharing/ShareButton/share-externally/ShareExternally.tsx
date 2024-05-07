@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
@@ -23,8 +23,9 @@ import { DashboardScene } from '../../../scene/DashboardScene';
 import { DashboardInteractions } from '../../../utils/interactions';
 
 import { EmailSharing } from './EmailShare/EmailSharing';
-import { PublicConfiguration } from './PublicShare/PublicConfiguration';
+import { PublicSharing } from './PublicShare/PublicSharing';
 import ShareTypeSelect from './ShareTypeSelect';
+import UnsupportedAlerts from './UnsupportedAlerts';
 
 export interface ShareExternallyDrawerState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;
@@ -131,9 +132,19 @@ function ShareExternallyDrawerRenderer({ model }: SceneComponentProps<ShareExter
 
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
 
-  const onCancel = () => {
+  const onCancel = useCallback(() => {
     dashboard.closeModal();
-  };
+  }, [dashboard]);
+
+  const Config = useMemo(() => {
+    if (hasEmailSharingEnabled && value.value === PublicDashboardShareType.EMAIL) {
+      return <EmailSharing dashboard={dashboard} onCancel={onCancel} />;
+    }
+    if (value.value === PublicDashboardShareType.PUBLIC) {
+      return <PublicSharing onCancel={onCancel} />;
+    }
+    return <></>;
+  }, [value, dashboard, onCancel]);
 
   if (isLoading) {
     return <Loader />;
@@ -141,12 +152,10 @@ function ShareExternallyDrawerRenderer({ model }: SceneComponentProps<ShareExter
 
   return (
     <Stack direction="column" gap={2}>
+      <UnsupportedAlerts dashboard={dashboard} />
       <ShareTypeSelect dashboard={dashboard} setShareType={setValue} value={value} options={options} />
       {!hasWritePermissions && <NoUpsertPermissionsAlert mode={publicDashboard ? 'edit' : 'create'} />}
-      {hasEmailSharingEnabled && value.value === PublicDashboardShareType.EMAIL && (
-        <EmailSharing dashboard={dashboard} onCancel={onCancel} />
-      )}
-      {value.value === PublicDashboardShareType.PUBLIC && <PublicConfiguration onCancel={onCancel} />}
+      {Config}
       {publicDashboard && (
         <>
           <Divider spacing={0} />

@@ -76,32 +76,6 @@ const EmailList = ({
               >
                 <Button icon="ellipsis-v" variant="secondary" />
               </Dropdown>
-              {/*<ButtonGroup>*/}
-              {/*  <Button*/}
-              {/*    type="button"*/}
-              {/*    variant="destructive"*/}
-              {/*    fill="text"*/}
-              {/*    title={t('public-dashboard.email-sharing.revoke-button-title', 'Revoke')}*/}
-              {/*    size="sm"*/}
-              {/*    disabled={isLoading}*/}
-              {/*    onClick={() => onDeleteEmail(recipient.uid, recipient.recipient)}*/}
-              {/*    data-testid={`${selectors.DeleteEmail}-${idx}`}*/}
-              {/*  >*/}
-              {/*    <Trans i18nKey="public-dashboard.email-sharing.revoke-button">Revoke</Trans>*/}
-              {/*  </Button>*/}
-              {/*  <Button*/}
-              {/*    type="button"*/}
-              {/*    variant="primary"*/}
-              {/*    fill="text"*/}
-              {/*    title={t('public-dashboard.email-sharing.resend-button-title', 'Resend')}*/}
-              {/*    size="sm"*/}
-              {/*    disabled={isLoading}*/}
-              {/*    onClick={() => onReshare(recipient.uid)}*/}
-              {/*    data-testid={`${selectors.ReshareLink}-${idx}`}*/}
-              {/*  >*/}
-              {/*    <Trans i18nKey="public-dashboard.email-sharing.resend-button">Resend</Trans>*/}
-              {/*  </Button>*/}
-              {/*</ButtonGroup>*/}
             </td>
           </tr>
         ))}

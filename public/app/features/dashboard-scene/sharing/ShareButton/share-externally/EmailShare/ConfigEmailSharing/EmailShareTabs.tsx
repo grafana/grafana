@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Stack, Tab, TabContent, TabProps, TabsBar } from '@grafana/ui';
 
 import { DashboardScene } from '../../../../../scene/DashboardScene';
+import ShareConfiguration from '../../ShareConfiguration';
 
 import { EmailListTab } from './EmailListTab';
 
@@ -45,7 +46,7 @@ export const EmailShareTabs = ({ dashboard }: { dashboard: DashboardScene }) => 
       </TabsBar>
       <TabContent>
         {state[0].active && <EmailListTab dashboard={dashboard} />}
-        {state[1].active && <div>Second tab content</div>}
+        {state[1].active && <ShareConfiguration dashboard={dashboard} />}
       </TabContent>
     </Stack>
   );

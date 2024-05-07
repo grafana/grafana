@@ -68,7 +68,7 @@ export const CreateEmailSharing = ({
             <Button type="submit" disabled={!isValid}>
               Accept
             </Button>
-            <Button variant="secondary" onClick={onCancel} disabled={false}>
+            <Button variant="secondary" onClick={onCancel}>
               Cancel
             </Button>
             {isLoading && <Spinner />}
