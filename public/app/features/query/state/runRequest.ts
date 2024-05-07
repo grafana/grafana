@@ -159,6 +159,7 @@ export function runRequest(
       request.endTime = Date.now();
 
       state = processResponsePacket(packet, state);
+      console.log('runRequest ' + datasource.uid, state);
 
       return state.panelData;
     }),
