@@ -153,7 +153,6 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			userTeamsRawJSON:  testGHUserTeamsJSON,
 			autoAssignOrgRole: "",
 			roleAttributePath: "",
-			oAuthExtraInfo:    map[string]string{},
 			want: &social.BasicUserInfo{
 				Id:     "1",
 				Name:   "monalisa octocat",
@@ -169,7 +168,6 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			userRawJSON:       testGHUserJSON,
 			autoAssignOrgRole: "Editor",
 			userTeamsRawJSON:  testGHUserTeamsJSON,
-			oAuthExtraInfo:    map[string]string{},
 			want: &social.BasicUserInfo{
 				Id:     "1",
 				Name:   "monalisa octocat",
@@ -185,7 +183,6 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			userRawJSON:       testGHUserJSON,
 			autoAssignOrgRole: "Editor",
 			userTeamsRawJSON:  testGHUserTeamsJSON,
-			oAuthExtraInfo:    map[string]string{},
 			want: &social.BasicUserInfo{
 				Id:     "1",
 				Name:   "monalisa octocat",
@@ -201,7 +198,6 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			settingSkipOrgRoleSync: true,
 			userRawJSON:            testGHUserJSON,
 			userTeamsRawJSON:       testGHUserTeamsJSON,
-			oAuthExtraInfo:         map[string]string{},
 			want: &social.BasicUserInfo{
 				Id:     "1",
 				Name:   "monalisa octocat",
@@ -218,7 +214,6 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			settingAllowGrafanaAdmin: true,
 			userRawJSON:              testGHUserJSON,
 			userTeamsRawJSON:         testGHUserTeamsJSON,
-			oAuthExtraInfo:           map[string]string{},
 			want: &social.BasicUserInfo{
 				Id:             "1",
 				Name:           "monalisa octocat",
@@ -235,7 +230,6 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			userRawJSON:       testGHUserJSON,
 			autoAssignOrgRole: "Editor",
 			userTeamsRawJSON:  testGHUserTeamsJSON,
-			oAuthExtraInfo:    map[string]string{},
 			want: &social.BasicUserInfo{
 				Id:     "1",
 				Name:   "monalisa octocat",
