@@ -139,7 +139,11 @@ describe('align frames', () => {
 
     const tableData1 = toDataFrame({
       fields: [
-        { name: 'gender', type: FieldType.string, values: ['MALE', 'MALE', 'MALE', 'FEMALE', 'FEMALE', 'NON-BINARY'] },
+        {
+          name: 'gender',
+          type: FieldType.string,
+          values: ['NON-BINARY', 'MALE', 'MALE', 'FEMALE', 'FEMALE', 'NON-BINARY'],
+        },
         {
           name: 'day',
           type: FieldType.string,
@@ -150,8 +154,8 @@ describe('align frames', () => {
     });
     const tableData2 = toDataFrame({
       fields: [
-        { name: 'gender', type: FieldType.string, values: ['MALE', 'FEMALE'] },
-        { name: 'count', type: FieldType.number, values: [103, 95] },
+        { name: 'gender', type: FieldType.string, values: ['MALE', 'NON-BINARY', 'FEMALE'] },
+        { name: 'count', type: FieldType.number, values: [103, 95, 201] },
       ],
     });
 
@@ -171,7 +175,7 @@ describe('align frames', () => {
           {
             "name": "gender",
             "values": [
-              "MALE",
+              "NON-BINARY",
               "MALE",
               "MALE",
               "FEMALE",
@@ -204,12 +208,12 @@ describe('align frames', () => {
           {
             "name": "count",
             "values": [
-              103,
-              103,
-              103,
               95,
+              103,
+              103,
+              201,
+              201,
               95,
-              undefined,
             ],
           },
         ]
@@ -232,11 +236,12 @@ describe('align frames', () => {
           {
             "name": "gender",
             "values": [
-              "MALE",
+              "NON-BINARY",
               "MALE",
               "MALE",
               "FEMALE",
               "FEMALE",
+              "NON-BINARY",
             ],
           },
           {
@@ -247,6 +252,7 @@ describe('align frames', () => {
               "Monday",
               "Wednesday",
               "Tuesday",
+              "Monday",
             ],
           },
           {
@@ -257,15 +263,17 @@ describe('align frames', () => {
               13,
               17,
               71,
+              7,
             ],
           },
           {
             "name": "count",
             "values": [
-              103,
-              103,
-              103,
               95,
+              103,
+              103,
+              201,
+              201,
               95,
             ],
           },
