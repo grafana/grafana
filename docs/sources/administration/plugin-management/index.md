@@ -161,7 +161,7 @@ For more information about Grafana CLI plugin commands, refer to [Plugin command
 
 After the user has downloaded the archive containing the plugin assets, they can install it by extracting the archive into their plugin directory. For example:
 
-```
+```bash
 unzip my-plugin-0.2.0.zip -d YOUR_PLUGIN_DIR/my-plugin
 ```
 
