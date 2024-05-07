@@ -546,8 +546,8 @@ export const TooltipPlugin2 = ({
 
       const event = plot!.cursor.event;
 
-      // if not viaSync, re-dispatch real event
-      if (event != null) {
+      // if not viaSync, re-dispatch real event and prevent unattached MouseEvent from being dispatched
+      if (event != null && event.currentTarget != null) {
         plot!.over.dispatchEvent(event);
       } else {
         plot!.setCursor(

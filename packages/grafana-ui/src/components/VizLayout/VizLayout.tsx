@@ -95,10 +95,7 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
 
   return (
     <div style={containerStyle}>
-      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- Interactivity set by KeyboardPlugin*/}
-      <div aria-label="Graph" tabIndex={0} className={styles.viz}>
-        {size && children(size.width, size.height)}
-      </div>
+      <div className={styles.viz}>{size && children(size.width, size.height)}</div>
       <div style={legendStyle} ref={legendRef}>
         <CustomScrollbar hideHorizontalTrack>{legend}</CustomScrollbar>
       </div>
