@@ -252,7 +252,6 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
 
   let joined: Array<Array<number | string | null | undefined>> = [];
 
-  // JEV: change this into a switch statement
   if (options.mode === JoinMode.outerTabular) {
     joined = joinOuterTabular(allData, originalFieldsOrderByFrame, originalFields.length, nullModes);
   } else if (options.mode === JoinMode.inner) {
