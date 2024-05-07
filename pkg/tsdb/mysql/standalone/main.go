@@ -3,8 +3,10 @@ package main
 import (
 	"os"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana/pkg/tsdb/mysql"
 )
 
 func main() {
@@ -16,7 +18,8 @@ func main() {
 	// from Grafana to create different instances of SampleDatasource (per datasource
 	// ID). When datasource configuration changed Dispose method will be called and
 	// new datasource instance created using NewSampleDatasource factory.
-	if err := datasource.Manage("mysql", NewDatasource, datasource.ManageOpts{}); err != nil {
+	logger := backend.NewLoggerWith("logger", "tsdb.mysql")
+	if err := datasource.Manage("mysql", mysql.NewInstanceSettings(logger), datasource.ManageOpts{}); err != nil {
 		log.DefaultLogger.Error(err.Error())
 		os.Exit(1)
 	}

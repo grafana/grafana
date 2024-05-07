@@ -31,24 +31,11 @@ const (
 	dateTimeFormat2 = "2006-01-02T15:04:05Z"
 )
 
-type Service struct {
-	im     instancemgmt.InstanceManager
-	logger log.Logger
-}
-
 func characterEscape(s string, escapeChar string) string {
 	return strings.ReplaceAll(s, escapeChar, url.QueryEscape(escapeChar))
 }
 
-func ProvideService() *Service {
-	logger := backend.NewLoggerWith("logger", "tsdb.mysql")
-	return &Service{
-		im:     datasource.NewInstanceManager(newInstanceSettings(logger)),
-		logger: logger,
-	}
-}
-
-func newInstanceSettings(logger log.Logger) datasource.InstanceFactoryFunc {
+func NewInstanceSettings(logger log.Logger) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		cfg := backend.GrafanaConfigFromContext(ctx)
 		sqlCfg, err := cfg.SQL()
@@ -169,42 +156,6 @@ func newInstanceSettings(logger log.Logger) datasource.InstanceFactoryFunc {
 
 		return sqleng.NewQueryDataHandler(userFacingDefaultError, db, config, &rowTransformer, newMysqlMacroEngine(logger, userFacingDefaultError), logger)
 	}
-}
-
-func (s *Service) getDataSourceHandler(ctx context.Context, pluginCtx backend.PluginContext) (*sqleng.DataSourceHandler, error) {
-	i, err := s.im.Get(ctx, pluginCtx)
-	if err != nil {
-		return nil, err
-	}
-	instance := i.(*sqleng.DataSourceHandler)
-	return instance, nil
-}
-
-// CheckHealth pings the connected SQL database
-func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	dsHandler, err := s.getDataSourceHandler(ctx, req.PluginContext)
-	if err != nil {
-		return nil, err
-	}
-
-	err = dsHandler.Ping()
-
-	if err != nil {
-		var driverErr *mysql.MySQLError
-		if errors.As(err, &driverErr) {
-			return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: dsHandler.TransformQueryError(s.logger, driverErr).Error()}, nil
-		}
-		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: dsHandler.TransformQueryError(s.logger, err).Error()}, nil
-	}
-	return &backend.CheckHealthResult{Status: backend.HealthStatusOk, Message: "Database Connection OK"}, nil
-}
-
-func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	dsHandler, err := s.getDataSourceHandler(ctx, req.PluginContext)
-	if err != nil {
-		return nil, err
-	}
-	return dsHandler.QueryData(ctx, req)
 }
 
 type mysqlQueryResultTransformer struct {
