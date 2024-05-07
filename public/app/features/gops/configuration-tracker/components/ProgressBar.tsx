@@ -27,7 +27,7 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     containerStyles: css({
       height: theme.spacing(2),
-      borderRadius: theme.shape.borderRadius(8),
+      borderRadius: theme.shape.radius.pill,
       backgroundColor: theme.colors.border.weak,
       flex: 'auto',
     }),
@@ -36,7 +36,7 @@ function getStyles(theme: GrafanaTheme2) {
         height: '100%',
         width: `${stepsDone}%`,
         backgroundColor: theme.colors.success.main,
-        borderRadius: theme.shape.borderRadius(8),
+        borderRadius: theme.shape.radius.pill,
         textAlign: 'right',
       }),
   };

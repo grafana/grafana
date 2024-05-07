@@ -125,6 +125,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginBottom: 0,
     display: 'grid',
     gap: theme.spacing(3),
-    'grid-template-columns': ' 1fr 1fr',
+    gridTemplateColumns: ' 1fr 1fr',
   }),
 });

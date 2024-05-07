@@ -20,7 +20,7 @@ export function ConfigCard({ config, handleActionClick }: ConfigCardProps) {
       <div className={styles.cardContent}>
         <Stack direction={'column'} gap={1}>
           <div className={styles.cardTitle}>
-            <Stack direction={'row'} gap={1}>
+            <Stack direction={'row'} gap={1} alignItems={'center'}>
               {config.title}
               {config.titleIcon && <Icon name={config.titleIcon} />}
               {config.isDone && <Icon name="check-circle" color="green" size="lg" />}

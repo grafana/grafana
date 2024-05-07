@@ -119,7 +119,7 @@ interface StepButtonProps extends StepButtonDto {}
 function StepButton({
   type,
   urlLink,
-  urlLinkOnDone: ulrLinkOnDone,
+  urlLinkOnDone,
   label,
   labelOnDone,
   options,
@@ -132,7 +132,7 @@ function StepButton({
         <OpenLinkButton
           urlLink={urlLink}
           label={label}
-          urlLinkOnDone={ulrLinkOnDone}
+          urlLinkOnDone={urlLinkOnDone}
           labelOnDone={labelOnDone}
           done={done}
         />
