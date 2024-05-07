@@ -100,3 +100,11 @@ type ScopeNodeList struct {
 
 	Items []ScopeNode `json:"items,omitempty"`
 }
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type FindResults struct {
+	metav1.TypeMeta `json:",inline"`
+
+	Found   []string `json:"found"`
+	Message string   `json:"message,omitempty"`
+}

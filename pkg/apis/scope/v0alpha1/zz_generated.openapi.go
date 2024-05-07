@@ -16,6 +16,7 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
+		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.FindResults":               schema_pkg_apis_scope_v0alpha1_FindResults(ref),
 		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.Scope":                     schema_pkg_apis_scope_v0alpha1_Scope(ref),
 		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeDashboardBinding":     schema_pkg_apis_scope_v0alpha1_ScopeDashboardBinding(ref),
 		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeDashboardBindingList": schema_pkg_apis_scope_v0alpha1_ScopeDashboardBindingList(ref),
@@ -26,6 +27,53 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeNodeList":             schema_pkg_apis_scope_v0alpha1_ScopeNodeList(ref),
 		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeNodeSpec":             schema_pkg_apis_scope_v0alpha1_ScopeNodeSpec(ref),
 		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeSpec":                 schema_pkg_apis_scope_v0alpha1_ScopeSpec(ref),
+	}
+}
+
+func schema_pkg_apis_scope_v0alpha1_FindResults(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"found": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"message": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"found"},
+			},
+		},
 	}
 }
 
