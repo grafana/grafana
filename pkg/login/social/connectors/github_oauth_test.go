@@ -153,10 +153,7 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			userTeamsRawJSON:  testGHUserTeamsJSON,
 			autoAssignOrgRole: "",
 			roleAttributePath: "",
-			oAuthExtraInfo: map[string]string{
-				"allowed_organizations": "",
-				"team_ids":              "",
-			},
+			oAuthExtraInfo:    map[string]string{},
 			want: &social.BasicUserInfo{
 				Id:     "1",
 				Name:   "monalisa octocat",
@@ -172,10 +169,7 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			userRawJSON:       testGHUserJSON,
 			autoAssignOrgRole: "Editor",
 			userTeamsRawJSON:  testGHUserTeamsJSON,
-			oAuthExtraInfo: map[string]string{
-				"allowed_organizations": "",
-				"team_ids":              "",
-			},
+			oAuthExtraInfo:    map[string]string{},
 			want: &social.BasicUserInfo{
 				Id:     "1",
 				Name:   "monalisa octocat",
@@ -191,10 +185,7 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			userRawJSON:       testGHUserJSON,
 			autoAssignOrgRole: "Editor",
 			userTeamsRawJSON:  testGHUserTeamsJSON,
-			oAuthExtraInfo: map[string]string{
-				"allowed_organizations": "",
-				"team_ids":              "",
-			},
+			oAuthExtraInfo:    map[string]string{},
 			want: &social.BasicUserInfo{
 				Id:     "1",
 				Name:   "monalisa octocat",
@@ -210,10 +201,7 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			settingSkipOrgRoleSync: true,
 			userRawJSON:            testGHUserJSON,
 			userTeamsRawJSON:       testGHUserTeamsJSON,
-			oAuthExtraInfo: map[string]string{
-				"allowed_organizations": "",
-				"team_ids":              "",
-			},
+			oAuthExtraInfo:         map[string]string{},
 			want: &social.BasicUserInfo{
 				Id:     "1",
 				Name:   "monalisa octocat",
@@ -230,10 +218,7 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			settingAllowGrafanaAdmin: true,
 			userRawJSON:              testGHUserJSON,
 			userTeamsRawJSON:         testGHUserTeamsJSON,
-			oAuthExtraInfo: map[string]string{
-				"allowed_organizations": "",
-				"team_ids":              "",
-			},
+			oAuthExtraInfo:           map[string]string{},
 			want: &social.BasicUserInfo{
 				Id:             "1",
 				Name:           "monalisa octocat",
@@ -250,10 +235,7 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			userRawJSON:       testGHUserJSON,
 			autoAssignOrgRole: "Editor",
 			userTeamsRawJSON:  testGHUserTeamsJSON,
-			oAuthExtraInfo: map[string]string{
-				"allowed_organizations": "",
-				"team_ids":              "",
-			},
+			oAuthExtraInfo:    map[string]string{},
 			want: &social.BasicUserInfo{
 				Id:     "1",
 				Name:   "monalisa octocat",
@@ -265,7 +247,7 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 		},
 		{
 			// see: https://github.com/grafana/grafana/issues/85916
-			name:              "should not error out, when the team_id is of a parent team",
+			name:              "should check parent team id for team membership",
 			roleAttributePath: "",
 			userRawJSON:       testGHUserJSON,
 			autoAssignOrgRole: "Editor",
