@@ -527,12 +527,7 @@ func getQueryUrl(query string, resources []string, azurePortalUrl string, timeRa
 		return "", fmt.Errorf("failed to encode the query: %s", err)
 	}
 
-	portalUrl := azurePortalUrl
-	if err != nil {
-		return "", fmt.Errorf("failed to parse base portal URL: %s", err)
-	}
-
-	portalUrl += "/#blade/Microsoft_OperationsManagementSuite_Workspace/AnalyticsBlade/initiator/AnalyticsShareLinkToQuery/isQueryEditorVisible/true/scope/"
+	portalUrl := azurePortalUrl + "/#blade/Microsoft_OperationsManagementSuite_Workspace/AnalyticsBlade/initiator/AnalyticsShareLinkToQuery/isQueryEditorVisible/true/scope/"
 	resourcesJson := AzureLogAnalyticsURLResources{
 		Resources: make([]AzureLogAnalyticsURLResource, 0),
 	}
