@@ -252,7 +252,7 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 	obj, createdUS, errUS := d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 	if errUS != nil {
 		log.WithValues("object", obj).Error(err, "could not update in storage")
-		_, _, err := legacy.Update(ctx, name, &updateWrapper{upstream: objInfo, updated: old}, createValidation, updateValidation, forceAllowCreate, options)
+		_, _, err := d.Legacy.Update(ctx, name, &updateWrapper{upstream: objInfo, updated: old}, createValidation, updateValidation, forceAllowCreate, options)
 		if err != nil {
 			log.WithValues("object", obj).Error(err, "failed to rollback update in legacy storage")
 			return obj, createdUS, errUS
