@@ -4,9 +4,9 @@ import { DatasourceSrvMock, MockObservableDataSourceApi } from 'test/mocks/datas
 
 import { DataQueryRequest, DataSourceInstanceSettings, DataSourceRef, LoadingState } from '@grafana/data';
 import { DataSourceSrv, setDataSourceSrv, setTemplateSrv } from '@grafana/runtime';
+import { CustomVariable, SceneFlexLayout, SceneVariableSet } from '@grafana/scenes';
 
 import { TemplateSrv } from '../../../features/templating/template_srv';
-import { queryBuilder } from '../../../features/variables/shared/testing/builders';
 
 import { MIXED_DATASOURCE_NAME } from './MixedDataSource';
 import { MixedDatasource } from './module';
@@ -25,18 +25,6 @@ const datasourceSrv = new DatasourceSrvMock(defaultDS, {
   ]),
 });
 
-const variablesMock = [
-  queryBuilder().withId('test1').withName('test1').withCurrent('val1').build(),
-  queryBuilder()
-    .withId('ds')
-    .withName('ds')
-    .withCurrent(['B', 'C'], ['B', 'C'])
-    .withAllValue('')
-    .withMulti(true)
-    .withOptions('B', 'C')
-    .build(),
-];
-
 describe('MixedDatasource', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -47,14 +35,7 @@ describe('MixedDatasource', () => {
       getList: jest.fn(),
       reload: jest.fn(),
     });
-
-    setTemplateSrv(
-      new TemplateSrv({
-        getVariables: () => variablesMock,
-        getVariableWithName: (name: string) => variablesMock.filter((v) => v.name === name)[0],
-        getFilteredVariables: jest.fn(),
-      })
-    );
+    setTemplateSrv(new TemplateSrv());
   });
 
   describe('with no errors', () => {
@@ -121,11 +102,22 @@ describe('MixedDatasource', () => {
       } as DataSourceSrv);
     });
 
+    const scene = new SceneFlexLayout({
+      children: [],
+      $variables: new SceneVariableSet({
+        variables: [new CustomVariable({ name: 'ds', value: ['B', 'C'] })],
+      }),
+    });
+
     it('should run query for each datasource when there is a multi value template variable', async () => {
       const ds = new MixedDatasource({} as DataSourceInstanceSettings);
+
       const request = {
         targets: [{ refId: 'AA', datasource: { uid: '$ds' } }],
-      } as DataQueryRequest;
+        scopedVars: {
+          __sceneObject: { value: scene },
+        },
+      } as unknown as DataQueryRequest;
 
       await expect(ds.query(request)).toEmitValuesWith((results) => {
         expect(results).toHaveLength(2);
@@ -143,7 +135,10 @@ describe('MixedDatasource', () => {
           { refId: 'AA', datasource: { uid: '$ds' } },
           { refId: 'BB', datasource: { uid: 'Loki' } },
         ],
-      } as DataQueryRequest;
+        scopedVars: {
+          __sceneObject: { value: scene },
+        },
+      } as unknown as DataQueryRequest;
 
       await expect(ds.query(request)).toEmitValuesWith((results) => {
         expect(results).toHaveLength(4);
