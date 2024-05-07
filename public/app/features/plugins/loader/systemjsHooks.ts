@@ -37,27 +37,31 @@ export function decorateSystemJSResolve(
   id: string,
   parentUrl?: string
 ) {
-  const isFileSystemModule = id.endsWith('module.js') && !isHostedOnCDN(id);
-
   try {
     const url = originalResolve.apply(this, [id, parentUrl]);
     const cleanedUrl = getBackWardsCompatibleUrl(url);
+    const isFileSystemModule =
+      (cleanedUrl.endsWith('.js') || cleanedUrl.endsWith('.css')) && !isHostedOnCDN(cleanedUrl);
     // Add a cache query param for filesystem module.js requests
     // CDN hosted plugins contain the version in the path so skip
     return isFileSystemModule ? resolveWithCache(cleanedUrl) : cleanedUrl;
   } catch (err) {
-    // Provide fallback for old plugins that use `loadPluginCss` to load theme styles
-    // Only affect plugins on the filesystem.
+    // Provide fallback for plugins that use `loadPluginCss` to load theme styles
+    // Regex only targets plugins on the filesystem.
     if (LOAD_PLUGIN_CSS_REGEX.test(id)) {
-      return `${config.appSubUrl ?? ''}/public/${id}`;
+      const prefixId = `${config.appSubUrl ?? ''}/public/${id}`;
+      const url = originalResolve.apply(this, [prefixId, parentUrl]);
+      return resolveWithCache(url);
     }
-    console.log(`SystemJS: failed to resolve '${id}'`);
+    console.warn(`SystemJS: failed to resolve '${id}'`);
     return id;
   }
 }
 
 export function decorateSystemJsOnload(err: unknown, id: string) {
-  if (id.endsWith('.css') && !err) {
+  // IF the url is relative resolve to current origin, absolute urls passed in will ignore base.
+  const url = new URL(id, window.location.origin);
+  if (url.pathname.endsWith('.css') && !err) {
     const module = SystemJS.get(id);
     const styles = module?.default;
     if (styles) {
