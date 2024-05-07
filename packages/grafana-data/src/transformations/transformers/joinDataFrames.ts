@@ -382,9 +382,6 @@ function joinOuterTabular(
 function joinInner(tables: AlignedData[]): Array<Array<string | number | null | undefined>> {
   const joinedTables: Array<Array<string | number | null | undefined>> = [];
 
-  // Helper function to get the value at a specific index from an array or typed array
-  const getValue = (arr: number[] | TypedArray | Array<number | null | undefined>, index: number) => arr[index];
-
   // Recursive function to perform the inner join.
   const joinTables = (
     currentTables: AlignedData[],
@@ -401,7 +398,7 @@ function joinInner(tables: AlignedData[]): Array<Array<string | number | null | 
     const [xValues, ...yValues] = currentTable;
 
     for (let i = 0; i < xValues.length; i++) {
-      const value = getValue(xValues, i);
+      const value = xValues[i];
 
       if (currentIndex === 0 || currentRow.includes(value)) {
         const newRow = [...currentRow];
@@ -411,7 +408,7 @@ function joinInner(tables: AlignedData[]): Array<Array<string | number | null | 
         }
 
         for (let j = 0; j < yValues.length; j++) {
-          newRow.push(getValue(yValues[j], i));
+          newRow.push(yValues[j][i]);
         }
 
         // Recursive call for the next table
