@@ -1903,7 +1903,7 @@ steps:
   name: build-frontend-packages
 - commands:
   - /src/grafana-build artifacts -a targz:grafana:linux/amd64 -a targz:grafana:linux/arm64
-    -a targz:grafana:linux/arm/v7 --go-version=1.22.2 --yarn-cache=$$YARN_CACHE_FOLDER
+    -a targz:grafana:linux/arm/v7 --go-version=1.22.3 --yarn-cache=$$YARN_CACHE_FOLDER
     --build-id=$$DRONE_BUILD_NUMBER --grafana-dir=$$PWD > packages.txt
   depends_on:
   - update-package-json-version
@@ -2143,7 +2143,7 @@ steps:
   - /src/grafana-build artifacts -a docker:grafana:linux/amd64 -a docker:grafana:linux/amd64:ubuntu
     -a docker:grafana:linux/arm64 -a docker:grafana:linux/arm64:ubuntu -a docker:grafana:linux/arm/v7
     -a docker:grafana:linux/arm/v7:ubuntu --yarn-cache=$$YARN_CACHE_FOLDER --build-id=$$DRONE_BUILD_NUMBER
-    --go-version=1.22.2 --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.19.1 --tag-format='{{
+    --go-version=1.22.3 --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.19.1 --tag-format='{{
     .version_base }}-{{ .buildID }}-{{ .arch }}' --grafana-dir=$$PWD --ubuntu-tag-format='{{
     .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}' > docker.txt
   - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
@@ -3024,7 +3024,7 @@ steps:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
       from_secret: github_token
-    GO_VERSION: 1.22.2
+    GO_VERSION: 1.22.3
     GPG_PASSPHRASE:
       from_secret: packages_gpg_passphrase
     GPG_PRIVATE_KEY:
@@ -4048,20 +4048,20 @@ steps:
 - commands: []
   depends_on:
   - clone
-  image: golang:1.22.2-windowsservercore-1809
+  image: golang:1.22.3-windowsservercore-1809
   name: windows-init
 - commands:
   - go install github.com/google/wire/cmd/wire@v0.5.0
   - wire gen -tags oss ./pkg/server
   depends_on:
   - windows-init
-  image: golang:1.22.2-windowsservercore-1809
+  image: golang:1.22.3-windowsservercore-1809
   name: wire-install
 - commands:
   - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
-  image: golang:1.22.2-windowsservercore-1809
+  image: golang:1.22.3-windowsservercore-1809
   name: test-backend
 trigger:
   event:
@@ -4635,7 +4635,7 @@ steps:
     path: /root/.docker/
 - commands:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM alpine/git:2.40.1
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM golang:1.22.2-alpine
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM golang:1.22.3-alpine
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM node:20.9.0-alpine
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM node:20-bookworm
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM google/cloud-sdk:431.0.0
@@ -4923,8 +4923,3 @@ get:
   path: secret/data/common/gcr
 kind: secret
 name: gcr_credentials
----
-kind: signature
-hmac: 165260ab07061f24b2b206251d8d2ae11eadfc90155af178b0ac8982782c4520
-
-...
