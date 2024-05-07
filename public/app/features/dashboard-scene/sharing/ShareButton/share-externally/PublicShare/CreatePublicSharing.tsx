@@ -3,18 +3,17 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Button, Checkbox, FieldSet, Spinner, Stack } from '@grafana/ui';
-import { useStyles2 } from '@grafana/ui/';
-import { contextSrv } from 'app/core/core';
-import { useCreatePublicDashboardMutation } from 'app/features/dashboard/api/publicDashboardApi';
-import { PublicDashboardShareType } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
-import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
-import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
-import { AccessControlAction } from 'app/types';
+import { Alert, Button, Checkbox, FieldSet, Spinner, Stack, useStyles2 } from '@grafana/ui';
 
-const EMAIL_SHARING_URL = 'https://grafana.com/docs/grafana/latest/dashboards/dashboard-public/#email-sharing';
+import { contextSrv } from '../../../../../../core/services/context_srv';
+import { AccessControlAction } from '../../../../../../types';
+import { useCreatePublicDashboardMutation } from '../../../../../dashboard/api/publicDashboardApi';
+import { PublicDashboardShareType } from '../../../../../dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
+import { DashboardScene } from '../../../../scene/DashboardScene';
+import { DashboardInteractions } from '../../../../utils/interactions';
 
-export const CreateEmailSharing = ({
+const PUBLIC_DASHBOARD_URL = 'https://grafana.com/docs/grafana/latest/dashboards/dashboard-public/';
+export default function CreatePublicSharing({
   dashboard,
   onCancel,
   hasError,
@@ -22,7 +21,7 @@ export const CreateEmailSharing = ({
   dashboard: DashboardScene;
   onCancel: () => void;
   hasError: boolean;
-}) => {
+}) {
   const styles = useStyles2(getStyles);
 
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
@@ -31,12 +30,12 @@ export const CreateEmailSharing = ({
     handleSubmit,
     register,
     formState: { isValid },
-  } = useForm<{ billAcknowledgment: boolean }>({ mode: 'onChange' });
+  } = useForm<{ publicAcknowledgment: boolean }>({ mode: 'onChange' });
 
   const [createPublicDashboard, { isLoading, isError }] = useCreatePublicDashboardMutation();
   const onCreate = () => {
-    createPublicDashboard({ dashboard, payload: { share: PublicDashboardShareType.EMAIL, isEnabled: true } });
-    DashboardInteractions.generatePublicDashboardUrlClicked({ share: PublicDashboardShareType.EMAIL });
+    createPublicDashboard({ dashboard, payload: { share: PublicDashboardShareType.PUBLIC, isEnabled: true } });
+    DashboardInteractions.generatePublicDashboardUrlClicked({ share: PublicDashboardShareType.PUBLIC });
   };
 
   const disableInputs = !hasWritePermissions || isLoading || isError || hasError;
@@ -46,21 +45,21 @@ export const CreateEmailSharing = ({
       {hasWritePermissions && (
         <Alert
           title=""
-          severity="info"
+          severity="warning"
           buttonContent={<span>Learn more</span>}
-          onRemove={() => window.open(EMAIL_SHARING_URL, '_blank')}
+          onRemove={() => window.open(PUBLIC_DASHBOARD_URL, '_blank')}
           bottomSpacing={0}
         >
-          Effective immediately, sharing public dashboards by email incurs a cost per active user. Going forward, you’ll
-          be prompted for payment whenever you add new users to your dashboard.
+          Sharing this dashboard externally makes it entirely accessible to anyone with the link. Currently, this
+          feature is limited to some data sources.
         </Alert>
       )}
       <form onSubmit={handleSubmit(onCreate)}>
         <FieldSet disabled={disableInputs}>
           <div className={styles.checkbox}>
             <Checkbox
-              {...register('billAcknowledgment', { required: true })}
-              label="I understand that adding users requires payment.*"
+              {...register('publicAcknowledgment', { required: true })}
+              label="I understand that this entire dashboard will be public.*"
             />
           </div>
           <Stack direction="row" gap={1} alignItems="center">
@@ -76,7 +75,7 @@ export const CreateEmailSharing = ({
       </form>
     </>
   );
-};
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   checkbox: css({

@@ -2,16 +2,15 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Button, Field, FieldSet, Spinner, Stack } from '@grafana/ui';
+import { Button, Field, FieldSet, Stack } from '@grafana/ui';
 import { Input } from '@grafana/ui/src/components/Input/Input';
 import { Trans, t } from '@grafana/ui/src/utils/i18n';
-
-import { contextSrv } from '../../../../../../../core/core';
-import { AccessControlAction } from '../../../../../../../types/accessControl';
-import { publicDashboardApi, useAddRecipientMutation } from '../../../../../../dashboard/api/publicDashboardApi';
-import { validEmailRegex } from '../../../../../../dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
-import { DashboardScene } from '../../../../../scene/DashboardScene';
-import { DashboardInteractions } from '../../../../../utils/interactions';
+import { contextSrv } from 'app/core/core';
+import { publicDashboardApi, useAddRecipientMutation } from 'app/features/dashboard/api/publicDashboardApi';
+import { validEmailRegex } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
+import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
+import { AccessControlAction } from 'app/types';
 
 import { EmailShareTabs } from './EmailShareTabs';
 
@@ -47,7 +46,7 @@ export const ConfigEmailSharing = ({ dashboard }: { dashboard: DashboardScene })
   return (
     <div>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <FieldSet disabled={!hasWritePermissions}>
+        <FieldSet disabled={!hasWritePermissions || !publicDashboard?.isEnabled}>
           <Field
             label="Invite someone by email"
             error={errors.email?.message}
@@ -57,6 +56,7 @@ export const ConfigEmailSharing = ({ dashboard }: { dashboard: DashboardScene })
               <Input
                 placeholder="Type in the recipient email address and press Enter"
                 autoCapitalize="none"
+                loading={isAddEmailLoading}
                 {...register('email', {
                   required: t('public-dashboard.email-sharing.input-required-email-text', 'Email is required'),
                   pattern: {
@@ -73,7 +73,6 @@ export const ConfigEmailSharing = ({ dashboard }: { dashboard: DashboardScene })
                 data-testid={selectors.EmailSharingInviteButton}
               >
                 <Trans i18nKey="public-dashboard.email-sharing.invite-button">Invite</Trans>
-                {isAddEmailLoading && <Spinner />}
               </Button>
             </Stack>
           </Field>

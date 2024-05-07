@@ -10,17 +10,24 @@ import {
   publicDashboardApi,
 } from 'app/features/dashboard/api/publicDashboardApi';
 import { PublicDashboard } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
+import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
-
-import { DashboardScene } from '../../../../../scene/DashboardScene';
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard.EmailSharingConfiguration;
 
-const RecipientMenu = ({ onDelete, onReshare }: { onDelete: () => void; onReshare: () => void }) => {
+const RecipientMenu = ({
+  onDelete,
+  onReshare,
+  disabled,
+}: {
+  onDelete: () => void;
+  onReshare: () => void;
+  disabled: boolean;
+}) => {
   return (
     <Menu>
-      <Menu.Item label="Resend invite" onClick={onReshare} />
-      <Menu.Item label="Remove access" destructive onClick={onDelete} />
+      <Menu.Item disabled={disabled} label="Resend invite" onClick={onReshare} />
+      <Menu.Item disabled={disabled} label="Remove access" destructive onClick={onDelete} />
     </Menu>
   );
 };
@@ -28,11 +35,11 @@ const RecipientMenu = ({ onDelete, onReshare }: { onDelete: () => void; onReshar
 const EmailList = ({
   recipients,
   dashboardUid,
-  publicDashboardUid,
+  publicDashboard,
 }: {
   recipients: PublicDashboard['recipients'];
   dashboardUid: string;
-  publicDashboardUid: string;
+  publicDashboard: PublicDashboard;
 }) => {
   const styles = useStyles2(getStyles);
 
@@ -43,12 +50,12 @@ const EmailList = ({
 
   const onDeleteEmail = (recipientUid: string, recipientEmail: string) => {
     DashboardInteractions.revokePublicDashboardEmailClicked();
-    deleteEmail({ recipientUid, recipientEmail, dashboardUid: dashboardUid, uid: publicDashboardUid });
+    deleteEmail({ recipientUid, recipientEmail, dashboardUid: dashboardUid, uid: publicDashboard.uid });
   };
 
   const onReshare = (recipientUid: string) => {
     DashboardInteractions.resendPublicDashboardEmailClicked();
-    reshareAccess({ recipientUid, uid: publicDashboardUid });
+    reshareAccess({ recipientUid, uid: publicDashboard.uid });
   };
 
   return (
@@ -71,6 +78,7 @@ const EmailList = ({
                   <RecipientMenu
                     onDelete={() => onDeleteEmail(recipient.uid, recipient.recipient)}
                     onReshare={() => onReshare(recipient.uid)}
+                    disabled={!publicDashboard.isEnabled}
                   />
                 }
               >
@@ -91,13 +99,15 @@ export const EmailListTab = ({ dashboard }: { dashboard: DashboardScene }) => {
   );
 
   return (
-    <Field label="People with access" className={styles.listContainer}>
+    <Field label="People with access" className={styles.listField}>
       {!!publicDashboard?.recipients?.length ? (
-        <EmailList
-          recipients={publicDashboard.recipients}
-          dashboardUid={dashboard.state.uid!}
-          publicDashboardUid={publicDashboard.uid}
-        />
+        <div className={styles.listContainer}>
+          <EmailList
+            recipients={publicDashboard.recipients}
+            dashboardUid={dashboard.state.uid!}
+            publicDashboard={publicDashboard}
+          />
+        </div>
       ) : (
         <></>
       )}
@@ -106,8 +116,12 @@ export const EmailListTab = ({ dashboard }: { dashboard: DashboardScene }) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  listContainer: css({
+  listField: css({
     marginBottom: 0,
+  }),
+  listContainer: css({
+    maxHeight: '200px',
+    overflowY: 'auto',
   }),
   table: css({
     width: '100%',
@@ -117,15 +131,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     gap: theme.spacing(0.5),
     padding: theme.spacing(0.75, 1),
-    color: theme.colors.border.strong,
+    color: theme.colors.text.secondary,
   }),
   user: css({
     flex: 1,
   }),
   icon: css({
-    border: `${theme.spacing(0.25)} solid ${theme.colors.border.strong}`,
+    border: `${theme.spacing(0.25)} solid ${theme.colors.text.secondary}`,
     padding: theme.spacing(0.125, 0.5),
     borderRadius: theme.shape.radius.circle,
-    color: theme.colors.border.strong,
+    color: theme.colors.text.secondary,
   }),
 });

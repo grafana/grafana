@@ -5,27 +5,27 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { config, featureEnabled } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState } from '@grafana/scenes';
 import { Button, ClipboardButton, Divider, Spinner, Stack } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
+import {
+  useDeletePublicDashboardMutation,
+  useGetPublicDashboardQuery,
+  useUpdatePublicDashboardMutation,
+} from 'app/features/dashboard/api/publicDashboardApi';
+import { NoUpsertPermissionsAlert } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/ModalAlerts/NoUpsertPermissionsAlert';
+import { Loader } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboard';
 import {
   generatePublicDashboardUrl,
   PublicDashboard,
   PublicDashboardShareType,
 } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
-
-import { contextSrv } from '../../../../../core/services/context_srv';
-import { AccessControlAction } from '../../../../../types';
-import {
-  useGetPublicDashboardQuery,
-  useUpdatePublicDashboardMutation,
-} from '../../../../dashboard/api/publicDashboardApi';
-import { NoUpsertPermissionsAlert } from '../../../../dashboard/components/ShareModal/SharePublicDashboard/ModalAlerts/NoUpsertPermissionsAlert';
-import { Loader } from '../../../../dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboard';
-import { DashboardScene } from '../../../scene/DashboardScene';
-import { DashboardInteractions } from '../../../utils/interactions';
+import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
+import { AccessControlAction } from 'app/types';
 
 import { EmailSharing } from './EmailShare/EmailSharing';
 import { PublicSharing } from './PublicShare/PublicSharing';
+import ShareAlerts from './ShareAlerts';
 import ShareTypeSelect from './ShareTypeSelect';
-import UnsupportedAlerts from './UnsupportedAlerts';
 
 export interface ShareExternallyDrawerState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;
@@ -51,8 +51,9 @@ export class ShareExternally extends SceneObjectBase<ShareExternallyDrawerState>
 
 function Actions({ dashboard, publicDashboard }: { dashboard: DashboardScene; publicDashboard: PublicDashboard }) {
   const [update, { isLoading: isUpdateLoading }] = useUpdatePublicDashboardMutation();
+  const [deletePublicDashboard, { isLoading: isDeleteLoading }] = useDeletePublicDashboardMutation();
 
-  const isLoading = isUpdateLoading;
+  const isLoading = isUpdateLoading || isDeleteLoading;
 
   function onCopyURL() {
     DashboardInteractions.publicDashboardUrlCopied();
@@ -68,14 +69,14 @@ function Actions({ dashboard, publicDashboard }: { dashboard: DashboardScene; pu
     });
   };
 
-  // const onDeleteClick = (onDelete: () => void) => {
-  //   deletePublicDashboard({
-  //     dashboard,
-  //     uid: publicDashboard!.uid,
-  //     dashboardUid: dashboard.state.uid!,
-  //   });
-  //   onDelete();
-  // };
+  const onDeleteClick = () => {
+    DashboardInteractions.revokePublicDashboardClicked();
+    deletePublicDashboard({
+      dashboard,
+      uid: publicDashboard!.uid,
+      dashboardUid: dashboard.state.uid!,
+    });
+  };
 
   return (
     <Stack alignItems="center">
@@ -91,13 +92,7 @@ function Actions({ dashboard, publicDashboard }: { dashboard: DashboardScene; pu
         >
           Copy link
         </ClipboardButton>
-        <Button
-          icon="trash-alt"
-          variant="destructive"
-          fill="outline"
-          disabled={isLoading}
-          // onClick={() => dashboard.showModal(new RevokeModal({ dashboard, publicDashboard }))}
-        >
+        <Button icon="trash-alt" variant="destructive" fill="outline" disabled={isLoading} onClick={onDeleteClick}>
           Remove access
         </Button>
         <Button
@@ -141,7 +136,7 @@ function ShareExternallyDrawerRenderer({ model }: SceneComponentProps<ShareExter
       return <EmailSharing dashboard={dashboard} onCancel={onCancel} />;
     }
     if (value.value === PublicDashboardShareType.PUBLIC) {
-      return <PublicSharing onCancel={onCancel} />;
+      return <PublicSharing dashboard={dashboard} onCancel={onCancel} />;
     }
     return <></>;
   }, [value, dashboard, onCancel]);
@@ -152,7 +147,7 @@ function ShareExternallyDrawerRenderer({ model }: SceneComponentProps<ShareExter
 
   return (
     <Stack direction="column" gap={2}>
-      <UnsupportedAlerts dashboard={dashboard} />
+      <ShareAlerts dashboard={dashboard} />
       <ShareTypeSelect dashboard={dashboard} setShareType={setValue} value={value} options={options} />
       {!hasWritePermissions && <NoUpsertPermissionsAlert mode={publicDashboard ? 'edit' : 'create'} />}
       {Config}

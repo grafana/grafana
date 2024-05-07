@@ -3,11 +3,10 @@ import React from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Label, Select, Stack, Text, useStyles2 } from '@grafana/ui';
-
-import { publicDashboardApi, useUpdatePublicDashboardMutation } from '../../../../dashboard/api/publicDashboardApi';
-import { PublicDashboardShareType } from '../../../../dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
-import { DashboardScene } from '../../../scene/DashboardScene';
-import { DashboardInteractions } from '../../../utils/interactions';
+import { publicDashboardApi, useUpdatePublicDashboardMutation } from 'app/features/dashboard/api/publicDashboardApi';
+import { PublicDashboardShareType } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
+import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 export default function ShareTypeSelect({
   dashboard,

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 
 import { Stack, Tab, TabContent, TabProps, TabsBar } from '@grafana/ui';
+import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
-import { DashboardScene } from '../../../../../scene/DashboardScene';
 import ShareConfiguration from '../../ShareConfiguration';
 
 import { EmailListTab } from './EmailListTab';
