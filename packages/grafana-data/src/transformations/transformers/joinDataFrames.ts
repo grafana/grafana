@@ -370,11 +370,15 @@ function joinOuterTabular(
  * This function performs a sql-style inner join on tabular data;
  * it will combine records from two tables whenever there are matching
  * values in a field common to both tables.
- * 
+ *
  * NOTE: This function implicitly assumes that the first array in each AlignedData
  * contains the values to join on. It doesn't explicitly specify a column field to join on,
- * but rather uses the position of the arrays to determine the joining keys, i.e. AlignedData[0].
- * 
+ * but rather uses the 0th position of the arrays (AlignedData[0]) to determine the joining keys.
+ * Then, when processing the tables, the function iterates over the values in the `xValues`
+ * (the joining keys) array and checks if the current row `currentRow` already includes the value.
+ * If a matching value is found, it joins the corresponding values from the remaining arrays `yValues`
+ * (all other non-joining key arrays) to create a new row in the joined table.
+ *
  * @param {AlignedData[]} tables - The tables to join.
  *
  * @returns {Array<Array<string | number | null | undefined>>} The joined tables as an array of arrays, where each array represents a row in the joined table.
@@ -423,15 +427,16 @@ function joinInnerTabular(tables: AlignedData[]): Array<Array<string | number | 
     }
   };
 
-  // Start the recursive join process
+  // Start the recursive join process.
   joinTables(tables, 0, []);
 
-  // Check if joinedTables is empty before transposing
+  // Check if joinedTables is empty before transposing. No need to transpose if there are no joined tables.
   if (joinedTables.length === 0) {
     return [];
   }
 
-  // Transpose the joined tables to get the desired output format
+  // Transpose the joined tables to get the desired output format.
+  // This essentially flips the rows and columns back to the stucture of the original `tables`.
   return joinedTables[0].map((_, colIndex) => joinedTables.map((row) => row[colIndex]));
 }
 
