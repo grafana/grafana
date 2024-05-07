@@ -208,8 +208,6 @@ func (s *Service) getUserDirectPermissions(ctx context.Context, user identity.Re
 }
 
 func (s *Service) getCachedUserPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
-	permissions := make([]accesscontrol.Permission, 0)
-
 	basicRolesPermissions, err := s.getCachedBasicRolesPermissions(ctx, user, options)
 	if err != nil {
 		return nil, err
@@ -225,6 +223,7 @@ func (s *Service) getCachedUserPermissions(ctx context.Context, user identity.Re
 		return nil, err
 	}
 
+	permissions := make([]accesscontrol.Permission, 0, len(basicRolesPermissions)+len(teamsPermissions)+len(userPermissions))
 	permissions = append(permissions, basicRolesPermissions...)
 	permissions = append(permissions, teamsPermissions...)
 	permissions = append(permissions, userPermissions...)
