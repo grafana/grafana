@@ -83,7 +83,10 @@ export function getDashboardUrl(options: DashboardUrlOptions) {
 }
 
 export function getViewPanelUrl(vizPanel: VizPanel) {
-  return locationUtil.getUrlForPartial(locationService.getLocation(), { viewPanel: vizPanel.state.key });
+  return locationUtil.getUrlForPartial(locationService.getLocation(), {
+    viewPanel: vizPanel.state.key,
+    editPanel: undefined,
+  });
 }
 
 export function getEditPanelUrl(panelId: number) {
