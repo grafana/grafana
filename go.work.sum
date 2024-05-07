@@ -718,8 +718,6 @@ github.com/grafana/e2e v0.1.1-0.20221018202458-cffd2bb71c7b h1:Ha+kSIoTutf4ytlVw
 github.com/grafana/e2e v0.1.1-0.20221018202458-cffd2bb71c7b/go.mod h1:3UsooRp7yW5/NJQBlXcTsAHOoykEhNUYXkQ3r6ehEEY=
 github.com/grafana/gomemcache v0.0.0-20231023152154-6947259a0586 h1:/of8Z8taCPftShATouOrBVy6GaTTjgQd/VfNiZp/VXQ=
 github.com/grafana/gomemcache v0.0.0-20231023152154-6947259a0586/go.mod h1:PGk3RjYHpxMM8HFPhKKo+vve3DdlPUELZLSDEFehPuU=
-github.com/grafana/grafana-azure-sdk-go/v2 v2.0.2 h1:CWT7mOBPUht9n7F/NiBQnEM05pFmCP3Z8CZPGCVC1tM=
-github.com/grafana/grafana-azure-sdk-go/v2 v2.0.2/go.mod h1:s8GLONgVh/svnSsO0Eo+OgXc/RZqozI5/0n+pNm3MEE=
 github.com/grafana/grafana-plugin-sdk-go v0.212.0/go.mod h1:qsI4ktDf0lig74u8SLPJf9zRdVxWV/W4Wi+Ox6gifgs=
 github.com/grafana/grafana-plugin-sdk-go v0.215.0/go.mod h1:nBsh3jRItKQUXDF2BQkiQCPxqrsSQeb+7hiFyJTO1RE=
 github.com/grafana/grafana-plugin-sdk-go v0.216.0/go.mod h1:FdvSvOliqpVLnytM7e89zCFyYPDE6VOn9SIjVQRvVxM=
@@ -727,8 +725,6 @@ github.com/grafana/grafana-plugin-sdk-go v0.227.1-0.20240426134450-5fe9f7b9dfd4 
 github.com/grafana/grafana-plugin-sdk-go v0.227.1-0.20240426134450-5fe9f7b9dfd4/go.mod h1:UBDIuvdUGUI5fMDHDAl6yAVpFhfwl5ojMaw1N68775w=
 github.com/grafana/grafana-plugin-sdk-go v0.227.1-0.20240430073540-ce4d126ae8b8 h1:pyWJN79uW8QHZiQRasHGLCEkXSr3k6HCjdr0J2jZ3rU=
 github.com/grafana/grafana-plugin-sdk-go v0.227.1-0.20240430073540-ce4d126ae8b8/go.mod h1:u4K9vVN6eU86loO68977eTXGypC4brUCnk4sfDzutZU=
-github.com/grafana/grafana-plugin-sdk-go v0.228.0 h1:LlPqyB+RZTtDy8RVYD7iQVJW5A0gMoGSI/+Ykz8HebQ=
-github.com/grafana/grafana-plugin-sdk-go v0.228.0/go.mod h1:u4K9vVN6eU86loO68977eTXGypC4brUCnk4sfDzutZU=
 github.com/grafana/grafana/pkg/promlib v0.0.3/go.mod h1:3El4NlsfALz8QQCbEGHGFvJUG+538QLMuALRhZ3pcoo=
 github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7 h1:pdN6V1QBWetyv/0+wjACpqVH+eVULgEjkurDLq3goeM=
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.18.1/go.mod h1:YvJ2f6MplWDhfxiUC3KpyTy76kYUZA4W3pTv/wdKQ9Y=
@@ -1219,6 +1215,7 @@ k8s.io/component-base v0.0.0-20240417101527-62c04b35eff6 h1:WN8Lymy+dCTDHgn4vhUS
 k8s.io/component-base v0.0.0-20240417101527-62c04b35eff6/go.mod h1:l0ukbPS0lwFxOzSq5ZqjutzF+5IL2TLp495PswRPSZk=
 k8s.io/gengo v0.0.0-20230829151522-9cce18d56c01/go.mod h1:FiNAH4ZV3gBg2Kwh89tzAEV2be7d5xI0vBa/VySYy3E=
 k8s.io/gengo/v2 v2.0.0-20240228010128-51d4e06bde70/go.mod h1:VH3AT8AaQOqiGjMF9p0/IM1Dj+82ZwjfxUP1IxaHE+8=
+k8s.io/klog v1.0.0 h1:Pt+yjF5aB1xDSVbau4VsWe+dQNzA0qv1LlXdC2dF6Q8=
 k8s.io/kms v0.29.0/go.mod h1:mB0f9HLxRXeXUfHfn1A7rpwOlzXI1gIWu86z6buNoYA=
 k8s.io/kube-openapi v0.0.0-20231010175941-2dd684a91f00/go.mod h1:AsvuZPBlUDVuCdzJ87iajxtXuR9oktsTctW/R9wwouA=
 k8s.io/kube-openapi v0.0.0-20231214164306-ab13479f8bf8/go.mod h1:AsvuZPBlUDVuCdzJ87iajxtXuR9oktsTctW/R9wwouA=
