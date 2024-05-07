@@ -1,0 +1,51 @@
+{
+  "$schema": "https://raw.githubusercontent.com/grafana/grafana/master/docs/sources/developers/plugins/plugin.schema.json",
+  "type": "datasource",
+  "name": "CMF gRPC Datasource",
+  "id": "criticalmanufacturing-grpc-datasource",
+  "metrics": true,
+  "backend": true,
+  "executable": "cmf_backend_grpc_plugin",
+  "alerting": true,
+  "queryOptions": {
+    "cacheTimeout": true,
+    "maxDataPoints": true,
+    "minInterval": true
+  },
+  "info": {
+    "description": "CMF datasource plugin for Grafana. Its using gRPC framework with HTTP/2 for transport and Protocol Buffers as the interface description language",
+    "author": {
+      "name": "CMF",
+      "url": "https://criticalmanufacturing.com"
+    },
+    "keywords": [
+      "grpc"
+    ],
+    "logos": {
+      "small": "img/logo.svg",
+      "large": "img/logo.svg"
+    },
+    "links": [
+      {
+        "name": "Website",
+        "url": "https://www.criticalmanufacturing.com/"
+      }
+    ],
+    "screenshots": [
+      {
+        "name": "Datasource Configuration",
+        "path": "img/screenshots/configuration.png"
+      },
+      {
+        "name": "Query Editor",
+        "path": "img/screenshots/queryeditor.png"
+      }
+    ],
+    "version": "%VERSION%",
+    "updated": "%TODAY%"
+  },
+  "dependencies": {
+    "grafanaDependency": ">=7.0.0",
+    "plugins": []
+  }
+}

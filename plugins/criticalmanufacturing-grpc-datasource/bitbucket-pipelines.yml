@@ -1,0 +1,12 @@
+clone:
+  depth: full
+pipelines:
+  default:
+    - step:
+        script:
+          - git push --mirror git@github.com:innius/grafana-simple-grpc-datasource.git
+  tags:
+    v*:
+      - step:
+          script:
+            - git push git@github.com:innius/grafana-simple-grpc-datasource.git --tags

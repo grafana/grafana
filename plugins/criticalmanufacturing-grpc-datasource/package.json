@@ -1,0 +1,33 @@
+{
+  "name": "criticalmanufacturing-grpc-datasource",
+  "version": "1.0.0",
+  "state" : "beta",
+  "description": "Critical Manufacturing Grafana GRPC DataSource",
+  "scripts": {
+    "build": "grafana-toolkit plugin:build",
+    "test": "grafana-toolkit plugin:test",
+    "dev": "grafana-toolkit plugin:dev",
+    "watch": "grafana-toolkit plugin:dev --watch",
+    "sign": "grafana-toolkit plugin:sign",
+    "start": "yarn watch"
+  },
+  "author": "CMF",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@grafana/data": "^8.3.4",
+    "@grafana/runtime": "^8.3.4",
+    "@grafana/toolkit": "^8.3.4",
+    "@grafana/ui": "^8.3.4",
+    "emotion": "10.0.27"
+  },
+  "resolutions": {
+    "rxjs": "7.3.0",
+    "@types/react": "18.2.65"
+  },
+  "engines": {
+    "node": ">=14"
+  },
+  "dependencies": {
+    "@typescript-eslint/typescript-estree": "^5.10.1"
+  }
+}

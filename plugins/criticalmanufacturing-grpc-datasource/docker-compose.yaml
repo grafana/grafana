@@ -1,0 +1,24 @@
+version: '3.3'
+
+services:
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_INSTALL_PLUGINS=https://github.com/innius/grafana-simple-grpc-datasource/releases/download/v1.0.2/innius-grpc-datasource-1.0.2.zip;innius-grpc-plugin
+    networks:
+      - local
+    restart: always
+
+  grpcserver:
+    image: innius/sample-grpc-server:v1.0.3
+    ports:
+      - 50051:50051
+    networks:
+      - local
+    restart: always
+
+networks:
+  local:
+
