@@ -286,6 +286,7 @@ func TestMode1_DeleteCollection(t *testing.T) {
 		}
 
 		dw := selectDualWriter(Mode1, ls, us)
+
 		obj, err := dw.DeleteCollection(context.Background(), func(ctx context.Context, obj runtime.Object) error { return nil }, tt.input, &metainternalversion.ListOptions{})
 
 		if tt.wantErr {
