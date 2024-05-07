@@ -49,6 +49,7 @@ func (b *ScopeAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	if err != nil {
 		return err
 	}
+
 	err = scheme.AddFieldLabelConversionFunc(
 		scope.ScopeResourceInfo.GroupVersionKind(),
 		func(label, value string) (string, string, error) {
@@ -139,7 +140,7 @@ func (b *ScopeAPIBuilder) GetAPIGroupInfo(
 	}
 	storage[scopeNodeResourceInfo.StoragePath()] = scopeNodeStorage
 
-	storage["find"] = &subQueryREST{}
+	storage["find"] = &findREST{}
 
 	apiGroupInfo.VersionedResourcesStorageMap[scope.VERSION] = storage
 	return &apiGroupInfo, nil
