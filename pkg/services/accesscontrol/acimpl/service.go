@@ -181,8 +181,7 @@ func (s *Service) getUserDirectPermissions(ctx context.Context, user identity.Re
 	namespace, identifier := user.GetNamespacedID()
 
 	var userID int64
-	switch namespace {
-	case authn.NamespaceUser, authn.NamespaceServiceAccount:
+	if namespace == authn.NamespaceUser || namespace == authn.NamespaceServiceAccount {
 		var err error
 		userID, err = strconv.ParseInt(identifier, 10, 64)
 		if err != nil {
