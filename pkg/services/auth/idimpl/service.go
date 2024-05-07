@@ -108,7 +108,7 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 		}
 
 		extracted := auth.IDClaims{}
-		// We don't need to verify the signature here, we are only intrested in checking
+		// We don't need to verify the signature here, we are only interested in checking
 		// when the token expires.
 		if err := parsed.UnsafeClaimsWithoutVerification(&extracted); err != nil {
 			s.metrics.failedTokenSigningCounter.Inc()
