@@ -1,16 +1,30 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { isEmpty } from 'lodash';
 import React, { FC, useEffect } from 'react';
-import { useFormContext, FieldError, DeepMap, Controller } from 'react-hook-form';
+import { Controller, DeepMap, FieldError, useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Checkbox, Field, Input, RadioButtonList, Select, TextArea, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import {
+  Button,
+  Checkbox,
+  Drawer,
+  Field,
+  Input,
+  RadioButtonList,
+  Select,
+  Stack,
+  TextArea,
+  useStyles2,
+} from '@grafana/ui';
 import { NotificationChannelOption } from 'app/types';
+
+import { defaultPayloadString } from '../../TemplateForm';
 
 import { KeyValueMapInput } from './KeyValueMapInput';
 import { StringArrayInput } from './StringArrayInput';
 import { SubformArrayField } from './SubformArrayField';
 import { SubformField } from './SubformField';
+import { TemplateContentAndPreview } from './TemplateContentAndPreview';
 
 interface Props {
   defaultValue: any;
@@ -89,7 +103,7 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
   customValidator,
 }) => {
   const styles = useStyles2(getStyles);
-  const { control, register, unregister, getValues } = useFormContext();
+  const { control, register, unregister, getValues, setValue } = useFormContext();
   const name = `${pathPrefix}${option.propertyName}`;
 
   // workaround for https://github.com/react-hook-form/react-hook-form/issues/4993#issuecomment-829012506
@@ -99,6 +113,18 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
     },
     [unregister, name]
   );
+
+  const showTemplateDropDown = option.placeholder.includes('{{ template');
+  const [selectedTemplate, setSelectedTemplate] = React.useState<string>('');
+
+  function onSelectTemplate(template: string) {
+    setSelectedTemplate(template);
+  }
+
+  useEffect(() => {
+    Boolean(selectedTemplate) && setValue(name, selectedTemplate);
+  }, [selectedTemplate, setValue, name]);
+
   switch (option.element) {
     case 'checkbox':
       return (
@@ -114,22 +140,25 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
       );
     case 'input':
       return (
-        <Input
-          id={id}
-          readOnly={readOnly || determineReadOnly(option, getValues, pathIndex)}
-          invalid={invalid}
-          type={option.inputType}
-          {...register(name, {
-            required: determineRequired(option, getValues, pathIndex),
-            validate: {
-              validationRule: (v) =>
-                option.validationRule ? validateOption(v, option.validationRule, option.required) : true,
-              customValidator: (v) => (customValidator ? customValidator(v) : true),
-            },
-            setValueAs: option.setValueAs,
-          })}
-          placeholder={option.placeholder}
-        />
+        <Stack direction="row" gap={1} alignItems="center">
+          {showTemplateDropDown && <TemplatesPicker onSelect={onSelectTemplate} />}
+          <Input
+            id={id}
+            readOnly={readOnly || determineReadOnly(option, getValues, pathIndex)}
+            invalid={invalid}
+            type={option.inputType}
+            {...register(name, {
+              required: determineRequired(option, getValues, pathIndex),
+              validate: {
+                validationRule: (v) =>
+                  option.validationRule ? validateOption(v, option.validationRule, option.required) : true,
+                customValidator: (v) => (customValidator ? customValidator(v) : true),
+              },
+              setValueAs: option.setValueAs,
+            })}
+            placeholder={option.placeholder}
+          />
+        </Stack>
       );
 
     case 'select':
@@ -178,17 +207,20 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
       );
     case 'textarea':
       return (
-        <TextArea
-          id={id}
-          readOnly={readOnly}
-          invalid={invalid}
-          placeholder={option.placeholder}
-          {...register(name, {
-            required: option.required ? 'Required' : false,
-            validate: (v) =>
-              option.validationRule !== '' ? validateOption(v, option.validationRule, option.required) : true,
-          })}
-        />
+        <Stack direction="row" gap={1} alignItems="center">
+          {showTemplateDropDown && <TemplatesPicker onSelect={onSelectTemplate} />}
+          <TextArea
+            id={id}
+            readOnly={readOnly}
+            invalid={invalid}
+            placeholder={option.placeholder}
+            {...register(name, {
+              required: option.required ? 'Required' : false,
+              validate: (v) =>
+                option.validationRule !== '' ? validateOption(v, option.validationRule, option.required) : true,
+            })}
+          />
+        </Stack>
       );
     case 'string_array':
       return (
@@ -218,11 +250,34 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  checkbox: css`
-    height: auto; // native checkbox has fixed height which does not take into account description
-  `,
-  legend: css`
-    font-size: ${theme.typography.h6.fontSize};
+  checkbox: css({
+    height: 'auto', // native checkbox has fixed height which does not take into account description
+  }),
+  legend: css({
+    fontSize: theme.typography.h6.fontSize,
+  }),
+  actions: css({
+    flex: 0,
+    justifyContent: 'flex-end',
+    display: 'flex',
+    gap: theme.spacing(1),
+  }),
+  templateContent: css({
+    padding: theme.spacing(1),
+    backgroundColor: theme.colors.background.primary,
+    height: theme.spacing(100),
+  }),
+  templatePreview: css({
+    flex: 1,
+    display: 'flex',
+  }),
+  minEditorSize: css({
+    minHeight: 300,
+    minWidth: 300,
+  }),
+  templateEditor: css`
+    width: 100%;
+    height: 100%;
   `,
 });
 
@@ -257,3 +312,103 @@ const determineReadOnly = (option: NotificationChannelOption, getValues: any, pa
     return getValues(`${pathIndex}secureFields.${option.dependsOn}`);
   }
 };
+interface TemplatesPickerProps {
+  onSelect: (temnplate: string) => void;
+}
+function TemplatesPicker({ onSelect }: TemplatesPickerProps) {
+  const [showTemplates, setShowTemplates] = React.useState(false);
+
+  return (
+    <>
+      <Button
+        icon="plus"
+        tooltip={'Select available template in this field'}
+        onClick={() => setShowTemplates(true)}
+        variant="secondary"
+        aria-label={'Select available template from the list of available templates.'}
+      >
+        Select template
+      </Button>
+
+      {showTemplates && (
+        <Drawer title="Select template" size="md" onClose={() => setShowTemplates(false)}>
+          <TemplateSelector onSelect={onSelect} onClose={() => setShowTemplates(false)} />
+        </Drawer>
+      )}
+    </>
+  );
+}
+
+interface Template {
+  name: string;
+  content: string;
+}
+interface TemplateSelectorProps {
+  onSelect: (template: string) => void;
+  onClose: () => void;
+}
+function TemplateSelector({ onSelect, onClose }: TemplateSelectorProps) {
+  const styles = useStyles2(getStyles);
+  const [template, setTemplate] = React.useState<Template | undefined>(undefined);
+  const options = [
+    {
+      label: `template1`,
+      value: {
+        name: 'template1',
+        content: `{ { define "template1" } } { { if len.Values } } { { $first:= true } } { { range $refID, $value := .Values -} }
+    { { if $first } } { { $first = false } } { { else } }, { { end } } { { $refID } }={ { $value } } { { end -} }
+    { { else } } [no value]{ { end } } { { end } }  `,
+      },
+    },
+    {
+      label: 'Template 2',
+      value: {
+        name: 'template2',
+        content: `{ { define "template2" } } { { if len.Values } } { { $first:= true } } { { range $refID, $value := .Values -} }
+    { { if $first } } { { $first = false } } { { else } }, { { end } } { { $refID } }={ { $value } } { { end -} }
+    { { else } } [no value]{ { end } } { { end } } `,
+      },
+    },
+  ];
+  return (
+    <Stack direction="column" gap={1} justifyContent="space-between" height="100%">
+      <Stack direction="column" gap={1}>
+        <Select<Template>
+          aria-label="Template"
+          // defaultValue={}
+          onChange={(value: SelectableValue<Template>, _) => {
+            setTemplate(value?.value);
+          }}
+          options={options}
+          width={50}
+        />
+        <TemplateContentAndPreview
+          templateContent={template?.content ?? ''}
+          payload={defaultPayloadString}
+          templateName={template?.name ?? ''}
+          setPayloadFormatError={() => {}}
+          className={cx(styles.templatePreview, styles.minEditorSize)}
+          payloadFormatError={null}
+        />
+      </Stack>
+      <div className={styles.actions}>
+        <Button variant="secondary" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button
+          variant="primary"
+          onClick={() => {
+            onSelect(getUseTemplateText(template?.name ?? ''));
+            onClose();
+          }}
+        >
+          Select
+        </Button>
+      </div>
+    </Stack>
+  );
+}
+
+function getUseTemplateText(templateName: string) {
+  return `{{ template "${templateName}" . }}`;
+}
