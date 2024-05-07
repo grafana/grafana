@@ -39,7 +39,7 @@ The sample application generates real data and exposes metrics, which are stored
 
 Download the files to your local machine.
 
-1. Clone the [tutorial environment repository](https://github.com/grafana/tutorial-environment).
+1. Clone the [tutorial environment repository](www.github.com/grafana/tutorial-environment).
 
    ```
    git clone https://github.com/grafana/tutorial-environment.git
@@ -152,9 +152,9 @@ In this section, we define queries, expressions (used to manipulate the data), a
 
    This [PromQL](https://prometheus.io/docs/prometheus/latest/querying/basics/) query calculates the sum of the per-second average rates of increase of the `tns_request_duration_seconds_count` metric over the last 1 minute, grouped by the HTTP method used in the requests. This can be useful for analyzing the request duration trends for different HTTP methods.
 
-1. Keep expressions “B” and “C” as they are. These expressions (**Reduce** and **Threshold**, respectively) come by default when creating a new rule.
+1. Remove expression "B" (click the bin icon). The **Reduce** expression comes by default, and in this case, it is not needed since the queried data is already reduced.
 
-   The Reduce expression “B”, selects the last value of our query “A”, while the Threshold expression “C” will check if the last value from expression “B” is above a specific value. In addition, the Threshold expression is the alert condition by default. Enter `0.2` as threshold value. You can read more about queries and conditions [here](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/queries-conditions/#expression-queries).
+1. In expression "C", **Threshold**, change the **Input** to "A". By selecting the input, you're telling Grafana which data source and which specific metric within that data source the expression should evaluate. The Threshold expression is now the alert condition. Enter `0.2` as threshold value. You can read more about queries and conditions [here](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/queries-conditions/#expression-queries).
 
 1. Click Preview to run the queries.
 
@@ -207,7 +207,7 @@ In this tutorial, you have learned how to set up an alert, send alert notificati
 
 Check out the links below to continue your learning journey with Grafana's LGTM stack.
 
-- [Prometheus](/docs/grafana/latest/features/datasources/prometheus/)
-- [Alerting Overview](/docs/grafana/latest/alerting/)
-- [Alert rules](/docs/grafana/latest/alerting/create-alerts/)
-- [Contact points](/docs/grafana/latest/alerting/fundamentals/contact-points/)
+- [Prometheus](/docs/grafana/<GRAFANA_VERSION>/features/datasources/prometheus/)
+- [Alerting Overview](/docs/grafana/<GRAFANA_VERSION>/alerting/)
+- [Alert rules](/docs/grafana/<GRAFANA_VERSION>/alerting/create-alerts/)
+- [Contact Points](/docs/grafana/<GRAFANA_VERSION>/alerting/notifications/)

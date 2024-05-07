@@ -40,18 +40,17 @@ export const RuleEditorSection = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  parent: css`
-    display: flex;
-    flex-direction: row;
-    max-width: ${theme.breakpoints.values.xl}px;
-    border: solid 1px ${theme.colors.border.weak};
-    border-radius: ${theme.shape.radius.default};
-    padding: ${theme.spacing(2)} ${theme.spacing(3)};
-  `,
-  description: css`
-    margin-top: -${theme.spacing(2)};
-  `,
-  fullWidth: css`
-    width: 100%;
-  `,
+  parent: css({
+    display: 'flex',
+    flexDirection: 'row',
+    border: `solid 1px ${theme.colors.border.weak}`,
+    borderRadius: theme.shape.radius.default,
+    padding: `${theme.spacing(2)} ${theme.spacing(3)}`,
+  }),
+  description: css({
+    marginTop: `-${theme.spacing(2)}`,
+  }),
+  fullWidth: css({
+    width: '100%',
+  }),
 });

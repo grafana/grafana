@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/LabelFilterItem.tsx
 import debounce from 'debounce-promise';
 import React, { useState } from 'react';
 
@@ -141,6 +142,8 @@ export function LabelFilterItem({
               : getSelectOptionsFromString(itemValue).map(toOption)[0]
           }
           allowCustomValue
+          formatCreateLabel={(input) => input} // to avoid confusion, opt out of using the `defaultFormatCreateLabel`
+          createOptionPosition={item.op?.includes('~') ? 'first' : 'last'}
           onOpenMenu={async () => {
             setState({ isLoadingLabelValues: true });
             const labelValues = await onGetLabelValues(item);

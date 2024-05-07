@@ -410,6 +410,187 @@ export const panelWithNoDataSource = {
   title: 'Panel with no data source',
   type: 'timeseries',
 };
+
+export const panelWithDataSourceNotFound = {
+  datasource: {
+    type: 'datasource',
+    uid: 'abc',
+  },
+  fieldConfig: {
+    defaults: {
+      color: {
+        mode: 'palette-classic',
+      },
+      custom: {
+        axisBorderShow: false,
+        axisCenteredZero: false,
+        axisColorMode: 'text',
+        axisLabel: '',
+        axisPlacement: 'auto',
+        barAlignment: 0,
+        drawStyle: 'line',
+        fillOpacity: 0,
+        gradientMode: 'none',
+        hideFrom: {
+          legend: false,
+          tooltip: false,
+          viz: false,
+        },
+        insertNulls: false,
+        lineInterpolation: 'linear',
+        lineWidth: 1,
+        pointSize: 5,
+        scaleDistribution: {
+          type: 'linear',
+        },
+        showPoints: 'auto',
+        spanNulls: false,
+        stacking: {
+          group: 'A',
+          mode: 'none',
+        },
+        thresholdsStyle: {
+          mode: 'off',
+        },
+      },
+      mappings: [],
+      thresholds: {
+        mode: 'absolute',
+        steps: [
+          {
+            color: 'green',
+            value: null,
+          },
+          {
+            color: 'red',
+            value: 80,
+          },
+        ],
+      },
+    },
+    overrides: [],
+  },
+  gridPos: {
+    h: 8,
+    w: 12,
+    x: 0,
+    y: 0,
+  },
+  id: 6,
+  options: {
+    legend: {
+      calcs: [],
+      displayMode: 'list',
+      placement: 'bottom',
+      showLegend: true,
+    },
+    tooltip: {
+      mode: 'single',
+      sort: 'none',
+    },
+  },
+  targets: [
+    {
+      refId: 'A',
+    },
+  ],
+  title: 'Panel with no data source',
+  type: 'timeseries',
+};
+
+export const panelWithQueriesAndMixedDatasource = {
+  datasource: {
+    type: 'datasource',
+    uid: '-- Mixed --',
+  },
+  fieldConfig: {
+    defaults: {
+      color: {
+        mode: 'palette-classic',
+      },
+      custom: {
+        axisBorderShow: false,
+        axisCenteredZero: false,
+        axisColorMode: 'text',
+        axisLabel: '',
+        axisPlacement: 'auto',
+        barAlignment: 0,
+        drawStyle: 'line',
+        fillOpacity: 0,
+        gradientMode: 'none',
+        hideFrom: {
+          legend: false,
+          tooltip: false,
+          viz: false,
+        },
+        insertNulls: false,
+        lineInterpolation: 'linear',
+        lineWidth: 1,
+        pointSize: 5,
+        scaleDistribution: {
+          type: 'linear',
+        },
+        showPoints: 'auto',
+        spanNulls: false,
+        stacking: {
+          group: 'A',
+          mode: 'none',
+        },
+        thresholdsStyle: {
+          mode: 'off',
+        },
+      },
+      mappings: [],
+      thresholds: {
+        mode: 'absolute',
+        steps: [
+          {
+            color: 'green',
+            value: null,
+          },
+          {
+            color: 'red',
+            value: 80,
+          },
+        ],
+      },
+    },
+    overrides: [],
+  },
+  gridPos: {
+    h: 8,
+    w: 12,
+    x: 0,
+    y: 0,
+  },
+  id: 7,
+  options: {
+    legend: {
+      calcs: [],
+      displayMode: 'list',
+      placement: 'bottom',
+      showLegend: true,
+    },
+    tooltip: {
+      mode: 'single',
+      sort: 'none',
+    },
+  },
+  targets: [
+    {
+      datasource: {
+        type: 'grafana-testdata-datasource',
+        uid: 'gdev-testdata',
+      },
+      refId: 'A',
+      scenarioId: 'random_walk',
+      seriesCount: 1,
+    },
+  ],
+  title: 'Panel with just queries',
+  type: 'timeseries',
+};
+
 export const testDashboard = {
   annotations: {
     list: [
@@ -439,6 +620,8 @@ export const testDashboard = {
     panelWithDashboardQuery,
     panelWithDashboardQueryAndTransformations,
     panelWithNoDataSource,
+    panelWithDataSourceNotFound,
+    panelWithQueriesAndMixedDatasource,
   ],
   refresh: '',
   schemaVersion: 39,

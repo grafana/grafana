@@ -19,6 +19,7 @@ import {
 } from 'app/features/alerting/unified/api/ruler';
 import * as useContactPoints from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import * as dsByPermission from 'app/features/alerting/unified/hooks/useAlertManagerSources';
+import { mockApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { MockDataSourceSrv, grantUserPermissions, mockDataSource } from 'app/features/alerting/unified/mocks';
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { fetchRulerRulesIfNotFetchedYet } from 'app/features/alerting/unified/state/actions';
@@ -102,8 +103,11 @@ const mocks = {
   },
 };
 
+const server = setupMswServer();
+
 describe('Can create a new grafana managed alert unsing simplified routing', () => {
   beforeEach(() => {
+    mockApi(server).eval({ results: {} });
     jest.clearAllMocks();
     contextSrv.isEditor = true;
     contextSrv.hasEditPermissionInFolders = true;
@@ -176,7 +180,7 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
             {
               annotations: { description: 'some description', summary: 'some summary' },
               labels: { severity: 'warn', team: 'the a-team' },
-              for: '5m',
+              for: '1m',
               grafana_alert: {
                 uid: '23',
                 namespace_uid: 'abcd',
@@ -198,7 +202,7 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
             {
               annotations: { description: 'some description', summary: 'some summary' },
               labels: { severity: 'warn', team: 'the a-team' },
-              for: '5m',
+              for: '1m',
               grafana_alert: {
                 uid: '23',
                 namespace_uid: 'b',
@@ -259,6 +263,7 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
       expect(mocks.api.setRulerRuleGroup).not.toHaveBeenCalled();
     });
   });
+
   it('can create new grafana managed alert when using simplified routing and selecting a contact point', async () => {
     const contactPointsAvailable: ContactPointWithMetadata[] = [
       {
@@ -275,7 +280,7 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
             settings: {},
           },
         ],
-        numberOfPolicies: 0,
+        policies: [],
       },
     ];
     mocks.useContactPointsWithStatus.mockReturnValue({
@@ -302,7 +307,7 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
             {
               annotations: { description: 'some description', summary: 'some summary' },
               labels: { severity: 'warn', team: 'the a-team' },
-              for: '5m',
+              for: '1m',
               grafana_alert: {
                 uid: '23',
                 namespace_uid: 'abcd',
@@ -324,7 +329,7 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
             {
               annotations: { description: 'some description', summary: 'some summary' },
               labels: { severity: 'warn', team: 'the a-team' },
-              for: '5m',
+              for: '1m',
               grafana_alert: {
                 uid: '23',
                 namespace_uid: 'b',
@@ -396,7 +401,7 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
           {
             annotations: {},
             labels: {},
-            for: '5m',
+            for: '1m',
             grafana_alert: {
               condition: 'B',
               data: getDefaultQueries(),

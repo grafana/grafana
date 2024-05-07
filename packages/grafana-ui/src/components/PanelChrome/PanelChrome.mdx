@@ -3,10 +3,10 @@ import { Meta, Preview } from '@storybook/addon-docs/blocks';
 import { PanelChrome } from './PanelChrome';
 
 import { action } from '@storybook/addon-actions';
-import { HorizontalGroup } from '../Layout/Layout';
 import { LoadingState } from '@grafana/data';
 import { Button } from '../Button';
 import { Menu } from '../Menu/Menu';
+import { Stack } from '../Layout/Stack/Stack';
 import { IconButton } from '../IconButton/IconButton';
 
 <Meta title="MDX|PanelChrome" component={PanelChrome} />
@@ -109,7 +109,7 @@ Component used for rendering content wrapped in the same style as grafana panels
 
 <Preview>
 
-  <HorizontalGroup spacing="md" align="flex-start" wrap>
+  <Stack gap={2} alignItems="flex-start" wrap="wrap">
   <PanelChrome
     title="My awesome panel title"
     menu={() => (
@@ -182,7 +182,7 @@ Component used for rendering content wrapped in the same style as grafana panels
     }}
 
   </PanelChrome>
-</HorizontalGroup>
+</Stack>
 </Preview>
 
 ### States: Loading , Streaming, Error
@@ -217,7 +217,7 @@ Component used for rendering content wrapped in the same style as grafana panels
 
 <Preview>
 
-  <HorizontalGroup spacing="md" align="flex-start" wrap>
+  <Stack gap={2} alignItems="flex-start" wrap="wrap">
   <PanelChrome
     title="My awesome panel title"
     loadingState={LoadingState.Loading}
@@ -297,7 +297,7 @@ Component used for rendering content wrapped in the same style as grafana panels
     }}
 
   </PanelChrome>
-</HorizontalGroup>
+</Stack>
 </Preview>
 
 ### Extra options? Title items and actions

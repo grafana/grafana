@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/PromExemplarField.tsx
 import { css, cx } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 import { usePrevious } from 'react-use';
@@ -65,15 +66,15 @@ export function PromExemplarField({ datasource, onChange, query, ...rest }: Prop
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    eyeIcon: css`
-      margin-left: ${theme.spacing(2)};
-    `,
-    activeIcon: css`
-      color: ${theme.colors.primary.main};
-    `,
-    iconWrapper: css`
-      display: flex;
-      align-items: center;
-    `,
+    eyeIcon: css({
+      marginLeft: theme.spacing(2),
+    }),
+    activeIcon: css({
+      color: theme.colors.primary.main,
+    }),
+    iconWrapper: css({
+      display: 'flex',
+      alignItems: 'center',
+    }),
   };
 }

@@ -10,19 +10,24 @@
     "@grafana/schema": "11.1.0-pre",
     "@grafana/ui": "11.1.0-pre",
     "lodash": "4.17.21",
-    "monaco-editor": "0.34.0",
+    "monaco-editor": "0.34.1",
     "react": "18.2.0",
+    "react-dom": "18.2.0",
     "react-use": "17.5.0",
     "rxjs": "7.8.1",
     "tslib": "2.6.2"
   },
   "devDependencies": {
     "@grafana/plugin-configs": "11.1.0-pre",
-    "@testing-library/react": "14.2.2",
+    "@testing-library/dom": "10.0.0",
+    "@testing-library/react": "15.0.2",
     "@testing-library/user-event": "14.5.2",
     "@types/lodash": "4.17.0",
-    "@types/react": "18.2.74",
+    "@types/node": "20.12.8",
+    "@types/react": "18.2.79",
+    "@types/react-dom": "18.2.25",
     "ts-node": "10.9.2",
+    "typescript": "5.4.5",
     "webpack": "5.91.0"
   },
   "peerDependencies": {
@@ -33,5 +38,5 @@
     "build:commit": "webpack -c ./webpack.config.ts --env production --env commit=$(git rev-parse --short HEAD)",
     "dev": "webpack -w -c ./webpack.config.ts --env development"
   },
-  "packageManager": "yarn@4.1.1"
+  "packageManager": "yarn@4.2.1"
 }

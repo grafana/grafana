@@ -843,6 +843,113 @@ WHERE r.uid IN (?, ?, ?) AND p.action LIKE 'annotations:%' AND p.scope IN ('*', 
 	return true, nil
 }
 
+const ManagedFolderAlertingSilencesActionsMigratorID = "managed folder permissions alerting silences actions migration"
+
+func AddManagedFolderAlertingSilencesActionsMigrator(mg *migrator.Migrator) {
+	mg.AddMigration(ManagedFolderAlertingSilencesActionsMigratorID, &managedFolderAlertingSilencesActionsMigrator{})
+}
+
+type managedFolderAlertingSilencesActionsMigrator struct {
+	migrator.MigrationBase
+}
+
+func (m *managedFolderAlertingSilencesActionsMigrator) SQL(_ migrator.Dialect) string {
+	return CodeMigrationSQL
+}
+
+func (m *managedFolderAlertingSilencesActionsMigrator) Exec(sess *xorm.Session, _ *migrator.Migrator) error {
+	var ids []any
+	if err := sess.SQL("SELECT id FROM role WHERE name LIKE 'managed:%'").Find(&ids); err != nil {
+		return err
+	}
+
+	if len(ids) == 0 {
+		return nil
+	}
+
+	var permissions []ac.Permission
+	if err := sess.SQL("SELECT role_id, action, scope FROM permission WHERE role_id IN(?"+strings.Repeat(" ,?", len(ids)-1)+") AND scope LIKE 'folders:%'", ids...).Find(&permissions); err != nil {
+		return err
+	}
+
+	mapped := make(map[int64]map[string][]ac.Permission, len(ids)-1)
+	for _, p := range permissions {
+		if mapped[p.RoleID] == nil {
+			mapped[p.RoleID] = make(map[string][]ac.Permission)
+		}
+		mapped[p.RoleID][p.Scope] = append(mapped[p.RoleID][p.Scope], p)
+	}
+
+	var toAdd []ac.Permission
+	now := time.Now()
+
+	for id, a := range mapped {
+		for scope, p := range a {
+			// Create a temporary permission to split the scope into kind, attribute and identifier
+			kind, attribute, identifier := ac.Permission{Scope: scope}.SplitScope()
+
+			if hasFolderView(p) {
+				if !hasAction(ac.ActionAlertingSilencesRead, p) {
+					toAdd = append(toAdd, ac.Permission{
+						RoleID:     id,
+						Action:     ac.ActionAlertingSilencesRead,
+						Scope:      scope,
+						Kind:       kind,
+						Attribute:  attribute,
+						Identifier: identifier,
+						Updated:    now,
+						Created:    now,
+					})
+				}
+			}
+
+			if hasFolderAdmin(p) || hasFolderEdit(p) {
+				if !hasAction(ac.ActionAlertingSilencesCreate, p) {
+					toAdd = append(toAdd, ac.Permission{
+						RoleID:     id,
+						Action:     ac.ActionAlertingSilencesCreate,
+						Scope:      scope,
+						Kind:       kind,
+						Attribute:  attribute,
+						Identifier: identifier,
+						Updated:    now,
+						Created:    now,
+					})
+				}
+				if !hasAction(ac.ActionAlertingSilencesWrite, p) {
+					toAdd = append(toAdd, ac.Permission{
+						RoleID:     id,
+						Action:     ac.ActionAlertingSilencesWrite,
+						Scope:      scope,
+						Kind:       kind,
+						Attribute:  attribute,
+						Identifier: identifier,
+						Updated:    now,
+						Created:    now,
+					})
+				}
+			}
+		}
+	}
+
+	if len(toAdd) == 0 {
+		return nil
+	}
+
+	err := batch(len(toAdd), batchSize, func(start, end int) error {
+		if _, err := sess.InsertMulti(toAdd[start:end]); err != nil {
+			return err
+		}
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func hasFolderAdmin(permissions []ac.Permission) bool {
 	return hasActions(folderPermissionTranslation[dashboardaccess.PERMISSION_ADMIN], permissions)
 }

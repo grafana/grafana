@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
 import { get, groupBy } from 'lodash';
-import memoizeOne from 'memoize-one';
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer, { HorizontalSize } from 'react-virtualized-auto-sizer';
@@ -31,7 +30,6 @@ import {
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/src/components/Table/types';
 import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { getNodeGraphDataFrames } from 'app/plugins/panel/nodeGraph/utils';
 import { StoreState } from 'app/types';
 
 import { getTimeZone } from '../profile/state/selectors';
@@ -41,7 +39,6 @@ import { ContentOutlineContextProvider } from './ContentOutline/ContentOutlineCo
 import { ContentOutlineItem } from './ContentOutline/ContentOutlineItem';
 import { CorrelationHelper } from './CorrelationHelper';
 import { CustomContainer } from './CustomContainer';
-import ExploreQueryInspector from './ExploreQueryInspector';
 import { ExploreToolbar } from './ExploreToolbar';
 import { FlameGraphExploreContainer } from './FlameGraph/FlameGraphExploreContainer';
 import { GraphContainer } from './Graph/GraphContainer';
@@ -53,7 +50,6 @@ import { NodeGraphContainer } from './NodeGraph/NodeGraphContainer';
 import { QueryRows } from './QueryRows';
 import RawPrometheusContainer from './RawPrometheus/RawPrometheusContainer';
 import { ResponseErrorContainer } from './ResponseErrorContainer';
-import RichHistoryContainer from './RichHistory/RichHistoryContainer';
 import { SecondaryActions } from './SecondaryActions';
 import TableContainer from './Table/TableContainer';
 import { TraceViewContainer } from './TraceView/TraceViewContainer';
@@ -108,15 +104,11 @@ export interface ExploreProps extends Themeable2 {
   exploreId: string;
   theme: GrafanaTheme2;
   eventBus: EventBus;
-}
-
-enum ExploreDrawer {
-  RichHistory,
-  QueryInspector,
+  setShowQueryInspector: (value: boolean) => void;
+  showQueryInspector: boolean;
 }
 
 interface ExploreState {
-  openDrawer?: ExploreDrawer;
   contentOutlineVisible: boolean;
 }
 
@@ -151,12 +143,10 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   scrollElement: HTMLDivElement | undefined;
   graphEventBus: EventBus;
   logsEventBus: EventBus;
-  memoizedGetNodeGraphDataFrames = memoizeOne(getNodeGraphDataFrames);
 
   constructor(props: Props) {
     super(props);
     this.state = {
-      openDrawer: undefined,
       contentOutlineVisible: false,
     };
     this.graphEventBus = props.eventBus.newScopedBus('graph', { onlyLocal: false });
@@ -309,22 +299,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   onUpdateTimeRange = (absoluteRange: AbsoluteTimeRange) => {
     const { exploreId, updateTimeRange } = this.props;
     updateTimeRange({ exploreId, absoluteRange });
-  };
-
-  toggleShowRichHistory = () => {
-    this.setState((state) => {
-      return {
-        openDrawer: state.openDrawer === ExploreDrawer.RichHistory ? undefined : ExploreDrawer.RichHistory,
-      };
-    });
-  };
-
-  toggleShowQueryInspector = () => {
-    this.setState((state) => {
-      return {
-        openDrawer: state.openDrawer === ExploreDrawer.QueryInspector ? undefined : ExploreDrawer.QueryInspector,
-      };
-    });
   };
 
   onSplitOpen = (panelType: string) => {
@@ -497,7 +471,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     return (
       <ContentOutlineItem panelId="Node Graph" title="Node Graph" icon="code-branch">
         <NodeGraphContainer
-          dataFrames={this.memoizedGetNodeGraphDataFrames(queryResponse.series)}
+          dataFrames={queryResponse.nodeGraphFrames}
           exploreId={exploreId}
           withTraceView={showTrace}
           datasourceType={datasourceType}
@@ -551,17 +525,16 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       showCustom,
       showNodeGraph,
       showFlameGraph,
-      timeZone,
       showLogsSample,
       correlationEditorDetails,
       correlationEditorHelperData,
+      showQueryInspector,
+      setShowQueryInspector,
     } = this.props;
-    const { openDrawer, contentOutlineVisible } = this.state;
+    const { contentOutlineVisible } = this.state;
     const styles = getStyles(theme);
     const showPanels = queryResponse && queryResponse.state !== LoadingState.NotStarted;
-    const showRichHistory = openDrawer === ExploreDrawer.RichHistory;
     const richHistoryRowButtonHidden = !supportedFeatures().queryHistoryAvailable;
-    const showQueryInspector = openDrawer === ExploreDrawer.QueryInspector;
     const showNoData =
       queryResponse.state === LoadingState.Done &&
       [
@@ -622,11 +595,9 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                           //TODO:unification
                           addQueryRowButtonHidden={false}
                           richHistoryRowButtonHidden={richHistoryRowButtonHidden}
-                          richHistoryButtonActive={showRichHistory}
                           queryInspectorButtonActive={showQueryInspector}
                           onClickAddQueryRowButton={this.onClickAddQueryRowButton}
-                          onClickRichHistoryButton={this.toggleShowRichHistory}
-                          onClickQueryInspectorButton={this.toggleShowQueryInspector}
+                          onClickQueryInspectorButton={() => setShowQueryInspector(!showQueryInspector)}
                         />
                         <ResponseErrorContainer exploreId={exploreId} />
                       </PanelContainer>
@@ -663,22 +634,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                                   {showCustom && <ErrorBoundaryAlert>{this.renderCustom(width)}</ErrorBoundaryAlert>}
                                   {showNoData && <ErrorBoundaryAlert>{this.renderNoData()}</ErrorBoundaryAlert>}
                                 </>
-                              )}
-                              {showRichHistory && (
-                                <RichHistoryContainer
-                                  width={width}
-                                  exploreId={exploreId}
-                                  onClose={this.toggleShowRichHistory}
-                                />
-                              )}
-                              {showQueryInspector && (
-                                <ExploreQueryInspector
-                                  exploreId={exploreId}
-                                  width={width}
-                                  onClose={this.toggleShowQueryInspector}
-                                  timeZone={timeZone}
-                                  isMixed={datasourceInstance.meta.mixed || false}
-                                />
                               )}
                             </ErrorBoundaryAlert>
                           </main>

@@ -84,7 +84,7 @@ func TestCanWriteAllRules(t *testing.T) {
 
 func TestAuthorizeAccessToRuleGroup(t *testing.T) {
 	testUser := &user.SignedInUser{}
-	rules := models.GenerateAlertRules(1, models.AlertRuleGen())
+	rules := models.RuleGen.GenerateManyRef(1)
 
 	t.Run("should return nil when user has provisioning permissions", func(t *testing.T) {
 		rs := &fakes.FakeRuleService{}

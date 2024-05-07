@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -35,15 +34,14 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 
 	ctxLogger := s.log.FromContext(ctx).New("id", id.ID, "login", id.Login)
 
-	namespace, identifier := id.GetNamespacedID()
-	if namespace != authn.NamespaceUser {
-		ctxLogger.Warn("Failed to sync org role, invalid namespace for identity", "namespace", namespace)
+	if !id.ID.IsNamespace(authn.NamespaceUser) {
+		ctxLogger.Warn("Failed to sync org role, invalid namespace for identity", "namespace", id.ID.Namespace())
 		return nil
 	}
 
-	userID, err := identity.IntIdentifier(namespace, identifier)
+	userID, err := id.ID.ParseInt()
 	if err != nil {
-		ctxLogger.Warn("Failed to sync org role, invalid ID for identity", "namespace", namespace, "err", err)
+		ctxLogger.Warn("Failed to sync org role, invalid ID for identity", "namespace", id.ID.Namespace(), "err", err)
 		return nil
 	}
 
@@ -122,9 +120,9 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 	if _, ok := id.OrgRoles[id.OrgID]; !ok {
 		if len(orgIDs) > 0 {
 			id.OrgID = orgIDs[0]
-			return s.userService.SetUsingOrg(ctx, &user.SetUsingOrgCommand{
+			return s.userService.Update(ctx, &user.UpdateUserCommand{
 				UserID: userID,
-				OrgID:  id.OrgID,
+				OrgID:  &id.OrgID,
 			})
 		}
 	}
@@ -132,43 +130,39 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 	return nil
 }
 
-func (s *OrgSync) SetDefaultOrgHook(ctx context.Context, currentIdentity *authn.Identity, r *authn.Request) error {
-	if s.cfg.LoginDefaultOrgId < 1 || currentIdentity == nil {
-		return nil
+func (s *OrgSync) SetDefaultOrgHook(ctx context.Context, currentIdentity *authn.Identity, r *authn.Request, err error) {
+	if s.cfg.LoginDefaultOrgId < 1 || currentIdentity == nil || err != nil {
+		return
 	}
 
 	ctxLogger := s.log.FromContext(ctx)
 
-	namespace, identifier := currentIdentity.GetNamespacedID()
-	if namespace != identity.NamespaceUser {
-		ctxLogger.Debug("Skipping default org sync, not a user", "namespace", namespace)
-		return nil
+	if !currentIdentity.ID.IsNamespace(authn.NamespaceUser) {
+		ctxLogger.Debug("Skipping default org sync, not a user", "namespace", currentIdentity.ID.Namespace())
+		return
 	}
 
-	userID, err := identity.IntIdentifier(namespace, identifier)
+	userID, err := currentIdentity.ID.ParseInt()
 	if err != nil {
-		ctxLogger.Debug("Skipping default org sync, invalid ID for identity", "id", currentIdentity.ID, "namespace", namespace, "err", err)
-		return nil
+		ctxLogger.Debug("Skipping default org sync, invalid ID for identity", "id", currentIdentity.ID, "namespace", currentIdentity.ID.Namespace(), "err", err)
+		return
 	}
 
 	hasAssignedToOrg, err := s.validateUsingOrg(ctx, userID, s.cfg.LoginDefaultOrgId)
 	if err != nil {
 		ctxLogger.Error("Skipping default org sync, failed to validate user's organizations", "id", currentIdentity.ID, "err", err)
-		return nil
+		return
 	}
 
 	if !hasAssignedToOrg {
 		ctxLogger.Debug("Skipping default org sync, user is not assigned to org", "id", currentIdentity.ID, "org", s.cfg.LoginDefaultOrgId)
-		return nil
+		return
 	}
 
-	cmd := user.SetUsingOrgCommand{UserID: userID, OrgID: s.cfg.LoginDefaultOrgId}
-	if err := s.userService.SetUsingOrg(ctx, &cmd); err != nil {
-		ctxLogger.Error("Failed to set default org", "id", currentIdentity.ID, "err", err)
-		return err
+	cmd := user.UpdateUserCommand{UserID: userID, OrgID: &s.cfg.LoginDefaultOrgId}
+	if svcErr := s.userService.Update(ctx, &cmd); svcErr != nil {
+		ctxLogger.Error("Failed to set default org", "id", currentIdentity.ID, "err", svcErr)
 	}
-
-	return nil
 }
 
 func (s *OrgSync) validateUsingOrg(ctx context.Context, userID int64, orgID int64) (bool, error) {

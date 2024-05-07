@@ -41,7 +41,7 @@ You can configure standard options for the following visualizations:
 | [Bar gauge][bar gauge]     | [Histogram][histogram]           | [Table][table]                   |
 | [Candlestick][candlestick] | [Pie chart][pie chart]           | [Time series][time series]       |
 | [Canvas][canvas]           | [Stat][stat]                     | [Trend][trend]                   |
-| [Gauge][gauge]             | [State timeline][state timeline] | <!-- xychart -->                 |
+| [Gauge][gauge]             | [State timeline][state timeline] | [XY chart][xy chart]             |
 
 ## Standard options
 
@@ -83,6 +83,10 @@ You can also paste a native emoji in the **Unit** drop-down and select it as a c
 ![A thumbs up emoji as a custom unit](/media/docs/grafana/panels-visualizations/custom_unit_thumbsup_v11.0.png)
 
 ![A time series visualization using custom thumbs up emoji units](/media/docs/grafana/panels-visualizations/thumbsup_panel_v11.0.png)
+
+#### Control unit scaling
+
+By default, Grafana automatically scales the unit based on the magnitude of the value. For example, if you have values of 0.14kW and 3000kW, Grafana displays them as 140W and 3MW, respectively. You can use custom units to control this behavior by setting a prefix, suffix, or custom SI unit.
 
 #### String units
 
@@ -191,6 +195,9 @@ Enter what Grafana should display if the field value is empty or null. The defau
 
 [trend]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/trend"
 [trend]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/trend"
+
+[xy chart]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/xy-chart"
+[xy chart]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/xy-chart"
 
 [variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
 [variables]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/variables"

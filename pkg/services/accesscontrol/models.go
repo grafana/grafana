@@ -440,6 +440,10 @@ const (
 	ActionAlertingInstanceUpdate = "alert.instances:write"
 	ActionAlertingInstanceRead   = "alert.instances:read"
 
+	ActionAlertingSilencesRead   = "alert.silences:read"
+	ActionAlertingSilencesCreate = "alert.silences:create"
+	ActionAlertingSilencesWrite  = "alert.silences:write"
+
 	// Alerting Notification policies actions
 	ActionAlertingNotificationsRead  = "alert.notifications:read"
 	ActionAlertingNotificationsWrite = "alert.notifications:write"
@@ -481,6 +485,9 @@ const (
 	ActionLibraryPanelsRead   = "library.panels:read"
 	ActionLibraryPanelsWrite  = "library.panels:write"
 	ActionLibraryPanelsDelete = "library.panels:delete"
+
+	// Usage stats actions
+	ActionUsageStatsRead = "server.usagestats.report:read"
 )
 
 var (
