@@ -30,9 +30,9 @@ To find new plugins, browse the Grafana plugins catalog which is available both 
 1. Optional: select the desired version. We strongly recommended to run the latest version of plugins.
 1. Click **Install plugin** on the appropriate Grafana instance.
 
-### Install a plugin from Grafana WebUI
+### Install a plugin from Grafana
 
-1. In Grafana's WebUI, on the right-hand menu, click **Administration** > **Plugins and data** > **Plugins** to view installed plugins.
+1. In Grafana's right-hand menu, click **Administration** > **Plugins and data** > **Plugins** to view installed plugins.
 1. Click the **All** filter to browse all available plugins.
 1. Click the **Data sources**, **Panels**, or **Applications** buttons to filter by plugin type.
 1. Click the logo of the plugin you want to install.
