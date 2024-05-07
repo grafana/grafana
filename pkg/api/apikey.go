@@ -152,3 +152,10 @@ type AddAPIkeyParams struct {
 	// required:true
 	Body apikey.AddCommand
 }
+
+// swagger:response postAPIkeyResponse
+type PostAPIkeyResponse struct {
+	// The response message
+	// in: body
+	Body dtos.NewApiKeyResult `json:"body"`
+}
