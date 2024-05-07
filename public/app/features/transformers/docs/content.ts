@@ -788,7 +788,7 @@ Use this transformation to merge multiple results into a single table, enabling 
 
 This is especially useful for converting multiple time series results into a single wide table with a shared time field.
 
-#### Inner join
+#### Inner join (for Time Series data)
 
 An inner join merges data from multiple tables where all tables share the same value from the selected field. This type of join excludes data where values do not match in every result.
 
@@ -819,7 +819,7 @@ The result after applying the inner join transformation looks like the following
 | 2020-07-07 11:34:20 | node    | 25260122  | server 1 | 15     |
 | 2020-07-07 11:24:20 | postgre | 123001233 | server 2 | 5      |
 
-#### Outer join
+#### Outer join (for Time Series data)
 
 An outer join includes all data from an inner join and rows where values do not match in every input. While the inner join joins Query A and Query B on the time field, the outer join includes all rows that don't match on the time field.
 
@@ -865,6 +865,28 @@ ${buildImageContent(
   imageRenderType,
   'A table visualization showing results for multiple servers'
 )}
+
+#### Inner join (for tabular data)
+
+#### Outer join (for tabular data)
+
+
+
+| Class    | Day       | Room |
+| -------- | --------- | ---- |
+| BIOLOGY  | Wednesday | 18   |
+| BIOLOGY  | Tuesday   | 72   |
+| BIOLOGY  | Monday    | 13   |
+| CALCULUS | Wednesday | 17   |
+| CALCULUS | Tuesday   | 71   |
+| CALCULUS | Monday    | 7    |
+
+Can now be joined with:
+
+| Class    | Room |
+| -------- | ---- |
+| BIOLOGY  | 103  |
+| CALCULUS | 95   |
 
 Combine and analyze data from various queries with table joining for a comprehensive view of your information.
   `;
