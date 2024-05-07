@@ -28,7 +28,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
   const history = useHistory();
   const remotePluginsAvailable = useIsRemotePluginsAvailable();
   const keyword = locationSearch.q?.toString() || '';
-  const filterBy = locationSearch.filterBy?.toString() || 'installed';
+  const filterBy = locationSearch.filterBy?.toString() || 'all';
   const filterByType = (locationSearch.filterByType as PluginType | 'all') || 'all';
   const sortBy = (locationSearch.sortBy as Sorters) || Sorters.nameAsc;
   const { isLoading, error, plugins } = useGetAll(
