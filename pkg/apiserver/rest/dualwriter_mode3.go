@@ -12,17 +12,20 @@ import (
 )
 
 type DualWriterMode3 struct {
-	DualWriter
+	Legacy  LegacyStorage
+	Storage Storage
+	Log     klog.Logger
 }
 
 // NewDualWriterMode3 returns a new DualWriter in mode 3.
 // Mode 3 represents writing to LegacyStorage and Storage and reading from Storage.
 func NewDualWriterMode3(legacy LegacyStorage, storage Storage) *DualWriterMode3 {
-	return &DualWriterMode3{*NewDualWriter(legacy, storage)}
+	return &DualWriterMode3{Legacy: legacy, Storage: storage, Log: klog.NewKlogr().WithName("DualWriterMode3")}
 }
 
 // Create overrides the behavior of the generic DualWriter and writes to LegacyStorage and Storage.
 func (d *DualWriterMode3) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	log := klog.FromContext(ctx)
 	legacy, ok := d.Legacy.(rest.Creater)
 	if !ok {
 		return nil, errDualWriterCreaterMissing
@@ -30,12 +33,12 @@ func (d *DualWriterMode3) Create(ctx context.Context, obj runtime.Object, create
 
 	created, err := d.Storage.Create(ctx, obj, createValidation, options)
 	if err != nil {
-		klog.FromContext(ctx).Error(err, "unable to create object in Storage", "mode", 3)
+		log.Error(err, "unable to create object in storage")
 		return created, err
 	}
 
 	if _, err := legacy.Create(ctx, obj, createValidation, options); err != nil {
-		klog.FromContext(ctx).Error(err, "unable to create object in legacy storage", "mode", 3)
+		log.WithValues("object", created).Error(err, "unable to create object in legacy storage")
 	}
 	return created, nil
 }
@@ -46,6 +49,8 @@ func (d *DualWriterMode3) Get(ctx context.Context, name string, options *metav1.
 }
 
 func (d *DualWriterMode3) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	log := d.Log.WithValues("name", name)
+	ctx = klog.NewContext(ctx, log)
 	legacy, ok := d.Legacy.(rest.GracefulDeleter)
 	if !ok {
 		return nil, false, errDualWriterDeleterMissing
@@ -54,7 +59,7 @@ func (d *DualWriterMode3) Delete(ctx context.Context, name string, deleteValidat
 	deleted, async, err := d.Storage.Delete(ctx, name, deleteValidation, options)
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
-			klog.FromContext(ctx).Error(err, "could not delete from unified store", "mode", Mode3)
+			log.Error(err, "could not delete from unified store")
 			return deleted, async, err
 		}
 	}
@@ -62,7 +67,7 @@ func (d *DualWriterMode3) Delete(ctx context.Context, name string, deleteValidat
 	_, _, errLS := legacy.Delete(ctx, name, deleteValidation, options)
 	if errLS != nil {
 		if !apierrors.IsNotFound(errLS) {
-			klog.FromContext(ctx).Error(errLS, "could not delete from legacy store", "mode", Mode3)
+			log.WithValues("deleted", deleted).Error(errLS, "could not delete from legacy store")
 		}
 	}
 
@@ -71,13 +76,17 @@ func (d *DualWriterMode3) Delete(ctx context.Context, name string, deleteValidat
 
 // Update overrides the behavior of the generic DualWriter and writes first to Storage and then to LegacyStorage.
 func (d *DualWriterMode3) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	log := d.Log.WithValues("name", name)
+	ctx = klog.NewContext(ctx, log)
 	old, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
+		log.WithValues("object", old).Error(err, "could not get object to update")
 		return nil, false, err
 	}
 
 	updated, err := objInfo.UpdatedObject(ctx, old)
 	if err != nil {
+		log.WithValues("object", updated).Error(err, "could not update or create object")
 		return nil, false, err
 	}
 	objInfo = &updateWrapper{
@@ -87,13 +96,13 @@ func (d *DualWriterMode3) Update(ctx context.Context, name string, objInfo rest.
 
 	obj, created, err := d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 	if err != nil {
-		klog.FromContext(ctx).Error(err, "could not write to US", "mode", Mode3)
+		log.WithValues("object", obj).Error(err, "could not write to US")
 		return obj, created, err
 	}
 
 	legacy, ok := d.Legacy.(rest.Updater)
 	if !ok {
-		klog.FromContext(ctx).Error(errDualWriterUpdaterMissing, "legacy storage update not implemented")
+		log.Error(errDualWriterUpdaterMissing, "legacy storage update not implemented")
 		return obj, created, err
 	}
 
@@ -102,13 +111,15 @@ func (d *DualWriterMode3) Update(ctx context.Context, name string, objInfo rest.
 		updated:  obj,
 	}, createValidation, updateValidation, forceAllowCreate, options)
 	if errLeg != nil {
-		klog.FromContext(ctx).Error(errLeg, "could not update object in legacy store", "mode", Mode3)
+		log.Error(errLeg, "could not update object in legacy store")
 	}
 	return obj, created, err
 }
 
 // DeleteCollection overrides the behavior of the generic DualWriter and deletes from both LegacyStorage and Storage.
 func (d *DualWriterMode3) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
+	log := d.Log.WithValues("kind", options.Kind, "resourceVersion", listOptions.ResourceVersion)
+	ctx = klog.NewContext(ctx, log)
 	legacy, ok := d.Legacy.(rest.CollectionDeleter)
 	if !ok {
 		return nil, errDualWriterCollectionDeleterMissing
@@ -117,12 +128,43 @@ func (d *DualWriterMode3) DeleteCollection(ctx context.Context, deleteValidation
 	// #TODO: figure out how to handle partial deletions
 	deleted, err := d.Storage.DeleteCollection(ctx, deleteValidation, options, listOptions)
 	if err != nil {
-		klog.FromContext(ctx).Error(err, "failed to delete collection successfully from Storage", "deletedObjects", deleted)
+		log.Error(err, "failed to delete collection successfully from Storage")
 	}
 
 	if deleted, err := legacy.DeleteCollection(ctx, deleteValidation, options, listOptions); err != nil {
-		klog.FromContext(ctx).Error(err, "failed to delete collection successfully from LegacyStorage", "deletedObjects", deleted)
+		log.WithValues("deleted", deleted).Error(err, "failed to delete collection successfully from LegacyStorage")
 	}
 
 	return deleted, err
+}
+
+func (d *DualWriterMode3) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
+	//TODO: implement List
+	klog.Error("List not implemented")
+	return nil, nil
+}
+
+func (d *DualWriterMode3) Destroy() {
+	d.Storage.Destroy()
+	d.Legacy.Destroy()
+}
+
+func (d *DualWriterMode3) GetSingularName() string {
+	return d.Storage.GetSingularName()
+}
+
+func (d *DualWriterMode3) NamespaceScoped() bool {
+	return d.Storage.NamespaceScoped()
+}
+
+func (d *DualWriterMode3) New() runtime.Object {
+	return d.Storage.New()
+}
+
+func (d *DualWriterMode3) NewList() runtime.Object {
+	return d.Storage.NewList()
+}
+
+func (d *DualWriterMode3) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+	return d.Storage.ConvertToTable(ctx, object, tableOptions)
 }

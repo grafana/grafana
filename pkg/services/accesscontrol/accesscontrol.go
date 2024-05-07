@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/registry"
@@ -100,22 +99,18 @@ func (s *SearchOptions) ComputeUserID() (int64, error) {
 	if s.NamespacedID == "" {
 		return 0, errors.New("namespacedID must be set")
 	}
-	// Split namespaceID into namespace and ID
-	parts := strings.Split(s.NamespacedID, ":")
-	// Validate namespace ID format
-	if len(parts) != 2 {
-		return 0, fmt.Errorf("invalid namespaced ID: %s", s.NamespacedID)
-	}
-	// Validate namespace type is user or service account
-	if parts[0] != identity.NamespaceUser && parts[0] != identity.NamespaceServiceAccount {
-		return 0, fmt.Errorf("invalid namespace: %s", parts[0])
-	}
-	// Validate namespace ID is a number
-	id, err := strconv.ParseInt(parts[1], 10, 64)
+
+	id, err := identity.ParseNamespaceID(s.NamespacedID)
 	if err != nil {
-		return 0, fmt.Errorf("invalid namespaced ID: %s", s.NamespacedID)
+		return 0, err
 	}
-	return id, nil
+
+	// Validate namespace type is user or service account
+	if id.Namespace() != identity.NamespaceUser && id.Namespace() != identity.NamespaceServiceAccount {
+		return 0, fmt.Errorf("invalid namespace: %s", id.Namespace())
+	}
+
+	return id.ParseInt()
 }
 
 type SyncUserRolesCommand struct {
