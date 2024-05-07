@@ -39,7 +39,7 @@ Use panel plugins when you want to:
 
 ## Data source plugins
 
-Data source plugins add support for new databases, such as [Google BigQuery](/grafana/plugins/grafana-bigquery-datasource), [Zendesk](https://grafana.com/grafana/plugins/gabrielthomasjacobs-zendesk-datasource/), and [NetData](https://grafana.com/grafana/plugins/netdatacloud-netdata-datasource/).
+Data source plugins add support for new databases, such as [Google BigQuery](/grafana/plugins/grafana-bigquery-datasource).
 
 Data source plugins communicate with external sources of data and return the data in a format that Grafana understands. By adding a data source plugin, you can immediately use the data in any of your existing dashboards.
 
@@ -47,7 +47,7 @@ Use data source plugins when you want to import data from external or third-part
 
 ## App plugins
 
-Applications, or _app plugins_, bundle data sources and panels to provide a cohesive experience, such as the [Zabbix](/grafana/plugins/alexanderzobnin-zabbix-app), [Performance Co-Pilot](https://grafana.com/grafana/plugins/performancecopilot-pcp-app/) and [cPacket Utility Bundle](https://grafana.com/grafana/plugins/cpacket-cclearutilitybundle-app/) apps.
+Applications, or _app plugins_, bundle data sources and panels to provide a cohesive experience, such as the [Zabbix](/grafana/plugins/alexanderzobnin-zabbix-app) app.
 
 Apps can also add custom pages for things like control panels.
 
