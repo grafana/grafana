@@ -1,1 +1,1 @@
-API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/scope/v0alpha1,FindResults,Found
+API rule violation: names_match,github.com/grafana/grafana/pkg/apis/scope/v0alpha1,TreeItem,NodeID

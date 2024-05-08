@@ -28,7 +28,7 @@ var (
 
 func (r *findREST) New() runtime.Object {
 	// This is added as the "ResponseType" regarless what ProducesObject() says :)
-	return &scope.FindResults{}
+	return &scope.TreeResults{}
 }
 
 func (r *findREST) Destroy() {}
@@ -46,7 +46,7 @@ func (r *findREST) ProducesMIMETypes(verb string) []string {
 }
 
 func (r *findREST) ProducesObject(verb string) interface{} {
-	return &scope.FindResults{}
+	return &scope.TreeResults{}
 }
 
 func (r *findREST) ConnectMethods() []string {
@@ -66,12 +66,10 @@ func (r *findREST) Connect(ctx context.Context, name string, opts runtime.Object
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		parent := req.URL.Query().Get("parent")
-		results := &scope.FindResults{
-			Message: fmt.Sprintf("Find: %s", parent),
-		}
+		results := &scope.TreeResults{}
 
 		raw, err := r.scopeNodeStorage.List(ctx, &internalversion.ListOptions{
-			Limit: 100,
+			Limit: 1000,
 		})
 		if err != nil {
 			responder.Error(err)
@@ -84,8 +82,17 @@ func (r *findREST) Connect(ctx context.Context, name string, opts runtime.Object
 		}
 
 		for _, item := range all.Items {
-			// TODO... any additional filtering makes sense
-			results.Found = append(results.Found, item.Name)
+			if parent != item.Spec.ParentName {
+				continue // Someday this will have an index in raw storage on parentName
+			}
+			results.Items = append(results.Items, scope.TreeItem{
+				NodeID:      item.Name,
+				NodeType:    item.Spec.NodeType,
+				Title:       item.Spec.Title,
+				Description: item.Spec.Description,
+				LinkType:    item.Spec.LinkType,
+				LinkID:      item.Spec.LinkID,
+			})
 		}
 		responder.Object(200, results)
 	}), nil

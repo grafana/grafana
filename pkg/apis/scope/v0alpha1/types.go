@@ -82,15 +82,37 @@ type ScopeNode struct {
 	Spec ScopeNodeSpec `json:"spec,omitempty"`
 }
 
+// Type of the item.
+// +enum
+type NodeType string
+
+// Defines values for ItemType.
+const (
+	NodeTypeContainer NodeType = "container"
+	NodeTypeLeaf      NodeType = "leaf"
+)
+
+// Type of the item.
+// +enum
+type LinkType string
+
+// Defines values for ItemType.
+const (
+	LinkTypeScope LinkType = "scope"
+)
+
 type ScopeNodeSpec struct {
 	//+optional
-	ParentName   *string `json:"parentName"`
-	Title        string  `json:"title"`
-	Description  string  `json:"description"`
-	IsLeaf       bool    `json:"isLeaf"`
-	IsSelectable bool    `json:"isSelectable"`
-	LeafType     string  `json:"leafType"`
-	LeafName     string  `json:"leafName"`
+	ParentName string `json:"parentName,omitempty"`
+
+	NodeType NodeType `json:"nodeType"` // container | leaf
+
+	Title       string `json:"title"`
+	Description string `json:"description,omitempty"`
+
+	LinkType LinkType `json:"linkType,omitempty"` // scope (later more things)
+	LinkID   string   `json:"linkID,omitempty"`   // the k8s name
+	// ?? should this be a slice of links
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -102,9 +124,20 @@ type ScopeNodeList struct {
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type FindResults struct {
+type TreeResults struct {
 	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Found   []string `json:"found"`
-	Message string   `json:"message,omitempty"`
+	Items []TreeItem `json:"items,omitempty"`
+}
+
+type TreeItem struct {
+	NodeID   string   `json:"nodeId,omitempty"`
+	NodeType NodeType `json:"nodeType"` // container | leaf
+
+	Title       string `json:"title"`
+	Description string `json:"description,omitempty"`
+
+	LinkType LinkType `json:"linkType,omitempty"` // scope (later more things)
+	LinkID   string   `json:"linkID,omitempty"`   // the k8s name
 }
