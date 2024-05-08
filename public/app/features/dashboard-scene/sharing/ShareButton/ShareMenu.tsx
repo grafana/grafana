@@ -38,7 +38,12 @@ export default function ShareMenu({ dashboard }: { dashboard: DashboardScene }) 
         icon="building"
         onClick={buildUrl}
       />
-      <Menu.Item label="Share externally" icon="share-alt" onClick={onShareExternallyClick} />
+      <Menu.Item
+        testId={newShareButtonSelector.shareExternally}
+        label="Share externally"
+        icon="share-alt"
+        onClick={onShareExternallyClick}
+      />
     </Menu>
   );
 }

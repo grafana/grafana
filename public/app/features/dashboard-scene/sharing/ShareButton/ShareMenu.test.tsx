@@ -18,6 +18,12 @@ jest.mock('app/core/utils/shortLinks', () => ({
 
 const selector = e2eSelectors.pages.Dashboard.DashNav.newShareButton.menu;
 describe('ShareMenu', () => {
+  it('should render menu items', async () => {
+    setup();
+
+    expect(await screen.findByTestId(selector.shareInternally)).toBeInTheDocument();
+    expect(await screen.findByTestId(selector.shareExternally)).toBeInTheDocument();
+  });
   it('should call createAndCopyDashboardShortLink when share internally clicked', async () => {
     setup();
 

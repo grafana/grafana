@@ -65,6 +65,7 @@ export const Pages = {
         menu: {
           container: 'data-testid new share button menu',
           shareInternally: 'data-testid new share button share internally',
+          shareExternally: 'data-testid new share button share externally',
         },
       },
       playlistControls: {
