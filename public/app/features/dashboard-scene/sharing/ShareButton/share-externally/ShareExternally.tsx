@@ -35,7 +35,6 @@ const hasEmailSharingEnabled =
   !!config.featureToggles.publicDashboardsEmailSharing && featureEnabled('publicDashboardsEmailSharing');
 
 const options = [{ label: 'Anyone with the link', value: PublicDashboardShareType.PUBLIC, icon: 'globe' }];
-
 if (hasEmailSharingEnabled) {
   options.unshift({ label: 'Only specific people', value: PublicDashboardShareType.EMAIL, icon: 'users-alt' });
 }
@@ -121,14 +120,14 @@ function Actions({ dashboard, publicDashboard }: { dashboard: DashboardScene; pu
 }
 
 function ShareExternallyDrawerRenderer({ model }: SceneComponentProps<ShareExternally>) {
-  const [value, setValue] = React.useState<SelectableValue<PublicDashboardShareType>>(options[0]);
+  const [shareType, setShareType] = React.useState<SelectableValue<PublicDashboardShareType>>(options[0]);
   const dashboard = model.state.dashboardRef.resolve();
   const { data: publicDashboard, isLoading } = useGetPublicDashboardQuery(dashboard.state.uid!);
 
   useEffect(() => {
     if (publicDashboard) {
       const opt = options.find((opt) => opt.value === publicDashboard?.share);
-      setValue(opt!);
+      setShareType(opt!);
     }
   }, [publicDashboard]);
 
@@ -139,14 +138,14 @@ function ShareExternallyDrawerRenderer({ model }: SceneComponentProps<ShareExter
   }, [dashboard]);
 
   const Config = useMemo(() => {
-    if (hasEmailSharingEnabled && value.value === PublicDashboardShareType.EMAIL) {
+    if (shareType.value === PublicDashboardShareType.EMAIL && hasEmailSharingEnabled) {
       return <EmailSharing dashboard={dashboard} onCancel={onCancel} />;
     }
-    if (value.value === PublicDashboardShareType.PUBLIC) {
+    if (shareType.value === PublicDashboardShareType.PUBLIC) {
       return <PublicSharing dashboard={dashboard} onCancel={onCancel} />;
     }
     return <></>;
-  }, [value, dashboard, onCancel]);
+  }, [shareType, dashboard, onCancel]);
 
   if (isLoading) {
     return <Loader />;
@@ -155,7 +154,7 @@ function ShareExternallyDrawerRenderer({ model }: SceneComponentProps<ShareExter
   return (
     <Stack direction="column" gap={2}>
       <ShareAlerts dashboard={dashboard} />
-      <ShareTypeSelect dashboard={dashboard} setShareType={setValue} value={value} options={options} />
+      <ShareTypeSelect dashboard={dashboard} setShareType={setShareType} value={shareType} options={options} />
       {!hasWritePermissions && <NoUpsertPermissionsAlert mode={publicDashboard ? 'edit' : 'create'} />}
       {Config}
       {publicDashboard && (

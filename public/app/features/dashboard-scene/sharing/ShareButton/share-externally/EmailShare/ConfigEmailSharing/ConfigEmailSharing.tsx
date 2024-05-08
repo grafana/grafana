@@ -31,7 +31,7 @@ export const ConfigEmailSharing = ({ dashboard }: { dashboard: DashboardScene })
     mode: 'onSubmit',
   });
 
-  const { data: publicDashboard } = publicDashboardApi.endpoints?.getPublicDashboard.useQueryState(
+  const { data: publicDashboard, isError } = publicDashboardApi.endpoints?.getPublicDashboard.useQueryState(
     dashboard.state.uid!
   );
   const [addEmail, { isLoading: isAddEmailLoading }] = useAddRecipientMutation();
@@ -46,12 +46,8 @@ export const ConfigEmailSharing = ({ dashboard }: { dashboard: DashboardScene })
   return (
     <div>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <FieldSet disabled={!hasWritePermissions || !publicDashboard?.isEnabled}>
-          <Field
-            label="Invite someone by email"
-            error={errors.email?.message}
-            invalid={!!errors.email?.message || undefined}
-          >
+        <FieldSet disabled={!hasWritePermissions || !publicDashboard?.isEnabled || isError}>
+          <Field label="Invite someone by email" error={errors.email?.message} invalid={!!errors.email?.message}>
             <Stack direction="row">
               <Input
                 placeholder="Type in the recipient email address and press Enter"
