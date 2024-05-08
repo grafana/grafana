@@ -553,6 +553,9 @@ func (s *Service) searchUserPermissions(ctx context.Context, orgID int64, search
 	}
 	permissions = append(permissions, dbPermissions[userID]...)
 
+	key := accesscontrol.GetPermissionCacheKey(&user.SignedInUser{UserID: userID, OrgID: orgID})
+	s.cache.Set(key, permissions, cacheTTL)
+
 	return permissions, nil
 }
 
