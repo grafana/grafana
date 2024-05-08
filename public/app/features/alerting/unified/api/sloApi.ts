@@ -25,12 +25,12 @@ export interface Slo {
   alerting?: SloAlerting;
 }
 
-const getProxyApiUrl = (path: string) => `/api/plugin-proxy/${SupportedPlugin.Slo}${path}`;
+const SLO_API_PATH = `/api/plugins/${SupportedPlugin.Slo}/resources/v1`;
 
 export const sloApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
     getSlos: build.query<{ slos: Slo[] }, void>({
-      query: () => ({ url: getProxyApiUrl('/slo') }),
+      query: () => ({ url: `${SLO_API_PATH}/slo` }),
       providesTags: ['GrafanaSlo'],
     }),
   }),
