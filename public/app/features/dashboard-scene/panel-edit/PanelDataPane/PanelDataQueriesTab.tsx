@@ -48,13 +48,6 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     };
 
     this._panelManager = panelManager;
-    this.addActivationHandler(this.onActivate.bind(this));
-  }
-
-  private onActivate() {
-    // This is to preserve SceneQueryRunner stays alive when switching between visualizations and table view
-    const deactivate = this._panelManager.queryRunner.activate();
-    return () => deactivate();
   }
 
   buildQueryOptions(): QueryGroupOptions {
