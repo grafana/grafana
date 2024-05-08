@@ -77,6 +77,8 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
             queries,
             scopedVars: request.scopedVars,
           });
+
+          return;
         }
 
         for (const uid of value) {
