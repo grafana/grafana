@@ -771,6 +771,8 @@ github.com/savsgio/gotils v0.0.0-20230208104028-c358bd845dee h1:8Iv5m6xEo1NR1Avp
 github.com/savsgio/gotils v0.0.0-20230208104028-c358bd845dee/go.mod h1:qwtSXrKuJh/zsFQ12yEE89xfCrGKK63Rr7ctU/uCo4g=
 github.com/schollz/closestmatch v2.1.0+incompatible h1:Uel2GXEpJqOWBrlyI+oY9LTiyyjYS17cCYRqP13/SHk=
 github.com/schollz/closestmatch v2.1.0+incompatible/go.mod h1:RtP1ddjLong6gTkbtmuhtR2uUrrJOpYzYRvbcPAid+g=
+github.com/scottlepp/go-duck v0.0.20 h1:SrDrLuwouDh50QB2eaEEhfWvRpdAbnejgqn/3aHBspY=
+github.com/scottlepp/go-duck v0.0.20/go.mod h1:GL+hHuKdueJRrFCduwBc7A7TQk+Tetc5BPXPVtduihY=
 github.com/segmentio/fasthash v0.0.0-20180216231524-a72b379d632e h1:uO75wNGioszjmIzcY/tvdDYKRLVvzggtAmmJkn9j4GQ=
 github.com/segmentio/fasthash v0.0.0-20180216231524-a72b379d632e/go.mod h1:tm/wZFQ8e24NYaBGIlnO2WGCAi67re4HHuOm0sftE/M=
 github.com/segmentio/parquet-go v0.0.0-20230427215636-d483faba23a5 h1:7CWCjaHrXSUCHrRhIARMGDVKdB82tnPAQMmANeflKOw=
