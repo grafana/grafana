@@ -231,6 +231,7 @@ shellcheck: $(SH_FILES) ## Run checks for shell scripts.
 
 TAG_SUFFIX=$(if $(WIRE_TAGS)!=oss,-$(WIRE_TAGS))
 PLATFORM=linux/amd64
+GRAFANA_TAG=dev
 
 build-docker-full-local:
 	@echo "build docker container"
@@ -251,19 +252,21 @@ build-docker-full: ## Build Docker image for development.
 	@echo "build docker container"
 	tar -ch . | \
 	docker buildx build - \
+    -f Dockerfile.local \
 	--platform $(PLATFORM) \
 	--build-arg BINGO=false \
 	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
 	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
-	--tag grafana/grafana$(TAG_SUFFIX):dev \
+	--tag 406095609952.dkr.ecr.us-east-1.amazonaws.com/grafana-x:$(GRAFANA_TAG) \
 	$(DOCKER_BUILD_ARGS)
 
 build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	@echo "build docker container"
 	tar -ch . | \
 	docker buildx build - \
+	-f Dockerfile.local \
 	--platform $(PLATFORM) \
 	--build-arg BINGO=false \
 	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
@@ -272,7 +275,7 @@ build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
 	--build-arg BASE_IMAGE=ubuntu:22.04 \
 	--build-arg GO_IMAGE=golang:1.21.8 \
-	--tag grafana/grafana$(TAG_SUFFIX):dev-ubuntu \
+	--tag 406095609952.dkr.ecr.us-east-1.amazonaws.com/grafana-x:$(GRAFANA_TAG)-ubuntu \
 	$(DOCKER_BUILD_ARGS)
 
 ##@ Services

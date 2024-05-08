@@ -5,5 +5,4 @@ const schema = Joi.object({
     port: Joi.number().default(3333),
 });
 
-
 module.exports = { schema };
