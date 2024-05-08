@@ -25,6 +25,14 @@
       "user": "Nutzer"
     }
   },
+  "annotations": {
+    "empty-state": {
+      "button-title": "",
+      "info-box-content": "",
+      "info-box-content-2": "",
+      "title": ""
+    }
+  },
   "api-keys": {
     "empty-state": {
       "message": ""
@@ -72,6 +80,12 @@
       "select-checkbox": "Auswählen",
       "tags-column": "Tags"
     },
+    "empty-state": {
+      "button-title": "",
+      "pro-tip": "",
+      "title": "",
+      "title-folder": ""
+    },
     "folder-actions-button": {
       "delete": "Löschen",
       "folder-actions": "Ordneraktionen",
@@ -114,7 +128,7 @@
       "light-theme": "Hell"
     },
     "empty-state": {
-      "message": ""
+      "message": "Keine Ergebnisse gefunden"
     },
     "search-box": {
       "placeholder": "Suche oder springe zu ..."
@@ -158,6 +172,11 @@
       "label-required": "Dieses Feld ist erforderlich.",
       "sub-text": "<0>Text definieren, der die Korrelation beschreibt.</0>",
       "title": "Korrelationsbezeichnung definieren (Schritt 1 von 3)"
+    },
+    "empty-state": {
+      "button-title": "",
+      "pro-tip": "",
+      "title": ""
     },
     "list": {
       "delete": "Korrelation löschen",
@@ -250,7 +269,7 @@
     "empty": {
       "add-library-panel-body": "Visualisierungen hinzufügen, die mit anderen Dashboards geteilt werden.",
       "add-library-panel-button": "Bibliotheksfenster hinzufügen",
-      "add-library-panel-header": "",
+      "add-library-panel-header": "Panel importieren",
       "add-visualization-body": "Wählen Sie eine Datenquelle aus und visualisieren und fragen Sie dann Ihre Daten mit Diagrammen, Statistiken und Tabellen ab oder erstellen Sie Listen, Markierungen und andere Widgets.",
       "add-visualization-button": "Visualisierung hinzufügen",
       "add-visualization-header": "Starten Sie Ihr neues Dashboard, indem Sie eine Visualisierung hinzufügen",
@@ -355,11 +374,18 @@
       "validation-required": "Benötigt ein Dashboard JSON-Modell"
     }
   },
+  "dashboard-links": {
+    "empty-state": {
+      "button-title": "",
+      "info-box-content": "",
+      "title": ""
+    }
+  },
   "dashboard-settings": {
     "annotations": {
       "title": "Anmerkungen"
     },
-    "dashboard-delete-button": "Dashboard löschen",
+    "dashboard-delete-button": "",
     "general": {
       "auto-refresh-description": "",
       "auto-refresh-label": "Automatisch aktualisieren",
@@ -405,6 +431,13 @@
       "title": "Versionen"
     }
   },
+  "data-source-list": {
+    "empty-state": {
+      "button-title": "",
+      "pro-tip": "",
+      "title": ""
+    }
+  },
   "data-source-picker": {
     "add-new-data-source": "Neue Datenquelle konfigurieren",
     "built-in-list": {
@@ -427,7 +460,7 @@
       "label": "Neue Datenquelle hinzufügen"
     },
     "empty-state": {
-      "message": ""
+      "message": "Keine Datenquellen gefunden"
     }
   },
   "explore": {
@@ -439,6 +472,7 @@
       "newest-first": "Neueste zuerst",
       "oldest-first": "Älteste zuerst",
       "query-history": "Abfrageverlauf",
+      "query-library": "",
       "settings": "Einstellungen",
       "starred": "Hervorgehoben"
     },
@@ -550,11 +584,11 @@
     "toolbar": {
       "aria-label": "Werkzeugleiste durchsuchen",
       "copy-link": "URL kopieren",
-      "copy-link-abs-time": "",
+      "copy-link-abs-time": "Absolute URL kopieren",
       "copy-links-absolute-category": "Zeitsynchronisierte URL-Links (Freigabe mit intaktem Zeitraum)",
       "copy-links-normal-category": "Normale URL-Links",
       "copy-shortened-link": "Gekürzte URL kopieren",
-      "copy-shortened-link-abs-time": "",
+      "copy-shortened-link-abs-time": "Absolut verkürzte URL kopieren",
       "copy-shortened-link-menu": "",
       "refresh-picker-cancel": "Abbrechen",
       "refresh-picker-run": "Abfrage ausführen",
@@ -657,6 +691,10 @@
     },
     "add-widget": {
       "title": "Panel aus Panel-Bibliothek hinzufügen"
+    },
+    "empty-state": {
+      "message": "",
+      "more-info": ""
     }
   },
   "library-panels": {
@@ -664,7 +702,7 @@
       "message": ""
     },
     "modal": {
-      "button-cancel": "",
+      "button-cancel": "Abbrechen",
       "button-view-panel1": "Fenster in {{label}} anzeigen...",
       "button-view-panel2": "Fenster im Dashboard anzeigen...",
       "panel-not-linked": "Fenster ist nicht mit einem Dashboard verbunden. Fügen Sie das Fenster einem Dashboard hinzu und versuchen Sie es erneut.",
@@ -689,10 +727,12 @@
     "forgot-password": "Passwort vergessen?",
     "form": {
       "password-label": "Passwort",
+      "password-placeholder": "",
       "password-required": "Passwort ist erforderlich",
       "submit-label": "Einloggen",
       "submit-loading-label": "Einloggen...",
       "username-label": "E-Mail oder Benutzername",
+      "username-placeholder": "",
       "username-required": "E-Mail oder Benutzername ist erforderlich"
     },
     "services": {
@@ -804,13 +844,13 @@
     "resource-type": {
       "dashboard": "Dashboard",
       "datasource": "Datenquelle",
-      "folder": "",
+      "folder": "Ordner",
       "unknown": "Unbekannt"
     },
     "summary": {
-      "disconnect": "",
+      "disconnect": "Verbindung trennen",
       "disconnect-error-description": "",
-      "disconnect-error-title": "",
+      "disconnect-error-title": "Es gab einen Fehler beim Trennen der Verbindung",
       "run-migration-error-description": "",
       "run-migration-error-title": "",
       "start-migration": "",
@@ -847,7 +887,8 @@
       "title": "Meldungen"
     },
     "alerting-admin": {
-      "title": "Administrator"
+      "subtitle": "",
+      "title": ""
     },
     "alerting-am-routes": {
       "subtitle": "Lege fest, wie Warnungen an Kontaktpunkte weitergeleitet werden",
@@ -933,7 +974,7 @@
       "title": "Erstellen"
     },
     "create-alert": {
-      "title": ""
+      "title": "Neue Warnregel"
     },
     "create-dashboard": {
       "title": "Dashboard"
@@ -1230,9 +1271,8 @@
       "confirm-text": "Löschen"
     },
     "empty": {
-      "button": "Playlist erstellen",
-      "pro-tip": "Sie können Playlists verwenden, um Dashboards auf TV-Geräten ohne Benutzersteuerung zu steuern",
-      "pro-tip-link-title": "Mehr erfahren",
+      "button": "",
+      "pro-tip": "",
       "title": "Es gibt noch keine Playlists erstellt"
     }
   },
@@ -1346,6 +1386,10 @@
       "orphaned-title": "<0>Verwaistes öffentliches Dashboard</0>",
       "orphaned-tooltip": "Das verlinkte Dashboard wurde bereits gelöscht"
     },
+    "empty-state": {
+      "message": "",
+      "more-info": ""
+    },
     "toggle": {
       "pause-sharing-toggle-text": "Teilen pausieren"
     }
@@ -1450,7 +1494,10 @@
   },
   "service-accounts": {
     "empty-state": {
-      "message": ""
+      "button-title": "",
+      "message": "",
+      "more-info": "",
+      "title": ""
     }
   },
   "share-modal": {
@@ -1517,7 +1564,7 @@
       "library-panel": "Bibliotheks-Panel",
       "link": "Link",
       "panel-embed": "Einbetten",
-      "public-dashboard": "",
+      "public-dashboard": "Öffentliches Dashboard",
       "public-dashboard-title": "Öffentliches Dashboard",
       "snapshot": "Schnappschuss"
     },
@@ -1570,7 +1617,17 @@
     },
     "title": "Einstellungen"
   },
+  "silences": {
+    "empty-state": {
+      "button-title": "",
+      "title": ""
+    }
+  },
   "snapshot": {
+    "empty-state": {
+      "message": "",
+      "more-info": ""
+    },
     "external-badge": "Extern",
     "name-column-header": "Name",
     "url-column-header": "Snapshot url",
@@ -1583,7 +1640,10 @@
   },
   "teams": {
     "empty-state": {
-      "message": ""
+      "button-title": "",
+      "message": "",
+      "pro-tip": "",
+      "title": ""
     }
   },
   "time-picker": {
@@ -1704,6 +1764,14 @@
     },
     "textbox": {
       "placeholder": "Variablenwert eingeben"
+    }
+  },
+  "variables": {
+    "empty-state": {
+      "button-title": "",
+      "info-box-content": "",
+      "info-box-content-2": "",
+      "title": ""
     }
   }
 }

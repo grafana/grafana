@@ -36,6 +36,10 @@ The following video provides a walkthrough of creating a logs visualization. You
 
 {{< youtube id="jSSi_x-fD_8" >}}
 
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ## Log level
 
 For logs where a **level** label is specified, we use the value of the label to determine the log level and update color accordingly. If the log doesn't have a level label specified, we try to find out if its content matches any of the supported expressions (see below for more information). The log level is always determined by the first match. In case Grafana is not able to determine a log level, it will be visualized with **unknown** log level. See [supported log levels and mappings of log level abbreviation and expressions][].
@@ -62,6 +66,6 @@ Use these settings to refine your visualization:
 - **Order -** Display results in descending or ascending time order. The default is **Descending**, showing the newest logs first. Set to **Ascending** to show the oldest log lines first.
 
 {{% docs/reference %}}
-[supported log levels and mappings of log level abbreviation and expressions]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore/logs-integration#log-level"
-[supported log levels and mappings of log level abbreviation and expressions]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore/logs-integration#log-level"
+[supported log levels and mappings of log level abbreviation and expressions]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/explore/logs-integration#log-level"
+[supported log levels and mappings of log level abbreviation and expressions]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/explore/logs-integration#log-level"
 {{% /docs/reference %}}

@@ -25,9 +25,9 @@ scenes,experimental,@grafana/dashboards-squad,false,false,true
 disableSecretsCompatibility,experimental,@grafana/hosted-grafana-team,false,true,false
 logRequestsInstrumentedAsUnknown,experimental,@grafana/hosted-grafana-team,false,false,false
 topnav,deprecated,@grafana/grafana-frontend-platform,false,false,false
-returnToPrevious,preview,@grafana/grafana-frontend-platform,false,false,true
+returnToPrevious,GA,@grafana/grafana-frontend-platform,false,false,true
 grpcServer,preview,@grafana/grafana-app-platform-squad,false,false,false
-unifiedStorage,experimental,@grafana/grafana-app-platform-squad,true,true,false
+unifiedStorage,experimental,@grafana/grafana-app-platform-squad,false,true,false
 cloudWatchCrossAccountQuerying,GA,@grafana/aws-datasources,false,false,false
 showDashboardValidationWarnings,experimental,@grafana/dashboards-squad,false,false,false
 mysqlAnsiQuotes,experimental,@grafana/search-and-storage,false,false,false
@@ -125,7 +125,7 @@ dashboardSceneSolo,experimental,@grafana/dashboards-squad,false,false,true
 dashboardScene,experimental,@grafana/dashboards-squad,false,false,true
 panelFilterVariable,experimental,@grafana/dashboards-squad,false,false,true
 pdfTables,preview,@grafana/sharing-squad,false,false,false
-ssoSettingsApi,preview,@grafana/identity-access-team,false,false,false
+ssoSettingsApi,GA,@grafana/identity-access-team,false,false,false
 canvasPanelPanZoom,preview,@grafana/dataviz-squad,false,false,true
 logsInfiniteScrolling,experimental,@grafana/observability-logs,false,false,true
 flameGraphItemCollapsing,experimental,@grafana/observability-traces-and-profiling,false,false,true
@@ -160,3 +160,8 @@ newDashboardWithFiltersAndGroupBy,experimental,@grafana/dashboards-squad,false,f
 cloudWatchNewLabelParsing,GA,@grafana/aws-datasources,false,false,false
 accessActionSets,experimental,@grafana/identity-access-team,false,false,false
 disableNumericMetricsSortingInExpressions,experimental,@grafana/observability-metrics,false,true,false
+grafanaManagedRecordingRules,experimental,@grafana/alerting-squad,false,false,false
+queryLibrary,experimental,@grafana/explore-squad,false,false,false
+autofixDSUID,experimental,@grafana/plugins-platform-backend,false,false,false
+logsExploreTableDefaultVisualization,experimental,@grafana/observability-logs,false,false,true
+newDashboardSharingComponent,experimental,@grafana/sharing-squad,false,false,true

@@ -11,9 +11,12 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o *options.Options) {
+func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o *options.Options) error {
 	defaultLogLevel := 0
 	ip := net.ParseIP(cfg.HTTPAddr)
+	if ip == nil {
+		return fmt.Errorf("invalid IP address: %s", cfg.HTTPAddr)
+	}
 	apiURL := cfg.AppURL
 	port, err := strconv.Atoi(cfg.HTTPPort)
 	if err != nil {
@@ -27,7 +30,7 @@ func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o
 		apiURL = fmt.Sprintf("https://%s:%d", ip, port)
 	}
 
-	host := fmt.Sprintf("%s:%d", ip, port)
+	host := net.JoinHostPort(cfg.HTTPAddr, strconv.Itoa(port))
 
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 
@@ -54,4 +57,5 @@ func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o
 	o.ExtraOptions.ExternalAddress = host
 	o.ExtraOptions.APIURL = apiURL
 	o.ExtraOptions.Verbosity = apiserverCfg.Key("log_level").MustInt(defaultLogLevel)
+	return nil
 }

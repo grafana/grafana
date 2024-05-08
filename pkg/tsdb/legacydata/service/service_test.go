@@ -42,16 +42,16 @@ func TestHandleRequest(t *testing.T) {
 			actualReq = req
 			return backend.NewQueryDataResponse(), nil
 		}
-		sqlStore := db.InitTestDB(t)
+		sqlStore, cfg := db.InitTestDBWithCfg(t)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		datasourcePermissions := acmock.NewMockedPermissionsService()
 		quotaService := quotatest.New(false, nil)
 		dsCache := datasourceservice.ProvideCacheService(localcache.ProvideService(), sqlStore, guardian.ProvideGuardian())
-		dsService, err := datasourceservice.ProvideService(nil, secretsService, secretsStore, sqlStore.Cfg, featuremgmt.WithFeatures(), acmock.New(), datasourcePermissions, quotaService, &pluginstore.FakePluginStore{})
+		dsService, err := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), datasourcePermissions, quotaService, &pluginstore.FakePluginStore{})
 		require.NoError(t, err)
 
-		pCtxProvider := plugincontext.ProvideService(sqlStore.Cfg, localcache.ProvideService(), &pluginstore.FakePluginStore{
+		pCtxProvider := plugincontext.ProvideService(cfg, localcache.ProvideService(), &pluginstore.FakePluginStore{
 			PluginList: []pluginstore.Plugin{{JSONData: plugins.JSONData{ID: "test"}}},
 		}, dsCache, dsService, pluginSettings.ProvideService(sqlStore, secretsService), pluginconfig.NewFakePluginRequestConfigProvider())
 		s := ProvideService(client, nil, dsService, pCtxProvider)

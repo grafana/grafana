@@ -174,7 +174,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     const variables = scopedVars || {};
 
     // We want to interpolate these variables on backend.
-    // The pre-calculated values are replaced withe the variable strings.
+    // The pre-calculated values are replaced with the variable strings.
     variables.__interval = {
       value: '$__interval',
     };

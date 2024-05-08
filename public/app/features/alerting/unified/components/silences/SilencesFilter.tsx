@@ -79,23 +79,23 @@ export const SilencesFilter = () => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  searchInput: css`
-    width: 360px;
-  `,
-  flexRow: css`
-    display: flex;
-    flex-direction: row;
-    align-items: flex-end;
-    padding-bottom: ${theme.spacing(3)};
-    border-bottom: 1px solid ${theme.colors.border.medium};
-  `,
-  rowChild: css`
-    margin-right: ${theme.spacing(1)};
-    margin-bottom: 0;
-    max-height: 52px;
-  `,
-  fieldLabel: css`
-    font-size: 12px;
-    font-weight: 500;
-  `,
+  searchInput: css({
+    width: '360px',
+  }),
+  flexRow: css({
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    paddingBottom: theme.spacing(3),
+    borderBottom: `1px solid ${theme.colors.border.medium}`,
+  }),
+  rowChild: css({
+    marginRight: theme.spacing(1),
+    marginBottom: 0,
+    maxHeight: '52px',
+  }),
+  fieldLabel: css({
+    fontSize: '12px',
+    fontWeight: 500,
+  }),
 });
