@@ -385,7 +385,7 @@
     "annotations": {
       "title": "Anotações"
     },
-    "dashboard-delete-button": "Excluir painel de controle",
+    "dashboard-delete-button": "",
     "general": {
       "auto-refresh-description": "",
       "auto-refresh-label": "Atualização automática",
@@ -472,6 +472,7 @@
       "newest-first": "Mais recentes primeiro",
       "oldest-first": "Mais antigos primeiro",
       "query-history": "Histórico de consultas",
+      "query-library": "",
       "settings": "Configurações",
       "starred": "Favorito"
     },
@@ -726,10 +727,12 @@
     "forgot-password": "Esqueceu sua senha?",
     "form": {
       "password-label": "Senha",
+      "password-placeholder": "",
       "password-required": "A senha é obrigatória",
       "submit-label": "Fazer login",
       "submit-loading-label": "Fazendo login...",
       "username-label": "E-mail ou nome de usuário",
+      "username-placeholder": "",
       "username-required": "O e-mail ou nome de usuário é obrigatório"
     },
     "services": {
@@ -884,7 +887,8 @@
       "title": "Alertas"
     },
     "alerting-admin": {
-      "title": "Administrador"
+      "subtitle": "",
+      "title": ""
     },
     "alerting-am-routes": {
       "subtitle": "Determine como os alertas são encaminhados para pontos de contato",

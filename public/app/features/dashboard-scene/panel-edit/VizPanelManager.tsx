@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import {
   DataSourceApi,
@@ -22,7 +22,6 @@ import {
   SceneObjectState,
   SceneQueryRunner,
   VizPanel,
-  sceneGraph,
   sceneUtils,
 } from '@grafana/scenes';
 import { DataQuery, DataTransformerConfig, Panel } from '@grafana/schema';
@@ -88,8 +87,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     repeatOptions = { repeat, repeatDirection, maxPerRow };
 
     return new VizPanelManager({
-      panel: sourcePanel.clone({ $data: undefined }),
-      $data: sourcePanel.state.$data?.clone(),
+      panel: sourcePanel.clone(),
       sourcePanel: sourcePanel.getRef(),
       ...repeatOptions,
     });
@@ -100,7 +98,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
   }
 
   private async loadDataSource() {
-    const dataObj = this.state.$data;
+    const dataObj = this.state.panel.state.$data;
 
     if (!dataObj) {
       return;
@@ -141,10 +139,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       }
 
       if (datasource && dsSettings) {
-        this.setState({
-          datasource,
-          dsSettings,
-        });
+        this.setState({ datasource, dsSettings });
 
         storeLastUsedDataSourceInLocalStorage(
           {
@@ -210,14 +205,14 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     });
 
     // When changing from non-data to data panel, we need to add a new data provider
-    if (!this.state.$data && !config.panels[pluginId].skipDataQuery) {
+    if (!this.state.panel.state.$data && !config.panels[pluginId].skipDataQuery) {
       let ds = getLastUsedDatasourceFromStorage(getDashboardSceneFor(this).state.uid!)?.datasourceUid;
 
       if (!ds) {
         ds = config.defaultDatasource;
       }
 
-      this.setState({
+      newPanel.setState({
         $data: new SceneDataTransformer({
           $data: new SceneQueryRunner({
             datasource: {
@@ -284,7 +279,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
   public changeQueryOptions(options: QueryGroupOptions) {
     const panelObj = this.state.panel;
     const dataObj = this.queryRunner;
-    let timeRangeObj = sceneGraph.getTimeRange(panelObj);
+    const timeRangeObj = panelObj.state.$timeRange;
 
     const dataObjStateUpdate: Partial<SceneQueryRunner['state']> = {};
     const timeRangeObjStateUpdate: Partial<PanelTimeRangeState> = {};
@@ -351,7 +346,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
 
   get queryRunner(): SceneQueryRunner {
     // Panel data object is always SceneQueryRunner wrapped in a SceneDataTransformer
-    const runner = getQueryRunnerFor(this);
+    const runner = getQueryRunnerFor(this.state.panel);
 
     if (!runner) {
       throw new Error('Query runner not found');
@@ -361,7 +356,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
   }
 
   get dataTransformer(): SceneDataTransformer {
-    const provider = this.state.$data;
+    const provider = this.state.panel.state.$data;
     if (!provider || !(provider instanceof SceneDataTransformer)) {
       throw new Error('Could not find SceneDataTransformer for panel');
     }
@@ -379,6 +374,9 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
         .setTitle('')
         .setOption('showTypeIcons', true)
         .setOption('showHeader', true)
+        // Here we are breaking a scene rule and changing the parent of the main panel data provider
+        // But we need to share this same instance as the queries tab is subscribing to it
+        .setData(this.dataTransformer)
         .build(),
     });
   }
@@ -418,23 +416,21 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     if (sourcePanel.parent instanceof DashboardGridItem) {
       sourcePanel.parent.setState({
         ...repeatUpdate,
-        body: this.state.panel.clone({
-          $data: this.state.$data?.clone(),
-        }),
+        body: this.state.panel.clone(),
       });
     }
 
     if (sourcePanel.parent instanceof LibraryVizPanel) {
       if (sourcePanel.parent.parent instanceof DashboardGridItem) {
         const newLibPanel = sourcePanel.parent.clone({
-          panel: this.state.panel.clone({
-            $data: this.state.$data?.clone(),
-          }),
+          panel: this.state.panel.clone(),
         });
+
         sourcePanel.parent.parent.setState({
           body: newLibPanel,
           ...repeatUpdate,
         });
+
         updateLibraryVizPanel(newLibPanel!).then((p) => {
           if (sourcePanel.parent instanceof LibraryVizPanel) {
             newLibPanel.setPanelFromLibPanel(p);
@@ -458,16 +454,10 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     }
 
     const parentClone = gridItem.clone({
-      body: this.state.panel.clone({
-        $data: this.state.$data?.clone(),
-      }),
+      body: this.state.panel.clone(),
     });
 
     return gridItemToPanel(parentClone);
-  }
-
-  public getPanelCloneWithData(): VizPanel {
-    return this.state.panel.clone({ $data: this.state.$data?.clone() });
   }
 
   public setPanelTitle(newTitle: string) {
@@ -477,10 +467,19 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
   public static Component = ({ model }: SceneComponentProps<VizPanelManager>) => {
     const { panel, tableView } = model.useState();
     const styles = useStyles2(getStyles);
-
     const panelToShow = tableView ?? panel;
+    const dataProvider = panelToShow.state.$data;
 
-    return <div className={styles.wrapper}>{<panelToShow.Component model={panelToShow} />}</div>;
+    // This is to preserve SceneQueryRunner stays alive when switching between visualizations and table view
+    useEffect(() => {
+      return dataProvider?.activate();
+    }, [dataProvider]);
+
+    return (
+      <>
+        <div className={styles.wrapper}>{<panelToShow.Component model={panelToShow} />}</div>
+      </>
+    );
   };
 }
 

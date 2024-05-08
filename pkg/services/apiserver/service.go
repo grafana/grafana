@@ -212,7 +212,10 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	o := grafanaapiserveroptions.NewOptions(Codecs.LegacyCodec(groupVersions...))
-	applyGrafanaConfig(s.cfg, s.features, o)
+	err := applyGrafanaConfig(s.cfg, s.features, o)
+	if err != nil {
+		return err
+	}
 
 	if errs := o.Validate(); len(errs) != 0 {
 		// TODO: handle multiple errors
@@ -243,7 +246,7 @@ func (s *service) start(ctx context.Context) error {
 
 	case grafanaapiserveroptions.StorageTypeUnified:
 		if !s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
-			return fmt.Errorf("unified storage requires the unifiedStorage feature flag (and app_mode = development)")
+			return fmt.Errorf("unified storage requires the unifiedStorage feature flag")
 		}
 
 		eDB, err := dbimpl.ProvideEntityDB(s.db, s.cfg, s.features)
@@ -286,7 +289,7 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	// Add OpenAPI specs for each group+version
-	err := builder.SetupConfig(
+	err = builder.SetupConfig(
 		Scheme,
 		serverConfig,
 		builders,
