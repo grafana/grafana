@@ -76,6 +76,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
             state: result.data.state,
             errors: result.data.errors,
             error: result.data.error,
+            key: 'source-ds-provider',
           };
         }),
         finalize(cleanUp)
