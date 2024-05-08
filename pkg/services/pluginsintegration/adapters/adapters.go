@@ -27,7 +27,7 @@ func ModelToInstanceSettings(ds *datasources.DataSource, decryptFn func(ds *data
 		return nil, err
 	}
 
-	return &backend.DataSourceInstanceSettings{
+	dss := &backend.DataSourceInstanceSettings{
 		Type:                    ds.Type,
 		ID:                      ds.ID,
 		Name:                    ds.Name,
@@ -40,7 +40,9 @@ func ModelToInstanceSettings(ds *datasources.DataSource, decryptFn func(ds *data
 		JSONData:                jsonDataBytes,
 		DecryptedSecureJSONData: decrypted,
 		Updated:                 ds.Updated,
-	}, err
+		APIVersion:              ds.APIVersion,
+	}
+	return dss, err
 }
 
 // BackendUserFromSignedInUser converts Grafana's context request identity
