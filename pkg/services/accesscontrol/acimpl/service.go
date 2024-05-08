@@ -246,7 +246,7 @@ func (s *Service) getCachedBasicRolesPermissions(ctx context.Context, user ident
 }
 
 func (s *Service) getCachedBasicRolePermissions(ctx context.Context, role string, orgID int64, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
-	key := basicRoleCacheKey(role, orgID)
+	key := accesscontrol.GetBasicRolePermissionCacheKey(role, orgID)
 	getPermissionsFn := func() ([]accesscontrol.Permission, error) {
 		return s.getBasicRolePermissions(ctx, role, orgID)
 	}
@@ -257,7 +257,7 @@ func (s *Service) getCachedUserDirectPermissions(ctx context.Context, user ident
 	ctx, span := s.tracer.Start(ctx, "authz.getCachedUserDirectPermissions")
 	defer span.End()
 
-	key := permissionCacheKey(user)
+	key := accesscontrol.GetUserDirectPermissionCacheKey(user)
 	getUserPermissionsFn := func() ([]accesscontrol.Permission, error) {
 		return s.getUserDirectPermissions(ctx, user)
 	}
@@ -302,7 +302,7 @@ func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.R
 	if !options.ReloadCache {
 		miss = make([]int64, 0)
 		for _, teamID := range teams {
-			key := teamCacheKey(teamID, orgID)
+			key := accesscontrol.GetTeamPermissionCacheKey(teamID, orgID)
 			teamPermissions, ok := s.cache.Get(key)
 			if ok {
 				metrics.MAccessPermissionsCacheUsage.WithLabelValues(accesscontrol.CacheHit).Inc()
@@ -322,7 +322,7 @@ func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.R
 		}
 
 		for teamID, teamPermissions := range teamsPermissions {
-			key := teamCacheKey(teamID, orgID)
+			key := accesscontrol.GetTeamPermissionCacheKey(teamID, orgID)
 			s.cache.Set(key, teamPermissions, cacheTTL)
 			permissions = append(permissions, teamPermissions...)
 		}
@@ -332,7 +332,8 @@ func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.R
 }
 
 func (s *Service) ClearUserPermissionCache(user identity.Requester) {
-	s.cache.Delete(permissionCacheKey(user))
+	s.cache.Delete(accesscontrol.GetPermissionCacheKey(user))
+	s.cache.Delete(accesscontrol.GetUserDirectPermissionCacheKey(user))
 }
 
 func (s *Service) DeleteUserPermissions(ctx context.Context, orgID int64, userID int64) error {
@@ -552,6 +553,9 @@ func (s *Service) searchUserPermissions(ctx context.Context, orgID int64, search
 	}
 	permissions = append(permissions, dbPermissions[userID]...)
 
+	key := accesscontrol.GetPermissionCacheKey(&user.SignedInUser{UserID: userID, OrgID: orgID})
+	s.cache.Set(key, permissions, cacheTTL)
+
 	return permissions, nil
 }
 
@@ -567,7 +571,7 @@ func (s *Service) searchUserPermissionsFromCache(orgID int64, searchOptions acce
 		OrgID:  orgID,
 	}
 
-	key := permissionCacheKey(tempUser)
+	key := accesscontrol.GetPermissionCacheKey(tempUser)
 	permissions, ok := s.cache.Get((key))
 	if !ok {
 		metrics.MAccessSearchUserPermissionsCacheUsage.WithLabelValues(accesscontrol.CacheMiss).Inc()
@@ -650,18 +654,4 @@ func (s *Service) GetRoleByName(ctx context.Context, orgID int64, roleName strin
 		return true
 	})
 	return role, err
-}
-
-func permissionCacheKey(user identity.Requester) string {
-	return fmt.Sprintf("rbac-permissions-%s", user.GetCacheKey())
-}
-
-func basicRoleCacheKey(role string, orgID int64) string {
-	roleKey := strings.Replace(role, " ", "_", -1)
-	roleKey = strings.ToLower(roleKey)
-	return fmt.Sprintf("rbac-permissions-basic-role-%d-%s", orgID, roleKey)
-}
-
-func teamCacheKey(teamID int64, orgID int64) string {
-	return fmt.Sprintf("rbac-permissions-team-%d-%d", orgID, teamID)
 }
