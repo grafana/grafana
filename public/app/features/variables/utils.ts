@@ -161,6 +161,7 @@ export function getVariableRefresh(variable: VariableModel): VariableRefresh {
   }
 
   if (
+    !variable ||
     !('refresh' in variable) ||
     (variable.refresh !== VariableRefresh.onTimeRangeChanged && variable.refresh !== VariableRefresh.onDashboardLoad)
   ) {
