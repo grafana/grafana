@@ -8,6 +8,9 @@ import { PublicDashboardShareType } from 'app/features/dashboard/components/Shar
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
+import { contextSrv } from '../../../../../core/services/context_srv';
+import { AccessControlAction } from '../../../../../types';
+
 export default function ShareTypeSelect({
   dashboard,
   setShareType,
@@ -19,12 +22,13 @@ export default function ShareTypeSelect({
   value: SelectableValue<PublicDashboardShareType>;
   options: Array<{ label: string; value: PublicDashboardShareType }>;
 }) {
+  const styles = useStyles2(getStyles);
   const { data: publicDashboard } = publicDashboardApi.endpoints?.getPublicDashboard.useQueryState(
     dashboard.state.uid!
   );
   const [updateShareType] = useUpdatePublicDashboardMutation();
 
-  const styles = useStyles2(getStyles);
+  const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
 
   const onUpdateShareType = (shareType: PublicDashboardShareType) => {
     if (!publicDashboard) {
@@ -53,6 +57,7 @@ export default function ShareTypeSelect({
         <Select
           options={options}
           value={value}
+          disabled={!hasWritePermissions}
           onChange={(v) => {
             setShareType(v);
             onUpdateShareType(v.value!);

@@ -54,6 +54,7 @@ function Actions({ dashboard, publicDashboard }: { dashboard: DashboardScene; pu
   const [deletePublicDashboard, { isLoading: isDeleteLoading }] = useDeletePublicDashboardMutation();
 
   const isLoading = isUpdateLoading || isDeleteLoading;
+  const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
 
   function onCopyURL() {
     DashboardInteractions.publicDashboardUrlCopied();
@@ -92,7 +93,13 @@ function Actions({ dashboard, publicDashboard }: { dashboard: DashboardScene; pu
         >
           Copy link
         </ClipboardButton>
-        <Button icon="trash-alt" variant="destructive" fill="outline" disabled={isLoading} onClick={onDeleteClick}>
+        <Button
+          icon="trash-alt"
+          variant="destructive"
+          fill="outline"
+          disabled={isLoading || !hasWritePermissions}
+          onClick={onDeleteClick}
+        >
           Remove access
         </Button>
         <Button
@@ -103,7 +110,7 @@ function Actions({ dashboard, publicDashboard }: { dashboard: DashboardScene; pu
             publicDashboard.isEnabled ? 'Pausing will temporarily disable access to this dashboard for all users' : ''
           }
           onClick={onPauseOrResumeClick}
-          disabled={isLoading}
+          disabled={isLoading || !hasWritePermissions}
         >
           {publicDashboard.isEnabled ? 'Pause access' : 'Resume'}
         </Button>

@@ -3,7 +3,8 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Button, Dropdown, Field, Icon, Menu, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Dropdown, Field, Icon, Menu, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
+import { IconButton } from '@grafana/ui/';
 import {
   useReshareAccessToRecipientMutation,
   useDeleteRecipientMutation,
@@ -82,7 +83,7 @@ const EmailList = ({
                   />
                 }
               >
-                <Button icon="ellipsis-v" variant="secondary" />
+                <IconButton name="ellipsis-v" aria-label="email-menu" variant="secondary" size="lg" />
               </Dropdown>
             </td>
           </tr>

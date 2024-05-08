@@ -10,6 +10,9 @@ import { ConfigPublicDashboardForm } from 'app/features/dashboard/components/Sha
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
+import { contextSrv } from '../../../../../core/services/context_srv';
+import { AccessControlAction } from '../../../../../types';
+
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
 
 type FormInput = Omit<ConfigPublicDashboardForm, 'isPaused'>;
@@ -20,6 +23,9 @@ export default function ShareConfiguration({ dashboard }: { dashboard: Dashboard
   const { data: publicDashboard } = publicDashboardApi.endpoints?.getPublicDashboard.useQueryState(
     dashboard.state.uid!
   );
+
+  const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
+  const disableForm = isLoading || !publicDashboard?.isEnabled || !hasWritePermissions;
 
   const { handleSubmit, setValue, control } = useForm<FormInput>({
     defaultValues: {
@@ -49,7 +55,7 @@ export default function ShareConfiguration({ dashboard }: { dashboard: Dashboard
   return (
     <Stack justifyContent="space-between">
       <form onSubmit={handleSubmit(onUpdate)}>
-        <FieldSet disabled={isLoading || !publicDashboard?.isEnabled}>
+        <FieldSet disabled={disableForm}>
           <Stack direction="column" gap={2}>
             <Stack gap={1}>
               <Controller

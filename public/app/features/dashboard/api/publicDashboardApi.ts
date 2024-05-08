@@ -84,7 +84,7 @@ export const publicDashboardApi = createApi({
       },
       async onQueryStarted({ dashboard, payload }, { dispatch, queryFulfilled }) {
         const { data } = await queryFulfilled;
-        dispatch(notifyApp(createSuccessNotification('Dashboard is public!')));
+        dispatch(notifyApp(createSuccessNotification('Your dashboard is now public')));
 
         if (dashboard instanceof DashboardScene) {
           dashboard.setState({
