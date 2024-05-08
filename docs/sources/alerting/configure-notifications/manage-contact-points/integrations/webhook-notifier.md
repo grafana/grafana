@@ -121,7 +121,7 @@ The webhook notification is a simple way to send information about a state chang
 | state             | string                    | **Will be deprecated soon**                                                     |
 | message           | string                    | **Will be deprecated soon**                                                     |
 
-## Alert
+### Alert
 
 | Key          | Type   | Description                                                                        |
 | ------------ | ------ | ---------------------------------------------------------------------------------- |
