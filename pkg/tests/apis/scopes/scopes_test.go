@@ -49,9 +49,9 @@ func TestIntegrationScopes(t *testing.T) {
 			"resources": [
 			  {
 				"name": "find",
-				"singularName": "FindResult",
+				"singularName": "TreeResult",
 				"namespaced": true,
-				"kind": "FindResults",
+				"kind": "TreeResults",
 				"verbs": [
 				  "get"
 				]

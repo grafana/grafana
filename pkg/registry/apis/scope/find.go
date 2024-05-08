@@ -38,7 +38,7 @@ func (s *findREST) NamespaceScoped() bool {
 }
 
 func (s *findREST) GetSingularName() string {
-	return "FindResult" // Used for the
+	return "TreeResult" // Used for the
 }
 
 func (r *findREST) ProducesMIMETypes(verb string) []string {
@@ -82,7 +82,7 @@ func (r *findREST) Connect(ctx context.Context, name string, opts runtime.Object
 		}
 
 		for _, item := range all.Items {
-			if parent != item.Spec.ParentName {
+			if parent != item.Spec.ParentName && parent != "" {
 				continue // Someday this will have an index in raw storage on parentName
 			}
 			results.Items = append(results.Items, scope.TreeItem{
