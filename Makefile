@@ -252,6 +252,7 @@ build-docker-full: ## Build Docker image for development.
 	@echo "build docker container"
 	tar -ch . | \
 	docker buildx build - \
+    -f Dockerfile.local \
 	--platform $(PLATFORM) \
 	--build-arg BINGO=false \
 	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
@@ -265,6 +266,7 @@ build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	@echo "build docker container"
 	tar -ch . | \
 	docker buildx build - \
+	-f Dockerfile.local \
 	--platform $(PLATFORM) \
 	--build-arg BINGO=false \
 	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
