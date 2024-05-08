@@ -152,6 +152,6 @@ func (s *Verifier) Complete(ctx context.Context, cmd user.CompleteEmailVerifyCom
 	// remove the current token, so a new one can be generated with correct values.
 	return s.is.RemoveIDToken(
 		ctx,
-		&authn.Identity{ID: authn.NewNamespaceIDUnchecked(authn.NamespaceUser, usr.ID), OrgID: usr.OrgID},
+		&authn.Identity{ID: authn.NewNamespaceID(authn.NamespaceUser, usr.ID), OrgID: usr.OrgID},
 	)
 }

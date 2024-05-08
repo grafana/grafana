@@ -470,7 +470,7 @@ func TestUserSync_EnableDisabledUserHook(t *testing.T) {
 		{
 			desc: "should skip if correct flag is not set",
 			identity: &authn.Identity{
-				ID:           authn.MustNewNamespaceID(authn.NamespaceUser, 1),
+				ID:           authn.NewNamespaceID(authn.NamespaceUser, 1),
 				IsDisabled:   true,
 				ClientParams: authn.ClientParams{EnableUser: false},
 			},
@@ -479,7 +479,7 @@ func TestUserSync_EnableDisabledUserHook(t *testing.T) {
 		{
 			desc: "should skip if identity is not a user",
 			identity: &authn.Identity{
-				ID:           authn.MustNewNamespaceID(authn.NamespaceAPIKey, 1),
+				ID:           authn.NewNamespaceID(authn.NamespaceAPIKey, 1),
 				IsDisabled:   true,
 				ClientParams: authn.ClientParams{EnableUser: true},
 			},
@@ -488,7 +488,7 @@ func TestUserSync_EnableDisabledUserHook(t *testing.T) {
 		{
 			desc: "should enabled disabled user",
 			identity: &authn.Identity{
-				ID:           authn.MustNewNamespaceID(authn.NamespaceUser, 1),
+				ID:           authn.NewNamespaceID(authn.NamespaceUser, 1),
 				IsDisabled:   true,
 				ClientParams: authn.ClientParams{EnableUser: true},
 			},

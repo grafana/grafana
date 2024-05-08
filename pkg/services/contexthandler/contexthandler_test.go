@@ -44,7 +44,7 @@ func TestContextHandler(t *testing.T) {
 	})
 
 	t.Run("should set identity on successful authentication", func(t *testing.T) {
-		identity := &authn.Identity{ID: authn.MustNewNamespaceID(authn.NamespaceUser, 1), OrgID: 1}
+		identity := &authn.Identity{ID: authn.NewNamespaceID(authn.NamespaceUser, 1), OrgID: 1}
 		handler := contexthandler.ProvideService(
 			setting.NewCfg(),
 			tracing.InitializeTracerForTest(),
