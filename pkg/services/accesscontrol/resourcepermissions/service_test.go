@@ -312,7 +312,7 @@ func TestService_RegisterActionSets(t *testing.T) {
 			} else {
 				// Check that action sets have not been registered
 				for permission := range tt.options.PermissionsToActions {
-					actionSetName := actionSets.GetActionSetName(tt.options.Resource, permission)
+					actionSetName := GetActionSetName(tt.options.Resource, permission)
 					assert.Nil(t, actionSets.GetActionSet(actionSetName))
 				}
 			}

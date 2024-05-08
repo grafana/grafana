@@ -564,9 +564,7 @@ func seedResourcePermissions(
 
 func setupTestEnv(t testing.TB) (*store, db.DB, *setting.Cfg) {
 	sql, cfg := db.InitTestDBWithCfg(t)
-	ac := acimpl.ProvideAccessControl(setting.NewCfg())
-	asService := NewActionSetService(ac)
-	return NewStore(sql, featuremgmt.WithFeatures(), asService), sql, cfg
+	return NewStore(sql, featuremgmt.WithFeatures()), sql, cfg
 }
 
 func TestStore_IsInherited(t *testing.T) {
@@ -786,11 +784,12 @@ func TestStore_StoreActionSet(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			store, _, _ := setupTestEnv(t)
 			store.features = featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets)
+			ac := acimpl.ProvideAccessControl(setting.NewCfg())
+			asService := NewActionSetService(ac)
+			asService.StoreActionSet(tt.resource, tt.action, tt.actions)
 
-			store.actionSetService.StoreActionSet(tt.resource, tt.action, tt.actions)
-
-			actionSetName := store.actionSetService.GetActionSetName(tt.resource, tt.action)
-			actionSet := store.actionSetService.GetActionSet(actionSetName)
+			actionSetName := GetActionSetName(tt.resource, tt.action)
+			actionSet := asService.GetActionSet(actionSetName)
 			require.Equal(t, tt.actions, actionSet)
 		})
 	}
@@ -801,12 +800,10 @@ func TestStore_ResolveActionSet(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	store, _, _ := setupTestEnv(t)
-	store.features = featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets)
-
-	store.actionSetService.StoreActionSet("folders", "edit", []string{"folders:read", "folders:write", "dashboards:read", "dashboards:write"})
-	store.actionSetService.StoreActionSet("folders", "view", []string{"folders:read", "dashboards:read"})
-	store.actionSetService.StoreActionSet("dashboards", "view", []string{"dashboards:read"})
+	actionSetService := NewActionSetService(acimpl.ProvideAccessControl(setting.NewCfg()))
+	actionSetService.StoreActionSet("folders", "edit", []string{"folders:read", "folders:write", "dashboards:read", "dashboards:write"})
+	actionSetService.StoreActionSet("folders", "view", []string{"folders:read", "dashboards:read"})
+	actionSetService.StoreActionSet("dashboards", "view", []string{"dashboards:read"})
 
 	type actionSetTest struct {
 		desc               string
@@ -839,7 +836,7 @@ func TestStore_ResolveActionSet(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			actionSets := store.actionSetService.Resolve(tt.action)
+			actionSets := actionSetService.Resolve(tt.action)
 			require.ElementsMatch(t, tt.expectedActionSets, actionSets)
 		})
 	}

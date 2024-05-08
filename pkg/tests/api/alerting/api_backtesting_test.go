@@ -108,7 +108,7 @@ func TestBacktesting(t *testing.T) {
 		})
 
 		// access control permissions store
-		permissionsStore := resourcepermissions.NewStore(env.SQLStore, featuremgmt.WithFeatures(), nil)
+		permissionsStore := resourcepermissions.NewStore(env.SQLStore, featuremgmt.WithFeatures())
 		_, err := permissionsStore.SetUserResourcePermission(context.Background(),
 			accesscontrol.GlobalOrgID,
 			accesscontrol.User{ID: testUserId},

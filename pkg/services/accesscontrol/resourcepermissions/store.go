@@ -18,14 +18,14 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func NewStore(sql db.DB, features featuremgmt.FeatureToggles, actionsetService ActionSetService) *store {
-	return &store{sql, features, actionsetService}
+func NewStore(sql db.DB, features featuremgmt.FeatureToggles) *store {
+	store := &store{sql: sql, features: features}
+	return store
 }
 
 type store struct {
-	sql              db.DB
-	features         featuremgmt.FeatureToggles
-	actionSetService ActionSetService
+	sql      db.DB
+	features featuremgmt.FeatureToggles
 }
 
 type flatResourcePermission struct {
@@ -678,7 +678,7 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, resource, reso
 		Add ACTION SET of managed permissions to in-memory store
 	*/
 	if s.features.IsEnabled(context.TODO(), featuremgmt.FlagAccessActionSets) {
-		actionSetName := s.actionSetService.GetActionSetName(resource, permission)
+		actionSetName := GetActionSetName(resource, permission)
 		p := managedPermission(actionSetName, resource, resourceID, resourceAttribute)
 		p.RoleID = roleID
 		p.Created = time.Now()
@@ -731,7 +731,7 @@ type ActionSetService interface {
 	accesscontrol.ActionResolver
 
 	GetActionSet(actionName string) []string
-	GetActionSetName(resource, permission string) string
+	//GetActionSetName(resource, permission string) string
 	StoreActionSet(resource, permission string, actions []string)
 }
 
@@ -791,7 +791,7 @@ func (s *InMemoryActionSets) GetActionSet(actionName string) []string {
 
 func (s *InMemoryActionSets) StoreActionSet(resource, permission string, actions []string) {
 	s.log.Debug("storing action set\n")
-	name := s.GetActionSetName(resource, permission)
+	name := GetActionSetName(resource, permission)
 	actionSet := &ActionSet{
 		Action:  name,
 		Actions: actions,
@@ -809,7 +809,7 @@ func (s *InMemoryActionSets) StoreActionSet(resource, permission string, actions
 }
 
 // GetActionSetName function creates an action set from a list of actions and stores it inmemory.
-func (s *InMemoryActionSets) GetActionSetName(resource, permission string) string {
+func GetActionSetName(resource, permission string) string {
 	// lower cased
 	resource = strings.ToLower(resource)
 	permission = strings.ToLower(permission)

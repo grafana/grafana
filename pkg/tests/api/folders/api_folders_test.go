@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana-openapi-client-go/client/folders"
 	"github.com/grafana/grafana-openapi-client-go/models"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -66,9 +65,7 @@ func TestGetFolders(t *testing.T) {
 	viewerClient := tests.GetClient(grafanaListedAddr, "viewer", "viewer")
 
 	// access control permissions store
-	ac := acimpl.ProvideAccessControl(cfg)
-	actionSetService := resourcepermissions.NewActionSetService(ac)
-	permissionsStore := resourcepermissions.NewStore(store, featuremgmt.WithFeatures(), actionSetService)
+	permissionsStore := resourcepermissions.NewStore(store, featuremgmt.WithFeatures())
 
 	numberOfFolders := 5
 	indexWithoutPermission := 3
