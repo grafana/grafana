@@ -88,7 +88,7 @@ export const RowsList = (props: RowsListProps) => {
   // Set font property using theme info
   // This will make text measurement accurate
   if (osContext !== null) {
-    osContext.font = `${theme.typography.body.fontSize} ${theme.typography.body.fontFamily}`;
+    osContext.font = `${theme.typography.fontSize}px ${theme.typography.body.fontFamily}`;
   }
 
 
@@ -391,15 +391,16 @@ function getTextBoundingBox(text: string, headerGroups: HeaderGroup[], osContext
 
     if (measure) {
       // Retreive an estimated number of lines
+      // TODO: This still needs some tweaking
+      // Tricky part of this heuristic is that we're assuming we
+      // wrap _exactly_ at each end character of the line, but we're really
+      // wrapping boundaries typically. So some wiggle room needs to be added
       let lines = Math.ceil(measure.width / width);
 
-      // TODO: We need to add some more
-      // to this calculation since we have
-      // padding etc.
 
       // Estimated height would be lines multiplied
       // by the line height
-      let height = lines * lineHeight;
+      let height = (lines * lineHeight) + 24;
 
       return { width, height };
     }
