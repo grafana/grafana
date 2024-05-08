@@ -67,7 +67,7 @@ To prevent users from seeing an app plugin, refer to [these permissions scenario
 
 ## Plugin catalog
 
-The Grafana plugin catalog allows you to browse and manage plugins from within Grafana. Only Grafana server administrators and Organization administrators can access and use the plugin catalog. For more information about Grafana roles and permissions, refer to [Roles and permissions]({{< relref "../administration/roles-and-permissions" >}}). 
+The Grafana plugin catalog allows you to browse and manage plugins from within Grafana. Only Grafana server administrators and Organization administrators can access and use the plugin catalog. For more information about Grafana roles and permissions, refer to [Roles and permissions]({{< relref "../administration/roles-and-permissions" >}}).
 
 The following access rules apply depending on the user role:
 
@@ -185,7 +185,7 @@ If you are a plugin developer and want to know how to sign your plugin, refer to
 | Signature status   | Description                                                                     |
 | ------------------ | ------------------------------------------------------------------------------- |
 | Core               | Core plugin built into Grafana.                                                 |
-| Invalid signature  | The plugin has an invalid signature.                                             |
+| Invalid signature  | The plugin has an invalid signature.                                            |
 | Modified signature | The plugin has changed since it was signed. This may indicate malicious intent. |
 | Unsigned           | The plugin is not signed.                                                       |
 | Signed             | The plugin signature was successfully verified.                                 |
