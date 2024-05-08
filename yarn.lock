@@ -3569,35 +3569,24 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/faro-core@npm:^1.3.6, @grafana/faro-core@npm:^1.6.0, @grafana/faro-core@npm:^1.7.0":
-  version: 1.7.0
-  resolution: "@grafana/faro-core@npm:1.7.0"
+"@grafana/faro-core@npm:^1.3.6, @grafana/faro-core@npm:^1.7.2":
+  version: 1.7.2
+  resolution: "@grafana/faro-core@npm:1.7.2"
   dependencies:
     "@opentelemetry/api": "npm:^1.7.0"
     "@opentelemetry/otlp-transformer": "npm:^0.48.0"
-  checksum: 10/4cad2a6c9a5b3c4c1ba1da98c239a2ba27486479e7f4d980ba95d2f823e5a16d853647502db41571d4a882c6165c4a0702ac07f8fa07b25f680f0e68e9672c5b
+  checksum: 10/4460a9160875af52da7f411c9407a58415378ae17e7f8dea2f5dc0c00f6ca2ca588b87b501d2f45477f106a20a6c3020dc9bc7855009ba8246da72012b645d54
   languageName: node
   linkType: hard
 
-"@grafana/faro-web-sdk@npm:1.6.0":
-  version: 1.6.0
-  resolution: "@grafana/faro-web-sdk@npm:1.6.0"
+"@grafana/faro-web-sdk@npm:1.7.2, @grafana/faro-web-sdk@npm:^1.3.6":
+  version: 1.7.2
+  resolution: "@grafana/faro-web-sdk@npm:1.7.2"
   dependencies:
-    "@grafana/faro-core": "npm:^1.6.0"
+    "@grafana/faro-core": "npm:^1.7.2"
     ua-parser-js: "npm:^1.0.32"
     web-vitals: "npm:^3.1.1"
-  checksum: 10/65db25703bd4f26bf7509ddf5bfa5a47df38e5a6a014612eb707a2475641baff95a27196f760ee68301347735b10006e0cf58e6f47fed553c2c01c264232e76f
-  languageName: node
-  linkType: hard
-
-"@grafana/faro-web-sdk@npm:^1.3.6":
-  version: 1.7.0
-  resolution: "@grafana/faro-web-sdk@npm:1.7.0"
-  dependencies:
-    "@grafana/faro-core": "npm:^1.7.0"
-    ua-parser-js: "npm:^1.0.32"
-    web-vitals: "npm:^3.1.1"
-  checksum: 10/f4d852d0cb1add37310e2f7b145bcb0ca243409eed8b3845ce4446bcd877a790573022e55dfa9a6bc71c82fbda5f0db452a5d05d9b56b4e294390b0a55d0087e
+  checksum: 10/5d30a928d1d30b8b4fdec76c3d8ab70bef7d418e0f13890f4897d82f4f3cc0be931a6af43acbdaa0454426c0a68f99ae92c3ca9aec9c64c27dca01161bae978d
   languageName: node
   linkType: hard
 
@@ -3767,7 +3756,7 @@ __metadata:
     "@grafana/data": "npm:11.1.0-pre"
     "@grafana/e2e-selectors": "npm:11.1.0-pre"
     "@grafana/experimental": "npm:1.7.10"
-    "@grafana/faro-web-sdk": "npm:1.6.0"
+    "@grafana/faro-web-sdk": "npm:1.7.2"
     "@grafana/runtime": "npm:11.1.0-pre"
     "@grafana/schema": "npm:11.1.0-pre"
     "@grafana/tsconfig": "npm:^1.3.0-rc1"
@@ -3947,8 +3936,8 @@ __metadata:
   linkType: soft
 
 "@grafana/scenes@npm:^4.14.0":
-  version: 4.14.0
-  resolution: "@grafana/scenes@npm:4.14.0"
+  version: 4.17.1
+  resolution: "@grafana/scenes@npm:4.17.1"
   dependencies:
     "@grafana/e2e-selectors": "npm:^10.4.1"
     react-grid-layout: "npm:1.3.4"
@@ -3962,7 +3951,7 @@ __metadata:
     "@grafana/ui": ^10.4.1
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10/f8b5dc7e8b6aa5c7fa96d0b579292822ce1cbe274af6b9af7221660c3c960897a9744e2eaa1847ae0381cac72f8250e6e95a881a387fe42f8eeaebdd0241031e
+  checksum: 10/e79b68860e4ba027ccb0c617e0dd28de7e8c1e26e4a88319e7bc6fd93448dbb9539549883b5d70bd0fc0f909a5050c3e8dcbbb9e63fbb9d82c62bf168258ac51
   languageName: node
   linkType: hard
 
@@ -9381,9 +9370,9 @@ __metadata:
   linkType: hard
 
 "@types/diff@npm:^5":
-  version: 5.2.0
-  resolution: "@types/diff@npm:5.2.0"
-  checksum: 10/e1d3e6e9fd9d5386496c8716dd89316288d139cd8159a064f886a079149d05d65289b7b725ce1e333d4e77ce8024e210c6e281e9875a636fc17b4c760c2cf85f
+  version: 5.2.1
+  resolution: "@types/diff@npm:5.2.1"
+  checksum: 10/dcfb214aa99b252237f195d3c9f241329c8092b2961ab98261d75a97a85f2a48dd758a4f65c0bd38027a1b7b0963c45e7e8668005f48c96de78f164bf9a2ce30
   languageName: node
   linkType: hard
 
