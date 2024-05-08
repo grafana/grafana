@@ -39,7 +39,7 @@ if (hasEmailSharingEnabled) {
   options.unshift({ label: 'Only specific people', value: PublicDashboardShareType.EMAIL, icon: 'users-alt' });
 }
 
-const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
+const selectors = e2eSelectors.pages.ShareDashboardDrawer.ShareExternally;
 export class ShareExternally extends SceneObjectBase<ShareExternallyDrawerState> {
   static Component = ShareExternallyDrawerRenderer;
 
@@ -82,7 +82,7 @@ function Actions({ dashboard, publicDashboard }: { dashboard: DashboardScene; pu
     <Stack alignItems="center">
       <Stack gap={1} flex={1}>
         <ClipboardButton
-          data-testid={selectors.CopyUrlButton}
+          data-testid={selectors.copyUrlButton}
           variant="primary"
           fill="outline"
           icon="link"
@@ -152,7 +152,7 @@ function ShareExternallyDrawerRenderer({ model }: SceneComponentProps<ShareExter
   }
 
   return (
-    <Stack direction="column" gap={2}>
+    <Stack direction="column" gap={2} data-testid={selectors.container}>
       <ShareAlerts dashboard={dashboard} />
       <ShareTypeSelect dashboard={dashboard} setShareType={setShareType} value={shareType} options={options} />
       {!hasWritePermissions && <NoUpsertPermissionsAlert mode={publicDashboard ? 'edit' : 'create'} />}

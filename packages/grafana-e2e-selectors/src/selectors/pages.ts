@@ -273,6 +273,12 @@ export const Pages = {
       Tab: 'Tab Public Dashboard',
     },
   },
+  ShareDashboardDrawer: {
+    ShareExternally: {
+      container: 'data-testid share externally drawer container',
+      copyUrlButton: 'data-testid share externally copy url button',
+    },
+  },
   PublicDashboard: {
     page: 'public-dashboard-page',
     NotAvailable: {
