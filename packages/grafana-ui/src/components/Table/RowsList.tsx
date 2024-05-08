@@ -74,12 +74,8 @@ export const RowsList = (props: RowsListProps) => {
 
   const [rowHighlightIndex, setRowHighlightIndex] = useState<number | undefined>(initialRowIndex);
 
-  console.log(width);
-
   const theme = useTheme2();
   const panelContext = usePanelContext();
-
-  console.log(theme);
 
   // Create off-screen canbas for measuring rows for virtualized rendering
   const osCan = new OffscreenCanvas(256, 1024);
