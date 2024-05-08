@@ -3,14 +3,10 @@ const path = require('path');
 const isBareSpecifier = (importPath) => !importPath.startsWith('app/') && /^[^./]/.test(importPath);
 const barrelFileNames = ['index.ts', 'index.tsx', 'index.js', 'index.jsx'];
 
-const resolvePath = (fileDir, importPath) => {
-  if (importPath.startsWith('app/')) {
-    const resolvedPath = require.resolve(path.join(process.cwd(), 'public', importPath));
-    return resolvedPath;
-  }
-
-  return require.resolve(path.resolve(fileDir, importPath));
-};
+const resolvePath = (fileDir, importPath) =>
+  importPath.startsWith('app/')
+    ? require.resolve(path.join(__dirname, '..', '..', 'public', importPath))
+    : require.resolve(path.resolve(fileDir, importPath));
 
 module.exports = function (fileInfo, api) {
   const j = api.jscodeshift;
