@@ -366,9 +366,11 @@ devenv-mysql:
 .PHONY: protobuf
 protobuf: ## Compile protobuf definitions
 	bash scripts/protobuf-check.sh
-	bash pkg/plugins/backendplugin/pluginextensionv2/generate.sh
-	bash pkg/plugins/backendplugin/secretsmanagerplugin/generate.sh
-	bash pkg/services/store/entity/generate.sh
+	go install google.golang.org/protobuf/cmd/protoc-gen-go
+	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+	buf generate pkg/plugins/backendplugin/pluginextensionv2 --template pkg/plugins/backendplugin/pluginextensionv2/buf.gen.yaml
+	buf generate pkg/plugins/backendplugin/secretsmanagerplugin --template pkg/plugins/backendplugin/secretsmanagerplugin/buf.gen.yaml
+	buf generate pkg/services/store/entity --template pkg/services/store/entity/buf.gen.yaml
 
 .PHONY: clean
 clean: ## Clean up intermediate build artifacts.
