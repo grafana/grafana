@@ -1,10 +1,18 @@
-// Worker is not three shakable, so we should not import the whole loadash library
-// eslint-disable-next-line lodash/import-scope
-import debounce from 'lodash/debounce';
+import { Dashboard } from '@grafana/schema';
 
 import { getDashboardChanges } from './getDashboardChanges';
 
-self.onmessage = debounce((e: MessageEvent<{ initial: any; changed: any }>) => {
+function _debounce<T>(f: (...args: T[]) => void, timeout: number) {
+  let timeoutId: NodeJS.Timeout | undefined = undefined;
+  return (...theArgs: T[]) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => {
+      f(...theArgs);
+    }, timeout);
+  };
+}
+
+self.onmessage = _debounce((e: MessageEvent<{ initial: Dashboard; changed: Dashboard }>) => {
   const result = getDashboardChanges(e.data.initial, e.data.changed, false, false, false);
   self.postMessage(result);
 }, 500);

@@ -3,12 +3,10 @@ package authn
 import (
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
 
 	"golang.org/x/oauth2"
 
-	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -18,20 +16,22 @@ import (
 
 const GlobalOrgID = int64(0)
 
-var _ identity.Requester = (*Identity)(nil)
+type Requester = identity.Requester
+
+var _ Requester = (*Identity)(nil)
 
 type Identity struct {
+	// ID is the unique identifier for the entity in the Grafana database.
+	// It is in the format <namespace>:<id> where namespace is one of the
+	// Namespace* constants. For example, "user:1" or "api-key:1".
+	// If the entity is not found in the DB or this entity is non-persistent, this field will be empty.
+	ID NamespaceID
 	// OrgID is the active organization for the entity.
 	OrgID int64
 	// OrgName is the name of the active organization.
 	OrgName string
 	// OrgRoles is the list of organizations the entity is a member of and their roles.
 	OrgRoles map[int64]org.RoleType
-	// ID is the unique identifier for the entity in the Grafana database.
-	// It is in the format <namespace>:<id> where namespace is one of the
-	// Namespace* constants. For example, "user:1" or "api-key:1".
-	// If the entity is not found in the DB or this entity is non-persistent, this field will be empty.
-	ID string
 	// Login is the shorthand identifier of the entity. Should be unique.
 	Login string
 	// Name is the display name of the entity. It is not guaranteed to be unique.
@@ -71,18 +71,25 @@ type Identity struct {
 	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
 	// Will only be set when featuremgmt.FlagIdForwarding is enabled.
 	IDToken string
+	// UserUID is the unique identifier for the entity in the Grafana database.
+	UserUID string
 }
 
-func (i *Identity) GetID() string {
+func (i *Identity) GetID() NamespaceID {
 	return i.ID
 }
 
-func (i *Identity) GetNamespacedID() (namespace string, identifier string) {
-	split := strings.Split(i.GetID(), ":")
-	if len(split) != 2 {
-		return "", ""
-	}
-	return split[0], split[1]
+func (i *Identity) GetNamespacedID() (namespace identity.Namespace, identifier string) {
+	return i.ID.Namespace(), i.ID.ID()
+}
+
+func (i *Identity) GetUID() NamespaceID {
+	ns, uid := i.GetNamespacedUID()
+	return identity.NewNamespaceIDString(ns, uid)
+}
+
+func (i *Identity) GetNamespacedUID() (namespace identity.Namespace, identifier string) {
+	return i.ID.Namespace(), i.UserUID
 }
 
 func (i *Identity) GetAuthID() string {
@@ -136,13 +143,13 @@ func (i *Identity) GetOrgName() string {
 	return i.OrgName
 }
 
-func (i *Identity) GetOrgRole() roletype.RoleType {
+func (i *Identity) GetOrgRole() org.RoleType {
 	if i.OrgRoles == nil {
-		return roletype.RoleNone
+		return org.RoleNone
 	}
 
 	if i.OrgRoles[i.GetOrgID()] == "" {
-		return roletype.RoleNone
+		return org.RoleNone
 	}
 
 	return i.OrgRoles[i.GetOrgID()]
@@ -177,7 +184,7 @@ func (i *Identity) GetTeams() []int64 {
 	return i.Teams
 }
 
-func (i *Identity) HasRole(role roletype.RoleType) bool {
+func (i *Identity) HasRole(role org.RoleType) bool {
 	if i.GetIsGrafanaAdmin() {
 		return true
 	}
@@ -261,27 +268,5 @@ func (i *Identity) ExternalUserInfo() login.ExternalUserInfo {
 		OrgRoles:       i.OrgRoles,
 		IsGrafanaAdmin: i.IsGrafanaAdmin,
 		IsDisabled:     i.IsDisabled,
-	}
-}
-
-// IdentityFromSignedInUser creates an identity from a SignedInUser.
-func IdentityFromSignedInUser(id string, usr *user.SignedInUser, params ClientParams, authenticatedBy string) *Identity {
-	return &Identity{
-		ID:              id,
-		OrgID:           usr.OrgID,
-		OrgName:         usr.OrgName,
-		OrgRoles:        map[int64]org.RoleType{usr.OrgID: usr.OrgRole},
-		Login:           usr.Login,
-		Name:            usr.Name,
-		Email:           usr.Email,
-		AuthenticatedBy: authenticatedBy,
-		IsGrafanaAdmin:  &usr.IsGrafanaAdmin,
-		IsDisabled:      usr.IsDisabled,
-		HelpFlags1:      usr.HelpFlags1,
-		LastSeenAt:      usr.LastSeenAt,
-		Teams:           usr.Teams,
-		ClientParams:    params,
-		Permissions:     usr.Permissions,
-		IDToken:         usr.IDToken,
 	}
 }
