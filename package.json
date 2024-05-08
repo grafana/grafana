@@ -124,7 +124,7 @@
     "@types/node-forge": "^1",
     "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.2.4",
     "@types/pluralize": "^0.0.33",
-    "@types/prismjs": "1.26.3",
+    "@types/prismjs": "1.26.4",
     "@types/react": "18.2.79",
     "@types/react-beautiful-dnd": "13.1.8",
     "@types/react-dom": "18.2.25",
