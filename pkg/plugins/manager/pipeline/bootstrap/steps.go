@@ -143,6 +143,11 @@ func configureAppChildPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
 		return
 	}
 	child.IncludedInAppID = parent.ID
+
+	if child.Info.Version == "" {
+		child.Info.Version = parent.Info.Version
+	}
+
 	//child.BaseURL = parent.BaseURL
 	//
 	//// TODO move this logic within assetpath package
