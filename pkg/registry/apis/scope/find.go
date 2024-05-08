@@ -33,11 +33,11 @@ func (r *findREST) New() runtime.Object {
 
 func (r *findREST) Destroy() {}
 
-func (s *findREST) NamespaceScoped() bool {
+func (r *findREST) NamespaceScoped() bool {
 	return true
 }
 
-func (s *findREST) GetSingularName() string {
+func (r *findREST) GetSingularName() string {
 	return "TreeResult" // Used for the
 }
 
