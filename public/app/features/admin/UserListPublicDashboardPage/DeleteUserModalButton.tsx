@@ -73,11 +73,11 @@ export const DeleteUserModalButton = ({ user }: { user: SessionUser }) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  modal: css`
-    width: 500px;
-  `,
-  description: css`
-    font-size: ${theme.typography.body.fontSize};
-    margin: 0;
-  `,
+  modal: css({
+    width: '500px',
+  }),
+  description: css({
+    fontSize: theme.typography.body.fontSize,
+    margin: 0,
+  }),
 });
