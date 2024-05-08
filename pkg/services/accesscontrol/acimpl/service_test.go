@@ -805,7 +805,7 @@ func TestPermissionCacheKey(t *testing.T) {
 	}
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expected, permissionCacheKey(tc.signedInUser))
+			assert.Equal(t, tc.expected, accesscontrol.GetPermissionCacheKey(tc.signedInUser))
 		})
 	}
 }
