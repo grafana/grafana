@@ -9,7 +9,7 @@ include .bingo/Variables.mk
 
 
 GO = go
-GO_VERSION = 1.22.2
+GO_VERSION = 1.22.3
 GO_FILES ?= ./pkg/... ./pkg/apiserver/... ./pkg/apimachinery/... ./pkg/promlib/...
 SH_FILES ?= $(shell find ./scripts -name *.sh)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
@@ -118,7 +118,7 @@ ifeq ("$(wildcard $(ENTERPRISE_FE_EXT_FILE))","") ## if enterprise is not enable
 i18n-extract-enterprise:
 	@echo "Skipping i18n extract for Enterprise: not enabled"
 else
-i18n-extract-enterprise: $(SWAGGER) ## Generate API Swagger specification
+i18n-extract-enterprise:
 	@echo "Extracting i18n strings for Enterprise"
 	yarn run i18next --config public/locales/i18next-parser-enterprise.config.cjs
 	node ./public/locales/pseudo.mjs --mode enterprise
