@@ -322,24 +322,6 @@ The Alerting Provisioning HTTP API has been updated to enforce Role-Based Access
 
 ## Data sources
 
-### Azure Monitor: Current User authentication
-
-<!-- #grafana-partner-datasources, @Andreas -->
-
-_Experimental in all editions of Grafana_
-
-You can now configure the Azure Monitor data source to authenticate as the logged-in Grafana user when making query and resource requests if you also use Azure Entra to sign your users into Grafana.
-
-Current User authentication allows you to enforce Azure RBAC restrictions on your Grafana users by removing the need to provide broad service credentials. Once a data source is configured with Current User authentication a user will **only** have access to resources they can access directly in Azure.
-
-Additionally, data sources configured to use Current User authentication are less likely to be impacted by throttling issues due to the individual level of access.
-
-Current User authentication does not inherently support backend features such as alerting. To account for this, data sources configured with Current User authentication can optionally specify service credentials that will be utilized for backend features when no signed-in user is available.
-
-To get started with Current User authentication, refer to the [Azure Monitor data source documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/#configure-current-user-authentication).
-
-{{< figure src="/media/docs/grafana/data-sources/screenshot-current-user.png" alt="Data source configured with Current User authentication" >}}
-
 ### Removal of old Tempo Search and Loki Search in Tempo
 
 <!-- Joey Tawadrous -->
