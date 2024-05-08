@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -18,7 +18,7 @@ export const MatcherFilter = ({ onFilterChange, defaultQueryString }: Props) => 
 
   const [filterQuery, setFilterQuery] = React.useState<string>(defaultQueryString ?? '');
 
-  const [, cancel] = useDebounce(
+  useDebounce(
     () => {
       logInfo(LogMessages.filterByLabel);
       onFilterChange(filterQuery);
