@@ -64,6 +64,7 @@ jobs:
           GRAFANA_VERSION=10.1.0
 
           cd $GITHUB_WORKSPACE/ephemeral/src
+          echo "GO version=$(go version)"
           go run . \
             -GITHUB_TOKEN="${{ steps.generate_token.outputs.token }}" \
             -GITHUB_WORKFLOW_RUN_ID="${{ github.run_id }}" \
