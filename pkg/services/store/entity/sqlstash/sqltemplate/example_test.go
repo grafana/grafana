@@ -7,22 +7,22 @@ import (
 )
 
 // This file contains runnable examples. They serve the purpose of providing
-// idiomatic usage of the package as well as showing how it actually works since
-// they are actually run together with regular Go tests. Note the "Output"
-// comment section at the end of each function starting with "Example", it is
-// used by the Go tests to check that the standard output of the function
-// matches the comments until the end of the function. If you change the
-// function, you may need to adapt that comment section as it's possible that
-// the output changes, causing it to fail tests. To learn more about Go's
-// runnable tests, which are a core builtin feature of Go's standard testing
-// library, see:
+// idiomatic usage of the package as well as showing how it actually works,
+// since the examples are actually run together with regular Go tests. Note that
+// the "Output" comment section at the end of each function starting with
+// "Example" is used by the standard Go test tool to check that the standard
+// output of the function matches the commented text until the end of the
+// function. If you change the function, you may need to adapt that comment
+// section as it's possible that the output changes, causing it to fail tests.
+// To learn more about Go's runnable tests, which are a core builtin feature of
+// Go's standard testing library, see:
 //	https://pkg.go.dev/testing#hdr-Examples
 
 // In this example we will use both Args and Dialect to dynamically and securely
 // build SQL queries, while also keeping track of the arguments that need to be
 // passed to the database methods to replace the placeholder "?" with the
 // correct values. If you're not familiar with Go text templating language,
-// please, consider reading.
+// please, consider reading that library's documentation first.
 
 // We will start with creating a simple text template to insert a new row into a
 // users table:
@@ -50,18 +50,18 @@ type CreateUserRequest struct {
 type DBCreateUserRequest struct {
 	Dialect // provides access to all Dialect methods, like Ident
 	*Args   // provides access to Arg method, to keep track of db arguments
-	CreateUserRequest
+	*CreateUserRequest
 }
 
 func Example() {
 	// Finally, we can take a request received from a user like the following:
-	dto := CreateUserRequest{
+	dto := &CreateUserRequest{
 		ID:   1,
 		Name: "root",
 		Type: "admin",
 	}
 
-	// Convert it to a database request:
+	// Put it into a database request:
 	req := DBCreateUserRequest{
 		Dialect:           SQLite, // set at runtime, the template is agnostic
 		Args:              new(Args),

@@ -14,16 +14,16 @@ var (
 // Dialect should be added to the data types passed to SQL templates to
 // provide methods that deal with SQL implementation-specific traits. It can be
 // embedded for ease of use, or with a named struct field if any of its methods
-// would clash with other fields.
+// would clash with other struct field names.
 type Dialect interface {
 	// Ident returns the given string quoted in a way that is suitable to be
 	// used as an identifier. Database names, schema names, table names, column
 	// names are all examples of identifiers.
 	Ident(string) (string, error)
 
-	// SelectFor returns whether the given row-locking clause for a SELECT
-	// statement. Implementations of this method should use
-	// ParseRowLockingClause.
+	// SelectFor parses and returns the given row-locking clause for a SELECT
+	// statement. If the clause is invalid it returns an error. Implementations
+	// of this method should use ParseRowLockingClause.
 	// Example:
 	//
 	//	SELECT *
@@ -47,8 +47,8 @@ func (o RowLockingClause) Valid() bool {
 }
 
 // ParseRowLockingClause parses a RowLockingClause from the given strings. This
-// should be used by implementations of Dialect to parse the input of SelectFor
-// method.
+// should be used by implementations of Dialect to parse the input of the
+// SelectFor method.
 func ParseRowLockingClause(s ...string) (RowLockingClause, error) {
 	opt := RowLockingClause(strings.ToUpper(strings.Join(s, " ")))
 	if !opt.Valid() {
