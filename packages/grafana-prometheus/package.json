@@ -94,7 +94,7 @@
     "@types/lodash": "4.17.0",
     "@types/node": "20.12.11",
     "@types/pluralize": "^0.0.33",
-    "@types/prismjs": "1.26.3",
+    "@types/prismjs": "1.26.4",
     "@types/react": "18.2.79",
     "@types/react-beautiful-dnd": "13.1.8",
     "@types/react-dom": "18.2.25",

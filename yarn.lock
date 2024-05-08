@@ -3005,7 +3005,7 @@ __metadata:
     "@types/jest": "npm:29.5.12"
     "@types/lodash": "npm:4.17.0"
     "@types/node": "npm:20.12.11"
-    "@types/prismjs": "npm:1.26.3"
+    "@types/prismjs": "npm:1.26.4"
     "@types/react": "npm:18.2.79"
     "@types/react-dom": "npm:18.2.25"
     "@types/testing-library__jest-dom": "npm:5.14.9"
@@ -3078,7 +3078,7 @@ __metadata:
     "@types/jest": "npm:29.5.12"
     "@types/lodash": "npm:4.17.0"
     "@types/node": "npm:20.12.11"
-    "@types/prismjs": "npm:1.26.3"
+    "@types/prismjs": "npm:1.26.4"
     "@types/react": "npm:18.2.79"
     "@types/react-dom": "npm:18.2.25"
     "@types/testing-library__jest-dom": "npm:5.14.9"
@@ -3268,7 +3268,7 @@ __metadata:
     "@types/jest": "npm:29.5.12"
     "@types/lodash": "npm:4.17.0"
     "@types/node": "npm:20.12.11"
-    "@types/prismjs": "npm:1.26.3"
+    "@types/prismjs": "npm:1.26.4"
     "@types/react": "npm:18.2.79"
     "@types/react-dom": "npm:18.2.25"
     "@types/react-test-renderer": "npm:18.0.7"
@@ -3324,7 +3324,7 @@ __metadata:
     "@types/jest": "npm:29.5.12"
     "@types/lodash": "npm:4.17.0"
     "@types/node": "npm:20.12.11"
-    "@types/prismjs": "npm:1.26.3"
+    "@types/prismjs": "npm:1.26.4"
     "@types/react": "npm:18.2.79"
     "@types/react-dom": "npm:18.2.25"
     "@types/semver": "npm:7.5.8"
@@ -3783,7 +3783,7 @@ __metadata:
     "@types/lodash": "npm:4.17.0"
     "@types/node": "npm:20.12.11"
     "@types/pluralize": "npm:^0.0.33"
-    "@types/prismjs": "npm:1.26.3"
+    "@types/prismjs": "npm:1.26.4"
     "@types/react": "npm:18.2.79"
     "@types/react-beautiful-dnd": "npm:13.1.8"
     "@types/react-dom": "npm:18.2.25"
@@ -4082,7 +4082,7 @@ __metadata:
     "@types/lodash": "npm:4.17.0"
     "@types/mock-raf": "npm:1.0.6"
     "@types/node": "npm:20.12.11"
-    "@types/prismjs": "npm:1.26.3"
+    "@types/prismjs": "npm:1.26.4"
     "@types/react": "npm:18.2.79"
     "@types/react-beautiful-dnd": "npm:13.1.8"
     "@types/react-color": "npm:3.0.12"
@@ -9881,10 +9881,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/prismjs@npm:1.26.3":
-  version: 1.26.3
-  resolution: "@types/prismjs@npm:1.26.3"
-  checksum: 10/4bd55230ffc0b2b16f4008be3a7f1d7c6b32dd3bed8006e64d24fb22c44fc7e300dac77b856f732803ccdc9a3472b2c0ee7776cad048843c47d608c41a89b6a6
+"@types/prismjs@npm:1.26.4":
+  version: 1.26.4
+  resolution: "@types/prismjs@npm:1.26.4"
+  checksum: 10/fcf7072c56835bfdc9bd9c06acd733440c5198b9fba33c5de09cd7bfe9e6663604120c5d602ffbeb806cdc06447fb711d84fc89c9039b8cc95078702a15e7ff1
   languageName: node
   linkType: hard
 
@@ -18219,7 +18219,7 @@ __metadata:
     "@types/node-forge": "npm:^1"
     "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.2.4"
     "@types/pluralize": "npm:^0.0.33"
-    "@types/prismjs": "npm:1.26.3"
+    "@types/prismjs": "npm:1.26.4"
     "@types/react": "npm:18.2.79"
     "@types/react-beautiful-dnd": "npm:13.1.8"
     "@types/react-dom": "npm:18.2.25"
