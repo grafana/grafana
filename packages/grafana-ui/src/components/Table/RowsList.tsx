@@ -262,17 +262,15 @@ export const RowsList = (props: RowsListProps) => {
         style.color = textColor;
       }
 
-
       // Get the text value
       // TODO: Actually use configuration rather than using the second
       // data value 🤫
-      const textValue = row.values[1]
+      const textValue = row.values[1];
 
       // Set cell height
-      const bbox = getTextBoundingBox(textValue, headerGroups, osContext, tableStyles.rowHeight);
+      const pxLineHeight = theme.typography.body.lineHeight * theme.typography.fontSize;
+      const bbox = getTextBoundingBox(textValue, headerGroups, osContext, pxLineHeight, tableStyles.rowHeight);
       style.height = bbox.height;
-
-
 
       return (
         <div
@@ -321,6 +319,8 @@ export const RowsList = (props: RowsListProps) => {
       tableState.expanded,
       tableStyles,
       theme.components.table.rowHoverBackground,
+      theme.typography.body.fontSize,
+      theme.typography.body.lineHeight,
       timeRange,
       width,
       rowBg,
@@ -338,7 +338,8 @@ export const RowsList = (props: RowsListProps) => {
     }
 
     // TODO: short circuit this when we're not wrapping 🎁
-    return getTextBoundingBox(row.values[1], headerGroups, osContext, tableStyles.rowHeight).height;
+    const pxLineHeight = theme.typography.fontSize * theme.typography.body.lineHeight;
+    return getTextBoundingBox(row.values[1], headerGroups, osContext, pxLineHeight, tableStyles.rowHeight).height;
   };
 
   const handleScroll: UIEventHandler = (event) => {
@@ -376,7 +377,7 @@ export const RowsList = (props: RowsListProps) => {
  * 
  * TODO: Move this 🚚
  */
-function getTextBoundingBox(text: string, headerGroups: HeaderGroup[], osContext: OffscreenCanvasRenderingContext2D | null, defaultRowHeight: number) {
+function getTextBoundingBox(text: string, headerGroups: HeaderGroup[], osContext: OffscreenCanvasRenderingContext2D | null, lineHeight: number, defaultRowHeight: number) {
   let width = 300;
   if (typeof headerGroups[0].headers[1].width === 'number') {
     width = headerGroups[0].headers[1].width;
@@ -385,20 +386,20 @@ function getTextBoundingBox(text: string, headerGroups: HeaderGroup[], osContext
     width = parseInt(headerGroups[0].headers[1].width, 10);
   }
 
-  // TODO: Get actual line height 😂
-  const lineHeight = 42;
-
   if (osContext !== null) {
     const measure = osContext.measureText(text);
 
     if (measure) {
       // Retreive an estimated number of lines
-      let lines = Math.ceil(measure.width / width)
+      let lines = Math.ceil(measure.width / width);
+
+      // TODO: We need to add some more
+      // to this calculation since we have
+      // padding etc.
 
       // Estimated height would be lines multiplied
       // by the line height
       let height = lines * lineHeight;
-
 
       return { width, height };
     }
