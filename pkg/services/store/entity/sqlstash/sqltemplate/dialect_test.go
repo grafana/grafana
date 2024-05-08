@@ -44,22 +44,18 @@ func TestParseRowLockingClause(t *testing.T) {
 		err    error
 	}{
 		{err: ErrInvalidRowLockingClause},
-
 		{
 			input: []string{" " + string(SelectForShare)},
 			err:   ErrInvalidRowLockingClause,
 		},
-
 		{
 			input:  splitSpace(string(SelectForShareNoWait)),
 			output: SelectForShareNoWait,
 		},
-
 		{
 			input:  splitSpace(strings.ToLower(string(SelectForShareNoWait))),
 			output: SelectForShareNoWait,
 		},
-
 		{
 			input:  splitSpace(strings.ToTitle(string(SelectForShareNoWait))),
 			output: SelectForShareNoWait,
@@ -92,6 +88,7 @@ func TestRowLockingClauseAll_SelectFor(t *testing.T) {
 		{err: ErrInvalidRowLockingClause},
 		{input: []string{"invalid"}, err: ErrInvalidRowLockingClause},
 		{input: []string{" share"}, err: ErrInvalidRowLockingClause},
+
 		{
 			input:  splitSpace(string(SelectForShare)),
 			output: SelectForShare,
@@ -128,7 +125,10 @@ func TestStandardIdent_Ident(t *testing.T) {
 		{input: ``, err: ErrEmptyIdent},
 		{input: `polite_example`, output: `"polite_example"`},
 		{input: `Juan Carlos`, output: `"Juan Carlos"`},
-		{input: `exaggerated " ' ` + "`" + ` example`, output: `"exaggerated "" ' ` + "`" + ` example"`},
+		{
+			input:  `exaggerated " ' ` + "`" + ` example`,
+			output: `"exaggerated "" ' ` + "`" + ` example"`,
+		},
 	}
 
 	for i, tc := range testCases {

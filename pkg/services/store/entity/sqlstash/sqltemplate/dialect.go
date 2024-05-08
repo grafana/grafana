@@ -19,11 +19,6 @@ type Dialect interface {
 	// Ident returns the given string quoted in a way that is suitable to be
 	// used as an identifier. Database names, schema names, table names, column
 	// names are all examples of identifiers.
-	// Example in template:
-	//
-	//	SELECT
-	//		mytab.{{ .Ident int }} AS intvalue -- reserved word "int"
-	//		FROM {{ .Ident "MyTable" }} AS mytab; -- name with uppercase letters
 	Ident(string) (string, error)
 
 	// SelectFor returns whether the given row-locking clause for a SELECT
@@ -43,8 +38,12 @@ type RowLockingClause string
 
 // Valid returns whether the given option is valid.
 func (o RowLockingClause) Valid() bool {
-	_, ok := validRowLockingClause[o]
-	return ok
+	switch o {
+	case SelectForShare, SelectForShareNoWait, SelectForShareSkipLocked,
+		SelectForUpdate, SelectForUpdateNoWait, SelectForUpdateSkipLocked:
+		return true
+	}
+	return false
 }
 
 // ParseRowLockingClause parses a RowLockingClause from the given strings. This
@@ -68,15 +67,6 @@ const (
 	SelectForUpdateNoWait     RowLockingClause = "UPDATE NOWAIT"
 	SelectForUpdateSkipLocked RowLockingClause = "UPDATE SKIP LOCKED"
 )
-
-var validRowLockingClause = map[RowLockingClause]struct{}{
-	SelectForShare:            {},
-	SelectForShareNoWait:      {},
-	SelectForShareSkipLocked:  {},
-	SelectForUpdate:           {},
-	SelectForUpdateNoWait:     {},
-	SelectForUpdateSkipLocked: {},
-}
 
 // rowLockingClauseAll aids implementations that either support all the
 // row-locking clause options or none. If it's true, it returns the clause,

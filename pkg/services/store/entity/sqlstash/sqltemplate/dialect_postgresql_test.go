@@ -19,9 +19,15 @@ func TestPostgreSQL_Ident(t *testing.T) {
 	}{
 		{input: ``, err: ErrEmptyIdent},
 		{input: `polite_example`, output: `"polite_example"`},
-		{input: `unpolite_` + string([]byte{0}) + `example`, err: ErrPostgreSQLUnsupportedIdent},
 		{input: `Juan Carlos`, output: `"Juan Carlos"`},
-		{input: `exaggerated " ' ` + "`" + ` example`, output: `"exaggerated "" ' ` + "`" + ` example"`},
+		{
+			input: `unpolite_` + string([]byte{0}) + `example`,
+			err:   ErrPostgreSQLUnsupportedIdent,
+		},
+		{
+			input:  `exaggerated " ' ` + "`" + ` example`,
+			output: `"exaggerated "" ' ` + "`" + ` example"`,
+		},
 	}
 
 	for i, tc := range testCases {
