@@ -251,7 +251,6 @@ steps:
     \           "
   depends_on:
   - yarn-install
-  failure: ignore
   image: node:20-bookworm
   name: verify-i18n
 trigger:
@@ -1634,7 +1633,6 @@ steps:
     \           "
   depends_on:
   - yarn-install
-  failure: ignore
   image: node:20-bookworm
   name: verify-i18n
 trigger:
@@ -4923,6 +4921,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: f96d17c0ac86a761810fac5f8604f6dd4f44155af26165c48aa0e304b353823e
+hmac: 7397697ccc703dc375a0f90ba8a12fd978c2972f37fdffbdca1f72ff3991b339
 
 ...

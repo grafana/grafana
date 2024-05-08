@@ -648,7 +648,6 @@ def verify_i18n_step():
         "depends_on": [
             "yarn-install",
         ],
-        "failure": "ignore",
         "commands": [
             "make i18n-extract || (echo \"{}\" && false)".format(extract_error_message),
             # Verify that translation extraction has been committed
