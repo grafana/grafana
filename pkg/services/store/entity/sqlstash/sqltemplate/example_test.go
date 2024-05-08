@@ -35,7 +35,7 @@ var createUserTmpl = template.Must(template.New("query").Parse(`
 // reusable text template, that will dynamically create the SQL code when
 // executed, which is interesting because we have a SQL-implementation dependant
 // code handled for us within the template (escaping the reserved word "type"),
-// but also becasue the arguments to the database Exec method will be handled
+// but also because the arguments to the database Exec method will be handled
 // for us. The struct with the data needed to create a new user could be
 // something like the following:
 type CreateUserRequest struct {
@@ -53,7 +53,7 @@ type DBCreateUserRequest struct {
 	CreateUserRequest
 }
 
-func ExampleCreateUser() {
+func Example() {
 	// Finally, we can take a request received from a user like the following:
 	dto := CreateUserRequest{
 		ID:   1,
@@ -97,7 +97,8 @@ func ExampleCreateUser() {
 // given the previous example. It is left as an exercise to the reader how the
 // code should be implemented, based on the ExampleCreateUser function.
 
-var listUsers = template.Must(template.New("query").Parse(`
+// List users example.
+var _ = template.Must(template.New("query").Parse(`
     SELECT id, {{ .Ident "type" }}, name
 	    FROM users
 		WHERE

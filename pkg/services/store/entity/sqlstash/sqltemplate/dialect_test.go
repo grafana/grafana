@@ -1,6 +1,7 @@
 package sqltemplate
 
 import (
+	"errors"
 	"strings"
 	"testing"
 )
@@ -67,7 +68,7 @@ func TestParseRowLockingClause(t *testing.T) {
 
 	for i, tc := range testCases {
 		gotOutput, gotErr := ParseRowLockingClause(tc.input...)
-		if gotErr != tc.err {
+		if !errors.Is(gotErr, tc.err) {
 			t.Fatalf("unexpected error %v in test case %d", gotErr, i)
 		}
 		if gotOutput != (tc.output) {
@@ -99,7 +100,7 @@ func TestRowLockingClauseAll_SelectFor(t *testing.T) {
 
 	for i, tc := range testCases {
 		gotOutput, gotErr := rowLockingClauseAll(true).SelectFor(tc.input...)
-		if gotErr != tc.err {
+		if !errors.Is(gotErr, tc.err) {
 			t.Fatalf("[true] unexpected error %v in test case %d", gotErr, i)
 		}
 		if gotOutput != string(tc.output) {
@@ -107,7 +108,7 @@ func TestRowLockingClauseAll_SelectFor(t *testing.T) {
 		}
 
 		gotOutput, gotErr = rowLockingClauseAll(false).SelectFor(tc.input...)
-		if gotErr != tc.err {
+		if !errors.Is(gotErr, tc.err) {
 			t.Fatalf("[false] unexpected error %v in test case %d", gotErr, i)
 		}
 		if gotOutput != "" {
@@ -127,12 +128,12 @@ func TestStandardIdent_Ident(t *testing.T) {
 		{input: ``, err: ErrEmptyIdent},
 		{input: `polite_example`, output: `"polite_example"`},
 		{input: `Juan Carlos`, output: `"Juan Carlos"`},
-		{input: `exagerated " ' ` + "`" + ` example`, output: `"exagerated "" ' ` + "`" + ` example"`},
+		{input: `exaggerated " ' ` + "`" + ` example`, output: `"exaggerated "" ' ` + "`" + ` example"`},
 	}
 
 	for i, tc := range testCases {
 		gotOutput, gotErr := standardIdent{}.Ident(tc.input)
-		if gotErr != tc.err {
+		if !errors.Is(gotErr, tc.err) {
 			t.Fatalf("unexpected error %v in test case %d", gotErr, i)
 		}
 		if gotOutput != tc.output {
