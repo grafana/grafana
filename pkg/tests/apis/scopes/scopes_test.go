@@ -40,44 +40,54 @@ func TestIntegrationScopes(t *testing.T) {
 
 		v1Disco, err := json.MarshalIndent(resources, "", "  ")
 		require.NoError(t, err)
+		//fmt.Printf("%s", string(v1Disco))
 
 		require.JSONEq(t, `{
 			"kind": "APIResourceList",
 			"apiVersion": "v1",
 			"groupVersion": "scope.grafana.app/v0alpha1",
 			"resources": [
-				{
-					"name": "scopedashboardbindings",
-					"singularName": "scopedashboardbinding",
-					"namespaced": true,
-					"kind": "ScopeDashboardBinding",
-					"verbs": [
-					  "create",
-					  "delete",
-					  "deletecollection",
-					  "get",
-					  "list",
-					  "patch",
-					  "update",
-					  "watch"
-					]
-				  },{
+			  {
+				"name": "find",
+				"singularName": "TreeResult",
+				"namespaced": true,
+				"kind": "TreeResults",
+				"verbs": [
+				  "get"
+				]
+			  },
+			  {
+				"name": "scopedashboardbindings",
+				"singularName": "scopedashboardbinding",
+				"namespaced": true,
+				"kind": "ScopeDashboardBinding",
+				"verbs": [
+				  "create",
+				  "delete",
+				  "deletecollection",
+				  "get",
+				  "list",
+				  "patch",
+				  "update",
+				  "watch"
+				]
+			  },
+			  {
 				"name": "scopenodes",
 				"singularName": "scopenode",
 				"namespaced": true,
 				"kind": "ScopeNode",
 				"verbs": [
-					"create",
-					"delete",
-					"deletecollection",
-					"get",
-					"list",
-					"patch",
-					"update",
-					"watch"
+				  "create",
+				  "delete",
+				  "deletecollection",
+				  "get",
+				  "list",
+				  "patch",
+				  "update",
+				  "watch"
 				]
 			  },
-			  
 			  {
 				"name": "scopes",
 				"singularName": "scope",
@@ -94,7 +104,6 @@ func TestIntegrationScopes(t *testing.T) {
 				  "watch"
 				]
 			  }
-			  
 			]
 		  }`, string(v1Disco))
 	})

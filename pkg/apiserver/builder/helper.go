@@ -3,6 +3,7 @@ package builder
 import (
 	"fmt"
 	"net/http"
+	"regexp"
 	goruntime "runtime"
 	"runtime/debug"
 	"strconv"
@@ -24,6 +25,16 @@ import (
 
 	"github.com/grafana/grafana/pkg/apiserver/endpoints/filters"
 )
+
+var pathRewriters = []filters.PathRewriter{
+	{
+		// TODO: this is a temporary hack to make rest.Connecter work with resource level routes
+		Pattern: regexp.MustCompile(`(/apis/scope.grafana.app/v0alpha1/namespaces/.*/find$)`),
+		ReplaceFunc: func(matches []string) string {
+			return matches[1] + "/name" // connector requires a name
+		},
+	},
+}
 
 func SetupConfig(
 	scheme *runtime.Scheme,
@@ -76,6 +87,7 @@ func SetupConfig(
 
 		handler := genericapiserver.DefaultBuildHandlerChain(requestHandler, c)
 		handler = filters.WithAcceptHeader(handler)
+		handler = filters.WithPathRewriters(handler, pathRewriters)
 		handler = k8stracing.WithTracing(handler, serverConfig.TracerProvider, "KubernetesAPI")
 
 		return handler
