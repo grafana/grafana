@@ -659,26 +659,34 @@ func (s *store) getPermissions(sess *db.Session, resource, resourceID, resourceA
 	return result, nil
 }
 
-func (s *store) createPermissions(sess *db.Session, roleID int64, resource, resourceID, resourceAttribute string, actions map[string]struct{}, permission string) error {
-	if len(actions) == 0 {
-		return nil
-	}
-	permissions := make([]accesscontrol.Permission, 0, len(actions))
-
-	for action := range actions {
-		p := managedPermission(action, resource, resourceID, resourceAttribute)
-		p.RoleID = roleID
-		p.Created = time.Now()
-		p.Updated = time.Now()
-		p.Kind, p.Attribute, p.Identifier = p.SplitScope()
-		permissions = append(permissions, p)
-	}
+func (s *store) createPermissions(sess *db.Session, roleID int64, resource, resourceID, resourceAttribute string, missingActions map[string]struct{}, permission string) error {
+	permissions := make([]accesscontrol.Permission, 0, len(missingActions))
 	/*
 		Add ACTION SET of managed permissions to in-memory store
 	*/
 	if s.features.IsEnabled(context.TODO(), featuremgmt.FlagAccessActionSets) {
 		actionSetName := s.actionSetService.GetActionSetName(resource, permission)
 		p := managedPermission(actionSetName, resource, resourceID, resourceAttribute)
+		p.RoleID = roleID
+		p.Created = time.Now()
+		p.Updated = time.Now()
+		p.Kind, p.Attribute, p.Identifier = p.SplitScope()
+		permissions = append(permissions, p)
+	}
+
+	// If there are no missing actions for the resource, we don't need to insert any prior actions
+	// we still want to add the action set
+	if len(missingActions) == 0 {
+		if s.features.IsEnabled(context.TODO(), featuremgmt.FlagAccessActionSets) {
+			if _, err := sess.InsertMulti(&permissions); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	for action := range missingActions {
+		p := managedPermission(action, resource, resourceID, resourceAttribute)
 		p.RoleID = roleID
 		p.Created = time.Now()
 		p.Updated = time.Now()
@@ -768,7 +776,6 @@ func (s *InMemoryActionSets) StoreActionSet(resource, permission string, actions
 		Actions: actions,
 	}
 	s.actionSets[actionSet.Action] = actions
-	s.log.Debug("stored action set actionname \n", actionSet.Action)
 }
 
 // GetActionSetName function creates an action set from a list of actions and stores it inmemory.

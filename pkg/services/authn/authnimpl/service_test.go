@@ -487,26 +487,26 @@ func TestService_Logout(t *testing.T) {
 func TestService_ResolveIdentity(t *testing.T) {
 	t.Run("should return error for for unknown namespace", func(t *testing.T) {
 		svc := setupTests(t)
-		_, err := svc.ResolveIdentity(context.Background(), 1, "some:1")
-		assert.ErrorIs(t, err, authn.ErrInvalidNamespaceID)
+		_, err := svc.ResolveIdentity(context.Background(), 1, authn.NewNamespaceIDUnchecked("some", 1))
+		assert.ErrorIs(t, err, authn.ErrUnsupportedIdentity)
 	})
 
 	t.Run("should return error for for namespace that don't have a resolver", func(t *testing.T) {
 		svc := setupTests(t)
-		_, err := svc.ResolveIdentity(context.Background(), 1, "api-key:1")
+		_, err := svc.ResolveIdentity(context.Background(), 1, authn.MustParseNamespaceID("api-key:1"))
 		assert.ErrorIs(t, err, authn.ErrUnsupportedIdentity)
 	})
 
 	t.Run("should resolve for user", func(t *testing.T) {
 		svc := setupTests(t)
-		identity, err := svc.ResolveIdentity(context.Background(), 1, "user:1")
+		identity, err := svc.ResolveIdentity(context.Background(), 1, authn.MustParseNamespaceID("user:1"))
 		assert.NoError(t, err)
 		assert.NotNil(t, identity)
 	})
 
 	t.Run("should resolve for service account", func(t *testing.T) {
 		svc := setupTests(t)
-		identity, err := svc.ResolveIdentity(context.Background(), 1, "service-account:1")
+		identity, err := svc.ResolveIdentity(context.Background(), 1, authn.MustParseNamespaceID("service-account:1"))
 		assert.NoError(t, err)
 		assert.NotNil(t, identity)
 	})
@@ -514,14 +514,14 @@ func TestService_ResolveIdentity(t *testing.T) {
 	t.Run("should resolve for valid namespace if client is registered", func(t *testing.T) {
 		svc := setupTests(t, func(svc *Service) {
 			svc.RegisterClient(&authntest.MockClient{
-				NamespaceFunc: func() string { return authn.NamespaceAPIKey },
+				NamespaceFunc: func() string { return authn.NamespaceAPIKey.String() },
 				ResolveIdentityFunc: func(ctx context.Context, orgID int64, namespaceID authn.NamespaceID) (*authn.Identity, error) {
 					return &authn.Identity{}, nil
 				},
 			})
 		})
 
-		identity, err := svc.ResolveIdentity(context.Background(), 1, "api-key:1")
+		identity, err := svc.ResolveIdentity(context.Background(), 1, authn.MustParseNamespaceID("api-key:1"))
 		assert.NoError(t, err)
 		assert.NotNil(t, identity)
 	})

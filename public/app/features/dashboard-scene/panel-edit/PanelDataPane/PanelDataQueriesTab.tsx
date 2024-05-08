@@ -48,13 +48,6 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     };
 
     this._panelManager = panelManager;
-    this.addActivationHandler(this.onActivate.bind(this));
-  }
-
-  private onActivate() {
-    // This is to preserve SceneQueryRunner stays alive when switching between visualizations and table view
-    const deactivate = this._panelManager.queryRunner.activate();
-    return () => deactivate();
   }
 
   buildQueryOptions(): QueryGroupOptions {
@@ -185,7 +178,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
   }
 }
 
-function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQueriesTab>) {
+export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQueriesTab>) {
   const { datasource, dsSettings } = model.panelManager.useState();
   const { data, queries } = model.panelManager.queryRunner.useState();
 
@@ -232,7 +225,7 @@ function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQue
             icon="plus"
             onClick={model.onAddExpressionClick}
             variant="secondary"
-            data-testid="query-tab-add-expression"
+            data-testid={selectors.components.QueryTab.addExpression}
           >
             <span>Expression&nbsp;</span>
           </Button>

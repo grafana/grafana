@@ -2,7 +2,7 @@ package user
 
 import (
 	"fmt"
-	"strings"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models/roletype"
@@ -40,7 +40,7 @@ type SignedInUser struct {
 	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
 	// Will only be set when featuremgmt.FlagIdForwarding is enabled.
 	IDToken      string `json:"-" xorm:"-"`
-	NamespacedID string
+	NamespacedID identity.NamespaceID
 }
 
 func (u *SignedInUser) ShouldUpdateLastSeenAt() bool {
@@ -55,36 +55,6 @@ func (u *SignedInUser) NameOrFallback() string {
 		return u.Login
 	}
 	return u.Email
-}
-
-// TODO: There's a need to remove this struct since it creates a circular dependency
-
-// DEPRECATED: This function uses `UserDisplayDTO` model which we want to remove
-// In order to retrieve the user URL, we need the dto library. However, adding
-// the dto library to the user service creates a circular dependency
-func (u *SignedInUser) ToUserDisplayDTO() *UserDisplayDTO {
-	return &UserDisplayDTO{
-		ID:    u.UserID,
-		UID:   u.UserUID,
-		Login: u.Login,
-		Name:  u.Name,
-		// AvatarURL: dtos.GetGravatarUrl(u.GetEmail()),
-	}
-}
-
-// Static function to parse a requester into a UserDisplayDTO
-func NewUserDisplayDTOFromRequester(requester identity.Requester) (*UserDisplayDTO, error) {
-	userID := int64(0)
-	namespaceID, identifier := requester.GetNamespacedID()
-	if namespaceID == identity.NamespaceUser || namespaceID == identity.NamespaceServiceAccount {
-		userID, _ = identity.IntIdentifier(namespaceID, identifier)
-	}
-
-	return &UserDisplayDTO{
-		ID:    userID,
-		Login: requester.GetLogin(),
-		Name:  requester.GetDisplayName(),
-	}, nil
 }
 
 func (u *SignedInUser) HasRole(role roletype.RoleType) bool {
@@ -196,33 +166,53 @@ func (u *SignedInUser) GetOrgRole() roletype.RoleType {
 }
 
 // GetID returns namespaced id for the entity
-func (u *SignedInUser) GetID() string {
-	switch {
-	case u.ApiKeyID != 0:
-		return namespacedID(identity.NamespaceAPIKey, u.ApiKeyID)
-	case u.IsServiceAccount:
-		return namespacedID(identity.NamespaceServiceAccount, u.UserID)
-	case u.UserID > 0:
-		return namespacedID(identity.NamespaceUser, u.UserID)
-	case u.IsAnonymous:
-		return identity.NamespaceAnonymous + ":"
-	case u.AuthenticatedBy == "render" && u.UserID == 0:
-		return namespacedID(identity.NamespaceRenderService, 0)
-	}
-
-	return u.NamespacedID
+func (u *SignedInUser) GetID() identity.NamespaceID {
+	ns, id := u.GetNamespacedID()
+	return identity.NewNamespaceIDString(ns, id)
 }
 
 // GetNamespacedID returns the namespace and ID of the active entity
 // The namespace is one of the constants defined in pkg/services/auth/identity
-func (u *SignedInUser) GetNamespacedID() (string, string) {
-	parts := strings.Split(u.GetID(), ":")
-	// Safety: GetID always returns a ':' separated string
-	if len(parts) != 2 {
-		return "", ""
+func (u *SignedInUser) GetNamespacedID() (identity.Namespace, string) {
+	switch {
+	case u.ApiKeyID != 0:
+		return identity.NamespaceAPIKey, strconv.FormatInt(u.ApiKeyID, 10)
+	case u.IsServiceAccount:
+		return identity.NamespaceServiceAccount, strconv.FormatInt(u.UserID, 10)
+	case u.UserID > 0:
+		return identity.NamespaceUser, strconv.FormatInt(u.UserID, 10)
+	case u.IsAnonymous:
+		return identity.NamespaceAnonymous, "0"
+	case u.AuthenticatedBy == "render" && u.UserID == 0:
+		return identity.NamespaceRenderService, "0"
 	}
 
-	return parts[0], parts[1]
+	return u.NamespacedID.Namespace(), u.NamespacedID.ID()
+}
+
+// GetUID returns namespaced uid for the entity
+func (u *SignedInUser) GetUID() identity.NamespaceID {
+	ns, uid := u.GetNamespacedUID()
+	return identity.NewNamespaceIDString(ns, uid)
+}
+
+// GetNamespacedUID returns the namespace and UID of the active entity
+// The namespace is one of the constants defined in pkg/services/auth/identity
+func (u *SignedInUser) GetNamespacedUID() (identity.Namespace, string) {
+	switch {
+	case u.ApiKeyID != 0:
+		return identity.NamespaceAPIKey, fmt.Sprint(u.ApiKeyID)
+	case u.IsServiceAccount:
+		return identity.NamespaceServiceAccount, u.UserUID
+	case u.UserID > 0:
+		return identity.NamespaceUser, u.UserUID
+	case u.IsAnonymous:
+		return identity.NamespaceAnonymous, ""
+	case u.AuthenticatedBy == "render" && u.UserID == 0:
+		return identity.NamespaceRenderService, ""
+	}
+
+	return identity.NamespaceEmpty, ""
 }
 
 func (u *SignedInUser) GetAuthID() string {
@@ -265,8 +255,4 @@ func (u *SignedInUser) GetDisplayName() string {
 
 func (u *SignedInUser) GetIDToken() string {
 	return u.IDToken
-}
-
-func namespacedID(namespace string, id int64) string {
-	return fmt.Sprintf("%s:%d", namespace, id)
 }

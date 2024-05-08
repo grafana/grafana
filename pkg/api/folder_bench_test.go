@@ -214,7 +214,10 @@ func setupDB(b testing.TB) benchScenario {
 	require.NoError(b, err)
 
 	cache := localcache.ProvideService()
-	userSvc, err := userimpl.ProvideService(db, orgService, cfg, teamSvc, cache, &quotatest.FakeQuotaService{}, bundleregistry.ProvideService())
+	userSvc, err := userimpl.ProvideService(
+		db, orgService, cfg, teamSvc, cache, tracing.InitializeTracerForTest(),
+		&quotatest.FakeQuotaService{}, bundleregistry.ProvideService(),
+	)
 	require.NoError(b, err)
 
 	var orgID int64 = 1
@@ -445,7 +448,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
 
-	acSvc := acimpl.ProvideOSSService(sc.cfg, acdb.ProvideService(sc.db), localcache.ProvideService(), features)
+	acSvc := acimpl.ProvideOSSService(sc.cfg, acdb.ProvideService(sc.db), localcache.ProvideService(), features, tracing.InitializeTracerForTest())
 
 	quotaSrv := quotatest.New(false, nil)
 
@@ -455,7 +458,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 	folderStore := folderimpl.ProvideDashboardFolderStore(sc.db)
 
 	ac := acimpl.ProvideAccessControl(sc.cfg)
-	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sc.cfg, dashStore, folderStore, sc.db, features, supportbundlestest.NewFakeBundleService(), nil)
+	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderStore, sc.db, features, supportbundlestest.NewFakeBundleService(), nil)
 
 	cfg := setting.NewCfg()
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(

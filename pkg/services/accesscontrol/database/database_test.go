@@ -91,9 +91,9 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			store, permissionStore, sql, teamSvc, _ := setupTestEnv(t)
+			store, permissionStore, usrSvc, teamSvc, _ := setupTestEnv(t)
 
-			user, team := createUserAndTeam(t, store.sql, sql, teamSvc, tt.orgID)
+			user, team := createUserAndTeam(t, store.sql, usrSvc, teamSvc, tt.orgID)
 
 			for _, id := range tt.userPermissions {
 				_, err := permissionStore.SetUserResourcePermission(context.Background(), tt.orgID, accesscontrol.User{ID: user.ID}, rs.SetResourcePermissionCommand{
@@ -162,10 +162,86 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 	}
 }
 
+type getTeamsPermissionsTestCase struct {
+	desc             string
+	orgID            int64
+	teamsPermissions [][]string
+	teamsToQuery     []int
+	expected         int
+}
+
+func TestAccessControlStore_GetTeamsPermissions(t *testing.T) {
+	tests := []getTeamsPermissionsTestCase{
+		{
+			desc:  "should successfully get team permissions",
+			orgID: 1,
+			teamsPermissions: [][]string{
+				{"100", "2"},
+				{"101", "3"},
+			},
+			teamsToQuery: []int{0, 1},
+			expected:     4,
+		},
+		{
+			desc:  "Should not get permissions for teams not listed in the query",
+			orgID: 1,
+			teamsPermissions: [][]string{
+				{"100", "2"},
+				{"101", "3"},
+			},
+			teamsToQuery: []int{0},
+			expected:     2,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			store, permissionStore, _, teamSvc, _ := setupTestEnv(t)
+
+			teams := make([]team.Team, 0)
+			for i := 0; i < len(tt.teamsPermissions); i++ {
+				team, err := teamSvc.CreateTeam(context.Background(), fmt.Sprintf("team-%v", i), "", tt.orgID)
+				require.NoError(t, err)
+				teams = append(teams, team)
+			}
+
+			for teamIDx, teamPermissions := range tt.teamsPermissions {
+				for _, id := range teamPermissions {
+					team := teams[teamIDx]
+					_, err := permissionStore.SetTeamResourcePermission(context.Background(), tt.orgID, team.ID, rs.SetResourcePermissionCommand{
+						Actions:    []string{"dashboards:read"},
+						Resource:   "dashboards",
+						ResourceID: id,
+					}, nil)
+					require.NoError(t, err)
+				}
+			}
+
+			teamIDs := make([]int64, 0)
+			for _, teamIDx := range tt.teamsToQuery {
+				if teamIDx < len(teams) {
+					teamIDs = append(teamIDs, teams[teamIDx].ID)
+				}
+			}
+
+			teamsPermissions, err := store.GetTeamsPermissions(context.Background(), accesscontrol.GetUserPermissionsQuery{
+				TeamIDs: teamIDs,
+				OrgID:   tt.orgID,
+			})
+			require.NoError(t, err)
+
+			permissions := make([]accesscontrol.Permission, 0)
+			for _, teamPermissions := range teamsPermissions {
+				permissions = append(permissions, teamPermissions...)
+			}
+			assert.Len(t, permissions, tt.expected)
+		})
+	}
+}
+
 func TestAccessControlStore_DeleteUserPermissions(t *testing.T) {
 	t.Run("expect permissions in all orgs to be deleted", func(t *testing.T) {
-		store, permissionsStore, sql, teamSvc, _ := setupTestEnv(t)
-		user, _ := createUserAndTeam(t, store.sql, sql, teamSvc, 1)
+		store, permissionsStore, usrSvc, teamSvc, _ := setupTestEnv(t)
+		user, _ := createUserAndTeam(t, store.sql, usrSvc, teamSvc, 1)
 
 		// generate permissions in org 1
 		_, err := permissionsStore.SetUserResourcePermission(context.Background(), 1, accesscontrol.User{ID: user.ID}, rs.SetResourcePermissionCommand{
@@ -204,8 +280,8 @@ func TestAccessControlStore_DeleteUserPermissions(t *testing.T) {
 	})
 
 	t.Run("expect permissions in org 1 to be deleted", func(t *testing.T) {
-		store, permissionsStore, sql, teamSvc, _ := setupTestEnv(t)
-		user, _ := createUserAndTeam(t, store.sql, sql, teamSvc, 1)
+		store, permissionsStore, usrSvc, teamSvc, _ := setupTestEnv(t)
+		user, _ := createUserAndTeam(t, store.sql, usrSvc, teamSvc, 1)
 
 		// generate permissions in org 1
 		_, err := permissionsStore.SetUserResourcePermission(context.Background(), 1, accesscontrol.User{ID: user.ID}, rs.SetResourcePermissionCommand{
@@ -246,8 +322,8 @@ func TestAccessControlStore_DeleteUserPermissions(t *testing.T) {
 
 func TestAccessControlStore_DeleteTeamPermissions(t *testing.T) {
 	t.Run("expect permissions related to team to be deleted", func(t *testing.T) {
-		store, permissionsStore, sql, teamSvc, _ := setupTestEnv(t)
-		user, team := createUserAndTeam(t, store.sql, sql, teamSvc, 1)
+		store, permissionsStore, usrSvc, teamSvc, _ := setupTestEnv(t)
+		user, team := createUserAndTeam(t, store.sql, usrSvc, teamSvc, 1)
 
 		// grant permission to the team
 		_, err := permissionsStore.SetTeamResourcePermission(context.Background(), 1, team.ID, rs.SetResourcePermissionCommand{
@@ -280,8 +356,8 @@ func TestAccessControlStore_DeleteTeamPermissions(t *testing.T) {
 		assert.Len(t, permissions, 0)
 	})
 	t.Run("expect permissions not related to team to be kept", func(t *testing.T) {
-		store, permissionsStore, sql, teamSvc, _ := setupTestEnv(t)
-		user, team := createUserAndTeam(t, store.sql, sql, teamSvc, 1)
+		store, permissionsStore, usrSvc, teamSvc, _ := setupTestEnv(t)
+		user, team := createUserAndTeam(t, store.sql, usrSvc, teamSvc, 1)
 
 		// grant permission to the team
 		_, err := permissionsStore.SetTeamResourcePermission(context.Background(), 1, team.ID, rs.SetResourcePermissionCommand{
@@ -409,7 +485,10 @@ func setupTestEnv(t testing.TB) (*AccessControlStore, rs.Store, user.Service, te
 	require.Equal(t, int64(1), orgID)
 	require.NoError(t, err)
 
-	userService, err := userimpl.ProvideService(sql, orgService, cfg, teamService, localcache.ProvideService(), quotatest.New(false, nil), supportbundlestest.NewFakeBundleService())
+	userService, err := userimpl.ProvideService(
+		sql, orgService, cfg, teamService, localcache.ProvideService(), tracing.InitializeTracerForTest(),
+		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
+	)
 	require.NoError(t, err)
 	return acstore, permissionStore, userService, teamService, orgService
 }
@@ -546,7 +625,7 @@ func TestIntegrationAccessControlStore_SearchUsersPermissions(t *testing.T) {
 			},
 			options: accesscontrol.SearchOptions{
 				ActionPrefix: "teams:",
-				NamespacedID: identity.NamespaceUser + ":1",
+				NamespacedID: fmt.Sprintf("%s:1", identity.NamespaceUser),
 			},
 			wantPerm: map[int64][]accesscontrol.Permission{
 				1: {{Action: "teams:read", Scope: "teams:id:1"}, {Action: "teams:read", Scope: "teams:id:10"},

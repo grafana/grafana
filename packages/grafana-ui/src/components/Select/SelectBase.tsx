@@ -11,6 +11,7 @@ import { useTheme2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { Spinner } from '../Spinner/Spinner';
 
+import { CustomInput } from './CustomInput';
 import { DropdownIndicator } from './DropdownIndicator';
 import { IndicatorsContainer } from './IndicatorsContainer';
 import { InputControl } from './InputControl';
@@ -240,8 +241,13 @@ export function SelectBase<T, Rest = {}>({
     onBlur,
     onChange: onChangeWithEmpty,
     onInputChange: (val: string, actionMeta: InputActionMeta) => {
-      setHasInputValue(!!val);
-      onInputChange?.(val, actionMeta);
+      const newValue = onInputChange?.(val, actionMeta) ?? val;
+      const newHasValue = !!newValue;
+      if (newHasValue !== hasInputValue) {
+        setHasInputValue(newHasValue);
+      }
+
+      return newValue;
     },
     onKeyDown,
     onMenuClose: onCloseMenu,
@@ -330,6 +336,7 @@ export function SelectBase<T, Rest = {}>({
           SelectContainer,
           MultiValueContainer: MultiValueContainer,
           MultiValueRemove: !disabled ? MultiValueRemove : () => null,
+          Input: CustomInput,
           ...components,
         }}
         styles={selectStyles}
