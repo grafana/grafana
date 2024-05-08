@@ -299,10 +299,16 @@ func (fr *FileReader) getOrCreateFolderID(ctx context.Context, cfg *config, serv
 	}
 
 	cmd := &dashboards.GetDashboardQuery{
-		Title:    &folderName,
-		FolderID: util.Pointer(int64(0)),
+		FolderID: util.Pointer(int64(0)), // nolint:staticcheck
 		OrgID:    cfg.OrgID,
 	}
+
+	if cfg.FolderUID != "" {
+		cmd.UID = cfg.FolderUID
+	} else {
+		cmd.Title = &folderName
+	}
+
 	result, err := fr.dashboardStore.GetDashboard(ctx, cmd)
 
 	if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
