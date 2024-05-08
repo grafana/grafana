@@ -144,19 +144,10 @@ func configureAppChildPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
 	}
 	child.IncludedInAppID = parent.ID
 
+	// If the child plugin does not have a version, it will inherit the version from the parent.
 	if child.Info.Version == "" {
 		child.Info.Version = parent.Info.Version
 	}
-
-	//child.BaseURL = parent.BaseURL
-	//
-	//// TODO move this logic within assetpath package
-	//appSubPath := strings.ReplaceAll(strings.Replace(child.FS.Base(), parent.FS.Base(), "", 1), "\\", "/")
-	//if parent.IsCorePlugin() {
-	//	child.Module = path.Join("core:plugin", parent.ID, appSubPath)
-	//} else {
-	//	child.Module = path.Join("public/plugins", parent.ID, appSubPath, "module.js")
-	//}
 }
 
 // SkipHostEnvVarsDecorateFunc returns a DecorateFunc that configures the SkipHostEnvVars field of the plugin.
