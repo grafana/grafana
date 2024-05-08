@@ -24,6 +24,7 @@ import { TableCell } from './TableCell';
 import { TableStyles } from './styles';
 import { CellColors, TableFieldOptions, TableFilterActionCallback } from './types';
 import { calculateAroundPointThreshold, getCellColors, isPointTimeValAroundTableTimeVal } from './utils';
+import { text } from 'd3';
 
 interface RowsListProps {
   data: DataFrame;
@@ -214,6 +215,7 @@ export const RowsList = (props: RowsListProps) => {
   );
 
   let rowBg: Function | undefined = undefined;
+  let textWrapField: Field | undefined = undefined;
   for (const field of data.fields) {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const fieldOptions = field.config.custom as TableFieldOptions;
@@ -229,6 +231,15 @@ export const RowsList = (props: RowsListProps) => {
         const colors = getCellColors(tableStyles, fieldOptions.cellOptions, display);
         return colors;
       };
+    }
+
+    if (
+      fieldOptions !== undefined &&
+      fieldOptions.cellOptions !== undefined &&
+      fieldOptions.cellOptions.type === TableCellDisplayMode.Auto &&
+      fieldOptions.cellOptions.wrapText
+    ) {
+      textWrapField = field;
     }
   }
 
@@ -255,15 +266,12 @@ export const RowsList = (props: RowsListProps) => {
         style.color = textColor;
       }
 
-      // Get the text value
-      // TODO: Actually use configuration rather than using the second
-      // data value 🤫
-      const textValue = row.values[1];
-
-      // Set cell height
-      const pxLineHeight = theme.typography.body.lineHeight * theme.typography.fontSize;
-      const bbox = getTextBoundingBox(textValue, headerGroups, osContext, pxLineHeight, tableStyles.rowHeight);
-      style.height = bbox.height;
+      // If there's a text wrapping field we set the height of it here
+      if (textWrapField) {
+        const pxLineHeight = theme.typography.body.lineHeight * theme.typography.fontSize;
+        const bbox = getTextBoundingBox(textWrapField.values[index], headerGroups, osContext, pxLineHeight, tableStyles.rowHeight);
+        style.height = bbox.height;
+      }
 
       return (
         <div
@@ -328,13 +336,18 @@ export const RowsList = (props: RowsListProps) => {
     const indexForPagination = rowIndexForPagination(index);
     const row = rows[indexForPagination];
 
+    console.log(index);
+
     if (tableState.expanded[row.id] && nestedDataField) {
       return getExpandedRowHeight(nestedDataField, row.index, tableStyles);
     }
 
-    // TODO: short circuit this when we're not wrapping 🎁
-    const pxLineHeight = theme.typography.fontSize * theme.typography.body.lineHeight;
-    return getTextBoundingBox(row.values[1], headerGroups, osContext, pxLineHeight, tableStyles.rowHeight).height;
+    if (textWrapField) {
+      const pxLineHeight = theme.typography.fontSize * theme.typography.body.lineHeight;
+      return getTextBoundingBox(textWrapField.values[index], headerGroups, osContext, pxLineHeight, tableStyles.rowHeight).height;
+    }
+
+    return tableStyles.rowHeight;
   };
 
   const handleScroll: UIEventHandler = (event) => {
