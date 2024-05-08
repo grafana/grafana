@@ -25,11 +25,6 @@ export interface Slo {
   alerting?: SloAlerting;
 }
 
-export interface OnCallConfigChecks {
-  is_chatops_connected: boolean;
-  is_integration_chatops_connected: boolean;
-}
-
 const getProxyApiUrl = (path: string) => `/api/plugin-proxy/${SupportedPlugin.Slo}${path}`;
 
 export const sloApi = alertingApi.injectEndpoints({
