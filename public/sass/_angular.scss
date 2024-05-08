@@ -1,0 +1,22 @@
+// these styles are only used by angular components/pages
+// once angular is disabled, this file can be deleted
+
+.edit-tab-content {
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.view-mode--inactive {
+  .react-resizable-handle,
+  .add-row-panel-hint,
+  .dash-row-menu-container,
+  .panel-info-corner--info,
+  .panel-info-corner--links {
+    display: none;
+  }
+}
+
+.login-form {
+  margin-bottom: $space-md;
+  width: 100%;
+}
