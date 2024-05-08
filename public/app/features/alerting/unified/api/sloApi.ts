@@ -1,23 +1,21 @@
-import { FetchError, isFetchError } from '@grafana/runtime';
-
 import { SupportedPlugin } from '../types/pluginBridges';
 
 import { alertingApi } from './alertingApi';
 
-export interface KeyValue {
+export interface Label {
   key: string;
   value: string;
 }
 
 export interface SloAlertingMetadata {
-  annotations?: KeyValue[];
-  labels?: KeyValue[];
+  annotations?: Label[];
+  labels?: Label[];
 }
 
 export interface SloAlerting {
-  annotations?: KeyValue[];
+  annotations?: Label[];
   fastBurn?: SloAlertingMetadata;
-  labels?: KeyValue[];
+  labels?: Label[];
   slowBurn?: SloAlertingMetadata;
 }
 
@@ -35,9 +33,3 @@ export const sloApi = alertingApi.injectEndpoints({
     }),
   }),
 });
-
-export const { useGetSlosQuery } = sloApi;
-
-export function isSlosFetchError(error: unknown): error is FetchError<{ detail: string }> {
-  return isFetchError(error) && 'detail' in error.data;
-}
