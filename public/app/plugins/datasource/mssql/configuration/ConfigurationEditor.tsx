@@ -120,25 +120,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
     { value: MSSQLEncryptOptions.false, label: 'false' },
     { value: MSSQLEncryptOptions.true, label: 'true' },
   ];
-
-  if (!jsonData.authenticationType) {
-    jsonData.authenticationType = MSSQLAuthenticationType.sqlAuth;
-    onOptionsChange({
-      ...dsSettings,
-      ...{
-        jsonData: {
-          ...jsonData,
-          azureCredentials: undefined,
-          keytabFilePath: undefined,
-          credentialCache: undefined,
-          credentialCacheLookupFile: undefined,
-        },
-        secureJsonData: { ...dsSettings.secureJsonData, ...{ password: '' } },
-        secureJsonFields: { ...dsSettings.secureJsonFields, ...{ password: false } },
-        user: '',
-      },
-    });
-  }
+ 
 
   return (
     <>

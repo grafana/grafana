@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useEffectOnce } from 'react-use';
 
 import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -48,10 +49,13 @@ export const MonitorConfig = (props: Props) => {
   const onSubscriptionChange = (subscriptionId?: string) =>
     updateOptions((options) => ({ ...options, jsonData: { ...options.jsonData, subscriptionId } }));
 
-  if (!options.jsonData.authType) {
-    options.jsonData.authType = credentials.authType
-    onCredentialsChange(credentials);
-  }
+  // The auth type needs to be set on the first load of the data source
+  useEffectOnce(() => {
+    if (!options.jsonData.authType) {
+      options.jsonData.authType = credentials.authType
+      onCredentialsChange(credentials);
+    }
+  });
 
   return (
     <>
