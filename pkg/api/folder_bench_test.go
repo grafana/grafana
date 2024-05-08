@@ -448,7 +448,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
 
-	acSvc := acimpl.ProvideOSSService(sc.cfg, acdb.ProvideService(sc.db), localcache.ProvideService(), features)
+	acSvc := acimpl.ProvideOSSService(sc.cfg, acdb.ProvideService(sc.db), localcache.ProvideService(), features, tracing.InitializeTracerForTest())
 
 	quotaSrv := quotatest.New(false, nil)
 

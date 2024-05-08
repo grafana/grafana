@@ -14,6 +14,10 @@ type HostTransportDialer struct {
 	Host   string
 }
 
+func (m HostTransportDialer) HostName() string {
+	return m.Host
+}
+
 func (m HostTransportDialer) DialContext(ctx context.Context, network string, addr string) (conn net.Conn, err error) {
 	return m.Dialer.DialContext(ctx, network, addr)
 }

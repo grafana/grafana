@@ -373,7 +373,7 @@ func (s *Service) resolveIdenity(ctx context.Context, orgID int64, namespaceID a
 			}}, nil
 	}
 
-	resolver, ok := s.idenityResolverClients[namespaceID.Namespace()]
+	resolver, ok := s.idenityResolverClients[namespaceID.Namespace().String()]
 	if !ok {
 		return nil, authn.ErrUnsupportedIdentity.Errorf("no resolver for : %s", namespaceID.Namespace())
 	}
