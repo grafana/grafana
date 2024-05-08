@@ -52,8 +52,8 @@ export const COMMON_LABELS = 'Common labels';
 
 export const LogLevelColor = {
   [LogLevel.critical]: colors[7],
-  [LogLevel.warning]: colors[1],
   [LogLevel.error]: colors[4],
+  [LogLevel.warning]: colors[1],
   [LogLevel.info]: colors[0],
   [LogLevel.debug]: colors[5],
   [LogLevel.trace]: colors[2],
