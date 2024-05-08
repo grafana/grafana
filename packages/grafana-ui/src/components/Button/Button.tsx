@@ -45,7 +45,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       className,
       type = 'button',
       tooltip,
+      disabled,
       tooltipPlacement,
+      onClick,
       ...otherProps
     },
     ref
@@ -60,10 +62,27 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       iconOnly: !children,
     });
 
+    const buttonStyles = cx(
+      styles.button,
+      {
+        [css(styles.disabled, {
+          '&:hover': css(styles.disabled),
+        })]: disabled,
+      },
+      className
+    );
+
     // In order to standardise Button please always consider using IconButton when you need a button with an icon only
     // When using tooltip, ref is forwarded to Tooltip component instead for https://github.com/grafana/grafana/issues/65632
     const button = (
-      <button className={cx(styles.button, className)} type={type} {...otherProps} ref={tooltip ? undefined : ref}>
+      <button
+        className={buttonStyles}
+        type={type}
+        onClick={disabled ? undefined : onClick}
+        {...otherProps}
+        aria-disabled={disabled}
+        ref={tooltip ? undefined : ref}
+      >
         <IconRenderer icon={icon} size={size} className={styles.icon} />
         {children && <span className={styles.content}>{children}</span>}
       </button>
