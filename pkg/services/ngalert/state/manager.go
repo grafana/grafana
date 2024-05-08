@@ -489,20 +489,34 @@ func translateInstanceState(state ngModels.InstanceStateType) eval.State {
 }
 
 func (st *Manager) deleteStaleStatesFromCache(ctx context.Context, logger log.Logger, evaluatedAt time.Time, alertRule *ngModels.AlertRule) []StateTransition {
+	resolveMissing, err := alertRule.IsNoNormalStateRule()
+	if err != nil {
+		st.log.Debug("do not resolve missing states immediately because can't detect type of rule", "error", err)
+		resolveMissing = false
+	}
 	// If we are removing two or more stale series it makes sense to share the resolved image as the alert rule is the same.
 	// TODO: We will need to change this when we support images without screenshots as each series will have a different image
 	staleStates := st.cache.deleteRuleStates(alertRule.GetKey(), func(s *State) bool {
-		return stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds)
+		isStale := stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds)
+		return isStale || resolveMissing && (s.State == eval.Pending || s.State == eval.Alerting) && s.LastEvaluationTime.Before(evaluatedAt)
 	})
 	resolvedStates := make([]StateTransition, 0, len(staleStates))
-
+	var resolvedMissingEvalResult int
 	for _, s := range staleStates {
-		logger.Info("Detected stale state entry", "cacheID", s.CacheID, "state", s.State, "reason", s.StateReason)
+		isStale := stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds)
+		if isStale {
+			logger.Info("Detected stale state entry", "cacheID", s.CacheID, "state", s.State, "reason", s.StateReason)
+		} else {
+			resolvedMissingEvalResult++
+			logger.Debug("Resolved state entry", "cacheID", s.CacheID, "oldState", s.State, "oldReason", s.StateReason)
+		}
 		oldState := s.State
 		oldReason := s.StateReason
 
 		s.State = eval.Normal
-		s.StateReason = ngModels.StateReasonMissingSeries
+		if isStale {
+			s.StateReason = ngModels.StateReasonMissingSeries
+		}
 		s.EndsAt = evaluatedAt
 		s.LastEvaluationTime = evaluatedAt
 
@@ -525,6 +539,10 @@ func (st *Manager) deleteStaleStatesFromCache(ctx context.Context, logger log.Lo
 			PreviousStateReason: oldReason,
 		}
 		resolvedStates = append(resolvedStates, record)
+	}
+
+	if resolvedMissingEvalResult > 0 {
+		st.log.Info("Resolved dimensions in alerting state because they were missing in the evaluation results", "count", resolvedMissingEvalResult)
 	}
 	return resolvedStates
 }

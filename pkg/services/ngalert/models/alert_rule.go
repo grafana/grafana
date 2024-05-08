@@ -255,6 +255,17 @@ type AlertRule struct {
 	NotificationSettings []NotificationSettings `xorm:"notification_settings"` // we use slice to workaround xorm mapping that does not serialize a struct to JSON unless it's a slice
 }
 
+func (alertRule *AlertRule) IsNoNormalStateRule() (bool, error) {
+	if len(alertRule.Data) != 1 {
+		return false, nil
+	}
+	isDs, dsType, err := alertRule.Data[0].IsDatasourceQuery()
+	if err != nil {
+		return false, err
+	}
+	return isDs && dsType == "prometheus", nil
+}
+
 // AlertRuleWithOptionals This is to avoid having to pass in additional arguments deep in the call stack. Alert rule
 // object is created in an early validation step without knowledge about current alert rule fields or if they need to be
 // overridden. This is done in a later step and, in that step, we did not have knowledge about if a field was optional

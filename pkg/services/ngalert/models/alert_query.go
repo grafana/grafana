@@ -113,6 +113,32 @@ func (aq *AlertQuery) setModelProps() error {
 	return nil
 }
 
+func (aq *AlertQuery) IsDatasourceQuery() (bool, string, error) {
+	nt := expr.NodeTypeFromDatasourceUID(aq.DatasourceUID)
+	if nt != expr.TypeDatasourceNode {
+		return false, "", nil
+	}
+	if aq.modelProps == nil {
+		err := aq.setModelProps()
+		if err != nil {
+			return false, "", err
+		}
+	}
+	dsany, ok := aq.modelProps["datasource"]
+	if !ok {
+		return false, "", fmt.Errorf("model does not contain 'datasource' field")
+	}
+	ds, ok := dsany.(map[string]any)
+	if !ok {
+		return false, "", fmt.Errorf("field 'datasource' is expected to be a JSON dictionary but got %T", dsany)
+	}
+	datasourceType := ""
+	if d, ok := ds["type"]; ok {
+		datasourceType = fmt.Sprintf("%v", d)
+	}
+	return true, datasourceType, nil
+}
+
 // IsExpression returns true if the alert query is an expression.
 func (aq *AlertQuery) IsExpression() (bool, error) {
 	return expr.NodeTypeFromDatasourceUID(aq.DatasourceUID) == expr.TypeCMDNode, nil
