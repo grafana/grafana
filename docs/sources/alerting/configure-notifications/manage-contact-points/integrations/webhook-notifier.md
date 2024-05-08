@@ -24,11 +24,11 @@ title: Configure the webhook notifier for Alerting
 weight: 200
 ---
 
-## Configure the webhook notifier for Alerting
+# Configure the webhook notifier for Alerting
 
 The webhook notification is a simple way to send information about a state change over HTTP to a custom endpoint. Using this notification you could integrate Grafana into a system of your choosing.
 
-### Webhook JSON payload
+## Webhook JSON payload
 
 ```json
 {
@@ -100,7 +100,7 @@ The webhook notification is a simple way to send information about a state chang
 }
 ```
 
-### Webhook fields
+## Webhook fields
 
 ### Body
 
@@ -121,7 +121,7 @@ The webhook notification is a simple way to send information about a state chang
 | state             | string                    | **Will be deprecated soon**                                                     |
 | message           | string                    | **Will be deprecated soon**                                                     |
 
-### Alert
+## Alert
 
 | Key          | Type   | Description                                                                        |
 | ------------ | ------ | ---------------------------------------------------------------------------------- |
