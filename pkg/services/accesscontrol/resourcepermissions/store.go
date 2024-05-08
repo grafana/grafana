@@ -665,7 +665,7 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, resource, reso
 	/*
 		Add ACTION SET of managed permissions to in-memory store
 	*/
-	if s.features.IsEnabled(context.TODO(), featuremgmt.FlagAccessActionSets) {
+	if s.features.IsEnabled(context.TODO(), featuremgmt.FlagAccessActionSets) && permission != "" {
 		actionSetName := GetActionSetName(resource, permission)
 		p := managedPermission(actionSetName, resource, resourceID, resourceAttribute)
 		p.RoleID = roleID
@@ -675,10 +675,10 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, resource, reso
 		permissions = append(permissions, p)
 	}
 
-	// If there are no missing actions for the resource, we don't need to insert any prior actions
-	// we still want to add the action set
+	// If there are no missing actions for the resource (in case of access level downgrade or resource removal), we don't need to insert any prior actions
+	// we still want to add the action set in case of access level downgrade, but not in case of resource removal (when permission == "")
 	if len(missingActions) == 0 {
-		if s.features.IsEnabled(context.TODO(), featuremgmt.FlagAccessActionSets) {
+		if s.features.IsEnabled(context.TODO(), featuremgmt.FlagAccessActionSets) && permission != "" {
 			if _, err := sess.InsertMulti(&permissions); err != nil {
 				return err
 			}
