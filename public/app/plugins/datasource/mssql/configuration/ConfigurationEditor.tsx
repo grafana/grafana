@@ -121,6 +121,25 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
     { value: MSSQLEncryptOptions.true, label: 'true' },
   ];
 
+  if (!jsonData.authenticationType) {
+    jsonData.authenticationType = MSSQLAuthenticationType.sqlAuth;
+    onOptionsChange({
+      ...dsSettings,
+      ...{
+        jsonData: {
+          ...jsonData,
+          azureCredentials: undefined,
+          keytabFilePath: undefined,
+          credentialCache: undefined,
+          credentialCacheLookupFile: undefined,
+        },
+        secureJsonData: { ...dsSettings.secureJsonData, ...{ password: '' } },
+        secureJsonFields: { ...dsSettings.secureJsonFields, ...{ password: false } },
+        user: '',
+      },
+    });
+  }
+
   return (
     <>
       <DataSourceDescription
@@ -271,7 +290,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
         >
           <Select
             // Default to basic authentication of none is set
-            value={jsonData.authenticationType || MSSQLAuthenticationType.sqlAuth}
+            value={jsonData.authenticationType}
             inputId="authenticationType"
             options={buildAuthenticationOptions()}
             onChange={onAuthenticationMethodChanged}

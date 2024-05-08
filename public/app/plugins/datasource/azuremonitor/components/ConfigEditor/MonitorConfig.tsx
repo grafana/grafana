@@ -48,6 +48,11 @@ export const MonitorConfig = (props: Props) => {
   const onSubscriptionChange = (subscriptionId?: string) =>
     updateOptions((options) => ({ ...options, jsonData: { ...options.jsonData, subscriptionId } }));
 
+  if (!options.jsonData.authType) {
+    options.jsonData.authType = credentials.authType
+    onCredentialsChange(credentials);
+  }
+
   return (
     <>
       <AzureCredentialsForm
