@@ -139,7 +139,7 @@ The webhook notification is a simple way to send information about a state chang
 | imageURL     | string | URL of a screenshot of a panel assigned to the rule that created this notification |
 
 {{< admonition type="note" >}}
-Alert rules are not coupled to dashboards anymore therefore the fields related to dashboards dashboardId and panelId have been removed.
+Alert rules are not coupled to dashboards anymore therefore the fields related to dashboards `dashboardId` and `panelId` have been removed.
 {{< /admonition >}}
 
 ## Procedure
