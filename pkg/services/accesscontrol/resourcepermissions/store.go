@@ -763,7 +763,12 @@ func (s *InMemoryActionSets) Resolve(action string) []string {
 	sets := make([]string, 0, len(actionSets))
 
 	for _, actionSet := range actionSets {
-		prefix := strings.Split(actionSet, ":")[0]
+		setParts := strings.Split(actionSet, ":")
+		if len(setParts) != 2 {
+			s.log.Debug("skipping resolution for action set with invalid name", "action set", actionSet)
+			continue
+		}
+		prefix := setParts[0]
 		// Only use action sets for folders and dashboards for now
 		// We need to verify that action sets for other resources do not share names with actions (eg, `datasources:query`)
 		if prefix != "folders" && prefix != "dashboards" {
