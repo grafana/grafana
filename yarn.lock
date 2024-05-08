@@ -3779,7 +3779,7 @@ __metadata:
     "@types/debounce-promise": "npm:3.1.9"
     "@types/eslint": "npm:8.56.10"
     "@types/jest": "npm:29.5.12"
-    "@types/jquery": "npm:3.5.29"
+    "@types/jquery": "npm:3.5.30"
     "@types/lodash": "npm:4.17.0"
     "@types/node": "npm:20.12.8"
     "@types/pluralize": "npm:^0.0.33"
@@ -4078,7 +4078,7 @@ __metadata:
     "@types/hoist-non-react-statics": "npm:3.3.5"
     "@types/is-hotkey": "npm:0.1.10"
     "@types/jest": "npm:29.5.12"
-    "@types/jquery": "npm:3.5.29"
+    "@types/jquery": "npm:3.5.30"
     "@types/lodash": "npm:4.17.0"
     "@types/mock-raf": "npm:1.0.6"
     "@types/node": "npm:20.12.8"
@@ -9641,12 +9641,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/jquery@npm:3.5.29":
-  version: 3.5.29
-  resolution: "@types/jquery@npm:3.5.29"
+"@types/jquery@npm:3.5.30":
+  version: 3.5.30
+  resolution: "@types/jquery@npm:3.5.30"
   dependencies:
     "@types/sizzle": "npm:*"
-  checksum: 10/364facf2cb0bc935cb4b7f4af0b12c8e901b02b08a85af213172485166123b10aad8563f8e51e363f65a778c4105a59a64dedd0b0fd73f96557219d46477af56
+  checksum: 10/5287586be022bfe85d411733b35f8f0ae8577c4afb5a94ff0e157d2c1036e10adfdd15ed80becb06f01647c39be5dbb24a45cba10db3fa6304eb442fa509321e
   languageName: node
   linkType: hard
 
@@ -18208,7 +18208,7 @@ __metadata:
     "@types/gtag.js": "npm:^0.0.19"
     "@types/history": "npm:4.7.11"
     "@types/jest": "npm:29.5.12"
-    "@types/jquery": "npm:3.5.29"
+    "@types/jquery": "npm:3.5.30"
     "@types/js-yaml": "npm:^4.0.5"
     "@types/jsurl": "npm:^1.2.28"
     "@types/lodash": "npm:4.17.0"
