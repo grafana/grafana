@@ -136,7 +136,7 @@
     "@types/hoist-non-react-statics": "3.3.5",
     "@types/is-hotkey": "0.1.10",
     "@types/jest": "29.5.12",
-    "@types/jquery": "3.5.29",
+    "@types/jquery": "3.5.30",
     "@types/lodash": "4.17.0",
     "@types/mock-raf": "1.0.6",
     "@types/node": "20.12.8",
