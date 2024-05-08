@@ -2,15 +2,20 @@ package scope
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
+	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	scope "github.com/grafana/grafana/pkg/apis/scope/v0alpha1"
 )
 
 type findREST struct {
+	scopeNodeStorage *storage
 }
 
 var (
@@ -53,12 +58,29 @@ func (r *findREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *findREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+	// See: /pkg/apiserver/builder/helper.go#L34
+	// The name is set with a rewriter hack
+	if name != "name" {
+		return nil, errors.NewNotFound(schema.GroupResource{}, name)
+	}
+
+	raw, err := r.scopeNodeStorage.List(ctx, &internalversion.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	all, ok := raw.(*scope.ScopeNodeList)
+	if !ok {
+		return nil, fmt.Errorf("expected ScopeNodeList")
+	}
+
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		responder.Object(200,
-			&scope.FindResults{
-				Message: "hello",
-				Found:   []string{"A", "B", "C"},
-			},
-		)
+		results := &scope.FindResults{
+			Message: "hello",
+		}
+		for _, item := range all.Items {
+			// TODO... whatever filtering makes sense
+			results.Found = append(results.Found, item.Name)
+		}
+		responder.Object(200, results)
 	}), nil
 }

@@ -11,11 +11,12 @@ import (
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 
+	apistore "k8s.io/apiserver/pkg/storage"
+
 	scope "github.com/grafana/grafana/pkg/apis/scope/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
-	apistore "k8s.io/apiserver/pkg/storage"
 )
 
 var _ grafanarest.Storage = (*storage)(nil)

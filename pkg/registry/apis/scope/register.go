@@ -140,7 +140,10 @@ func (b *ScopeAPIBuilder) GetAPIGroupInfo(
 	}
 	storage[scopeNodeResourceInfo.StoragePath()] = scopeNodeStorage
 
-	storage["find"] = &findREST{}
+	// Adds a rest.Connector
+	// NOTE! the server has a hardcoded rewrite filter that fills in a name
+	// so the standard k8s plumbing continues to work
+	storage["find"] = &findREST{scopeNodeStorage: scopeNodeStorage}
 
 	apiGroupInfo.VersionedResourcesStorageMap[scope.VERSION] = storage
 	return &apiGroupInfo, nil
