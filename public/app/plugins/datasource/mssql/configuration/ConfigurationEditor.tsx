@@ -119,8 +119,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
     { value: MSSQLEncryptOptions.disable, label: 'disable' },
     { value: MSSQLEncryptOptions.false, label: 'false' },
     { value: MSSQLEncryptOptions.true, label: 'true' },
-  ];
- 
+  ]; 
 
   return (
     <>
