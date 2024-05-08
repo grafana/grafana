@@ -43,6 +43,7 @@ export const alertingApi = createApi({
     'DataSourceSettings',
     'GrafanaLabels',
     'CombinedAlertRule',
+    'Slos',
   ],
   endpoints: () => ({}),
 });

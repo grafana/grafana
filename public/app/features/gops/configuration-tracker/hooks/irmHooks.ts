@@ -4,6 +4,7 @@ import { getBackendSrv, locationService } from '@grafana/runtime';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
 import { onCallApi } from 'app/features/alerting/unified/api/onCallApi';
+import { sloApi } from 'app/features/alerting/unified/api/sloApi';
 import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
@@ -184,6 +185,24 @@ function useOnCallChatOpsConnections() {
   return { is_chatops_connected, is_integration_chatops_connected };
 }
 
+function useGetSlosChecks() {
+  const { installed: sloPluginInstalled } = usePluginBridge(SupportedPlugin.Slo);
+
+  const { data: sloChecks } = sloApi.endpoints.getSlos.useQuery(undefined, {
+    skip: !sloPluginInstalled,
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+    refetchOnMountOrArgChange: true,
+  });
+
+  return Boolean(sloChecks?.slos?.length)
+    ? {
+        hasSlos: true,
+        hasSlosWithAlerting: sloChecks?.slos.some((slo) => Boolean(slo.alerting?.fastBurn)),
+      }
+    : { hasSlos: false, hasSlosWithAlerting: false };
+}
+
 export interface EssentialsConfigurationData {
   essentialContent: SectionsDto;
   stepsDone: number;
@@ -196,6 +215,7 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
   const incidentPluginConfig = useGetIncidentPluginConfig();
   const onCallOptions = useOnCallOptions();
   const chatOpsConnections = useOnCallChatOpsConnections();
+  const slosChecks = useGetSlosChecks();
   function onIntegrationClick(integrationId: string, url: string) {
     const urlToGoWithIntegration = createUrl(url + integrationId, {
       returnTo: location.pathname + location.search,
@@ -256,6 +276,40 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
               },
               labelOnDone: 'View',
               done: isCreateAlertRuleDone(),
+            },
+          },
+          {
+            title: 'Create your first SLO',
+            description: 'Create SLOs to monitor your service.',
+            button: {
+              type: 'openLink',
+              label: 'Create',
+              urlLink: {
+                url: '/a/grafana-slo-app/wizard/new',
+              },
+              labelOnDone: 'View',
+              urlLinkOnDone: {
+                url: '/a/grafana-slo-app/manage-slos',
+              },
+              done: slosChecks.hasSlos,
+            },
+          },
+          {
+            title: 'Enable SLO alerting',
+            description: 'Configure SLO alerting to receive notifications when your SLOs are breached.',
+            button: {
+              type: 'openLink',
+              label: 'Enable',
+              urlLink: {
+                url: '/a/grafana-slo-app/manage-slos',
+                queryParams: { alertsEnabled: 'disabled' },
+              },
+              labelOnDone: 'View',
+              urlLinkOnDone: {
+                url: '/a/grafana-slo-app/manage-slos',
+                queryParams: { alertsEnabled: 'enabled' },
+              },
+              done: slosChecks.hasSlosWithAlerting,
             },
           },
         ],
