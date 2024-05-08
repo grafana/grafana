@@ -9047,6 +9047,31 @@
           }
         }
       },
+      "put": {
+        "description": "Any current team members and admins not in the provided lists will be removed.",
+        "tags": [
+          "teams"
+        ],
+        "summary": "Set team memberships. Takes user emails, and updates team members and admins to the provided lists of users.",
+        "operationId": "setTeamMemberships",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
       "post": {
         "tags": [
           "teams"
