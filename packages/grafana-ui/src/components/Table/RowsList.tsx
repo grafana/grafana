@@ -233,6 +233,8 @@ export const RowsList = (props: RowsListProps) => {
       };
     }
 
+    // TODO: Also add option for colored background cell,
+    // and colored text cell
     if (
       fieldOptions !== undefined &&
       fieldOptions.cellOptions !== undefined &&
