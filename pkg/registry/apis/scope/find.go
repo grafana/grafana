@@ -74,8 +74,9 @@ func (r *findREST) Connect(ctx context.Context, name string, opts runtime.Object
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		parent := req.URL.Query().Get("parent")
 		results := &scope.FindResults{
-			Message: "hello",
+			Message: fmt.Sprintf("Find: %s", parent),
 		}
 		for _, item := range all.Items {
 			// TODO... whatever filtering makes sense
