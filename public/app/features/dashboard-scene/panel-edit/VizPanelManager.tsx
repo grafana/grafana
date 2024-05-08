@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import {
   DataSourceApi,
@@ -467,10 +467,19 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
   public static Component = ({ model }: SceneComponentProps<VizPanelManager>) => {
     const { panel, tableView } = model.useState();
     const styles = useStyles2(getStyles);
-
     const panelToShow = tableView ?? panel;
+    const dataProvider = panelToShow.state.$data;
 
-    return <div className={styles.wrapper}>{<panelToShow.Component model={panelToShow} />}</div>;
+    // This is to preserve SceneQueryRunner stays alive when switching between visualizations and table view
+    useEffect(() => {
+      return dataProvider?.activate();
+    }, [dataProvider]);
+
+    return (
+      <>
+        <div className={styles.wrapper}>{<panelToShow.Component model={panelToShow} />}</div>
+      </>
+    );
   };
 }
 
