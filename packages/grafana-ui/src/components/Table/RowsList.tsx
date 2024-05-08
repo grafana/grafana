@@ -69,7 +69,7 @@ export const RowsList = (props: RowsListProps) => {
     listRef,
     enableSharedCrosshair = false,
     initialRowIndex = undefined,
-    headerGroups
+    headerGroups,
   } = props;
 
   const [rowHighlightIndex, setRowHighlightIndex] = useState<number | undefined>(initialRowIndex);
@@ -79,15 +79,13 @@ export const RowsList = (props: RowsListProps) => {
 
   // Create off-screen canbas for measuring rows for virtualized rendering
   const osCan = new OffscreenCanvas(256, 1024);
-  const osContext = osCan.getContext("2d");
+  const osContext = osCan.getContext('2d');
 
   // Set font property using theme info
   // This will make text measurement accurate
   if (osContext !== null) {
     osContext.font = `${theme.typography.fontSize}px ${theme.typography.body.fontFamily}`;
   }
-
-
 
   const threshold = useMemo(() => {
     const timeField = data.fields.find((f) => f.type === FieldType.time);
@@ -241,7 +239,6 @@ export const RowsList = (props: RowsListProps) => {
       let additionalProps: React.HTMLAttributes<HTMLDivElement> = {};
       prepareRow(row);
 
-
       const expandedRowStyle = tableState.expanded[row.id] ? css({ '&:hover': { background: 'inherit' } }) : {};
 
       if (rowHighlightIndex !== undefined && row.index === rowHighlightIndex) {
@@ -366,19 +363,23 @@ export const RowsList = (props: RowsListProps) => {
   );
 };
 
-
 /**
  * Calculate an esimated bounding box for a block
  * of text using an offscreen canvas.
- * 
+ *
  * TODO: Move this 🚚
  */
-function getTextBoundingBox(text: string, headerGroups: HeaderGroup[], osContext: OffscreenCanvasRenderingContext2D | null, lineHeight: number, defaultRowHeight: number) {
+function getTextBoundingBox(
+  text: string,
+  headerGroups: HeaderGroup[],
+  osContext: OffscreenCanvasRenderingContext2D | null,
+  lineHeight: number,
+  defaultRowHeight: number
+) {
   let width = 300;
   if (typeof headerGroups[0].headers[1].width === 'number') {
     width = headerGroups[0].headers[1].width;
-  }
-  else if (typeof headerGroups[0].headers[1].width === 'string') {
+  } else if (typeof headerGroups[0].headers[1].width === 'string') {
     width = parseInt(headerGroups[0].headers[1].width, 10);
   }
 
@@ -393,10 +394,9 @@ function getTextBoundingBox(text: string, headerGroups: HeaderGroup[], osContext
       // wrapping boundaries typically. So some wiggle room needs to be added
       let lines = Math.ceil(measure.width / width);
 
-
       // Estimated height would be lines multiplied
       // by the line height
-      let height = (lines * lineHeight) + 24;
+      let height = lines * lineHeight + 24;
 
       return { width, height };
     }

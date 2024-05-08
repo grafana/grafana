@@ -31,11 +31,11 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
 
       ...(asCellText
         ? {
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          userSelect: 'text',
-          whiteSpace: 'nowrap',
-        }
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            userSelect: 'text',
+            whiteSpace: 'nowrap',
+          }
         : {}),
 
       alignItems: 'center',
