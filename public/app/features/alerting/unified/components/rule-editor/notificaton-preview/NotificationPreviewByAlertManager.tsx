@@ -87,30 +87,30 @@ function NotificationPreviewByAlertManager({
 export default withErrorBoundary(NotificationPreviewByAlertManager);
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  alertManagerRow: css`
-    display: flex;
-    flex-direction: column;
-    gap: ${theme.spacing(1)};
-    width: 100%;
-  `,
-  firstAlertManagerLine: css`
-    height: 1px;
-    width: ${theme.spacing(4)};
-    background-color: ${theme.colors.secondary.main};
-  `,
-  alertManagerName: css`
-    width: fit-content;
-  `,
-  secondAlertManagerLine: css`
-    height: 1px;
-    width: 100%;
-    flex: 1;
-    background-color: ${theme.colors.secondary.main};
-  `,
-  img: css`
-    margin-left: ${theme.spacing(2)};
-    width: ${theme.spacing(3)};
-    height: ${theme.spacing(3)};
-    margin-right: ${theme.spacing(1)};
-  `,
+  alertManagerRow: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(1),
+    width: '100%',
+  }),
+  firstAlertManagerLine: css({
+    height: '1px',
+    width: theme.spacing(4),
+    backgroundColor: theme.colors.secondary.main,
+  }),
+  alertManagerName: css({
+    width: 'fit-content',
+  }),
+  secondAlertManagerLine: css({
+    height: '1px',
+    width: '100%',
+    flex: 1,
+    backgroundColor: theme.colors.secondary.main,
+  }),
+  img: css({
+    marginLeft: theme.spacing(2),
+    width: theme.spacing(3),
+    height: theme.spacing(3),
+    marginRight: theme.spacing(1),
+  }),
 });
