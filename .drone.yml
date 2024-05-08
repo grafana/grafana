@@ -241,7 +241,6 @@ steps:
   image: node:20.9.0-alpine
   name: lint-frontend
 - commands:
-  - apk add --update git
   - |-
     make i18n-extract || (echo "
     Extraction failed. Make sure that you have no dynamic translation phrases, such as 't(\`preferences.theme.\$${themeID}\`, themeName)' and that no translation key is used twice. Search the output for '[warning]' to find the offending file." && false)
@@ -252,8 +251,7 @@ steps:
     \           "
   depends_on:
   - yarn-install
-  failure: ignore
-  image: node:20.9.0-alpine
+  image: node:20-bookworm
   name: verify-i18n
 trigger:
   event:
@@ -1625,7 +1623,6 @@ steps:
   image: node:20.9.0-alpine
   name: lint-frontend
 - commands:
-  - apk add --update git
   - |-
     make i18n-extract || (echo "
     Extraction failed. Make sure that you have no dynamic translation phrases, such as 't(\`preferences.theme.\$${themeID}\`, themeName)' and that no translation key is used twice. Search the output for '[warning]' to find the offending file." && false)
@@ -1636,8 +1633,7 @@ steps:
     \           "
   depends_on:
   - yarn-install
-  failure: ignore
-  image: node:20.9.0-alpine
+  image: node:20-bookworm
   name: verify-i18n
 trigger:
   branch: main
@@ -4923,3 +4919,8 @@ get:
   path: secret/data/common/gcr
 kind: secret
 name: gcr_credentials
+---
+kind: signature
+hmac: 7397697ccc703dc375a0f90ba8a12fd978c2972f37fdffbdca1f72ff3991b339
+
+...
