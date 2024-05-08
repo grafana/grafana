@@ -66,11 +66,11 @@ function getLabelColor(input: string): string {
 }
 
 const getStyles = (theme: GrafanaTheme2, size?: LabelSize) => ({
-  wrapper: css`
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
+  wrapper: css({
+    display: 'flex',
+    flexWrap: 'wrap',
+    alignItems: 'center',
 
-    gap: ${size === 'md' ? theme.spacing() : theme.spacing(0.5)};
-  `,
+    gap: size === 'md' ? theme.spacing() : theme.spacing(0.5),
+  }),
 });

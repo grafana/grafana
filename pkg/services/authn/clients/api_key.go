@@ -135,7 +135,7 @@ func (s *APIKey) Priority() uint {
 }
 
 func (s *APIKey) Namespace() string {
-	return authn.NamespaceAPIKey
+	return authn.NamespaceAPIKey.String()
 }
 
 func (s *APIKey) ResolveIdentity(ctx context.Context, orgID int64, namespaceID authn.NamespaceID) (*authn.Identity, error) {
