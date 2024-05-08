@@ -340,7 +340,7 @@ func (db *PostgresDialect) GetDBName(dsn string) (string, error) {
 		}
 		dsn = parsedDSN
 	}
-	re := regexp.MustCompile(`dbname=(\w+)`)
+	re := regexp.MustCompile(`dbname='?(\w+)'?`)
 	submatch := re.FindSubmatch([]byte(dsn))
 	if len(submatch) < 2 {
 		return "", fmt.Errorf("failed to get database name")
