@@ -24,7 +24,7 @@ import { TableCell } from './TableCell';
 import { TableStyles } from './styles';
 import { CellColors, TableFieldOptions, TableFilterActionCallback } from './types';
 import { calculateAroundPointThreshold, getCellColors, isPointTimeValAroundTableTimeVal } from './utils';
-import { text } from 'd3';
+
 
 interface RowsListProps {
   data: DataFrame;
@@ -270,8 +270,9 @@ export const RowsList = (props: RowsListProps) => {
 
       // If there's a text wrapping field we set the height of it here
       if (textWrapField) {
+        const seriesIndex = textWrapField.state.seriesIndex;
         const pxLineHeight = theme.typography.body.lineHeight * theme.typography.fontSize;
-        const bbox = getTextBoundingBox(textWrapField.values[index], headerGroups, osContext, pxLineHeight, tableStyles.rowHeight);
+        const bbox = getTextBoundingBox(textWrapField.values[index], headerGroups[0].headers[seriesIndex], osContext, pxLineHeight, tableStyles.rowHeight);
         style.height = bbox.height;
       }
 
@@ -345,8 +346,9 @@ export const RowsList = (props: RowsListProps) => {
     }
 
     if (textWrapField) {
+      const seriesIndex = textWrapField.state.seriesIndex;
       const pxLineHeight = theme.typography.fontSize * theme.typography.body.lineHeight;
-      return getTextBoundingBox(textWrapField.values[index], headerGroups, osContext, pxLineHeight, tableStyles.rowHeight).height;
+      return getTextBoundingBox(textWrapField.values[index], headerGroups[0].headers[seriesIndex], osContext, pxLineHeight, tableStyles.rowHeight).height;
     }
 
     return tableStyles.rowHeight;
@@ -388,17 +390,12 @@ export const RowsList = (props: RowsListProps) => {
  */
 function getTextBoundingBox(
   text: string,
-  headerGroups: HeaderGroup[],
+  headerGroup: HeaderGroup,
   osContext: OffscreenCanvasRenderingContext2D | null,
   lineHeight: number,
   defaultRowHeight: number
 ) {
-  let width = 300;
-  if (typeof headerGroups[0].headers[1].width === 'number') {
-    width = headerGroups[0].headers[1].width;
-  } else if (typeof headerGroups[0].headers[1].width === 'string') {
-    width = parseInt(headerGroups[0].headers[1].width, 10);
-  }
+  const width = Number(headerGroup.width ?? 300);
 
   if (osContext !== null) {
     const measure = osContext.measureText(text);
