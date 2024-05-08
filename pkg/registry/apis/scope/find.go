@@ -38,7 +38,7 @@ func (s *findREST) NamespaceScoped() bool {
 }
 
 func (s *findREST) GetSingularName() string {
-	return "results" // not sure if this is actually used, but it is required to exist
+	return "FindResult" // Used for the
 }
 
 func (r *findREST) ProducesMIMETypes(verb string) []string {
@@ -64,22 +64,27 @@ func (r *findREST) Connect(ctx context.Context, name string, opts runtime.Object
 		return nil, errors.NewNotFound(schema.GroupResource{}, name)
 	}
 
-	raw, err := r.scopeNodeStorage.List(ctx, &internalversion.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-	all, ok := raw.(*scope.ScopeNodeList)
-	if !ok {
-		return nil, fmt.Errorf("expected ScopeNodeList")
-	}
-
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		parent := req.URL.Query().Get("parent")
 		results := &scope.FindResults{
 			Message: fmt.Sprintf("Find: %s", parent),
 		}
+
+		raw, err := r.scopeNodeStorage.List(ctx, &internalversion.ListOptions{
+			Limit: 100,
+		})
+		if err != nil {
+			responder.Error(err)
+			return
+		}
+		all, ok := raw.(*scope.ScopeNodeList)
+		if !ok {
+			responder.Error(fmt.Errorf("expected ScopeNodeList"))
+			return
+		}
+
 		for _, item := range all.Items {
-			// TODO... whatever filtering makes sense
+			// TODO... any additional filtering makes sense
 			results.Found = append(results.Found, item.Name)
 		}
 		responder.Object(200, results)
