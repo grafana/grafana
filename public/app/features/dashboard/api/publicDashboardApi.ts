@@ -188,6 +188,7 @@ export const publicDashboardApi = createApi({
       async onQueryStarted({ dashboard, uid }, { dispatch, queryFulfilled }) {
         await queryFulfilled;
         dispatch(notifyApp(createSuccessNotification('Public dashboard deleted!')));
+        dispatch(publicDashboardApi.util?.resetApiState());
 
         if (dashboard instanceof DashboardScene) {
           dashboard.setState({
