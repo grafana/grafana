@@ -887,8 +887,8 @@
       "title": "Alertas"
     },
     "alerting-admin": {
-      "title": "",
-      "subtitle": ""
+      "subtitle": "",
+      "title": ""
     },
     "alerting-am-routes": {
       "subtitle": "Determine como os alertas são encaminhados para pontos de contato",

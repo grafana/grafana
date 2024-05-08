@@ -887,8 +887,8 @@
       "title": "Alertas"
     },
     "alerting-admin": {
-      "title": "",
-      "subtitle": ""
+      "subtitle": "",
+      "title": ""
     },
     "alerting-am-routes": {
       "subtitle": "Determinar cómo se enrutan las alertas a los puntos de contacto",
