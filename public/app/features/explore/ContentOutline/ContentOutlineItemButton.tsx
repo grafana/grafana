@@ -2,7 +2,7 @@ import { cx, css } from '@emotion/css';
 import React, { ButtonHTMLAttributes, useEffect, useRef, useState } from 'react';
 
 import { IconName, isIconName, GrafanaTheme2 } from '@grafana/data';
-import { Icon, useStyles2, Tooltip } from '@grafana/ui';
+import { Icon, Tooltip, useTheme2 } from '@grafana/ui';
 import { TooltipPlacement } from '@grafana/ui/src/components/Tooltip';
 
 type CommonProps = {
@@ -16,8 +16,10 @@ type CommonProps = {
   collapsible?: boolean;
   collapsed?: boolean;
   isActive?: boolean;
+  extraHighlight?: boolean;
   sectionId?: string;
   toggleCollapsed?: () => void;
+  color?: string;
 };
 
 export type ContentOutlineItemButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
@@ -33,11 +35,14 @@ export function ContentOutlineItemButton({
   collapsible,
   collapsed,
   isActive,
+  extraHighlight,
   sectionId,
   toggleCollapsed,
+  color,
   ...rest
 }: ContentOutlineItemButtonProps) {
-  const styles = useStyles2(getStyles);
+  const theme = useTheme2();
+  const styles = getStyles(theme, color);
 
   const buttonStyles = cx(styles.button, className);
 
@@ -66,6 +71,7 @@ export function ContentOutlineItemButton({
       <button
         className={cx(buttonStyles, {
           [styles.active]: isActive,
+          [styles.extraHighlight]: extraHighlight,
         })}
         aria-label={tooltip}
         {...rest}
@@ -104,7 +110,7 @@ function OutlineIcon({ icon }: { icon: IconName | React.ReactNode }) {
   return icon;
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, color?: string) => {
   return {
     buttonContainer: css({
       position: 'relative',
@@ -153,9 +159,30 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderTopRightRadius: theme.shape.radius.default,
       borderBottomRightRadius: theme.shape.radius.default,
       position: 'relative',
+      height: theme.spacing(theme.components.height.md),
 
       '&::before': {
-        backgroundImage: theme.colors.gradients.brandVertical,
+        backgroundImage: color !== undefined ? 'none' : theme.colors.gradients.brandVertical,
+        backgroundColor: color !== undefined ? color : 'none',
+        borderRadius: theme.shape.radius.default,
+        content: '" "',
+        display: 'block',
+        height: '100%',
+        position: 'absolute',
+        transform: 'translateX(-50%)',
+        width: theme.spacing(0.5),
+        left: '2px',
+      },
+    }),
+    extraHighlight: css({
+      backgroundColor: theme.colors.background.secondary,
+      borderTopRightRadius: theme.shape.radius.default,
+      borderBottomRightRadius: theme.shape.radius.default,
+      position: 'relative',
+
+      '&::before': {
+        backgroundImage: color !== undefined ? 'none' : theme.colors.gradients.brandVertical,
+        backgroundColor: color !== undefined ? color : 'none',
         borderRadius: theme.shape.radius.default,
         content: '" "',
         display: 'block',

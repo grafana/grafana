@@ -6,25 +6,25 @@ import {
   AbsoluteTimeRange,
   applyFieldOverrides,
   createFieldConfigRegistry,
+  DashboardCursorSync,
   DataFrame,
   dateTime,
+  EventBus,
   FieldColorModeId,
   FieldConfigSource,
   getFrameDisplayName,
   LoadingState,
   SplitOpen,
   ThresholdsConfig,
-  DashboardCursorSync,
-  EventBus,
 } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';
 import {
   GraphDrawStyle,
-  LegendDisplayMode,
-  TooltipDisplayMode,
-  SortOrder,
   GraphThresholdsStyleConfig,
+  LegendDisplayMode,
+  SortOrder,
   TimeZone,
+  TooltipDisplayMode,
   VizLegendOptions,
 } from '@grafana/schema';
 import { PanelContext, PanelContextProvider, SeriesVisibilityChangeMode, useTheme2 } from '@grafana/ui';
@@ -58,6 +58,7 @@ interface Props {
   thresholdsStyle?: GraphThresholdsStyleConfig;
   eventBus: EventBus;
   vizLegendOverrides?: Partial<VizLegendOptions>;
+  toggleLegendRef?: React.MutableRefObject<(name: string, mode: SeriesVisibilityChangeMode) => void>;
 }
 
 export function ExploreGraph({
@@ -79,6 +80,7 @@ export function ExploreGraph({
   thresholdsStyle,
   eventBus,
   vizLegendOverrides,
+  toggleLegendRef,
 }: Props) {
   const theme = useTheme2();
   const previousTimeRange = usePrevious(absoluteRange);
@@ -175,6 +177,14 @@ export function ExploreGraph({
     },
     dataLinkPostProcessor,
   };
+
+  function toggleLegend(name: string, mode: SeriesVisibilityChangeMode) {
+    setFieldConfig(seriesVisibilityConfigFactory(name, mode, fieldConfig, data));
+  }
+
+  if (toggleLegendRef) {
+    toggleLegendRef.current = toggleLegend;
+  }
 
   const panelOptions: TimeSeriesOptions = useMemo(
     () => ({
