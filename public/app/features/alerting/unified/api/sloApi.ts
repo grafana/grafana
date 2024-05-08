@@ -31,7 +31,7 @@ export const sloApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
     getSlos: build.query<{ slos: Slo[] }, void>({
       query: () => ({ url: getProxyApiUrl('/slo') }),
-      providesTags: ['Slos'],
+      providesTags: ['GrafanaSlo'],
     }),
   }),
 });
