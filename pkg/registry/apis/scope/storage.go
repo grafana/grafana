@@ -10,7 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
-
 	apistore "k8s.io/apiserver/pkg/storage"
 
 	scope "github.com/grafana/grafana/pkg/apis/scope/v0alpha1"
