@@ -86,8 +86,11 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     const { variableName: repeat, repeatDirection, maxPerRow } = gridItem.state;
     repeatOptions = { repeat, repeatDirection, maxPerRow };
 
+    const panelClone = sourcePanel.clone();
+    panelClone.setState({ hoverHeaderOffset: 0 });
+
     return new VizPanelManager({
-      panel: sourcePanel.clone(),
+      panel: panelClone,
       sourcePanel: sourcePanel.getRef(),
       ...repeatOptions,
     });
@@ -461,7 +464,12 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
   }
 
   public setPanelTitle(newTitle: string) {
-    this.state.panel.setState({ title: newTitle, hoverHeader: newTitle === '' });
+    const hasHoverHeader = newTitle === '';
+    this.state.panel.setState({
+      title: newTitle,
+      hoverHeader: hasHoverHeader,
+      hoverHeaderOffset: hasHoverHeader ? 0 : undefined,
+    });
   }
 
   public static Component = ({ model }: SceneComponentProps<VizPanelManager>) => {

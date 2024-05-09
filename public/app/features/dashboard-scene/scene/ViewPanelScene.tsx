@@ -33,7 +33,7 @@ export class ViewPanelScene extends SceneObjectBase<ViewPanelSceneState> {
       $variables: this.getScopedVariables(panel),
     });
 
-    const body = new VizPanel(panelState);
+    const body = new VizPanel({ ...panelState, hoverHeaderOffset: 0 });
 
     this.setState({ body });
 

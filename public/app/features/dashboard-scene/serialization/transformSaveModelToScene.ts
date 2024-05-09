@@ -433,7 +433,6 @@ export function buildGridItemForLibPanel(panel: PanelModel) {
     uid: panel.libraryPanel.uid,
     name: panel.libraryPanel.name,
     panelKey: getVizPanelKeyForPanelId(panel.id),
-    gridPos: panel.gridPos,
   });
 
   return new DashboardGridItem({
@@ -477,7 +476,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     fieldConfig: panel.fieldConfig,
     pluginVersion: panel.pluginVersion,
     displayMode: panel.transparent ? 'transparent' : undefined,
-    // To be replaced with it's own option persited option instead derived
+    // To be replaced with it's own option persisted option instead derived
     hoverHeader: !panel.title && !panel.timeFrom && !panel.timeShift,
     hoverHeaderOffset: (panel.gridPos?.y ?? 0) === 0 ? 0 : undefined,
     $data: createPanelDataProvider(panel),

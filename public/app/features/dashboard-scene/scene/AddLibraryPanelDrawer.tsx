@@ -14,6 +14,7 @@ import { NEW_PANEL_HEIGHT, NEW_PANEL_WIDTH, getDashboardSceneFor, getVizPanelKey
 
 import { DashboardGridItem } from './DashboardGridItem';
 import { LibraryVizPanel } from './LibraryVizPanel';
+import { hoverHeaderOffsetBehavior } from './hoverHeaderOffsetBehavior';
 
 export interface AddLibraryPanelDrawerState extends SceneObjectState {}
 
@@ -46,6 +47,7 @@ export class AddLibraryPanelDrawer extends SceneObjectBase<AddLibraryPanelDrawer
       y: 0,
       body: body,
       key: `grid-item-${panelId}`,
+      $behaviors: [hoverHeaderOffsetBehavior],
     });
 
     layout.setState({ children: [newGridItem, ...layout.state.children] });

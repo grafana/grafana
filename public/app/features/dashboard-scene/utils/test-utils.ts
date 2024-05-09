@@ -18,6 +18,7 @@ import { DashboardGridItem, RepeatDirection } from '../scene/DashboardGridItem';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
+import { hoverHeaderOffsetBehavior } from '../scene/hoverHeaderOffsetBehavior';
 
 export function setupLoadDashboardMock(rsp: DeepPartial<DashboardDTO>, spy?: jest.Mock) {
   const loadDashboardMock = (spy || jest.fn()).mockResolvedValue(rsp);
@@ -116,6 +117,7 @@ export function buildPanelRepeaterScene(options: SceneOptions, source?: VizPanel
       }),
     x: options.x || 0,
     y: options.y || 0,
+    $behaviors: [hoverHeaderOffsetBehavior],
   });
 
   const withoutRepeat = new DashboardGridItem({
@@ -128,6 +130,7 @@ export function buildPanelRepeaterScene(options: SceneOptions, source?: VizPanel
       pluginId: 'timeseries',
       titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
     }),
+    $behaviors: [hoverHeaderOffsetBehavior],
   });
 
   const rowChildren = defaults.usePanelRepeater ? withRepeat : withoutRepeat;

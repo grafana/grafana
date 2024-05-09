@@ -8,7 +8,7 @@ import {
   VizPanelMenu,
   VizPanelState,
 } from '@grafana/scenes';
-import { GridPos, LibraryPanel } from '@grafana/schema';
+import { LibraryPanel } from '@grafana/schema';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
@@ -26,7 +26,6 @@ export interface LibraryVizPanelState extends SceneObjectState {
   name: string;
   panel?: VizPanel;
   isLoaded?: boolean;
-  gridPos?: GridPos;
   panelKey: string;
   _loadedPanel?: LibraryPanel;
 }
@@ -67,7 +66,6 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
       displayMode: libPanelModel.transparent ? 'transparent' : undefined,
       // To be replaced with it's own option persisted option instead derived
       hoverHeader: !libPanelModel.title && !libPanelModel.timeFrom && !libPanelModel.timeShift,
-      hoverHeaderOffset: (this.state.gridPos?.y ?? 0) === 0 ? 0 : undefined,
       description: libPanelModel.description,
       $data: createPanelDataProvider(libPanelModel),
       menu: new VizPanelMenu({ $behaviors: [panelMenuBehavior] }),

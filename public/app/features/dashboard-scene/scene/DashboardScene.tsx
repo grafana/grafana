@@ -66,6 +66,7 @@ import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryVizPanel } from './LibraryVizPanel';
 import { ScopesScene } from './ScopesScene';
 import { ViewPanelScene } from './ViewPanelScene';
+import { hoverHeaderOffsetBehavior } from './hoverHeaderOffsetBehavior';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta'];
@@ -502,6 +503,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       y: 0,
       body: vizPanel,
       key: `grid-item-${panelId}`,
+      $behaviors: [hoverHeaderOffsetBehavior],
     });
 
     sceneGridLayout.setState({
@@ -542,6 +544,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
           name: libraryPanel.state.name,
           panelKey: getVizPanelKeyForPanelId(newPanelId),
         }),
+        $behaviors: [hoverHeaderOffsetBehavior],
       });
     } else {
       if (gridItem instanceof DashboardGridItem) {
@@ -561,6 +564,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
         height: NEW_PANEL_HEIGHT,
         width: NEW_PANEL_WIDTH,
         body: new VizPanel({ ...panelState, $data: panelData, key: getVizPanelKeyForPanelId(newPanelId) }),
+        $behaviors: [hoverHeaderOffsetBehavior],
       });
     }
 
