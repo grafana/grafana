@@ -745,7 +745,7 @@ func TestHTTPServer_hasPluginRequestedPermissions(t *testing.T) {
 			}
 			hs.log = logger
 			hs.accesscontrolService = actest.FakeService{}
-			hs.AccessControl = acimpl.ProvideAccessControl(hs.Cfg)
+			hs.AccessControl = acimpl.ProvideAccessControl(hs.Features)
 
 			expectedIdentity := &authn.Identity{
 				OrgID:       tt.orgID,
