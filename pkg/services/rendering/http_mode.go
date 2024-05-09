@@ -80,7 +80,7 @@ func (rs *RenderingService) generateImageRendererURL(renderType RenderType, opts
 	}
 
 	queryParams := imageRendererURL.Query()
-	url := rs.createURLForRendering(opts.Path)
+	url := rs.getGrafanaCallbackURL(opts.Path)
 	queryParams.Add("url", url)
 	queryParams.Add("renderKey", renderKey)
 	queryParams.Add("domain", rs.domain)
@@ -88,9 +88,12 @@ func (rs *RenderingService) generateImageRendererURL(renderType RenderType, opts
 	queryParams.Add("encoding", string(renderType))
 	queryParams.Add("timeout", strconv.Itoa(int(opts.Timeout.Seconds())))
 
-	if renderType != RenderCSV {
+	if renderType == RenderPNG {
 		queryParams.Add("width", strconv.Itoa(opts.Width))
 		queryParams.Add("height", strconv.Itoa(opts.Height))
+	}
+
+	if renderType != RenderCSV {
 		queryParams.Add("deviceScaleFactor", fmt.Sprintf("%f", opts.DeviceScaleFactor))
 	}
 

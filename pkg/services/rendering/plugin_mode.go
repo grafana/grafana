@@ -27,7 +27,7 @@ func (rs *RenderingService) renderViaPlugin(ctx context.Context, renderType Rend
 	}
 
 	req := &pluginextensionv2.RenderRequest{
-		Url:               rs.createURLForRendering(opts.Path),
+		Url:               rs.getGrafanaCallbackURL(opts.Path),
 		Width:             int32(opts.Width),
 		Height:            int32(opts.Height),
 		DeviceScaleFactor: float32(opts.DeviceScaleFactor),
@@ -79,7 +79,7 @@ func (rs *RenderingService) renderCSVViaPlugin(ctx context.Context, renderKey st
 	}
 
 	req := &pluginextensionv2.RenderCSVRequest{
-		Url:       rs.createURLForRendering(opts.Path),
+		Url:       rs.getGrafanaCallbackURL(opts.Path),
 		FilePath:  filePath,
 		RenderKey: renderKey,
 		Domain:    rs.domain,

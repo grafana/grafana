@@ -27,7 +27,7 @@ func TestGetUrl(t *testing.T) {
 	t.Run("When renderer and callback url configured should return callback url plus path", func(t *testing.T) {
 		rs.Cfg.RendererUrl = "http://localhost:8081/render"
 		rs.Cfg.RendererCallbackUrl = "http://public-grafana.com/"
-		url := rs.createURLForRendering(path)
+		url := rs.getGrafanaCallbackURL(path)
 		require.Equal(t, rs.Cfg.RendererCallbackUrl+path+"&render=1", url)
 	})
 
@@ -40,13 +40,13 @@ func TestGetUrl(t *testing.T) {
 			rs.Cfg.ServeFromSubPath = false
 			rs.Cfg.AppSubURL = ""
 			rs.Cfg.Protocol = setting.HTTPScheme
-			url := rs.createURLForRendering(path)
+			url := rs.getGrafanaCallbackURL(path)
 			require.Equal(t, "http://localhost:3000/"+path+"&render=1", url)
 
 			t.Run("And serve from sub path should return expected path", func(t *testing.T) {
 				rs.Cfg.ServeFromSubPath = true
 				rs.Cfg.AppSubURL = "/grafana"
-				url := rs.createURLForRendering(path)
+				url := rs.getGrafanaCallbackURL(path)
 				require.Equal(t, "http://localhost:3000/grafana/"+path+"&render=1", url)
 			})
 		})
@@ -55,7 +55,7 @@ func TestGetUrl(t *testing.T) {
 			rs.Cfg.ServeFromSubPath = false
 			rs.Cfg.AppSubURL = ""
 			rs.Cfg.Protocol = setting.HTTPSScheme
-			url := rs.createURLForRendering(path)
+			url := rs.getGrafanaCallbackURL(path)
 			require.Equal(t, "https://localhost:3000/"+path+"&render=1", url)
 		})
 
@@ -63,7 +63,7 @@ func TestGetUrl(t *testing.T) {
 			rs.Cfg.ServeFromSubPath = false
 			rs.Cfg.AppSubURL = ""
 			rs.Cfg.Protocol = setting.HTTP2Scheme
-			url := rs.createURLForRendering(path)
+			url := rs.getGrafanaCallbackURL(path)
 			require.Equal(t, "https://localhost:3000/"+path+"&render=1", url)
 		})
 	})

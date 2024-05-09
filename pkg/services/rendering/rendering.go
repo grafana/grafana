@@ -407,8 +407,8 @@ func (rs *RenderingService) getNewFilePath(rt RenderType) (string, error) {
 	return filepath.Abs(filepath.Join(folder, fmt.Sprintf("%s.%s", rand, ext)))
 }
 
-// createURLForRendering creates a URL to send to the image rendering as callback for rendering a Grafana resource
-func (rs *RenderingService) createURLForRendering(path string) string {
+// getGrafanaCallbackURL creates a URL to send to the image rendering as callback for rendering a Grafana resource
+func (rs *RenderingService) getGrafanaCallbackURL(path string) string {
 	if rs.Cfg.RendererUrl != "" {
 		// The backend rendering service can potentially be remote.
 		// So we need to use the root_url to ensure the rendering service
