@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/apiserver
 
-go 1.21.0
+go 1.21.10
 
 require (
 	github.com/bwmarrin/snowflake v0.3.0
