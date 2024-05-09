@@ -38,8 +38,8 @@ type State struct {
 	// ResultFingerprint is a hash of labels of the result before it is processed by
 	ResultFingerprint data.Fingerprint
 
-	// Results contains the result of the current and previous evaluations.
-	Results []Evaluation
+	// LatestResult contains the result of the most recent evaluation, if available.
+	LatestResult *Evaluation
 
 	// Error is set if the current evaluation returned an error. If error is non-nil results
 	// can still contain the results of previous evaluations.
@@ -427,20 +427,6 @@ func (a *State) Equals(b *State) bool {
 		data.Labels(a.Annotations).String() == data.Labels(b.Annotations).String()
 }
 
-func (a *State) TrimResults(alertRule *models.AlertRule) {
-	numBuckets := int64(alertRule.For.Seconds()) / alertRule.IntervalSeconds
-	if numBuckets == 0 {
-		numBuckets = 10 // keep at least 10 evaluations in the event For is set to 0
-	}
-
-	if len(a.Results) < int(numBuckets) {
-		return
-	}
-	newResults := make([]Evaluation, numBuckets)
-	copy(newResults, a.Results[len(a.Results)-int(numBuckets):])
-	a.Results = newResults
-}
-
 func nextEndsTime(interval int64, evaluatedAt time.Time) time.Time {
 	ends := ResendDelay
 	intv := time.Second * time.Duration(interval)
@@ -464,11 +450,11 @@ func (a *State) GetLabels(opts ...models.LabelOption) map[string]string {
 }
 
 func (a *State) GetLastEvaluationValuesForCondition() map[string]float64 {
-	if len(a.Results) <= 0 {
+	if a.LatestResult == nil {
 		return nil
 	}
 
-	lastResult := a.Results[len(a.Results)-1]
+	lastResult := *a.LatestResult
 	r := make(map[string]float64, len(lastResult.Values))
 
 	for refID, value := range lastResult.Values {
