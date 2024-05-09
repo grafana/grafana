@@ -466,9 +466,14 @@ const (
 	ActionAlertingNotificationsExternalRead  = "alert.notifications.external:read"
 
 	// Alerting provisioning actions
-	ActionAlertingProvisioningRead        = "alert.provisioning:read"
-	ActionAlertingProvisioningReadSecrets = "alert.provisioning.secrets:read"
-	ActionAlertingProvisioningWrite       = "alert.provisioning:write"
+	ActionAlertingProvisioningRead               = "alert.provisioning:read"
+	ActionAlertingProvisioningReadSecrets        = "alert.provisioning.secrets:read"
+	ActionAlertingProvisioningWrite              = "alert.provisioning:write"
+	ActionAlertingRulesProvisioningRead          = "alert.rules.provisioning:read"
+	ActionAlertingRulesProvisioningWrite         = "alert.rules.provisioning:write"
+	ActionAlertingNotificationsProvisioningRead  = "alert.notifications.provisioning:read"
+	ActionAlertingNotificationsProvisioningWrite = "alert.notifications.provisioning:write"
+
 	// ActionAlertingProvisioningSetStatus Gives access to set provisioning status to alerting resources. Cannot be used alone. Only in conjunction with other permissions.
 	ActionAlertingProvisioningSetStatus = "alert.provisioning.provenance:write"
 
