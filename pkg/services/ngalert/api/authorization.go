@@ -372,8 +372,8 @@ func (api *API) authorize(method, path string) web.Handler {
 		http.MethodPut + "/api/v1/provisioning/mute-timings/{name}",
 		http.MethodDelete + "/api/v1/provisioning/mute-timings/{name}":
 		eval = ac.EvalAny(
-			ac.EvalPermission(ac.ActionAlertingProvisioningWrite),             // organization scope,
-			ac.EvalPermission(ac.ActionAlertingNotificationsProvisioningRead), // organization scope
+			ac.EvalPermission(ac.ActionAlertingProvisioningWrite),              // organization scope,
+			ac.EvalPermission(ac.ActionAlertingNotificationsProvisioningWrite), // organization scope
 			ac.EvalAll(
 				ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
 				ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
