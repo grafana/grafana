@@ -110,5 +110,6 @@
   "annotations": true,
   "alerting": true,
   "backend": true,
-  "logs": true
+  "logs": true,
+  "tracing": true
 }
