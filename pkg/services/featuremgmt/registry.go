@@ -1240,6 +1240,13 @@ var (
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: true,
 		},
+		{
+			Name:         "tlsMemcached",
+			Description:  "Use TLS-enabled memcached in the enterprise caching feature",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaOperatorExperienceSquad,
+			HideFromDocs: true,
+		},
 	}
 )
 
