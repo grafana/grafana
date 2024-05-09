@@ -168,6 +168,9 @@ describe('RuleViewer', () => {
         grafana: mockDataSource<AlertManagerDataSourceJsonData>({
           name: GRAFANA_RULES_SOURCE_NAME,
           type: DataSourceType.Alertmanager,
+          jsonData: {
+            handleGrafanaManagedAlerts: true,
+          },
         }),
         am: mockDataSource<AlertManagerDataSourceJsonData>({
           name: 'Alertmanager',
