@@ -49,7 +49,6 @@ export const AzureAuthSettings = (props: HttpSettingsBaseProps) => {
     // The auth type needs to be set on the first load of the data source
     useEffectOnce(() => {
       if (!dataSourceConfig.jsonData.authType) {
-        dataSourceConfig.jsonData.authType = credentials.authType
         onCredentialsChange(credentials);
       }
     });
