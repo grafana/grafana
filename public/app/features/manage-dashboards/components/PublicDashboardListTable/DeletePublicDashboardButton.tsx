@@ -1,7 +1,8 @@
 import React from 'react';
 
 import { Button, ModalsController, ButtonProps } from '@grafana/ui/src';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 import { useDeletePublicDashboardMutation } from 'app/features/dashboard/api/publicDashboardApi';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 

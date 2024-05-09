@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 
 import { config } from '@grafana/runtime';
 import { Alert, ConfirmModal, Text, Space } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans, t } from 'app/core/internationalization/index';
 
 import { useGetAffectedItemsQuery } from '../../api/browseDashboardsAPI';
 import { DashboardTreeSelection } from '../../types';

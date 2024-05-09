@@ -3,7 +3,8 @@ import { useParams } from 'react-router-dom';
 
 import { Alert, Badge } from '@grafana/ui';
 import { PluginDetailsPage } from 'app/features/plugins/admin/components/PluginDetailsPage';
-import { StoreState, useSelector, AppNotificationSeverity } from 'app/types';
+// @todo: replace barrel import path
+import { StoreState, useSelector, AppNotificationSeverity } from 'app/types/index';
 
 import { ROUTES } from '../constants';
 

@@ -6,7 +6,8 @@ import { locationService } from '@grafana/runtime';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
 
 import { GrafanaRouteComponentProps } from '../../../../../core/navigation/types';
-import { useDispatch } from '../../../../../types';
+// @todo: replace barrel import path
+import { useDispatch } from '../../../../../types/index';
 import { RuleIdentifier } from '../../../../../types/unified-alerting';
 import { fetchEditableRuleAction, fetchRulesSourceBuildInfoAction } from '../../state/actions';
 import { formValuesFromExistingRule } from '../../utils/rule-form';

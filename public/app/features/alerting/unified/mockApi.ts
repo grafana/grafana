@@ -6,7 +6,8 @@ import { DataSourceInstanceSettings, PluginMeta } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
 import { AlertRuleUpdated } from 'app/features/alerting/unified/api/alertRuleApi';
 import allHandlers from 'app/features/alerting/unified/mocks/server/handlers';
-import { DashboardDTO, FolderDTO, NotifierDTO, OrgUser } from 'app/types';
+// @todo: replace barrel import path
+import { DashboardDTO, FolderDTO, NotifierDTO, OrgUser } from 'app/types/index';
 import {
   PromBuildInfoResponse,
   PromRulesResponse,

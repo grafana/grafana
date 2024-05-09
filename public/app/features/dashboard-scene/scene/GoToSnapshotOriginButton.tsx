@@ -6,7 +6,8 @@ import { config, locationService } from '@grafana/runtime';
 import { ConfirmModal, ToolbarButton } from '@grafana/ui';
 
 import appEvents from '../../../core/app_events';
-import { t } from '../../../core/internationalization';
+// @todo: replace barrel import path
+import { t } from '../../../core/internationalization/index';
 import { ShowModalReactEvent } from '../../../types/events';
 
 export function GoToSnapshotOriginButton(props: { originalURL: string }) {

@@ -5,7 +5,8 @@ import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { ServiceAccountPicker } from 'app/core/components/Select/ServiceAccountPicker';
 import { TeamPicker } from 'app/core/components/Select/TeamPicker';
 import { UserPicker } from 'app/core/components/Select/UserPicker';
-import { Trans, t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans, t } from 'app/core/internationalization/index';
 import { OrgRole } from 'app/types/acl';
 
 import { Assignments, PermissionTarget, SetPermission } from './types';

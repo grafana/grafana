@@ -6,6 +6,7 @@ import { Input, Stack } from '@grafana/ui';
 
 import { ElasticsearchQuery } from '../../types';
 
+// @todo: replace barrel import path
 import { ElasticQueryEditorProps, ElasticSearchQueryField } from './index';
 
 type Props = ElasticQueryEditorProps & {

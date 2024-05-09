@@ -1,11 +1,13 @@
 import { TimeZone } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { notifyApp } from 'app/core/actions';
+// @todo: replace barrel import path
+import { notifyApp } from 'app/core/actions/index';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { removeAllPanels } from 'app/features/panel/state/reducers';
 import { updateTimeZoneForSession, updateWeekStartForSession } from 'app/features/profile/state/reducers';
-import { ThunkResult } from 'app/types';
+// @todo: replace barrel import path
+import { ThunkResult } from 'app/types/index';
 
 import { loadPluginDashboards } from '../../plugins/admin/state/actions';
 import { cancelVariables } from '../../variables/state/actions';

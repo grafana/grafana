@@ -9,7 +9,8 @@ import {
   WithAccessControlMetadata,
 } from '@grafana/data';
 import { IconName } from '@grafana/ui';
-import { StoreState, PluginsState } from 'app/types';
+// @todo: replace barrel import path
+import { StoreState, PluginsState } from 'app/types/index';
 
 export type PluginTypeCode = 'app' | 'panel' | 'datasource';
 

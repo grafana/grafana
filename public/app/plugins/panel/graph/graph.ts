@@ -44,7 +44,8 @@ import { ContextSrv } from 'app/core/services/context_srv';
 import { provideTheme } from 'app/core/utils/ConfigProvider';
 import { tickStep } from 'app/core/utils/ticks';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { DashboardModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { DashboardModel } from 'app/features/dashboard/state/index';
 import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';

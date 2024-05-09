@@ -4,7 +4,8 @@ import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { getCredentials, updateCredentials } from '../../credentials';
-import { AzureDataSourceSettings, AzureCredentials } from '../../types';
+// @todo: replace barrel import path
+import { AzureDataSourceSettings, AzureCredentials } from '../../types/index';
 
 import { AzureCredentialsForm } from './AzureCredentialsForm';
 import { DefaultSubscription } from './DefaultSubscription';

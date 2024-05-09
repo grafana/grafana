@@ -1,7 +1,8 @@
 import { standardEditorsRegistry, standardFieldConfigEditorRegistry } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { mockStandardFieldConfigOptions } from '@grafana/data/test/helpers/fieldConfig';
-import { PanelModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { PanelModel } from 'app/features/dashboard/state/index';
 import { panelPluginLoaded } from 'app/features/plugins/admin/state/actions';
 
 import { thunkTester } from '../../../../test/core/thunk/thunkTester';

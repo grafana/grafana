@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 
-import { DashboardModel } from '../../state';
+// @todo: replace barrel import path
+import { DashboardModel } from '../../state/index';
 
 import { GenAIButton } from './GenAIButton';
 import { EventTrackingSrc } from './tracking';

@@ -11,9 +11,11 @@ import { useDispatch } from '../../hooks/useStatelessReducer';
 import { ElasticsearchOptions, ElasticsearchQuery } from '../../types';
 import { isSupportedVersion, isTimeSeriesQuery, unsupportedVersionMessage } from '../../utils';
 
-import { BucketAggregationsEditor } from './BucketAggregationsEditor';
+// @todo: replace barrel import path
+import { BucketAggregationsEditor } from './BucketAggregationsEditor/index';
 import { ElasticsearchProvider } from './ElasticsearchQueryContext';
-import { MetricAggregationsEditor } from './MetricAggregationsEditor';
+// @todo: replace barrel import path
+import { MetricAggregationsEditor } from './MetricAggregationsEditor/index';
 import { metricAggregationConfig } from './MetricAggregationsEditor/utils';
 import { QueryTypeSelector } from './QueryTypeSelector';
 import { changeAliasPattern, changeQuery } from './state';

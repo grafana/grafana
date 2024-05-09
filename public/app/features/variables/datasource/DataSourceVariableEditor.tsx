@@ -4,7 +4,8 @@ import { connect, ConnectedProps } from 'react-redux';
 import { SelectableValue } from '@grafana/data';
 import { DataSourceVariableForm } from 'app/features/dashboard-scene/settings/variables/components/DataSourceVariableForm';
 
-import { StoreState } from '../../../types';
+// @todo: replace barrel import path
+import { StoreState } from '../../../types/index';
 import { initialVariableEditorState } from '../editor/reducer';
 import { getDatasourceVariableEditorState } from '../editor/selectors';
 import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';

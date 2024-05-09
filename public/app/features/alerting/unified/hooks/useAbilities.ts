@@ -2,7 +2,8 @@ import { useMemo } from 'react';
 
 import { contextSrv, contextSrv as ctx } from 'app/core/services/context_srv';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';

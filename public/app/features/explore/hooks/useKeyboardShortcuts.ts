@@ -3,8 +3,9 @@ import { Unsubscribable } from 'rxjs';
 
 import { getAppEvents } from '@grafana/runtime';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { useDispatch } from 'app/types';
+// @todo: replace barrel import path
 import { AbsoluteTimeEvent, CopyTimeEvent, PasteTimeEvent, ShiftTimeEvent, ZoomOutEvent } from 'app/types/events';
+import { useDispatch } from 'app/types/index';
 
 import {
   copyTimeRangeToClipboard,

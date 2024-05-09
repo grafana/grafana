@@ -1,6 +1,7 @@
 import { DataSourceInstanceSettings, PluginType } from '@grafana/data';
 
-import { AzureDataSourceInstanceSettings } from '../types';
+// @todo: replace barrel import path
+import { AzureDataSourceInstanceSettings } from '../types/index';
 
 import { DeepPartial, mapPartialArrayObject } from './utils';
 

@@ -6,10 +6,13 @@ import { DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { EmptyState, LinkButton, TextLink, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { Trans, t } from 'app/core/internationalization';
-import { StoreState, AccessControlAction, useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { Trans, t } from 'app/core/internationalization/index';
+// @todo: replace barrel import path
+import { StoreState, AccessControlAction, useSelector } from 'app/types/index';
 
-import { getDataSources, getDataSourcesCount, useDataSourcesRoutes, useLoadDataSources } from '../state';
+// @todo: replace barrel import path
+import { getDataSources, getDataSourcesCount, useDataSourcesRoutes, useLoadDataSources } from '../state/index';
 import { trackDataSourcesListViewed } from '../tracking';
 
 import { DataSourcesListCard } from './DataSourcesListCard';

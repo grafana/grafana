@@ -2,7 +2,8 @@ import { UrlQueryValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
-import { OrgUser, AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { OrgUser, AccessControlAction } from 'app/types/index';
 
 const perPage = 30;
 

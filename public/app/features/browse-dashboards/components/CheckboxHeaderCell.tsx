@@ -1,7 +1,8 @@
 import React from 'react';
 
 import { Checkbox } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 
 import { DashboardTreeHeaderProps, SelectionState } from '../types';
 

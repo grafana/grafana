@@ -8,7 +8,8 @@ import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/Toolt
 import { XYFieldMatchers } from 'app/core/components/GraphNG/types';
 import { preparePlotFrame } from 'app/core/components/GraphNG/utils';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
-import { findFieldIndex } from 'app/features/dimensions';
+// @todo: replace barrel import path
+import { findFieldIndex } from 'app/features/dimensions/index';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 import { isTooltipScrollable, prepareGraphableFields } from '../timeseries/utils';

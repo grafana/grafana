@@ -4,7 +4,8 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { Button, HorizontalGroup, Spinner, useStyles2, VerticalGroup } from '@grafana/ui';
-import { DashboardInitPhase } from 'app/types';
+// @todo: replace barrel import path
+import { DashboardInitPhase } from 'app/types/index';
 
 export interface Props {
   initPhase: DashboardInitPhase;

@@ -4,10 +4,12 @@ import React from 'react';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 import { useStyles2, Select, Button, Field, InlineField, InlineSwitch, Alert } from '@grafana/ui';
-import { notifyApp } from 'app/core/actions';
+// @todo: replace barrel import path
+import { notifyApp } from 'app/core/actions/index';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { MAX_HISTORY_ITEMS } from 'app/core/history/RichHistoryLocalStorage';
-import { Trans, t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans, t } from 'app/core/internationalization/index';
 import { dispatch } from 'app/store/store';
 
 import { supportedFeatures } from '../../../core/history/richHistoryStorageProvider';

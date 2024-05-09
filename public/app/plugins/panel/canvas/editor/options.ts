@@ -2,10 +2,16 @@ import { capitalize } from 'lodash';
 
 import { FieldType } from '@grafana/data';
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
-import { CanvasConnection, CanvasElementOptions, ConnectionDirection } from 'app/features/canvas';
+// @todo: replace barrel import path
+import { CanvasConnection, CanvasElementOptions, ConnectionDirection } from 'app/features/canvas/index';
 import { SVGElements } from 'app/features/canvas/runtime/element';
-import { ColorDimensionEditor, ResourceDimensionEditor, ScaleDimensionEditor } from 'app/features/dimensions/editors';
+// @todo: replace barrel import path
 import { BackgroundSizeEditor } from 'app/features/dimensions/editors/BackgroundSizeEditor';
+import {
+  ColorDimensionEditor,
+  ResourceDimensionEditor,
+  ScaleDimensionEditor,
+} from 'app/features/dimensions/editors/index';
 
 import { LineStyle } from '../types';
 

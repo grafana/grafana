@@ -1,6 +1,7 @@
 import { TypedVariableModel } from '@grafana/data';
 
-import { EngineSchema } from '../types';
+// @todo: replace barrel import path
+import { EngineSchema } from '../types/index';
 import { AzureLogAnalyticsMetadata } from '../types/logAnalyticsMetadata';
 
 // matches (name):(type) = (defaultValue)

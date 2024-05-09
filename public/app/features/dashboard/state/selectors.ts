@@ -1,5 +1,6 @@
 import { PanelPlugin } from '@grafana/data';
-import { StoreState } from 'app/types';
+// @todo: replace barrel import path
+import { StoreState } from 'app/types/index';
 
 import { getPanelPluginNotFound } from '../../panel/components/PanelPluginError';
 

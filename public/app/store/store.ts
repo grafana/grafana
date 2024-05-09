@@ -1,7 +1,8 @@
 import { Store } from 'redux';
 
 import { initialKeyedVariablesState } from 'app/features/variables/state/keyedVariablesReducer';
-import { StoreState } from 'app/types';
+// @todo: replace barrel import path
+import { StoreState } from 'app/types/index';
 
 export let store: Store<StoreState>;
 

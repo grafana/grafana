@@ -4,8 +4,10 @@ import React, { PureComponent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, Icon, LoadingPlaceholder } from '@grafana/ui';
-import { i18nDate, Trans } from 'app/core/internationalization';
-import { UserSession } from 'app/types';
+// @todo: replace barrel import path
+import { i18nDate, Trans } from 'app/core/internationalization/index';
+// @todo: replace barrel import path
+import { UserSession } from 'app/types/index';
 
 interface Props {
   sessions: UserSession[];

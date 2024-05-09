@@ -2,8 +2,10 @@ import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 import { isFetchError } from '@grafana/runtime';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { t } from 'app/core/internationalization';
-import { PanelModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
+// @todo: replace barrel import path
+import { PanelModel } from 'app/features/dashboard/state/index';
 
 import { saveAndRefreshLibraryPanel } from '../utils';
 

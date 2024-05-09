@@ -7,13 +7,15 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
 import { Table, AdHocFilterItem, PanelChrome, withTheme2, Themeable2 } from '@grafana/ui';
 import { config } from 'app/core/config';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 import {
   hasDeprecatedParentRowIndex,
   migrateFromParentRowIndexToNestedFrames,
 } from 'app/plugins/panel/table/migrations';
-import { StoreState } from 'app/types';
+// @todo: replace barrel import path
 import { ExploreItemState } from 'app/types/explore';
+import { StoreState } from 'app/types/index';
 
 import { MetaInfoText } from '../MetaInfoText';
 import { selectIsWaitingForData } from '../state/query';

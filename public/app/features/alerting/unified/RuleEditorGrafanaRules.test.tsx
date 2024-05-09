@@ -14,7 +14,8 @@ import {
   mockAlertmanagerChoiceResponse,
 } from 'app/features/alerting/unified/mocks/alertmanagerApi';
 import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 import { GrafanaAlertStateDecision, PromApplication } from 'app/types/unified-alerting-dto';
 
 import { searchFolders } from '../../../../app/features/manage-dashboards/state/actions';

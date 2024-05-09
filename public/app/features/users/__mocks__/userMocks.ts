@@ -1,4 +1,5 @@
-import { OrgRole, OrgUser } from 'app/types';
+// @todo: replace barrel import path
+import { OrgRole, OrgUser } from 'app/types/index';
 
 import { UsersFetchResult, initialState } from '../state/reducers';
 

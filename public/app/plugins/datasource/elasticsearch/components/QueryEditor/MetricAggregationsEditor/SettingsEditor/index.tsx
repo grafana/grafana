@@ -11,7 +11,8 @@ import { isMetricAggregationWithInlineScript, isMetricAggregationWithMissingSupp
 import { changeMetricMeta, changeMetricSetting } from '../state/actions';
 import { metricAggregationConfig } from '../utils';
 
-import { BucketScriptSettingsEditor } from './BucketScriptSettingsEditor';
+// @todo: replace barrel import path
+import { BucketScriptSettingsEditor } from './BucketScriptSettingsEditor/index';
 import { MovingAverageSettingsEditor } from './MovingAverageSettingsEditor';
 import { SettingField } from './SettingField';
 import { TopMetricsSettingsEditor } from './TopMetricsSettingsEditor';

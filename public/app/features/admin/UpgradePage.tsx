@@ -7,7 +7,8 @@ import { LinkButton, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { getNavModel } from '../../core/selectors/navModel';
-import { StoreState } from '../../types';
+// @todo: replace barrel import path
+import { StoreState } from '../../types/index';
 
 import { LicenseChrome } from './LicenseChrome';
 import { ServerStats } from './ServerStats';

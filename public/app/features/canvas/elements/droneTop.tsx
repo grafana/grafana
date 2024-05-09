@@ -4,8 +4,10 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { ScalarDimensionConfig } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
-import { DimensionContext } from 'app/features/dimensions';
-import { ScalarDimensionEditor } from 'app/features/dimensions/editors';
+// @todo: replace barrel import path
+import { ScalarDimensionEditor } from 'app/features/dimensions/editors/index';
+import { DimensionContext } from 'app/features/dimensions/index';
+// @todo: replace barrel import path
 
 import { CanvasElementItem, CanvasElementOptions, CanvasElementProps, defaultBgColor } from '../element';
 

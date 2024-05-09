@@ -17,7 +17,8 @@ import {
   EventBus,
 } from '@grafana/data';
 import { ComparisonOperation } from '@grafana/schema';
-import { findField } from 'app/features/dimensions';
+// @todo: replace barrel import path
+import { findField } from 'app/features/dimensions/index';
 
 import { StyleEditor } from '../../editor/StyleEditor';
 import { polyStyle } from '../../style/markers';

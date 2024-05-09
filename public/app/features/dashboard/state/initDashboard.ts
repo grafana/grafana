@@ -1,6 +1,7 @@
 import { DataQuery, locationUtil, setWeekStart, DashboardLoadedEvent } from '@grafana/data';
 import { config, isFetchError, locationService } from '@grafana/runtime';
-import { notifyApp } from 'app/core/actions';
+// @todo: replace barrel import path
+import { notifyApp } from 'app/core/actions/index';
 import appEvents from 'app/core/app_events';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -19,7 +20,15 @@ import { getFolderByUid } from 'app/features/folders/state/actions';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { toStateKey } from 'app/features/variables/utils';
-import { DashboardDTO, DashboardInitPhase, DashboardRoutes, StoreState, ThunkDispatch, ThunkResult } from 'app/types';
+// @todo: replace barrel import path
+import {
+  DashboardDTO,
+  DashboardInitPhase,
+  DashboardRoutes,
+  StoreState,
+  ThunkDispatch,
+  ThunkResult,
+} from 'app/types/index';
 
 import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { initVariablesTransaction } from '../../variables/state/actions';

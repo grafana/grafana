@@ -3,7 +3,8 @@ import React from 'react';
 
 import { Button, Modal } from '@grafana/ui';
 
-import { DashboardModel } from '../../state';
+// @todo: replace barrel import path
+import { DashboardModel } from '../../state/index';
 
 import { SaveDashboardButton } from './SaveDashboardButton';
 

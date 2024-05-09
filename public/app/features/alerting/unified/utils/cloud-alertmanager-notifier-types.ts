@@ -1,4 +1,5 @@
-import { CloudNotifierType, NotificationChannelOption, NotifierDTO } from 'app/types';
+// @todo: replace barrel import path
+import { CloudNotifierType, NotificationChannelOption, NotifierDTO } from 'app/types/index';
 
 import { option } from './notifier-types';
 

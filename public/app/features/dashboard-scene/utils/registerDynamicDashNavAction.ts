@@ -1,6 +1,7 @@
 import React from 'react';
 
-import { DashboardModel } from '../../dashboard/state';
+// @todo: replace barrel import path
+import { DashboardModel } from '../../dashboard/state/index';
 
 interface ComponentProps {
   dashboard: DashboardModel;

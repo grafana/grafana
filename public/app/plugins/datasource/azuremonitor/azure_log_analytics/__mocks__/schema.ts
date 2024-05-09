@@ -1,4 +1,5 @@
-import { AzureLogAnalyticsMetadataTable, EngineSchema } from '../../types';
+// @todo: replace barrel import path
+import { AzureLogAnalyticsMetadataTable, EngineSchema } from '../../types/index';
 
 export default class FakeSchemaData {
   static getLogAnalyticsFakeSchema() {

@@ -2,7 +2,8 @@ import { DataFrame, DataFrameView, FieldType, getDisplayProcessor, SelectableVal
 import { config } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { PermissionLevelString } from 'app/types';
+// @todo: replace barrel import path
+import { PermissionLevelString } from 'app/types/index';
 
 import { DEFAULT_MAX_VALUES, TYPE_KIND_MAP } from '../constants';
 import { DashboardSearchHit, DashboardSearchItemType } from '../types';
@@ -10,7 +11,8 @@ import { DashboardSearchHit, DashboardSearchItemType } from '../types';
 import { LocationInfo } from './types';
 import { replaceCurrentFolderQuery } from './utils';
 
-import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery } from '.';
+// @todo: replace barrel import path
+import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery } from './index';
 
 interface APIQuery {
   query?: string;

@@ -1,7 +1,8 @@
 import React, { useCallback, useState } from 'react';
 
 import { useStyles2, getSelectStyles, useTheme2 } from '@grafana/ui';
-import { Role } from 'app/types';
+// @todo: replace barrel import path
+import { Role } from 'app/types/index';
 
 import { RoleMenuGroupOption } from './RoleMenuGroupOption';
 import { RoleMenuOption } from './RoleMenuOption';

@@ -3,7 +3,8 @@ import React from 'react';
 import { StandardEditorProps, FieldNamePickerBaseNameMode } from '@grafana/data';
 import { Field } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
-import { ColorDimensionEditor, ScaleDimensionEditor } from 'app/features/dimensions/editors';
+// @todo: replace barrel import path
+import { ColorDimensionEditor, ScaleDimensionEditor } from 'app/features/dimensions/editors/index';
 
 import { Options, ScatterSeriesConfig } from './panelcfg.gen';
 

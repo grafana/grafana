@@ -12,7 +12,8 @@ import { reportInteraction } from '@grafana/runtime';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { Button, CustomScrollbar, Icon, Input, ModalsController, Portal, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
-import { Trans } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans } from 'app/core/internationalization/index';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
 import { defaultFileUploadQuery, GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 

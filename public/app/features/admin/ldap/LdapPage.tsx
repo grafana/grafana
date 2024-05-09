@@ -8,6 +8,7 @@ import { Alert, Button, Field, Input, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+// @todo: replace barrel import path
 import {
   AppNotificationSeverity,
   LdapError,
@@ -16,7 +17,7 @@ import {
   SyncInfo,
   LdapConnectionInfo,
   AccessControlAction,
-} from 'app/types';
+} from 'app/types/index';
 
 import {
   loadLdapState,

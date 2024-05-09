@@ -5,7 +5,8 @@ import { useLatest } from 'react-use';
 import { CodeEditor, Monaco, useStyles2, monacoTypes } from '@grafana/ui';
 
 import { ParcaDataSource } from '../datasource';
-import { languageDefinition } from '../lang';
+// @todo: replace barrel import path
+import { languageDefinition } from '../lang/index';
 
 import { CompletionProvider } from './autocomplete';
 

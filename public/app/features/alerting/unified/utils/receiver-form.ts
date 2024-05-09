@@ -8,7 +8,8 @@ import {
   Receiver,
   Route,
 } from 'app/plugins/datasource/alertmanager/types';
-import { CloudNotifierType, NotifierDTO, NotifierType } from 'app/types';
+// @todo: replace barrel import path
+import { CloudNotifierType, NotifierDTO, NotifierType } from 'app/types/index';
 
 import {
   CloudChannelConfig,

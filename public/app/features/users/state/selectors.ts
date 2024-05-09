@@ -1,4 +1,5 @@
-import { UsersState } from 'app/types';
+// @todo: replace barrel import path
+import { UsersState } from 'app/types/index';
 
 export const getUsers = (state: UsersState) => {
   const regex = new RegExp(state.searchQuery, 'i');

@@ -3,7 +3,8 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, ReactUtils, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 
 export interface Props {
   onRowToggle: () => void;

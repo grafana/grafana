@@ -1,7 +1,8 @@
 import { DataFrameView } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
-import { DashboardQueryResult, getGrafanaSearcher } from '../service';
+// @todo: replace barrel import path
+import { DashboardQueryResult, getGrafanaSearcher } from '../service/index';
 import { SearchLayout } from '../types';
 import * as utils from '../utils';
 

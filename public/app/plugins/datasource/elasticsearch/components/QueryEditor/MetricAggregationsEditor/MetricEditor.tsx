@@ -12,7 +12,8 @@ import { MetricPicker } from '../../MetricPicker';
 import { useDatasource, useQuery } from '../ElasticsearchQueryContext';
 import { segmentStyles } from '../styles';
 
-import { SettingsEditor } from './SettingsEditor';
+// @todo: replace barrel import path
+import { SettingsEditor } from './SettingsEditor/index';
 import {
   isMetricAggregationWithField,
   isMetricAggregationWithInlineScript,

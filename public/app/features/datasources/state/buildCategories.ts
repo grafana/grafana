@@ -1,6 +1,7 @@
 import { DataSourcePluginMeta, PluginType } from '@grafana/data';
 import { featureEnabled } from '@grafana/runtime';
-import { DataSourcePluginCategory } from 'app/types';
+// @todo: replace barrel import path
+import { DataSourcePluginCategory } from 'app/types/index';
 
 export function buildCategories(plugins: DataSourcePluginMeta[]): DataSourcePluginCategory[] {
   const categories: DataSourcePluginCategory[] = [

@@ -8,7 +8,8 @@ import appEvents from 'app/core/app_events';
 import configCore from 'app/core/config';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { removePluginFromNavTree } from 'app/core/reducers/navBarTree';
-import { useDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { useDispatch } from 'app/types/index';
 
 import {
   useInstallStatus,

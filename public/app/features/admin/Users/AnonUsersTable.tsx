@@ -12,7 +12,8 @@ import {
   FetchDataFunc,
 } from '@grafana/ui';
 import { EmptyArea } from 'app/features/alerting/unified/components/EmptyArea';
-import { UserAnonymousDeviceDTO } from 'app/types';
+// @todo: replace barrel import path
+import { UserAnonymousDeviceDTO } from 'app/types/index';
 
 type Cell<T extends keyof UserAnonymousDeviceDTO = keyof UserAnonymousDeviceDTO> = CellProps<
   UserAnonymousDeviceDTO,

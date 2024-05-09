@@ -3,6 +3,7 @@ import { find, get } from 'lodash';
 import { FetchResponse } from '@grafana/runtime';
 
 import TimeGrainConverter from '../time_grain_converter';
+// @todo: replace barrel import path
 import {
   AzureMonitorLocalizedValue,
   AzureMonitorLocations,
@@ -13,7 +14,7 @@ import {
   Location,
   Subscription,
   Resource,
-} from '../types';
+} from '../types/index';
 export default class ResponseParser {
   static parseResponseValues<T>(
     result: AzureAPIResponse<T>,

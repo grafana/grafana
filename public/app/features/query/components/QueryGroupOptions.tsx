@@ -5,7 +5,8 @@ import { rangeUtil, PanelData, DataSourceApi } from '@grafana/data';
 import { Switch, Input, InlineFormLabel, stylesFactory } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { config } from 'app/core/config';
-import { QueryGroupOptions } from 'app/types';
+// @todo: replace barrel import path
+import { QueryGroupOptions } from 'app/types/index';
 
 interface Props {
   options: QueryGroupOptions;

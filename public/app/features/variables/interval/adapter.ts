@@ -2,7 +2,8 @@ import { cloneDeep } from 'lodash';
 
 import { dispatch } from '../../../store/store';
 import { VariableAdapter } from '../adapters';
-import { optionPickerFactory } from '../pickers';
+// @todo: replace barrel import path
+import { optionPickerFactory } from '../pickers/index';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { IntervalVariableModel } from '../types';
 import { toKeyedVariableIdentifier } from '../utils';

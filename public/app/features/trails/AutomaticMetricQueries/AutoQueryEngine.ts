@@ -1,4 +1,5 @@
-import { getQueryGeneratorFor } from './query-generators';
+// @todo: replace barrel import path
+import { getQueryGeneratorFor } from './query-generators/index';
 import { AutoQueryInfo } from './types';
 
 export function getAutoQueriesForMetric(metric: string): AutoQueryInfo {

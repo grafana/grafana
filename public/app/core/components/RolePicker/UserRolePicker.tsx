@@ -2,7 +2,8 @@ import React, { useEffect } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { contextSrv } from 'app/core/core';
-import { Role, OrgRole, AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { Role, OrgRole, AccessControlAction } from 'app/types/index';
 
 import { RolePicker } from './RolePicker';
 import { fetchUserRoles, updateUserRoles } from './api';

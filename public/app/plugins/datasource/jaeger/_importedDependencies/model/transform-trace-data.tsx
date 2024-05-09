@@ -15,7 +15,8 @@
 import { isEqual as _isEqual } from 'lodash';
 
 import { getTraceSpanIdsAsTree } from '../selectors/trace';
-import { TraceKeyValuePair, TraceSpan, Trace, TraceResponse, TraceProcess } from '../types';
+// @todo: replace barrel import path
+import { TraceKeyValuePair, TraceSpan, Trace, TraceResponse, TraceProcess } from '../types/index';
 import TreeNode from '../utils/TreeNode';
 import { getConfigValue } from '../utils/config/get-config';
 

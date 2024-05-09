@@ -4,7 +4,8 @@ import { Label } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { contextSrv } from 'app/core/core';
 import { OrgRolePicker } from 'app/features/admin/OrgRolePicker';
-import { AccessControlAction, OrgRole, Role, ServiceAccountDTO } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction, OrgRole, Role, ServiceAccountDTO } from 'app/types/index';
 
 interface Props {
   label: string;

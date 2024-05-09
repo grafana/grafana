@@ -1,7 +1,8 @@
 import { lastValueFrom } from 'rxjs';
 
 import { getBackendSrv } from '@grafana/runtime';
-import { ContactPointsState, NotifierDTO, ReceiversStateDTO, ReceiverState } from 'app/types';
+// @todo: replace barrel import path
+import { ContactPointsState, NotifierDTO, ReceiversStateDTO, ReceiverState } from 'app/types/index';
 
 import { getDatasourceAPIUid } from '../utils/datasource';
 

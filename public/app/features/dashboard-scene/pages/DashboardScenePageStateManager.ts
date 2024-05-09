@@ -10,7 +10,8 @@ import {
   removeDashboardToFetchFromLocalStorage,
 } from 'app/features/dashboard/state/initDashboard';
 import { trackDashboardSceneLoaded } from 'app/features/dashboard/utils/tracking';
-import { DashboardDTO, DashboardRoutes } from 'app/types';
+// @todo: replace barrel import path
+import { DashboardDTO, DashboardRoutes } from 'app/types/index';
 
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';

@@ -6,9 +6,11 @@ import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import { changePanelPlugin } from 'app/features/panel/state/actions';
 import { getPanelStateForModel } from 'app/features/panel/state/selectors';
-import { StoreState } from 'app/types';
+// @todo: replace barrel import path
+import { StoreState } from 'app/types/index';
 
-import { PanelModel, DashboardModel } from '../../state';
+// @todo: replace barrel import path
+import { PanelModel, DashboardModel } from '../../state/index';
 
 import { getSectionOpenState, saveSectionOpenState } from './state/utils';
 

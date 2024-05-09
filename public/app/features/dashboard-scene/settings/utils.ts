@@ -3,9 +3,11 @@ import { useLocation } from 'react-router-dom';
 import { locationUtil, NavModelItem } from '@grafana/data';
 import { SceneObject, SceneObjectState } from '@grafana/scenes';
 import { contextSrv } from 'app/core/core';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { AccessControlAction, useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction, useSelector } from 'app/types/index';
 
 import { DashboardScene } from '../scene/DashboardScene';
 

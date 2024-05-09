@@ -8,7 +8,8 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import store from 'app/core/store';
 import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
 import { DASHBOARD_FROM_LS_KEY } from 'app/features/dashboard/state/initDashboard';
-import { DashboardDTO, DashboardRoutes } from 'app/types';
+// @todo: replace barrel import path
+import { DashboardDTO, DashboardRoutes } from 'app/types/index';
 
 import { DashboardPrompt } from '../saving/DashboardPrompt';
 

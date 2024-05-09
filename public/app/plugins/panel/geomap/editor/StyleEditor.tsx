@@ -22,13 +22,14 @@ import {
 } from '@grafana/ui';
 import { NumberValueEditor } from 'app/core/components/OptionsUI/number';
 import { SliderValueEditor } from 'app/core/components/OptionsUI/slider';
+// @todo: replace barrel import path
 import {
   ColorDimensionEditor,
   ResourceDimensionEditor,
   ScaleDimensionEditor,
   ScalarDimensionEditor,
   TextDimensionEditor,
-} from 'app/features/dimensions/editors';
+} from 'app/features/dimensions/editors/index';
 import { ResourceFolderName, defaultTextConfig, MediaType } from 'app/features/dimensions/types';
 
 import {

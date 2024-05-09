@@ -1,6 +1,7 @@
 import { createAction } from '@reduxjs/toolkit';
 
-import { StoreState } from '../../types';
+// @todo: replace barrel import path
+import { StoreState } from '../../types/index';
 
 export type CleanUpAction = (state: StoreState) => void;
 

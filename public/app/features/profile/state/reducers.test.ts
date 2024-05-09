@@ -1,5 +1,6 @@
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
-import { OrgRole, TeamPermissionLevel } from '../../../types';
+// @todo: replace barrel import path
+import { OrgRole, TeamPermissionLevel } from '../../../types/index';
 import { getMockTeam } from '../../teams/__mocks__/teamMocks';
 
 import {

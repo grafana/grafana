@@ -18,8 +18,9 @@ import { selectors } from '@grafana/e2e-selectors';
 import { getTimeSrv, TimeSrv, setTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { PanelQueryRunner } from '../../../query/state/PanelQueryRunner';
-import { PanelModel } from '../../state';
+// @todo: replace barrel import path
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
+import { PanelModel } from '../../state/index';
 
 import { PanelEditorTableView, Props } from './PanelEditorTableView';
 

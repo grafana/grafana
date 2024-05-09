@@ -4,7 +4,8 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Modal, Icon, Button } from '@grafana/ui';
 
-import { type CardGridItem } from '../CardGrid';
+// @todo: replace barrel import path
+import { type CardGridItem } from '../CardGrid/index';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   modal: css`

@@ -86,7 +86,6 @@ export const BucketScriptSettingsEditor = ({ value, previousMetrics }: Props) =>
                   value={pipelineVar.pipelineAgg}
                 />
               </div>
-
               <AddRemove
                 index={index}
                 elements={value.pipelineVariables || []}
@@ -97,7 +96,6 @@ export const BucketScriptSettingsEditor = ({ value, previousMetrics }: Props) =>
           ))}
         </div>
       </div>
-
       <SettingField
         label="Script"
         metric={value}

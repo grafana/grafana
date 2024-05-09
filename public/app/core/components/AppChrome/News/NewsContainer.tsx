@@ -5,7 +5,8 @@ import { useToggle } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { IconButton, Drawer, ToolbarButton, useStyles2, Text } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 import { DEFAULT_FEED_URL } from 'app/plugins/panel/news/constants';
 
 import { NewsWrapper } from './NewsWrapper';

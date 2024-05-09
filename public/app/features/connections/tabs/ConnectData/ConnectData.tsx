@@ -5,16 +5,22 @@ import { GrafanaTheme2, PluginType } from '@grafana/data';
 import { useStyles2, LoadingPlaceholder, EmptyState } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 import { useGetAll } from 'app/features/plugins/admin/state/hooks';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 
 import { ROUTES } from '../../constants';
 
-import { CardGrid, type CardGridItem } from './CardGrid';
-import { CategoryHeader } from './CategoryHeader';
-import { NoAccessModal } from './NoAccessModal';
-import { Search } from './Search';
+// @todo: replace barrel import path
+import { CardGrid, type CardGridItem } from './CardGrid/index';
+// @todo: replace barrel import path
+import { CategoryHeader } from './CategoryHeader/index';
+// @todo: replace barrel import path
+import { NoAccessModal } from './NoAccessModal/index';
+// @todo: replace barrel import path
+import { Search } from './Search/index';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   spacer: css({

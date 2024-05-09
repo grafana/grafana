@@ -2,7 +2,8 @@ import React, { useCallback } from 'react';
 
 import { CodeEditor } from '@grafana/ui';
 
-import { AzureQueryEditorFieldProps } from '../../types';
+// @todo: replace barrel import path
+import { AzureQueryEditorFieldProps } from '../../types/index';
 
 const QueryField = ({ query, onQueryChange }: AzureQueryEditorFieldProps) => {
   const onChange = useCallback(

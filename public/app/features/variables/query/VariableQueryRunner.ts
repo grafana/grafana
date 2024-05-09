@@ -13,7 +13,8 @@ import {
 } from '@grafana/data';
 
 import { dispatch, getState } from '../../../store/store';
-import { StoreState, ThunkDispatch } from '../../../types';
+// @todo: replace barrel import path
+import { StoreState, ThunkDispatch } from '../../../types/index';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { runRequest } from '../../query/state/runRequest';
 import { getLastKey, getVariable } from '../state/selectors';

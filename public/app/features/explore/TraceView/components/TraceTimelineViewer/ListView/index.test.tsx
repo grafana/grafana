@@ -15,6 +15,7 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
+// @todo: replace barrel import path
 import ListView, { TListViewProps } from './index';
 
 const DATA_LENGTH = 10;

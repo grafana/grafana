@@ -1,6 +1,7 @@
 import { getDataSourceSrv } from '@grafana/runtime';
 
-import { RichHistoryQuery } from '../../types';
+// @todo: replace barrel import path
+import { RichHistoryQuery } from '../../types/index';
 
 import { RichHistoryRemoteStorageDTO } from './RichHistoryRemoteStorage';
 

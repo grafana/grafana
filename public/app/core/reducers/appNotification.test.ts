@@ -1,4 +1,5 @@
-import { AppNotificationSeverity, AppNotificationsState } from 'app/types/';
+// @todo: replace barrel import path
+import { AppNotificationSeverity, AppNotificationsState } from 'app/types/index';
 
 import { appNotificationsReducer, clearNotification, notifyApp } from './appNotification';
 

@@ -5,8 +5,9 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { ResourceDimensionMode } from '@grafana/schema';
 import { Portal, useTheme2 } from '@grafana/ui';
 import { Scene } from 'app/features/canvas/runtime/scene';
-import { MediaType, ResourceFolderName } from 'app/features/dimensions';
+// @todo: replace barrel import path
 import { ResourcePickerPopover } from 'app/features/dimensions/editors/ResourcePickerPopover';
+import { MediaType, ResourceFolderName } from 'app/features/dimensions/index';
 
 import { AnchorPoint } from '../types';
 

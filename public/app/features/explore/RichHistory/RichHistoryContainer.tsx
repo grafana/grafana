@@ -4,9 +4,11 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { config, reportInteraction } from '@grafana/runtime';
 import { useTheme2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans } from 'app/core/internationalization/index';
 // Types
-import { StoreState } from 'app/types';
+// @todo: replace barrel import path
+import { StoreState } from 'app/types/index';
 
 // Components, enums
 import { useQueriesDrawerContext } from '../QueriesDrawer/QueriesDrawerContext';

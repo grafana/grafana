@@ -8,7 +8,8 @@ import AlertRuleMenu from 'app/features/alerting/unified/components/rule-viewer/
 import { useDeleteModal } from 'app/features/alerting/unified/components/rule-viewer/DeleteModal';
 import { INSTANCES_DISPLAY_LIMIT } from 'app/features/alerting/unified/components/rules/RuleDetails';
 import { useRulesFilter } from 'app/features/alerting/unified/hooks/useFilteredRules';
-import { useDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { useDispatch } from 'app/types/index';
 import { CombinedRule, RuleIdentifier, RulesSource } from 'app/types/unified-alerting';
 
 import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';

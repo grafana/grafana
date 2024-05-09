@@ -1,6 +1,7 @@
 import { config } from '@grafana/runtime';
 import { SceneDataProvider, SceneDataTransformer, SceneQueryRunner } from '@grafana/scenes';
-import { PanelModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { PanelModel } from 'app/features/dashboard/state/index';
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
 

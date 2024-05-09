@@ -7,7 +7,8 @@ import { GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
 import { Dropdown, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
-import { useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { useSelector } from 'app/types/index';
 
 import { Branding } from '../../Branding/Branding';
 import { enrichHelpItem } from '../MegaMenu/utils';

@@ -16,7 +16,8 @@ import {
 
 import { AzureMonitorQuery, AzureQueryType, AzureTracesFilter } from '../../dataquery.gen';
 import Datasource from '../../datasource';
-import { VariableOptionGroup } from '../../types';
+// @todo: replace barrel import path
+import { VariableOptionGroup } from '../../types/index';
 import { addValueToOptions } from '../../utils/common';
 
 export interface FilterProps {

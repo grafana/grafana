@@ -3,7 +3,8 @@ import React from 'react';
 
 import { PanelData, QueryResultMetaStat, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 
 import { InspectStatsTable } from './InspectStatsTable';
 import { InspectStatsTraceIdsTable } from './InspectStatsTraceIdsTable';

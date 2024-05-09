@@ -6,13 +6,16 @@ import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Alert, Icon, Input, LoadingBar, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 import { skipToken, useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
-import { QueryResponse, getGrafanaSearcher } from 'app/features/search/service';
+// @todo: replace barrel import path
+import { QueryResponse, getGrafanaSearcher } from 'app/features/search/service/index';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
-import { PermissionLevelString } from 'app/types';
+// @todo: replace barrel import path
+import { PermissionLevelString } from 'app/types/index';
 
 import { getDOMId, NestedFolderList } from './NestedFolderList';
 import Trigger from './Trigger';

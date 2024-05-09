@@ -32,7 +32,8 @@ import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/
 import { updateLibraryVizPanel } from 'app/features/library-panels/state/api';
 import { updateQueries } from 'app/features/query/state/updateQueries';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
-import { QueryGroupOptions } from 'app/types';
+// @todo: replace barrel import path
+import { QueryGroupOptions } from 'app/types/index';
 
 import { DashboardGridItem, RepeatDirection } from '../scene/DashboardGridItem';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';

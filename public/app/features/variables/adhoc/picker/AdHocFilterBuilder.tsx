@@ -1,7 +1,8 @@
 import React, { useCallback, useState } from 'react';
 
 import { DataSourceRef, SelectableValue } from '@grafana/data';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 import { AdHocVariableFilter } from 'app/features/variables/types';
 
 import { AdHocFilterKey, REMOVE_FILTER_KEY } from './AdHocFilterKey';

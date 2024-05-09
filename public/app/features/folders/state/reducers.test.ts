@@ -1,4 +1,5 @@
-import { FolderDTO, FolderState } from 'app/types';
+// @todo: replace barrel import path
+import { FolderDTO, FolderState } from 'app/types/index';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 

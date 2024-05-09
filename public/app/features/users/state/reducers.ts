@@ -1,7 +1,8 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import config from 'app/core/config';
-import { OrgUser, UsersState } from 'app/types';
+// @todo: replace barrel import path
+import { OrgUser, UsersState } from 'app/types/index';
 
 export const initialState: UsersState = {
   users: [],

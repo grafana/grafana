@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 
-import { FolderDTO, useDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { FolderDTO, useDispatch } from 'app/types/index';
 
 import { fetchFolderIfNotFetchedAction } from '../state/actions';
 import { initialAsyncRequestState } from '../utils/redux';

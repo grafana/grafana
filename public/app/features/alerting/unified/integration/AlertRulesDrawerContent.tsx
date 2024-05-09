@@ -2,7 +2,8 @@ import React from 'react';
 import { useAsync } from 'react-use';
 
 import { LoadingPlaceholder } from '@grafana/ui';
-import { useDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { useDispatch } from 'app/types/index';
 
 import { RulesTable } from '../components/rules/RulesTable';
 import { useCombinedRuleNamespaces } from '../hooks/useCombinedRuleNamespaces';

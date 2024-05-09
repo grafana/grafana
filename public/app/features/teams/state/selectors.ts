@@ -1,4 +1,5 @@
-import { Team, TeamState } from 'app/types';
+// @todo: replace barrel import path
+import { Team, TeamState } from 'app/types/index';
 
 export const getTeamGroups = (state: TeamState) => state.groups;
 

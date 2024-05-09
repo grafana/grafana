@@ -6,7 +6,8 @@ import { getDefaultTimeRange, LoadingState } from '@grafana/data';
 import { setDataSourceSrv } from '@grafana/runtime';
 import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { DashboardModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { DashboardModel } from 'app/features/dashboard/state/index';
 
 import {
   createDashboardModelFixture,

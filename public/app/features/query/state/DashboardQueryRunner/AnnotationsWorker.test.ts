@@ -3,7 +3,8 @@ import { delay } from 'rxjs/operators';
 
 import { AnnotationQuery } from '@grafana/data';
 import { DataSourceSrv, setDataSourceSrv, config } from '@grafana/runtime';
-import { DashboardModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { DashboardModel } from 'app/features/dashboard/state/index';
 
 import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceConsoleOutput';
 import * as annotationsSrv from '../../../annotations/executeAnnotationQuery';

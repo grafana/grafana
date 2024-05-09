@@ -3,7 +3,8 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { ValuePicker, useStyles2 } from '@grafana/ui';
-import { UserOrg } from 'app/types';
+// @todo: replace barrel import path
+import { UserOrg } from 'app/types/index';
 
 import { OrganizationBaseProps } from './types';
 

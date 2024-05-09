@@ -5,7 +5,8 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { OrgRole } from '@grafana/data';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 import { getUserOrganizations } from 'app/features/org/state/actions';
-import * as appTypes from 'app/types';
+// @todo: replace barrel import path
+import * as appTypes from 'app/types/index';
 
 import { OrganizationSwitcher } from './OrganizationSwitcher';
 

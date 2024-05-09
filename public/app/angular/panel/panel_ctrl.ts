@@ -13,7 +13,8 @@ import { AngularLocationWrapper } from 'app/angular/AngularLocationWrapper';
 import config from 'app/core/config';
 import { profiler } from 'app/core/core';
 
-import { DashboardModel } from '../../features/dashboard/state';
+// @todo: replace barrel import path
+import { DashboardModel } from '../../features/dashboard/state/index';
 
 export class PanelCtrl {
   panel: any;

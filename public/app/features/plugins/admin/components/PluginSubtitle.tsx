@@ -4,7 +4,8 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, useStyles2 } from '@grafana/ui';
 
-import { InstallControlsWarning } from '../components/InstallControls';
+// @todo: replace barrel import path
+import { InstallControlsWarning } from '../components/InstallControls/index';
 import { getLatestCompatibleVersion, hasInstallControlWarning } from '../helpers';
 import { useInstallStatus, useIsRemotePluginsAvailable } from '../state/hooks';
 import { CatalogPlugin, PluginStatus } from '../types';

@@ -6,7 +6,8 @@ import { Spinner, useStyles2 } from '@grafana/ui/src';
 import { useGetPublicDashboardQuery } from 'app/features/dashboard/api/publicDashboardApi';
 import { publicDashboardPersisted } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { ShareModalTabProps } from 'app/features/dashboard/components/ShareModal/types';
-import { useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { useSelector } from 'app/types/index';
 
 import { HorizontalGroup } from '../../../../plugins/admin/components/HorizontalGroup';
 

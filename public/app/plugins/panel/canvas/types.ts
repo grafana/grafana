@@ -1,4 +1,5 @@
-import { CanvasConnection } from '../../../features/canvas';
+// @todo: replace barrel import path
+import { CanvasConnection } from '../../../features/canvas/index';
 import { ElementState } from '../../../features/canvas/runtime/element';
 
 import { ConnectionCoordinates } from './panelcfg.gen';

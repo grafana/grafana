@@ -2,7 +2,8 @@ import React, { useMemo } from 'react';
 
 import { Alert } from '@grafana/ui';
 import { AlertManagerCortexConfig, Receiver } from 'app/plugins/datasource/alertmanager/types';
-import { useDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { useDispatch } from 'app/types/index';
 
 import { alertmanagerApi } from '../../../api/alertmanagerApi';
 import { updateAlertManagerConfigAction } from '../../../state/actions';

@@ -14,7 +14,8 @@ import {
   Field,
 } from '@grafana/data';
 import { FrameGeometrySourceMode, MapLayerOptions } from '@grafana/schema';
-import { findField } from 'app/features/dimensions';
+// @todo: replace barrel import path
+import { findField } from 'app/features/dimensions/index';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getLocationMatchers } from 'app/features/geo/utils/location';
 

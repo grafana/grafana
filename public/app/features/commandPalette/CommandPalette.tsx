@@ -17,7 +17,8 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { EmptyState, Icon, LoadingBar, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 
 import { KBarResults } from './KBarResults';
 import { ResultItem } from './ResultItem';

@@ -4,7 +4,8 @@ import { Subject } from 'rxjs';
 
 import { applyFieldOverrides, createTheme, DataFrame, DataFrameView, FieldType, toDataFrame } from '@grafana/data';
 
-import { DashboardQueryResult, getGrafanaSearcher, QueryResponse } from '../../service';
+// @todo: replace barrel import path
+import { DashboardQueryResult, getGrafanaSearcher, QueryResponse } from '../../service/index';
 import { DashboardSearchItemType } from '../../types';
 
 import { SearchResultsTable } from './SearchResultsTable';

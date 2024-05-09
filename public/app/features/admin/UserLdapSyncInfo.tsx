@@ -3,7 +3,8 @@ import React, { PureComponent } from 'react';
 import { dateTimeFormat } from '@grafana/data';
 import { Button, LinkButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction, SyncInfo, UserDTO } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction, SyncInfo, UserDTO } from 'app/types/index';
 
 interface Props {
   ldapSyncInfo: SyncInfo;

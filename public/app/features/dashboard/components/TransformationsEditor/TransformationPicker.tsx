@@ -4,7 +4,8 @@ import React, { FormEventHandler, KeyboardEventHandler, ReactNode } from 'react'
 import { DocsId, GrafanaTheme2, TransformerRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Card, Container, VerticalGroup, Alert, Input, useStyles2 } from '@grafana/ui';
-import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
+// @todo: replace barrel import path
+import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider/index';
 import { getDocsLink } from 'app/core/utils/docsLinks';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 

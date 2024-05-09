@@ -14,8 +14,10 @@ import {
   Input,
   Icon,
 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
-import * as DFImport from 'app/features/dataframe-import';
+// @todo: replace barrel import path
+import { t, Trans } from 'app/core/internationalization/index';
+// @todo: replace barrel import path
+import * as DFImport from 'app/features/dataframe-import/index';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { getFileDropToQueryHandler } from 'app/plugins/datasource/grafana/utils';
 

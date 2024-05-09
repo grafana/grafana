@@ -4,7 +4,8 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { Card, Field, FieldSet, Input, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans, t } from 'app/core/internationalization/index';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 

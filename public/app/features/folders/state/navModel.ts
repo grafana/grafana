@@ -1,9 +1,11 @@
 import { NavModel, NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getNavSubTitle } from 'app/core/utils/navBarItem-translations';
-import { AccessControlAction, FolderDTO } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction, FolderDTO } from 'app/types/index';
 
 export const FOLDER_ID = 'manage-folder';
 

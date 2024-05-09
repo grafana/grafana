@@ -3,7 +3,8 @@ import { cloneDeep } from 'lodash';
 import { dispatch } from '../../../store/store';
 import { VariableAdapter } from '../adapters';
 import { ALL_VARIABLE_TEXT } from '../constants';
-import { optionPickerFactory } from '../pickers';
+// @todo: replace barrel import path
+import { optionPickerFactory } from '../pickers/index';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { QueryVariableModel, VariableRefresh } from '../types';
 import { containsVariable, isAllVariable, toKeyedVariableIdentifier } from '../utils';

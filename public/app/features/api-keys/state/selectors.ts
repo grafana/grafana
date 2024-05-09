@@ -1,4 +1,5 @@
-﻿import { ApiKeysState } from 'app/types';
+// @todo: replace barrel import path
+import { ApiKeysState } from 'app/types/index';
 
 export const getApiKeysCount = (state: ApiKeysState) =>
   state.includeExpired ? state.keysIncludingExpired.length : state.keys.length;

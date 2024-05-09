@@ -5,7 +5,8 @@ import { TimeRange } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { FieldSet, Label, Switch, TimeRangeInput, VerticalGroup } from '@grafana/ui/src';
 import { Layout } from '@grafana/ui/src/components/Layout/Layout';
-import { Trans, t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans, t } from 'app/core/internationalization/index';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { ConfigPublicDashboardForm } from './ConfigPublicDashboard';

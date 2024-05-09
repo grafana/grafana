@@ -3,7 +3,8 @@ import { ComponentType } from 'react';
 import { NavModel } from '@grafana/data';
 import { IconName } from '@grafana/ui';
 
-import { DashboardModel } from '../../state';
+// @todo: replace barrel import path
+import { DashboardModel } from '../../state/index';
 
 export interface SettingsPage {
   id: string;

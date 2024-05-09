@@ -2,7 +2,8 @@ import { useState } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 
 import { fetchRoleOptions } from './api';
 

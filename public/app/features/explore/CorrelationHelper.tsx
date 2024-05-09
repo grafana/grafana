@@ -18,7 +18,8 @@ import {
   Icon,
   Stack,
 } from '@grafana/ui';
-import { useDispatch, useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { useDispatch, useSelector } from 'app/types/index';
 
 import { getTransformationVars } from '../correlations/transformations';
 import { generateDefaultLabel } from '../correlations/utils';

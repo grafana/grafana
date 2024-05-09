@@ -1,4 +1,5 @@
-import general from './common';
+// @todo: replace barrel import path
+import general from './common/index';
 import { createHistogramQueryDefs } from './histogram';
 import { createSummaryQueryDefs } from './summary';
 import { MetricQueriesGenerator } from './types';

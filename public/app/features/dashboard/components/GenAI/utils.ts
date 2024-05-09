@@ -4,7 +4,8 @@ import { llms } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import { Panel } from '@grafana/schema';
 
-import { DashboardModel, PanelModel } from '../../state';
+// @todo: replace barrel import path
+import { DashboardModel, PanelModel } from '../../state/index';
 
 import { getDashboardStringDiff } from './jsonDiffText';
 

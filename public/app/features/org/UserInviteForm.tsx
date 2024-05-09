@@ -18,7 +18,8 @@ import {
   Stack,
 } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
-import { OrgRole, useDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { OrgRole, useDispatch } from 'app/types/index';
 
 import { Form } from '../../core/components/Form/Form';
 import { addInvitee } from '../invites/state/actions';

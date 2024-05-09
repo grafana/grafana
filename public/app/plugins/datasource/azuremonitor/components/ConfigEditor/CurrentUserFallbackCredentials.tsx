@@ -7,7 +7,8 @@ import { Select, Field, RadioButtonGroup, Alert, Stack } from '@grafana/ui';
 
 import { instanceOfAzureCredential } from '../../credentials';
 import { selectors } from '../../e2e/selectors';
-import { AadCurrentUserCredentials, AzureAuthType, AzureCredentials } from '../../types';
+// @todo: replace barrel import path
+import { AadCurrentUserCredentials, AzureAuthType, AzureCredentials } from '../../types/index';
 
 import { AppRegistrationCredentials } from './AppRegistrationCredentials';
 

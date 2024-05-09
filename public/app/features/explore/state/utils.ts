@@ -25,8 +25,9 @@ import { DataQuery, DataSourceJsonData, DataSourceRef, TimeZone } from '@grafana
 import { getLocalRichHistoryStorage } from 'app/core/history/richHistoryStorageProvider';
 import { SortOrder } from 'app/core/utils/richHistory';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { ExplorePanelData, StoreState } from 'app/types';
+// @todo: replace barrel import path
 import { ExploreItemState, RichHistoryQuery } from 'app/types/explore';
+import { ExplorePanelData, StoreState } from 'app/types/index';
 
 import store from '../../../core/store';
 import { setLastUsedDatasourceUID } from '../../../core/utils/explore';

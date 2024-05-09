@@ -11,7 +11,8 @@ import { LS_VISUALIZATION_SELECT_TAB_KEY, LS_WIDGET_SELECT_TAB_KEY } from 'app/c
 import { PanelLibraryOptionsGroup } from 'app/features/library-panels/components/PanelLibraryOptionsGroup/PanelLibraryOptionsGroup';
 import { VisualizationSuggestions } from 'app/features/panel/components/VizTypePicker/VisualizationSuggestions';
 import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
-import { useDispatch, useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { useDispatch, useSelector } from 'app/types/index';
 
 import { VizTypePicker } from '../../../panel/components/VizTypePicker/VizTypePicker';
 import { changePanelPlugin } from '../../../panel/state/actions';

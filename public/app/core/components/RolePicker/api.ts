@@ -1,5 +1,6 @@
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
-import { Role } from 'app/types';
+// @todo: replace barrel import path
+import { Role } from 'app/types/index';
 
 import { addDisplayNameForFixedRole } from './utils';
 

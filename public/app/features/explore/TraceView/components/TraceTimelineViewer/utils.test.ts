@@ -13,7 +13,8 @@
 // limitations under the License.
 
 import traceGenerator from '../demo/trace-generators';
-import { TraceSpan } from '../types';
+// @todo: replace barrel import path
+import { TraceSpan } from '../types/index';
 
 import {
   findServerChildSpan,

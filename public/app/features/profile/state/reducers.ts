@@ -4,7 +4,8 @@ import { isEmpty, isString, set } from 'lodash';
 import { dateTimeFormatTimeAgo, setWeekStart, TimeZone } from '@grafana/data';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
-import { Team, ThunkResult, UserDTO, UserOrg, UserSession } from 'app/types';
+// @todo: replace barrel import path
+import { Team, ThunkResult, UserDTO, UserOrg, UserSession } from 'app/types/index';
 
 export interface UserState {
   orgId: number;

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 
 import Datasource from '../../datasource';
-import { AzureMonitorQuery } from '../../types';
+// @todo: replace barrel import path
+import { AzureMonitorQuery } from '../../types/index';
 import { isGUIDish } from '../ResourcePicker/utils';
 
 async function migrateWorkspaceQueryToResourceQuery(

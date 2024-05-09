@@ -25,7 +25,8 @@ import ExternalLinks from '../common/ExternalLinks';
 import TraceName from '../common/TraceName';
 import { getTraceLinks } from '../model/link-patterns';
 import { getHeaderTags, getTraceName } from '../model/trace-viewer';
-import { Trace } from '../types';
+// @todo: replace barrel import path
+import { Trace } from '../types/index';
 import { formatDuration } from '../utils/date';
 
 import TracePageActions from './Actions/TracePageActions';

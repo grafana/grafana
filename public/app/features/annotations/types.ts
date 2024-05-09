@@ -1,6 +1,7 @@
 import { AnnotationEvent, PanelData, TimeRange } from '@grafana/data';
 
-import { DashboardModel, PanelModel } from '../dashboard/state';
+// @todo: replace barrel import path
+import { DashboardModel, PanelModel } from '../dashboard/state/index';
 
 export interface AnnotationQueryOptions {
   dashboard: DashboardModel;

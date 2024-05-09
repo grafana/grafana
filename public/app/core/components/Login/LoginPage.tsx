@@ -7,7 +7,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Alert, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 import { Branding } from 'app/core/components/Branding/Branding';
-import { t, Trans } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t, Trans } from 'app/core/internationalization/index';
 
 import { ChangePassword } from '../ForgottenPassword/ChangePassword';
 

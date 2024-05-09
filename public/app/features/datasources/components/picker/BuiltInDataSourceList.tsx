@@ -3,7 +3,8 @@ import React from 'react';
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { DataSourceRef } from '@grafana/schema';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 
 import { useDatasources } from '../../hooks';
 

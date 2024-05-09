@@ -11,13 +11,15 @@ import { Echo } from 'app/core/services/echo/Echo';
 import * as initDashboard from 'app/features/dashboard/state/initDashboard';
 import { DashboardSearchItemType } from 'app/features/search/types';
 import { configureStore } from 'app/store/configureStore';
-import { ExploreState } from 'app/types';
+// @todo: replace barrel import path
+import { ExploreState } from 'app/types/index';
 
 import { createEmptyQueryResponse } from '../../state/utils';
 
 import * as api from './addToDashboard';
 
-import { AddToDashboard } from '.';
+// @todo: replace barrel import path
+import { AddToDashboard } from './index';
 
 const setup = (children: ReactNode, queries: DataQuery[] = [{ refId: 'A' }]) => {
   const store = configureStore({

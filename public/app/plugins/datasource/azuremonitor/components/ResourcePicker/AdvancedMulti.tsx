@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import { Collapse, Space } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
-import { AzureMonitorResource } from '../../types';
+// @todo: replace barrel import path
+import { AzureMonitorResource } from '../../types/index';
 
 export interface ResourcePickerProps<T> {
   resources: T[];

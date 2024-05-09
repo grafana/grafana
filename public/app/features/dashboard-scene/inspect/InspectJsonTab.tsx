@@ -18,9 +18,11 @@ import {
 } from '@grafana/scenes';
 import { LibraryPanel } from '@grafana/schema/';
 import { Button, CodeEditor, Field, Select, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
-import { PanelModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { PanelModel } from 'app/features/dashboard/state/index';
 import { getPanelInspectorStyles2 } from 'app/features/inspector/styles';
 import { InspectTab } from 'app/features/inspector/types';
 import { getPrettyJSON } from 'app/features/inspector/utils/utils';

@@ -5,7 +5,8 @@ import { dateTime, DateTime, PanelProps, TimeRange } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { applyPanelTimeOverrides, calculateInnerPanelHeight } from 'app/features/dashboard/utils/panel';
 
-import { PanelModel } from '../state';
+// @todo: replace barrel import path
+import { PanelModel } from '../state/index';
 
 const dashboardTimeRange: TimeRange = {
   from: dateTime([2019, 1, 11, 12, 0]),

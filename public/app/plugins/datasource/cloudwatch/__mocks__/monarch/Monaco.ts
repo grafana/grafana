@@ -1,10 +1,14 @@
 import { monacoTypes } from '@grafana/ui';
 
 import { Monaco } from '../../language/monarch/types';
-import * as CloudwatchLogsTestData from '../cloudwatch-logs-test-data';
-import * as SQLTestData from '../cloudwatch-sql-test-data';
-import * as DynamicLabelTestData from '../dynamic-label-test-data';
-import * as MetricMathTestData from '../metric-math-test-data';
+// @todo: replace barrel import path
+import * as CloudwatchLogsTestData from '../cloudwatch-logs-test-data/index';
+// @todo: replace barrel import path
+import * as SQLTestData from '../cloudwatch-sql-test-data/index';
+// @todo: replace barrel import path
+import * as DynamicLabelTestData from '../dynamic-label-test-data/index';
+// @todo: replace barrel import path
+import * as MetricMathTestData from '../metric-math-test-data/index';
 
 // Stub for the Monaco instance.
 const MonacoMock: Monaco = {

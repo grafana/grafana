@@ -2,7 +2,8 @@ import React from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
 
 import { Button, Stack, Text } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans } from 'app/core/internationalization/index';
 
 import TransformationsEditorRow from './TransformationEditorRow';
 

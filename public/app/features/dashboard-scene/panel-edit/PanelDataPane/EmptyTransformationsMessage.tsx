@@ -2,7 +2,8 @@ import React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Box, Button, Stack, Text } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans } from 'app/core/internationalization/index';
 
 interface EmptyTransformationsProps {
   onShowPicker: () => void;

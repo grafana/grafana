@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 
-import { TraceSpan } from './components';
+// @todo: replace barrel import path
+import { TraceSpan } from './components/index';
 
 /**
  * Children state means whether spans are collapsed or not. Also provides some functions to manipulate that state.

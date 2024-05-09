@@ -4,7 +4,8 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { DashboardLink } from '@grafana/schema';
 import { Button, DeleteButton, EmptyState, Icon, IconButton, Stack, TagList, TextLink, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans, t } from 'app/core/internationalization/index';
 
 interface DashboardLinkListProps {
   links: DashboardLink[];

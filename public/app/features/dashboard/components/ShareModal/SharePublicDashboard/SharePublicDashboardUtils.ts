@@ -3,7 +3,8 @@ import { config, DataSourceWithBackend } from '@grafana/runtime';
 import { getConfig } from 'app/core/config';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
-import { PanelModel } from '../../../state';
+// @todo: replace barrel import path
+import { PanelModel } from '../../../state/index';
 import { shareDashboardType } from '../utils';
 
 import { supportedDatasources } from './SupportedPubdashDatasources';

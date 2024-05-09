@@ -17,19 +17,22 @@ import {
   useStyles2,
 } from '@grafana/ui/src';
 import { Layout } from '@grafana/ui/src/components/Layout/Layout';
-import { Trans, t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans, t } from 'app/core/internationalization/index';
 import {
   useDeletePublicDashboardMutation,
   useUpdatePublicDashboardMutation,
 } from 'app/features/dashboard/api/publicDashboardApi';
-import { DashboardModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { DashboardModel } from 'app/features/dashboard/state/index';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { DeletePublicDashboardModal } from 'app/features/manage-dashboards/components/PublicDashboardListTable/DeletePublicDashboardModal';
 
 import { contextSrv } from '../../../../../../core/services/context_srv';
-import { AccessControlAction, useSelector } from '../../../../../../types';
+// @todo: replace barrel import path
+import { AccessControlAction, useSelector } from '../../../../../../types/index';
 import { useIsDesktop } from '../../../../utils/screen';
 import { ShareModal } from '../../ShareModal';
 import { shareDashboardType } from '../../utils';

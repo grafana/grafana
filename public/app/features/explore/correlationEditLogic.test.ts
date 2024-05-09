@@ -1,4 +1,5 @@
-import { CORRELATION_EDITOR_POST_CONFIRM_ACTION } from 'app/types';
+// @todo: replace barrel import path
+import { CORRELATION_EDITOR_POST_CONFIRM_ACTION } from 'app/types/index';
 
 import { showModalMessage } from './correlationEditLogic';
 

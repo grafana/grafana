@@ -2,7 +2,8 @@ import React, { useCallback, useState } from 'react';
 
 import { Input } from '@grafana/ui';
 
-import { AzureQueryEditorFieldProps } from '../../types';
+// @todo: replace barrel import path
+import { AzureQueryEditorFieldProps } from '../../types/index';
 import { Field } from '../shared/Field';
 
 import { setLegendAlias } from './setQueryValue';

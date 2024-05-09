@@ -1,4 +1,5 @@
-import { DashboardInitPhase, DashboardState } from 'app/types';
+// @todo: replace barrel import path
+import { DashboardInitPhase, DashboardState } from 'app/types/index';
 
 import { createDashboardModelFixture, createPanelSaveModel } from './__fixtures__/dashboardFixtures';
 import {

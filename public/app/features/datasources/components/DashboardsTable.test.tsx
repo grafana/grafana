@@ -2,7 +2,8 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { PluginDashboard } from 'app/types';
+// @todo: replace barrel import path
+import { PluginDashboard } from 'app/types/index';
 
 import DashboardsTable, { Props } from './DashboardsTable';
 

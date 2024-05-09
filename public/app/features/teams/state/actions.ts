@@ -2,10 +2,12 @@ import { debounce } from 'lodash';
 
 import { getBackendSrv } from '@grafana/runtime';
 import { FetchDataArgs } from '@grafana/ui';
-import { updateNavIndex } from 'app/core/actions';
+// @todo: replace barrel import path
+import { updateNavIndex } from 'app/core/actions/index';
 import { contextSrv } from 'app/core/core';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
-import { AccessControlAction, Team, TeamMember, ThunkResult } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction, Team, TeamMember, ThunkResult } from 'app/types/index';
 
 import { buildNavModel } from './navModel';
 import {

@@ -1,4 +1,5 @@
-import { ThunkResult } from 'app/types';
+// @todo: replace barrel import path
+import { ThunkResult } from 'app/types/index';
 
 import { validateVariableSelectionState } from '../state/actions';
 import { toKeyedAction } from '../state/keyedVariablesReducer';

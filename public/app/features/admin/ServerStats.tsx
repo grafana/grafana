@@ -4,7 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, GrafanaBootConfig } from '@grafana/runtime';
 import { LinkButton, useStyles2 } from '@grafana/ui';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 
 import { contextSrv } from '../../core/services/context_srv';
 

@@ -9,8 +9,9 @@ import { locationService } from '@grafana/runtime';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 
 import { configureStore } from '../../../../store/configureStore';
-import { DashboardModel } from '../../state';
+// @todo: replace barrel import path
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
+import { DashboardModel } from '../../state/index';
 
 import { DashboardSettings } from './DashboardSettings';
 

@@ -5,7 +5,8 @@ import React, { MouseEvent, useCallback, useEffect, useMemo, useState } from 're
 import { GrafanaTheme2, SelectableValue, urlUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { AsyncSelect, Button, Modal, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t, Trans } from 'app/core/internationalization/index';
 
 import { DashboardSearchItem } from '../../../search/types';
 import { getConnectedDashboards, getLibraryPanelConnectedDashboards } from '../../state/api';

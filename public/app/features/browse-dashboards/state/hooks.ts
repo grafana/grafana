@@ -2,7 +2,8 @@ import { useCallback, useRef } from 'react';
 import { createSelector } from 'reselect';
 
 import { DashboardViewItem } from 'app/features/search/types';
-import { useSelector, StoreState, useDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { useSelector, StoreState, useDispatch } from 'app/types/index';
 
 import { PAGE_SIZE } from '../api/services';
 import { isSharedWithMe } from '../components/utils';

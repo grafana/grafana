@@ -1,7 +1,9 @@
 import { CellProps } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 
-import { MigrateDataResponseItemDto } from '../api';
+// @todo: replace barrel import path
+import { MigrateDataResponseItemDto } from '../api/index';
 
 export function TypeCell(props: CellProps<MigrateDataResponseItemDto>) {
   const { type } = props.row.original;

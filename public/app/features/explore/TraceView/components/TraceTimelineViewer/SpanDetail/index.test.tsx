@@ -30,6 +30,7 @@ import { formatDuration } from '../utils';
 
 import DetailState from './DetailState';
 
+// @todo: replace barrel import path
 import SpanDetail, { getAbsoluteTime, SpanDetailProps } from './index';
 
 describe('<SpanDetail>', () => {

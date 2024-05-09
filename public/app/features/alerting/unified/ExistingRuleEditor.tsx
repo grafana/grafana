@@ -2,7 +2,8 @@ import React, { useEffect } from 'react';
 
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
-import { useDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { useDispatch } from 'app/types/index';
 import { RuleIdentifier } from 'app/types/unified-alerting';
 
 import { AlertWarning } from './AlertWarning';

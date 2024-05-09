@@ -3,7 +3,8 @@ import { Controller, useFormContext, useWatch } from 'react-hook-form';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { Field, FieldSet } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans, t } from 'app/core/internationalization/index';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { QueryEditorField } from './QueryEditorField';

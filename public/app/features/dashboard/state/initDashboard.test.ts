@@ -9,7 +9,8 @@ import { KeybindingSrv } from 'app/core/services/keybindingSrv';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { createConstantVariableAdapter } from 'app/features/variables/constant/adapter';
 import { constantBuilder } from 'app/features/variables/shared/testing/builders';
-import { DashboardInitPhase, DashboardRoutes } from 'app/types';
+// @todo: replace barrel import path
+import { DashboardInitPhase, DashboardRoutes } from 'app/types/index';
 
 import { Echo } from '../../../core/services/echo/Echo';
 import {

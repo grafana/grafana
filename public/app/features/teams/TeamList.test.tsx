@@ -5,7 +5,8 @@ import { TestProvider } from 'test/helpers/TestProvider';
 
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { Team } from '../../types';
+// @todo: replace barrel import path
+import { Team } from '../../types/index';
 
 import { Props, TeamList } from './TeamList';
 import { getMockTeam, getMultipleMockTeams } from './__mocks__/teamMocks';

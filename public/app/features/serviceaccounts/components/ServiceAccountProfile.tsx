@@ -5,7 +5,8 @@ import { dateTimeFormat, GrafanaTheme2, OrgRole, TimeZone } from '@grafana/data'
 import { Label, TextLink, useStyles2 } from '@grafana/ui';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction, Role, ServiceAccountDTO } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction, Role, ServiceAccountDTO } from 'app/types/index';
 
 import { ServiceAccountProfileRow } from './ServiceAccountProfileRow';
 import { ServiceAccountRoleRow } from './ServiceAccountRoleRow';

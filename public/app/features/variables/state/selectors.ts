@@ -3,7 +3,8 @@ import memoizeOne from 'memoize-one';
 import { TypedVariableModel } from '@grafana/data';
 
 import { getState } from '../../../store/store';
-import { StoreState } from '../../../types';
+// @todo: replace barrel import path
+import { StoreState } from '../../../types/index';
 import { toStateKey } from '../utils';
 
 import { getInitialTemplatingState, TemplatingState } from './reducers';

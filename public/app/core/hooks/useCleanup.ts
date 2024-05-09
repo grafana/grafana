@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 
-import { useDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { useDispatch } from 'app/types/index';
 
 import { cleanUpAction, CleanUpAction } from '../actions/cleanUp';
 

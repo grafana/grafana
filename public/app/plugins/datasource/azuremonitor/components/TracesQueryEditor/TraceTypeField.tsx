@@ -4,7 +4,8 @@ import { SelectableValue } from '@grafana/data';
 import { MultiSelect } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
-import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
+// @todo: replace barrel import path
+import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types/index';
 import { findOptions } from '../../utils/common';
 import { Field } from '../shared/Field';
 

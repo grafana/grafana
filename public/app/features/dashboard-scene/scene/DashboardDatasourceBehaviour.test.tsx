@@ -12,7 +12,8 @@ import {
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneGridLayout, SceneQueryRunner, VizPanel } from '@grafana/scenes';
-import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
+// @todo: replace barrel import path
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/index';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 
 import { VizPanelManager } from '../panel-edit/VizPanelManager';

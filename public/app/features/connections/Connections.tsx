@@ -1,10 +1,13 @@
 import * as React from 'react';
 import { Redirect, Route, Switch, useLocation } from 'react-router-dom';
 
-import { DataSourcesRoutesContext } from 'app/features/datasources/state';
-import { StoreState, useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { DataSourcesRoutesContext } from 'app/features/datasources/state/index';
+// @todo: replace barrel import path
+import { StoreState, useSelector } from 'app/types/index';
 
 import { ROUTES } from './constants';
+// @todo: replace barrel import path
 import {
   AddNewConnectionPage,
   DataSourceDashboardsPage,
@@ -12,7 +15,7 @@ import {
   DataSourcesListPage,
   EditDataSourcePage,
   NewDataSourcePage,
-} from './pages';
+} from './pages/index';
 
 function RedirectToAddNewConnection() {
   const { search } = useLocation();

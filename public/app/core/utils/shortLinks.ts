@@ -3,7 +3,8 @@ import memoizeOne from 'memoize-one';
 import { UrlQueryMap } from '@grafana/data';
 import { getBackendSrv, config, locationService } from '@grafana/runtime';
 import { sceneGraph, SceneTimeRangeLike, VizPanel } from '@grafana/scenes';
-import { notifyApp } from 'app/core/actions';
+// @todo: replace barrel import path
+import { notifyApp } from 'app/core/actions/index';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/urlBuilders';

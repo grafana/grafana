@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { FieldError, DeepMap, useFormContext } from 'react-hook-form';
 
 import { Button, useStyles2 } from '@grafana/ui';
-import { NotificationChannelOption } from 'app/types';
+// @todo: replace barrel import path
+import { NotificationChannelOption } from 'app/types/index';
 
 import { ActionIcon } from '../../../rules/ActionIcon';
 

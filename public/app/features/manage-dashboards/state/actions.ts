@@ -1,11 +1,13 @@
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { getBackendSrv, getDataSourceSrv, isFetchError } from '@grafana/runtime';
-import { notifyApp } from 'app/core/actions';
+// @todo: replace barrel import path
+import { notifyApp } from 'app/core/actions/index';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { browseDashboardsAPI, ImportInputs } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { FolderInfo, PermissionLevelString, SearchQueryType, ThunkResult } from 'app/types';
+// @todo: replace barrel import path
+import { FolderInfo, PermissionLevelString, SearchQueryType, ThunkResult } from 'app/types/index';
 
 import {
   Input,

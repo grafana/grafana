@@ -31,7 +31,8 @@ import { PanelContext, PanelContextProvider, SeriesVisibilityChangeMode, useThem
 import { GraphFieldConfig } from 'app/plugins/panel/graph/types';
 import { defaultGraphConfig, getGraphFieldConfig } from 'app/plugins/panel/timeseries/config';
 import { Options as TimeSeriesOptions } from 'app/plugins/panel/timeseries/panelcfg.gen';
-import { ExploreGraphStyle } from 'app/types';
+// @todo: replace barrel import path
+import { ExploreGraphStyle } from 'app/types/index';
 
 import { seriesVisibilityConfigFactory } from '../../dashboard/dashgrid/SeriesVisibilityConfigFactory';
 import { useExploreDataLinkPostProcessor } from '../hooks/useExploreDataLinkPostProcessor';

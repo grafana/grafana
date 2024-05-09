@@ -4,9 +4,11 @@ import React from 'react';
 import { Provider } from 'react-redux';
 
 import { configureStore } from '../../../../../store/configureStore';
-import { DashboardInitPhase } from '../../../../../types';
-import { DashboardModel, PanelModel } from '../../../state';
+// @todo: replace barrel import path
+import { DashboardInitPhase } from '../../../../../types/index';
+// @todo: replace barrel import path
 import { createDashboardModelFixture } from '../../../state/__fixtures__/dashboardFixtures';
+import { DashboardModel, PanelModel } from '../../../state/index';
 import { ShareModal } from '../ShareModal';
 
 import * as sharePublicDashboardUtils from './SharePublicDashboardUtils';

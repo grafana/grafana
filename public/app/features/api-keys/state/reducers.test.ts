@@ -1,5 +1,6 @@
 ﻿import { reducerTester } from '../../../../test/core/redux/reducerTester';
-import { ApiKeysState } from '../../../types';
+// @todo: replace barrel import path
+import { ApiKeysState } from '../../../types/index';
 import { getMultipleMockKeys } from '../__mocks__/apiKeysMock';
 
 import {

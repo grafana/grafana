@@ -2,12 +2,13 @@ import React, { PureComponent } from 'react';
 
 import { Spinner, HorizontalGroup } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+// @todo: replace barrel import path
 import {
   historySrv,
   RevisionsModel,
   VersionHistoryHeader,
   VersionsHistoryButtons,
-} from 'app/features/dashboard-scene/settings/version-history';
+} from 'app/features/dashboard-scene/settings/version-history/index';
 
 import { VersionHistoryComparison } from '../VersionHistory/VersionHistoryComparison';
 import { VersionHistoryTable } from '../VersionHistory/VersionHistoryTable';

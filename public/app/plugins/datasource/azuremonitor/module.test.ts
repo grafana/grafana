@@ -2,7 +2,8 @@ import { DashboardLoadedEvent } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
 import './module';
-import { AzureMonitorQuery } from './types';
+// @todo: replace barrel import path
+import { AzureMonitorQuery } from './types/index';
 
 jest.mock('@grafana/runtime', () => {
   return {

@@ -1,4 +1,5 @@
-import { NotifierDTO } from 'app/types';
+// @todo: replace barrel import path
+import { NotifierDTO } from 'app/types/index';
 
 export const grafanaAlertNotifiersMock: NotifierDTO[] = [
   {

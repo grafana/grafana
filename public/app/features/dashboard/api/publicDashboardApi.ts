@@ -2,7 +2,8 @@ import { BaseQueryFn, createApi } from '@reduxjs/toolkit/query/react';
 import { lastValueFrom } from 'rxjs';
 
 import { BackendSrvRequest, FetchError, getBackendSrv, isFetchError } from '@grafana/runtime/src';
-import { notifyApp } from 'app/core/actions';
+// @todo: replace barrel import path
+import { notifyApp } from 'app/core/actions/index';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import {
   PublicDashboard,
@@ -10,7 +11,8 @@ import {
   SessionDashboard,
   SessionUser,
 } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
-import { DashboardModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { DashboardModel } from 'app/features/dashboard/state/index';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import {
   PublicDashboardListWithPagination,

@@ -14,7 +14,8 @@
 
 import { find as _find, get as _get } from 'lodash';
 
-import { TNil, TraceSpan } from '../types';
+// @todo: replace barrel import path
+import { TNil, TraceSpan } from '../types/index';
 
 function getFirstAncestor(span: TraceSpan): TraceSpan | TNil {
   return _get(

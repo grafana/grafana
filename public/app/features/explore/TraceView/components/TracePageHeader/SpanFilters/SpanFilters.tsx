@@ -25,7 +25,8 @@ import { Collapse, HorizontalGroup, Icon, InlineField, InlineFieldRow, Select, T
 import { defaultFilters, randomId, SearchProps, Tag } from '../../../useSearch';
 import SearchBarInput from '../../common/SearchBarInput';
 import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE, ID } from '../../constants/span';
-import { Trace } from '../../types';
+// @todo: replace barrel import path
+import { Trace } from '../../types/index';
 import NextPrevResult from '../SearchBar/NextPrevResult';
 import TracePageSearchBar from '../SearchBar/TracePageSearchBar';
 

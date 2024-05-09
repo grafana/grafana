@@ -4,7 +4,8 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { Branding } from 'app/core/components/Branding/Branding';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useNavModel } from 'app/core/hooks/useNavModel';
-import { ExploreQueryParams } from 'app/types';
+// @todo: replace barrel import path
+import { ExploreQueryParams } from 'app/types/index';
 
 import { isFulfilled, hasKey } from './utils';
 

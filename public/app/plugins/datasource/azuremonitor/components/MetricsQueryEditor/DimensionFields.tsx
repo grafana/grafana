@@ -4,7 +4,13 @@ import { SelectableValue, DataFrame, PanelData, Labels } from '@grafana/data';
 import { EditorList, AccessoryButton } from '@grafana/experimental';
 import { Select, HorizontalGroup, MultiSelect } from '@grafana/ui';
 
-import { AzureMetricDimension, AzureMonitorOption, AzureMonitorQuery, AzureQueryEditorFieldProps } from '../../types';
+// @todo: replace barrel import path
+import {
+  AzureMetricDimension,
+  AzureMonitorOption,
+  AzureMonitorQuery,
+  AzureQueryEditorFieldProps,
+} from '../../types/index';
 import { Field } from '../shared/Field';
 
 import { setDimensionFilters } from './setQueryValue';

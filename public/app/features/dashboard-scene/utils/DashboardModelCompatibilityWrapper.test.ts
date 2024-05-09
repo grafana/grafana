@@ -9,7 +9,8 @@ import {
   SceneDataLayerSet,
 } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
-import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
+// @todo: replace barrel import path
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/index';
 
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';

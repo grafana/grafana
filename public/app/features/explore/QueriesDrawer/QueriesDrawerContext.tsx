@@ -1,7 +1,8 @@
 import React, { PropsWithChildren, useState, createContext, useContext, useEffect } from 'react';
 
 import { config } from '@grafana/runtime';
-import { useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { useSelector } from 'app/types/index';
 
 import { selectRichHistorySettings } from '../state/selectors';
 

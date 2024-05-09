@@ -8,10 +8,12 @@ import { locationService } from '@grafana/runtime';
 import { Button, ToolbarButtonRow } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
 import { DashboardMetaChangedEvent } from 'app/types/events';
+import { AccessControlAction } from 'app/types/index';
 
 import { VariableEditorContainer } from '../../../variables/editor/VariableEditorContainer';
 import { DashboardModel } from '../../state/DashboardModel';

@@ -15,7 +15,8 @@ import { configureStore } from 'app/store/configureStore';
 import { makeDatasourceSetup } from '../../spec/helper/setup';
 import { splitClose, splitOpen } from '../../state/main';
 
-import { useStateSync } from './';
+// @todo: replace barrel import path
+import { useStateSync } from './index';
 
 const fetch = jest.fn().mockResolvedValue({ correlations: [] });
 jest.mock('@grafana/runtime', () => ({

@@ -2,8 +2,10 @@ import React, { PureComponent } from 'react';
 
 import { ConfirmButton, ConfirmModal, Button, Stack } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { i18nDate } from 'app/core/internationalization';
-import { AccessControlAction, UserSession } from 'app/types';
+// @todo: replace barrel import path
+import { i18nDate } from 'app/core/internationalization/index';
+// @todo: replace barrel import path
+import { AccessControlAction, UserSession } from 'app/types/index';
 
 interface Props {
   sessions: UserSession[];

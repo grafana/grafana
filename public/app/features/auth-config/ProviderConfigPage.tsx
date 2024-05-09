@@ -6,7 +6,8 @@ import { Badge, Stack, Text } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
-import { StoreState } from '../../types';
+// @todo: replace barrel import path
+import { StoreState } from '../../types/index';
 
 import { ProviderConfigForm } from './ProviderConfigForm';
 import { UIMap } from './constants';

@@ -4,7 +4,8 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { VERSIONS_FETCH_LIMIT, VersionsEditView } from './VersionsEditView';
-import { historySrv } from './version-history';
+// @todo: replace barrel import path
+import { historySrv } from './version-history/index';
 
 jest.mock('./version-history/HistorySrv');
 

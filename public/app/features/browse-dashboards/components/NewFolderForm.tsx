@@ -3,7 +3,8 @@ import { useForm } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, Input, Field, Stack } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans, t } from 'app/core/internationalization/index';
 
 import { validationSrv } from '../../manage-dashboards/services/ValidationSrv';
 

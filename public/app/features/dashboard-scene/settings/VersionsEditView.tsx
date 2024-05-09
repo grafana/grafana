@@ -10,6 +10,7 @@ import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
+// @todo: replace barrel import path
 import {
   RevisionsModel,
   VersionHistoryComparison,
@@ -17,7 +18,7 @@ import {
   VersionHistoryTable,
   VersionsHistoryButtons,
   historySrv,
-} from './version-history';
+} from './version-history/index';
 
 export const VERSIONS_FETCH_LIMIT = 10;
 

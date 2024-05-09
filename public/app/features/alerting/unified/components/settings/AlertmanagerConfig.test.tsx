@@ -5,7 +5,8 @@ import { render } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';

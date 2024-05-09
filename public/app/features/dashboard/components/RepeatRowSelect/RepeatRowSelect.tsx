@@ -3,7 +3,8 @@ import React, { useCallback, useMemo } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { SceneObject, sceneGraph } from '@grafana/scenes';
 import { Select } from '@grafana/ui';
-import { useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { useSelector } from 'app/types/index';
 
 import { getLastKey, getVariablesByKey } from '../../../variables/state/selectors';
 

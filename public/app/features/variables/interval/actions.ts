@@ -1,6 +1,7 @@
 import { rangeUtil } from '@grafana/data';
 
-import { ThunkResult } from '../../../types';
+// @todo: replace barrel import path
+import { ThunkResult } from '../../../types/index';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from '../../templating/template_srv';
 import { validateVariableSelectionState } from '../state/actions';

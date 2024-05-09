@@ -8,7 +8,8 @@ import {
   SceneObjectRef,
   VizPanel,
 } from '@grafana/scenes';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 import { QueryInspector } from 'app/features/inspector/QueryInspector';
 import { InspectTab } from 'app/features/inspector/types';
 

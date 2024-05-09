@@ -3,7 +3,8 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { OrgRole, ServiceAccountDTO, ServiceAccountStateFilter } from 'app/types';
+// @todo: replace barrel import path
+import { OrgRole, ServiceAccountDTO, ServiceAccountStateFilter } from 'app/types/index';
 
 import { Props, ServiceAccountsListPageUnconnected } from './ServiceAccountsListPage';
 

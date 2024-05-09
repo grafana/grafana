@@ -3,8 +3,9 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { Dashboard } from '@grafana/schema';
-import { DashboardModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
+import { DashboardModel } from 'app/features/dashboard/state/index';
 
 import { SaveDashboardOptions } from '../types';
 

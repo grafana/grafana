@@ -7,7 +7,16 @@ import { Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { StoreState, UserDTO, UserOrg, UserSession, SyncInfo, UserAdminError, AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import {
+  StoreState,
+  UserDTO,
+  UserOrg,
+  UserSession,
+  SyncInfo,
+  UserAdminError,
+  AccessControlAction,
+} from 'app/types/index';
 
 import { UserLdapSyncInfo } from './UserLdapSyncInfo';
 import { UserOrgs } from './UserOrgs';

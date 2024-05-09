@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
 
 import { Alert, CellProps, Column, Icon, InteractiveTable, Stack, Text, Tooltip } from '@grafana/ui';
-import { AppNotificationSeverity, LdapConnectionInfo, LdapServerInfo } from 'app/types';
+// @todo: replace barrel import path
+import { AppNotificationSeverity, LdapConnectionInfo, LdapServerInfo } from 'app/types/index';
 
 interface Props {
   ldapConnectionInfo: LdapConnectionInfo;

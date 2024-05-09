@@ -6,7 +6,8 @@ import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2 } from '@grafa
 import { selectors } from '@grafana/e2e-selectors';
 import { getTemplateSrv } from '@grafana/runtime';
 import { useStyles2, useTheme2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans } from 'app/core/internationalization/index';
 
 import { useDatasources, useKeyboardNavigatableList, useRecentlyUsedDataSources } from '../../hooks';
 

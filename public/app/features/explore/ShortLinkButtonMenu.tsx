@@ -3,10 +3,12 @@ import React, { useState } from 'react';
 import { IconName } from '@grafana/data';
 import { reportInteraction, config } from '@grafana/runtime';
 import { ToolbarButton, Dropdown, Menu, Stack, ToolbarButtonRow, MenuGroup } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 import { copyStringToClipboard } from 'app/core/utils/explore';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
-import { useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { useSelector } from 'app/types/index';
 
 import { selectPanes } from './state/selectors';
 import { constructAbsoluteUrl } from './utils/links';

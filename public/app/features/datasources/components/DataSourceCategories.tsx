@@ -2,7 +2,8 @@ import React from 'react';
 
 import { DataSourcePluginMeta } from '@grafana/data';
 import { LinkButton } from '@grafana/ui';
-import { DataSourcePluginCategory } from 'app/types';
+// @todo: replace barrel import path
+import { DataSourcePluginCategory } from 'app/types/index';
 
 import { ROUTES } from '../../connections/constants';
 

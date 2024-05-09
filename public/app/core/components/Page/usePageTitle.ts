@@ -2,7 +2,8 @@ import { useEffect } from 'react';
 
 import { NavModel, NavModelItem } from '@grafana/data';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
-import { useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { useSelector } from 'app/types/index';
 
 import { Branding } from '../Branding/Branding';
 import { buildBreadcrumbs } from '../Breadcrumbs/utils';

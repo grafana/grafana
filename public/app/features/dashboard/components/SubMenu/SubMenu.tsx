@@ -6,9 +6,11 @@ import { AnnotationQuery, DataQuery, TypedVariableModel, GrafanaTheme2 } from '@
 import { DashboardLink } from '@grafana/schema';
 import { stylesFactory, Themeable2, withTheme2 } from '@grafana/ui';
 
-import { StoreState } from '../../../../types';
+// @todo: replace barrel import path
+import { StoreState } from '../../../../types/index';
 import { getSubMenuVariables, getVariablesState } from '../../../variables/state/selectors';
-import { DashboardModel } from '../../state';
+// @todo: replace barrel import path
+import { DashboardModel } from '../../state/index';
 
 import { Annotations } from './Annotations';
 import { DashboardLinks } from './DashboardLinks';

@@ -5,7 +5,8 @@ import { useAsync } from 'react-use';
 import { Field, LinkModel, PanelProps } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { TraceView } from 'app/features/explore/TraceView/TraceView';
-import { SpanLinkFunc } from 'app/features/explore/TraceView/components';
+// @todo: replace barrel import path
+import { SpanLinkFunc } from 'app/features/explore/TraceView/components/index';
 import { transformDataFrames } from 'app/features/explore/TraceView/utils/transform';
 
 const styles = {

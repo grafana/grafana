@@ -3,7 +3,8 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { Button, Modal, ModalsController, useStyles2 } from '@grafana/ui/src';
-import { Trans, t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans, t } from 'app/core/internationalization/index';
 import { SessionUser } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 
 import { useRevokeAllAccessMutation } from '../../dashboard/api/publicDashboardApi';

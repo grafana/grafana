@@ -10,7 +10,8 @@ import {
   Receiver,
   Route,
 } from 'app/plugins/datasource/alertmanager/types';
-import { NotifierDTO, NotifierStatus, ReceiversStateDTO } from 'app/types';
+// @todo: replace barrel import path
+import { NotifierDTO, NotifierStatus, ReceiversStateDTO } from 'app/types/index';
 
 import { OnCallIntegrationDTO } from '../../api/onCallApi';
 import { computeInheritedTree } from '../../utils/notification-policies';

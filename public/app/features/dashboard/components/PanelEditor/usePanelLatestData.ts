@@ -4,7 +4,8 @@ import { Unsubscribable } from 'rxjs';
 import { LoadingState, PanelData } from '@grafana/data';
 
 import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
-import { PanelModel } from '../../state';
+// @todo: replace barrel import path
+import { PanelModel } from '../../state/index';
 
 interface UsePanelLatestData {
   data?: PanelData;

@@ -27,7 +27,8 @@ import { getTransformationVars } from 'app/features/correlations/transformations
 import { ExploreItemState } from 'app/types/explore';
 
 import { getLinkSrv } from '../../panel/panellinks/link_srv';
-import { getUrlStateFromPaneState } from '../hooks/useStateSync';
+// @todo: replace barrel import path
+import { getUrlStateFromPaneState } from '../hooks/useStateSync/index';
 
 type DataLinkFilter = (link: DataLink, scopedVars: ScopedVars) => boolean;
 

@@ -13,13 +13,16 @@ import { Dashboard, DashboardCursorSync, FieldConfigSource, ThresholdsMode, Pane
 import config from 'app/core/config';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
-import * as appTypes from 'app/types';
-import { DashboardInitPhase, DashboardMeta, DashboardRoutes } from 'app/types';
+// @todo: replace barrel import path
+import * as appTypes from 'app/types/index';
+// @todo: replace barrel import path
+import { DashboardInitPhase, DashboardMeta, DashboardRoutes } from 'app/types/index';
 
 import { SafeDynamicImport } from '../../../core/components/DynamicImports/SafeDynamicImport';
 import { configureStore } from '../../../store/configureStore';
 import { Props as LazyLoaderProps } from '../dashgrid/LazyLoader';
-import { DashboardModel } from '../state';
+// @todo: replace barrel import path
+import { DashboardModel } from '../state/index';
 import { initDashboard } from '../state/initDashboard';
 
 import PublicDashboardPage, { Props } from './PublicDashboardPage';

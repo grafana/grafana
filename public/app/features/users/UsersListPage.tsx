@@ -4,7 +4,8 @@ import { connect, ConnectedProps } from 'react-redux';
 import { renderMarkdown } from '@grafana/data';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
-import { OrgUser, OrgRole, StoreState } from 'app/types';
+// @todo: replace barrel import path
+import { OrgUser, OrgRole, StoreState } from 'app/types/index';
 
 import { OrgUsersTable } from '../admin/Users/OrgUsersTable';
 import InviteesTable from '../invites/InviteesTable';

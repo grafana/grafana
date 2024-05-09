@@ -6,13 +6,14 @@ import { getBackendSrv, getTemplateSrv, isFetchError, TemplateSrv, config } from
 import { Alert, Divider, SecureSocksProxySettings } from '@grafana/ui';
 
 import ResponseParser from '../../azure_monitor/response_parser';
+// @todo: replace barrel import path
 import {
   AzureAPIResponse,
   AzureDataSourceJsonData,
   AzureDataSourceSecureJsonData,
   AzureDataSourceSettings,
   Subscription,
-} from '../../types';
+} from '../../types/index';
 import { routeNames } from '../../utils/common';
 
 import { MonitorConfig } from './MonitorConfig';

@@ -16,6 +16,7 @@ import React from 'react';
 
 import TNil from '../../../types/TNil';
 import DraggableManager from '../DraggableManager';
+// @todo: replace barrel import path
 import { DraggableBounds, DraggingUpdate } from '../index';
 
 import './DividerDemo.css';

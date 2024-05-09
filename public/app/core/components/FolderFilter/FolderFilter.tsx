@@ -6,7 +6,8 @@ import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { AsyncMultiSelect, Icon, Button, useStyles2 } from '@grafana/ui';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { DashboardSearchItemType } from 'app/features/search/types';
-import { FolderInfo, PermissionLevelString } from 'app/types';
+// @todo: replace barrel import path
+import { FolderInfo, PermissionLevelString } from 'app/types/index';
 
 export interface FolderFilterProps {
   onChange: (folder: FolderInfo[]) => void;

@@ -1,7 +1,8 @@
 import { SelectableValue, DataFrame, DataFrameView } from '@grafana/data';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 
-import { GrafanaSearcher, QueryResponse, SearchQuery } from '.';
+// @todo: replace barrel import path
+import { GrafanaSearcher, QueryResponse, SearchQuery } from './index';
 
 // This is a dummy search useful for tests
 export class DummySearcher implements GrafanaSearcher {

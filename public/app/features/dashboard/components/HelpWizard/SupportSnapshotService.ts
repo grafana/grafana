@@ -8,7 +8,8 @@ import { Randomize } from 'app/features/dashboard-scene/inspect/HelpWizard/rando
 import { createDashboardSceneFromDashboardModel } from 'app/features/dashboard-scene/serialization/transformSaveModelToScene';
 
 import { getTimeSrv } from '../../services/TimeSrv';
-import { DashboardModel, PanelModel } from '../../state';
+// @todo: replace barrel import path
+import { DashboardModel, PanelModel } from '../../state/index';
 import { setDashboardToFetchFromLocalStorage } from '../../state/initDashboard';
 
 import { getDebugDashboard, getGithubMarkdown } from './utils';

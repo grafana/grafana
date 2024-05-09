@@ -1,4 +1,5 @@
-import { DashboardQueryResult } from '../search/service';
+// @todo: replace barrel import path
+import { DashboardQueryResult } from '../search/service/index';
 
 export type PlaylistMode = boolean | 'tv';
 

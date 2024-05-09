@@ -1,6 +1,7 @@
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
-import { createAsyncThunk } from 'app/types';
+// @todo: replace barrel import path
+import { createAsyncThunk } from 'app/types/index';
 
 import { listDashboards, listFolders, PAGE_SIZE } from '../api/services';
 import { DashboardViewItemWithUIItems, UIDashboardViewItem } from '../types';

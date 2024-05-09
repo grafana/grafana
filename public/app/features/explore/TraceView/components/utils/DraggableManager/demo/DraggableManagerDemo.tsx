@@ -14,7 +14,8 @@
 
 import React from 'react';
 
-import { TNil } from '../../../types';
+// @todo: replace barrel import path
+import { TNil } from '../../../types/index';
 
 import DividerDemo from './DividerDemo';
 import RegionDemo from './RegionDemo';

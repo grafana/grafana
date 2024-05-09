@@ -1,6 +1,7 @@
 import { UrlQueryMap } from '@grafana/data';
 import { setDataSourceSrv } from '@grafana/runtime';
-import { DashboardModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { DashboardModel } from 'app/features/dashboard/state/index';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';

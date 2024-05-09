@@ -4,7 +4,8 @@ import Skeleton from 'react-loading-skeleton';
 
 import { Button, LinkButton, useStyles2 } from '@grafana/ui';
 import { SkeletonComponent, attachSkeleton } from '@grafana/ui/src/unstable';
-import { Trans } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans } from 'app/core/internationalization/index';
 import { Snapshot } from 'app/features/dashboard/services/SnapshotSrv';
 
 export interface Props {

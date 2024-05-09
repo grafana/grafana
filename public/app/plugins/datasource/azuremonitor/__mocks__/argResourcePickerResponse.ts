@@ -1,9 +1,10 @@
+// @todo: replace barrel import path
 import {
   AzureGraphResponse,
   RawAzureResourceGroupItem,
   RawAzureResourceItem,
   RawAzureSubscriptionItem,
-} from '../types';
+} from '../types/index';
 
 export const createMockARGSubscriptionResponse = (): AzureGraphResponse<RawAzureSubscriptionItem[]> => ({
   data: [

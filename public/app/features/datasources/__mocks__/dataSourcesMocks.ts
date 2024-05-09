@@ -1,7 +1,8 @@
 import { merge } from 'lodash';
 
 import { DataSourceSettings, DataSourcePluginMeta, DataSourceJsonData } from '@grafana/data';
-import { DataSourceSettingsState, PluginDashboard } from 'app/types';
+// @todo: replace barrel import path
+import { DataSourceSettingsState, PluginDashboard } from 'app/types/index';
 
 export const getMockDashboard = (override?: Partial<PluginDashboard>) => ({
   uid: 'G1btqkgkK',

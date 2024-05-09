@@ -13,10 +13,12 @@ import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { GetVariables } from 'app/features/variables/state/selectors';
 import { VariablesChanged } from 'app/features/variables/types';
 import { configureStore } from 'app/store/configureStore';
-import { DashboardMeta } from 'app/types';
+// @todo: replace barrel import path
+import { DashboardMeta } from 'app/types/index';
 
-import { DashboardModel } from '../state';
+// @todo: replace barrel import path
 import { createDashboardModelFixture } from '../state/__fixtures__/dashboardFixtures';
+import { DashboardModel } from '../state/index';
 
 import { DashboardGrid, PANEL_FILTER_VARIABLE, Props } from './DashboardGrid';
 import { Props as LazyLoaderProps } from './LazyLoader';

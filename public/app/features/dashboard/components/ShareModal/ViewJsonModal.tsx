@@ -2,7 +2,8 @@ import React, { useCallback } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { ClipboardButton, CodeEditor, Modal } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans } from 'app/core/internationalization/index';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 export interface ViewJsonModalProps {

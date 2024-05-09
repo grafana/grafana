@@ -1,7 +1,8 @@
 import { DataSourceApi, dateTime, DataQuery } from '@grafana/data';
 
-import { PanelModel } from '../dashboard/state';
+// @todo: replace barrel import path
 import { createDashboardModelFixture } from '../dashboard/state/__fixtures__/dashboardFixtures';
+import { PanelModel } from '../dashboard/state/index';
 import { TestQuery, getMockDataSource } from '../query/state/__mocks__/mockDataSource';
 
 import { executeAnnotationQuery } from './executeAnnotationQuery';

@@ -13,7 +13,8 @@ import {
 import { waitForServerRequest } from 'app/features/alerting/unified/mocks/server/events';
 import { silenceCreateHandler } from 'app/features/alerting/unified/mocks/silences';
 import { MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 
 import Silences from './Silences';
 import { grantUserPermissions, MOCK_SILENCE_ID_EXISTING, mockDataSource, MockDataSourceSrv } from './mocks';

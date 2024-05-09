@@ -1,7 +1,8 @@
 import { throttle } from 'lodash';
 
 import { getBackendSrv, locationService } from '@grafana/runtime';
-import { SupportBundle, SupportBundleCollector, SupportBundleCreateRequest, ThunkResult } from 'app/types';
+// @todo: replace barrel import path
+import { SupportBundle, SupportBundleCollector, SupportBundleCreateRequest, ThunkResult } from 'app/types/index';
 
 import {
   collectorsFetchBegin,

@@ -6,8 +6,9 @@ import { PluginState } from '@grafana/data/src';
 import { TextDimensionMode } from '@grafana/schema';
 import { Button, Spinner, useStyles2 } from '@grafana/ui';
 import { DimensionContext } from 'app/features/dimensions/context';
-import { ColorDimensionEditor } from 'app/features/dimensions/editors';
+// @todo: replace barrel import path
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
+import { ColorDimensionEditor } from 'app/features/dimensions/editors/index';
 import { APIEditor, APIEditorConfig } from 'app/plugins/panel/canvas/editor/element/APIEditor';
 import { ButtonStyleConfig, ButtonStyleEditor } from 'app/plugins/panel/canvas/editor/element/ButtonStyleEditor';
 import { callApi } from 'app/plugins/panel/canvas/editor/element/utils';

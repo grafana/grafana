@@ -1,6 +1,7 @@
 import { contextSrv } from 'app/core/core';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { AccessControlAction, Settings, SettingsSection } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction, Settings, SettingsSection } from 'app/types/index';
 
 import { AuthProviderInfo, GetStatusHook, AuthProviderStatus } from './types';
 

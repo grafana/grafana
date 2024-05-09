@@ -15,14 +15,16 @@ import {
   isFetchError,
   locationService,
 } from '@grafana/runtime';
-import { updateNavIndex } from 'app/core/actions';
+// @todo: replace barrel import path
+import { updateNavIndex } from 'app/core/actions/index';
 import { appEvents, contextSrv } from 'app/core/core';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import { importDataSourcePlugin } from 'app/features/plugins/plugin_loader';
-import { AccessControlAction, DataSourcePluginCategory, ThunkDispatch, ThunkResult } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction, DataSourcePluginCategory, ThunkDispatch, ThunkResult } from 'app/types/index';
 
 import * as api from '../api';
 import { DATASOURCES_ROUTES } from '../constants';

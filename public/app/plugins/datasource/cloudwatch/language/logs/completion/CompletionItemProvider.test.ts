@@ -2,7 +2,13 @@ import { CustomVariableModel } from '@grafana/data';
 import { Monaco, monacoTypes } from '@grafana/ui';
 
 import { setupMockedTemplateService, logGroupNamesVariable } from '../../../__mocks__/CloudWatchDataSource';
-import { emptyQuery, filterQuery, newCommandQuery, sortQuery } from '../../../__mocks__/cloudwatch-logs-test-data';
+// @todo: replace barrel import path
+import {
+  emptyQuery,
+  filterQuery,
+  newCommandQuery,
+  sortQuery,
+} from '../../../__mocks__/cloudwatch-logs-test-data/index';
 import MonacoMock from '../../../__mocks__/monarch/Monaco';
 import TextModel from '../../../__mocks__/monarch/TextModel';
 import { ResourcesAPI } from '../../../resources/ResourcesAPI';

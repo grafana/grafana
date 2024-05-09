@@ -4,7 +4,8 @@ import { connect, ConnectedProps } from 'react-redux';
 import { RadioButtonGroup, LinkButton, FilterInput, InlineField } from '@grafana/ui';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction, StoreState } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction, StoreState } from 'app/types/index';
 
 import { selectTotal } from '../invites/state/selectors';
 

@@ -5,7 +5,8 @@ import { useAsync } from 'react-use';
 import { DataSourceApi, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Button, FilterInput, MultiSelect, RangeSlider, Select, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans, t } from 'app/core/internationalization/index';
 import {
   createDatasourcesList,
   mapNumbertoTimeInSlider,
@@ -14,8 +15,9 @@ import {
   RichHistorySearchFilters,
   RichHistorySettings,
 } from 'app/core/utils/richHistory';
-import { useSelector } from 'app/types';
+// @todo: replace barrel import path
 import { RichHistoryQuery } from 'app/types/explore';
+import { useSelector } from 'app/types/index';
 
 import { selectExploreDSMaps } from '../state/selectors';
 

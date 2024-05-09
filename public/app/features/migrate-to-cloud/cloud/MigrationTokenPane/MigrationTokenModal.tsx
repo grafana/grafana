@@ -1,7 +1,8 @@
 import React, { useId } from 'react';
 
 import { Modal, Button, Input, Stack, ClipboardButton, Field } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans, t } from 'app/core/internationalization/index';
 
 import { TokenErrorAlert } from '../TokenErrorAlert';
 

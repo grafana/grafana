@@ -10,7 +10,8 @@ import { AngularLoader } from 'app/angular/services/AngularLoader';
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 import { ContextSrv } from 'app/core/services/context_srv';
-import { AppEventEmitter, AppEventConsumer } from 'app/types';
+// @todo: replace barrel import path
+import { AppEventEmitter, AppEventConsumer } from 'app/types/index';
 
 import { UtilSrv } from './services/UtilSrv';
 

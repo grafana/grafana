@@ -3,7 +3,8 @@ import React, { PureComponent, useRef, useState } from 'react';
 
 import { Button, ConfirmButton, ConfirmModal, Input, LegacyInputStatus, Stack } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction, UserDTO } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction, UserDTO } from 'app/types/index';
 
 interface Props {
   user: UserDTO;

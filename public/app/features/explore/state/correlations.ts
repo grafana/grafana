@@ -2,13 +2,15 @@ import { Observable } from 'rxjs';
 
 import { DataLinkTransformationConfig } from '@grafana/data';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { notifyApp } from 'app/core/actions';
+// @todo: replace barrel import path
+import { notifyApp } from 'app/core/actions/index';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { CreateCorrelationParams } from 'app/features/correlations/types';
 import { CorrelationData } from 'app/features/correlations/useCorrelations';
 import { getCorrelationsBySourceUIDs, createCorrelation, generateDefaultLabel } from 'app/features/correlations/utils';
 import { store } from 'app/store/store';
-import { ThunkResult } from 'app/types';
+// @todo: replace barrel import path
+import { ThunkResult } from 'app/types/index';
 
 import { saveCorrelationsAction } from './explorePane';
 import { splitClose } from './main';

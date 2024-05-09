@@ -3,7 +3,8 @@ import React from 'react';
 import { PluginExtensionPoints, type PluginExtensionLinkConfig } from '@grafana/data';
 import { contextSrv } from 'app/core/core';
 import { dispatch } from 'app/store/store';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 
 import { createExtensionLinkConfig, logWarning } from '../../plugins/extensions/utils';
 import { changeCorrelationEditorDetails } from '../state/main';

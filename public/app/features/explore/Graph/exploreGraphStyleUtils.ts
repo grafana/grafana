@@ -2,7 +2,8 @@ import { produce } from 'immer';
 
 import { FieldConfigSource, ThresholdsConfig } from '@grafana/data';
 import { GraphDrawStyle, GraphFieldConfig, GraphThresholdsStyleConfig, StackingMode } from '@grafana/schema';
-import { ExploreGraphStyle } from 'app/types';
+// @todo: replace barrel import path
+import { ExploreGraphStyle } from 'app/types/index';
 
 export type FieldConfig = FieldConfigSource<GraphFieldConfig>;
 

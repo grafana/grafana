@@ -6,7 +6,8 @@ import { Button, ConfirmModal, IconButton, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { AccessControlAction, ApiKey, ServiceAccountDTO, StoreState } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction, ApiKey, ServiceAccountDTO, StoreState } from 'app/types/index';
 
 import { ServiceAccountPermissions } from './ServiceAccountPermissions';
 import { CreateTokenModal, ServiceAccountToken } from './components/CreateTokenModal';

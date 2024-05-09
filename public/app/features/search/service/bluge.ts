@@ -11,7 +11,8 @@ import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 
 import { replaceCurrentFolderQuery } from './utils';
 
-import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery, SearchResultMeta } from '.';
+// @todo: replace barrel import path
+import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery, SearchResultMeta } from './index';
 
 // The backend returns an empty frame with a special name to indicate that the indexing engine is being rebuilt,
 // and that it can not serve any search requests. We are temporarily using the old SQL Search API as a fallback when that happens.

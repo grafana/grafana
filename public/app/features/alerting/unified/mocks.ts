@@ -34,7 +34,15 @@ import {
   SilenceState,
 } from 'app/plugins/datasource/alertmanager/types';
 import { configureStore } from 'app/store/configureStore';
-import { AccessControlAction, DashboardDTO, FolderDTO, NotifiersState, ReceiversState, StoreState } from 'app/types';
+// @todo: replace barrel import path
+import {
+  AccessControlAction,
+  DashboardDTO,
+  FolderDTO,
+  NotifiersState,
+  ReceiversState,
+  StoreState,
+} from 'app/types/index';
 import {
   Alert,
   AlertingRule,

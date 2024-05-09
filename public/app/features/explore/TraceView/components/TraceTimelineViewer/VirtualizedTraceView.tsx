@@ -25,15 +25,18 @@ import { TimeZone } from '@grafana/schema';
 import { stylesFactory, withTheme2, ToolbarButton } from '@grafana/ui';
 
 import { PEER_SERVICE } from '../constants/tag-keys';
-import { CriticalPathSection, SpanBarOptions, SpanLinkFunc, TNil } from '../types';
+// @todo: replace barrel import path
 import TTraceTimeline from '../types/TTraceTimeline';
+import { CriticalPathSection, SpanBarOptions, SpanLinkFunc, TNil } from '../types/index';
 import { TraceLog, TraceSpan, Trace, TraceKeyValuePair, TraceLink, TraceSpanReference } from '../types/trace';
 import { getColorByKey } from '../utils/color-generator';
 
-import ListView from './ListView';
+// @todo: replace barrel import path
+import ListView from './ListView/index';
 import SpanBarRow from './SpanBarRow';
-import { TraceFlameGraphs } from './SpanDetail';
+// @todo: replace barrel import path
 import DetailState from './SpanDetail/DetailState';
+import { TraceFlameGraphs } from './SpanDetail/index';
 import SpanDetailRow from './SpanDetailRow';
 import {
   createViewedBoundsFunc,

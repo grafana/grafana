@@ -1,7 +1,8 @@
 import { lastValueFrom } from 'rxjs';
 
 import { defaultDashboard } from '@grafana/schema';
-import { DashboardModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { DashboardModel } from 'app/features/dashboard/state/index';
 import { DashboardGridItem } from 'app/features/dashboard-scene/scene/DashboardGridItem';
 import { LibraryVizPanel } from 'app/features/dashboard-scene/scene/LibraryVizPanel';
 import { vizPanelToPanel } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModel';

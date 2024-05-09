@@ -6,7 +6,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { AsyncSelect } from '@grafana/ui';
 
 import { GENERAL_FOLDER_ID, GENERAL_FOLDER_TITLE } from '../../../../features/search/constants';
-import { FolderInfo, PermissionLevelString } from '../../../../types';
+// @todo: replace barrel import path
+import { FolderInfo, PermissionLevelString } from '../../../../types/index';
 
 import { findOptionWithId, getFolderAsOption, getFoldersAsOptions } from './api';
 import { PermissionLevel } from './types';

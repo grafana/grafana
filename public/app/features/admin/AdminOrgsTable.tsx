@@ -6,7 +6,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Button, ConfirmModal, useStyles2 } from '@grafana/ui';
 import { SkeletonComponent, attachSkeleton } from '@grafana/ui/src/unstable';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction, Organization } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction, Organization } from 'app/types/index';
 
 interface Props {
   orgs: Organization[];

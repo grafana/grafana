@@ -5,12 +5,14 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { config, featureEnabled } from '@grafana/runtime';
 import { useStyles2, TabsBar, Tab } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 import { contextSrv } from 'app/core/services/context_srv';
 import { isPublicDashboardsEnabled } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 
 import { Page } from '../../core/components/Page/Page';
-import { AccessControlAction } from '../../types';
+// @todo: replace barrel import path
+import { AccessControlAction } from '../../types/index';
 import { UsersListPageContent } from '../users/UsersListPage';
 
 import { UserListAdminPageContent } from './UserListAdminPage';

@@ -5,9 +5,11 @@ import { connect, ConnectedProps } from 'react-redux';
 import { InlineField, InlineSwitch, Modal, Button, EmptyState } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 import { getTimeZone } from 'app/features/profile/state/selectors';
-import { AccessControlAction, ApiKey, ApikeyMigrationResult, StoreState } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction, ApiKey, ApikeyMigrationResult, StoreState } from 'app/types/index';
 
 import { ApiKeysActionBar } from './ApiKeysActionBar';
 import { ApiKeysTable } from './ApiKeysTable';

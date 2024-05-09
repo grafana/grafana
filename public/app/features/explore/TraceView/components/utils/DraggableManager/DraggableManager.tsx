@@ -14,7 +14,8 @@
 
 import { get as _get } from 'lodash';
 
-import { TNil } from '../../types';
+// @todo: replace barrel import path
+import { TNil } from '../../types/index';
 
 import EUpdateTypes from './EUpdateTypes';
 import { DraggableBounds, DraggingUpdate } from './types';

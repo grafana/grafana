@@ -21,8 +21,10 @@ import {
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { useNavModel } from 'app/core/hooks/useNavModel';
-import { Trans, t } from 'app/core/internationalization';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { Trans, t } from 'app/core/internationalization/index';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 
 import { AddCorrelationForm } from './Forms/AddCorrelationForm';
 import { EditCorrelationForm } from './Forms/EditCorrelationForm';

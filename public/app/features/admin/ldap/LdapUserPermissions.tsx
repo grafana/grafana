@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
 
 import { Column, Icon, InteractiveTable } from '@grafana/ui';
-import { LdapPermissions } from 'app/types';
+// @todo: replace barrel import path
+import { LdapPermissions } from 'app/types/index';
 
 interface Props {
   permissions: LdapPermissions;

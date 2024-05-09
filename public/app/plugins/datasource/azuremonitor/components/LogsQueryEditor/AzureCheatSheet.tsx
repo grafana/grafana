@@ -16,6 +16,7 @@ import {
 } from '@grafana/ui';
 
 import AzureLogAnalyticsDatasource from '../../azure_log_analytics/azure_log_analytics_datasource';
+// @todo: replace barrel import path
 import {
   AzureMonitorQuery,
   AzureQueryType,
@@ -23,7 +24,7 @@ import {
   CheatsheetQueries,
   CheatsheetQuery,
   DropdownCategories,
-} from '../../types';
+} from '../../types/index';
 
 import { RawQuery } from './RawQuery';
 import tokenizer from './syntax';

@@ -7,7 +7,8 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions, mockDataSource } from '../../mocks';

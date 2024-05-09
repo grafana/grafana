@@ -5,7 +5,8 @@ import { useForm } from 'react-hook-form';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, Input, Field, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 
 import { PasswordField } from '../PasswordField/PasswordField';
 

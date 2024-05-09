@@ -9,7 +9,8 @@ import { config } from '@grafana/runtime';
 import { Alert, Spinner, useStyles2 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { SearchResultsTable } from 'app/features/search/page/components/SearchResultsTable';
-import { getGrafanaSearcher, SearchQuery } from 'app/features/search/service';
+// @todo: replace barrel import path
+import { getGrafanaSearcher, SearchQuery } from 'app/features/search/service/index';
 
 type Props = {
   plugin: PluginMeta;

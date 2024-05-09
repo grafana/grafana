@@ -7,7 +7,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import config from 'app/core/config';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
-import { PanelModel } from '../../state';
+// @todo: replace barrel import path
+import { PanelModel } from '../../state/index';
 
 import { TransformationsEditor } from './TransformationsEditor';
 

@@ -6,8 +6,16 @@ import { Alert, LinkButton } from '@grafana/ui';
 
 import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
-import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery, ResultFormat, EngineSchema } from '../../types';
-import ResourceField from '../ResourceField';
+// @todo: replace barrel import path
+import {
+  AzureMonitorErrorish,
+  AzureMonitorOption,
+  AzureMonitorQuery,
+  ResultFormat,
+  EngineSchema,
+} from '../../types/index';
+// @todo: replace barrel import path
+import ResourceField from '../ResourceField/index';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
 import { parseResourceDetails } from '../ResourcePicker/utils';
 import FormatAsField from '../shared/FormatAsField';

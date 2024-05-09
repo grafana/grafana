@@ -2,7 +2,8 @@ import React from 'react';
 
 import { dateTimeFormat } from '@grafana/data';
 import { InteractiveTable, Text } from '@grafana/ui';
-import { SyncInfo } from 'app/types';
+// @todo: replace barrel import path
+import { SyncInfo } from 'app/types/index';
 
 interface Props {
   ldapSyncInfo: SyncInfo;

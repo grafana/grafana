@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
-import { DashboardModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { DashboardModel } from 'app/features/dashboard/state/index';
 
 import { getUnsupportedDashboardDatasources } from './SharePublicDashboardUtils';
 

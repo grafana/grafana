@@ -35,7 +35,8 @@ import {
 import { getDefaultQueries } from 'app/features/alerting/unified/utils/rule-form';
 import { searchFolders } from 'app/features/manage-dashboards/state/actions';
 import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 import { GrafanaAlertStateDecision, PromApplication } from 'app/types/unified-alerting-dto';
 
 import { RECEIVER_META_KEY } from '../../../contact-points/useContactPoints';

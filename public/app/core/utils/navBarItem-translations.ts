@@ -1,4 +1,5 @@
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 
 // Maps the ID of the nav item to a translated phrase to later pass to <Trans />
 // Because the navigation content is dynamic (defined in the backend), we can not use

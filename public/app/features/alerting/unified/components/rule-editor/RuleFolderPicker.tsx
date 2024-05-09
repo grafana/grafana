@@ -4,7 +4,8 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { Props as FolderPickerProps, OldFolderPicker } from 'app/core/components/Select/OldFolderPicker';
-import { PermissionLevelString, SearchQueryType } from 'app/types';
+// @todo: replace barrel import path
+import { PermissionLevelString, SearchQueryType } from 'app/types/index';
 
 import { CustomAdd, FolderWarning } from '../../../../../core/components/Select/OldFolderPicker';
 

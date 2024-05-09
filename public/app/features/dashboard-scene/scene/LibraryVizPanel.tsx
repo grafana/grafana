@@ -9,7 +9,8 @@ import {
   VizPanelState,
 } from '@grafana/scenes';
 import { LibraryPanel } from '@grafana/schema';
-import { PanelModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { PanelModel } from 'app/features/dashboard/state/index';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';

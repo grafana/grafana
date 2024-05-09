@@ -3,7 +3,8 @@ import React, { useEffect, useRef, useState } from 'react';
 
 import { Button, CustomScrollbar, Stack, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
 import { getSelectStyles } from '@grafana/ui/src/components/Select/getSelectStyles';
-import { OrgRole, Role } from 'app/types';
+// @todo: replace barrel import path
+import { OrgRole, Role } from 'app/types/index';
 
 import { BuiltinRoleSelector } from './BuiltinRoleSelector';
 import { RoleMenuGroupsSection } from './RoleMenuGroupsSection';

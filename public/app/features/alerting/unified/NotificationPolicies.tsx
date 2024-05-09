@@ -6,7 +6,8 @@ import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
 import { Alert, LoadingPlaceholder, Stack, Tab, TabContent, TabsBar, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { ObjectMatcher, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
-import { useDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { useDispatch } from 'app/types/index';
 
 import { useCleanup } from '../../../core/hooks/useCleanup';
 

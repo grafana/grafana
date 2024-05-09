@@ -14,7 +14,8 @@ import { InspectJSONTab } from 'app/features/inspector/InspectJSONTab';
 import { InspectStatsTab } from 'app/features/inspector/InspectStatsTab';
 import { QueryInspector } from 'app/features/inspector/QueryInspector';
 import { mixedRequestId } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { StoreState, ExploreItemState } from 'app/types';
+// @todo: replace barrel import path
+import { StoreState, ExploreItemState } from 'app/types/index';
 
 import { GetDataOptions } from '../query/state/PanelQueryRunner';
 

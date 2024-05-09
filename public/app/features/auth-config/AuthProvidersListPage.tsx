@@ -6,13 +6,15 @@ import { reportInteraction } from '@grafana/runtime';
 import { Grid, TextLink, ToolbarButton } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { config } from 'app/core/config';
-import { StoreState } from 'app/types';
+// @todo: replace barrel import path
+import { StoreState } from 'app/types/index';
 
 import AuthDrawer from './AuthDrawer';
 import ConfigureAuthCTA from './components/ConfigureAuthCTA';
 import { ProviderCard } from './components/ProviderCard';
 import { loadSettings } from './state/actions';
 
+// @todo: replace barrel import path
 import { getRegisteredAuthProviders } from './index';
 
 interface OwnProps {}

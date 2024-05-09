@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 
-import { useDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { useDispatch } from 'app/types/index';
 import { StateHistoryItem } from 'app/types/unified-alerting';
 
 import { fetchGrafanaAnnotationsAction } from '../state/actions';

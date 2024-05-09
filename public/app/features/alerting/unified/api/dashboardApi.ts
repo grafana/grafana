@@ -1,4 +1,5 @@
-import { DashboardDTO } from '../../../../types';
+// @todo: replace barrel import path
+import { DashboardDTO } from '../../../../types/index';
 import { DashboardSearchItem } from '../../../search/types';
 
 import { alertingApi } from './alertingApi';

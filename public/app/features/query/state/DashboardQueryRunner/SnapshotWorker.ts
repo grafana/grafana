@@ -2,7 +2,8 @@ import { Observable, of } from 'rxjs';
 
 import { AnnotationEvent } from '@grafana/data';
 
-import { DashboardModel } from '../../../dashboard/state';
+// @todo: replace barrel import path
+import { DashboardModel } from '../../../dashboard/state/index';
 
 import { DashboardQueryRunnerOptions, DashboardQueryRunnerWorker, DashboardQueryRunnerWorkerResult } from './types';
 import { emptyResult, getAnnotationsByPanelId, translateQueryResult } from './utils';

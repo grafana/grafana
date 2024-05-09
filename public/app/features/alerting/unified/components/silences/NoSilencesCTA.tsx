@@ -1,7 +1,8 @@
 import React from 'react';
 
 import { CallToActionCard, EmptyState, LinkButton } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans, t } from 'app/core/internationalization/index';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { getInstancesPermissions } from '../../utils/access-control';

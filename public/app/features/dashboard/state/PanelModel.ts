@@ -25,13 +25,14 @@ import { LibraryPanel, LibraryPanelRef } from '@grafana/schema';
 import config from 'app/core/config';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { getNextRefIdChar } from 'app/core/utils/query';
-import { QueryGroupOptions } from 'app/types';
+// @todo: replace barrel import path
 import {
   PanelOptionsChangedEvent,
   PanelQueriesChangedEvent,
   PanelTransformationsChangedEvent,
   RenderEvent,
 } from 'app/types/events';
+import { QueryGroupOptions } from 'app/types/index';
 
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { TimeOverrideResult } from '../utils/panel';

@@ -2,8 +2,10 @@ import React, { ChangeEvent, FocusEvent, KeyboardEvent, ReactElement, useCallbac
 
 import { isEmptyObject } from '@grafana/data';
 import { Input } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
-import { useDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
+// @todo: replace barrel import path
+import { useDispatch } from 'app/types/index';
 
 import { variableAdapters } from '../adapters';
 import { VARIABLE_PREFIX } from '../constants';

@@ -6,7 +6,8 @@ import { ColorDimensionConfig, ScaleDimensionConfig } from '@grafana/schema';
 import { config } from 'app/core/config';
 
 import { LineStyleConfig } from '../../plugins/panel/canvas/editor/LineStyleEditor';
-import { DimensionContext } from '../dimensions';
+// @todo: replace barrel import path
+import { DimensionContext } from '../dimensions/index';
 
 import { BackgroundConfig, Constraint, LineConfig, Placement, StandardEditorConfig } from './types';
 

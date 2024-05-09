@@ -8,11 +8,14 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, useStyles2 } from '@grafana/ui';
 import { Text } from '@grafana/ui/src/components/Text/Text';
 import { Indent } from 'app/core/components/Indent/Indent';
-import { Trans } from 'app/core/internationalization';
-import { childrenByParentUIDSelector, rootItemsSelector } from 'app/features/browse-dashboards/state';
+// @todo: replace barrel import path
+import { Trans } from 'app/core/internationalization/index';
+// @todo: replace barrel import path
+import { childrenByParentUIDSelector, rootItemsSelector } from 'app/features/browse-dashboards/state/index';
 import { DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { DashboardViewItem } from 'app/features/search/types';
-import { useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { useSelector } from 'app/types/index';
 
 const ROW_HEIGHT = 40;
 const CHEVRON_SIZE = 'md';

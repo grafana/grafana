@@ -5,7 +5,8 @@ import { TestProvider } from 'test/helpers/TestProvider';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { sceneGraph, SceneRefreshPicker } from '@grafana/scenes';
-import { SaveDashboardResponseDTO } from 'app/types';
+// @todo: replace barrel import path
+import { SaveDashboardResponseDTO } from 'app/types/index';
 
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';

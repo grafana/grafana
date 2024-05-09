@@ -2,7 +2,8 @@ import { AnyAction, createAction } from '@reduxjs/toolkit';
 
 import { DataSourcePluginMeta, DataSourceSettings, LayoutMode, LayoutModes } from '@grafana/data';
 import { TestingStatus } from '@grafana/runtime';
-import { DataSourcesState, DataSourceSettingsState } from 'app/types';
+// @todo: replace barrel import path
+import { DataSourcesState, DataSourceSettingsState } from 'app/types/index';
 
 import { GenericDataSourcePlugin } from '../types';
 

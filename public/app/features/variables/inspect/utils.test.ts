@@ -1,4 +1,5 @@
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state/index';
 
 import { variableAdapters } from '../adapters';
 import { createCustomVariableAdapter } from '../custom/adapter';

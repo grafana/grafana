@@ -2,7 +2,8 @@ import React from 'react';
 
 import { InteractiveTable } from '@grafana/ui';
 
-import { MigrateDataResponseItemDto } from '../api';
+// @todo: replace barrel import path
+import { MigrateDataResponseItemDto } from '../api/index';
 
 import { NameCell } from './NameCell';
 import { StatusCell } from './StatusCell';

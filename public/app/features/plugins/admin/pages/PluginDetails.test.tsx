@@ -15,7 +15,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
-import { mockPluginApis, getCatalogPluginMock, getPluginsStateMock, mockUserPermissions } from '../__mocks__';
+// @todo: replace barrel import path
+import { mockPluginApis, getCatalogPluginMock, getPluginsStateMock, mockUserPermissions } from '../__mocks__/index';
 import * as api from '../api';
 import { usePluginConfig } from '../hooks/usePluginConfig';
 import { fetchRemotePlugins } from '../state/actions';

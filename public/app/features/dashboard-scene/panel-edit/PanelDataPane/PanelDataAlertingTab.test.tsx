@@ -25,10 +25,12 @@ import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import * as config from 'app/features/alerting/unified/utils/config';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state/index';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { configureStore } from 'app/store/configureStore';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { createDashboardSceneFromDashboardModel } from '../../serialization/transformSaveModelToScene';

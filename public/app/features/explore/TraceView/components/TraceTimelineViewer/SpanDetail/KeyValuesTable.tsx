@@ -21,7 +21,8 @@ import { Icon, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
 import CopyIcon from '../../common/CopyIcon';
-import { TraceKeyValuePair, TraceLink, TNil } from '../../types';
+// @todo: replace barrel import path
+import { TraceKeyValuePair, TraceLink, TNil } from '../../types/index';
 
 import jsonMarkup from './jsonMarkup';
 

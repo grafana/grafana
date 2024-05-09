@@ -6,7 +6,8 @@ import { DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Card, LinkButton, Stack, Tag, useStyles2 } from '@grafana/ui';
 
-import { useDataSourcesRoutes } from '../state';
+// @todo: replace barrel import path
+import { useDataSourcesRoutes } from '../state/index';
 import { trackCreateDashboardClicked, trackExploreClicked } from '../tracking';
 import { constructDataSourceExploreUrl } from '../utils';
 

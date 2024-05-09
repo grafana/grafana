@@ -5,8 +5,9 @@ import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 import { locationService } from '@grafana/runtime';
 import { Modal, ConfirmModal, Button } from '@grafana/ui';
-import { DashboardModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
 import { cleanUpDashboardAndVariables } from 'app/features/dashboard/state/actions';
+import { DashboardModel } from 'app/features/dashboard/state/index';
 import { deleteDashboard } from 'app/features/manage-dashboards/state/actions';
 
 type DeleteDashboardModalProps = {

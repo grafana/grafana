@@ -1,4 +1,5 @@
-import { NotificationChannelOption } from '../../../../types';
+// @todo: replace barrel import path
+import { NotificationChannelOption } from '../../../../types/index';
 
 export function option(
   propertyName: string,

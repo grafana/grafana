@@ -9,8 +9,10 @@ import { Tab, TabsBar, TabContent, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { t } from 'app/core/internationalization';
-import { StoreState } from 'app/types';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
+// @todo: replace barrel import path
+import { StoreState } from 'app/types/index';
 
 import UserOrganizations from './UserOrganizations';
 import UserProfileEditForm from './UserProfileEditForm';

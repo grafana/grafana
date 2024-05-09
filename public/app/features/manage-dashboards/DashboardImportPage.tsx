@@ -25,9 +25,11 @@ import {
 import appEvents from 'app/core/app_events';
 import { Form } from 'app/core/components/Form/Form';
 import { Page } from 'app/core/components/Page/Page';
-import { t, Trans } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t, Trans } from 'app/core/internationalization/index';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { StoreState } from 'app/types';
+// @todo: replace barrel import path
+import { StoreState } from 'app/types/index';
 
 import { cleanUpAction } from '../../core/actions/cleanUp';
 

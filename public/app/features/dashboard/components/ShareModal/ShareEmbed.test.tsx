@@ -6,8 +6,9 @@ import { setEchoSrv } from '@grafana/runtime/src';
 import config from 'app/core/config';
 
 import { Echo } from '../../../../core/services/echo/Echo';
-import { PanelModel } from '../../state';
+// @todo: replace barrel import path
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
+import { PanelModel } from '../../state/index';
 
 import { ShareEmbed } from './ShareEmbed';
 

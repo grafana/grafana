@@ -4,7 +4,8 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { Button, LoadingPlaceholder, Modal, ModalsController, useStyles2 } from '@grafana/ui/src';
-import { Trans, t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans, t } from 'app/core/internationalization/index';
 import {
   generatePublicDashboardConfigUrl,
   generatePublicDashboardUrl,

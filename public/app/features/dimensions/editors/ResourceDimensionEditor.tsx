@@ -5,7 +5,8 @@ import { ResourceDimensionConfig, ResourceDimensionMode } from '@grafana/schema'
 import { InlineField, InlineFieldRow, RadioButtonGroup } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
 
-import { getPublicOrAbsoluteUrl, ResourceFolderName } from '..';
+// @todo: replace barrel import path
+import { getPublicOrAbsoluteUrl, ResourceFolderName } from '../index';
 import { MediaType, ResourceDimensionOptions, ResourcePickerSize } from '../types';
 
 import { ResourcePicker } from './ResourcePicker';

@@ -10,7 +10,8 @@ import { config } from 'app/core/config';
 
 import { SnapshotWorker } from '../../query/state/DashboardQueryRunner/SnapshotWorker';
 import { getTimeSrv } from '../services/TimeSrv';
-import { DashboardModel, PanelModel } from '../state';
+// @todo: replace barrel import path
+import { DashboardModel, PanelModel } from '../state/index';
 
 import { applyPanelTimeOverrides } from './panel';
 

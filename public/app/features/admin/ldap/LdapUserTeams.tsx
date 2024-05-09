@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
 
 import { Column, InteractiveTable, CellProps } from '@grafana/ui';
-import { LdapTeam } from 'app/types';
+// @todo: replace barrel import path
+import { LdapTeam } from 'app/types/index';
 
 interface Props {
   teams: LdapTeam[];

@@ -2,7 +2,8 @@ import { isEmpty, isObject, mapValues, omitBy } from 'lodash';
 
 import { ExploreUrlState, toURLRange } from '@grafana/data';
 import { clearQueryKeys } from 'app/core/utils/explore';
-import { ExploreItemState } from 'app/types';
+// @todo: replace barrel import path
+import { ExploreItemState } from 'app/types/index';
 
 export function getUrlStateFromPaneState(pane: ExploreItemState): ExploreUrlState {
   return {

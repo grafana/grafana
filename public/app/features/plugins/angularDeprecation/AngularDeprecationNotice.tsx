@@ -2,7 +2,8 @@ import React from 'react';
 
 import { reportInteraction } from '@grafana/runtime';
 import { Alert, Button } from '@grafana/ui';
-import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
+// @todo: replace barrel import path
+import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider/index';
 
 const LOCAL_STORAGE_KEY_PREFIX = 'grafana.angularDeprecation.dashboardNoticeAndMigration.isDismissed';
 

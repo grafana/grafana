@@ -1,6 +1,7 @@
 import { DataSourceApi } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
-import { ExploreItemState } from 'app/types';
+// @todo: replace barrel import path
+import { ExploreItemState } from 'app/types/index';
 
 import { updateDatasourceInstanceAction, datasourceReducer } from './datasource';
 import { createEmptyQueryResponse } from './utils';

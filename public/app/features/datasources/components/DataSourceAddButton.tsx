@@ -3,10 +3,13 @@ import React from 'react';
 import { config } from '@grafana/runtime';
 import { LinkButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { Trans } from 'app/core/internationalization';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { Trans } from 'app/core/internationalization/index';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 
-import { useDataSourcesRoutes } from '../state';
+// @todo: replace barrel import path
+import { useDataSourcesRoutes } from '../state/index';
 
 export function DataSourceAddButton(): JSX.Element | null {
   const canCreateDataSource = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);

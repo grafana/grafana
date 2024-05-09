@@ -3,7 +3,8 @@ import React, { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Grid, Modal, useStyles2, Text } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 import { getModKey } from 'app/core/utils/browser';
 
 const getShortcuts = (modKey: string) => {

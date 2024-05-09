@@ -1,5 +1,6 @@
 import { SupportedTransformationType } from '@grafana/data';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 
 import { CorrelationConfig } from '../types';
 

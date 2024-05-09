@@ -5,7 +5,8 @@ import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
 
 import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
-import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
+// @todo: replace barrel import path
+import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types/index';
 
 import QueryField from './QueryField';
 import SubscriptionField from './SubscriptionField';

@@ -6,6 +6,7 @@ import { FetchDataArgs } from '@grafana/ui';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
+// @todo: replace barrel import path
 import {
   ThunkResult,
   LdapUser,
@@ -14,7 +15,7 @@ import {
   AccessControlAction,
   UserFilter,
   AnonUserFilter,
-} from 'app/types';
+} from 'app/types/index';
 
 import {
   userAdminPageLoadedAction,

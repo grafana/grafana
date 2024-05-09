@@ -3,6 +3,8 @@ import { isNumber, isString } from 'lodash';
 import { AppEvents, Field, getFieldDisplayName, LinkModel, PluginState, SelectableValue } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import { hasAlphaPanels, config } from 'app/core/config';
+// @todo: replace barrel import path
+import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import {
   defaultElementItems,
   advancedElementItems,
@@ -11,12 +13,12 @@ import {
   CanvasElementOptions,
   CanvasConnection,
   ConnectionDirection,
-} from 'app/features/canvas';
-import { notFoundItem } from 'app/features/canvas/elements/notFound';
+} from 'app/features/canvas/index';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { FrameState } from 'app/features/canvas/runtime/frame';
 import { Scene, SelectionParams } from 'app/features/canvas/runtime/scene';
-import { DimensionContext } from 'app/features/dimensions';
+// @todo: replace barrel import path
+import { DimensionContext } from 'app/features/dimensions/index';
 
 import { AnchorPoint, ConnectionState, LineStyle, StrokeDasharray } from './types';
 

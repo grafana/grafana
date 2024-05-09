@@ -5,7 +5,8 @@ import { useFormContext, FieldError, DeepMap, Controller } from 'react-hook-form
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Checkbox, Field, Input, RadioButtonList, Select, TextArea, useStyles2 } from '@grafana/ui';
-import { NotificationChannelOption } from 'app/types';
+// @todo: replace barrel import path
+import { NotificationChannelOption } from 'app/types/index';
 
 import { KeyValueMapInput } from './KeyValueMapInput';
 import { StringArrayInput } from './StringArrayInput';

@@ -4,9 +4,11 @@ import store from 'app/core/store';
 import { removePanel } from 'app/features/dashboard/utils/panel';
 import { cleanUpPanelState } from 'app/features/panel/state/actions';
 import { panelModelAndPluginReady } from 'app/features/panel/state/reducers';
-import { ThunkResult } from 'app/types';
+// @todo: replace barrel import path
+import { ThunkResult } from 'app/types/index';
 
-import { DashboardModel, PanelModel } from '../../../state';
+// @todo: replace barrel import path
+import { DashboardModel, PanelModel } from '../../../state/index';
 
 import {
   closeEditor,

@@ -3,7 +3,8 @@ import React from 'react';
 import { PluginMeta } from '@grafana/data';
 import { Button } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 
 import { updatePluginSettings } from '../../api';
 import { usePluginConfig } from '../../hooks/usePluginConfig';

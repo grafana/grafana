@@ -14,7 +14,8 @@
 
 import ease from 'tween-functions';
 
-import { TNil } from './types';
+// @todo: replace barrel import path
+import { TNil } from './types/index';
 
 export interface TweenState {
   done: boolean;

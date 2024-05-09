@@ -4,7 +4,8 @@ import { components, MultiValueRemoveProps } from 'react-select';
 
 import { escapeStringForRegex, GrafanaTheme2 } from '@grafana/data';
 import { Icon, MultiSelect, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 
 import { TagBadge } from './TagBadge';
 import { TagOption, TagSelectOption } from './TagOption';

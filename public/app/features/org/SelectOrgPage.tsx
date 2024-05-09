@@ -5,7 +5,8 @@ import { useEffectOnce } from 'react-use';
 import { config } from '@grafana/runtime';
 import { Button, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { StoreState, UserOrg } from 'app/types';
+// @todo: replace barrel import path
+import { StoreState, UserOrg } from 'app/types/index';
 
 import { getUserOrganizations, setUserOrganization } from './state/actions';
 

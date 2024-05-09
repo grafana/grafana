@@ -6,7 +6,8 @@ import { Context, createContext } from '../__mocks__/datasource';
 import createMockQuery from '../__mocks__/query';
 import { createTemplateVariables } from '../__mocks__/utils';
 import { multiVariable, singleVariable, subscriptionsVariable } from '../__mocks__/variables';
-import { AzureQueryType } from '../types';
+// @todo: replace barrel import path
+import { AzureQueryType } from '../types/index';
 
 let getTempVars = () => [] as CustomVariableModel[];
 let replace = () => '';

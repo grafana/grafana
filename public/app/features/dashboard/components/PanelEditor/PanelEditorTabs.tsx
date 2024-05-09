@@ -9,7 +9,8 @@ import { PanelAlertTab } from 'app/features/alerting/unified/PanelAlertTab';
 import { PanelAlertTabContent } from 'app/features/alerting/unified/PanelAlertTabContent';
 import { PanelQueriesChangedEvent, PanelTransformationsChangedEvent } from 'app/types/events';
 
-import { DashboardModel, PanelModel } from '../../state';
+// @todo: replace barrel import path
+import { DashboardModel, PanelModel } from '../../state/index';
 import { TransformationsEditor } from '../TransformationsEditor/TransformationsEditor';
 
 import { PanelEditorQueries } from './PanelEditorQueries';

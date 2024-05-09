@@ -4,7 +4,8 @@ import { Controller, FormProvider, useFieldArray, useForm, useFormContext } from
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, Field, InlineLabel, Input, LoadingPlaceholder, Space, Stack, Text, useStyles2 } from '@grafana/ui';
-import { useDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { useDispatch } from 'app/types/index';
 
 import { labelsApi } from '../../../api/labelsApi';
 import { usePluginBridge } from '../../../hooks/usePluginBridge';

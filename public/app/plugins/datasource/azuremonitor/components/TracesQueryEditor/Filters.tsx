@@ -5,7 +5,8 @@ import { SelectableValue } from '@grafana/data';
 import { EditorList } from '@grafana/experimental';
 import { Field } from '@grafana/ui';
 
-import { AzureQueryEditorFieldProps, AzureTracesFilter } from '../../types';
+// @todo: replace barrel import path
+import { AzureQueryEditorFieldProps, AzureTracesFilter } from '../../types/index';
 
 import { makeRenderItem } from './Filter';
 import { tablesSchema } from './consts';

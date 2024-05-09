@@ -3,7 +3,8 @@ import uFuzzy from '@leeoniya/ufuzzy';
 import { DataFrameView, SelectableValue } from '@grafana/data';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 
-import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery } from '.';
+// @todo: replace barrel import path
+import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery } from './index';
 
 export class FrontendSearcher implements GrafanaSearcher {
   readonly cache = new Map<string, Promise<FullResultCache>>();

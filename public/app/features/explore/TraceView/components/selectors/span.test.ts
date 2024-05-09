@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { TraceResponse } from 'app/features/explore/TraceView/components/types';
+// @todo: replace barrel import path
+import { TraceResponse } from 'app/features/explore/TraceView/components/types/index';
 
 import traceGenerator from '../demo/trace-generators';
 

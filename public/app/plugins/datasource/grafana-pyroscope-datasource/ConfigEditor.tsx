@@ -20,7 +20,6 @@ export const ConfigEditor = (props: Props) => {
         onChange={onOptionsChange}
         secureSocksDSProxyEnabled={config.secureSocksDSProxyEnabled}
       />
-
       <h3 className="page-heading">Querying</h3>
       <div className="gf-form-group">
         <div className="gf-form-inline">

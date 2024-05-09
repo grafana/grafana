@@ -1,6 +1,7 @@
 import { DataFrame, DataFrameView, TraceSpanRow } from '@grafana/data';
 
-import { Trace, TraceProcess, TraceResponse, transformTraceData } from '../components';
+// @todo: replace barrel import path
+import { Trace, TraceProcess, TraceResponse, transformTraceData } from '../components/index';
 
 export function transformDataFrames(frame?: DataFrame): Trace | null {
   if (!frame) {

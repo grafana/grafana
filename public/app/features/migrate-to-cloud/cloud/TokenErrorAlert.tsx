@@ -1,7 +1,8 @@
 import React from 'react';
 
 import { Alert } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans, t } from 'app/core/internationalization/index';
 
 export function TokenErrorAlert() {
   return (

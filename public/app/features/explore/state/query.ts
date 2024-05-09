@@ -42,6 +42,8 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { SupportingQueryType } from 'app/plugins/datasource/loki/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
+// @todo: replace barrel import path
+import { ExploreState, QueryOptions, SupplementaryQueries } from 'app/types/explore';
 import {
   createAsyncThunk,
   ExploreItemState,
@@ -50,10 +52,10 @@ import {
   StoreState,
   ThunkDispatch,
   ThunkResult,
-} from 'app/types';
-import { ExploreState, QueryOptions, SupplementaryQueries } from 'app/types/explore';
+} from 'app/types/index';
 
-import { notifyApp } from '../../../core/actions';
+// @todo: replace barrel import path
+import { notifyApp } from '../../../core/actions/index';
 import { createErrorNotification } from '../../../core/copy/appNotification';
 import { runRequest } from '../../query/state/runRequest';
 import { visualisationTypeKey } from '../Logs/utils/logs';

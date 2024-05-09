@@ -5,13 +5,16 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Tooltip, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-import { t, Trans } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t, Trans } from 'app/core/internationalization/index';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
-import { useDispatch } from 'app/types';
+// @todo: replace barrel import path
 import { ShowModalReactEvent } from 'app/types/events';
+import { useDispatch } from 'app/types/index';
 
 import { useDeleteItemsMutation, useMoveItemsMutation } from '../../api/browseDashboardsAPI';
-import { setAllSelection, useActionSelectionState } from '../../state';
+// @todo: replace barrel import path
+import { setAllSelection, useActionSelectionState } from '../../state/index';
 import { DashboardTreeSelection } from '../../types';
 
 import { DeleteModal } from './DeleteModal';

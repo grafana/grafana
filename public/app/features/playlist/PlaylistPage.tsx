@@ -4,7 +4,8 @@ import { useAsync } from 'react-use';
 import { ConfirmModal, EmptyState, LinkButton, TextLink } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
-import { Trans, t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans, t } from 'app/core/internationalization/index';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { PlaylistPageList } from './PlaylistPageList';

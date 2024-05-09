@@ -9,7 +9,8 @@ import { CustomScrollbar, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty';
-import { useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { useSelector } from 'app/types/index';
 
 import { DashboardScene } from './DashboardScene';
 import { NavToolbarActions } from './NavToolbarActions';

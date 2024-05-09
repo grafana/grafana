@@ -6,7 +6,8 @@ import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import { AlertManagerCortexConfig, MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 
 import MuteTimings from './MuteTimings';
 import { fetchAlertManagerConfig, updateAlertManagerConfig } from './api/alertmanager';

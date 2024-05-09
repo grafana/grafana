@@ -8,10 +8,13 @@ import { Alert, Field, Select, Space } from '@grafana/ui';
 import DataSource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
 import { migrateQuery } from '../../grafanaTemplateVariableFns';
-import { AzureMonitorOption, AzureMonitorQuery, AzureQueryType } from '../../types';
+// @todo: replace barrel import path
+import { AzureMonitorOption, AzureMonitorQuery, AzureQueryType } from '../../types/index';
 import useLastError from '../../utils/useLastError';
-import ArgQueryEditor from '../ArgQueryEditor';
-import LogsQueryEditor from '../LogsQueryEditor';
+// @todo: replace barrel import path
+import ArgQueryEditor from '../ArgQueryEditor/index';
+// @todo: replace barrel import path
+import LogsQueryEditor from '../LogsQueryEditor/index';
 
 import GrafanaTemplateVariableFnInput from './GrafanaTemplateVariableFn';
 

@@ -8,7 +8,8 @@ import { useDispatch } from '../../../hooks/useStatelessReducer';
 import { segmentStyles } from '../styles';
 
 import { BucketAggregation, BucketAggregationType } from './../../../types';
-import { SettingsEditor } from './SettingsEditor';
+// @todo: replace barrel import path
+import { SettingsEditor } from './SettingsEditor/index';
 import { isBucketAggregationWithField } from './aggregations';
 import { changeBucketAggregationField, changeBucketAggregationType } from './state/actions';
 import { bucketAggregationConfig } from './utils';

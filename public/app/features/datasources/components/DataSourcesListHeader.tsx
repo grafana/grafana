@@ -2,9 +2,16 @@ import React, { useCallback } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
-import { StoreState, useSelector, useDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { StoreState, useSelector, useDispatch } from 'app/types/index';
 
-import { getDataSourcesSearchQuery, getDataSourcesSort, setDataSourcesSearchQuery, setIsSortAscending } from '../state';
+// @todo: replace barrel import path
+import {
+  getDataSourcesSearchQuery,
+  getDataSourcesSort,
+  setDataSourcesSearchQuery,
+  setIsSortAscending,
+} from '../state/index';
 
 const ascendingSortValue = 'alpha-asc';
 const descendingSortValue = 'alpha-desc';

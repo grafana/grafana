@@ -2,7 +2,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { TeamGroup } from '../../types';
+// @todo: replace barrel import path
+import { TeamGroup } from '../../types/index';
 
 import { Props, TeamGroupSync } from './TeamGroupSync';
 import { getMockTeamGroups } from './__mocks__/teamMocks';

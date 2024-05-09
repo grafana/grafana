@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { dateTime } from '@grafana/data';
+// @todo: replace barrel import path
 import {
   AlertRule,
   AlertRuleDTO,
@@ -8,7 +9,7 @@ import {
   NotificationChannelOption,
   NotificationChannelState,
   NotifierDTO,
-} from 'app/types';
+} from 'app/types/index';
 
 import unifiedAlertingReducer from '../unified/state/reducers';
 

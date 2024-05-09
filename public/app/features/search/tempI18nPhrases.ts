@@ -1,7 +1,8 @@
 // Temporary place to collect phrases we reuse between new and old browse/search
 // TODO: remove this when new Browse Dashboards UI is no longer feature flagged
 
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 
 export function getSearchPlaceholder(includePanels = false) {
   return includePanels

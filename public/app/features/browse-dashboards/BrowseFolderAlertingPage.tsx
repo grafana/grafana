@@ -3,7 +3,8 @@ import React, { useMemo } from 'react';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { buildNavModel, getAlertingTabID } from 'app/features/folders/state/navModel';
-import { useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { useSelector } from 'app/types/index';
 
 import { AlertsFolderView } from '../alerting/unified/AlertsFolderView';
 

@@ -2,7 +2,8 @@ import { Observable } from 'rxjs';
 
 import { AlertStateInfo, AnnotationEvent, AnnotationQuery, DataSourceApi, TimeRange } from '@grafana/data';
 
-import { DashboardModel } from '../../../dashboard/state';
+// @todo: replace barrel import path
+import { DashboardModel } from '../../../dashboard/state/index';
 
 export interface DashboardQueryRunnerOptions {
   dashboard: DashboardModel;

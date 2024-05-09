@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { Organization, OrganizationState, UserOrg } from 'app/types';
+// @todo: replace barrel import path
+import { Organization, OrganizationState, UserOrg } from 'app/types/index';
 
 export const initialState: OrganizationState = {
   organization: {} as Organization,

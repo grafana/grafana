@@ -2,14 +2,16 @@ import React, { CSSProperties } from 'react';
 import { OnDrag, OnResize, OnRotate } from 'react-moveable/declaration/types';
 
 import { LayerElement } from 'app/core/components/Layers/types';
+// @todo: replace barrel import path
+import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import {
   BackgroundImageSize,
   CanvasElementItem,
   CanvasElementOptions,
   canvasElementRegistry,
-} from 'app/features/canvas';
-import { notFoundItem } from 'app/features/canvas/elements/notFound';
-import { DimensionContext } from 'app/features/dimensions';
+} from 'app/features/canvas/index';
+// @todo: replace barrel import path
+import { DimensionContext } from 'app/features/dimensions/index';
 import { getConnectionsByTarget, isConnectionTarget } from 'app/plugins/panel/canvas/utils';
 
 import { Constraint, HorizontalConstraint, Placement, VerticalConstraint } from '../types';

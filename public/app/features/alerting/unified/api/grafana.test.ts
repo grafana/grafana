@@ -1,4 +1,5 @@
-import { ReceiversStateDTO } from 'app/types';
+// @todo: replace barrel import path
+import { ReceiversStateDTO } from 'app/types/index';
 
 import { contactPointsStateDtoToModel, getIntegrationType, parseIntegrationName } from './grafana';
 

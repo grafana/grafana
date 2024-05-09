@@ -7,7 +7,8 @@ import { ElasticDatasource } from '../../../../datasource';
 import { ElasticsearchQuery } from '../../../../types';
 import { ElasticsearchProvider } from '../../ElasticsearchQueryContext';
 
-import { SettingsEditor } from '.';
+// @todo: replace barrel import path
+import { SettingsEditor } from './index';
 
 describe('Settings Editor', () => {
   describe('Raw Data', () => {

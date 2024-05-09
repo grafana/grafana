@@ -5,7 +5,8 @@ import { Router } from 'react-router-dom';
 
 import { locationService } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 
 import { grantUserPermissions } from '../../mocks';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';

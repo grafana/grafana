@@ -3,7 +3,8 @@ import React from 'react';
 import { StandardEditorProps } from '@grafana/data';
 import { ResourceDimensionConfig, ResourceDimensionMode } from '@grafana/schema';
 import { RadioButtonGroup } from '@grafana/ui';
-import { ResourceDimensionOptions } from 'app/features/dimensions';
+// @todo: replace barrel import path
+import { ResourceDimensionOptions } from 'app/features/dimensions/index';
 
 export const SymbolEditor = (
   props: StandardEditorProps<ResourceDimensionConfig, ResourceDimensionOptions, unknown>

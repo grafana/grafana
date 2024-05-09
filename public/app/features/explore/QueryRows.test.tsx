@@ -6,7 +6,8 @@ import { DataSourceApi } from '@grafana/data';
 import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { configureStore } from 'app/store/configureStore';
-import { ExploreState } from 'app/types';
+// @todo: replace barrel import path
+import { ExploreState } from 'app/types/index';
 
 import { UserState } from '../profile/state/reducers';
 

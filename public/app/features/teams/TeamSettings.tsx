@@ -8,7 +8,8 @@ import { updateTeamRoles } from 'app/core/components/RolePicker/api';
 import { useRoleOptions } from 'app/core/components/RolePicker/hooks';
 import { SharedPreferences } from 'app/core/components/SharedPreferences/SharedPreferences';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction, Role, Team } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction, Role, Team } from 'app/types/index';
 
 import { updateTeam } from './state/actions';
 

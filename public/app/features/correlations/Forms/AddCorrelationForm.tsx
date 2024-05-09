@@ -5,7 +5,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { PanelContainer, useStyles2 } from '@grafana/ui';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 
-import { Wizard } from '../components/Wizard';
+// @todo: replace barrel import path
+import { Wizard } from '../components/Wizard/index';
 import { useCorrelations } from '../useCorrelations';
 
 import { ConfigureCorrelationBasicInfoForm } from './ConfigureCorrelationBasicInfoForm';

@@ -20,13 +20,15 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
-import { TNil } from '../../types';
+// @todo: replace barrel import path
+import { TNil } from '../../types/index';
 import { TraceLog, TraceKeyValuePair, TraceLink } from '../../types/trace';
 import { formatDuration } from '../utils';
 
 import AccordianKeyValues from './AccordianKeyValues';
 
-import { alignIcon } from '.';
+// @todo: replace barrel import path
+import { alignIcon } from './index';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {

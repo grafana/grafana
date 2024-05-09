@@ -1,4 +1,5 @@
-import { AzureMonitorQuery, AzureQueryType, ResultFormat } from '../types';
+// @todo: replace barrel import path
+import { AzureMonitorQuery, AzureQueryType, ResultFormat } from '../types/index';
 
 export default function createMockQuery(overrides?: Partial<AzureMonitorQuery>): AzureMonitorQuery {
   return {

@@ -1,6 +1,7 @@
 import { getBackendSrv } from '@grafana/runtime';
 
-import { Team, UserDTO, UserOrg, UserSession } from '../../types';
+// @todo: replace barrel import path
+import { Team, UserDTO, UserOrg, UserSession } from '../../types/index';
 
 import { ChangePasswordFields, ProfileUpdateFields } from './types';
 

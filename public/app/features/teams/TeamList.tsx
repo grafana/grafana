@@ -21,9 +21,11 @@ import {
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
-import { Trans, t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans, t } from 'app/core/internationalization/index';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction, Role, StoreState, Team } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction, Role, StoreState, Team } from 'app/types/index';
 
 import { TeamRolePicker } from '../../core/components/RolePicker/TeamRolePicker';
 

@@ -17,7 +17,8 @@ import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWi
 import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { DataSourceJsonData } from '@grafana/schema';
 import { getNextRefIdChar } from 'app/core/utils/query';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state/index';
 import {
   getDashboardSceneFor,
   getPanelIdForVizPanel,

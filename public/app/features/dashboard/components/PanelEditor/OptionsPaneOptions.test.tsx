@@ -17,8 +17,9 @@ import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { selectors } from '@grafana/e2e-selectors';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 
-import { PanelModel } from '../../state';
+// @todo: replace barrel import path
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
+import { PanelModel } from '../../state/index';
 
 import { OptionsPaneOptions } from './OptionsPaneOptions';
 import { dataOverrideTooltipDescription, overrideRuleTooltipDescription } from './state/getOptionOverrides';

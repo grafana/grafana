@@ -1,6 +1,7 @@
 import { AnnotationQuery } from '@grafana/data';
 
-import { AzureMonitorQuery, AzureQueryType } from '../types';
+// @todo: replace barrel import path
+import { AzureMonitorQuery, AzureQueryType } from '../types/index';
 
 import migrateAnnotation from './migrateAnnotation';
 

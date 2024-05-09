@@ -4,7 +4,8 @@ import { DraggableProvided } from 'react-beautiful-dnd';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, IconButton, useStyles2, Stack } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 
 export interface QueryOperationRowHeaderProps {
   actionsElement?: React.ReactNode;
@@ -76,7 +77,6 @@ export const QueryOperationRowHeader = ({
         )}
         {headerElement}
       </div>
-
       <Stack gap={1} alignItems="center">
         {actionsElement}
         {draggable && (

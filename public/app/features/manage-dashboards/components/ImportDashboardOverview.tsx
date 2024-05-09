@@ -5,7 +5,8 @@ import { dateTimeFormat } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { Box, Legend } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
-import { StoreState } from 'app/types';
+// @todo: replace barrel import path
+import { StoreState } from 'app/types/index';
 
 import { clearLoadedDashboard, importDashboard } from '../state/actions';
 import { DashboardSource, ImportDashboardDTO } from '../state/reducers';

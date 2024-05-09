@@ -3,7 +3,8 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Card, Grid, useStyles2 } from '@grafana/ui';
-import { PluginAngularBadge } from 'app/features/plugins/admin/components/Badges';
+// @todo: replace barrel import path
+import { PluginAngularBadge } from 'app/features/plugins/admin/components/Badges/index';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   heading: css({

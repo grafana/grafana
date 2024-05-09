@@ -21,6 +21,7 @@ import { createTheme } from '@grafana/data';
 import traceGenerator from '../demo/trace-generators';
 import transformTraceData from '../model/transform-trace-data';
 
+// @todo: replace barrel import path
 import TraceTimelineViewer, { TProps } from './index';
 
 jest.mock('@grafana/runtime', () => {

@@ -7,7 +7,8 @@ import { PanelRenderer } from 'app/features/panel/components/PanelRenderer';
 import { Options } from 'app/plugins/panel/table/panelcfg.gen';
 
 import { getTimeSrv } from '../../services/TimeSrv';
-import { DashboardModel, PanelModel } from '../../state';
+// @todo: replace barrel import path
+import { DashboardModel, PanelModel } from '../../state/index';
 
 import PanelHeaderCorner from './PanelHeaderCorner';
 import { usePanelLatestData } from './usePanelLatestData';

@@ -1,5 +1,6 @@
 import { dateTime } from '@grafana/data';
-import { AlertRuleDTO, AlertRulesState, NotificationChannelState, NotifierDTO } from 'app/types';
+// @todo: replace barrel import path
+import { AlertRuleDTO, AlertRulesState, NotificationChannelState, NotifierDTO } from 'app/types/index';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 

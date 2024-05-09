@@ -13,11 +13,13 @@ import {
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Checkbox, Icon, IconName, TagList, Text } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 import { PluginIconName } from 'app/features/plugins/admin/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
-import { QueryResponse, SearchResultMeta } from '../../service';
+// @todo: replace barrel import path
+import { QueryResponse, SearchResultMeta } from '../../service/index';
 import { getIconForKind } from '../../service/utils';
 import { SelectionChecker, SelectionToggle } from '../selection';
 

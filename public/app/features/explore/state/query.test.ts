@@ -18,7 +18,8 @@ import {
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import config from 'app/core/config';
 import { queryLogsSample, queryLogsVolume } from 'app/features/logs/logsModel';
-import { createAsyncThunk, ExploreItemState, StoreState, ThunkDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { createAsyncThunk, ExploreItemState, StoreState, ThunkDispatch } from 'app/types/index';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import * as richHistory from '../../../core/utils/richHistory';

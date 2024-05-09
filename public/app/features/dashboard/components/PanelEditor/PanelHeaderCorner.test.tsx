@@ -3,7 +3,8 @@ import React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 
-import { PanelModel } from '../../state';
+// @todo: replace barrel import path
+import { PanelModel } from '../../state/index';
 
 import PanelHeaderCorner, { Props } from './PanelHeaderCorner';
 

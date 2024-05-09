@@ -17,8 +17,10 @@ import {
 } from '@grafana/schema';
 import { Portal, stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
-import { CanvasFrameOptions, DEFAULT_CANVAS_ELEMENT_CONFIG } from 'app/features/canvas';
-import { DimensionContext } from 'app/features/dimensions';
+// @todo: replace barrel import path
+import { CanvasFrameOptions, DEFAULT_CANVAS_ELEMENT_CONFIG } from 'app/features/canvas/index';
+// @todo: replace barrel import path
+import { DimensionContext } from 'app/features/dimensions/index';
 import {
   getColorDimensionFromData,
   getResourceDimensionFromData,

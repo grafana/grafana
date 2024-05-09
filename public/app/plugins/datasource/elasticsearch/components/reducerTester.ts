@@ -2,7 +2,8 @@ import { AnyAction } from '@reduxjs/toolkit';
 import { cloneDeep } from 'lodash';
 import { Action } from 'redux';
 
-import { StoreState } from 'app/types';
+// @todo: replace barrel import path
+import { StoreState } from 'app/types/index';
 
 type GrafanaReducer<S = StoreState, A extends Action = AnyAction> = (state: S, action: A) => S;
 

@@ -28,8 +28,9 @@ import { isAngularDatasourcePluginAndNotHidden } from 'app/features/plugins/angu
 import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { GetVariables, getVariablesByKey } from 'app/features/variables/state/selectors';
-import { CoreEvents, DashboardMeta, KioskMode } from 'app/types';
+// @todo: replace barrel import path
 import { DashboardMetaChangedEvent, DashboardPanelsChangedEvent, RenderEvent } from 'app/types/events';
+import { CoreEvents, DashboardMeta, KioskMode } from 'app/types/index';
 
 import { appEvents } from '../../../core/core';
 import { dispatch } from '../../../store/store';

@@ -10,7 +10,8 @@ import {
   mockAlertmanagerChoiceResponse,
 } from 'app/features/alerting/unified/mocks/alertmanagerApi';
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 import { RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { getCloudRule, getGrafanaRule, grantUserPermissions, mockDataSource, mockFolder } from '../mocks';

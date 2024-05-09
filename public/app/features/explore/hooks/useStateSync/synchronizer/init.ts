@@ -9,8 +9,10 @@ import { clearPanes, syncTimesAction } from 'app/features/explore/state/main';
 import { fromURLRange } from 'app/features/explore/state/utils';
 import { withUniqueRefIds } from 'app/features/explore/utils/queries';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { ThunkDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { ThunkDispatch } from 'app/types/index';
 
+// @todo: replace barrel import path
 import { getUrlStateFromPaneState } from '../index';
 import {
   getDefaultQuery,

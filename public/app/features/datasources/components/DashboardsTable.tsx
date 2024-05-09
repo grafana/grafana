@@ -1,7 +1,8 @@
 import React from 'react';
 
 import { Button, Icon } from '@grafana/ui';
-import { PluginDashboard } from 'app/types';
+// @todo: replace barrel import path
+import { PluginDashboard } from 'app/types/index';
 
 export interface Props {
   // List of plugin dashboards to show in the table

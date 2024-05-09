@@ -1,6 +1,7 @@
 import { NavModelItem } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 
 import { ShowModalReactEvent } from '../../../../types/events';

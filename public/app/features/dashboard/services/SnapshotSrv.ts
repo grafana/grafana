@@ -2,7 +2,8 @@ import { lastValueFrom, map } from 'rxjs';
 
 import { config, getBackendSrv, FetchResponse } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
-import { DashboardDataDTO, DashboardDTO } from 'app/types';
+// @todo: replace barrel import path
+import { DashboardDataDTO, DashboardDTO } from 'app/types/index';
 
 // Used in the snapshot list
 export interface Snapshot {

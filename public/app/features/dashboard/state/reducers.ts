@@ -3,7 +3,8 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { PanelPlugin } from '@grafana/data';
 import { AngularComponent } from '@grafana/runtime';
 import { defaultDashboard } from '@grafana/schema';
-import { DashboardInitError, DashboardInitPhase, DashboardState } from 'app/types';
+// @todo: replace barrel import path
+import { DashboardInitError, DashboardInitPhase, DashboardState } from 'app/types/index';
 
 import { DashboardModel } from './DashboardModel';
 import { PanelModel } from './PanelModel';

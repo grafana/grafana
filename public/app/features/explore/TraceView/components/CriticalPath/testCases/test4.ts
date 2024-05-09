@@ -29,6 +29,7 @@ Both spanB and spanC will be dropped.    |
 span A is on critical path(+++++)        |
 */
 
+// @todo: replace barrel import path
 import { TraceResponse, transformTraceData } from '../../index';
 
 const trace: TraceResponse = {

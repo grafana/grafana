@@ -6,7 +6,8 @@ import {
 import createMockDatasource from '../__mocks__/datasource';
 import { createMockInstanceSetttings } from '../__mocks__/instanceSettings';
 import { ResourceRowType } from '../components/ResourcePicker/types';
-import { AzureGraphResponse } from '../types';
+// @todo: replace barrel import path
+import { AzureGraphResponse } from '../types/index';
 
 import ResourcePickerData from './resourcePickerData';
 

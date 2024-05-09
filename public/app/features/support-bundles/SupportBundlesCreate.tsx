@@ -4,7 +4,8 @@ import { connect, ConnectedProps } from 'react-redux';
 import { Button, Field, Checkbox, LinkButton, Stack, Alert } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import { Page } from 'app/core/components/Page/Page';
-import { StoreState } from 'app/types';
+// @todo: replace barrel import path
+import { StoreState } from 'app/types/index';
 
 import { loadSupportBundleCollectors, createSupportBundle } from './state/actions';
 

@@ -14,7 +14,8 @@ import { PromQLQueryEditor } from './PromQLEditor';
 import { QueryHeader } from './QueryHeader';
 import { defaultQuery as defaultSLOQuery } from './SLOQueryEditor';
 
-import { MetricQueryEditor, SLOQueryEditor } from './';
+// @todo: replace barrel import path
+import { MetricQueryEditor, SLOQueryEditor } from './index';
 
 export type Props = QueryEditorProps<CloudMonitoringDatasource, CloudMonitoringQuery, CloudMonitoringOptions>;
 

@@ -7,7 +7,8 @@ import { TestProvider } from 'test/helpers/TestProvider';
 
 import { config } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { PermissionLevelString } from 'app/types';
+// @todo: replace barrel import path
+import { PermissionLevelString } from 'app/types/index';
 
 import {
   treeViewersCanEdit,

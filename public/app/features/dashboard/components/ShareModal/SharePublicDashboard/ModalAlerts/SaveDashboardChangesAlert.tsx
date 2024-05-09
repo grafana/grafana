@@ -1,7 +1,8 @@
 import React from 'react';
 
 import { Alert } from '@grafana/ui/src';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 
 export const SaveDashboardChangesAlert = () => (
   <Alert

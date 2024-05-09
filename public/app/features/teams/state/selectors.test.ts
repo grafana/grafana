@@ -1,4 +1,5 @@
-import { TeamState } from '../../../types';
+// @todo: replace barrel import path
+import { TeamState } from '../../../types/index';
 import { getMockTeam } from '../__mocks__/teamMocks';
 
 import { getTeam } from './selectors';

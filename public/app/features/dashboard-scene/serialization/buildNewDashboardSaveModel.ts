@@ -1,7 +1,8 @@
 import { config } from '@grafana/runtime';
 import { VariableModel, defaultDashboard } from '@grafana/schema';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { DashboardDTO } from 'app/types';
+// @todo: replace barrel import path
+import { DashboardDTO } from 'app/types/index';
 
 export async function buildNewDashboardSaveModel(urlFolderUid?: string): Promise<DashboardDTO> {
   let variablesList = defaultDashboard.templating?.list;

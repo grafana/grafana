@@ -8,8 +8,9 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { updateDashboardName } from 'app/core/reducers/navBarTree';
 import { useSaveDashboardMutation } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { SaveDashboardOptions } from 'app/features/dashboard/components/SaveDashboard/types';
-import { useDispatch } from 'app/types';
+// @todo: replace barrel import path
 import { DashboardSavedEvent } from 'app/types/events';
+import { useDispatch } from 'app/types/index';
 
 import { updateDashboardUidLastUsedDatasource } from '../../dashboard/utils/dashboard';
 import { DashboardScene } from '../scene/DashboardScene';

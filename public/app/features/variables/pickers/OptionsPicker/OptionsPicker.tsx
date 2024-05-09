@@ -4,7 +4,8 @@ import { bindActionCreators } from 'redux';
 
 import { LoadingState } from '@grafana/data';
 import { ClickOutsideWrapper } from '@grafana/ui';
-import { StoreState, ThunkDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { StoreState, ThunkDispatch } from 'app/types/index';
 
 import { VARIABLE_PREFIX } from '../../constants';
 import { isMulti } from '../../guard';

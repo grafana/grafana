@@ -1,4 +1,5 @@
-import { PanelModel } from '../dashboard/state';
+// @todo: replace barrel import path
+import { PanelModel } from '../dashboard/state/index';
 
 import { PanelModelWithLibraryPanel } from './types';
 

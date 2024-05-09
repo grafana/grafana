@@ -1,11 +1,14 @@
 import React, { useCallback } from 'react';
 
 import { CallToActionCard, EmptyState, LinkButton, TextLink } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans, t } from 'app/core/internationalization/index';
 import { DashboardViewItem } from 'app/features/search/types';
-import { useDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { useDispatch } from 'app/types/index';
 
 import { PAGE_SIZE } from '../api/services';
+// @todo: replace barrel import path
 import {
   useFlatTreeState,
   useCheckboxSelectionState,
@@ -16,7 +19,7 @@ import {
   useBrowseLoadingStatus,
   useLoadNextChildrenPage,
   fetchNextChildrenPage,
-} from '../state';
+} from '../state/index';
 import { BrowseDashboardsState, DashboardTreeSelection, SelectionState } from '../types';
 
 import { DashboardsTree } from './DashboardsTree';

@@ -13,7 +13,8 @@ import {
   PublicDashboardPageRouteSearchParams,
 } from 'app/features/dashboard/containers/types';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
-import { useSelector, useDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { useSelector, useDispatch } from 'app/types/index';
 
 import { DashNavTimeControls } from '../components/DashNav/DashNavTimeControls';
 import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
@@ -23,7 +24,8 @@ import { useGetPublicDashboardConfig } from '../components/PublicDashboard/usePu
 import { PublicDashboardNotAvailable } from '../components/PublicDashboardNotAvailable/PublicDashboardNotAvailable';
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { getTimeSrv } from '../services/TimeSrv';
-import { DashboardModel } from '../state';
+// @todo: replace barrel import path
+import { DashboardModel } from '../state/index';
 import { initDashboard } from '../state/initDashboard';
 
 export type Props = GrafanaRouteComponentProps<PublicDashboardPageRouteParams, PublicDashboardPageRouteSearchParams>;

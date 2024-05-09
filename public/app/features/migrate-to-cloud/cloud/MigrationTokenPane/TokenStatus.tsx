@@ -2,7 +2,8 @@ import React from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { Text } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans } from 'app/core/internationalization/index';
 
 interface Props {
   hasToken: boolean;

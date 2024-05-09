@@ -2,7 +2,8 @@ import { isEqualWith } from 'lodash';
 
 import { PanelModel as IPanelModel } from '@grafana/data';
 
-import { PanelModel } from '../state';
+// @todo: replace barrel import path
+import { PanelModel } from '../state/index';
 
 export interface PanelMergeInfo {
   changed: boolean;

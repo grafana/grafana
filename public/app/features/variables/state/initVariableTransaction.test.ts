@@ -1,6 +1,7 @@
 import { DataSourceRef, LoadingState } from '@grafana/data/src';
 import { setDataSourceSrv } from '@grafana/runtime/src';
-import { DashboardModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { DashboardModel } from 'app/features/dashboard/state/index';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { toAsyncOfResult } from '../../query/state/DashboardQueryRunner/testHelpers';

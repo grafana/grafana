@@ -17,9 +17,11 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
+// @todo: replace barrel import path
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/index';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
-import { DashboardDataDTO } from 'app/types';
+// @todo: replace barrel import path
+import { DashboardDataDTO } from 'app/types/index';
 
 import { transformSaveModelToScene } from '../../serialization/transformSaveModelToScene';
 import { DashboardModelCompatibilityWrapper } from '../../utils/DashboardModelCompatibilityWrapper';

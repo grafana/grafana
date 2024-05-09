@@ -16,8 +16,10 @@ import { css } from '@emotion/css';
 import cx from 'classnames';
 import * as React from 'react';
 
-import { TNil } from '../../types';
-import DraggableManager, { DraggableBounds, DraggingUpdate } from '../../utils/DraggableManager';
+// @todo: replace barrel import path
+import { TNil } from '../../types/index';
+// @todo: replace barrel import path
+import DraggableManager, { DraggableBounds, DraggingUpdate } from '../../utils/DraggableManager/index';
 
 export const getStyles = () => {
   return {

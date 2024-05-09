@@ -17,7 +17,8 @@ import {
   Tooltip,
 } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
-import { UserDTO } from 'app/types';
+// @todo: replace barrel import path
+import { UserDTO } from 'app/types/index';
 
 import { OrgUnits } from './OrgUnits';
 

@@ -3,7 +3,8 @@ import { FieldError, DeepMap, useFormContext } from 'react-hook-form';
 
 import { Button, useStyles2 } from '@grafana/ui';
 import { useControlledFieldArray } from 'app/features/alerting/unified/hooks/useControlledFieldArray';
-import { NotificationChannelOption } from 'app/types';
+// @todo: replace barrel import path
+import { NotificationChannelOption } from 'app/types/index';
 
 import { ActionIcon } from '../../../rules/ActionIcon';
 import { CollapsibleSection } from '../CollapsibleSection';

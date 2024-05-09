@@ -1,7 +1,8 @@
 import React from 'react';
 
 import { Box } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t, Trans } from 'app/core/internationalization/index';
 
 import { InfoItem } from '../../shared/InfoItem';
 

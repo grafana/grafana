@@ -8,19 +8,23 @@ import { Alert, Button, CodeEditor, Space } from '@grafana/ui';
 
 import AzureMonitorDatasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
+// @todo: replace barrel import path
 import {
   AzureDataSourceJsonData,
   AzureMonitorErrorish,
   AzureMonitorOption,
   AzureMonitorQuery,
   AzureQueryType,
-} from '../../types';
+} from '../../types/index';
 import useLastError from '../../utils/useLastError';
-import ArgQueryEditor from '../ArgQueryEditor';
-import LogsQueryEditor from '../LogsQueryEditor';
+// @todo: replace barrel import path
+import ArgQueryEditor from '../ArgQueryEditor/index';
+// @todo: replace barrel import path
 import { AzureCheatSheetModal } from '../LogsQueryEditor/AzureCheatSheetModal';
+import LogsQueryEditor from '../LogsQueryEditor/index';
 import NewMetricsQueryEditor from '../MetricsQueryEditor/MetricsQueryEditor';
-import TracesQueryEditor from '../TracesQueryEditor';
+// @todo: replace barrel import path
+import TracesQueryEditor from '../TracesQueryEditor/index';
 
 import { QueryHeader } from './QueryHeader';
 import usePreparedQuery from './usePreparedQuery';

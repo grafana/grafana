@@ -1,4 +1,5 @@
-import { AzureMetricDimension, AzureMonitorQuery, AzureQueryType, ResultFormat } from '../types';
+// @todo: replace barrel import path
+import { AzureMetricDimension, AzureMonitorQuery, AzureQueryType, ResultFormat } from '../types/index';
 
 import migrateQuery from './migrateQuery';
 

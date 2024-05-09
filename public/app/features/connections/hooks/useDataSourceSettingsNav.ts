@@ -6,7 +6,8 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { useDataSource, useDataSourceMeta, useDataSourceSettings } from 'app/features/datasources/state/hooks';
 import { getDataSourceLoadingNav, buildNavModel, getDataSourceNav } from 'app/features/datasources/state/navModel';
 import { useGetSingle } from 'app/features/plugins/admin/state/hooks';
-import { useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { useSelector } from 'app/types/index';
 
 export function useDataSourceSettingsNav(pageIdParam?: string) {
   const { uid } = useParams<{ uid: string }>();

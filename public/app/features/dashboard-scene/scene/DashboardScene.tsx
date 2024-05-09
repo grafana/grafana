@@ -22,12 +22,14 @@ import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { getNavModel } from 'app/core/selectors/navModel';
 import store from 'app/core/store';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state/index';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { deleteDashboard } from 'app/features/manage-dashboards/state/actions';
 import { VariablesChanged } from 'app/features/variables/types';
-import { DashboardDTO, DashboardMeta, SaveDashboardResponseDTO } from 'app/types';
+// @todo: replace barrel import path
 import { ShowConfirmModalEvent } from 'app/types/events';
+import { DashboardDTO, DashboardMeta, SaveDashboardResponseDTO } from 'app/types/index';
 
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
@@ -40,7 +42,8 @@ import {
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { DashboardEditView } from '../settings/utils';
-import { historySrv } from '../settings/version-history';
+// @todo: replace barrel import path
+import { historySrv } from '../settings/version-history/index';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { dashboardSceneGraph, getLibraryVizPanelFromVizPanel } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';

@@ -9,7 +9,8 @@ import {
   getImportPhrase,
   getNewPhrase,
 } from 'app/features/search/tempI18nPhrases';
-import { FolderDTO } from 'app/types';
+// @todo: replace barrel import path
+import { FolderDTO } from 'app/types/index';
 
 import { useNewFolderMutation } from '../api/browseDashboardsAPI';
 

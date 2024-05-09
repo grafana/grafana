@@ -18,7 +18,8 @@ import {
   useStyles2,
 } from '@grafana/ui';
 
-import { DashboardModel } from '../../../../dashboard/state';
+// @todo: replace barrel import path
+import { DashboardModel } from '../../../../dashboard/state/index';
 import { dashboardApi } from '../../api/dashboardApi';
 
 import { useDashboardQuery } from './useDashboardQuery';

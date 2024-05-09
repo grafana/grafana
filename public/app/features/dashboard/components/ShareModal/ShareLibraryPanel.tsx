@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
 
 import { reportInteraction } from '@grafana/runtime/src';
-import { Trans } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans } from 'app/core/internationalization/index';
 import { AddLibraryPanelContents } from 'app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal';
 
 import { ShareModalTabProps } from './types';

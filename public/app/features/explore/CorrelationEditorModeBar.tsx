@@ -6,7 +6,8 @@ import { useBeforeUnload, useUnmount } from 'react-use';
 import { GrafanaTheme2, colorManipulator } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
-import { CORRELATION_EDITOR_POST_CONFIRM_ACTION, ExploreItemState, useDispatch, useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { CORRELATION_EDITOR_POST_CONFIRM_ACTION, ExploreItemState, useDispatch, useSelector } from 'app/types/index';
 
 import { CorrelationUnsavedChangesModal } from './CorrelationUnsavedChangesModal';
 import { showModalMessage } from './correlationEditLogic';

@@ -25,7 +25,8 @@ import {
 import config from 'app/core/config';
 import { EmptyTransformationsMessage } from 'app/features/dashboard-scene/panel-edit/PanelDataPane/EmptyTransformationsMessage';
 
-import { PanelModel } from '../../state';
+// @todo: replace barrel import path
+import { PanelModel } from '../../state/index';
 import { PanelNotSupported } from '../PanelEditor/PanelNotSupported';
 
 import { TransformationOperationRows } from './TransformationOperationRows';

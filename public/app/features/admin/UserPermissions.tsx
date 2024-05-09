@@ -5,7 +5,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { ConfirmButton, RadioButtonGroup, Icon, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { ExternalUserTooltip } from 'app/features/admin/UserOrgs';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 
 interface Props {
   isGrafanaAdmin: boolean;

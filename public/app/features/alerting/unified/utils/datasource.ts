@@ -6,7 +6,8 @@ import {
   AlertManagerImplementation,
   AlertmanagerChoice,
 } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 import { RulesSource } from 'app/types/unified-alerting';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';

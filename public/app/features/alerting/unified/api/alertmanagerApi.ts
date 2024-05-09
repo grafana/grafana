@@ -15,7 +15,8 @@ import {
   Matcher,
   MuteTimeInterval,
 } from '../../../../plugins/datasource/alertmanager/types';
-import { NotifierDTO } from '../../../../types';
+// @todo: replace barrel import path
+import { NotifierDTO } from '../../../../types/index';
 import { withPerformanceLogging } from '../Analytics';
 import { matcherToOperator } from '../utils/alertmanager';
 import {

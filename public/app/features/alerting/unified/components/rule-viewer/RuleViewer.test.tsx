@@ -4,7 +4,8 @@ import { byText, byRole } from 'testing-library-selector';
 
 import { setBackendSrv, setPluginExtensionsHook } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
 
 import {

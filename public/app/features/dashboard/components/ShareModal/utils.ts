@@ -4,7 +4,8 @@ import { SceneObjectRef, VizPanel } from '@grafana/scenes';
 import { createShortLink } from 'app/core/utils/shortLinks';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
-import { PanelModel } from '../../state';
+// @todo: replace barrel import path
+import { PanelModel } from '../../state/index';
 
 export interface BuildParamsArgs {
   useCurrentTimeRange: boolean;

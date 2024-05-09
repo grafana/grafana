@@ -9,7 +9,8 @@ import {
   isAsyncRequestMapSlicePending,
   isAsyncRequestMapSliceSettled,
 } from 'app/features/alerting/unified/utils/redux';
-import { useDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { useDispatch } from 'app/types/index';
 import { AlertingRule } from 'app/types/unified-alerting';
 import { PromRuleType } from 'app/types/unified-alerting-dto';
 

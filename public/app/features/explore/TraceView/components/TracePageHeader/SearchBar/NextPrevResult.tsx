@@ -21,7 +21,8 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { Icon, PopoverContent, Tooltip, useTheme2 } from '@grafana/ui';
 import { getButtonStyles } from '@grafana/ui/src/components/Button';
 
-import { Trace } from '../../types';
+// @todo: replace barrel import path
+import { Trace } from '../../types/index';
 
 export type NextPrevResultProps = {
   trace: Trace;

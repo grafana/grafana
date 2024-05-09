@@ -19,7 +19,8 @@ import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicker/api';
 import { OrgPicker, OrgSelectItem } from 'app/core/components/Select/OrgPicker';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction, Organization, OrgRole, Role, UserDTO, UserOrg } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction, Organization, OrgRole, Role, UserDTO, UserOrg } from 'app/types/index';
 
 import { OrgRolePicker } from './OrgRolePicker';
 

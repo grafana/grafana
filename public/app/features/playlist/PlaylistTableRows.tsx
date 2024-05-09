@@ -7,7 +7,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Icon, IconButton, useStyles2, Spinner, IconName } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
-import { t, Trans } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t, Trans } from 'app/core/internationalization/index';
 
 import { PlaylistItem } from './types';
 

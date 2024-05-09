@@ -5,7 +5,8 @@ import { PanelPlugin, PluginError } from '@grafana/data';
 import { config, getBackendSrv, isFetchError } from '@grafana/runtime';
 import configCore from 'app/core/config';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
-import { StoreState, ThunkResult } from 'app/types';
+// @todo: replace barrel import path
+import { StoreState, ThunkResult } from 'app/types/index';
 
 import { invalidatePluginInCache } from '../../loader/cache';
 import {

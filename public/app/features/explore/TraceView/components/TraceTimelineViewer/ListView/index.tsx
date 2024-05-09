@@ -14,7 +14,8 @@
 
 import * as React from 'react';
 
-import { TNil } from '../../types';
+// @todo: replace barrel import path
+import { TNil } from '../../types/index';
 
 import Positions from './Positions';
 

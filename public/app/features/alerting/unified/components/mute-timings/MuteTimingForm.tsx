@@ -5,7 +5,8 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, Field, FieldSet, Input, LinkButton, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { AlertManagerCortexConfig, MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
-import { useDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { useDispatch } from 'app/types/index';
 
 import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
 import { useAlertmanager } from '../../state/AlertmanagerContext';

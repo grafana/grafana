@@ -13,7 +13,8 @@ import {
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t, Trans } from 'app/core/internationalization/index';
 import { InspectDataTab } from 'app/features/inspector/InspectDataTab';
 import { InspectErrorTab } from 'app/features/inspector/InspectErrorTab';
 import { InspectJSONTab } from 'app/features/inspector/InspectJSONTab';
@@ -23,7 +24,8 @@ import { QueryInspector } from 'app/features/inspector/QueryInspector';
 import { InspectTab } from 'app/features/inspector/types';
 
 import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
-import { DashboardModel, PanelModel } from '../../state';
+// @todo: replace barrel import path
+import { DashboardModel, PanelModel } from '../../state/index';
 
 interface Props {
   dashboard: DashboardModel;

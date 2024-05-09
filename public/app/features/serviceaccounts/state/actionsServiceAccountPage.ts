@@ -1,6 +1,7 @@
 import { getBackendSrv, locationService } from '@grafana/runtime';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
-import { ServiceAccountDTO, ThunkResult } from 'app/types';
+// @todo: replace barrel import path
+import { ServiceAccountDTO, ThunkResult } from 'app/types/index';
 
 import { ServiceAccountToken } from '../components/CreateTokenModal';
 

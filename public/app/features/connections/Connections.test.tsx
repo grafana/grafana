@@ -4,11 +4,13 @@ import { TestProvider } from 'test/helpers/TestProvider';
 
 import { locationService } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
-import { getMockDataSources } from 'app/features/datasources/__mocks__';
+// @todo: replace barrel import path
+import { getMockDataSources } from 'app/features/datasources/__mocks__/index';
 import * as api from 'app/features/datasources/api';
 import { configureStore } from 'app/store/configureStore';
 
-import { getPluginsStateMock } from '../plugins/admin/__mocks__';
+// @todo: replace barrel import path
+import { getPluginsStateMock } from '../plugins/admin/__mocks__/index';
 
 import Connections from './Connections';
 import { navIndex } from './__mocks__/store.navIndex.mock';

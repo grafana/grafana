@@ -3,7 +3,8 @@ import { setupListeners } from '@reduxjs/toolkit/query';
 
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
-import { cloudMigrationAPI } from 'app/features/migrate-to-cloud/api';
+// @todo: replace barrel import path
+import { cloudMigrationAPI } from 'app/features/migrate-to-cloud/api/index';
 import { StoreState } from 'app/types/store';
 
 import { buildInitialState } from '../core/reducers/navModel';

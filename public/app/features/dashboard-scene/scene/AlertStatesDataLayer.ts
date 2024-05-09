@@ -9,14 +9,16 @@ import {
   sceneGraph,
   SceneTimeRangeLike,
 } from '@grafana/scenes';
-import { notifyApp } from 'app/core/actions';
+// @todo: replace barrel import path
+import { notifyApp } from 'app/core/actions/index';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import { isAlertingRule } from 'app/features/alerting/unified/utils/rules';
 import { dispatch } from 'app/store/store';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 import { PromAlertingRuleState, PromRulesResponse } from 'app/types/unified-alerting-dto';
 
 import { getDashboardSceneFor } from '../utils/utils';

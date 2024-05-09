@@ -9,7 +9,8 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { setTimeSrv, TimeSrv } from '../services/TimeSrv';
-import { DashboardModel, PanelModel } from '../state';
+// @todo: replace barrel import path
+import { DashboardModel, PanelModel } from '../state/index';
 
 import { PanelStateWrapper, Props } from './PanelStateWrapper';
 

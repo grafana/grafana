@@ -6,7 +6,8 @@ import { Router } from 'react-router-dom';
 import { locationService } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
-import { getMockDataSources } from '../__mocks__';
+// @todo: replace barrel import path
+import { getMockDataSources } from '../__mocks__/index';
 
 import { DataSourcesListView } from './DataSourcesList';
 

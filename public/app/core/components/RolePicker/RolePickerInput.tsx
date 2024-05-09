@@ -4,7 +4,8 @@ import React, { FormEvent, HTMLProps, useEffect, useRef } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, getInputStyles, sharedInputStyle, styleMixins, Tooltip, Icon, Spinner } from '@grafana/ui';
 
-import { Role } from '../../../types';
+// @todo: replace barrel import path
+import { Role } from '../../../types/index';
 
 import { ValueContainer } from './ValueContainer';
 import { ROLE_PICKER_WIDTH } from './constants';

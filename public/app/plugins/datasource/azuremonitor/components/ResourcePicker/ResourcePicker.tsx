@@ -6,7 +6,8 @@ import { Alert, Button, LoadingPlaceholder, Modal, useStyles2, Space } from '@gr
 
 import { selectors } from '../../e2e/selectors';
 import ResourcePickerData, { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
-import { AzureMonitorResource } from '../../types';
+// @todo: replace barrel import path
+import { AzureMonitorResource } from '../../types/index';
 import messageFromError from '../../utils/messageFromError';
 
 import AdvancedMulti from './AdvancedMulti';

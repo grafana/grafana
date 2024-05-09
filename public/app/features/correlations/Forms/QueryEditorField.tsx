@@ -5,7 +5,8 @@ import { useAsync } from 'react-use';
 import { CoreApp } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Field, LoadingPlaceholder, Alert } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans, t } from 'app/core/internationalization/index';
 
 interface Props {
   dsUid?: string;

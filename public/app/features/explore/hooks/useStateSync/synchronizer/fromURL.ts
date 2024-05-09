@@ -8,8 +8,10 @@ import { cancelQueries, runQueries, setQueriesAction } from 'app/features/explor
 import { updateTime } from 'app/features/explore/state/time';
 import { fromURLRange } from 'app/features/explore/state/utils';
 import { withUniqueRefIds } from 'app/features/explore/utils/queries';
-import { ExploreItemState, ThunkDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { ExploreItemState, ThunkDispatch } from 'app/types/index';
 
+// @todo: replace barrel import path
 import { getUrlStateFromPaneState } from '../index';
 import { urlDiff } from '../internal.utils';
 import { ExploreURLV1 } from '../migrators/v1';

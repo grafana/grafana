@@ -1,6 +1,7 @@
 import { UrlQueryMap } from '@grafana/data';
 
-import { KioskMode } from '../../types';
+// @todo: replace barrel import path
+import { KioskMode } from '../../types/index';
 
 // TODO Remove after topnav feature toggle is permanent and old NavBar is removed
 export function getKioskMode(queryParams: UrlQueryMap): KioskMode | null {

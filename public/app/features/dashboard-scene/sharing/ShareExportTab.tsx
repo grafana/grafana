@@ -5,10 +5,13 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { Button, ClipboardButton, CodeEditor, Field, Modal, Stack, Switch } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
-import { DashboardExporter } from 'app/features/dashboard/components/DashExportModal';
+// @todo: replace barrel import path
+import { t, Trans } from 'app/core/internationalization/index';
+// @todo: replace barrel import path
+import { DashboardExporter } from 'app/features/dashboard/components/DashExportModal/index';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
-import { DashboardModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { DashboardModel } from 'app/features/dashboard/state/index';
 
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { getVariablesCompatibility } from '../utils/getVariablesCompatibility';

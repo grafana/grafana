@@ -3,7 +3,8 @@ import React from 'react';
 
 import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { DeleteButton, Icon, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
-import { ApiKey } from 'app/types';
+// @todo: replace barrel import path
+import { ApiKey } from 'app/types/index';
 
 interface Props {
   tokens: ApiKey[];

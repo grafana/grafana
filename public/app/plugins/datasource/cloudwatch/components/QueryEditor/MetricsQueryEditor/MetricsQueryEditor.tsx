@@ -14,11 +14,13 @@ import {
   MetricQueryType,
   MetricStat,
 } from '../../../types';
-import { MetricStatEditor } from '../../shared/MetricStatEditor';
+// @todo: replace barrel import path
+import { MetricStatEditor } from '../../shared/MetricStatEditor/index';
 
 import { DynamicLabelsField } from './DynamicLabelsField';
 import { MathExpressionQueryField } from './MathExpressionQueryField';
-import { SQLBuilderEditor } from './SQLBuilderEditor';
+// @todo: replace barrel import path
+import { SQLBuilderEditor } from './SQLBuilderEditor/index';
 import { SQLCodeEditor } from './SQLCodeEditor';
 
 export interface Props extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> {
@@ -111,7 +113,6 @@ export const MetricsQueryEditor = (props: Props) => {
   return (
     <>
       <Space v={0.5} />
-
       {query.metricQueryType === MetricQueryType.Search && (
         <>
           {query.metricEditorMode === MetricEditorMode.Builder && (

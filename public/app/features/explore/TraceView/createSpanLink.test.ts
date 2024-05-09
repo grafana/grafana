@@ -14,7 +14,8 @@ import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { LinkSrv, setLinkSrv } from '../../panel/panellinks/link_srv';
 import { TemplateSrv } from '../../templating/template_srv';
 
-import { Trace, TraceSpan } from './components';
+// @todo: replace barrel import path
+import { Trace, TraceSpan } from './components/index';
 import { SpanLinkType } from './components/types/links';
 import { createSpanLinkFactory, pyroscopeProfileIdTagKey } from './createSpanLink';
 

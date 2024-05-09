@@ -3,7 +3,8 @@ import React from 'react';
 
 import { FieldType, getDefaultTimeRange, InternalTimeZones, toDataFrame, LoadingState } from '@grafana/data';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
-import { TABLE_RESULTS_STYLE } from 'app/types';
+// @todo: replace barrel import path
+import { TABLE_RESULTS_STYLE } from 'app/types/index';
 
 import { RawPrometheusContainer } from './RawPrometheusContainer';
 

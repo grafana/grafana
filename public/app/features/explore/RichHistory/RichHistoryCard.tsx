@@ -6,9 +6,11 @@ import { GrafanaTheme2, DataSourceApi } from '@grafana/data';
 import { config, reportInteraction, getAppEvents } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { TextArea, Button, IconButton, useStyles2, ToolbarButton, Dropdown, Menu } from '@grafana/ui';
-import { notifyApp } from 'app/core/actions';
+// @todo: replace barrel import path
+import { notifyApp } from 'app/core/actions/index';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
-import { Trans, t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans, t } from 'app/core/internationalization/index';
 import { copyStringToClipboard } from 'app/core/utils/explore';
 import { createUrlFromRichHistory, createQueryText } from 'app/core/utils/richHistory';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
@@ -16,9 +18,10 @@ import { changeDatasource } from 'app/features/explore/state/datasource';
 import { starHistoryItem, commentHistoryItem, deleteHistoryItem } from 'app/features/explore/state/history';
 import { setQueries } from 'app/features/explore/state/query';
 import { dispatch } from 'app/store/store';
-import { useSelector } from 'app/types';
+// @todo: replace barrel import path
 import { ShowConfirmModalEvent } from 'app/types/events';
 import { RichHistoryQuery } from 'app/types/explore';
+import { useSelector } from 'app/types/index';
 
 import { isSplit, selectExploreDSMaps, selectPanesEntries } from '../state/selectors';
 

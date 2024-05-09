@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 
-import { Invitee } from 'app/types';
+// @todo: replace barrel import path
+import { Invitee } from 'app/types/index';
 
 import InviteeRow from './InviteeRow';
 

@@ -2,7 +2,8 @@ import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { Button, ClipboardButton } from '@grafana/ui';
-import { Invitee } from 'app/types';
+// @todo: replace barrel import path
+import { Invitee } from 'app/types/index';
 
 import { revokeInvite } from './state/actions';
 

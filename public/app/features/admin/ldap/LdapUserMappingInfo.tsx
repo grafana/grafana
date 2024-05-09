@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
 
 import { InteractiveTable } from '@grafana/ui';
-import { LdapUserInfo } from 'app/types';
+// @todo: replace barrel import path
+import { LdapUserInfo } from 'app/types/index';
 
 interface Props {
   info: LdapUserInfo;

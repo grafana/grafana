@@ -4,7 +4,8 @@ import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { byTestId } from 'testing-library-selector';
 
-import { FolderState } from 'app/types';
+// @todo: replace barrel import path
+import { FolderState } from 'app/types/index';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { AlertsFolderView } from './AlertsFolderView';

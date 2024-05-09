@@ -34,11 +34,14 @@ import {
   RowPanel,
   VariableType,
 } from '@grafana/schema';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
 import { createPanelSaveModel } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
-import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state/index';
+// @todo: replace barrel import path
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/index';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
-import { DashboardDataDTO } from 'app/types';
+// @todo: replace barrel import path
+import { DashboardDataDTO } from 'app/types/index';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardGridItem } from '../scene/DashboardGridItem';

@@ -4,7 +4,8 @@ import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Field, FieldSet, Input, TextArea, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans, t } from 'app/core/internationalization/index';
 
 import { useCorrelationsFormContext } from './correlationsFormContext';
 import { FormDTO } from './types';

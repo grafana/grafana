@@ -13,7 +13,8 @@
 // limitations under the License.
 
 import { defaultFilters, defaultTagFilter } from '../../useSearch';
-import { TraceSpan } from '../types';
+// @todo: replace barrel import path
+import { TraceSpan } from '../types/index';
 
 import { filterSpans } from './filter-spans';
 

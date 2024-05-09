@@ -7,7 +7,8 @@ import { Field, Input, Button, Legend, Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { OrgUser, AccessControlAction, OrgRole } from 'app/types';
+// @todo: replace barrel import path
+import { OrgUser, AccessControlAction, OrgRole } from 'app/types/index';
 
 import { OrgUsersTable } from './Users/OrgUsersTable';
 import { getOrg, getOrgUsers, getUsersRoles, removeOrgUser, updateOrgName, updateOrgUserRole } from './api';

@@ -6,7 +6,8 @@ import { TypedVariableModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, useStyles2, Stack, EmptyState, TextLink } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t, Trans } from 'app/core/internationalization/index';
 
 import { VariablesDependenciesButton } from '../inspect/VariablesDependenciesButton';
 import { UsagesToNetwork, VariableUsageTree } from '../inspect/utils';

@@ -3,8 +3,10 @@ import React, { useCallback } from 'react';
 import { DataSourcePluginMeta } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
-import { useDataSourcesRoutes, addDataSource } from 'app/features/datasources/state';
-import { useDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { useDataSourcesRoutes, addDataSource } from 'app/features/datasources/state/index';
+// @todo: replace barrel import path
+import { useDispatch } from 'app/types/index';
 
 import { isDataSourceEditor } from '../../permissions';
 import { CatalogPlugin } from '../../types';

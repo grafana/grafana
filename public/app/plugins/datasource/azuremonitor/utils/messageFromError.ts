@@ -1,6 +1,7 @@
 import { isValidElement } from 'react';
 
-import { AzureMonitorErrorish } from '../types';
+// @todo: replace barrel import path
+import { AzureMonitorErrorish } from '../types/index';
 
 export function messageFromElement(error: AzureMonitorErrorish): AzureMonitorErrorish | undefined {
   if (isValidElement(error)) {

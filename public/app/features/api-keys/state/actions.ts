@@ -1,5 +1,6 @@
 ﻿import { getBackendSrv } from 'app/core/services/backend_srv';
-import { ThunkResult } from 'app/types';
+// @todo: replace barrel import path
+import { ThunkResult } from 'app/types/index';
 
 import { apiKeysLoaded, includeExpiredToggled, isFetching, setMigrationResult } from './reducers';
 

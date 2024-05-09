@@ -4,7 +4,8 @@ import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { byLabelText, byPlaceholderText, byRole, byTestId } from 'testing-library-selector';
 
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';

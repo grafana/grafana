@@ -1,11 +1,13 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { StoreState } from 'app/types';
+// @todo: replace barrel import path
+import { StoreState } from 'app/types/index';
 
 import { initPanelState } from '../../panel/state/actions';
 import { setPanelInstanceState } from '../../panel/state/reducers';
-import { DashboardModel, PanelModel } from '../state';
+// @todo: replace barrel import path
+import { DashboardModel, PanelModel } from '../state/index';
 
 import { LazyLoader } from './LazyLoader';
 import { PanelChromeAngular } from './PanelChromeAngular';

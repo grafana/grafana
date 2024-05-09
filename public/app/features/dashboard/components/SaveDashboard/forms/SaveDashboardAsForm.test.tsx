@@ -2,7 +2,8 @@ import { screen, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { DashboardModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { DashboardModel } from 'app/features/dashboard/state/index';
 import * as api from 'app/features/manage-dashboards/state/actions';
 
 import { SaveDashboardAsForm, SaveDashboardAsFormProps } from './SaveDashboardAsForm';

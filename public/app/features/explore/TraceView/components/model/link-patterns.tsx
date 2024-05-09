@@ -15,7 +15,8 @@
 import { uniq as _uniq } from 'lodash';
 import memoize from 'lru-memoize';
 
-import { Trace } from '../types';
+// @todo: replace barrel import path
+import { Trace } from '../types/index';
 import { getConfigValue } from '../utils/config/get-config';
 
 const parameterRegExp = /#\{([^{}]*)\}/g;

@@ -16,8 +16,10 @@ import { css } from '@emotion/css';
 import memoizeOne from 'memoize-one';
 import * as React from 'react';
 
+// @todo: replace barrel import path
 import { TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from '../../index';
-import { TraceSpan, Trace } from '../../types';
+// @todo: replace barrel import path
+import { TraceSpan, Trace } from '../../types/index';
 
 import CanvasSpanGraph from './CanvasSpanGraph';
 import TickLabels from './TickLabels';

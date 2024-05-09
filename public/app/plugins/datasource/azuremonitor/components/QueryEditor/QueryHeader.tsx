@@ -4,7 +4,8 @@ import { SelectableValue } from '@grafana/data';
 import { EditorHeader, InlineSelect } from '@grafana/experimental';
 
 import { selectors } from '../../e2e/selectors';
-import { AzureMonitorQuery, AzureQueryType } from '../../types';
+// @todo: replace barrel import path
+import { AzureMonitorQuery, AzureQueryType } from '../../types/index';
 
 interface QueryTypeFieldProps {
   query: AzureMonitorQuery;

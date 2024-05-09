@@ -21,17 +21,20 @@ import {
   VariableWithOptions,
 } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { notifyApp } from 'app/core/actions';
+// @todo: replace barrel import path
+import { notifyApp } from 'app/core/actions/index';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { DashboardModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { DashboardModel } from 'app/features/dashboard/state/index';
 import { store } from 'app/store/store';
 
 import { createErrorNotification } from '../../../core/copy/appNotification';
 import { appEvents } from '../../../core/core';
 import { getBackendSrv } from '../../../core/services/backend_srv';
 import { Graph, Node } from '../../../core/utils/dag';
-import { AppNotification, StoreState, ThunkResult } from '../../../types';
+// @todo: replace barrel import path
+import { AppNotification, StoreState, ThunkResult } from '../../../types/index';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { getTemplateSrv, TemplateSrv } from '../../templating/template_srv';
 import { variableAdapters } from '../adapters';

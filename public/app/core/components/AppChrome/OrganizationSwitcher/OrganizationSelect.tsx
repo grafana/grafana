@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { Icon, Select, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
-import { UserOrg } from 'app/types';
+// @todo: replace barrel import path
+import { UserOrg } from 'app/types/index';
 
 import { OrganizationBaseProps } from './types';
 

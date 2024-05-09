@@ -11,7 +11,8 @@ import {
   urlUtil,
 } from '@grafana/data';
 import { CustomScrollbar, useStyles2, IconButton } from '@grafana/ui';
-import { updateNavIndex } from 'app/core/actions';
+// @todo: replace barrel import path
+import { updateNavIndex } from 'app/core/actions/index';
 import { getConfig } from 'app/core/config';
 import { appEvents } from 'app/core/core';
 import { useBusEvent } from 'app/core/hooks/useBusEvent';
@@ -22,7 +23,8 @@ import impressionSrv from 'app/core/services/impression_srv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardSearchItem } from 'app/features/search/types';
 import { VariablesChanged } from 'app/features/variables/types';
-import { useDispatch, useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { useDispatch, useSelector } from 'app/types/index';
 
 import { Options } from './panelcfg.gen';
 import { getStyles } from './styles';

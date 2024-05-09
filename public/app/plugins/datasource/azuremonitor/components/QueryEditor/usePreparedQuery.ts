@@ -2,7 +2,8 @@ import deepEqual from 'fast-deep-equal';
 import { defaults } from 'lodash';
 import { useEffect, useMemo } from 'react';
 
-import { AzureMonitorQuery, AzureQueryType } from '../../types';
+// @todo: replace barrel import path
+import { AzureMonitorQuery, AzureQueryType } from '../../types/index';
 import migrateQuery from '../../utils/migrateQuery';
 
 const DEFAULT_QUERY = {

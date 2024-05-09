@@ -1,5 +1,6 @@
 import { configureStore } from 'app/store/configureStore';
-import { useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { useSelector } from 'app/types/index';
 
 import { fullyLoadedViewItemCollection } from '../fixtures/state.fixtures';
 import { BrowseDashboardsState } from '../types';

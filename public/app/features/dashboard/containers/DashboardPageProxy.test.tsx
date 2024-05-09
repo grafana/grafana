@@ -12,7 +12,8 @@ import {
   getDashboardScenePageStateManager,
 } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 import { configureStore } from 'app/store/configureStore';
-import { DashboardDTO, DashboardRoutes } from 'app/types';
+// @todo: replace barrel import path
+import { DashboardDTO, DashboardRoutes } from 'app/types/index';
 
 import DashboardPageProxy, { DashboardPageProxyProps } from './DashboardPageProxy';
 

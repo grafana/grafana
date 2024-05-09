@@ -2,7 +2,8 @@ import { createTwoFilesPatch } from 'diff';
 
 import { Dashboard } from '@grafana/schema';
 
-import { DashboardModel } from '../../state';
+// @todo: replace barrel import path
+import { DashboardModel } from '../../state/index';
 
 export type JSONValue = null | boolean | number | string | JSONArray | JSONObject;
 

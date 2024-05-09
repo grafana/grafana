@@ -3,7 +3,8 @@ import React from 'react';
 
 import createMockDatasource from '../../__mocks__/datasource';
 import createMockQuery from '../../__mocks__/query';
-import { ResultFormat } from '../../types';
+// @todo: replace barrel import path
+import { ResultFormat } from '../../types/index';
 import { setFormatAs } from '../TracesQueryEditor/setQueryValue';
 
 import FormatAsField from './FormatAsField';

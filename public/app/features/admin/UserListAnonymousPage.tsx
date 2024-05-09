@@ -7,7 +7,8 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { RadioButtonGroup, useStyles2, FilterInput } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
-import { StoreState } from '../../types';
+// @todo: replace barrel import path
+import { StoreState } from '../../types/index';
 
 import { AnonUsersDevicesTable } from './Users/AnonUsersTable';
 import { fetchUsersAnonymousDevices, changeAnonUserSort, changeAnonPage, changeAnonQuery } from './state/actions';

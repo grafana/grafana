@@ -12,7 +12,8 @@ import {
   updateRichHistorySettings,
   updateStarredInRichHistory,
 } from 'app/core/utils/richHistory';
-import { RichHistoryQuery, ThunkResult } from 'app/types';
+// @todo: replace barrel import path
+import { RichHistoryQuery, ThunkResult } from 'app/types/index';
 
 import { supportedFeatures } from '../../../core/history/richHistoryStorageProvider';
 import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';

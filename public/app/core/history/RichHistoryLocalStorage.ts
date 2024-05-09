@@ -3,7 +3,8 @@ import { find, isEqual, omit } from 'lodash';
 import { DataQuery, SelectableValue } from '@grafana/data';
 import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistory';
 
-import { RichHistoryQuery } from '../../types';
+// @todo: replace barrel import path
+import { RichHistoryQuery } from '../../types/index';
 import store from '../store';
 
 import RichHistoryStorage, { RichHistoryServiceError, RichHistoryStorageWarning } from './RichHistoryStorage';

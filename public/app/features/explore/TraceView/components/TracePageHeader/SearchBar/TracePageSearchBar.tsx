@@ -20,7 +20,8 @@ import { Button, Switch, useStyles2 } from '@grafana/ui';
 import { getButtonStyles } from '@grafana/ui/src/components/Button';
 
 import { SearchProps } from '../../../useSearch';
-import { Trace } from '../../types';
+// @todo: replace barrel import path
+import { Trace } from '../../types/index';
 import { convertTimeFilter } from '../../utils/filter-spans';
 
 import NextPrevResult from './NextPrevResult';

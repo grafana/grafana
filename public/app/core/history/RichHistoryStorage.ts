@@ -1,6 +1,7 @@
 import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistory';
 
-import { RichHistoryQuery } from '../../types';
+// @todo: replace barrel import path
+import { RichHistoryQuery } from '../../types/index';
 
 /**
  * Errors are used when the operation on Rich History was not successful.

@@ -4,8 +4,10 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaContext';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { StoreState } from 'app/types';
+// @todo: replace barrel import path
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state/index';
+// @todo: replace barrel import path
+import { StoreState } from 'app/types/index';
 
 import { DashboardPanel } from '../dashgrid/DashboardPanel';
 import { initDashboard } from '../state/initDashboard';

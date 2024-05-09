@@ -1,6 +1,7 @@
 import { NavModelItem } from '@grafana/data';
 import { enrichHelpItem } from 'app/core/components/AppChrome/MegaMenu/utils';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 import { changeTheme } from 'app/core/services/theme';
 
 import { CommandPaletteAction } from '../types';

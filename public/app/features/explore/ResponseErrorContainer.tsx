@@ -1,7 +1,8 @@
 import React from 'react';
 
 import { LoadingState } from '@grafana/data';
-import { useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { useSelector } from 'app/types/index';
 
 import { ErrorContainer } from './ErrorContainer';
 

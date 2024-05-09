@@ -1,7 +1,8 @@
 import React, { useCallback } from 'react';
 
 import { RefreshPicker } from '@grafana/ui';
-import { useDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { useDispatch } from 'app/types/index';
 
 import { setPausedStateAction, runQueries, clearLogs } from './state/query';
 import { changeRefreshInterval } from './state/time';

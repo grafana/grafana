@@ -1,4 +1,5 @@
-import { getGrafanaSearcher } from 'app/features/search/service';
+// @todo: replace barrel import path
+import { getGrafanaSearcher } from 'app/features/search/service/index';
 
 class ValidationError extends Error {
   type: string;

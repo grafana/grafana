@@ -21,7 +21,8 @@ import { DURATION, NONE, TAG } from '@grafana/o11y-ds-frontend';
 import { Icon, stylesFactory, withTheme2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
-import { SpanBarOptions, SpanLinkFunc, TraceSpan, TNil, CriticalPathSection } from '../types';
+// @todo: replace barrel import path
+import { SpanBarOptions, SpanLinkFunc, TraceSpan, TNil, CriticalPathSection } from '../types/index';
 
 import SpanBar from './SpanBar';
 import { SpanLinksMenu } from './SpanLinks';

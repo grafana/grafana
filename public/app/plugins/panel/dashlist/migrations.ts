@@ -1,6 +1,7 @@
 import { PanelModel } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { FolderDTO } from 'app/types';
+// @todo: replace barrel import path
+import { FolderDTO } from 'app/types/index';
 
 import { Options } from './panelcfg.gen';
 

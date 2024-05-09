@@ -13,7 +13,8 @@ import {
   reportSearchQueryInteraction,
   reportSearchResultInteraction,
 } from '../page/reporting';
-import { getGrafanaSearcher, SearchQuery } from '../service';
+// @todo: replace barrel import path
+import { getGrafanaSearcher, SearchQuery } from '../service/index';
 import { SearchLayout, SearchQueryParams, SearchState } from '../types';
 import { parseRouteParams } from '../utils';
 

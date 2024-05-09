@@ -2,7 +2,8 @@ import React, { useEffect } from 'react';
 
 import { Alert, LoadingPlaceholder, Text, Box } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { useDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { useDispatch } from 'app/types/index';
 
 import { AlertmanagerChoice } from '../../../plugins/datasource/alertmanager/types';
 

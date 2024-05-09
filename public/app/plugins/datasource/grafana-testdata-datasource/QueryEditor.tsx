@@ -5,7 +5,7 @@ import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { selectors as editorSelectors } from '@grafana/e2e-selectors';
 import { InlineField, InlineFieldRow, InlineSwitch, Input, Select, Icon, TextArea } from '@grafana/ui';
 
-import { RandomWalkEditor, StreamingClientEditor } from './components';
+// @todo: replace barrel import path
 import { CSVContentEditor } from './components/CSVContentEditor';
 import { CSVFileEditor } from './components/CSVFileEditor';
 import { CSVWavesEditor } from './components/CSVWaveEditor';
@@ -16,6 +16,7 @@ import { PredictablePulseEditor } from './components/PredictablePulseEditor';
 import { RawFrameEditor } from './components/RawFrameEditor';
 import { SimulationQueryEditor } from './components/SimulationQueryEditor';
 import { USAQueryEditor, usaQueryModes } from './components/USAQueryEditor';
+import { RandomWalkEditor, StreamingClientEditor } from './components/index';
 import { defaultCSVWaveQuery, defaultPulseQuery, defaultQuery } from './constants';
 import { CSVWave, NodesQuery, TestDataDataQuery, TestDataQueryType, USAQuery } from './dataquery';
 import { TestDataDataSource } from './datasource';

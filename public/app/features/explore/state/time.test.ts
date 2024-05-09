@@ -2,7 +2,8 @@ import { reducerTester } from 'test/core/redux/reducerTester';
 
 import { dateTime } from '@grafana/data';
 import { configureStore } from 'app/store/configureStore';
-import { ExploreItemState } from 'app/types';
+// @todo: replace barrel import path
+import { ExploreItemState } from 'app/types/index';
 
 import { createDefaultInitialState } from './helpers';
 import { changeRangeAction, timeReducer, updateTime } from './time';

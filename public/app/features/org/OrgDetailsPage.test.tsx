@@ -7,7 +7,8 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { NavModel } from '@grafana/data';
 
 import { backendSrv } from '../../core/services/backend_srv';
-import { Organization } from '../../types';
+// @todo: replace barrel import path
+import { Organization } from '../../types/index';
 
 import { OrgDetailsPage, Props } from './OrgDetailsPage';
 import { setOrganizationName } from './state/reducers';

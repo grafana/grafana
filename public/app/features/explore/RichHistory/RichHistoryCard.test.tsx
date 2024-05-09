@@ -7,8 +7,9 @@ import { DataSourceApi, DataSourceInstanceSettings, DataSourcePluginMeta } from 
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { MixedDatasource } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { configureStore } from 'app/store/configureStore';
-import { ExploreState, RichHistoryQuery } from 'app/types';
+// @todo: replace barrel import path
 import { ShowConfirmModalEvent } from 'app/types/events';
+import { ExploreState, RichHistoryQuery } from 'app/types/index';
 
 import { RichHistoryCard, Props } from './RichHistoryCard';
 

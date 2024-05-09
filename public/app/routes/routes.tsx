@@ -10,14 +10,16 @@ import { contextSrv } from 'app/core/services/context_srv';
 import UserAdminPage from 'app/features/admin/UserAdminPage';
 import LdapPage from 'app/features/admin/ldap/LdapPage';
 import { getAlertingRoutes } from 'app/features/alerting/routes';
-import { ConnectionsRedirectNotice } from 'app/features/connections/components/ConnectionsRedirectNotice';
+// @todo: replace barrel import path
+import { ConnectionsRedirectNotice } from 'app/features/connections/components/ConnectionsRedirectNotice/index';
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import { getRoutes as getDataConnectionsRoutes } from 'app/features/connections/routes';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
 import { getAppPluginRoutes } from 'app/features/plugins/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
-import { AccessControlAction, DashboardRoutes } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction, DashboardRoutes } from 'app/types/index';
 
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
 import { RouteDescriptor } from '../core/navigation/types';

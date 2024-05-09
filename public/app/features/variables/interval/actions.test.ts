@@ -2,7 +2,8 @@ import { dateTime } from '@grafana/data';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
-import { notifyApp } from '../../../core/actions';
+// @todo: replace barrel import path
+import { notifyApp } from '../../../core/actions/index';
 import { getTimeSrv, setTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
 import { TemplateSrv } from '../../templating/template_srv';
 import { variableAdapters } from '../adapters';

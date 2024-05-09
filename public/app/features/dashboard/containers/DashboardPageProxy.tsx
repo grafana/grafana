@@ -5,7 +5,8 @@ import { config } from '@grafana/runtime';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import DashboardScenePage from 'app/features/dashboard-scene/pages/DashboardScenePage';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
-import { DashboardRoutes } from 'app/types';
+// @todo: replace barrel import path
+import { DashboardRoutes } from 'app/types/index';
 
 import DashboardPage from './DashboardPage';
 import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from './types';

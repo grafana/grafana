@@ -2,7 +2,8 @@ import { http, HttpResponse } from 'msw';
 import { SetupServer } from 'msw/node';
 
 import { AlertmanagerChoice, AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
-import { ReceiversStateDTO } from 'app/types';
+// @todo: replace barrel import path
+import { ReceiversStateDTO } from 'app/types/index';
 
 import { mockApi } from '../../../mockApi';
 import { mockAlertmanagerChoiceResponse } from '../../../mocks/alertmanagerApi';

@@ -2,7 +2,8 @@ import { map } from 'lodash';
 
 import { SelectableValue, VariableWithMultiSupport } from '@grafana/data';
 
-import { AzureMonitorOption, VariableOptionGroup } from '../types';
+// @todo: replace barrel import path
+import { AzureMonitorOption, VariableOptionGroup } from '../types/index';
 
 export const hasOption = (options: AzureMonitorOption[], value: string): boolean =>
   options.some((v) => (v.options ? hasOption(v.options, value) : v.value === value));

@@ -15,7 +15,8 @@ import ResourcePickerData, { ResourcePickerQueryType } from '../../resourcePicke
 
 import { ResourceRowType } from './types';
 
-import ResourcePicker from '.';
+// @todo: replace barrel import path
+import ResourcePicker from './index';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

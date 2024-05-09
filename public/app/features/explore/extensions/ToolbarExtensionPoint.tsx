@@ -5,7 +5,8 @@ import { config, usePluginLinkExtensions } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { Dropdown, ToolbarButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction, ExplorePanelData, useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction, ExplorePanelData, useSelector } from 'app/types/index';
 
 import { getExploreItemSelector, isLeftPaneSelector, selectCorrelationDetails } from '../state/selectors';
 

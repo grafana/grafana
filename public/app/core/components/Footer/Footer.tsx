@@ -3,7 +3,8 @@ import React from 'react';
 import { LinkTarget } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Icon, IconName } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 
 export interface FooterLink {
   target: LinkTarget;

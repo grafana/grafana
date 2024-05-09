@@ -28,7 +28,8 @@ import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import { autoColor } from '../../Theme';
 import LabeledList from '../../common/LabeledList';
 import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE } from '../../constants/span';
-import { SpanLinkFunc, TNil } from '../../types';
+// @todo: replace barrel import path
+import { SpanLinkFunc, TNil } from '../../types/index';
 import { SpanLinkDef, SpanLinkType } from '../../types/links';
 import { TraceKeyValuePair, TraceLink, TraceLog, TraceSpan, TraceSpanReference } from '../../types/trace';
 import { formatDuration } from '../utils';

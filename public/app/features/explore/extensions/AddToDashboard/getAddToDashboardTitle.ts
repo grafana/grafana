@@ -1,5 +1,6 @@
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 
 export function getAddToDashboardTitle(): string {
   const canCreateDashboard = contextSrv.hasPermission(AccessControlAction.DashboardsCreate);

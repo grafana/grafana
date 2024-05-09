@@ -3,7 +3,8 @@ import React from 'react';
 
 import { Alert } from '@grafana/ui';
 import { getMessageFromError } from 'app/core/utils/errors';
-import { DashboardInitError, AppNotificationSeverity } from 'app/types';
+// @todo: replace barrel import path
+import { DashboardInitError, AppNotificationSeverity } from 'app/types/index';
 
 export interface Props {
   initError?: DashboardInitError;

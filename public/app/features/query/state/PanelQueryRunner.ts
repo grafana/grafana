@@ -36,8 +36,10 @@ import { isStreamingDataFrame } from 'app/features/live/data/utils';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
 
-import { isSharedDashboardQuery, runSharedRequest } from '../../../plugins/datasource/dashboard';
-import { PanelModel } from '../../dashboard/state';
+// @todo: replace barrel import path
+import { isSharedDashboardQuery, runSharedRequest } from '../../../plugins/datasource/dashboard/index';
+// @todo: replace barrel import path
+import { PanelModel } from '../../dashboard/state/index';
 
 import { getDashboardQueryRunner } from './DashboardQueryRunner/DashboardQueryRunner';
 import { mergePanelAndDashData } from './mergePanelAndDashData';

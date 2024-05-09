@@ -3,7 +3,8 @@ import { AngularComponent, locationService } from '@grafana/runtime';
 import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import config from 'app/core/config';
 import { createErrorNotification } from 'app/core/copy/appNotification';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError } from 'app/core/utils/errors';
@@ -25,7 +26,8 @@ import { DashboardInteractions } from 'app/features/dashboard-scene/utils/intera
 import { InspectTab } from 'app/features/inspector/types';
 import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
 import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
-import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
+// @todo: replace barrel import path
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/index';
 import { dispatch, store } from 'app/store/store';
 
 import { getCreateAlertInMenuAvailability } from '../../alerting/unified/utils/access-control';

@@ -1,4 +1,5 @@
-﻿import { ApiKeysState } from 'app/types';
+// @todo: replace barrel import path
+import { ApiKeysState } from 'app/types/index';
 
 import { getMultipleMockKeys } from '../__mocks__/apiKeysMock';
 

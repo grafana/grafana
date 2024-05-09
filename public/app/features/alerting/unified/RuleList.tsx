@@ -6,7 +6,8 @@ import { useAsyncFn, useInterval } from 'react-use';
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
 import { Button, LinkButton, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { useDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { useDispatch } from 'app/types/index';
 
 import { CombinedRuleNamespace } from '../../../types/unified-alerting';
 

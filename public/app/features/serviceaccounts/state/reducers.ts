@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+// @todo: replace barrel import path
 import {
   ApiKey,
   Role,
@@ -7,7 +8,7 @@ import {
   ServiceAccountProfileState,
   ServiceAccountsState,
   ServiceAccountStateFilter,
-} from 'app/types';
+} from 'app/types/index';
 
 // serviceAccountsProfilePage
 export const initialStateProfile: ServiceAccountProfileState = {

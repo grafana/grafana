@@ -3,7 +3,8 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Box, Stack, TextLink, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t, Trans } from 'app/core/internationalization/index';
 
 import { InfoItem } from '../shared/InfoItem';
 

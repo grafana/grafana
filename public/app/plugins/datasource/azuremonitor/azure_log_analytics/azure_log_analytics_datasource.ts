@@ -5,6 +5,7 @@ import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/run
 
 import ResponseParser from '../azure_monitor/response_parser';
 import { getAuthType, getAzureCloud, getAzurePortalUrl } from '../credentials';
+// @todo: replace barrel import path
 import {
   AzureAPIResponse,
   AzureDataSourceJsonData,
@@ -14,7 +15,7 @@ import {
   DatasourceValidationResult,
   Subscription,
   Workspace,
-} from '../types';
+} from '../types/index';
 import { interpolateVariable, routeNames } from '../utils/common';
 
 import { transformMetadataToKustoSchema } from './utils';

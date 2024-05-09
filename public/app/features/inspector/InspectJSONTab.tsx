@@ -9,8 +9,10 @@ import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
 import { Button, CodeEditor, Field, Select, useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
-import { t } from 'app/core/internationalization';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
+// @todo: replace barrel import path
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state/index';
 
 import { getPanelDataFrames } from '../dashboard/components/HelpWizard/utils';
 import { getPanelInspectorStyles2 } from '../inspector/styles';

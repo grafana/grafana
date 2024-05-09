@@ -1,6 +1,7 @@
 import { createSelector } from 'reselect';
 
-import { StoreState, useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { StoreState, useSelector } from 'app/types/index';
 
 import { UnifiedAlertingState } from '../state/reducers';
 

@@ -6,7 +6,8 @@ import { PluginSignatureStatus } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
-import { getPluginsStateMock } from '../../__mocks__';
+// @todo: replace barrel import path
+import { getPluginsStateMock } from '../../__mocks__/index';
 import { CatalogPlugin, PluginStatus } from '../../types';
 
 import { InstallControlsButton } from './InstallControlsButton';

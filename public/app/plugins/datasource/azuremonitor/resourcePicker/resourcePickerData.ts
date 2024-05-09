@@ -3,7 +3,8 @@ import { uniq } from 'lodash';
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { DataSourceWithBackend, reportInteraction } from '@grafana/runtime';
 
-import { logsResourceTypes, resourceTypeDisplayNames, resourceTypes } from '../azureMetadata';
+// @todo: replace barrel import path
+import { logsResourceTypes, resourceTypeDisplayNames, resourceTypes } from '../azureMetadata/index';
 import AzureMonitorDatasource from '../azure_monitor/azure_monitor_datasource';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../components/ResourcePicker/types';
 import {
@@ -14,6 +15,7 @@ import {
   parseResourceURI,
   resourceToString,
 } from '../components/ResourcePicker/utils';
+// @todo: replace barrel import path
 import {
   AzureDataSourceJsonData,
   AzureGraphResponse,
@@ -24,7 +26,7 @@ import {
   RawAzureResourceGroupItem,
   RawAzureResourceItem,
   RawAzureSubscriptionItem,
-} from '../types';
+} from '../types/index';
 import { routeNames } from '../utils/common';
 
 const RESOURCE_GRAPH_URL = '/providers/Microsoft.ResourceGraph/resources?api-version=2021-03-01';

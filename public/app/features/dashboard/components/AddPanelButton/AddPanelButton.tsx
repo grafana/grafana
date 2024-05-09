@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Dropdown, Button, Icon } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
-import { DashboardModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { Trans } from 'app/core/internationalization/index';
+// @todo: replace barrel import path
+import { DashboardModel } from 'app/features/dashboard/state/index';
 
 import AddPanelMenu from './AddPanelMenu';
 

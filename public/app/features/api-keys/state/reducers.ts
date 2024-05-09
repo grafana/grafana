@@ -1,6 +1,7 @@
 ﻿import { createSlice } from '@reduxjs/toolkit';
 
-import { ApiKeysState } from 'app/types';
+// @todo: replace barrel import path
+import { ApiKeysState } from 'app/types/index';
 
 export const initialApiKeysState: ApiKeysState = {
   hasFetched: false,

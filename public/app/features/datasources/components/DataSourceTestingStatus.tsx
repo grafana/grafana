@@ -7,7 +7,8 @@ import { TestingStatus, config } from '@grafana/runtime';
 import { AlertVariant, Alert, useTheme2, Link } from '@grafana/ui';
 
 import { contextSrv } from '../../../core/core';
-import { AccessControlAction } from '../../../types';
+// @todo: replace barrel import path
+import { AccessControlAction } from '../../../types/index';
 import { trackCreateDashboardClicked } from '../tracking';
 
 export type Props = {

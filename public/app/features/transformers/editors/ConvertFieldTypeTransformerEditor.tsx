@@ -19,7 +19,8 @@ import {
 import { Button, InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
 import { allFieldTypeIconOptions } from '@grafana/ui/src/components/MatchersUI/FieldTypeMatcherEditor';
-import { findField } from 'app/features/dimensions';
+// @todo: replace barrel import path
+import { findField } from 'app/features/dimensions/index';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import { getTimezoneOptions } from '../utils';

@@ -8,7 +8,8 @@ import { SkeletonComponent, attachSkeleton } from '@grafana/ui/src/unstable';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { contextSrv } from 'app/core/core';
 import { OrgRolePicker } from 'app/features/admin/OrgRolePicker';
-import { AccessControlAction, Role, ServiceAccountDTO } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction, Role, ServiceAccountDTO } from 'app/types/index';
 
 type ServiceAccountListItemProps = {
   serviceAccount: ServiceAccountDTO;

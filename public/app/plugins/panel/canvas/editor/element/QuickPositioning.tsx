@@ -3,7 +3,8 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { IconButton, useStyles2 } from '@grafana/ui/src';
-import { HorizontalConstraint, Placement, QuickPlacement, VerticalConstraint } from 'app/features/canvas';
+// @todo: replace barrel import path
+import { HorizontalConstraint, Placement, QuickPlacement, VerticalConstraint } from 'app/features/canvas/index';
 import { ElementState } from 'app/features/canvas/runtime/element';
 
 import { CanvasEditorOptions } from './elementEditor';

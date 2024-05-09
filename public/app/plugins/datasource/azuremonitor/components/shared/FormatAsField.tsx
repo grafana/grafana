@@ -5,7 +5,8 @@ import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
-import { FormatAsFieldProps, ResultFormat } from '../../types';
+// @todo: replace barrel import path
+import { FormatAsFieldProps, ResultFormat } from '../../types/index';
 
 import { Field } from './Field';
 

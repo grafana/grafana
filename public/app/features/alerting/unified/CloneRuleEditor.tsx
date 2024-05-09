@@ -5,7 +5,8 @@ import { useAsync } from 'react-use';
 import { locationService } from '@grafana/runtime/src';
 import { Alert, LoadingPlaceholder } from '@grafana/ui/src';
 
-import { useDispatch } from '../../../types';
+// @todo: replace barrel import path
+import { useDispatch } from '../../../types/index';
 import { RuleIdentifier, RuleWithLocation } from '../../../types/unified-alerting';
 import { RulerRuleDTO } from '../../../types/unified-alerting-dto';
 

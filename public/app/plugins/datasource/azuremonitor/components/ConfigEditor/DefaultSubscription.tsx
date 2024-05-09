@@ -5,7 +5,8 @@ import { Select, Button, Field } from '@grafana/ui';
 
 import { isCredentialsComplete } from '../../credentials';
 import { selectors } from '../../e2e/selectors';
-import { AzureCredentials, AzureDataSourceJsonData } from '../../types';
+// @todo: replace barrel import path
+import { AzureCredentials, AzureDataSourceJsonData } from '../../types/index';
 
 export interface Props {
   options: AzureDataSourceJsonData;

@@ -7,7 +7,8 @@ import { useToggle } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Field, Input, Text, TextArea, useStyles2, Stack } from '@grafana/ui';
 
-import { DashboardModel } from '../../../../dashboard/state';
+// @todo: replace barrel import path
+import { DashboardModel } from '../../../../dashboard/state/index';
 import { RuleFormValues } from '../../types/rule-form';
 import { Annotation, annotationLabels } from '../../utils/constants';
 

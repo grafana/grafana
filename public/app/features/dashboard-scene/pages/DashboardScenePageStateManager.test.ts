@@ -4,7 +4,8 @@ import { BackendSrv, locationService, setBackendSrv } from '@grafana/runtime';
 import { getUrlSyncManager } from '@grafana/scenes';
 import store from 'app/core/store';
 import { DASHBOARD_FROM_LS_KEY } from 'app/features/dashboard/state/initDashboard';
-import { DashboardRoutes } from 'app/types';
+// @todo: replace barrel import path
+import { DashboardRoutes } from 'app/types/index';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { setupLoadDashboardMock } from '../utils/test-utils';

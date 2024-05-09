@@ -1,9 +1,11 @@
 import React from 'react';
 
-import { Permissions } from 'app/core/components/AccessControl';
+// @todo: replace barrel import path
+import { Permissions } from 'app/core/components/AccessControl/index';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { AccessControlAction, ServiceAccountDTO } from '../../types';
+// @todo: replace barrel import path
+import { AccessControlAction, ServiceAccountDTO } from '../../types/index';
 
 type ServiceAccountPermissionsProps = {
   serviceAccount: ServiceAccountDTO;

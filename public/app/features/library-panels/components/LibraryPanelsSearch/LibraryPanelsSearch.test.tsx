@@ -5,7 +5,8 @@ import React from 'react';
 import { PanelPluginMeta, PluginMetaInfo, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Panel } from '@grafana/schema';
-import { getGrafanaSearcher } from 'app/features/search/service';
+// @todo: replace barrel import path
+import { getGrafanaSearcher } from 'app/features/search/service/index';
 
 import { backendSrv } from '../../../../core/services/backend_srv';
 import * as panelUtils from '../../../panel/state/util';

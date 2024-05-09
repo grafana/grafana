@@ -21,10 +21,18 @@ import { useStyles2 } from '@grafana/ui';
 import { TempoQuery } from '@grafana-plugins/tempo/types';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTimeZone } from 'app/features/profile/state/selectors';
-import { useDispatch, useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { useDispatch, useSelector } from 'app/types/index';
 
 import { changePanelState } from '../state/explorePane';
 
+// @todo: replace barrel import path
+// @todo: replace barrel import path
+import memoizedTraceCriticalPath from './components/CriticalPath/index';
+// @todo: replace barrel import path
+import SpanGraph from './components/TracePageHeader/SpanGraph/index';
+// @todo: replace barrel import path
+import { TraceFlameGraphs } from './components/TraceTimelineViewer/SpanDetail/index';
 import {
   SpanBarOptionsData,
   SpanLinkFunc,
@@ -32,10 +40,7 @@ import {
   TracePageHeader,
   TraceTimelineViewer,
   TTraceTimeline,
-} from './components';
-import memoizedTraceCriticalPath from './components/CriticalPath';
-import SpanGraph from './components/TracePageHeader/SpanGraph';
-import { TraceFlameGraphs } from './components/TraceTimelineViewer/SpanDetail';
+} from './components/index';
 import { createSpanLinkFactory } from './createSpanLink';
 import { useChildrenState } from './useChildrenState';
 import { useDetailState } from './useDetailState';

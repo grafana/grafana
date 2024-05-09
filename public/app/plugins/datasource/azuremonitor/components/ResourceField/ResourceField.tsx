@@ -6,8 +6,10 @@ import { Button, Icon, Modal, useStyles2, IconName } from '@grafana/ui';
 import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
 import { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
-import { AzureQueryEditorFieldProps, AzureMonitorResource } from '../../types';
-import ResourcePicker from '../ResourcePicker';
+// @todo: replace barrel import path
+import { AzureQueryEditorFieldProps, AzureMonitorResource } from '../../types/index';
+// @todo: replace barrel import path
+import ResourcePicker from '../ResourcePicker/index';
 import getStyles from '../ResourcePicker/styles';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
 import { parseMultipleResourceDetails, setResources } from '../ResourcePicker/utils';

@@ -1,7 +1,8 @@
 import { dateTime, DataQuery } from '@grafana/data';
 import store from 'app/core/store';
 
-import { RichHistoryQuery } from '../../types';
+// @todo: replace barrel import path
+import { RichHistoryQuery } from '../../types/index';
 import RichHistoryStorage, { RichHistoryStorageWarning } from '../history/RichHistoryStorage';
 
 import {

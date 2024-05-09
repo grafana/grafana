@@ -3,7 +3,8 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { AdHocVariableForm } from 'app/features/dashboard-scene/settings/variables/components/AdHocVariableForm';
-import { StoreState } from 'app/types';
+// @todo: replace barrel import path
+import { StoreState } from 'app/types/index';
 
 import { initialVariableEditorState } from '../editor/reducer';
 import { getAdhocVariableEditorState } from '../editor/selectors';

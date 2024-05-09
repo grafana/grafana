@@ -4,8 +4,10 @@ import { useAsync } from 'react-use';
 
 import { urlUtil } from '@grafana/data';
 import { Alert, Button, LinkButton } from '@grafana/ui';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state/index';
+// @todo: replace barrel import path
+import { useSelector } from 'app/types/index';
 
 import { logInfo, LogMessages } from '../../Analytics';
 import { panelToRuleFormValues } from '../../utils/rule-form';

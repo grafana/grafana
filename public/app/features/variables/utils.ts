@@ -14,7 +14,8 @@ import { getTemplateSrv, locationService } from '@grafana/runtime';
 import { safeStringifyValue } from 'app/core/utils/explore';
 
 import { getState } from '../../store/store';
-import { StoreState } from '../../types';
+// @todo: replace barrel import path
+import { StoreState } from '../../types/index';
 import { TimeSrv } from '../dashboard/services/TimeSrv';
 
 import { variableAdapters } from './adapters';

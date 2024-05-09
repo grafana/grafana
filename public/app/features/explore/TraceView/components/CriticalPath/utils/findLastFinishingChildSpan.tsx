@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { TraceSpan } from '../../types';
+// @todo: replace barrel import path
+import { TraceSpan } from '../../types/index';
 
 /**
  * @returns - Returns the span that finished last among the remaining child spans.

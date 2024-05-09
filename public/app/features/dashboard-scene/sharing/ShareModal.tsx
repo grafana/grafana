@@ -4,7 +4,8 @@ import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel, SceneObjectRef } from '@grafana/scenes';
 import { Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 import { isPublicDashboardsEnabled } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 
 import { getTrackingSource } from '../../dashboard/components/ShareModal/utils';

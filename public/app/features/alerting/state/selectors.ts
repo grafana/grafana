@@ -1,4 +1,5 @@
-import { AlertRule, AlertRulesState, NotificationChannelState, StoreState } from 'app/types';
+// @todo: replace barrel import path
+import { AlertRule, AlertRulesState, NotificationChannelState, StoreState } from 'app/types/index';
 
 export const getSearchQuery = (state: AlertRulesState) => state.searchQuery;
 

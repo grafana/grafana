@@ -2,10 +2,12 @@ import React from 'react';
 
 import { PageLayoutType } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
-import { Permissions } from 'app/core/components/AccessControl';
+// @todo: replace barrel import path
+import { Permissions } from 'app/core/components/AccessControl/index';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';

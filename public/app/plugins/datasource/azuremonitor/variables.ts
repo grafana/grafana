@@ -12,7 +12,8 @@ import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import VariableEditor from './components/VariableEditor/VariableEditor';
 import DataSource from './datasource';
 import { migrateQuery } from './grafanaTemplateVariableFns';
-import { AzureMonitorQuery, AzureQueryType } from './types';
+// @todo: replace barrel import path
+import { AzureMonitorQuery, AzureQueryType } from './types/index';
 import { GrafanaTemplateVariableQuery } from './types/templateVariables';
 import messageFromError from './utils/messageFromError';
 

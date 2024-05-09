@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 
-import { TraceSpan } from './components';
+// @todo: replace barrel import path
+import { TraceSpan } from './components/index';
 import { defaultFilters, useSearch } from './useSearch';
 
 describe('useSearch', () => {

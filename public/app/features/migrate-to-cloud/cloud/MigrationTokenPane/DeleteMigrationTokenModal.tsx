@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 
 import { Modal, Button, Text } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans, t } from 'app/core/internationalization/index';
 
 interface Props {
   hideModal: () => void;

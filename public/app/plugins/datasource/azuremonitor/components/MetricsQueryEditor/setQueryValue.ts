@@ -1,4 +1,5 @@
-import { AzureMetricDimension, AzureMonitorQuery } from '../../types';
+// @todo: replace barrel import path
+import { AzureMetricDimension, AzureMonitorQuery } from '../../types/index';
 
 export function setCustomNamespace(query: AzureMonitorQuery, selection: string | undefined): AzureMonitorQuery {
   if (query.azureMonitor?.customNamespace === selection) {

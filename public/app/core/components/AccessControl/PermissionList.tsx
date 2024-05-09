@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 
-import { Trans } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans } from 'app/core/internationalization/index';
 
 import { PermissionListItem } from './PermissionListItem';
 import { ResourcePermission } from './types';

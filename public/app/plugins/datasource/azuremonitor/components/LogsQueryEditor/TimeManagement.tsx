@@ -3,7 +3,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { InlineField, RadioButtonGroup, Select } from '@grafana/ui';
 
-import { AzureQueryEditorFieldProps } from '../../types';
+// @todo: replace barrel import path
+import { AzureQueryEditorFieldProps } from '../../types/index';
 
 import { setDashboardTime, setTimeColumn } from './setQueryValue';
 

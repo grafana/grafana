@@ -4,7 +4,8 @@ import { useAsync, useLatest } from 'react-use';
 
 import { CodeEditor, Monaco, useStyles2, monacoTypes } from '@grafana/ui';
 
-import { languageDefinition } from '../pyroscopeql';
+// @todo: replace barrel import path
+import { languageDefinition } from '../pyroscopeql/index';
 
 import { CompletionProvider } from './autocomplete';
 

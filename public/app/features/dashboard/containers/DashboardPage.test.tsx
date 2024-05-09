@@ -12,19 +12,22 @@ import { createTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService, setDataSourceSrv } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
-import { notifyApp } from 'app/core/actions';
+// @todo: replace barrel import path
+import { notifyApp } from 'app/core/actions/index';
 import { AppChrome } from 'app/core/components/AppChrome/AppChrome';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { RouteDescriptor } from 'app/core/navigation/types';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
-import { DashboardInitPhase, DashboardMeta, DashboardRoutes } from 'app/types';
+// @todo: replace barrel import path
+import { DashboardInitPhase, DashboardMeta, DashboardRoutes } from 'app/types/index';
 
 import { configureStore } from '../../../store/configureStore';
 import { Props as LazyLoaderProps } from '../dashgrid/LazyLoader';
 import { DashboardSrv, setDashboardSrv } from '../services/DashboardSrv';
-import { DashboardModel } from '../state';
+// @todo: replace barrel import path
 import { createDashboardModelFixture } from '../state/__fixtures__/dashboardFixtures';
+import { DashboardModel } from '../state/index';
 
 import { Props, UnthemedDashboardPage } from './DashboardPage';
 

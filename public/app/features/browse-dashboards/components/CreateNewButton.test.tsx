@@ -3,7 +3,8 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { FolderDTO } from 'app/types';
+// @todo: replace barrel import path
+import { FolderDTO } from 'app/types/index';
 
 import { mockFolderDTO } from '../fixtures/folder.fixture';
 

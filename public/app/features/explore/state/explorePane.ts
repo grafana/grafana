@@ -16,8 +16,9 @@ import { getQueryKeys } from 'app/core/utils/explore';
 import { CorrelationData } from 'app/features/correlations/useCorrelations';
 import { getCorrelationsBySourceUIDs } from 'app/features/correlations/utils';
 import { getTimeZone } from 'app/features/profile/state/selectors';
-import { createAsyncThunk, ThunkResult } from 'app/types';
+// @todo: replace barrel import path
 import { ExploreItemState } from 'app/types/explore';
+import { createAsyncThunk, ThunkResult } from 'app/types/index';
 
 import { datasourceReducer } from './datasource';
 import { queryReducer, runQueries } from './query';

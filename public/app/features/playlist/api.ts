@@ -2,7 +2,8 @@ import { lastValueFrom } from 'rxjs';
 
 import { DataQueryRequest, DataFrameView } from '@grafana/data';
 import { getBackendSrv, config } from '@grafana/runtime';
-import { notifyApp } from 'app/core/actions';
+// @todo: replace barrel import path
+import { notifyApp } from 'app/core/actions/index';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { getGrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
@@ -10,7 +11,8 @@ import { dispatch } from 'app/store/store';
 
 import { ScopedResourceServer } from '../apiserver/server';
 import { Resource, ResourceForCreate, ResourceServer } from '../apiserver/types';
-import { DashboardQueryResult, getGrafanaSearcher, SearchQuery } from '../search/service';
+// @todo: replace barrel import path
+import { DashboardQueryResult, getGrafanaSearcher, SearchQuery } from '../search/service/index';
 
 import { Playlist, PlaylistItem, PlaylistAPI } from './types';
 

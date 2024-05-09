@@ -14,7 +14,9 @@
 
 import React from 'react';
 
-import { TNil } from '../../../types';
+// @todo: replace barrel import path
+import { TNil } from '../../../types/index';
+// @todo: replace barrel import path
 import DraggableManager, { DraggableBounds, DraggingUpdate } from '../index';
 
 import './RegionDemo.css';

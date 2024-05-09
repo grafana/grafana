@@ -1,4 +1,5 @@
-import { ContactPointsState } from 'app/types';
+// @todo: replace barrel import path
+import { ContactPointsState } from 'app/types/index';
 
 import { CONTACT_POINTS_STATE_INTERVAL_MS } from '../utils/constants';
 

@@ -5,7 +5,8 @@ import { ConfigSection } from '@grafana/experimental';
 import { Select, Field } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
-import { AzureAuthType, AzureCredentials } from '../../types';
+// @todo: replace barrel import path
+import { AzureAuthType, AzureCredentials } from '../../types/index';
 
 import { AppRegistrationCredentials } from './AppRegistrationCredentials';
 import CurrentUserFallbackCredentials from './CurrentUserFallbackCredentials';

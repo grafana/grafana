@@ -10,7 +10,8 @@ import config from 'app/core/config';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction, StoreState } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction, StoreState } from 'app/types/index';
 
 import TeamGroupSync, { TeamSyncUpgradeContent } from './TeamGroupSync';
 import TeamPermissions from './TeamPermissions';

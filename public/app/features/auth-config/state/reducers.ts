@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { Settings } from 'app/types';
+// @todo: replace barrel import path
+import { Settings } from 'app/types/index';
 
 import { SettingsError, AuthProviderStatus, AuthConfigState, SSOProvider } from '../types';
 

@@ -1,5 +1,6 @@
 import store from 'app/core/store';
-import { ExploreGraphStyle, EXPLORE_GRAPH_STYLES } from 'app/types';
+// @todo: replace barrel import path
+import { ExploreGraphStyle, EXPLORE_GRAPH_STYLES } from 'app/types/index';
 
 const GRAPH_STYLE_KEY = 'grafana.explore.style.graph';
 export const storeGraphStyle = (graphStyle: string): void => {

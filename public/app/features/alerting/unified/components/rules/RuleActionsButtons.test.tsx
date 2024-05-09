@@ -16,7 +16,8 @@ import {
   mockPromAlertingRule,
 } from 'app/features/alerting/unified/mocks';
 import { configureStore } from 'app/store/configureStore';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 setupMswServer();

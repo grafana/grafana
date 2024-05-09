@@ -28,7 +28,8 @@ import {
   Receiver,
   RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
-import { ReceiversState } from 'app/types';
+// @todo: replace barrel import path
+import { ReceiversState } from 'app/types/index';
 
 import { RoutesMatchingFilters } from '../../NotificationPolicies';
 import { AlertmanagerAction, useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/useAbilities';

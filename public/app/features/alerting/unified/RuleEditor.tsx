@@ -4,7 +4,8 @@ import { useAsync } from 'react-use';
 import { NavModelItem } from '@grafana/data';
 import { withErrorBoundary } from '@grafana/ui';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { useDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { useDispatch } from 'app/types/index';
 import { RuleIdentifier } from 'app/types/unified-alerting';
 
 import { AlertWarning } from './AlertWarning';

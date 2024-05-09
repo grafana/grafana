@@ -22,11 +22,13 @@ import { TimeZone } from '@grafana/schema';
 import { Button, clearButtonStyles, stylesFactory, withTheme2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
-import { SpanLinkFunc } from '../types';
+// @todo: replace barrel import path
+import { SpanLinkFunc } from '../types/index';
 import { TraceLog, TraceSpan, TraceKeyValuePair, TraceLink, TraceSpanReference } from '../types/trace';
 
-import SpanDetail, { TraceFlameGraphs } from './SpanDetail';
+// @todo: replace barrel import path
 import DetailState from './SpanDetail/DetailState';
+import SpanDetail, { TraceFlameGraphs } from './SpanDetail/index';
 import SpanTreeOffset from './SpanTreeOffset';
 import TimelineRow from './TimelineRow';
 

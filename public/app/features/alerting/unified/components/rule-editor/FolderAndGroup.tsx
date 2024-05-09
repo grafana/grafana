@@ -9,7 +9,8 @@ import { AsyncSelect, Box, Button, Field, Input, Label, Modal, Stack, Text, useS
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
 import { createFolder } from 'app/features/manage-dashboards/state/actions';
-import { AccessControlAction, useDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction, useDispatch } from 'app/types/index';
 import { CombinedRuleGroup } from 'app/types/unified-alerting';
 import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 

@@ -4,7 +4,8 @@ import { config } from '@grafana/runtime';
 import { filterByValueTransformRegistryItem } from './FilterByValueTransformer/FilterByValueTransformerEditor';
 import { heatmapTransformRegistryItem } from './calculateHeatmap/HeatmapTransformerEditor';
 import { configFromQueryTransformRegistryItem } from './configFromQuery/ConfigFromQueryTransformerEditor';
-import { calculateFieldTransformRegistryItem } from './editors/CalculateFieldTransformerEditor';
+// @todo: replace barrel import path
+import { calculateFieldTransformRegistryItem } from './editors/CalculateFieldTransformerEditor/index';
 import { concatenateTransformRegistryItem } from './editors/ConcatenateTransformerEditor';
 import { convertFieldTypeTransformRegistryItem } from './editors/ConvertFieldTypeTransformerEditor';
 import { filterFieldsByNameTransformRegistryItem } from './editors/FilterByNameTransformerEditor';

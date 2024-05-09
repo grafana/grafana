@@ -23,12 +23,15 @@ import { stylesFactory, withTheme2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
 import { merge as mergeShortcuts } from '../keyboard-shortcuts';
-import { CriticalPathSection, SpanLinkFunc, TNil } from '../types';
+// @todo: replace barrel import path
 import TTraceTimeline from '../types/TTraceTimeline';
+import { CriticalPathSection, SpanLinkFunc, TNil } from '../types/index';
 import { TraceSpan, Trace, TraceLog, TraceKeyValuePair, TraceLink, TraceSpanReference } from '../types/trace';
 
-import { TraceFlameGraphs } from './SpanDetail';
-import TimelineHeaderRow from './TimelineHeaderRow';
+// @todo: replace barrel import path
+import { TraceFlameGraphs } from './SpanDetail/index';
+// @todo: replace barrel import path
+import TimelineHeaderRow from './TimelineHeaderRow/index';
 import VirtualizedTraceView from './VirtualizedTraceView';
 import { TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from './types';
 

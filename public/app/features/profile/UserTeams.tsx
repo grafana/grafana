@@ -1,7 +1,8 @@
 import React, { PureComponent } from 'react';
 
 import { LoadingPlaceholder } from '@grafana/ui';
-import { Team } from 'app/types';
+// @todo: replace barrel import path
+import { Team } from 'app/types/index';
 
 export interface Props {
   teams: Team[];

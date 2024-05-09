@@ -1,4 +1,5 @@
-import { ExploreQueryParams } from 'app/types';
+// @todo: replace barrel import path
+import { ExploreQueryParams } from 'app/types/index';
 
 import { v0Migrator } from './migrators/v0';
 import { ExploreURLV1, v1Migrator } from './migrators/v1';

@@ -7,9 +7,11 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { LinkButton, RadioButtonGroup, useStyles2, FilterInput, EmptyState } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 
-import { AccessControlAction, StoreState, UserFilter } from '../../types';
+// @todo: replace barrel import path
+import { AccessControlAction, StoreState, UserFilter } from '../../types/index';
 
 import { UsersTable } from './Users/UsersTable';
 import { changeFilter, changePage, changeQuery, changeSort, fetchUsers } from './state/actions';

@@ -5,7 +5,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Icon, useStyles2 } from '@grafana/ui';
 import { LoadingIndicator } from '@grafana/ui/src/components/PanelChrome/LoadingIndicator';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 
 import { ALL_VARIABLE_TEXT } from '../../constants';
 

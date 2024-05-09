@@ -5,13 +5,15 @@ import tinycolor from 'tinycolor2';
 import { GrafanaTheme2 } from '@grafana/data';
 import { LibraryPanel } from '@grafana/schema';
 import { IconButton, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans } from 'app/core/internationalization/index';
 
 import {
   LibraryPanelsSearch,
   LibraryPanelsSearchVariant,
 } from '../../../library-panels/components/LibraryPanelsSearch/LibraryPanelsSearch';
-import { DashboardModel, PanelModel } from '../../state';
+// @todo: replace barrel import path
+import { DashboardModel, PanelModel } from '../../state/index';
 
 interface Props {
   panel: PanelModel;

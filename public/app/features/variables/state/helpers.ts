@@ -10,7 +10,8 @@ import {
 import { VariableRefresh } from '@grafana/schema';
 import { dashboardReducer } from 'app/features/dashboard/state/reducers';
 
-import { DashboardState, StoreState } from '../../../types';
+// @todo: replace barrel import path
+import { DashboardState, StoreState } from '../../../types/index';
 import { VariableAdapter } from '../adapters';
 import { NEW_VARIABLE_ID } from '../constants';
 import { initialVariableModelState } from '../types';

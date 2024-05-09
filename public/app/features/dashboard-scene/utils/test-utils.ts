@@ -12,7 +12,8 @@ import {
 } from '@grafana/scenes';
 import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
-import { DashboardDTO } from 'app/types';
+// @todo: replace barrel import path
+import { DashboardDTO } from 'app/types/index';
 
 import { DashboardGridItem, RepeatDirection } from '../scene/DashboardGridItem';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';

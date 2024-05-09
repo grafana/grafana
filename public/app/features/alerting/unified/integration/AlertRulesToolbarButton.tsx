@@ -2,7 +2,8 @@ import React, { useContext } from 'react';
 
 import { ModalsContext, ToolbarButton } from '@grafana/ui';
 
-import { t } from '../../../../core/internationalization';
+// @todo: replace barrel import path
+import { t } from '../../../../core/internationalization/index';
 import { alertRuleApi } from '../api/alertRuleApi';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 

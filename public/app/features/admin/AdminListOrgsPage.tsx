@@ -5,7 +5,8 @@ import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { LinkButton } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction, Organization } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction, Organization } from 'app/types/index';
 
 import { AdminOrgsTable } from './AdminOrgsTable';
 

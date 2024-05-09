@@ -23,9 +23,11 @@ import { DataSourceModal } from 'app/features/datasources/components/picker/Data
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { AngularDeprecationPluginNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationPluginNotice';
-import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
+// @todo: replace barrel import path
+import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard/index';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
-import { QueryGroupOptions } from 'app/types';
+// @todo: replace barrel import path
+import { QueryGroupOptions } from 'app/types/index';
 
 import { isAngularDatasourcePluginAndNotHidden } from '../../plugins/angularDeprecation/utils';
 import { PanelQueryRunner } from '../state/PanelQueryRunner';

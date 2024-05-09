@@ -14,8 +14,10 @@ import {
 import { getDataSourceSrv, usePluginComponentExtensions } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
-import { DataSourceSettingsState, useDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { DataSourceSettingsState, useDispatch } from 'app/types/index';
 
+// @todo: replace barrel import path
 import {
   dataSourceLoaded,
   setDataSourceName,
@@ -29,7 +31,7 @@ import {
   useInitDataSourceSettings,
   useTestDataSource,
   useUpdateDatasource,
-} from '../state';
+} from '../state/index';
 import { trackDsConfigClicked, trackDsConfigUpdated } from '../tracking';
 import { DataSourceRights } from '../types';
 

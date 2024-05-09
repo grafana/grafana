@@ -3,9 +3,11 @@ import React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { ToolbarButton, ButtonGroup } from '@grafana/ui';
-import { useDispatch, useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { useDispatch, useSelector } from 'app/types/index';
 
-import { PanelModel } from '../../state';
+// @todo: replace barrel import path
+import { PanelModel } from '../../state/index';
 import { getPanelPluginWithFallback } from '../../state/selectors';
 
 import { updatePanelEditorUIState } from './state/actions';

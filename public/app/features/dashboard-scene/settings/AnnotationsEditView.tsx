@@ -13,7 +13,8 @@ import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { EditListViewSceneUrlSync } from './EditListViewSceneUrlSync';
-import { AnnotationSettingsEdit, AnnotationSettingsList, newAnnotationName } from './annotations';
+// @todo: replace barrel import path
+import { AnnotationSettingsEdit, AnnotationSettingsList, newAnnotationName } from './annotations/index';
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
 
 export enum MoveDirection {

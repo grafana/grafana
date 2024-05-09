@@ -35,9 +35,11 @@ import {
 } from 'app/features/alerting/unified/utils/redux';
 import { flattenCombinedRules, getFirstActiveAt } from 'app/features/alerting/unified/utils/rules';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { DashboardModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { DashboardModel } from 'app/features/dashboard/state/index';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { ThunkDispatch, useDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { ThunkDispatch, useDispatch } from 'app/types/index';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { AlertingAction, useAlertingAbility } from '../../../features/alerting/unified/hooks/useAbilities';

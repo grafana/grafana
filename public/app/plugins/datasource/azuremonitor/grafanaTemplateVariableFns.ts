@@ -1,6 +1,7 @@
 import { isGUIDish } from './components/ResourcePicker/utils';
 import DataSource from './datasource';
-import { AzureMonitorQuery, AzureQueryType } from './types';
+// @todo: replace barrel import path
+import { AzureMonitorQuery, AzureQueryType } from './types/index';
 import {
   AppInsightsGroupByQuery,
   AppInsightsMetricNameQuery,

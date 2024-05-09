@@ -2,7 +2,8 @@ import { Action } from 'redux';
 
 import { WithAccessControlMetadata } from '@grafana/data';
 
-import { QueryResponse } from './service';
+// @todo: replace barrel import path
+import { QueryResponse } from './service/index';
 
 export enum DashboardSearchItemType {
   DashDB = 'dash-db',

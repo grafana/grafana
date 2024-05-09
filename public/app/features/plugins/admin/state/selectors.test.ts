@@ -1,7 +1,8 @@
 import { PluginType } from '@grafana/data';
 import { configureStore } from 'app/store/configureStore';
 
-import { getCatalogPluginMock, getPluginsStateMock } from '../__mocks__';
+// @todo: replace barrel import path
+import { getCatalogPluginMock, getPluginsStateMock } from '../__mocks__/index';
 
 import { selectPlugins } from './selectors';
 

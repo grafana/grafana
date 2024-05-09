@@ -10,7 +10,8 @@ import { changeBucketAggregationSetting } from '../state/actions';
 import { bucketAggregationConfig } from '../utils';
 
 import { DateHistogramSettingsEditor } from './DateHistogramSettingsEditor';
-import { FiltersSettingsEditor } from './FiltersSettingsEditor';
+// @todo: replace barrel import path
+import { FiltersSettingsEditor } from './FiltersSettingsEditor/index';
 import { TermsSettingsEditor } from './TermsSettingsEditor';
 import { useDescription } from './useDescription';
 

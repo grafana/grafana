@@ -20,8 +20,10 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { withTheme2, stylesFactory, Button } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
+// @todo: replace barrel import path
 import { TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate, TNil } from '../../index';
-import DraggableManager, { DraggableBounds, DraggingUpdate, EUpdateTypes } from '../../utils/DraggableManager';
+// @todo: replace barrel import path
+import DraggableManager, { DraggableBounds, DraggingUpdate, EUpdateTypes } from '../../utils/DraggableManager/index';
 
 import GraphTicks from './GraphTicks';
 import Scrubber from './Scrubber';

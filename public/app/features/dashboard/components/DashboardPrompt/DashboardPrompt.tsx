@@ -10,8 +10,9 @@ import { appEvents } from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
 import { SaveLibraryPanelModal } from 'app/features/library-panels/components/SaveLibraryPanelModal/SaveLibraryPanelModal';
 import { PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
-import { useDispatch } from 'app/types';
+// @todo: replace barrel import path
 import { DashboardSavedEvent } from 'app/types/events';
+import { useDispatch } from 'app/types/index';
 
 import { DashboardModel } from '../../state/DashboardModel';
 import { discardPanelChanges, exitPanelEditor } from '../PanelEditor/state/actions';

@@ -3,7 +3,8 @@ import { CustomVariableModel } from '@grafana/data';
 import { Context, createContext } from '../__mocks__/datasource';
 import createMockQuery from '../__mocks__/query';
 import { singleVariable } from '../__mocks__/variables';
-import { AzureLogsQuery, AzureMonitorQuery, AzureQueryType, AzureTracesQuery } from '../types';
+// @todo: replace barrel import path
+import { AzureLogsQuery, AzureMonitorQuery, AzureQueryType, AzureTracesQuery } from '../types/index';
 
 import FakeSchemaData from './__mocks__/schema';
 import AzureLogAnalyticsDatasource from './azure_log_analytics_datasource';

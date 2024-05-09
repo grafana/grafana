@@ -5,7 +5,8 @@ import { dateTimeFormat } from '@grafana/data';
 import { LinkButton, Spinner, IconButton } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction, StoreState } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction, StoreState } from 'app/types/index';
 
 import { loadBundles, removeBundle, checkBundles } from './state/actions';
 

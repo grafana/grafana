@@ -1,5 +1,6 @@
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
-import { UsersState } from '../../../types';
+// @todo: replace barrel import path
+import { UsersState } from '../../../types/index';
 import { getMockUsers, getFetchUsersMock } from '../__mocks__/userMocks';
 
 import { initialState, searchQueryChanged, usersLoaded, usersReducer } from './reducers';

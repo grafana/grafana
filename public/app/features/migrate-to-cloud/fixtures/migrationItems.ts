@@ -1,6 +1,7 @@
 import { Chance } from 'chance';
 
-import { MigrateDataResponseItemDto } from '../api';
+// @todo: replace barrel import path
+import { MigrateDataResponseItemDto } from '../api/index';
 
 export function wellFormedDatasourceMigrationItem(
   seed = 1,

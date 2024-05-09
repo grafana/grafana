@@ -11,7 +11,8 @@ import {
   SceneObjectState,
   VizPanel,
 } from '@grafana/scenes';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 import { InspectTab } from 'app/features/inspector/types';
 import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 

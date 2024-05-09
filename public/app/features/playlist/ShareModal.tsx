@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 
 import { SelectableValue, UrlQueryMap, urlUtil } from '@grafana/data';
 import { Checkbox, ClipboardButton, Field, FieldSet, Input, Modal, RadioButtonGroup } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t, Trans } from 'app/core/internationalization/index';
 import { buildBaseUrl } from 'app/features/dashboard/components/ShareModal/utils';
 
 import { PlaylistMode } from './types';

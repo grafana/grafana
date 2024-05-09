@@ -1,7 +1,9 @@
 import { SelectableValue, WithAccessControlMetadata } from '@grafana/data';
-import { Role } from 'app/types';
+// @todo: replace barrel import path
+import { Role } from 'app/types/index';
 
-import { OrgRole } from '.';
+// @todo: replace barrel import path
+import { OrgRole } from './index';
 
 export interface OrgUser extends WithAccessControlMetadata {
   avatarUrl: string;

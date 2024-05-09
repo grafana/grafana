@@ -6,7 +6,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 
 import { DismissableButton } from './DismissableButton';
 

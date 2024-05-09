@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 
-import { ViewRangeTimeUpdate, ViewRange } from './components';
+// @todo: replace barrel import path
+import { ViewRangeTimeUpdate, ViewRange } from './components/index';
 
 /**
  * Controls state of the zoom function that can be used through minimap in header or on the timeline. ViewRange contains

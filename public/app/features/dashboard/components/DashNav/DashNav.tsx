@@ -15,25 +15,29 @@ import {
   ConfirmModal,
   Badge,
 } from '@grafana/ui';
-import { updateNavIndex } from 'app/core/actions';
+// @todo: replace barrel import path
+import { updateNavIndex } from 'app/core/actions/index';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
 import config from 'app/core/config';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { appEvents } from 'app/core/core';
 import { useBusEvent } from 'app/core/hooks/useBusEvent';
-import { t, Trans } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t, Trans } from 'app/core/internationalization/index';
 import { ID_PREFIX, setStarred } from 'app/core/reducers/navBarTree';
 import { removeNavIndex } from 'app/core/reducers/navModel';
 import AddPanelButton from 'app/features/dashboard/components/AddPanelButton/AddPanelButton';
 import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { DashboardModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { DashboardModel } from 'app/features/dashboard/state/index';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
-import { KioskMode, StoreState } from 'app/types';
+// @todo: replace barrel import path
 import { DashboardMetaChangedEvent, ShowModalReactEvent } from 'app/types/events';
+import { KioskMode, StoreState } from 'app/types/index';
 
 import {
   DynamicDashNavButtonModel,

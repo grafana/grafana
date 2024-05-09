@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
 
-import { AzureMonitorErrorish } from '../types';
+// @todo: replace barrel import path
+import { AzureMonitorErrorish } from '../types/index';
 
 import { messageFromElement } from './messageFromError';
 

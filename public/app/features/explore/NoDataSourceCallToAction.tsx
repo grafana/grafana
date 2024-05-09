@@ -4,7 +4,8 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { LinkButton, CallToActionCard, Icon, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 
 function getCardStyles(theme: GrafanaTheme2) {
   return css({

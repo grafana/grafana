@@ -3,12 +3,14 @@ import { thunkTester } from 'test/core/thunk/thunkTester';
 import { dateTime, ExploreUrlState } from '@grafana/data';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 import { locationService } from '@grafana/runtime';
-import { PanelModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { PanelModel } from 'app/features/dashboard/state/index';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { MockDataSourceApi } from '../../../../test/mocks/datasource_srv';
 import { configureStore } from '../../../store/configureStore';
-import { ExploreItemState, ExploreState, StoreState, ThunkDispatch } from '../../../types';
+// @todo: replace barrel import path
+import { ExploreItemState, ExploreState, StoreState, ThunkDispatch } from '../../../types/index';
 
 import { exploreReducer, navigateToExplore, splitClose, splitOpen } from './main';
 

@@ -2,9 +2,11 @@ import React from 'react';
 
 import { LinkButton, ButtonVariant } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { Trans } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans } from 'app/core/internationalization/index';
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 
 interface AddNewDataSourceButtonProps {
   onClick?: () => void;

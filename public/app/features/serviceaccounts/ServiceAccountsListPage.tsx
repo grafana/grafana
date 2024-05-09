@@ -7,8 +7,10 @@ import { ConfirmModal, FilterInput, LinkButton, RadioButtonGroup, InlineField, E
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
-import { Trans, t } from 'app/core/internationalization';
-import { StoreState, ServiceAccountDTO, AccessControlAction, ServiceAccountStateFilter } from 'app/types';
+// @todo: replace barrel import path
+import { Trans, t } from 'app/core/internationalization/index';
+// @todo: replace barrel import path
+import { StoreState, ServiceAccountDTO, AccessControlAction, ServiceAccountStateFilter } from 'app/types/index';
 
 import { ServiceAccountTable } from './ServiceAccountTable';
 import { CreateTokenModal, ServiceAccountToken } from './components/CreateTokenModal';

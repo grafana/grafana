@@ -4,7 +4,8 @@ import React, { PureComponent, ReactNode } from 'react';
 // Types
 import { PanelProps, PanelPlugin, PluginType, PanelPluginMeta } from '@grafana/data';
 import { Alert } from '@grafana/ui';
-import { AppNotificationSeverity } from 'app/types';
+// @todo: replace barrel import path
+import { AppNotificationSeverity } from 'app/types/index';
 
 interface Props {
   title: string;

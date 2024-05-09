@@ -3,7 +3,8 @@ import { cloneDeep } from 'lodash';
 import { TypedVariableModel, VariableType } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
-import { ThunkResult } from '../../../types';
+// @todo: replace barrel import path
+import { ThunkResult } from '../../../types/index';
 import { variableAdapters } from '../adapters';
 import { initInspect } from '../inspect/reducer';
 import { createUsagesNetwork, transformUsagesToNetwork } from '../inspect/utils';

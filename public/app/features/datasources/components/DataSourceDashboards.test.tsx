@@ -4,7 +4,8 @@ import { Provider } from 'react-redux';
 
 import { configureStore } from 'app/store/configureStore';
 
-import { getMockDashboard } from '../__mocks__';
+// @todo: replace barrel import path
+import { getMockDashboard } from '../__mocks__/index';
 
 import { DataSourceDashboardsView, ViewProps } from './DataSourceDashboards';
 

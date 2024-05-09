@@ -5,8 +5,10 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
 import { Button, useStyles2, Text, Box, Stack } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
-import { DashboardModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { Trans } from 'app/core/internationalization/index';
+// @todo: replace barrel import path
+import { DashboardModel } from 'app/features/dashboard/state/index';
 import {
   onAddLibraryPanel as onAddLibraryPanelImpl,
   onCreateNewPanel,
@@ -14,7 +16,8 @@ import {
 } from 'app/features/dashboard/utils/dashboard';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
-import { useDispatch, useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { useDispatch, useSelector } from 'app/types/index';
 
 import { setInitialDatasource } from '../state/reducers';
 

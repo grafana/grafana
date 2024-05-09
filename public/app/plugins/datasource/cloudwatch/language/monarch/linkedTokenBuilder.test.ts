@@ -1,6 +1,7 @@
 import { monacoTypes } from '@grafana/ui';
 
-import { multiLineFullQuery, singleLineFullQuery } from '../../__mocks__/cloudwatch-sql-test-data';
+// @todo: replace barrel import path
+import { multiLineFullQuery, singleLineFullQuery } from '../../__mocks__/cloudwatch-sql-test-data/index';
 import MonacoMock from '../../__mocks__/monarch/Monaco';
 import TextModel from '../../__mocks__/monarch/TextModel';
 import { SQLTokenTypes } from '../cloudwatch-sql/completion/types';

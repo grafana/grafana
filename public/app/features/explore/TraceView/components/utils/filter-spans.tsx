@@ -16,7 +16,8 @@ import { SpanStatusCode } from '@opentelemetry/api';
 
 import { SearchProps, Tag } from '../../useSearch';
 import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE, ID } from '../constants/span';
-import { TNil, TraceKeyValuePair, TraceSpan } from '../types';
+// @todo: replace barrel import path
+import { TNil, TraceKeyValuePair, TraceSpan } from '../types/index';
 
 // filter spans where all filters added need to be true for each individual span that is returned
 // i.e. the more filters added -> the more specific that the returned results are

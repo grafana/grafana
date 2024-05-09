@@ -7,8 +7,10 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { CustomScrollbar, Icon, IconButton, useStyles2, Stack } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { t } from 'app/core/internationalization';
-import { useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
+// @todo: replace barrel import path
+import { useSelector } from 'app/types/index';
 
 import { MegaMenuItem } from './MegaMenuItem';
 import { enrichWithInteractionTracking, getActiveItem } from './utils';

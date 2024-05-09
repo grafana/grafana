@@ -1,7 +1,8 @@
 import { SafeDynamicImport } from '../../core/components/DynamicImports/SafeDynamicImport';
 import { config } from '../../core/config';
 import { RouteDescriptor } from '../../core/navigation/types';
-import { DashboardRoutes } from '../../types';
+// @todo: replace barrel import path
+import { DashboardRoutes } from '../../types/index';
 
 export const getPublicDashboardRoutes = (): RouteDescriptor[] => {
   if (!config.publicDashboardsEnabled || !config.featureToggles.publicDashboards) {

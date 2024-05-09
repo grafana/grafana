@@ -5,7 +5,8 @@ import { GrafanaTheme2, urlUtil } from '@grafana/data';
 import { EmbeddedDashboardProps } from '@grafana/runtime';
 import { SceneObjectStateChangedEvent, sceneUtils } from '@grafana/scenes';
 import { Spinner, Alert, useStyles2 } from '@grafana/ui';
-import { DashboardRoutes } from 'app/types';
+// @todo: replace barrel import path
+import { DashboardRoutes } from 'app/types/index';
 
 import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
 import { DashboardScene } from '../scene/DashboardScene';

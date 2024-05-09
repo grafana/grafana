@@ -12,7 +12,8 @@ import { useCreatableSelectPersistedBehaviour } from '../../../hooks/useCreatabl
 import { changeBucketAggregationSetting } from '../state/actions';
 import { bucketAggregationConfig } from '../utils';
 
-import { inlineFieldProps } from '.';
+// @todo: replace barrel import path
+import { inlineFieldProps } from './index';
 
 const defaultIntervalOptions: Array<SelectableValue<string>> = [
   { label: 'auto', value: 'auto' },

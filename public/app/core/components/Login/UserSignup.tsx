@@ -3,7 +3,8 @@ import React from 'react';
 
 import { LinkButton, Stack } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
-import { Trans } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans } from 'app/core/internationalization/index';
 
 export const UserSignup = () => {
   const href = getConfig().verifyEmailEnabled ? `${getConfig().appSubUrl}/verify` : `${getConfig().appSubUrl}/signup`;

@@ -3,7 +3,8 @@ import React from 'react';
 import { DataFrame, DataTransformerID, getFrameDisplayName, SelectableValue } from '@grafana/data';
 import { Field, HorizontalGroup, Select, Switch, VerticalGroup, useStyles2 } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 import { DetailText } from 'app/features/inspector/DetailText';
 import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 

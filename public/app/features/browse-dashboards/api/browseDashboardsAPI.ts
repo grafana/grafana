@@ -4,11 +4,13 @@ import { lastValueFrom } from 'rxjs';
 import { isTruthy, locationUtil } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
-import { notifyApp } from 'app/core/actions';
+// @todo: replace barrel import path
+import { notifyApp } from 'app/core/actions/index';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
+// @todo: replace barrel import path
 import {
   DashboardDTO,
   DescendantCount,
@@ -18,9 +20,10 @@ import {
   ImportDashboardResponseDTO,
   PermissionLevelString,
   SaveDashboardResponseDTO,
-} from 'app/types';
+} from 'app/types/index';
 
-import { refetchChildren, refreshParents } from '../state';
+// @todo: replace barrel import path
+import { refetchChildren, refreshParents } from '../state/index';
 import { DashboardTreeSelection } from '../types';
 
 import { PAGE_SIZE } from './services';

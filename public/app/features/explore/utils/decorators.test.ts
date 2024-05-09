@@ -13,7 +13,8 @@ import {
 import { DataSourceJsonData, DataQuery } from '@grafana/schema';
 import TableModel from 'app/core/TableModel';
 import { CorrelationData } from 'app/features/correlations/useCorrelations';
-import { ExplorePanelData } from 'app/types';
+// @todo: replace barrel import path
+import { ExplorePanelData } from 'app/types/index';
 
 import {
   decorateWithCorrelations,

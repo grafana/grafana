@@ -17,10 +17,12 @@ import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { getPluginLinkExtensions, setPluginImportUtils } from '@grafana/runtime';
 import { MultiValueVariable, SceneGridLayout, SceneGridRow, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { Dashboard, LoadingState, Panel, RowPanel, VariableRefresh } from '@grafana/schema';
-import { PanelModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { PanelModel } from 'app/features/dashboard/state/index';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 import { reduceTransformRegistryItem } from 'app/features/transformers/editors/ReduceTransformerEditor';
-import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
+// @todo: replace barrel import path
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/index';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';

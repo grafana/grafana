@@ -6,6 +6,7 @@ import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/run
 
 import { getAuthType, getAzureCloud, getAzurePortalUrl } from '../credentials';
 import TimegrainConverter from '../time_grain_converter';
+// @todo: replace barrel import path
 import {
   AzureDataSourceJsonData,
   AzureMonitorMetricsMetadataResponse,
@@ -24,7 +25,7 @@ import {
   Location,
   ResourceGroup,
   Metric,
-} from '../types';
+} from '../types/index';
 import { routeNames } from '../utils/common';
 import migrateQuery from '../utils/migrateQuery';
 

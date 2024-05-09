@@ -2,7 +2,8 @@ import { lastValueFrom } from 'rxjs';
 
 import { DataFrame, DataLinkConfigOrigin } from '@grafana/data';
 import { createMonitoringLogger, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
-import { ExploreItemState } from 'app/types';
+// @todo: replace barrel import path
+import { ExploreItemState } from 'app/types/index';
 
 import { formatValueName } from '../explore/PrometheusListView/ItemLabels';
 

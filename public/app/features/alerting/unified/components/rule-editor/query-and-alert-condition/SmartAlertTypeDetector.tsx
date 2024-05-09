@@ -6,7 +6,8 @@ import { DataSourceJsonData } from '@grafana/schema';
 import { RadioButtonGroup, Text, Stack } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';

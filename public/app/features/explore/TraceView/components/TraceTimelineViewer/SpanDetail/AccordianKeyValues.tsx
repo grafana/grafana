@@ -20,12 +20,14 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
-import { TraceKeyValuePair, TraceLink, TNil } from '../../types';
+// @todo: replace barrel import path
+import { TraceKeyValuePair, TraceLink, TNil } from '../../types/index';
 
 import * as markers from './AccordianKeyValues.markers';
 import KeyValuesTable from './KeyValuesTable';
 
-import { alignIcon } from '.';
+// @todo: replace barrel import path
+import { alignIcon } from './index';
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {

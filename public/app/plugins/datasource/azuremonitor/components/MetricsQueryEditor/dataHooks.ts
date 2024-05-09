@@ -4,7 +4,8 @@ import { rangeUtil } from '@grafana/data';
 
 import Datasource from '../../datasource';
 import TimegrainConverter from '../../time_grain_converter';
-import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery, AzureMonitorResource } from '../../types';
+// @todo: replace barrel import path
+import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery, AzureMonitorResource } from '../../types/index';
 import { toOption } from '../../utils/common';
 import { useAsyncState } from '../../utils/useAsyncState';
 

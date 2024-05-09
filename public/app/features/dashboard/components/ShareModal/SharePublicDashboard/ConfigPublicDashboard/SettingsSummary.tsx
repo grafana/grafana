@@ -3,7 +3,8 @@ import React from 'react';
 
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { Spinner, TimeRangeLabel, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans, t } from 'app/core/internationalization/index';
 
 export interface Props {
   timeRange: TimeRange;

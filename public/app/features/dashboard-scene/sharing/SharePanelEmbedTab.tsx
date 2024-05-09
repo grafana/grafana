@@ -2,7 +2,8 @@ import React from 'react';
 
 import { TimeRange } from '@grafana/data';
 import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectRef, VizPanel } from '@grafana/scenes';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 import { ShareEmbed } from 'app/features/dashboard/components/ShareModal/ShareEmbed';
 import { buildParams, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 

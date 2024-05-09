@@ -3,7 +3,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import { CodeEditor, Monaco, MonacoEditor } from '@grafana/ui';
 
-import { AzureQueryEditorFieldProps } from '../../types';
+// @todo: replace barrel import path
+import { AzureQueryEditorFieldProps } from '../../types/index';
 
 import { setKustoQuery } from './setQueryValue';
 

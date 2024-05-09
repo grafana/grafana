@@ -9,7 +9,8 @@ import * as useQueryParams from 'app/core/hooks/useQueryParams';
 
 import { TestProvider } from '../../../test/helpers/TestProvider';
 import { backendSrv } from '../../core/services/backend_srv';
-import { TeamPermissionLevel } from '../../types';
+// @todo: replace barrel import path
+import { TeamPermissionLevel } from '../../types/index';
 import { getMockTeam } from '../teams/__mocks__/teamMocks';
 
 import { Props, UserProfileEditPage } from './UserProfileEditPage';

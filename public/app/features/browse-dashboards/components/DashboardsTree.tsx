@@ -7,7 +7,8 @@ import InfiniteLoader from 'react-window-infinite-loader';
 import { GrafanaTheme2, isTruthy } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t, Trans } from 'app/core/internationalization/index';
 import { DashboardViewItem } from 'app/features/search/types';
 
 import { DashboardsTreeCellProps, DashboardsTreeColumn, DashboardsTreeItem, SelectionState } from '../types';

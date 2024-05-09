@@ -3,7 +3,8 @@ import React from 'react';
 import { PanelPlugin } from '@grafana/data';
 import { TagsInput } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { PermissionLevelString } from 'app/types';
+// @todo: replace barrel import path
+import { PermissionLevelString } from 'app/types/index';
 
 import { DashList } from './DashList';
 import { dashlistMigrationHandler } from './migrations';

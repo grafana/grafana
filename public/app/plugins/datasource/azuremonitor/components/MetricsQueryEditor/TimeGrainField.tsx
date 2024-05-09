@@ -4,7 +4,8 @@ import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
 import TimegrainConverter from '../../time_grain_converter';
-import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
+// @todo: replace barrel import path
+import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types/index';
 import { addValueToOptions } from '../../utils/common';
 import { Field } from '../shared/Field';
 

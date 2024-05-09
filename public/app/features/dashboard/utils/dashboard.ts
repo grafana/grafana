@@ -5,7 +5,8 @@ import { locationService } from '@grafana/runtime';
 import config from 'app/core/config';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import store from 'app/core/store';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state/index';
 import { calculateNewPanelGridPos } from 'app/features/dashboard/utils/panel';
 
 export function onCreateNewPanel(dashboard: DashboardModel, datasource?: string): number | undefined {

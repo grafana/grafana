@@ -5,7 +5,8 @@ import { GrafanaTheme2, PluginType } from '@grafana/data';
 import { config, featureEnabled } from '@grafana/runtime';
 import { HorizontalGroup, Icon, LinkButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 
 import { getExternalManageLink } from '../../helpers';
 import { useIsRemotePluginsAvailable } from '../../state/hooks';

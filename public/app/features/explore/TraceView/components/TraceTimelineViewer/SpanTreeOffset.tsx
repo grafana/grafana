@@ -21,7 +21,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, stylesFactory, withTheme2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
-import { TraceSpan } from '../types';
+// @todo: replace barrel import path
+import { TraceSpan } from '../types/index';
 import spanAncestorIds from '../utils/span-ancestor-ids';
 
 export const getStyles = stylesFactory((theme: GrafanaTheme2) => {

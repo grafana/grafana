@@ -5,7 +5,8 @@ import Skeleton from 'react-loading-skeleton';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, getInputStyles, useTheme2, Text } from '@grafana/ui';
 import { focusCss, getFocusStyles, getMouseFocusStyles } from '@grafana/ui/src/themes/mixins';
-import { Trans, t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans, t } from 'app/core/internationalization/index';
 
 interface TriggerProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   isLoading: boolean;

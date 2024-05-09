@@ -1,6 +1,7 @@
 import { WithAccessControlMetadata } from '@grafana/data';
 
-import { ApiKey, OrgRole, Role } from '.';
+// @todo: replace barrel import path
+import { ApiKey, OrgRole, Role } from './index';
 
 export interface OrgServiceAccount extends WithAccessControlMetadata {
   serviceAccountId: number;

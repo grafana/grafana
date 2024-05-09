@@ -4,7 +4,8 @@ import { useAsync } from 'react-use';
 import { NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
-import { t, Trans } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t, Trans } from 'app/core/internationalization/index';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { PlaylistForm } from './PlaylistForm';

@@ -1,4 +1,5 @@
-import { NotifierDTO } from '../../../../../../types';
+// @todo: replace barrel import path
+import { NotifierDTO } from '../../../../../../types/index';
 
 export interface NotifierMetadata {
   enabled: boolean;

@@ -4,7 +4,8 @@ import { LoadingState } from '@grafana/data';
 import * as runtime from '@grafana/runtime';
 import { DataSourceSrv, LocationService } from '@grafana/runtime';
 import { BackendSrv } from 'app/core/services/backend_srv';
-import { DashboardModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { DashboardModel } from 'app/features/dashboard/state/index';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { toAsyncOfResult } from '../../query/state/DashboardQueryRunner/testHelpers';

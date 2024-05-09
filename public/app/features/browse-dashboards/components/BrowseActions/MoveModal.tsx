@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 
 import { Alert, Button, Field, Modal, Text, Space } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { t, Trans } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t, Trans } from 'app/core/internationalization/index';
 
 import { DashboardTreeSelection } from '../../types';
 

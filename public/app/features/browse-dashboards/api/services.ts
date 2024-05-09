@@ -1,11 +1,13 @@
 import { config, getBackendSrv } from '@grafana/runtime';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
-import { getGrafanaSearcher, NestedFolderDTO } from 'app/features/search/service';
+// @todo: replace barrel import path
+import { getGrafanaSearcher, NestedFolderDTO } from 'app/features/search/service/index';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
 
 import { contextSrv } from '../../../core/core';
-import { AccessControlAction } from '../../../types';
+// @todo: replace barrel import path
+import { AccessControlAction } from '../../../types/index';
 import { isSharedWithMe } from '../components/utils';
 
 export const PAGE_SIZE = 50;

@@ -6,7 +6,8 @@ import { EventBusSrv, getTimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { CustomScrollbar } from '@grafana/ui';
 import { stopQueryState } from 'app/core/utils/explore';
-import { StoreState, useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { StoreState, useSelector } from 'app/types/index';
 
 import Explore from './Explore';
 import ExploreQueryInspector from './ExploreQueryInspector';

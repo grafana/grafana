@@ -3,7 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { useDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { useDispatch } from 'app/types/index';
 
 import { setInitialDatasource } from '../state/reducers';
 

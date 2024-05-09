@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { Team, TeamGroup, TeamMember, TeamsState, TeamState } from 'app/types';
+// @todo: replace barrel import path
+import { Team, TeamGroup, TeamMember, TeamsState, TeamState } from 'app/types/index';
 
 export const initialTeamsState: TeamsState = {
   teams: [],

@@ -18,7 +18,8 @@ import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 
 import { refreshIntervalToSortOrder } from '../../../core/utils/explore';
-import { ExplorePanelData } from '../../../types';
+// @todo: replace barrel import path
+import { ExplorePanelData } from '../../../types/index';
 import { CorrelationData } from '../../correlations/useCorrelations';
 import { attachCorrelationsToDataFrames } from '../../correlations/utils';
 import { dataFrameToLogsModel } from '../../logs/logsModel';

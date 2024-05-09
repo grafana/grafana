@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
-import { useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { useSelector } from 'app/types/index';
 
 import { CommandPaletteAction } from '../types';
 

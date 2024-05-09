@@ -10,7 +10,8 @@ import createMockDatasource from '../../__mocks__/datasource';
 import createMockQuery from '../../__mocks__/query';
 import { AzureQueryType } from '../../dataquery.gen';
 import Datasource from '../../datasource';
-import { AzureMonitorQuery } from '../../types';
+// @todo: replace barrel import path
+import { AzureMonitorQuery } from '../../types/index';
 import { selectOptionInTest } from '../../utils/testUtils';
 
 import Filters from './Filters';

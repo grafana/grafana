@@ -2,7 +2,8 @@ import React from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { Alert } from '@grafana/ui/src';
-import { Trans, t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans, t } from 'app/core/internationalization/index';
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
 

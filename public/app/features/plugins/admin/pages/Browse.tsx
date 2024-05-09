@@ -9,7 +9,8 @@ import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
-import { useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { useSelector } from 'app/types/index';
 
 import { HorizontalGroup } from '../components/HorizontalGroup';
 import { PluginList } from '../components/PluginList';

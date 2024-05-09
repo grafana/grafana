@@ -6,7 +6,8 @@ import { byTestId } from 'testing-library-selector';
 import { SelectableValue } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 
-import { FolderInfo, PermissionLevelString } from '../../../../types';
+// @todo: replace barrel import path
+import { FolderInfo, PermissionLevelString } from '../../../../types/index';
 
 import { ALL_FOLDER, GENERAL_FOLDER, ReadonlyFolderPicker, ReadonlyFolderPickerProps } from './ReadonlyFolderPicker';
 import * as api from './api';

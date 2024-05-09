@@ -6,7 +6,8 @@ import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { setDataSourceSrv } from '@grafana/runtime';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 
 import AlertGroups from './AlertGroups';
 import { fetchAlertGroups } from './api/alertmanager';

@@ -2,11 +2,14 @@ import React, { useState } from 'react';
 
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
-import { Permissions } from 'app/core/components/AccessControl';
+// @todo: replace barrel import path
+import { Permissions } from 'app/core/components/AccessControl/index';
 import { appEvents } from 'app/core/core';
-import { t, Trans } from 'app/core/internationalization';
-import { FolderDTO } from 'app/types';
+// @todo: replace barrel import path
+import { t, Trans } from 'app/core/internationalization/index';
+// @todo: replace barrel import path
 import { ShowModalReactEvent } from 'app/types/events';
+import { FolderDTO } from 'app/types/index';
 
 import { useDeleteFolderMutation, useMoveFolderMutation } from '../api/browseDashboardsAPI';
 import { getFolderPermissions } from '../permissions';

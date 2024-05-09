@@ -9,7 +9,8 @@ import impressionSrv from 'app/core/services/impression_srv';
 import kbn from 'app/core/utils/kbn';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { DashboardDTO } from 'app/types';
+// @todo: replace barrel import path
+import { DashboardDTO } from 'app/types/index';
 
 import { appEvents } from '../../../core/core';
 

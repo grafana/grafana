@@ -4,9 +4,11 @@ import React, { useCallback, useState } from 'react';
 import { PanelPluginMeta } from '@grafana/data';
 import { Button, VerticalGroup } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { PanelModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { PanelModel } from 'app/features/dashboard/state/index';
 import { changeToLibraryPanel } from 'app/features/panel/state/actions';
-import { useDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { useDispatch } from 'app/types/index';
 
 import { PanelTypeFilter } from '../../../../core/components/PanelTypeFilter/PanelTypeFilter';
 import { LibraryElementDTO } from '../../types';

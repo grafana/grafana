@@ -1,6 +1,7 @@
 import { DataFrame, FieldConfigSource, PanelData, PanelPlugin } from '@grafana/data';
 
-import { DashboardModel, PanelModel } from '../../state';
+// @todo: replace barrel import path
+import { DashboardModel, PanelModel } from '../../state/index';
 
 export interface PanelEditorTab {
   id: string;

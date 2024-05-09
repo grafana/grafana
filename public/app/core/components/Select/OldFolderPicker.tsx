@@ -8,11 +8,13 @@ import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { ActionMeta, AsyncVirtualizedSelect, Input, InputActionMeta, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 import { contextSrv } from 'app/core/services/context_srv';
 import { createFolder, getFolderByUid, searchFolders } from 'app/features/manage-dashboards/state/actions';
 import { DashboardSearchHit } from 'app/features/search/types';
-import { AccessControlAction, PermissionLevelString, SearchQueryType } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction, PermissionLevelString, SearchQueryType } from 'app/types/index';
 
 export type FolderPickerFilter = (hits: DashboardSearchHit[]) => DashboardSearchHit[];
 

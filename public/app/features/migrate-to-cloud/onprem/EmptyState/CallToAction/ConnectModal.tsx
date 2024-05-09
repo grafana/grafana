@@ -4,9 +4,11 @@ import { SubmitHandler, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Modal, Button, Stack, TextLink, Field, Input, Text, useStyles2, Alert } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans, t } from 'app/core/internationalization/index';
 
-import { CreateMigrationApiArg } from '../../../api';
+// @todo: replace barrel import path
+import { CreateMigrationApiArg } from '../../../api/index';
 
 interface Props {
   isOpen: boolean;

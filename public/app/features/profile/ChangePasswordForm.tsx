@@ -8,8 +8,10 @@ import {
   strongPasswordValidationRegister,
 } from 'app/core/components/ValidationLabels/ValidationLabels';
 import config from 'app/core/config';
-import { t, Trans } from 'app/core/internationalization';
-import { UserDTO } from 'app/types';
+// @todo: replace barrel import path
+import { t, Trans } from 'app/core/internationalization/index';
+// @todo: replace barrel import path
+import { UserDTO } from 'app/types/index';
 
 import { PasswordField } from '../../core/components/PasswordField/PasswordField';
 

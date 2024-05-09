@@ -1,9 +1,11 @@
 import React, { useCallback, useState } from 'react';
 
 import { Box, Button, Text } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t, Trans } from 'app/core/internationalization/index';
 
-import { useCreateCloudMigrationTokenMutation } from '../../api';
+// @todo: replace barrel import path
+import { useCreateCloudMigrationTokenMutation } from '../../api/index';
 import { InfoItem } from '../../shared/InfoItem';
 import { TokenErrorAlert } from '../TokenErrorAlert';
 

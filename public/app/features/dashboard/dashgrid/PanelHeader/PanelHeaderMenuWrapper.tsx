@@ -2,7 +2,8 @@ import React from 'react';
 
 import { LoadingState } from '@grafana/data';
 
-import { DashboardModel, PanelModel } from '../../state';
+// @todo: replace barrel import path
+import { DashboardModel, PanelModel } from '../../state/index';
 
 import { PanelHeaderMenu } from './PanelHeaderMenu';
 import { PanelHeaderMenuProvider } from './PanelHeaderMenuProvider';

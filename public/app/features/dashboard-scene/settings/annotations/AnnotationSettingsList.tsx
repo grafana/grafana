@@ -5,7 +5,8 @@ import { AnnotationQuery } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Button, DeleteButton, EmptyState, IconButton, Stack, TextLink, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t, Trans } from 'app/core/internationalization/index';
 import { ListNewButton } from 'app/features/dashboard/components/DashboardSettings/ListNewButton';
 
 import { MoveDirection } from '../AnnotationsEditView';

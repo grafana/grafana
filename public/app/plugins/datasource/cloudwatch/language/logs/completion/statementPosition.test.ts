@@ -1,12 +1,13 @@
 import { monacoTypes } from '@grafana/ui';
 
+// @todo: replace barrel import path
 import {
   emptyQuery,
   whitespaceOnlyQuery,
   commentOnlyQuery,
   singleLineFullQuery,
   multiLineFullQuery,
-} from '../../../__mocks__/cloudwatch-logs-test-data';
+} from '../../../__mocks__/cloudwatch-logs-test-data/index';
 import MonacoMock from '../../../__mocks__/monarch/Monaco';
 import TextModel from '../../../__mocks__/monarch/TextModel';
 import { linkedTokenBuilder } from '../../monarch/linkedTokenBuilder';

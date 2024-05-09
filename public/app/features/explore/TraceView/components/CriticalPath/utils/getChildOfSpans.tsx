@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { TraceSpan } from '../../types';
+// @todo: replace barrel import path
+import { TraceSpan } from '../../types/index';
 
 /**
  * Removes child spans whose refType is FOLLOWS_FROM and their descendants.

@@ -1,9 +1,11 @@
 import { reducerTester } from 'test/core/redux/reducerTester';
 
 import { PluginMeta, PluginMetaInfo, PluginType, LayoutModes } from '@grafana/data';
-import { DataSourceSettingsState, DataSourcesState } from 'app/types';
+// @todo: replace barrel import path
+import { DataSourceSettingsState, DataSourcesState } from 'app/types/index';
 
-import { getMockDataSource, getMockDataSources } from '../__mocks__';
+// @todo: replace barrel import path
+import { getMockDataSource, getMockDataSources } from '../__mocks__/index';
 import { GenericDataSourcePlugin } from '../types';
 
 import {

@@ -5,7 +5,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { Menu, Dropdown, useStyles2, useTheme2, ToolbarButton } from '@grafana/ui';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
-import { useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { useSelector } from 'app/types/index';
 
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 

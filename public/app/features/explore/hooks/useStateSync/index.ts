@@ -2,7 +2,8 @@ import { useEffect, useRef } from 'react';
 
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { addListener, ExploreQueryParams, useDispatch, useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { addListener, ExploreQueryParams, useDispatch, useSelector } from 'app/types/index';
 
 import { selectPanes } from '../../state/selectors';
 

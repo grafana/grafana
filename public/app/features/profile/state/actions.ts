@@ -1,6 +1,7 @@
 import { config } from '@grafana/runtime';
 
-import { ThunkResult, UserOrg } from '../../../types';
+// @todo: replace barrel import path
+import { ThunkResult, UserOrg } from '../../../types/index';
 import { api } from '../api';
 import { ChangePasswordFields, ProfileUpdateFields } from '../types';
 

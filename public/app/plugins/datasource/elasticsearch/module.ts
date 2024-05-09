@@ -1,7 +1,8 @@
 import { DashboardLoadedEvent, DataSourcePlugin } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 
-import { QueryEditor } from './components/QueryEditor';
+// @todo: replace barrel import path
+import { QueryEditor } from './components/QueryEditor/index';
 import { ConfigEditor } from './configuration/ConfigEditor';
 import { ElasticDatasource } from './datasource';
 import { onDashboardLoadedHandler } from './tracking';

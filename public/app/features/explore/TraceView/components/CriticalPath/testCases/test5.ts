@@ -28,6 +28,7 @@
 Here span B is ref-type is 'FOLLOWS_FROM'    |
 */
 
+// @todo: replace barrel import path
 import { TraceResponse, transformTraceData } from '../../index';
 
 const trace: TraceResponse = {

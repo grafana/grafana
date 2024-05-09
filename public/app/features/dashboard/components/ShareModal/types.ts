@@ -1,7 +1,8 @@
 import React from 'react';
 
 import { NavModelItem } from '@grafana/data';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state/index';
 
 export interface ShareModalTabProps {
   dashboard: DashboardModel;

@@ -1,6 +1,7 @@
 import { renderHook, act } from '@testing-library/react';
 
-import { TraceSpan } from './components';
+// @todo: replace barrel import path
+import { TraceSpan } from './components/index';
 import { useChildrenState } from './useChildrenState';
 
 describe('useChildrenState', () => {

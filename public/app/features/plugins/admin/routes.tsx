@@ -1,7 +1,8 @@
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
 import { contextSrv } from 'app/core/core';
 import { RouteDescriptor } from 'app/core/navigation/types';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 
 import { PluginAdminRoutes } from './types';
 

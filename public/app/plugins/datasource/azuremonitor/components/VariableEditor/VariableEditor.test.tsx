@@ -6,7 +6,8 @@ import { select, openMenu } from 'react-select-event';
 import * as ui from '@grafana/ui';
 
 import createMockDatasource from '../../__mocks__/datasource';
-import { AzureMonitorQuery, AzureQueryType } from '../../types';
+// @todo: replace barrel import path
+import { AzureMonitorQuery, AzureQueryType } from '../../types/index';
 
 import VariableEditor from './VariableEditor';
 

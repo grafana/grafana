@@ -6,7 +6,8 @@ import createMockQuery from '../__mocks__/query';
 import { createTemplateVariables } from '../__mocks__/utils';
 import { multiVariable } from '../__mocks__/variables';
 import AzureMonitorDatasource from '../datasource';
-import { AzureAPIResponse, AzureDataSourceJsonData, Location } from '../types';
+// @todo: replace barrel import path
+import { AzureAPIResponse, AzureDataSourceJsonData, Location } from '../types/index';
 
 let replace = () => '';
 

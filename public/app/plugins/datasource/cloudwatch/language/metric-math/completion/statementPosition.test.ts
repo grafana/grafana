@@ -1,6 +1,7 @@
 import { monacoTypes } from '@grafana/ui';
 
-import * as MetricMathTestQueries from '../../../__mocks__/metric-math-test-data';
+// @todo: replace barrel import path
+import * as MetricMathTestQueries from '../../../__mocks__/metric-math-test-data/index';
 import MonacoMock from '../../../__mocks__/monarch/Monaco';
 import TextModel from '../../../__mocks__/monarch/TextModel';
 import { linkedTokenBuilder } from '../../monarch/linkedTokenBuilder';

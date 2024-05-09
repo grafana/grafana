@@ -3,7 +3,8 @@ import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import alertmanagerMock from 'app/features/alerting/unified/components/contact-points/__mocks__/alertmanager.config.mock.json';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 
 import { ONCALL_INTEGRATION_V2_FEATURE } from '../../api/onCallApi';
 import { mockApi, setupMswServer } from '../../mockApi';

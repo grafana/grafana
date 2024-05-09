@@ -7,9 +7,11 @@ import { applyFieldOverrides, DataFrame, GrafanaTheme2, SplitOpen } from '@grafa
 import { config, reportInteraction } from '@grafana/runtime';
 import { useStyles2, useTheme2, PanelChrome } from '@grafana/ui';
 
-import { NodeGraph } from '../../../plugins/panel/nodeGraph';
+// @todo: replace barrel import path
+import { NodeGraph } from '../../../plugins/panel/nodeGraph/index';
 import { useCategorizeFrames } from '../../../plugins/panel/nodeGraph/useCategorizeFrames';
-import { StoreState } from '../../../types';
+// @todo: replace barrel import path
+import { StoreState } from '../../../types/index';
 import { useLinks } from '../utils/links';
 
 const getStyles = (theme: GrafanaTheme2) => ({

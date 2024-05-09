@@ -1,7 +1,8 @@
 import { debounce, trim } from 'lodash';
 
 import { isEmptyObject, containsSearchFilter } from '@grafana/data';
-import { StoreState, ThunkDispatch, ThunkResult } from 'app/types';
+// @todo: replace barrel import path
+import { StoreState, ThunkDispatch, ThunkResult } from 'app/types/index';
 
 import { variableAdapters } from '../../adapters';
 import { hasOptions } from '../../guard';

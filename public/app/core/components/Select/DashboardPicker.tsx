@@ -5,7 +5,8 @@ import { SelectableValue } from '@grafana/data';
 import { AsyncSelectProps, AsyncSelect } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSearchItem } from 'app/features/search/types';
-import { DashboardDTO } from 'app/types';
+// @todo: replace barrel import path
+import { DashboardDTO } from 'app/types/index';
 
 interface Props extends Omit<AsyncSelectProps<DashboardPickerDTO>, 'value' | 'onChange' | 'loadOptions' | ''> {
   value?: DashboardPickerDTO['uid'];

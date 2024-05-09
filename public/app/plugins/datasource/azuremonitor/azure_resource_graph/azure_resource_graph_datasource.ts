@@ -4,7 +4,8 @@ import _ from 'lodash';
 import { ScopedVars } from '@grafana/data';
 import { getTemplateSrv, DataSourceWithBackend } from '@grafana/runtime';
 
-import { AzureMonitorQuery, AzureDataSourceJsonData, AzureQueryType } from '../types';
+// @todo: replace barrel import path
+import { AzureMonitorQuery, AzureDataSourceJsonData, AzureQueryType } from '../types/index';
 import { interpolateVariable } from '../utils/common';
 
 export default class AzureResourceGraphDatasource extends DataSourceWithBackend<

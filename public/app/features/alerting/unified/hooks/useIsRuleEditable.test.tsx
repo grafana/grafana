@@ -3,7 +3,8 @@ import React from 'react';
 import { Provider } from 'react-redux';
 
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction, FolderDTO, StoreState } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction, FolderDTO, StoreState } from 'app/types/index';
 
 import { mockFolder, mockRulerAlertingRule, mockRulerGrafanaRule, mockUnifiedAlertingStore } from '../mocks';
 

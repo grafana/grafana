@@ -4,7 +4,8 @@ import { DataSourceInstanceSettings, PanelPlugin } from '@grafana/data';
 import { Button, Stack } from '@grafana/ui';
 import { OldFolderPicker } from 'app/core/components/Select/OldFolderPicker';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
-import { PermissionLevelString } from 'app/types';
+// @todo: replace barrel import path
+import { PermissionLevelString } from 'app/types/index';
 
 import { GRAFANA_DATASOURCE_NAME } from '../../../features/alerting/unified/utils/datasource';
 

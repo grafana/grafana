@@ -15,7 +15,8 @@ import {
 } from '@grafana/data';
 import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import { ContextSrv } from 'app/core/services/context_srv';
-import { PanelModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { PanelModel } from 'app/features/dashboard/state/index';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 
 import { PanelQueryRunner } from '../../features/query/state/PanelQueryRunner';

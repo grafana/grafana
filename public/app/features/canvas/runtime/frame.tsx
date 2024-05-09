@@ -1,9 +1,11 @@
 import { cloneDeep } from 'lodash';
 import React from 'react';
 
-import { canvasElementRegistry, CanvasFrameOptions } from 'app/features/canvas';
+// @todo: replace barrel import path
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
-import { DimensionContext } from 'app/features/dimensions';
+import { canvasElementRegistry, CanvasFrameOptions } from 'app/features/canvas/index';
+// @todo: replace barrel import path
+import { DimensionContext } from 'app/features/dimensions/index';
 import { LayerActionID } from 'app/plugins/panel/canvas/types';
 
 import { updateConnectionsForSource } from '../../../plugins/panel/canvas/utils';

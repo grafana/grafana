@@ -2,7 +2,8 @@ import React from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 
 import { FieldSet } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 
 import { PlaylistTableRows } from './PlaylistTableRows';
 import { PlaylistItem } from './types';

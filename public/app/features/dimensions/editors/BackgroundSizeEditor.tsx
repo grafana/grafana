@@ -2,7 +2,8 @@ import React, { useCallback } from 'react';
 
 import { SelectableValue, StandardEditorProps } from '@grafana/data';
 import { InlineField, InlineFieldRow, RadioButtonGroup } from '@grafana/ui/src';
-import { BackgroundImageSize } from 'app/features/canvas';
+// @todo: replace barrel import path
+import { BackgroundImageSize } from 'app/features/canvas/index';
 
 const options: Array<SelectableValue<BackgroundImageSize>> = [
   { value: BackgroundImageSize.Original, label: 'Original' },

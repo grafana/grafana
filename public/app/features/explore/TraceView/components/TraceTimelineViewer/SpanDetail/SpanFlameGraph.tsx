@@ -29,7 +29,8 @@ import {
 } from '../../../createSpanLink';
 import { TraceSpan } from '../../types/trace';
 
-import { TraceFlameGraphs } from '.';
+// @todo: replace barrel import path
+import { TraceFlameGraphs } from './index';
 
 export type SpanFlameGraphProps = {
   span: TraceSpan;

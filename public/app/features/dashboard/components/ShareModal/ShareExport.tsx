@@ -3,8 +3,10 @@ import React, { PureComponent } from 'react';
 
 import { Button, Field, Modal, Switch } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
-import { t, Trans } from 'app/core/internationalization';
-import { DashboardExporter } from 'app/features/dashboard/components/DashExportModal';
+// @todo: replace barrel import path
+import { t, Trans } from 'app/core/internationalization/index';
+// @todo: replace barrel import path
+import { DashboardExporter } from 'app/features/dashboard/components/DashExportModal/index';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { ShowModalReactEvent } from 'app/types/events';
 

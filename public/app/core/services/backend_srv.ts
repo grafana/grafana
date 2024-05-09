@@ -21,10 +21,12 @@ import appEvents from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
 import { getSessionExpiry, hasSessionExpiry } from 'app/core/utils/auth';
 import { loadUrlToken } from 'app/core/utils/urlToken';
-import { DashboardModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { DashboardModel } from 'app/features/dashboard/state/index';
 import { DashboardSearchItem } from 'app/features/search/types';
 import { TokenRevokedModal } from 'app/features/users/TokenRevokedModal';
-import { DashboardDTO, FolderDTO } from 'app/types';
+// @todo: replace barrel import path
+import { DashboardDTO, FolderDTO } from 'app/types/index';
 
 import { ShowModalReactEvent } from '../../types/events';
 import {

@@ -4,11 +4,14 @@ import { useAsyncFn } from 'react-use';
 import { locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { historySrv } from 'app/features/dashboard-scene/settings/version-history';
-import { useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { historySrv } from 'app/features/dashboard-scene/settings/version-history/index';
+// @todo: replace barrel import path
+import { useSelector } from 'app/types/index';
 
 import { dashboardWatcher } from '../../../live/dashboard/dashboardWatcher';
-import { DashboardModel } from '../../state';
+// @todo: replace barrel import path
+import { DashboardModel } from '../../state/index';
 
 const restoreDashboard = async (version: number, dashboard: DashboardModel) => {
   // Skip the watcher logic for this save since it's handled by the hook

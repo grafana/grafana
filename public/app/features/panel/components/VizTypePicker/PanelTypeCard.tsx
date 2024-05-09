@@ -51,7 +51,6 @@ const PanelTypeCardComponent = ({
       title={isCurrent ? 'Click again to close this section' : plugin.name}
     >
       <img className={cx(styles.img, { [styles.disabled]: isDisabled })} src={plugin.info.logos.small} alt="" />
-
       <div className={cx(styles.itemContent, { [styles.disabled]: isDisabled })}>
         <div className={styles.name}>{title}</div>
         {description ? <span className={styles.description}>{description}</span> : null}

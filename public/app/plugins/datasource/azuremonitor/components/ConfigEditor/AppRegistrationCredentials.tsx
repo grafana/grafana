@@ -4,7 +4,8 @@ import { SelectableValue } from '@grafana/data';
 import { Field, Select, Input, Button } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
-import { AzureClientSecretCredentials, AzureCredentials } from '../../types';
+// @todo: replace barrel import path
+import { AzureClientSecretCredentials, AzureCredentials } from '../../types/index';
 
 export interface AppRegistrationCredentialsProps {
   credentials: AzureClientSecretCredentials;

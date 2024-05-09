@@ -1,6 +1,7 @@
 import { template } from 'lodash';
 
-import { CORRELATION_EDITOR_POST_CONFIRM_ACTION } from 'app/types';
+// @todo: replace barrel import path
+import { CORRELATION_EDITOR_POST_CONFIRM_ACTION } from 'app/types/index';
 
 enum CONSEQUENCES {
   SOURCE_TARGET_CHANGE = 'cause the query in the right pane to be re-ran and links added to that data',

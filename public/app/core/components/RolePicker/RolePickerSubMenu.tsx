@@ -3,7 +3,8 @@ import React from 'react';
 
 import { Button, CustomScrollbar, Stack, useStyles2, useTheme2 } from '@grafana/ui';
 import { getSelectStyles } from '@grafana/ui/src/components/Select/getSelectStyles';
-import { Role } from 'app/types';
+// @todo: replace barrel import path
+import { Role } from 'app/types/index';
 
 import { RoleMenuOption } from './RoleMenuOption';
 import { MENU_MAX_HEIGHT } from './constants';

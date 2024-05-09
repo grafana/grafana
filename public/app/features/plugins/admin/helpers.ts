@@ -5,7 +5,8 @@ import { config, featureEnabled } from '@grafana/runtime';
 import configCore, { Settings } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 
 import {
   CatalogPlugin,

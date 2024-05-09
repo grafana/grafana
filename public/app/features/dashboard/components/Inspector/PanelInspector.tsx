@@ -4,10 +4,12 @@ import { useLocation } from 'react-router-dom';
 
 import { PanelPlugin } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state/index';
 import { InspectTab } from 'app/features/inspector/types';
 import { getPanelStateForModel } from 'app/features/panel/state/selectors';
-import { StoreState } from 'app/types';
+// @todo: replace barrel import path
+import { StoreState } from 'app/types/index';
 
 import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
 import { HelpWizard } from '../HelpWizard/HelpWizard';

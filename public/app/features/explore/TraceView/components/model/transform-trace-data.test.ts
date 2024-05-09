@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { TraceResponse } from '../types';
+// @todo: replace barrel import path
+import { TraceResponse } from '../types/index';
 
 import transformTraceData, { orderTags, deduplicateTags } from './transform-trace-data';
 

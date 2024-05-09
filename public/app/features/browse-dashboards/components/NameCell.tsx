@@ -6,11 +6,13 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { Icon, IconButton, Link, Spinner, useStyles2, Text } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/src/components/Icon/utils';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 import { getIconForItem } from 'app/features/search/service/utils';
 
 import { Indent } from '../../../core/components/Indent/Indent';
-import { useChildrenByParentUIDState } from '../state';
+// @todo: replace barrel import path
+import { useChildrenByParentUIDState } from '../state/index';
 import { DashboardsTreeCellProps } from '../types';
 
 import { makeRowID } from './utils';

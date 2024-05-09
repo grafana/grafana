@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
 import { Field, Icon, IconButton, Input, Label, Select, Stack, Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans, t } from 'app/core/internationalization/index';
 
 import { FormDTO, getSupportedTransTypeDetails, getTransformOptions } from './types';
 type Props = {

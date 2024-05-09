@@ -1,6 +1,7 @@
 import React from 'react';
 
-import { CanvasFrameOptions } from 'app/features/canvas';
+// @todo: replace barrel import path
+import { CanvasFrameOptions } from 'app/features/canvas/index';
 
 import { FrameState } from './frame';
 import { Scene } from './scene';

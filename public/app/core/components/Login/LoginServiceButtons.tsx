@@ -5,7 +5,8 @@ import React from 'react';
 import { GrafanaTheme2, DEFAULT_SAML_NAME } from '@grafana/data';
 import { Icon, IconName, LinkButton, Stack, useStyles2, useTheme2 } from '@grafana/ui';
 import config from 'app/core/config';
-import { Trans } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans } from 'app/core/internationalization/index';
 
 export interface LoginService {
   bgColor: string;

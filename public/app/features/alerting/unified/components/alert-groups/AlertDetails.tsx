@@ -5,7 +5,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { LinkButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AlertmanagerAlert, AlertState } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 
 import { AlertmanagerAction } from '../../hooks/useAbilities';
 import { isGrafanaRulesSource } from '../../utils/datasource';

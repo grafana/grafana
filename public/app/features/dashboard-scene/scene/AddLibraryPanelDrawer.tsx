@@ -3,7 +3,8 @@ import React from 'react';
 import { SceneComponentProps, SceneGridLayout, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { LibraryPanel } from '@grafana/schema';
 import { Drawer } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 import {
   LibraryPanelsSearch,
   LibraryPanelsSearchVariant,

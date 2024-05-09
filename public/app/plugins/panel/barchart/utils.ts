@@ -31,7 +31,8 @@ import {
 import { FIXED_UNIT, measureText, UPlotConfigBuilder, UPlotConfigPrepFn, UPLOT_AXIS_FONT_SIZE } from '@grafana/ui';
 import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
 import { getStackingGroups } from '@grafana/ui/src/components/uPlot/utils';
-import { findField } from 'app/features/dimensions';
+// @todo: replace barrel import path
+import { findField } from 'app/features/dimensions/index';
 
 import { setClassicPaletteIdxs } from '../timeseries/utils';
 

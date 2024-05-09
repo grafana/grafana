@@ -3,8 +3,10 @@ import React, { useMemo } from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
 import { Menu } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
-import { DashboardModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
+// @todo: replace barrel import path
+import { DashboardModel } from 'app/features/dashboard/state/index';
 import {
   getCopiedPanelPlugin,
   onAddLibraryPanel,
@@ -13,7 +15,8 @@ import {
   onPasteCopiedPanel,
 } from 'app/features/dashboard/utils/dashboard';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
-import { useDispatch, useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { useDispatch, useSelector } from 'app/types/index';
 
 import { setInitialDatasource } from '../../state/reducers';
 

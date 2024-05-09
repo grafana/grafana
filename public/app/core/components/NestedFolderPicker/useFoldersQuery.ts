@@ -9,7 +9,8 @@ import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
 import { getPaginationPlaceholders } from 'app/features/browse-dashboards/state/utils';
 import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { RootState } from 'app/store/configureStore';
-import { FolderListItemDTO, PermissionLevelString } from 'app/types';
+// @todo: replace barrel import path
+import { FolderListItemDTO, PermissionLevelString } from 'app/types/index';
 import { useDispatch, useSelector } from 'app/types/store';
 
 type ListFoldersQuery = ReturnType<ReturnType<typeof browseDashboardsAPI.endpoints.listFolders.select>>;

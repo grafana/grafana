@@ -23,7 +23,8 @@ import { Tooltip, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
 import { Popover } from '../common/Popover';
-import { TraceSpan, TNil, CriticalPathSection } from '../types';
+// @todo: replace barrel import path
+import { TraceSpan, TNil, CriticalPathSection } from '../types/index';
 
 import AccordianLogs from './SpanDetail/AccordianLogs';
 import { ViewedBoundsFunctionType } from './utils';

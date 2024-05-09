@@ -21,8 +21,10 @@ import {
   useStyles2,
   Tooltip,
 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
-import { ExploreGraphStyle } from 'app/types';
+// @todo: replace barrel import path
+import { t, Trans } from 'app/core/internationalization/index';
+// @todo: replace barrel import path
+import { ExploreGraphStyle } from 'app/types/index';
 
 import { storeGraphStyle } from '../state/utils';
 

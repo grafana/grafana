@@ -13,7 +13,8 @@ import {
   VariableQueryData,
 } from '../types/types';
 
-import { VariableQueryField } from './';
+// @todo: replace barrel import path
+import { VariableQueryField } from './index';
 
 export type Props = QueryEditorProps<
   CloudMonitoringDatasource,

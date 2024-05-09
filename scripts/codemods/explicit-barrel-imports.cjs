@@ -29,7 +29,11 @@ module.exports = function (fileInfo, api) {
         path.node.comments.push(comment);
 
         // Update the import path appending '/index'
-        path.node.source.value = path.node.source.value + '/index';
+        if (!path.node.source.value.endsWith('index')) {
+          path.node.source.value = path.node.source.value.endsWith('/')
+            ? path.node.source.value + 'index'
+            : path.node.source.value + '/index';
+        }
       }
     });
 

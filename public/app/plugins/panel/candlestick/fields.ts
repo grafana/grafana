@@ -8,7 +8,8 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/joinDataFrames';
-import { findField } from 'app/features/dimensions';
+// @todo: replace barrel import path
+import { findField } from 'app/features/dimensions/index';
 
 import { prepareGraphableFields } from '../timeseries/utils';
 

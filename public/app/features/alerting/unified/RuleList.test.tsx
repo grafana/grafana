@@ -29,7 +29,8 @@ import { mockAlertmanagerChoiceResponse } from 'app/features/alerting/unified/mo
 import * as actions from 'app/features/alerting/unified/state/actions';
 import { getMockUser } from 'app/features/users/__mocks__/userMocks';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 import { PromAlertingRuleState, PromApplication } from 'app/types/unified-alerting-dto';
 
 import * as analytics from './Analytics';

@@ -3,7 +3,8 @@ import { useAsyncFn, useToggle } from 'react-use';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, ConfirmModal, Modal } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans } from 'app/core/internationalization/index';
 
 import { DashboardScene } from '../scene/DashboardScene';
 

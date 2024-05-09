@@ -7,7 +7,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
 import { Button, HorizontalGroup, Icon } from '@grafana/ui';
 
-import { StoreState, ThunkDispatch } from '../../../types';
+// @todo: replace barrel import path
+import { StoreState, ThunkDispatch } from '../../../types/index';
 import { VariableHideSelect } from '../../dashboard-scene/settings/variables/components/VariableHideSelect';
 import { VariableLegend } from '../../dashboard-scene/settings/variables/components/VariableLegend';
 import { VariableTextAreaField } from '../../dashboard-scene/settings/variables/components/VariableTextAreaField';

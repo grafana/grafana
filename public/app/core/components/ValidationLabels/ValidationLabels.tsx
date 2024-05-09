@@ -4,7 +4,8 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Box, Icon, Text, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 
 interface StrongPasswordValidation {
   message: string;

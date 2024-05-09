@@ -1,7 +1,8 @@
 import React from 'react';
 
 import { Box, Stack, Text } from '@grafana/ui';
-import { LdapUser } from 'app/types';
+// @todo: replace barrel import path
+import { LdapUser } from 'app/types/index';
 
 import { LdapUserGroups } from './LdapUserGroups';
 import { LdapUserMappingInfo } from './LdapUserMappingInfo';

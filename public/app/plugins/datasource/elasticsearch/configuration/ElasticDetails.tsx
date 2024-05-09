@@ -46,7 +46,6 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
           required
         />
       </InlineField>
-
       <InlineField
         label="Pattern"
         htmlFor="es_config_indexPattern"
@@ -63,7 +62,6 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
           width={24}
         />
       </InlineField>
-
       <InlineField
         label="Time field name"
         htmlFor="es_config_timeField"
@@ -79,7 +77,6 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
           required
         />
       </InlineField>
-
       <InlineField
         label="Max concurrent Shard Requests"
         htmlFor="es_config_shardRequests"
@@ -93,7 +90,6 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
           width={24}
         />
       </InlineField>
-
       <InlineField
         label="Min time interval"
         htmlFor="es_config_minTimeInterval"

@@ -4,7 +4,8 @@ import { isNumber } from 'lodash';
 
 import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import { config } from 'app/core/config';
-import { CoreEvents } from 'app/types';
+// @todo: replace barrel import path
+import { CoreEvents } from 'app/types/index';
 
 export class ThresholdManager {
   plot: any;

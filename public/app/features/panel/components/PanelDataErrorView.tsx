@@ -17,7 +17,8 @@ import store from 'app/core/store';
 import { toggleVizPicker } from 'app/features/dashboard/components/PanelEditor/state/reducers';
 import { VisualizationSelectPaneTab } from 'app/features/dashboard/components/PanelEditor/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { useDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { useDispatch } from 'app/types/index';
 
 import { changePanelPlugin } from '../state/actions';
 

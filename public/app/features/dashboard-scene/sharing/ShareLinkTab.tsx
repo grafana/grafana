@@ -6,7 +6,8 @@ import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectRef, VizPanel, sceneGraph } from '@grafana/scenes';
 import { TimeZone } from '@grafana/schema';
 import { Alert, ClipboardButton, Field, FieldSet, Icon, Input, Switch } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t, Trans } from 'app/core/internationalization/index';
 import { createDashboardShareUrl, createShortLink, getShareUrlParams } from 'app/core/utils/shortLinks';
 import { ThemePicker } from 'app/features/dashboard/components/ShareModal/ThemePicker';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';

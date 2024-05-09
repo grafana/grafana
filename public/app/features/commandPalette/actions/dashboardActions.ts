@@ -2,10 +2,12 @@ import debounce from 'debounce-promise';
 import { useEffect, useRef, useState } from 'react';
 
 import { config } from '@grafana/runtime';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 import { contextSrv } from 'app/core/services/context_srv';
 import impressionSrv from 'app/core/services/impression_srv';
-import { getGrafanaSearcher } from 'app/features/search/service';
+// @todo: replace barrel import path
+import { getGrafanaSearcher } from 'app/features/search/service/index';
 
 import { CommandPaletteAction } from '../types';
 import { RECENT_DASHBOARDS_PRIORITY, SEARCH_RESULTS_PRIORITY } from '../values';

@@ -9,7 +9,8 @@ import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSupplie
 import { isAngularDatasourcePluginAndNotHidden } from 'app/features/plugins/angularDeprecation/utils';
 
 import { PanelHeaderTitleItems } from '../dashgrid/PanelHeader/PanelHeaderTitleItems';
-import { DashboardModel, PanelModel } from '../state';
+// @todo: replace barrel import path
+import { DashboardModel, PanelModel } from '../state/index';
 
 interface CommonProps {
   panel: PanelModel;

@@ -1,4 +1,5 @@
-import { Role } from 'app/types';
+// @todo: replace barrel import path
+import { Role } from 'app/types/index';
 
 export const isNotDelegatable = (role: Role) => {
   return role.delegatable !== undefined && !role.delegatable;

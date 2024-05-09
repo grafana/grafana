@@ -3,7 +3,8 @@ import tinycolor from 'tinycolor2';
 
 import { Registry, RegistryItem, textUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { getPublicOrAbsoluteUrl } from 'app/features/dimensions';
+// @todo: replace barrel import path
+import { getPublicOrAbsoluteUrl } from 'app/features/dimensions/index';
 
 import { defaultStyleConfig, DEFAULT_SIZE, StyleConfigValues, StyleMaker } from './types';
 import { getDisplacement } from './utils';

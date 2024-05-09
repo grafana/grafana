@@ -1,7 +1,8 @@
 import React from 'react';
 
 import { DataSourceApi, PanelData } from '@grafana/data';
-import { Trans } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans } from 'app/core/internationalization/index';
 
 interface InspectMetadataTabProps {
   data: PanelData;

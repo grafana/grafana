@@ -1,4 +1,5 @@
-import { Team, TeamGroup, TeamMember, TeamPermissionLevel } from 'app/types';
+// @todo: replace barrel import path
+import { Team, TeamGroup, TeamMember, TeamPermissionLevel } from 'app/types/index';
 
 export const getMultipleMockTeams = (numberOfTeams: number): Team[] => {
   const teams: Team[] = [];

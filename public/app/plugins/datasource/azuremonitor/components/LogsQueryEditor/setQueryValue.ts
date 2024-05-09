@@ -1,4 +1,5 @@
-import { AzureMonitorQuery, ResultFormat } from '../../types';
+// @todo: replace barrel import path
+import { AzureMonitorQuery, ResultFormat } from '../../types/index';
 
 export function setKustoQuery(query: AzureMonitorQuery, kustoQuery: string): AzureMonitorQuery {
   return {

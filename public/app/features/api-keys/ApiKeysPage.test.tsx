@@ -3,7 +3,8 @@ import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event'
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { ApiKey, OrgRole } from 'app/types';
+// @todo: replace barrel import path
+import { ApiKey, OrgRole } from 'app/types/index';
 
 import { mockToolkitActionCreator } from '../../../test/core/redux/mocks';
 import { silenceConsoleOutput } from '../../../test/core/utils/silenceConsoleOutput';

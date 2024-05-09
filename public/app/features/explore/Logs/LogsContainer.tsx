@@ -25,8 +25,9 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Collapse } from '@grafana/ui';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { StoreState } from 'app/types';
+// @todo: replace barrel import path
 import { ExploreItemState } from 'app/types/explore';
+import { StoreState } from 'app/types/index';
 
 import { getTimeZone } from '../../profile/state/selectors';
 import {

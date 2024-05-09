@@ -9,7 +9,8 @@ import 'whatwg-fetch';
 import { setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { mockApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 import { PromApplication } from 'app/types/unified-alerting-dto';
 
 import { searchFolders } from '../../manage-dashboards/state/actions';

@@ -26,6 +26,7 @@
                    └──────────────┘                 |       (parent-child tree)
 */
 
+// @todo: replace barrel import path
 import { TraceResponse, transformTraceData } from '../../index';
 
 const trace: TraceResponse = {

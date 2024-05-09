@@ -3,11 +3,19 @@ import React from 'react';
 import { PanelData } from '@grafana/data/src/types';
 import { EditorRows, EditorRow, EditorFieldGroup } from '@grafana/experimental';
 
-import { multiResourceCompatibleTypes } from '../../azureMetadata';
+// @todo: replace barrel import path
+import { multiResourceCompatibleTypes } from '../../azureMetadata/index';
 import type Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
-import type { AzureMonitorQuery, AzureMonitorOption, AzureMonitorErrorish, AzureMonitorResource } from '../../types';
-import ResourceField from '../ResourceField';
+// @todo: replace barrel import path
+import type {
+  AzureMonitorQuery,
+  AzureMonitorOption,
+  AzureMonitorErrorish,
+  AzureMonitorResource,
+} from '../../types/index';
+// @todo: replace barrel import path
+import ResourceField from '../ResourceField/index';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
 import { parseResourceDetails } from '../ResourcePicker/utils';
 

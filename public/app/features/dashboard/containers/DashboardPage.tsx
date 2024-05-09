@@ -6,7 +6,8 @@ import { NavModel, NavModelItem, TimeRange, PageLayoutType, locationUtil } from 
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
 import { Themeable2, withTheme2 } from '@grafana/ui';
-import { notifyApp } from 'app/core/actions';
+// @todo: replace barrel import path
+import { notifyApp } from 'app/core/actions/index';
 import { Page } from 'app/core/components/Page/Page';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaContext';
@@ -15,25 +16,30 @@ import { getKioskMode } from 'app/core/navigation/kiosk';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { ID_PREFIX } from 'app/core/reducers/navBarTree';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { PanelModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { PanelModel } from 'app/features/dashboard/state/index';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { AngularDeprecationNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationNotice';
 import { AngularMigrationNotice } from 'app/features/plugins/angularDeprecation/AngularMigrationNotice';
 import { getPageNavFromSlug, getRootContentNavModel } from 'app/features/storage/StorageFolderPage';
-import { DashboardRoutes, KioskMode, StoreState } from 'app/types';
+// @todo: replace barrel import path
 import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
+import { DashboardRoutes, KioskMode, StoreState } from 'app/types/index';
 
 import { cancelVariables, templateVarsChangedInUrl } from '../../variables/state/actions';
 import { findTemplateVarChanges } from '../../variables/utils';
 import { AddWidgetModal } from '../components/AddWidgetModal/AddWidgetModal';
-import { DashNav } from '../components/DashNav';
+// @todo: replace barrel import path
+import { DashNav } from '../components/DashNav/index';
 import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
 import { DashboardLoading } from '../components/DashboardLoading/DashboardLoading';
 import { DashboardPrompt } from '../components/DashboardPrompt/DashboardPrompt';
-import { DashboardSettings } from '../components/DashboardSettings';
+// @todo: replace barrel import path
+import { DashboardSettings } from '../components/DashboardSettings/index';
 import { PanelInspector } from '../components/Inspector/PanelInspector';
 import { PanelEditor } from '../components/PanelEditor/PanelEditor';
-import { ShareModal } from '../components/ShareModal';
+// @todo: replace barrel import path
+import { ShareModal } from '../components/ShareModal/index';
 import { SubMenu } from '../components/SubMenu/SubMenu';
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { liveTimer } from '../dashgrid/liveTimer';

@@ -2,7 +2,8 @@ import React from 'react';
 
 import { Drawer, LoadingPlaceholder, Stack, TextLink } from '@grafana/ui';
 
-import { t } from '../../../../core/internationalization';
+// @todo: replace barrel import path
+import { t } from '../../../../core/internationalization/index';
 import { createUrl } from '../utils/url';
 
 const AlertRulesDrawerContent = React.lazy(

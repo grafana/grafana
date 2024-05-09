@@ -24,7 +24,8 @@ import ReferenceLink from '../../url/ReferenceLink';
 
 import AccordianKeyValues from './AccordianKeyValues';
 
-import { alignIcon } from '.';
+// @todo: replace barrel import path
+import { alignIcon } from './index';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {

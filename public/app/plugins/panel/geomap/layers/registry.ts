@@ -11,9 +11,11 @@ import {
 } from '@grafana/data';
 import { config, hasAlphaPanels } from 'app/core/config';
 
-import { basemapLayers } from './basemaps';
+// @todo: replace barrel import path
 import { carto } from './basemaps/carto';
-import { dataLayers } from './data';
+import { basemapLayers } from './basemaps/index';
+// @todo: replace barrel import path
+import { dataLayers } from './data/index';
 
 export const DEFAULT_BASEMAP_CONFIG: MapLayerOptions = {
   type: 'default',

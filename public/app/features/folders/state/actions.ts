@@ -1,6 +1,8 @@
-import { updateNavIndex } from 'app/core/actions';
+// @todo: replace barrel import path
+import { updateNavIndex } from 'app/core/actions/index';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { FolderDTO, ThunkResult } from 'app/types';
+// @todo: replace barrel import path
+import { FolderDTO, ThunkResult } from 'app/types/index';
 
 import { buildNavModel } from './navModel';
 import { loadFolder } from './reducers';

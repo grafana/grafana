@@ -6,7 +6,8 @@ import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 import { PromAlertingRuleState, PromRulesResponse, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceConsoleOutput';

@@ -23,8 +23,10 @@ import {
   Stack,
 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
-import { PanelModel } from 'app/features/dashboard/state';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { PanelModel } from 'app/features/dashboard/state/index';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 
 import { ShowMessage, SnapshotTab, SupportSnapshotService } from './SupportSnapshotService';
 

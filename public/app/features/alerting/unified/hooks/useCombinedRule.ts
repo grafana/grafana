@@ -1,7 +1,8 @@
 import { useEffect, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
-import { useDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { useDispatch } from 'app/types/index';
 import { CombinedRule, RuleIdentifier, RuleNamespace, RulerDataSourceConfig } from 'app/types/unified-alerting';
 import { RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 

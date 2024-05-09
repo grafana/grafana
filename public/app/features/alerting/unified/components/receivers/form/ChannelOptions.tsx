@@ -2,7 +2,8 @@ import React from 'react';
 import { useFormContext, FieldError, FieldErrors, DeepMap } from 'react-hook-form';
 
 import { Button, Field, Input } from '@grafana/ui';
-import { NotificationChannelOption, NotificationChannelSecureFields } from 'app/types';
+// @todo: replace barrel import path
+import { NotificationChannelOption, NotificationChannelSecureFields } from 'app/types/index';
 
 import { ChannelValues, ReceiverFormValues } from '../../../types/receiver-form';
 

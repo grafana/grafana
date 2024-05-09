@@ -4,7 +4,8 @@ import { InlineFieldRow, InlineLabel, InlineSegmentGroup } from '@grafana/ui';
 
 import { MetricAggregation } from '../../types';
 
-import { SettingsEditor } from './MetricAggregationsEditor/SettingsEditor';
+// @todo: replace barrel import path
+import { SettingsEditor } from './MetricAggregationsEditor/SettingsEditor/index';
 
 type Props = {
   name: string;

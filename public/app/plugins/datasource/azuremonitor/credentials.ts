@@ -1,5 +1,6 @@
 import { config } from '@grafana/runtime';
 
+// @todo: replace barrel import path
 import {
   AadCurrentUserCredentials,
   AzureAuthType,
@@ -9,7 +10,7 @@ import {
   AzureDataSourceInstanceSettings,
   AzureDataSourceSettings,
   ConcealedSecret,
-} from './types';
+} from './types/index';
 
 const concealed: ConcealedSecret = Symbol('Concealed client secret');
 

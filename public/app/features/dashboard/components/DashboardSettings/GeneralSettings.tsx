@@ -16,7 +16,8 @@ import {
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { t, Trans } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t, Trans } from 'app/core/internationalization/index';
 import { updateTimeZoneDashboard, updateWeekStartDashboard } from 'app/features/dashboard/state/actions';
 
 import { DeleteDashboardButton } from '../DeleteDashboard/DeleteDashboardButton';

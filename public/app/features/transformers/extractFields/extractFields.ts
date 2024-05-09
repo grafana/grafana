@@ -11,7 +11,8 @@ import {
   SynchronousDataTransformerInfo,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { findField } from 'app/features/dimensions';
+// @todo: replace barrel import path
+import { findField } from 'app/features/dimensions/index';
 
 import { fieldExtractors } from './fieldExtractors';
 import { ExtractFieldsOptions, FieldExtractorID, JSONPath } from './types';

@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 
 import { LoadingPlaceholder } from '@grafana/ui';
 
-import { FolderDTO } from '../../../../../types';
+// @todo: replace barrel import path
+import { FolderDTO } from '../../../../../types/index';
 import { alertRuleApi } from '../../api/alertRuleApi';
 
 import { FileExportPreview } from './FileExportPreview';

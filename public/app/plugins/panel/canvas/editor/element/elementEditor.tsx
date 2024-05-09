@@ -1,12 +1,13 @@
 import { get as lodashGet } from 'lodash';
 
 import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
+// @todo: replace barrel import path
 import {
   CanvasElementOptions,
   canvasElementRegistry,
   DEFAULT_CANVAS_ELEMENT_CONFIG,
   defaultElementItems,
-} from 'app/features/canvas';
+} from 'app/features/canvas/index';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { FrameState } from 'app/features/canvas/runtime/frame';
 import { Scene } from 'app/features/canvas/runtime/scene';

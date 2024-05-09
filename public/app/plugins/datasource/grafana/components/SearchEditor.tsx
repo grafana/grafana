@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 
 import { InlineField, Input, InlineFieldRow, CodeEditor } from '@grafana/ui';
-import { SearchQuery } from 'app/features/search/service';
+// @todo: replace barrel import path
+import { SearchQuery } from 'app/features/search/service/index';
 
 interface Props {
   value: SearchQuery;

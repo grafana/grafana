@@ -2,7 +2,8 @@ import React, { forwardRef, PropsWithChildren } from 'react';
 
 import { IconName } from '@grafana/data';
 import { Icon, Tooltip, Box, Stack } from '@grafana/ui';
-import { Unit } from 'app/types';
+// @todo: replace barrel import path
+import { Unit } from 'app/types/index';
 
 type OrgUnitProps = { units?: Unit[]; icon: IconName };
 

@@ -5,7 +5,8 @@ import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { RouteDescriptor } from 'app/core/navigation/types';
-import { ApiKey, OrgRole, ServiceAccountDTO } from 'app/types';
+// @todo: replace barrel import path
+import { ApiKey, OrgRole, ServiceAccountDTO } from 'app/types/index';
 
 import { ServiceAccountPageUnconnected, Props } from './ServiceAccountPage';
 

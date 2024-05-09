@@ -7,7 +7,8 @@ import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Card, FilterInput, Icon, Pagination, Select, TagList, useStyles2, Stack } from '@grafana/ui';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 import { getQueryParamValue } from 'app/core/utils/query';
-import { FolderState, useDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { FolderState, useDispatch } from 'app/types/index';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { useCombinedRuleNamespaces } from './hooks/useCombinedRuleNamespaces';

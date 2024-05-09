@@ -1,4 +1,5 @@
-import { PanelModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { PanelModel } from 'app/features/dashboard/state/index';
 
 import { timelinePanelChangedHandler } from './migrations';
 

@@ -7,7 +7,8 @@ import { config } from '@grafana/runtime';
 import { useStyles2, TabContent, Alert } from '@grafana/ui';
 import { Layout } from '@grafana/ui/src/components/Layout/Layout';
 import { Page } from 'app/core/components/Page/Page';
-import { AppNotificationSeverity } from 'app/types';
+// @todo: replace barrel import path
+import { AppNotificationSeverity } from 'app/types/index';
 
 import { AngularDeprecationPluginNotice } from '../../angularDeprecation/AngularDeprecationPluginNotice';
 import { Loader } from '../components/Loader';

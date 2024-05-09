@@ -9,7 +9,8 @@ import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps
 import { RouteDescriptor } from 'app/core/navigation/types';
 import { configureStore } from 'app/store/configureStore';
 
-import { getCatalogPluginMock, getPluginsStateMock } from '../__mocks__';
+// @todo: replace barrel import path
+import { getCatalogPluginMock, getPluginsStateMock } from '../__mocks__/index';
 import { fetchRemotePlugins } from '../state/actions';
 import { PluginAdminRoutes, CatalogPlugin, ReducerState, RequestStatus } from '../types';
 

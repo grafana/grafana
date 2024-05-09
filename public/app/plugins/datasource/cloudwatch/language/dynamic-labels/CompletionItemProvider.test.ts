@@ -1,7 +1,8 @@
 import { CompletionItemPriority } from '@grafana/experimental';
 import { Monaco, monacoTypes } from '@grafana/ui';
 
-import { afterLabelValue, insideLabelValue } from '../../__mocks__/dynamic-label-test-data';
+// @todo: replace barrel import path
+import { afterLabelValue, insideLabelValue } from '../../__mocks__/dynamic-label-test-data/index';
 import MonacoMock from '../../__mocks__/monarch/Monaco';
 import TextModel from '../../__mocks__/monarch/TextModel';
 

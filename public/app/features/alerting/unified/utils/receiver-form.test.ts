@@ -1,6 +1,7 @@
 import 'core-js/stable/structured-clone';
 
-import { NotifierDTO } from 'app/types';
+// @todo: replace barrel import path
+import { NotifierDTO } from 'app/types/index';
 
 import { Receiver } from '../../../../plugins/datasource/alertmanager/types';
 import { CloudChannelValues, GrafanaChannelValues, ReceiverFormValues } from '../types/receiver-form';

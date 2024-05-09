@@ -5,7 +5,8 @@ import { Subject } from 'rxjs';
 import { SelectableValue, StandardEditorProps } from '@grafana/data';
 import { Field, HorizontalGroup, Icon, InlineField, InlineFieldRow, Select, VerticalGroup } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
-import { HorizontalConstraint, Placement, VerticalConstraint } from 'app/features/canvas';
+// @todo: replace barrel import path
+import { HorizontalConstraint, Placement, VerticalConstraint } from 'app/features/canvas/index';
 
 import { Options } from '../../panelcfg.gen';
 

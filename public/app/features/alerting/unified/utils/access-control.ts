@@ -1,6 +1,7 @@
 import { getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 
 import { GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from './datasource';
 

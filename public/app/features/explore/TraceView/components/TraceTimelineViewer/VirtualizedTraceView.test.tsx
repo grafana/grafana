@@ -16,7 +16,8 @@ import React from 'react';
 
 import traceGenerator from '../demo/trace-generators';
 import transformTraceData from '../model/transform-trace-data';
-import { Trace } from '../types';
+// @todo: replace barrel import path
+import { Trace } from '../types/index';
 import { formatDuration } from '../utils/date';
 
 import SpanTreeOffset from './SpanTreeOffset';

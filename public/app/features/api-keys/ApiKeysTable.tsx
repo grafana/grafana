@@ -4,9 +4,11 @@ import React from 'react';
 import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { Button, DeleteButton, Icon, Stack, Tooltip, useTheme2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 
-import { ApiKey } from '../../types';
+// @todo: replace barrel import path
+import { ApiKey } from '../../types/index';
 
 interface Props {
   apiKeys: ApiKey[];

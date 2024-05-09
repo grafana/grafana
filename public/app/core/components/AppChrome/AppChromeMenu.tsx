@@ -8,7 +8,8 @@ import CSSTransition from 'react-transition-group/CSSTransition';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { KioskMode } from 'app/types';
+// @todo: replace barrel import path
+import { KioskMode } from 'app/types/index';
 
 import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
 import { TOGGLE_BUTTON_ID } from './NavToolbar/NavToolbar';

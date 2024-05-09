@@ -10,7 +10,8 @@ import { Alert, Button, Dropdown, Field, Icon, Menu, MenuItem, Stack, Tooltip, u
 import { Text } from '@grafana/ui/src/components/Text/Text';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { ExpressionDatasourceUID, ExpressionQueryType, expressionTypes } from 'app/features/expressions/types';
-import { useDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { useDispatch } from 'app/types/index';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler';

@@ -29,8 +29,10 @@ import {
   GroupByVariable,
   AdHocFiltersVariable,
 } from '@grafana/scenes';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { DashboardDTO } from 'app/types';
+// @todo: replace barrel import path
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state/index';
+// @todo: replace barrel import path
+import { DashboardDTO } from 'app/types/index';
 
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';

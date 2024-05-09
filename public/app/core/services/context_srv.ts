@@ -3,8 +3,9 @@ import { extend } from 'lodash';
 import { AnalyticsSettings, OrgRole, rangeUtil, WithAccessControlMetadata } from '@grafana/data';
 import { featureEnabled, getBackendSrv } from '@grafana/runtime';
 import { getSessionExpiry } from 'app/core/utils/auth';
-import { AccessControlAction, UserPermission } from 'app/types';
+// @todo: replace barrel import path
 import { CurrentUserInternal } from 'app/types/config';
+import { AccessControlAction, UserPermission } from 'app/types/index';
 
 import config from '../../core/config';
 

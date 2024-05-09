@@ -6,7 +6,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Button, Checkbox, TextArea, useStyles2, Stack } from '@grafana/ui';
-import { DashboardModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { DashboardModel } from 'app/features/dashboard/state/index';
 
 import { GenAIDashboardChangesButton } from '../../GenAI/GenAIDashboardChangesButton';
 import { SaveDashboardData, SaveDashboardOptions } from '../types';

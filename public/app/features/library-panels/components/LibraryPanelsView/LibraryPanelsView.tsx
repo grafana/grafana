@@ -4,7 +4,8 @@ import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
 import { EmptyState, Pagination, Stack, TextLink, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans, t } from 'app/core/internationalization/index';
 
 import { LibraryElementDTO } from '../../types';
 import { LibraryPanelCard } from '../LibraryPanelCard/LibraryPanelCard';

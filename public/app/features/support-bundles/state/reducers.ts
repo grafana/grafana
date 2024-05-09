@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { SupportBundle, SupportBundleCollector, SupportBundlesState } from 'app/types';
+// @todo: replace barrel import path
+import { SupportBundle, SupportBundleCollector, SupportBundlesState } from 'app/types/index';
 
 export const initialState: SupportBundlesState = {
   supportBundles: [],

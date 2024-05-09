@@ -4,7 +4,8 @@ import { useFormContext, Controller } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Field, useStyles2, VirtualizedSelect } from '@grafana/ui';
-import { useDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { useDispatch } from 'app/types/index';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { fetchRulerRulesAction } from '../../state/actions';

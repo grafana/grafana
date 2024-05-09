@@ -15,7 +15,8 @@ import {
 } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction, OrgRole, Role, ServiceAccountDTO } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction, OrgRole, Role, ServiceAccountDTO } from 'app/types/index';
 
 import { OrgRolePicker } from '../admin/OrgRolePicker';
 

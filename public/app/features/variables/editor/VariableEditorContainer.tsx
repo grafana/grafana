@@ -6,7 +6,8 @@ import { locationService } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 import { SettingsPageProps } from 'app/features/dashboard/components/DashboardSettings/types';
 
-import { StoreState, ThunkDispatch } from '../../../types';
+// @todo: replace barrel import path
+import { StoreState, ThunkDispatch } from '../../../types/index';
 import { VariablesUnknownTable } from '../inspect/VariablesUnknownTable';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { getEditorVariables, getVariablesState } from '../state/selectors';

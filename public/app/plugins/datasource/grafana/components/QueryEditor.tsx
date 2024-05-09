@@ -31,9 +31,11 @@ import {
   Stack,
 } from '@grafana/ui';
 import { hasAlphaPanels } from 'app/core/config';
-import * as DFImport from 'app/features/dataframe-import';
+// @todo: replace barrel import path
+import * as DFImport from 'app/features/dataframe-import/index';
 import { getManagedChannelInfo } from 'app/features/live/info';
-import { SearchQuery } from 'app/features/search/service';
+// @todo: replace barrel import path
+import { SearchQuery } from 'app/features/search/service/index';
 
 import { GrafanaDatasource } from '../datasource';
 import { defaultQuery, GrafanaQuery, GrafanaQueryType } from '../types';

@@ -2,11 +2,13 @@ import { DataSourcePlugin, DashboardLoadedEvent } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 
 import { ConfigEditor } from './components/ConfigEditor/ConfigEditor';
-import AzureMonitorQueryEditor from './components/QueryEditor';
+// @todo: replace barrel import path
+import AzureMonitorQueryEditor from './components/QueryEditor/index';
 import Datasource from './datasource';
 import pluginJson from './plugin.json';
 import { trackAzureMonitorDashboardLoaded } from './tracking';
-import { AzureMonitorQuery, AzureDataSourceJsonData, AzureQueryType, ResultFormat } from './types';
+// @todo: replace barrel import path
+import { AzureMonitorQuery, AzureDataSourceJsonData, AzureQueryType, ResultFormat } from './types/index';
 
 export const plugin = new DataSourcePlugin<Datasource, AzureMonitorQuery, AzureDataSourceJsonData>(Datasource)
   .setConfigEditor(ConfigEditor)

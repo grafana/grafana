@@ -6,7 +6,8 @@ import { PluginExtensionTypes, PluginState } from '@grafana/data';
 import { setAngularLoader, setPluginExtensionsHook } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
-import { getMockDataSource, getMockDataSourceMeta, getMockDataSourceSettingsState } from '../__mocks__';
+// @todo: replace barrel import path
+import { getMockDataSource, getMockDataSourceMeta, getMockDataSourceSettingsState } from '../__mocks__/index';
 
 import { missingRightsMessage } from './DataSourceMissingRightsMessage';
 import { readOnlyMessage } from './DataSourceReadOnlyMessage';

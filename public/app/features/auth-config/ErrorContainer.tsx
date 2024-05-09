@@ -2,7 +2,8 @@ import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { Alert } from '@grafana/ui';
-import { StoreState } from 'app/types';
+// @todo: replace barrel import path
+import { StoreState } from 'app/types/index';
 
 import { resetError, resetWarning } from './state/reducers';
 

@@ -1,4 +1,5 @@
-import { AzureMonitorQuery, AzureTracesFilter, ResultFormat } from '../../types';
+// @todo: replace barrel import path
+import { AzureMonitorQuery, AzureTracesFilter, ResultFormat } from '../../types/index';
 
 export function setQueryOperationId(query: AzureMonitorQuery, operationId?: string): AzureMonitorQuery {
   return {

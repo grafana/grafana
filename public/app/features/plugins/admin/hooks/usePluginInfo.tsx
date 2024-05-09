@@ -4,7 +4,8 @@ import React from 'react';
 import { GrafanaTheme2, PluginSignatureType } from '@grafana/data';
 
 import { PageInfoItem } from '../../../../core/components/Page/types';
-import { PluginDisabledBadge } from '../components/Badges';
+// @todo: replace barrel import path
+import { PluginDisabledBadge } from '../components/Badges/index';
 import { PluginDetailsHeaderDependencies } from '../components/PluginDetailsHeaderDependencies';
 import { PluginDetailsHeaderSignature } from '../components/PluginDetailsHeaderSignature';
 import { getLatestCompatibleVersion } from '../helpers';

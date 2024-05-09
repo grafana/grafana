@@ -10,7 +10,8 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import store from 'app/core/store';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
-import { KioskMode } from 'app/types';
+// @todo: replace barrel import path
+import { KioskMode } from 'app/types/index';
 
 import { AppChromeMenu } from './AppChromeMenu';
 import { DOCKED_LOCAL_STORAGE_KEY, DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY } from './AppChromeService';

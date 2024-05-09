@@ -2,7 +2,8 @@ import { DataQuery } from '@grafana/data';
 import store from 'app/core/store';
 
 import { DatasourceSrv } from '../../features/plugins/datasource_srv';
-import { RichHistoryQuery } from '../../types';
+// @todo: replace barrel import path
+import { RichHistoryQuery } from '../../types/index';
 import { backendSrv } from '../services/backend_srv';
 import { RichHistorySearchFilters, RichHistorySettings, SortOrder } from '../utils/richHistoryTypes';
 

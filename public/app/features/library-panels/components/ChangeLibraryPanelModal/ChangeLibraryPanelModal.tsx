@@ -2,7 +2,8 @@ import React from 'react';
 
 import { ConfirmModal } from '@grafana/ui';
 
-import { PanelModel } from '../../../dashboard/state';
+// @todo: replace barrel import path
+import { PanelModel } from '../../../dashboard/state/index';
 import { isPanelModelLibraryPanel } from '../../guard';
 
 export interface ChangeLibraryPanelModalProps {

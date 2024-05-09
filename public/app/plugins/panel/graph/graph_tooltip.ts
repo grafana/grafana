@@ -8,7 +8,8 @@ import {
   DataHoverClearEvent,
 } from '@grafana/data';
 import { appEvents } from 'app/core/core';
-import { CoreEvents } from 'app/types';
+// @todo: replace barrel import path
+import { CoreEvents } from 'app/types/index';
 
 export default function GraphTooltip(this: any, elem: any, dashboard: any, scope: any, getSeriesFn: any) {
   const self = this;

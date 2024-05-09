@@ -1,7 +1,8 @@
 import React from 'react';
 
 import { Button, Stack } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans, t } from 'app/core/internationalization/index';
 
 import { useWizardContext } from '../components/Wizard/wizardContext';
 

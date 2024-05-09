@@ -1,7 +1,8 @@
 import React from 'react';
 
 import { GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
-import { CloudNotifierType, NotifierType } from 'app/types';
+// @todo: replace barrel import path
+import { CloudNotifierType, NotifierType } from 'app/types/index';
 
 import { ControlledField } from '../hooks/useControlledFieldArray';
 

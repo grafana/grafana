@@ -2,8 +2,9 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { PanelModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
+import { PanelModel } from 'app/features/dashboard/state/index';
 
 import * as analytics from '../../Analytics';
 

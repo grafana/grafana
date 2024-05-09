@@ -6,9 +6,11 @@ import { SceneComponentProps, SceneObjectBase, sceneUtils } from '@grafana/scene
 import { Dashboard } from '@grafana/schema';
 import { Alert, Box, Button, CodeEditor, Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { Trans } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans } from 'app/core/internationalization/index';
 import { getPrettyJSON } from 'app/features/inspector/utils/utils';
-import { DashboardDTO, SaveDashboardResponseDTO } from 'app/types';
+// @todo: replace barrel import path
+import { DashboardDTO, SaveDashboardResponseDTO } from 'app/types/index';
 
 import {
   NameAlreadyExistsError,

@@ -2,9 +2,11 @@ import { useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { getMessageFromError } from 'app/core/utils/errors';
-import { AppNotification, AppNotificationSeverity, useDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { AppNotification, AppNotificationSeverity, useDispatch } from 'app/types/index';
 
-import { notifyApp } from '../actions';
+// @todo: replace barrel import path
+import { notifyApp } from '../actions/index';
 
 const defaultSuccessNotification = {
   title: '',

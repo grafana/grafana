@@ -1,6 +1,7 @@
 import { createEntityAdapter, createSlice } from '@reduxjs/toolkit';
 
-import { Invitee } from 'app/types';
+// @todo: replace barrel import path
+import { Invitee } from 'app/types/index';
 
 import { fetchInvitees, revokeInvite } from './actions';
 

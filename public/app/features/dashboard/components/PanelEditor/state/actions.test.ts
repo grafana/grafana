@@ -5,7 +5,8 @@ import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixt
 import { panelModelAndPluginReady, removePanel } from 'app/features/panel/state/reducers';
 
 import { thunkTester } from '../../../../../../test/core/thunk/thunkTester';
-import { PanelModel } from '../../../state';
+// @todo: replace barrel import path
+import { PanelModel } from '../../../state/index';
 
 import { exitPanelEditor, initPanelEditor, skipPanelUpdate } from './actions';
 import { closeEditor, initialState, PanelEditorState } from './reducers';

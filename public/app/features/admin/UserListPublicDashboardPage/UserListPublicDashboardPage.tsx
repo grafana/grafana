@@ -3,7 +3,8 @@ import React from 'react';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { Icon, Stack, Tag, Tooltip } from '@grafana/ui/src';
 import { Page } from 'app/core/components/Page/Page';
-import { Trans, t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans, t } from 'app/core/internationalization/index';
 
 import { useGetActiveUsersQuery } from '../../dashboard/api/publicDashboardApi';
 

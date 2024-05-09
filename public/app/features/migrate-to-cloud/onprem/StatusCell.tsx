@@ -1,9 +1,11 @@
 import React from 'react';
 
 import { CellProps, Text, Stack, Button } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 
-import { MigrateDataResponseItemDto } from '../api';
+// @todo: replace barrel import path
+import { MigrateDataResponseItemDto } from '../api/index';
 
 export function StatusCell(props: CellProps<MigrateDataResponseItemDto>) {
   const { status, error } = props.row.original;
@@ -18,7 +20,6 @@ export function StatusCell(props: CellProps<MigrateDataResponseItemDto>) {
     return (
       <Stack alignItems="center">
         <Text color="error">{t('migrate-to-cloud.resource-status.failed', 'Error')}</Text>
-
         {error && (
           // TODO: trigger a proper modal, probably from the parent, on click
           <Button size="sm" variant="secondary" onClick={() => window.alert(error)}>

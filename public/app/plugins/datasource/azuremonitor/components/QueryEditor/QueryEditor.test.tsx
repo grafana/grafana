@@ -9,7 +9,8 @@ import createMockDatasource from '../../__mocks__/datasource';
 import { invalidNamespaceError } from '../../__mocks__/errors';
 import createMockQuery from '../../__mocks__/query';
 import { selectors } from '../../e2e/selectors';
-import { AzureQueryType } from '../../types';
+// @todo: replace barrel import path
+import { AzureQueryType } from '../../types/index';
 import { selectOptionInTest } from '../../utils/testUtils';
 
 import QueryEditor from './QueryEditor';

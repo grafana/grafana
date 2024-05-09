@@ -3,10 +3,12 @@ import React, { useEffect } from 'react';
 
 import { AppEvents, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Stack } from '@grafana/ui';
-import { notifyApp, hideAppNotification } from 'app/core/actions';
+// @todo: replace barrel import path
+import { notifyApp, hideAppNotification } from 'app/core/actions/index';
 import appEvents from 'app/core/app_events';
 import { selectVisible } from 'app/core/reducers/appNotification';
-import { useSelector, useDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { useSelector, useDispatch } from 'app/types/index';
 
 import {
   createErrorNotification,

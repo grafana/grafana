@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 
-import { Wizard } from '../components/Wizard';
+// @todo: replace barrel import path
+import { Wizard } from '../components/Wizard/index';
 import { Correlation } from '../types';
 import { useCorrelations } from '../useCorrelations';
 

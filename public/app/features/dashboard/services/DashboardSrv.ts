@@ -4,10 +4,12 @@ import { AppEvents } from '@grafana/data';
 import { BackendSrvRequest } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { saveDashboard } from 'app/features/manage-dashboards/state/actions';
-import { DashboardMeta } from 'app/types';
+// @todo: replace barrel import path
+import { DashboardMeta } from 'app/types/index';
 
 import { RemovePanelEvent } from '../../../types/events';
 import { DashboardModel } from '../state/DashboardModel';

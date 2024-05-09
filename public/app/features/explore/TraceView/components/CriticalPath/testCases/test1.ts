@@ -27,6 +27,7 @@
 
 Here +++++ are critical path sections
 */
+// @todo: replace barrel import path
 import { Trace, TraceResponse, transformTraceData } from '../../index';
 
 const testTrace: TraceResponse = {

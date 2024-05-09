@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { EmptyState, TabbedContainer, TabConfig } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 import { SortOrder, RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistory';
 import { RichHistoryQuery } from 'app/types/explore';
 

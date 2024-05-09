@@ -7,13 +7,14 @@ import {
   ColorDimensionConfig,
   ScalarDimensionConfig,
 } from '@grafana/schema';
+// @todo: replace barrel import path
 import {
   getColorDimension,
   getScaledDimension,
   getTextDimension,
   getResourceDimension,
   DimensionSupplier,
-} from 'app/features/dimensions';
+} from 'app/features/dimensions/index';
 
 import { getScalarDimension } from './scalar';
 

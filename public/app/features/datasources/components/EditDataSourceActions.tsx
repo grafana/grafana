@@ -3,9 +3,11 @@ import React from 'react';
 import { config } from '@grafana/runtime';
 import { LinkButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 
-import { useDataSource } from '../state';
+// @todo: replace barrel import path
+import { useDataSource } from '../state/index';
 import { trackCreateDashboardClicked, trackDsConfigClicked, trackExploreClicked } from '../tracking';
 import { constructDataSourceExploreUrl } from '../utils';
 

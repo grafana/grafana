@@ -9,7 +9,8 @@ import {
   ScalarDimensionMode,
   TextDimensionConfig,
 } from '@grafana/schema';
-import { DimensionSupplier } from 'app/features/dimensions';
+// @todo: replace barrel import path
+import { DimensionSupplier } from 'app/features/dimensions/index';
 
 export enum GeometryTypeId {
   Point = 'point',

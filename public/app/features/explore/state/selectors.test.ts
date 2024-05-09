@@ -1,7 +1,8 @@
 import { DataSourceApi, DataSourceJsonData } from '@grafana/data';
 import { DataQuery } from '@grafana/schema/dist/esm/index';
 import { configureStore } from 'app/store/configureStore';
-import { StoreState, ThunkDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { StoreState, ThunkDispatch } from 'app/types/index';
 
 import { createDefaultInitialState } from './helpers';
 import { selectExploreDSMaps } from './selectors';

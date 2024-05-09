@@ -12,7 +12,8 @@ import {
   SceneVariableSet,
 } from '@grafana/scenes';
 import { DataQuery, DataSourceJsonData, VariableHide, VariableType } from '@grafana/schema';
-import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
+// @todo: replace barrel import path
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/index';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 
 import { AdHocFiltersVariableEditor } from './editors/AdHocFiltersVariableEditor';

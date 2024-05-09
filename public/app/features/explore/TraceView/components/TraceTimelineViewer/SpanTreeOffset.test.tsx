@@ -18,7 +18,8 @@ import React from 'react';
 
 import { createTheme } from '@grafana/data';
 
-import { TraceSpan } from '../types';
+// @todo: replace barrel import path
+import { TraceSpan } from '../types/index';
 import spanAncestorIdsSpy from '../utils/span-ancestor-ids';
 
 import SpanTreeOffset, { getStyles, TProps } from './SpanTreeOffset';

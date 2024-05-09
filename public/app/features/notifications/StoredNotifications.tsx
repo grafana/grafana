@@ -5,7 +5,8 @@ import { useEffectOnce } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, Checkbox, EmptyState, useStyles2 } from '@grafana/ui';
 import { StoredNotificationItem } from 'app/core/components/AppNotifications/StoredNotificationItem';
-import { Trans, t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans, t } from 'app/core/internationalization/index';
 import {
   clearAllNotifications,
   clearNotification,
@@ -13,7 +14,8 @@ import {
   selectWarningsAndErrors,
   selectLastReadTimestamp,
 } from 'app/core/reducers/appNotification';
-import { useDispatch, useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { useDispatch, useSelector } from 'app/types/index';
 
 export function StoredNotifications() {
   const dispatch = useDispatch();

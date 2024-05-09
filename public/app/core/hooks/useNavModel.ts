@@ -1,5 +1,6 @@
 import { NavModel } from '@grafana/data';
-import { useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { useSelector } from 'app/types/index';
 
 import { getNavModel } from '../selectors/navModel';
 

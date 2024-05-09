@@ -11,9 +11,11 @@ import { dataSource as expressionDatasource } from 'app/features/expressions/Exp
 import { GroupActionComponents } from 'app/features/query/components/QueryActionComponent';
 import { QueryEditorRows } from 'app/features/query/components/QueryEditorRows';
 import { QueryGroupTopSection } from 'app/features/query/components/QueryGroup';
-import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
+// @todo: replace barrel import path
+import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard/index';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
-import { QueryGroupOptions } from 'app/types';
+// @todo: replace barrel import path
+import { QueryGroupOptions } from 'app/types/index';
 
 import { PanelTimeRange } from '../../scene/PanelTimeRange';
 import { VizPanelManager } from '../VizPanelManager';

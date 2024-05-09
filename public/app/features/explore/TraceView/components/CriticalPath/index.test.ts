@@ -22,6 +22,7 @@ import test7 from './testCases/test7';
 import test8 from './testCases/test8';
 import test9 from './testCases/test9';
 
+// @todo: replace barrel import path
 import TraceCriticalPath from './index';
 
 describe.each([[test1], [test2], [test3], [test4], [test5], [test6], [test7], [test8], [test9]])(

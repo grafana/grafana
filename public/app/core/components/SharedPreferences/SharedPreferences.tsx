@@ -17,8 +17,9 @@ import {
   FeatureBadge,
 } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
-import { t, Trans } from 'app/core/internationalization';
+// @todo: replace barrel import path
 import { LANGUAGES, PSEUDO_LOCALE } from 'app/core/internationalization/constants';
+import { t, Trans } from 'app/core/internationalization/index';
 import { PreferencesService } from 'app/core/services/PreferencesService';
 import { changeTheme } from 'app/core/services/theme';
 

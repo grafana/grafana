@@ -2,7 +2,8 @@ import { Observable, of } from 'rxjs';
 
 import { getDefaultTimeRange, LoadingState, LogsModel } from '@grafana/data';
 
-import { ExplorePanelData } from '../../../types';
+// @todo: replace barrel import path
+import { ExplorePanelData } from '../../../types/index';
 
 type MockProps = {
   logsResult?: Partial<LogsModel>;

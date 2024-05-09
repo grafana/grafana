@@ -40,7 +40,8 @@ import { configureStore } from 'app/store/configureStore';
 import { RichHistoryRemoteStorageDTO } from '../../../../core/history/RichHistoryRemoteStorage';
 import { LokiDatasource } from '../../../../plugins/datasource/loki/datasource';
 import { LokiQuery } from '../../../../plugins/datasource/loki/types';
-import { ExploreQueryParams } from '../../../../types';
+// @todo: replace barrel import path
+import { ExploreQueryParams } from '../../../../types/index';
 import { initialUserState } from '../../../profile/state/reducers';
 import ExplorePage from '../../ExplorePage';
 

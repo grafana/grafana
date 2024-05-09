@@ -1,4 +1,5 @@
-import { AlertRulesState, StoreState } from 'app/types';
+// @todo: replace barrel import path
+import { AlertRulesState, StoreState } from 'app/types/index';
 
 import { getSearchQuery, getAlertRuleItems } from './selectors';
 

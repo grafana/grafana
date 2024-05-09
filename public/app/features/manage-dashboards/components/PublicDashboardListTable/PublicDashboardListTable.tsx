@@ -20,7 +20,8 @@ import {
   TextLink,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { Trans, t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans, t } from 'app/core/internationalization/index';
 import { contextSrv } from 'app/core/services/context_srv';
 import {
   useListPublicDashboardsQuery,
@@ -30,7 +31,8 @@ import {
   generatePublicDashboardConfigUrl,
   generatePublicDashboardUrl,
 } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 
 import { PublicDashboardListResponse } from '../../types';
 

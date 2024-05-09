@@ -1,6 +1,7 @@
 import { UrlQueryValue } from '@grafana/data';
 
-import { ThunkResult } from '../../../types';
+// @todo: replace barrel import path
+import { ThunkResult } from '../../../types/index';
 import { variableAdapters } from '../adapters';
 import { setOptionFromUrl } from '../state/actions';
 import { toKeyedAction } from '../state/keyedVariablesReducer';

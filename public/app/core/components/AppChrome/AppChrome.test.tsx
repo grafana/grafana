@@ -8,7 +8,8 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 import { DataFrame, DataFrameView, FieldType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
-import { DashboardQueryResult, getGrafanaSearcher, QueryResponse } from 'app/features/search/service';
+// @todo: replace barrel import path
+import { DashboardQueryResult, getGrafanaSearcher, QueryResponse } from 'app/features/search/service/index';
 
 import { Page } from '../Page/Page';
 

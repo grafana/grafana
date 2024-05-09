@@ -102,9 +102,10 @@ export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZ
       const maxHeightForValues = height / 2;
 
       return (
+        //Subtract 3 for the "..." added to the end.
         maxHeightForValues /
           (Math.sin(((rotationAngle >= 0 ? rotationAngle : rotationAngle * -1) * Math.PI) / 180) * textSize) -
-        3 //Subtract 3 for the "..." added to the end.
+        3
       );
     } else {
       return options.xTickLabelMaxLength;

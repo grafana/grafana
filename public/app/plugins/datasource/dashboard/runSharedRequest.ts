@@ -11,7 +11,8 @@ import {
   DataTopic,
 } from '@grafana/data';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { PanelModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { PanelModel } from 'app/features/dashboard/state/index';
 import { QueryRunnerOptions } from 'app/features/query/state/PanelQueryRunner';
 
 import { DashboardQuery, SHARED_DASHBOARD_QUERY } from './types';

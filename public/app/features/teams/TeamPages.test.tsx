@@ -6,7 +6,8 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { createTheme } from '@grafana/data';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 
-import { Team } from '../../types';
+// @todo: replace barrel import path
+import { Team } from '../../types/index';
 
 import { Props, TeamPages } from './TeamPages';
 import { getMockTeam } from './__mocks__/teamMocks';

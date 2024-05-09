@@ -23,7 +23,8 @@ import {
 } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
 import { FacetedData, FacetSeries } from '@grafana/ui/src/components/uPlot/types';
-import { findFieldIndex, getScaledDimensionForField } from 'app/features/dimensions';
+// @todo: replace barrel import path
+import { findFieldIndex, getScaledDimensionForField } from 'app/features/dimensions/index';
 
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 

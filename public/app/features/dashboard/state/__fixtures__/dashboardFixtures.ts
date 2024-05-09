@@ -8,7 +8,8 @@ import {
   VariableModel,
 } from '@grafana/schema';
 import { GetVariables } from 'app/features/variables/state/selectors';
-import { DashboardMeta } from 'app/types';
+// @todo: replace barrel import path
+import { DashboardMeta } from 'app/types/index';
 
 import { DashboardModel } from '../DashboardModel';
 

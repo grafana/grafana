@@ -4,7 +4,8 @@ import { useEffectOnce } from 'react-use';
 import { RawTimeRange, TimeRange } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { ClipboardButton, Field, Modal, Switch, TextArea } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t, Trans } from 'app/core/internationalization/index';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { ThemePicker } from './ThemePicker';

@@ -8,7 +8,8 @@ import { usePluginLinkExtensions } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
-import { ExplorePanelData, ExploreState } from 'app/types';
+// @todo: replace barrel import path
+import { ExplorePanelData, ExploreState } from 'app/types/index';
 
 import { createEmptyQueryResponse } from '../state/utils';
 

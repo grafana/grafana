@@ -1,4 +1,5 @@
-﻿import { ApiKey, OrgRole } from 'app/types';
+// @todo: replace barrel import path
+import { ApiKey, OrgRole } from 'app/types/index';
 
 export const getMultipleMockKeys = (numberOfKeys: number): ApiKey[] => {
   const keys: ApiKey[] = [];

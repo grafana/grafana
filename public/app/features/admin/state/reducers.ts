@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+// @todo: replace barrel import path
 import {
   LdapConnectionInfo,
   LdapError,
@@ -16,7 +17,7 @@ import {
   UserListAnonymousDevicesState,
   UserAnonymousDeviceDTO,
   AnonUserFilter,
-} from 'app/types';
+} from 'app/types/index';
 
 const initialLdapState: LdapState = {
   connectionInfo: [],

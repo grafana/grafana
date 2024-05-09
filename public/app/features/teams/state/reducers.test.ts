@@ -1,5 +1,6 @@
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
-import { TeamsState, TeamState } from '../../../types';
+// @todo: replace barrel import path
+import { TeamsState, TeamState } from '../../../types/index';
 import { getMockTeam, getMockTeamGroups, getMockTeamMember } from '../__mocks__/teamMocks';
 
 import {

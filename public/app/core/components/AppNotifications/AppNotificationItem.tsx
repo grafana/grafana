@@ -4,7 +4,8 @@ import { useEffectOnce } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, useStyles2 } from '@grafana/ui';
-import { AppNotification, timeoutMap } from 'app/types';
+// @todo: replace barrel import path
+import { AppNotification, timeoutMap } from 'app/types/index';
 
 interface Props {
   appNotification: AppNotification;

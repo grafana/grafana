@@ -2,7 +2,8 @@ import { DataFrame, DataFrameView, FieldType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { ContextSrv, contextSrv } from 'app/core/services/context_srv';
 import impressionSrv from 'app/core/services/impression_srv';
-import { DashboardQueryResult, getGrafanaSearcher, QueryResponse } from 'app/features/search/service';
+// @todo: replace barrel import path
+import { DashboardQueryResult, getGrafanaSearcher, QueryResponse } from 'app/features/search/service/index';
 
 import { getRecentDashboardActions, getSearchResultActions } from './dashboardActions';
 

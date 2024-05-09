@@ -1,7 +1,8 @@
 import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceConsoleOutput';
 import * as api from '../../../../features/manage-dashboards/state/actions';
 import { DashboardSearchHit } from '../../../../features/search/types';
-import { PermissionLevelString } from '../../../../types';
+// @todo: replace barrel import path
+import { PermissionLevelString } from '../../../../types/index';
 
 import { ALL_FOLDER, GENERAL_FOLDER } from './ReadonlyFolderPicker';
 import { getFolderAsOption, getFoldersAsOptions } from './api';

@@ -1,5 +1,6 @@
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
-import { OrganizationState, OrgRole } from '../../../types';
+// @todo: replace barrel import path
+import { OrganizationState, OrgRole } from '../../../types/index';
 
 import {
   initialState,

@@ -6,7 +6,8 @@ import { isFetchError } from '@grafana/runtime';
 
 import { useAppNotification } from '../../../../../../../core/copy/appNotification';
 import { Receiver } from '../../../../../../../plugins/datasource/alertmanager/types';
-import { NotifierDTO } from '../../../../../../../types';
+// @todo: replace barrel import path
+import { NotifierDTO } from '../../../../../../../types/index';
 import { ONCALL_INTEGRATION_V2_FEATURE, onCallApi } from '../../../../api/onCallApi';
 import { usePluginBridge } from '../../../../hooks/usePluginBridge';
 import { SupportedPlugin } from '../../../../types/pluginBridges';

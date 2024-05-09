@@ -46,7 +46,8 @@ import config, { updateConfig } from 'app/core/config';
 import { arrayMove } from 'app/core/utils/arrayMove';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
-import getDefaultMonacoLanguages from '../lib/monaco-languages';
+// @todo: replace barrel import path
+import getDefaultMonacoLanguages from '../lib/monaco-languages/index';
 
 import { AppWrapper } from './AppWrapper';
 import appEvents from './core/app_events';
@@ -55,7 +56,8 @@ import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/componen
 import { PluginPage } from './core/components/Page/PluginPage';
 import { GrafanaContextType, useReturnToPreviousInternal } from './core/context/GrafanaContext';
 import { initIconCache } from './core/icons/iconBundle';
-import { initializeI18n } from './core/internationalization';
+// @todo: replace barrel import path
+import { initializeI18n } from './core/internationalization/index';
 import { setMonacoEnv } from './core/monacoEnv';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
 import { NewFrontendAssetsChecker } from './core/services/NewFrontendAssetsChecker';
@@ -73,10 +75,12 @@ import { KeybindingSrv } from './core/services/keybindingSrv';
 import { startMeasure, stopMeasure } from './core/utils/metrics';
 import { initDevFeatures } from './dev';
 import { initAlerting } from './features/alerting/unified/initAlerting';
-import { initAuthConfig } from './features/auth-config';
+// @todo: replace barrel import path
+import { initAuthConfig } from './features/auth-config/index';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { EmbeddedDashboardLazy } from './features/dashboard-scene/embedding/EmbeddedDashboardLazy';
-import { initGrafanaLive } from './features/live';
+// @todo: replace barrel import path
+import { initGrafanaLive } from './features/live/index';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { DatasourceSrv } from './features/plugins/datasource_srv';

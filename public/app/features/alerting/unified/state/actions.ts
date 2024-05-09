@@ -10,7 +10,8 @@ import {
   Receiver,
   TestReceiversAlert,
 } from 'app/plugins/datasource/alertmanager/types';
-import { FolderDTO, NotifierDTO, StoreState, ThunkResult } from 'app/types';
+// @todo: replace barrel import path
+import { FolderDTO, NotifierDTO, StoreState, ThunkResult } from 'app/types/index';
 import {
   CombinedRuleGroup,
   CombinedRuleNamespace,

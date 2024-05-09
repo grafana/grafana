@@ -2,7 +2,8 @@ import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { RadioButtonGroup, Field } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 
 interface Props {
   selectedTheme: string;

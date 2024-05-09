@@ -4,7 +4,8 @@ import { useLocation } from 'react-router-dom';
 import { GrafanaPlugin, NavModelItem, PluginIncludeType, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 
 import { usePluginConfig } from '../hooks/usePluginConfig';
 import { CatalogPlugin, PluginTabIds, PluginTabLabels } from '../types';

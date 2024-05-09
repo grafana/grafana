@@ -6,9 +6,11 @@ import { config } from '@grafana/runtime';
 import { HorizontalGroup, Icon, useStyles2, VerticalGroup } from '@grafana/ui';
 import configCore from 'app/core/config';
 
-import { GetStartedWithPlugin } from '../components/GetStartedWithPlugin';
-import { InstallControlsButton } from '../components/InstallControls';
+// @todo: replace barrel import path
+import { GetStartedWithPlugin } from '../components/GetStartedWithPlugin/index';
+// @todo: replace barrel import path
 import { ExternallyManagedButton } from '../components/InstallControls/ExternallyManagedButton';
+import { InstallControlsButton } from '../components/InstallControls/index';
 import { getLatestCompatibleVersion, hasInstallControlWarning, isInstallControlsEnabled } from '../helpers';
 import { useIsRemotePluginsAvailable } from '../state/hooks';
 import { CatalogPlugin, PluginStatus } from '../types';

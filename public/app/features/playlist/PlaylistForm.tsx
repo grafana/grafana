@@ -6,9 +6,11 @@ import { Button, Field, FieldSet, Input, LinkButton, Stack } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
-import { Trans, t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans, t } from 'app/core/internationalization/index';
 
-import { getGrafanaSearcher } from '../search/service';
+// @todo: replace barrel import path
+import { getGrafanaSearcher } from '../search/service/index';
 
 import { PlaylistTable } from './PlaylistTable';
 import { Playlist } from './types';

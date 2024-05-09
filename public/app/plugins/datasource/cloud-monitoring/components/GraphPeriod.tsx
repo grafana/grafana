@@ -6,6 +6,7 @@ import { HorizontalGroup, Switch } from '@grafana/ui';
 
 import { GRAPH_PERIODS } from '../constants';
 
+// @todo: replace barrel import path
 import { PeriodSelect } from './index';
 
 export interface Props {

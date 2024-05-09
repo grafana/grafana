@@ -1,7 +1,8 @@
 import { SerializedError } from '@reduxjs/toolkit';
 import { useEffect, useMemo } from 'react';
 
-import { useDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { useDispatch } from 'app/types/index';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { fetchPromRulesAction, fetchRulerRulesAction } from '../state/actions';

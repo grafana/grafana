@@ -7,7 +7,8 @@ import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { InspectTab } from 'app/features/inspector/types';
 import * as libAPI from 'app/features/library-panels/state/api';
-import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
+// @todo: replace barrel import path
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/index';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 
 import { DashboardGridItem } from '../scene/DashboardGridItem';

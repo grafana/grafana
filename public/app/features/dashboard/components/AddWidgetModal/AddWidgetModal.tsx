@@ -7,7 +7,8 @@ import { CustomScrollbar, Icon, Input, Modal, useStyles2 } from '@grafana/ui';
 import { onCreateNewWidgetPanel } from 'app/features/dashboard/utils/dashboard';
 import { VizTypePickerPlugin } from 'app/features/panel/components/VizTypePicker/VizTypePickerPlugin';
 import { filterPluginList, getWidgetPluginMeta } from 'app/features/panel/state/util';
-import { useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { useSelector } from 'app/types/index';
 
 export const AddWidgetModal = () => {
   const styles = useStyles2(getStyles);

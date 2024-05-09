@@ -8,7 +8,8 @@ import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { UpgradeBox, UpgradeContent, UpgradeContentProps } from 'app/core/components/Upgrade/UpgradeBox';
 import { highlightTrial } from 'app/features/admin/utils';
 
-import { StoreState, TeamGroup } from '../../types';
+// @todo: replace barrel import path
+import { StoreState, TeamGroup } from '../../types/index';
 
 import { addTeamGroup, loadTeamGroups, removeTeamGroup } from './state/actions';
 import { getTeamGroups } from './state/selectors';

@@ -1,6 +1,7 @@
 import { AnnotationEvent, AnnotationQuery, getDefaultTimeRange } from '@grafana/data';
 import { Dashboard } from '@grafana/schema';
-import { DashboardModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { DashboardModel } from 'app/features/dashboard/state/index';
 
 import { SnapshotWorker } from './SnapshotWorker';
 import { DashboardQueryRunnerOptions } from './types';

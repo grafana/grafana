@@ -4,7 +4,8 @@ import { DataTransformerConfig } from '@grafana/schema/dist/esm/raw/dashboard/x/
 import { backendSrv } from 'app/core/services/backend_srv';
 import { setDashboardToFetchFromLocalStorage } from 'app/features/dashboard/state/initDashboard';
 import { buildNewDashboardSaveModel } from 'app/features/dashboard-scene/serialization/buildNewDashboardSaveModel';
-import { DashboardDTO, ExplorePanelData } from 'app/types';
+// @todo: replace barrel import path
+import { DashboardDTO, ExplorePanelData } from 'app/types/index';
 
 export enum AddToDashboardError {
   FETCH_DASHBOARD = 'fetch-dashboard',

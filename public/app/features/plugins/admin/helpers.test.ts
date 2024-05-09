@@ -1,7 +1,8 @@
 import { PluginSignatureStatus, PluginSignatureType, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { getLocalPluginMock, getRemotePluginMock, getCatalogPluginMock } from './__mocks__';
+// @todo: replace barrel import path
+import { getLocalPluginMock, getRemotePluginMock, getCatalogPluginMock } from './__mocks__/index';
 import {
   mapToCatalogPlugin,
   mapRemoteToCatalog,

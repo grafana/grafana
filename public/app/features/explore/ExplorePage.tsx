@@ -7,10 +7,12 @@ import { ErrorBoundaryAlert, useStyles2, useTheme2 } from '@grafana/ui';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useNavModel } from 'app/core/hooks/useNavModel';
-import { Trans } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans } from 'app/core/internationalization/index';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { useSelector } from 'app/types';
+// @todo: replace barrel import path
 import { ExploreQueryParams } from 'app/types/explore';
+import { useSelector } from 'app/types/index';
 
 import { CorrelationEditorModeBar } from './CorrelationEditorModeBar';
 import { ExploreActions } from './ExploreActions';
@@ -21,7 +23,8 @@ import RichHistoryContainer from './RichHistory/RichHistoryContainer';
 import { useExplorePageTitle } from './hooks/useExplorePageTitle';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useSplitSizeUpdater } from './hooks/useSplitSizeUpdater';
-import { useStateSync } from './hooks/useStateSync';
+// @todo: replace barrel import path
+import { useStateSync } from './hooks/useStateSync/index';
 import { useTimeSrvFix } from './hooks/useTimeSrvFix';
 import { isSplit, selectCorrelationDetails, selectPanesEntries } from './state/selectors';
 

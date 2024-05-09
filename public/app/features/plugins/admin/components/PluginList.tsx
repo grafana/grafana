@@ -3,7 +3,8 @@ import { useLocation } from 'react-router-dom';
 
 import { config } from '@grafana/runtime';
 import { EmptyState, Grid } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 
 import { CatalogPlugin, PluginListDisplayMode } from '../types';
 

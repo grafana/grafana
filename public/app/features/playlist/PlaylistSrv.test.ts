@@ -5,7 +5,8 @@ import configureMockStore from 'redux-mock-store';
 import { locationService } from '@grafana/runtime';
 import { setStore } from 'app/store/store';
 
-import { DashboardQueryResult } from '../search/service';
+// @todo: replace barrel import path
+import { DashboardQueryResult } from '../search/service/index';
 
 import { PlaylistSrv } from './PlaylistSrv';
 import { Playlist, PlaylistItem } from './types';

@@ -1,5 +1,6 @@
 import { DataFrame, DataFrameView, FieldType } from '@grafana/data';
-import { DashboardQueryResult, getGrafanaSearcher, QueryResponse } from 'app/features/search/service';
+// @todo: replace barrel import path
+import { DashboardQueryResult, getGrafanaSearcher, QueryResponse } from 'app/features/search/service/index';
 
 import { listDashboards } from './services';
 

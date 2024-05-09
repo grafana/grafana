@@ -4,9 +4,11 @@ import { AppPluginMeta, DataSourceSettings, PluginMetaInfo, PluginType } from '@
 import { DataSourceSrv, FetchError } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { ThunkResult, ThunkDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { ThunkResult, ThunkDispatch } from 'app/types/index';
 
-import { getMockDataSource } from '../__mocks__';
+// @todo: replace barrel import path
+import { getMockDataSource } from '../__mocks__/index';
 import * as api from '../api';
 import { DATASOURCES_ROUTES } from '../constants';
 import { trackDataSourceCreated, trackDataSourceTested } from '../tracking';

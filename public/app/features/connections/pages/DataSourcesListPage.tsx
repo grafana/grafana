@@ -3,8 +3,10 @@ import * as React from 'react';
 import { Page } from 'app/core/components/Page/Page';
 import { DataSourceAddButton } from 'app/features/datasources/components/DataSourceAddButton';
 import { DataSourcesList } from 'app/features/datasources/components/DataSourcesList';
-import { getDataSourcesCount } from 'app/features/datasources/state';
-import { StoreState, useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { getDataSourcesCount } from 'app/features/datasources/state/index';
+// @todo: replace barrel import path
+import { StoreState, useSelector } from 'app/types/index';
 
 export function DataSourcesListPage() {
   const dataSourcesCount = useSelector(({ dataSources }: StoreState) => getDataSourcesCount(dataSources));

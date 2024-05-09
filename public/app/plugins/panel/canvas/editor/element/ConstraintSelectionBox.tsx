@@ -3,7 +3,8 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
-import { Constraint, HorizontalConstraint, VerticalConstraint } from 'app/features/canvas';
+// @todo: replace barrel import path
+import { Constraint, HorizontalConstraint, VerticalConstraint } from 'app/features/canvas/index';
 
 interface Props {
   onVerticalConstraintChange: (v: VerticalConstraint) => void;

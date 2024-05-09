@@ -7,12 +7,14 @@ import { DataSourceApi } from '@grafana/data';
 import { PromOptions, PrometheusDatasource } from '@grafana/prometheus';
 import { setDataSourceSrv } from '@grafana/runtime';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state/index';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { toggleOption } from 'app/features/variables/pickers/OptionsPicker/reducer';
 import { toKeyedAction } from 'app/features/variables/state/keyedVariablesReducer';
 import { configureStore } from 'app/store/configureStore';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { PanelAlertTabContent } from './PanelAlertTabContent';

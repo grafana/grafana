@@ -1,7 +1,8 @@
 import { SelectableValue } from '@grafana/data';
 
 import { getFolderById, searchFolders } from '../../../../features/manage-dashboards/state/actions';
-import { FolderInfo, PermissionLevelString } from '../../../../types';
+// @todo: replace barrel import path
+import { FolderInfo, PermissionLevelString } from '../../../../types/index';
 
 import { PermissionLevel } from './types';
 

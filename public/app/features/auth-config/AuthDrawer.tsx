@@ -5,7 +5,8 @@ import { connect, ConnectedProps } from 'react-redux';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Drawer, Text, TextLink, Switch, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { StoreState } from 'app/types';
+// @todo: replace barrel import path
+import { StoreState } from 'app/types/index';
 
 import { loadSettings, saveSettings } from './state/actions';
 

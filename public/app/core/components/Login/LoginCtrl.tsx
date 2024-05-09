@@ -2,7 +2,8 @@ import React, { PureComponent } from 'react';
 
 import { FetchError, getBackendSrv, isFetchError } from '@grafana/runtime';
 import config from 'app/core/config';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 
 import { LoginDTO } from './types';
 

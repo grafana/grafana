@@ -7,9 +7,11 @@ import { Input } from '@grafana/ui';
 
 import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
-import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery, ResultFormat } from '../../types';
+// @todo: replace barrel import path
+import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery, ResultFormat } from '../../types/index';
 import AdvancedResourcePicker from '../LogsQueryEditor/AdvancedResourcePicker';
-import ResourceField from '../ResourceField';
+// @todo: replace barrel import path
+import ResourceField from '../ResourceField/index';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
 import { parseResourceDetails } from '../ResourcePicker/utils';
 import { Field } from '../shared/Field';

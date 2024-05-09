@@ -1,6 +1,8 @@
 import { getBackendSrv } from '@grafana/runtime';
-import { updateConfigurationSubtitle } from 'app/core/actions';
-import { ThunkResult } from 'app/types';
+// @todo: replace barrel import path
+import { updateConfigurationSubtitle } from 'app/core/actions/index';
+// @todo: replace barrel import path
+import { ThunkResult } from 'app/types/index';
 
 import { organizationLoaded, userOrganizationsLoaded } from './reducers';
 

@@ -4,9 +4,10 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from 'app/core/config';
-import { DimensionContext } from 'app/features/dimensions';
+// @todo: replace barrel import path
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
+import { DimensionContext } from 'app/features/dimensions/index';
 import { getDataLinks } from 'app/plugins/panel/canvas/utils';
 
 import {

@@ -7,7 +7,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Badge, Button, Field, Input, Label, LinkButton, Modal, useStyles2, Stack } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
-import { useDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { useDispatch } from 'app/types/index';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 

@@ -8,7 +8,8 @@ import { Alert, Button, Field, Modal, RadioButtonGroup } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { contextSrv } from 'app/core/services/context_srv';
 import { removeDashboardToFetchFromLocalStorage } from 'app/features/dashboard/state/initDashboard';
-import { AccessControlAction, useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction, useSelector } from 'app/types/index';
 
 import { getExploreItemSelector } from '../../state/selectors';
 

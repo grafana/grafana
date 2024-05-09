@@ -1,6 +1,7 @@
 import { reducerTester } from 'test/core/redux/reducerTester';
 
-import { LdapState, LdapUser, UserAdminState, UserDTO, UserListAdminState } from 'app/types';
+// @todo: replace barrel import path
+import { LdapState, LdapUser, UserAdminState, UserDTO, UserListAdminState } from 'app/types/index';
 
 import {
   clearUserMappingInfoAction,

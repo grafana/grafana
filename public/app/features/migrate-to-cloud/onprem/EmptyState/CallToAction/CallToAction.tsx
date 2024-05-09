@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 
 import { Box, Button, Text } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans } from 'app/core/internationalization/index';
 
-import { useCreateMigrationMutation } from '../../../api';
+// @todo: replace barrel import path
+import { useCreateMigrationMutation } from '../../../api/index';
 
 import { ConnectModal } from './ConnectModal';
 

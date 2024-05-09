@@ -19,7 +19,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { withTheme2, stylesFactory } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
-import { TNil } from '../../types';
+// @todo: replace barrel import path
+import { TNil } from '../../types/index';
 import { getRgbColorByKey } from '../../utils/color-generator';
 
 import renderIntoCanvas from './render-into-canvas';

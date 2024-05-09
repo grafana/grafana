@@ -1,7 +1,8 @@
 import { useEffect, useMemo } from 'react';
 
 import { PluginError, PluginType } from '@grafana/data';
-import { useDispatch, useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { useDispatch, useSelector } from 'app/types/index';
 
 import { sortPlugins, Sorters } from '../helpers';
 import { CatalogPlugin, PluginListDisplayMode } from '../types';

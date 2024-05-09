@@ -3,7 +3,8 @@ import { setupServer } from 'msw/node';
 
 import { GrafanaAlertingConfigurationStatusResponse } from 'app/features/alerting/unified/api/alertmanagerApi';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 
 import { grafanaAlertingConfigurationStatusHandler } from '../../../mocks/alertmanagerApi';
 

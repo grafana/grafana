@@ -6,7 +6,8 @@ import { TimeRangePickerProps, TimeRangePicker } from '@grafana/ui';
 import { t } from '@grafana/ui/src/utils/i18n';
 import appEvents from 'app/core/app_events';
 
-import { LocalStorageValueProvider } from '../LocalStorageValueProvider';
+// @todo: replace barrel import path
+import { LocalStorageValueProvider } from '../LocalStorageValueProvider/index';
 
 const LOCAL_STORAGE_KEY = 'grafana.dashboard.timepicker.history';
 

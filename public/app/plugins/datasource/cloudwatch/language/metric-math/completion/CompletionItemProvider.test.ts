@@ -1,7 +1,8 @@
 import { Monaco, monacoTypes } from '@grafana/ui';
 
 import { setupMockedTemplateService } from '../../../__mocks__/CloudWatchDataSource';
-import * as MetricMathTestData from '../../../__mocks__/metric-math-test-data';
+// @todo: replace barrel import path
+import * as MetricMathTestData from '../../../__mocks__/metric-math-test-data/index';
 import MonacoMock from '../../../__mocks__/monarch/Monaco';
 import TextModel from '../../../__mocks__/monarch/TextModel';
 import { ResourcesAPI } from '../../../resources/ResourcesAPI';

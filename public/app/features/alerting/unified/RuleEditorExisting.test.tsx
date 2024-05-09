@@ -12,7 +12,8 @@ import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
 import { searchFolders } from '../../../../app/features/manage-dashboards/state/actions';
 import { backendSrv } from '../../../core/services/backend_srv';
-import { AccessControlAction } from '../../../types';
+// @todo: replace barrel import path
+import { AccessControlAction } from '../../../types/index';
 
 import RuleEditor from './RuleEditor';
 import { discoverFeatures } from './api/buildInfo';

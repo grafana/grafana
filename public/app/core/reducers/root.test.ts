@@ -1,6 +1,7 @@
 import { reducerTester } from '../../../test/core/redux/reducerTester';
 import { initialTeamsState, teamsLoaded } from '../../features/teams/state/reducers';
-import { Team } from '../../types';
+// @todo: replace barrel import path
+import { Team } from '../../types/index';
 import { StoreState } from '../../types/store';
 import { cleanUpAction } from '../actions/cleanUp';
 

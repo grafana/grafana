@@ -4,7 +4,8 @@ import React from 'react';
 import { ElasticDatasource } from '../../datasource';
 import { ElasticsearchQuery } from '../../types';
 
-import { QueryEditor } from '.';
+// @todo: replace barrel import path
+import { QueryEditor } from './index';
 
 const noop = () => void 0;
 const datasourceMock = {

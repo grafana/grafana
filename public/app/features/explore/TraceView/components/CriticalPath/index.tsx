@@ -14,7 +14,8 @@
 
 import memoizeOne from 'memoize-one';
 
-import { CriticalPathSection, Trace, TraceSpan } from '../types';
+// @todo: replace barrel import path
+import { CriticalPathSection, Trace, TraceSpan } from '../types/index';
 
 import findLastFinishingChildSpan from './utils/findLastFinishingChildSpan';
 import getChildOfSpans from './utils/getChildOfSpans';

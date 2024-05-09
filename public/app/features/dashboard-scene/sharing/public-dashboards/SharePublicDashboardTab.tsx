@@ -1,7 +1,8 @@
 import React from 'react';
 
 import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 import { useGetPublicDashboardQuery } from 'app/features/dashboard/api/publicDashboardApi';
 import { Loader } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboard';
 import { publicDashboardPersisted } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';

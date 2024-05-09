@@ -1,8 +1,10 @@
 import { thunkTester } from 'test/core/thunk/thunkTester';
 
 import { BackendSrv } from '@grafana/runtime';
-import { updateConfigurationSubtitle } from 'app/core/actions';
-import { OrgRole } from 'app/types';
+// @todo: replace barrel import path
+import { updateConfigurationSubtitle } from 'app/core/actions/index';
+// @todo: replace barrel import path
+import { OrgRole } from 'app/types/index';
 
 import { updateOrganization, setUserOrganization, getUserOrganizations } from './actions';
 

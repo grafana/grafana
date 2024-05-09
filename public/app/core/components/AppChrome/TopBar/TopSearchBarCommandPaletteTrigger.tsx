@@ -6,7 +6,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { getInputStyles, Icon, Text, ToolbarButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { focusCss } from '@grafana/ui/src/themes/mixins';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 import { getModKey } from 'app/core/utils/browser';
 
 export function TopSearchBarCommandPaletteTrigger() {

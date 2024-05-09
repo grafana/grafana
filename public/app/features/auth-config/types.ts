@@ -2,7 +2,8 @@ import { ReactElement } from 'react';
 import { Validate } from 'react-hook-form';
 
 import { IconName, SelectableValue } from '@grafana/data';
-import { Settings } from 'app/types';
+// @todo: replace barrel import path
+import { Settings } from 'app/types/index';
 export interface AuthProviderInfo {
   id: string;
   type: string;

@@ -3,7 +3,8 @@ import { chain } from 'lodash';
 import { stringToJsRegex } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
-import { ThunkResult } from '../../../types';
+// @todo: replace barrel import path
+import { ThunkResult } from '../../../types/index';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { changeVariableEditorExtended } from '../editor/reducer';
 import { validateVariableSelectionState } from '../state/actions';

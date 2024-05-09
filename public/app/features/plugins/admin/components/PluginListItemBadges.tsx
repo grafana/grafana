@@ -5,6 +5,7 @@ import { HorizontalGroup, PluginSignatureBadge } from '@grafana/ui';
 
 import { CatalogPlugin } from '../types';
 
+// @todo: replace barrel import path
 import {
   PluginEnterpriseBadge,
   PluginDisabledBadge,
@@ -12,7 +13,7 @@ import {
   PluginUpdateAvailableBadge,
   PluginAngularBadge,
   PluginDeprecatedBadge,
-} from './Badges';
+} from './Badges/index';
 
 type PluginBadgeType = {
   plugin: CatalogPlugin;

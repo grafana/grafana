@@ -24,7 +24,8 @@ import {
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { ActiveTab as ContactPointsActiveTabs } from 'app/features/alerting/unified/components/contact-points/ContactPoints';
 import { AlertManagerCortexConfig, TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
-import { useDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { useDispatch } from 'app/types/index';
 
 import { AppChromeUpdate } from '../../../../../core/components/AppChrome/AppChromeUpdate';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';

@@ -1,10 +1,12 @@
 import React from 'react';
 
 import { SceneComponentProps, SceneObjectBase, SceneObjectRef, VizPanel } from '@grafana/scenes';
-import { t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
 import { ShareLibraryPanel } from 'app/features/dashboard/components/ShareModal/ShareLibraryPanel';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state/index';
 
 import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { gridItemToPanel, transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';

@@ -3,8 +3,10 @@ import React from 'react';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { locationService } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
-import { DashboardModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { Trans } from 'app/core/internationalization/index';
+// @todo: replace barrel import path
+import { DashboardModel } from 'app/features/dashboard/state/index';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 export const ShareButton = ({ dashboard }: { dashboard: DashboardModel }) => {

@@ -4,7 +4,8 @@ import { useAsyncFn } from 'react-use';
 import { SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { AsyncSelect } from '@grafana/ui';
-import { Organization, UserOrg } from 'app/types';
+// @todo: replace barrel import path
+import { Organization, UserOrg } from 'app/types/index';
 
 export type OrgSelectItem = SelectableValue<Organization>;
 

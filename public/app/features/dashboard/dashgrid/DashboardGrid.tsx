@@ -10,10 +10,13 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardPanelsChangedEvent } from 'app/types/events';
 
-import { AddLibraryPanelWidget } from '../components/AddLibraryPanelWidget';
-import { DashboardRow } from '../components/DashboardRow';
-import { DashboardModel, PanelModel } from '../state';
+// @todo: replace barrel import path
+import { AddLibraryPanelWidget } from '../components/AddLibraryPanelWidget/index';
+// @todo: replace barrel import path
+import { DashboardRow } from '../components/DashboardRow/index';
+// @todo: replace barrel import path
 import { GridPos } from '../state/PanelModel';
+import { DashboardModel, PanelModel } from '../state/index';
 
 import DashboardEmpty from './DashboardEmpty';
 import { DashboardPanel } from './DashboardPanel';

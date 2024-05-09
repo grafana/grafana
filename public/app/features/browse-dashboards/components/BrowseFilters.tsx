@@ -1,7 +1,8 @@
 import React from 'react';
 
 import { ActionRow } from 'app/features/search/page/components/ActionRow';
-import { getGrafanaSearcher } from 'app/features/search/service';
+// @todo: replace barrel import path
+import { getGrafanaSearcher } from 'app/features/search/service/index';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 
 export function BrowseFilters() {

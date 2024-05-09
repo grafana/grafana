@@ -18,7 +18,8 @@ import React from 'react';
 
 import { DURATION, NONE, TAG } from '@grafana/o11y-ds-frontend';
 
-import { SpanLinkDef, TraceSpan } from '../types';
+// @todo: replace barrel import path
+import { SpanLinkDef, TraceSpan } from '../types/index';
 
 import SpanBarRow, { SpanBarRowProps } from './SpanBarRow';
 

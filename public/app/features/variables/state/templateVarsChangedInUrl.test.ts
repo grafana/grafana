@@ -1,8 +1,10 @@
 import { TypedVariableModel } from '@grafana/data';
 
-import { DashboardState, StoreState } from '../../../types';
-import { PanelModel } from '../../dashboard/state';
+// @todo: replace barrel import path
+import { DashboardState, StoreState } from '../../../types/index';
+// @todo: replace barrel import path
 import { createDashboardModelFixture } from '../../dashboard/state/__fixtures__/dashboardFixtures';
+import { PanelModel } from '../../dashboard/state/index';
 import { initialState } from '../../dashboard/state/reducers';
 import { variableAdapters } from '../adapters';
 import { createConstantVariableAdapter } from '../constant/adapter';

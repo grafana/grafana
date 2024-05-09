@@ -5,7 +5,8 @@ import { CoreApp } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { getNextRefIdChar } from 'app/core/utils/query';
-import { useDispatch, useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { useDispatch, useSelector } from 'app/types/index';
 
 import { getDatasourceSrv } from '../plugins/datasource_srv';
 import { QueryEditorRows } from '../query/components/QueryEditorRows';

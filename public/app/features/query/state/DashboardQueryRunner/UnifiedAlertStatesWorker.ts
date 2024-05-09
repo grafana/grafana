@@ -7,7 +7,8 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import { isAlertingRule } from 'app/features/alerting/unified/utils/rules';
 import { promAlertStateToAlertState } from 'app/features/dashboard-scene/scene/AlertStatesDataLayer';
-import { AccessControlAction } from 'app/types';
+// @todo: replace barrel import path
+import { AccessControlAction } from 'app/types/index';
 import { PromRulesResponse } from 'app/types/unified-alerting-dto';
 
 import { DashboardQueryRunnerOptions, DashboardQueryRunnerWorker, DashboardQueryRunnerWorkerResult } from './types';

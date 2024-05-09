@@ -4,7 +4,8 @@ import { InlineField, Input } from '@grafana/ui';
 
 import DataSource from '../../datasource';
 import { migrateStringQueriesToObjectQueries } from '../../grafanaTemplateVariableFns';
-import { AzureMonitorQuery, AzureQueryType } from '../../types';
+// @todo: replace barrel import path
+import { AzureMonitorQuery, AzureQueryType } from '../../types/index';
 
 const GrafanaTemplateVariableFnInput = ({
   query,

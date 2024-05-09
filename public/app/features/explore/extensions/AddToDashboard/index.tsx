@@ -1,8 +1,10 @@
 import React, { useCallback, useState } from 'react';
 
 import { Modal, ToolbarButton } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
-import { useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { t } from 'app/core/internationalization/index';
+// @todo: replace barrel import path
+import { useSelector } from 'app/types/index';
 
 import { getExploreItemSelector } from '../../state/selectors';
 

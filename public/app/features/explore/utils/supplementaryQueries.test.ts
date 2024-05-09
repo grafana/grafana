@@ -20,7 +20,8 @@ import { DataQuery } from '@grafana/schema';
 
 import { MockDataSourceApi } from '../../../../test/mocks/datasource_srv';
 import { MockDataQueryRequest, MockQuery } from '../../../../test/mocks/query';
-import { ExplorePanelData } from '../../../types';
+// @todo: replace barrel import path
+import { ExplorePanelData } from '../../../types/index';
 import { mockExplorePanelData } from '../__mocks__/data';
 
 import { getSupplementaryQueryProvider } from './supplementaryQueries';

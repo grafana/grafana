@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
 
 import { Tooltip, Icon, InteractiveTable, type CellProps, Column } from '@grafana/ui';
-import { LdapRole } from 'app/types';
+// @todo: replace barrel import path
+import { LdapRole } from 'app/types/index';
 
 interface Props {
   groups: LdapRole[];

@@ -2,8 +2,10 @@ import React, { PureComponent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, LoadingPlaceholder } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
-import { UserDTO, UserOrg } from 'app/types';
+// @todo: replace barrel import path
+import { Trans } from 'app/core/internationalization/index';
+// @todo: replace barrel import path
+import { UserDTO, UserOrg } from 'app/types/index';
 
 export interface Props {
   user: UserDTO | null;

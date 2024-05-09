@@ -5,10 +5,12 @@ import { locationService } from '@grafana/runtime';
 import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/components/picker/utils';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { QueryGroup } from 'app/features/query/components/QueryGroup';
-import { QueryGroupDataSource, QueryGroupOptions } from 'app/types';
+// @todo: replace barrel import path
+import { QueryGroupDataSource, QueryGroupOptions } from 'app/types/index';
 
 import { getDashboardSrv } from '../../services/DashboardSrv';
-import { PanelModel } from '../../state';
+// @todo: replace barrel import path
+import { PanelModel } from '../../state/index';
 import { getLastUsedDatasourceFromStorage } from '../../utils/dashboard';
 
 interface Props {

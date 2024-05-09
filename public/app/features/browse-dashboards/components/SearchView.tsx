@@ -2,14 +2,17 @@ import React, { useCallback } from 'react';
 
 import { DataFrameView, toDataFrame } from '@grafana/data';
 import { Button, EmptyState } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans, t } from 'app/core/internationalization/index';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
 import { SearchResultsProps, SearchResultsTable } from 'app/features/search/page/components/SearchResultsTable';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 import { DashboardViewItemKind } from 'app/features/search/types';
-import { useDispatch, useSelector } from 'app/types';
+// @todo: replace barrel import path
+import { useDispatch, useSelector } from 'app/types/index';
 
-import { setAllSelection, setItemSelectionState, useHasSelection } from '../state';
+// @todo: replace barrel import path
+import { setAllSelection, setItemSelectionState, useHasSelection } from '../state/index';
 
 interface SearchViewProps {
   height: number;

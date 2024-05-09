@@ -4,7 +4,8 @@ import { useForm, FormProvider } from 'react-hook-form';
 import { Alert, Button, Stack, LinkButton } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
-import { useDispatch } from 'app/types';
+// @todo: replace barrel import path
+import { useDispatch } from 'app/types/index';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { updateAlertManagerConfigAction } from '../../state/actions';

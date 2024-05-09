@@ -1,7 +1,8 @@
 import React from 'react';
 
 import { Tab, TabProps } from '@grafana/ui';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+// @todo: replace barrel import path
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state/index';
 
 import { usePanelCombinedRules } from './hooks/usePanelCombinedRules';
 

@@ -9,10 +9,12 @@ import config from 'app/core/config';
 import { PANEL_BORDER } from 'app/core/constants';
 import { setPanelAngularComponent } from 'app/features/panel/state/reducers';
 import { getPanelStateForModel } from 'app/features/panel/state/selectors';
-import { StoreState } from 'app/types';
+// @todo: replace barrel import path
+import { StoreState } from 'app/types/index';
 
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
-import { DashboardModel, PanelModel } from '../state';
+// @todo: replace barrel import path
+import { DashboardModel, PanelModel } from '../state/index';
 import { getPanelChromeProps } from '../utils/getPanelChromeProps';
 
 import { PanelHeaderMenuWrapper } from './PanelHeader/PanelHeaderMenuWrapper';

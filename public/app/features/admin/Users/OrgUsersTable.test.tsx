@@ -2,7 +2,8 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { OrgUser } from '../../../types';
+// @todo: replace barrel import path
+import { OrgUser } from '../../../types/index';
 import { getMockUsers } from '../../users/__mocks__/userMocks';
 
 import { OrgUsersTable, Props } from './OrgUsersTable';

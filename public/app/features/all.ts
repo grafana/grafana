@@ -1,2 +1,3 @@
 import './plugins/all';
-import './dashboard';
+// @todo: replace barrel import path
+import './dashboard/index';

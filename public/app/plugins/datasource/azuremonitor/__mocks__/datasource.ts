@@ -2,7 +2,8 @@ import { DataSourceInstanceSettings } from '@grafana/data';
 import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 import Datasource from '../datasource';
-import { AzureDataSourceJsonData } from '../types';
+// @todo: replace barrel import path
+import { AzureDataSourceJsonData } from '../types/index';
 
 import { createMockInstanceSetttings } from './instanceSettings';
 import { DeepPartial } from './utils';

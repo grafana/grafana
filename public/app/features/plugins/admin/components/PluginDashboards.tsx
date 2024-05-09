@@ -5,7 +5,8 @@ import { AppEvents, PluginMeta, DataSourceApi } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
 import DashboardsTable from 'app/features/datasources/components/DashboardsTable';
-import { PluginDashboard } from 'app/types';
+// @todo: replace barrel import path
+import { PluginDashboard } from 'app/types/index';
 
 interface Props {
   plugin: PluginMeta;

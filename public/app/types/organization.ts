@@ -1,4 +1,5 @@
-import { UserOrg } from 'app/types';
+// @todo: replace barrel import path
+import { UserOrg } from 'app/types/index';
 
 export interface Organization {
   name: string;

@@ -11,7 +11,8 @@ import { CloudMonitoringOptions } from '../types/types';
 
 import { MetricQueryEditor, defaultTimeSeriesList } from './MetricQueryEditor';
 
-import { AnnotationsHelp } from './';
+// @todo: replace barrel import path
+import { AnnotationsHelp } from './index';
 
 export type Props = QueryEditorProps<CloudMonitoringDatasource, CloudMonitoringQuery, CloudMonitoringOptions>;
 

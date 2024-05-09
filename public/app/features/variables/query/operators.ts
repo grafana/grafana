@@ -10,7 +10,8 @@ import {
   PanelData,
 } from '@grafana/data';
 
-import { ThunkDispatch } from '../../../types';
+// @todo: replace barrel import path
+import { ThunkDispatch } from '../../../types/index';
 import { validateVariableSelectionState } from '../state/actions';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { QueryVariableModel } from '../types';

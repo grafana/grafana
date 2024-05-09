@@ -11,8 +11,9 @@ import { initTemplateSrv } from '../../../../../test/helpers/initTemplateSrv';
 import { Echo } from '../../../../core/services/echo/Echo';
 import { variableAdapters } from '../../../variables/adapters';
 import { createQueryVariableAdapter } from '../../../variables/query/adapter';
-import { PanelModel } from '../../state';
+// @todo: replace barrel import path
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
+import { PanelModel } from '../../state/index';
 
 import { Props, ShareLink } from './ShareLink';
 

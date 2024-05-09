@@ -1,7 +1,8 @@
 import React from 'react';
 
 import { Page } from 'app/core/components/Page/Page';
-import { Trans } from 'app/core/internationalization';
+// @todo: replace barrel import path
+import { Trans } from 'app/core/internationalization/index';
 
 export default function FeatureTogglePage() {
   return (
