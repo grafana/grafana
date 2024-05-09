@@ -159,7 +159,7 @@ describe('align frames', () => {
       ],
     });
 
-    it('should perform an outer join with duplicated values to join on', () => {
+    it('should perform an outer join with duplicated values to join on - as expected for tabular data', () => {
       const out = joinDataFrames({
         frames: [tableData1, tableData2],
         joinBy: fieldMatchers.get(FieldMatcherID.byName).get('gender'),
