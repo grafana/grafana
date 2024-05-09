@@ -887,8 +887,8 @@
       "title": "Meldungen"
     },
     "alerting-admin": {
-      "title": "",
-      "subtitle": ""
+      "subtitle": "",
+      "title": ""
     },
     "alerting-am-routes": {
       "subtitle": "Lege fest, wie Warnungen an Kontaktpunkte weitergeleitet werden",

@@ -104,7 +104,6 @@ func (s *store) setUserResourcePermission(
 	cmd SetResourcePermissionCommand,
 	hook UserResourceHookFunc,
 ) (*accesscontrol.ResourcePermission, error) {
-	fmt.Printf("setting user resource permission %v\n", cmd)
 	permission, err := s.setResourcePermission(sess, orgID, accesscontrol.ManagedUserRoleName(user.ID), s.userAdder(sess, orgID, user.ID), cmd)
 	if err != nil {
 		return nil, err
@@ -238,7 +237,6 @@ type roleAdder func(roleID int64) error
 func (s *store) setResourcePermission(
 	sess *db.Session, orgID int64, roleName string, adder roleAdder, cmd SetResourcePermissionCommand,
 ) (*accesscontrol.ResourcePermission, error) {
-	fmt.Printf("setting resource permission %v\n", cmd)
 	role, err := s.getOrCreateManagedRole(sess, orgID, roleName, adder)
 	if err != nil {
 		return nil, err
@@ -666,7 +664,7 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, resource, reso
 	/*
 		Add ACTION SET of managed permissions to in-memory store
 	*/
-	if s.features.IsEnabled(context.TODO(), featuremgmt.FlagAccessActionSets) {
+	if s.features.IsEnabled(context.TODO(), featuremgmt.FlagAccessActionSets) && permission != "" {
 		actionSetName := s.actionSetService.GetActionSetName(resource, permission)
 		p := managedPermission(actionSetName, resource, resourceID, resourceAttribute)
 		p.RoleID = roleID
@@ -676,10 +674,10 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, resource, reso
 		permissions = append(permissions, p)
 	}
 
-	// If there are no missing actions for the resource, we don't need to insert any prior actions
-	// we still want to add the action set
+	// If there are no missing actions for the resource (in case of access level downgrade or resource removal), we don't need to insert any prior actions
+	// we still want to add the action set in case of access level downgrade, but not in case of resource removal (when permission == "")
 	if len(missingActions) == 0 {
-		if s.features.IsEnabled(context.TODO(), featuremgmt.FlagAccessActionSets) {
+		if s.features.IsEnabled(context.TODO(), featuremgmt.FlagAccessActionSets) && permission != "" {
 			if _, err := sess.InsertMulti(&permissions); err != nil {
 				return err
 			}
@@ -778,7 +776,6 @@ func (s *InMemoryActionSets) StoreActionSet(resource, permission string, actions
 		Actions: actions,
 	}
 	s.actionSets[actionSet.Action] = actions
-	fmt.Printf("stored action set actionname %s\n", s.actionSets)
 }
 
 // GetActionSetName function creates an action set from a list of actions and stores it inmemory.
