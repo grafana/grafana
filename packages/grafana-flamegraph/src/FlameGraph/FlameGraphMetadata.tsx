@@ -82,7 +82,7 @@ const FlameGraphMetadata = React.memo(
       );
     }
 
-    return <>{<div className={styles.metadata}>{parts}</div>}</>;
+    return <div className={styles.metadata}>{parts}</div>;
   }
 );
 

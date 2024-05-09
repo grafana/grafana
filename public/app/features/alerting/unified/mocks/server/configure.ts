@@ -1,5 +1,5 @@
 import server from 'app/features/alerting/unified/mockApi';
-import { alertmanagerChoiceHandler } from 'app/features/alerting/unified/mocks/alertmanagerApi';
+import { grafanaAlertingConfigurationStatusHandler } from 'app/features/alerting/unified/mocks/alertmanagerApi';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 
 /**
@@ -11,5 +11,5 @@ export const setAlertmanagerChoices = (alertmanagersChoice: AlertmanagerChoice, 
     alertmanagersChoice,
     numExternalAlertmanagers,
   };
-  server.use(alertmanagerChoiceHandler(response));
+  server.use(grafanaAlertingConfigurationStatusHandler(response));
 };

@@ -69,6 +69,7 @@ export enum AlertRuleAction {
   Explore = 'explore-alert-rule',
   Silence = 'silence-alert-rule',
   ModifyExport = 'modify-export-rule',
+  Pause = 'pause-alert-rule',
 }
 
 // this enum lists all of the actions we can perform within alerting in general, not linked to a specific
@@ -178,6 +179,7 @@ export function useAllAlertRuleAbilities(rule: CombinedRule): Abilities<AlertRul
     [AlertRuleAction.Explore]: toAbility(AlwaysSupported, AccessControlAction.DataSourcesExplore),
     [AlertRuleAction.Silence]: canSilence,
     [AlertRuleAction.ModifyExport]: [isGrafanaManagedAlertRule, exportAllowed],
+    [AlertRuleAction.Pause]: [MaybeSupportedUnlessImmutable && isGrafanaManagedAlertRule, isEditable ?? false],
   };
 
   return abilities;
@@ -275,10 +277,10 @@ export function useAlertmanagerAbilities(actions: AlertmanagerAction[]): Ability
 function useCanSilence(rulesSource: RulesSource): [boolean, boolean] {
   const isGrafanaManagedRule = rulesSource === GRAFANA_RULES_SOURCE_NAME;
 
-  const { useGetAlertmanagerChoiceStatusQuery } = alertmanagerApi;
-  const { currentData: amConfigStatus, isLoading } = useGetAlertmanagerChoiceStatusQuery(undefined, {
-    skip: !isGrafanaManagedRule,
-  });
+  const { currentData: amConfigStatus, isLoading } =
+    alertmanagerApi.endpoints.getGrafanaAlertingConfigurationStatus.useQuery(undefined, {
+      skip: !isGrafanaManagedRule,
+    });
 
   // we don't support silencing when the rule is not a Grafana managed rule
   // we simply don't know what Alertmanager the ruler is sending alerts to
