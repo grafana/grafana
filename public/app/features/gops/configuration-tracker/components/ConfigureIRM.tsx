@@ -8,8 +8,7 @@ import { getFirstCompatibleDataSource } from 'app/features/alerting/unified/util
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 
 import { IRMInteractionNames, trackIrmConfigurationTrackerEvent } from '../Analytics';
-import { useGetEssentialsConfiguration } from '../hooks/irmHooks';
-import { useGetConfigurationForUI } from '../hooks/useGetConfiguration';
+import { useGetConfigurationForUI, useGetEssentialsConfiguration } from '../irmHooks';
 
 import { ConfigCard } from './ConfigCard';
 import { Essentials } from './Essentials';

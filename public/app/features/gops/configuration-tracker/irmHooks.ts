@@ -1,15 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 
-import { getBackendSrv, locationService } from '@grafana/runtime';
-import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
-import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
-import { onCallApi } from 'app/features/alerting/unified/api/onCallApi';
-import { useDataSourceFeatures } from 'app/features/alerting/unified/hooks/useCombinedRule';
-import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
-import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
-import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { locationService } from '@grafana/runtime';
 import { createUrl } from 'app/features/alerting/unified/utils/url';
-import { Receiver } from 'app/plugins/datasource/alertmanager/types';
+
+import {
+  isOnCallContactPointReady,
+  useGetContactPoints,
+  useGetDefaultContactPoint,
+  useIsCreateAlertRuleDone,
+} from './alerting/hooks';
+import { isContactPointReady } from './alerting/utils';
+import { ConfigurationStepsEnum, DataSourceConfigurationData, IrmCardConfiguration } from './components/ConfigureIRM';
+import { useGetIncidentPluginConfig } from './incidents/hooks';
+import { useOnCallChatOpsConnections, useOnCallOptions } from './onCall/hooks';
 
 interface UrlLink {
   url: string;
@@ -37,159 +40,6 @@ export interface SectionDto {
 }
 export interface SectionsDto {
   sections: SectionDto[];
-}
-
-function useIsCreateAlertRuleDone() {
-  const [fetchRulerRules, { data }] = alertRuleApi.endpoints.rulerRules.useLazyQuery({
-    refetchOnFocus: true,
-    refetchOnReconnect: true,
-  });
-
-  const { dsFeatures } = useDataSourceFeatures(GRAFANA_RULES_SOURCE_NAME);
-  const rulerConfig = dsFeatures?.rulerConfig;
-
-  useEffect(() => {
-    rulerConfig && fetchRulerRules({ rulerConfig });
-  }, [rulerConfig, fetchRulerRules]);
-
-  const rules = data
-    ? Object.entries(data).flatMap(([_, groupDto]) => {
-        return groupDto.flatMap((group) => group.rules);
-      })
-    : [];
-  return rules.length > 0;
-}
-
-function isContactPointReady(defaultContactPoint: string, contactPoints: Receiver[]) {
-  // We consider the contact point ready if the default contact has the address filled
-
-  const defaultEmailUpdated = contactPoints.some(
-    (contactPoint: Receiver) =>
-      contactPoint.name === defaultContactPoint &&
-      contactPoint.grafana_managed_receiver_configs?.some(
-        (receiver) => receiver.name === defaultContactPoint && receiver.settings?.address !== '<example@email.com>'
-      )
-  );
-  return defaultEmailUpdated;
-}
-
-function isOnCallContactPointReady(contactPoints: Receiver[]) {
-  return contactPoints.some((contactPoint: Receiver) =>
-    contactPoint.grafana_managed_receiver_configs?.some((receiver) => receiver.type === 'oncall')
-  );
-}
-
-interface IncidentsPluginConfig {
-  isInstalled: boolean;
-  isChatOpsInstalled: boolean;
-  isIncidentCreated: boolean;
-}
-
-function useGetContactPoints() {
-  const alertmanagerConfiguration = alertmanagerApi.endpoints.getAlertmanagerConfiguration.useQuery(
-    GRAFANA_RULES_SOURCE_NAME,
-    {
-      refetchOnFocus: true,
-      refetchOnReconnect: true,
-      refetchOnMountOrArgChange: true,
-    }
-  );
-
-  const contactPoints = alertmanagerConfiguration.data?.alertmanager_config?.receivers ?? [];
-  return contactPoints;
-}
-
-function useGetDefaultContactPoint() {
-  const alertmanagerConfiguration = alertmanagerApi.endpoints.getAlertmanagerConfiguration.useQuery(
-    GRAFANA_RULES_SOURCE_NAME,
-    {
-      refetchOnFocus: true,
-      refetchOnReconnect: true,
-      refetchOnMountOrArgChange: true,
-    }
-  );
-
-  return alertmanagerConfiguration.data?.alertmanager_config?.route?.receiver ?? '';
-}
-
-function useGetIncidentPluginConfig() {
-  const { installed: incidentPluginInstalled } = usePluginBridge(SupportedPlugin.Incident);
-  const [config, setConfig] = useState<IncidentsPluginConfig>({
-    isInstalled: false,
-    isChatOpsInstalled: false,
-    isIncidentCreated: false,
-  });
-
-  useEffect(() => {
-    if (!incidentPluginInstalled) {
-      setConfig({
-        isInstalled: false,
-        isChatOpsInstalled: false,
-        isIncidentCreated: false,
-      });
-      return;
-    }
-
-    getBackendSrv()
-      .post('/api/plugins/grafana-incident-app/resources/api/ConfigurationTrackerService.GetConfigurationTracker', {})
-      .then((response) => {
-        setConfig({
-          isInstalled: true,
-          isChatOpsInstalled: response.isChatOpsInstalled,
-          isIncidentCreated: response.isIncidentCreated,
-        });
-      })
-      .catch((error) => {
-        console.error('Error getting incidents plugin config', error);
-        setConfig({
-          isInstalled: incidentPluginInstalled,
-          isChatOpsInstalled: false,
-          isIncidentCreated: false,
-        });
-      });
-  }, [incidentPluginInstalled]);
-
-  return {
-    isInstalled: config.isInstalled,
-    isChatOpsInstalled: config.isChatOpsInstalled,
-    isIncidentCreated: config.isIncidentCreated,
-  };
-}
-
-function useGetOnCallIntegrations() {
-  const { installed: onCallPluginInstalled } = usePluginBridge(SupportedPlugin.OnCall);
-
-  const { data: onCallIntegrations } = onCallApi.endpoints.grafanaOnCallIntegrations.useQuery(undefined, {
-    skip: !onCallPluginInstalled,
-    refetchOnFocus: true,
-    refetchOnReconnect: true,
-    refetchOnMountOrArgChange: true,
-  });
-
-  return onCallIntegrations ?? [];
-}
-
-export function useGetOnCallConfigurationChecks() {
-  const { data: onCallConfigChecks } = onCallApi.endpoints.onCallConfigChecks.useQuery(undefined, {
-    refetchOnFocus: true,
-    refetchOnReconnect: true,
-    refetchOnMountOrArgChange: true,
-  });
-
-  return onCallConfigChecks ?? { is_chatops_connected: false, is_integration_chatops_connected: false };
-}
-
-function useOnCallOptions() {
-  const onCallIntegrations = useGetOnCallIntegrations();
-  return onCallIntegrations.map((integration) => ({
-    label: integration.display_name,
-    value: integration.value,
-  }));
-}
-
-function useOnCallChatOpsConnections() {
-  const { is_chatops_connected, is_integration_chatops_connected } = useGetOnCallConfigurationChecks();
-  return { is_chatops_connected, is_integration_chatops_connected };
 }
 
 export interface EssentialsConfigurationData {
@@ -386,3 +236,40 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
   );
   return { essentialContent, stepsDone, totalStepsToDo };
 }
+interface UseConfigurationProps {
+  dataSourceConfigurationData: DataSourceConfigurationData;
+  essentialsConfigurationData: EssentialsConfigurationData;
+}
+
+export const useGetConfigurationForUI = ({
+  dataSourceConfigurationData: { dataSourceCompatibleWithAlerting },
+  essentialsConfigurationData: { stepsDone, totalStepsToDo },
+}: UseConfigurationProps): IrmCardConfiguration[] => {
+  return useMemo(() => {
+    function getConnectDataSourceConfiguration() {
+      const description = dataSourceCompatibleWithAlerting
+        ? 'You have connected a datasource.'
+        : 'Connect at least one data source to start receiving data.';
+      const actionButtonTitle = dataSourceCompatibleWithAlerting ? 'View' : 'Connect';
+      return {
+        id: ConfigurationStepsEnum.CONNECT_DATASOURCE,
+        title: 'Connect data source',
+        description,
+        actionButtonTitle,
+        isDone: dataSourceCompatibleWithAlerting,
+      };
+    }
+    return [
+      getConnectDataSourceConfiguration(),
+      {
+        id: ConfigurationStepsEnum.ESSENTIALS,
+        title: 'Essentials',
+        titleIcon: 'star',
+        description: 'Configure the features you need to start using Grafana IRM workflows',
+        actionButtonTitle: 'Start',
+        stepsDone,
+        totalStepsToDo,
+      },
+    ];
+  }, [dataSourceCompatibleWithAlerting, stepsDone, totalStepsToDo]);
+};
