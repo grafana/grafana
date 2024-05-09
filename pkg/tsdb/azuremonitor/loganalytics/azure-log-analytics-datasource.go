@@ -56,20 +56,6 @@ func (e *AzureLogAnalyticsDatasource) ExecuteTimeSeriesQuery(ctx context.Context
 	return result, nil
 }
 
-func getApiURL(resourceOrWorkspace string, isAppInsightsQuery bool) string {
-	matchesResourceURI, _ := regexp.MatchString("^/subscriptions/", resourceOrWorkspace)
-
-	if matchesResourceURI {
-		if isAppInsightsQuery {
-			componentName := resourceOrWorkspace[strings.LastIndex(resourceOrWorkspace, "/")+1:]
-			return fmt.Sprintf("v1/apps/%s/query", componentName)
-		}
-		return fmt.Sprintf("v1%s/query", resourceOrWorkspace)
-	} else {
-		return fmt.Sprintf("v1/workspaces/%s/query", resourceOrWorkspace)
-	}
-}
-
 func buildLogAnalyticsQuery(query backend.DataQuery, dsInfo types.DatasourceInfo, appInsightsRegExp *regexp.Regexp) (*AzureLogAnalyticsQuery, error) {
 	queryJSONModel := types.LogJSONQuery{}
 	err := json.Unmarshal(query.JSON, &queryJSONModel)

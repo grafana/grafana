@@ -1,6 +1,10 @@
 package loganalytics
 
 import (
+	"fmt"
+	"regexp"
+	"strings"
+
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 )
@@ -49,4 +53,18 @@ func ParseResultFormat(queryResultFormat *dataquery.ResultFormat, queryType data
 		}
 	}
 	return resultFormat
+}
+
+func getApiURL(resourceOrWorkspace string, isAppInsightsQuery bool) string {
+	matchesResourceURI, _ := regexp.MatchString("^/subscriptions/", resourceOrWorkspace)
+
+	if matchesResourceURI {
+		if isAppInsightsQuery {
+			componentName := resourceOrWorkspace[strings.LastIndex(resourceOrWorkspace, "/")+1:]
+			return fmt.Sprintf("v1/apps/%s/query", componentName)
+		}
+		return fmt.Sprintf("v1%s/query", resourceOrWorkspace)
+	} else {
+		return fmt.Sprintf("v1/workspaces/%s/query", resourceOrWorkspace)
+	}
 }
