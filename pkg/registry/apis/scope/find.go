@@ -82,7 +82,7 @@ func (r *findREST) Connect(ctx context.Context, name string, opts runtime.Object
 		}
 
 		for _, item := range all.Items {
-			if parent != item.Spec.ParentName && parent != "" {
+			if parent != item.Spec.ParentName {
 				continue // Someday this will have an index in raw storage on parentName
 			}
 			results.Items = append(results.Items, scope.TreeItem{
