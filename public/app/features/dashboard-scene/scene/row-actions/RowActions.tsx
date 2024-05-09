@@ -48,8 +48,7 @@ export class RowActions extends SceneObjectBase<RowActionsState> {
       // Temp, needs fix in scenes lib
       repeatBehavior.activate();
     } else if (repeatBehavior) {
-      repeatBehavior.removeRepeatClonesFromLayout();
-      row.setState({ $behaviors: row.state.$behaviors!.filter((b) => b !== repeatBehavior) });
+      repeatBehavior.removeBehavior();
     }
 
     if (title !== row.state.title) {

@@ -155,10 +155,15 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
     });
   }
 
-  public removeRepeatClonesFromLayout() {
+  public removeBehavior() {
+    const row = this._getRow();
     const layout = this._getLayout();
     const children = getLayoutChildrenFilterOutRepeatClones(this._getLayout(), this._getRow());
+
     layout.setState({ children: children });
+
+    // Remove behavior and the scoped local variable
+    row.setState({ $behaviors: row.state.$behaviors!.filter((b) => b !== this), $variables: undefined });
   }
 }
 

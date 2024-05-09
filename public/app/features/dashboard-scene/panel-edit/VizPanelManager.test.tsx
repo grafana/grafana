@@ -2,7 +2,14 @@ import { map, of } from 'rxjs';
 
 import { DataQueryRequest, DataSourceApi, DataSourceInstanceSettings, LoadingState, PanelData } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import {
+  LocalValueVariable,
+  SceneGridRow,
+  SceneQueryRunner,
+  SceneVariableSet,
+  VizPanel,
+  sceneGraph,
+} from '@grafana/scenes';
 import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { InspectTab } from 'app/features/inspector/types';
@@ -783,6 +790,25 @@ describe('VizPanelManager', () => {
 
     expect(vizPanelManager.state.datasource).toEqual(ds1Mock);
     expect(vizPanelManager.state.dsSettings).toEqual(instance1SettingsMock);
+  });
+
+  describe('Given a panel inside repeated row', () => {
+    it('Should include row variable scope', () => {
+      const { panel } = setupTest('panel-9');
+
+      const row = panel.parent?.parent;
+      if (!(row instanceof SceneGridRow)) {
+        throw new Error('Did not find parent row');
+      }
+
+      row.setState({
+        $variables: new SceneVariableSet({ variables: [new LocalValueVariable({ name: 'hello', value: 'A' })] }),
+      });
+
+      const editor = buildPanelEditScene(panel);
+      const variable = sceneGraph.lookupVariable('hello', editor.state.vizManager);
+      expect(variable?.getValue()).toBe('A');
+    });
   });
 });
 
