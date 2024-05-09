@@ -37,7 +37,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
       dispatch(setInitialDatasource(undefined));
     }
 
-    locationService.partial({ editPanel: id, firstPanel: true });
+    locationService.partial({ editPanel: id, firstPanel: true, isNewPanel: true });
     DashboardInteractions.emptyDashboardButtonClicked({ item: 'add_visualization' });
   };
 

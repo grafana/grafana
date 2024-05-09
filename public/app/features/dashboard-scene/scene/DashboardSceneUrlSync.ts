@@ -28,7 +28,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   constructor(private _scene: DashboardScene) {}
 
   getKeys(): string[] {
-    return ['inspect', 'viewPanel', 'editPanel', 'editview', 'autofitpanels'];
+    return ['inspect', 'viewPanel', 'editPanel', 'editview', 'autofitpanels', 'isNewPanel'];
   }
 
   getUrlState(): SceneObjectUrlValues {
@@ -39,6 +39,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       viewPanel: state.viewPanelScene?.getUrlKey(),
       editview: state.editview?.getUrlKey(),
       editPanel: state.editPanel?.getUrlKey() || undefined,
+      isNewPanel: state.editPanel?.state.isNewPanel ? 'true' : undefined,
     };
   }
 
@@ -124,6 +125,8 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     // Handle edit panel state
     if (typeof values.editPanel === 'string') {
       const panel = findVizPanelByKey(this._scene, values.editPanel);
+      const isNewPanel = values.isNewPanel !== undefined && values.isNewPanel !== null;
+
       if (!panel) {
         console.warn(`Panel ${values.editPanel} not found`);
         return;
@@ -135,11 +138,12 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       }
       if (getLibraryPanel(panel)) {
         this._handleLibraryPanel(panel, (p) => {
-          this._scene.setState({ editPanel: buildPanelEditScene(p) });
+          this._scene.setState({ editPanel: buildPanelEditScene(p, isNewPanel) });
         });
         return;
       }
-      update.editPanel = buildPanelEditScene(panel);
+
+      update.editPanel = buildPanelEditScene(panel, isNewPanel);
     } else if (editPanel && values.editPanel === null) {
       update.editPanel = undefined;
     }

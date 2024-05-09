@@ -112,6 +112,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       vizPanelToPanel(this.state.sourcePanel.resolve()),
       vizPanelToPanel(this.state.panel)
     );
+
     this.setState({ isDirty: hasChanges });
   }, 250);
 

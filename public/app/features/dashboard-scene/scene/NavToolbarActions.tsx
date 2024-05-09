@@ -172,7 +172,7 @@ export function ToolbarActions({ dashboard }: Props) {
               onClick={() => {
                 const id = dashboard.onCreateNewPanel();
                 DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
-                locationService.partial({ editPanel: id });
+                locationService.partial({ editPanel: id, isNewPanel: true });
               }}
             />
             <Menu.Item
@@ -419,7 +419,7 @@ export function ToolbarActions({ dashboard }: Props) {
     render: () => (
       <Button
         onClick={editPanel?.onDiscard}
-        tooltip="Discard panel changes"
+        tooltip={editPanel?.state.isNewPanel ? 'Discard panel' : 'Discard panel changes'}
         size="sm"
         disabled={!isEditedPanelDirty || !isDirty}
         key="discard"
@@ -427,7 +427,7 @@ export function ToolbarActions({ dashboard }: Props) {
         variant="destructive"
         data-testid={selectors.components.NavToolbar.editDashboard.discardChangesButton}
       >
-        Discard panel changes
+        {editPanel?.state.isNewPanel ? 'Discard panel' : 'Discard panel changes'}
       </Button>
     ),
   });
