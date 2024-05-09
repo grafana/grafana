@@ -18,7 +18,13 @@ import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
 import AzureResourceGraphDatasource from './azure_resource_graph/azure_resource_graph_datasource';
 import { instanceOfAzureCredential, isCredentialsComplete } from './credentials';
 import ResourcePickerData from './resourcePicker/resourcePickerData';
-import { AadCurrentUserCredentials, AzureDataSourceJsonData, AzureMonitorQuery, AzureQueryType } from './types';
+import {
+  AadCurrentUserCredentials,
+  AzureDataSourceJsonData,
+  AzureMonitorQuery,
+  AzureQueryType,
+  ResultFormat,
+} from './types';
 import migrateAnnotation from './utils/migrateAnnotation';
 import migrateQuery from './utils/migrateQuery';
 import { VariableSupport } from './variables';
@@ -107,7 +113,11 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     }
 
     const observables: Array<Observable<DataQueryResponse>> = Array.from(byType.entries()).map(([queryType, req]) => {
-      const mappedQueryType = queryType === AzureQueryType.AzureTraces ? AzureQueryType.LogAnalytics : queryType;
+      let mappedQueryType = queryType;
+      if (queryType === AzureQueryType.AzureTraces || queryType === AzureQueryType.TraceExemplar) {
+        mappedQueryType = AzureQueryType.LogAnalytics;
+      }
+
       const ds = this.pseudoDatasource[mappedQueryType];
       if (!ds) {
         throw new Error('Data source not created for query type ' + queryType);
@@ -250,6 +260,7 @@ function hasQueryForType(query: AzureMonitorQuery): boolean {
       return !!query.azureResourceGraph;
 
     case AzureQueryType.AzureTraces:
+    case AzureQueryType.TraceExemplar:
       return !!query.azureTraces;
 
     case AzureQueryType.GrafanaTemplateVariableFn:
