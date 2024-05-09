@@ -1,15 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 
-import { getBackendSrv, locationService } from '@grafana/runtime';
-import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
-import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
-import { onCallApi } from 'app/features/alerting/unified/api/onCallApi';
-import { sloApi } from 'app/features/alerting/unified/api/sloApi';
-import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
-import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
-import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { locationService } from '@grafana/runtime';
 import { createUrl } from 'app/features/alerting/unified/utils/url';
-import { Receiver } from 'app/plugins/datasource/alertmanager/types';
+
+import {
+  isOnCallContactPointReady,
+  useGetContactPoints,
+  useGetDefaultContactPoint,
+  useIsCreateAlertRuleDone,
+} from './alerting/hooks';
+import { isContactPointReady } from './alerting/utils';
+import { ConfigurationStepsEnum, DataSourceConfigurationData, IrmCardConfiguration } from './components/ConfigureIRM';
+import { useGetIncidentPluginConfig } from './incidents/hooks';
+import { useOnCallChatOpsConnections, useOnCallOptions } from './onCall/hooks';
 
 interface UrlLink {
   url: string;
@@ -19,16 +22,17 @@ export interface StepButtonDto {
   type: 'openLink' | 'dropDown';
   label: string;
   labelOnDone?: string;
-  done?: boolean;
   urlLink?: UrlLink; // only for openLink
   urlLinkOnDone?: UrlLink; // only for openLink
   options?: Array<{ label: string; value: string }>; // only for dropDown
   onClickOption?: (value: string) => void; // only for dropDown
+  stepNotAvailableText?: string;
 }
 export interface SectionDtoStep {
   title: string;
   description: string;
   button: StepButtonDto;
+  done?: boolean;
 }
 export interface SectionDto {
   title: string;
@@ -39,183 +43,66 @@ export interface SectionsDto {
   sections: SectionDto[];
 }
 
-function isCreateAlertRuleDone() {
-  const { data: namespaces = [] } = alertRuleApi.endpoints.prometheusRuleNamespaces.useQuery(
-    {
-      ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
-    },
-    {
-      refetchOnFocus: true,
-      refetchOnReconnect: true,
-      refetchOnMountOrArgChange: true,
-    }
-  );
-  return namespaces.length > 0;
-}
-
-function isContactPointReady(defaultContactPoint: string, contactPoints: Receiver[]) {
-  // We consider the contact point ready if the default contact has the address filled
-
-  const defaultEmailUpdated = contactPoints.some(
-    (contactPoint: Receiver) =>
-      contactPoint.name === defaultContactPoint &&
-      contactPoint.grafana_managed_receiver_configs?.some(
-        (receiver) => receiver.name === defaultContactPoint && receiver.settings?.address !== '<example@email.com>'
-      )
-  );
-  return defaultEmailUpdated;
-}
-
-function isOnCallContactPointReady(contactPoints: Receiver[]) {
-  return contactPoints.some((contactPoint: Receiver) =>
-    contactPoint.grafana_managed_receiver_configs?.some((receiver) => receiver.type === 'oncall')
-  );
-}
-
-interface IncidentsPluginConfig {
-  isInstalled: boolean;
-  isChatOpsInstalled: boolean;
-  isIncidentCreated: boolean;
-}
-
-function useGetContactPoints() {
-  const alertmanagerConfiguration = alertmanagerApi.endpoints.getAlertmanagerConfiguration.useQuery(
-    GRAFANA_RULES_SOURCE_NAME,
-    {
-      refetchOnFocus: true,
-      refetchOnReconnect: true,
-      refetchOnMountOrArgChange: true,
-    }
-  );
-
-  const contactPoints = alertmanagerConfiguration.data?.alertmanager_config?.receivers ?? [];
-  return contactPoints;
-}
-
-function useGetDefaultContactPoint() {
-  const alertmanagerConfiguration = alertmanagerApi.endpoints.getAlertmanagerConfiguration.useQuery(
-    GRAFANA_RULES_SOURCE_NAME,
-    {
-      refetchOnFocus: true,
-      refetchOnReconnect: true,
-      refetchOnMountOrArgChange: true,
-    }
-  );
-
-  return alertmanagerConfiguration.data?.alertmanager_config?.route?.receiver ?? '';
-}
-
-function useGetIncidentPluginConfig() {
-  const { installed: incidentPluginInstalled } = usePluginBridge(SupportedPlugin.Incident);
-  const [config, setConfig] = useState<IncidentsPluginConfig>({
-    isInstalled: false,
-    isChatOpsInstalled: false,
-    isIncidentCreated: false,
-  });
-
-  useEffect(() => {
-    if (!incidentPluginInstalled) {
-      setConfig({
-        isInstalled: false,
-        isChatOpsInstalled: false,
-        isIncidentCreated: false,
-      });
-      return;
-    }
-
-    getBackendSrv()
-      .post('/api/plugins/grafana-incident-app/resources/api/ConfigurationTrackerService.GetConfigurationTracker', {})
-      .then((response) => {
-        setConfig({
-          isInstalled: true,
-          isChatOpsInstalled: response.isChatOpsInstalled,
-          isIncidentCreated: response.isIncidentCreated,
-        });
-      })
-      .catch((error) => {
-        console.error('Error getting incidents plugin config', error);
-        setConfig({
-          isInstalled: incidentPluginInstalled,
-          isChatOpsInstalled: false,
-          isIncidentCreated: false,
-        });
-      });
-  }, [incidentPluginInstalled]);
-
-  return {
-    isInstalled: config.isInstalled,
-    isChatOpsInstalled: config.isChatOpsInstalled,
-    isIncidentCreated: config.isIncidentCreated,
-  };
-}
-
-function useGetOnCallIntegrations() {
-  const { installed: onCallPluginInstalled } = usePluginBridge(SupportedPlugin.OnCall);
-
-  const { data: onCallIntegrations } = onCallApi.endpoints.grafanaOnCallIntegrations.useQuery(undefined, {
-    skip: !onCallPluginInstalled,
-    refetchOnFocus: true,
-    refetchOnReconnect: true,
-    refetchOnMountOrArgChange: true,
-  });
-
-  return onCallIntegrations ?? [];
-}
-
-export function useGetOnCallConfigurationChecks() {
-  const { data: onCallConfigChecks } = onCallApi.endpoints.onCallConfigChecks.useQuery(undefined, {
-    refetchOnFocus: true,
-    refetchOnReconnect: true,
-    refetchOnMountOrArgChange: true,
-  });
-
-  return onCallConfigChecks ?? { is_chatops_connected: false, is_integration_chatops_connected: false };
-}
-
-function useOnCallOptions() {
-  const onCallIntegrations = useGetOnCallIntegrations();
-  return onCallIntegrations.map((integration) => ({
-    label: integration.display_name,
-    value: integration.value,
-  }));
-}
-
-function useOnCallChatOpsConnections() {
-  const { is_chatops_connected, is_integration_chatops_connected } = useGetOnCallConfigurationChecks();
-  return { is_chatops_connected, is_integration_chatops_connected };
-}
-
-function useGetSlosChecks() {
-  const { installed: sloPluginInstalled } = usePluginBridge(SupportedPlugin.Slo);
-
-  const { data: sloChecks } = sloApi.endpoints.getSlos.useQuery(undefined, {
-    skip: !sloPluginInstalled,
-    refetchOnFocus: true,
-    refetchOnReconnect: true,
-    refetchOnMountOrArgChange: true,
-  });
-
-  return Boolean(sloChecks?.slos?.length)
-    ? {
-        hasSlos: true,
-        hasSlosWithAlerting: sloChecks?.slos.some((slo) => Boolean(slo.alerting?.fastBurn)),
-      }
-    : { hasSlos: false, hasSlosWithAlerting: false };
-}
-
 export interface EssentialsConfigurationData {
   essentialContent: SectionsDto;
   stepsDone: number;
   totalStepsToDo: number;
+  isLoading: boolean;
+}
+
+function useGetConfigurationForApps() {
+  // configuration checks for alerting
+  const { contactPoints, isLoading: isLoadingContactPoints } = useGetContactPoints();
+  const { defaultContactpoint, isLoading: isLoadingDefaultContactPoint } = useGetDefaultContactPoint();
+  const { isDone: isCreateAlertRuleDone, isLoading: isLoadingAlertCreatedDone } = useIsCreateAlertRuleDone();
+  // configuration checks for incidents
+  const {
+    isChatOpsInstalled,
+    isInstalled: isIncidentsInstalled,
+    isLoading: isIncidentsConfigLoading,
+  } = useGetIncidentPluginConfig();
+  // configuration checks for oncall
+  const onCallOptions = useOnCallOptions();
+  const {
+    is_chatops_connected,
+    is_integration_chatops_connected,
+    isLoading: isOnCallConfigLoading,
+  } = useOnCallChatOpsConnections();
+  // check if any of the configurations are loading
+  const isLoading =
+    isLoadingContactPoints ||
+    isLoadingDefaultContactPoint ||
+    isLoadingAlertCreatedDone ||
+    isIncidentsConfigLoading ||
+    isOnCallConfigLoading;
+
+  return {
+    alerting: {
+      contactPoints,
+      defaultContactpoint,
+      isCreateAlertRuleDone,
+    },
+    incidents: {
+      isChatOpsInstalled,
+      isIncidentsInstalled,
+    },
+    onCall: {
+      onCallOptions,
+      is_chatops_connected,
+      is_integration_chatops_connected,
+    },
+    isLoading,
+  };
 }
 
 export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
-  const contactPoints = useGetContactPoints();
-  const defaultContactPoint = useGetDefaultContactPoint();
-  const incidentPluginConfig = useGetIncidentPluginConfig();
-  const onCallOptions = useOnCallOptions();
-  const chatOpsConnections = useOnCallChatOpsConnections();
-  const slosChecks = useGetSlosChecks();
+  const {
+    alerting: { contactPoints, defaultContactpoint, isCreateAlertRuleDone },
+    incidents: { isChatOpsInstalled, isIncidentsInstalled },
+    onCall: { onCallOptions, is_chatops_connected, is_integration_chatops_connected },
+    isLoading,
+  } = useGetConfigurationForApps();
+
   function onIntegrationClick(integrationId: string, url: string) {
     const urlToGoWithIntegration = createUrl(url + integrationId, {
       returnTo: location.pathname + location.search,
@@ -235,7 +122,7 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
             button: {
               type: 'openLink',
               urlLink: {
-                url: `/alerting/notifications/receivers/${defaultContactPoint}/edit`,
+                url: `/alerting/notifications/receivers/${defaultContactpoint}/edit`,
                 queryParams: { alertmanager: 'grafana' },
               },
               label: 'Edit',
@@ -243,24 +130,24 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
               urlLinkOnDone: {
                 url: `/alerting/notifications`,
               },
-              done: isContactPointReady(defaultContactPoint, contactPoints),
             },
+            done: isContactPointReady(defaultContactpoint, contactPoints),
           },
           {
             title: 'Connect alerting to OnCall',
-            description: 'OnCall allows precisely manage your on-call strategy and use multiple channels to deliver',
+            description: 'Create an OnCall integration for an alerting contact point.',
             button: {
               type: 'openLink',
               urlLink: {
                 url: '/alerting/notifications/receivers/new',
               },
               label: 'Connect',
-              done: isOnCallContactPointReady(contactPoints),
               urlLinkOnDone: {
                 url: '/alerting/notifications',
               },
               labelOnDone: 'View',
             },
+            done: isOnCallContactPointReady(contactPoints),
           },
           {
             title: 'Create alert rule',
@@ -275,42 +162,8 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
                 url: '/alerting/list',
               },
               labelOnDone: 'View',
-              done: isCreateAlertRuleDone(),
             },
-          },
-          {
-            title: 'Create your first SLO',
-            description: 'Create SLOs to monitor your service.',
-            button: {
-              type: 'openLink',
-              label: 'Create',
-              urlLink: {
-                url: '/a/grafana-slo-app/wizard/new',
-              },
-              labelOnDone: 'View',
-              urlLinkOnDone: {
-                url: '/a/grafana-slo-app/manage-slos',
-              },
-              done: slosChecks.hasSlos,
-            },
-          },
-          {
-            title: 'Enable SLO alerting',
-            description: 'Configure SLO alerting to receive notifications when your SLOs are breached.',
-            button: {
-              type: 'openLink',
-              label: 'Enable',
-              urlLink: {
-                url: '/a/grafana-slo-app/manage-slos',
-                queryParams: { alertsEnabled: 'disabled' },
-              },
-              labelOnDone: 'View',
-              urlLinkOnDone: {
-                url: '/a/grafana-slo-app/manage-slos',
-                queryParams: { alertsEnabled: 'enabled' },
-              },
-              done: slosChecks.hasSlosWithAlerting,
-            },
+            done: isCreateAlertRuleDone,
           },
         ],
       },
@@ -331,8 +184,8 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
                 url: '/a/grafana-incident-app',
               },
               labelOnDone: 'View',
-              done: incidentPluginConfig?.isInstalled,
             },
+            done: isIncidentsInstalled,
           },
           {
             title: 'Connect your Messaging workspace to OnCall',
@@ -349,8 +202,8 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
                 queryParams: { tab: 'ChatOps' },
               },
               labelOnDone: 'View',
-              done: chatOpsConnections.is_chatops_connected,
             },
+            done: is_chatops_connected,
           },
           {
             title: 'Connect your Messaging workspace to Incident',
@@ -365,8 +218,8 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
               urlLinkOnDone: {
                 url: '/a/grafana-incident-app/integrations',
               },
-              done: incidentPluginConfig?.isChatOpsInstalled,
             },
+            done: isChatOpsInstalled,
           },
           {
             title: 'Add Messaging workspace channel to OnCall Integration',
@@ -381,8 +234,8 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
                 url: '/a/grafana-oncall-app/integrations/',
               },
               labelOnDone: 'View',
-              done: chatOpsConnections.is_integration_chatops_connected,
             },
+            done: is_integration_chatops_connected,
           },
         ],
       },
@@ -398,6 +251,7 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
               label: 'Select integration',
               options: onCallOptions,
               onClickOption: (value) => onIntegrationClick(value, '/a/grafana-oncall-app/integrations/'),
+              stepNotAvailableText: 'No integrations available',
             },
           },
           {
@@ -418,11 +272,8 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
   };
   const { stepsDone, totalStepsToDo } = essentialContent.sections.reduce(
     (acc, section) => {
-      const stepsDone = section.steps.filter((step) => step.button.done).length;
-      const totalStepsToForSection = section.steps.reduce(
-        (acc, step) => (step.button.done !== undefined ? acc + 1 : acc),
-        0
-      );
+      const stepsDone = section.steps.filter((step) => step.done).length;
+      const totalStepsToForSection = section.steps.reduce((acc, step) => (step.done !== undefined ? acc + 1 : acc), 0);
       return {
         stepsDone: acc.stepsDone + stepsDone,
         totalStepsToDo: acc.totalStepsToDo + totalStepsToForSection,
@@ -430,5 +281,42 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
     },
     { stepsDone: 0, totalStepsToDo: 0 }
   );
-  return { essentialContent, stepsDone, totalStepsToDo };
+  return { essentialContent, stepsDone, totalStepsToDo, isLoading };
 }
+interface UseConfigurationProps {
+  dataSourceConfigurationData: DataSourceConfigurationData;
+  essentialsConfigurationData: EssentialsConfigurationData;
+}
+
+export const useGetConfigurationForUI = ({
+  dataSourceConfigurationData: { dataSourceCompatibleWithAlerting },
+  essentialsConfigurationData: { stepsDone, totalStepsToDo },
+}: UseConfigurationProps): IrmCardConfiguration[] => {
+  return useMemo(() => {
+    function getConnectDataSourceConfiguration() {
+      const description = dataSourceCompatibleWithAlerting
+        ? 'You have connected a datasource.'
+        : 'Connect at least one data source to start receiving data.';
+      const actionButtonTitle = dataSourceCompatibleWithAlerting ? 'View' : 'Connect';
+      return {
+        id: ConfigurationStepsEnum.CONNECT_DATASOURCE,
+        title: 'Connect data source',
+        description,
+        actionButtonTitle,
+        isDone: dataSourceCompatibleWithAlerting,
+      };
+    }
+    return [
+      getConnectDataSourceConfiguration(),
+      {
+        id: ConfigurationStepsEnum.ESSENTIALS,
+        title: 'Essentials',
+        titleIcon: 'star',
+        description: 'Configure the features you need to start using Grafana IRM workflows',
+        actionButtonTitle: 'Start',
+        stepsDone,
+        totalStepsToDo,
+      },
+    ];
+  }, [dataSourceCompatibleWithAlerting, stepsDone, totalStepsToDo]);
+};
