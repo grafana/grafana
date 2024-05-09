@@ -198,6 +198,12 @@ var (
 					Action: accesscontrol.ActionAlertingRulesProvisioningWrite, // organization scope
 				},
 				{
+					Action: accesscontrol.ActionAlertingNotificationsProvisioningRead, // organization scope
+				},
+				{
+					Action: accesscontrol.ActionAlertingNotificationsProvisioningWrite, // organization scope
+				},
+				{
 					Action: dashboards.ActionFoldersRead,
 					Scope:  dashboards.ScopeFoldersAll,
 				},
@@ -221,6 +227,9 @@ var (
 				},
 				{
 					Action: accesscontrol.ActionAlertingRulesProvisioningRead, // organization scope
+				},
+				{
+					Action: accesscontrol.ActionAlertingNotificationsProvisioningRead, // organization scope
 				},
 			},
 		},
