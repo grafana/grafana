@@ -631,6 +631,7 @@ function useEditingLibraryPanel(panelEditor?: PanelEditor) {
   return isEditingLibraryPanel;
 }
 
+// This hook handles when panelEditor is not defined to avoid conditionally hook usage
 function useVizManagerDirty(panelEditor?: PanelEditor) {
   const [isDirty, setIsDirty] = useState<Boolean>(false);
 

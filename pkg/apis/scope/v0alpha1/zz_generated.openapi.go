@@ -26,6 +26,8 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeNodeList":             schema_pkg_apis_scope_v0alpha1_ScopeNodeList(ref),
 		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeNodeSpec":             schema_pkg_apis_scope_v0alpha1_ScopeNodeSpec(ref),
 		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeSpec":                 schema_pkg_apis_scope_v0alpha1_ScopeSpec(ref),
+		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.TreeItem":                  schema_pkg_apis_scope_v0alpha1_TreeItem(ref),
+		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.TreeResults":               schema_pkg_apis_scope_v0alpha1_TreeResults(ref),
 	}
 }
 
@@ -365,6 +367,15 @@ func schema_pkg_apis_scope_v0alpha1_ScopeNodeSpec(ref common.ReferenceCallback) 
 							Format: "",
 						},
 					},
+					"nodeType": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Possible enum values:\n - `\"container\"`\n - `\"leaf\"`",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"container", "leaf"},
+						},
+					},
 					"title": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
@@ -374,41 +385,27 @@ func schema_pkg_apis_scope_v0alpha1_ScopeNodeSpec(ref common.ReferenceCallback) 
 					},
 					"description": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Type:   []string{"string"},
+							Format: "",
 						},
 					},
-					"isLeaf": {
+					"linkType": {
 						SchemaProps: spec.SchemaProps{
-							Default: false,
-							Type:    []string{"boolean"},
-							Format:  "",
+							Description: "Possible enum values:\n - `\"scope\"`",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"scope"},
 						},
 					},
-					"isSelectable": {
+					"linkID": {
 						SchemaProps: spec.SchemaProps{
-							Default: false,
-							Type:    []string{"boolean"},
-							Format:  "",
-						},
-					},
-					"leafType": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"leafName": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Description: "scope (later more things)",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 				},
-				Required: []string{"title", "description", "isLeaf", "isSelectable", "leafType", "leafName"},
+				Required: []string{"nodeType", "title"},
 			},
 		},
 	}
@@ -472,5 +469,108 @@ func schema_pkg_apis_scope_v0alpha1_ScopeSpec(ref common.ReferenceCallback) comm
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeFilter"},
+	}
+}
+
+func schema_pkg_apis_scope_v0alpha1_TreeItem(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"nodeId": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"nodeType": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Possible enum values:\n - `\"container\"`\n - `\"leaf\"`",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"container", "leaf"},
+						},
+					},
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"description": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"linkType": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Possible enum values:\n - `\"scope\"`",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"scope"},
+						},
+					},
+					"linkID": {
+						SchemaProps: spec.SchemaProps{
+							Description: "scope (later more things)",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"nodeType", "title"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_scope_v0alpha1_TreeResults(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/scope/v0alpha1.TreeItem"),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.TreeItem", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }

@@ -887,8 +887,8 @@
       "title": "Alerting"
     },
     "alerting-admin": {
-      "title": "Settings",
-      "subtitle": "Manage Alertmanager configurations and configure where alert instances generated from Grafana managed alert rules are sent"
+      "subtitle": "Manage Alertmanager configurations and configure where alert instances generated from Grafana managed alert rules are sent",
+      "title": "Settings"
     },
     "alerting-am-routes": {
       "subtitle": "Determine how alerts are routed to contact points",
