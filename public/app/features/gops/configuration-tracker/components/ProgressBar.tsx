@@ -10,7 +10,7 @@ export function ProgressBar({ stepsDone, totalStepsToDo }: { stepsDone: number; 
     return null;
   }
   return (
-    <div className={styles.containerStyles}>
+    <div className={styles.containerStyles} role="progressbar" aria-valuenow={stepsDone} aria-valuemax={totalStepsToDo}>
       <div className={styles.fillerStyles((stepsDone / totalStepsToDo) * 100)} />
     </div>
   );
