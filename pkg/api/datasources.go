@@ -457,12 +457,6 @@ func (hs *HTTPServer) AddDataSource(c *contextmodel.ReqContext) response.Respons
 		}
 	}
 
-	p, found := hs.pluginStore.Plugin(c.Req.Context(), cmd.Type)
-	if !found {
-		return response.Error(http.StatusBadRequest, "Data source type not found", nil)
-	}
-	cmd.APIVersion = p.APIVersion
-
 	if err := validateJSONData(c.Req.Context(), cmd.JsonData, hs.Cfg, hs.Features); err != nil {
 		return response.Error(http.StatusBadRequest, "Failed to add datasource", err)
 	}

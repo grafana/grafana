@@ -295,13 +295,6 @@ func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user identity.Requ
 			return nil, ErrInvalidDatasourceID
 		}
 
-		queryAPIVersion := query.Get("apiVersion").MustString("")
-		if ds.APIVersion != "" &&
-			queryAPIVersion != "" &&
-			ds.APIVersion != queryAPIVersion {
-			return nil, ErrAPIVersionMismatch
-		}
-
 		datasourcesByUid[ds.UID] = ds
 		if expr.NodeTypeFromDatasourceUID(ds.UID) != expr.TypeDatasourceNode {
 			req.hasExpression = true

@@ -10,7 +10,7 @@
   "alerting": true,
   "annotations": true,
   "backend": true,
-  "apiVersion": "v1alpha0",
+  "apiVersion": "v0alpha1",
 
   "queryOptions": {
     "minInterval": true,

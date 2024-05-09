@@ -10,5 +10,4 @@ var (
 	ErrMissingDataSourceInfo = errutil.BadRequest("query.missingDataSourceInfo").MustTemplate("query missing datasource info: {{ .Public.RefId }}", errutil.WithPublic("Query {{ .Public.RefId }} is missing datasource information"))
 	ErrQueryParamMismatch    = errutil.BadRequest("query.headerMismatch", errutil.WithPublicMessage("The request headers point to a different plugin than is defined in the request body")).Errorf("plugin header/body mismatch")
 	ErrDuplicateRefId        = errutil.BadRequest("query.duplicateRefId", errutil.WithPublicMessage("Multiple queries using the same RefId is not allowed ")).Errorf("multiple queries using the same RefId is not allowed")
-	ErrAPIVersionMismatch    = errutil.BadRequest("query.apiVersionMismatch", errutil.WithPublicMessage("The API version in the request body does not match the API version in the datasource")).Errorf("API version mismatch")
 )

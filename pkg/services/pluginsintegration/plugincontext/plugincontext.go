@@ -81,10 +81,6 @@ func (p *Provider) Get(ctx context.Context, pluginID string, user identity.Reque
 			return backend.PluginContext{}, err
 		}
 
-		if plugin.APIVersion != "" && appSettings.APIVersion != "" && plugin.APIVersion != appSettings.APIVersion {
-			return backend.PluginContext{}, fmt.Errorf("plugin API version mismatch, plugin: %s, datasource: %s", plugin.APIVersion, appSettings.APIVersion)
-		}
-
 		pCtx.AppInstanceSettings = appSettings
 	}
 
@@ -108,10 +104,6 @@ func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user 
 	plugin, exists := p.pluginStore.Plugin(ctx, pluginID)
 	if !exists {
 		return backend.PluginContext{}, plugins.ErrPluginNotRegistered
-	}
-
-	if plugin.APIVersion != "" && ds.APIVersion != "" && plugin.APIVersion != ds.APIVersion {
-		return backend.PluginContext{}, fmt.Errorf("plugin API version mismatch, plugin: %s, datasource: %s", plugin.APIVersion, ds.APIVersion)
 	}
 
 	pCtx := backend.PluginContext{
@@ -161,10 +153,6 @@ func (p *Provider) PluginContextForDataSource(ctx context.Context, datasourceSet
 	plugin, exists := p.pluginStore.Plugin(ctx, pluginID)
 	if !exists {
 		return backend.PluginContext{}, plugins.ErrPluginNotRegistered
-	}
-
-	if plugin.APIVersion != "" && datasourceSettings.APIVersion != "" && plugin.APIVersion != datasourceSettings.APIVersion {
-		return backend.PluginContext{}, fmt.Errorf("plugin API version mismatch, plugin: %s, datasource: %s", plugin.APIVersion, datasourceSettings.APIVersion)
 	}
 
 	user, err := appcontext.User(ctx)
