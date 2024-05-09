@@ -49,8 +49,6 @@ export const getColorIndicatorClass = (colorIndicator: string, styles: ColorIndi
   switch (colorIndicator) {
     case ColorIndicator.value:
       return styles.value;
-    case ColorIndicator.series:
-      return styles.series;
     case ColorIndicator.hexagon:
       return styles.hexagon;
     case ColorIndicator.pie_1_4:
@@ -139,6 +137,7 @@ export const getContentItems = (
       colorPlacement: ColorPlacement.first,
       isActive: mode === TooltipDisplayMode.Multi && seriesIdx === i,
       numeric,
+      lineStyle: field.config.custom?.lineStyle,
     });
   }
 
