@@ -4597,6 +4597,9 @@
           "accessControl": {
             "$ref": "#/components/schemas/Metadata"
           },
+          "apiVersion": {
+            "type": "string"
+          },
           "basicAuth": {
             "type": "boolean"
           },

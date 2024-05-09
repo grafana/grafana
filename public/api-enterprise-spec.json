@@ -3928,6 +3928,9 @@
         "accessControl": {
           "$ref": "#/definitions/Metadata"
         },
+        "apiVersion": {
+          "type": "string"
+        },
         "basicAuth": {
           "type": "boolean"
         },
