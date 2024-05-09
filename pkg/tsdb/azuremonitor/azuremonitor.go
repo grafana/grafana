@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/metrics"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/resourcegraph"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/utils"
 )
 
 func ProvideService(httpClientProvider *httpclient.Provider) *Service {
@@ -36,6 +37,7 @@ func ProvideService(httpClientProvider *httpclient.Provider) *Service {
 		azureLogAnalytics:  &loganalytics.AzureLogAnalyticsDatasource{Proxy: proxy, Logger: logger},
 		azureResourceGraph: &resourcegraph.AzureResourceGraphDatasource{Proxy: proxy, Logger: logger},
 		azureTraces:        &loganalytics.AzureLogAnalyticsDatasource{Proxy: proxy, Logger: logger},
+		traceExemplar:      &loganalytics.AzureLogAnalyticsDatasource{Proxy: proxy, Logger: logger},
 	}
 
 	im := datasource.NewInstanceManager(NewInstanceSettings(httpClientProvider, executors, logger))
