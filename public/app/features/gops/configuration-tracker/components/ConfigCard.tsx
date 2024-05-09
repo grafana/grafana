@@ -19,7 +19,7 @@ export function ConfigCard({ config, handleActionClick }: ConfigCardProps) {
     <Stack direction={'column'} gap={1} justifyContent={'space-around'}>
       <div className={styles.cardContent}>
         <Stack direction={'column'} gap={1}>
-          <div className={styles.cardTitle}>
+          <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1}>
             <Stack direction={'row'} gap={1} alignItems={'center'}>
               {config.title}
               {config.titleIcon && <Icon name={config.titleIcon} />}
@@ -31,7 +31,7 @@ export function ConfigCard({ config, handleActionClick }: ConfigCardProps) {
                 complete
               </Stack>
             )}
-          </div>
+          </Stack>
           <Stack direction={'column'}>
             {config.description}
             {config.stepsDone && config.totalStepsToDo && (
@@ -61,7 +61,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background: theme.colors.background.secondary,
     padding: theme.spacing(2),
     borderRadius: theme.shape.radius.default,
-    height: theme.spacing(20),
+    height: '100%',
+    gap: theme.spacing(1),
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'space-between',

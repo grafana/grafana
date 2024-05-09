@@ -4,6 +4,7 @@ import { getBackendSrv, locationService } from '@grafana/runtime';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
 import { onCallApi } from 'app/features/alerting/unified/api/onCallApi';
+import { useDataSourceFeatures } from 'app/features/alerting/unified/hooks/useCombinedRule';
 import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
@@ -38,18 +39,25 @@ export interface SectionsDto {
   sections: SectionDto[];
 }
 
-function isCreateAlertRuleDone() {
-  const { data: namespaces = [] } = alertRuleApi.endpoints.prometheusRuleNamespaces.useQuery(
-    {
-      ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
-    },
-    {
-      refetchOnFocus: true,
-      refetchOnReconnect: true,
-      refetchOnMountOrArgChange: true,
-    }
-  );
-  return namespaces.length > 0;
+function useIsCreateAlertRuleDone() {
+  const [fetchRulerRules, { data }] = alertRuleApi.endpoints.rulerRules.useLazyQuery({
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+  });
+
+  const { dsFeatures } = useDataSourceFeatures(GRAFANA_RULES_SOURCE_NAME);
+  const rulerConfig = dsFeatures?.rulerConfig;
+
+  useEffect(() => {
+    rulerConfig && fetchRulerRules({ rulerConfig });
+  }, [rulerConfig, fetchRulerRules]);
+
+  const rules = data
+    ? Object.entries(data).flatMap(([_, groupDto]) => {
+        return groupDto.flatMap((group) => group.rules);
+      })
+    : [];
+  return rules.length > 0;
 }
 
 function isContactPointReady(defaultContactPoint: string, contactPoints: Receiver[]) {
@@ -255,7 +263,7 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
                 url: '/alerting/list',
               },
               labelOnDone: 'View',
-              done: isCreateAlertRuleDone(),
+              done: useIsCreateAlertRuleDone(),
             },
           },
         ],
