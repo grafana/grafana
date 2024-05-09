@@ -1,8 +1,9 @@
 name: Run dashboard scenes e2e
 
 on:
-  schedule:
-    - cron: "0 8 * * 1-5" # every day at 08:00UTC on weekdays
+  # schedule:
+  #   - cron: "0 8 * * 1-5" # every day at 08:00UTC on weekdays
+  push
 
 env:
   ARCH: linux-amd64
