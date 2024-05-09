@@ -60,11 +60,26 @@ function getPanelStateBadgeDisplayModel(featureState: FeatureState): BadgeProps 
         icon: 'exclamation-triangle',
         color: 'orange',
       };
-  }
 
-  return {
-    text: 'Beta',
-    icon: 'rocket',
-    color: 'blue',
-  };
+    case FeatureState.beta:
+      return {
+        text: 'Beta',
+        icon: 'rocket',
+        color: 'blue',
+      };
+
+    case FeatureState.experimental:
+      return {
+        text: 'Experimental',
+        icon: 'exclamation-triangle',
+        color: 'orange',
+      };
+
+    case FeatureState.preview:
+      return {
+        text: 'Preview',
+        icon: 'rocket',
+        color: 'blue',
+      };
+  }
 }
