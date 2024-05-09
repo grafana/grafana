@@ -25,6 +25,14 @@
       "user": "Utilisateur"
     }
   },
+  "annotations": {
+    "empty-state": {
+      "button-title": "",
+      "info-box-content": "",
+      "info-box-content-2": "",
+      "title": ""
+    }
+  },
   "api-keys": {
     "empty-state": {
       "message": ""
@@ -71,6 +79,12 @@
       "select-all-header-checkbox": "Tout sélectionner",
       "select-checkbox": "Sélectionner",
       "tags-column": "Étiquettes"
+    },
+    "empty-state": {
+      "button-title": "",
+      "pro-tip": "",
+      "title": "",
+      "title-folder": ""
     },
     "folder-actions-button": {
       "delete": "Supprimer",
@@ -158,6 +172,11 @@
       "label-required": "Ce champ est obligatoire.",
       "sub-text": "<0>Définissez le texte qui décrira la corrélation.</0>",
       "title": "Définir l'étiquette de corrélation (Étape 1 sur 3)"
+    },
+    "empty-state": {
+      "button-title": "",
+      "pro-tip": "",
+      "title": ""
     },
     "list": {
       "delete": "supprimer la corrélation",
@@ -355,11 +374,18 @@
       "validation-required": "Nécessite un modèle JSON de tableau de bord"
     }
   },
+  "dashboard-links": {
+    "empty-state": {
+      "button-title": "",
+      "info-box-content": "",
+      "title": ""
+    }
+  },
   "dashboard-settings": {
     "annotations": {
       "title": "Annotations"
     },
-    "dashboard-delete-button": "Supprimer le tableau de bord",
+    "dashboard-delete-button": "",
     "general": {
       "auto-refresh-description": "",
       "auto-refresh-label": "Actualisation automatique",
@@ -405,6 +431,13 @@
       "title": "Versions"
     }
   },
+  "data-source-list": {
+    "empty-state": {
+      "button-title": "",
+      "pro-tip": "",
+      "title": ""
+    }
+  },
   "data-source-picker": {
     "add-new-data-source": "Configurer une nouvelle source de données",
     "built-in-list": {
@@ -439,6 +472,7 @@
       "newest-first": "Plus récent en premier",
       "oldest-first": "Plus ancien en premier",
       "query-history": "Historique des requêtes",
+      "query-library": "",
       "settings": "Paramètres",
       "starred": "Favoris"
     },
@@ -657,6 +691,10 @@
     },
     "add-widget": {
       "title": "Ajouter un panneau depuis la bibliothèque de panneau"
+    },
+    "empty-state": {
+      "message": "",
+      "more-info": ""
     }
   },
   "library-panels": {
@@ -689,10 +727,12 @@
     "forgot-password": "Vous avez oublié votre mot de passe ?",
     "form": {
       "password-label": "Mot de passe",
+      "password-placeholder": "",
       "password-required": "Vous devez renseigner le mot de passe",
       "submit-label": "Connexion",
       "submit-loading-label": "Connexion…",
       "username-label": "E-mail ou nom d'utilisateur",
+      "username-placeholder": "",
       "username-required": "Vous devez renseigner l'e-mail ou le nom d'utilisateur"
     },
     "services": {
@@ -847,7 +887,8 @@
       "title": "Alertes"
     },
     "alerting-admin": {
-      "title": "Administrateur"
+      "subtitle": "",
+      "title": ""
     },
     "alerting-am-routes": {
       "subtitle": "Déterminer comment les alertes sont acheminées vers les points de contact",
@@ -1163,6 +1204,10 @@
     "title": "Dernières nouvelles sur le blog"
   },
   "notifications": {
+    "empty-state": {
+      "description": "",
+      "title": ""
+    },
     "starred-dashboard": "Tableau de bord favori",
     "unstarred-dashboard": "Tableau de bord non favori"
   },
@@ -1226,9 +1271,8 @@
       "confirm-text": "Supprimer"
     },
     "empty": {
-      "button": "Créer une playlist",
-      "pro-tip": "Vous pouvez utiliser des playlists pour faire défiler des tableaux de bord sur des téléviseurs sans contrôle utilisateur",
-      "pro-tip-link-title": "En savoir plus",
+      "button": "",
+      "pro-tip": "",
       "title": "Il n'y a aucune playlist créée"
     }
   },
@@ -1342,6 +1386,10 @@
       "orphaned-title": "<0>Tableau de bord public orphelin</0>",
       "orphaned-tooltip": "Le tableau de bord lié a déjà été supprimé"
     },
+    "empty-state": {
+      "message": "",
+      "more-info": ""
+    },
     "toggle": {
       "pause-sharing-toggle-text": "Suspendre le partage"
     }
@@ -1446,7 +1494,10 @@
   },
   "service-accounts": {
     "empty-state": {
-      "message": ""
+      "button-title": "",
+      "message": "",
+      "more-info": "",
+      "title": ""
     }
   },
   "share-modal": {
@@ -1566,7 +1617,17 @@
     },
     "title": "Préférences"
   },
+  "silences": {
+    "empty-state": {
+      "button-title": "",
+      "title": ""
+    }
+  },
   "snapshot": {
+    "empty-state": {
+      "message": "",
+      "more-info": ""
+    },
     "external-badge": "Externe",
     "name-column-header": "Nom",
     "url-column-header": "URL de l'instantané",
@@ -1579,7 +1640,10 @@
   },
   "teams": {
     "empty-state": {
-      "message": ""
+      "button-title": "",
+      "message": "",
+      "pro-tip": "",
+      "title": ""
     }
   },
   "time-picker": {
@@ -1700,6 +1764,14 @@
     },
     "textbox": {
       "placeholder": "Entrer la valeur de la variable"
+    }
+  },
+  "variables": {
+    "empty-state": {
+      "button-title": "",
+      "info-box-content": "",
+      "info-box-content-2": "",
+      "title": ""
     }
   }
 }

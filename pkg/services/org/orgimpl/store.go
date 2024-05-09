@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -54,7 +53,6 @@ type sqlStore struct {
 	dialect migrator.Dialect
 	//TODO: moved to service
 	log     log.Logger
-	cfg     *setting.Cfg
 	deletes []string
 }
 

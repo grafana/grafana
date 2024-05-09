@@ -25,6 +25,14 @@
       "user": "Usuário"
     }
   },
+  "annotations": {
+    "empty-state": {
+      "button-title": "",
+      "info-box-content": "",
+      "info-box-content-2": "",
+      "title": ""
+    }
+  },
   "api-keys": {
     "empty-state": {
       "message": ""
@@ -71,6 +79,12 @@
       "select-all-header-checkbox": "Selecionar tudo",
       "select-checkbox": "Selecionar",
       "tags-column": "Tags"
+    },
+    "empty-state": {
+      "button-title": "",
+      "pro-tip": "",
+      "title": "",
+      "title-folder": ""
     },
     "folder-actions-button": {
       "delete": "Excluir",
@@ -158,6 +172,11 @@
       "label-required": "Este campo é obrigatório.",
       "sub-text": "<0>Defina o texto que descreverá a correlação.</0>",
       "title": "Definir rótulo de correlação (Passo 1 de 3)"
+    },
+    "empty-state": {
+      "button-title": "",
+      "pro-tip": "",
+      "title": ""
     },
     "list": {
       "delete": "excluir correlação",
@@ -355,11 +374,18 @@
       "validation-required": "Precisa de um modelo JSON de painel de controle"
     }
   },
+  "dashboard-links": {
+    "empty-state": {
+      "button-title": "",
+      "info-box-content": "",
+      "title": ""
+    }
+  },
   "dashboard-settings": {
     "annotations": {
       "title": "Anotações"
     },
-    "dashboard-delete-button": "Excluir painel de controle",
+    "dashboard-delete-button": "",
     "general": {
       "auto-refresh-description": "",
       "auto-refresh-label": "Atualização automática",
@@ -405,6 +431,13 @@
       "title": "Versões"
     }
   },
+  "data-source-list": {
+    "empty-state": {
+      "button-title": "",
+      "pro-tip": "",
+      "title": ""
+    }
+  },
   "data-source-picker": {
     "add-new-data-source": "Configurar uma nova fonte de dados",
     "built-in-list": {
@@ -439,6 +472,7 @@
       "newest-first": "Mais recentes primeiro",
       "oldest-first": "Mais antigos primeiro",
       "query-history": "Histórico de consultas",
+      "query-library": "",
       "settings": "Configurações",
       "starred": "Favorito"
     },
@@ -657,6 +691,10 @@
     },
     "add-widget": {
       "title": "Adicionar painel a partir da biblioteca de painéis"
+    },
+    "empty-state": {
+      "message": "",
+      "more-info": ""
     }
   },
   "library-panels": {
@@ -689,10 +727,12 @@
     "forgot-password": "Esqueceu sua senha?",
     "form": {
       "password-label": "Senha",
+      "password-placeholder": "",
       "password-required": "A senha é obrigatória",
       "submit-label": "Fazer login",
       "submit-loading-label": "Fazendo login...",
       "username-label": "E-mail ou nome de usuário",
+      "username-placeholder": "",
       "username-required": "O e-mail ou nome de usuário é obrigatório"
     },
     "services": {
@@ -847,7 +887,8 @@
       "title": "Alertas"
     },
     "alerting-admin": {
-      "title": "Administrador"
+      "subtitle": "",
+      "title": ""
     },
     "alerting-am-routes": {
       "subtitle": "Determine como os alertas são encaminhados para pontos de contato",
@@ -1163,6 +1204,10 @@
     "title": "Mais recentes do blog"
   },
   "notifications": {
+    "empty-state": {
+      "description": "",
+      "title": ""
+    },
     "starred-dashboard": "Painel de controle marcado como favorito",
     "unstarred-dashboard": "Painel de controle não marcado como favorito"
   },
@@ -1226,9 +1271,8 @@
       "confirm-text": "Excluir"
     },
     "empty": {
-      "button": "Criar lista de reprodução",
-      "pro-tip": "Você pode usar listas de reprodução para alternar entre painéis de controle na TVs sem controle de usuário",
-      "pro-tip-link-title": "Saiba mais",
+      "button": "",
+      "pro-tip": "",
       "title": "Não há listas de reprodução criadas ainda"
     }
   },
@@ -1342,6 +1386,10 @@
       "orphaned-title": "<0>Painel de controle público órfão</0>",
       "orphaned-tooltip": "O painel de controle vinculado já foi excluído"
     },
+    "empty-state": {
+      "message": "",
+      "more-info": ""
+    },
     "toggle": {
       "pause-sharing-toggle-text": "Pausar compartilhamento"
     }
@@ -1446,7 +1494,10 @@
   },
   "service-accounts": {
     "empty-state": {
-      "message": ""
+      "button-title": "",
+      "message": "",
+      "more-info": "",
+      "title": ""
     }
   },
   "share-modal": {
@@ -1566,7 +1617,17 @@
     },
     "title": "Preferências"
   },
+  "silences": {
+    "empty-state": {
+      "button-title": "",
+      "title": ""
+    }
+  },
   "snapshot": {
+    "empty-state": {
+      "message": "",
+      "more-info": ""
+    },
     "external-badge": "Externo",
     "name-column-header": "Nome",
     "url-column-header": "URL da captura",
@@ -1579,7 +1640,10 @@
   },
   "teams": {
     "empty-state": {
-      "message": ""
+      "button-title": "",
+      "message": "",
+      "pro-tip": "",
+      "title": ""
     }
   },
   "time-picker": {
@@ -1700,6 +1764,14 @@
     },
     "textbox": {
       "placeholder": "Inserir valor da variável"
+    }
+  },
+  "variables": {
+    "empty-state": {
+      "button-title": "",
+      "info-box-content": "",
+      "info-box-content-2": "",
+      "title": ""
     }
   }
 }

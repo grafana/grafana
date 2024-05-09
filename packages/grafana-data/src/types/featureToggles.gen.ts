@@ -179,4 +179,9 @@ export interface FeatureToggles {
   cloudWatchNewLabelParsing?: boolean;
   accessActionSets?: boolean;
   disableNumericMetricsSortingInExpressions?: boolean;
+  grafanaManagedRecordingRules?: boolean;
+  queryLibrary?: boolean;
+  autofixDSUID?: boolean;
+  logsExploreTableDefaultVisualization?: boolean;
+  newDashboardSharingComponent?: boolean;
 }

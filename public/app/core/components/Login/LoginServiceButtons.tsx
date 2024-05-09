@@ -149,7 +149,7 @@ export const LoginServiceButtons = () => {
 
   if (hasServices) {
     return (
-      <Stack direction="column">
+      <Stack direction={'column'} width={'100%'}>
         <LoginDivider />
         {Object.entries(enabledServices).map(([key, service]) => {
           const serviceName = service.name;
