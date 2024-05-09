@@ -167,6 +167,7 @@ export interface FeatureToggles {
   nodeGraphDotLayout?: boolean;
   groupToNestedTableTransformation?: boolean;
   newPDFRendering?: boolean;
+  tlsMemcached?: boolean;
   kubernetesAggregator?: boolean;
   expressionParser?: boolean;
   groupByVariable?: boolean;
