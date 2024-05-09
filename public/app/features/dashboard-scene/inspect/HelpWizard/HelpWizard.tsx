@@ -12,7 +12,6 @@ import {
   CodeEditor,
   useStyles2,
   Field,
-  HorizontalGroup,
   InlineSwitch,
   Button,
   Spinner,
@@ -153,7 +152,7 @@ export function HelpWizard({ panel, onClose }: Props) {
             label="Randomize data"
             description="Modify the original data to hide sensitve information.  Note the lengths will stay the same, and duplicate values will be equal."
           >
-            <HorizontalGroup>
+            <Stack>
               <InlineSwitch
                 label="Labels"
                 id="randomize-labels"
@@ -175,7 +174,7 @@ export function HelpWizard({ panel, onClose }: Props) {
                 value={Boolean(randomize.values)}
                 onChange={() => service.onToggleRandomize('values')}
               />
-            </HorizontalGroup>
+            </Stack>
           </Field>
 
           <Field label="Support snapshot" description={`Panel: ${panelTitle}`}>

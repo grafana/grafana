@@ -113,18 +113,18 @@
     "@types/gtag.js": "^0.0.19",
     "@types/history": "4.7.11",
     "@types/jest": "29.5.12",
-    "@types/jquery": "3.5.29",
+    "@types/jquery": "3.5.30",
     "@types/js-yaml": "^4.0.5",
     "@types/jsurl": "^1.2.28",
     "@types/lodash": "4.17.1",
     "@types/logfmt": "^1.2.3",
     "@types/lucene": "^2",
     "@types/mousetrap": "1.6.15",
-    "@types/node": "20.12.8",
+    "@types/node": "20.12.11",
     "@types/node-forge": "^1",
     "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.2.4",
     "@types/pluralize": "^0.0.33",
-    "@types/prismjs": "1.26.3",
+    "@types/prismjs": "1.26.4",
     "@types/react": "18.2.79",
     "@types/react-beautiful-dnd": "13.1.8",
     "@types/react-dom": "18.2.25",
@@ -347,7 +347,7 @@
     "prismjs": "1.29.0",
     "rc-slider": "10.6.2",
     "rc-time-picker": "3.7.3",
-    "rc-tree": "5.8.5",
+    "rc-tree": "5.8.7",
     "re-resizable": "6.9.16",
     "react": "18.2.0",
     "react-beautiful-dnd": "13.1.1",
@@ -384,7 +384,7 @@
     "reselect": "4.1.8",
     "rxjs": "7.8.1",
     "selecto": "1.26.3",
-    "semver": "7.6.0",
+    "semver": "7.6.1",
     "slate": "0.47.9",
     "slate-plain-serializer": "0.7.13",
     "slate-react": "0.22.10",
@@ -426,7 +426,7 @@
   "engines": {
     "node": ">= 20"
   },
-  "packageManager": "yarn@4.2.1",
+  "packageManager": "yarn@4.2.2",
   "dependenciesMeta": {
     "prettier@3.2.5": {
       "unplugged": true
