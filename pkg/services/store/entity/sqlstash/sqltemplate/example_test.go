@@ -2,7 +2,6 @@ package sqltemplate
 
 import (
 	"fmt"
-	"strings"
 	"text/template"
 )
 
@@ -70,8 +69,7 @@ func Example() {
 
 	// Then we finally execute the template to both generate the SQL code and to
 	// populate req.Args with the arguments:
-	var b strings.Builder
-	err := createUserTmpl.Execute(&b, req)
+	query, err := Execute(createUserTmpl, req)
 	if err != nil {
 		panic(err) // terminate the runnable example on error
 	}
@@ -79,11 +77,11 @@ func Example() {
 	// And we should finally be able to see the SQL generated, as well as
 	// getting the arguments populated for execution in a database. To execute
 	// it in the databse, we could run:
-	//	db.ExecContext(ctx, b.String(), req.Args...)
+	//	db.ExecContext(ctx, query, req.Args...)
 
 	// To provide the runnable example with some code to test, we will now print
 	// the values to standard output:
-	fmt.Println(b.String())
+	fmt.Println(query)
 	fmt.Printf("%#v", req.Args)
 
 	// Output:
