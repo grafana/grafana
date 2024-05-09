@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
+import React, { CSSProperties } from 'react';
 
 import { GrafanaTheme2, fieldColorModeRegistry } from '@grafana/data';
 import { LineStyle } from '@grafana/schema';
@@ -31,44 +31,24 @@ export const SeriesIcon = React.memo(
       cssColor = color!;
     }
 
-    if (lineStyle?.fill === 'dot' || lineStyle?.fill === 'dash') {
-      return (
-        <div data-testid="series-icon" ref={ref} className={cx(className, styles.container)} {...restProps}>
-          {lineStyle?.fill === 'dot' &&
-            [0, 1, 2].map((i) => (
-              <div
-                key={i}
-                className={cx(styles.forcedColors, styles.dot)}
-                style={{
-                  background: cssColor,
-                  marginRight: i < 2 ? '1px' : undefined,
-                }}
-              />
-            ))}
+    const lineStyleStyle =
+      lineStyle?.fill === 'dot' ? styles.dot : lineStyle?.fill === 'dash' ? styles.dash : styles.solid;
 
-          {lineStyle?.fill === 'dash' &&
-            [0, 1].map((i) => (
-              <div
-                key={i}
-                className={cx(styles.forcedColors, styles.dash)}
-                style={{
-                  background: cssColor,
-                  marginRight: i === 0 ? '2px' : undefined,
-                }}
-              />
-            ))}
-        </div>
-      );
-    }
+    const colorStyle: CSSProperties =
+      lineStyle?.fill === 'dot' || lineStyle?.fill === 'dash'
+        ? {
+            borderTopColor: cssColor,
+          }
+        : {
+            backgroundColor: cssColor,
+          };
 
     return (
       <div
         data-testid="series-icon"
         ref={ref}
-        className={cx(className, styles.forcedColors, styles.container, styles.solid)}
-        style={{
-          background: cssColor,
-        }}
+        className={cx(className, styles.forcedColors, styles.container, lineStyleStyle)}
+        style={colorStyle}
         {...restProps}
       />
     );
@@ -78,21 +58,16 @@ export const SeriesIcon = React.memo(
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     marginRight: '8px',
-    display: 'inline-flex',
+    display: 'inline-block',
+    width: '14px',
   }),
   dot: css({
-    width: '4px',
-    height: '4px',
-    borderRadius: theme.shape.radius.circle,
-    display: 'inline-block',
+    borderTop: 'dotted 3.99px',
   }),
   dash: css({
-    width: '6px',
-    height: '4px',
-    display: 'inline-block',
+    borderTop: 'dashed 3px',
   }),
   solid: css({
-    width: '14px',
     height: '4px',
     borderRadius: theme.shape.radius.pill,
     display: 'inline-block',
