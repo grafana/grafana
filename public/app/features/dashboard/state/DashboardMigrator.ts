@@ -157,7 +157,7 @@ export class DashboardMigrator {
     if (oldVersion < 3) {
       // ensure panel IDs
       let maxId = this.dashboard.getNextPanelId();
-      panelUpgrades.push((panel: any) => {
+      panelUpgrades.push((panel: PanelModel) => {
         if (!panel.id) {
           panel.id = maxId;
           maxId += 1;
@@ -278,7 +278,7 @@ export class DashboardMigrator {
     // schema version 9 changes
     if (oldVersion < 9) {
       // move aliasYAxis changes
-      panelUpgrades.push((panel: any) => {
+      panelUpgrades.push((panel: PanelModel) => {
         if (panel.type !== 'singlestat' && panel.thresholds !== '') {
           return panel;
         }
@@ -629,7 +629,7 @@ export class DashboardMigrator {
     }
 
     if (oldVersion < 26) {
-      panelUpgrades.push((panel: any) => {
+      panelUpgrades.push((panel: PanelModel) => {
         const wasReactText = panel.type === 'text2';
         if (!wasReactText) {
           return panel;

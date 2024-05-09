@@ -180,7 +180,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   snapshotData?: DataFrameDTO[];
   timeFrom?: any;
   timeShift?: any;
-  hideTimeOverride?: any;
+  hideTimeOverride?: boolean;
   declare options: {
     [key: string]: any;
   };
@@ -515,7 +515,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
 
   changePlugin(newPlugin: PanelPlugin) {
     const pluginId = newPlugin.meta.id;
-    const oldOptions: any = this.getOptionsToRemember();
+    const oldOptions = this.getOptionsToRemember();
     const prevFieldConfig = this.fieldConfig;
     const oldPluginId = this.type;
     const wasAngular = this.isAngularPlugin() || Boolean(autoMigrateAngular[oldPluginId]);
@@ -720,7 +720,7 @@ interface PanelOptionsCache {
 
 // For cases where we immediately want to stringify the panel model without cloning each property
 export function stringifyPanelModel(panel: PanelModel) {
-  const model: any = {};
+  const model: Record<string, unknown> = {};
 
   Object.entries(panel)
     .filter(
