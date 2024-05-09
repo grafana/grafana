@@ -447,7 +447,7 @@ export const prepConfig = ({ series, color, orientation, options, timeZone, them
       frame = series[0];
       color = _color;
 
-      return config.prepData(series, builder.getStackingGroups());
+      return builder.prepData!(series);
     },
   };
 };
