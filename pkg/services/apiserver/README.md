@@ -87,6 +87,6 @@ select the relevant API from the dropdown in the upper right.
 * [apiserver](https://github.com/kubernetes/apiserver) == [pkg/apiserver](/pkg/apiserver) - contains apiserver library code used for both standalone app apiservers and the one embedded in grafana. it depends on `pkg/apimachinery`
 * [pkg/services/apiserver](/pkg/services/apiserver) - this is where the embedded grafana API server background service is currently configured. it depends on `pkg/apiserver` and `pkg/apimachinery`
 * [pkg/apis](/pkg/apis) - where API resource types are defined
-* [pkg/hack/update-codegen.sh](/hack#kubernetes-hack-alert) - the script used to run [k8s codegen](https://github.com/kubernetes/code-generator/) against the types defined in `pkg/apis`
+* [hack/update-codegen.sh](/hack#kubernetes-hack-alert) - the script used to run [k8s codegen](https://github.com/kubernetes/code-generator/) against the types defined in `pkg/apis`
 * [pkg/registry/apis](/pkg/registry/apis) - where all of the types in `pkg/apis` are registered with the API server by implementing the [builder](/pkg/apiserver/builder/common.go#L18) interface
 * [pkg/cmd/grafana/apiserver](/pkg/cmd/grafana/apiserver) - this is where the apiserver is configured for the `grafana apiserver` CLI command, which can be used to launch standalone API servers
