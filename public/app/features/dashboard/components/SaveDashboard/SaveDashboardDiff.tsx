@@ -63,7 +63,16 @@ export const SaveDashboardDiff = ({
     <Stack direction="column" gap={1}>
       {hasFolderChanges && (
         <DiffGroup
-          diffs={[{ op: 'replace', value: newFolder, originalValue: oldFolder, path: [], startLineNumber: 0 }]}
+          diffs={[
+            {
+              op: 'replace',
+              value: newFolder,
+              originalValue: oldFolder,
+              path: [],
+              startLineNumber: 0,
+              endLineNumber: 0,
+            },
+          ]}
           key={'folder'}
           title={'folder'}
         />
