@@ -455,3 +455,13 @@ func NotificationSettingsFromAlertRuleNotificationSettings(ns *definitions.Alert
 		},
 	}
 }
+
+func ApiRecordFromModelRecord(r *models.Record) *definitions.Record {
+	if r == nil {
+		return nil
+	}
+	return &definitions.Record{
+		Metric: r.Metric,
+		From:   r.From,
+	}
+}
