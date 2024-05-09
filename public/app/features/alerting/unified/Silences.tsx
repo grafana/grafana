@@ -9,7 +9,7 @@ import {
 
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertmanagerDeliveryWarning';
-import ConnectedSilencesEditor, { SilencesEditor } from './components/silences/SilencesEditor';
+import ExistingSilenceEditor, { SilencesEditor } from './components/silences/SilencesEditor';
 import SilencesTable from './components/silences/SilencesTable';
 import { useSilenceNavData } from './hooks/useSilenceNavData';
 import { useAlertmanager } from './state/AlertmanagerContext';
@@ -40,7 +40,7 @@ const Silences = () => {
           {({ match }: RouteChildrenProps<{ id: string }>) => {
             return (
               match?.params.id && (
-                <ConnectedSilencesEditor silenceId={match.params.id} alertManagerSourceName={selectedAlertmanager} />
+                <ExistingSilenceEditor silenceId={match.params.id} alertManagerSourceName={selectedAlertmanager} />
               )
             );
           }}

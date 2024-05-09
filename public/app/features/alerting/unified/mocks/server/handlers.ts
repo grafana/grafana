@@ -2,6 +2,7 @@
  * Contains all handlers that are required for test rendering of components within Alerting
  */
 
+import { alertRuleDetailsHandler } from 'app/features/alerting/unified/mocks/alertRuleApi';
 import {
   alertmanagerAlertsListHandler,
   grafanaAlertingConfigurationStatusHandler,
@@ -21,6 +22,8 @@ import {
 const allHandlers = [
   grafanaAlertingConfigurationStatusHandler(),
   alertmanagerAlertsListHandler(),
+
+  alertRuleDetailsHandler(),
 
   folderHandler(),
 

@@ -12,23 +12,22 @@ interface Props {
   /**
    * If true, only show alertmanagers that are receiving alerts from Grafana
    */
-  showOnlyReceving?: boolean;
+  showOnlyReceivingGrafanaAlerts?: boolean;
 }
 
 function getAlertManagerLabel(alertManager: AlertManagerDataSource) {
   return alertManager.name === GRAFANA_RULES_SOURCE_NAME ? 'Grafana' : alertManager.name.slice(0, 37);
 }
 
-export const AlertManagerPicker = ({ disabled = false, showOnlyReceving }: Props) => {
+export const AlertManagerPicker = ({ disabled = false, showOnlyReceivingGrafanaAlerts }: Props) => {
   const styles = useStyles2(getStyles);
-
   const { selectedAlertmanager, availableAlertManagers, setSelectedAlertmanager } = useAlertmanager();
 
   const options: Array<SelectableValue<string>> = useMemo(() => {
     return availableAlertManagers
       .filter(({ name, handleGrafanaManagedAlerts }) => {
         const isReceivingGrafanaAlerts = name === GRAFANA_RULES_SOURCE_NAME || handleGrafanaManagedAlerts;
-        return showOnlyReceving ? isReceivingGrafanaAlerts : true;
+        return showOnlyReceivingGrafanaAlerts ? isReceivingGrafanaAlerts : true;
       })
       .map((ds) => ({
         label: getAlertManagerLabel(ds),
@@ -36,7 +35,7 @@ export const AlertManagerPicker = ({ disabled = false, showOnlyReceving }: Props
         imgUrl: ds.imgUrl,
         meta: ds.meta,
       }));
-  }, [availableAlertManagers, showOnlyReceving]);
+  }, [availableAlertManagers, showOnlyReceivingGrafanaAlerts]);
 
   return (
     <InlineField

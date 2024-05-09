@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDebounce, useDeepCompareEffect } from 'react-use';
 
 import { dateTime, GrafanaTheme2 } from '@grafana/data';
@@ -22,6 +22,9 @@ interface Props {
   ruleUid?: string;
 }
 
+/**
+ * Performs a deep equality check on the dependencies, and debounces the callback
+ */
 const useDebouncedDeepCompare = (cb: () => void, debounceMs: number, dependencies: unknown[]) => {
   const [state, setState] = useState<unknown[]>();
 
@@ -47,9 +50,12 @@ export const SilencedInstancesPreview = ({ amSourceName, matchers: inputMatchers
 
   const [getAlertmanagerAlerts, { currentData: alerts = [], isFetching, isError }] = useLazyQuery();
 
+  // We need to deep compare the matchers, as otherwise the preview API call is triggered on every render
+  // of the component. This is because between react-hook-form's useFieldArray, and our parsing of the matchers,
+  // we end up otherwise triggering the call too frequently
   useDebouncedDeepCompare(
     () => {
-      if (hasValidMatchers || ruleUid) {
+      if (hasValidMatchers) {
         getAlertmanagerAlerts({ amSourceName, filter: { matchers } });
       }
     },

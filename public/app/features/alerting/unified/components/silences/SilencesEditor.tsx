@@ -19,9 +19,11 @@ import {
   Field,
   FieldSet,
   Input,
+  Label,
   LinkButton,
   LoadingPlaceholder,
   Stack,
+  Tag,
   TextArea,
   useStyles2,
 } from '@grafana/ui';
@@ -40,7 +42,7 @@ import { SilencePeriod } from './SilencePeriod';
 import { SilencedInstancesPreview } from './SilencedInstancesPreview';
 import { getDefaultSilenceFormValues, getFormFieldsForSilence } from './utils';
 
-interface ConnectedSilenceEditorProps {
+interface Props {
   silenceId: string;
   alertManagerSourceName: string;
 }
@@ -50,7 +52,7 @@ interface ConnectedSilenceEditorProps {
  *
  * Fetches silence details from API, based on `silenceId`
  */
-export const ConnectedSilencesEditor = ({ silenceId, alertManagerSourceName }: ConnectedSilenceEditorProps) => {
+export const ExistingSilenceEditor = ({ silenceId, alertManagerSourceName }: Props) => {
   const {
     data: silence,
     isLoading: getSilenceIsLoading,
@@ -187,9 +189,10 @@ export const SilencesEditor = ({
       <form onSubmit={handleSubmit(onSubmit)}>
         <FieldSet className={styles.formContainer}>
           {alertRule && (
-            <Field label="Alert rule">
-              <div>{alertRule.grafana_alert.title}</div>
-            </Field>
+            <div className={styles.alertRule}>
+              <Label id="alert-rule">Alert rule</Label>
+              <Tag colorIndex={8} aria-labelledby="alert-rule" name={alertRule.grafana_alert.title} />
+            </div>
           )}
 
           <div className={styles.silencePeriod}>
@@ -263,6 +266,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   formContainer: css({
     maxWidth: theme.breakpoints.values.md,
   }),
+  alertRule: css({
+    paddingBottom: theme.spacing(2),
+  }),
   silencePeriod: css({
     display: 'flex',
     flexDirection: 'row',
@@ -272,4 +278,4 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-export default ConnectedSilencesEditor;
+export default ExistingSilenceEditor;

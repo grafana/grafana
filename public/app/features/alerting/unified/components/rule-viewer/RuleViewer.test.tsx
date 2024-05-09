@@ -2,14 +2,17 @@ import React from 'react';
 import { render, waitFor, screen, userEvent } from 'test/test-utils';
 import { byText, byRole } from 'testing-library-selector';
 
-import { setBackendSrv, setPluginExtensionsHook } from '@grafana/runtime';
+import { setBackendSrv, setDataSourceSrv, setPluginExtensionsHook } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/mocks/alertRuleApi';
 import { setFolderAccessControl } from 'app/features/alerting/unified/mocks/server/configure';
+import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
 
 import {
+  MockDataSourceSrv,
   getCloudRule,
   getGrafanaRule,
   grantUserPermissions,
@@ -18,7 +21,7 @@ import {
 } from '../../mocks';
 import { setupDataSources } from '../../testSetup/datasources';
 import { Annotation } from '../../utils/constants';
-import { DataSourceType } from '../../utils/datasource';
+import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import * as ruleId from '../../utils/rule-id';
 
 import { AlertRuleProvider } from './RuleContext';
@@ -158,6 +161,32 @@ describe('RuleViewer', () => {
       for (const menuItem of menuItems) {
         expect(menuItem.get()).toBeInTheDocument();
       }
+    });
+
+    it('renders silencing form correctly and shows alert rule name', async () => {
+      const dataSources = {
+        grafana: mockDataSource<AlertManagerDataSourceJsonData>({
+          name: GRAFANA_RULES_SOURCE_NAME,
+          type: DataSourceType.Alertmanager,
+        }),
+        am: mockDataSource<AlertManagerDataSourceJsonData>({
+          name: 'Alertmanager',
+          type: DataSourceType.Alertmanager,
+          jsonData: {
+            handleGrafanaManagedAlerts: true,
+          },
+        }),
+      };
+      setupDataSources(dataSources.grafana, dataSources.am);
+      setDataSourceSrv(new MockDataSourceSrv(dataSources));
+
+      await renderRuleViewer(mockRule, mockRuleIdentifier);
+
+      const user = userEvent.setup();
+      await user.click(ELEMENTS.actions.more.button.get());
+      await user.click(ELEMENTS.actions.more.actions.silence.get());
+
+      expect(await screen.findByLabelText(/^alert rule/i)).toHaveTextContent(MOCK_GRAFANA_ALERT_RULE_TITLE);
     });
   });
 
