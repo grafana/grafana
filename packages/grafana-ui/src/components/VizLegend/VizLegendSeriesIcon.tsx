@@ -27,8 +27,6 @@ export const VizLegendSeriesIcon = React.memo(({ seriesName, color, gradient, re
     [seriesName, onSeriesColorChange]
   );
 
-  console.log('VizLegendSeriesIcon', lineStyle);
-
   if (seriesName && onSeriesColorChange && color && !readonly) {
     return (
       <SeriesColorPicker color={color} onChange={onChange} enableNamedColors>
