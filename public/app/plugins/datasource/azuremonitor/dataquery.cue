@@ -50,10 +50,13 @@ composableKinds: DataQuery: {
 					region?:        string
 					// Azure Monitor query type.
 					// queryType: #AzureQueryType
+
+					// Used only for exemplar queries from Prometheus
+					query?: string
 				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 				// Defines the supported queryTypes. GrafanaTemplateVariableFn is deprecated
-				#AzureQueryType: "Azure Monitor" | "Azure Log Analytics" | "Azure Resource Graph" | "Azure Traces" | "Azure Subscriptions" | "Azure Resource Groups" | "Azure Namespaces" | "Azure Resource Names" | "Azure Metric Names" | "Azure Workspaces" | "Azure Regions" | "Grafana Template Variable Function" @cuetsy(kind="enum", memberNames="AzureMonitor|LogAnalytics|AzureResourceGraph|AzureTraces|SubscriptionsQuery|ResourceGroupsQuery|NamespacesQuery|ResourceNamesQuery|MetricNamesQuery|WorkspacesQuery|LocationsQuery|GrafanaTemplateVariableFn")
+				#AzureQueryType: "Azure Monitor" | "Azure Log Analytics" | "Azure Resource Graph" | "Azure Traces" | "Azure Subscriptions" | "Azure Resource Groups" | "Azure Namespaces" | "Azure Resource Names" | "Azure Metric Names" | "Azure Workspaces" | "Azure Regions" | "Grafana Template Variable Function" | "traceql" @cuetsy(kind="enum", memberNames="AzureMonitor|LogAnalytics|AzureResourceGraph|AzureTraces|SubscriptionsQuery|ResourceGroupsQuery|NamespacesQuery|ResourceNamesQuery|MetricNamesQuery|WorkspacesQuery|LocationsQuery|GrafanaTemplateVariableFn|TraceExemplar")
 
 				#AzureMetricQuery: {
 					// Array of resource URIs to be queried.
