@@ -8,10 +8,11 @@ interface NeedHelpInfoProps {
   contentText: string | JSX.Element;
   externalLink?: string;
   linkText?: string;
-  title: string;
+  title?: string;
 }
-export function NeedHelpInfo({ contentText, externalLink, linkText, title }: NeedHelpInfoProps) {
+export function NeedHelpInfo({ contentText, externalLink, linkText, title = 'Need help?' }: NeedHelpInfoProps) {
   const styles = useStyles2(getStyles);
+
   return (
     <Toggletip
       content={<div className={styles.mutedText}>{contentText}</div>}
@@ -48,12 +49,12 @@ export function NeedHelpInfo({ contentText, externalLink, linkText, title }: Nee
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  mutedText: css`
-    color: ${theme.colors.text.secondary};
-    font-size: ${theme.typography.size.sm};
-  `,
-  helpInfo: css`
-    cursor: pointer;
-    text-decoration: underline;
-  `,
+  mutedText: css({
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.size.sm,
+  }),
+  helpInfo: css({
+    cursor: 'pointer',
+    textDecoration: 'underline',
+  }),
 });

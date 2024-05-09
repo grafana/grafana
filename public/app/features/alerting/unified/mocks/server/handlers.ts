@@ -1,10 +1,36 @@
 /**
- * Contains definitions for all handlers that are required for test rendering of components within Alerting
+ * Contains all handlers that are required for test rendering of components within Alerting
  */
 
-import { HttpResponse, http } from 'msw';
+import {
+  alertmanagerAlertsListHandler,
+  grafanaAlertingConfigurationStatusHandler,
+} from 'app/features/alerting/unified/mocks/alertmanagerApi';
+import { datasourceBuildInfoHandler } from 'app/features/alerting/unified/mocks/datasources';
+import { folderHandler } from 'app/features/alerting/unified/mocks/folders';
+import { pluginsHandler } from 'app/features/alerting/unified/mocks/plugins';
+import {
+  silenceCreateHandler,
+  silenceGetHandler,
+  silencesListHandler,
+} from 'app/features/alerting/unified/mocks/silences';
 
-import { defaultAlertmanagerChoiceResponse } from 'app/features/alerting/unified/mocks/alertmanagerApi';
+/**
+ * All mock handlers that are required across Alerting tests
+ */
+const allHandlers = [
+  grafanaAlertingConfigurationStatusHandler(),
+  alertmanagerAlertsListHandler(),
 
-export const alertmanagerChoiceHandler = (response = defaultAlertmanagerChoiceResponse) =>
-  http.get('/api/v1/ngalert', () => HttpResponse.json(response));
+  folderHandler(),
+
+  pluginsHandler(),
+
+  silencesListHandler(),
+  silenceGetHandler(),
+  silenceCreateHandler(),
+
+  datasourceBuildInfoHandler(),
+];
+
+export default allHandlers;

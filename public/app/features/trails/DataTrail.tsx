@@ -93,14 +93,25 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       );
     }
 
+    // Disconnects the current step history state from the current state, to prevent changes affecting history state
+    const currentState = this.state.history.state.steps[this.state.history.state.currentStep]?.trailState;
+    if (currentState) {
+      this.restoreFromHistoryStep(currentState);
+    }
+
     this.enableUrlSync();
+
+    // Save the current trail as a recent if the browser closes or reloads
+    const saveRecentTrail = () => getTrailStore().setRecentTrail(this);
+    window.addEventListener('unload', saveRecentTrail);
 
     return () => {
       this.disableUrlSync();
 
       if (!this.state.embedded) {
-        getTrailStore().setRecentTrail(this);
+        saveRecentTrail();
       }
+      window.removeEventListener('unload', saveRecentTrail);
     };
   }
 
@@ -158,6 +169,11 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   public restoreFromHistoryStep(state: DataTrailState) {
     this.disableUrlSync();
 
+    if (!state.topScene && !state.metric) {
+      // If the top scene for an  is missing, correct it.
+      state.topScene = new MetricSelectScene({});
+    }
+
     this.setState(
       sceneUtils.cloneSceneObjectState(state, {
         history: this.state.history,
@@ -202,7 +218,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       if (this.state.metric !== values.metric) {
         Object.assign(stateUpdate, this.getSceneUpdatesForNewMetricValue(values.metric));
       }
-    } else if (values.metric === null) {
+    } else if (values.metric == null) {
       stateUpdate.metric = undefined;
       stateUpdate.topScene = new MetricSelectScene({});
     }
