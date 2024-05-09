@@ -12,9 +12,10 @@ export interface TableSelectorProps extends ResourceSelectorProps {
   table: string | undefined;
   dataset: string | undefined;
   onChange: (v: SelectableValue) => void;
+  inputId?: string | undefined;
 }
 
-export const TableSelector = ({ db, dataset, table, className, onChange }: TableSelectorProps) => {
+export const TableSelector = ({ db, dataset, table, className, onChange, inputId }: TableSelectorProps) => {
   const state = useAsync(async () => {
     // No need to attempt to fetch tables for an unknown dataset.
     if (!dataset) {
@@ -30,6 +31,7 @@ export const TableSelector = ({ db, dataset, table, className, onChange }: Table
       className={className}
       disabled={state.loading}
       aria-label="Table selector"
+      inputId={inputId}
       data-testid={selectors.components.SQLQueryEditor.headerTableSelector}
       value={table}
       options={state.value}
