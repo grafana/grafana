@@ -1,11 +1,15 @@
 {
   "openapi": "3.0.0",
   "info": {
+    "description": "Grafana scopes",
     "title": "scope.grafana.app/v0alpha1"
   },
   "paths": {
     "/apis/scope.grafana.app/v0alpha1/": {
       "get": {
+        "tags": [
+          "API Discovery"
+        ],
         "description": "get available resources",
         "operationId": "getAPIResources",
         "responses": {
@@ -31,6 +35,49 @@
           }
         }
       }
+    },
+    "/apis/scope.grafana.app/v0alpha1/namespaces/{namespace}/find": {
+      "get": {
+        "tags": [
+          "TreeResults"
+        ],
+        "description": "Navigate the scopes tree",
+        "operationId": "connectGetNamespacedTreeResults",
+        "parameters": [
+          {
+            "name": "parent",
+            "in": "query",
+            "description": "The parent scope node"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.scope.v0alpha1.TreeResults"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "scope.grafana.app",
+          "version": "v0alpha1",
+          "kind": "TreeResults"
+        }
+      },
+      "parameters": [
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "example": "default"
+        }
+      ]
     },
     "/apis/scope.grafana.app/v0alpha1/namespaces/{namespace}/scopedashboardbindings": {
       "get": {
@@ -4635,33 +4682,32 @@
       "com.github.grafana.grafana.pkg.apis.scope.v0alpha1.ScopeNodeSpec": {
         "type": "object",
         "required": [
-          "title",
-          "description",
-          "isLeaf",
-          "isSelectable",
-          "leafType",
-          "leafName"
+          "nodeType",
+          "title"
         ],
         "properties": {
           "description": {
+            "type": "string"
+          },
+          "linkID": {
+            "description": "scope (later more things)",
+            "type": "string"
+          },
+          "linkType": {
+            "description": "Possible enum values:\n - `\"scope\"`",
             "type": "string",
-            "default": ""
+            "enum": [
+              "scope"
+            ]
           },
-          "isLeaf": {
-            "type": "boolean",
-            "default": false
-          },
-          "isSelectable": {
-            "type": "boolean",
-            "default": false
-          },
-          "leafName": {
+          "nodeType": {
+            "description": "Possible enum values:\n - `\"container\"`\n - `\"leaf\"`",
             "type": "string",
-            "default": ""
-          },
-          "leafType": {
-            "type": "string",
-            "default": ""
+            "default": "",
+            "enum": [
+              "container",
+              "leaf"
+            ]
           },
           "parentName": {
             "type": "string"
@@ -4711,6 +4757,89 @@
             "default": ""
           }
         }
+      },
+      "com.github.grafana.grafana.pkg.apis.scope.v0alpha1.TreeItem": {
+        "type": "object",
+        "required": [
+          "nodeType",
+          "title"
+        ],
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "linkID": {
+            "description": "scope (later more things)",
+            "type": "string"
+          },
+          "linkType": {
+            "description": "Possible enum values:\n - `\"scope\"`",
+            "type": "string",
+            "enum": [
+              "scope"
+            ]
+          },
+          "nodeId": {
+            "type": "string"
+          },
+          "nodeType": {
+            "description": "Possible enum values:\n - `\"container\"`\n - `\"leaf\"`",
+            "type": "string",
+            "default": "",
+            "enum": [
+              "container",
+              "leaf"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.pkg.apis.scope.v0alpha1.TreeResults": {
+        "type": "object",
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.scope.v0alpha1.TreeItem"
+                }
+              ]
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
+              }
+            ]
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "scope.grafana.app",
+            "kind": "TreeResults",
+            "version": "__internal"
+          },
+          {
+            "group": "scope.grafana.app",
+            "kind": "TreeResults",
+            "version": "v0alpha1"
+          }
+        ]
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.APIResource": {
         "description": "APIResource specifies the name of a resource and whether it is namespaced.",
