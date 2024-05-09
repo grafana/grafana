@@ -59,8 +59,6 @@ func buildLogAnalyticsQuery(query backend.DataQuery, dsInfo types.DatasourceInfo
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode the Azure Log Analytics query object from JSON: %w", err)
 	}
-	resources := []string{}
-	var resourceOrWorkspace string
 	var queryString string
 	appInsightsQuery := false
 	dashboardTime := false
@@ -69,20 +67,8 @@ func buildLogAnalyticsQuery(query backend.DataQuery, dsInfo types.DatasourceInfo
 
 	resultFormat := ParseResultFormat(azureLogAnalyticsTarget.ResultFormat, dataquery.AzureQueryTypeAzureLogAnalytics)
 
-	// Legacy queries only specify a Workspace GUID, which we need to use the old workspace-centric
-	// API URL for, and newer queries specifying a resource URI should use resource-centric API.
-	// However, legacy workspace queries using a `workspaces()` template variable will be resolved
-	// to a resource URI, so they should use the new resource-centric.
-	if len(azureLogAnalyticsTarget.Resources) > 0 {
-		resources = azureLogAnalyticsTarget.Resources
-		resourceOrWorkspace = azureLogAnalyticsTarget.Resources[0]
-		appInsightsQuery = appInsightsRegExp.Match([]byte(resourceOrWorkspace))
-	} else if azureLogAnalyticsTarget.Resource != nil && *azureLogAnalyticsTarget.Resource != "" {
-		resources = []string{*azureLogAnalyticsTarget.Resource}
-		resourceOrWorkspace = *azureLogAnalyticsTarget.Resource
-	} else if azureLogAnalyticsTarget.Workspace != nil {
-		resourceOrWorkspace = *azureLogAnalyticsTarget.Workspace
-	}
+	resources, resourceOrWorkspace := retrieveResources(azureLogAnalyticsTarget)
+	appInsightsQuery = appInsightsRegExp.Match([]byte(resourceOrWorkspace))
 
 	if azureLogAnalyticsTarget.Query != nil {
 		queryString = *azureLogAnalyticsTarget.Query

@@ -68,3 +68,23 @@ func getApiURL(resourceOrWorkspace string, isAppInsightsQuery bool) string {
 		return fmt.Sprintf("v1/workspaces/%s/query", resourceOrWorkspace)
 	}
 }
+
+// Legacy queries only specify a Workspace GUID, which we need to use the old workspace-centric
+// API URL for, and newer queries specifying a resource URI should use resource-centric API.
+// However, legacy workspace queries using a `workspaces()` template variable will be resolved
+// to a resource URI, so they should use the new resource-centric.
+func retrieveResources(query dataquery.AzureLogsQuery) ([]string, string) {
+	resources := []string{}
+	var resourceOrWorkspace string
+	if len(query.Resources) > 0 {
+		resources = query.Resources
+		resourceOrWorkspace = query.Resources[0]
+	} else if query.Resource != nil && *query.Resource != "" {
+		resources = []string{*query.Resource}
+		resourceOrWorkspace = *query.Resource
+	} else if query.Workspace != nil {
+		resourceOrWorkspace = *query.Workspace
+	}
+
+	return resources, resourceOrWorkspace
+}
