@@ -52,14 +52,14 @@ function isCreateAlertRuleDone() {
   return namespaces.length > 0;
 }
 
-function isContactPointReady(contactPoints: Receiver[]) {
+function isContactPointReady(defaultContactPoint: string, contactPoints: Receiver[]) {
   // We consider the contact point ready if the default contact has the address filled
 
   const defaultEmailUpdated = contactPoints.some(
     (contactPoint: Receiver) =>
-      contactPoint.name === 'grafana-default-email' &&
+      contactPoint.name === defaultContactPoint &&
       contactPoint.grafana_managed_receiver_configs?.some(
-        (receiver) => receiver.name === 'grafana-default-email' && receiver.settings?.address !== '<example@email.com>'
+        (receiver) => receiver.name === defaultContactPoint && receiver.settings?.address !== '<example@email.com>'
       )
   );
   return defaultEmailUpdated;
@@ -223,7 +223,7 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
               urlLinkOnDone: {
                 url: `/alerting/notifications`,
               },
-              done: isContactPointReady(contactPoints),
+              done: isContactPointReady(defaultContactPoint, contactPoints),
             },
           },
           {
