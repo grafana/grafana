@@ -230,38 +230,38 @@ function getDefaultTimeRange(): TimeRange {
 }
 
 export const getStyles = (theme: GrafanaTheme2) => ({
-  fullSize: css`
-    min-width: 100%;
-    height: 100%;
+  fullSize: css({
+    minWidth: '100%',
+    height: '100%',
 
-    display: flex;
-    flex-direction: column;
-  `,
-  graphWrapper: css`
-    padding: ${theme.spacing()} 0;
-  `,
-  emptyState: css`
-    color: ${theme.colors.text.secondary};
+    display: 'flex',
+    flexDirection: 'column',
+  }),
+  graphWrapper: css({
+    padding: `${theme.spacing()} 0`,
+  }),
+  emptyState: css({
+    color: theme.colors.text.secondary,
 
-    display: flex;
-    flex-direction: column;
-    gap: ${theme.spacing(2)};
-    align-items: center;
-    margin: auto auto;
-  `,
-  moreInstancesWarning: css`
-    color: ${theme.colors.warning.text};
-    padding: ${theme.spacing()};
-  `,
-  commonLabels: css`
-    display: grid;
-    grid-template-columns: max-content auto;
-  `,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(2),
+    alignItems: 'center',
+    margin: 'auto auto',
+  }),
+  moreInstancesWarning: css({
+    color: theme.colors.warning.text,
+    padding: theme.spacing(),
+  }),
+  commonLabels: css({
+    display: 'grid',
+    gridTemplateColumns: 'max-content auto',
+  }),
   // we need !important here to override the list item default styles
-  highlightedLogRecord: css`
-    background: ${theme.colors.primary.transparent} !important;
-    outline: 1px solid ${theme.colors.primary.shade} !important;
-  `,
+  highlightedLogRecord: css({
+    background: `${theme.colors.primary.transparent} !important`,
+    outline: `1px solid ${theme.colors.primary.shade} !important`,
+  }),
 });
 
 export default LokiStateHistory;

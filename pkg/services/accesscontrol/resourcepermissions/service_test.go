@@ -224,6 +224,102 @@ func TestService_SetPermissions(t *testing.T) {
 	}
 }
 
+func TestService_RegisterActionSets(t *testing.T) {
+	type registerActionSetsTest struct {
+		desc               string
+		actionSetsEnabled  bool
+		options            Options
+		expectedActionSets []ActionSet
+	}
+
+	tests := []registerActionSetsTest{
+		{
+			desc:              "should register folder action sets if action sets are enabled",
+			actionSetsEnabled: true,
+			options: Options{
+				Resource: "folders",
+				PermissionsToActions: map[string][]string{
+					"View": {"folders:read", "dashboards:read"},
+					"Edit": {"folders:read", "dashboards:read", "folders:write", "dashboards:write"},
+				},
+			},
+			expectedActionSets: []ActionSet{
+				{
+					Action:  "folders:view",
+					Actions: []string{"folders:read", "dashboards:read"},
+				},
+				{
+					Action:  "folders:edit",
+					Actions: []string{"folders:read", "dashboards:read", "folders:write", "dashboards:write"},
+				},
+			},
+		},
+		{
+			desc:              "should register dashboard action set if action sets are enabled",
+			actionSetsEnabled: true,
+			options: Options{
+				Resource: "dashboards",
+				PermissionsToActions: map[string][]string{
+					"View": {"dashboards:read"},
+				},
+			},
+			expectedActionSets: []ActionSet{
+				{
+					Action:  "dashboards:view",
+					Actions: []string{"dashboards:read"},
+				},
+			},
+		},
+		{
+			desc:              "should not register dashboard action set if action sets are not enabled",
+			actionSetsEnabled: false,
+			options: Options{
+				Resource: "dashboards",
+				PermissionsToActions: map[string][]string{
+					"View": {"dashboards:read"},
+				},
+			},
+			expectedActionSets: []ActionSet{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.IsFeatureToggleEnabled = func(ft string) bool {
+				if ft == featuremgmt.FlagAccessActionSets {
+					return tt.actionSetsEnabled
+				}
+				return false
+			}
+			ac := acimpl.ProvideAccessControl(cfg)
+			actionSets := NewActionSetService(ac)
+			features := featuremgmt.WithFeatures()
+			if tt.actionSetsEnabled {
+				features = featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets)
+			}
+			_, err := New(
+				setting.NewCfg(), tt.options, features, routing.NewRouteRegister(), licensingtest.NewFakeLicensing(),
+				ac, &actest.FakeService{}, db.InitTestDB(t), nil, nil, actionSets,
+			)
+			require.NoError(t, err)
+
+			if len(tt.expectedActionSets) > 0 {
+				for _, expectedActionSet := range tt.expectedActionSets {
+					actionSet := actionSets.GetActionSet(expectedActionSet.Action)
+					assert.ElementsMatch(t, expectedActionSet.Actions, actionSet)
+				}
+			} else {
+				// Check that action sets have not been registered
+				for permission := range tt.options.PermissionsToActions {
+					actionSetName := GetActionSetName(tt.options.Resource, permission)
+					assert.Nil(t, actionSets.GetActionSet(actionSetName))
+				}
+			}
+		})
+	}
+}
+
 func setupTestEnvironment(t *testing.T, ops Options) (*Service, user.Service, team.Service) {
 	t.Helper()
 
@@ -245,11 +341,11 @@ func setupTestEnvironment(t *testing.T, ops Options) (*Service, user.Service, te
 
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
-	ac := acimpl.ProvideAccessControl(cfg)
+	ac := acimpl.ProvideAccessControl(setting.NewCfg())
 	acService := &actest.FakeService{}
 	service, err := New(
 		cfg, ops, featuremgmt.WithFeatures(), routing.NewRouteRegister(), license,
-		ac, acService, sql, teamSvc, userSvc, NewActionSetService(),
+		ac, acService, sql, teamSvc, userSvc, NewActionSetService(ac),
 	)
 	require.NoError(t, err)
 

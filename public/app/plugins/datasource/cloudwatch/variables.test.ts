@@ -51,7 +51,7 @@ describe('variables', () => {
     mock.datasource.resources.getMetrics = getMetrics;
     const query = { ...defaultQuery, queryType: VariableQueryType.Metrics, accountId: '123' };
     const result = await variables.execute(query);
-    expect(getMetrics).toBeCalledWith({
+    expect(getMetrics).toHaveBeenCalledWith({
       region: query.region,
       namespace: 'foo',
       accountId: query.accountId,
@@ -63,7 +63,7 @@ describe('variables', () => {
     mock.datasource.resources.getDimensionKeys = getDimensionKeys;
     const query = { ...defaultQuery, queryType: VariableQueryType.DimensionKeys, accountId: '123' };
     const result = await variables.execute(query);
-    expect(getDimensionKeys).toBeCalledWith({
+    expect(getDimensionKeys).toHaveBeenCalledWith({
       region: query.region,
       namespace: query.namespace,
       accountId: query.accountId,
@@ -120,7 +120,7 @@ describe('variables', () => {
     });
     it('should run if values are set', async () => {
       const result = await variables.execute(query);
-      expect(getDimensionValues).toBeCalledWith({
+      expect(getDimensionValues).toHaveBeenCalledWith({
         region: query.region,
         namespace: query.namespace,
         metricName: query.metricName,
@@ -150,7 +150,7 @@ describe('variables', () => {
         queryType: VariableQueryType.EBSVolumeIDs,
         instanceID: 'foo',
       });
-      expect(getEbsVolumeIds).toBeCalledWith(defaultQuery.region, 'foo');
+      expect(getEbsVolumeIds).toHaveBeenCalledWith(defaultQuery.region, 'foo');
       expect(result).toEqual([{ text: 'f', value: 'f', expandable: true }]);
     });
   });
@@ -175,7 +175,7 @@ describe('variables', () => {
 
     it('should run if instance id set', async () => {
       const result = await variables.execute(query);
-      expect(getEc2InstanceAttribute).toBeCalledWith(query.region, query.attributeName, { a: ['b'] });
+      expect(getEc2InstanceAttribute).toHaveBeenCalledWith(query.region, query.attributeName, { a: ['b'] });
       expect(result).toEqual([{ text: 'g', value: 'g', expandable: true }]);
     });
   });
@@ -200,7 +200,7 @@ describe('variables', () => {
 
     it('should run if instance id set', async () => {
       const result = await variables.execute(query);
-      expect(getResourceARNs).toBeCalledWith(query.region, query.resourceType, { a: ['b'] });
+      expect(getResourceARNs).toHaveBeenCalledWith(query.region, query.resourceType, { a: ['b'] });
       expect(result).toEqual([{ text: 'h', value: 'h', expandable: true }]);
     });
   });
@@ -238,7 +238,7 @@ describe('variables', () => {
         accountId: '123',
       };
       await variables.execute(query);
-      expect(getLogGroups).toBeCalledWith({
+      expect(getLogGroups).toHaveBeenCalledWith({
         region: query.region,
         logGroupNamePrefix: 'templatedField',
         listAllLogGroups: true,
