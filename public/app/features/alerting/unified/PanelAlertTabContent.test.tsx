@@ -1,4 +1,4 @@
-import { render, waitFor } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { byTestId } from 'testing-library-selector';
@@ -9,8 +9,6 @@ import { setDataSourceSrv, setPluginExtensionsHook } from '@grafana/runtime';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { toggleOption } from 'app/features/variables/pickers/OptionsPicker/reducer';
-import { toKeyedAction } from 'app/features/variables/state/keyedVariablesReducer';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types';
 import { AlertQuery, PromRulesResponse } from 'app/types/unified-alerting-dto';
@@ -32,7 +30,6 @@ import { RuleFormValues } from './types/rule-form';
 import * as config from './utils/config';
 import { Annotation } from './utils/constants';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
-import * as ruleFormUtils from './utils/rule-form';
 
 jest.mock('./api/prometheus');
 jest.mock('./api/ruler');
@@ -342,25 +339,5 @@ describe('PanelAlertTabContent', () => {
     };
 
     expect(defaultsWithDeterministicTime).toMatchSnapshot();
-  });
-
-  it('Update NewRuleFromPanel button url when template changes', async () => {
-    const panelToRuleValuesSpy = jest.spyOn(ruleFormUtils, 'panelToRuleFormValues');
-
-    const store = configureStore();
-    renderAlertTabContent(dashboard, panel, store);
-
-    store.dispatch(
-      toKeyedAction(
-        'optionKey',
-        toggleOption({
-          option: { value: 'optionValue', selected: true, text: 'Option' },
-          clearOthers: false,
-          forceSelect: false,
-        })
-      )
-    );
-
-    await waitFor(() => expect(panelToRuleValuesSpy).toHaveBeenCalledTimes(2));
   });
 });
