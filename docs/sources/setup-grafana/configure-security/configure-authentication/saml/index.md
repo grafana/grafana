@@ -63,7 +63,7 @@ It is possible to setup Grafana with SAML authentication using Azure AD. However
 
 It is preferable to take this into consideration when setting up SAML authentication with Azure AD. We encourage the use of [Azure AD OAuth integration]({{< relref "../azuread" >}}) instead of SAML if you have more than 150 groups.
 
-- [Azure AD SAML limitations](https://docs.microsoft.com/en-us/azure/active-directory/develop/active-directory-token-limits)
+- [Azure AD SAML limitations](https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#groups-overage-claim)
 
 {{% /admonition %}}
 
