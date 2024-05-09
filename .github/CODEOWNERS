@@ -502,6 +502,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/core/utils/metrics.ts @grafana/plugins-platform-frontend
 /public/app/index.ts @grafana/frontend-ops
 /public/app/AppWrapper.tsx @grafana/frontend-ops
+/public/app/emotion.ts @grafana/frontend-ops
 /public/app/partials/ @grafana/grafana-frontend-platform
 
 
