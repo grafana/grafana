@@ -116,16 +116,6 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries 
 	}
 
 	for _, query := range queries {
-		resources := []string{}
-		var resourceOrWorkspace string
-		var queryString string
-		var resultFormat dataquery.ResultFormat
-		appInsightsQuery := false
-		traceExploreQuery := ""
-		traceParentExploreQuery := ""
-		traceLogsExploreQuery := ""
-		dashboardTime := false
-		timeColumn := ""
 		if query.QueryType == string(dataquery.AzureQueryTypeAzureLogAnalytics) {
 			azureLogAnalyticsQuery, err := buildLogAnalyticsQuery(query, dsInfo, appInsightsRegExp)
 			if err != nil {
@@ -141,30 +131,6 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries 
 			}
 			azureLogAnalyticsQueries = append(azureLogAnalyticsQueries, azureAppInsightsQuery)
 		}
-
-		apiURL := getApiURL(resourceOrWorkspace, appInsightsQuery)
-
-		rawQuery, err := macros.KqlInterpolate(query, dsInfo, queryString, "TimeGenerated")
-		if err != nil {
-			return nil, err
-		}
-
-		azureLogAnalyticsQueries = append(azureLogAnalyticsQueries, &AzureLogAnalyticsQuery{
-			RefID:                   query.RefID,
-			ResultFormat:            resultFormat,
-			URL:                     apiURL,
-			JSON:                    query.JSON,
-			TimeRange:               query.TimeRange,
-			Query:                   rawQuery,
-			Resources:               resources,
-			QueryType:               dataquery.AzureQueryType(query.QueryType),
-			TraceExploreQuery:       traceExploreQuery,
-			TraceParentExploreQuery: traceParentExploreQuery,
-			TraceLogsExploreQuery:   traceLogsExploreQuery,
-			AppInsightsQuery:        appInsightsQuery,
-			DashboardTime:           dashboardTime,
-			TimeColumn:              timeColumn,
-		})
 	}
 
 	return azureLogAnalyticsQueries, nil
