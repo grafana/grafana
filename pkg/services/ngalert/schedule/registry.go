@@ -311,5 +311,10 @@ func (r ruleWithFolder) Fingerprint() fingerprint {
 	writeInt(int64(rule.RuleGroupIndex))
 	writeString(string(rule.NoDataState))
 	writeString(string(rule.ExecErrState))
+	if rule.Record != nil {
+		binary.LittleEndian.PutUint64(tmp, uint64(rule.Record.Fingerprint()))
+		writeBytes(tmp)
+	}
+
 	return fingerprint(sum.Sum64())
 }
