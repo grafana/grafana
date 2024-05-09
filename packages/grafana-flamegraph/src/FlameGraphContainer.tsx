@@ -192,6 +192,7 @@ const FlameGraphContainer = ({
       onSandwich={setSandwichItem}
       onSearch={setSearch}
       onTableSort={onTableSort}
+      colorScheme={colorScheme}
     />
   );
 
