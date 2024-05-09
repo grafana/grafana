@@ -8,6 +8,7 @@ import {
   GrafanaTheme2,
   cacheFieldDisplayNames,
   formattedValueToString,
+  getDisplayProcessor,
   getFieldColorModeForField,
   getFieldSeriesColor,
   outerJoinDataFrames,
@@ -86,9 +87,9 @@ export function prepSeries(
           );
 
     frame.fields.forEach((field) => {
-      if (field !== xField && field !== colorField) {
+      if (field !== xField) {
         if (field.type === FieldType.number && !field.config.custom?.hideFrom?.viz) {
-          fields.push({
+          const field2 = {
             ...field,
             values: field.values.map((v) => (Number.isFinite(v) ? v : null)),
             // TODO: stacking should be moved from panel opts to fieldConfig (like TimeSeries) so we dont have to do this
@@ -102,12 +103,15 @@ export function prepSeries(
                 },
               },
             },
-          });
+          };
 
-          // if (options.stacking === StackingMode.Percent) {
-          //   copy.config.unit = 'percentunit';
-          //   copy.display = getDisplayProcessor({ field: copy, theme });
-          // }
+          if (stacking === StackingMode.Percent) {
+            field2.config.unit = 'percentunit';
+            // this bit is already done inside setClassicPaletteIdxs() below
+            // field2.display = getDisplayProcessor({ field: copy, theme });
+          }
+
+          fields.push(field2);
         } else {
           _rest.push(field);
         }

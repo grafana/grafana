@@ -18,7 +18,7 @@ import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/Toolt
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 
-import { BarChartLegend } from './BarChartLegend';
+import { BarChartLegend2, hasVisibleLegendSeries } from './BarChartLegend2';
 import { Options } from './panelcfg.gen';
 import { prepConfig, prepSeries } from './utils2';
 
@@ -66,19 +66,30 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
         // auto max length clamps to half viz height, subracts 3 chars for ... ellipsis
         Math.floor(height / 2 / Math.sin(Math.abs(xTickLabelRotation * toRads)) / charWidth - 3);
 
-  // TODO: config data links, color field
+  // TODO: config data links
   const info = useMemo(
     () => prepSeries(data.series, fieldConfig, stacking, theme, xField, colorByField),
     [data.series, fieldConfig, stacking, theme, xField, colorByField]
   );
 
-  const xGroupsCount = info.series?.[0].length;
+  const vizSeries = useMemo(
+    () => [
+      {
+        ...info.series![0],
+        fields: info.series![0].fields.filter((field, i) => i === 0 || !field.state?.hideFrom?.viz),
+      },
+    ],
+    [info.series]
+  );
+
+  const xGroupsCount = vizSeries[0].length;
+  const seriesCount = vizSeries[0].fields?.length;
 
   let { builder, prepData } = useMemo(
     () => {
       console.log('invaidate!');
 
-      return prepConfig({ series: info.series!, color: info.color, orientation, options, timeZone, theme });
+      return prepConfig({ series: vizSeries, color: info.color, orientation, options, timeZone, theme });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
@@ -86,6 +97,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
       timeZone,
       props.data.structureRev,
 
+      seriesCount,
       xGroupsCount,
 
       barWidth,
@@ -106,7 +118,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
     ]
   );
 
-  const plotData = useMemo(() => prepData(info.series!, info.color), [prepData, info.series, info.color]);
+  const plotData = useMemo(() => prepData(vizSeries, info.color), [prepData, vizSeries, info.color]);
 
   // if (error) {
   //   return (
@@ -116,11 +128,17 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
   //   );
   // }
 
+  const legendComp =
+    legend.showLegend && hasVisibleLegendSeries(builder, info.series!) ? (
+      <BarChartLegend2 data={info.series!} config={builder} {...legend} />
+    ) : null;
+
   return (
     <VizLayout
       width={props.width}
       height={props.height}
-      legend={<BarChartLegend frame={info.series![0]} colorField={info.color} {...legend} />}
+      // legend={<BarChartLegend frame={info.series![0]} colorField={info.color} {...legend} />}
+      legend={legendComp}
     >
       {(vizWidth, vizHeight) => (
         <UPlotChart config={builder!} data={plotData} width={vizWidth} height={vizHeight}>
@@ -134,7 +152,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
               render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2) => {
                 return (
                   <TimeSeriesTooltip
-                    series={info.series![0]}
+                    series={vizSeries[0]}
                     _rest={info._rest}
                     dataIdxs={dataIdxs}
                     seriesIdx={seriesIdx}
