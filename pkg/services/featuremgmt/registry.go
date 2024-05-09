@@ -1243,9 +1243,9 @@ var (
 		{
 			Name:         "tlsMemcached",
 			Description:  "Use TLS-enabled memcached in the enterprise caching feature",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePrivatePreview,
 			Owner:        grafanaOperatorExperienceSquad,
-			HideFromDocs: true,
+			HideFromDocs: false,
 		},
 	}
 )

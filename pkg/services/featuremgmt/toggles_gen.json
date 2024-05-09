@@ -2153,14 +2153,16 @@
     {
       "metadata": {
         "name": "tlsMemcached",
-        "resourceVersion": "1715224677791",
-        "creationTimestamp": "2024-05-09T03:17:57Z"
+        "resourceVersion": "1715224796139",
+        "creationTimestamp": "2024-05-09T03:17:57Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-05-09 03:19:56.13953 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Use TLS-enabled memcached in the enterprise caching feature",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-operator-experience-squad",
-        "hideFromDocs": true
+        "stage": "privatePreview",
+        "codeowner": "@grafana/grafana-operator-experience-squad"
       }
     }
   ]
