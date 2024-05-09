@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/macros"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/utils"
 )
 
 // AzureLogAnalyticsDatasource calls the Azure Log Analytics API's
@@ -161,7 +162,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries 
 			}
 		}
 
-		if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) {
+		if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) || query.QueryType == string(dataquery.AzureQueryTypeTraceql) {
 			queryJSONModel := types.TracesJSONQuery{}
 			err := json.Unmarshal(query.JSON, &queryJSONModel)
 			if err != nil {
@@ -180,8 +181,17 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries 
 			}
 
 			resources = azureTracesTarget.Resources
-			resourceOrWorkspace = azureTracesTarget.Resources[0]
 			appInsightsQuery = appInsightsRegExp.Match([]byte(resourceOrWorkspace))
+			if query.QueryType == string(dataquery.AzureQueryTypeTraceql) {
+				subscription, err := utils.GetFirstSubscriptionOrDefault(ctx, dsInfo, e.Logger)
+				if err != nil {
+					return nil, fmt.Errorf("failed to retrieve subscription for trace exemplars query: %w", err)
+				}
+				resources = []string{fmt.Sprintf("/subscriptions/%s", subscription)}
+				appInsightsQuery = true
+			}
+
+			resourceOrWorkspace = resources[0]
 			resourcesMap := make(map[string]bool, 0)
 			if len(resources) > 1 {
 				for _, resource := range resources {
@@ -205,6 +215,11 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries 
 				queryResources = append(queryResources, resource)
 			}
 			sort.Strings(queryResources)
+
+			if query.QueryType == string(dataquery.AzureQueryTypeTraceql) {
+				resources = queryResources
+				resourceOrWorkspace = resources[0]
+			}
 
 			queryString = buildTracesQuery(operationId, nil, queryJSONModel.AzureTraces.TraceTypes, queryJSONModel.AzureTraces.Filters, &resultFormat, queryResources)
 			traceIdVariable := "${__data.fields.traceID}"
@@ -331,7 +346,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		return nil, err
 	}
 
-	if query.QueryType == dataquery.AzureQueryTypeAzureTraces && query.ResultFormat == dataquery.ResultFormatTrace {
+	if (query.QueryType == dataquery.AzureQueryTypeAzureTraces || query.QueryType == dataquery.AzureQueryTypeTraceql) && query.ResultFormat == dataquery.ResultFormatTrace {
 		frame.Meta.PreferredVisualization = data.VisTypeTrace
 	}
 
