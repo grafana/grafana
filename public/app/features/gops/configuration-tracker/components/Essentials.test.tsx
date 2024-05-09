@@ -45,7 +45,23 @@ function mockSectionsDto(): SectionsDto {
               urlLink: {
                 url: '/url3',
               },
-              label: 'test',
+              label: 'label3',
+            },
+          },
+          {
+            title: 'testing step',
+            description: 'description3',
+            button: {
+              type: 'openLink',
+              urlLink: {
+                url: '/url4',
+              },
+              urlLinkOnDone: {
+                url: '/url4',
+              },
+              label: 'testNotDone',
+              labelOnDone: 'testDone',
+              done: true,
             },
           },
         ],
@@ -82,12 +98,12 @@ describe('Essentials', () => {
         onClose={jest.fn()}
       />
     );
-    // step1 is done
+    // step1 is done and labelonDone is not defined
     expect(byRole('heading', { name: /detect/i }).get()).toBeInTheDocument();
     const step1 = screen.getAllByTestId('step')[0];
     expect(within(step1).getByText(/create something1/i)).toBeInTheDocument();
     expect(within(step1).getByTestId('checked-step')).toBeInTheDocument();
-    expect(within(step1).queryByRole('link', { name: /label2/i })).not.toBeInTheDocument();
+    expect(within(step1).queryByRole('link', { name: /label1/i })).not.toBeInTheDocument();
     // step2 is not done
     const step2 = screen.getAllByTestId('step')[1];
     expect(within(step2).getByText(/create something2/i)).toBeInTheDocument();
@@ -100,6 +116,13 @@ describe('Essentials', () => {
     expect(within(step3).queryByTestId('checked-step')).not.toBeInTheDocument();
     expect(within(step3).queryByTestId('unckecked-step')).not.toBeInTheDocument();
     expect(within(step3).queryByTestId('step-button')).not.toBeInTheDocument();
-    expect(within(step3).queryByRole('link', { name: /label2/i })).not.toBeInTheDocument();
+    expect(within(step3).queryByRole('link', { name: /label3/i })).toBeInTheDocument();
+
+    // step4 is done and labelonDone is defined
+    const step4 = screen.getAllByTestId('step')[3];
+    expect(within(step4).getByText(/testing step/i)).toBeInTheDocument();
+    expect(within(step4).getByTestId('checked-step')).toBeInTheDocument();
+    expect(within(step4).queryByRole('link', { name: /testNotDone/i })).not.toBeInTheDocument();
+    expect(within(step4).queryByRole('link', { name: /testDone/i })).toBeInTheDocument();
   });
 });
