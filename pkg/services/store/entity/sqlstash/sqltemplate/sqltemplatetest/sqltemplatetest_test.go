@@ -6,8 +6,6 @@ import (
 	"text/template"
 )
 
-var errTest = errors.New("yes, it failed")
-
 func TestGolden(t *testing.T) {
 	t.Parallel()
 

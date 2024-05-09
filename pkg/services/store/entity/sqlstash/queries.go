@@ -22,12 +22,9 @@ var (
 
 // Templates.
 var (
-	sqlKindVersionLock = template.Must(template.New("sql").
-				Parse(sqlKindVersionLockData))
-	sqlKindVersionInc = template.Must(template.New("sql").
-				Parse(sqlKindVersionIncData))
-	sqlEntityInsert = template.Must(template.New("sql").
-			Parse(sqlEntityInsertData))
+	sqlKindVersionLock = template.Must(template.New("sql").Parse(sqlKindVersionLockData))
+	sqlKindVersionInc  = template.Must(template.New("sql").Parse(sqlKindVersionIncData))
+	sqlEntityInsert    = template.Must(template.New("sql").Parse(sqlEntityInsertData))
 )
 
 type sqlKindVersionLockRequest struct {
@@ -74,7 +71,6 @@ func newEntitySerializedData(e *entity.Entity) (*entitySerializedData, error) {
 
 	if len(e.Labels) == 0 {
 		d.Labels = jsonEmptyObject
-
 	} else {
 		d.Labels, err = json.Marshal(e.Labels)
 		if err != nil {
@@ -84,7 +80,6 @@ func newEntitySerializedData(e *entity.Entity) (*entitySerializedData, error) {
 
 	if len(e.Fields) == 0 {
 		d.Fields = jsonEmptyObject
-
 	} else {
 		d.Fields, err = json.Marshal(e.Fields)
 		if err != nil {
@@ -94,7 +89,6 @@ func newEntitySerializedData(e *entity.Entity) (*entitySerializedData, error) {
 
 	if len(e.Errors) == 0 {
 		d.Errors = jsonEmptyArray
-
 	} else {
 		d.Errors, err = json.Marshal(e.Errors)
 		if err != nil {

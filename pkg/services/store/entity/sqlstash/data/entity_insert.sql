@@ -1,13 +1,11 @@
 INSERT INTO
 
   {{/* Determine which table to insert into */}}
-
   {{ if .TableEntity }} {{ .Ident "entity" }}
   {{ else }}            {{ .Ident "entity_history" }}
   {{ end }}
 
   {{/* Explicitly specify fields that will be set */}}
-
   (
     {{ .Ident "guid" }},
     {{ .Ident "resource_version" }},
@@ -51,7 +49,6 @@ INSERT INTO
   )
 
   {{/* Provide the values */}}
-
   VALUES (
     {{ .Arg .Entity.Guid }},
     {{ .Arg .Entity.ResourceVersion }},
