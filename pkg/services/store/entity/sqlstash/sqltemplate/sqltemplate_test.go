@@ -8,9 +8,7 @@ import (
 func TestExecute(t *testing.T) {
 	t.Parallel()
 
-	tmpl := template.Must(template.New("test").Parse(`
-		{{ .ID }}
-	`))
+	tmpl := template.Must(template.New("test").Parse(`{{ .ID }}`))
 
 	data := struct {
 		ID int

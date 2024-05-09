@@ -85,7 +85,9 @@ func Example() {
 	fmt.Printf("%#v", req.Args)
 
 	// Output:
-	// INSERT INTO users (id, "type", name) VALUES (?, ?, ?);
+	// INSERT INTO users (id, "type", name)
+	//         VALUES (?, ?, ?);
+	//
 	// &sqltemplate.Args{1, "admin", "root"}
 }
 
