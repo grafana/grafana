@@ -216,7 +216,7 @@ const reduceGroups = (filterState: RulesFilter) => {
       const matchesFilterFor = chain(filterState)
         // ⚠️ keep this list of properties we filter for here up-to-date ⚠️
         // We are ignoring predicates we've matched before we get here (like "freeFormWords")
-        .pick(['ruleType', 'dataSourceNames', 'ruleHealth', 'labels', 'ruleState', 'dashboardUid', 'hide'])
+        .pick(['ruleType', 'dataSourceNames', 'ruleHealth', 'labels', 'ruleState', 'dashboardUid', 'plugins'])
         .omitBy(isEmpty)
         .mapValues(() => false)
         .value();
@@ -225,8 +225,8 @@ const reduceGroups = (filterState: RulesFilter) => {
         matchesFilterFor.ruleType = true;
       }
 
-      if ('hide' in matchesFilterFor && filterState.hide === 'plugins') {
-        matchesFilterFor.hide = !isPluginProvidedRule(rule);
+      if ('plugins' in matchesFilterFor && filterState.plugins === 'hide') {
+        matchesFilterFor.plugins = !isPluginProvidedRule(rule);
       }
 
       if ('dataSourceNames' in matchesFilterFor) {

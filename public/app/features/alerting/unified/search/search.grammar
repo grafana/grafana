@@ -1,6 +1,6 @@
 @top AlertRuleSearch { expression+ }
 
-@dialects { dataSourceFilter, nameSpaceFilter, labelFilter, groupFilter, ruleFilter, stateFilter, typeFilter, healthFilter, dashboardFilter, hideFilter }
+@dialects { dataSourceFilter, nameSpaceFilter, labelFilter, groupFilter, ruleFilter, stateFilter, typeFilter, healthFilter, dashboardFilter, pluginsFilter }
 
 expression { (FilterExpression | FreeFormExpression) expression }
 
@@ -16,7 +16,7 @@ FilterExpression {
  filter<TypeToken> |
  filter<HealthToken> |
  filter<DashboardToken> |
- filter<HideToken>
+ filter<PluginsToken>
 }
 
 filter<token> { token FilterValue }
@@ -44,7 +44,7 @@ filter<token> { token FilterValue }
   TypeToken[@dialect=typeFilter] { filterToken<"type"> }
   HealthToken[@dialect=healthFilter] { filterToken<"health"> }
   DashboardToken[@dialect=dashboardFilter] { filterToken<"dashboard"> }
-  HideToken[@dialect=hideFilter] { filterToken<"hide"> }
+  PluginsToken[@dialect=pluginsFilter] { filterToken<"plugins"> }
 
   @precedence { DataSourceToken, word }
   @precedence { NameSpaceToken, word }
@@ -55,6 +55,6 @@ filter<token> { token FilterValue }
   @precedence { TypeToken, word }
   @precedence { HealthToken, word }
   @precedence { DashboardToken, word }
-  @precedence { HideToken, word }
+  @precedence { PluginsToken, word }
 }
 

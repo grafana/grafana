@@ -16,6 +16,7 @@ import {
 } from '../../Analytics';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
+import { useAlertingHomePageExtensions } from '../../plugins/useAlertingHomePageExtensions';
 import { RuleHealth } from '../../search/rulesSearchParser';
 import { alertStateToReadable } from '../../utils/rules';
 import { HoverCard } from '../HoverCard';
@@ -69,6 +70,7 @@ const RuleStateOptions = Object.entries(PromAlertingRuleState).map(([key, value]
 const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => {
   const styles = useStyles2(getStyles);
   const [queryParams, updateQueryParams] = useURLSearchParams();
+  const { pluginsFilterEnabled } = usePluginsFilterStatus();
   const { filterState, hasActiveFilters, searchQuery, setSearchQuery, updateFilters } = useRulesFilter();
 
   // const ruleOrigin = queryParams.get('ruleOrigin');
@@ -221,17 +223,19 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
               onChange={handleRuleHealthChange}
             />
           </div>
-          <div>
-            <Label>Rule origin</Label>
-            <RadioButtonGroup<'plugins'>
-              options={[
-                { label: 'All', value: undefined },
-                { label: 'Exclude plugins', value: 'plugins' },
-              ]}
-              value={filterState.hide}
-              onChange={(value) => updateFilters({ ...filterState, hide: value })}
-            />
-          </div>
+          {pluginsFilterEnabled && (
+            <div>
+              <Label>Plugin rules</Label>
+              <RadioButtonGroup<'hide'>
+                options={[
+                  { label: 'Show', value: undefined },
+                  { label: 'Hide', value: 'hide' },
+                ]}
+                value={filterState.plugins}
+                onChange={(value) => updateFilters({ ...filterState, plugins: value })}
+              />
+            </div>
+          )}
         </Stack>
         <Stack direction="column" gap={1}>
           <Stack direction="row" gap={1}>
@@ -359,5 +363,10 @@ const helpStyles = (theme: GrafanaTheme2) => ({
     textAlign: 'center',
   }),
 });
+
+function usePluginsFilterStatus() {
+  const { extensions } = useAlertingHomePageExtensions();
+  return { pluginsFilterEnabled: extensions.length > 0 };
+}
 
 export default RulesFilter;
