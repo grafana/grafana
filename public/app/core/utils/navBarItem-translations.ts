@@ -265,7 +265,7 @@ export function getNavSubTitle(navId: string | undefined) {
     case 'admin':
       return t(
         'nav.admin.subtitle',
-        'Manage Alertmanager configurations and configure where alert instances generated from Grafana managed alert rules are sent'
+        'Manage server-wide settings and access to resources such as organizations, users, and licenses'
       );
     case 'cfg/general':
       return t('nav.config-general.subtitle', 'Manage default preferences and settings across Grafana');
