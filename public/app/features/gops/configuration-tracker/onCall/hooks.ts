@@ -15,17 +15,14 @@ export function useGetOnCallIntegrations() {
   return onCallIntegrations ?? [];
 }
 
-function useGetOnCallConfigurationChecks() {
-  const { data: onCallConfigChecks, isLoading } = onCallApi.endpoints.onCallConfigChecks.useQuery(undefined, {
+export function useGetOnCallConfigurationChecks() {
+  const { data: onCallConfigChecks } = onCallApi.endpoints.onCallConfigChecks.useQuery(undefined, {
     refetchOnFocus: true,
     refetchOnReconnect: true,
     refetchOnMountOrArgChange: true,
   });
 
-  return {
-    isLoading,
-    onCallConfigChecks: onCallConfigChecks ?? { is_chatops_connected: false, is_integration_chatops_connected: false },
-  };
+  return onCallConfigChecks ?? { is_chatops_connected: false, is_integration_chatops_connected: false };
 }
 
 export function useOnCallOptions() {
@@ -37,9 +34,6 @@ export function useOnCallOptions() {
 }
 
 export function useOnCallChatOpsConnections() {
-  const {
-    onCallConfigChecks: { is_chatops_connected, is_integration_chatops_connected },
-    isLoading,
-  } = useGetOnCallConfigurationChecks();
-  return { is_chatops_connected, is_integration_chatops_connected, isLoading };
+  const { is_chatops_connected, is_integration_chatops_connected } = useGetOnCallConfigurationChecks();
+  return { is_chatops_connected, is_integration_chatops_connected };
 }

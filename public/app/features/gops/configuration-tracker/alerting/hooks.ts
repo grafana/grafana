@@ -2,18 +2,17 @@ import { useEffect } from 'react';
 
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
-import { ReceiverTypes } from 'app/features/alerting/unified/components/receivers/grafanaAppReceivers/onCall/onCall';
 import { useDataSourceFeatures } from 'app/features/alerting/unified/hooks/useCombinedRule';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { Receiver } from 'app/plugins/datasource/alertmanager/types';
 
 export function useIsCreateAlertRuleDone() {
-  const [fetchRulerRules, { data, isLoading }] = alertRuleApi.endpoints.rulerRules.useLazyQuery({
+  const [fetchRulerRules, { data }] = alertRuleApi.endpoints.rulerRules.useLazyQuery({
     refetchOnFocus: true,
     refetchOnReconnect: true,
   });
 
-  const { dsFeatures, isLoadingDsFeatures } = useDataSourceFeatures(GRAFANA_RULES_SOURCE_NAME);
+  const { dsFeatures } = useDataSourceFeatures(GRAFANA_RULES_SOURCE_NAME);
   const rulerConfig = dsFeatures?.rulerConfig;
 
   useEffect(() => {
@@ -25,13 +24,12 @@ export function useIsCreateAlertRuleDone() {
         return groupDto.flatMap((group) => group.rules);
       })
     : [];
-  const isDone = rules.length > 0;
-  return { isDone, isLoading: isLoading || isLoadingDsFeatures };
+  return rules.length > 0;
 }
 
 export function isOnCallContactPointReady(contactPoints: Receiver[]) {
   return contactPoints.some((contactPoint: Receiver) =>
-    contactPoint.grafana_managed_receiver_configs?.some((receiver) => receiver.type === ReceiverTypes.OnCall)
+    contactPoint.grafana_managed_receiver_configs?.some((receiver) => receiver.type === 'oncall')
   );
 }
 
@@ -46,7 +44,7 @@ export function useGetContactPoints() {
   );
 
   const contactPoints = alertmanagerConfiguration.data?.alertmanager_config?.receivers ?? [];
-  return { contactPoints, isLoading: alertmanagerConfiguration.isLoading };
+  return contactPoints;
 }
 
 export function useGetDefaultContactPoint() {
@@ -59,6 +57,5 @@ export function useGetDefaultContactPoint() {
     }
   );
 
-  const defaultContactpoint = alertmanagerConfiguration.data?.alertmanager_config?.route?.receiver ?? '';
-  return { defaultContactpoint, isLoading: alertmanagerConfiguration.isLoading };
+  return alertmanagerConfiguration.data?.alertmanager_config?.route?.receiver ?? '';
 }
