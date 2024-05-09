@@ -1,10 +1,11 @@
 import { css, cx } from '@emotion/css';
 import React, { useCallback, useEffect } from 'react';
-import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Box, useStyles2 } from '@grafana/ui';
 import { AlertField, usePreviewTemplateMutation } from 'app/features/alerting/unified/api/templateApi';
+import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 
 import { EditorColumnHeader } from '../../../contact-points/templates/EditorColumnHeader';
 import { getPreviewResults } from '../../TemplatePreview';
@@ -27,6 +28,8 @@ export function TemplateContentAndPreview({
   const styles = useStyles2(getStyles);
 
   const [trigger, { data }] = usePreviewTemplateMutation();
+  const { selectedAlertmanager } = useAlertmanager();
+  const isGrafanaAlertManager = selectedAlertmanager === GRAFANA_RULES_SOURCE_NAME;
 
   const previewToRender = getPreviewResults(undefined, payloadFormatError, data);
 
@@ -47,21 +50,19 @@ export function TemplateContentAndPreview({
     <div className={cx(styles.container, className)}>
       <EditorColumnHeader label="Template content" />
       <Box flex={1}>
-        <AutoSizer disableWidth>
-          {({ height }) => (
-            <div className={styles.viewerContainer({ height })}>
-              <div className={styles.templateContent}>{templateContent}</div>
-            </div>
-          )}
-        </AutoSizer>
+        <div className={styles.viewerContainer({ height: 400 })}>
+          <div className={styles.templateContent}>{templateContent}</div>
+        </div>
       </Box>
 
-      <EditorColumnHeader label="Preview with the default payload" />
-      <Box flex={1}>
-        <AutoSizer disableWidth>
-          {({ height }) => <div className={styles.viewerContainer({ height })}>{previewToRender}</div>}
-        </AutoSizer>
-      </Box>
+      {isGrafanaAlertManager && (
+        <>
+          <EditorColumnHeader label="Preview with the default payload" />
+          <Box flex={1}>
+            <div className={styles.viewerContainer({ height: 500 })}>{previewToRender}</div>
+          </Box>
+        </>
+      )}
     </div>
   );
 }
