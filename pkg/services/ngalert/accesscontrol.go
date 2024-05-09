@@ -179,6 +179,18 @@ var (
 				{
 					Action: accesscontrol.ActionAlertingProvisioningWrite, // organization scope
 				},
+				{
+					Action: accesscontrol.ActionAlertingRulesProvisioningRead, // organization scope
+				},
+				{
+					Action: accesscontrol.ActionAlertingRulesProvisioningWrite, // organization scope
+				},
+				{
+					Action: accesscontrol.ActionAlertingNotificationsProvisioningRead, // organization scope
+				},
+				{
+					Action: accesscontrol.ActionAlertingNotificationsProvisioningWrite, // organization scope
+				},
 			},
 		},
 		Grants: []string{string(org.RoleAdmin)},
@@ -196,6 +208,12 @@ var (
 				},
 				{
 					Action: accesscontrol.ActionAlertingProvisioningRead, // organization scope
+				},
+				{
+					Action: accesscontrol.ActionAlertingRulesProvisioningRead, // organization scope
+				},
+				{
+					Action: accesscontrol.ActionAlertingNotificationsProvisioningRead, // organization scope
 				},
 			},
 		},
