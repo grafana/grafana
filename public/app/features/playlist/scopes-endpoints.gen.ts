@@ -4,6 +4,15 @@ const injectedRtkApi = api.injectEndpoints({
     getApiResources: build.query<GetApiResourcesApiResponse, GetApiResourcesApiArg>({
       query: () => ({ url: `/apis/scope.grafana.app/v0alpha1/` }),
     }),
+    connectGetNamespacedTreeResults: build.query<
+      ConnectGetNamespacedTreeResultsApiResponse,
+      ConnectGetNamespacedTreeResultsApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/apis/scope.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/find`,
+        params: { parent: queryArg.parent },
+      }),
+    }),
     listNamespacedScopeDashboardBinding: build.query<
       ListNamespacedScopeDashboardBindingApiResponse,
       ListNamespacedScopeDashboardBindingApiArg
@@ -579,6 +588,14 @@ const injectedRtkApi = api.injectEndpoints({
 export { injectedRtkApi as generatedAPI };
 export type GetApiResourcesApiResponse = /** status 200 OK */ IoK8SApimachineryPkgApisMetaV1ApiResourceList;
 export type GetApiResourcesApiArg = void;
+export type ConnectGetNamespacedTreeResultsApiResponse =
+  /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisScopeV0Alpha1TreeResults;
+export type ConnectGetNamespacedTreeResultsApiArg = {
+  /** object name and auth scope, such as for teams and projects */
+  namespace: any;
+  /** The parent scope node */
+  parent?: any;
+};
 export type ListNamespacedScopeDashboardBindingApiResponse =
   /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisScopeV0Alpha1ScopeDashboardBindingList;
 export type ListNamespacedScopeDashboardBindingApiArg = {
@@ -1730,6 +1747,38 @@ export type IoK8SApimachineryPkgApisMetaV1ApiResourceList = {
   /** resources contains the name of the resources and if they are namespaced. */
   resources: IoK8SApimachineryPkgApisMetaV1ApiResource[];
 };
+export type ComGithubGrafanaGrafanaPkgApisScopeV0Alpha1TreeItem = {
+  description?: string;
+  /** scope (later more things) */
+  linkID?: string;
+  /** Possible enum values:
+     - `"scope"` */
+  linkType?: 'scope';
+  nodeId?: string;
+  /** Possible enum values:
+     - `"container"`
+     - `"leaf"` */
+  nodeType: 'container' | 'leaf';
+  title: string;
+};
+export type IoK8SApimachineryPkgApisMetaV1ListMeta = {
+  /** continue may be set if the user set a limit on the number of items returned, and indicates that the server has more data available. The value is opaque and may be used to issue another request to the endpoint that served this list to retrieve the next set of available objects. Continuing a consistent list may not be possible if the server configuration has changed or more than a few minutes have passed. The resourceVersion field returned when using this continue value will be identical to the value in the first response, unless you have received this token from an error message. */
+  continue?: string;
+  /** remainingItemCount is the number of subsequent items in the list which are not included in this list response. If the list request contained label or field selectors, then the number of remaining items is unknown and the field will be left unset and omitted during serialization. If the list is complete (either because it is not chunking or because this is the last chunk), then there are no more remaining items and this field will be left unset and omitted during serialization. Servers older than v1.15 do not set this field. The intended use of the remainingItemCount is *estimating* the size of a collection. Clients should not rely on the remainingItemCount to be set or to be exact. */
+  remainingItemCount?: number;
+  /** String that identifies the server's internal version of this object that can be used by clients to determine when objects have changed. Value must be treated as opaque by clients and passed unmodified back to the server. Populated by the system. Read-only. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency */
+  resourceVersion?: string;
+  /** Deprecated: selfLink is a legacy read-only field that is no longer populated by the system. */
+  selfLink?: string;
+};
+export type ComGithubGrafanaGrafanaPkgApisScopeV0Alpha1TreeResults = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  items?: ComGithubGrafanaGrafanaPkgApisScopeV0Alpha1TreeItem[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata?: IoK8SApimachineryPkgApisMetaV1ListMeta;
+};
 export type IoK8SApimachineryPkgApisMetaV1Time = string;
 export type IoK8SApimachineryPkgApisMetaV1FieldsV1 = object;
 export type IoK8SApimachineryPkgApisMetaV1ManagedFieldsEntry = {
@@ -1824,16 +1873,6 @@ export type ComGithubGrafanaGrafanaPkgApisScopeV0Alpha1ScopeDashboardBinding = {
   metadata?: IoK8SApimachineryPkgApisMetaV1ObjectMeta;
   spec?: ComGithubGrafanaGrafanaPkgApisScopeV0Alpha1ScopeDashboardBindingSpec;
 };
-export type IoK8SApimachineryPkgApisMetaV1ListMeta = {
-  /** continue may be set if the user set a limit on the number of items returned, and indicates that the server has more data available. The value is opaque and may be used to issue another request to the endpoint that served this list to retrieve the next set of available objects. Continuing a consistent list may not be possible if the server configuration has changed or more than a few minutes have passed. The resourceVersion field returned when using this continue value will be identical to the value in the first response, unless you have received this token from an error message. */
-  continue?: string;
-  /** remainingItemCount is the number of subsequent items in the list which are not included in this list response. If the list request contained label or field selectors, then the number of remaining items is unknown and the field will be left unset and omitted during serialization. If the list is complete (either because it is not chunking or because this is the last chunk), then there are no more remaining items and this field will be left unset and omitted during serialization. Servers older than v1.15 do not set this field. The intended use of the remainingItemCount is *estimating* the size of a collection. Clients should not rely on the remainingItemCount to be set or to be exact. */
-  remainingItemCount?: number;
-  /** String that identifies the server's internal version of this object that can be used by clients to determine when objects have changed. Value must be treated as opaque by clients and passed unmodified back to the server. Populated by the system. Read-only. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency */
-  resourceVersion?: string;
-  /** Deprecated: selfLink is a legacy read-only field that is no longer populated by the system. */
-  selfLink?: string;
-};
 export type ComGithubGrafanaGrafanaPkgApisScopeV0Alpha1ScopeDashboardBindingList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
@@ -1910,11 +1949,16 @@ export type IoK8SApimachineryPkgApisMetaV1DeleteOptions = {
 };
 export type IoK8SApimachineryPkgApisMetaV1Patch = object;
 export type ComGithubGrafanaGrafanaPkgApisScopeV0Alpha1ScopeNodeSpec = {
-  description: string;
-  isLeaf: boolean;
-  isSelectable: boolean;
-  leafName: string;
-  leafType: string;
+  description?: string;
+  /** scope (later more things) */
+  linkID?: string;
+  /** Possible enum values:
+     - `"scope"` */
+  linkType?: 'scope';
+  /** Possible enum values:
+     - `"container"`
+     - `"leaf"` */
+  nodeType: 'container' | 'leaf';
   parentName?: string;
   title: string;
 };
@@ -1979,6 +2023,7 @@ export type IoK8SApimachineryPkgApisMetaV1WatchEvent = {
 };
 export const {
   useGetApiResourcesQuery,
+  useConnectGetNamespacedTreeResultsQuery,
   useListNamespacedScopeDashboardBindingQuery,
   useCreateNamespacedScopeDashboardBindingMutation,
   useDeletecollectionNamespacedScopeDashboardBindingMutation,

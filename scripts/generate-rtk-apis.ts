@@ -30,12 +30,12 @@ const config: ConfigFile = {
       apiImport: 'baseAPI',
     },
 
-    '../public/app/features/playlist/endpoints-filtered.gen.ts': {
-      schemaFile: '../pkg/tests/apis/playlist/testdata/openapi.json',
-      apiFile: '../public/app/features/playlist/baseAPI.ts',
-      apiImport: 'baseAPI',
-      filterEndpoints: [],
-    },
+    // '../public/app/features/playlist/endpoints-filtered.gen.ts': {
+    //   schemaFile: '../pkg/tests/apis/playlist/testdata/openapi.json',
+    //   apiFile: '../public/app/features/playlist/baseAPI.ts',
+    //   apiImport: 'baseAPI',
+    //   filterEndpoints: [],
+    // },
 
     '../public/app/features/playlist/scopes-endpoints.gen.ts': {
       schemaFile: '../pkg/tests/apis/scopes/testdata/openapi.json',
