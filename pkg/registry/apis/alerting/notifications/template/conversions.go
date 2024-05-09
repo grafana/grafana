@@ -8,16 +8,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
-func convertToK8sResources(orgID int64, list []definitions.NotificationTemplate, namespacer request.NamespaceMapper) (*notifications.TemplateList, error) {
-	result := &notifications.TemplateList{}
+func convertToK8sResources(orgID int64, list []definitions.NotificationTemplate, namespacer request.NamespaceMapper) (*notifications.TemplateGroupList, error) {
+	result := &notifications.TemplateGroupList{}
 	for _, t := range list {
 		result.Items = append(result.Items, *convertToK8sResource(orgID, t, namespacer))
 	}
 	return result, nil
 }
 
-func convertToK8sResource(orgID int64, template definitions.NotificationTemplate, namespacer request.NamespaceMapper) *notifications.Template {
-	return &notifications.Template{
+func convertToK8sResource(orgID int64, template definitions.NotificationTemplate, namespacer request.NamespaceMapper) *notifications.TemplateGroup {
+	return &notifications.TemplateGroup{
 		TypeMeta: resourceInfo.TypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      template.Name,
@@ -27,14 +27,14 @@ func convertToK8sResource(orgID int64, template definitions.NotificationTemplate
 			},
 			// TODO ResourceVersion and CreationTimestamp
 		},
-		Spec: notifications.TemplateSpec{Template: template.Template},
+		Spec: notifications.TemplateGroupSpec{Content: template.Template},
 	}
 }
 
-func convertToDomainModel(template *notifications.Template) definitions.NotificationTemplate {
+func convertToDomainModel(template *notifications.TemplateGroup) definitions.NotificationTemplate {
 	return definitions.NotificationTemplate{
 		Name:       template.Name,
-		Template:   template.Spec.Template,
+		Template:   template.Spec.Content,
 		Provenance: "",
 	}
 }

@@ -4,5 +4,5 @@ API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/alerti
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1,TimeIntervalInterval,Weekdays
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1,TimeIntervalInterval,Years
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1,TimeIntervalSpec,Intervals
-API rule violation: names_match,github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1,Template,TemplateStatus
+API rule violation: names_match,github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1,TemplateGroup,TemplateStatus
 API rule violation: names_match,github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1,TimeInterval,TimeIntervalStatus

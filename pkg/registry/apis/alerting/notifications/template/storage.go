@@ -7,7 +7,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
-	"k8s.io/apiserver/pkg/registry/rest"
 
 	notifications "github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1"
 
@@ -17,8 +16,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 )
 
-func NewStorage(legacyService TemplateService, namespacer request.NamespaceMapper, scheme *runtime.Scheme, dualWrite bool, optsGetter generic.RESTOptionsGetter) (rest.Storage, error) {
-	legacyStore := &legacyStorage{
+func NewStorage(legacyService TemplateService, namespacer request.NamespaceMapper, scheme *runtime.Scheme, dualWrite bool, optsGetter generic.RESTOptionsGetter) (grafanarest.Storage, error) {
+	legacyStore := &legacyGroupStorage{
 		service:    legacyService,
 		namespacer: namespacer,
 		tableConverter: utils.NewTableConverter(
@@ -27,7 +26,7 @@ func NewStorage(legacyService TemplateService, namespacer request.NamespaceMappe
 				{Name: "Name", Type: "string", Format: "name"},
 			},
 			func(obj any) ([]interface{}, error) {
-				r, ok := obj.(*notifications.Template)
+				r, ok := obj.(*notifications.TemplateGroup)
 				if ok {
 					return []interface{}{
 						r.Name,

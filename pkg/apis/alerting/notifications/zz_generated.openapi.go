@@ -17,10 +17,12 @@ import (
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
 		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.Template":                        schema_apis_alerting_notifications_v0alpha1_Template(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplateGroup":                   schema_apis_alerting_notifications_v0alpha1_TemplateGroup(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplateGroupList":               schema_apis_alerting_notifications_v0alpha1_TemplateGroupList(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplateGroupSpec":               schema_apis_alerting_notifications_v0alpha1_TemplateGroupSpec(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplateGroupStatus":             schema_apis_alerting_notifications_v0alpha1_TemplateGroupStatus(ref),
 		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplateList":                    schema_apis_alerting_notifications_v0alpha1_TemplateList(ref),
 		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplateOperatorState":           schema_apis_alerting_notifications_v0alpha1_TemplateOperatorState(ref),
-		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplateSpec":                    schema_apis_alerting_notifications_v0alpha1_TemplateSpec(ref),
-		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplateStatus":                  schema_apis_alerting_notifications_v0alpha1_TemplateStatus(ref),
 		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplatestatusOperatorState":     schema_apis_alerting_notifications_v0alpha1_TemplatestatusOperatorState(ref),
 		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TimeInterval":                    schema_apis_alerting_notifications_v0alpha1_TimeInterval(ref),
 		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TimeIntervalInterval":            schema_apis_alerting_notifications_v0alpha1_TimeIntervalInterval(ref),
@@ -53,6 +55,47 @@ func schema_apis_alerting_notifications_v0alpha1_Template(ref common.ReferenceCa
 							Format:      "",
 						},
 					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"content": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"name", "content"},
+			},
+		},
+	}
+}
+
+func schema_apis_alerting_notifications_v0alpha1_TemplateGroup(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
@@ -62,13 +105,13 @@ func schema_apis_alerting_notifications_v0alpha1_Template(ref common.ReferenceCa
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplateSpec"),
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplateGroupSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplateStatus"),
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplateGroupStatus"),
 						},
 					},
 				},
@@ -76,7 +119,122 @@ func schema_apis_alerting_notifications_v0alpha1_Template(ref common.ReferenceCa
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplateSpec", "github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplateStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplateGroupSpec", "github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplateGroupStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_apis_alerting_notifications_v0alpha1_TemplateGroupList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplateGroup"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"metadata", "items"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplateGroup", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+	}
+}
+
+func schema_apis_alerting_notifications_v0alpha1_TemplateGroupSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "TemplateGroupSpec defines model for TemplateGroupSpec.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"template": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"template"},
+			},
+		},
+	}
+}
+
+func schema_apis_alerting_notifications_v0alpha1_TemplateGroupStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "TemplateGroupStatus defines model for TemplateGroupStatus.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"additionalFields": {
+						SchemaProps: spec.SchemaProps{
+							Description: "additionalFields is reserved for future use",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"operatorStates": {
+						SchemaProps: spec.SchemaProps{
+							Description: "operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplatestatusOperatorState"),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplatestatusOperatorState"},
 	}
 }
 
@@ -178,73 +336,6 @@ func schema_apis_alerting_notifications_v0alpha1_TemplateOperatorState(ref commo
 				Required: []string{"lastEvaluation", "state"},
 			},
 		},
-	}
-}
-
-func schema_apis_alerting_notifications_v0alpha1_TemplateSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "TemplateSpec defines model for TemplateSpec.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"template": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-				},
-				Required: []string{"template"},
-			},
-		},
-	}
-}
-
-func schema_apis_alerting_notifications_v0alpha1_TemplateStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "TemplateStatus defines model for TemplateStatus.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"additionalFields": {
-						SchemaProps: spec.SchemaProps{
-							Description: "additionalFields is reserved for future use",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
-					"operatorStates": {
-						SchemaProps: spec.SchemaProps{
-							Description: "operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field.",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplatestatusOperatorState"),
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplatestatusOperatorState"},
 	}
 }
 

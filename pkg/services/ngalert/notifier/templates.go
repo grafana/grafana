@@ -2,13 +2,17 @@ package notifier
 
 import (
 	"context"
+	"fmt"
+	"text/template"
 
 	alertingModels "github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/templates"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	prometheusModel "github.com/prometheus/common/model"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type TestTemplatesResults = alertingNotify.TestTemplatesResults
@@ -60,4 +64,23 @@ func addDefaultLabelsAndAnnotations(alert *amv2.PostableAlert) {
 			alert.Annotations[k] = v
 		}
 	}
+}
+
+func ParseTemplateGroup(t string) ([]*template.Template, error) {
+	u := fmt.Sprintf("__ignore_me_%s", util.GenerateShortUID())
+	tmpl, err := template.New(u).Funcs(template.FuncMap(templates.DefaultFuncs)).Parse(t)
+	if err != nil {
+		return nil, err
+	}
+
+	// definedTmpls is the list of all named templates in tmpl, including tmpl.
+	definedTmpls := tmpl.Templates()
+	result := make([]*template.Template, 0, len(definedTmpls)-1)
+	for _, definedTmpl := range definedTmpls {
+		if definedTmpl.Name() == u {
+			continue
+		}
+		result = append(result, definedTmpl)
+	}
+	return result, nil
 }

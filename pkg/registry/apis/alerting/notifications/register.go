@@ -61,6 +61,8 @@ func (t NotificationsAPIBuilder) GetGroupVersion() schema.GroupVersion {
 
 func (t NotificationsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(t.gv,
+		&notificationsModels.TemplateGroup{},
+		&notificationsModels.TemplateGroupList{},
 		&notificationsModels.Template{},
 		&notificationsModels.TemplateList{},
 		&notificationsModels.TimeInterval{},
@@ -84,8 +86,9 @@ func (t NotificationsAPIBuilder) GetAPIGroupInfo(scheme *runtime.Scheme, codecs 
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[notificationsModels.VERSION] = map[string]rest.Storage{
-		notificationsModels.TemplateResourceInfo.StoragePath():     templ,
-		notificationsModels.TimeIntervalResourceInfo.StoragePath(): intervals,
+		notificationsModels.TemplateGroupResourceInfo.StoragePath():            templ,
+		notificationsModels.TemplateGroupResourceInfo.StoragePath("templates"): template.NewTemplateConnect(templ),
+		notificationsModels.TimeIntervalResourceInfo.StoragePath():             intervals,
 	}
 	return &apiGroupInfo, nil
 }
@@ -102,7 +105,7 @@ func (t NotificationsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 			switch a.GetResource() {
-			case notificationsModels.TemplateResourceInfo.GroupResource().Resource:
+			case notificationsModels.TemplateGroupResourceInfo.GroupResource().Resource:
 				return template.Authorize(ctx, t.authz, a)
 			case notificationsModels.TimeIntervalResourceInfo.GroupResource().Resource:
 				return timeIntervals.Authorize(ctx, t.authz, a)

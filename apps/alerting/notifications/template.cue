@@ -1,7 +1,7 @@
 package core
 
-template: {
-	kind:  "Template"
+templateGroup: {
+	kind:  "TemplateGroup"
 	group: "notifications"
 	apiResource: {
 		groupOverride: "notifications.alerting.grafana.app"
@@ -10,13 +10,13 @@ template: {
 		frontend: false
 		backend:  true
 	}
-	pluralName: "Templates"
+	pluralName: "TemplatesGroups"
 	current:    "v0alpha1"
 	versions: {
 		"v0alpha1": {
 			schema: {
 				spec: {
-					template: string
+					content: string
 				}
 			}
 		}

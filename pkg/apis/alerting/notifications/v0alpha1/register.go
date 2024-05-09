@@ -13,6 +13,12 @@ const (
 	APIVERSION = GROUP + "/" + VERSION
 )
 
+var TemplateGroupResourceInfo = common.NewResourceInfo(GROUP, VERSION,
+	"template-groups", "template-group", "TemplateGroup",
+	func() runtime.Object { return &TemplateGroup{} },
+	func() runtime.Object { return &TemplateGroupList{} },
+)
+
 var TemplateResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 	"templates", "template", "Template",
 	func() runtime.Object { return &Template{} },
