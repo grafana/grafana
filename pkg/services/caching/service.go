@@ -3,7 +3,6 @@ package caching
 import (
 	"context"
 
-	"github.com/grafana/gomemcache/memcache"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
@@ -63,6 +62,3 @@ func (s *OSSCachingService) HandleResourceRequest(ctx context.Context, req *back
 }
 
 var _ CachingService = &OSSCachingService{}
-
-// Hack to sync OSS and Enterprise dependencies
-var _ *memcache.Client
