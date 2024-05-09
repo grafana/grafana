@@ -6,7 +6,7 @@ import { createDataFrame } from '@grafana/data';
 import { ColorScheme, SelectedView } from '../types';
 
 import FlameGraph from './FlameGraph';
-import { CollapsedMap, FlameGraphDataContainer } from './dataTransform';
+import { FlameGraphDataContainer } from './dataTransform';
 import { data } from './testData/dataNestedSet';
 
 import 'jest-canvas-mock';
@@ -49,7 +49,7 @@ describe('FlameGraph', () => {
         colorScheme={ColorScheme.ValueBased}
         selectedView={SelectedView.FlameGraph}
         search={''}
-        collapsedMap={new CollapsedMap()}
+        collapsedMap={container.getCollapsedMap()}
         setCollapsedMap={() => {}}
         {...props}
       />
