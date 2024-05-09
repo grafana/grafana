@@ -1,5 +1,4 @@
-INSERT INTO "entity_history"
-  (
+INSERT INTO "entity_history" (
     "guid",
     "resource_version",
 
@@ -39,47 +38,8 @@ INSERT INTO "entity_history"
     "errors",
 
     "action"
-  )
-
-  VALUES (
-    ?,
-    ?,
-
-    ?,
-
-    ?,
-    ?,
-    ?,
-    ?,
-    ?,
-
-    ?,
-
-    ?,
-    ?,
-    ?,
-
-    ?,
-    ?,
-
-    ?,
-    ?,
-    ?,
-    ?,
-
-    ?,
-    ?,
-    ?,
-
-    ?,
-    ?,
-    ?,
-
-    ?,
-    ?,
-    ?,
-    ?,
-
-    ?
+  ) VALUES (
+    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+    ?, ?, ?, ?
   )
 ;
