@@ -44,7 +44,7 @@ import { historySrv } from '../settings/version-history';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { dashboardSceneGraph, getLibraryVizPanelFromVizPanel } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
-import { getDashboardUrl } from '../utils/urlBuilders';
+import { getDashboardUrl, getViewPanelUrl } from '../utils/urlBuilders';
 import {
   NEW_PANEL_HEIGHT,
   NEW_PANEL_WIDTH,
@@ -418,6 +418,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       pageNav = {
         text: 'View panel',
         parentItem: pageNav,
+        url: getViewPanelUrl(viewPanelScene.state.panelRef.resolve()),
       };
     }
 
