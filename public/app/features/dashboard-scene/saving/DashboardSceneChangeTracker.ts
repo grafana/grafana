@@ -36,10 +36,10 @@ export class DashboardSceneChangeTracker {
     this._dashboard = dashboard;
   }
 
-  private onStateChanged({ payload }: SceneObjectStateChangedEvent) {
+  static isUpdatingPersistedState({ payload }: SceneObjectStateChangedEvent) {
     // If there are no changes in the state, the check is not needed
     if (Object.keys(payload.partialUpdate).length === 0) {
-      return;
+      return false;
     }
 
     // Any change in the panel should trigger a change detection
@@ -50,7 +50,7 @@ export class DashboardSceneChangeTracker {
       payload.changedObject instanceof DashboardGridItem ||
       payload.changedObject instanceof PanelTimeRange
     ) {
-      return this.detectSaveModelChanges();
+      return true;
     }
     // VizPanelManager includes the repeat configuration
     if (payload.changedObject instanceof VizPanelManager) {
@@ -59,27 +59,27 @@ export class DashboardSceneChangeTracker {
         Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'repeatDirection') ||
         Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'maxPerRow')
       ) {
-        return this.detectSaveModelChanges();
+        return true;
       }
     }
     // SceneQueryRunner includes the DS configuration
     if (payload.changedObject instanceof SceneQueryRunner) {
       if (!Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'data')) {
-        return this.detectSaveModelChanges();
+        return true;
       }
     }
     // SceneDataTransformer includes the transformation configuration
     if (payload.changedObject instanceof SceneDataTransformer) {
       if (!Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'data')) {
-        return this.detectSaveModelChanges();
+        return true;
       }
     }
     if (payload.changedObject instanceof VizPanelLinks) {
-      return this.detectSaveModelChanges();
+      return true;
     }
     if (payload.changedObject instanceof LibraryVizPanel) {
       if (Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'name')) {
-        return this.detectSaveModelChanges();
+        return true;
       }
     }
     if (payload.changedObject instanceof SceneRefreshPicker) {
@@ -87,47 +87,54 @@ export class DashboardSceneChangeTracker {
         Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'intervals') ||
         Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'refresh')
       ) {
-        return this.detectSaveModelChanges();
+        return true;
       }
     }
     if (payload.changedObject instanceof behaviors.CursorSync) {
-      return this.detectSaveModelChanges();
+      return true;
     }
     if (payload.changedObject instanceof SceneDataLayerSet) {
-      return this.detectSaveModelChanges();
+      return true;
     }
     if (payload.changedObject instanceof DashboardGridItem) {
-      return this.detectSaveModelChanges();
+      return true;
     }
     if (payload.changedObject instanceof SceneGridLayout) {
-      return this.detectSaveModelChanges();
+      return true;
     }
     if (payload.changedObject instanceof DashboardScene) {
       if (Object.keys(payload.partialUpdate).some((key) => PERSISTED_PROPS.includes(key))) {
-        return this.detectSaveModelChanges();
+        return true;
       }
     }
     if (payload.changedObject instanceof SceneTimeRange) {
-      return this.detectSaveModelChanges();
+      return true;
     }
     if (payload.changedObject instanceof DashboardControls) {
       if (Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'hideTimeControls')) {
-        return this.detectSaveModelChanges();
+        return true;
       }
     }
     if (payload.changedObject instanceof SceneVariableSet) {
-      return this.detectSaveModelChanges();
+      return true;
     }
     if (payload.changedObject instanceof DashboardAnnotationsDataLayer) {
       if (!Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'data')) {
-        return this.detectSaveModelChanges();
+        return true;
       }
     }
     if (payload.changedObject instanceof behaviors.LiveNowTimer) {
-      return this.detectSaveModelChanges();
+      return true;
     }
     if (isSceneVariableInstance(payload.changedObject)) {
-      return this.detectSaveModelChanges();
+      return true;
+    }
+    return false;
+  }
+
+  private onStateChanged(event: SceneObjectStateChangedEvent) {
+    if (DashboardSceneChangeTracker.isUpdatingPersistedState(event)) {
+      this.detectSaveModelChanges();
     }
   }
 

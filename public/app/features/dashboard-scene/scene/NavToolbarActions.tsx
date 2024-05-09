@@ -66,6 +66,7 @@ export function ToolbarActions({ dashboard }: Props) {
   const styles = useStyles2(getStyles);
   const isEditingPanel = Boolean(editPanel);
   const isViewingPanel = Boolean(viewPanelScene);
+  const isEditedPanelDirty = useVizManagerDirty(editPanel);
   const isEditingLibraryPanel = useEditingLibraryPanel(editPanel);
   const hasCopiedPanel = Boolean(copiedPanel);
   // Means we are not in settings view, fullscreen panel or edit panel
@@ -420,6 +421,7 @@ export function ToolbarActions({ dashboard }: Props) {
         onClick={editPanel?.onDiscard}
         tooltip="Discard panel changes"
         size="sm"
+        disabled={!isEditedPanelDirty || !isDirty}
         key="discard"
         fill="outline"
         variant="destructive"
@@ -627,6 +629,26 @@ function useEditingLibraryPanel(panelEditor?: PanelEditor) {
   }, [panelEditor]);
 
   return isEditingLibraryPanel;
+}
+
+// This hook handles when panelEditor is not defined to avoid conditionally hook usage
+function useVizManagerDirty(panelEditor?: PanelEditor) {
+  const [isDirty, setIsDirty] = useState<Boolean>(false);
+
+  useEffect(() => {
+    if (panelEditor) {
+      const unsub = panelEditor.state.vizManager.subscribeToState((vizManagerState) =>
+        setIsDirty(vizManagerState.isDirty || false)
+      );
+      return () => {
+        unsub.unsubscribe();
+      };
+    }
+    setIsDirty(false);
+    return;
+  }, [panelEditor]);
+
+  return isDirty;
 }
 
 interface ToolbarAction {
