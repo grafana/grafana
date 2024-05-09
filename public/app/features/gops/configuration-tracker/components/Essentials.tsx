@@ -75,13 +75,13 @@ function Step({ step }: StepProps) {
   return (
     <Stack direction={'row'} justifyContent={'space-between'} data-testid="step">
       <Stack direction={'row'} alignItems="center">
-        {step.button.done !== undefined && <DoneIcon done={step.button.done} />}
+        {step.done !== undefined && <DoneIcon done={step.done} />}
         <Text variant="body">{step.title}</Text>
         <Tooltip content={step.description} placement="right">
           <Icon name="question-circle" />
         </Tooltip>
       </Stack>
-      <StepButton {...step.button} data-testid="step-button" />
+      <StepButton {...step.button} done={step.done} data-testid="step-button" />
     </Stack>
   );
 }
@@ -115,7 +115,9 @@ function OpenLinkButton(props: LinkButtonProps) {
   );
 }
 
-interface StepButtonProps extends StepButtonDto {}
+interface StepButtonProps extends StepButtonDto {
+  done?: boolean;
+}
 function StepButton({
   type,
   urlLink,
