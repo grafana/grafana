@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -48,6 +49,11 @@ func (a *AccessControl) Evaluate(ctx context.Context, user identity.Requester, e
 		return false, nil
 	}
 
+	// TODO update this to use featuremgmt.FeatureToggles instead of checking the config
+	if a.cfg != nil && a.cfg.IsFeatureToggleEnabled != nil && a.cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccessActionSets) {
+		evaluator = evaluator.AppendActionSets(ctx, a.resolvers.GetActionSetResolver())
+	}
+
 	a.debug(ctx, user, "Evaluating permissions", evaluator)
 	// Test evaluation without scope resolver first, this will prevent 403 for wildcard scopes when resource does not exist
 	if evaluator.Evaluate(permissions) {
@@ -68,6 +74,10 @@ func (a *AccessControl) Evaluate(ctx context.Context, user identity.Requester, e
 
 func (a *AccessControl) RegisterScopeAttributeResolver(prefix string, resolver accesscontrol.ScopeAttributeResolver) {
 	a.resolvers.AddScopeAttributeResolver(prefix, resolver)
+}
+
+func (a *AccessControl) RegisterActionResolver(resolver accesscontrol.ActionResolver) {
+	a.resolvers.SetActionResolver(resolver)
 }
 
 func (a *AccessControl) debug(ctx context.Context, ident identity.Requester, msg string, eval accesscontrol.Evaluator) {
