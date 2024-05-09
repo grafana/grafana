@@ -217,14 +217,15 @@ export const ConnectionSVG = ({
                   }
                 } else {
                   // Last vertex
-                  let previousVertex = { x: 0, y: 0 };
                   if (index > 0) {
                     // Not also the first vertex
-                    previousVertex = vertices[index - 1];
+                    const previousVertex = vertices[index - 1];
+                    const Xp = previousVertex.x * xDist + xStart;
+                    const Yp = previousVertex.y * yDist + yStart;
+                    angle1 = calculateAngle(Xp, Yp, X, Y);
+                  } else {
+                    angle1 = calculateAngle(x1, y1, X, Y);
                   }
-                  const Xp = previousVertex.x * xDist + xStart;
-                  const Yp = previousVertex.y * yDist + yStart;
-                  angle1 = calculateAngle(Xp, Yp, X, Y);
                   angle2 = calculateAngle(X, Y, x2, y2);
                 }
 
