@@ -1,6 +1,8 @@
 import { map, of } from 'rxjs';
 
 import { DataQueryRequest, DataSourceApi, DataSourceInstanceSettings, LoadingState, PanelData } from '@grafana/data';
+import { calculateFieldTransformer } from '@grafana/data/src/transformations/transformers/calculateField';
+import { mockTransformationsRegistry } from '@grafana/data/src/utils/tests/mockTransformationsRegistry';
 import { config, locationService } from '@grafana/runtime';
 import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
@@ -178,12 +180,17 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
+mockTransformationsRegistry([calculateFieldTransformer]);
+
+jest.useFakeTimers();
+
 describe('VizPanelManager', () => {
   describe('When changing plugin', () => {
     it('Should successfully change from one viz type to another', () => {
       const { vizPanelManager } = setupTest('panel-1');
       expect(vizPanelManager.state.panel.state.pluginId).toBe('timeseries');
       vizPanelManager.changePluginType('table');
+
       expect(vizPanelManager.state.panel.state.pluginId).toBe('table');
     });
 
@@ -405,6 +412,8 @@ describe('VizPanelManager', () => {
           datasourceUid: 'gdev-prometheus',
         });
 
+        jest.runAllTimers(); // The detect panel changes is debounced
+        expect(vizPanelManager.state.isDirty).toBe(true);
         expect(vizPanelManager.state.datasource).toEqual(ds2Mock);
         expect(vizPanelManager.state.dsSettings).toEqual(instance2SettingsMock);
       });
@@ -472,6 +481,8 @@ describe('VizPanelManager', () => {
             },
           });
 
+          jest.runAllTimers(); // The detect panel changes is debounced
+          expect(vizPanelManager.state.isDirty).toBe(true);
           expect((panel.state.$timeRange?.state as PanelTimeRangeState).timeFrom).toBe('2h');
         });
 
@@ -515,7 +526,7 @@ describe('VizPanelManager', () => {
       });
 
       describe('max data points and interval', () => {
-        it('max data points', async () => {
+        it('should update max data points', async () => {
           const { vizPanelManager } = setupTest('panel-1');
           vizPanelManager.activate();
           await Promise.resolve();
@@ -534,10 +545,12 @@ describe('VizPanelManager', () => {
             maxDataPoints: 100,
           });
 
+          jest.runAllTimers(); // The detect panel changes is debounced
+          expect(vizPanelManager.state.isDirty).toBe(true);
           expect(dataObj.state.maxDataPoints).toBe(100);
         });
 
-        it('max data points', async () => {
+        it('should update min interval', async () => {
           const { vizPanelManager } = setupTest('panel-1');
           vizPanelManager.activate();
           await Promise.resolve();
@@ -556,6 +569,8 @@ describe('VizPanelManager', () => {
             minInterval: '1s',
           });
 
+          jest.runAllTimers(); // The detect panel changes is debounced
+          expect(vizPanelManager.state.isDirty).toBe(true);
           expect(dataObj.state.minInterval).toBe('1s');
         });
       });
@@ -579,6 +594,8 @@ describe('VizPanelManager', () => {
             queries: [],
           });
 
+          jest.runAllTimers(); // The detect panel changes is debounced
+          expect(vizPanelManager.state.isDirty).toBe(true);
           expect(dataObj.state.cacheTimeout).toBe('60');
           expect(dataObj.state.queryCachingTTL).toBe(200000);
         });
@@ -616,6 +633,8 @@ describe('VizPanelManager', () => {
           },
         } as DataSourceInstanceSettings);
 
+        jest.runAllTimers(); // The detect panel changes is debounced
+        expect(vizPanelManager.state.isDirty).toBe(true);
         expect(vizPanelManager.queryRunner.state.datasource).toEqual({
           uid: 'gdev-prometheus',
           type: 'grafana-prometheus-datasource',
@@ -643,6 +662,8 @@ describe('VizPanelManager', () => {
           },
         } as DataSourceInstanceSettings);
 
+        jest.runAllTimers(); // The detect panel changes is debounced
+        expect(vizPanelManager.state.isDirty).toBe(true);
         expect(vizPanelManager.queryRunner.state.datasource).toEqual({
           uid: SHARED_DASHBOARD_QUERY,
           type: 'datasource',
@@ -670,6 +691,8 @@ describe('VizPanelManager', () => {
           },
         } as DataSourceInstanceSettings);
 
+        jest.runAllTimers(); // The detect panel changes is debounced
+        expect(vizPanelManager.state.isDirty).toBe(true);
         expect(vizPanelManager.queryRunner.state.datasource).toEqual({
           uid: 'gdev-prometheus',
           type: 'grafana-prometheus-datasource',
@@ -691,6 +714,8 @@ describe('VizPanelManager', () => {
       vizPanelManager.dataTransformer.reprocessTransformations = reprocessMock;
       vizPanelManager.changeTransformations([{ id: 'calculateField', options: {} }]);
 
+      jest.runAllTimers(); // The detect panel changes is debounced
+      expect(vizPanelManager.state.isDirty).toBe(true);
       expect(reprocessMock).toHaveBeenCalledTimes(1);
       expect(vizPanelManager.dataTransformer.state.transformations).toEqual([{ id: 'calculateField', options: {} }]);
     });
@@ -716,6 +741,8 @@ describe('VizPanelManager', () => {
           },
         ]);
 
+        jest.runAllTimers(); // The detect panel changes is debounced
+        expect(vizPanelManager.state.isDirty).toBe(true);
         expect(vizPanelManager.queryRunner.state.queries).toEqual([
           {
             datasource: {
@@ -763,6 +790,8 @@ describe('VizPanelManager', () => {
           },
         ]);
 
+        jest.runAllTimers(); // The detect panel changes is debounced
+        expect(vizPanelManager.state.isDirty).toBe(true);
         expect(vizPanelManager.queryRunner.state.queries[0].panelId).toBe(panelWithQueriesOnly.id);
       });
     });
