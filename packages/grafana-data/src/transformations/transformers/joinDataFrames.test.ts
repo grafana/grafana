@@ -32,7 +32,7 @@ describe('align frames', () => {
 
     // the following does not work for tabular joins where the joined on field value is duplicated
     // the time will never have a duplicated time which is joined on
-    it('should perform an outer join', () => {
+    it('should perform an outer join - as expected on time series data', () => {
       const out = joinDataFrames({ frames: [series1, series2] })!;
       expect(
         out.fields.map((f) => ({
@@ -85,7 +85,7 @@ describe('align frames', () => {
       `);
     });
 
-    it('should perform an inner join', () => {
+    it('should perform an inner join - as expected on time series data', () => {
       const out = joinDataFrames({ frames: [series1, series2], mode: JoinMode.inner })!;
       expect(
         out.fields.map((f) => ({
@@ -139,7 +139,11 @@ describe('align frames', () => {
 
     const tableData1 = toDataFrame({
       fields: [
-        { name: 'gender', type: FieldType.string, values: ['MALE', 'MALE', 'MALE', 'FEMALE', 'FEMALE', 'FEMALE'] },
+        {
+          name: 'gender',
+          type: FieldType.string,
+          values: ['NON-BINARY', 'MALE', 'MALE', 'FEMALE', 'FEMALE', 'NON-BINARY'],
+        },
         {
           name: 'day',
           type: FieldType.string,
@@ -150,12 +154,12 @@ describe('align frames', () => {
     });
     const tableData2 = toDataFrame({
       fields: [
-        { name: 'gender', type: FieldType.string, values: ['MALE', 'FEMALE'] },
-        { name: 'count', type: FieldType.number, values: [103, 95] },
+        { name: 'gender', type: FieldType.string, values: ['MALE', 'NON-BINARY', 'FEMALE'] },
+        { name: 'count', type: FieldType.number, values: [103, 95, 201] },
       ],
     });
 
-    it('should perform an outer join with duplicated values to join on', () => {
+    it('should perform an outer join with duplicated values to join on - as expected for tabular data', () => {
       const out = joinDataFrames({
         frames: [tableData1, tableData2],
         joinBy: fieldMatchers.get(FieldMatcherID.byName).get('gender'),
@@ -171,12 +175,12 @@ describe('align frames', () => {
           {
             "name": "gender",
             "values": [
-              "MALE",
+              "NON-BINARY",
               "MALE",
               "MALE",
               "FEMALE",
               "FEMALE",
-              "FEMALE",
+              "NON-BINARY",
             ],
           },
           {
@@ -204,11 +208,72 @@ describe('align frames', () => {
           {
             "name": "count",
             "values": [
-              103,
-              103,
-              103,
               95,
+              103,
+              103,
+              201,
+              201,
               95,
+            ],
+          },
+        ]
+      `);
+    });
+
+    it('should perform an inner join with duplicated values to join on - as expected for tabular data', () => {
+      const out = joinDataFrames({
+        frames: [tableData1, tableData2],
+        joinBy: fieldMatchers.get(FieldMatcherID.byName).get('gender'),
+        mode: JoinMode.inner,
+      })!;
+      expect(
+        out.fields.map((f) => ({
+          name: f.name,
+          values: f.values,
+        }))
+      ).toMatchInlineSnapshot(`
+        [
+          {
+            "name": "gender",
+            "values": [
+              "NON-BINARY",
+              "MALE",
+              "MALE",
+              "FEMALE",
+              "FEMALE",
+              "NON-BINARY",
+            ],
+          },
+          {
+            "name": "day",
+            "values": [
+              "Wednesday",
+              "Tuesday",
+              "Monday",
+              "Wednesday",
+              "Tuesday",
+              "Monday",
+            ],
+          },
+          {
+            "name": "count",
+            "values": [
+              18,
+              72,
+              13,
+              17,
+              71,
+              7,
+            ],
+          },
+          {
+            "name": "count",
+            "values": [
+              95,
+              103,
+              103,
+              201,
+              201,
               95,
             ],
           },
