@@ -197,7 +197,7 @@ func TestAccessControlStore_GetTeamsPermissions(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			store, permissionStore, _, teamSvc, _ := setupTestEnv(t)
+			store, permissionStore, _, teamSvc, _, _ := setupTestEnv(t)
 
 			teams := make([]team.Team, 0)
 			for i := 0; i < len(tt.teamsPermissions); i++ {
