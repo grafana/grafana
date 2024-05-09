@@ -61,7 +61,7 @@ By default, SP-initiated requests are enabled. For instructions on how to enable
 {{% admonition type="warning" %}}
 It is possible to setup Grafana with SAML authentication using Azure AD. However, Azure AD limits the number of groups that can be sent in the SAML assertion to 150. If you have more than 150 groups, Azure AD provides a link to retrieve the groups that only works for OIDC/OAuth workflows. At the moment it is not possible to use this link with SAML authentication in Grafana.
 
-It is preferable to take this into consideration when setting up SAML authentication with Azure AD. We encourage the use of [Azure AD OAuth integration]({{< relref "../azuread/" >}}) instead of SAML if you have more than 150 groups.
+It is preferable to take this into consideration when setting up SAML authentication with Azure AD. We encourage the use of [Azure AD OAuth integration]({{< relref "../azuread" >}}) instead of SAML if you have more than 150 groups.
 
 - [Azure AD SAML limitations](https://docs.microsoft.com/en-us/azure/active-directory/develop/active-directory-token-limits)
 
