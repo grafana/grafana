@@ -100,8 +100,7 @@ const FlameGraphContainer = ({
   const [sandwichItem, setSandwichItem] = useState<string>();
   const [collapsedMap, setCollapsedMap] = useState(new CollapsedMap());
 
-  const theme = getTheme();
-
+  const theme = useMemo(() => getTheme(), [getTheme]);
   const dataContainer = useMemo((): FlameGraphDataContainer | undefined => {
     if (!data) {
       return;
