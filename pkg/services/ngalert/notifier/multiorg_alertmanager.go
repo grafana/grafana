@@ -10,6 +10,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	alertingCluster "github.com/grafana/alerting/cluster"
+	dstls "github.com/grafana/dskit/crypto/tls"
 	"github.com/grafana/grafana/pkg/util/errutil"
 
 	alertingNotify "github.com/grafana/alerting/notify"
@@ -169,13 +170,23 @@ func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
 	// Redis setup.
 	if cfg.UnifiedAlerting.HARedisAddr != "" {
 		redisPeer, err := newRedisPeer(redisConfig{
-			addr:     cfg.UnifiedAlerting.HARedisAddr,
-			name:     cfg.UnifiedAlerting.HARedisPeerName,
-			prefix:   cfg.UnifiedAlerting.HARedisPrefix,
-			password: cfg.UnifiedAlerting.HARedisPassword,
-			username: cfg.UnifiedAlerting.HARedisUsername,
-			db:       cfg.UnifiedAlerting.HARedisDB,
-			maxConns: cfg.UnifiedAlerting.HARedisMaxConns,
+			addr:       cfg.UnifiedAlerting.HARedisAddr,
+			name:       cfg.UnifiedAlerting.HARedisPeerName,
+			prefix:     cfg.UnifiedAlerting.HARedisPrefix,
+			password:   cfg.UnifiedAlerting.HARedisPassword,
+			username:   cfg.UnifiedAlerting.HARedisUsername,
+			db:         cfg.UnifiedAlerting.HARedisDB,
+			maxConns:   cfg.UnifiedAlerting.HARedisMaxConns,
+			tlsEnabled: cfg.UnifiedAlerting.HARedisTLSEnabled,
+			tls: dstls.ClientConfig{
+				CertPath:           cfg.UnifiedAlerting.HARedisTLSCertPath,
+				KeyPath:            cfg.UnifiedAlerting.HARedisTLSKeyPath,
+				CAPath:             cfg.UnifiedAlerting.HARedisTLSCAPath,
+				ServerName:         cfg.UnifiedAlerting.HARedisTLSServerName,
+				InsecureSkipVerify: cfg.UnifiedAlerting.HARedisTLSInsecureSkipVerify,
+				CipherSuites:       cfg.UnifiedAlerting.HARedisTLSCipherSuites,
+				MinVersion:         cfg.UnifiedAlerting.HARedisTLSMinVersion,
+			},
 		}, clusterLogger, moa.metrics.Registerer, cfg.UnifiedAlerting.HAPushPullInterval)
 		if err != nil {
 			return fmt.Errorf("unable to initialize redis: %w", err)
