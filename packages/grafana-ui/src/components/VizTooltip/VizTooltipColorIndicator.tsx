@@ -32,8 +32,6 @@ export const VizTooltipColorIndicator = ({
 }: Props) => {
   const styles = useStyles2(getStyles);
 
-  console.log('c', colorIndicator, lineStyle);
-
   if (colorIndicator === ColorIndicator.series) {
     return (
       <SeriesIcon

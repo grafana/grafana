@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
-import React, { CSSProperties } from 'react';
+import React from 'react';
 
-import { fieldColorModeRegistry } from '@grafana/data';
+import { GrafanaTheme2, fieldColorModeRegistry } from '@grafana/data';
 import { LineStyle } from '@grafana/schema';
 
 import { useTheme2, useStyles2 } from '../../themes';
@@ -15,7 +15,7 @@ export interface Props extends React.HTMLAttributes<HTMLDivElement> {
 export const SeriesIcon = React.memo(
   React.forwardRef<HTMLDivElement, Props>(({ color, className, gradient, lineStyle, ...restProps }, ref) => {
     const theme = useTheme2();
-    const styles2 = useStyles2(getStyles);
+    const styles = useStyles2(getStyles);
 
     let cssColor: string;
 
@@ -30,31 +30,17 @@ export const SeriesIcon = React.memo(
     } else {
       cssColor = color!;
     }
-    console.log('seriesicon', lineStyle);
 
     if (lineStyle?.fill === 'dot' || lineStyle?.fill === 'dash') {
       return (
-        <div
-          data-testid="series-icon"
-          ref={ref}
-          style={{
-            marginRight: '8px',
-            display: 'flex',
-          }}
-          className={cx(className)}
-          {...restProps}
-        >
+        <div data-testid="series-icon" ref={ref} className={cx(className, styles.container)} {...restProps}>
           {lineStyle?.fill === 'dot' &&
             [0, 1, 2].map((i) => (
               <div
                 key={i}
-                className={cx(styles2.forcedColors)}
+                className={cx(styles.forcedColors, styles.dot)}
                 style={{
                   background: cssColor,
-                  width: '4px',
-                  height: '4px',
-                  borderRadius: theme.shape.radius.circle,
-                  display: 'inline-block',
                   marginRight: i < 2 ? '1px' : undefined,
                 }}
               />
@@ -64,12 +50,9 @@ export const SeriesIcon = React.memo(
             [0, 1].map((i) => (
               <div
                 key={i}
-                className={cx(styles2.forcedColors)}
+                className={cx(styles.forcedColors, styles.dash)}
                 style={{
                   background: cssColor,
-                  width: '6px',
-                  height: '4px',
-                  display: 'inline-block',
                   marginRight: i === 0 ? '2px' : undefined,
                 }}
               />
@@ -78,28 +61,42 @@ export const SeriesIcon = React.memo(
       );
     }
 
-    const styles: CSSProperties = {
-      background: cssColor,
-      width: '14px',
-      height: '4px',
-      borderRadius: theme.shape.radius.pill,
-      display: 'inline-block',
-      marginRight: '8px',
-    };
-
     return (
       <div
         data-testid="series-icon"
         ref={ref}
-        className={cx(className, styles2.forcedColors)}
-        style={styles}
+        className={cx(className, styles.forcedColors, styles.container, styles.solid)}
+        style={{
+          background: cssColor,
+        }}
         {...restProps}
       />
     );
   })
 );
 
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2) => ({
+  container: css({
+    marginRight: '8px',
+    display: 'inline-flex',
+  }),
+  dot: css({
+    width: '4px',
+    height: '4px',
+    borderRadius: theme.shape.radius.circle,
+    display: 'inline-block',
+  }),
+  dash: css({
+    width: '6px',
+    height: '4px',
+    display: 'inline-block',
+  }),
+  solid: css({
+    width: '14px',
+    height: '4px',
+    borderRadius: theme.shape.radius.pill,
+    display: 'inline-block',
+  }),
   forcedColors: css({
     '@media (forced-colors: active)': {
       forcedColorAdjust: 'none',
