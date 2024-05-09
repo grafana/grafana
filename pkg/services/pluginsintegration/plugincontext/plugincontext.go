@@ -80,7 +80,6 @@ func (p *Provider) Get(ctx context.Context, pluginID string, user identity.Reque
 		if err != nil {
 			return backend.PluginContext{}, err
 		}
-
 		pCtx.AppInstanceSettings = appSettings
 	}
 
@@ -164,7 +163,6 @@ func (p *Provider) PluginContextForDataSource(ctx context.Context, datasourceSet
 		PluginVersion: plugin.Info.Version,
 		APIVersion:    plugin.APIVersion,
 	}
-
 	if user != nil && !user.IsNil() {
 		pCtx.OrgID = user.GetOrgID()
 		pCtx.User = adapters.BackendUserFromSignedInUser(user)
