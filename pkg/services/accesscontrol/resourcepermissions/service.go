@@ -66,7 +66,9 @@ func New(cfg *setting.Cfg,
 		for _, a := range actions {
 			actionSet[a] = struct{}{}
 		}
-		actionSetService.StoreActionSet(options.Resource, permission, actions)
+		if features.IsEnabled(context.Background(), featuremgmt.FlagAccessActionSets) {
+			actionSetService.StoreActionSet(options.Resource, permission, actions)
+		}
 	}
 
 	// Sort all permissions based on action length. Will be used when mapping between actions to permissions
@@ -81,7 +83,7 @@ func New(cfg *setting.Cfg,
 
 	s := &Service{
 		ac:          ac,
-		store:       NewStore(sqlStore, features, &actionSetService),
+		store:       NewStore(sqlStore, features),
 		options:     options,
 		license:     license,
 		permissions: permissions,

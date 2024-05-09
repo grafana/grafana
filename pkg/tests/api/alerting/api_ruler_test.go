@@ -52,8 +52,7 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
-	asService := resourcepermissions.NewActionSetService()
-	permissionsStore := resourcepermissions.NewStore(env.SQLStore, featuremgmt.WithFeatures(), &asService)
+	permissionsStore := resourcepermissions.NewStore(env.SQLStore, featuremgmt.WithFeatures())
 
 	// Create a user to make authenticated requests
 	userID := createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
@@ -337,8 +336,7 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
-	asService := resourcepermissions.NewActionSetService()
-	permissionsStore := resourcepermissions.NewStore(env.SQLStore, featuremgmt.WithFeatures(), &asService)
+	permissionsStore := resourcepermissions.NewStore(env.SQLStore, featuremgmt.WithFeatures())
 
 	// Create a user to make authenticated requests
 	userID := createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
@@ -734,8 +732,7 @@ func TestAlertRulePostExport(t *testing.T) {
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
-	asService := resourcepermissions.NewActionSetService()
-	permissionsStore := resourcepermissions.NewStore(env.SQLStore, featuremgmt.WithFeatures(), &asService)
+	permissionsStore := resourcepermissions.NewStore(env.SQLStore, featuremgmt.WithFeatures())
 
 	// Create a user to make authenticated requests
 	userID := createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
@@ -1415,8 +1412,7 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 		AppModeProduction:     true,
 	})
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-	asService := resourcepermissions.NewActionSetService()
-	permissionsStore := resourcepermissions.NewStore(env.SQLStore, featuremgmt.WithFeatures(), &asService)
+	permissionsStore := resourcepermissions.NewStore(env.SQLStore, featuremgmt.WithFeatures())
 
 	// Create a user to make authenticated requests
 	userID := createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
