@@ -130,18 +130,9 @@ export function buildPanelRepeaterScene(options: SceneOptions, source?: VizPanel
     }),
   });
 
-  const rowChildren = defaults.usePanelRepeater ? withRepeat : withoutRepeat;
-
   const row = new SceneGridRow({
-    $behaviors: defaults.useRowRepeater
-      ? [
-          new RowRepeaterBehavior({
-            variableName: 'handler',
-            sources: [rowChildren],
-          }),
-        ]
-      : [],
-    children: defaults.useRowRepeater ? [] : [rowChildren],
+    $behaviors: defaults.useRowRepeater ? [new RowRepeaterBehavior({ variableName: 'handler' })] : [],
+    children: [defaults.usePanelRepeater ? withRepeat : withoutRepeat],
   });
 
   const panelRepeatVariable = new TestVariable({

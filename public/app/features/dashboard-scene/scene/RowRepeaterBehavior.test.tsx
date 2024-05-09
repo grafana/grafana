@@ -31,14 +31,14 @@ describe('RowRepeaterBehavior', () => {
       // Verify that first row still has repeat behavior
       const row1 = grid.state.children[1] as SceneGridRow;
       expect(row1.state.$behaviors?.[0]).toBeInstanceOf(RowRepeaterBehavior);
-      expect(row1.state.$variables!.state.variables[0].getValue()).toBe('1');
+      expect(row1.state.$variables!.state.variables[0].getValue()).toBe('A1');
 
       const row2 = grid.state.children[2] as SceneGridRow;
       expect(row2.state.$variables!.state.variables[0].getValueText?.()).toBe('B');
 
       // Should give repeated panels unique keys
       const gridItem = row2.state.children[0] as SceneGridItem;
-      expect(gridItem.state.body?.state.key).toBe('canvas-1-row-1');
+      expect(gridItem.state.body?.state.key).toBe('canvas-1-clone-B1');
     });
 
     it('Should push row at the bottom down', () => {
@@ -66,7 +66,7 @@ describe('RowRepeaterBehavior', () => {
     it('Should handle second repeat cycle and update remove old repeats', async () => {
       // trigger another repeat cycle by changing the variable
       const variable = scene.state.$variables!.state.variables[0] as TestVariable;
-      variable.changeValueTo(['2', '3']);
+      variable.changeValueTo(['B1', 'C1']);
 
       await new Promise((r) => setTimeout(r, 1));
 
@@ -78,12 +78,13 @@ describe('RowRepeaterBehavior', () => {
   describe('Given scene empty row', () => {
     let scene: EmbeddedScene;
     let grid: SceneGridLayout;
-    let repeatBehavior: RowRepeaterBehavior;
+    let rowToRepeat: SceneGridRow;
 
     beforeEach(async () => {
-      ({ scene, grid, repeatBehavior } = buildScene({ variableQueryTime: 0 }));
+      ({ scene, grid, rowToRepeat } = buildScene({ variableQueryTime: 0 }));
 
-      repeatBehavior.setState({ sources: [] });
+      rowToRepeat.setState({ children: [] });
+
       activateFullSceneTree(scene);
       await new Promise((r) => setTimeout(r, 1));
     });
@@ -108,21 +109,7 @@ interface SceneOptions {
 }
 
 function buildScene(options: SceneOptions) {
-  const repeatBehavior = new RowRepeaterBehavior({
-    variableName: 'server',
-    sources: [
-      new SceneGridItem({
-        x: 0,
-        y: 11,
-        width: 24,
-        height: 5,
-        body: new SceneCanvasText({
-          key: 'canvas-1',
-          text: 'Panel inside repeated row, server = $server',
-        }),
-      }),
-    ],
-  });
+  const repeatBehavior = new RowRepeaterBehavior({ variableName: 'server' });
 
   const grid = new SceneGridLayout({
     children: [
@@ -141,6 +128,18 @@ function buildScene(options: SceneOptions) {
         width: 24,
         height: 1,
         $behaviors: [repeatBehavior],
+        children: [
+          new SceneGridItem({
+            x: 0,
+            y: 11,
+            width: 24,
+            height: 5,
+            body: new SceneCanvasText({
+              key: 'canvas-1',
+              text: 'Panel inside repeated row, server = $server',
+            }),
+          }),
+        ],
       }),
       new SceneGridRow({
         x: 0,
@@ -185,11 +184,11 @@ function buildScene(options: SceneOptions) {
           includeAll: true,
           delayMs: options.variableQueryTime,
           optionsToReturn: [
-            { label: 'A', value: '1' },
-            { label: 'B', value: '2' },
-            { label: 'C', value: '3' },
-            { label: 'D', value: '4' },
-            { label: 'E', value: '5' },
+            { label: 'A', value: 'A1' },
+            { label: 'B', value: 'B1' },
+            { label: 'C', value: 'B1' },
+            { label: 'D', value: 'C1' },
+            { label: 'E', value: 'D1' },
           ],
         }),
       ],
@@ -197,5 +196,7 @@ function buildScene(options: SceneOptions) {
     body: grid,
   });
 
-  return { scene, grid, repeatBehavior };
+  const rowToRepeat = repeatBehavior.parent as SceneGridRow;
+
+  return { scene, grid, repeatBehavior, rowToRepeat };
 }

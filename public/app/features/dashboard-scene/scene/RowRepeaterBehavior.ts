@@ -18,7 +18,6 @@ import { DashboardRepeatsProcessedEvent } from './types';
 
 interface RowRepeaterBehaviorState extends SceneObjectState {
   variableName: string;
-  sources: SceneGridItemLike[];
 }
 
 /**
@@ -45,6 +44,24 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
     this._performRepeat();
   }
 
+  private _getRow(): SceneGridRow {
+    if (!(this.parent instanceof SceneGridRow)) {
+      throw new Error('RepeatedRowBehavior: Parent is not a SceneGridRow');
+    }
+
+    return this.parent;
+  }
+
+  private _getLayout(): SceneGridLayout {
+    const layout = sceneGraph.getLayout(this);
+
+    if (!(layout instanceof SceneGridLayout)) {
+      throw new Error('RepeatedRowBehavior: Layout is not a SceneGridLayout');
+    }
+
+    return layout;
+  }
+
   private _performRepeat() {
     if (this._variableDependency.hasDependencyInLoadingState()) {
       return;
@@ -62,40 +79,32 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
       return;
     }
 
-    if (!(this.parent instanceof SceneGridRow)) {
-      console.error('RepeatedRowBehavior: Parent is not a SceneGridRow');
-      return;
-    }
+    const rowToRepeat = this._getRow();
+    const layout = this._getLayout();
 
-    const layout = sceneGraph.getLayout(this);
-
-    if (!(layout instanceof SceneGridLayout)) {
-      console.error('RepeatedRowBehavior: Layout is not a SceneGridLayout');
-      return;
-    }
-
-    const rowToRepeat = this.parent;
     const { values, texts } = getMultiVariableValues(variable);
     const rows: SceneGridRow[] = [];
-    const rowContentHeight = getRowContentHeight(this.state.sources);
+    const rowContent = rowToRepeat.state.children;
+    const rowContentHeight = getRowContentHeight(rowContent);
+
     let maxYOfRows = 0;
 
     // Loop through variable values and create repeates
     for (let index = 0; index < values.length; index++) {
       const children: SceneGridItemLike[] = [];
+      const localValue = values[index];
 
       // Loop through panels inside row
-      for (const source of this.state.sources) {
+      for (const source of rowContent) {
         const sourceItemY = source.state.y ?? 0;
         const itemY = sourceItemY + (rowContentHeight + 1) * index;
-
-        const itemClone = source.clone({
-          key: `${source.state.key}-clone-${index}`,
-          y: itemY,
-        });
+        const itemKey = index > 0 ? `${source.state.key}-clone-${localValue}` : source.state.key;
+        const itemClone = source.clone({ key: itemKey, y: itemY });
 
         //Make sure all the child scene objects have unique keys
-        ensureUniqueKeys(itemClone, index);
+        if (index > 0) {
+          ensureUniqueKeys(itemClone, localValue);
+        }
 
         children.push(itemClone);
 
@@ -104,7 +113,7 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
         }
       }
 
-      const rowClone = this.getRowClone(rowToRepeat, index, values[index], texts[index], rowContentHeight, children);
+      const rowClone = this.getRowClone(rowToRepeat, index, localValue, texts[index], rowContentHeight, children);
       rows.push(rowClone);
     }
 
@@ -136,7 +145,7 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
     const sourceRowY = rowToRepeat.state.y ?? 0;
 
     return rowToRepeat.clone({
-      key: `${rowToRepeat.state.key}-clone-${index}`,
+      key: `${rowToRepeat.state.key}-clone-${value}`,
       $variables: new SceneVariableSet({
         variables: [new LocalValueVariable({ name: this.state.variableName, value, text: String(text) })],
       }),
@@ -144,6 +153,12 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
       children,
       y: sourceRowY + rowContentHeight * index + index,
     });
+  }
+
+  public removeRepeatClonesFromLayout() {
+    const layout = this._getLayout();
+    const children = getLayoutChildrenFilterOutRepeatClones(this._getLayout(), this._getRow());
+    layout.setState({ children: children });
   }
 }
 
@@ -207,9 +222,9 @@ function getLayoutChildrenFilterOutRepeatClones(layout: SceneGridLayout, rowToRe
   });
 }
 
-function ensureUniqueKeys(item: SceneGridItemLike, rowIndex: number) {
+function ensureUniqueKeys(item: SceneGridItemLike, localValue: VariableValueSingle) {
   item.forEachChild((child) => {
-    child.setState({ key: `${child.state.key}-row-${rowIndex}` });
-    ensureUniqueKeys(child, rowIndex);
+    child.setState({ key: `${child.state.key}-clone-${localValue}` });
+    ensureUniqueKeys(child, localValue);
   });
 }
