@@ -107,7 +107,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 							"resultFormat": "%s",
 							"dashboardTime": false
 						}
-					}`, types.TimeSeries)),
+					}`, dataquery.ResultFormatTimeSeries)),
 					RefID:     "A",
 					TimeRange: timeRange,
 					QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
@@ -116,7 +116,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 			azureLogAnalyticsQueries: []*AzureLogAnalyticsQuery{
 				{
 					RefID:        "A",
-					ResultFormat: types.TimeSeries,
+					ResultFormat: dataquery.ResultFormatTimeSeries,
 					URL:          "v1/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace/query",
 					JSON: []byte(fmt.Sprintf(`{
 						"queryType": "Azure Log Analytics",
@@ -126,7 +126,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 							"resultFormat": "%s",
 							"dashboardTime": false
 						}
-					}`, types.TimeSeries)),
+					}`, dataquery.ResultFormatTimeSeries)),
 					Query:            "Perf | where ['TimeGenerated'] >= datetime('2018-03-15T13:00:00Z') and ['TimeGenerated'] <= datetime('2018-03-15T13:34:00Z') | where ['Computer'] in ('comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, 34000ms), Computer",
 					Resources:        []string{"/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace"},
 					TimeRange:        timeRange,
@@ -148,7 +148,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 							"query":        "Perf",
 							"resultFormat": "%s"
 						}
-					}`, types.TimeSeries)),
+					}`, dataquery.ResultFormatTimeSeries)),
 					RefID:     "A",
 					QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
 				},
@@ -156,7 +156,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 			azureLogAnalyticsQueries: []*AzureLogAnalyticsQuery{
 				{
 					RefID:        "A",
-					ResultFormat: types.TimeSeries,
+					ResultFormat: dataquery.ResultFormatTimeSeries,
 					URL:          "v1/workspaces/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/query",
 					JSON: []byte(fmt.Sprintf(`{
 						"queryType": "Azure Log Analytics",
@@ -165,7 +165,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 							"query":        "Perf",
 							"resultFormat": "%s"
 						}
-					}`, types.TimeSeries)),
+					}`, dataquery.ResultFormatTimeSeries)),
 					Query:            "Perf",
 					Resources:        []string{},
 					QueryType:        dataquery.AzureQueryTypeAzureLogAnalytics,
@@ -186,7 +186,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 							"query":        "Perf",
 							"resultFormat": "%s"
 						}
-					}`, types.TimeSeries)),
+					}`, dataquery.ResultFormatTimeSeries)),
 					RefID:     "A",
 					QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
 				},
@@ -194,7 +194,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 			azureLogAnalyticsQueries: []*AzureLogAnalyticsQuery{
 				{
 					RefID:        "A",
-					ResultFormat: types.TimeSeries,
+					ResultFormat: dataquery.ResultFormatTimeSeries,
 					URL:          "v1/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace/query",
 					JSON: []byte(fmt.Sprintf(`{
 						"queryType": "Azure Log Analytics",
@@ -203,7 +203,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 							"query":        "Perf",
 							"resultFormat": "%s"
 						}
-					}`, types.TimeSeries)),
+					}`, dataquery.ResultFormatTimeSeries)),
 					Query:            "Perf",
 					Resources:        []string{},
 					QueryType:        dataquery.AzureQueryTypeAzureLogAnalytics,
@@ -225,7 +225,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 							"resultFormat": "%s",
 							"dashboardTime": false
 						}
-					}`, types.TimeSeries)),
+					}`, dataquery.ResultFormatTimeSeries)),
 					RefID:     "A",
 					QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
 				},
@@ -233,7 +233,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 			azureLogAnalyticsQueries: []*AzureLogAnalyticsQuery{
 				{
 					RefID:        "A",
-					ResultFormat: types.TimeSeries,
+					ResultFormat: dataquery.ResultFormatTimeSeries,
 					URL:          "v1/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace/query",
 					JSON: []byte(fmt.Sprintf(`{
 						"queryType": "Azure Log Analytics",
@@ -243,7 +243,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 							"resultFormat": "%s",
 							"dashboardTime": false
 						}
-					}`, types.TimeSeries)),
+					}`, dataquery.ResultFormatTimeSeries)),
 					Query:            "Perf",
 					Resources:        []string{"/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace"},
 					QueryType:        dataquery.AzureQueryTypeAzureLogAnalytics,
@@ -265,7 +265,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 							"resultFormat": "%s",
 							"dashboardTime": false
 						}
-					}`, types.TimeSeries)),
+					}`, dataquery.ResultFormatTimeSeries)),
 					RefID:     "A",
 					TimeRange: timeRange,
 					QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
@@ -274,7 +274,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 			azureLogAnalyticsQueries: []*AzureLogAnalyticsQuery{
 				{
 					RefID:        "A",
-					ResultFormat: types.TimeSeries,
+					ResultFormat: dataquery.ResultFormatTimeSeries,
 					URL:          "v1/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace/query",
 					JSON: []byte(fmt.Sprintf(`{
 						"queryType": "Azure Log Analytics",
@@ -284,7 +284,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 							"resultFormat": "%s",
 							"dashboardTime": false
 						}
-					}`, types.TimeSeries)),
+					}`, dataquery.ResultFormatTimeSeries)),
 					Query:            "Perf",
 					Resources:        []string{"/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace", "/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace2"},
 					TimeRange:        timeRange,
@@ -308,7 +308,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 							"dashboardTime": true,
 							"timeColumn":	"TimeGenerated"
 						}
-					}`, types.TimeSeries)),
+					}`, dataquery.ResultFormatTimeSeries)),
 					RefID:     "A",
 					TimeRange: timeRange,
 					QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
@@ -317,7 +317,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 			azureLogAnalyticsQueries: []*AzureLogAnalyticsQuery{
 				{
 					RefID:        "A",
-					ResultFormat: types.TimeSeries,
+					ResultFormat: dataquery.ResultFormatTimeSeries,
 					URL:          "v1/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace/query",
 					JSON: []byte(fmt.Sprintf(`{
 						"queryType": "Azure Log Analytics",
@@ -328,7 +328,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 							"dashboardTime": true,
 							"timeColumn":	"TimeGenerated"
 						}
-					}`, types.TimeSeries)),
+					}`, dataquery.ResultFormatTimeSeries)),
 					Query:            "Perf",
 					Resources:        []string{"/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace"},
 					TimeRange:        timeRange,

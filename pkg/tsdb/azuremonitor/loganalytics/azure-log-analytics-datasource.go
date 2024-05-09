@@ -104,15 +104,12 @@ func buildLogAnalyticsQuery(query backend.DataQuery, dsInfo types.DatasourceInfo
 	resources := []string{}
 	var resourceOrWorkspace string
 	var queryString string
-	resultFormat := dataquery.ResultFormat(types.TimeSeries)
 	appInsightsQuery := false
 	dashboardTime := false
 	timeColumn := ""
 	azureLogAnalyticsTarget := queryJSONModel.AzureLogAnalytics
 
-	if azureLogAnalyticsTarget.ResultFormat != nil {
-		resultFormat = *azureLogAnalyticsTarget.ResultFormat
-	}
+	resultFormat := ParseResultFormat(azureLogAnalyticsTarget.ResultFormat, dataquery.AzureQueryTypeAzureLogAnalytics)
 
 	// Legacy queries only specify a Workspace GUID, which we need to use the old workspace-centric
 	// API URL for, and newer queries specifying a resource URI should use resource-centric API.
@@ -168,7 +165,6 @@ func buildLogAnalyticsQuery(query backend.DataQuery, dsInfo types.DatasourceInfo
 }
 
 func buildAppInsightsQuery(ctx context.Context, query backend.DataQuery, dsInfo types.DatasourceInfo, appInsightsRegExp *regexp.Regexp) (*AzureLogAnalyticsQuery, error) {
-	var resultFormat dataquery.ResultFormat
 	dashboardTime := true
 	timeColumn := ""
 	queryJSONModel := types.TracesJSONQuery{}
@@ -179,14 +175,7 @@ func buildAppInsightsQuery(ctx context.Context, query backend.DataQuery, dsInfo 
 
 	azureTracesTarget := queryJSONModel.AzureTraces
 
-	if azureTracesTarget.ResultFormat == nil {
-		resultFormat = types.Table
-	} else {
-		resultFormat = *azureTracesTarget.ResultFormat
-		if resultFormat == "" {
-			resultFormat = types.Table
-		}
-	}
+	resultFormat := ParseResultFormat(azureTracesTarget.ResultFormat, dataquery.AzureQueryTypeAzureTraces)
 
 	resources := azureTracesTarget.Resources
 	resourceOrWorkspace := azureTracesTarget.Resources[0]
@@ -416,7 +405,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		}
 	}
 
-	if query.ResultFormat == types.TimeSeries {
+	if query.ResultFormat == dataquery.ResultFormatTimeSeries {
 		tsSchema := frame.TimeSeriesSchema()
 		if tsSchema.Type == data.TimeSeriesTypeLong {
 			wideFrame, err := data.LongToWide(frame, nil)
