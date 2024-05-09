@@ -55,3 +55,47 @@ func TestParseResultFormat(t *testing.T) {
 		})
 	}
 }
+
+func TestRetrieveResources(t *testing.T) {
+	legacyResource := "test-single-resource"
+	legacyWorkspace := "test-workspace"
+	testCases := []struct {
+		name                        string
+		query                       dataquery.AzureLogsQuery
+		expectedResources           []string
+		expectedResourceOrWorkspace string
+	}{
+		{
+			name: "current resource query returns the resources and the first resource",
+			query: dataquery.AzureLogsQuery{
+				Resources: []string{"test-resource"},
+			},
+			expectedResources:           []string{"test-resource"},
+			expectedResourceOrWorkspace: "test-resource",
+		},
+		{
+			name: "legacy query with resource specified",
+			query: dataquery.AzureLogsQuery{
+				Resource: &legacyResource,
+			},
+			expectedResources:           []string{"test-single-resource"},
+			expectedResourceOrWorkspace: "test-single-resource",
+		},
+		{
+			name: "legacy query with workspace specified",
+			query: dataquery.AzureLogsQuery{
+				Workspace: &legacyWorkspace,
+			},
+			expectedResources:           []string{},
+			expectedResourceOrWorkspace: "test-workspace",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			resources, resourceOrWorkspace := retrieveResources(tc.query)
+			assert.Equal(t, tc.expectedResources, resources)
+			assert.Equal(t, tc.expectedResourceOrWorkspace, resourceOrWorkspace)
+		})
+	}
+}
