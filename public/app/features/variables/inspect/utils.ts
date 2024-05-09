@@ -1,7 +1,9 @@
 import { DataLinkBuiltInVars } from '@grafana/data';
+import { SceneVariable, SceneVariableState } from '@grafana/scenes';
 import { Graph } from 'app/core/utils/dag';
 import { mapSet } from 'app/core/utils/set';
 import { stringifyPanelModel } from 'app/features/dashboard/state/PanelModel';
+import { isSceneVariableInstance } from 'app/features/dashboard-scene/settings/variables/utils';
 
 import { safeStringifyValue } from '../../../core/utils/explore';
 import { DashboardModel, PanelModel } from '../../dashboard/state';
@@ -20,11 +22,23 @@ export interface GraphEdge {
   to: string;
 }
 
-export const createDependencyNodes = (variables: VariableModel[]): GraphNode[] => {
+function isSceneVariableArray(variables: unknown): variables is Array<SceneVariable<SceneVariableState>> {
+  return Array.isArray(variables) && isSceneVariableInstance(variables[0]);
+}
+
+export const createDependencyNodes = (
+  variables: VariableModel[] | Array<SceneVariable<SceneVariableState>>
+): GraphNode[] => {
   const nodes: GraphNode[] = [];
 
-  for (const variable of variables) {
-    nodes.push({ id: variable.id, label: `${variable.id}` });
+  if (isSceneVariableArray(variables)) {
+    for (const variable of variables) {
+      nodes.push({ id: variable.state.name, label: `${variable.state.name}` });
+    }
+  } else {
+    for (const variable of variables) {
+      nodes.push({ id: variable.id, label: `${variable.id}` });
+    }
   }
 
   return nodes;
@@ -34,19 +48,35 @@ export const filterNodesWithDependencies = (nodes: GraphNode[], edges: GraphEdge
   return nodes.filter((node) => edges.some((edge) => edge.from === node.id || edge.to === node.id));
 };
 
-export const createDependencyEdges = (variables: VariableModel[]): GraphEdge[] => {
+export const createDependencyEdges = (
+  variables: VariableModel[] | Array<SceneVariable<SceneVariableState>>
+): GraphEdge[] => {
   const edges: GraphEdge[] = [];
 
-  for (const variable of variables) {
-    for (const other of variables) {
-      if (variable === other) {
-        continue;
+  if (isSceneVariableArray(variables)) {
+    for (const variable of variables) {
+      for (const other of variables) {
+        if (variable === other) {
+          continue;
+        }
+
+        const dependsOn = variable.variableDependency?.hasDependencyOn(other.state.name);
+        if (dependsOn) {
+          edges.push({ from: variable.state.name, to: other.state.name });
+        }
       }
+    }
+  } else {
+    for (const variable of variables) {
+      for (const other of variables) {
+        if (variable === other) {
+          continue;
+        }
 
-      const dependsOn = variableAdapters.get(variable.type).dependsOn(variable, other);
-
-      if (dependsOn) {
-        edges.push({ from: variable.id, to: other.id });
+        const dependsOn = variableAdapters.get(variable.type).dependsOn(variable, other);
+        if (dependsOn) {
+          edges.push({ from: variable.id, to: other.id });
+        }
       }
     }
   }
