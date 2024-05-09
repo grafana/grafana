@@ -272,10 +272,10 @@ export const ConnectionSVG = ({
                   }
                   // Calculate arc control points
                   const lDelta = lSegment - lHalfArc;
-                  xa = lDelta * Math.cos(angle1) + x1;
-                  ya = lDelta * Math.sin(angle1) + y1;
-                  xb = lHalfArc * Math.cos(angle2) + X;
-                  yb = lHalfArc * Math.sin(angle2) + Y;
+                  xa = Math.round(lDelta * Math.cos(angle1) + x1);
+                  ya = Math.round(lDelta * Math.sin(angle1) + y1);
+                  xb = Math.round(lHalfArc * Math.cos(angle2) + X);
+                  yb = Math.round(lHalfArc * Math.sin(angle2) + Y);
 
                   // Check if arc control points are inside of segment, otherwise swap sign
                   if ((xa > X && xa > x1) || (xa < X && xa < x1)) {
@@ -321,10 +321,10 @@ export const ConnectionSVG = ({
 
                   // Calculate arc control points
                   const lDelta = lSegment - lHalfArc;
-                  xa = lDelta * Math.cos(angle1) + Xp;
-                  ya = lDelta * Math.sin(angle1) + Yp;
-                  xb = lHalfArc * Math.cos(angle2) + X;
-                  yb = lHalfArc * Math.sin(angle2) + Y;
+                  xa = Math.round(lDelta * Math.cos(angle1) + Xp);
+                  ya = Math.round(lDelta * Math.sin(angle1) + Yp);
+                  xb = Math.round(lHalfArc * Math.cos(angle2) + X);
+                  yb = Math.round(lHalfArc * Math.sin(angle2) + Y);
 
                   // Check if arc control points are inside of segment, otherwise swap sign
                   if ((xa > X && xa > Xp) || (xa < X && xa < Xp)) {
