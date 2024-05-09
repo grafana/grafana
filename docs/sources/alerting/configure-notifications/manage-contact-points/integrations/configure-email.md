@@ -16,7 +16,7 @@ title: Configure email for Alerting
 weight: 300
 ---
 
-## Configure email for Alerting
+# Configure email for Alerting
 
 Use the Grafana Alerting - email integration to send email notifications when your alerts are firing. An email is sent when an alert fires and when an alert gets resolved.
 
