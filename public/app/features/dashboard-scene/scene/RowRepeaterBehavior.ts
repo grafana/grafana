@@ -27,8 +27,10 @@ interface RowRepeaterBehaviorState extends SceneObjectState {
 export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorState> {
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: [this.state.variableName],
-    onVariableUpdateCompleted: this._onVariableUpdateCompleted.bind(this),
+    onVariableUpdateCompleted: () => {},
   });
+
+  public isWaitingForVariables = false;
 
   public constructor(state: RowRepeaterBehaviorState) {
     super(state);
@@ -37,11 +39,7 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
   }
 
   private _activationHandler() {
-    this._performRepeat();
-  }
-
-  private _onVariableUpdateCompleted(): void {
-    this._performRepeat();
+    this.performRepeat();
   }
 
   private _getRow(): SceneGridRow {
@@ -62,8 +60,10 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
     return layout;
   }
 
-  private _performRepeat() {
-    if (this._variableDependency.hasDependencyInLoadingState()) {
+  public performRepeat() {
+    this.isWaitingForVariables = this._variableDependency.hasDependencyInLoadingState();
+
+    if (this.isWaitingForVariables) {
       return;
     }
 

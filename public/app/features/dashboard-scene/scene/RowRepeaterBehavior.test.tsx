@@ -1,5 +1,4 @@
 import {
-  EmbeddedScene,
   SceneCanvasText,
   SceneGridLayout,
   SceneGridRow,
@@ -13,11 +12,12 @@ import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/co
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { RepeatDirection } from './DashboardGridItem';
+import { DashboardScene } from './DashboardScene';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';
 
 describe('RowRepeaterBehavior', () => {
   describe('Given scene with variable with 5 values', () => {
-    let scene: EmbeddedScene, grid: SceneGridLayout;
+    let scene: DashboardScene, grid: SceneGridLayout;
 
     beforeEach(async () => {
       ({ scene, grid } = buildScene({ variableQueryTime: 0 }));
@@ -28,6 +28,7 @@ describe('RowRepeaterBehavior', () => {
     it('Should repeat row', () => {
       // Verify that panel above row remains
       expect(grid.state.children[0]).toBeInstanceOf(SceneGridItem);
+
       // Verify that first row still has repeat behavior
       const row1 = grid.state.children[1] as SceneGridRow;
       expect(row1.state.$behaviors?.[0]).toBeInstanceOf(RowRepeaterBehavior);
@@ -76,7 +77,7 @@ describe('RowRepeaterBehavior', () => {
   });
 
   describe('Given scene empty row', () => {
-    let scene: EmbeddedScene;
+    let scene: DashboardScene;
     let grid: SceneGridLayout;
     let rowToRepeat: SceneGridRow;
 
@@ -171,7 +172,7 @@ function buildScene(options: SceneOptions) {
     ],
   });
 
-  const scene = new EmbeddedScene({
+  const scene = new DashboardScene({
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
     $variables: new SceneVariableSet({
       variables: [

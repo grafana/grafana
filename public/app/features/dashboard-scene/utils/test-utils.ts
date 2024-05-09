@@ -68,6 +68,11 @@ export function mockResizeObserver() {
 export function activateFullSceneTree(scene: SceneObject): SceneDeactivationHandler {
   const deactivationHandlers: SceneDeactivationHandler[] = [];
 
+  // Important that variables are activated before other children
+  if (scene.state.$variables) {
+    deactivationHandlers.push(activateFullSceneTree(scene.state.$variables));
+  }
+
   scene.forEachChild((child) => {
     // For query runners which by default use the container width for maxDataPoints calculation we are setting a width.
     // In real life this is done by the React component when VizPanel is rendered.
