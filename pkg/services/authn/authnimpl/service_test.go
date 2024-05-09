@@ -419,31 +419,31 @@ func TestService_Logout(t *testing.T) {
 	tests := []TestCase{
 		{
 			desc:             "should redirect to default redirect url when identity is not a user",
-			identity:         &authn.Identity{ID: authn.MustNewNamespaceID(authn.NamespaceServiceAccount, 1)},
+			identity:         &authn.Identity{ID: authn.NewNamespaceID(authn.NamespaceServiceAccount, 1)},
 			expectedRedirect: &authn.Redirect{URL: "http://localhost:3000/login"},
 		},
 		{
 			desc:                 "should redirect to default redirect url when no external provider was used to authenticate",
-			identity:             &authn.Identity{ID: authn.MustNewNamespaceID(authn.NamespaceUser, 1)},
+			identity:             &authn.Identity{ID: authn.NewNamespaceID(authn.NamespaceUser, 1)},
 			expectedRedirect:     &authn.Redirect{URL: "http://localhost:3000/login"},
 			expectedTokenRevoked: true,
 		},
 		{
 			desc:                 "should redirect to default redirect url when client is not found",
-			identity:             &authn.Identity{ID: authn.MustNewNamespaceID(authn.NamespaceUser, 1), AuthenticatedBy: "notfound"},
+			identity:             &authn.Identity{ID: authn.NewNamespaceID(authn.NamespaceUser, 1), AuthenticatedBy: "notfound"},
 			expectedRedirect:     &authn.Redirect{URL: "http://localhost:3000/login"},
 			expectedTokenRevoked: true,
 		},
 		{
 			desc:                 "should redirect to default redirect url when client do not implement logout extension",
-			identity:             &authn.Identity{ID: authn.MustNewNamespaceID(authn.NamespaceUser, 1), AuthenticatedBy: "azuread"},
+			identity:             &authn.Identity{ID: authn.NewNamespaceID(authn.NamespaceUser, 1), AuthenticatedBy: "azuread"},
 			expectedRedirect:     &authn.Redirect{URL: "http://localhost:3000/login"},
 			client:               &authntest.FakeClient{ExpectedName: "auth.client.azuread"},
 			expectedTokenRevoked: true,
 		},
 		{
 			desc:             "should redirect to client specific url",
-			identity:         &authn.Identity{ID: authn.MustNewNamespaceID(authn.NamespaceUser, 1), AuthenticatedBy: "azuread"},
+			identity:         &authn.Identity{ID: authn.NewNamespaceID(authn.NamespaceUser, 1), AuthenticatedBy: "azuread"},
 			expectedRedirect: &authn.Redirect{URL: "http://idp.com/logout"},
 			client: &authntest.MockClient{
 				NameFunc: func() string { return "auth.client.azuread" },
@@ -487,7 +487,7 @@ func TestService_Logout(t *testing.T) {
 func TestService_ResolveIdentity(t *testing.T) {
 	t.Run("should return error for for unknown namespace", func(t *testing.T) {
 		svc := setupTests(t)
-		_, err := svc.ResolveIdentity(context.Background(), 1, authn.NewNamespaceIDUnchecked("some", 1))
+		_, err := svc.ResolveIdentity(context.Background(), 1, authn.NewNamespaceID("some", 1))
 		assert.ErrorIs(t, err, authn.ErrUnsupportedIdentity)
 	})
 
@@ -514,7 +514,7 @@ func TestService_ResolveIdentity(t *testing.T) {
 	t.Run("should resolve for valid namespace if client is registered", func(t *testing.T) {
 		svc := setupTests(t, func(svc *Service) {
 			svc.RegisterClient(&authntest.MockClient{
-				NamespaceFunc: func() string { return authn.NamespaceAPIKey },
+				NamespaceFunc: func() string { return authn.NamespaceAPIKey.String() },
 				ResolveIdentityFunc: func(ctx context.Context, orgID int64, namespaceID authn.NamespaceID) (*authn.Identity, error) {
 					return &authn.Identity{}, nil
 				},
