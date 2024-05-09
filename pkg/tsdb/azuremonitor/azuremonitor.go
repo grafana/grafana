@@ -299,7 +299,7 @@ func metricCheckHealth(ctx context.Context, dsInfo types.DatasourceInfo, logger 
 		}
 		return fmt.Sprintf("Error connecting to Azure Monitor endpoint: %s", string(body)), defaultSubscription, backend.HealthStatusError
 	}
-	subscriptions, err := parseSubscriptions(metricsRes, logger)
+	subscriptions, err := utils.ParseSubscriptions(metricsRes, logger)
 	if err != nil {
 		return err.Error(), defaultSubscription, backend.HealthStatusError
 	}
@@ -361,30 +361,6 @@ func graphLogHealthCheck(ctx context.Context, dsInfo types.DatasourceInfo, defau
 		return fmt.Sprintf("Error connecting to Azure Resource Graph endpoint: %s", string(body)), backend.HealthStatusError
 	}
 	return "Successfully connected to Azure Resource Graph endpoint.", backend.HealthStatusOk
-}
-
-func parseSubscriptions(res *http.Response, logger log.Logger) ([]string, error) {
-	var target struct {
-		Value []struct {
-			SubscriptionId string `json:"subscriptionId"`
-		}
-	}
-	err := json.NewDecoder(res.Body).Decode(&target)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		if err := res.Body.Close(); err != nil {
-			logger.Warn("Failed to close response body", "err", err)
-		}
-	}()
-
-	result := make([]string, len(target.Value))
-	for i, v := range target.Value {
-		result[i] = v.SubscriptionId
-	}
-
-	return result, nil
 }
 
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
