@@ -33,7 +33,7 @@ Administrators can also [configure the data source via YAML](#provision-the-data
 When Elasticsearch security features are enabled, it is essential to configure the necessary cluster privileges to ensure seamless operation. Below is a list of the required privileges along with their purposes:
 
 - **monitor** - Necessary to retrieve the version information of the connected Elasticsearch instance.
-- **view_index_metadata** - Required for accessing mapping definitions of indices
+- **view_index_metadata** - Required for accessing mapping definitions of indices.
 - **read** - Grants the ability to perform search and retrieval operations on indices. This is essential for querying and extracting data from the cluster.
 
 ## Add the data source
