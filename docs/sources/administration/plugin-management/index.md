@@ -17,7 +17,7 @@ weight: 600
 
 You can enhance your Grafana experience with _plugins_, extensions to Grafana beyond the wide range of visualizations and data sources that are built-in.
 
-This guide shows you how to [install](#install-a-plugin) a wide range of the plugins that are built by Grafana Labs, commercial partners, our community, or plugins that you have [built yourself](/developers/plugin-tools).
+This guide shows you how to [install](#install-a-plugin) plugins that are built by Grafana Labs, commercial partners, our community, or plugins that you have [built yourself](/developers/plugin-tools).
 
 ## Types of plugins
 
@@ -43,7 +43,7 @@ Data source plugins add support for new databases, such as [Google BigQuery](/gr
 
 Data source plugins communicate with external sources of data and return the data in a format that Grafana understands. By adding a data source plugin, you can immediately use the data in any of your existing dashboards.
 
-Use data source plugins when you want to import data from external or third-party systems.
+Use data source plugins when you want to query data from external or third-party systems.
 
 ## App plugins
 
@@ -55,9 +55,9 @@ Use app plugins when you want an out-of-the-box monitoring experience.
 
 ### Managing access for app plugins
 
-With [RBAC]({{< relref "../roles-and-permissions/access-control/#about-rbac" >}}), you can now customize access to app plugins.
+Customize access to app plugins with [RBAC]({{< relref "../roles-and-permissions/access-control/#about-rbac" >}}).
 
-By default, the roles of Viewers, Editors and Admins have access to all app plugins that their Organization role allows them to access. Access is granted by the `fixed:plugins.app:reader` role.
+By default, the Viewer, Editor and Admin roles have access to all app plugins that their Organization role allows them to access. Access is granted by the `fixed:plugins.app:reader` role.
 
 {{% admonition type="note" %}}
 Revoking the RBAC role from some users will prevent them from accessing app plugins. However, granting the RBAC role to users will only allow them to see app plugins their Organization role allows them to see.
@@ -91,7 +91,7 @@ _Video shows the Plugin catalog in a previous version of Grafana._
 In order to be able to install, uninstall, or update plugins using the plugin catalog, you must enable it with the `plugin_admin_enabled` flag in the [configuration]({{< relref "../../setup-grafana/configure-grafana/#plugin_admin_enabled" >}}) file.
 
 {{% admonition type="note" %}}
-In the most recent versions of Grafana, the `plugin_admin_enabled` flag is enabled by default.
+If required, the Grafana plugin catalog can be disabled using the `plugin_admin_enabled` flag in the [configuration]({{< relref "../../setup-grafana/configure-grafana/#plugin_admin_enabled" >}}) file.
 {{% /admonition %}}
 
 <a id="#plugin-catalog-entry"></a>
