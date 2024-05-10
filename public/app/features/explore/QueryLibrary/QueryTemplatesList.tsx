@@ -1,7 +1,8 @@
 import React from 'react';
 
 import { EmptyState, Spinner } from '@grafana/ui';
-import { QueryTemplate, useAllQueryTemplatesQuery } from 'app/features/query-library';
+import { useAllQueryTemplatesQuery } from 'app/features/query-library';
+import { QueryTemplate } from 'app/features/query-library/types';
 
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 

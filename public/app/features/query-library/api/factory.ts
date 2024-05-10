@@ -5,15 +5,13 @@ import { QueryTemplate } from '../types';
 import { convertDataQueryResponseToQueryTemplates } from './mappers';
 import { baseQuery } from './query';
 
-export const createQueryLibraryApi = () => {
-  return createApi({
-    baseQuery,
-    endpoints: (builder) => ({
-      allQueryTemplates: builder.query<QueryTemplate[], void>({
-        query: () => undefined,
-        transformResponse: convertDataQueryResponseToQueryTemplates,
-      }),
+export const queryLibraryApi = createApi({
+  baseQuery,
+  endpoints: (builder) => ({
+    allQueryTemplates: builder.query<QueryTemplate[], void>({
+      query: () => undefined,
+      transformResponse: convertDataQueryResponseToQueryTemplates,
     }),
-    reducerPath: undefined,
-  });
-};
+  }),
+  reducerPath: 'queryLibrary',
+});
