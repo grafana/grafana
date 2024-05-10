@@ -69,9 +69,8 @@ func TestIntegrationScopeNodesExample(t *testing.T) {
 
 		found, err := scopeNodesClient.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err)
-		require.Len(t, found.Items, 11)
+		require.Len(t, found.Items, 12)
 	})
-
 }
 
 func jsonListToUnstructuredList(t *testing.T, fname string) (ul unstructured.UnstructuredList) {

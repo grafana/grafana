@@ -5,6 +5,18 @@
       "apiVersion": "scope.grafana.app/v0alpha1",
       "kind": "ScopeNode",
       "metadata": {
+          "name": "applications"
+      },
+      "spec": {
+          "description": "Application Scopes",
+          "title": "Applications",
+          "nodeType": "container"
+      }
+    },
+    {
+      "apiVersion": "scope.grafana.app/v0alpha1",
+      "kind": "ScopeNode",
+      "metadata": {
         "name": "applications.clusters"
       },
       "spec": {
