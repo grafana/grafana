@@ -12,6 +12,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/sync/errgroup"
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -82,10 +83,13 @@ func (r *queryREST) Connect(ctx context.Context, name string, opts runtime.Objec
 		raw := &query.QueryDataRequest{}
 		err := web.Bind(httpreq, raw)
 		if err != nil {
-			responder.Error(errutil.BadRequest(
-				"query.bind",
-				errutil.WithPublicMessage("Error reading query")).
-				Errorf("error reading: %w", err))
+			err = errorsK8s.NewBadRequest("error reading query")
+			// TODO: can we wrap the error so details are not lost?!
+			// errutil.BadRequest(
+			// 	"query.bind",
+			// 	errutil.WithPublicMessage("Error reading query")).
+			// 	Errorf("error reading: %w", err)
+			responder.Error(err)
 			return
 		}
 
@@ -93,9 +97,13 @@ func (r *queryREST) Connect(ctx context.Context, name string, opts runtime.Objec
 		req, err := b.parser.parseRequest(ctx, raw)
 		if err != nil {
 			if errors.Is(err, datasources.ErrDataSourceNotFound) {
-				err = errutil.BadRequest(
-					"query.datasource.notfound",
-					errutil.WithPublicMessage(err.Error()))
+				// TODO, can we wrap the error somehow?
+				err = &errorsK8s.StatusError{ErrStatus: metav1.Status{
+					Status:  metav1.StatusFailure,
+					Code:    http.StatusBadRequest, // the URL is found, but includes bad requests
+					Reason:  metav1.StatusReasonNotFound,
+					Message: "datasource not found",
+				}}
 			}
 			responder.Error(err)
 			return
@@ -111,7 +119,7 @@ func (r *queryREST) Connect(ctx context.Context, name string, opts runtime.Objec
 			return
 		}
 
-		responder.Object(200, &query.QueryDataResponse{
+		responder.Object(query.GetResponseCode(rsp), &query.QueryDataResponse{
 			QueryDataResponse: *rsp, // wrap the backend response as a QueryDataResponse
 		})
 	}), nil
