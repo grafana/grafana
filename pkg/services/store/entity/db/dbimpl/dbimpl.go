@@ -3,8 +3,6 @@ package dbimpl
 import (
 	"fmt"
 
-	"github.com/dlmiddlecote/sqlstats"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -13,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/entity/db/migrations"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/jmoiron/sqlx"
-	"github.com/prometheus/client_golang/prometheus"
 	"xorm.io/xorm"
 )
 
@@ -104,11 +101,6 @@ func (db *EntityDB) GetEngine() (*xorm.Engine, error) {
 	if err := migrations.MigrateEntityStore(db, db.features); err != nil {
 		db.engine = nil
 		return nil, err
-	}
-
-	// register the go_sql_stats_connections_* metrics
-	if err := prometheus.Register(sqlstats.NewStatsCollector("unified_storage", db.engine.DB().DB)); err != nil {
-		logger.Warn("Failed to register unified storage sql stats collector", "error", err)
 	}
 
 	return db.engine, nil
