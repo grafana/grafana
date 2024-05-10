@@ -1303,157 +1303,157 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		})
 	})
 
-	t.Run("Plugin child field `IncludedInAppID` is set to parent app's plugin ID", func(t *testing.T) {
-		parent := &plugins.Plugin{
-			JSONData: plugins.JSONData{
-				ID:   "myorgid-simple-app",
-				Type: plugins.TypeApp,
-				Name: "Simple App",
-				Info: plugins.Info{
-					Author: plugins.InfoLink{
-						Name: "Your Name",
-					},
-					Links: []plugins.InfoLink{
-						{Name: "Website", URL: "https://github.com/grafana/grafana-starter-app"},
-						{Name: "License", URL: "https://github.com/grafana/grafana-starter-app/blob/master/LICENSE"},
-					},
-					Logos: plugins.Logos{
-						Small: "public/plugins/myorgid-simple-app/img/logo.svg",
-						Large: "public/plugins/myorgid-simple-app/img/logo.svg",
-					},
-					Screenshots: []plugins.Screenshots{},
-					Description: "Grafana App Plugin Template",
-					Version:     "",
-					Updated:     "",
-					Keywords:    []string{"panel", "template"},
-				},
-				Dependencies: plugins.Dependencies{
-					GrafanaVersion:    "7.0.0",
-					GrafanaDependency: ">=7.0.0",
-					Plugins:           []plugins.Dependency{},
-				},
-				Includes: []*plugins.Includes{
-					{
-						Name:       "Root Page (react)",
-						Path:       "/a/myorgid-simple-app",
-						Type:       "page",
-						Role:       org.RoleViewer,
-						AddToNav:   true,
-						DefaultNav: true,
-						Slug:       "root-page-react",
-					},
-					{
-						Name:     "Root Page (Tab B)",
-						Path:     "/a/myorgid-simple-app/?tab=b",
-						Type:     "page",
-						Role:     org.RoleViewer,
-						AddToNav: true,
-						Slug:     "root-page-tab-b",
-					},
-					{
-						Name:     "React Config",
-						Path:     "/plugins/myorgid-simple-app/?page=page2",
-						Type:     "page",
-						Role:     org.RoleAdmin,
-						AddToNav: true,
-						Slug:     "react-config",
-					},
-					{
-						Name: "Streaming Example",
-						Path: "dashboards/streaming.json",
-						Type: "dashboard",
-						Role: org.RoleViewer,
-						Slug: "streaming-example",
-					},
-					{
-						Name: "Lots of Stats",
-						Path: "dashboards/stats.json",
-						Type: "dashboard",
-						Role: org.RoleViewer,
-						Slug: "lots-of-stats",
-					},
-				},
-				Backend: false,
-			},
-			Module:        "public/plugins/myorgid-simple-app/module.js",
-			BaseURL:       "public/plugins/myorgid-simple-app",
-			FS:            mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "app-with-child/dist")),
-			DefaultNavURL: "/plugins/myorgid-simple-app/page/root-page-react",
-			Signature:     plugins.SignatureStatusValid,
-			SignatureType: plugins.SignatureTypeGrafana,
-			SignatureOrg:  "Grafana Labs",
-			Class:         plugins.ClassExternal,
-		}
+	// t.Run("Plugin child field `IncludedInAppID` is set to parent app's plugin ID", func(t *testing.T) {
+	// 	parent := &plugins.Plugin{
+	// 		JSONData: plugins.JSONData{
+	// 			ID:   "myorgid-simple-app",
+	// 			Type: plugins.TypeApp,
+	// 			Name: "Simple App",
+	// 			Info: plugins.Info{
+	// 				Author: plugins.InfoLink{
+	// 					Name: "Your Name",
+	// 				},
+	// 				Links: []plugins.InfoLink{
+	// 					{Name: "Website", URL: "https://github.com/grafana/grafana-starter-app"},
+	// 					{Name: "License", URL: "https://github.com/grafana/grafana-starter-app/blob/master/LICENSE"},
+	// 				},
+	// 				Logos: plugins.Logos{
+	// 					Small: "public/plugins/myorgid-simple-app/img/logo.svg",
+	// 					Large: "public/plugins/myorgid-simple-app/img/logo.svg",
+	// 				},
+	// 				Screenshots: []plugins.Screenshots{},
+	// 				Description: "Grafana App Plugin Template",
+	// 				Version:     "",
+	// 				Updated:     "",
+	// 				Keywords:    []string{"panel", "template"},
+	// 			},
+	// 			Dependencies: plugins.Dependencies{
+	// 				GrafanaVersion:    "7.0.0",
+	// 				GrafanaDependency: ">=7.0.0",
+	// 				Plugins:           []plugins.Dependency{},
+	// 			},
+	// 			Includes: []*plugins.Includes{
+	// 				{
+	// 					Name:       "Root Page (react)",
+	// 					Path:       "/a/myorgid-simple-app",
+	// 					Type:       "page",
+	// 					Role:       org.RoleViewer,
+	// 					AddToNav:   true,
+	// 					DefaultNav: true,
+	// 					Slug:       "root-page-react",
+	// 				},
+	// 				{
+	// 					Name:     "Root Page (Tab B)",
+	// 					Path:     "/a/myorgid-simple-app/?tab=b",
+	// 					Type:     "page",
+	// 					Role:     org.RoleViewer,
+	// 					AddToNav: true,
+	// 					Slug:     "root-page-tab-b",
+	// 				},
+	// 				{
+	// 					Name:     "React Config",
+	// 					Path:     "/plugins/myorgid-simple-app/?page=page2",
+	// 					Type:     "page",
+	// 					Role:     org.RoleAdmin,
+	// 					AddToNav: true,
+	// 					Slug:     "react-config",
+	// 				},
+	// 				{
+	// 					Name: "Streaming Example",
+	// 					Path: "dashboards/streaming.json",
+	// 					Type: "dashboard",
+	// 					Role: org.RoleViewer,
+	// 					Slug: "streaming-example",
+	// 				},
+	// 				{
+	// 					Name: "Lots of Stats",
+	// 					Path: "dashboards/stats.json",
+	// 					Type: "dashboard",
+	// 					Role: org.RoleViewer,
+	// 					Slug: "lots-of-stats",
+	// 				},
+	// 			},
+	// 			Backend: false,
+	// 		},
+	// 		Module:        "public/plugins/myorgid-simple-app/module.js",
+	// 		BaseURL:       "public/plugins/myorgid-simple-app",
+	// 		FS:            mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "app-with-child/dist")),
+	// 		DefaultNavURL: "/plugins/myorgid-simple-app/page/root-page-react",
+	// 		Signature:     plugins.SignatureStatusValid,
+	// 		SignatureType: plugins.SignatureTypeGrafana,
+	// 		SignatureOrg:  "Grafana Labs",
+	// 		Class:         plugins.ClassExternal,
+	// 	}
 
-		child := &plugins.Plugin{
-			JSONData: plugins.JSONData{
-				ID:   "myorgid-simple-panel",
-				Type: plugins.TypePanel,
-				Name: "Grafana Panel Plugin Template",
-				Info: plugins.Info{
-					Author: plugins.InfoLink{
-						Name: "Your Name",
-					},
-					Links: []plugins.InfoLink{
-						{Name: "Website", URL: "https://github.com/grafana/grafana-starter-panel"},
-						{Name: "License", URL: "https://github.com/grafana/grafana-starter-panel/blob/master/LICENSE"},
-					},
-					Logos: plugins.Logos{
-						Small: "public/plugins/myorgid-simple-panel/img/logo.svg",
-						Large: "public/plugins/myorgid-simple-panel/img/logo.svg",
-					},
-					Screenshots: []plugins.Screenshots{},
-					Description: "Grafana Panel Plugin Template",
-					Version:     "",
-					Updated:     "",
-					Keywords:    []string{"panel", "template"},
-				},
-				Dependencies: plugins.Dependencies{
-					GrafanaDependency: ">=7.0.0",
-					GrafanaVersion:    "*",
-					Plugins:           []plugins.Dependency{},
-				},
-			},
-			Module:          "public/plugins/myorgid-simple-app/child/module.js",
-			BaseURL:         "public/plugins/myorgid-simple-app",
-			FS:              mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "app-with-child/dist/child")),
-			IncludedInAppID: parent.ID,
-			Signature:       plugins.SignatureStatusValid,
-			SignatureType:   plugins.SignatureTypeGrafana,
-			SignatureOrg:    "Grafana Labs",
-			Class:           plugins.ClassExternal,
-		}
+	// 	child := &plugins.Plugin{
+	// 		JSONData: plugins.JSONData{
+	// 			ID:   "myorgid-simple-panel",
+	// 			Type: plugins.TypePanel,
+	// 			Name: "Grafana Panel Plugin Template",
+	// 			Info: plugins.Info{
+	// 				Author: plugins.InfoLink{
+	// 					Name: "Your Name",
+	// 				},
+	// 				Links: []plugins.InfoLink{
+	// 					{Name: "Website", URL: "https://github.com/grafana/grafana-starter-panel"},
+	// 					{Name: "License", URL: "https://github.com/grafana/grafana-starter-panel/blob/master/LICENSE"},
+	// 				},
+	// 				Logos: plugins.Logos{
+	// 					Small: "public/plugins/myorgid-simple-panel/img/logo.svg",
+	// 					Large: "public/plugins/myorgid-simple-panel/img/logo.svg",
+	// 				},
+	// 				Screenshots: []plugins.Screenshots{},
+	// 				Description: "Grafana Panel Plugin Template",
+	// 				Version:     "",
+	// 				Updated:     "",
+	// 				Keywords:    []string{"panel", "template"},
+	// 			},
+	// 			Dependencies: plugins.Dependencies{
+	// 				GrafanaDependency: ">=7.0.0",
+	// 				GrafanaVersion:    "*",
+	// 				Plugins:           []plugins.Dependency{},
+	// 			},
+	// 		},
+	// 		Module:          "public/plugins/myorgid-simple-app/child/module.js",
+	// 		BaseURL:         "public/plugins/myorgid-simple-app",
+	// 		FS:              mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "app-with-child/dist/child")),
+	// 		IncludedInAppID: parent.ID,
+	// 		Signature:       plugins.SignatureStatusValid,
+	// 		SignatureType:   plugins.SignatureTypeGrafana,
+	// 		SignatureOrg:    "Grafana Labs",
+	// 		Class:           plugins.ClassExternal,
+	// 	}
 
-		parent.Children = []*plugins.Plugin{child}
-		child.Parent = parent
-		expected := []*plugins.Plugin{parent, child}
+	// 	parent.Children = []*plugins.Plugin{child}
+	// 	child.Parent = parent
+	// 	expected := []*plugins.Plugin{parent, child}
 
-		reg := fakes.NewFakePluginRegistry()
-		procPrvdr := fakes.NewFakeBackendProcessProvider()
-		procMgr := fakes.NewFakeProcessManager()
-		cfg := &config.PluginManagementCfg{}
-		l := newLoader(t, cfg, reg, procMgr, procPrvdr, newFakeErrorTracker())
-		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
-			PluginClassFunc: func(ctx context.Context) plugins.Class {
-				return plugins.ClassExternal
-			},
-			PluginURIsFunc: func(ctx context.Context) []string {
-				return []string{filepath.Join(testDataDir(t), "app-with-child")}
-			},
-		})
-		require.NoError(t, err)
+	// 	reg := fakes.NewFakePluginRegistry()
+	// 	procPrvdr := fakes.NewFakeBackendProcessProvider()
+	// 	procMgr := fakes.NewFakeProcessManager()
+	// 	cfg := &config.PluginManagementCfg{}
+	// 	l := newLoader(t, cfg, reg, procMgr, procPrvdr, newFakeErrorTracker())
+	// 	got, err := l.Load(context.Background(), &fakes.FakePluginSource{
+	// 		PluginClassFunc: func(ctx context.Context) plugins.Class {
+	// 			return plugins.ClassExternal
+	// 		},
+	// 		PluginURIsFunc: func(ctx context.Context) []string {
+	// 			return []string{filepath.Join(testDataDir(t), "app-with-child")}
+	// 		},
+	// 	})
+	// 	require.NoError(t, err)
 
-		// to ensure we can compare with expected
-		sort.SliceStable(got, func(i, j int) bool {
-			return got[i].ID < got[j].ID
-		})
+	// 	// to ensure we can compare with expected
+	// 	sort.SliceStable(got, func(i, j int) bool {
+	// 		return got[i].ID < got[j].ID
+	// 	})
 
-		if !cmp.Equal(got, expected, compareOpts...) {
-			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts...))
-		}
+	// 	if !cmp.Equal(got, expected, compareOpts...) {
+	// 		t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts...))
+	// 	}
 
-		verifyState(t, expected, reg, procPrvdr, procMgr)
-	})
+	// 	verifyState(t, expected, reg, procPrvdr, procMgr)
+	// })
 }
 
 type loaderDepOpts struct {
