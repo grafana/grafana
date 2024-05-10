@@ -2,8 +2,6 @@ package query
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -12,57 +10,111 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/sync/errgroup"
+	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/registry/rest"
 
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/util/errutil/errhttp"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-// The query method (not really a create)
-func (b *QueryAPIBuilder) doQuery(w http.ResponseWriter, r *http.Request) {
-	ctx, span := b.tracer.Start(r.Context(), "QueryService.Query")
-	defer span.End()
+type queryREST struct {
+	builder *QueryAPIBuilder
+}
 
-	raw := &query.QueryDataRequest{}
-	err := web.Bind(r, raw)
-	if err != nil {
-		errhttp.Write(ctx, errutil.BadRequest(
-			"query.bind",
-			errutil.WithPublicMessage("Error reading query")).
-			Errorf("error reading: %w", err), w)
-		return
+var (
+	_ rest.Storage              = (*queryREST)(nil)
+	_ rest.SingularNameProvider = (*queryREST)(nil)
+	_ rest.Connecter            = (*queryREST)(nil)
+	_ rest.Scoper               = (*queryREST)(nil)
+	_ rest.StorageMetadata      = (*queryREST)(nil)
+)
+
+func (r *queryREST) New() runtime.Object {
+	// This is added as the "ResponseType" regarless what ProducesObject() says :)
+	return &query.QueryDataResponse{}
+}
+
+func (r *queryREST) Destroy() {}
+
+func (r *queryREST) NamespaceScoped() bool {
+	return true
+}
+
+func (r *queryREST) GetSingularName() string {
+	return "QueryResults" // Used for the
+}
+
+func (r *queryREST) ProducesMIMETypes(verb string) []string {
+	return []string{"application/json"} // and parquet!
+}
+
+func (r *queryREST) ProducesObject(verb string) interface{} {
+	return &query.QueryDataResponse{}
+}
+
+func (r *queryREST) ConnectMethods() []string {
+	return []string{"POST"}
+}
+
+func (r *queryREST) NewConnectOptions() (runtime.Object, bool, string) {
+	return nil, false, "" // true means you can use the trailing path as a variable
+}
+
+func (r *queryREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+	// See: /pkg/apiserver/builder/helper.go#L34
+	// The name is set with a rewriter hack
+	if name != "name" {
+		return nil, errors.NewNotFound(schema.GroupResource{}, name)
 	}
+	b := r.builder
 
-	// Parses the request and splits it into multiple sub queries (if necessary)
-	req, err := b.parser.parseRequest(ctx, raw)
-	if err != nil {
-		if errors.Is(err, datasources.ErrDataSourceNotFound) {
+	return http.HandlerFunc(func(w http.ResponseWriter, httpreq *http.Request) {
+		ctx, span := b.tracer.Start(httpreq.Context(), "QueryService.Query")
+		defer span.End()
+
+		raw := &query.QueryDataRequest{}
+		err := web.Bind(httpreq, raw)
+		if err != nil {
 			errhttp.Write(ctx, errutil.BadRequest(
-				"query.datasource.notfound",
-				errutil.WithPublicMessage(err.Error())), w)
+				"query.bind",
+				errutil.WithPublicMessage("Error reading query")).
+				Errorf("error reading: %w", err), w)
 			return
 		}
-		errhttp.Write(ctx, err, w)
-		return
-	}
 
-	// Actually run the query
-	rsp, err := b.execute(ctx, req)
-	if err != nil {
-		errhttp.Write(ctx, errutil.Internal(
-			"query.execution",
-			errutil.WithPublicMessage("Error executing query")).
-			Errorf("execution error: %w", err), w)
-		return
-	}
+		// Parses the request and splits it into multiple sub queries (if necessary)
+		req, err := b.parser.parseRequest(ctx, raw)
+		if err != nil {
+			// if errors.Is(err, datasources.ErrDataSourceNotFound) {
+			// 	errhttp.Write(ctx, errutil.BadRequest(
+			// 		"query.datasource.notfound",
+			// 		errutil.WithPublicMessage(err.Error())), w)
+			// 	return
+			// }
+			errhttp.Write(ctx, err, w)
+			return
+		}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(query.GetResponseCode(rsp))
-	_ = json.NewEncoder(w).Encode(rsp)
+		// Actually run the query
+		rsp, err := b.execute(ctx, req)
+		if err != nil {
+			errhttp.Write(ctx, errutil.Internal(
+				"query.execution",
+				errutil.WithPublicMessage("Error executing query")).
+				Errorf("execution error: %w", err), w)
+			return
+		}
+
+		responder.Object(200, &query.QueryDataResponse{
+			QueryDataResponse: *rsp, // wrap the backend response as a QueryDataResponse
+		})
+	}), nil
 }
 
 func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo) (qdr *backend.QueryDataResponse, err error) {
