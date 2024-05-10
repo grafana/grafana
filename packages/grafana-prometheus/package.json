@@ -69,7 +69,7 @@
     "react-use": "17.5.0",
     "react-window": "1.8.10",
     "rxjs": "7.8.1",
-    "semver": "7.6.1",
+    "semver": "7.6.2",
     "tslib": "2.6.2",
     "uuid": "9.0.1",
     "whatwg-fetch": "3.6.20"
