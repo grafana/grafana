@@ -24,17 +24,18 @@ export const GrotNotFound = ({ width = 'auto', height }: Props) => {
 
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
-      const grotArm = svgRef.current?.querySelector('#grot-not-found-arm');
-      const grotMagnifier = svgRef.current?.querySelector('#grot-not-found-magnifier');
-
-      const { clientX, clientY } = event;
-      const { innerWidth, innerHeight } = window;
-      const heightRatio = clientY / innerHeight;
-      const widthRatio = clientX / innerWidth;
-      const rotation = getIntermediateValue(heightRatio, MIN_ARM_ROTATION, MAX_ARM_ROTATION);
-      const translation = getIntermediateValue(widthRatio, MIN_ARM_TRANSLATION, MAX_ARM_TRANSLATION);
-
+      // only apply animation if no reduced motion preference is set
       if (window.matchMedia('(prefers-reduced-motion: no-preference)').matches) {
+        const grotArm = svgRef.current?.querySelector('#grot-not-found-arm');
+        const grotMagnifier = svgRef.current?.querySelector('#grot-not-found-magnifier');
+
+        const { clientX, clientY } = event;
+        const { innerWidth, innerHeight } = window;
+        const heightRatio = clientY / innerHeight;
+        const widthRatio = clientX / innerWidth;
+        const rotation = getIntermediateValue(heightRatio, MIN_ARM_ROTATION, MAX_ARM_ROTATION);
+        const translation = getIntermediateValue(widthRatio, MIN_ARM_TRANSLATION, MAX_ARM_TRANSLATION);
+
         window.requestAnimationFrame(() => {
           grotArm?.setAttribute('style', `transform: rotate(${rotation}deg) translateX(${translation}%)`);
           grotMagnifier?.setAttribute('style', `transform: rotate(${rotation}deg) translateX(${translation}%)`);
