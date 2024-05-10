@@ -1,6 +1,6 @@
 import uPlot from 'uplot';
 
-import { formattedValueToString, GrafanaTheme2 } from '@grafana/data';
+import { FieldType, formattedValueToString, GrafanaTheme2, NumericRange, reduceField, ReducerID } from '@grafana/data';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import { AxisPlacement, ScaleDirection, ScaleOrientation, VisibilityMode } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
@@ -434,6 +434,8 @@ export function prepData(xySeries: XYSeries[]): FacetedData {
   //   return [null];
   // }
 
+  const sizeGlobalRange = getGlobalRangeByField(xySeries, 'size');
+
   return [
     null,
     ...xySeries.map((s, idx) => {
@@ -443,6 +445,7 @@ export function prepData(xySeries: XYSeries[]): FacetedData {
 
       if (s.size.field != null) {
         let { min, max } = s.size;
+        let { min: minVal, delta: valRange } = sizeGlobalRange;
 
         // todo: this scaling should be in renderer from raw values (not by passing css pixel diams via data)
         let minPx = min! ** 2;
@@ -454,16 +457,13 @@ export function prepData(xySeries: XYSeries[]): FacetedData {
         // todo: better min/max with ignoring non-finite values
         // todo: allow this to come from fieldConfig min/max ? or field.state.min/max (shared)
         let vals = s.size.field.values;
-        let minVal = Math.min(...vals);
-        let maxVal = Math.max(...vals);
-        let valRange = maxVal - minVal;
 
         diams = Array(len);
 
         for (let i = 0; i < vals.length; i++) {
           let val = vals[i];
 
-          let valPct = (val - minVal) / valRange;
+          let valPct = (val - (minVal ?? 0)) / valRange;
           let pxArea = minPx + valPct * pxRange;
           diams[i] = pxArea ** 0.5;
         }
@@ -480,3 +480,34 @@ export function prepData(xySeries: XYSeries[]): FacetedData {
     }),
   ];
 }
+
+const getGlobalRangeByField = (xySeries: XYSeries[], fieldName: string): NumericRange => {
+  let min: number | null = null;
+  let max: number | null = null;
+
+  const reducers = [ReducerID.min, ReducerID.max];
+
+  xySeries.map((series) => {
+    const fieldByName = series[fieldName as keyof typeof series];
+    if (!fieldByName) {
+      return;
+    }
+
+    const field = fieldByName.field; // @TODO fix this
+    if (field.type === FieldType.number) {
+      const calcs = reduceField({ field, reducers });
+      const calcsMin = calcs[ReducerID.min];
+      const calcsMax = calcs[ReducerID.max];
+
+      if (min === null || calcsMin < min) {
+        min = calcsMin;
+      }
+
+      if (max === null || calcsMax > max) {
+        max = calcsMax;
+      }
+    }
+  });
+
+  return { min, max, delta: (max ?? 0) - (min ?? 0) };
+};
