@@ -256,7 +256,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     }
 
     if (has(query, 'metricQuery') && ['metrics', QueryType.ANNOTATION].includes(query.queryType ?? '')) {
-      const metricQuery: MetricQuery = get(query, 'metricQuery')!;
+      const metricQuery = get(query, 'metricQuery') as MetricQuery;
       if (metricQuery.editorMode === 'mql') {
         query.timeSeriesQuery = {
           projectName: metricQuery.projectName,
@@ -288,7 +288,10 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     }
 
     if (query.queryType === QueryType.SLO && has(query, 'sloQuery.aliasBy')) {
-      query.aliasBy = get(query, 'sloQuery.aliasBy');
+      const sloQuery = get(query, 'sloQuery.aliasBy');
+      if (typeof sloQuery === 'string') {
+        query.aliasBy = sloQuery;
+      }
       query = omit(query, 'sloQuery.aliasBy');
     }
 

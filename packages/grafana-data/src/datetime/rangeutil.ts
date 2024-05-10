@@ -1,4 +1,4 @@
-import { each, has } from 'lodash';
+import { each } from 'lodash';
 
 import { RawTimeRange, TimeRange, TimeZone, IntervalValues, RelativeTimeRange, TimeOption } from '../types/time';
 
@@ -298,7 +298,7 @@ export function calculateInterval(range: TimeRange, resolution: number, lowLimit
 
 const interval_regex = /(-?\d+(?:\.\d+)?)(ms|[Mwdhmsy])/;
 // histogram & trends
-const intervals_in_seconds = {
+const intervals_in_seconds: Record<string, number> = {
   y: 31536000,
   M: 2592000,
   w: 604800,
@@ -320,15 +320,24 @@ export function describeInterval(str: string) {
   }
 
   const matches = str.match(interval_regex);
-  if (!matches || !has(intervals_in_seconds, matches[2])) {
+  if (!matches) {
     throw new Error(
       `Invalid interval string, has to be either unit-less or end with one of the following units: "${Object.keys(
         intervals_in_seconds
       ).join(', ')}"`
     );
   }
+
+  const sec = intervals_in_seconds[matches[2]];
+  if (sec === undefined) {
+    // this can never happen, because above we
+    // already made sure the key is correct,
+    // but we handle it to be safe.
+    throw new Error('describeInterval failed: invalid interval string');
+  }
+
   return {
-    sec: intervals_in_seconds[matches[2] as keyof typeof intervals_in_seconds],
+    sec,
     type: matches[2],
     count: parseInt(matches[1], 10),
   };
