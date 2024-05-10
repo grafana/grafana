@@ -87,7 +87,6 @@ The Grafana plugin catalog is designed to work with a single Grafana server inst
 
 _Video shows the Plugin catalog in a previous version of Grafana._
 
-In order to be able to install, uninstall, or update plugins using the plugin catalog, you must enable it with the `plugin_admin_enabled` flag in the [configuration]({{< relref "../../setup-grafana/configure-grafana/#plugin_admin_enabled" >}}) file.
 
 {{% admonition type="note" %}}
 If required, the Grafana plugin catalog can be disabled using the `plugin_admin_enabled` flag in the [configuration]({{< relref "../../setup-grafana/configure-grafana/#plugin_admin_enabled" >}}) file.
