@@ -77,7 +77,7 @@ function useGetConfigurationForApps() {
     isOnCallConfigLoading;
 
   return {
-    alertingConfig: {
+    alerting: {
       contactPoints,
       defaultContactpoint,
       isCreateAlertRuleDone,
@@ -97,7 +97,7 @@ function useGetConfigurationForApps() {
 
 export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
   const {
-    alertingConfig: { contactPoints, defaultContactpoint, isCreateAlertRuleDone },
+    alerting: { contactPoints, defaultContactpoint, isCreateAlertRuleDone },
     incidents: { isChatOpsInstalled, isIncidentsInstalled },
     onCall: { onCallOptions, is_chatops_connected, is_integration_chatops_connected },
     isLoading,
