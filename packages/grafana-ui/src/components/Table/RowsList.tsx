@@ -82,7 +82,7 @@ export const RowsList = (props: RowsListProps) => {
   // Create off-screen canbas for measuring rows for virtualized rendering
   // This line is like this because Jest doesn't have OffscreenCanvas mocked
   // nor is it a part of the jest-canvas-mock package
-  let osContext = undefined;
+  let osContext = null;
   if (window.OffscreenCanvas !== undefined) {
     osContext = new OffscreenCanvas(256, 1024).getContext('2d');
   }
@@ -275,7 +275,7 @@ export const RowsList = (props: RowsListProps) => {
 
       // If there's a text wrapping field we set the height of it here
       if (textWrapField) {
-        const seriesIndex = textWrapField.state.seriesIndex;
+        const seriesIndex = textWrapField.state?.seriesIndex ?? 0;
         const pxLineHeight = theme.typography.body.lineHeight * theme.typography.fontSize;
         const bbox = getTextBoundingBox(
           textWrapField.values[index],
@@ -317,8 +317,8 @@ export const RowsList = (props: RowsListProps) => {
               timeRange={timeRange}
               frame={data}
               rowStyled={rowBg !== undefined}
-              textWrapped={textWrapField}
-              height={style.height}
+              textWrapped={textWrapField !== undefined}
+              height={Number(style.height)}
             />
           ))}
         </div>
@@ -357,7 +357,7 @@ export const RowsList = (props: RowsListProps) => {
     }
 
     if (textWrapField) {
-      const seriesIndex = textWrapField.state.seriesIndex;
+      const seriesIndex = textWrapField.state?.seriesIndex ?? 0;
       const pxLineHeight = theme.typography.fontSize * theme.typography.body.lineHeight;
       return getTextBoundingBox(
         textWrapField.values[index],

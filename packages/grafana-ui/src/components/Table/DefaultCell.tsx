@@ -117,6 +117,7 @@ function getCellStyle(
   disableOverflowOnHover = false,
   isStringValue = false,
   shouldWrapText = false,
+  textWrapped = false,
   rowStyled = false
 ) {
   // Setup color variables
@@ -139,6 +140,7 @@ function getCellStyle(
     !disableOverflowOnHover,
     isStringValue,
     shouldWrapText,
+    textWrapped,
     rowStyled
   );
 }
