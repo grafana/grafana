@@ -45,8 +45,6 @@ export class RowActions extends SceneObjectBase<RowActionsState> {
     if (repeat && !repeatBehavior) {
       const repeatBehavior = new RowRepeaterBehavior({ variableName: repeat });
       row.setState({ $behaviors: [...(row.state.$behaviors ?? []), repeatBehavior] });
-      // Temp, needs fix in scenes lib
-      repeatBehavior.activate();
     } else if (repeatBehavior) {
       repeatBehavior.removeBehavior();
     }
