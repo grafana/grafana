@@ -60,19 +60,9 @@ func validateRuleNode(
 		return nil, fmt.Errorf("alert rule title is too long. Max length is %d", store.AlertRuleMaxTitleLength)
 	}
 
-	if len(ruleNode.GrafanaManagedAlert.Data) == 0 {
-		if canPatch {
-			if ruleNode.GrafanaManagedAlert.Condition != "" {
-				return nil, fmt.Errorf("%w: query is not specified by condition is. You must specify both query and condition to update existing alert rule", ngmodels.ErrAlertRuleFailedValidation)
-			}
-		} else {
-			return nil, fmt.Errorf("%w: no queries or expressions are found", ngmodels.ErrAlertRuleFailedValidation)
-		}
-	} else {
-		err = validateCondition(ruleNode.GrafanaManagedAlert.Condition, ruleNode.GrafanaManagedAlert.Data)
-		if err != nil {
-			return nil, fmt.Errorf("%w: %s", ngmodels.ErrAlertRuleFailedValidation, err.Error())
-		}
+	err = validateCondition(ruleNode.GrafanaManagedAlert.Condition, ruleNode.GrafanaManagedAlert.Data, canPatch)
+	if err != nil {
+		return nil, err
 	}
 
 	queries := AlertQueriesFromApiAlertQueries(ruleNode.GrafanaManagedAlert.Data)
@@ -174,20 +164,34 @@ func validateLabels(l map[string]string) error {
 	return nil
 }
 
-func validateCondition(condition string, queries []apimodels.AlertQuery) error {
+func validateCondition(condition string, queries []apimodels.AlertQuery, canPatch bool) error {
+	if canPatch {
+		// Patch requests may leave both query and condition blank. If a request supplies one, it must supply the other.
+		if len(queries) == 0 && condition == "" {
+			return nil
+		}
+		if len(queries) == 0 && condition != "" {
+			return fmt.Errorf("%w: query is not specified but condition is. You must specify both query and condition to update existing alert rule", ngmodels.ErrAlertRuleFailedValidation)
+		}
+		if len(queries) > 0 && condition == "" {
+			return fmt.Errorf("%w: condition is not specified but query is. You must specify both query and condition to update existing alert rule", ngmodels.ErrAlertRuleFailedValidation)
+		}
+	}
+
 	if condition == "" {
-		return errors.New("condition cannot be empty")
+		return fmt.Errorf("%w: condition cannot be empty", ngmodels.ErrAlertRuleFailedValidation)
 	}
 	if len(queries) == 0 {
-		return errors.New("no query/expressions specified")
+		return fmt.Errorf("%w: no queries or expressions are found", ngmodels.ErrAlertRuleFailedValidation)
 	}
+
 	refIDs := make(map[string]int, len(queries))
 	for idx, query := range queries {
 		if query.RefID == "" {
-			return fmt.Errorf("refID is not specified for data query/expression at index %d", idx)
+			return fmt.Errorf("%w: refID is not specified for data query/expression at index %d", ngmodels.ErrAlertRuleFailedValidation, idx)
 		}
 		if usedIdx, ok := refIDs[query.RefID]; ok {
-			return fmt.Errorf("refID '%s' is already used by query/expression at index %d", query.RefID, usedIdx)
+			return fmt.Errorf("%w: refID '%s' is already used by query/expression at index %d", ngmodels.ErrAlertRuleFailedValidation, query.RefID, usedIdx)
 		}
 		refIDs[query.RefID] = idx
 	}
@@ -197,7 +201,7 @@ func validateCondition(condition string, queries []apimodels.AlertQuery) error {
 			ids = append(ids, id)
 		}
 		sort.Strings(ids)
-		return fmt.Errorf("condition %s does not exist, must be one of [%s]", condition, strings.Join(ids, ","))
+		return fmt.Errorf("%w: condition %s does not exist, must be one of [%s]", ngmodels.ErrAlertRuleFailedValidation, condition, strings.Join(ids, ","))
 	}
 	return nil
 }

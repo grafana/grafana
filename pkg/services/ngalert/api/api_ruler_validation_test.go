@@ -125,7 +125,7 @@ func TestValidateCondition(t *testing.T) {
 			name:      "error when data is empty",
 			condition: "A",
 			data:      []apimodels.AlertQuery{},
-			errorMsg:  "no query/expressions specified",
+			errorMsg:  "no queries or expressions are found",
 		},
 		{
 			name:      "error when condition does not exist",
@@ -182,7 +182,7 @@ func TestValidateCondition(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := validateCondition(tc.condition, tc.data)
+			err := validateCondition(tc.condition, tc.data, false)
 			if tc.errorMsg == "" {
 				require.NoError(t, err)
 			} else {
