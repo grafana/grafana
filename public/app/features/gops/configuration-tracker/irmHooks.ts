@@ -59,10 +59,18 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
     isLoading: isIncidentsConfigLoading,
   } = useGetIncidentPluginConfig();
   const onCallOptions = useOnCallOptions();
-  const chatOpsConnections = useOnCallChatOpsConnections();
+  const {
+    is_chatops_connected,
+    is_integration_chatops_connected,
+    isLoading: isOnCallConfigLoading,
+  } = useOnCallChatOpsConnections();
   const { isDone: isCreateAlertRuleDone, isLoading: isLoadingAlertCreatedDone } = useIsCreateAlertRuleDone();
   const isLoading =
-    isLoadingContactPoints || isLoadingDefaultContactPoint || isLoadingAlertCreatedDone || isIncidentsConfigLoading;
+    isLoadingContactPoints ||
+    isLoadingDefaultContactPoint ||
+    isLoadingAlertCreatedDone ||
+    isIncidentsConfigLoading ||
+    isOnCallConfigLoading;
   function onIntegrationClick(integrationId: string, url: string) {
     const urlToGoWithIntegration = createUrl(url + integrationId, {
       returnTo: location.pathname + location.search,
@@ -163,7 +171,7 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
               },
               labelOnDone: 'View',
             },
-            done: chatOpsConnections.is_chatops_connected,
+            done: is_chatops_connected,
           },
           {
             title: 'Connect your Messaging workspace to Incident',
@@ -195,7 +203,7 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
               },
               labelOnDone: 'View',
             },
-            done: chatOpsConnections.is_integration_chatops_connected,
+            done: is_integration_chatops_connected,
           },
         ],
       },
