@@ -4,9 +4,9 @@ const injectedRtkApi = api.injectEndpoints({
     getApiResources: build.query<GetApiResourcesApiResponse, GetApiResourcesApiArg>({
       query: () => ({ url: `/apis/playlist.grafana.app/v0alpha1/` }),
     }),
-    listNamespacedPlaylist: build.query<ListNamespacedPlaylistApiResponse, ListNamespacedPlaylistApiArg>({
+    listPlaylists: build.query<ListPlaylistsApiResponse, ListPlaylistsApiArg>({
       query: (queryArg) => ({
-        url: `/apis/playlist.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/playlists`,
+        url: `/playlists`,
         params: {
           pretty: queryArg.pretty,
           allowWatchBookmarks: queryArg.allowWatchBookmarks,
@@ -22,9 +22,9 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    createNamespacedPlaylist: build.mutation<CreateNamespacedPlaylistApiResponse, CreateNamespacedPlaylistApiArg>({
+    createPlaylist: build.mutation<CreatePlaylistApiResponse, CreatePlaylistApiArg>({
       query: (queryArg) => ({
-        url: `/apis/playlist.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/playlists`,
+        url: `/playlists`,
         method: 'POST',
         body: queryArg.comGithubGrafanaGrafanaPkgApisPlaylistV0Alpha1Playlist,
         params: {
@@ -35,15 +35,12 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    readNamespacedPlaylist: build.query<ReadNamespacedPlaylistApiResponse, ReadNamespacedPlaylistApiArg>({
-      query: (queryArg) => ({
-        url: `/apis/playlist.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/playlists/${queryArg.name}`,
-        params: { pretty: queryArg.pretty },
-      }),
+    readPlaylist: build.query<ReadPlaylistApiResponse, ReadPlaylistApiArg>({
+      query: (queryArg) => ({ url: `/playlists/${queryArg.name}`, params: { pretty: queryArg.pretty } }),
     }),
-    replaceNamespacedPlaylist: build.mutation<ReplaceNamespacedPlaylistApiResponse, ReplaceNamespacedPlaylistApiArg>({
+    replacePlaylist: build.mutation<ReplacePlaylistApiResponse, ReplacePlaylistApiArg>({
       query: (queryArg) => ({
-        url: `/apis/playlist.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/playlists/${queryArg.name}`,
+        url: `/playlists/${queryArg.name}`,
         method: 'PUT',
         body: queryArg.comGithubGrafanaGrafanaPkgApisPlaylistV0Alpha1Playlist,
         params: {
@@ -54,9 +51,9 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    deleteNamespacedPlaylist: build.mutation<DeleteNamespacedPlaylistApiResponse, DeleteNamespacedPlaylistApiArg>({
+    deletePlaylist: build.mutation<DeletePlaylistApiResponse, DeletePlaylistApiArg>({
       query: (queryArg) => ({
-        url: `/apis/playlist.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/playlists/${queryArg.name}`,
+        url: `/playlists/${queryArg.name}`,
         method: 'DELETE',
         body: queryArg.ioK8SApimachineryPkgApisMetaV1DeleteOptions,
         params: {
@@ -68,9 +65,9 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    patchNamespacedPlaylist: build.mutation<PatchNamespacedPlaylistApiResponse, PatchNamespacedPlaylistApiArg>({
+    patchPlaylist: build.mutation<PatchPlaylistApiResponse, PatchPlaylistApiArg>({
       query: (queryArg) => ({
-        url: `/apis/playlist.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/playlists/${queryArg.name}`,
+        url: `/playlists/${queryArg.name}`,
         method: 'PATCH',
         body: queryArg.ioK8SApimachineryPkgApisMetaV1Patch,
         params: {
@@ -109,9 +106,8 @@ const injectedRtkApi = api.injectEndpoints({
 export { injectedRtkApi as generatedAPI };
 export type GetApiResourcesApiResponse = /** status 200 OK */ IoK8SApimachineryPkgApisMetaV1ApiResourceList;
 export type GetApiResourcesApiArg = void;
-export type ListNamespacedPlaylistApiResponse =
-  /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisPlaylistV0Alpha1PlaylistList;
-export type ListNamespacedPlaylistApiArg = {
+export type ListPlaylistsApiResponse = /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisPlaylistV0Alpha1PlaylistList;
+export type ListPlaylistsApiArg = {
   /** object name and auth scope, such as for teams and projects */
   namespace: string;
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
@@ -157,11 +153,11 @@ export type ListNamespacedPlaylistApiArg = {
   /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
   watch?: boolean;
 };
-export type CreateNamespacedPlaylistApiResponse = /** status 200 OK */
+export type CreatePlaylistApiResponse = /** status 200 OK */
   | ComGithubGrafanaGrafanaPkgApisPlaylistV0Alpha1Playlist
   | /** status 201 Created */ ComGithubGrafanaGrafanaPkgApisPlaylistV0Alpha1Playlist
   | /** status 202 Accepted */ ComGithubGrafanaGrafanaPkgApisPlaylistV0Alpha1Playlist;
-export type CreateNamespacedPlaylistApiArg = {
+export type CreatePlaylistApiArg = {
   /** object name and auth scope, such as for teams and projects */
   namespace: string;
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
@@ -174,9 +170,8 @@ export type CreateNamespacedPlaylistApiArg = {
   fieldValidation?: string;
   comGithubGrafanaGrafanaPkgApisPlaylistV0Alpha1Playlist: ComGithubGrafanaGrafanaPkgApisPlaylistV0Alpha1Playlist;
 };
-export type ReadNamespacedPlaylistApiResponse =
-  /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisPlaylistV0Alpha1Playlist;
-export type ReadNamespacedPlaylistApiArg = {
+export type ReadPlaylistApiResponse = /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisPlaylistV0Alpha1Playlist;
+export type ReadPlaylistApiArg = {
   /** name of the Playlist */
   name: string;
   /** object name and auth scope, such as for teams and projects */
@@ -184,10 +179,10 @@ export type ReadNamespacedPlaylistApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
 };
-export type ReplaceNamespacedPlaylistApiResponse = /** status 200 OK */
+export type ReplacePlaylistApiResponse = /** status 200 OK */
   | ComGithubGrafanaGrafanaPkgApisPlaylistV0Alpha1Playlist
   | /** status 201 Created */ ComGithubGrafanaGrafanaPkgApisPlaylistV0Alpha1Playlist;
-export type ReplaceNamespacedPlaylistApiArg = {
+export type ReplacePlaylistApiArg = {
   /** name of the Playlist */
   name: string;
   /** object name and auth scope, such as for teams and projects */
@@ -202,10 +197,10 @@ export type ReplaceNamespacedPlaylistApiArg = {
   fieldValidation?: string;
   comGithubGrafanaGrafanaPkgApisPlaylistV0Alpha1Playlist: ComGithubGrafanaGrafanaPkgApisPlaylistV0Alpha1Playlist;
 };
-export type DeleteNamespacedPlaylistApiResponse = /** status 200 OK */
+export type DeletePlaylistApiResponse = /** status 200 OK */
   | IoK8SApimachineryPkgApisMetaV1Status
   | /** status 202 Accepted */ IoK8SApimachineryPkgApisMetaV1Status;
-export type DeleteNamespacedPlaylistApiArg = {
+export type DeletePlaylistApiArg = {
   /** name of the Playlist */
   name: string;
   /** object name and auth scope, such as for teams and projects */
@@ -222,10 +217,10 @@ export type DeleteNamespacedPlaylistApiArg = {
   propagationPolicy?: string;
   ioK8SApimachineryPkgApisMetaV1DeleteOptions: IoK8SApimachineryPkgApisMetaV1DeleteOptions;
 };
-export type PatchNamespacedPlaylistApiResponse = /** status 200 OK */
+export type PatchPlaylistApiResponse = /** status 200 OK */
   | ComGithubGrafanaGrafanaPkgApisPlaylistV0Alpha1Playlist
   | /** status 201 Created */ ComGithubGrafanaGrafanaPkgApisPlaylistV0Alpha1Playlist;
-export type PatchNamespacedPlaylistApiArg = {
+export type PatchPlaylistApiArg = {
   /** name of the Playlist */
   name: string;
   /** object name and auth scope, such as for teams and projects */
@@ -524,11 +519,11 @@ export type IoK8SApimachineryPkgApisMetaV1DeleteOptions = {
 export type IoK8SApimachineryPkgApisMetaV1Patch = object;
 export const {
   useGetApiResourcesQuery,
-  useListNamespacedPlaylistQuery,
-  useCreateNamespacedPlaylistMutation,
-  useReadNamespacedPlaylistQuery,
-  useReplaceNamespacedPlaylistMutation,
-  useDeleteNamespacedPlaylistMutation,
-  usePatchNamespacedPlaylistMutation,
+  useListPlaylistsQuery,
+  useCreatePlaylistMutation,
+  useReadPlaylistQuery,
+  useReplacePlaylistMutation,
+  useDeletePlaylistMutation,
+  usePatchPlaylistMutation,
   useListPlaylistForAllNamespacesQuery,
 } = injectedRtkApi;

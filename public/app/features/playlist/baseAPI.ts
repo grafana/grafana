@@ -1,7 +1,7 @@
 import { BaseQueryFn, createApi } from '@reduxjs/toolkit/query/react';
 import { lastValueFrom } from 'rxjs';
 
-import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
+import { BackendSrvRequest, config, getBackendSrv } from '@grafana/runtime';
 
 interface RequestOptions extends BackendSrvRequest {
   manageError?: (err: unknown) => { error: unknown };
@@ -33,6 +33,8 @@ function createBackendSrvBaseQuery({ baseURL }: { baseURL: string }): BaseQueryF
 
 export const baseAPI = createApi({
   reducerPath: 'playlistAPI',
-  baseQuery: createBackendSrvBaseQuery({ baseURL: '/' }),
+  baseQuery: createBackendSrvBaseQuery({
+    baseURL: `/apis/playlist.grafana.app/v0alpha1/namespaces/${config.namespace}/`,
+  }),
   endpoints: () => ({}),
 });

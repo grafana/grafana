@@ -3,6 +3,17 @@
   "info": {
     "title": "playlist.grafana.app/v0alpha1"
   },
+  "servers": [
+    {
+      "url": "/apis/playlist.grafana.app/v0alpha1/namespaces/{namespace}/",
+      "variables": {
+        "namespace": {
+          "default": "default",
+          "description": "object name and auth scope, such as for teams and projects",
+        }
+      }
+    }
+  ],
   "paths": {
     "/apis/playlist.grafana.app/v0alpha1/": {
       "get": {
@@ -32,13 +43,14 @@
         }
       }
     },
-    "/apis/playlist.grafana.app/v0alpha1/namespaces/{namespace}/playlists": {
+
+    "/playlists": {
       "get": {
         "tags": [
           "Playlist"
         ],
         "description": "list objects of kind Playlist",
-        "operationId": "listNamespacedPlaylist",
+        "operationId": "listPlaylists",
         "parameters": [
           {
             "name": "allowWatchBookmarks",
@@ -175,7 +187,7 @@
           "Playlist"
         ],
         "description": "create a Playlist",
-        "operationId": "createNamespacedPlaylist",
+        "operationId": "createPlaylist",
         "parameters": [
           {
             "name": "dryRun",
@@ -306,13 +318,13 @@
         }
       ]
     },
-    "/apis/playlist.grafana.app/v0alpha1/namespaces/{namespace}/playlists/{name}": {
+    "/playlists/{name}": {
       "get": {
         "tags": [
           "Playlist"
         ],
         "description": "read the specified Playlist",
-        "operationId": "readNamespacedPlaylist",
+        "operationId": "readPlaylist",
         "responses": {
           "200": {
             "description": "OK",
@@ -347,7 +359,7 @@
           "Playlist"
         ],
         "description": "replace the specified Playlist",
-        "operationId": "replaceNamespacedPlaylist",
+        "operationId": "replacePlaylist",
         "parameters": [
           {
             "name": "dryRun",
@@ -441,7 +453,7 @@
           "Playlist"
         ],
         "description": "delete a Playlist",
-        "operationId": "deleteNamespacedPlaylist",
+        "operationId": "deletePlaylist",
         "parameters": [
           {
             "name": "dryRun",
@@ -543,7 +555,7 @@
           "Playlist"
         ],
         "description": "partially update the specified Playlist",
-        "operationId": "patchNamespacedPlaylist",
+        "operationId": "patchPlaylist",
         "parameters": [
           {
             "name": "dryRun",
