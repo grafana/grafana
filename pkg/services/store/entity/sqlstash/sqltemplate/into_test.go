@@ -11,7 +11,7 @@ func TestScanDest_Into(t *testing.T) {
 	var d ScanDest
 
 	colName, err := d.Into(reflect.Value{}, "some field")
-	if colName != "" || err == nil || len(d) != 0 {
+	if colName != "" || err == nil || len(d.GetScanDest()) != 0 {
 		t.Fatalf("unexpected outcome, got colname %q, err: %v, scan dest: %#v",
 			colName, err, d)
 	}

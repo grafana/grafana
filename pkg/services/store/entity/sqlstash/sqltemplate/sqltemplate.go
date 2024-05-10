@@ -17,6 +17,11 @@ func New(d Dialect) *SQLTemplate {
 	}
 }
 
+type SQLTemplateIface interface {
+	GetArgs() Args
+	GetScanDest() ScanDest
+}
+
 // Execute is a trivial utility to execute and return the results of any
 // text/template as a string and an error.
 func Execute(t *template.Template, data any) (string, error) {
