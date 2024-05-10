@@ -785,6 +785,7 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 
 	query, args := entityQuery.toQuery()
 
+	//nolint:rowserrcheck
 	rows, err := s.sess.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
