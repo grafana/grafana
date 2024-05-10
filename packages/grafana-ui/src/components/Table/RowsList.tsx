@@ -277,7 +277,13 @@ export const RowsList = (props: RowsListProps) => {
       if (textWrapField) {
         const seriesIndex = textWrapField.state.seriesIndex;
         const pxLineHeight = theme.typography.body.lineHeight * theme.typography.fontSize;
-        const bbox = getTextBoundingBox(textWrapField.values[index], headerGroups[0].headers[seriesIndex], osContext, pxLineHeight, tableStyles.rowHeight);
+        const bbox = getTextBoundingBox(
+          textWrapField.values[index],
+          headerGroups[0].headers[seriesIndex],
+          osContext,
+          pxLineHeight,
+          tableStyles.rowHeight
+        );
         style.height = bbox.height;
       }
 
@@ -352,7 +358,13 @@ export const RowsList = (props: RowsListProps) => {
     if (textWrapField) {
       const seriesIndex = textWrapField.state.seriesIndex;
       const pxLineHeight = theme.typography.fontSize * theme.typography.body.lineHeight;
-      return getTextBoundingBox(textWrapField.values[index], headerGroups[0].headers[seriesIndex], osContext, pxLineHeight, tableStyles.rowHeight).height;
+      return getTextBoundingBox(
+        textWrapField.values[index],
+        headerGroups[0].headers[seriesIndex],
+        osContext,
+        pxLineHeight,
+        tableStyles.rowHeight
+      ).height;
     }
 
     return tableStyles.rowHeight;
@@ -404,17 +416,16 @@ function getTextBoundingBox(
   if (osContext !== null) {
     const words = text.split(/\s/);
     const lines = [];
-    let currentLine = "";
+    let currentLine = '';
 
     // Let's just wrap the liens and see how well the measurement works
     for (let i = 0; i < words.length; i++) {
       const currentWord = words[i];
-      let lineWidth = osContext.measureText(currentLine + " " + currentWord).width;
+      let lineWidth = osContext.measureText(currentLine + ' ' + currentWord).width;
 
       if (lineWidth < width) {
-        currentLine += " " + currentWord;
-      }
-      else {
+        currentLine += ' ' + currentWord;
+      } else {
         lines.push(currentLine);
         currentLine = currentWord;
       }
@@ -426,9 +437,8 @@ function getTextBoundingBox(
     let height = 38;
     if (lineNumber > 5) {
       height = lineNumber * lineHeight * LINE_SCALE_FACTOR;
-    }
-    else {
-      height = (lineNumber * lineHeight) + LOW_LINE_PAD;
+    } else {
+      height = lineNumber * lineHeight + LOW_LINE_PAD;
     }
 
     return { width, height };
@@ -436,6 +446,3 @@ function getTextBoundingBox(
 
   return { width, height: defaultRowHeight };
 }
-
-
-
