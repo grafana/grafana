@@ -2163,6 +2163,18 @@
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "hideFromDocs": true
       }
+    },
+    {
+      "metadata": {
+        "name": "alertingNotificationsApi",
+        "resourceVersion": "1715351183647",
+        "creationTimestamp": "2024-05-10T14:26:23Z"
+      },
+      "spec": {
+        "description": "Enables Kubernetes style notification APIs that let handle resources independently",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad"
+      }
     }
   ]
 }

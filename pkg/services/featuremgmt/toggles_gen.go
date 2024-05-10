@@ -674,4 +674,8 @@ const (
 	// FlagNewDashboardSharingComponent
 	// Enables the new sharing drawer design
 	FlagNewDashboardSharingComponent = "newDashboardSharingComponent"
+
+	// FlagAlertingNotificationsApi
+	// Enables Kubernetes style notification APIs that let handle resources independently
+	FlagAlertingNotificationsApi = "alertingNotificationsApi"
 )

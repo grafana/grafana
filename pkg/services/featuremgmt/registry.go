@@ -1247,6 +1247,12 @@ var (
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: true,
 		},
+		{
+			Name:        "alertingNotificationsApi",
+			Description: "Enables Kubernetes style notification APIs that let handle resources independently",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAlertingSquad,
+		},
 	}
 )
 
