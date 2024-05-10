@@ -30,7 +30,7 @@ SAML authentication integration allows your Grafana users to log in by using an 
 You can configure SAML authentication in Grafana through one of the following methods:
 
 - the Grafana configuration file
-- the API (refer to [SSO Settings API]({{< relref "../../../../developers/http_api/sso-settings.md" >}}))
+- the API (refer to [SSO Settings API]({{< relref "../../../../developers/http_api/sso-settings" >}}))
 - the user interface (refer to [Configure SAML authentication using the Grafana user interface]({{< relref "../saml-ui" >}}))
 - the terraform provider (refer to [Terraform docs](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/sso_settings))
 
