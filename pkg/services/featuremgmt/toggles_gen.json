@@ -784,14 +784,18 @@
     {
       "metadata": {
         "name": "featureToggleAdminPage",
-        "resourceVersion": "1713545444177",
-        "creationTimestamp": "2024-04-19T16:50:44Z"
+        "resourceVersion": "1715364932183",
+        "creationTimestamp": "2024-04-19T16:50:44Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-05-10 18:15:32.183828 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enable admin page for managing feature toggles from the Grafana front-end",
+        "description": "Enable admin page for managing feature toggles from the Grafana front-end. Grafana Cloud only.",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
-        "requiresRestart": true
+        "requiresRestart": true,
+        "hideFromDocs": true
       }
     },
     {
