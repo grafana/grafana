@@ -41,8 +41,7 @@ import { CloudWatchVariableSupport } from './variables';
 
 export class CloudWatchDatasource
   extends DataSourceWithBackend<CloudWatchQuery, CloudWatchJsonData>
-  implements DataSourceWithLogsContextSupport<CloudWatchLogsQuery>
-{
+  implements DataSourceWithLogsContextSupport<CloudWatchLogsQuery> {
   defaultRegion?: string;
   languageProvider: CloudWatchLogsLanguageProvider;
   sqlCompletionItemProvider: SQLCompletionItemProvider;
@@ -80,6 +79,11 @@ export class CloudWatchDatasource
     return query.hide !== true || (isCloudWatchMetricsQuery(query) && query.id !== '');
   }
 
+  // reminder: when queries are made on the backend through alerting they will not go through this function
+  // we have duplicated code here to retry queries on the frontend so that the we can show partial results to users
+  // but ultimately anytime we add special error handling or logic retrying here we should ask ourselves 
+  // could it only live in the backend? if so let's implement it there. If not, should it also live in the backend or just in the frontend?
+  // another note that at the end of the day all of these queries call super.query which is what forwards the request to the backend through /query
   query(options: DataQueryRequest<CloudWatchQuery>): Observable<DataQueryResponse> {
     options = cloneDeep(options);
 
@@ -101,7 +105,7 @@ export class CloudWatchDatasource
 
     const dataQueryResponses: Array<Observable<DataQueryResponse>> = [];
     if (logQueries.length) {
-      dataQueryResponses.push(this.logsQueryRunner.handleLogQueries(logQueries, options, super.query.bind(this)));
+      dataQueryResponses.push(this.logsQueryRunner.HandleLogQueries(logQueries, options, super.query.bind(this)));
     }
 
     if (metricsQueries.length) {
