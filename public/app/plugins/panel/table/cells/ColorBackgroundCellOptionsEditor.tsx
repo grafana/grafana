@@ -49,8 +49,8 @@ export const ColorBackgroundCellOptionsEditor = ({
         <Switch value={cellOptions.applyToRow} onChange={onColorRowChange} />
       </Field>
       <Field
-        label="Apply to entire row"
-        description="If selected the entire row will be colored as this cell would be."
+        label="Wrap text"
+        description="If selected text will be wrapped to the width of text in the configured column."
       >
         <Switch value={cellOptions.wrapText} onChange={onWrapTextChange} />
       </Field>
