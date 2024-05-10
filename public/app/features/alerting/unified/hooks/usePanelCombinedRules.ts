@@ -17,7 +17,7 @@ interface ReturnBag {
 }
 
 export function usePanelCombinedRules({ dashboardUID, panelId, poll = false }: Options): ReturnBag {
-  const { result: combinedNamespaces, loading, error } = useCombinedRules(dashboardUID, panelId);
+  const { result: combinedNamespaces, loading, error } = useCombinedRules(dashboardUID, panelId, poll);
   const rules = combinedNamespaces ? combinedNamespaces.flatMap((ns) => ns.groups).flatMap((group) => group.rules) : [];
 
   return {

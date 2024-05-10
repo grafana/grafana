@@ -22,6 +22,7 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../api/alertRuleApi';
+import { RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
 import {
   getAllRulesSources,
   getRulesSourceByName,
@@ -468,7 +469,8 @@ function hashQuery(query: string) {
 */
 export function useCombinedRules(
   dashboardUID?: string,
-  panelId?: number
+  panelId?: number,
+  poll?: boolean
 ): {
   loading: boolean;
   result?: CombinedRuleNamespace[];
@@ -478,20 +480,30 @@ export function useCombinedRules(
     currentData: promRuleNs,
     isLoading: isLoadingPromRules,
     error: promRuleNsError,
-  } = alertRuleApi.endpoints.prometheusRuleNamespaces.useQuery({
-    ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
-    dashboardUid: dashboardUID,
-    panelId,
-  });
+  } = alertRuleApi.endpoints.prometheusRuleNamespaces.useQuery(
+    {
+      ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
+      dashboardUid: dashboardUID,
+      panelId,
+    },
+    {
+      pollingInterval: poll ? RULE_LIST_POLL_INTERVAL_MS : undefined,
+    }
+  );
 
   const {
     currentData: rulerRules,
     isLoading: isLoadingRulerRules,
     error: rulerRulesError,
-  } = alertRuleApi.endpoints.rulerRules.useQuery({
-    rulerConfig: grafanaRulerConfig,
-    filter: { dashboardUID, panelId },
-  });
+  } = alertRuleApi.endpoints.rulerRules.useQuery(
+    {
+      rulerConfig: grafanaRulerConfig,
+      filter: { dashboardUID, panelId },
+    },
+    {
+      pollingInterval: poll ? RULE_LIST_POLL_INTERVAL_MS : undefined,
+    }
+  );
 
   //---------
   // cache results per rules source, so we only recalculate those for which results have actually changed
