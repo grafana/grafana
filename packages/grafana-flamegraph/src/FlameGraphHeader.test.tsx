@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+import { CollapsedMap } from './FlameGraph/dataTransform';
 import FlameGraphHeader from './FlameGraphHeader';
 import { ColorScheme, SelectedView } from './types';
 
@@ -28,6 +29,8 @@ describe('FlameGraphHeader', () => {
         onColorSchemeChange={onSchemeChange}
         stickyHeader={false}
         isDiffMode={false}
+        setCollapsedMap={() => {}}
+        collapsedMap={new CollapsedMap()}
         {...props}
       />
     );

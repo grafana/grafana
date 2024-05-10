@@ -4,9 +4,10 @@ import useDebounce from 'react-use/lib/useDebounce';
 import usePrevious from 'react-use/lib/usePrevious';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Button, Dropdown, Input, Menu, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Button, ButtonGroup, Dropdown, Input, Menu, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
 import { byPackageGradient, byValueGradient, diffColorBlindGradient, diffDefaultGradient } from './FlameGraph/colors';
+import { CollapsedMap } from './FlameGraph/dataTransform';
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
 import { ColorScheme, ColorSchemeDiff, SelectedView, TextAlign } from './types';
 
@@ -25,6 +26,8 @@ type Props = {
   stickyHeader: boolean;
   vertical?: boolean;
   isDiffMode: boolean;
+  setCollapsedMap: (collapsedMap: CollapsedMap) => void;
+  collapsedMap: CollapsedMap;
 
   extraHeaderElements?: React.ReactNode;
 };
@@ -45,6 +48,8 @@ const FlameGraphHeader = ({
   extraHeaderElements,
   vertical,
   isDiffMode,
+  setCollapsedMap,
+  collapsedMap,
 }: Props) => {
   const styles = useStyles2(getStyles);
   const [localSearch, setLocalSearch] = useSearchInput(search, setSearch);
@@ -94,6 +99,32 @@ const FlameGraphHeader = ({
           />
         )}
         <ColorSchemeButton value={colorScheme} onChange={onColorSchemeChange} isDiffMode={isDiffMode} />
+        <ButtonGroup className={styles.buttonSpacing}>
+          <Button
+            variant={'secondary'}
+            fill={'outline'}
+            size={'sm'}
+            tooltip={'Expand all groups'}
+            onClick={() => {
+              setCollapsedMap(collapsedMap.setAllCollapsedStatus(false));
+            }}
+            aria-label={'Expand all groups'}
+            icon={'angle-double-down'}
+            disabled={selectedView === SelectedView.TopTable}
+          />
+          <Button
+            variant={'secondary'}
+            fill={'outline'}
+            size={'sm'}
+            tooltip={'Collapse all groups'}
+            onClick={() => {
+              setCollapsedMap(collapsedMap.setAllCollapsedStatus(true));
+            }}
+            aria-label={'Collapse all groups'}
+            icon={'angle-double-up'}
+            disabled={selectedView === SelectedView.TopTable}
+          />
+        </ButtonGroup>
         <RadioButtonGroup<TextAlign>
           size="sm"
           disabled={selectedView === SelectedView.TopTable}
