@@ -162,14 +162,22 @@ export const alertRuleApi = alertingApi.injectEndpoints({
 
     prometheusRuleNamespaces: build.query<
       RuleNamespace[],
-      { ruleSourceName: string; namespace?: string; groupName?: string; ruleName?: string; dashboardUid?: string }
+      {
+        ruleSourceName: string;
+        namespace?: string;
+        groupName?: string;
+        ruleName?: string;
+        dashboardUid?: string;
+        panelId?: number;
+      }
     >({
-      query: ({ ruleSourceName, namespace, groupName, ruleName, dashboardUid }) => {
+      query: ({ ruleSourceName, namespace, groupName, ruleName, dashboardUid, panelId }) => {
         const queryParams: Record<string, string | undefined> = {
           file: namespace,
           rule_group: groupName,
           rule_name: ruleName,
           dashboard_uid: dashboardUid, // Supported only by Grafana managed rules
+          panel_id: panelId?.toString(), // Supported only by Grafana managed rules
         };
 
         return {

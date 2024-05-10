@@ -2,18 +2,19 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { SceneObjectBase, SceneComponentProps } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { Alert, LoadingPlaceholder, Tab, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { RulesTable } from 'app/features/alerting/unified/components/rules/RulesTable';
 import { usePanelCombinedRules } from 'app/features/alerting/unified/hooks/usePanelCombinedRules';
 import { getRulesPermissions } from 'app/features/alerting/unified/utils/access-control';
+import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 
 import { getDashboardSceneFor, getPanelIdForVizPanel } from '../../utils/utils';
 import { VizPanelManager } from '../VizPanelManager';
 
 import { ScenesNewRuleFromPanelButton } from './NewAlertRuleButton';
-import { PanelDataPaneTabState, PanelDataPaneTab, TabId, PanelDataTabHeaderProps } from './types';
+import { PanelDataPaneTab, PanelDataPaneTabState, PanelDataTabHeaderProps, TabId } from './types';
 
 export class PanelDataAlertingTab extends SceneObjectBase<PanelDataPaneTabState> implements PanelDataPaneTab {
   static Component = PanelDataAlertingTabRendered;
@@ -72,7 +73,7 @@ export function PanelDataAlertingTabRendered(props: SceneComponentProps<PanelDat
   const alert = errors.length ? (
     <Alert title="Errors loading rules" severity="error">
       {errors.map((error, index) => (
-        <div key={index}>Failed to load Grafana rules state: {error.message || 'Unknown error.'}</div>
+        <div key={index}>Failed to load Grafana rules state: {stringifyErrorLike(error)}</div>
       ))}
     </Alert>
   ) : null;
