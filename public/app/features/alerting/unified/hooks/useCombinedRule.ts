@@ -316,7 +316,7 @@ function getRulesSourceFromIdentifier(ruleIdentifier: RuleIdentifier): RulesSour
   return getDataSourceByName(ruleIdentifier.ruleSourceName);
 }
 
-const grafanaRulerConfig: RulerDataSourceConfig = {
+export const grafanaRulerConfig: RulerDataSourceConfig = {
   dataSourceName: GRAFANA_RULES_SOURCE_NAME,
   apiVersion: 'legacy',
 };
