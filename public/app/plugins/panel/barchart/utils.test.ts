@@ -21,7 +21,7 @@ import {
 import { FieldConfig as PanelFieldConfig } from './panelcfg.gen';
 import { prepSeries, prepConfig, PrepConfigOpts } from './utils';
 
-const fieldConfig: FieldConfigSource<any> = {
+const fieldConfig: FieldConfigSource = {
   defaults: {},
   overrides: [],
 };
