@@ -217,9 +217,15 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
 	}
 
+	namespaceFilter := c.Req.Form.Get("file")
 	namespaces := map[string]string{}
-	for namespaceUID, folder := range namespaceMap {
-		namespaces[namespaceUID] = folder.Fullpath
+
+	if namespaceFilter != "" && namespaceMap[namespaceFilter] != nil {
+		namespaces[namespaceFilter] = namespaceMap[namespaceFilter].Fullpath
+	} else {
+		for namespaceUID, folder := range namespaceMap {
+			namespaces[namespaceUID] = folder.Fullpath
+		}
 	}
 
 	ruleResponse = PrepareRuleGroupStatuses(srv.log, srv.manager, srv.store, RuleGroupStatusesOptions{
@@ -245,6 +251,7 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 		},
 	}
 
+	ruleGroup := opts.Query.Get("rule_group")
 	dashboardUID := opts.Query.Get("dashboard_uid")
 	panelID, err := getPanelIDFromQuery(opts.Query)
 	if err != nil {
@@ -300,6 +307,7 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 	alertRuleQuery := ngmodels.ListAlertRulesQuery{
 		OrgID:         opts.OrgID,
 		NamespaceUIDs: namespaceUIDs,
+		RuleGroup:     ruleGroup,
 		DashboardUID:  dashboardUID,
 		PanelID:       panelID,
 	}
