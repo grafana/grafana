@@ -339,6 +339,7 @@ func TestValidateRuleNode_NoUID(t *testing.T) {
 				require.Equal(t, time.Duration(*api.ApiRuleNode.For), alert.For)
 				require.Equal(t, api.ApiRuleNode.Annotations, alert.Annotations)
 				require.Equal(t, api.ApiRuleNode.Labels, alert.Labels)
+				require.Nil(t, alert.Record)
 			},
 		},
 		{

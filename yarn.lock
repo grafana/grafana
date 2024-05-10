@@ -3005,7 +3005,7 @@ __metadata:
     "@types/jest": "npm:29.5.12"
     "@types/lodash": "npm:4.17.0"
     "@types/node": "npm:20.12.11"
-    "@types/prismjs": "npm:1.26.3"
+    "@types/prismjs": "npm:1.26.4"
     "@types/react": "npm:18.2.79"
     "@types/react-dom": "npm:18.2.25"
     "@types/testing-library__jest-dom": "npm:5.14.9"
@@ -3078,7 +3078,7 @@ __metadata:
     "@types/jest": "npm:29.5.12"
     "@types/lodash": "npm:4.17.0"
     "@types/node": "npm:20.12.11"
-    "@types/prismjs": "npm:1.26.3"
+    "@types/prismjs": "npm:1.26.4"
     "@types/react": "npm:18.2.79"
     "@types/react-dom": "npm:18.2.25"
     "@types/testing-library__jest-dom": "npm:5.14.9"
@@ -3268,7 +3268,7 @@ __metadata:
     "@types/jest": "npm:29.5.12"
     "@types/lodash": "npm:4.17.0"
     "@types/node": "npm:20.12.11"
-    "@types/prismjs": "npm:1.26.3"
+    "@types/prismjs": "npm:1.26.4"
     "@types/react": "npm:18.2.79"
     "@types/react-dom": "npm:18.2.25"
     "@types/react-test-renderer": "npm:18.0.7"
@@ -3316,7 +3316,7 @@ __metadata:
     "@lezer/lr": "npm:1.3.3"
     "@opentelemetry/api": "npm:1.8.0"
     "@opentelemetry/exporter-collector": "npm:0.25.0"
-    "@opentelemetry/semantic-conventions": "npm:1.23.0"
+    "@opentelemetry/semantic-conventions": "npm:1.24.1"
     "@testing-library/dom": "npm:10.0.0"
     "@testing-library/jest-dom": "npm:6.4.2"
     "@testing-library/react": "npm:15.0.2"
@@ -3324,7 +3324,7 @@ __metadata:
     "@types/jest": "npm:29.5.12"
     "@types/lodash": "npm:4.17.0"
     "@types/node": "npm:20.12.11"
-    "@types/prismjs": "npm:1.26.3"
+    "@types/prismjs": "npm:1.26.4"
     "@types/react": "npm:18.2.79"
     "@types/react-dom": "npm:18.2.25"
     "@types/semver": "npm:7.5.8"
@@ -3343,7 +3343,7 @@ __metadata:
     react-select-event: "npm:5.5.1"
     react-use: "npm:17.5.0"
     rxjs: "npm:7.8.1"
-    semver: "npm:7.6.0"
+    semver: "npm:7.6.1"
     stream-browserify: "npm:3.0.0"
     string_decoder: "npm:1.3.0"
     ts-node: "npm:10.9.2"
@@ -3783,7 +3783,7 @@ __metadata:
     "@types/lodash": "npm:4.17.0"
     "@types/node": "npm:20.12.11"
     "@types/pluralize": "npm:^0.0.33"
-    "@types/prismjs": "npm:1.26.3"
+    "@types/prismjs": "npm:1.26.4"
     "@types/react": "npm:18.2.79"
     "@types/react-beautiful-dnd": "npm:13.1.8"
     "@types/react-dom": "npm:18.2.25"
@@ -3842,7 +3842,7 @@ __metadata:
     rxjs: "npm:7.8.1"
     sass: "npm:1.75.0"
     sass-loader: "npm:14.2.1"
-    semver: "npm:7.6.0"
+    semver: "npm:7.6.1"
     style-loader: "npm:4.0.0"
     testing-library-selector: "npm:0.3.1"
     ts-node: "npm:10.9.2"
@@ -3936,8 +3936,8 @@ __metadata:
   linkType: soft
 
 "@grafana/scenes@npm:^4.14.0":
-  version: 4.17.1
-  resolution: "@grafana/scenes@npm:4.17.1"
+  version: 4.17.3
+  resolution: "@grafana/scenes@npm:4.17.3"
   dependencies:
     "@grafana/e2e-selectors": "npm:^10.4.1"
     react-grid-layout: "npm:1.3.4"
@@ -3951,7 +3951,7 @@ __metadata:
     "@grafana/ui": ^10.4.1
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10/e79b68860e4ba027ccb0c617e0dd28de7e8c1e26e4a88319e7bc6fd93448dbb9539549883b5d70bd0fc0f909a5050c3e8dcbbb9e63fbb9d82c62bf168258ac51
+  checksum: 10/b837e48e5a4c48195ec74448e3ec4399209960763bcdf04a81cfc5bf3db2ab4e48a11e690d016bd1ba8f96774c2bf22db69718d064e3129eb5a9a3ae8f52eefb
   languageName: node
   linkType: hard
 
@@ -4082,7 +4082,7 @@ __metadata:
     "@types/lodash": "npm:4.17.0"
     "@types/mock-raf": "npm:1.0.6"
     "@types/node": "npm:20.12.11"
-    "@types/prismjs": "npm:1.26.3"
+    "@types/prismjs": "npm:1.26.4"
     "@types/react": "npm:18.2.79"
     "@types/react-beautiful-dnd": "npm:13.1.8"
     "@types/react-color": "npm:3.0.12"
@@ -5814,10 +5814,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@opentelemetry/semantic-conventions@npm:1.23.0":
-  version: 1.23.0
-  resolution: "@opentelemetry/semantic-conventions@npm:1.23.0"
-  checksum: 10/6cd87722039f7fc8b5933bb0227b9562e0191096c919c6e9b9810d6ae175c0373fcdb30fea0a62ec4b2699020e4cfef4ba11380d886e921b09bc63c9d90e1690
+"@opentelemetry/semantic-conventions@npm:1.24.1":
+  version: 1.24.1
+  resolution: "@opentelemetry/semantic-conventions@npm:1.24.1"
+  checksum: 10/f09fa2ecd1994c3601c108922fb1c175618b14acc0f2a2436ca1506f6c48f2e51c505c6490fc5aeac9b94fbd372dd2081a8b7c0e83d96c57fedd360af13d68a5
   languageName: node
   linkType: hard
 
@@ -5876,14 +5876,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@playwright/test@npm:1.43.1":
-  version: 1.43.1
-  resolution: "@playwright/test@npm:1.43.1"
+"@playwright/test@npm:1.44.0":
+  version: 1.44.0
+  resolution: "@playwright/test@npm:1.44.0"
   dependencies:
-    playwright: "npm:1.43.1"
+    playwright: "npm:1.44.0"
   bin:
     playwright: cli.js
-  checksum: 10/c49fc94af11472fc7fb781d084191c875aab8afb6cfcd4708168489c55ea4dbde702850e28b7ed05c0f775be8f8b5cac4bf2688a376b9a930d1f5cefdfc45382
+  checksum: 10/bd34b3c3f90f3cb5ceb2e47715c36bf7f6f57f0eb2bb4e47f17be4ecfecf58833a3722b200f3fcd0f97320a9ea08aee3ed58a61fe245591fedae3c6db171743c
   languageName: node
   linkType: hard
 
@@ -9881,10 +9881,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/prismjs@npm:1.26.3":
-  version: 1.26.3
-  resolution: "@types/prismjs@npm:1.26.3"
-  checksum: 10/4bd55230ffc0b2b16f4008be3a7f1d7c6b32dd3bed8006e64d24fb22c44fc7e300dac77b856f732803ccdc9a3472b2c0ee7776cad048843c47d608c41a89b6a6
+"@types/prismjs@npm:1.26.4":
+  version: 1.26.4
+  resolution: "@types/prismjs@npm:1.26.4"
+  checksum: 10/fcf7072c56835bfdc9bd9c06acd733440c5198b9fba33c5de09cd7bfe9e6663604120c5d602ffbeb806cdc06447fb711d84fc89c9039b8cc95078702a15e7ff1
   languageName: node
   linkType: hard
 
@@ -10286,9 +10286,9 @@ __metadata:
   linkType: hard
 
 "@types/webpack-env@npm:^1.18.4":
-  version: 1.18.4
-  resolution: "@types/webpack-env@npm:1.18.4"
-  checksum: 10/a1c37f8eb93fa86077b2406d3b8dd50c7505cd2b6ec46044786aa9681b0114ad6c3c3cd6402f8ecce9e4de6626c2fd91e5acda62d5d450c1f531533c3812b7c0
+  version: 1.18.5
+  resolution: "@types/webpack-env@npm:1.18.5"
+  checksum: 10/3c8dd0b23d45e2d33abdfbae7f1d8f75ce23d54588b08943e833f4dba81eb683ac68672a75eccbdba8e008bc1647638803c1bcadc8cdfd1dd7142fa2c3f612de
   languageName: node
   linkType: hard
 
@@ -18165,8 +18165,8 @@ __metadata:
     "@msagl/parser": "npm:^1.1.16"
     "@opentelemetry/api": "npm:1.8.0"
     "@opentelemetry/exporter-collector": "npm:0.25.0"
-    "@opentelemetry/semantic-conventions": "npm:1.23.0"
-    "@playwright/test": "npm:1.43.1"
+    "@opentelemetry/semantic-conventions": "npm:1.24.1"
+    "@playwright/test": "npm:1.44.0"
     "@pmmmwh/react-refresh-webpack-plugin": "npm:0.5.13"
     "@popperjs/core": "npm:2.11.8"
     "@prometheus-io/lezer-promql": "npm:^0.37.0-rc.1"
@@ -18219,7 +18219,7 @@ __metadata:
     "@types/node-forge": "npm:^1"
     "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.2.4"
     "@types/pluralize": "npm:^0.0.33"
-    "@types/prismjs": "npm:1.26.3"
+    "@types/prismjs": "npm:1.26.4"
     "@types/react": "npm:18.2.79"
     "@types/react-beautiful-dnd": "npm:13.1.8"
     "@types/react-dom": "npm:18.2.25"
@@ -18368,7 +18368,7 @@ __metadata:
     pseudoizer: "npm:^0.1.0"
     rc-slider: "npm:10.6.2"
     rc-time-picker: "npm:3.7.3"
-    rc-tree: "npm:5.8.5"
+    rc-tree: "npm:5.8.7"
     re-resizable: "npm:6.9.16"
     react: "npm:18.2.0"
     react-beautiful-dnd: "npm:13.1.1"
@@ -18413,7 +18413,7 @@ __metadata:
     sass: "npm:1.75.0"
     sass-loader: "npm:14.2.1"
     selecto: "npm:1.26.3"
-    semver: "npm:7.6.0"
+    semver: "npm:7.6.1"
     slate: "npm:0.47.9"
     slate-plain-serializer: "npm:0.7.13"
     slate-react: "npm:0.22.10"
@@ -24494,27 +24494,27 @@ __metadata:
   languageName: node
   linkType: hard
 
-"playwright-core@npm:1.43.1":
-  version: 1.43.1
-  resolution: "playwright-core@npm:1.43.1"
+"playwright-core@npm:1.44.0":
+  version: 1.44.0
+  resolution: "playwright-core@npm:1.44.0"
   bin:
     playwright-core: cli.js
-  checksum: 10/a4a3d9692a87c5a25d5efc99a4fad2b18e8ae4ac5182da932b3d12f932caf6f245e057f4575c769f219b2826abf017ec2ded7a2fa43afed7f62d294af7b359af
+  checksum: 10/50b1741b8e4e5f053f9756846e1064d796e8e54ee0c13d4d026926338d76969fa528bddf1e563a2f30e17b92f301b06895044d1080179f2d3b5b5f68fe01387f
   languageName: node
   linkType: hard
 
-"playwright@npm:1.43.1":
-  version: 1.43.1
-  resolution: "playwright@npm:1.43.1"
+"playwright@npm:1.44.0":
+  version: 1.44.0
+  resolution: "playwright@npm:1.44.0"
   dependencies:
     fsevents: "npm:2.3.2"
-    playwright-core: "npm:1.43.1"
+    playwright-core: "npm:1.44.0"
   dependenciesMeta:
     fsevents:
       optional: true
   bin:
     playwright: cli.js
-  checksum: 10/0c8cf26df58e6fac2cbad77cc060451ca1bb96d4631ca07d83d382a0462a307f33fa47c1ec53fc2b1b78058cdd6e62c9b881a0bd91ddd956cc1e900d866d8af6
+  checksum: 10/a7d8d6c0dee6262f97ab7fe52ec80ddeff7ad21178a9b90eefae56779fb573e8a3987f27619de6e98d8b9b78e9bb66b94f3caf9fbd51c0f1964dcd744dcb3cae
   languageName: node
   linkType: hard
 
@@ -25655,9 +25655,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-tree@npm:5.8.5, rc-tree@npm:~5.8.1":
-  version: 5.8.5
-  resolution: "rc-tree@npm:5.8.5"
+"rc-tree@npm:5.8.7, rc-tree@npm:~5.8.1":
+  version: 5.8.7
+  resolution: "rc-tree@npm:5.8.7"
   dependencies:
     "@babel/runtime": "npm:^7.10.1"
     classnames: "npm:2.x"
@@ -25667,7 +25667,7 @@ __metadata:
   peerDependencies:
     react: "*"
     react-dom: "*"
-  checksum: 10/4115fe6efaf25dc5f7e51eb1ddcd93d37b74358bfd1730d5146bc9187330c9fc01c6e1492f64a79f250aae14051a23fa49fcae494376f451064e199e351b0d84
+  checksum: 10/d51b1bdc13408e9f6bed0af5ed312d50923a011139ad8b7166dd4f749afda819d80fad9a063347e2cbfbb9555e09f52976cd9117a1af54f9b5933a0bc49df9b1
   languageName: node
   linkType: hard
 
@@ -25990,11 +25990,11 @@ __metadata:
   linkType: hard
 
 "react-hook-form@npm:^7.49.2":
-  version: 7.51.3
-  resolution: "react-hook-form@npm:7.51.3"
+  version: 7.51.4
+  resolution: "react-hook-form@npm:7.51.4"
   peerDependencies:
     react: ^16.8.0 || ^17 || ^18
-  checksum: 10/37f5d681b0f9d6a64b56e38c6ea98941c78d2634e175e7722e66a6bd72b4b22a73a5b912ada8cc010b5ec9e1019b8e2d4a6b0f38e87280600f8e921dee96aaca
+  checksum: 10/1edb032284c127756ad4b99be5da55407dac311afa05f534ad882971088efef6c1debd339f2d9783a572fe17f97d206dbeb9b5b0cdd4e7599cd86a3485e45ad0
   languageName: node
   linkType: hard
 
@@ -27735,14 +27735,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"semver@npm:7.6.0, semver@npm:^7.0.0, semver@npm:^7.1.1, semver@npm:^7.3.4, semver@npm:^7.3.5, semver@npm:^7.3.7, semver@npm:^7.3.8, semver@npm:^7.5.3, semver@npm:^7.5.4, semver@npm:^7.6.0":
-  version: 7.6.0
-  resolution: "semver@npm:7.6.0"
-  dependencies:
-    lru-cache: "npm:^6.0.0"
+"semver@npm:7.6.1, semver@npm:^7.0.0, semver@npm:^7.1.1, semver@npm:^7.3.4, semver@npm:^7.3.5, semver@npm:^7.3.7, semver@npm:^7.3.8, semver@npm:^7.5.3, semver@npm:^7.5.4, semver@npm:^7.6.0":
+  version: 7.6.1
+  resolution: "semver@npm:7.6.1"
   bin:
     semver: bin/semver.js
-  checksum: 10/1b41018df2d8aca5a1db4729985e8e20428c650daea60fcd16e926e9383217d00f574fab92d79612771884a98d2ee2a1973f49d630829a8d54d6570defe62535
+  checksum: 10/a05a641ebaa65f4a35970bb587c4178dc50931e15261ca60c9d531b4fc2b70a2d24b3f300a3bf6c37f37ce9d007b0071abca2f87c0f947f09a253ecfb0df4026
   languageName: node
   linkType: hard
 

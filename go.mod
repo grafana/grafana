@@ -48,6 +48,7 @@ require (
 	github.com/blugelabs/bluge v0.1.9 // @grafana/grafana-backend-group
 	github.com/blugelabs/bluge_segment_api v0.2.0 // @grafana/grafana-backend-group
 	github.com/bradfitz/gomemcache v0.0.0-20190913173617-a41fca850d0b // @grafana/grafana-backend-group
+	github.com/grafana/gomemcache v0.0.0-20231023152154-6947259a0586 // @grafana/grafana-operator-experience-squad
 	github.com/bufbuild/connect-go v1.10.0 // @grafana/observability-traces-and-profiling
 	github.com/bwmarrin/snowflake v0.3.0 // @grafan/grafana-app-platform-squad
 	github.com/centrifugal/centrifuge v0.30.2 // @grafana/grafana-app-platform-squad
@@ -95,7 +96,7 @@ require (
 	github.com/grafana/dskit v0.0.0-20240104111617-ea101a3b86eb // @grafana/grafana-backend-group
 	github.com/grafana/gofpdf v0.0.0-20231002120153-857cc45be447 // @grafana/sharing-squad
 	github.com/grafana/grafana-aws-sdk v0.25.1 // @grafana/aws-datasources
-	github.com/grafana/grafana-azure-sdk-go/v2 v2.0.2 // @grafana/partner-datasources
+	github.com/grafana/grafana-azure-sdk-go/v2 v2.0.3 // @grafana/partner-datasources
 	github.com/grafana/grafana-google-sdk-go v0.1.0 // @grafana/partner-datasources
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 // @grafana/grafana-backend-group
 	github.com/grafana/grafana-plugin-sdk-go v0.230.0 // @grafana/plugins-platform-backend
@@ -146,7 +147,7 @@ require (
 	github.com/redis/go-redis/v9 v9.1.0 // @grafana/alerting-squad-backend
 	github.com/robfig/cron/v3 v3.0.1 // @grafana/grafana-backend-group
 	github.com/russellhaering/goxmldsig v1.4.0 // @grafana/grafana-backend-group
-	github.com/scottlepp/go-duck v0.0.19 // @grafana/grafana-app-platform-squad
+	github.com/scottlepp/go-duck v0.0.20 // @grafana/grafana-app-platform-squad
 	github.com/spf13/cobra v1.8.0 // @grafana/grafana-app-platform-squad
 	github.com/spf13/pflag v1.0.5 // @grafana-app-platform-squad
 	github.com/spyzhov/ajson v0.9.0 // @grafana/grafana-app-platform-squad

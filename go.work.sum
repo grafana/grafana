@@ -1,4 +1,3 @@
-buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.31.0-20230721003620-2341cbb21958.1/go.mod h1:xafc+XIsTxTy76GJQ1TKgvJWsSugFBqMaN27WhUblew=
 buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.31.0-20230802163732-1c33ebd9ecfa.1/go.mod h1:xafc+XIsTxTy76GJQ1TKgvJWsSugFBqMaN27WhUblew=
 buf.build/gen/go/grpc-ecosystem/grpc-gateway/bufbuild/connect-go v1.4.1-20221127060915-a1ecdc58eccd.1 h1:vp9EaPFSb75qe/793x58yE5fY1IJ/gdxb/kcDUzavtI=
 buf.build/gen/go/grpc-ecosystem/grpc-gateway/bufbuild/connect-go v1.4.1-20221127060915-a1ecdc58eccd.1/go.mod h1:YDq2B5X5BChU0lxAG5MxHpDb8mx1fv9OGtF2mwOe7hY=
@@ -94,7 +93,6 @@ cloud.google.com/go/clouddms v1.7.4/go.mod h1:RdrVqoFG9RWI5AvZ81SxJ/xvxPdtcRhFot
 cloud.google.com/go/cloudtasks v1.12.4 h1:5xXuFfAjg0Z5Wb81j2GAbB3e0bwroCeSF+5jBn/L650=
 cloud.google.com/go/cloudtasks v1.12.6 h1:EUt1hIZ9bLv8Iz9yWaCrqgMnIU+Tdh0yXM1MMVGhjfE=
 cloud.google.com/go/cloudtasks v1.12.6/go.mod h1:b7c7fe4+TJsFZfDyzO51F7cjq7HLUlRi/KZQLQjDsaY=
-cloud.google.com/go/compute v1.23.4/go.mod h1:/EJMj55asU6kAFnuZET8zqgwgJ9FvXWXOkkfQZa4ioI=
 cloud.google.com/go/compute v1.24.0 h1:phWcR2eWzRJaL/kOiJwfFsPs4BaKq1j6vnpZrc1YlVg=
 cloud.google.com/go/compute v1.24.0/go.mod h1:kw1/T+h/+tK2LJK0wiPPx1intgdAM3j/g3hFDlscY40=
 cloud.google.com/go/contactcenterinsights v1.12.1 h1:EiGBeejtDDtr3JXt9W7xlhXyZ+REB5k2tBgVPVtmNb0=
@@ -218,7 +216,6 @@ cloud.google.com/go/ids v1.4.5/go.mod h1:p0ZnyzjMWxww6d2DvMGnFwCsSxDJM666Iir1bK1
 cloud.google.com/go/iot v1.7.4 h1:m1WljtkZnvLTIRYW1YTOv5A6H1yKgLHR6nU7O8yf27w=
 cloud.google.com/go/iot v1.7.5 h1:munTeBlbqI33iuTYgXy7S8lW2TCgi5l1hA4roSIY+EE=
 cloud.google.com/go/iot v1.7.5/go.mod h1:nq3/sqTz3HGaWJi1xNiX7F41ThOzpud67vwk0YsSsqs=
-cloud.google.com/go/kms v1.15.6/go.mod h1:yF75jttnIdHfGBoE51AKsD/Yqf+/jICzB9v1s1acsms=
 cloud.google.com/go/language v1.12.2 h1:zg9uq2yS9PGIOdc0Kz/l+zMtOlxKWonZjjo5w5YPG2A=
 cloud.google.com/go/language v1.12.3 h1:iaJZg6K4j/2PvZZVcjeO/btcWWIllVRBhuTFjGO4LXs=
 cloud.google.com/go/language v1.12.3/go.mod h1:evFX9wECX6mksEva8RbRnr/4wi/vKGYnAJrTRXU8+f8=
@@ -363,7 +360,6 @@ cloud.google.com/go/spanner v1.57.0/go.mod h1:aXQ5QDdhPRIqVhYmnkAdwPYvj/DRN0Fguc
 cloud.google.com/go/speech v1.21.0 h1:qkxNao58oF8ghAHE1Eghen7XepawYEN5zuZXYWaUTA4=
 cloud.google.com/go/speech v1.21.1 h1:nuFc+Kj5B8de75nN4FdPyUbI2SiBoHZG6BLurXL56Q0=
 cloud.google.com/go/speech v1.21.1/go.mod h1:E5GHZXYQlkqWQwY5xRSLHw2ci5NMQNG52FfMU1aZrIA=
-cloud.google.com/go/storage v1.36.0/go.mod h1:M6M/3V/D3KpzMTJyPOR/HU6n2Si5QdaXYEsng2xgOs8=
 cloud.google.com/go/storagetransfer v1.10.3 h1:YM1dnj5gLjfL6aDldO2s4GeU8JoAvH1xyIwXre63KmI=
 cloud.google.com/go/storagetransfer v1.10.4 h1:dy4fL3wO0VABvzM05ycMUPFHxTPbJz9Em8ikAJVqSbI=
 cloud.google.com/go/storagetransfer v1.10.4/go.mod h1:vef30rZKu5HSEf/x1tK3WfWrL0XVoUQN/EPDRGPzjZs=
@@ -717,7 +713,6 @@ github.com/grafana/dataplane/sdata v0.0.7 h1:CImITypIyS1jxijCR6xqKx71JnYAxcwpH9C
 github.com/grafana/dataplane/sdata v0.0.7/go.mod h1:Jvs5ddpGmn6vcxT7tCTWAZ1mgi4sbcdFt9utQx5uMAU=
 github.com/grafana/e2e v0.1.1-0.20221018202458-cffd2bb71c7b h1:Ha+kSIoTutf4ytlVw/SaEclDUloYx0+FXDKJWKhNbE4=
 github.com/grafana/e2e v0.1.1-0.20221018202458-cffd2bb71c7b/go.mod h1:3UsooRp7yW5/NJQBlXcTsAHOoykEhNUYXkQ3r6ehEEY=
-github.com/grafana/gomemcache v0.0.0-20231023152154-6947259a0586 h1:/of8Z8taCPftShATouOrBVy6GaTTjgQd/VfNiZp/VXQ=
 github.com/grafana/gomemcache v0.0.0-20231023152154-6947259a0586/go.mod h1:PGk3RjYHpxMM8HFPhKKo+vve3DdlPUELZLSDEFehPuU=
 github.com/grafana/grafana-plugin-sdk-go v0.212.0/go.mod h1:qsI4ktDf0lig74u8SLPJf9zRdVxWV/W4Wi+Ox6gifgs=
 github.com/grafana/grafana-plugin-sdk-go v0.215.0/go.mod h1:nBsh3jRItKQUXDF2BQkiQCPxqrsSQeb+7hiFyJTO1RE=
@@ -735,7 +730,6 @@ github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.0/go.mod h1:qmOFXW2epJhM0qSnUUYp
 github.com/grpc-ecosystem/grpc-opentracing v0.0.0-20180507213350-8e809c8a8645 h1:MJG/KsmcqMwFAkh8mTnAwhyKoB+sTAnY4CACC110tbU=
 github.com/grpc-ecosystem/grpc-opentracing v0.0.0-20180507213350-8e809c8a8645/go.mod h1:6iZfnjpejD4L/4DwD7NryNaJyCQdzwWwH2MWhCA90Kw=
 github.com/hamba/avro/v2 v2.17.2/go.mod h1:Q9YK+qxAhtVrNqOhwlZTATLgLA8qxG2vtvkhK8fJ7Jo=
-github.com/hashicorp/go-hclog v0.14.1/go.mod h1:whpDNt7SSdeAju8AWKIWsul05p54N/39EeqMAyrmvFQ=
 github.com/hashicorp/go-hclog v0.16.1 h1:IVQwpTGNRRIHafnTs2dQLIk4ENtneRIEEJWOVDqz99o=
 github.com/hashicorp/go-hclog v0.16.1/go.mod h1:whpDNt7SSdeAju8AWKIWsul05p54N/39EeqMAyrmvFQ=
 github.com/hashicorp/hcl v1.0.0 h1:0Anlzjpi4vEasTeNFn2mLJgTSwt0+6sfsiTG8qcWGx4=
@@ -1164,23 +1158,6 @@ google.golang.org/api v0.162.0/go.mod h1:6SulDkfoBIg4NFmCuZ39XeeAgSHCPecfSUuDyYl
 google.golang.org/api v0.169.0/go.mod h1:gpNOiMA2tZ4mf5R9Iwf4rK/Dcz0fbdIgWYWVoxmsyLg=
 google.golang.org/appengine v1.6.8 h1:IhEN5q69dyKagZPYMSdIjS2HqprW324FRQZJcGqPAsM=
 google.golang.org/appengine v1.6.8/go.mod h1:1jJ3jBArFh5pcgW8gCtRJnepW8FzD1V44FJffLiz/Ds=
-google.golang.org/genproto v0.0.0-20231211222908-989df2bf70f3/go.mod h1:5RBcpGRxr25RbDzY5w+dmaqpSEvl8Gwl1x2CICf60ic=
-google.golang.org/genproto v0.0.0-20231212172506-995d672761c0/go.mod h1:l/k7rMz0vFTBPy+tFSGvXEd3z+BcoG1k7EHbqm+YBsY=
-google.golang.org/genproto v0.0.0-20240102182953-50ed04b92917/go.mod h1:pZqR+glSb11aJ+JQcczCvgf47+duRuzNSKqE8YAQnV0=
-google.golang.org/genproto v0.0.0-20240116215550-a9fa1716bcac/go.mod h1:+Rvu7ElI+aLzyDQhpHMFMMltsD6m7nqpuWDd2CwJw3k=
-google.golang.org/genproto v0.0.0-20240125205218-1f4bbc51befe/go.mod h1:cc8bqMqtv9gMOr0zHg2Vzff5ULhhL2IXP4sbcn32Dro=
-google.golang.org/genproto v0.0.0-20240205150955-31a09d347014/go.mod h1:xEgQu1e4stdSSsxPDK8Azkrk/ECl5HvdPf6nbZrTS5M=
-google.golang.org/genproto v0.0.0-20240213162025-012b6fc9bca9/go.mod h1:mqHbVIp48Muh7Ywss/AD6I5kNVKZMmAa/QEW58Gxp2s=
-google.golang.org/genproto/googleapis/api v0.0.0-20231120223509-83a465c0220f/go.mod h1:Uy9bTZJqmfrw2rIBxgGLnamc78euZULUBrLZ9XTITKI=
-google.golang.org/genproto/googleapis/api v0.0.0-20231211222908-989df2bf70f3/go.mod h1:k2dtGpRrbsSyKcNPKKI5sstZkrNCZwpU/ns96JoHbGg=
-google.golang.org/genproto/googleapis/api v0.0.0-20231212172506-995d672761c0/go.mod h1:CAny0tYF+0/9rmDB9fahA9YLzX3+AEVl1qXbv5hhj6c=
-google.golang.org/genproto/googleapis/api v0.0.0-20240102182953-50ed04b92917/go.mod h1:CmlNWB9lSezaYELKS5Ym1r44VrrbPUa7JTvw+6MbpJ0=
-google.golang.org/genproto/googleapis/api v0.0.0-20240116215550-a9fa1716bcac/go.mod h1:B5xPO//w8qmBDjGReYLpR6UJPnkldGkCSMoH/2vxJeg=
-google.golang.org/genproto/googleapis/api v0.0.0-20240122161410-6c6643bf1457/go.mod h1:4jWUdICTdgc3Ibxmr8nAJiiLHwQBY0UI0XZcEMaFKaA=
-google.golang.org/genproto/googleapis/api v0.0.0-20240125205218-1f4bbc51befe/go.mod h1:4jWUdICTdgc3Ibxmr8nAJiiLHwQBY0UI0XZcEMaFKaA=
-google.golang.org/genproto/googleapis/api v0.0.0-20240205150955-31a09d347014/go.mod h1:rbHMSEDyoYX62nRVLOCc4Qt1HbsdytAYoVwgjiOhF3I=
-google.golang.org/genproto/googleapis/api v0.0.0-20240213162025-012b6fc9bca9/go.mod h1:PVreiBMirk8ypES6aw9d4p6iiBNSIfZEBqr3UGoAi2E=
-google.golang.org/genproto/googleapis/api v0.0.0-20240227224415-6ceb2ff114de/go.mod h1:5iCWqnniDlqZHrd3neWVTOwvh/v6s3232omMecelax8=
 google.golang.org/genproto/googleapis/api v0.0.0-20240311132316-a219d84964c2/go.mod h1:O1cOfN1Cy6QEYr7VxtjOyP5AdAuR0aJ/MYZaaof623Y=
 google.golang.org/genproto/googleapis/bytestream v0.0.0-20231120223509-83a465c0220f h1:hL+1ptbhFoeL1HcROQ8OGXaqH0jYRRibgWQWco0/Ugc=
 google.golang.org/genproto/googleapis/bytestream v0.0.0-20231212172506-995d672761c0 h1:Y6QQt9D/syZt/Qgnz5a1y2O3WunQeeVDfS9+Xr82iFA=
