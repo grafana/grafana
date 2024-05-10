@@ -3,8 +3,6 @@
  * To be exposed via grafana-runtime/data in the future.
  */
 
-export { QueryTemplate } from './types';
-
 import { ApiProvider } from '@reduxjs/toolkit/query/react';
 import React, { PropsWithChildren } from 'react';
 

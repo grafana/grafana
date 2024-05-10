@@ -1,4 +1,4 @@
-import { DataQuery } from '@grafana/schema/dist/esm/index';
+import { DataQuery } from '@grafana/schema';
 
 export type QueryTemplate = {
   uid: string;
