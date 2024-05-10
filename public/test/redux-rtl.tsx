@@ -1,5 +1,4 @@
-import { AnyAction, configureStore } from '@reduxjs/toolkit';
-import { ThunkMiddlewareFor } from '@reduxjs/toolkit/dist/getDefaultMiddleware';
+import { configureStore } from '@reduxjs/toolkit';
 import { render as rtlRender } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
@@ -13,11 +12,7 @@ function render(
   ui: React.ReactElement,
   {
     preloadedState = { navIndex: mockNavModel },
-    store = configureStore<
-      StoreState,
-      AnyAction,
-      ReadonlyArray<ThunkMiddlewareFor<StoreState, { thunk: true; serializableCheck: false; immutableCheck: false }>>
-    >({
+    store = configureStore({
       reducer: createRootReducer(),
       preloadedState,
       middleware: (getDefaultMiddleware) =>
