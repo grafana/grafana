@@ -731,7 +731,7 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 
 	dashboardFolderStore := foldertest.NewFakeFolderStore(t)
 
-	db, cfg := sqlstore.InitTestDB(t)
+	db, _ := sqlstore.InitTestDB(t)
 	folderService := &Service{
 		store:                nestedFolderStore,
 		log:                  slog.New(logtest.NewTestHandler(t)).With("logger", "test-folder-service"),
