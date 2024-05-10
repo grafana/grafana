@@ -515,77 +515,59 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     }
 
     const libraryPanel = getLibraryVizPanelFromVizPanel(vizPanel);
-
     const gridItem = libraryPanel ? libraryPanel.parent : vizPanel.parent;
 
     if (!(gridItem instanceof DashboardGridItem)) {
       console.error('Trying to duplicate a panel in a layout that is not DashboardGridItem');
       return;
-    }
-
-    let panelState;
-    let panelData;
-    let newGridItem;
-    const newPanelId = dashboardSceneGraph.getNextPanelId(this);
-
-    if (libraryPanel) {
-      const gridItemToDuplicateState = sceneUtils.cloneSceneObjectState(gridItem.state);
-
-      newGridItem = new DashboardGridItem({
-        x: gridItemToDuplicateState.x,
-        y: gridItemToDuplicateState.y,
-        width: gridItemToDuplicateState.width,
-        height: gridItemToDuplicateState.height,
-        body: new LibraryVizPanel({
-          title: libraryPanel.state.title,
-          uid: libraryPanel.state.uid,
-          name: libraryPanel.state.name,
-          panelKey: getVizPanelKeyForPanelId(newPanelId),
-        }),
-      });
-    } else {
-      if (gridItem instanceof DashboardGridItem) {
-        panelState = sceneUtils.cloneSceneObjectState(gridItem.state.body.state);
-        panelData = sceneGraph.getData(gridItem.state.body).clone();
-      } else {
-        panelState = sceneUtils.cloneSceneObjectState(vizPanel.state);
-        panelData = sceneGraph.getData(vizPanel).clone();
-      }
-
-      // when we duplicate a panel we don't want to clone the alert state
-      delete panelData.state.data?.alertState;
-
-      newGridItem = new DashboardGridItem({
-        x: gridItem.state.x,
-        y: gridItem.state.y,
-        height: NEW_PANEL_HEIGHT,
-        width: NEW_PANEL_WIDTH,
-        body: new VizPanel({ ...panelState, $data: panelData, key: getVizPanelKeyForPanelId(newPanelId) }),
-      });
-    }
-
-    if (!(this.state.body instanceof SceneGridLayout)) {
+    } else if (!(this.state.body instanceof SceneGridLayout)) {
       console.error('Trying to duplicate a panel in a layout that is not SceneGridLayout ');
       return;
     }
 
-    const sceneGridLayout = this.state.body;
+    const newPanelId = dashboardSceneGraph.getNextPanelId(this);
 
+    let body: ConstructorParameters<typeof DashboardGridItem>[0]['body'];
+    if (libraryPanel) {
+      body = new LibraryVizPanel({
+        title: libraryPanel.state.title,
+        uid: libraryPanel.state.uid,
+        name: libraryPanel.state.name,
+        panelKey: getVizPanelKeyForPanelId(newPanelId),
+      });
+    } else {
+      const target = gridItem instanceof DashboardGridItem ? gridItem.state.body : vizPanel;
+      const panelState = sceneUtils.cloneSceneObjectState(target.state);
+      const panelData = sceneGraph.getData(target).clone();
+
+      // when we duplicate a panel we don't want to clone the alert state
+      delete panelData.state.data?.alertState;
+
+      body = new VizPanel({ ...panelState, $data: panelData, key: getVizPanelKeyForPanelId(newPanelId) });
+    }
+
+    const { x = 0, y = 0, width = 0, height } = gridItem.state;
+    const newGridItem = new DashboardGridItem({
+      x: x + width,
+      y: y - Number.MIN_VALUE,
+      width,
+      height,
+      body,
+    });
+
+    const sceneGridLayout = this.state.body;
     if (gridItem.parent instanceof SceneGridRow) {
       const row = gridItem.parent;
-
       row.setState({
         children: [...row.state.children, newGridItem],
       });
 
       sceneGridLayout.forceRender();
-
-      return;
+    } else {
+      sceneGridLayout.setState({
+        children: [...sceneGridLayout.state.children, newGridItem],
+      });
     }
-
-    sceneGridLayout.setState({
-      children: [...sceneGridLayout.state.children, newGridItem],
-    });
   }
 
   public copyPanel(vizPanel: VizPanel) {
