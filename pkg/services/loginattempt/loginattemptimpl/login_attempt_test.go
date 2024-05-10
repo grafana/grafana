@@ -88,12 +88,12 @@ func TestLoginAttempts(t *testing.T) {
 	service := ProvideService(db, cfg, nil)
 
 	// add multiple login attempts with different uppercases, they all should be counted as the same user
-	service.Add(ctx, "admin", "[::1]")
-	service.Add(ctx, "Admin", "[::1]")
-	service.Add(ctx, "aDmin", "[::1]")
-	service.Add(ctx, "adMin", "[::1]")
-	service.Add(ctx, "admIn", "[::1]")
-	service.Add(ctx, "admIN", "[::1]")
+	_ = service.Add(ctx, "admin", "[::1]")
+	_ = service.Add(ctx, "Admin", "[::1]")
+	_ = service.Add(ctx, "aDmin", "[::1]")
+	_ = service.Add(ctx, "adMin", "[::1]")
+	_ = service.Add(ctx, "admIn", "[::1]")
+	_ = service.Add(ctx, "admIN", "[::1]")
 
 	// validate the number of attempts is correct for all the different uppercases
 	count, err := service.store.GetUserLoginAttemptCount(ctx, GetUserLoginAttemptCountQuery{Username: "admin"})
