@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
+import React, { CSSProperties } from 'react';
 
 import { GrafanaTheme2, fieldColorModeRegistry } from '@grafana/data';
 import { LineStyle } from '@grafana/schema';
@@ -31,17 +31,35 @@ export const SeriesIcon = React.memo(
       cssColor = color!;
     }
 
-    const lineStyleStyle =
-      lineStyle?.fill === 'dot' ? styles.dot : lineStyle?.fill === 'dash' ? styles.dash : styles.solid;
+    let customStyle: CSSProperties;
+
+    if (lineStyle?.fill === 'dot' && !gradient) {
+      // make a circle bg image and repeat it
+      customStyle = {
+        backgroundImage: `radial-gradient(circle at 2px 2px, ${color} 2px, transparent 0)`,
+        backgroundSize: '4px 4px',
+        backgroundRepeat: 'space',
+      };
+    } else if (lineStyle?.fill === 'dash' && !gradient) {
+      // make a rectangle bg image and repeat it
+      customStyle = {
+        backgroundImage: `linear-gradient(to right, ${color} 100%, transparent 0%)`,
+        backgroundSize: '6px 4px',
+        backgroundRepeat: 'space',
+      };
+    } else {
+      customStyle = {
+        background: cssColor,
+        borderRadius: theme.shape.radius.pill,
+      };
+    }
 
     return (
       <div
         data-testid="series-icon"
         ref={ref}
-        className={cx(className, styles.forcedColors, styles.container, lineStyleStyle)}
-        style={{
-          borderTopColor: cssColor,
-        }}
+        className={cx(className, styles.forcedColors, styles.container)}
+        style={customStyle}
         {...restProps}
       />
     );
@@ -53,17 +71,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginRight: '8px',
     display: 'inline-block',
     width: '14px',
-  }),
-  dot: css({
-    borderTop: 'dotted 3.99px',
-  }),
-  dash: css({
-    borderTop: 'dashed 3px',
-  }),
-  solid: css({
-    borderTop: 'solid 4px',
-    borderRadius: theme.shape.radius.pill,
-    display: 'inline-block',
+    height: '4px',
   }),
   forcedColors: css({
     '@media (forced-colors: active)': {
