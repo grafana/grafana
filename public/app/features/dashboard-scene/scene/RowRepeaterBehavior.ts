@@ -1,3 +1,5 @@
+import { isEqual } from 'lodash';
+
 import {
   LocalValueVariable,
   MultiValueVariable,
@@ -31,6 +33,7 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
   });
 
   public isWaitingForVariables = false;
+  private _prevRepeatValues?: VariableValueSingle[];
 
   public constructor(state: RowRepeaterBehaviorState) {
     super(state);
@@ -81,8 +84,15 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
 
     const rowToRepeat = this._getRow();
     const layout = this._getLayout();
-
     const { values, texts } = getMultiVariableValues(variable);
+
+    // Do nothing if values are the same
+    if (isEqual(this._prevRepeatValues, values)) {
+      return;
+    }
+
+    this._prevRepeatValues = values;
+
     const rows: SceneGridRow[] = [];
     const rowContent = rowToRepeat.state.children;
     const rowContentHeight = getRowContentHeight(rowContent);

@@ -17,10 +17,15 @@ import { RowRepeaterBehavior } from './RowRepeaterBehavior';
 
 describe('RowRepeaterBehavior', () => {
   describe('Given scene with variable with 5 values', () => {
-    let scene: DashboardScene, grid: SceneGridLayout;
+    let scene: DashboardScene, grid: SceneGridLayout, repeatBehavior: RowRepeaterBehavior;
+    let gridStateUpdates: unknown[];
 
     beforeEach(async () => {
-      ({ scene, grid } = buildScene({ variableQueryTime: 0 }));
+      ({ scene, grid, repeatBehavior } = buildScene({ variableQueryTime: 0 }));
+
+      gridStateUpdates = [];
+      grid.subscribeToState((state) => gridStateUpdates.push(state));
+
       activateFullSceneTree(scene);
       await new Promise((r) => setTimeout(r, 1));
     });
@@ -73,6 +78,15 @@ describe('RowRepeaterBehavior', () => {
 
       // should now only have 2 repeated rows (and the panel above + the row at the bottom)
       expect(grid.state.children.length).toBe(4);
+    });
+
+    it('Should ignore repeat process if variable values are the same', async () => {
+      // trigger another repeat cycle by changing the variable
+      repeatBehavior.performRepeat();
+
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(gridStateUpdates.length).toBe(1);
     });
   });
 
@@ -187,9 +201,9 @@ function buildScene(options: SceneOptions) {
           optionsToReturn: [
             { label: 'A', value: 'A1' },
             { label: 'B', value: 'B1' },
-            { label: 'C', value: 'B1' },
-            { label: 'D', value: 'C1' },
-            { label: 'E', value: 'D1' },
+            { label: 'C', value: 'C1' },
+            { label: 'D', value: 'D1' },
+            { label: 'E', value: 'E1' },
           ],
         }),
       ],
