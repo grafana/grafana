@@ -1,100 +1,93 @@
-import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import React from 'react';
 
-import { DataFrame, Field, FieldColorModeId } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { VizLayout, VizLegend, VizLegendItem, VizLegendOptions, useStyles2 } from '@grafana/ui';
+import { DataFrame, Field, getFieldSeriesColor } from '@grafana/data';
+import { VizLegendOptions, AxisPlacement } from '@grafana/schema';
+import { UPlotConfigBuilder, VizLayout, VizLayoutLegendProps, VizLegend, VizLegendItem, useTheme2 } from '@grafana/ui';
+import { getDisplayValuesForCalcs } from '@grafana/ui/src/components/uPlot/utils';
+import { getFieldLegendItem } from 'app/core/components/TimelineChart/utils';
 
-interface BarChartLegendProps extends VizLegendOptions {
-  frame: DataFrame;
+interface BarChartLegend2Props extends VizLegendOptions, Omit<VizLayoutLegendProps, 'children'> {
+  data: DataFrame[];
   colorField?: Field | null;
+  // config: UPlotConfigBuilder;
+}
+
+/**
+ * mostly duplicates logic in PlotLegend below :(
+ *
+ * @internal
+ */
+export function hasVisibleLegendSeries(config: UPlotConfigBuilder, data: DataFrame[]) {
+  return data[0].fields.slice(1).some((field) => !Boolean(field.config.custom?.hideFrom?.legend));
+
+  // return config.getSeries().some((s, i) => {
+  //   const frameIndex = 0;
+  //   const fieldIndex = i + 1;
+  //   const field = data[frameIndex].fields[fieldIndex];
+  //   return !Boolean(field.config.custom?.hideFrom?.legend);
+  // });
 }
 
 export const BarChartLegend = React.memo(
-  ({ frame, colorField, placement, displayMode, width }: BarChartLegendProps) => {
-    const styles = useStyles2(getStyles);
-    const { palette, getColorByName } = config.theme2.visualization;
+  ({ data, placement, calcs, displayMode, colorField, ...vizLayoutLegendProps }: BarChartLegend2Props) => {
+    const theme = useTheme2();
 
-    const numSeries = useMemo(
-      () =>
-        frame.fields.reduce((acc, field, idx) => acc + (idx === 0 || field.config.custom.hideFrom?.legend ? 0 : 1), 0),
-      [frame]
-    );
-
-    // if enum exists, then use that. if mappings exist, then use that,
-
-    // // timelinechart get legend item
-    // //
-    // if (numSeries === 1) {
-    //   let yField = frame.fields[1];
-
-    //   && frame.fields[1].config.color?.mode === FieldColorModeId.Thresholds || frame.fields[1].config.custom.color
-    //   // if scheme is by value && thresholds or mappings
-    //   colorField = frame.fields[1];
-    //   // mappings
-    //   // thresholds
-    //   // enum
-    //   //
-    // }
-
-    const items: VizLegendItem[] = [];
-
-    // or single frame + single series + color by value?
     if (colorField != null) {
-      // TODO: by color
-      // maybe use getFieldLegendItem?
-      return null;
+      const items = getFieldLegendItem([colorField], theme);
 
-      // the color by field can also be the yField itself (thresholds, etc)
-    } else {
-      let fields = frame.fields;
-
-      let paletteIdx = 0;
-
-      for (let i = 1; i < fields.length; i++) {
-        let yField = fields[i];
-
-        if (!yField.config.custom.hideFrom?.legend) {
-          let colorCfg = yField.config.color ?? { mode: FieldColorModeId.PaletteClassic };
-          let name = yField.state?.displayName ?? yField.name;
-
-          let color: string;
-
-          if (colorCfg.mode === FieldColorModeId.PaletteClassic) {
-            color = getColorByName(palette[paletteIdx++ % palette.length]); // todo: do this via state.seriesIdx and re-init displayProcessor
-          } else if (colorCfg.mode === FieldColorModeId.Fixed) {
-            color = getColorByName(colorCfg.fixedColor!);
-          }
-
-          // TODO: calcs / PlotLegend?
-
-          items.push({
-            yAxis: 1, // TODO: pull from y field
-            label: name,
-            color: color!,
-            getItemKey: () => `${i}-${name}`,
-            disabled: yField.state?.hideFrom?.viz ?? false,
-          });
-        }
+      if (items?.length) {
+        return (
+          <VizLayout.Legend placement={placement}>
+            <VizLegend placement={placement} items={items} displayMode={displayMode} />
+          </VizLayout.Legend>
+        );
       }
     }
 
-    // sort series by calcs? table mode?
+    const legendItems = data[0].fields
+      .slice(1)
+      .map((field, i) => {
+        const frameIndex = 0;
+        const fieldIndex = i + 1;
+        // const axisPlacement = config.getAxisPlacement(s.props.scaleKey); // TODO: this should be stamped on the field.config?
+        // const field = data[frameIndex].fields[fieldIndex];
+
+        if (!field || field.config.custom?.hideFrom?.legend) {
+          return undefined;
+        }
+
+        // // apparently doing a second pass like this will take existing state.displayName, and if same as another one, appends counter
+        // const label = getFieldDisplayName(field, data[0], data);
+        const label = field.state?.displayName ?? field.name;
+
+        const color = getFieldSeriesColor(field, theme).color;
+
+        const item: VizLegendItem = {
+          disabled: field.state?.hideFrom?.viz,
+          color,
+          label,
+          yAxis: field.config.custom?.axisPlacement === AxisPlacement.Right ? 2 : 1,
+          getDisplayValues: () => getDisplayValuesForCalcs(calcs, field, theme),
+          getItemKey: () => `${label}-${frameIndex}-${fieldIndex}`,
+        };
+
+        return item;
+      })
+      .filter((i): i is VizLegendItem => i !== undefined);
 
     return (
-      <VizLayout.Legend placement={placement} width={width}>
-        <VizLegend className={styles.legend} placement={placement} items={items} displayMode={displayMode} />
+      <VizLayout.Legend placement={placement} {...vizLayoutLegendProps}>
+        <VizLegend
+          placement={placement}
+          items={legendItems}
+          displayMode={displayMode}
+          sortBy={vizLayoutLegendProps.sortBy}
+          sortDesc={vizLayoutLegendProps.sortDesc}
+          isSortable={true}
+        />
       </VizLayout.Legend>
     );
   }
 );
 
 BarChartLegend.displayName = 'BarChartLegend';
-
-const getStyles = () => ({
-  legend: css({
-    div: {
-      justifyContent: 'flex-start',
-    },
-  }),
-});
