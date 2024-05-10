@@ -5,8 +5,8 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
-import { SceneGridLayout, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { config, locationService } from '@grafana/runtime';
+import { SceneGridLayout, SceneQueryRunner, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
@@ -26,6 +26,17 @@ jest.mock('app/features/playlist/PlaylistSrv', () => ({
     prev: jest.fn(),
     stop: jest.fn(),
   },
+}));
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual<Record<string, any>>('@grafana/runtime'),
+  getDataSourceSrv: () => ({
+    get: jest.fn(),
+    getInstanceSettings: jest.fn().mockReturnValue({
+      uid: 'datasource-uid',
+      name: 'datasource-name',
+    }),
+  }),
 }));
 
 describe('NavToolbarActions', () => {
@@ -135,6 +146,22 @@ describe('NavToolbarActions', () => {
       expect(await screen.findByText('Discard panel changes')).toBeInTheDocument();
       expect(await screen.findByText('Back to dashboard')).toBeInTheDocument();
     });
+
+    it('Should set the correct params to indicate it is adding a panel', async () => {
+      await setup();
+
+      await act(async () => {
+        await userEvent.click(await screen.findByText('Edit'));
+      });
+      await act(async () => {
+        await userEvent.click(await screen.findByText('Add'));
+      });
+      await act(async () => {
+        await userEvent.click(await screen.findByText('Visualization'));
+      });
+
+      expect(locationService.getSearchObject().isNewPanel).toBe(true);
+    });
   });
 
   describe('Given new sharing button', () => {
@@ -159,6 +186,7 @@ describe('NavToolbarActions', () => {
 async function setup() {
   return act(() => {
     const dashboard = new DashboardScene({
+      $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
       meta: {
         canEdit: true,
         isNew: false,
