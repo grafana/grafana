@@ -209,12 +209,12 @@ describe('graphiteDatasource', () => {
           fromAnnotations: true,
           tags: ['tag1'],
           queryType: 'tags',
-        },
+        } as GraphiteQuery,
       ],
 
       range: {
-        from: '2022-06-06T07:03:03.109Z',
-        to: '2022-06-07T07:03:03.109Z',
+        from: dateTime('2022-06-06T07:03:03.109Z'),
+        to: dateTime('2022-06-07T07:03:03.109Z'),
         raw: {
           from: '2022-06-06T07:03:03.109Z',
           to: '2022-06-07T07:03:03.109Z',
@@ -748,6 +748,7 @@ function accessScenario(name: string, url: string, fn: ({ headers }: { headers: 
 
     const httpOptions = {
       headers: {},
+      url,
     };
 
     describe('when using proxy mode', () => {

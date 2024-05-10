@@ -124,7 +124,7 @@ export class TemplateSrv implements BaseTemplateSrv {
    * interpolateVariablesInQueries or applyTemplateVariables it is passed as a new argument
    **/
   getAdhocFilters(datasourceName: string, skipDeprecationWarning?: boolean): AdHocVariableFilter[] {
-    let filters: any = [];
+    let filters: AdHocVariableFilter[] = [];
     let ds = getDataSourceSrv().getInstanceSettings(datasourceName);
 
     if (!ds) {

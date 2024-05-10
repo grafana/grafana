@@ -100,7 +100,7 @@ export default class ResponseParser {
     }
 
     const table = this.getTable(rsp.data, target, {});
-    const list: any[] = [];
+    const list: AnnotationEvent[] = [];
     let titleColIndex = 0;
     let timeColIndex = 0;
     let timeEndColIndex = 0;
