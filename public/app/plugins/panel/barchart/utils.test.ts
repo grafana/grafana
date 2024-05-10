@@ -1,6 +1,13 @@
 import { assertIsDefined } from 'test/helpers/asserts';
 
-import { createTheme, FieldConfig, FieldType, MutableDataFrame, VizOrientation } from '@grafana/data';
+import {
+  createTheme,
+  FieldConfig,
+  FieldType,
+  MutableDataFrame,
+  VizOrientation,
+  FieldConfigSource,
+} from '@grafana/data';
 import {
   LegendDisplayMode,
   TooltipDisplayMode,
@@ -8,11 +15,10 @@ import {
   GraphGradientMode,
   StackingMode,
   SortOrder,
-  FieldConfigSource,
   defaultTimeZone,
 } from '@grafana/schema';
 
-import { FieldConfig as PanelFieldConfig, Options } from './panelcfg.gen';
+import { FieldConfig as PanelFieldConfig } from './panelcfg.gen';
 import { prepSeries, prepConfig, PrepConfigOpts } from './utils';
 
 const fieldConfig: FieldConfigSource<any> = {
@@ -159,53 +165,56 @@ describe('BarChart utils', () => {
   });
 
   describe('prepareGraphableFrames', () => {
-    it.skip('will warn when there is no frames in the response', () => {
-      const result = prepareBarChartDisplayValues([], createTheme(), { stacking: StackingMode.None } as Options);
-      const warning = assertIsDefined('warn' in result ? result : null);
+    it('will warn when there is no frames in the response', () => {
+      const info = prepSeries([], fieldConfig, StackingMode.None, createTheme());
+      const warning = assertIsDefined('warn' in info ? info : null);
 
       expect(warning.warn).toEqual('No data in response');
     });
 
-    it.skip('will warn when there is no data in the response', () => {
-      const result = prepareBarChartDisplayValues(
+    it('will warn when there is no data in the response', () => {
+      const info = prepSeries(
         [
           {
             length: 0,
             fields: [],
           },
         ],
-        createTheme(),
-        { stacking: StackingMode.None } as Options
+        fieldConfig,
+        StackingMode.None,
+        createTheme()
       );
-      const warning = assertIsDefined('warn' in result ? result : null);
+      const warning = assertIsDefined('warn' in info ? info : null);
 
       expect(warning.warn).toEqual('No data in response');
     });
 
-    it.skip('will warn when there is no string or time field', () => {
+    it('will warn when there is no string or time field', () => {
       const df = new MutableDataFrame({
         fields: [
           { name: 'a', type: FieldType.other, values: [1, 2, 3, 4, 5] },
           { name: 'value', values: [1, 2, 3, 4, 5] },
         ],
       });
-      const result = prepareBarChartDisplayValues([df], createTheme(), { stacking: StackingMode.None } as Options);
-      const warning = assertIsDefined('warn' in result ? result : null);
+      df.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
+
+      const info = prepSeries([df], fieldConfig, StackingMode.None, createTheme());
+      const warning = assertIsDefined('warn' in info ? info : null);
       expect(warning.warn).toEqual('Bar charts requires a string or time field');
-      expect(warning).not.toHaveProperty('viz');
     });
 
-    it.skip('will warn when there are no numeric fields in the response', () => {
+    it('will warn when there are no numeric fields in the response', () => {
       const df = new MutableDataFrame({
         fields: [
           { name: 'a', type: FieldType.string, values: ['a', 'b', 'c', 'd', 'e'] },
           { name: 'value', type: FieldType.boolean, values: [true, true, true, true, true] },
         ],
       });
-      const result = prepareBarChartDisplayValues([df], createTheme(), { stacking: StackingMode.None } as Options);
-      const warning = assertIsDefined('warn' in result ? result : null);
+      df.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
+
+      const info = prepSeries([df], fieldConfig, StackingMode.None, createTheme());
+      const warning = assertIsDefined('warn' in info ? info : null);
       expect(warning.warn).toEqual('No numeric fields found');
-      expect(warning).not.toHaveProperty('viz');
     });
 
     it('will convert NaN and Infinty to nulls', () => {
@@ -215,7 +224,6 @@ describe('BarChart utils', () => {
           { name: 'value', values: [-10, NaN, 10, -Infinity, +Infinity] },
         ],
       });
-
       df.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
 
       const info = prepSeries([df], fieldConfig, StackingMode.None, createTheme());
@@ -230,25 +238,10 @@ describe('BarChart utils', () => {
           null,
         ]
       `);
-
-      /*
-      const displayLegendValuesAsc = assertIsDefined('legend' in result ? result : null).legend;
-      const legendField = displayLegendValuesAsc.fields[1];
-
-      expect(legendField.values).toMatchInlineSnapshot(`
-      [
-        -10,
-        null,
-        10,
-        null,
-        null,
-      ]
-    `);
-  */
     });
 
-    it.skip('should remove unit from legend values when stacking is percent', () => {
-      const frame = new MutableDataFrame({
+    it('should not apply % unit to series when stacking is percent', () => {
+      const df = new MutableDataFrame({
         fields: [
           { name: 'string', type: FieldType.string, values: ['a', 'b', 'c'] },
           { name: 'a', values: [-10, 20, 10], state: { calcs: { min: -10 } } },
@@ -256,15 +249,13 @@ describe('BarChart utils', () => {
           { name: 'c', values: [10, 10, 10], state: { calcs: { min: 10 } } },
         ],
       });
+      df.fields.forEach((f) => (f.config.custom = f.config.custom ?? {}));
 
-      const resultAsc = prepareBarChartDisplayValues([frame], createTheme(), {
-        stacking: StackingMode.Percent,
-      } as Options);
-      const displayLegendValuesAsc = assertIsDefined('legend' in resultAsc ? resultAsc : null).legend;
+      const info = prepSeries([df], fieldConfig, StackingMode.Percent, createTheme());
 
-      expect(displayLegendValuesAsc.fields[0].config.unit).toBeUndefined();
-      expect(displayLegendValuesAsc.fields[1].config.unit).toBeUndefined();
-      expect(displayLegendValuesAsc.fields[2].config.unit).toBeUndefined();
+      expect(info.series[0].fields[0].config.unit).toBeUndefined();
+      expect(info.series[0].fields[1].config.unit).toBeUndefined();
+      expect(info.series[0].fields[2].config.unit).toBeUndefined();
     });
   });
 });

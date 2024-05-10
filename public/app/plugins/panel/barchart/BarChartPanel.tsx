@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 
 import { PanelProps, VizOrientation } from '@grafana/data';
+import { PanelDataErrorView } from '@grafana/runtime';
 import {
   TooltipDisplayMode,
   TooltipPlugin2,
@@ -30,7 +31,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
     width,
     height,
     timeZone,
-    // id,
+    id,
     // replaceVariables
   } = props;
 
@@ -128,17 +129,17 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
 
   const plotData = useMemo(() => prepData(vizSeries, info.color), [prepData, vizSeries, info.color]);
 
-  // if ('warn' in info) {
-  //   return (
-  //     <PanelDataErrorView
-  //       panelId={id}
-  //       fieldConfig={fieldConfig}
-  //       data={data}
-  //       message={info.warn}
-  //       needsNumberField={true}
-  //     />
-  //   );
-  // }
+  if (info.warn != null) {
+    return (
+      <PanelDataErrorView
+        panelId={id}
+        fieldConfig={fieldConfig}
+        data={data}
+        message={info.warn}
+        needsNumberField={true}
+      />
+    );
+  }
 
   const legendComp =
     legend.showLegend && hasVisibleLegendSeries(builder, info.series!) ? (

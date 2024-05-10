@@ -119,6 +119,12 @@ export function prepSeries(
       }
     });
 
+    let warn: string | null = null;
+
+    if (fields.length === 1) {
+      warn = 'No numeric fields found';
+    }
+
     frame.fields = fields;
 
     const series = [frame];
@@ -129,7 +135,7 @@ export function prepSeries(
       series,
       _rest,
       color: colorField,
-      warn: null,
+      warn,
     };
   }
 
@@ -137,7 +143,7 @@ export function prepSeries(
     series: [],
     _rest: [],
     color: null,
-    warn: null,
+    warn: 'Bar charts requires a string or time field',
   };
 }
 
