@@ -139,7 +139,11 @@ func (v *APIVersionValidation) Validate(ctx context.Context, p *plugins.Plugin) 
 		if p.Type != plugins.TypeDataSource {
 			return fmt.Errorf("plugin %s has an API version but is not a datasource plugin", p.ID)
 		}
-		if m, _ := regexp.MatchString(`^v([\\d]+)(?:(alpha|beta)([\\d]+))?$`, p.APIVersion); !m {
+		m, err := regexp.MatchString(`^v([\d]+)(?:(alpha|beta)([\d]+))?$`, p.APIVersion)
+		if err != nil {
+			return fmt.Errorf("failed to verify apiVersion %s: %v", p.APIVersion, err)
+		}
+		if !m {
 			return fmt.Errorf("plugin %s has an invalid API version %s", p.ID, p.APIVersion)
 		}
 	}
