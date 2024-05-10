@@ -139,6 +139,17 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
 
   const isEnabled = config?.settings.enabled;
 
+  const onSaveAttempt = (toggleEnabled: boolean) => {
+    reportInteraction('grafana_authentication_ssosettings_save_attempt', {
+      provider,
+      enabled: toggleEnabled ? !isEnabled : isEnabled,
+    });
+
+    if (toggleEnabled) {
+      setValue('enabled', !isEnabled);
+    }
+  };
+
   return (
     <Page.Contents isLoading={isLoading}>
       <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: '600px' }}>
@@ -187,13 +198,13 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
             <Button
               type={'submit'}
               disabled={isSaving}
-              onClick={() => setValue('enabled', !isEnabled)}
+              onClick={() => onSaveAttempt(true)}
               variant={isEnabled ? 'secondary' : undefined}
             >
               {isSaving ? (isEnabled ? 'Disabling...' : 'Saving...') : isEnabled ? 'Disable' : 'Save and enable'}
             </Button>
 
-            <Button type={'submit'} disabled={isSaving} variant={'secondary'}>
+            <Button type={'submit'} disabled={isSaving} variant={'secondary'} onClick={() => onSaveAttempt(false)}>
               {isSaving ? 'Saving...' : 'Save'}
             </Button>
             <LinkButton href={'/admin/authentication'} variant={'secondary'}>

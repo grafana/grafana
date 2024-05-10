@@ -156,21 +156,19 @@ export function getLegacyQueryOptions(
 }
 
 export function getVariableRefresh(variable: VariableModel): VariableRefresh {
-  if (!variable || !variable.hasOwnProperty('refresh')) {
-    return VariableRefresh.never;
+  if (variable?.type === 'custom') {
+    return VariableRefresh.onDashboardLoad;
   }
 
-  const queryVariable = variable as QueryVariableModel;
-
   if (
-    queryVariable.refresh !== VariableRefresh.onTimeRangeChanged &&
-    queryVariable.refresh !== VariableRefresh.onDashboardLoad &&
-    queryVariable.refresh !== VariableRefresh.never
+    !variable ||
+    !('refresh' in variable) ||
+    (variable.refresh !== VariableRefresh.onTimeRangeChanged && variable.refresh !== VariableRefresh.onDashboardLoad)
   ) {
     return VariableRefresh.never;
   }
 
-  return queryVariable.refresh;
+  return variable.refresh;
 }
 
 export function getVariableTypes(): Array<{ label: string; value: VariableType }> {

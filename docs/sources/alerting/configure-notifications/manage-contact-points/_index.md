@@ -110,7 +110,7 @@ Once configured, you can use integrations as part of your contact points to rece
 | ------------------------ | ------------------------- |
 | DingDing                 | `dingding`                |
 | Discord                  | `discord`                 |
-| Email                    | `email`                   |
+| Email[email]             | `email`                   |
 | Google Chat              | `googlechat`              |
 | [Grafana Oncall][oncall] | `oncall`                  |
 | Hipchat                  | `hipchat`                 |
@@ -124,20 +124,27 @@ Once configured, you can use integrations as part of your contact points to rece
 | Sensu                    | `sensu`                   |
 | Sensu Go                 | `sensugo`                 |
 | [Slack][slack]           | `slack`                   |
-| Telegram                 | `telegram`                |
+| Telegram[telegram]       | `telegram`                |
 | Threema                  | `threema`                 |
 | VictorOps                | `victorops`               |
 | [Webhook][webhook]       | `webhook`                 |
 
 {{% docs/reference %}}
-[pagerduty]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/pager-duty"
-[pagerduty]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/pager-duty"
+
+[email]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-email"
+[email]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-email"
 
 [oncall]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-oncall"
 [oncall]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-oncall"
 
+[pagerduty]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/pager-duty"
+[pagerduty]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/pager-duty"
+
 [slack]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-slack"
 [slack]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-slack"
+
+[telegram]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-telegram"
+[telegram]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-telegram"
 
 [webhook]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier"
 [webhook]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier"

@@ -286,6 +286,8 @@ export const Components = {
     queryInspectorButton: 'Query inspector button',
     queryHistoryButton: 'data-testid query-history-button',
     addQuery: 'data-testid query-tab-add-query',
+    queryGroupTopSection: 'data-testid query group top section',
+    addExpression: 'data-testid query-tab-add-expression',
   },
   QueryHistory: {
     queryText: 'Query text',

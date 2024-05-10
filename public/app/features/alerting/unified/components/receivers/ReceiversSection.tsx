@@ -68,12 +68,12 @@ export const ReceiversSection = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  heading: css`
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-  `,
-  description: css`
-    color: ${theme.colors.text.secondary};
-  `,
+  heading: css({
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+  }),
+  description: css({
+    color: theme.colors.text.secondary,
+  }),
 });
