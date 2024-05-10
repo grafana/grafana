@@ -6,13 +6,14 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
-import { SceneGridLayout, VizPanel } from '@grafana/scenes';
+import { SceneGridLayout, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 
 import { DashboardGridItem } from './DashboardGridItem';
+import { DashboardScene } from './DashboardScene';
 import { ToolbarActions } from './NavToolbarActions';
 
 jest.mock('app/features/playlist/PlaylistSrv', () => ({
@@ -30,7 +31,7 @@ jest.mock('app/features/playlist/PlaylistSrv', () => ({
 describe('NavToolbarActions', () => {
   describe('Given an already saved dashboard', () => {
     it('Should show correct buttons when not in editing', async () => {
-      setup();
+      await setup();
 
       expect(screen.queryByText('Save dashboard')).not.toBeInTheDocument();
       expect(screen.queryByLabelText('Add')).not.toBeInTheDocument();
@@ -40,7 +41,7 @@ describe('NavToolbarActions', () => {
 
     it('Should show the correct buttons when playing a playlist', async () => {
       jest.mocked(playlistSrv).useState.mockReturnValueOnce({ isPlaying: true });
-      setup();
+      await setup();
 
       expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.prev)).toBeInTheDocument();
       expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.stop)).toBeInTheDocument();
@@ -51,7 +52,7 @@ describe('NavToolbarActions', () => {
 
     it('Should call the playlist srv when using playlist controls', async () => {
       jest.mocked(playlistSrv).useState.mockReturnValueOnce({ isPlaying: true });
-      setup();
+      await setup();
 
       // Previous dashboard
       expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.prev)).toBeInTheDocument();
@@ -70,14 +71,14 @@ describe('NavToolbarActions', () => {
     });
 
     it('Should hide the playlist controls when it is not playing', async () => {
-      setup();
+      await setup();
       expect(screen.queryByText(selectors.pages.Dashboard.DashNav.playlistControls.prev)).not.toBeInTheDocument();
       expect(screen.queryByText(selectors.pages.Dashboard.DashNav.playlistControls.stop)).not.toBeInTheDocument();
       expect(screen.queryByText(selectors.pages.Dashboard.DashNav.playlistControls.next)).not.toBeInTheDocument();
     });
 
     it('Should show correct buttons when editing', async () => {
-      setup();
+      await setup();
 
       await userEvent.click(await screen.findByText('Edit'));
 
@@ -92,7 +93,7 @@ describe('NavToolbarActions', () => {
     });
 
     it('Should show correct buttons when in settings menu', async () => {
-      setup();
+      await setup();
 
       await userEvent.click(await screen.findByText('Edit'));
       await userEvent.click(await screen.findByText('Settings'));
@@ -105,13 +106,11 @@ describe('NavToolbarActions', () => {
     });
 
     it('Should show correct buttons when editing a new panel', async () => {
+      const { dashboard } = await setup();
       await act(() => {
-        const { dashboard, ...rest } = setup();
-        dashboard.onEnterEditMode();
         const editingPanel = ((dashboard.state.body as SceneGridLayout).state.children[0] as DashboardGridItem).state
           .body as VizPanel;
         dashboard.urlSync?.updateFromUrl({ isNewPanel: '', editPanel: editingPanel.state.key });
-        return { dashboard, ...rest };
       });
 
       expect(await screen.findByText('Save dashboard')).toBeInTheDocument();
@@ -120,15 +119,12 @@ describe('NavToolbarActions', () => {
     });
 
     it('Should show correct buttons when editing an existing panel', async () => {
+      const { dashboard } = await setup();
       await act(() => {
-        const { dashboard, ...rest } = setup();
-        dashboard.onEnterEditMode();
         const editingPanel = ((dashboard.state.body as SceneGridLayout).state.children[0] as DashboardGridItem).state
           .body as VizPanel;
         dashboard.urlSync?.updateFromUrl({ editPanel: editingPanel.state.key });
-        return { dashboard, ...rest };
       });
-
       expect(await screen.findByText('Save dashboard')).toBeInTheDocument();
       expect(await screen.findByText('Discard panel changes')).toBeInTheDocument();
       expect(await screen.findByText('Back to dashboard')).toBeInTheDocument();
@@ -137,7 +133,7 @@ describe('NavToolbarActions', () => {
 
   describe('Given new sharing button', () => {
     it('Should show old share button when newDashboardSharingComponent FF is disabled', async () => {
-      setup();
+      await setup();
 
       expect(await screen.findByText('Share')).toBeInTheDocument();
       const newShareButton = screen.queryByTestId(selectors.pages.Dashboard.DashNav.newShareButton.container);
@@ -145,61 +141,63 @@ describe('NavToolbarActions', () => {
     });
     it('Should show new share button when newDashboardSharingComponent FF is enabled', async () => {
       config.featureToggles.newDashboardSharingComponent = true;
-      setup();
+      await setup();
 
-      expect(screen.queryByTestId(selectors.pages.Dashboard.DashNav.shareButton)).not.toBeInTheDocument();
+      expect(await screen.queryByTestId(selectors.pages.Dashboard.DashNav.shareButton)).not.toBeInTheDocument();
       const newShareButton = screen.getByTestId(selectors.pages.Dashboard.DashNav.newShareButton.container);
       expect(newShareButton).toBeInTheDocument();
     });
   });
 });
 
-let cleanUp = () => {};
-
-function setup() {
-  const dashboard = transformSaveModelToScene({
-    dashboard: {
+async function setup() {
+  return act(() => {
+    const dashboard = new DashboardScene({
+      meta: {
+        canEdit: true,
+        isNew: false,
+        canMakeEditable: true,
+        canSave: true,
+        canShare: true,
+        canStar: true,
+        canAdmin: true,
+        canDelete: true,
+      },
       title: 'hello',
-      uid: 'my-uid',
-      schemaVersion: 30,
-      panels: [
-        {
-          title: 'Panel A',
-          pluginId: 'graph',
-          type: 'graph',
-          gridPos: { x: 0, y: 0, w: 12, h: 8 },
-          id: 1,
-          datasource: 'prometheus',
-          targets: [{ refId: 'A', expr: 'up' }],
-        },
-      ],
-      version: 10,
-    },
-    meta: {
-      canSave: true,
-    },
+      uid: 'dash-1',
+      body: new SceneGridLayout({
+        children: [
+          new DashboardGridItem({
+            key: 'griditem-1',
+            x: 0,
+            body: new VizPanel({
+              title: 'Panel A',
+              key: 'panel-1',
+              pluginId: 'table',
+              $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
+            }),
+          }),
+          new DashboardGridItem({
+            body: new VizPanel({
+              title: 'Panel B',
+              key: 'panel-2',
+              pluginId: 'table',
+            }),
+          }),
+        ],
+      }),
+    });
+
+    const context = getGrafanaContextMock();
+
+    render(
+      <TestProvider grafanaContext={context}>
+        <ToolbarActions dashboard={dashboard} />
+      </TestProvider>
+    );
+
+    const actions = context.chrome.state.getValue().actions;
+
+    return { dashboard, actions };
   });
-
-  // Clear any data layers
-  dashboard.setState({ $data: undefined });
-
-  const initialSaveModel = transformSceneToSaveModel(dashboard);
-  dashboard.setInitialSaveModel(initialSaveModel);
-
-  dashboard.startUrlSync();
-
-  cleanUp();
-  cleanUp = dashboard.activate();
-
-  const context = getGrafanaContextMock();
-
-  render(
-    <TestProvider grafanaContext={context}>
-      <ToolbarActions dashboard={dashboard} />
-    </TestProvider>
-  );
-
-  const actions = context.chrome.state.getValue().actions;
-
-  return { dashboard, actions };
 }
