@@ -1,9 +1,6 @@
 import { config } from '@grafana/runtime';
 
-import { sandboxPluginDependencies } from '../sandbox/plugin_dependencies';
-
 import { SHARED_DEPENDENCY_PREFIX } from './constants';
-import { trackPackageUsage } from './packageMetrics';
 import { SystemJS } from './systemjs';
 
 export function buildImportMap(importMap: Record<string, System.Module>) {
@@ -11,19 +8,47 @@ export function buildImportMap(importMap: Record<string, System.Module>) {
     // Use the 'package:' prefix to act as a URL instead of a bare specifier
     const module_name = `${SHARED_DEPENDENCY_PREFIX}:${key}`;
 
-    // get the module to use
-    const module = config.featureToggles.pluginsAPIMetrics ? trackPackageUsage(importMap[key], key) : importMap[key];
-
-    // expose dependency to SystemJS
-    SystemJS.set(module_name, module);
-
-    // expose dependency to sandboxed plugins
-    // the sandbox handles its own way of plugins api metrics
-    sandboxPluginDependencies.set(key, importMap[key]);
+    // expose dependency to loaders
+    addPreload(module_name, importMap[key]);
 
     acc[key] = module_name;
     return acc;
   }, {});
+}
+
+// TODO: Figure out dynamic fe sandbox dependencies... maybe we can use define here instead?
+function addPreload(id: string, preload: (() => Promise<System.Module>) | System.Module) {
+  if (SystemJS.has(id)) {
+    return false;
+  }
+
+  let resolvedId;
+  try {
+    resolvedId = SystemJS.resolve(id);
+  } catch (e) {
+    console.log(e);
+  }
+
+  if (resolvedId && SystemJS.has(resolvedId)) {
+    return false;
+  }
+
+  const moduleId = resolvedId || id;
+  if (typeof preload === 'function') {
+    SystemJS.register(id, [], (_export) => {
+      return {
+        execute: async function () {
+          const module = await preload();
+          _export(module);
+        },
+      };
+    });
+    return true;
+  }
+
+  SystemJS.set(moduleId, preload);
+
+  return true;
 }
 
 export function isHostedOnCDN(path: string) {
