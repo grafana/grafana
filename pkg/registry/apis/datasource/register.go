@@ -227,7 +227,9 @@ func (b *DataSourceAPIBuilder) getPluginContext(ctx context.Context, uid string)
 	if err != nil {
 		return backend.PluginContext{}, err
 	}
-	return b.contextProvider.PluginContextForDataSource(ctx, instance)
+	pctx, err := b.contextProvider.PluginContextForDataSource(ctx, instance)
+	pctx.APIVersion = b.connectionResourceInfo.APIVersion()
+	return pctx, err
 }
 
 func (b *DataSourceAPIBuilder) GetOpenAPIDefinitions() openapi.GetOpenAPIDefinitions {

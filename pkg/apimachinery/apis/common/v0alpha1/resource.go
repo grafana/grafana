@@ -61,6 +61,10 @@ func (info *ResourceInfo) TypeMeta() metav1.TypeMeta {
 	}
 }
 
+func (info *ResourceInfo) APIVersion() string {
+	return info.version
+}
+
 func (info *ResourceInfo) GroupVersion() schema.GroupVersion {
 	return schema.GroupVersion{
 		Group:   info.group,
