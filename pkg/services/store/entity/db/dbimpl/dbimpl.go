@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/dlmiddlecote/sqlstats"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -143,7 +142,7 @@ func (db *EntityDB) GetEngine() (*xorm.Engine, error) {
 
 	// register the go_sql_stats_connections_* metrics
 	if err := prometheus.Register(sqlstats.NewStatsCollector("unified_storage", db.engine.DB().DB)); err != nil {
-		logger.Warn("Failed to register unified storage sql stats collector", "error", err)
+		db.log.Warn("Failed to register unified storage sql stats collector", "error", err)
 	}
 
 	return db.engine, nil
