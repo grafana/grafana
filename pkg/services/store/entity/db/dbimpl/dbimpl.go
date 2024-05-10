@@ -115,7 +115,7 @@ func (db *EntityDB) GetEngine() (*xorm.Engine, error) {
 		}
 
 		// register sql stat metrics
-		if err := prometheus.Register(sqlstats.NewStatsCollector("unified_storage", db.engine.DB().DB)); err != nil {
+		if err := prometheus.Register(sqlstats.NewStatsCollector("unified_storage", engine.DB().DB)); err != nil {
 			db.log.Warn("Failed to register unified storage sql stats collector", "error", err)
 		}
 
