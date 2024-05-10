@@ -10,7 +10,7 @@ import {
   useFloating,
   useInteractions,
 } from '@floating-ui/react';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { CSSTransition } from 'react-transition-group';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -35,14 +35,14 @@ type VisibilityChangeHandler = (state: boolean) => void | undefined;
 export const Dropdown = React.memo(({ children, overlay, placement, offset, onVisibleChange }: Props) => {
   const [show, setShow] = useState(false);
   const transitionRef = useRef(null);
-  const onVisibilityChangeRef = useRef<VisibilityChangeHandler>();
-  onVisibilityChangeRef.current = onVisibleChange;
 
-  useEffect(() => {
-    if (onVisibilityChangeRef.current) {
-      onVisibilityChangeRef.current(show);
-    }
-  }, [show]);
+  const handleOpenChange = useCallback(
+    (newState: boolean) => {
+      setShow(newState);
+      onVisibleChange?.(newState);
+    },
+    [onVisibleChange]
+  );
 
   // the order of middleware is important!
   const middleware = [
@@ -62,7 +62,7 @@ export const Dropdown = React.memo(({ children, overlay, placement, offset, onVi
   const { context, refs, floatingStyles } = useFloating({
     open: show,
     placement: getPlacement(placement),
-    onOpenChange: setShow,
+    onOpenChange: handleOpenChange,
     middleware,
     whileElementsMounted: autoUpdate,
   });
