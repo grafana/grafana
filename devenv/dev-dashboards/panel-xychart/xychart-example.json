@@ -578,6 +578,15 @@
           },
           "refId": "A",
           "scenarioId": "csv_file"
+        },
+        {
+          "scenarioId": "csv_content",
+          "refId": "B",
+          "datasource": {
+            "uid": "PD8C576611E62080A",
+            "type": "grafana-testdata-datasource"
+          },
+          "csvContent": "x, y, size\n36,-60,88\n38,-120,50\n46,-140,112\n50,-90,123\n54,-120,18"
         }
       ],
       "title": "Bubble Charts",
