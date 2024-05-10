@@ -2,6 +2,8 @@ import { AppEvents } from '@grafana/data';
 import { SceneGridLayout, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
 
+import { PanelEditor, buildPanelEditScene } from '../panel-edit/PanelEditor';
+
 import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardScene } from './DashboardScene';
 import { DashboardRepeatsProcessedEvent } from './types';
@@ -38,6 +40,29 @@ describe('DashboardSceneUrlSync', () => {
       expect(scene.urlSync?.getUrlState().autofitpanels).toBeUndefined();
       (scene.state.body as SceneGridLayout).setState({ UNSAFE_fitPanels: true });
       expect(scene.urlSync?.getUrlState().autofitpanels).toBe('true');
+    });
+
+    it('Should set the right state in the editor when url has isNewPanel', () => {
+      const scene = buildTestScene();
+      scene.onEnterEditMode();
+
+      const editingPanel = ((scene.state.body as SceneGridLayout).state.children[0] as DashboardGridItem).state
+        .body as VizPanel;
+      scene.urlSync?.updateFromUrl({ isNewPanel: '', editPanel: editingPanel.state.key });
+
+      expect(scene.state.editPanel?.state.isNewPanel).toBe(true);
+    });
+
+    it('Should get the autofitpanels from the scene state', () => {
+      const scene = buildTestScene();
+
+      const editingPanel = ((scene.state.body as SceneGridLayout).state.children[0] as DashboardGridItem).state
+        .body as VizPanel;
+      scene.urlSync?.updateFromUrl({ editPanel: editingPanel.state.key });
+
+      expect(scene.urlSync?.getUrlState().isNewPanel).toBeUndefined();
+      (scene.state.editPanel as PanelEditor).setState({ isNewPanel: true });
+      expect(scene.urlSync?.getUrlState().isNewPanel).toBe('true');
     });
   });
 

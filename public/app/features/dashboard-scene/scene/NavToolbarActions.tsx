@@ -415,7 +415,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: isEditingPanel && !isEditingLibraryPanel && !editview && !meta.isNew && !isViewingPanel,
+    condition: isEditingPanel && !isEditingLibraryPanel && !editview && !isViewingPanel,
     render: () => (
       <Button
         onClick={editPanel?.onDiscard}

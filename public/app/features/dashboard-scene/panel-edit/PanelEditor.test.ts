@@ -59,6 +59,63 @@ describe('PanelEditor', () => {
       const updatedPanel = gridItem.state.body as VizPanel;
       expect(updatedPanel?.state.title).toBe('changed title');
     });
+
+    it('should discard changes when unmounted and discard changes is marked as true', () => {
+      pluginToLoad = getTestPanelPlugin({ id: 'text', skipDataQuery: true });
+
+      const panel = new VizPanel({
+        key: 'panel-1',
+        pluginId: 'text',
+      });
+
+      const gridItem = new DashboardGridItem({ body: panel });
+
+      const editScene = buildPanelEditScene(panel);
+      const scene = new DashboardScene({
+        editPanel: editScene,
+        isEditing: true,
+        body: new SceneGridLayout({
+          children: [gridItem],
+        }),
+      });
+
+      const deactivate = activateFullSceneTree(scene);
+
+      editScene.state.vizManager.state.panel.setState({ title: 'changed title' });
+
+      editScene.onDiscard();
+      deactivate();
+
+      const updatedPanel = gridItem.state.body as VizPanel;
+      expect(updatedPanel?.state.title).toBe(panel.state.title);
+    });
+
+    it('should discard a newly added panel', () => {
+      pluginToLoad = getTestPanelPlugin({ id: 'text', skipDataQuery: true });
+
+      const panel = new VizPanel({
+        key: 'panel-1',
+        pluginId: 'text',
+      });
+
+      const gridItem = new DashboardGridItem({ body: panel });
+
+      const editScene = buildPanelEditScene(panel, true);
+      const scene = new DashboardScene({
+        editPanel: editScene,
+        isEditing: true,
+        body: new SceneGridLayout({
+          children: [gridItem],
+        }),
+      });
+
+      editScene.onDiscard();
+      const deactivate = activateFullSceneTree(scene);
+
+      deactivate();
+
+      expect((scene.state.body as SceneGridLayout).state.children.length).toBe(0);
+    });
   });
 
   describe('Handling library panels', () => {

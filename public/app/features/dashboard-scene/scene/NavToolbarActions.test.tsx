@@ -1,4 +1,4 @@
-import { screen, render } from '@testing-library/react';
+import { screen, render, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
@@ -6,11 +6,13 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
+import { SceneGridLayout, VizPanel } from '@grafana/scenes';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 
+import { DashboardGridItem } from './DashboardGridItem';
 import { ToolbarActions } from './NavToolbarActions';
 
 jest.mock('app/features/playlist/PlaylistSrv', () => ({
@@ -101,6 +103,36 @@ describe('NavToolbarActions', () => {
       expect(screen.queryByText(selectors.pages.Dashboard.DashNav.playlistControls.stop)).not.toBeInTheDocument();
       expect(screen.queryByText(selectors.pages.Dashboard.DashNav.playlistControls.next)).not.toBeInTheDocument();
     });
+
+    it('Should show correct buttons when editing a new panel', async () => {
+      await act(() => {
+        const { dashboard, ...rest } = setup();
+        dashboard.onEnterEditMode();
+        const editingPanel = ((dashboard.state.body as SceneGridLayout).state.children[0] as DashboardGridItem).state
+          .body as VizPanel;
+        dashboard.urlSync?.updateFromUrl({ isNewPanel: '', editPanel: editingPanel.state.key });
+        return { dashboard, ...rest };
+      });
+
+      expect(await screen.findByText('Save dashboard')).toBeInTheDocument();
+      expect(await screen.findByText('Discard panel')).toBeInTheDocument();
+      expect(await screen.findByText('Back to dashboard')).toBeInTheDocument();
+    });
+
+    it('Should show correct buttons when editing an existing panel', async () => {
+      await act(() => {
+        const { dashboard, ...rest } = setup();
+        dashboard.onEnterEditMode();
+        const editingPanel = ((dashboard.state.body as SceneGridLayout).state.children[0] as DashboardGridItem).state
+          .body as VizPanel;
+        dashboard.urlSync?.updateFromUrl({ editPanel: editingPanel.state.key });
+        return { dashboard, ...rest };
+      });
+
+      expect(await screen.findByText('Save dashboard')).toBeInTheDocument();
+      expect(await screen.findByText('Discard panel changes')).toBeInTheDocument();
+      expect(await screen.findByText('Back to dashboard')).toBeInTheDocument();
+    });
   });
 
   describe('Given new sharing button', () => {
@@ -130,7 +162,17 @@ function setup() {
       title: 'hello',
       uid: 'my-uid',
       schemaVersion: 30,
-      panels: [],
+      panels: [
+        {
+          title: 'Panel A',
+          pluginId: 'graph',
+          type: 'graph',
+          gridPos: { x: 0, y: 0, w: 12, h: 8 },
+          id: 1,
+          datasource: 'prometheus',
+          targets: [{ refId: 'A', expr: 'up' }],
+        },
+      ],
       version: 10,
     },
     meta: {
