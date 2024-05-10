@@ -25,6 +25,11 @@ jest.mock('@grafana/ui', () => ({
 jest.mock('@grafana/runtime', () => ({
   ___esModule: true,
   ...jest.requireActual('@grafana/runtime'),
+  getTemplateSrv: () => ({
+    replace: (val: string) => {
+      return val;
+    },
+  }),
 }));
 
 describe('Azure Monitor QueryEditor', () => {
