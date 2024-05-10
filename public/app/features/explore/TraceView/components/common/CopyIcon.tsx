@@ -18,21 +18,19 @@ import React, { useState } from 'react';
 
 import { Button, IconName, Tooltip, useStyles2 } from '@grafana/ui';
 
-const getStyles = () => {
-  return {
-    CopyIcon: css`
-      background-color: transparent;
-      border: none;
-      color: inherit;
-      height: 100%;
-      overflow: hidden;
-      &:focus {
-        background-color: rgba(255, 255, 255, 0.25);
-        color: inherit;
-      }
-    `,
-  };
-};
+const getStyles = () => ({
+  CopyIcon: css({
+    backgroundColor: 'transparent',
+    border: 'none',
+    color: 'inherit',
+    height: '100%',
+    overflow: 'hidden',
+    '&:focus': {
+      backgroundCcolor: 'rgba(255, 255, 255, 0.25)',
+      color: 'inherit',
+    },
+  }),
+});
 
 type PropsType = {
   className?: string;

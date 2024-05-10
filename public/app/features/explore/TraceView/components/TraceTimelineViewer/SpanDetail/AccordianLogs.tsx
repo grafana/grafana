@@ -28,39 +28,37 @@ import AccordianKeyValues from './AccordianKeyValues';
 
 import { alignIcon } from '.';
 
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    AccordianLogs: css`
-      label: AccordianLogs;
-      border: 1px solid ${autoColor(theme, '#d8d8d8')};
-      position: relative;
-      margin-bottom: 0.25rem;
-    `,
-    AccordianLogsHeader: css`
-      label: AccordianLogsHeader;
-      background: ${autoColor(theme, '#e4e4e4')};
-      color: inherit;
-      display: block;
-      padding: 0.25rem 0.5rem;
-      &:hover {
-        background: ${autoColor(theme, '#dadada')};
-      }
-    `,
-    AccordianLogsContent: css`
-      label: AccordianLogsContent;
-      background: ${autoColor(theme, '#f0f0f0')};
-      border-top: 1px solid ${autoColor(theme, '#d8d8d8')};
-      padding: 0.5rem 0.5rem 0.25rem 0.5rem;
-    `,
-    AccordianLogsFooter: css`
-      label: AccordianLogsFooter;
-      color: ${autoColor(theme, '#999')};
-    `,
-    AccordianKeyValuesItem: css({
-      marginBottom: theme.spacing(0.5),
-    }),
-  };
-};
+const getStyles = (theme: GrafanaTheme2) => ({
+  AccordianLogs: css({
+    label: 'AccordianLogs',
+    border: `1px solid ${autoColor(theme, '#d8d8d8')}`,
+    position: 'relative',
+    marginBottom: '0.25rem',
+  }),
+  AccordianLogsHeader: css({
+    label: 'AccordianLogsHeader',
+    background: autoColor(theme, '#e4e4e4'),
+    color: 'inherit',
+    display: 'block',
+    padding: '0.25rem 0.5rem',
+    '&:hover': {
+      background: autoColor(theme, '#dadada'),
+    },
+  }),
+  AccordianLogsContent: css({
+    label: 'AccordianLogsContent',
+    background: autoColor(theme, '#f0f0f0'),
+    borderTop: `1px solid ${autoColor(theme, '#d8d8d8')}`,
+    padding: '0.5rem 0.5rem 0.25rem 0.5rem',
+  }),
+  AccordianLogsFooter: css({
+    label: 'AccordianLogsFooter',
+    color: autoColor(theme, '#999'),
+  }),
+  AccordianKeyValuesItem: css({
+    marginBottom: theme.spacing(0.5),
+  }),
+});
 
 export type AccordianLogsProps = {
   interactive?: boolean;

@@ -27,65 +27,63 @@ import KeyValuesTable from './KeyValuesTable';
 
 import { alignIcon } from '.';
 
-export const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    container: css({
-      textOverflow: 'ellipsis',
-    }),
-    header: css`
-      label: header;
-      cursor: pointer;
-      overflow: hidden;
-      padding: 0.25em 0.1em;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      &:hover {
-        background: ${autoColor(theme, '#e8e8e8')};
-      }
-    `,
-    headerEmpty: css`
-      label: headerEmpty;
-      background: none;
-      cursor: initial;
-    `,
-    headerHighContrast: css`
-      label: headerHighContrast;
-      &:hover {
-        background: ${autoColor(theme, '#ddd')};
-      }
-    `,
-    emptyIcon: css`
-      label: emptyIcon;
-      color: ${autoColor(theme, '#aaa')};
-    `,
-    summary: css`
-      label: summary;
-      display: inline;
-      list-style: none;
-      padding: 0;
-    `,
-    summaryItem: css`
-      label: summaryItem;
-      display: inline;
-      margin-left: 0.7em;
-      padding-right: 0.5rem;
-      border-right: 1px solid ${autoColor(theme, '#ddd')};
-      &:last-child {
-        padding-right: 0;
-        border-right: none;
-      }
-    `,
-    summaryLabel: css`
-      label: summaryLabel;
-      color: ${autoColor(theme, '#777')};
-    `,
-    summaryDelim: css`
-      label: summaryDelim;
-      color: ${autoColor(theme, '#bbb')};
-      padding: 0 0.2em;
-    `,
-  };
-};
+export const getStyles = (theme: GrafanaTheme2) => ({
+  container: css({
+    textOverflow: 'ellipsis',
+  }),
+  header: css({
+    label: 'header',
+    cursor: 'pointer',
+    overflow: 'hidden',
+    padding: '0.25em 0.1em',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    '&:hover': {
+      background: autoColor(theme, '#e8e8e8'),
+    },
+  }),
+  headerEmpty: css({
+    label: 'headerEmpty',
+    background: 'none',
+    cursor: 'initial',
+  }),
+  headerHighContrast: css({
+    label: 'headerHighContrast',
+    '&:hover': {
+      background: autoColor(theme, '#ddd'),
+    },
+  }),
+  emptyIcon: css({
+    label: 'emptyIcon',
+    color: autoColor(theme, '#aaa'),
+  }),
+  summary: css({
+    label: 'summary',
+    display: 'inline',
+    listStyle: 'none',
+    padding: 0,
+  }),
+  summaryItem: css({
+    label: 'summaryItem',
+    display: 'inline',
+    marginLeft: '0.7em',
+    paddingRight: '0.5rem',
+    borderRight: `1px solid ${autoColor(theme, '#ddd')}`,
+    '&:last-child': {
+      paddingRight: 0,
+      borderRight: 'none',
+    },
+  }),
+  summaryLabel: css({
+    label: 'summaryLabel',
+    color: autoColor(theme, '#777'),
+  }),
+  summaryDelim: css({
+    label: 'summaryDelim',
+    color: autoColor(theme, '#bbb'),
+    padding: '0 0.2em',
+  }),
+});
 
 export type AccordianKeyValuesProps = {
   className?: string | TNil;

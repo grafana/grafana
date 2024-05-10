@@ -26,10 +26,10 @@ import BreakableText from './BreakableText';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    TraceName: css`
-      label: TraceName;
-      font-size: ${theme.typography.size.lg};
-    `,
+    TraceName: css({
+      label: 'TraceName',
+      fontSize: theme.typography.size.lg,
+    }),
   };
 };
 

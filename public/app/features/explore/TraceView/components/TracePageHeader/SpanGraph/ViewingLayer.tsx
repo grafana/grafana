@@ -30,60 +30,61 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   // Need this cause emotion will merge emotion generated classes into single className if used with cx from emotion
   // package and the selector won't work
   const ViewingLayerResetZoomHoverClassName = 'JaegerUiComponents__ViewingLayerResetZoomHoverClassName';
-  const ViewingLayerResetZoom = css`
-    label: ViewingLayerResetZoom;
-    display: none;
-    position: absolute;
-    right: 1%;
-    top: 10%;
-    z-index: 1;
-  `;
+  const ViewingLayerResetZoom = css({
+    label: 'ViewingLayerResetZoom',
+    display: 'none',
+    position: 'absolute',
+    right: '1%',
+    top: '10%',
+    zIndex: 1,
+  });
+
   return {
-    ViewingLayer: css`
-      label: ViewingLayer;
-      cursor: vertical-text;
-      position: relative;
-      z-index: 1;
-      &:hover > .${ViewingLayerResetZoomHoverClassName} {
-        display: unset;
-      }
-    `,
-    ViewingLayerGraph: css`
-      label: ViewingLayerGraph;
-      border: 1px solid ${autoColor(theme, '#999')};
+    ViewingLayer: css({
+      label: 'ViewingLayer',
+      cursor: 'vertical-text',
+      position: 'relative',
+      zIndex: 1,
+      [`&:hover > .${ViewingLayerResetZoomHoverClassName}`]: {
+        display: 'unset',
+      },
+    }),
+    ViewingLayerGraph: css({
+      label: 'ViewingLayerGraph',
+      border: `1px solid ${autoColor(theme, '#999')}`,
       /* need !important here to overcome something from semantic UI */
-      overflow: visible !important;
-      position: relative;
-      transform-origin: 0 0;
-      width: 100%;
-    `,
-    ViewingLayerInactive: css`
-      label: ViewingLayerInactive;
-      fill: ${autoColor(theme, 'rgba(214, 214, 214, 0.5)')};
-    `,
-    ViewingLayerCursorGuide: css`
-      label: ViewingLayerCursorGuide;
-      stroke: ${autoColor(theme, '#f44')};
-      stroke-width: 1;
-    `,
-    ViewingLayerDraggedShift: css`
-      label: ViewingLayerDraggedShift;
-      fill-opacity: 0.2;
-    `,
-    ViewingLayerDrag: css`
-      label: ViewingLayerDrag;
-      fill: ${autoColor(theme, '#44f')};
-    `,
-    ViewingLayerFullOverlay: css`
-      label: ViewingLayerFullOverlay;
-      bottom: 0;
-      cursor: col-resize;
-      left: 0;
-      position: fixed;
-      right: 0;
-      top: 0;
-      user-select: none;
-    `,
+      overflow: 'visible !important',
+      position: 'relative',
+      transformOrigin: '0 0',
+      width: '100%',
+    }),
+    ViewingLayerInactive: css({
+      label: 'ViewingLayerInactive',
+      fill: autoColor(theme, 'rgba(214, 214, 214, 0.5)'),
+    }),
+    ViewingLayerCursorGuide: css({
+      label: 'ViewingLayerCursorGuide',
+      stroke: autoColor(theme, '#f44'),
+      strokeWidth: 1,
+    }),
+    ViewingLayerDraggedShift: css({
+      label: 'ViewingLayerDraggedShift',
+      fillOpacity: 0.2,
+    }),
+    ViewingLayerDrag: css({
+      label: 'ViewingLayerDrag',
+      fill: autoColor(theme, '#44f'),
+    }),
+    ViewingLayerFullOverlay: css({
+      label: 'ViewingLayerFullOverlay',
+      bottom: 0,
+      cursor: 'col-resize',
+      left: 0,
+      position: 'fixed',
+      right: 0,
+      top: 0,
+      userSelect: 'none',
+    }),
     ViewingLayerResetZoom,
     ViewingLayerResetZoomHoverClassName,
   };

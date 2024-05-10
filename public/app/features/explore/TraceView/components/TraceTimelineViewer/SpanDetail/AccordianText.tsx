@@ -27,20 +27,18 @@ import TextList from './TextList';
 
 import { alignIcon } from '.';
 
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    header: css`
-      cursor: pointer;
-      overflow: hidden;
-      padding: 0.25em 0.1em;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      &:hover {
-        background: ${autoColor(theme, '#e8e8e8')};
-      }
-    `,
-  };
-};
+const getStyles = (theme: GrafanaTheme2) => ({
+  header: css({
+    cursor: 'pointer',
+    overflow: 'hidden',
+    padding: '0.25em 0.1em',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    '&:hover': {
+      background: autoColor(theme, '#e8e8e8'),
+    },
+  }),
+});
 
 type AccordianTextProps = {
   className?: string | TNil;

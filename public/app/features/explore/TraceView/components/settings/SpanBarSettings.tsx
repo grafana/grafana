@@ -98,13 +98,13 @@ export const SpanBarSection = ({ options, onOptionsChange }: DataSourcePluginOpt
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  infoText: css`
-    label: infoText;
-    padding-bottom: ${theme.spacing(2)};
-    color: ${theme.colors.text.secondary};
-  `,
-  row: css`
-    label: row;
-    align-items: baseline;
-  `,
+  infoText: css({
+    label: 'infoText',
+    paddingBottom: theme.spacing(2),
+    color: theme.colors.text.secondary,
+  }),
+  row: css({
+    label: 'row',
+    alignItems: 'baseline',
+  }),
 });

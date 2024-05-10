@@ -27,56 +27,54 @@ import jsonMarkup from './jsonMarkup';
 
 const copyIconClassName = 'copyIcon';
 
-export const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    KeyValueTable: css`
-      label: KeyValueTable;
-      background: ${autoColor(theme, '#fff')};
-      border: 1px solid ${autoColor(theme, '#ddd')};
-      margin-bottom: 0.5rem;
-      max-height: 450px;
-      overflow: auto;
-    `,
-    table: css({
-      width: '100%',
-    }),
-    body: css`
-      label: body;
-      vertical-align: baseline;
-    `,
-    row: css`
-      label: row;
-      & > td {
-        padding: 0rem 0.5rem;
-        height: 30px;
-      }
-      &:nth-child(2n) > td {
-        background: ${autoColor(theme, '#f5f5f5')};
-      }
-      &:not(:hover) .${copyIconClassName} {
-        visibility: hidden;
-      }
-    `,
-    keyColumn: css`
-      label: keyColumn;
-      color: ${autoColor(theme, '#888')};
-      white-space: pre;
-      width: 125px;
-    `,
-    copyColumn: css`
-      label: copyColumn;
-      text-align: right;
-    `,
-    linkIcon: css`
-      label: linkIcon;
-      vertical-align: middle;
-      font-weight: bold;
-    `,
-    jsonTable: css({
-      display: 'inline-block',
-    }),
-  };
-};
+export const getStyles = (theme: GrafanaTheme2) => ({
+  KeyValueTable: css({
+    label: 'KeyValueTable',
+    background: autoColor(theme, '#fff'),
+    border: `1px solid ${autoColor(theme, '#ddd')}`,
+    marginBottom: '0.5rem',
+    maxHeight: '450px',
+    overflow: 'auto',
+  }),
+  table: css({
+    width: '100%',
+  }),
+  body: css({
+    label: 'body',
+    verticaAlign: 'baseline',
+  }),
+  row: css({
+    label: 'row',
+    '& > td': {
+      padding: '0rem 0.5rem',
+      height: '30px',
+    },
+    '&:nth-child(2n) > td': {
+      background: autoColor(theme, '#f5f5f5'),
+    },
+    [`&:not(:hover) .${copyIconClassName}`]: {
+      visibility: 'hidden',
+    },
+  }),
+  keyColumn: css({
+    label: 'keyColumn',
+    color: autoColor(theme, '#888'),
+    whiteSpace: 'pre',
+    width: '125px',
+  }),
+  copyColumn: css({
+    label: 'copyColumn',
+    textAlign: 'right',
+  }),
+  linkIcon: css({
+    label: 'linkIcon',
+    verticalAlign: 'middle',
+    fontWeight: 'bold',
+  }),
+  jsonTable: css({
+    display: 'inline-block',
+  }),
+});
 
 const jsonObjectOrArrayStartRegex = /^(\[|\{)/;
 

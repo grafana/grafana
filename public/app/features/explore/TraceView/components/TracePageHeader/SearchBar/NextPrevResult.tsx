@@ -228,27 +228,22 @@ export const getStyles = (theme: GrafanaTheme2, showSpanFilters: boolean) => {
   });
 
   return {
-    buttons: css`
-      display: inline-flex;
-      gap: 4px;
-    `,
-    buttonsDisabled: css`
-      cursor: not-allowed;
-    `,
-    button: css`
-      ${buttonStyles.button};
-    `,
-    buttonDisabled: css`
-      ${buttonStyles.disabled};
-      pointer-events: none;
-    `,
-    matches: css`
-      margin-right: ${theme.spacing(2)};
-      text-wrap: nowrap;
-    `,
-    tooltip: css`
-      color: #aaa;
-      margin: 0 0 0 5px;
-    `,
+    buttons: css({
+      display: 'inline-flex',
+      gap: '4px',
+    }),
+    buttonsDisabled: css({
+      cursor: 'not-allowed',
+    }),
+    button: buttonStyles.button,
+    buttonDisabled: css(buttonStyles.disabled, { pointerEvents: 'none' }),
+    matches: css({
+      marginRight: theme.spacing(2),
+      textWrap: 'nowrap',
+    }),
+    tooltip: css({
+      color: '#aaa',
+      margin: '0 0 0 5px',
+    }),
   };
 };

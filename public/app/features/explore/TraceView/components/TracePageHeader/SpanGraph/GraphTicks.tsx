@@ -17,15 +17,13 @@ import React from 'react';
 
 import { useStyles2 } from '@grafana/ui';
 
-const getStyles = () => {
-  return {
-    GraphTick: css`
-      label: GraphTick;
-      stroke: #aaa;
-      stroke-width: 1px;
-    `,
-  };
-};
+const getStyles = () => ({
+  GraphTick: css({
+    label: 'GraphTick',
+    stroke: '#aaa',
+    strokeWidth: '1px',
+  }),
+});
 
 export type GraphTicksProps = {
   numTicks: number;

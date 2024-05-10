@@ -19,22 +19,20 @@ import { useStyles2 } from '@grafana/ui';
 
 import { formatDuration } from '../../utils/date';
 
-const getStyles = () => {
-  return {
-    TickLabels: css`
-      label: TickLabels;
-      height: 1rem;
-      position: relative;
-    `,
-    TickLabelsLabel: css`
-      label: TickLabelsLabel;
-      color: #717171;
-      font-size: 0.7rem;
-      position: absolute;
-      user-select: none;
-    `,
-  };
-};
+const getStyles = () => ({
+  TickLabels: css({
+    label: 'TickLabels',
+    height: '1rem',
+    position: 'relative',
+  }),
+  TickLabelsLabel: css({
+    label: 'TickLabelsLabel',
+    color: '#717171',
+    fontSize: '0.7rem',
+    position: 'absolute',
+    userSelect: 'none',
+  }),
+});
 
 type TickLabelsProps = {
   numTicks: number;

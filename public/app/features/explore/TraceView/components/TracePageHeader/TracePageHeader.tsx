@@ -181,36 +181,36 @@ TracePageHeader.displayName = 'TracePageHeader';
 
 const getNewStyles = (theme: GrafanaTheme2) => {
   return {
-    TracePageHeaderBack: css`
-      label: TracePageHeaderBack;
-      align-items: center;
-      align-self: stretch;
-      background-color: #fafafa;
-      border-bottom: 1px solid #ddd;
-      border-right: 1px solid #ddd;
-      color: inherit;
-      display: flex;
-      font-size: 1.4rem;
-      padding: 0 1rem;
-      margin-bottom: -1px;
-      &:hover {
-        background-color: #f0f0f0;
-        border-color: #ccc;
-      }
-    `,
+    TracePageHeaderBack: css({
+      label: 'TracePageHeaderBack',
+      alignItems: 'center',
+      alignSelf: 'stretch',
+      backgroundColor: '#fafafa',
+      borderBottom: '1px solid #ddd',
+      borderRight: '1px solid #ddd',
+      color: 'inherit',
+      display: 'flex',
+      fontSize: '1.4rem',
+      padding: '0 1rem',
+      marginBottom: '-1px',
+      '&:hover': {
+        backgroundColor: '#f0f0f0',
+        borderColor: '#ccc',
+      },
+    }),
     TracePageHeaderOverviewItemValueDetail: cx(
-      css`
-        label: TracePageHeaderOverviewItemValueDetail;
-        color: #aaa;
-      `,
+      css({
+        label: 'TracePageHeaderOverviewItemValueDetail',
+        color: '#aaa',
+      }),
       'trace-item-value-detail'
     ),
-    TracePageHeaderOverviewItemValue: css`
-      label: TracePageHeaderOverviewItemValue;
-      &:hover > .trace-item-value-detail {
-        color: unset;
-      }
-    `,
+    TracePageHeaderOverviewItemValue: css({
+      label: 'TracePageHeaderOverviewItemValue',
+      '&:hover > .trace-item-value-detail': {
+        color: 'unset',
+      },
+    }),
     header: css({
       label: 'TracePageHeader',
       backgroundColor: theme.colors.background.primary,

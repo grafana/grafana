@@ -42,78 +42,78 @@ import SpanFlameGraph from './SpanFlameGraph';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    header: css`
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 0 1rem;
-      margin-bottom: 0.25rem;
-    `,
-    listWrapper: css`
-      overflow: hidden;
-    `,
+    header: css({
+      display: 'flex',
+      alignItems: 'flex-start',
+      justifyContent: 'space-between',
+      gap: '0 1rem',
+      marginBottom: '0.25rem',
+    }),
+    listWrapper: css({
+      overflow: 'hidden',
+    }),
     list: css({
       textAlign: 'right',
     }),
     operationName: css({
       margin: 0,
     }),
-    debugInfo: css`
-      label: debugInfo;
-      display: block;
-      letter-spacing: 0.25px;
-      margin: 0.5em 0 -0.75em;
-      text-align: right;
-    `,
-    debugLabel: css`
-      label: debugLabel;
-      &::before {
-        color: ${autoColor(theme, '#bbb')};
-        content: attr(data-label);
-      }
-    `,
-    debugValue: css`
-      label: debugValue;
-      background-color: inherit;
-      border: none;
-      color: ${autoColor(theme, '#888')};
-      cursor: pointer;
-      &:hover {
-        color: ${autoColor(theme, '#333')};
-      }
-    `,
-    AccordianWarnings: css`
-      label: AccordianWarnings;
-      background: ${autoColor(theme, '#fafafa')};
-      border: 1px solid ${autoColor(theme, '#e4e4e4')};
-      margin-bottom: 0.25rem;
-    `,
-    AccordianWarningsHeader: css`
-      label: AccordianWarningsHeader;
-      background: ${autoColor(theme, '#fff7e6')};
-      padding: 0.25rem 0.5rem;
-      &:hover {
-        background: ${autoColor(theme, '#ffe7ba')};
-      }
-    `,
-    AccordianWarningsHeaderOpen: css`
-      label: AccordianWarningsHeaderOpen;
-      border-bottom: 1px solid ${autoColor(theme, '#e8e8e8')};
-    `,
-    AccordianWarningsLabel: css`
-      label: AccordianWarningsLabel;
-      color: ${autoColor(theme, '#d36c08')};
-    `,
+    debugInfo: css({
+      label: 'debugInfo',
+      display: 'block',
+      letterSpacing: '0.25px',
+      margin: '0.5em 0 -0.75em',
+      textAlign: 'right',
+    }),
+    debugLabel: css({
+      label: 'debugLabel',
+      '&::before': {
+        color: autoColor(theme, '#bbb'),
+        content: 'attr(data-label)',
+      },
+    }),
+    debugValue: css({
+      label: 'debugValue',
+      backgroundColor: 'inherit',
+      border: 'none',
+      color: autoColor(theme, '#888'),
+      cursor: 'pointer',
+      '&:hover': {
+        color: autoColor(theme, '#333'),
+      },
+    }),
+    AccordianWarnings: css({
+      label: 'AccordianWarnings',
+      background: autoColor(theme, '#fafafa'),
+      border: `1px solid ${autoColor(theme, '#e4e4e4')}`,
+      marginBottom: '0.25rem',
+    }),
+    AccordianWarningsHeader: css({
+      label: 'AccordianWarningsHeader',
+      background: autoColor(theme, '#fff7e6'),
+      padding: '0.25rem 0.5rem',
+      '&:hover': {
+        background: autoColor(theme, '#ffe7ba'),
+      },
+    }),
+    AccordianWarningsHeaderOpen: css({
+      label: 'AccordianWarningsHeaderOpen',
+      borderBottom: `1px solid ${autoColor(theme, '#e8e8e8')}`,
+    }),
+    AccordianWarningsLabel: css({
+      label: 'AccordianWarningsLabel',
+      color: autoColor(theme, '#d36c08'),
+    }),
     AccordianKeyValuesItem: css({
       marginBottom: theme.spacing(0.5),
     }),
-    Textarea: css`
-      word-break: break-all;
-      white-space: pre;
-    `,
-    LinkIcon: css`
-      font-size: 1.5em;
-    `,
+    Textarea: css({
+      wordBreak: 'break-all',
+      whiteSpace: 'pre',
+    }),
+    LinkIcon: css({
+      fontSize: '1.5em',
+    }),
   };
 };
 

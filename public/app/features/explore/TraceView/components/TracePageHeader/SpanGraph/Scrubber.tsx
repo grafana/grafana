@@ -18,59 +18,57 @@ import React from 'react';
 
 import { useStyles2 } from '@grafana/ui';
 
-export const getStyles = () => {
-  return {
-    ScrubberHandleExpansion: cx(
-      css`
-        label: ScrubberHandleExpansion;
-        cursor: col-resize;
-        fill-opacity: 0;
-        fill: #44f;
-      `,
-      'scrubber-handle-expansion'
-    ),
-    ScrubberHandle: cx(
-      css`
-        label: ScrubberHandle;
-        cursor: col-resize;
-        fill: #555;
-      `,
-      'scrubber-handle'
-    ),
-    ScrubberLine: cx(
-      css`
-        label: ScrubberLine;
-        pointer-events: none;
-        stroke: #555;
-      `,
-      'scrubber-line'
-    ),
-    ScrubberDragging: css`
-      label: ScrubberDragging;
-      & .scrubber-handle-expansion {
-        fill-opacity: 1;
-      }
-      & .scrubber-handle {
-        fill: #44f;
-      }
-      & > .scrubber-line {
-        stroke: #44f;
-      }
-    `,
-    ScrubberHandles: css`
-      label: ScrubberHandles;
-      &:hover > .scrubber-handle-expansion {
-        fill-opacity: 1;
-      }
-      &:hover > .scrubber-handle {
-        fill: #44f;
-      }
-      &:hover + .scrubber.line {
-        stroke: #44f;
-      }
-    `,
-  };
-};
+export const getStyles = () => ({
+  ScrubberHandleExpansion: cx(
+    css({
+      label: 'ScrubberHandleExpansion',
+      cursor: 'col-resize',
+      fillOpacity: 0,
+      fill: '#44f',
+    }),
+    'scrubber-handle-expansion'
+  ),
+  ScrubberHandle: cx(
+    css({
+      label: 'ScrubberHandle',
+      cursor: 'col-resize',
+      fill: '#555',
+    }),
+    'scrubber-handle'
+  ),
+  ScrubberLine: cx(
+    css({
+      label: 'ScrubberLine',
+      pointerEvents: 'none',
+      stroke: '#555',
+    }),
+    'scrubber-line'
+  ),
+  ScrubberDragging: css({
+    label: 'ScrubberDragging',
+    '& .scrubber-handle-expansion': {
+      fillOpacity: 1,
+    },
+    '& .scrubber-handle': {
+      fill: '#44f',
+    },
+    '& > .scrubber-line': {
+      stroke: '#44f',
+    },
+  }),
+  ScrubberHandles: css({
+    label: 'ScrubberHandles',
+    '&:hover > .scrubber-handle-expansion': {
+      fillOpacity: 1,
+    },
+    '&:hover > .scrubber-handle': {
+      fill: '#44f',
+    },
+    '&:hover + .scrubber.line': {
+      stroke: '#44f',
+    },
+  }),
+});
 
 export type ScrubberProps = {
   isDragging: boolean;

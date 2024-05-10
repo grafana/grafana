@@ -29,31 +29,31 @@ import TimelineViewingLayer from './TimelineViewingLayer';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    TimelineHeaderRow: css`
-      label: TimelineHeaderRow;
-      background: ${autoColor(theme, '#ececec')};
-      border-bottom: 1px solid ${autoColor(theme, '#ccc')};
-      height: 38px;
-      line-height: 38px;
-      width: 100%;
-      z-index: 4;
-      position: relative;
-    `,
-    TimelineHeaderRowTitle: css`
-      label: TimelineHeaderRowTitle;
-      flex: 1;
-      overflow: hidden;
-      margin: 0;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    `,
-    TimelineHeaderWrapper: css`
-      label: TimelineHeaderWrapper;
-      align-items: center;
-      display: flex;
-      padding-left: ${theme.spacing(1)};
-      padding-right: ${theme.spacing(1)};
-    `,
+    TimelineHeaderRow: css({
+      label: 'TimelineHeaderRow',
+      background: autoColor(theme, '#ececec'),
+      borderBottom: `1px solid ${autoColor(theme, '#ccc')}`,
+      height: '38px',
+      lineHeight: '38px',
+      width: '100%',
+      zIndex: 4,
+      position: 'relative',
+    }),
+    TimelineHeaderRowTitle: css({
+      label: 'TimelineHeaderRowTitle',
+      flex: 1,
+      overflow: 'hidden',
+      margin: 0,
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+    }),
+    TimelineHeaderWrapper: css({
+      label: 'TimelineHeaderWrapper',
+      alignItems: 'center',
+      display: 'flex',
+      paddingLeft: theme.spacing(1),
+      paddingRight: theme.spacing(1),
+    }),
   };
 };
 

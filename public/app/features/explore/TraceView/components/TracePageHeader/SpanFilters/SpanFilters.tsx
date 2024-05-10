@@ -488,46 +488,44 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
 
 SpanFilters.displayName = 'SpanFilters';
 
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    container: css`
-      label: SpanFilters;
-      margin: 0.5em 0 -${theme.spacing(1)} 0;
-      z-index: 5;
+const getStyles = (theme: GrafanaTheme2) => ({
+  container: css({
+    label: 'SpanFilters',
+    margin: `0.5em 0 -${theme.spacing(1)} 0`,
+    zIndex: 5,
 
-      & > div {
-        border-left: none;
-        border-right: none;
-      }
-    `,
-    collapseLabel: css`
-      svg {
-        color: #aaa;
-        margin: -2px 0 0 10px;
-      }
-    `,
-    flexContainer: css({
-      display: 'flex',
-      justifyContent: 'space-between',
-    }),
-    addTag: css({
-      marginLeft: theme.spacing(1),
-    }),
-    intervalInput: css`
-      margin: 0 -4px 0 0;
-    `,
-    tagsRow: css`
-      margin: -4px 0 0 0;
-    `,
-    tagValues: css`
-      max-width: 200px;
-    `,
-    nextPrevResult: css`
-      flex: 1;
-      align-items: center;
-      display: flex;
-      justify-content: flex-end;
-      margin-right: ${theme.spacing(1)};
-    `,
-  };
-};
+    '& > div': {
+      borderLeft: 'none',
+      borderRight: 'none',
+    },
+  }),
+  collapseLabel: css({
+    svg: {
+      color: '#aaa',
+      margin: '-2px 0 0 10px',
+    },
+  }),
+  flexContainer: css({
+    display: 'flex',
+    justifyContent: 'space-between',
+  }),
+  addTag: css({
+    marginLeft: theme.spacing(1),
+  }),
+  intervalInput: css({
+    margin: '0 -4px 0 0',
+  }),
+  tagsRow: css({
+    margin: '-4px 0 0 0',
+  }),
+  tagValues: css({
+    maxWidth: '200px',
+  }),
+  nextPrevResult: css({
+    flex: 1,
+    alignItems: 'center',
+    display: 'flex',
+    justifyContent: 'flex-end',
+    marginRight: theme.spacing(1),
+  }),
+});

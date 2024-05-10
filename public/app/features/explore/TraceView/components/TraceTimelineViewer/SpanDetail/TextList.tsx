@@ -18,27 +18,25 @@ import * as React from 'react';
 
 import { useStyles2 } from '@grafana/ui';
 
-const getStyles = () => {
-  return {
-    TextList: css`
-      max-height: 450px;
-      overflow: auto;
-    `,
-    List: css`
-      width: 100%;
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    `,
-    item: css`
-      padding: 0.25rem 0.5rem;
-      vertical-align: top;
-      &:nth-child(2n) {
-        background: #f5f5f5;
-      }
-    `,
-  };
-};
+const getStyles = () => ({
+  TextList: css({
+    maxHeight: '450px',
+    overflow: 'auto',
+  }),
+  List: css({
+    width: '100%',
+    listStyle: 'none',
+    padding: 0,
+    margin: 0,
+  }),
+  item: css({
+    padding: '0.25rem 0.5rem',
+    verticalAlign: 'top',
+    '&:nth-child(2n)': {
+      background: '#f5f5f5',
+    },
+  }),
+});
 
 type TextListProps = {
   data: string[];
