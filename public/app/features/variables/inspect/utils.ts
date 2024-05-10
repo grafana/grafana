@@ -1,5 +1,5 @@
 import { DataLinkBuiltInVars } from '@grafana/data';
-import { SceneVariable, SceneVariableState } from '@grafana/scenes';
+import { SceneVariable, SceneVariableState, isSceneObject } from '@grafana/scenes';
 import { Graph } from 'app/core/utils/dag';
 import { mapSet } from 'app/core/utils/set';
 import { stringifyPanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -23,7 +23,7 @@ export interface GraphEdge {
 }
 
 function isSceneVariableArray(variables: unknown): variables is Array<SceneVariable<SceneVariableState>> {
-  return Array.isArray(variables) && isSceneVariableInstance(variables[0]);
+  return Array.isArray(variables) && isSceneObject(variables[0]) && isSceneVariableInstance(variables[0]);
 }
 
 export const createDependencyNodes = (
