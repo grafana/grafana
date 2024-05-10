@@ -25,7 +25,8 @@ import { TableStyles } from './styles';
 import { CellColors, TableFieldOptions, TableFilterActionCallback } from './types';
 import { calculateAroundPointThreshold, getCellColors, isPointTimeValAroundTableTimeVal } from './utils';
 
-
+const LINE_SCALE_FACTOR = 1.12;
+const LOW_LINE_PAD = 32;
 interface RowsListProps {
   data: DataFrame;
   rows: Row[];
@@ -420,8 +421,6 @@ function getTextBoundingBox(
     }
 
     let lineNumber = lines.length;
-
-    // console.log(lineNumber);
     // if (measure) {
     // Retreive an estimated number of lines
     // TODO: This still needs some tweaking
@@ -432,7 +431,13 @@ function getTextBoundingBox(
 
     // Estimated height would be lines multiplied
     // by the line height
-    let height = (lineNumber * lineHeight) + 48;
+    let height = 38;
+    if (lineNumber > 5) {
+      height = lineNumber * lineHeight * LINE_SCALE_FACTOR;
+    }
+    else {
+      height = (lineNumber * lineHeight) + LOW_LINE_PAD;
+    }
 
     return { width, height };
   }
