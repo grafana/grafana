@@ -50,27 +50,59 @@ export interface EssentialsConfigurationData {
   isLoading: boolean;
 }
 
-export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
+function useGetConfigurationForApps() {
+  // configuration checks for alerting
   const { contactPoints, isLoading: isLoadingContactPoints } = useGetContactPoints();
   const { defaultContactpoint, isLoading: isLoadingDefaultContactPoint } = useGetDefaultContactPoint();
+  const { isDone: isCreateAlertRuleDone, isLoading: isLoadingAlertCreatedDone } = useIsCreateAlertRuleDone();
+  // configuration checks for incidents
   const {
     isChatOpsInstalled,
     isInstalled: isIncidentsInstalled,
     isLoading: isIncidentsConfigLoading,
   } = useGetIncidentPluginConfig();
+  // configuration checks for oncall
   const onCallOptions = useOnCallOptions();
   const {
     is_chatops_connected,
     is_integration_chatops_connected,
     isLoading: isOnCallConfigLoading,
   } = useOnCallChatOpsConnections();
-  const { isDone: isCreateAlertRuleDone, isLoading: isLoadingAlertCreatedDone } = useIsCreateAlertRuleDone();
+  // check if any of the configurations are loading
   const isLoading =
     isLoadingContactPoints ||
     isLoadingDefaultContactPoint ||
     isLoadingAlertCreatedDone ||
     isIncidentsConfigLoading ||
     isOnCallConfigLoading;
+
+  return {
+    alertingConfig: {
+      contactPoints,
+      defaultContactpoint,
+      isCreateAlertRuleDone,
+    },
+    incidents: {
+      isChatOpsInstalled,
+      isIncidentsInstalled,
+    },
+    onCall: {
+      onCallOptions,
+      is_chatops_connected,
+      is_integration_chatops_connected,
+    },
+    isLoading,
+  };
+}
+
+export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
+  const {
+    alertingConfig: { contactPoints, defaultContactpoint, isCreateAlertRuleDone },
+    incidents: { isChatOpsInstalled, isIncidentsInstalled },
+    onCall: { onCallOptions, is_chatops_connected, is_integration_chatops_connected },
+    isLoading,
+  } = useGetConfigurationForApps();
+
   function onIntegrationClick(integrationId: string, url: string) {
     const urlToGoWithIntegration = createUrl(url + integrationId, {
       returnTo: location.pathname + location.search,
