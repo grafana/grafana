@@ -1,21 +1,12 @@
-import {
-  AnyAction,
-  configureStore,
-  EnhancedStore,
-  Reducer,
-  getDefaultMiddleware,
-  CombinedState,
-  PreloadedState,
-} from '@reduxjs/toolkit';
-import { NoInfer } from '@reduxjs/toolkit/dist/tsHelpers';
-import { Dispatch, Middleware, MiddlewareAPI } from 'redux';
-import thunk, { ThunkMiddleware } from 'redux-thunk';
+import { AnyAction, configureStore, EnhancedStore, Reducer, Tuple } from '@reduxjs/toolkit';
+import { Middleware, StoreEnhancer, UnknownAction } from 'redux';
+import { thunk, ThunkDispatch, ThunkMiddleware } from 'redux-thunk';
 
 import { setStore } from '../../../app/store/store';
 import { StoreState } from '../../../app/types';
 
 export interface ReduxTesterGiven<State> {
-  givenRootReducer: (rootReducer: Reducer<State>) => ReduxTesterWhen<State>;
+  givenRootReducer: (rootReducer: Reducer<State, UnknownAction, Partial<NoInfer<State>>>) => ReduxTesterWhen<State>;
 }
 
 export interface ReduxTesterWhen<State> {
@@ -38,36 +29,53 @@ export interface ReduxTesterThen<State> {
 }
 
 export interface ReduxTesterArguments<State> {
-  preloadedState?: PreloadedState<CombinedState<NoInfer<State>>>;
+  preloadedState?: Partial<NoInfer<State>>;
   debug?: boolean;
 }
 
 export const reduxTester = <State>(args?: ReduxTesterArguments<State>): ReduxTesterGiven<State> => {
   const dispatchedActions: AnyAction[] = [];
-  const logActionsMiddleWare: Middleware<{}, Partial<StoreState>> =
-    (store: MiddlewareAPI<Dispatch, Partial<StoreState>>) => (next: Dispatch) => (action: AnyAction) => {
-      // filter out thunk actions
-      if (action && typeof action !== 'function') {
-        dispatchedActions.push(action);
-      }
+  const logActionsMiddleWare: Middleware<{}, Partial<StoreState>> = (store) => (next) => (action) => {
+    // filter out thunk actions
+    if (action && typeof action !== 'function') {
+      dispatchedActions.push(action as AnyAction);
+    }
 
-      return next(action);
-    };
+    return next(action);
+  };
 
-  const preloadedState = args?.preloadedState ?? ({} as unknown as PreloadedState<CombinedState<NoInfer<State>>>);
+  const preloadedState = args?.preloadedState ?? ({} as unknown as Partial<NoInfer<State>>);
   const debug = args?.debug ?? false;
   let store: EnhancedStore<State, AnyAction, []> | null = null;
 
-  const defaultMiddleware = getDefaultMiddleware<State>({
-    thunk: false,
-    serializableCheck: false,
-    immutableCheck: false,
-  } as any);
-
-  const givenRootReducer = (rootReducer: Reducer<State>): ReduxTesterWhen<State> => {
-    store = configureStore<State, AnyAction, Array<Middleware<State>>>({
+  const givenRootReducer = (
+    rootReducer: Reducer<State, UnknownAction, Partial<NoInfer<State>>>
+  ): ReduxTesterWhen<State> => {
+    store = configureStore<
+      State,
+      UnknownAction,
+      Tuple<[ThunkMiddleware<State>]>,
+      Tuple<
+        [
+          StoreEnhancer<{
+            dispatch: ThunkDispatch<State, undefined, AnyAction>;
+          }>,
+          StoreEnhancer,
+        ]
+      >,
+      Partial<NoInfer<State>>
+    >({
       reducer: rootReducer,
-      middleware: [...defaultMiddleware, logActionsMiddleWare, thunk] as unknown as [ThunkMiddleware<State>],
+      middleware: (getDefaultMiddleware) =>
+        [
+          ...getDefaultMiddleware({
+            thunk: false,
+            serializableCheck: false,
+            immutableCheck: false,
+          }),
+          logActionsMiddleWare,
+          thunk,
+        ] as unknown as Tuple<[ThunkMiddleware<State>]>,
       preloadedState,
     });
 

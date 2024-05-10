@@ -23,18 +23,6 @@ type ListFoldersRequest = QueryActionCreatorResult<
   >
 >;
 
-const listFoldersSelector = createSelector(
-  (state: RootState) => state,
-  (
-    state: RootState,
-    parentUid: ListFolderQueryArgs['parentUid'],
-    page: ListFolderQueryArgs['page'],
-    limit: ListFolderQueryArgs['limit'],
-    permission: ListFolderQueryArgs['permission']
-  ) => browseDashboardsAPI.endpoints.listFolders.select({ parentUid, page, limit, permission }),
-  (state, selectFolderList) => selectFolderList(state)
-);
-
 const listAllFoldersSelector = createSelector(
   [(state: RootState) => state, (state: RootState, requests: ListFoldersRequest[]) => requests],
   (state: RootState, requests: ListFoldersRequest[]) => {
@@ -49,7 +37,13 @@ const listAllFoldersSelector = createSelector(
         continue;
       }
 
-      const page = listFoldersSelector(state, req.arg.parentUid, req.arg.page, req.arg.limit, req.arg.permission);
+      const page = browseDashboardsAPI.endpoints.listFolders.select({
+        parentUid: req.arg.parentUid,
+        page: req.arg.page,
+        limit: req.arg.limit,
+        permission: req.arg.permission,
+      })(state);
+
       if (page.status === 'pending') {
         isLoading = true;
       }

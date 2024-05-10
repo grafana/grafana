@@ -203,14 +203,7 @@ describe('NotificationPreview', () => {
     });
 
     await userEvent.click(ui.previewButton.get());
-    await waitFor(() => {
-      expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
-    });
-    //open details modal
-    await waitFor(() => {
-      expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
-    });
-    await userEvent.click(ui.seeDetails.get());
+    await userEvent.click(await ui.seeDetails.find());
     expect(ui.details.title.query()).toBeInTheDocument();
     //we expect seeing the default policy
     expect(screen.getByText(/default policy/i)).toBeInTheDocument();
@@ -234,14 +227,7 @@ describe('NotificationPreview', () => {
     });
 
     await userEvent.click(ui.previewButton.get());
-    await waitFor(() => {
-      expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
-    });
-    //open details modal
-    await waitFor(() => {
-      expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
-    });
-    await userEvent.click(ui.seeDetails.get());
+    await userEvent.click(await ui.seeDetails.find());
     expect(ui.details.title.query()).toBeInTheDocument();
     //we expect seeing the default policy
     expect(screen.getByText(/default policy/i)).toBeInTheDocument();

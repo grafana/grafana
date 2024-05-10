@@ -48,7 +48,7 @@ const expressionQuery: AlertQuery = {
 
 describe('Query and expressions reducer', () => {
   it('should return initial state', () => {
-    expect(queriesAndExpressionsReducer(undefined, { type: undefined })).toEqual({
+    expect(queriesAndExpressionsReducer(undefined, { type: '' })).toEqual({
       queries: [],
     });
   });
