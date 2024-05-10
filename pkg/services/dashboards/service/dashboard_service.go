@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -377,49 +378,34 @@ func (dr *DashboardServiceImpl) RestoreDashboard(ctx context.Context, dashboard 
 		return fmt.Errorf("feature flag %s is not enabled", featuremgmt.FlagDashboardRestore)
 	}
 
-	// validate if the folder exists and user has access to it
-	restoringFolderUID := dashboard.FolderUID
-
-	// GetFolders return only folders available to user. So we can use is to check access.
-	folders, err := dr.folderService.GetFolders(ctx, folder.GetFoldersQuery{
-		UIDs:         []string{dashboard.FolderUID},
-		OrgID:        dashboard.OrgID,
-		OrderByTitle: true,
-		SignedInUser: user,
-	})
-	if err != nil {
-		return folder.ErrInternal.Errorf("failed to fetch parent folder from store: %w", err)
-	}
-
-	if len(folders) == 0 {
-		// the folder does not exist or the user does not have access to it
-		if optionalFolderUID == "" {
-			return dashboards.ErrFolderRestoreNotFound
-		}
-
-		// GetFolders return only folders available to user. So we can use is to check access.
-		folders, err := dr.folderService.GetFolders(ctx, folder.GetFoldersQuery{
-			UIDs:         []string{optionalFolderUID},
+	// if the optionalFolder is provided we need to check if the folder exists and user has access to it
+	if optionalFolderUID != "" {
+		restoringFolder, err := dr.folderService.Get(ctx, &folder.GetFolderQuery{
+			UID:          &optionalFolderUID,
 			OrgID:        dashboard.OrgID,
-			OrderByTitle: true,
 			SignedInUser: user,
 		})
 		if err != nil {
-			return folder.ErrInternal.Errorf("failed to fetch parent folders from store: %w", err)
-		}
-		if len(folders) == 0 {
-			return dashboards.ErrFolderRestoreNotFound
+			if errors.Is(err, dashboards.ErrFolderNotFound) {
+				return dashboards.ErrFolderRestoreNotFound
+			}
+			return folder.ErrInternal.Errorf("failed to fetch parent folder from store: %w", err)
 		}
 
-		restoringFolderUID = optionalFolderUID
+		return dr.dashboardStore.RestoreDashboard(ctx, dashboard.OrgID, dashboard.UID, restoringFolder)
 	}
 
+	// if the optionalFolder is not provided we need to restore the dashboard to the original folder
+	// we check for permissions and the folder existence before restoring
 	restoringFolder, err := dr.folderService.Get(ctx, &folder.GetFolderQuery{
-		UID:          &restoringFolderUID,
-		SignedInUser: user,
+		UID:          &dashboard.FolderUID,
 		OrgID:        dashboard.OrgID,
+		SignedInUser: user,
 	})
 	if err != nil {
+		if errors.Is(err, dashboards.ErrFolderNotFound) {
+			return dashboards.ErrFolderRestoreNotFound
+		}
 		return folder.ErrInternal.Errorf("failed to fetch parent folder from store: %w", err)
 	}
 
