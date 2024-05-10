@@ -141,7 +141,7 @@ export function prepSeries(
   };
 }
 
-interface PrepConfigOpts {
+export interface PrepConfigOpts {
   series: DataFrame[];
   color?: Field | null;
   orientation: VizOrientation;
