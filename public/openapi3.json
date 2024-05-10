@@ -9177,6 +9177,14 @@
         },
         "type": "object"
       },
+      "RestoreDeletedDashboardCommand": {
+        "properties": {
+          "folderUid": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "RevokeAuthTokenCmd": {
         "properties": {
           "authTokenId": {
@@ -16067,7 +16075,7 @@
           "dashboards"
         ]
       },
-      "post": {
+      "patch": {
         "operationId": "restoreDeletedDashboardByUID",
         "parameters": [
           {
@@ -16083,7 +16091,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SaveDashboardCommand"
+                "$ref": "#/components/schemas/RestoreDeletedDashboardCommand"
               }
             }
           },
