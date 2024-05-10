@@ -19,6 +19,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -30,16 +31,19 @@ type PlaylistAPIBuilder struct {
 	service    playlistsvc.Service
 	namespacer request.NamespaceMapper
 	gv         schema.GroupVersion
+	features   featuremgmt.FeatureToggles
 }
 
 func RegisterAPIService(p playlistsvc.Service,
 	apiregistration builder.APIRegistrar,
 	cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
 ) *PlaylistAPIBuilder {
 	builder := &PlaylistAPIBuilder{
 		service:    p,
 		namespacer: request.GetNamespaceMapper(cfg),
 		gv:         playlist.PlaylistResourceInfo.GroupVersion(),
+		features:   features,
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -118,7 +122,7 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 		if err != nil {
 			return nil, err
 		}
-		storage[resource.StoragePath()] = grafanarest.NewDualWriter("playlist", legacyStore, store)
+		storage[resource.StoragePath()] = grafanarest.NewDualWriter("playlist", b.features, legacyStore, store)
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[playlist.VERSION] = storage

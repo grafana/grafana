@@ -3,6 +3,7 @@ package rest
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -80,22 +81,23 @@ const (
 	Mode4
 )
 
-// #TODO replace the keys with Kind type
-var CurrentMode = map[string]DualWriterMode{
-	"playlist": Mode2,
-}
-
-//TODO: make CurrentMode customisable and specific to each entity
-// change DualWriter signature to get the current mode as an argument
-
 // NewDualWriter returns a new DualWriter.
-func NewDualWriter(kind string, legacy LegacyStorage, storage Storage) DualWriter {
-	var mode DualWriterMode
-	if val, ok := CurrentMode[kind]; ok {
-		mode = val
-	}
+func NewDualWriter(kind string, features featuremgmt.FeatureToggles, legacy LegacyStorage, storage Storage) DualWriter {
+	// #TODO replace string with Kind type
+	switch kind {
+	case "playlist":
+		if features.IsEnabledGlobally(featuremgmt.FlagDualWritePlaylistsMode3) {
+			return NewDualWriterMode3(legacy, storage)
+		}
 
-	return selectDualWriter(mode, legacy, storage)
+		if features.IsEnabledGlobally(featuremgmt.FlagDualWritePlaylistsMode2) {
+			return NewDualWriterMode2(legacy, storage)
+		}
+
+		return NewDualWriterMode2(legacy, storage)
+	default:
+		return NewDualWriterMode1(legacy, storage)
+	}
 }
 
 type updateWrapper struct {
