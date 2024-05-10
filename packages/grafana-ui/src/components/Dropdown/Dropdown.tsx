@@ -27,16 +27,22 @@ export interface Props {
   children: React.ReactElement;
   /** Amount in pixels to nudge the dropdown vertically and horizontally, respectively. */
   offset?: [number, number];
-  onVisibleChange?: (state: boolean) => void;
+  onVisibleChange?: VisibilityChangeHandler;
 }
+
+type VisibilityChangeHandler = (state: boolean) => void | undefined;
 
 export const Dropdown = React.memo(({ children, overlay, placement, offset, onVisibleChange }: Props) => {
   const [show, setShow] = useState(false);
   const transitionRef = useRef(null);
+  const onVisibilityChangeRef = useRef<VisibilityChangeHandler>();
+  onVisibilityChangeRef.current = onVisibleChange;
 
   useEffect(() => {
-    onVisibleChange?.(show);
-  }, [onVisibleChange, show]);
+    if (onVisibilityChangeRef.current) {
+      onVisibilityChangeRef.current(show);
+    }
+  }, [show]);
 
   // the order of middleware is important!
   const middleware = [
