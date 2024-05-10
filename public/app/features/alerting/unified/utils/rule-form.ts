@@ -5,6 +5,7 @@ import {
   DataSourceInstanceSettings,
   DataSourceRef,
   getDefaultRelativeTimeRange,
+  getNextRefId,
   IntervalValues,
   rangeUtil,
   RelativeTimeRange,
@@ -16,7 +17,6 @@ import { config, getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { DataSourceJsonData } from '@grafana/schema';
-import { getNextRefIdChar } from 'app/core/utils/query';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import {
   getDashboardSceneFor,
@@ -568,12 +568,12 @@ export const panelToRuleFormValues = async (
   }
 
   if (!queries.find((query) => query.datasourceUid === ExpressionDatasourceUID)) {
-    const [reduceExpression, _thresholdExpression] = getDefaultExpressions(getNextRefIdChar(queries), '-');
+    const [reduceExpression, _thresholdExpression] = getDefaultExpressions(getNextRefId(queries), '-');
     queries.push(reduceExpression);
 
     const [_reduceExpression, thresholdExpression] = getDefaultExpressions(
       reduceExpression.refId,
-      getNextRefIdChar(queries)
+      getNextRefId(queries)
     );
     queries.push(thresholdExpression);
   }
@@ -638,12 +638,12 @@ export const scenesPanelToRuleFormValues = async (vizPanel: VizPanel): Promise<P
   }
 
   if (!grafanaQueries.find((query) => query.datasourceUid === ExpressionDatasourceUID)) {
-    const [reduceExpression, _thresholdExpression] = getDefaultExpressions(getNextRefIdChar(grafanaQueries), '-');
+    const [reduceExpression, _thresholdExpression] = getDefaultExpressions(getNextRefId(grafanaQueries), '-');
     grafanaQueries.push(reduceExpression);
 
     const [_reduceExpression, thresholdExpression] = getDefaultExpressions(
       reduceExpression.refId,
-      getNextRefIdChar(grafanaQueries)
+      getNextRefId(grafanaQueries)
     );
     grafanaQueries.push(thresholdExpression);
   }
