@@ -1,5 +1,6 @@
 import { cx } from '@emotion/css';
 import React, { FormEvent, useMemo, useState } from 'react';
+import { useEffectOnce } from 'react-use';
 
 import { config } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, InlineSwitch, Input } from '@grafana/ui';
@@ -44,6 +45,13 @@ export const AzureAuthSettings = (props: HttpSettingsBaseProps) => {
   const prometheusConfigOverhaulAuth = config.featureToggles.prometheusConfigOverhaulAuth;
 
   const labelWidth = prometheusConfigOverhaulAuth ? 24 : 26;
+
+  // The auth type needs to be set on the first load of the data source
+  useEffectOnce(() => {
+    if (!dataSourceConfig.jsonData.authType) {
+      onCredentialsChange(credentials);
+    }
+  });
 
   return (
     <>
