@@ -6858,16 +6858,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-types/shared@npm:3.22.1":
-  version: 3.22.1
-  resolution: "@react-types/shared@npm:3.22.1"
-  peerDependencies:
-    react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0
-  checksum: 10/da5fc6775a79ae8148d80a6cd7025ff0d44462c5b8923cdd072ac34626ac7416049f297ec078ebed29fd49d65fd356f21ede9587517b88f20f9d6236107c1333
-  languageName: node
-  linkType: hard
-
-"@react-types/shared@npm:^3.23.0":
+"@react-types/shared@npm:3.23.0, @react-types/shared@npm:^3.23.0":
   version: 3.23.0
   resolution: "@react-types/shared@npm:3.23.0"
   peerDependencies:
@@ -18178,7 +18169,7 @@ __metadata:
     "@react-types/button": "npm:3.9.3"
     "@react-types/menu": "npm:3.9.8"
     "@react-types/overlays": "npm:3.8.6"
-    "@react-types/shared": "npm:3.22.1"
+    "@react-types/shared": "npm:3.23.0"
     "@reduxjs/toolkit": "npm:2.2.4"
     "@rtk-query/codegen-openapi": "npm:^1.2.0"
     "@rtsao/plugin-proposal-class-properties": "npm:7.0.1-patch.1"
