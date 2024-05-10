@@ -603,6 +603,10 @@ const (
 	// New implementation for the dashboard-to-PDF rendering
 	FlagNewPDFRendering = "newPDFRendering"
 
+	// FlagTlsMemcached
+	// Use TLS-enabled memcached in the enterprise caching feature
+	FlagTlsMemcached = "tlsMemcached"
+
 	// FlagKubernetesAggregator
 	// Enable grafana aggregator
 	FlagKubernetesAggregator = "kubernetesAggregator"
