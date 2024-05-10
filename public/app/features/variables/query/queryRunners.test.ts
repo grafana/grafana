@@ -5,10 +5,9 @@ import {
   DataSourceApi,
   getDefaultTimeRange,
   QueryVariableModel,
+  VariableRefresh,
   VariableSupportType,
 } from '@grafana/data';
-
-import { VariableRefresh } from '../types';
 
 import { QueryRunners, RunnerArgs, variableDummyRefId } from './queryRunners';
 

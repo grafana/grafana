@@ -1,9 +1,8 @@
 import React, { PropsWithChildren, useMemo } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, VariableSort } from '@grafana/data';
 
 import { VariableSelectField } from '../../dashboard-scene/settings/variables/components/VariableSelectField';
-import { VariableSort } from '../types';
 
 interface Props {
   onChange: (option: SelectableValue<VariableSort>) => void;

@@ -2,7 +2,7 @@ import React, { FormEvent, PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { bindActionCreators } from 'redux';
 
-import { LoadingState, SelectableValue, VariableType } from '@grafana/data';
+import { LoadingState, SelectableValue, VariableHide, VariableType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
 import { Button, HorizontalGroup, Icon } from '@grafana/ui';
@@ -20,7 +20,6 @@ import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { getVariable, getVariablesState } from '../state/selectors';
 import { changeVariableProp, changeVariableType, removeVariable } from '../state/sharedReducer';
 import { KeyedVariableIdentifier } from '../state/types';
-import { VariableHide } from '../types';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 import { ConfirmDeleteModal } from './ConfirmDeleteModal';

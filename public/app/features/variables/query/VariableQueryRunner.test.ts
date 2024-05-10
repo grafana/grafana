@@ -1,14 +1,19 @@
 import { of, throwError } from 'rxjs';
 import { delay } from 'rxjs/operators';
 
-import { DataSourceApi, getDefaultTimeRange, LoadingState, VariableSupportType } from '@grafana/data';
+import {
+  DataSourceApi,
+  getDefaultTimeRange,
+  LoadingState,
+  QueryVariableModel,
+  VariableSupportType,
+} from '@grafana/data';
 
 import { queryBuilder } from '../shared/testing/builders';
 import { getPreloadedState } from '../state/helpers';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { initialTransactionState } from '../state/transactionReducer';
 import { KeyedVariableIdentifier } from '../state/types';
-import { QueryVariableModel } from '../types';
 import { toKeyedVariableIdentifier } from '../utils';
 
 import { UpdateOptionsResults, VariableQueryRunner } from './VariableQueryRunner';

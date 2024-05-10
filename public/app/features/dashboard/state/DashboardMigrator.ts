@@ -2,6 +2,7 @@ import { each, find, findIndex, flattenDeep, isArray, isBoolean, isNumber, isStr
 
 import {
   AnnotationQuery,
+  ConstantVariableModel,
   DataLink,
   DataLinkBuiltInVars,
   DataQuery,
@@ -19,10 +20,12 @@ import {
   SpecialValueMatch,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
+  TextBoxVariableModel,
   ThresholdsConfig,
   urlUtil,
   ValueMap,
   ValueMapping,
+  VariableHide,
 } from '@grafana/data';
 import { labelsToFieldsTransformer } from '@grafana/data/src/transformations/transformers/labelsToFields';
 import { mergeTransformer } from '@grafana/data/src/transformations/transformers/merge';
@@ -59,7 +62,6 @@ import {
   migrateMultipleStatsAnnotationQuery,
   migrateMultipleStatsMetricsQuery,
 } from '../../../plugins/datasource/cloudwatch/migrations/dashboardMigrations';
-import { ConstantVariableModel, TextBoxVariableModel, VariableHide } from '../../variables/types';
 
 import { DashboardModel } from './DashboardModel';
 import { PanelModel } from './PanelModel';

@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 
-import { VariableSupportType } from '@grafana/data';
+import { QueryVariableModel, VariableSupportType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
@@ -11,7 +11,6 @@ import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import { NEW_VARIABLE_ID } from '../constants';
 import { LegacyVariableQueryEditor } from '../editor/LegacyVariableQueryEditor';
 import { KeyedVariableIdentifier } from '../state/types';
-import { QueryVariableModel } from '../types';
 
 import { Props, QueryVariableEditorUnConnected } from './QueryVariableEditor';
 import { initialQueryVariableModelState } from './reducer';
