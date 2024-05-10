@@ -222,6 +222,68 @@ describe('Cloud Monitoring Datasource', () => {
             sloQuery: {},
           },
         },
+        {
+          description: 'legacy metrics query with metricType defined',
+          input: {
+            refId: 'A',
+            queryType: 'metrics',
+            intervalMs: 1000,
+            metricType: 'test-metric-type',
+          },
+          expected: {
+            queryType: QueryType.TIME_SERIES_LIST,
+            timeSeriesList: {
+              filters: ['metric.type', '=', 'test-metric-type'],
+            },
+          },
+        },
+        {
+          description: 'legacy metrics query with metricType and additional filters defined',
+          input: {
+            refId: 'A',
+            queryType: 'metrics',
+            intervalMs: 1000,
+            metricType: 'test-metric-type',
+            filters: ['test.filter', '=', 'test-filter-value'],
+          },
+          expected: {
+            queryType: QueryType.TIME_SERIES_LIST,
+            timeSeriesList: {
+              filters: ['test.filter', '=', 'test-filter-value', 'AND', 'metric.type', '=', 'test-metric-type'],
+            },
+          },
+        },
+        {
+          description: 'legacy metrics query without projectName defined',
+          input: {
+            refId: 'A',
+            queryType: 'metrics',
+            intervalMs: 1000,
+            metricType: 'test-metric-type',
+          },
+          expected: {
+            queryType: QueryType.TIME_SERIES_LIST,
+            timeSeriesList: {
+              projectName: 'test-project',
+            },
+          },
+        },
+        {
+          description: 'legacy metrics query with projectName defined',
+          input: {
+            refId: 'A',
+            queryType: 'metrics',
+            intervalMs: 1000,
+            metricType: 'test-metric-type',
+            projectName: 'test-project-defined',
+          },
+          expected: {
+            queryType: QueryType.TIME_SERIES_LIST,
+            timeSeriesList: {
+              projectName: 'test-project-defined',
+            },
+          },
+        },
       ].forEach((t) =>
         it(t.description, () => {
           const mockInstanceSettings = createMockInstanceSetttings();
