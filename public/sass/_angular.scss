@@ -1,0 +1,62 @@
+// these styles are only used by angular components/pages
+// once angular is disabled, this file can be deleted
+
+.edit-tab-content {
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.view-mode--inactive {
+  .react-resizable-handle,
+  .add-row-panel-hint,
+  .dash-row-menu-container,
+  .panel-info-corner--info,
+  .panel-info-corner--links {
+    display: none;
+  }
+}
+
+.login-form {
+  margin-bottom: $space-md;
+  width: 100%;
+}
+
+[ng\:cloak],
+[ng-cloak],
+.ng-cloak {
+  display: none !important;
+}
+
+// <3: https://medium.com/@brunn/detecting-autofilled-fields-in-javascript-aed598d25da7
+@keyframes onAutoFillStart {
+  from {
+    /**/
+  }
+  to {
+    /**/
+  }
+}
+@keyframes onAutoFillCancel {
+  from {
+    /**/
+  }
+  to {
+    /**/
+  }
+}
+input:-webkit-autofill {
+  animation-name: onAutoFillStart;
+  transition: transform 1ms;
+}
+input:not(:-webkit-autofill) {
+  animation-name: onAutoFillCancel;
+}
+
+input.validation-error,
+input.ng-dirty.ng-invalid {
+  box-shadow: inset 0 0px 5px $red;
+}
+
+input.invalid {
+  box-shadow: inset 0 0px 5px $red;
+}

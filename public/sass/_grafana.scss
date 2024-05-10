@@ -21,17 +21,13 @@
 
 // UTILS
 @import 'utils/utils';
-@import 'utils/validation';
-@import 'utils/angular';
 @import 'utils/spacings';
 @import 'utils/widths';
-@import 'utils/hacks';
 
 // COMPONENTS
 @import 'components/scrollbar';
 @import 'components/buttons';
 @import 'components/navs';
-@import 'components/tabs';
 @import 'components/alerts';
 @import 'components/switch';
 @import 'components/tooltip';
@@ -44,7 +40,6 @@
 @import 'components/panel_table';
 @import 'components/panel_heatmap';
 @import 'components/tagsinput';
-@import 'components/tables_lists';
 @import 'components/gf-form';
 @import 'components/filter-controls';
 @import 'components/filter-list';
@@ -60,29 +55,25 @@
 @import 'components/query_editor';
 @import 'components/tabbed_view';
 @import 'components/query_part';
-@import 'components/edit_sidemenu';
 @import 'components/row';
 @import 'components/json_explorer';
 @import 'components/code_editor';
 @import 'components/dashboard_grid';
 @import 'components/page_header';
 @import 'components/dashboard_settings';
-@import 'components/toolbar';
 @import 'components/add_data_source';
 @import 'components/page_loader';
-@import 'components/toggle_button_group';
-@import 'components/popover-box';
 @import 'components/panel_header';
 
 // LOAD @grafana/ui components
 @import '@grafana/ui/src/index';
 
 // PAGES
-@import 'pages/login';
 @import 'pages/dashboard';
 @import 'pages/admin';
 @import 'pages/alerting';
 @import 'pages/history';
-@import 'pages/errorpage';
 @import 'pages/explore';
-@import 'components/view_states';
+
+// ANGULAR
+@import 'angular';
