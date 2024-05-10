@@ -49,6 +49,22 @@ const defaultLogRow = {
   timeEpochMs: new Date().getTime(),
 } as unknown as LogRowModel;
 
+const frameWithoutTypes = {
+  rowIndex: 0,
+  dataFrame: createDataFrame({
+    fields: [
+      {
+        name: 'ts',
+        type: FieldType.time,
+        values: [0],
+      },
+    ],
+  }),
+  labels: { bar: 'baz', foo: 'uniqueParsedLabel', xyz: 'abc' },
+  uid: '1',
+  timeEpochMs: new Date().getTime(),
+} as unknown as LogRowModel;
+
 describe('LogContextProvider', () => {
   let logContextProvider: LogContextProvider;
   beforeEach(() => {
@@ -493,6 +509,23 @@ describe('LogContextProvider', () => {
         expect(result.preservedFiltersApplied).toBe(true);
       });
 
+      it('should correctly apply preserved labels with no types', async () => {
+        window.localStorage.setItem(
+          LOKI_LOG_CONTEXT_PRESERVED_LABELS,
+          JSON.stringify({
+            removedLabels: ['bar'],
+            selectedExtractedLabels: ['foo'],
+          })
+        );
+        const result = await logContextProvider.getInitContextFilters(frameWithoutTypes, queryWithParser);
+        expect(result.contextFilters).toEqual([
+          { enabled: false, nonIndexed: false, label: 'bar', value: 'baz' }, // disabled real label
+          { enabled: true, nonIndexed: false, label: 'foo', value: 'uniqueParsedLabel' }, // enabled parsed label
+          { enabled: true, nonIndexed: false, label: 'xyz', value: 'abc' },
+        ]);
+        expect(result.preservedFiltersApplied).toBe(true);
+      });
+
       it('should use contextFilters from row labels if all real labels are disabled', async () => {
         window.localStorage.setItem(
           LOKI_LOG_CONTEXT_PRESERVED_LABELS,
@@ -510,6 +543,23 @@ describe('LogContextProvider', () => {
         expect(result.preservedFiltersApplied).toBe(false);
       });
 
+      it('should use contextFilters from row labels if all real labels are disabled with no types', async () => {
+        window.localStorage.setItem(
+          LOKI_LOG_CONTEXT_PRESERVED_LABELS,
+          JSON.stringify({
+            removedLabels: ['bar', 'xyz'],
+            selectedExtractedLabels: ['foo'],
+          })
+        );
+        const result = await logContextProvider.getInitContextFilters(frameWithoutTypes, queryWithParser);
+        expect(result.contextFilters).toEqual([
+          { enabled: false, nonIndexed: false, label: 'bar', value: 'baz' }, // enabled real label
+          { enabled: true, nonIndexed: false, label: 'foo', value: 'uniqueParsedLabel' },
+          { enabled: false, nonIndexed: false, label: 'xyz', value: 'abc' }, // enabled real label
+        ]);
+        expect(result.preservedFiltersApplied).toBe(true);
+      });
+
       it('should not introduce new labels as context filters', async () => {
         window.localStorage.setItem(
           LOKI_LOG_CONTEXT_PRESERVED_LABELS,
@@ -522,6 +572,23 @@ describe('LogContextProvider', () => {
         expect(result.contextFilters).toEqual([
           { enabled: false, nonIndexed: false, label: 'bar', value: 'baz' },
           { enabled: true, nonIndexed: true, label: 'foo', value: 'uniqueParsedLabel' },
+          { enabled: true, nonIndexed: false, label: 'xyz', value: 'abc' },
+        ]);
+        expect(result.preservedFiltersApplied).toBe(true);
+      });
+
+      it('should not introduce new labels as context filters with no label types', async () => {
+        window.localStorage.setItem(
+          LOKI_LOG_CONTEXT_PRESERVED_LABELS,
+          JSON.stringify({
+            removedLabels: ['bar'],
+            selectedExtractedLabels: ['foo', 'new'],
+          })
+        );
+        const result = await logContextProvider.getInitContextFilters(frameWithoutTypes, queryWithParser);
+        expect(result.contextFilters).toEqual([
+          { enabled: false, nonIndexed: false, label: 'bar', value: 'baz' },
+          { enabled: true, nonIndexed: false, label: 'foo', value: 'uniqueParsedLabel' },
           { enabled: true, nonIndexed: false, label: 'xyz', value: 'abc' },
         ]);
         expect(result.preservedFiltersApplied).toBe(true);
