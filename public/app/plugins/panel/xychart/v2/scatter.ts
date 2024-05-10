@@ -452,9 +452,6 @@ export function prepData(xySeries: XYSeries[]): FacetedData {
         // use quadratic size scaling in byValue modes
         let pxRange = maxPx - minPx;
 
-        // todo: add shared, local, or key-group min/max option?
-        // todo: better min/max with ignoring non-finite values
-        // todo: allow this to come from fieldConfig min/max ? or field.state.min/max (shared)
         let vals = s.size.field.values;
         let minVal = sizeRange.min;
         let maxVal = sizeRange.max;
@@ -476,7 +473,7 @@ export function prepData(xySeries: XYSeries[]): FacetedData {
       return [
         s.x.field.values, // X
         s.y.field.values, // Y
-        diams, // TODO: fails for by value
+        diams,
         Array(len).fill(s.color.fixed!), // TODO: fails for by value
       ];
     }),
