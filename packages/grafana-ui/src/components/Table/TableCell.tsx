@@ -16,6 +16,7 @@ export interface Props {
   userProps?: object;
   frame: DataFrame;
   rowStyled?: boolean;
+  textWrapped?: boolean;
   height?: number;
 }
 
@@ -27,6 +28,7 @@ export const TableCell = ({
   userProps,
   frame,
   rowStyled,
+  textWrapped,
   height,
 }: Props) => {
   const cellProps = cell.getCellProps();
@@ -55,6 +57,7 @@ export const TableCell = ({
         userProps,
         frame,
         rowStyled,
+        textWrapped,
         height,
       })}
     </>

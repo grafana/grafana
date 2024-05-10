@@ -15,7 +15,7 @@ import { TableCellProps, CustomCellRendererProps, TableCellOptions } from './typ
 import { getCellColors, getCellOptions } from './utils';
 
 export const DefaultCell = (props: TableCellProps) => {
-  const { field, cell, tableStyles, row, cellProps, frame, rowStyled, height } = props;
+  const { field, cell, tableStyles, row, cellProps, frame, rowStyled, textWrapped, height } = props;
 
   const inspectEnabled = Boolean(field.config.custom?.inspect);
   const displayValue = field.display!(cell.value);
@@ -59,6 +59,7 @@ export const DefaultCell = (props: TableCellProps) => {
     inspectEnabled,
     isStringValue,
     textShouldWrap,
+    textWrapped,
     rowStyled
   );
 

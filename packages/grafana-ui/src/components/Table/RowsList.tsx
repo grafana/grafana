@@ -306,6 +306,7 @@ export const RowsList = (props: RowsListProps) => {
               timeRange={timeRange}
               frame={data}
               rowStyled={rowBg !== undefined}
+              textWrapped={textWrapField}
               height={style.height}
             />
           ))}
@@ -338,8 +339,6 @@ export const RowsList = (props: RowsListProps) => {
   const getItemSize = (index: number): number => {
     const indexForPagination = rowIndexForPagination(index);
     const row = rows[indexForPagination];
-
-    console.log(index);
 
     if (tableState.expanded[row.id] && nestedDataField) {
       return getExpandedRowHeight(nestedDataField, row.index, tableStyles);
@@ -397,24 +396,49 @@ function getTextBoundingBox(
 ) {
   const width = Number(headerGroup.width ?? 300);
 
+  console.log(width);
+
   if (osContext !== null) {
-    const measure = osContext.measureText(text);
+    const words = text.split(/\s/);
+    const lines = [];
+    let currentLine = "";
 
-    if (measure) {
-      // Retreive an estimated number of lines
-      // TODO: This still needs some tweaking
-      // Tricky part of this heuristic is that we're assuming we
-      // wrap _exactly_ at each end character of the line, but we're really
-      // wrapping boundaries typically. So some wiggle room needs to be added
-      let lines = Math.ceil(measure.width / width);
+    // Let's just wrap the liens and see how well the measurement works
+    for (let i = 0; i < words.length; i++) {
+      const currentWord = words[i];
+      console.log({ i, currentWord });
+      let lineWidth = osContext.measureText(currentLine + " " + currentWord).width;
 
-      // Estimated height would be lines multiplied
-      // by the line height
-      let height = lines * lineHeight + 24;
-
-      return { width, height };
+      if (lineWidth < width) {
+        currentLine += " " + currentWord;
+      }
+      else {
+        console.log({ currentLine });
+        lines.push(currentLine);
+        currentLine = currentWord;
+      }
     }
+
+    let lineNumber = lines.length;
+
+    // console.log(lineNumber);
+    // if (measure) {
+    // Retreive an estimated number of lines
+    // TODO: This still needs some tweaking
+    // Tricky part of this heuristic is that we're assuming we
+    // wrap _exactly_ at each end character of the line, but we're really
+    // wrapping boundaries typically. So some wiggle room needs to be added
+    // let lineNumber = Math.ceil(measure.width / width);
+
+    // Estimated height would be lines multiplied
+    // by the line height
+    let height = (lineNumber * lineHeight) + 48;
+
+    return { width, height };
   }
 
   return { width, height: defaultRowHeight };
 }
+
+
+
