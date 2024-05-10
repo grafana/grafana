@@ -48,6 +48,7 @@ func validateRuleNode(
 		return nil, fmt.Errorf("not Grafana managed alert rule")
 	}
 
+	isRecordingRule := ruleNode.GrafanaManagedAlert.Record != nil
 	// if UID is specified then we can accept partial model. Therefore, some validation can be skipped as it will be patched later
 	canPatch := ruleNode.GrafanaManagedAlert.UID != ""
 
@@ -57,31 +58,6 @@ func validateRuleNode(
 
 	if len(ruleNode.GrafanaManagedAlert.Title) > store.AlertRuleMaxTitleLength {
 		return nil, fmt.Errorf("alert rule title is too long. Max length is %d", store.AlertRuleMaxTitleLength)
-	}
-
-	noDataState := ngmodels.NoData
-	if ruleNode.GrafanaManagedAlert.NoDataState == "" && canPatch {
-		noDataState = ""
-	}
-
-	if ruleNode.GrafanaManagedAlert.NoDataState != "" {
-		noDataState, err = ngmodels.NoDataStateFromString(string(ruleNode.GrafanaManagedAlert.NoDataState))
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	errorState := ngmodels.AlertingErrState
-
-	if ruleNode.GrafanaManagedAlert.ExecErrState == "" && canPatch {
-		errorState = ""
-	}
-
-	if ruleNode.GrafanaManagedAlert.ExecErrState != "" {
-		errorState, err = ngmodels.ErrStateFromString(string(ruleNode.GrafanaManagedAlert.ExecErrState))
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	if len(ruleNode.GrafanaManagedAlert.Data) == 0 {
@@ -110,23 +86,19 @@ func validateRuleNode(
 		IntervalSeconds: intervalSeconds,
 		NamespaceUID:    namespaceUID,
 		RuleGroup:       groupName,
-		NoDataState:     noDataState,
-		ExecErrState:    errorState,
 		// Recording Rule fields will be implemented in the future.
 		// For now, no rules can be recording rules. So, we force these to be empty.
 		Record: nil,
 	}
 
-	if ruleNode.GrafanaManagedAlert.NotificationSettings != nil {
-		newAlertRule.NotificationSettings, err = validateNotificationSettings(ruleNode.GrafanaManagedAlert.NotificationSettings)
-		if err != nil {
+	if isRecordingRule {
+		if err := validateRecordingRule(ruleNode, &newAlertRule, canPatch); err != nil {
 			return nil, err
 		}
-	}
-
-	newAlertRule.For, err = validateForInterval(ruleNode)
-	if err != nil {
-		return nil, err
+	} else {
+		if err := validateAlertingRule(ruleNode, &newAlertRule, canPatch); err != nil {
+			return nil, err
+		}
 	}
 
 	if ruleNode.ApiRuleNode != nil {
@@ -143,6 +115,54 @@ func validateRuleNode(
 		}
 	}
 	return &newAlertRule, nil
+}
+
+func validateAlertingRule(in *apimodels.PostableExtendedRuleNode, newRule *ngmodels.AlertRule, canPatch bool) error {
+	var err error
+
+	noDataState := ngmodels.NoData
+	if in.GrafanaManagedAlert.NoDataState == "" && canPatch {
+		noDataState = ""
+	}
+	if in.GrafanaManagedAlert.NoDataState != "" {
+		noDataState, err = ngmodels.NoDataStateFromString(string(in.GrafanaManagedAlert.NoDataState))
+		if err != nil {
+			return err
+		}
+	}
+	newRule.NoDataState = noDataState
+
+	errorState := ngmodels.AlertingErrState
+	if in.GrafanaManagedAlert.ExecErrState == "" && canPatch {
+		errorState = ""
+	}
+	if in.GrafanaManagedAlert.ExecErrState != "" {
+		errorState, err = ngmodels.ErrStateFromString(string(in.GrafanaManagedAlert.ExecErrState))
+		if err != nil {
+			return err
+		}
+	}
+	newRule.ExecErrState = errorState
+
+	if in.GrafanaManagedAlert.NotificationSettings != nil {
+		newRule.NotificationSettings, err = validateNotificationSettings(in.GrafanaManagedAlert.NotificationSettings)
+		if err != nil {
+			return err
+		}
+	}
+
+	newRule.For, err = validateForInterval(in)
+	if err != nil {
+		return err
+	}
+
+	newRule.Record = nil
+
+	return nil
+}
+
+func validateRecordingRule(in *apimodels.PostableExtendedRuleNode, newRule *ngmodels.AlertRule, canPatch bool) error {
+	return nil
 }
 
 func validateLabels(l map[string]string) error {
