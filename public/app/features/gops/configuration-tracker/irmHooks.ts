@@ -90,7 +90,7 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
           },
           {
             title: 'Connect alerting to OnCall',
-            description: 'OnCall allows precisely manage your on-call strategy and use multiple channels to deliver',
+            description: 'Create an OnCall integration for an alerting contact point.',
             button: {
               type: 'openLink',
               urlLink: {
