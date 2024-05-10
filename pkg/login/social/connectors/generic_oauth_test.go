@@ -24,13 +24,14 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
+func TestUserInfoSearchesForEmailAndOrgRoles(t *testing.T) {
 	testCases := []struct {
 		Name                    string
 		SkipOrgRoleSync         bool
 		AllowAssignGrafanaAdmin bool
 		ResponseBody            any
 		OAuth2Extra             any
+		Setup                   func(*orgtest.FakeOrgService)
 		RoleAttributePath       string
 		RoleAttributeStrict     bool
 		OrgAttributePath        string
@@ -203,7 +204,22 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleEditor},
 		},
 		{
-			Name: "Given a valid id_token without role info, a valid advanced JMESPath role path, a valid API response, derive the correct role using the userinfo API response (JMESPath warning on id_token)",
+			Name: "Given a valid id_token without role info, a valid advanced JMESPath role path, a valid API response, derive the correct org roles using the userinfo API response (JMESPath warning on id_token)",
+			OAuth2Extra: map[string]any{
+				// { "email": "john.doe@example.com" }
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.k5GwPcZvGe2BE_jgwN0ntz0nz4KlYhEd0hRRLApkTJ4",
+			},
+			ResponseBody: map[string]any{
+				"info": map[string]any{
+					"roles": []string{"engineering", "SRE"},
+				},
+			},
+			RoleAttributePath: "contains(info.roles[*], 'SRE') && 'Admin'",
+			ExpectedEmail:     "john.doe@example.com",
+			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleAdmin},
+		},
+		{
+			Name: "Given a valid id_token without role info, a valid advanced JMESPath role path, a valid API response, derive the correct org roles using the userinfo API response (JMESPath warning on id_token)",
 			OAuth2Extra: map[string]any{
 				// { "email": "john.doe@example.com" }
 				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.k5GwPcZvGe2BE_jgwN0ntz0nz4KlYhEd0hRRLApkTJ4",
@@ -251,7 +267,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			ExpectedOrgRoles:  nil,
 		},
 		{
-			Name: "Given a valid id_token without role info, a valid advanced JMESPath role path, a valid org attribute path, a valid org mapping, a valid API response, derive the correct role and org roles using the userinfo API response (JMESPath warning on id_token)",
+			Name: "Given a valid id_token without role info, a valid advanced JMESPath role path, a valid org attribute path, a valid org mapping, a valid API response, derive the correct org roles using the userinfo API response (JMESPath warning on id_token)",
 			OAuth2Extra: map[string]any{
 				// { "email": "john.doe@example.com" }
 				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.k5GwPcZvGe2BE_jgwN0ntz0nz4KlYhEd0hRRLApkTJ4",
@@ -331,6 +347,25 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			ExpectedOrgRoles:    map[int64]org.RoleType{4: org.RoleViewer, 5: org.RoleEditor},
 		},
 		{
+			Name:                    "Should return empty when evaluated role is empty/invalid, role_attribute_strict is set to false and evaluated org roles are empty",
+			SkipOrgRoleSync:         false,
+			AllowAssignGrafanaAdmin: false,
+			ResponseBody:            map[string]any{"info": map[string]any{"roles": []string{"engineering", "SRE"}}},
+			OAuth2Extra: map[string]any{
+				// { "email": "john.doe@example.com",
+				//   "info": { "roles": [ "dev", "engineering" ] }}
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg"},
+			Setup: func(orgSvc *orgtest.FakeOrgService) {
+				orgSvc.ExpectedError = assert.AnError
+			},
+			RoleAttributePath:   "'Invalid'",
+			RoleAttributeStrict: false,
+			OrgAttributePath:    "info.roles",
+			OrgMapping:          []string{"dev:*:Viewer"},
+			ExpectedEmail:       "john.doe@example.com",
+			ExpectedOrgRoles:    nil,
+		},
+		{
 			Name:                    "Should fail when role_attribute_path is empty, role_attribute_strict is set to true and org_mapping is empty",
 			SkipOrgRoleSync:         false,
 			AllowAssignGrafanaAdmin: false,
@@ -347,7 +382,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			ExpectedError:       errRoleAttributeStrictViolation,
 		},
 		{
-			Name:                    "Should fail when role_attribute path is empty, role_attribute_strict is set to true and evaluated org roles are empty",
+			Name:                    "Should fail when role_attribute_path evaluates to invalid role, role_attribute_strict is set to true and org_mapping is empty",
 			SkipOrgRoleSync:         false,
 			AllowAssignGrafanaAdmin: false,
 			ResponseBody:            map[string]any{"info": map[string]any{"roles": []string{"engineering", "SRE"}}},
@@ -355,10 +390,10 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				// { "email": "john.doe@example.com",
 				//   "info": { "roles": [ "dev", "engineering" ] }}
 				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg"},
-			RoleAttributePath:   "",
+			RoleAttributePath:   "'Invalid'",
 			RoleAttributeStrict: true,
 			OrgAttributePath:    "info.invalid",
-			OrgMapping:          []string{"dev:org_dev:Viewer", "engineering:org_engineering:Editor"},
+			OrgMapping:          []string{},
 			ExpectedEmail:       "john.doe@example.com",
 			ExpectedError:       errRoleAttributeStrictViolation,
 		},
@@ -385,15 +420,20 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 		AutoAssignOrgId:   2,
 		AutoAssignOrgRole: string(org.RoleViewer),
 	}
-	orgRoleMapper := ProvideOrgRoleMapper(cfg, &orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "org_dev"}, {ID: 5, Name: "org_engineering"}}})
-	provider := NewGenericOAuthProvider(&social.OAuthInfo{
-		EmailAttributePath: "email",
-	}, cfg,
-		orgRoleMapper,
-		&ssosettingstests.MockService{},
-		featuremgmt.WithFeatures())
 
 	for _, tc := range testCases {
+		orgSvc := &orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "org_dev"}, {ID: 5, Name: "org_engineering"}}}
+		if tc.Setup != nil {
+			tc.Setup(orgSvc)
+		}
+		orgRoleMapper := ProvideOrgRoleMapper(cfg, orgSvc)
+		provider := NewGenericOAuthProvider(&social.OAuthInfo{
+			EmailAttributePath: "email",
+		}, cfg,
+			orgRoleMapper,
+			&ssosettingstests.MockService{},
+			featuremgmt.WithFeatures())
+
 		provider.info.RoleAttributePath = tc.RoleAttributePath
 		provider.info.OrgAttributePath = tc.OrgAttributePath
 		provider.info.OrgMapping = tc.OrgMapping

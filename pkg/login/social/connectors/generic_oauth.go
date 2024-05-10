@@ -285,12 +285,15 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 			}
 		}
 	}
+
 	if !s.info.SkipOrgRoleSync {
 		userInfo.OrgRoles = s.orgRoleMapper.MapOrgRoles(s.orgMappingCfg, externalOrgs, userInfo.Role)
-	}
-
-	if len(userInfo.OrgRoles) == 0 && !s.info.SkipOrgRoleSync {
-		return nil, errRoleAttributeStrictViolation.Errorf("could not evaluate any valid roles using IdP provided data")
+		if s.info.RoleAttributeStrict && len(userInfo.OrgRoles) == 0 {
+			// If no roles are found and role_attribute_strict is set, return an error.
+			// The s.info.RoleAttributeStrict is necessary, because there is a case when len(userInfo.OrgRoles) == 0,
+			// but strict role mapping is not enabled (when getAllOrgs fails).
+			return nil, errRoleAttributeStrictViolation.Errorf("could not evaluate any valid roles using IdP provided data")
+		}
 	}
 
 	if s.info.AllowAssignGrafanaAdmin && s.info.SkipOrgRoleSync {
