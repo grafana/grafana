@@ -38,6 +38,8 @@ export const Spinner = ({
   const styles = useStyles2(getStyles);
 
   const deprecatedStyles = useStyles2(getDeprecatedStyles, size);
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const iconName = prefersReducedMotion ? 'hourglass' : 'spinner';
 
   // this entire if statement is handling the deprecated size prop
   // TODO remove once we fully remove the deprecated type
@@ -80,7 +82,17 @@ export const Spinner = ({
         className
       )}
     >
-      <Icon className={cx('fa-spin', iconClassName)} name="spinner" size={size} aria-label="loading spinner" />
+      <Icon
+        className={cx(
+          {
+            'fa-spin': !prefersReducedMotion,
+          },
+          iconClassName
+        )}
+        name={iconName}
+        size={size}
+        aria-label="loading spinner"
+      />
     </div>
   );
 };
