@@ -144,6 +144,9 @@ func (b *QueryAPIBuilder) GetAPIGroupInfo(
 		plugins.returnEmptyList = true
 	}
 
+	// The query endpoint -- NOTE, this uses a rewrite hack to allow requests without a name parameter
+	storage["query"] = &queryREST{builder: b}
+
 	apiGroupInfo.VersionedResourcesStorageMap[gv.Version] = storage
 	return &apiGroupInfo, nil
 }
@@ -154,122 +157,7 @@ func (b *QueryAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 
 // Register additional routes with the server
 func (b *QueryAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	routes := &builder.APIRoutes{
-		Namespace: []builder.APIRouteHandler{
-			{
-				Path: "query",
-				Spec: &spec3.PathProps{
-					Post: &spec3.Operation{
-						OperationProps: spec3.OperationProps{
-							Tags:        []string{"query"},
-							Summary:     "Query",
-							Description: "longer description here?",
-							Parameters: []*spec3.Parameter{
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "namespace",
-										In:          "path",
-										Required:    true,
-										Example:     "default",
-										Description: "workspace",
-										Schema:      spec.StringProperty(),
-									},
-								},
-							},
-							RequestBody: &spec3.RequestBody{
-								RequestBodyProps: spec3.RequestBodyProps{
-									Content: map[string]*spec3.MediaType{
-										"application/json": {
-											MediaTypeProps: spec3.MediaTypeProps{
-												Schema: spec.RefSchema("#/components/schemas/" + QueryRequestSchemaKey),
-												Examples: map[string]*spec3.Example{
-													"A": {
-														ExampleProps: spec3.ExampleProps{
-															Summary:     "Random walk (testdata)",
-															Description: "Use testdata to execute a random walk query",
-															Value: `{
-																"queries": [
-																	{
-																		"refId": "A",
-																		"scenarioId": "random_walk_table",
-																		"seriesCount": 1,
-																		"datasource": {
-																		"type": "grafana-testdata-datasource",
-																		"uid": "PD8C576611E62080A"
-																		},
-																		"intervalMs": 60000,
-																		"maxDataPoints": 20
-																	}
-																],
-																"from": "now-6h",
-																"to": "now"
-															}`,
-														},
-													},
-													"B": {
-														ExampleProps: spec3.ExampleProps{
-															Summary:     "With deprecated datasource name",
-															Description: "Includes an old style string for datasource reference",
-															Value: `{
-																"queries": [
-																	{
-																		"refId": "A",
-																		"datasource": {
-																			"type": "grafana-googlesheets-datasource",
-																			"uid": "b1808c48-9fc9-4045-82d7-081781f8a553"
-																		},
-																		"cacheDurationSeconds": 300,
-																		"spreadsheet": "spreadsheetID",
-																		"datasourceId": 4,
-																		"intervalMs": 30000,
-																		"maxDataPoints": 794
-																	},
-																	{
-																		"refId": "Z",
-																		"datasource": "old",
-																		"maxDataPoints": 10,
-																		"timeRange": {
-																			"from": "100",
-																			"to": "200"
-																		}
-																	}
-																],
-																"from": "now-6h",
-																"to": "now"
-															}`,
-														},
-													},
-												},
-											},
-										},
-									},
-								},
-							},
-							Responses: &spec3.Responses{
-								ResponsesProps: spec3.ResponsesProps{
-									StatusCodeResponses: map[int]*spec3.Response{
-										200: {
-											ResponseProps: spec3.ResponseProps{
-												Content: map[string]*spec3.MediaType{
-													"application/json": {
-														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: spec.StringProperty(), // TODO!!!
-														},
-													},
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-				Handler: b.doQuery,
-			},
-		},
-	}
-	return routes
+	return nil
 }
 
 func (b *QueryAPIBuilder) GetAuthorizer() authorizer.Authorizer {
@@ -302,8 +190,99 @@ func (b *QueryAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI
 		return oas, err
 	}
 
+	// Rewrite the query path
+	sub := oas.Paths.Paths[root+"namespaces/{namespace}/query/{name}"]
+	if sub != nil && sub.Post != nil {
+		sub.Post.Tags = []string{"Query"}
+		sub.Parameters = []*spec3.Parameter{
+			{
+				ParameterProps: spec3.ParameterProps{
+					Name:        "namespace",
+					In:          "path",
+					Description: "object name and auth scope, such as for teams and projects",
+					Example:     "default",
+					Required:    true,
+				},
+			},
+		}
+		sub.Post.Description = "Query datasources (with expressions)"
+		sub.Post.Parameters = nil //
+		sub.Post.RequestBody = &spec3.RequestBody{
+			RequestBodyProps: spec3.RequestBodyProps{
+				Content: map[string]*spec3.MediaType{
+					"application/json": {
+						MediaTypeProps: spec3.MediaTypeProps{
+							Schema: spec.RefSchema("#/components/schemas/" + QueryRequestSchemaKey),
+							Examples: map[string]*spec3.Example{
+								"A": {
+									ExampleProps: spec3.ExampleProps{
+										Summary:     "Random walk (testdata)",
+										Description: "Use testdata to execute a random walk query",
+										Value: `{
+											"queries": [
+												{
+													"refId": "A",
+													"scenarioId": "random_walk_table",
+													"seriesCount": 1,
+													"datasource": {
+													"type": "grafana-testdata-datasource",
+													"uid": "PD8C576611E62080A"
+													},
+													"intervalMs": 60000,
+													"maxDataPoints": 20
+												}
+											],
+											"from": "now-6h",
+											"to": "now"
+										}`,
+									},
+								},
+								"B": {
+									ExampleProps: spec3.ExampleProps{
+										Summary:     "With deprecated datasource name",
+										Description: "Includes an old style string for datasource reference",
+										Value: `{
+											"queries": [
+												{
+													"refId": "A",
+													"datasource": {
+														"type": "grafana-googlesheets-datasource",
+														"uid": "b1808c48-9fc9-4045-82d7-081781f8a553"
+													},
+													"cacheDurationSeconds": 300,
+													"spreadsheet": "spreadsheetID",
+													"datasourceId": 4,
+													"intervalMs": 30000,
+													"maxDataPoints": 794
+												},
+												{
+													"refId": "Z",
+													"datasource": "old",
+													"maxDataPoints": 10,
+													"timeRange": {
+														"from": "100",
+														"to": "200"
+													}
+												}
+											],
+											"from": "now-6h",
+											"to": "now"
+										}`,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		delete(oas.Paths.Paths, root+"namespaces/{namespace}/query/{name}")
+		oas.Paths.Paths[root+"namespaces/{namespace}/query"] = sub
+	}
+
 	// The root API discovery list
-	sub := oas.Paths.Paths[root]
+	sub = oas.Paths.Paths[root]
 	if sub != nil && sub.Get != nil {
 		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
 	}
