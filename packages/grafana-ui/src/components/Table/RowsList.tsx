@@ -397,8 +397,6 @@ function getTextBoundingBox(
 ) {
   const width = Number(headerGroup.width ?? 300);
 
-  console.log(width);
-
   if (osContext !== null) {
     const words = text.split(/\s/);
     const lines = [];
@@ -407,30 +405,20 @@ function getTextBoundingBox(
     // Let's just wrap the liens and see how well the measurement works
     for (let i = 0; i < words.length; i++) {
       const currentWord = words[i];
-      console.log({ i, currentWord });
       let lineWidth = osContext.measureText(currentLine + " " + currentWord).width;
 
       if (lineWidth < width) {
         currentLine += " " + currentWord;
       }
       else {
-        console.log({ currentLine });
         lines.push(currentLine);
         currentLine = currentWord;
       }
     }
 
-    let lineNumber = lines.length;
-    // if (measure) {
-    // Retreive an estimated number of lines
-    // TODO: This still needs some tweaking
-    // Tricky part of this heuristic is that we're assuming we
-    // wrap _exactly_ at each end character of the line, but we're really
-    // wrapping boundaries typically. So some wiggle room needs to be added
-    // let lineNumber = Math.ceil(measure.width / width);
-
     // Estimated height would be lines multiplied
     // by the line height
+    let lineNumber = lines.length;
     let height = 38;
     if (lineNumber > 5) {
       height = lineNumber * lineHeight * LINE_SCALE_FACTOR;
