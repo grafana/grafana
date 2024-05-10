@@ -59,18 +59,35 @@ export function getDashboardChanges(dashboard: DashboardModel): {
   };
 }
 
+// Shared healthcheck promise so avoid multiple calls llm app settings and health check APIs
+let llmHealthCheck: Promise<boolean> | undefined;
+
 /**
  * Check if the LLM plugin is enabled.
  * @returns true if the LLM plugin is enabled.
  */
-export async function isLLMPluginEnabled() {
+export async function isLLMPluginEnabled(): Promise<boolean> {
   if (!config.apps['grafana-llm-app']) {
     return false;
   }
 
+  if (llmHealthCheck) {
+    return llmHealthCheck;
+  }
+
   // Check if the LLM plugin is enabled.
   // If not, we won't be able to make requests, so return early.
-  return llms.openai.health().then((response) => response.ok);
+  llmHealthCheck = new Promise((resolve) => {
+    llms.openai.health().then((response) => {
+      if (!response.ok) {
+        // Health check fail clear cached promise so we can try again later
+        llmHealthCheck = undefined;
+      }
+      resolve(response.ok);
+    });
+  });
+
+  return llmHealthCheck;
 }
 
 /**
