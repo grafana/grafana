@@ -9,6 +9,7 @@ import {
   PostableRuleGrafanaRuleDTO,
   PromRulesResponse,
   RulerAlertingRuleDTO,
+  RulerGrafanaRuleDTO,
   RulerRecordingRuleDTO,
   RulerRuleGroupDTO,
   RulerRulesConfigDTO,
@@ -204,6 +205,10 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         return { url: path, params };
       },
       providesTags: ['CombinedAlertRule'],
+    }),
+
+    getAlertRule: build.query<RulerGrafanaRuleDTO, { uid: string }>({
+      query: ({ uid }) => ({ url: `/api/ruler/grafana/api/v1/rule/${uid}` }),
     }),
 
     exportRules: build.query<string, ExportRulesParams>({

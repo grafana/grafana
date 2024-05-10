@@ -184,6 +184,7 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
               grafana_alert: {
                 uid: '23',
                 namespace_uid: 'abcd',
+                rule_group: 'my-group',
                 condition: 'B',
                 data: getDefaultQueries(),
                 exec_err_state: GrafanaAlertStateDecision.Error,
@@ -206,6 +207,7 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
               grafana_alert: {
                 uid: '23',
                 namespace_uid: 'b',
+                rule_group: 'my-group',
                 condition: 'B',
                 data: getDefaultQueries(),
                 exec_err_state: GrafanaAlertStateDecision.Error,
@@ -311,6 +313,7 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
               grafana_alert: {
                 uid: '23',
                 namespace_uid: 'abcd',
+                rule_group: 'my-group',
                 condition: 'B',
                 data: getDefaultQueries(),
                 exec_err_state: GrafanaAlertStateDecision.Error,
@@ -333,6 +336,7 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
               grafana_alert: {
                 uid: '23',
                 namespace_uid: 'b',
+                rule_group: 'my-group',
                 condition: 'B',
                 data: getDefaultQueries(),
                 exec_err_state: GrafanaAlertStateDecision.Error,
