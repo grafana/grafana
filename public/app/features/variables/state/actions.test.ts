@@ -1,6 +1,6 @@
 import { AnyAction } from 'redux';
 
-import { LoadingState } from '@grafana/data';
+import { ConstantVariableModel, LoadingState, VariableRefresh } from '@grafana/data';
 import * as runtime from '@grafana/runtime';
 import { DataSourceSrv, LocationService } from '@grafana/runtime';
 import { BackendSrv } from 'app/core/services/backend_srv';
@@ -27,7 +27,6 @@ import {
   textboxBuilder,
 } from '../shared/testing/builders';
 import { createTextBoxVariableAdapter } from '../textbox/adapter';
-import { ConstantVariableModel, VariableRefresh } from '../types';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 import {

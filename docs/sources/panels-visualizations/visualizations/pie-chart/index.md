@@ -23,6 +23,10 @@ Pie charts display reduced series, or values in a series, from one or more queri
 
 {{< docs/play title="Grafana Bar Charts and Pie Charts" url="https://play.grafana.org/d/ktMs4D6Mk/" >}}
 
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ## Value options
 
 Use the following options to refine the value in your visualization.
@@ -80,38 +84,56 @@ The following example shows a pie chart with **Name** and **Percent** labels dis
 
 ![Pie chart labels](/static/img/docs/pie-chart-panel/pie-chart-labels-7-5.png)
 
-{{< docs/shared lookup="visualizations/tooltip-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
+## Standard options
+
+{{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Tooltip options
+
+{{< docs/shared lookup="visualizations/tooltip-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Legend options
 
 Use these settings to define how the legend appears in your visualization. For more information about the legend, refer to [Configure a legend]({{< relref "../../configure-legend" >}}).
 
-### Legend visibility
+### Visibility
 
-Use the **Visibility** switch to show or hide the legend.
+Toggle the switch to turn the legend on or off.
 
-### Legend mode
+### Mode
 
-Set the display mode of the legend:
+Use these settings to define how the legend appears in your visualization.
 
 - **List -** Displays the legend as a list. This is a default display mode of the legend.
 - **Table -** Displays the legend as a table.
 
-### Legend placement
+### Placement
 
 Choose where to display the legend.
 
 - **Bottom -** Below the graph.
 - **Right -** To the right of the graph.
 
-### Legend values
+#### Width
+
+Control how wide the legend is when placed on the right side of the visualization. This option is only displayed if you set the legend placement to **Right**.
+
+### Values
 
 Select values to display in the legend. You can select more than one.
 
 - **Percent:** The percentage of the whole.
 - **Value:** The raw numerical value.
 
+## Value mappings
+
+{{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Field overrides
+
+{{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 {{% docs/reference %}}
-[Calculation types]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/calculation-types"
+[Calculation types]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/calculation-types"
 [Calculation types]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types"
 {{% /docs/reference %}}
