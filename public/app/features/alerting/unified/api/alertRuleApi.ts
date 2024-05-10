@@ -203,6 +203,13 @@ export const alertRuleApi = alertingApi.injectEndpoints({
       providesTags: ['CombinedAlertRule'],
     }),
 
+    rulerNamespace: build.query<RulerRulesConfigDTO, { rulerConfig: RulerDataSourceConfig; namespace: string }>({
+      query: ({ rulerConfig, namespace }) => {
+        const { path, params } = rulerUrlBuilder(rulerConfig).namespace(namespace);
+        return { url: path, params };
+      },
+    }),
+
     // TODO This should be probably a separate ruler API file
     rulerRuleGroup: build.query<
       RulerRuleGroupDTO,

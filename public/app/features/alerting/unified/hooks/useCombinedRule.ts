@@ -194,8 +194,9 @@ export function useCombinedRule({ ruleIdentifier }: { ruleIdentifier: RuleIdenti
     },
     {
       skip: !ruleLocation || isLoadingRuleLocation,
-      refetchOnFocus: true,
-      refetchOnReconnect: true,
+      // TODO Should we enable?
+      // refetchOnFocus: true,
+      // refetchOnReconnect: true,
     }
   );
 
