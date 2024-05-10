@@ -89,7 +89,7 @@ export const RowsList = (props: RowsListProps) => {
 
   // Set font property using theme info
   // This will make text measurement accurate
-  if (osContext !== undefined) {
+  if (osContext !== undefined && osContext !== null) {
     osContext.font = `${theme.typography.fontSize}px ${theme.typography.body.fontFamily}`;
   }
 
@@ -339,7 +339,6 @@ export const RowsList = (props: RowsListProps) => {
       textWrapField,
       theme.components.table.rowHoverBackground,
       theme.typography.fontSize,
-      theme.typography.body.fontSize,
       theme.typography.body.lineHeight,
       timeRange,
       width,
