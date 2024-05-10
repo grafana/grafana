@@ -137,7 +137,7 @@ func TestIntegrationSimpleQuery(t *testing.T) {
 		body, err = result.Raw()
 		//fmt.Printf("OUT: %s", string(body))
 
-		require.Error(t, err, "expecting an error")
+		require.Error(t, err, "expecting a 400")
 		require.JSONEq(t, `{
 			"kind": "Status",
 			"apiVersion": "v1",
