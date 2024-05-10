@@ -232,7 +232,7 @@ func TestQuery_StartQuery(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		assert.Equal(t, "failed to execute log action with subtype: StartQuery: invalid time range: start time must be before end time", resp.Responses["A"].Error.Error())
+		assert.Equal(t, "failed to execute log action with subtype: StartQuery: invalid time range: start time must be before end time", resp.Responses[refID].Error.Error())
 	})
 
 	t.Run("valid time range", func(t *testing.T) {
