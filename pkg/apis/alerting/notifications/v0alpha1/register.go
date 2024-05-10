@@ -31,6 +31,12 @@ var TimeIntervalResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 	func() runtime.Object { return &TimeIntervalList{} },
 )
 
+var ReceiverResourceInfo = common.NewResourceInfo(GROUP, VERSION,
+	"receivers", "receiver", "Receiver",
+	func() runtime.Object { return &Receiver{} },
+	func() runtime.Object { return &ReceiverList{} },
+)
+
 var (
 	// SchemeGroupVersion is group version used to register these objects
 	SchemeGroupVersion = schema.GroupVersion{Group: GROUP, Version: VERSION}

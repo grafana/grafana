@@ -16,22 +16,344 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.Template":                        schema_apis_alerting_notifications_v0alpha1_Template(ref),
-		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplateGroup":                   schema_apis_alerting_notifications_v0alpha1_TemplateGroup(ref),
-		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplateGroupList":               schema_apis_alerting_notifications_v0alpha1_TemplateGroupList(ref),
-		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplateGroupSpec":               schema_apis_alerting_notifications_v0alpha1_TemplateGroupSpec(ref),
-		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplateGroupStatus":             schema_apis_alerting_notifications_v0alpha1_TemplateGroupStatus(ref),
-		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplateList":                    schema_apis_alerting_notifications_v0alpha1_TemplateList(ref),
-		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplateOperatorState":           schema_apis_alerting_notifications_v0alpha1_TemplateOperatorState(ref),
-		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplatestatusOperatorState":     schema_apis_alerting_notifications_v0alpha1_TemplatestatusOperatorState(ref),
-		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TimeInterval":                    schema_apis_alerting_notifications_v0alpha1_TimeInterval(ref),
-		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TimeIntervalInterval":            schema_apis_alerting_notifications_v0alpha1_TimeIntervalInterval(ref),
-		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TimeIntervalList":                schema_apis_alerting_notifications_v0alpha1_TimeIntervalList(ref),
-		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TimeIntervalOperatorState":       schema_apis_alerting_notifications_v0alpha1_TimeIntervalOperatorState(ref),
-		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TimeIntervalSpec":                schema_apis_alerting_notifications_v0alpha1_TimeIntervalSpec(ref),
-		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TimeIntervalStatus":              schema_apis_alerting_notifications_v0alpha1_TimeIntervalStatus(ref),
-		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TimeIntervalTimeRange":           schema_apis_alerting_notifications_v0alpha1_TimeIntervalTimeRange(ref),
-		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TimeIntervalstatusOperatorState": schema_apis_alerting_notifications_v0alpha1_TimeIntervalstatusOperatorState(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.Receiver":                         schema_apis_alerting_notifications_v0alpha1_Receiver(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.ReceiverIntegration":              schema_apis_alerting_notifications_v0alpha1_ReceiverIntegration(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.ReceiverList":                     schema_apis_alerting_notifications_v0alpha1_ReceiverList(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.ReceiverOperatorState":            schema_apis_alerting_notifications_v0alpha1_ReceiverOperatorState(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.ReceiverSpec":                     schema_apis_alerting_notifications_v0alpha1_ReceiverSpec(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.ReceiverStatus":                   schema_apis_alerting_notifications_v0alpha1_ReceiverStatus(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.ReceiverstatusOperatorState":      schema_apis_alerting_notifications_v0alpha1_ReceiverstatusOperatorState(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.Template":                         schema_apis_alerting_notifications_v0alpha1_Template(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplateGroup":                    schema_apis_alerting_notifications_v0alpha1_TemplateGroup(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplateGroupList":                schema_apis_alerting_notifications_v0alpha1_TemplateGroupList(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplateGroupOperatorState":       schema_apis_alerting_notifications_v0alpha1_TemplateGroupOperatorState(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplateGroupSpec":                schema_apis_alerting_notifications_v0alpha1_TemplateGroupSpec(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplateGroupStatus":              schema_apis_alerting_notifications_v0alpha1_TemplateGroupStatus(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplateGroupstatusOperatorState": schema_apis_alerting_notifications_v0alpha1_TemplateGroupstatusOperatorState(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplateList":                     schema_apis_alerting_notifications_v0alpha1_TemplateList(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TimeInterval":                     schema_apis_alerting_notifications_v0alpha1_TimeInterval(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TimeIntervalInterval":             schema_apis_alerting_notifications_v0alpha1_TimeIntervalInterval(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TimeIntervalList":                 schema_apis_alerting_notifications_v0alpha1_TimeIntervalList(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TimeIntervalOperatorState":        schema_apis_alerting_notifications_v0alpha1_TimeIntervalOperatorState(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TimeIntervalSpec":                 schema_apis_alerting_notifications_v0alpha1_TimeIntervalSpec(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TimeIntervalStatus":               schema_apis_alerting_notifications_v0alpha1_TimeIntervalStatus(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TimeIntervalTimeRange":            schema_apis_alerting_notifications_v0alpha1_TimeIntervalTimeRange(ref),
+		"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TimeIntervalstatusOperatorState":  schema_apis_alerting_notifications_v0alpha1_TimeIntervalstatusOperatorState(ref),
+	}
+}
+
+func schema_apis_alerting_notifications_v0alpha1_Receiver(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.ReceiverSpec"),
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.ReceiverStatus"),
+						},
+					},
+				},
+				Required: []string{"metadata", "spec", "status"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.ReceiverSpec", "github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.ReceiverStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_apis_alerting_notifications_v0alpha1_ReceiverIntegration(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ReceiverIntegration defines model for ReceiverIntegration.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"disableResolveMessage": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+					"settings": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "byte",
+						},
+					},
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"uid": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"settings", "type"},
+			},
+		},
+	}
+}
+
+func schema_apis_alerting_notifications_v0alpha1_ReceiverList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.Receiver"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"metadata", "items"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.Receiver", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+	}
+}
+
+func schema_apis_alerting_notifications_v0alpha1_ReceiverOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ReceiverOperatorState defines model for ReceiverOperatorState.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"descriptiveState": {
+						SchemaProps: spec.SchemaProps{
+							Description: "descriptiveState is an optional more descriptive state field which has no requirements on format",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"details": {
+						SchemaProps: spec.SchemaProps{
+							Description: "details contains any extra information that is operator-specific",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"lastEvaluation": {
+						SchemaProps: spec.SchemaProps{
+							Description: "lastEvaluation is the ResourceVersion last evaluated",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"state": {
+						SchemaProps: spec.SchemaProps{
+							Description: "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"lastEvaluation", "state"},
+			},
+		},
+	}
+}
+
+func schema_apis_alerting_notifications_v0alpha1_ReceiverSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ReceiverSpec defines model for ReceiverSpec.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"integrations": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.ReceiverIntegration"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"integrations"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.ReceiverIntegration"},
+	}
+}
+
+func schema_apis_alerting_notifications_v0alpha1_ReceiverStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ReceiverStatus defines model for ReceiverStatus.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"additionalFields": {
+						SchemaProps: spec.SchemaProps{
+							Description: "additionalFields is reserved for future use",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"operatorStates": {
+						SchemaProps: spec.SchemaProps{
+							Description: "operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.ReceiverstatusOperatorState"),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.ReceiverstatusOperatorState"},
+	}
+}
+
+func schema_apis_alerting_notifications_v0alpha1_ReceiverstatusOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ReceiverstatusOperatorState defines model for Receiverstatus.#OperatorState.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"descriptiveState": {
+						SchemaProps: spec.SchemaProps{
+							Description: "descriptiveState is an optional more descriptive state field which has no requirements on format",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"details": {
+						SchemaProps: spec.SchemaProps{
+							Description: "details contains any extra information that is operator-specific",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"lastEvaluation": {
+						SchemaProps: spec.SchemaProps{
+							Description: "lastEvaluation is the ResourceVersion last evaluated",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"state": {
+						SchemaProps: spec.SchemaProps{
+							Description: "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"lastEvaluation", "state"},
+			},
+		},
 	}
 }
 
@@ -171,6 +493,59 @@ func schema_apis_alerting_notifications_v0alpha1_TemplateGroupList(ref common.Re
 	}
 }
 
+func schema_apis_alerting_notifications_v0alpha1_TemplateGroupOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "TemplateGroupOperatorState defines model for TemplateGroupOperatorState.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"descriptiveState": {
+						SchemaProps: spec.SchemaProps{
+							Description: "descriptiveState is an optional more descriptive state field which has no requirements on format",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"details": {
+						SchemaProps: spec.SchemaProps{
+							Description: "details contains any extra information that is operator-specific",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"lastEvaluation": {
+						SchemaProps: spec.SchemaProps{
+							Description: "lastEvaluation is the ResourceVersion last evaluated",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"state": {
+						SchemaProps: spec.SchemaProps{
+							Description: "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"lastEvaluation", "state"},
+			},
+		},
+	}
+}
+
 func schema_apis_alerting_notifications_v0alpha1_TemplateGroupSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -178,7 +553,7 @@ func schema_apis_alerting_notifications_v0alpha1_TemplateGroupSpec(ref common.Re
 				Description: "TemplateGroupSpec defines model for TemplateGroupSpec.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"template": {
+					"content": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
 							Type:    []string{"string"},
@@ -186,7 +561,7 @@ func schema_apis_alerting_notifications_v0alpha1_TemplateGroupSpec(ref common.Re
 						},
 					},
 				},
-				Required: []string{"template"},
+				Required: []string{"content"},
 			},
 		},
 	}
@@ -224,7 +599,7 @@ func schema_apis_alerting_notifications_v0alpha1_TemplateGroupStatus(ref common.
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplatestatusOperatorState"),
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplateGroupstatusOperatorState"),
 									},
 								},
 							},
@@ -234,7 +609,60 @@ func schema_apis_alerting_notifications_v0alpha1_TemplateGroupStatus(ref common.
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplatestatusOperatorState"},
+			"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.TemplateGroupstatusOperatorState"},
+	}
+}
+
+func schema_apis_alerting_notifications_v0alpha1_TemplateGroupstatusOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "TemplateGroupstatusOperatorState defines model for TemplateGroupstatus.#OperatorState.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"descriptiveState": {
+						SchemaProps: spec.SchemaProps{
+							Description: "descriptiveState is an optional more descriptive state field which has no requirements on format",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"details": {
+						SchemaProps: spec.SchemaProps{
+							Description: "details contains any extra information that is operator-specific",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"lastEvaluation": {
+						SchemaProps: spec.SchemaProps{
+							Description: "lastEvaluation is the ResourceVersion last evaluated",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"state": {
+						SchemaProps: spec.SchemaProps{
+							Description: "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"lastEvaluation", "state"},
+			},
+		},
 	}
 }
 
@@ -283,112 +711,6 @@ func schema_apis_alerting_notifications_v0alpha1_TemplateList(ref common.Referen
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1.Template", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
-	}
-}
-
-func schema_apis_alerting_notifications_v0alpha1_TemplateOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "TemplateOperatorState defines model for TemplateOperatorState.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"descriptiveState": {
-						SchemaProps: spec.SchemaProps{
-							Description: "descriptiveState is an optional more descriptive state field which has no requirements on format",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"details": {
-						SchemaProps: spec.SchemaProps{
-							Description: "details contains any extra information that is operator-specific",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
-					"lastEvaluation": {
-						SchemaProps: spec.SchemaProps{
-							Description: "lastEvaluation is the ResourceVersion last evaluated",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"state": {
-						SchemaProps: spec.SchemaProps{
-							Description: "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-				Required: []string{"lastEvaluation", "state"},
-			},
-		},
-	}
-}
-
-func schema_apis_alerting_notifications_v0alpha1_TemplatestatusOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "TemplatestatusOperatorState defines model for Templatestatus.#OperatorState.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"descriptiveState": {
-						SchemaProps: spec.SchemaProps{
-							Description: "descriptiveState is an optional more descriptive state field which has no requirements on format",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"details": {
-						SchemaProps: spec.SchemaProps{
-							Description: "details contains any extra information that is operator-specific",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
-					"lastEvaluation": {
-						SchemaProps: spec.SchemaProps{
-							Description: "lastEvaluation is the ResourceVersion last evaluated",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"state": {
-						SchemaProps: spec.SchemaProps{
-							Description: "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-				Required: []string{"lastEvaluation", "state"},
-			},
-		},
 	}
 }
 

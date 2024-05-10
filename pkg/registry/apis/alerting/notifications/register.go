@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/apis/alerting/notifications"
 	notificationsModels "github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/builder"
+	"github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/receiver"
 	"github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/template"
 	timeIntervals "github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/time-intervals"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -67,6 +68,8 @@ func (t NotificationsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		&notificationsModels.TemplateList{},
 		&notificationsModels.TimeInterval{},
 		&notificationsModels.TimeIntervalList{},
+		&notificationsModels.ReceiverList{},
+		&notificationsModels.Receiver{},
 	)
 	metav1.AddToGroupVersion(scheme, t.gv)
 	return scheme.SetVersionPriority(t.gv)
@@ -85,10 +88,16 @@ func (t NotificationsAPIBuilder) GetAPIGroupInfo(scheme *runtime.Scheme, codecs 
 		return nil, fmt.Errorf("failed to initialize time-interval storage: %w", err)
 	}
 
+	receivers, err := receiver.NewStorage(t.ng.Api.ReceiverService, t.namespacer, scheme, dualWrite, optsGetter)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize receiver storage: %w", err)
+	}
+
 	apiGroupInfo.VersionedResourcesStorageMap[notificationsModels.VERSION] = map[string]rest.Storage{
 		notificationsModels.TemplateGroupResourceInfo.StoragePath():            templ,
 		notificationsModels.TemplateGroupResourceInfo.StoragePath("templates"): template.NewTemplateConnect(templ),
 		notificationsModels.TimeIntervalResourceInfo.StoragePath():             intervals,
+		notificationsModels.ReceiverResourceInfo.StoragePath():                 receivers,
 	}
 	return &apiGroupInfo, nil
 }
@@ -109,6 +118,8 @@ func (t NotificationsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 				return template.Authorize(ctx, t.authz, a)
 			case notificationsModels.TimeIntervalResourceInfo.GroupResource().Resource:
 				return timeIntervals.Authorize(ctx, t.authz, a)
+			case notificationsModels.ReceiverResourceInfo.GroupResource().Resource:
+				return receiver.Authorize(ctx, t.authz, a)
 			}
 			return authorizer.DecisionNoOpinion, "", nil
 		})
