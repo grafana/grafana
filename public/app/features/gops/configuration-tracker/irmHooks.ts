@@ -53,11 +53,16 @@ export interface EssentialsConfigurationData {
 export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
   const { contactPoints, isLoading: isLoadingContactPoints } = useGetContactPoints();
   const { defaultContactpoint, isLoading: isLoadingDefaultContactPoint } = useGetDefaultContactPoint();
-  const incidentPluginConfig = useGetIncidentPluginConfig();
+  const {
+    isChatOpsInstalled,
+    isInstalled: isIncidentsInstalled,
+    isLoading: isIncidentsConfigLoading,
+  } = useGetIncidentPluginConfig();
   const onCallOptions = useOnCallOptions();
   const chatOpsConnections = useOnCallChatOpsConnections();
   const { isDone: isCreateAlertRuleDone, isLoading: isLoadingAlertCreatedDone } = useIsCreateAlertRuleDone();
-  const isLoading = isLoadingContactPoints || isLoadingDefaultContactPoint || isLoadingAlertCreatedDone;
+  const isLoading =
+    isLoadingContactPoints || isLoadingDefaultContactPoint || isLoadingAlertCreatedDone || isIncidentsConfigLoading;
   function onIntegrationClick(integrationId: string, url: string) {
     const urlToGoWithIntegration = createUrl(url + integrationId, {
       returnTo: location.pathname + location.search,
@@ -140,7 +145,7 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
               },
               labelOnDone: 'View',
             },
-            done: incidentPluginConfig?.isInstalled,
+            done: isIncidentsInstalled,
           },
           {
             title: 'Connect your Messaging workspace to OnCall',
@@ -174,7 +179,7 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
                 url: '/a/grafana-incident-app/integrations',
               },
             },
-            done: incidentPluginConfig?.isChatOpsInstalled,
+            done: isChatOpsInstalled,
           },
           {
             title: 'Add Messaging workspace channel to OnCall Integration',
