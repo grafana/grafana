@@ -18,6 +18,7 @@ func New(d Dialect) *SQLTemplate {
 }
 
 type SQLTemplateIface interface {
+	Dialect
 	GetArgs() Args
 	GetScanDest() ScanDest
 }
