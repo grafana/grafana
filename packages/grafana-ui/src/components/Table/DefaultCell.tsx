@@ -74,7 +74,11 @@ export const DefaultCell = (props: TableCellProps) => {
   }
 
   if (height) {
-    cellProps.style = { ...cellProps.style, height, textWrap: 'wrap' };
+    cellProps.style = { ...cellProps.style, height };
+  }
+
+  if (textWrapped) {
+    cellProps.style = { ...cellProps.style, textWrap: 'wrap' }
   }
 
   return (
