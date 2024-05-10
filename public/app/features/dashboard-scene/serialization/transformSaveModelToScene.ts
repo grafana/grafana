@@ -319,6 +319,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       filters: variable.filters ?? [],
       baseFilters: variable.baseFilters ?? [],
       defaultKeys: variable.defaultKeys,
+      useQueriesAsFilterForOptions: true,
     });
   }
   if (variable.type === 'custom') {
