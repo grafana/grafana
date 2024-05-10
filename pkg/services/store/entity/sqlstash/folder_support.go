@@ -39,6 +39,7 @@ func updateFolderTree(ctx context.Context, tx *session.SessionTx, tenant int64) 
 	}
 
 	all := []*folderInfo{}
+	//nolint:rowserrcheck
 	rows, err := tx.Query(ctx, "SELECT uid,folder,name,slug FROM entity WHERE kind=? AND tenant_id=? ORDER BY slug asc;",
 		entity.StandardKindFolder, tenant)
 	if err != nil {

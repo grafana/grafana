@@ -172,6 +172,7 @@ func (s *sqlEntityServer) readFromHistory(ctx context.Context, r *entity.ReadEnt
 		"updated_at", "updated_by",
 	}
 
+	//nolint:rowserrcheck
 	rows, err := s.sess.Query(ctx,
 		"SELECT "+strings.Join(fields, ",")+
 			" FROM entity_history WHERE grn=? AND version=?", oid, r.Version)
@@ -473,6 +474,7 @@ func (s *sqlEntityServer) fillCreationInfo(ctx context.Context, tx *session.Sess
 		createdBy = &ignore
 	}
 
+	//nolint:rowserrcheck
 	rows, err := tx.Query(ctx, "SELECT created_at,created_by FROM entity WHERE grn=?", grn)
 	if err != nil {
 		return err
@@ -494,6 +496,8 @@ func (s *sqlEntityServer) selectForUpdate(ctx context.Context, tx *session.Sessi
 	if false { // TODO, MYSQL/PosgreSQL can lock the row " FOR UPDATE"
 		q += " FOR UPDATE"
 	}
+
+	//nolint:rowserrcheck
 	rows, err := tx.Query(ctx, q, grn)
 	if err != nil {
 		return nil, err
@@ -695,6 +699,7 @@ func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRe
 		" WHERE grn=? " + page + "\n" +
 		" ORDER BY updated_at DESC LIMIT 100"
 
+	//nolint:rowserrcheck
 	rows, err := s.sess.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
@@ -780,6 +785,7 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 
 	query, args := entityQuery.toQuery()
 
+	//nolint:rowserrcheck
 	rows, err := s.sess.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
