@@ -71,6 +71,7 @@ export const PlotLegend = React.memo(
           yAxis: axisPlacement === AxisPlacement.Left || axisPlacement === AxisPlacement.Bottom ? 1 : 2,
           getDisplayValues: () => getDisplayValuesForCalcs(calcs, field, theme),
           getItemKey: () => `${label}-${fieldIndex.frameIndex}-${fieldIndex.fieldIndex}`,
+          lineStyle: seriesConfig.lineStyle,
         };
       })
       .filter((i): i is VizLegendItem => i !== undefined);

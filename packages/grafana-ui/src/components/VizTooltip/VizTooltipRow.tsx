@@ -36,6 +36,7 @@ export const VizTooltipRow = ({
   isActive = false,
   marginRight = '0px',
   isPinned,
+  lineStyle,
 }: VizTooltipRowProps) => {
   const styles = useStyles2(getStyles, justify, marginRight);
 
@@ -118,7 +119,7 @@ export const VizTooltipRow = ({
       {(color || label) && (
         <div className={styles.valueWrapper}>
           {color && colorPlacement === ColorPlacement.first && (
-            <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator} />
+            <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator} lineStyle={lineStyle} />
           )}
           {!isPinned ? (
             <div className={cx(styles.label, isActive && styles.activeSeries)}>{label}</div>
@@ -154,6 +155,7 @@ export const VizTooltipRow = ({
             color={color}
             colorIndicator={colorIndicator}
             position={ColorIndicatorPosition.Leading}
+            lineStyle={lineStyle}
           />
         )}
 
@@ -186,6 +188,7 @@ export const VizTooltipRow = ({
             color={color}
             colorIndicator={colorIndicator}
             position={ColorIndicatorPosition.Trailing}
+            lineStyle={lineStyle}
           />
         )}
       </div>
