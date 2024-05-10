@@ -84,14 +84,16 @@ export const TimeSeriesTooltip = ({
     footer = <VizTooltipFooter dataLinks={links} annotate={annotate} />;
   }
 
-  const headerItem: VizTooltipItem = {
-    label: xField.type === FieldType.time ? '' : xField.state?.displayName ?? xField.name,
-    value: xVal,
-  };
+  const headerItem: VizTooltipItem | null = xField.config.custom?.hideFrom?.tooltip
+    ? null
+    : {
+        label: xField.type === FieldType.time ? '' : xField.state?.displayName ?? xField.name,
+        value: xVal,
+      };
 
   return (
     <div className={styles.wrapper}>
-      <VizTooltipHeader item={headerItem} isPinned={isPinned} />
+      {headerItem != null && <VizTooltipHeader item={headerItem} isPinned={isPinned} />}
       <VizTooltipContent items={contentItems} isPinned={isPinned} scrollable={scrollable} maxHeight={maxHeight} />
       {footer}
     </div>
