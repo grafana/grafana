@@ -97,8 +97,6 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
 
   let { builder, prepData } = useMemo(
     () => {
-      console.log('invaidate!');
-
       return prepConfig({ series: vizSeries, color: info.color, orientation, options, timeZone, theme });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
