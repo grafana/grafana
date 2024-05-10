@@ -34,10 +34,12 @@ export const GrotNotFound = ({ width = 'auto', height }: Props) => {
       const rotation = getIntermediateValue(heightRatio, MIN_ARM_ROTATION, MAX_ARM_ROTATION);
       const translation = getIntermediateValue(widthRatio, MIN_ARM_TRANSLATION, MAX_ARM_TRANSLATION);
 
-      window.requestAnimationFrame(() => {
-        grotArm?.setAttribute('style', `transform: rotate(${rotation}deg) translateX(${translation}%)`);
-        grotMagnifier?.setAttribute('style', `transform: rotate(${rotation}deg) translateX(${translation}%)`);
-      });
+      if (window.matchMedia('(prefers-reduced-motion: no-preference)').matches) {
+        window.requestAnimationFrame(() => {
+          grotArm?.setAttribute('style', `transform: rotate(${rotation}deg) translateX(${translation}%)`);
+          grotMagnifier?.setAttribute('style', `transform: rotate(${rotation}deg) translateX(${translation}%)`);
+        });
+      }
     };
 
     window.addEventListener('mousemove', handleMouseMove);
