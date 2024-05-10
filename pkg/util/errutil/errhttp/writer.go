@@ -57,7 +57,7 @@ func Write(ctx context.Context, err error, w http.ResponseWriter, opts ...func(E
 	var rsp any
 	pub := gErr.Public()
 	w.Header().Add("Content-Type", "application/json")
-	w.WriteHeader(pub.StatusCode)
+	w.WriteHeader(int(pub.StatusCode))
 	rsp = pub
 
 	// When running in k8s, this will return a v1 status

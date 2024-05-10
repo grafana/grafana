@@ -402,7 +402,7 @@ func (e Error) Is(other error) bool {
 // PublicError is derived from Error and only contains information
 // available to the end user.
 type PublicError struct {
-	StatusCode int            `json:"statusCode"`
+	StatusCode int32          `json:"statusCode"`
 	MessageID  string         `json:"messageId"`
 	Message    string         `json:"message,omitempty"`
 	Extra      map[string]any `json:"extra,omitempty"`
