@@ -13,7 +13,7 @@ const SHIFT_MULTIPLIER = 2 as const;
 const KNOWN_KEYS = new Set(['ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown', 'Shift', ' ']);
 
 const initHook = (u: uPlot) => {
-  let parentWithFocus: HTMLElement | null = u.root.closest('[tabindex]');
+  let parentWithFocus: HTMLElement | null = u.root;
   let pressedKeys = new Set<string>();
   let dragStartX: number | null = null;
   let keysLastHandledAt: number | null = null;
@@ -21,6 +21,8 @@ const initHook = (u: uPlot) => {
   if (!parentWithFocus) {
     return;
   }
+  // Make Graph area focusable. Setting this in Viz* components will make focus available on panels that do not yet have keyboard support
+  parentWithFocus.tabIndex = 0;
 
   const moveCursor = (dx: number, dy: number) => {
     const { cursor } = u;
