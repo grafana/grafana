@@ -1,8 +1,6 @@
 package sqltemplate
 
-import (
-	"testing"
-)
+import "testing"
 
 func TestArgs_Arg(t *testing.T) {
 	t.Parallel()
