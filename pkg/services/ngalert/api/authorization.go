@@ -124,16 +124,42 @@ func (api *API) authorize(method, path string) web.Handler {
 
 	// Alert Instances and Silences
 
-	// Silences. Grafana Paths
-	case http.MethodDelete + "/api/alertmanager/grafana/api/v2/silence/{SilenceId}":
-		eval = ac.EvalPermission(ac.ActionAlertingInstanceUpdate) // delete endpoint actually expires silence
+	// Silences for Grafana paths.
+	// These permissions are required but not sufficient, further authorization is done in the request handler.
+	case http.MethodDelete + "/api/alertmanager/grafana/api/v2/silence/{SilenceId}": // Delete endpoint is used for silence expiration.
+		eval = ac.EvalAll(
+			ac.EvalAny(
+				ac.EvalPermission(ac.ActionAlertingInstanceRead),
+				ac.EvalPermission(ac.ActionAlertingSilencesRead),
+			),
+			ac.EvalAny(
+				ac.EvalPermission(ac.ActionAlertingInstanceUpdate),
+				ac.EvalPermission(ac.ActionAlertingSilencesWrite),
+			),
+		)
 	case http.MethodGet + "/api/alertmanager/grafana/api/v2/silence/{SilenceId}":
-		eval = ac.EvalPermission(ac.ActionAlertingInstanceRead)
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingInstanceRead),
+			ac.EvalPermission(ac.ActionAlertingSilencesRead),
+		)
 	case http.MethodGet + "/api/alertmanager/grafana/api/v2/silences":
-		eval = ac.EvalPermission(ac.ActionAlertingInstanceRead)
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingInstanceRead),
+			ac.EvalPermission(ac.ActionAlertingSilencesRead),
+		)
 	case http.MethodPost + "/api/alertmanager/grafana/api/v2/silences":
-		// additional authorization is done in the request handler
-		eval = ac.EvalAny(ac.EvalPermission(ac.ActionAlertingInstanceCreate), ac.EvalPermission(ac.ActionAlertingInstanceUpdate))
+		eval = ac.EvalAll(
+			ac.EvalAny(
+				ac.EvalPermission(ac.ActionAlertingInstanceRead),
+				ac.EvalPermission(ac.ActionAlertingSilencesRead),
+			),
+			ac.EvalAny(
+				ac.EvalPermission(ac.ActionAlertingInstanceCreate),
+				ac.EvalPermission(ac.ActionAlertingInstanceUpdate),
+				ac.EvalPermission(ac.ActionAlertingSilencesCreate),
+				ac.EvalPermission(ac.ActionAlertingSilencesWrite),
+			),
+		)
 
 	// Alert Instances. Grafana Paths
 	case http.MethodGet + "/api/alertmanager/grafana/api/v2/alerts/groups":
@@ -223,15 +249,17 @@ func (api *API) authorize(method, path string) web.Handler {
 		http.MethodGet + "/api/v1/provisioning/mute-timings/export",
 		http.MethodGet + "/api/v1/provisioning/mute-timings/{name}/export":
 		eval = ac.EvalAny(
-			ac.EvalPermission(ac.ActionAlertingNotificationsRead),       // organization scope
-			ac.EvalPermission(ac.ActionAlertingProvisioningRead),        // organization scope
-			ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets), // organization scope
+			ac.EvalPermission(ac.ActionAlertingNotificationsRead),             // organization scope
+			ac.EvalPermission(ac.ActionAlertingProvisioningRead),              // organization scope
+			ac.EvalPermission(ac.ActionAlertingNotificationsProvisioningRead), // organization scope
+			ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets),       // organization scope
 		)
 
 	case http.MethodGet + "/api/v1/provisioning/alert-rules",
 		http.MethodGet + "/api/v1/provisioning/alert-rules/export":
 		eval = ac.EvalAny(
 			ac.EvalPermission(ac.ActionAlertingProvisioningRead),
+			ac.EvalPermission(ac.ActionAlertingRulesProvisioningRead),
 			ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets),
 			ac.EvalAll( // scopes are enforced in the handler
 				ac.EvalPermission(ac.ActionAlertingRuleRead),
@@ -242,6 +270,7 @@ func (api *API) authorize(method, path string) web.Handler {
 		http.MethodGet + "/api/v1/provisioning/alert-rules/{UID}/export":
 		eval = ac.EvalAny(
 			ac.EvalPermission(ac.ActionAlertingProvisioningRead),
+			ac.EvalPermission(ac.ActionAlertingRulesProvisioningRead),
 			ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets),
 			ac.EvalAll(
 				ac.EvalPermission(ac.ActionAlertingRuleRead),
@@ -254,6 +283,7 @@ func (api *API) authorize(method, path string) web.Handler {
 		scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":FolderUID"))
 		eval = ac.EvalAny(
 			ac.EvalPermission(ac.ActionAlertingProvisioningRead),
+			ac.EvalPermission(ac.ActionAlertingRulesProvisioningRead),
 			ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets),
 			ac.EvalAll(
 				ac.EvalPermission(ac.ActionAlertingRuleRead, scope),
@@ -269,6 +299,7 @@ func (api *API) authorize(method, path string) web.Handler {
 		http.MethodGet + "/api/v1/provisioning/mute-timings/{name}":
 		eval = ac.EvalAny(
 			ac.EvalPermission(ac.ActionAlertingProvisioningRead),
+			ac.EvalPermission(ac.ActionAlertingNotificationsProvisioningRead), // organization scope
 			ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets),
 			ac.EvalPermission(ac.ActionAlertingNotificationsRead),
 		)
@@ -277,6 +308,7 @@ func (api *API) authorize(method, path string) web.Handler {
 	case http.MethodPost + "/api/v1/provisioning/alert-rules":
 		eval = ac.EvalAny(
 			ac.EvalPermission(ac.ActionAlertingProvisioningWrite),
+			ac.EvalPermission(ac.ActionAlertingRulesProvisioningWrite),
 			ac.EvalAll(
 				ac.EvalPermission(ac.ActionAlertingRuleCreate), // more granular permissions are enforced by the handler via "authorizeRuleChanges"
 				ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
@@ -285,6 +317,7 @@ func (api *API) authorize(method, path string) web.Handler {
 	case http.MethodPut + "/api/v1/provisioning/alert-rules/{UID}":
 		eval = ac.EvalAny(
 			ac.EvalPermission(ac.ActionAlertingProvisioningWrite),
+			ac.EvalPermission(ac.ActionAlertingRulesProvisioningWrite),
 			ac.EvalAll(
 				ac.EvalPermission(ac.ActionAlertingRuleUpdate), // more granular permissions are enforced by the handler via "authorizeRuleChanges"
 				ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
@@ -293,6 +326,7 @@ func (api *API) authorize(method, path string) web.Handler {
 	case http.MethodDelete + "/api/v1/provisioning/alert-rules/{UID}":
 		eval = ac.EvalAny(
 			ac.EvalPermission(ac.ActionAlertingProvisioningWrite),
+			ac.EvalPermission(ac.ActionAlertingRulesProvisioningWrite),
 			ac.EvalAll(
 				ac.EvalPermission(ac.ActionAlertingRuleDelete), // more granular permissions are enforced by the handler via "authorizeRuleChanges"
 				ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
@@ -302,6 +336,7 @@ func (api *API) authorize(method, path string) web.Handler {
 		scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":FolderUID"))
 		eval = ac.EvalAny(
 			ac.EvalPermission(ac.ActionAlertingProvisioningWrite),
+			ac.EvalPermission(ac.ActionAlertingRulesProvisioningWrite),
 			ac.EvalAll(
 				ac.EvalPermission(ac.ActionAlertingRuleDelete, scope),
 				ac.EvalPermission(ac.ActionAlertingRuleRead, scope),
@@ -313,6 +348,7 @@ func (api *API) authorize(method, path string) web.Handler {
 		scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":FolderUID"))
 		eval = ac.EvalAny(
 			ac.EvalPermission(ac.ActionAlertingProvisioningWrite),
+			ac.EvalPermission(ac.ActionAlertingRulesProvisioningWrite),
 			ac.EvalAll(
 				ac.EvalPermission(ac.ActionAlertingRuleRead, scope),
 				ac.EvalPermission(dashboards.ActionFoldersRead, scope),
@@ -336,7 +372,8 @@ func (api *API) authorize(method, path string) web.Handler {
 		http.MethodPut + "/api/v1/provisioning/mute-timings/{name}",
 		http.MethodDelete + "/api/v1/provisioning/mute-timings/{name}":
 		eval = ac.EvalAny(
-			ac.EvalPermission(ac.ActionAlertingProvisioningWrite), // organization scope,
+			ac.EvalPermission(ac.ActionAlertingProvisioningWrite),              // organization scope,
+			ac.EvalPermission(ac.ActionAlertingNotificationsProvisioningWrite), // organization scope
 			ac.EvalAll(
 				ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
 				ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
@@ -344,7 +381,12 @@ func (api *API) authorize(method, path string) web.Handler {
 		)
 	case http.MethodGet + "/api/v1/notifications/time-intervals/{name}",
 		http.MethodGet + "/api/v1/notifications/time-intervals":
-		eval = ac.EvalAny(ac.EvalPermission(ac.ActionAlertingNotificationsRead), ac.EvalPermission(ac.ActionAlertingNotificationsTimeIntervalsRead), ac.EvalPermission(ac.ActionAlertingProvisioningRead))
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingNotificationsRead),
+			ac.EvalPermission(ac.ActionAlertingNotificationsTimeIntervalsRead),
+			ac.EvalPermission(ac.ActionAlertingProvisioningRead),
+			ac.EvalPermission(ac.ActionAlertingNotificationsProvisioningRead), // organization scope
+		)
 	}
 
 	if eval != nil {

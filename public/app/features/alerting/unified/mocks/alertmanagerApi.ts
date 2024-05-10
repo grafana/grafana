@@ -8,30 +8,34 @@ import {
   AlertmanagerChoice,
   AlertManagerCortexConfig,
   AlertState,
-  ExternalAlertmanagersResponse,
+  ExternalAlertmanagersStatusResponse,
 } from '../../../../plugins/datasource/alertmanager/types';
-import { AlertmanagersChoiceResponse } from '../api/alertmanagerApi';
+import { GrafanaAlertingConfigurationStatusResponse } from '../api/alertmanagerApi';
 import { getDatasourceAPIUid } from '../utils/datasource';
 
-export const defaultAlertmanagerChoiceResponse: AlertmanagersChoiceResponse = {
+export const defaultGrafanaAlertingConfigurationStatusResponse: GrafanaAlertingConfigurationStatusResponse = {
   alertmanagersChoice: AlertmanagerChoice.Internal,
   numExternalAlertmanagers: 0,
 };
 
-export const alertmanagerChoiceHandler = (response = defaultAlertmanagerChoiceResponse) =>
-  http.get('/api/v1/ngalert', () => HttpResponse.json(response));
+export const grafanaAlertingConfigurationStatusHandler = (
+  response = defaultGrafanaAlertingConfigurationStatusResponse
+) => http.get('/api/v1/ngalert', () => HttpResponse.json(response));
 
-export function mockAlertmanagerChoiceResponse(server: SetupServer, response: AlertmanagersChoiceResponse) {
-  server.use(alertmanagerChoiceHandler(response));
+export function mockAlertmanagerChoiceResponse(
+  server: SetupServer,
+  response: GrafanaAlertingConfigurationStatusResponse
+) {
+  server.use(grafanaAlertingConfigurationStatusHandler(response));
 }
 
-export const emptyExternalAlertmanagersResponse: ExternalAlertmanagersResponse = {
+export const emptyExternalAlertmanagersResponse: ExternalAlertmanagersStatusResponse = {
   data: {
     droppedAlertManagers: [],
     activeAlertManagers: [],
   },
 };
-export function mockAlertmanagersResponse(server: SetupServer, response: ExternalAlertmanagersResponse) {
+export function mockAlertmanagersResponse(server: SetupServer, response: ExternalAlertmanagersStatusResponse) {
   server.use(http.get('/api/v1/ngalert/alertmanagers', () => HttpResponse.json(response)));
 }
 

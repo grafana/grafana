@@ -643,6 +643,12 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		require.Truef(t, found, "Rule with key %#v was not found in database", keyWithID)
 	}
 
+	t.Run("inserted alerting rules should have nil recording rule fields on model", func(t *testing.T) {
+		for _, rule := range dbRules {
+			require.Nil(t, rule.Record)
+		}
+	})
+
 	t.Run("fail to insert rules with same ID", func(t *testing.T) {
 		_, err = store.InsertAlertRules(context.Background(), []models.AlertRule{deref[0]})
 		require.ErrorIs(t, err, models.ErrAlertRuleConflictBase)
@@ -807,6 +813,57 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 			assert.Contains(t, expectedUIDs, ruleKey)
 		}
 	})
+}
+
+func TestIntegrationGetNamespacesByRuleUID(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	sqlStore := db.InitTestDB(t)
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting.BaseInterval = 1 * time.Second
+	store := &DBstore{
+		SQLStore:      sqlStore,
+		FolderService: setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures()),
+		Logger:        log.New("test-dbstore"),
+		Cfg:           cfg.UnifiedAlerting,
+	}
+
+	rules := models.RuleGen.With(models.RuleMuts.WithOrgID(1)).GenerateMany(5)
+	_, err := store.InsertAlertRules(context.Background(), rules)
+	require.NoError(t, err)
+
+	uids := make([]string, 0, len(rules))
+	for _, rule := range rules {
+		uids = append(uids, rule.UID)
+	}
+
+	result, err := store.GetNamespacesByRuleUID(context.Background(), 1, uids...)
+	require.NoError(t, err)
+	require.Len(t, result, len(rules))
+	for _, rule := range rules {
+		if !assert.Contains(t, result, rule.UID) {
+			continue
+		}
+		assert.EqualValues(t, rule.NamespaceUID, result[rule.UID])
+	}
+
+	// Now test with a subset of uids.
+	subset := uids[:3]
+	result, err = store.GetNamespacesByRuleUID(context.Background(), 1, subset...)
+	require.NoError(t, err)
+	require.Len(t, result, len(subset))
+	for _, uid := range subset {
+		if !assert.Contains(t, result, uid) {
+			continue
+		}
+		for _, rule := range rules {
+			if rule.UID == uid {
+				assert.EqualValues(t, rule.NamespaceUID, result[uid])
+			}
+		}
+	}
 }
 
 // createAlertRule creates an alert rule in the database and returns it.

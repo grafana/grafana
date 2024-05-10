@@ -603,6 +603,10 @@ const (
 	// New implementation for the dashboard-to-PDF rendering
 	FlagNewPDFRendering = "newPDFRendering"
 
+	// FlagTlsMemcached
+	// Use TLS-enabled memcached in the enterprise caching feature
+	FlagTlsMemcached = "tlsMemcached"
+
 	// FlagKubernetesAggregator
 	// Enable grafana aggregator
 	FlagKubernetesAggregator = "kubernetesAggregator"
@@ -659,7 +663,15 @@ const (
 	// Enables Query Library feature in Explore
 	FlagQueryLibrary = "queryLibrary"
 
+	// FlagAutofixDSUID
+	// Automatically migrates invalid datasource UIDs
+	FlagAutofixDSUID = "autofixDSUID"
+
 	// FlagLogsExploreTableDefaultVisualization
 	// Sets the logs table as default visualisation in logs explore
 	FlagLogsExploreTableDefaultVisualization = "logsExploreTableDefaultVisualization"
+
+	// FlagNewDashboardSharingComponent
+	// Enables the new sharing drawer design
+	FlagNewDashboardSharingComponent = "newDashboardSharingComponent"
 )

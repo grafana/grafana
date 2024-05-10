@@ -5,14 +5,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
+	"unsafe"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	alertingModels "github.com/grafana/alerting/models"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
@@ -239,7 +242,8 @@ type AlertRule struct {
 	DashboardUID    *string `xorm:"dashboard_uid"`
 	PanelID         *int64  `xorm:"panel_id"`
 	RuleGroup       string
-	RuleGroupIndex  int `xorm:"rule_group_idx"`
+	RuleGroupIndex  int     `xorm:"rule_group_idx"`
+	Record          *Record `xorm:"text null 'record'"`
 	NoDataState     NoDataState
 	ExecErrState    ExecutionErrorState
 	// ideally this field should have been apimodels.ApiDuration
@@ -514,6 +518,10 @@ func (alertRule *AlertRule) ValidateAlertRule(cfg setting.UnifiedAlertingSetting
 		}
 	}
 
+	if alertRule.Record != nil {
+		return fmt.Errorf("%w: storing recording rules is not yet allowed", ErrAlertRuleFailedValidation)
+	}
+
 	if len(alertRule.NotificationSettings) > 0 {
 		if len(alertRule.NotificationSettings) != 1 {
 			return fmt.Errorf("%w: only one notification settings entry is allowed", ErrAlertRuleFailedValidation)
@@ -561,6 +569,7 @@ type AlertRuleVersion struct {
 	Condition       string
 	Data            []AlertQuery
 	IntervalSeconds int64
+	Record          *Record `xorm:"text null 'record'"`
 	NoDataState     NoDataState
 	ExecErrState    ExecutionErrorState
 	// ideally this field should have been apimodels.ApiDuration
@@ -756,4 +765,27 @@ func GroupByAlertRuleGroupKey(rules []*AlertRule) map[AlertRuleGroupKey]RulesGro
 		group.SortByGroupIndex()
 	}
 	return result
+}
+
+// Record contains mapping information for Recording Rules.
+type Record struct {
+	// Metric indicates a metric name to send results to.
+	Metric string
+	// From contains a query RefID, indicating which expression node is the output of the recording rule.
+	From string
+}
+
+func (r *Record) Fingerprint() data.Fingerprint {
+	h := fnv.New64()
+
+	writeString := func(s string) {
+		// save on extra slice allocation when string is converted to bytes.
+		_, _ = h.Write(unsafe.Slice(unsafe.StringData(s), len(s))) //nolint:gosec
+		// ignore errors returned by Write method because fnv never returns them.
+		_, _ = h.Write([]byte{255}) // use an invalid utf-8 sequence as separator
+	}
+
+	writeString(r.Metric)
+	writeString(r.From)
+	return data.Fingerprint(h.Sum64())
 }

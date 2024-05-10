@@ -2,6 +2,7 @@ package acimpl
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -65,6 +67,7 @@ func TestUsageMetrics(t *testing.T) {
 				database.ProvideService(db.InitTestDB(t)),
 				localcache.ProvideService(),
 				featuremgmt.WithFeatures(),
+				tracing.InitializeTracerForTest(),
 			)
 			assert.Equal(t, tt.expectedValue, s.GetUsageStats(context.Background())["stats.oss.accesscontrol.enabled.count"])
 		})
@@ -537,7 +540,7 @@ func TestService_SearchUsersPermissions(t *testing.T) {
 			// only the user's basic roles and the user's stored permissions
 			name:           "check namespacedId filter works correctly",
 			siuPermissions: listAllPerms,
-			searchOption:   accesscontrol.SearchOptions{NamespacedID: identity.NamespaceServiceAccount + ":1"},
+			searchOption:   accesscontrol.SearchOptions{NamespacedID: fmt.Sprintf("%s:1", identity.NamespaceServiceAccount)},
 			ramRoles: map[string]*accesscontrol.RoleDTO{
 				string(roletype.RoleEditor): {Permissions: []accesscontrol.Permission{
 					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
@@ -607,7 +610,7 @@ func TestService_SearchUserPermissions(t *testing.T) {
 			name: "ram only",
 			searchOption: accesscontrol.SearchOptions{
 				ActionPrefix: "teams",
-				NamespacedID: identity.NamespaceUser + ":2",
+				NamespacedID: fmt.Sprintf("%s:2", identity.NamespaceUser),
 			},
 			ramRoles: map[string]*accesscontrol.RoleDTO{
 				string(roletype.RoleEditor): {Permissions: []accesscontrol.Permission{
@@ -632,7 +635,7 @@ func TestService_SearchUserPermissions(t *testing.T) {
 			name: "stored only",
 			searchOption: accesscontrol.SearchOptions{
 				ActionPrefix: "teams",
-				NamespacedID: identity.NamespaceUser + ":2",
+				NamespacedID: fmt.Sprintf("%s:2", identity.NamespaceUser),
 			},
 			storedPerms: map[int64][]accesscontrol.Permission{
 				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}},
@@ -652,7 +655,7 @@ func TestService_SearchUserPermissions(t *testing.T) {
 			name: "ram and stored",
 			searchOption: accesscontrol.SearchOptions{
 				ActionPrefix: "teams",
-				NamespacedID: identity.NamespaceUser + ":2",
+				NamespacedID: fmt.Sprintf("%s:2", identity.NamespaceUser),
 			},
 			ramRoles: map[string]*accesscontrol.RoleDTO{
 				string(roletype.RoleAdmin): {Permissions: []accesscontrol.Permission{
@@ -682,7 +685,7 @@ func TestService_SearchUserPermissions(t *testing.T) {
 			name: "check action prefix filter works correctly",
 			searchOption: accesscontrol.SearchOptions{
 				ActionPrefix: "teams",
-				NamespacedID: identity.NamespaceUser + ":1",
+				NamespacedID: fmt.Sprintf("%s:1", identity.NamespaceUser),
 			},
 			ramRoles: map[string]*accesscontrol.RoleDTO{
 				string(roletype.RoleEditor): {Permissions: []accesscontrol.Permission{
@@ -704,7 +707,7 @@ func TestService_SearchUserPermissions(t *testing.T) {
 			name: "check action filter works correctly",
 			searchOption: accesscontrol.SearchOptions{
 				Action:       accesscontrol.ActionTeamsRead,
-				NamespacedID: identity.NamespaceUser + ":1",
+				NamespacedID: fmt.Sprintf("%s:1", identity.NamespaceUser),
 			},
 			ramRoles: map[string]*accesscontrol.RoleDTO{
 				string(roletype.RoleEditor): {Permissions: []accesscontrol.Permission{
@@ -802,7 +805,7 @@ func TestPermissionCacheKey(t *testing.T) {
 	}
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expected, permissionCacheKey(tc.signedInUser))
+			assert.Equal(t, tc.expected, accesscontrol.GetPermissionCacheKey(tc.signedInUser))
 		})
 	}
 }
