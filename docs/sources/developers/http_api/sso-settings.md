@@ -26,13 +26,22 @@ title: SSO Settings API
 Available in Public Preview in Grafana 10.4 and on Grafana Cloud behind the `ssoSettingsApi` feature toggle.
 {{% /admonition %}}
 
-The API can be used to create, update, delete, get, and list SSO Settings.
+The API can be used to create, update, delete, get, and list SSO Settings for OAuth2 and SAML.
+
+The settings managed by this API are stored in the database and override
+[settings from other sources]({{< relref "../../setup-grafana/configure-security/configure-authentication" >}})
+(arguments, environment variables, settings file, etc).
+Therefore, every time settings for a specific provider are removed at runtime,
+the settings are inherited from the other sources in the reverse order of precedence
+(`arguments > environment variables > settings file`).
 
 ## List SSO Settings
 
 `GET /api/v1/sso-settings`
 
 Lists the SSO Settings for all providers.
+
+The providers or SSO keys that are not managed by this API are retrieved from the other sources (settings file, environment variables, default values).
 
 **Required permissions**
 
@@ -99,6 +108,8 @@ Status Codes:
 
 Gets the SSO Settings for a provider.
 
+The SSO keys that are not managed by this API are retrieved from the other sources (settings file, environment variables, default values).
+
 **Required permissions**
 
 See note in the [introduction]({{< ref "#sso-settings" >}}) for an explanation.
@@ -150,6 +161,11 @@ Status Codes:
 `PUT /api/v1/sso-settings/:provider`
 
 Updates the SSO Settings for a provider.
+
+When you submit new settings for a provider via API,
+Grafana verifies whether the given settings are allowed and valid.
+If they are, then Grafana stores the settings in the database and reloads
+Grafana services with no need to restart the instance.
 
 **Required permissions**
 
