@@ -72,7 +72,7 @@ The following access rules apply depending on the user role:
 
 - If you are an **Org Admin**, you can configure app plugins, but you can't install, uninstall, or update them.
 - If you are a **Server Admin**, you can't configure app plugins, but you can install, uninstall, or update them.
-- If you are both **Org** and **Server Admin**, you can configure app plugins and also install, uninstall, or update them.
+- If you are both **Org Admin** and **Server Admin**, you can configure app plugins and also install, uninstall, or update them.
 
 {{% admonition type="note" %}}
 The Grafana plugin catalog is designed to work with a single Grafana server instance only. Support for Grafana clusters is planned for future Grafana releases.
