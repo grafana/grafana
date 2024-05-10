@@ -28,7 +28,7 @@ For instructions on how to add a data source to Grafana, refer to the [administr
 Only users with the organization `administrator` role can add data sources.
 Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
 
-## Configuring Elasticsearch
+## Configuring permissions
 
 When Elasticsearch security features are enabled, it is essential to configure the necessary cluster privileges to ensure seamless operation. Below is a list of the required privileges along with their purposes:
 
