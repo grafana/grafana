@@ -3274,7 +3274,7 @@ __metadata:
     "@types/prismjs": "npm:1.26.4"
     "@types/react": "npm:18.2.79"
     "@types/react-dom": "npm:18.2.25"
-    "@types/react-test-renderer": "npm:18.0.7"
+    "@types/react-test-renderer": "npm:18.3.0"
     "@types/testing-library__jest-dom": "npm:5.14.9"
     debounce-promise: "npm:3.1.2"
     fast-deep-equal: "npm:^3.1.3"
@@ -4093,7 +4093,7 @@ __metadata:
     "@types/react-highlight-words": "npm:0.16.7"
     "@types/react-router-dom": "npm:5.3.3"
     "@types/react-table": "npm:7.7.20"
-    "@types/react-test-renderer": "npm:18.0.7"
+    "@types/react-test-renderer": "npm:18.3.0"
     "@types/react-transition-group": "npm:4.4.10"
     "@types/react-window": "npm:1.8.8"
     "@types/slate": "npm:0.47.11"
@@ -9997,12 +9997,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-test-renderer@npm:18.0.7":
-  version: 18.0.7
-  resolution: "@types/react-test-renderer@npm:18.0.7"
+"@types/react-test-renderer@npm:18.3.0":
+  version: 18.3.0
+  resolution: "@types/react-test-renderer@npm:18.3.0"
   dependencies:
     "@types/react": "npm:*"
-  checksum: 10/701d7d815fe7b921712ebdb2c4434e99b92403d37c51b33a01ce1b62fed7d1efbf9f749971d9031a5b137c6d5e194249c378106768aa69725a01f150fef0ec7f
+  checksum: 10/c53683990bd194cb68e3987bda79c78eff41517f7a747e92f3e54217c2ce3addd031b8a45bf631982c909cc2caeeb905372f322758e05bb76c03754a3f24426e
   languageName: node
   linkType: hard
 
@@ -18220,7 +18220,7 @@ __metadata:
     "@types/react-router": "npm:5.1.20"
     "@types/react-router-dom": "npm:5.3.3"
     "@types/react-table": "npm:7.7.20"
-    "@types/react-test-renderer": "npm:18.0.7"
+    "@types/react-test-renderer": "npm:18.3.0"
     "@types/react-transition-group": "npm:4.4.10"
     "@types/react-virtualized-auto-sizer": "npm:1.0.4"
     "@types/react-window": "npm:1.8.8"
