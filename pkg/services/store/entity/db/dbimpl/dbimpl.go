@@ -114,6 +114,11 @@ func (db *EntityDB) GetEngine() (*xorm.Engine, error) {
 			return nil, fmt.Errorf("invalid db type specified: %s", dbType)
 		}
 
+		// register sql stat metrics
+		if err := prometheus.Register(sqlstats.NewStatsCollector("unified_storage", db.engine.DB().DB)); err != nil {
+			db.log.Warn("Failed to register unified storage sql stats collector", "error", err)
+		}
+
 		// configure sql logging
 		debugSQL := cfgSection.Key("log_queries").MustBool(false)
 		if !debugSQL {
@@ -138,11 +143,6 @@ func (db *EntityDB) GetEngine() (*xorm.Engine, error) {
 	if err := migrations.MigrateEntityStore(db, db.features); err != nil {
 		db.engine = nil
 		return nil, err
-	}
-
-	// register the go_sql_stats_connections_* metrics
-	if err := prometheus.Register(sqlstats.NewStatsCollector("unified_storage", db.engine.DB().DB)); err != nil {
-		db.log.Warn("Failed to register unified storage sql stats collector", "error", err)
 	}
 
 	return db.engine, nil
