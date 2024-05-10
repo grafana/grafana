@@ -123,8 +123,7 @@ export const TrendPanel = ({
                 render={(u, dataIdxs, seriesIdx, isPinned = false) => {
                   return (
                     <TimeSeriesTooltip
-                      frames={info.frames!}
-                      seriesFrame={alignedDataFrame}
+                      series={alignedDataFrame}
                       dataIdxs={dataIdxs}
                       seriesIdx={seriesIdx}
                       mode={options.tooltip.mode}

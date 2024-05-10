@@ -123,8 +123,7 @@ export const TimeSeriesPanel = ({
                   return (
                     // not sure it header time here works for annotations, since it's taken from nearest datapoint index
                     <TimeSeriesTooltip
-                      frames={frames}
-                      seriesFrame={alignedFrame}
+                      series={alignedFrame}
                       dataIdxs={dataIdxs}
                       seriesIdx={seriesIdx}
                       mode={viaSync ? TooltipDisplayMode.Multi : options.tooltip.mode}

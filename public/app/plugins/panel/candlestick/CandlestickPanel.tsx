@@ -299,8 +299,7 @@ export const CandlestickPanel = ({
 
                   return (
                     <TimeSeriesTooltip
-                      frames={[info.frame]}
-                      seriesFrame={alignedFrame}
+                      series={alignedFrame}
                       dataIdxs={dataIdxs}
                       seriesIdx={seriesIdx}
                       mode={viaSync ? TooltipDisplayMode.Multi : options.tooltip.mode}
