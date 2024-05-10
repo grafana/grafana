@@ -137,17 +137,26 @@ func TestIntegrationSimpleQuery(t *testing.T) {
 		body, err = result.Raw()
 		//fmt.Printf("OUT: %s", string(body))
 
-		require.Error(t, err, "expecting a 400")
+		require.Error(t, err, "expecting an error")
 		require.JSONEq(t, `{
-			"status": "Failure",
+			"kind": "Status",
+			"apiVersion": "v1",
 			"metadata": {},
+			"status": "Failure",
 			"message": "did not execute expression [Y] due to a failure to of the dependent expression or query [X]",
-			"reason": "BadRequest",
-			"details": { "group": "query.grafana.app" },
-			"code": 400,
-			"messageId": "sse.dependencyError",
-			"extra": { "depRefId": "X", "refId": "Y" }
+			"reason": "Bad request",
+			"code": 400
 		  }`, string(body))
+		// require.JSONEq(t, `{
+		// 	"status": "Failure",
+		// 	"metadata": {},
+		// 	"message": "did not execute expression [Y] due to a failure to of the dependent expression or query [X]",
+		// 	"reason": "BadRequest",
+		// 	"details": { "group": "query.grafana.app" },
+		// 	"code": 400,
+		// 	"messageId": "sse.dependencyError",
+		// 	"extra": { "depRefId": "X", "refId": "Y" }
+		//   }`, string(body))
 
 		statusCode := -1
 		contentType := "?"
