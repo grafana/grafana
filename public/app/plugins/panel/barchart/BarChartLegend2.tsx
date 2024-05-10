@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { DataFrame, Field, getFieldDisplayName, getFieldSeriesColor } from '@grafana/data';
+import { DataFrame, Field, getFieldSeriesColor } from '@grafana/data';
 import { VizLegendOptions, AxisPlacement } from '@grafana/schema';
 import { UPlotConfigBuilder, VizLayout, VizLayoutLegendProps, VizLegend, VizLegendItem, useTheme2 } from '@grafana/ui';
 import { getDisplayValuesForCalcs } from '@grafana/ui/src/components/uPlot/utils';
@@ -8,7 +8,7 @@ import { getFieldLegendItem } from 'app/core/components/TimelineChart/utils';
 
 interface BarChartLegend2Props extends VizLegendOptions, Omit<VizLayoutLegendProps, 'children'> {
   data: DataFrame[];
-  colorField?: Field;
+  colorField?: Field | null;
   // config: UPlotConfigBuilder;
 }
 
@@ -28,11 +28,6 @@ export function hasVisibleLegendSeries(config: UPlotConfigBuilder, data: DataFra
   // });
 }
 
-// for now, this is a copy of PlotLegend, except:
-//  - without requirement for dataFrameFieldIndex
-//  - using field.state?.displayName
-//  - using field.state?.hideFrom?.viz
-// this will be re-visited in our Legends epic
 export const BarChartLegend2 = React.memo(
   ({ data, placement, calcs, displayMode, colorField, ...vizLayoutLegendProps }: BarChartLegend2Props) => {
     const theme = useTheme2();
