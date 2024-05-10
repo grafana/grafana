@@ -9,13 +9,14 @@ export type Diff = {
   originalValue: unknown;
   path: string[];
   startLineNumber: number;
+  endLineNumber: number;
 };
 
 export type Diffs = {
   [key: string]: Diff[];
 };
 
-export type JSONValue = string | Object;
+type JSONValue = string | Object;
 
 export const jsonDiff = (lhs: JSONValue, rhs: JSONValue): Diffs => {
   const diffs = compare(lhs, rhs);
@@ -27,6 +28,7 @@ export const jsonDiff = (lhs: JSONValue, rhs: JSONValue): Diffs => {
       let originalValue = undefined;
       let value = undefined;
       let startLineNumber = 0;
+      let endLineNumber = 0;
 
       const path = tail(diff.path.split('/'));
 
@@ -34,14 +36,17 @@ export const jsonDiff = (lhs: JSONValue, rhs: JSONValue): Diffs => {
         originalValue = get(lhs, path);
         value = diff.value;
         startLineNumber = rhsMap.pointers[diff.path].value.line;
+        endLineNumber = rhsMap.pointers[diff.path].valueEnd.line;
       }
       if (diff.op === 'add' && rhsMap.pointers[diff.path]) {
         value = diff.value;
         startLineNumber = rhsMap.pointers[diff.path].value.line;
+        endLineNumber = rhsMap.pointers[diff.path].valueEnd.line;
       }
       if (diff.op === 'remove' && lhsMap.pointers[diff.path]) {
         originalValue = get(lhs, path);
         startLineNumber = lhsMap.pointers[diff.path].value.line;
+        endLineNumber = lhsMap.pointers[diff.path].valueEnd.line;
       }
 
       return {
@@ -50,6 +55,7 @@ export const jsonDiff = (lhs: JSONValue, rhs: JSONValue): Diffs => {
         path,
         originalValue,
         startLineNumber,
+        endLineNumber,
       };
     });
   };
