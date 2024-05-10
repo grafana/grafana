@@ -80,14 +80,22 @@ const (
 	Mode4
 )
 
-var CurrentMode = Mode2
+// #TODO replace the keys with Kind type
+var CurrentMode = map[string]DualWriterMode{
+	"playlist": Mode2,
+}
 
 //TODO: make CurrentMode customisable and specific to each entity
 // change DualWriter signature to get the current mode as an argument
 
 // NewDualWriter returns a new DualWriter.
-func NewDualWriter(legacy LegacyStorage, storage Storage) DualWriter {
-	return selectDualWriter(CurrentMode, legacy, storage)
+func NewDualWriter(kind string, legacy LegacyStorage, storage Storage) DualWriter {
+	var mode DualWriterMode
+	if val, ok := CurrentMode[kind]; ok {
+		mode = val
+	}
+
+	return selectDualWriter(mode, legacy, storage)
 }
 
 type updateWrapper struct {
