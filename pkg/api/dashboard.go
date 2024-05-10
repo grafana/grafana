@@ -276,7 +276,7 @@ func (hs *HTTPServer) getDashboardHelper(ctx context.Context, orgID int64, id in
 	return queryResult, nil
 }
 
-// swagger:route POST /dashboards/uid/{uid}/trash dashboards restoreDeletedDashboardByUID
+// swagger:route PATCH /dashboards/uid/{uid}/trash dashboards restoreDeletedDashboardByUID
 //
 // Restore a dashboard to a given dashboard version using UID.
 //
@@ -1375,5 +1375,5 @@ type RestoreDeletedDashboardByUID struct {
 
 	// in:body
 	// required:true
-	Body dashboards.SaveDashboardCommand
+	Body dashboards.RestoreDeletedDashboardCommand
 }

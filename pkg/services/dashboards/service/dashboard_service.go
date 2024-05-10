@@ -388,7 +388,7 @@ func (dr *DashboardServiceImpl) RestoreDashboard(ctx context.Context, dashboard 
 		SignedInUser: user,
 	})
 	if err != nil {
-		return folder.ErrInternal.Errorf("failed to fetch parent folders from store: %w", err)
+		return folder.ErrInternal.Errorf("failed to fetch parent folder from store: %w", err)
 	}
 
 	if len(folders) == 0 {
