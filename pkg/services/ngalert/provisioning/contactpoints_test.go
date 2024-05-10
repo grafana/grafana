@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
@@ -25,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -261,7 +261,7 @@ func TestContactPointServiceDecryptRedact(t *testing.T) {
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
 	receiverServiceWithAC := func(ecp *ContactPointService) *notifier.ReceiverService {
 		return notifier.NewReceiverService(
-			acimpl.ProvideAccessControl(setting.NewCfg()),
+			acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 			// Get won't use the sut's config store, so we can use a different one here.
 			fakes.NewFakeAlertmanagerConfigStore(createEncryptedConfig(t, secretsService)),
 			ecp.provenanceStore,

@@ -457,7 +457,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 
 	folderStore := folderimpl.ProvideDashboardFolderStore(sc.db)
 
-	ac := acimpl.ProvideAccessControl(sc.cfg)
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderStore, sc.db, features, supportbundlestest.NewFakeBundleService(), nil)
 
 	cfg := setting.NewCfg()
@@ -490,7 +490,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 		DashboardService: dashboardSvc,
 	}
 
-	hs.AccessControl = acimpl.ProvideAccessControl(hs.Cfg)
+	hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	guardian.InitAccessControlGuardian(hs.Cfg, hs.AccessControl, hs.DashboardService)
 
 	m.Get("/api/folders", hs.GetFolders)

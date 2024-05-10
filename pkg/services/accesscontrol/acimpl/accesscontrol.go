@@ -11,20 +11,19 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 var _ accesscontrol.AccessControl = new(AccessControl)
 
-func ProvideAccessControl(cfg *setting.Cfg) *AccessControl {
+func ProvideAccessControl(features featuremgmt.FeatureToggles) *AccessControl {
 	logger := log.New("accesscontrol")
 	return &AccessControl{
-		cfg, logger, accesscontrol.NewResolvers(logger),
+		features, logger, accesscontrol.NewResolvers(logger),
 	}
 }
 
 type AccessControl struct {
-	cfg       *setting.Cfg
+	features  featuremgmt.FeatureToggles
 	log       log.Logger
 	resolvers accesscontrol.Resolvers
 }
@@ -49,8 +48,7 @@ func (a *AccessControl) Evaluate(ctx context.Context, user identity.Requester, e
 		return false, nil
 	}
 
-	// TODO update this to use featuremgmt.FeatureToggles instead of checking the config
-	if a.cfg != nil && a.cfg.IsFeatureToggleEnabled != nil && a.cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccessActionSets) {
+	if a.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
 		evaluator = evaluator.AppendActionSets(ctx, a.resolvers.GetActionSetResolver())
 	}
 
