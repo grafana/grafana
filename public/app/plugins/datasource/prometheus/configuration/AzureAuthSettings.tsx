@@ -46,12 +46,12 @@ export const AzureAuthSettings = (props: HttpSettingsBaseProps) => {
 
   const labelWidth = prometheusConfigOverhaulAuth ? 24 : 26;
 
-    // The auth type needs to be set on the first load of the data source
-    useEffectOnce(() => {
-      if (!dataSourceConfig.jsonData.authType) {
-        onCredentialsChange(credentials);
-      }
-    });
+  // The auth type needs to be set on the first load of the data source
+  useEffectOnce(() => {
+    if (!dataSourceConfig.jsonData.authType) {
+      onCredentialsChange(credentials);
+    }
+  });
 
   return (
     <>
