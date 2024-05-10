@@ -127,6 +127,7 @@ function StepButton({
   options,
   onClickOption,
   done,
+  stepNotAvailableText,
 }: StepButtonProps) {
   switch (type) {
     case 'openLink':
@@ -140,28 +141,32 @@ function StepButton({
         />
       );
     case 'dropDown':
-      return (
-        <Dropdown
-          overlay={
-            <Menu>
-              {options?.map((option) => (
-                <Menu.Item
-                  label={option.label}
-                  key={option.value}
-                  onClick={() => {
-                    onClickOption?.(option.value);
-                  }}
-                />
-              ))}
-            </Menu>
-          }
-        >
-          <Button variant="secondary" size="md">
-            {label}
-            <Icon name="angle-down" />
-          </Button>
-        </Dropdown>
-      );
+      if (Boolean(options?.length)) {
+        return (
+          <Dropdown
+            overlay={
+              <Menu>
+                {options?.map((option) => (
+                  <Menu.Item
+                    label={option.label}
+                    key={option.value}
+                    onClick={() => {
+                      onClickOption?.(option.value);
+                    }}
+                  />
+                ))}
+              </Menu>
+            }
+          >
+            <Button variant="secondary" size="md">
+              {label}
+              <Icon name="angle-down" />
+            </Button>
+          </Dropdown>
+        );
+      } else {
+        return <Text>{stepNotAvailableText ?? 'No options available'} </Text>;
+      }
   }
 }
 

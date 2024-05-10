@@ -26,6 +26,7 @@ export interface StepButtonDto {
   urlLinkOnDone?: UrlLink; // only for openLink
   options?: Array<{ label: string; value: string }>; // only for dropDown
   onClickOption?: (value: string) => void; // only for dropDown
+  stepNotAvailableText?: string;
 }
 export interface SectionDtoStep {
   title: string;
@@ -202,6 +203,7 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
               label: 'Select integration',
               options: onCallOptions,
               onClickOption: (value) => onIntegrationClick(value, '/a/grafana-oncall-app/integrations/'),
+              stepNotAvailableText: 'No integrations available',
             },
           },
           {
