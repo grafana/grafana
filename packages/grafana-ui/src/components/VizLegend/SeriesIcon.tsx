@@ -34,21 +34,14 @@ export const SeriesIcon = React.memo(
     const lineStyleStyle =
       lineStyle?.fill === 'dot' ? styles.dot : lineStyle?.fill === 'dash' ? styles.dash : styles.solid;
 
-    const colorStyle: CSSProperties =
-      lineStyle?.fill === 'dot' || lineStyle?.fill === 'dash'
-        ? {
-            borderTopColor: cssColor,
-          }
-        : {
-            backgroundColor: cssColor,
-          };
-
     return (
       <div
         data-testid="series-icon"
         ref={ref}
         className={cx(className, styles.forcedColors, styles.container, lineStyleStyle)}
-        style={colorStyle}
+        style={{
+          borderTopColor: cssColor,
+        }}
         {...restProps}
       />
     );
@@ -68,7 +61,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderTop: 'dashed 3px',
   }),
   solid: css({
-    height: '4px',
+    borderTop: 'solid 4px',
     borderRadius: theme.shape.radius.pill,
     display: 'inline-block',
   }),
