@@ -130,7 +130,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
 
   const legendComp =
     legend.showLegend && hasVisibleLegendSeries(builder, info.series!) ? (
-      <BarChartLegend2 data={info.series!} {...legend} />
+      <BarChartLegend2 data={info.series!} colorField={info.color} {...legend} />
     ) : null;
 
   return (

@@ -43,6 +43,13 @@ import { BarsOptions, getConfig } from './bars';
 import { FieldConfig, Options, defaultFieldConfig } from './panelcfg.gen';
 // import { isLegendOrdered } from './utils';
 
+interface BarSeries {
+  series: DataFrame[];
+  _rest: Field[];
+  color?: Field | null;
+  warn?: string | null;
+}
+
 export function prepSeries(
   frames: DataFrame[],
   fieldConfig: FieldConfigSource<any>,
@@ -50,9 +57,9 @@ export function prepSeries(
   theme: GrafanaTheme2,
   xFieldName?: string,
   colorFieldName?: string
-) {
+): BarSeries {
   if (frames.length === 0 || frames.every((fr) => fr.length === 0)) {
-    return { warn: 'No data in response' };
+    return { series: [], _rest: [], warn: 'No data in response' };
   }
 
   cacheFieldDisplayNames(frames);
@@ -104,12 +111,6 @@ export function prepSeries(
               },
             },
           };
-
-          if (stacking === StackingMode.Percent) {
-            field2.config.unit = 'percentunit';
-            // this bit is already done inside setClassicPaletteIdxs() below
-            // field2.display = getDisplayProcessor({ field: copy, theme });
-          }
 
           fields.push(field2);
         } else {
@@ -169,8 +170,25 @@ export const prepConfig = ({ series, color, orientation, options, timeZone, them
 
   const builder = new UPlotConfigBuilder();
 
+  const formatters = frame.fields.map((f, i) => {
+    if (stacking === StackingMode.Percent) {
+      return getDisplayProcessor({
+        field: {
+          ...f,
+          config: {
+            ...f.config,
+            unit: 'percentunit',
+          },
+        },
+        theme,
+      });
+    }
+
+    return f.display!;
+  });
+
   const formatValue = (seriesIdx: number, value: unknown) => {
-    return formattedValueToString(frame.fields[seriesIdx].display!(value));
+    return formattedValueToString(formatters[seriesIdx](value));
   };
 
   const formatShortValue = (seriesIdx: number, value: unknown) => {
