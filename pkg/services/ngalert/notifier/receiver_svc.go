@@ -144,10 +144,27 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 		return nil, err
 	}
 
-	eval := accesscontrol.EvalPermission(accesscontrol.ActionAlertingReceiversList)
-	listAccess, err := rs.ac.Evaluate(ctx, user, eval)
+	listOnly := false
+	readAccess, err := rs.ac.Evaluate(ctx, user, accesscontrol.EvalAny(
+		accesscontrol.EvalPermission(accesscontrol.ActionAlertingReceiversRead),
+		accesscontrol.EvalPermission(accesscontrol.ActionAlertingNotificationsRead),
+		accesscontrol.EvalPermission(accesscontrol.ActionAlertingReceiversReadSecrets),
+		accesscontrol.EvalPermission(accesscontrol.ActionAlertingProvisioningReadSecrets),
+		accesscontrol.EvalPermission(accesscontrol.ActionAlertingProvisioningRead),
+	))
 	if err != nil {
 		return nil, err
+	}
+	if !readAccess {
+		eval := accesscontrol.EvalPermission(accesscontrol.ActionAlertingReceiversList)
+		listAccess, err := rs.ac.Evaluate(ctx, user, eval)
+		if err != nil {
+			return nil, err
+		}
+		if !listAccess {
+			return nil, ErrPermissionDenied
+		}
+		listOnly = true
 	}
 
 	var output []definitions.GettableApiReceiver
@@ -163,7 +180,6 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 		}
 
 		decryptFn := rs.decryptOrRedact(ctx, decrypt, r.Name, "")
-		listOnly := !decrypt && listAccess
 
 		res, err := PostableToGettableApiReceiver(r, provenances, decryptFn, listOnly)
 		if err != nil {
