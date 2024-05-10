@@ -18421,7 +18421,7 @@ __metadata:
     stylelint: "npm:16.3.1"
     stylelint-config-sass-guidelines: "npm:11.1.0"
     symbol-observable: "npm:4.0.0"
-    systemjs: "npm:6.14.3"
+    systemjs: "npm:6.15.1"
     systemjs-cjs-extra: "npm:0.2.1"
     terser-webpack-plugin: "npm:5.3.10"
     testing-library-selector: "npm:0.3.1"
@@ -29304,10 +29304,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"systemjs@npm:6.14.3":
-  version: 6.14.3
-  resolution: "systemjs@npm:6.14.3"
-  checksum: 10/5d79c3b7dbd68b246fba6a9fe2372b88765c61cb1dbbd550beaaae0a4b38a1f19de302e203f2106845f959d00c1e7f9976bccf9b0527e907d5f3d8b5c6c5f61a
+"systemjs@npm:6.15.1":
+  version: 6.15.1
+  resolution: "systemjs@npm:6.15.1"
+  checksum: 10/9454c32515cdf7b033cac547233b161d6154abc020a1a97afc8654a01d63cf2bc51101869807aa7f8529aae98475a2cb4522c1e31da6d33832c8e12f00ee4e18
   languageName: node
   linkType: hard
 
