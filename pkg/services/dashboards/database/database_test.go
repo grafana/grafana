@@ -711,9 +711,9 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 	orgID := int64(1)
 	insertTestDashboard(t, dashboardStore, "dashboard under general", orgID, 0, "", false)
 
-	ac := acimpl.ProvideAccessControl(cfg)
+	ac := acimpl.ProvideAccessControl(features)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil)
+	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil)
 
 	user := &user.SignedInUser{
 		OrgID: 1,
@@ -828,9 +828,9 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 	orgID := int64(1)
 	insertTestDashboard(t, dashboardStore, "dashboard under general", orgID, 0, "", false)
 
-	ac := acimpl.ProvideAccessControl(cfg)
+	ac := acimpl.ProvideAccessControl(features)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil)
+	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil)
 
 	user := &user.SignedInUser{
 		OrgID: 1,

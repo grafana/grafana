@@ -19,12 +19,12 @@ import {
   getPanelOptionsWithDefaults,
   isStandardFieldProp,
   restoreCustomOverrideRules,
+  getNextRefId,
 } from '@grafana/data';
 import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
 import { LibraryPanel, LibraryPanelRef } from '@grafana/schema';
 import config from 'app/core/config';
 import { safeStringifyValue } from 'app/core/utils/explore';
-import { getNextRefIdChar } from 'app/core/utils/query';
 import { QueryGroupOptions } from 'app/types';
 import {
   PanelOptionsChangedEvent,
@@ -281,7 +281,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     if (this.targets && isArray(this.targets)) {
       for (const query of this.targets) {
         if (!query.refId) {
-          query.refId = getNextRefIdChar(this.targets);
+          query.refId = getNextRefId(this.targets);
         }
       }
     }
@@ -564,7 +564,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
 
   addQuery(query?: Partial<DataQuery>) {
     query = query || { refId: 'A' };
-    query.refId = getNextRefIdChar(this.targets);
+    query.refId = getNextRefId(this.targets);
     this.targets.push(query as DataQuery);
     this.configRev++;
   }

@@ -33,7 +33,7 @@ describe('LogsQueryEditor.TimeManagement', () => {
     const dashboardTimeOption = await screen.findByLabelText('Dashboard');
     await userEvent.click(dashboardTimeOption);
 
-    expect(onChange).toBeCalledWith(
+    expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({
         azureLogAnalytics: expect.objectContaining({
           dashboardTime: true,
@@ -52,7 +52,7 @@ describe('LogsQueryEditor.TimeManagement', () => {
       />
     );
 
-    expect(onChange).toBeCalledWith(
+    expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({
         azureLogAnalytics: expect.objectContaining({
           timeColumn: 'TimeGenerated',
@@ -90,7 +90,7 @@ describe('LogsQueryEditor.TimeManagement', () => {
       />
     );
 
-    expect(onChange).toBeCalledWith(
+    expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({
         azureLogAnalytics: expect.objectContaining({
           timeColumn: 'TimeGenerated',
@@ -128,7 +128,7 @@ describe('LogsQueryEditor.TimeManagement', () => {
       />
     );
 
-    expect(onChange).toBeCalledWith(
+    expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({
         azureLogAnalytics: expect.objectContaining({
           timeColumn: 'Timespan',

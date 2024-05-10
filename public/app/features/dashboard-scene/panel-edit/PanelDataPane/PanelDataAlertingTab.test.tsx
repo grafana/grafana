@@ -6,20 +6,21 @@ import { byTestId } from 'testing-library-selector';
 
 import { DataSourceApi } from '@grafana/data';
 import { PromOptions, PrometheusDatasource } from '@grafana/prometheus';
-import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { locationService, setDataSourceSrv, setPluginExtensionsHook } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { fetchRules } from 'app/features/alerting/unified/api/prometheus';
-import { fetchRulerRules } from 'app/features/alerting/unified/api/ruler';
+import * as ruler from 'app/features/alerting/unified/api/ruler';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
+import * as alertingAbilities from 'app/features/alerting/unified/hooks/useAbilities';
+import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import {
   MockDataSourceSrv,
   grantUserPermissions,
   mockDataSource,
   mockFolder,
+  mockPromAlert,
   mockPromAlertingRule,
-  mockPromRuleGroup,
-  mockPromRuleNamespace,
-  mockRulerGrafanaRule,
+  mockRulerAlertingRule,
+  mockRulerRuleGroup,
 } from 'app/features/alerting/unified/mocks';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import * as config from 'app/features/alerting/unified/utils/config';
@@ -29,11 +30,11 @@ import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
+import { AlertQuery, PromRulesResponse } from 'app/types/unified-alerting-dto';
 
 import { createDashboardSceneFromDashboardModel } from '../../serialization/transformSaveModelToScene';
-import { findVizPanelByKey, getVizPanelKeyForPanelId } from '../../utils/utils';
 import * as utils from '../../utils/utils';
+import { findVizPanelByKey, getVizPanelKeyForPanelId } from '../../utils/utils';
 import { VizPanelManager } from '../VizPanelManager';
 
 import { PanelDataAlertingTab, PanelDataAlertingTabRendered } from './PanelDataAlertingTab';
@@ -47,6 +48,13 @@ jest.mock('app/features/alerting/unified/api/ruler');
 
 jest.spyOn(config, 'getAllDataSources');
 jest.spyOn(ruleActionButtons, 'matchesWidth').mockReturnValue(false);
+jest.spyOn(ruler, 'rulerUrlBuilder');
+jest.spyOn(alertingAbilities, 'useAlertRuleAbility');
+
+setPluginExtensionsHook(() => ({
+  extensions: [],
+  isLoading: false,
+}));
 
 const dataSources = {
   prometheus: mockDataSource<PromOptions>({
@@ -65,10 +73,8 @@ dataSources.default.meta.alerting = true;
 
 const mocks = {
   getAllDataSources: jest.mocked(config.getAllDataSources),
-  api: {
-    fetchRules: jest.mocked(fetchRules),
-    fetchRulerRules: jest.mocked(fetchRulerRules),
-  },
+  useAlertRuleAbilityMock: jest.mocked(alertingAbilities.useAlertRuleAbility),
+  rulerBuilderMock: jest.mocked(ruler.rulerUrlBuilder),
 };
 
 const renderAlertTabContent = (model: PanelDataAlertingTab, initialStore?: ReturnType<typeof configureStore>) => {
@@ -79,73 +85,57 @@ const renderAlertTabContent = (model: PanelDataAlertingTab, initialStore?: Retur
   );
 };
 
-const rules = [
-  mockPromRuleNamespace({
-    name: 'default',
+const promResponse: PromRulesResponse = {
+  status: 'success',
+  data: {
     groups: [
-      mockPromRuleGroup({
+      {
         name: 'mygroup',
+        file: 'default',
         rules: [
           mockPromAlertingRule({
             name: 'dashboardrule1',
-            annotations: {
-              [Annotation.dashboardUID]: '12',
-              [Annotation.panelID]: '34',
-            },
+            alerts: [
+              mockPromAlert({
+                labels: { severity: 'critical' },
+                annotations: {
+                  [Annotation.dashboardUID]: '12',
+                  [Annotation.panelID]: '34',
+                },
+              }),
+            ],
+            totals: { alerting: 1 },
+            totalsFiltered: { alerting: 1 },
           }),
         ],
-      }),
-      mockPromRuleGroup({
+        interval: 20,
+      },
+      {
         name: 'othergroup',
+        file: 'default',
         rules: [
           mockPromAlertingRule({
             name: 'dashboardrule2',
-            annotations: {
-              [Annotation.dashboardUID]: '121',
-              [Annotation.panelID]: '341',
-            },
+            alerts: [
+              mockPromAlert({
+                labels: { severity: 'critical' },
+                annotations: {
+                  [Annotation.dashboardUID]: '121',
+                  [Annotation.panelID]: '341',
+                },
+              }),
+            ],
+            totals: { alerting: 1 },
+            totalsFiltered: { alerting: 1 },
           }),
         ],
-      }),
+        interval: 20,
+      },
     ],
-  }),
-];
-
-const rulerRules = {
-  default: [
-    {
-      name: 'mygroup',
-      rules: [
-        mockRulerGrafanaRule(
-          {
-            annotations: {
-              [Annotation.dashboardUID]: '12',
-              [Annotation.panelID]: '34',
-            },
-          },
-          {
-            title: 'dashboardrule1',
-          }
-        ),
-      ],
+    totals: {
+      alerting: 2,
     },
-    {
-      name: 'othergroup',
-      rules: [
-        mockRulerGrafanaRule(
-          {
-            annotations: {
-              [Annotation.dashboardUID]: '121',
-              [Annotation.panelID]: '341',
-            },
-          },
-          {
-            title: 'dashboardrule2',
-          }
-        ),
-      ],
-    },
-  ],
+  },
 };
 
 const dashboard = {
@@ -182,8 +172,10 @@ const ui = {
   row: byTestId('row'),
   createButton: byTestId<HTMLButtonElement>('create-alert-rule-button'),
 };
+const server = setupMswServer();
 
 describe('PanelAlertTabContent', () => {
+  // silenceConsoleOutput();
   beforeEach(() => {
     jest.resetAllMocks();
     grantUserPermissions([
@@ -204,6 +196,42 @@ describe('PanelAlertTabContent', () => {
     ) as DataSourceApi;
     dsService.datasources[dataSources.default.uid] = new PrometheusDatasource(dataSources.default) as DataSourceApi;
     setDataSourceSrv(dsService);
+    mocks.rulerBuilderMock.mockReturnValue({
+      rules: () => ({ path: `api/ruler/${GRAFANA_RULES_SOURCE_NAME}/api/v1/rules` }),
+      namespace: () => ({ path: 'ruler' }),
+      namespaceGroup: () => ({ path: 'ruler' }),
+    });
+    mocks.useAlertRuleAbilityMock.mockReturnValue([true, true]);
+
+    mockAlertRuleApi(server).prometheusRuleNamespaces(GRAFANA_RULES_SOURCE_NAME, promResponse);
+    mockAlertRuleApi(server).rulerRules(GRAFANA_RULES_SOURCE_NAME, {
+      default: [
+        mockRulerRuleGroup({
+          name: 'mygroup',
+          rules: [
+            mockRulerAlertingRule({
+              alert: 'dashboardrule1',
+              annotations: {
+                [Annotation.dashboardUID]: '12',
+                [Annotation.panelID]: '34',
+              },
+            }),
+          ],
+        }),
+        {
+          name: 'othergroup',
+          rules: [
+            mockRulerAlertingRule({
+              alert: 'dashboardrule2',
+              annotations: {
+                [Annotation.dashboardUID]: '121',
+                [Annotation.panelID]: '341',
+              },
+            }),
+          ],
+        },
+      ],
+    });
   });
 
   it('Will take into account panel maxDataPoints', async () => {
@@ -284,18 +312,16 @@ describe('PanelAlertTabContent', () => {
     });
   });
 
+  // after updating to RTKQ, the response is already returning the alerts belonging to the panel
   it('Will render alerts belonging to panel and a button to create alert from panel queries', async () => {
-    mocks.api.fetchRules.mockResolvedValue(rules);
-    mocks.api.fetchRulerRules.mockResolvedValue(rulerRules);
-
     dashboard.panels = [panel];
 
     renderAlertTab(dashboard);
 
     const rows = await ui.row.findAll();
-    expect(rows).toHaveLength(1);
+    expect(rows).toHaveLength(2);
     expect(rows[0]).toHaveTextContent(/dashboardrule1/);
-    expect(rows[0]).not.toHaveTextContent(/dashboardrule2/);
+    expect(rows[1]).toHaveTextContent(/dashboardrule2/);
 
     const defaults = await clickNewButton();
 
@@ -311,25 +337,6 @@ describe('PanelAlertTabContent', () => {
     };
 
     expect(defaultsWithDeterministicTime).toMatchSnapshot();
-
-    expect(mocks.api.fetchRulerRules).toHaveBeenCalledWith(
-      { dataSourceName: GRAFANA_RULES_SOURCE_NAME, apiVersion: 'legacy' },
-      {
-        dashboardUID: dashboard.uid,
-        panelId: panel.id,
-      }
-    );
-    expect(mocks.api.fetchRules).toHaveBeenCalledWith(
-      GRAFANA_RULES_SOURCE_NAME,
-      {
-        dashboardUID: dashboard.uid,
-        panelId: panel.id,
-      },
-      undefined,
-      undefined,
-      undefined,
-      undefined
-    );
   });
 });
 
