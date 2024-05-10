@@ -22,8 +22,7 @@ func getEngineMySQL(cfgSection *setting.DynamicSection) (*xorm.Engine, error) {
 		protocol = "unix"
 	}
 
-	connectionString := fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true",
-		dbUser, dbPass, protocol, dbHost, dbName)
+	connectionString := connectionStringMySQL(dbUser, dbPass, protocol, dbHost, dbName)
 
 	engine, err := xorm.NewEngine("mysql", connectionString)
 	if err != nil {
