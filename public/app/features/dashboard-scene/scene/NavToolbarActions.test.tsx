@@ -9,9 +9,6 @@ import { config, locationService } from '@grafana/runtime';
 import { SceneGridLayout, SceneQueryRunner, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
-import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
-import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
-
 import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardScene } from './DashboardScene';
 import { ToolbarActions } from './NavToolbarActions';

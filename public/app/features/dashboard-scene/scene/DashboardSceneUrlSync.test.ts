@@ -2,7 +2,7 @@ import { AppEvents } from '@grafana/data';
 import { SceneGridLayout, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
 
-import { PanelEditor, buildPanelEditScene } from '../panel-edit/PanelEditor';
+import { PanelEditor } from '../panel-edit/PanelEditor';
 
 import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardScene } from './DashboardScene';
