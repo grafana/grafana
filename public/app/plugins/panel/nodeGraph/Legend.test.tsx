@@ -25,6 +25,6 @@ describe('Legend', () => {
     expect(items.length).toBe(3);
 
     const item = screen.getByTestId(/VizLegend series error/);
-    expect((item.firstChild as HTMLDivElement).style.getPropertyValue('background')).toBe('rgb(242, 73, 92)');
+    expect((item.firstChild as HTMLDivElement).style.getPropertyValue('border-top-color')).toBe('#F2495C');
   });
 });

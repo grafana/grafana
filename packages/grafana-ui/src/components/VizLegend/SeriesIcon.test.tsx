@@ -16,6 +16,6 @@ describe('SeriesIcon', () => {
   it('renders color correctly', () => {
     const { container } = render(<SeriesIcon color={'red'} />);
     const div = container.firstChild! as HTMLDivElement;
-    expect(div.style.getPropertyValue('background')).toBe('red');
+    expect(div.style.getPropertyValue('border-top-color')).toBe('red');
   });
 });
