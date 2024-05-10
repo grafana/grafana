@@ -51,10 +51,6 @@ func getEnginePostgres(cfgSection *setting.DynamicSection) (*xorm.Engine, error)
 		return nil, fmt.Errorf("invalid host specifier '%s': %w", dbHost, err)
 	}
 
-	//connectionString := fmt.Sprintf(
-	//	"user=%s password=%s host=%s port=%s dbname=%s sslmode=%s", // sslcert='%s' sslkey='%s' sslrootcert='%s'",
-	//	dbUser, dbPass, addr.Host, addr.Port, dbName, dbSslMode, // ss.dbCfg.ClientCertPath, ss.dbCfg.ClientKeyPath, ss.dbCfg.CaCertPath
-	//)
 	connectionString := connectionStringPostgres(dbUser, dbPass, addr.Host, addr.Port, dbName, dbSslMode)
 
 	engine, err := xorm.NewEngine("postgres", connectionString)
