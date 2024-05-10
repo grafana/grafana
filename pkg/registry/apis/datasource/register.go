@@ -74,7 +74,7 @@ func RegisterAPIService(
 	}
 
 	for _, ds := range all {
-		if !slices.Contains(ids, ds.ID) {
+		if !slices.Contains(ids, ds.ID) && ds.APIVersion == "" {
 			continue // skip this one
 		}
 
@@ -106,7 +106,7 @@ func NewDataSourceAPIBuilder(
 	datasources PluginDatasourceProvider,
 	contextProvider PluginContextWrapper,
 	accessControl accesscontrol.AccessControl) (*DataSourceAPIBuilder, error) {
-	ri, err := resourceFromPluginID(plugin.ID)
+	ri, err := resourceFromPluginID(plugin.ID, plugin.APIVersion)
 	if err != nil {
 		return nil, err
 	}
@@ -158,12 +158,15 @@ func (b *DataSourceAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(gv)
 }
 
-func resourceFromPluginID(pluginID string) (common.ResourceInfo, error) {
+func resourceFromPluginID(pluginID string, apiVersion string) (common.ResourceInfo, error) {
 	group, err := plugins.GetDatasourceGroupNameFromPluginID(pluginID)
 	if err != nil {
 		return common.ResourceInfo{}, err
 	}
-	return datasource.GenericConnectionResourceInfo.WithGroupAndShortName(group, pluginID+"-connection"), nil
+	if apiVersion == "" {
+		apiVersion = "v0alpha1"
+	}
+	return datasource.GenericConnectionResourceInfo.WithGroupAndShortName(group, apiVersion, pluginID+"-connection"), nil
 }
 
 func (b *DataSourceAPIBuilder) GetAPIGroupInfo(

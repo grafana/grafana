@@ -28,7 +28,7 @@ type PluginSetting struct {
 	SignatureType   plugins.SignatureType   `json:"signatureType"`
 	SignatureOrg    string                  `json:"signatureOrg"`
 	AngularDetected bool                    `json:"angularDetected"`
-	APIVersion      string                  `json:"apiVersion"`
+	APIServer       *APIServerInfo          `json:"apiserver,omitempty"`
 }
 
 type PluginListItem struct {
@@ -50,7 +50,28 @@ type PluginListItem struct {
 	AccessControl   accesscontrol.Metadata  `json:"accessControl,omitempty"`
 	AngularDetected bool                    `json:"angularDetected"`
 	IAM             *pfs.IAM                `json:"iam,omitempty"`
-	APIVersion      string                  `json:"apiVersion"`
+	APIServer       *APIServerInfo          `json:"apiserver,omitempty"`
+}
+
+type APIServerInfo struct {
+	Group           string   `json:"group"`
+	Versions        []string `json:"versions"`
+	PreferedVersion string   `json:"preferredVersion"`
+}
+
+func GetPluginAPIServerInfo(pluginID, apiVersion string) *APIServerInfo {
+	if apiVersion == "" {
+		return nil
+	}
+	group, err := plugins.GetDatasourceGroupNameFromPluginID(pluginID)
+	if err != nil {
+		return nil
+	}
+	return &APIServerInfo{
+		Group:           group,
+		Versions:        []string{apiVersion},
+		PreferedVersion: apiVersion,
+	}
 }
 
 type PluginList []PluginListItem

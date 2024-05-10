@@ -105,5 +105,6 @@
         "url": "https://prometheus.io/"
       }
     ]
-  }
+  },
+  "apiVersion": "v0alpha3"
 }
