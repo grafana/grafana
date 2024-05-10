@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Icon, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Icon, LoadingPlaceholder, Stack, useStyles2 } from '@grafana/ui';
 
 import { IrmCardConfiguration } from './ConfigureIRM';
 import { ProgressBar, StepsStatus } from './ProgressBar';
@@ -11,9 +11,10 @@ import { ProgressBar, StepsStatus } from './ProgressBar';
 interface ConfigCardProps {
   config: IrmCardConfiguration;
   handleActionClick: (id: number, isDone: boolean | undefined) => void;
+  isLoading: boolean;
 }
 
-export function ConfigCard({ config, handleActionClick }: ConfigCardProps) {
+export function ConfigCard({ config, handleActionClick, isLoading = false }: ConfigCardProps) {
   const styles = useStyles2(getStyles);
   return (
     <Stack direction={'column'} gap={1} justifyContent={'space-around'}>
@@ -23,9 +24,10 @@ export function ConfigCard({ config, handleActionClick }: ConfigCardProps) {
             <Stack direction={'row'} gap={1} alignItems={'center'}>
               {config.title}
               {config.titleIcon && <Icon name={config.titleIcon} />}
-              {config.isDone && <Icon name="check-circle" color="green" size="lg" />}
+              {/* Only show check icon when not loading */}
+              {config.isDone && !isLoading && <Icon name="check-circle" color="green" size="lg" />}
             </Stack>
-            {config.stepsDone && config.totalStepsToDo && (
+            {config.stepsDone && config.totalStepsToDo && !isLoading && (
               <Stack direction="row" gap={0.5}>
                 <StepsStatus stepsDone={config.stepsDone} totalStepsToDo={config.totalStepsToDo} />
                 complete
@@ -33,8 +35,9 @@ export function ConfigCard({ config, handleActionClick }: ConfigCardProps) {
             )}
           </Stack>
           <Stack direction={'column'}>
-            {config.description}
-            {config.stepsDone && config.totalStepsToDo && (
+            {!isLoading ? config.description : <LoadingPlaceholder text="Loading configuration...." />}
+            {/* Only show ProgressBar when not loading */}
+            {!isLoading && config.stepsDone && config.totalStepsToDo && (
               <ProgressBar stepsDone={config.stepsDone} totalStepsToDo={config.totalStepsToDo} />
             )}
           </Stack>

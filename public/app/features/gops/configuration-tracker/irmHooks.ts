@@ -47,14 +47,17 @@ export interface EssentialsConfigurationData {
   essentialContent: SectionsDto;
   stepsDone: number;
   totalStepsToDo: number;
+  isLoading: boolean;
 }
 
 export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
-  const contactPoints = useGetContactPoints();
-  const defaultContactPoint = useGetDefaultContactPoint();
+  const { contactPoints, isLoading: isLoadingContactPoints } = useGetContactPoints();
+  const { defaultContactpoint, isLoading: isLoadingDefaultContactPoint } = useGetDefaultContactPoint();
   const incidentPluginConfig = useGetIncidentPluginConfig();
   const onCallOptions = useOnCallOptions();
   const chatOpsConnections = useOnCallChatOpsConnections();
+  const { isDone: isCreateAlertRuleDone, isLoading: isLoadingAlertCreatedDone } = useIsCreateAlertRuleDone();
+  const isLoading = isLoadingContactPoints || isLoadingDefaultContactPoint || isLoadingAlertCreatedDone;
   function onIntegrationClick(integrationId: string, url: string) {
     const urlToGoWithIntegration = createUrl(url + integrationId, {
       returnTo: location.pathname + location.search,
@@ -74,7 +77,7 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
             button: {
               type: 'openLink',
               urlLink: {
-                url: `/alerting/notifications/receivers/${defaultContactPoint}/edit`,
+                url: `/alerting/notifications/receivers/${defaultContactpoint}/edit`,
                 queryParams: { alertmanager: 'grafana' },
               },
               label: 'Edit',
@@ -83,7 +86,7 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
                 url: `/alerting/notifications`,
               },
             },
-            done: isContactPointReady(defaultContactPoint, contactPoints),
+            done: isContactPointReady(defaultContactpoint, contactPoints),
           },
           {
             title: 'Connect alerting to OnCall',
@@ -115,7 +118,7 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
               },
               labelOnDone: 'View',
             },
-            done: useIsCreateAlertRuleDone(),
+            done: isCreateAlertRuleDone,
           },
         ],
       },
@@ -233,7 +236,7 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
     },
     { stepsDone: 0, totalStepsToDo: 0 }
   );
-  return { essentialContent, stepsDone, totalStepsToDo };
+  return { essentialContent, stepsDone, totalStepsToDo, isLoading };
 }
 interface UseConfigurationProps {
   dataSourceConfigurationData: DataSourceConfigurationData;

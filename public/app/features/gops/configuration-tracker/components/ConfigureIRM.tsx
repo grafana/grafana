@@ -95,7 +95,12 @@ export function ConfigureIRM() {
       </Text>
       <section className={styles.container}>
         {configuration.map((config) => (
-          <ConfigCard key={config.id} config={config} handleActionClick={handleActionClick} />
+          <ConfigCard
+            key={config.id}
+            config={config}
+            handleActionClick={handleActionClick}
+            isLoading={essentialsConfigurationData.isLoading}
+          />
         ))}
         {essentialsOpen && (
           <Essentials
