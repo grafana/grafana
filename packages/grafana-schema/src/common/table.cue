@@ -73,6 +73,7 @@ TableColoredBackgroundCellOptions: {
 	type: TableCellDisplayMode & "color-background"
 	mode?: TableCellBackgroundDisplayMode
 	applyToRow?: bool
+	wrapText?: bool
 } @cuetsy(kind="interface")
 
 // Height of a table cell

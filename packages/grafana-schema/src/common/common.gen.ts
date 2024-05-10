@@ -795,6 +795,7 @@ export interface TableColoredBackgroundCellOptions {
   applyToRow?: boolean;
   mode?: TableCellBackgroundDisplayMode;
   type: TableCellDisplayMode.ColorBackground;
+  wrapText?: boolean;
 }
 
 /**
