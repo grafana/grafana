@@ -172,6 +172,7 @@ func (s *sqlEntityServer) readFromHistory(ctx context.Context, r *entity.ReadEnt
 		"updated_at", "updated_by",
 	}
 
+	//nolint:rowserrcheck
 	rows, err := s.sess.Query(ctx,
 		"SELECT "+strings.Join(fields, ",")+
 			" FROM entity_history WHERE grn=? AND version=?", oid, r.Version)

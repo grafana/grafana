@@ -127,6 +127,7 @@ func TestRetryingOnFailures(t *testing.T) {
 		require.NoError(t, err)
 	})
 	require.NoError(t, err)
+	require.NoError(t, rows.Err())
 	require.True(t, rows.Next()) // first row
 
 	str1 := ""
