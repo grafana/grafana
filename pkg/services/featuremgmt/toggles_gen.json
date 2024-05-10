@@ -2149,6 +2149,20 @@
         "codeowner": "@grafana/sharing-squad",
         "frontend": true
       }
+    },
+    {
+      "metadata": {
+        "name": "tlsMemcached",
+        "resourceVersion": "1715012300933",
+        "creationTimestamp": "2024-05-06T16:18:20Z",
+        "deletionTimestamp": "2024-05-06T16:20:46Z"
+      },
+      "spec": {
+        "description": "Use TLS-enabled memcached in the enterprise caching feature",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "hideFromDocs": true
+      }
     }
   ]
 }

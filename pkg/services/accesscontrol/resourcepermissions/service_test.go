@@ -285,19 +285,12 @@ func TestService_RegisterActionSets(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			cfg := setting.NewCfg()
-			cfg.IsFeatureToggleEnabled = func(ft string) bool {
-				if ft == featuremgmt.FlagAccessActionSets {
-					return tt.actionSetsEnabled
-				}
-				return false
-			}
-			ac := acimpl.ProvideAccessControl(cfg)
-			actionSets := NewActionSetService(ac)
 			features := featuremgmt.WithFeatures()
 			if tt.actionSetsEnabled {
 				features = featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets)
 			}
+			ac := acimpl.ProvideAccessControl(features)
+			actionSets := NewActionSetService(ac)
 			_, err := New(
 				setting.NewCfg(), tt.options, features, routing.NewRouteRegister(), licensingtest.NewFakeLicensing(),
 				ac, &actest.FakeService{}, db.InitTestDB(t), nil, nil, actionSets,
@@ -341,7 +334,7 @@ func setupTestEnvironment(t *testing.T, ops Options) (*Service, user.Service, te
 
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
-	ac := acimpl.ProvideAccessControl(setting.NewCfg())
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	acService := &actest.FakeService{}
 	service, err := New(
 		cfg, ops, featuremgmt.WithFeatures(), routing.NewRouteRegister(), license,

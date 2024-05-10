@@ -154,6 +154,39 @@ describe('MixedDatasource', () => {
     });
   });
 
+  describe('with single value template variable', () => {
+    beforeAll(() => {
+      setDataSourceSrv({
+        getInstanceSettings() {
+          return {};
+        },
+      } as DataSourceSrv);
+    });
+
+    const scene = new SceneFlexLayout({
+      children: [],
+      $variables: new SceneVariableSet({
+        variables: [new CustomVariable({ name: 'ds', value: 'B' })],
+      }),
+    });
+
+    it('should run query for correct datasource', async () => {
+      const ds = new MixedDatasource({} as DataSourceInstanceSettings);
+
+      const request = {
+        targets: [{ refId: 'AA', datasource: { uid: '$ds' } }],
+        scopedVars: {
+          __sceneObject: { value: scene },
+        },
+      } as unknown as DataQueryRequest;
+
+      await expect(ds.query(request)).toEmitValuesWith((results) => {
+        expect(results).toHaveLength(1);
+        expect(results[0].data).toEqual(['BBBB']);
+      });
+    });
+  });
+
   it('should return both query results from the same data source', async () => {
     const ds = new MixedDatasource({} as DataSourceInstanceSettings);
     const request = {
