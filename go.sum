@@ -2150,8 +2150,8 @@ github.com/gorilla/websocket v1.5.0 h1:PPwGk2jz7EePpoHN/+ClbZu8SPxiqlu12wZP/3sWm
 github.com/gorilla/websocket v1.5.0/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/grafana/alerting v0.0.0-20240424080142-bb4f4f429d36 h1:v4aQ0cde8SCzNRrD2RczzmFolEkXWriSY9tKakAD0ng=
 github.com/grafana/alerting v0.0.0-20240424080142-bb4f4f429d36/go.mod h1:8nOsn7PWmttOmWiR7bvYIl3VLl+tIq72ZF+1y54w36M=
-github.com/grafana/authlib v0.0.0-20240507125705-83f1bd27814b h1:kwBWYA2rinp3U7grClw+zOnC6Y6iNcLqKI3v7uiIEXA=
-github.com/grafana/authlib v0.0.0-20240507125705-83f1bd27814b/go.mod h1:86rRD5P6u2JPWtNWTMOlqlU+YMv2fUvVz/DomA6L7w4=
+github.com/grafana/authlib v0.0.0-20240510094551-3514cbee7f0c h1:T05Ff/I3sk6KMbuTihPiS108qsnZlImaYo8Tp0kHY2w=
+github.com/grafana/authlib v0.0.0-20240510094551-3514cbee7f0c/go.mod h1:86rRD5P6u2JPWtNWTMOlqlU+YMv2fUvVz/DomA6L7w4=
 github.com/grafana/codejen v0.0.3 h1:tAWxoTUuhgmEqxJPOLtJoxlPBbMULFwKFOcRsPRPXDw=
 github.com/grafana/codejen v0.0.3/go.mod h1:zmwwM/DRyQB7pfuBjTWII3CWtxcXh8LTwAYGfDfpR6s=
 github.com/grafana/cue v0.0.0-20230926092038-971951014e3f h1:TmYAMnqg3d5KYEAaT6PtTguL2GjLfvr6wnAX8Azw6tQ=
@@ -2167,6 +2167,7 @@ github.com/grafana/dskit v0.0.0-20240104111617-ea101a3b86eb/go.mod h1:kkWM4WUV23
 github.com/grafana/gofpdf v0.0.0-20231002120153-857cc45be447 h1:jxJJ5z0GxqhWFbQUsys3BHG8jnmniJ2Q74tXAG1NaDo=
 github.com/grafana/gofpdf v0.0.0-20231002120153-857cc45be447/go.mod h1:IxsY6mns6Q5sAnWcrptrgUrSglTZJXH/kXr9nbpb/9I=
 github.com/grafana/gomemcache v0.0.0-20231023152154-6947259a0586 h1:/of8Z8taCPftShATouOrBVy6GaTTjgQd/VfNiZp/VXQ=
+github.com/grafana/gomemcache v0.0.0-20231023152154-6947259a0586/go.mod h1:PGk3RjYHpxMM8HFPhKKo+vve3DdlPUELZLSDEFehPuU=
 github.com/grafana/grafana-aws-sdk v0.25.1 h1:waJERJueqB1GldclAh5+tBcY9Ju9AOO9xYSJEnOAuf4=
 github.com/grafana/grafana-aws-sdk v0.25.1/go.mod h1:3zghFF6edrxn0d6k6X9HpGZXDH+VfA+MwD2Pc/9X0ec=
 github.com/grafana/grafana-azure-sdk-go/v2 v2.0.3 h1:5qW9WVDpAxJx7db3Ir2BsHDetLhAFCwrAFlZjzCqTDE=
