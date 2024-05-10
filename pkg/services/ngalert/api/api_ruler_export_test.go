@@ -212,6 +212,13 @@ func TestExportRules(t *testing.T) {
 	gen := ngmodels.RuleGen
 	accessQuery := gen.GenerateQuery()
 	noAccessQuery := gen.GenerateQuery()
+	mdl := map[string]any{
+		"foo": "bar",
+		"baz": "a <=> b", // explicitly check greater/less than characters
+	}
+	model, err := json.Marshal(mdl)
+	require.NoError(t, err)
+	accessQuery.Model = model
 
 	hasAccess1 := gen.With(gen.WithGroupKey(hasAccessKey1), gen.WithQuery(accessQuery), gen.WithUniqueGroupIndex()).GenerateManyRef(5)
 	ruleStore.PutRule(context.Background(), hasAccess1...)
