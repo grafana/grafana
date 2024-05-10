@@ -44,7 +44,6 @@ func AddConfigLinks(frame data.Frame, dl string, title *string) data.Frame {
 func meetsBasicLogsCriteria(resources []string, fromAlert bool) (bool, error) {
 	if fromAlert {
 		return false, fmt.Errorf("basic Logs queries cannot be used for alerts")
-
 	}
 	if len(resources) != 1 {
 		return false, fmt.Errorf("basic logs queries cannot be run against multiple resources")
@@ -79,7 +78,7 @@ func getApiURL(resourceOrWorkspace string, isAppInsightsQuery bool, basicLogsQue
 	matchesResourceURI, _ := regexp.MatchString("^/subscriptions/", resourceOrWorkspace)
 
 	queryOrSearch := "query"
-	if basicLogsQuery == true {
+	if basicLogsQuery {
 		queryOrSearch = "search"
 	}
 
