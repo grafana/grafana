@@ -32,6 +32,13 @@ type Select []QueryPart
 type Response struct {
 	Results []Result
 	Error   string
+
+	// This field is not part of official InfluxQL API response.
+	// Some users are using proxy in between InfluxDB and Grafana.
+	// They add additional data through this field.
+	// We make sure this data will be passed through Grafana frontend
+	// so they can check it in Query Inspector
+	CustomResponse any `json:"influx_response"`
 }
 
 type Result struct {

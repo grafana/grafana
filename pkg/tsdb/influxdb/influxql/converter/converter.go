@@ -22,6 +22,7 @@ func rspErr(e error) *backend.DataResponse {
 func ReadInfluxQLStyleResult(jIter *jsoniter.Iterator, query *models.Query) *backend.DataResponse {
 	iter := sdkjsoniter.NewIterator(jIter)
 	var rsp *backend.DataResponse
+	var customResponse any
 
 l1Fields:
 	for l1Field, err := iter.ReadObject(); ; l1Field, err = iter.ReadObject() {
@@ -34,6 +35,8 @@ l1Fields:
 			if rsp.Error != nil {
 				return rsp
 			}
+		case "influx_response":
+			customResponse = readCustomResponse(iter)
 		case "":
 			if err != nil {
 				return rspErr(err)
@@ -49,7 +52,29 @@ l1Fields:
 		}
 	}
 
+	if len(rsp.Frames) > 0 {
+		rsp.Frames[0].Meta = &data.FrameMeta{
+			ExecutedQueryString:    query.RawQuery,
+			PreferredVisualization: util.GetVisType(query.ResultFormat),
+		}
+
+		if customResponse != nil {
+			rsp.Frames[0].Meta.Custom = map[string]any{
+				"influx_response": customResponse,
+			}
+		}
+	}
+
 	return rsp
+}
+
+func readCustomResponse(iter *sdkjsoniter.Iterator) any {
+	var someValue any
+	err := iter.ReadVal(&someValue)
+	if err != nil {
+		return nil
+	}
+	return someValue
 }
 
 func readResults(iter *sdkjsoniter.Iterator, query *models.Query) *backend.DataResponse {

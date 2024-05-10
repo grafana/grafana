@@ -40,11 +40,18 @@ func parse(buf io.Reader, statusCode int, query *models.Query) *backend.DataResp
 		return &backend.DataResponse{Error: fmt.Errorf(result.Error)}
 	}
 
+	var frames data.Frames
 	if query.ResultFormat == "table" {
-		return &backend.DataResponse{Frames: transformRowsForTable(result.Series, *query)}
+		frames = transformRowsForTable(result.Series, *query)
+	} else {
+		frames = transformRowsForTimeSeries(result.Series, *query)
 	}
 
-	return &backend.DataResponse{Frames: transformRowsForTimeSeries(result.Series, *query)}
+	if response.CustomResponse != nil {
+		frames[0].Meta.Custom = response.CustomResponse
+	}
+
+	return &backend.DataResponse{Frames: frames}
 }
 
 func parseJSON(buf io.Reader) (models.Response, error) {

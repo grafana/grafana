@@ -105,3 +105,22 @@ func TestParsingAsTimeSeriesWithoutTimeColumn(t *testing.T) {
 		runQuery(t, f, "cardinality", "time_series", query)
 	})
 }
+
+func TestInfluxdbSteamParser(t *testing.T) {
+	t.Run("Influxdb response parser with custom metadata field", func(t *testing.T) {
+		query := &models.Query{
+			RawQuery:     "custom metadata",
+			UseRawQuery:  true,
+			ResultFormat: "time_series",
+		}
+		result := ResponseParse(
+			io.NopCloser(strings.NewReader(`{"results":[{"series":[{"name":"cpu.upc","columns":["time","mean","sum"],"tags":{"datacenter":"America","dc.region.name":"Northeast","cluster-name":"Cluster","/cluster/name/":"Cluster/","@cluster@name@":"Cluster@"},"values":[[111,222,333]]}]}],"influx_response":{"server":"some-server","status":200,"eggs":"over-easy"}}`)),
+			200,
+			query,
+		)
+
+		require.NotNil(t, result.Frames)
+		require.NoError(t, result.Error)
+		require.NotNil(t, result.Frames[0].Meta.Custom)
+	})
+}
