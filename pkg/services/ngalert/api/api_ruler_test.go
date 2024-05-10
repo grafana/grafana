@@ -705,7 +705,7 @@ func createService(store *fakes.RuleStore) *RulerSrv {
 		cfg: &setting.UnifiedAlertingSettings{
 			BaseInterval: 10 * time.Second,
 		},
-		authz:          accesscontrol.NewRuleService(acimpl.ProvideAccessControl(setting.NewCfg())),
+		authz:          accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures())),
 		amConfigStore:  &fakeAMRefresher{},
 		amRefresher:    &fakeAMRefresher{},
 		featureManager: featuremgmt.WithFeatures(),
