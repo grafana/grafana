@@ -32,13 +32,13 @@ You can configure SAML authentication in Grafana through one of the following me
 - the Grafana configuration file
 - the API (refer to [SSO Settings API]({{< relref "../../../../developers/http_api/sso-settings" >}}))
 - the user interface (refer to [Configure SAML authentication using the Grafana user interface]({{< relref "../saml-ui" >}}))
-- the terraform provider (refer to [Terraform docs](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/sso_settings))
+- the Terraform provider (refer to [Terraform docs](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/sso_settings))
 
 {{% admonition type="note" %}}
-The API and terraform are available in Public Preview in Grafana v11.1 behind the `ssoSettingsSAML` feature toggle.
+The API and Terraform support are available in Public Preview in Grafana v11.1 behind the `ssoSettingsSAML` feature toggle. The `ssoSettingsApi` flag also has to be enabled.
 {{% /admonition %}}
 
-All methods offer the same configuration options, but you might prefer using the Grafana configuration file or the terraform provider if you want to keep all of Grafana's authentication settings in one place. Grafana Cloud users do not have access to Grafana configuration file, so they should configure SAML through the other methods.
+All methods offer the same configuration options, but you might prefer using the Grafana configuration file or the Terraform provider if you want to keep all of Grafana's authentication settings in one place. Grafana Cloud users do not have access to Grafana configuration file, so they should configure SAML through the other methods.
 
 {{% admonition type="note" %}}
 Configuration in the API takes precedence over the configuration in the Grafana configuration file. SAML settings from the API will override any SAML configuration set in the Grafana configuration file.
@@ -486,7 +486,7 @@ org_mapping = Engineering:2:Editor, Engineering:3:Viewer, Sales:3:Editor, *:1:Ed
 allowed_organizations = Engineering, Sales
 ```
 
-### Example SAML configuration in terraform
+### Example SAML configuration in Terraform
 
 {{% admonition type="note" %}}
 Available in Public Preview in Grafana v11.1 behind the `ssoSettingsSAML` feature toggle. Supported in the Terraform provider since v2.17.0.
