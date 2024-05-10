@@ -80,12 +80,16 @@ export const RowsList = (props: RowsListProps) => {
   const panelContext = usePanelContext();
 
   // Create off-screen canbas for measuring rows for virtualized rendering
-  const osCan = new OffscreenCanvas(256, 1024);
-  const osContext = osCan.getContext('2d');
+  // This line is like this because Jest doesn't have OffscreenCanvas mocked
+  // nor is it a part of the jest-canvas-mock package
+  let osContext = undefined;
+  if (window.OffscreenCanvas !== undefined) {
+    osContext = new OffscreenCanvas(256, 1024).getContext('2d');
+  }
 
   // Set font property using theme info
   // This will make text measurement accurate
-  if (osContext !== null) {
+  if (osContext !== undefined) {
     osContext.font = `${theme.typography.fontSize}px ${theme.typography.body.fontFamily}`;
   }
 
