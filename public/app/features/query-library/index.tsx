@@ -1,3 +1,10 @@
+/**
+ * This is a temporary place for Query Library API and data types.
+ * To be exposed via grafana-runtime/data in the future.
+ */
+
+export * from './types';
+
 import { ApiProvider } from '@reduxjs/toolkit/query/react';
 import React, { PropsWithChildren } from 'react';
 

@@ -1,4 +1,4 @@
-import { DataQuery } from '@grafana/schema';
+import { DataQuery } from '@grafana/schema/dist/esm/index';
 
 export type DataQueryTarget = {
   variables: object; // TODO: Detect variables in #86838

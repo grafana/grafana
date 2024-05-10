@@ -28,13 +28,13 @@ import {
   getDataSourceSrv,
   getEchoSrv,
   setLocationService,
-  QueryLibraryMocks,
 } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { GrafanaRoute } from 'app/core/navigation/GrafanaRoute';
 import { Echo } from 'app/core/services/echo/Echo';
 import { setLastUsedDatasourceUID } from 'app/core/utils/explore';
+import { QueryLibraryMocks } from 'app/features/query-library';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { configureStore } from 'app/store/configureStore';
 

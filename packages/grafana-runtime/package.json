@@ -75,7 +75,6 @@
   },
   "peerDependencies": {
     "react": "^18.0.0",
-    "react-dom": "^18.0.0",
-    "react-redux": "^8.0.0"
+    "react-dom": "^18.0.0"
   }
 }

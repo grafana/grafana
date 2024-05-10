@@ -16,7 +16,6 @@ export * from './themes';
 export * from './monaco';
 export * from './geo/layer';
 export * from './query';
-export * from './queryLibrary/types';
 export {
   type ValueMatcherOptions,
   type BasicValueMatcherOptions,

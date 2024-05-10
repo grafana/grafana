@@ -1,4 +1,4 @@
-import { QueryTemplate } from '@grafana/data';
+import { QueryTemplate } from '../types';
 
 import { DataQuerySpecResponse, DataQueryTarget } from './types';
 

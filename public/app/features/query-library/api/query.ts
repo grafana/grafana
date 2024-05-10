@@ -1,7 +1,7 @@
 import { BaseQueryFn } from '@reduxjs/toolkit/query/react';
 import { lastValueFrom } from 'rxjs';
 
-import { getBackendSrv, isFetchError } from '../../backendSrv';
+import { getBackendSrv, isFetchError } from '@grafana/runtime/src/services/backendSrv';
 
 import { DataQuerySpecResponse } from './types';
 

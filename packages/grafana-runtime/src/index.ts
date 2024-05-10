@@ -26,7 +26,6 @@ export {
   type DataResponse,
   type TestingStatus,
 } from './utils/queryResponse';
-export * from './services/queryLibrary';
 export { PanelRenderer, type PanelRendererProps } from './components/PanelRenderer';
 export { PanelDataErrorView, type PanelDataErrorViewProps } from './components/PanelDataErrorView';
 export { toDataQueryError } from './utils/toDataQueryError';

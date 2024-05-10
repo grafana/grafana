@@ -1,6 +1,6 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 
-import { QueryTemplate } from '@grafana/data';
+import { QueryTemplate } from '../types';
 
 import { convertDataQueryResponseToQueryTemplates } from './mappers';
 import { baseQuery } from './query';
