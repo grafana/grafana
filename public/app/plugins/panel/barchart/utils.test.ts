@@ -1,14 +1,6 @@
 import { assertIsDefined } from 'test/helpers/asserts';
 
-import {
-  createTheme,
-  DefaultTimeZone,
-  FieldConfig,
-  FieldType,
-  getDefaultTimeRange,
-  MutableDataFrame,
-  VizOrientation,
-} from '@grafana/data';
+import { createTheme, FieldConfig, FieldType, MutableDataFrame, VizOrientation } from '@grafana/data';
 import {
   LegendDisplayMode,
   TooltipDisplayMode,
@@ -239,7 +231,7 @@ describe('BarChart utils', () => {
         ]
       `);
 
-    /*
+      /*
       const displayLegendValuesAsc = assertIsDefined('legend' in result ? result : null).legend;
       const legendField = displayLegendValuesAsc.fields[1];
 

@@ -115,8 +115,7 @@ export const StateTimelinePanel = ({
 
                   return (
                     <StateTimelineTooltip2
-                      frames={frames ?? []}
-                      seriesFrame={alignedFrame}
+                      series={alignedFrame}
                       dataIdxs={dataIdxs}
                       seriesIdx={seriesIdx}
                       mode={viaSync ? TooltipDisplayMode.Multi : options.tooltip.mode}
