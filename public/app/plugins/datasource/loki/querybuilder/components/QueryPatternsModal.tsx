@@ -9,7 +9,7 @@ import { Button, Collapse, Modal, useStyles2 } from '@grafana/ui';
 import { LokiQuery } from '../../types';
 import { lokiQueryModeller } from '../LokiQueryModeller';
 import { buildVisualQueryFromString } from '../parsing';
-import { LokiQueryPattern, LokiQueryPatternType } from '../types';
+import { LokiOperationId, LokiQueryPattern, LokiQueryPatternType } from '../types';
 
 import { QueryPattern } from './QueryPattern';
 
@@ -22,6 +22,27 @@ type Props = {
   onChange: (query: LokiQuery) => void;
   onAddQuery?: (query: LokiQuery) => void;
 };
+
+const keepOperations: string[] = [
+  LokiOperationId.Json,
+  LokiOperationId.Logfmt,
+  LokiOperationId.Pattern,
+  LokiOperationId.Unpack,
+  LokiOperationId.LineFormat,
+  LokiOperationId.LabelFormat,
+  LokiOperationId.Drop,
+  LokiOperationId.Keep,
+  LokiOperationId.LineContains,
+  LokiOperationId.LineContainsNot,
+  LokiOperationId.LineContainsCaseInsensitive,
+  LokiOperationId.LineMatchesRegex,
+  LokiOperationId.LineMatchesRegexNot,
+  LokiOperationId.LineFilterIpMatches,
+  LokiOperationId.LabelFilter,
+  LokiOperationId.LabelFilterNoErrors,
+  LokiOperationId.LabelFilterIpMatches,
+  LokiOperationId.Unwrap,
+];
 
 export const QueryPatternsModal = (props: Props) => {
   const { isOpen, onClose, onChange, onAddQuery, query, queries, app } = props;
@@ -47,7 +68,12 @@ export const QueryPatternsModal = (props: Props) => {
       createNewQuery: hasNewQueryOption && selectAsNewQuery,
     });
 
-    visualQuery.query.operations = pattern.operations;
+    // Filter operations in the original query except those we configured to keep
+    visualQuery.query.operations = visualQuery.query.operations.filter(op => keepOperations.includes(op.id));
+    // Filter operations in the pattern that are present in the original query
+    const patternOperations = pattern.operations.filter(patternOp => visualQuery.query.operations.findIndex(op => op.id === patternOp.id) < 0);
+    visualQuery.query.operations = [...visualQuery.query.operations, ...patternOperations];
+
     if (hasNewQueryOption && selectAsNewQuery) {
       onAddQuery({
         ...query,
