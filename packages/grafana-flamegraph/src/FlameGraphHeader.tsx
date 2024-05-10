@@ -98,6 +98,7 @@ const FlameGraphHeader = ({
             aria-label={'Reset focus and sandwich state'}
           />
         )}
+        <ColorSchemeButton value={colorScheme} onChange={onColorSchemeChange} isDiffMode={isDiffMode} />
         <ButtonGroup className={styles.buttonSpacing}>
           <Button
             variant={'secondary'}
@@ -109,6 +110,7 @@ const FlameGraphHeader = ({
             }}
             aria-label={'Expand all groups'}
             icon={'angle-double-down'}
+            disabled={selectedView === SelectedView.TopTable}
           />
           <Button
             variant={'secondary'}
@@ -120,9 +122,9 @@ const FlameGraphHeader = ({
             }}
             aria-label={'Collapse all groups'}
             icon={'angle-double-up'}
+            disabled={selectedView === SelectedView.TopTable}
           />
         </ButtonGroup>
-        <ColorSchemeButton value={colorScheme} onChange={onColorSchemeChange} isDiffMode={isDiffMode} />
         <RadioButtonGroup<TextAlign>
           size="sm"
           disabled={selectedView === SelectedView.TopTable}
