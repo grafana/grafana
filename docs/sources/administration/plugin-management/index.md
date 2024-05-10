@@ -60,7 +60,6 @@ Customize access to app plugins with [RBAC]({{< relref "../roles-and-permissions
 By default, the Viewer, Editor and Admin roles have access to all app plugins that their Organization role allows them to access. Access is granted by the `fixed:plugins.app:reader` role.
 
 {{% admonition type="note" %}}
-Revoking the RBAC role from some users will prevent them from accessing app plugins. However, granting the RBAC role to users will only allow them to see app plugins their Organization role allows them to see.
 {{% /admonition %}}
 
 To prevent users from seeing an app plugin, refer to [these permissions scenarios]({{< relref "../roles-and-permissions/access-control/plan-rbac-rollout-strategy#prevent-viewers-from-accessing-an-app-plugin" >}}).
