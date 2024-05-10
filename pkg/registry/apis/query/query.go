@@ -2,6 +2,7 @@ package query
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -10,7 +11,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/sync/errgroup"
-	"k8s.io/apimachinery/pkg/api/errors"
+	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -18,8 +19,8 @@ import (
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/util/errutil"
-	"github.com/grafana/grafana/pkg/util/errutil/errhttp"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -70,7 +71,7 @@ func (r *queryREST) Connect(ctx context.Context, name string, opts runtime.Objec
 	// See: /pkg/apiserver/builder/helper.go#L34
 	// The name is set with a rewriter hack
 	if name != "name" {
-		return nil, errors.NewNotFound(schema.GroupResource{}, name)
+		return nil, errorsK8s.NewNotFound(schema.GroupResource{}, name)
 	}
 	b := r.builder
 
@@ -81,33 +82,32 @@ func (r *queryREST) Connect(ctx context.Context, name string, opts runtime.Objec
 		raw := &query.QueryDataRequest{}
 		err := web.Bind(httpreq, raw)
 		if err != nil {
-			errhttp.Write(ctx, errutil.BadRequest(
+			responder.Error(errutil.BadRequest(
 				"query.bind",
 				errutil.WithPublicMessage("Error reading query")).
-				Errorf("error reading: %w", err), w)
+				Errorf("error reading: %w", err))
 			return
 		}
 
 		// Parses the request and splits it into multiple sub queries (if necessary)
 		req, err := b.parser.parseRequest(ctx, raw)
 		if err != nil {
-			// if errors.Is(err, datasources.ErrDataSourceNotFound) {
-			// 	errhttp.Write(ctx, errutil.BadRequest(
-			// 		"query.datasource.notfound",
-			// 		errutil.WithPublicMessage(err.Error())), w)
-			// 	return
-			// }
-			errhttp.Write(ctx, err, w)
+			if errors.Is(err, datasources.ErrDataSourceNotFound) {
+				err = errutil.BadRequest(
+					"query.datasource.notfound",
+					errutil.WithPublicMessage(err.Error()))
+			}
+			responder.Error(err)
 			return
 		}
 
 		// Actually run the query
 		rsp, err := b.execute(ctx, req)
 		if err != nil {
-			errhttp.Write(ctx, errutil.Internal(
+			responder.Error(errutil.Internal(
 				"query.execution",
 				errutil.WithPublicMessage("Error executing query")).
-				Errorf("execution error: %w", err), w)
+				Errorf("execution error: %w", err))
 			return
 		}
 
