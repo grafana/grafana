@@ -13,6 +13,12 @@ const (
 	APIVERSION = GROUP + "/" + VERSION
 )
 
+var TemplateResourceInfo = common.NewResourceInfo(GROUP, VERSION,
+	"templates", "template", "Template",
+	func() runtime.Object { return &Template{} },
+	func() runtime.Object { return &TemplateList{} },
+)
+
 var TimeIntervalResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 	"time-intervals", "time-interval", "TimeIntervals",
 	func() runtime.Object { return &TimeInterval{} },

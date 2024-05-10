@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/apis/alerting/notifications"
 	notificationsModels "github.com/grafana/grafana/pkg/apis/alerting/notifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/builder"
+	"github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/template"
 	timeIntervals "github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/time-intervals"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -60,6 +61,8 @@ func (t NotificationsAPIBuilder) GetGroupVersion() schema.GroupVersion {
 
 func (t NotificationsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(t.gv,
+		&notificationsModels.Template{},
+		&notificationsModels.TemplateList{},
 		&notificationsModels.TimeInterval{},
 		&notificationsModels.TimeIntervalList{},
 	)
@@ -70,12 +73,18 @@ func (t NotificationsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 func (t NotificationsAPIBuilder) GetAPIGroupInfo(scheme *runtime.Scheme, codecs serializer.CodecFactory, optsGetter generic.RESTOptionsGetter, dualWrite bool) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(notificationsModels.GROUP, scheme, metav1.ParameterCodec, codecs)
 
+	templ, err := template.NewStorage(t.ng.Api.Templates, t.namespacer, scheme, dualWrite, optsGetter)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize templates storage: %w", err)
+	}
+
 	intervals, err := timeIntervals.NewStorage(t.ng.Api.MuteTimings, t.namespacer, scheme, dualWrite, optsGetter)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize time-interval storage: %w", err)
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[notificationsModels.VERSION] = map[string]rest.Storage{
+		notificationsModels.TemplateResourceInfo.StoragePath():     templ,
 		notificationsModels.TimeIntervalResourceInfo.StoragePath(): intervals,
 	}
 	return &apiGroupInfo, nil
@@ -93,6 +102,8 @@ func (t NotificationsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 			switch a.GetResource() {
+			case notificationsModels.TemplateResourceInfo.GroupResource().Resource:
+				return template.Authorize(ctx, t.authz, a)
 			case notificationsModels.TimeIntervalResourceInfo.GroupResource().Resource:
 				return timeIntervals.Authorize(ctx, t.authz, a)
 			}
