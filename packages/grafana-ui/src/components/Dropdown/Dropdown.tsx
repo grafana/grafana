@@ -10,7 +10,7 @@ import {
   useFloating,
   useInteractions,
 } from '@floating-ui/react';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { CSSTransition } from 'react-transition-group';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -27,10 +27,8 @@ export interface Props {
   children: React.ReactElement;
   /** Amount in pixels to nudge the dropdown vertically and horizontally, respectively. */
   offset?: [number, number];
-  onVisibleChange?: VisibilityChangeHandler;
+  onVisibleChange?: (state: boolean) => void;
 }
-
-type VisibilityChangeHandler = (state: boolean) => void | undefined;
 
 export const Dropdown = React.memo(({ children, overlay, placement, offset, onVisibleChange }: Props) => {
   const [show, setShow] = useState(false);
