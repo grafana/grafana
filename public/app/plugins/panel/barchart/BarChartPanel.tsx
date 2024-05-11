@@ -15,7 +15,6 @@ import {
 import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
-import { isTooltipScrollable } from '../timeseries/utils';
 
 import { BarChartLegend, hasVisibleLegendSeries } from './BarChartLegend';
 import { Options } from './panelcfg.gen';
@@ -171,7 +170,6 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
                     mode={options.tooltip.mode}
                     sortOrder={options.tooltip.sort}
                     isPinned={isPinned}
-                    scrollable={isTooltipScrollable(options.tooltip)}
                     maxHeight={options.tooltip.maxHeight}
                   />
                 );
