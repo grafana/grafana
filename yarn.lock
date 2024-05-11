@@ -3412,6 +3412,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/azure-sdk@npm:0.0.3":
+  version: 0.0.3
+  resolution: "@grafana/azure-sdk@npm:0.0.3"
+  dependencies:
+    ts-jest: "npm:29.1.2"
+  checksum: 10/fc888711e79865c3ff08f21401ed51b3d5a189e38c691a2dd60915af843612481deb45a1f804fe4a631636dae966f6591984e7e4f37ea0c62fd5e0a4c0cf1166
+  languageName: node
+  linkType: hard
+
 "@grafana/data@npm:11.1.0-pre, @grafana/data@workspace:*, @grafana/data@workspace:packages/grafana-data":
   version: 0.0.0-use.local
   resolution: "@grafana/data@workspace:packages/grafana-data"
