@@ -15,7 +15,7 @@ import { ExemplarsPlugin, getVisibleLabels } from './plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
 import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
 import { getPrepareTimeseriesSuggestion } from './suggestions';
-import { getTimezones, isTooltipScrollable, prepareGraphableFields } from './utils';
+import { getTimezones, prepareGraphableFields } from './utils';
 
 interface TimeSeriesPanelProps extends PanelProps<Options> {}
 
@@ -130,7 +130,6 @@ export const TimeSeriesPanel = ({
                       sortOrder={options.tooltip.sort}
                       isPinned={isPinned}
                       annotate={enableAnnotationCreation ? annotate : undefined}
-                      scrollable={isTooltipScrollable(options.tooltip)}
                       maxHeight={options.tooltip.maxHeight}
                     />
                   );
