@@ -2,15 +2,14 @@ package sqlstore
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
-	"github.com/mattn/go-sqlite3"
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
 var tsclogger = log.New("sqlstore.transactions")
@@ -64,14 +63,13 @@ func (ss *SQLStore) inTransactionWithRetryCtx(ctx context.Context, engine *xorm.
 	}
 
 	// special handling of database locked errors for sqlite, then we can retry 5 times
-	var sqlError sqlite3.Error
-	if errors.As(err, &sqlError) && retry < ss.dbCfg.TransactionRetries && (sqlError.Code == sqlite3.ErrLocked || sqlError.Code == sqlite3.ErrBusy) {
+	if migrator.IsSQLiteErrLocked(err) && retry < ss.dbCfg.TransactionRetries {
 		if rollErr := sess.Rollback(); rollErr != nil {
 			return fmt.Errorf("rolling back transaction due to error failed: %s: %w", rollErr, err)
 		}
 
 		time.Sleep(time.Millisecond * time.Duration(10))
-		ctxLogger.Info("Database locked, sleeping then retrying", "error", err, "retry", retry, "code", sqlError.Code)
+		ctxLogger.Info("Database locked, sleeping then retrying", "error", err, "retry", retry, "code", migrator.SQLiteErrCode(err))
 		return ss.inTransactionWithRetryCtx(ctx, engine, bus, callback, retry+1)
 	}
 

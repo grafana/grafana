@@ -1,14 +1,14 @@
 package migrator
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/golang-migrate/migrate/v4/database"
 	_ "github.com/lib/pq"
-	"github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
+
+	"github.com/golang-migrate/migrate/v4/database"
 	"go.uber.org/atomic"
 	"xorm.io/xorm"
 
@@ -211,7 +211,7 @@ func (mg *Migrator) run() (err error) {
 			err := mg.exec(m, sess)
 			// if we get an sqlite busy/locked error, sleep 100ms and try again
 			cnt := 0
-			for cnt < 3 && (errors.Is(err, sqlite3.ErrLocked) || errors.Is(err, sqlite3.ErrBusy)) {
+			for cnt < 3 && IsSQLiteErrLocked(err) {
 				cnt++
 				mg.Logger.Debug("Database locked, sleeping then retrying", "error", err, "sql", sql)
 				time.Sleep(100 * time.Millisecond)
