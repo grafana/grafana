@@ -1283,7 +1283,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-<<<<<<< HEAD
       [0, 0, 0, "Styles should be written using objects.", "4"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "6"]
@@ -1292,10 +1291,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"],
       [0, 0, 0, "Styles should be written using objects.", "2"]
-=======
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
->>>>>>> origin/main
     ],
     "public/app/features/alerting/unified/components/receivers/form/fields/SubformArrayField.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],

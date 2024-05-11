@@ -61,9 +61,21 @@ export function TemplatesPicker({ onSelect, option, valueInForm }: TemplatesPick
 
 type TemplateFieldOption = 'Existing' | 'Custom';
 
+/**
+ * This function parses the template content and returns an array of Template objects.
+ * Each Template object represents a single template definition found in the content.
+ *
+ * The template content may use the "-" symbol for whitespace trimming. If a template's left delimiter ("{{")
+ * is immediately followed by a "-" and whitespace, all trailing whitespace is removed from the preceding text.
+ * Similarly, if the right delimiter ("}}") is immediately preceded by whitespace and a "-", all leading whitespace
+ * is removed from the following text. In these cases, the whitespace must be present for the trimming to occur.
+ *
+ * @param templatesString is a string containing the template content. Each template is defined within
+ * "{{ define "templateName" }}" and "{{ end }}" delimiters.
+ */
 function parseTemplates(templatesString: string): Template[] {
   const result: Template[] = [];
-  const regex = /{{ define "(.*?)" }}\n(.*?)\n{{ end }}/gs;
+  const regex = /{{-?\s*define "(.*?)"\s*-?}}(.*?){{-?\s*end\s*-?}}/gs;
 
   let match;
   while ((match = regex.exec(templatesString)) !== null) {
@@ -74,6 +86,29 @@ function parseTemplates(templatesString: string): Template[] {
   }
 
   return result;
+}
+
+/* *
+ * This function parses the content of the template files and returns an array of SelectableValue<Template> objects.
+ * If the content contains multiple definitions with the same name, only the last definition is kept.
+ * This is because in the case of duplicate template names, the last one overrides the previous ones.
+ *
+ */
+export function getTemplateOptions(templateFiles: Record<string, string>): Array<SelectableValue<Template>> {
+  const templateMap = new Map();
+  Object.entries(templateFiles).forEach(([_, content]) => {
+    const templates: Template[] = parseTemplates(content);
+    templates.forEach((template) => {
+      templateMap.set(template.name, {
+        label: template.name,
+        value: {
+          name: template.name,
+          content: template.content,
+        },
+      });
+    });
+  });
+  return Array.from(templateMap.values());
 }
 
 export interface Template {
@@ -115,22 +150,8 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
   const onTemplateOptionChange = (option: TemplateFieldOption) => {
     setTemplateOption(option);
   };
-  const options = useMemo(
-    () =>
-      Object.entries(data?.template_files ?? {})
-        .map(([name, content]) => {
-          const templates: Template[] = parseTemplates(content);
-          return templates.map((template) => ({
-            label: template.name,
-            value: {
-              name: template.name,
-              content: template.content,
-            },
-          }));
-        })
-        .flat(),
-    [data]
-  );
+
+  const options = useMemo(() => getTemplateOptions(data?.template_files ?? {}), [data]);
 
   if (error) {
     return <div>Error loading templates</div>;
