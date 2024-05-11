@@ -31,7 +31,11 @@ const NewMessageTemplate = ({ match }: Props) => {
     return null;
   }
 
-  return <DuplicateTemplateView alertManagerSourceName={selectedAlertmanager!} config={data} templateName={name} />;
+  return <DuplicateTemplateView
+    alertManagerSourceName={selectedAlertmanager!}
+    config={data}
+    templateName={decodeURIComponent(name)}
+  />;
 };
 
 export default NewMessageTemplate;
