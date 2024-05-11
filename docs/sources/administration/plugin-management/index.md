@@ -8,6 +8,7 @@ aliases:
 labels:
   products:
     - enterprise
+    - cloud
     - oss
 title: Plugin management
 weight: 600
