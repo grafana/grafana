@@ -2,6 +2,7 @@ package pluginconfig
 
 import (
 	"context"
+	"encoding/json"
 	"slices"
 	"sort"
 	"strconv"
@@ -93,6 +94,13 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 	if azureSettings != nil && slices.Contains[[]string, string](azureSettings.ForwardSettingsPlugins, pluginID) {
 		if azureSettings.Cloud != "" {
 			m[azsettings.AzureCloud] = azureSettings.Cloud
+		}
+
+		if customClouds := azureSettings.CustomClouds(); len(customClouds) > 0 {
+			// TODO: CustomClouds() returns []AzureCloudInfo, but we need []AzureCloudSettings
+			if jsonBytes, err := json.Marshal(customClouds); err != nil {
+				m[azsettings.AzureCustomCloudsConfig] = string(jsonBytes)
+			}
 		}
 
 		if azureSettings.ManagedIdentityEnabled {
