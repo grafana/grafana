@@ -22,11 +22,11 @@ title: Dashboard HTTP API
 
 ## Identifier (id) vs unique identifier (uid)
 
-The identifier (id) of a dashboard is an auto-incrementing numeric value and is only unique per Grafana install.
+The identifier (id) of a dashboard is an auto-incrementing numeric value and is only unique per Grafana installation.
 
-The unique identifier (uid) of a dashboard can be used for uniquely identify a dashboard between multiple Grafana installs.
+The unique identifier (uid) of a dashboard can be used to uniquely identify a dashboard between multiple Grafana installations.
 It's automatically generated if not provided when creating a dashboard. The uid allows having consistent URLs for accessing
-dashboards and when syncing dashboards between multiple Grafana installs, see [dashboard provisioning]({{< relref "/docs/grafana/latest/administration/provisioning#dashboards" >}})
+dashboards and when syncing dashboards between multiple Grafana installations, see [dashboard provisioning]({{< relref "/docs/grafana/latest/administration/provisioning#dashboards" >}})
 for more information. This means that changing the title of a dashboard will not break any bookmarked links to that dashboard.
 
 The uid can have a maximum length of 40 characters.
