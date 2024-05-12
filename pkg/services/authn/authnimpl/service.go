@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authnimpl/sync"
 	"github.com/grafana/grafana/pkg/services/authn/clients"
@@ -347,15 +346,17 @@ func (s *Service) Logout(ctx context.Context, user identity.Requester, sessionTo
 	defer span.End()
 
 	redirect := &authn.Redirect{URL: s.cfg.AppSubURL + "/login"}
+	if s.cfg.SignoutRedirectUrl != "" {
+		redirect.URL = s.cfg.SignoutRedirectUrl
+	}
 
-	namespace, id := user.GetNamespacedID()
-	if namespace != authn.NamespaceUser {
+	if !user.GetID().IsNamespace(authn.NamespaceUser) {
 		return redirect, nil
 	}
 
-	userID, err := identity.IntIdentifier(namespace, id)
+	id, err := user.GetID().ParseInt()
 	if err != nil {
-		s.log.FromContext(ctx).Debug("Invalid user id", "id", userID, "err", err)
+		s.log.FromContext(ctx).Debug("Invalid user id", "id", id, "err", err)
 		return redirect, nil
 	}
 
@@ -384,7 +385,7 @@ func (s *Service) Logout(ctx context.Context, user identity.Requester, sessionTo
 	}
 
 Default:
-	if err = s.sessionService.RevokeToken(ctx, sessionToken, false); err != nil {
+	if err = s.sessionService.RevokeToken(ctx, sessionToken, false); err != nil && !errors.Is(err, auth.ErrUserTokenNotFound) {
 		return nil, err
 	}
 

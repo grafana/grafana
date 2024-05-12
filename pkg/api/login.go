@@ -261,6 +261,7 @@ func (hs *HTTPServer) Logout(c *contextmodel.ReqContext) {
 	if err != nil {
 		hs.log.Error("Failed perform proper logout", "error", err)
 		c.Redirect(hs.Cfg.AppSubURL + "/login")
+		return
 	}
 
 	_, id := c.SignedInUser.GetNamespacedID()
