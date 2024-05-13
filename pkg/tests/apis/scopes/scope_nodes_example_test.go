@@ -74,6 +74,7 @@ func TestIntegrationScopeNodesExample(t *testing.T) {
 }
 
 func jsonListToUnstructuredList(t *testing.T, fname string) (ul unstructured.UnstructuredList) {
+	// nolint:gosec
 	f, err := os.ReadFile(fname)
 	require.NoError(t, err)
 
