@@ -166,3 +166,4 @@ queryLibrary,experimental,@grafana/explore-squad,false,false,false
 autofixDSUID,experimental,@grafana/plugins-platform-backend,false,false,false
 logsExploreTableDefaultVisualization,experimental,@grafana/observability-logs,false,false,true
 newDashboardSharingComponent,experimental,@grafana/sharing-squad,false,false,true
+notificationBanner,experimental,@grafana/grafana-frontend-platform,false,false,false

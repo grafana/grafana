@@ -2167,6 +2167,18 @@
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "hideFromDocs": true
       }
+    },
+    {
+      "metadata": {
+        "name": "notificationBanner",
+        "resourceVersion": "1715582792356",
+        "creationTimestamp": "2024-05-13T06:46:32Z"
+      },
+      "spec": {
+        "description": "Enables the notification banner UI and API",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform"
+      }
     }
   ]
 }

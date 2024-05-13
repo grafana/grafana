@@ -674,4 +674,8 @@ const (
 	// FlagNewDashboardSharingComponent
 	// Enables the new sharing drawer design
 	FlagNewDashboardSharingComponent = "newDashboardSharingComponent"
+
+	// FlagNotificationBanner
+	// Enables the notification banner UI and API
+	FlagNotificationBanner = "notificationBanner"
 )

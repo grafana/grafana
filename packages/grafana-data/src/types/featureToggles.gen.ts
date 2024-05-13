@@ -185,4 +185,5 @@ export interface FeatureToggles {
   autofixDSUID?: boolean;
   logsExploreTableDefaultVisualization?: boolean;
   newDashboardSharingComponent?: boolean;
+  notificationBanner?: boolean;
 }
