@@ -1154,7 +1154,12 @@ function getServiceGraphView(
   if (errorRate.length > 0 && errorRate[0].fields?.length > 2) {
     const errorRateNames = errorRate[0].fields[1]?.values ?? [];
     const errorRateValues = errorRate[0].fields[2]?.values ?? [];
-    let errorRateObj: any = {};
+    let errorRateObj: Record<
+      string,
+      {
+        value: string;
+      }
+    > = {};
     errorRateNames.map((name: string, index: number) => {
       errorRateObj[name] = { value: errorRateValues[index] };
     });
@@ -1199,7 +1204,12 @@ function getServiceGraphView(
   }
 
   if (duration.length > 0) {
-    let durationObj: any = {};
+    let durationObj: Record<
+      string,
+      {
+        value: string;
+      }
+    > = {};
     duration.forEach((d) => {
       if (d.fields.length > 1) {
         const delimiter = d.refId?.includes('span_name=~"') ? 'span_name=~"' : 'span_name="';
