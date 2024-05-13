@@ -49,20 +49,8 @@ const mainConfig: StorybookConfig = {
     },
     getAbsolutePath('@storybook/addon-storysource'),
     getAbsolutePath('storybook-dark-mode'),
-    {
-      // replace babel-loader in manager and preview with esbuild-loader
-      name: 'storybook-addon-turbo-build',
-      options: {
-        optimizationLevel: 3,
-        // Target must match storybook 7 manager otherwise minimised docs error in production
-        esbuildMinifyOptions: {
-          target: 'chrome100',
-          minify: true,
-        },
-      },
-    },
     getAbsolutePath('@storybook/addon-mdx-gfm'),
-    '@storybook/addon-webpack5-compiler-swc',
+    getAbsolutePath('@storybook/addon-webpack5-compiler-swc'),
   ],
   core: {},
   docs: {
@@ -103,7 +91,7 @@ const mainConfig: StorybookConfig = {
   ],
   typescript: {
     check: true,
-    reactDocgen: 'react-docgen-typescript',
+    reactDocgen: 'react-docgen',
     reactDocgenTypescriptOptions: {
       tsconfigPath: path.resolve(__dirname, 'tsconfig.json'),
       shouldExtractLiteralValuesFromEnum: true,
