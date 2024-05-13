@@ -2,10 +2,10 @@ package loganalytics
 
 import (
 	"fmt"
-	"strconv"
-	"time"
 	"regexp"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
@@ -39,22 +39,6 @@ func AddConfigLinks(frame data.Frame, dl string, title *string) data.Frame {
 	return frame
 }
 
-func ConvertTime(timeStamp string) (time.Time, error) {
-	// Convert the timestamp string to an int64
-	timestampInt, err := strconv.ParseInt(timeStamp, 10, 64)
-	if err != nil {
-		// Handle error
-		return time.Time{}, err
-	}
-
-	// Convert the Unix timestamp (in milliseconds) to a time.Time
-	convTimeStamp := time.Unix(0, timestampInt*int64(time.Millisecond))
-
-	return convTimeStamp, nil
-}
-
-func GetDataVolumeRawQuery(table string) string {
-	return fmt.Sprintf("Usage \n| where DataType == \"%s\"\n| where IsBillable == true\n| summarize BillableDataGB = round(sum(Quantity) / 1000, 3)", table)
 func ParseResultFormat(queryResultFormat *dataquery.ResultFormat, queryType dataquery.AzureQueryType) dataquery.ResultFormat {
 	var resultFormat dataquery.ResultFormat
 	if queryResultFormat != nil {
@@ -105,4 +89,22 @@ func retrieveResources(query dataquery.AzureLogsQuery) ([]string, string) {
 	}
 
 	return resources, resourceOrWorkspace
+}
+
+func ConvertTime(timeStamp string) (time.Time, error) {
+	// Convert the timestamp string to an int64
+	timestampInt, err := strconv.ParseInt(timeStamp, 10, 64)
+	if err != nil {
+		// Handle error
+		return time.Time{}, err
+	}
+
+	// Convert the Unix timestamp (in milliseconds) to a time.Time
+	convTimeStamp := time.Unix(0, timestampInt*int64(time.Millisecond))
+
+	return convTimeStamp, nil
+}
+
+func GetDataVolumeRawQuery(table string) string {
+	return fmt.Sprintf("Usage \n| where DataType == \"%s\"\n| where IsBillable == true\n| summarize BillableDataGB = round(sum(Quantity) / 1000, 3)", table)
 }
