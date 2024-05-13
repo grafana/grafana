@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Drawer, Stack } from '@grafana/ui';
+import { Divider, Drawer, Stack } from '@grafana/ui';
 import { AlertManagerPicker } from 'app/features/alerting/unified/components/AlertManagerPicker';
 import { GrafanaAlertmanagerDeliveryWarning } from 'app/features/alerting/unified/components/GrafanaAlertmanagerDeliveryWarning';
 import { SilencesEditor } from 'app/features/alerting/unified/components/silences/SilencesEditor';
@@ -29,10 +29,13 @@ const SilenceGrafanaRuleDrawer = ({ rulerRule, onClose }: Props) => {
       onClose={onClose}
       size="md"
     >
-      <Stack gap={2} direction={'column'}>
+      <Stack direction={'column'}>
         <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={selectedAlertmanager!} />
 
-        <AlertManagerPicker showOnlyReceivingGrafanaAlerts />
+        <div>
+          <AlertManagerPicker showOnlyReceivingGrafanaAlerts />
+          <Divider />
+        </div>
 
         <SilencesEditor
           ruleUid={uid}

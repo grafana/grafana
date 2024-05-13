@@ -1,9 +1,10 @@
-import { css } from '@emotion/css';
-import React from 'react';
+import { css, cx } from '@emotion/css';
+import React, { useEffect } from 'react';
 import { useFormContext, useFieldArray, Controller } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Field, Input, IconButton, useStyles2, Select } from '@grafana/ui';
+import { Button, Field, Input, IconButton, useStyles2, Select, Divider } from '@grafana/ui';
+import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
 
 import { SilenceFormFields } from '../../types/silence-form';
@@ -12,9 +13,10 @@ import { matcherFieldOptions } from '../../utils/alertmanager';
 interface Props {
   className?: string;
   required: boolean;
+  ruleUid?: string;
 }
 
-const MatchersField = ({ className, required }: Props) => {
+const MatchersField = ({ className, required, ruleUid }: Props) => {
   const styles = useStyles2(getStyles);
   const formApi = useFormContext<SilenceFormFields>();
   const {
@@ -25,11 +27,27 @@ const MatchersField = ({ className, required }: Props) => {
 
   const { fields: matchers = [], append, remove } = useFieldArray<SilenceFormFields>({ name: 'matchers' });
 
+  const [getAlertRule, { data: alertRule }] = alertRuleApi.endpoints.getAlertRule.useLazyQuery();
+  useEffect(() => {
+    // If we have a UID, fetch the alert rule details so we can display the rule name
+    if (ruleUid) {
+      getAlertRule({ uid: ruleUid });
+    }
+  }, [getAlertRule, ruleUid]);
+
   return (
     <div className={className}>
-      <Field label="Matching labels" required={required}>
+      <Field label="Refine affected alerts" required={required}>
         <div>
-          <div className={styles.matchers}>
+          <div className={cx(styles.matchers, styles.indent)}>
+            {alertRule && (
+              <div>
+                <Field label="Alert rule" disabled>
+                  <Input defaultValue={alertRule.grafana_alert.title} disabled />
+                </Field>
+                <Divider />
+              </div>
+            )}
             {matchers.map((matcher, index) => {
               return (
                 <div className={styles.row} key={`${matcher.id}`} data-testid="matcher">
@@ -91,6 +109,7 @@ const MatchersField = ({ className, required }: Props) => {
             })}
           </div>
           <Button
+            className={styles.indent}
             tooltip="Refine which alert instances are silenced by selecting label matchers"
             type="button"
             icon="plus"
@@ -114,6 +133,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       marginTop: theme.spacing(2),
     }),
     row: css({
+      marginTop: theme.spacing(1),
       display: 'flex',
       alignItems: 'flex-start',
       flexDirection: 'row',
@@ -134,6 +154,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       maxWidth: `${theme.breakpoints.values.sm}px`,
       margin: `${theme.spacing(1)} 0`,
       paddingTop: theme.spacing(0.5),
+    }),
+    indent: css({
+      marginLeft: theme.spacing(2),
     }),
   };
 };

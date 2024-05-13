@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { pickBy } from 'lodash';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useDebounce } from 'react-use';
 
@@ -19,15 +19,12 @@ import {
   Field,
   FieldSet,
   Input,
-  Label,
   LinkButton,
   LoadingPlaceholder,
   Stack,
-  Tag,
   TextArea,
   useStyles2,
 } from '@grafana/ui';
-import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { alertSilencesApi, SilenceCreatedResponse } from 'app/features/alerting/unified/api/alertSilencesApi';
 import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
 import { getDatasourceAPIUid } from 'app/features/alerting/unified/utils/datasource';
@@ -108,20 +105,12 @@ export const SilencesEditor = ({
   ruleUid,
 }: SilencesEditorProps) => {
   const [createSilence, { isLoading }] = alertSilencesApi.endpoints.createSilence.useMutation();
-  const [getAlertRule, { data: alertRule }] = alertRuleApi.endpoints.getAlertRule.useLazyQuery();
   const formAPI = useForm({ defaultValues: formValues });
   const styles = useStyles2(getStyles);
 
   const { register, handleSubmit, formState, watch, setValue, clearErrors } = formAPI;
 
   const [duration, startsAt, endsAt, matchers] = watch(['duration', 'startsAt', 'endsAt', 'matchers']);
-
-  useEffect(() => {
-    // If we have a UID, fetch the alert rule details so we can display the rule name
-    if (ruleUid) {
-      getAlertRule({ uid: ruleUid });
-    }
-  }, [getAlertRule, ruleUid]);
 
   /** Default action taken after creation or cancellation, if corresponding method is not defined */
   const defaultHandler = () => {
@@ -188,13 +177,6 @@ export const SilencesEditor = ({
     <FormProvider {...formAPI}>
       <form onSubmit={handleSubmit(onSubmit)}>
         <FieldSet className={styles.formContainer}>
-          {alertRule && (
-            <div className={styles.alertRule}>
-              <Label id="alert-rule">Alert rule</Label>
-              <Tag colorIndex={8} aria-labelledby="alert-rule" name={alertRule.grafana_alert.title} />
-            </div>
-          )}
-
           <div className={styles.silencePeriod}>
             <SilencePeriod />
             <Field
@@ -217,7 +199,7 @@ export const SilencesEditor = ({
             </Field>
           </div>
 
-          <MatchersField required={Boolean(!ruleUid)} />
+          <MatchersField required={Boolean(!ruleUid)} ruleUid={ruleUid} />
 
           <Field
             label="Comment"
