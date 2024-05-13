@@ -311,7 +311,8 @@ func TestService_Logout(t *testing.T) {
 		sessionToken *usertoken.UserToken
 		info         *login.UserAuth
 
-		client authn.Client
+		client             authn.Client
+		signoutRedirectURL string
 
 		expectedErr          error
 		expectedTokenRevoked bool
@@ -343,6 +344,14 @@ func TestService_Logout(t *testing.T) {
 			info:                 &login.UserAuth{AuthModule: "azuread"},
 			expectedRedirect:     &authn.Redirect{URL: "http://localhost:3000/login"},
 			client:               &authntest.FakeClient{ExpectedName: "auth.client.azuread"},
+			expectedTokenRevoked: true,
+		},
+		{
+			desc:                 "should use signout redirect url if configured",
+			identity:             &authn.Identity{ID: authn.NamespacedID(authn.NamespaceUser, 1), AuthenticatedBy: "azuread"},
+			expectedRedirect:     &authn.Redirect{URL: "some-url"},
+			client:               &authntest.FakeClient{ExpectedName: "auth.client.azuread"},
+			signoutRedirectURL:   "some-url",
 			expectedTokenRevoked: true,
 		},
 		{
@@ -380,6 +389,10 @@ func TestService_Logout(t *testing.T) {
 						assert.False(t, soft)
 						return nil
 					},
+				}
+
+				if tt.signoutRedirectURL != "" {
+					svc.cfg.SignoutRedirectUrl = tt.signoutRedirectURL
 				}
 			})
 

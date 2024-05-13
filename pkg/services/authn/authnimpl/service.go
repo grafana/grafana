@@ -347,6 +347,9 @@ func (s *Service) Logout(ctx context.Context, user identity.Requester, sessionTo
 	defer span.End()
 
 	redirect := &authn.Redirect{URL: s.cfg.AppSubURL + "/login"}
+	if s.cfg.SignoutRedirectUrl != "" {
+		redirect.URL = s.cfg.SignoutRedirectUrl
+	}
 
 	namespace, id := user.GetNamespacedID()
 	if namespace != authn.NamespaceUser {
@@ -384,7 +387,7 @@ func (s *Service) Logout(ctx context.Context, user identity.Requester, sessionTo
 	}
 
 Default:
-	if err = s.sessionService.RevokeToken(ctx, sessionToken, false); err != nil {
+	if err = s.sessionService.RevokeToken(ctx, sessionToken, false); err != nil && !errors.Is(err, auth.ErrUserTokenNotFound) {
 		return nil, err
 	}
 
