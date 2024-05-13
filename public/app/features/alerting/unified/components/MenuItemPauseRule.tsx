@@ -54,29 +54,27 @@ const MenuItemPauseRule = ({ rule, onPauseChange }: Props) => {
     }
 
     // Parse the rules into correct format for API
-    const modifiedRules =
-      targetGroup.rules.map((groupRule) => {
-        if (!(isGrafanaRulerRule(groupRule) && groupRule.grafana_alert.uid === ruleUid)) {
-          return groupRule;
-        }
-        return produce(groupRule, (updatedGroupRule) => {
-          updatedGroupRule.grafana_alert.is_paused = newIsPaused;
-        });
-      }) ?? [];
+    const modifiedRules = targetGroup.rules.map((groupRule) => {
+      if (!(isGrafanaRulerRule(groupRule) && groupRule.grafana_alert.uid === ruleUid)) {
+        return groupRule;
+      }
+      return produce(groupRule, (updatedGroupRule) => {
+        updatedGroupRule.grafana_alert.is_paused = newIsPaused;
+      });
+    });
 
     const payload = {
-      interval: targetGroup.interval! ?? '',
-      name: targetGroup.name ?? '',
+      interval: targetGroup.interval!,
+      name: targetGroup.name,
       rules: modifiedRules,
     };
 
-    targetGroup &&
-      (await updateRule({
-        nameSpaceUID: rule.namespace.uid || rule.rulerRule.grafana_alert.namespace_uid,
-        payload,
-      }).unwrap());
+    await updateRule({
+      nameSpaceUID: rule.namespace.uid || rule.rulerRule.grafana_alert.namespace_uid,
+      payload,
+    }).unwrap();
 
-    targetGroup && onPauseChange?.();
+    onPauseChange?.();
   };
 
   return (
