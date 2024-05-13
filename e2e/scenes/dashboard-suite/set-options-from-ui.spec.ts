@@ -137,6 +137,7 @@ describe('Variables - Set options from ui', () => {
     cy.intercept({ pathname: '/api/ds/query' }).as('query');
 
     cy.wait('@query');
+    cy.wait(300);
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A,B')
       .should('be.visible')

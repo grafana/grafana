@@ -7,8 +7,7 @@ describe('TextBox - load options scenarios', function () {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
 
-  // TODO: remove skip after https://github.com/grafana/grafana/issues/86435
-  it.skip('default options should be correct', function () {
+  it('default options should be correct', function () {
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}/templating-textbox-e2e-scenarios?orgId=1` });
 
     validateTextboxAndMarkup('default value');
