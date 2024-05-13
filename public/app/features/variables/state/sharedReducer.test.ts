@@ -1,6 +1,13 @@
 import { cloneDeep } from 'lodash';
 
-import { BaseVariableModel, LoadingState, VariableType } from '@grafana/data';
+import {
+  BaseVariableModel,
+  ConstantVariableModel,
+  LoadingState,
+  QueryVariableModel,
+  VariableOption,
+  VariableType,
+} from '@grafana/data';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { variableAdapters } from '../adapters';
@@ -10,7 +17,6 @@ import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../constants';
 import { changeVariableNameSucceeded } from '../editor/reducer';
 import { createQueryVariableAdapter } from '../query/adapter';
 import { initialQueryVariableModelState } from '../query/reducer';
-import { ConstantVariableModel, QueryVariableModel, VariableOption } from '../types';
 import { toVariablePayload } from '../utils';
 
 import { createConstantVariable } from './__tests__/fixtures';
