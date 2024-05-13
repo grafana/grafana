@@ -33,7 +33,8 @@ const (
 	// headerFromExpression is used by data sources to identify expression queries
 	headerFromExpression = "X-Grafana-From-Expr"
 	// headerFromAlert is used by datasources to identify alert queries
-	headerFromAlert = "FromAlert"
+	headerFromAlert                   = "FromAlert"
+	defaultMaxConcurrentShardRequests = int64(5)
 )
 
 type Service struct {
@@ -138,18 +139,23 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			index = settings.Database
 		}
 
-		var maxConcurrentShardRequests float64
+		var maxConcurrentShardRequests int64
 
 		switch v := jsonData["maxConcurrentShardRequests"].(type) {
+		// unmarshalling from JSON will return float64 for numbers, so we need to handle that and convert to int64
 		case float64:
-			maxConcurrentShardRequests = v
+			maxConcurrentShardRequests = int64(v)
 		case string:
-			maxConcurrentShardRequests, err = strconv.ParseFloat(v, 64)
+			maxConcurrentShardRequests, err = strconv.ParseInt(v, 10, 64)
 			if err != nil {
-				maxConcurrentShardRequests = 256
+				maxConcurrentShardRequests = defaultMaxConcurrentShardRequests
 			}
 		default:
-			maxConcurrentShardRequests = 256
+			maxConcurrentShardRequests = defaultMaxConcurrentShardRequests
+		}
+
+		if maxConcurrentShardRequests <= 0 {
+			maxConcurrentShardRequests = defaultMaxConcurrentShardRequests
 		}
 
 		includeFrozen, ok := jsonData["includeFrozen"].(bool)
@@ -168,7 +174,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			URL:                        settings.URL,
 			HTTPClient:                 httpCli,
 			Database:                   index,
-			MaxConcurrentShardRequests: int64(maxConcurrentShardRequests),
+			MaxConcurrentShardRequests: maxConcurrentShardRequests,
 			ConfiguredFields:           configuredFields,
 			Interval:                   interval,
 			IncludeFrozen:              includeFrozen,
