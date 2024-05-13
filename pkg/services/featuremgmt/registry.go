@@ -1248,6 +1248,13 @@ var (
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: true,
 		},
+		{
+			Name:         "notificationBanner",
+			Description:  "Enables the notification banner UI and API",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			FrontendOnly: false,
+		},
 	}
 )
 
