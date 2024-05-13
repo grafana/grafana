@@ -259,11 +259,18 @@ func (alertRule *AlertRule) IsNoNormalStateRule() (bool, error) {
 	if len(alertRule.Data) != 1 {
 		return false, nil
 	}
-	isDs, dsType, err := alertRule.Data[0].IsDatasourceQuery()
+	isDs, err := alertRule.Data[0].IsDataSource()
 	if err != nil {
 		return false, err
 	}
-	return isDs && dsType == "prometheus", nil
+	if !isDs {
+		return false, nil
+	}
+	dsType, err := alertRule.Data[0].GetDatasourceType()
+	if err != nil {
+		return false, err
+	}
+	return dsType == "prometheus", nil
 }
 
 // AlertRuleWithOptionals This is to avoid having to pass in additional arguments deep in the call stack. Alert rule

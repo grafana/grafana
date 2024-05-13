@@ -113,30 +113,36 @@ func (aq *AlertQuery) setModelProps() error {
 	return nil
 }
 
-func (aq *AlertQuery) IsDatasourceQuery() (bool, string, error) {
+// GetDatasourceType extracts data source type from the query model, path "datasource.type".
+// Returns error if either the query is not data source or it does not have the fields in the model
+func (aq *AlertQuery) GetDatasourceType() (string, error) {
 	nt := expr.NodeTypeFromDatasourceUID(aq.DatasourceUID)
 	if nt != expr.TypeDatasourceNode {
-		return false, "", nil
+		return "", errors.New("not a data source")
 	}
 	if aq.modelProps == nil {
 		err := aq.setModelProps()
 		if err != nil {
-			return false, "", err
+			return "", err
 		}
 	}
 	dsany, ok := aq.modelProps["datasource"]
 	if !ok {
-		return false, "", fmt.Errorf("model does not contain 'datasource' field")
+		return "", fmt.Errorf("model does not contain 'datasource' field")
 	}
 	ds, ok := dsany.(map[string]any)
 	if !ok {
-		return false, "", fmt.Errorf("field 'datasource' is expected to be a JSON dictionary but got %T", dsany)
+		return "", fmt.Errorf("field 'datasource' is expected to be a JSON dictionary but got %T", dsany)
 	}
 	datasourceType := ""
 	if d, ok := ds["type"]; ok {
 		datasourceType = fmt.Sprintf("%v", d)
 	}
-	return true, datasourceType, nil
+	return datasourceType, nil
+}
+
+func (aq *AlertQuery) IsDataSource() (bool, error) {
+	return expr.NodeTypeFromDatasourceUID(aq.DatasourceUID) == expr.TypeDatasourceNode, nil
 }
 
 // IsExpression returns true if the alert query is an expression.
