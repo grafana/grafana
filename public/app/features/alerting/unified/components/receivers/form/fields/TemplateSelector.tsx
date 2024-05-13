@@ -292,6 +292,14 @@ export function WrapWithTemplateSelection({
   const emptyValue = value === '' || value === undefined;
   const onlyOneTemplate = value ? matchesOnlyOneTemplate(value) : false;
   const styles = useStyles2(getStyles);
+
+  // if the placeholder does not contain a template, we don't need to show the template picker
+  if (!option.placeholder.includes('{{ template ')) {
+    return <>{children}</>;
+  }
+  // Otherwise, we can use templates on this field
+
+  // if the value is empty, we only show the template picker
   if (emptyValue) {
     return (
       <div className={styles.inputContainer}>

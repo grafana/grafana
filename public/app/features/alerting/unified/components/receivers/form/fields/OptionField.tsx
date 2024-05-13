@@ -102,15 +102,10 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
   );
 
   const useTemplates = option.placeholder.includes('{{ template');
-  const [selectedTemplate, setSelectedTemplate] = React.useState<string>('');
 
   function onSelectTemplate(template: string) {
-    setSelectedTemplate(template);
+    Boolean(template) && setValue(name, template);
   }
-
-  useEffect(() => {
-    Boolean(selectedTemplate) && setValue(name, selectedTemplate);
-  }, [selectedTemplate, setValue, name]);
 
   switch (option.element) {
     case 'checkbox':
