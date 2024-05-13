@@ -578,11 +578,12 @@ var (
 		},
 		{
 			Name:            "featureToggleAdminPage",
-			Description:     "Enable admin page for managing feature toggles from the Grafana front-end",
+			Description:     "Enable admin page for managing feature toggles from the Grafana front-end. Grafana Cloud only.",
 			Stage:           FeatureStageExperimental,
 			FrontendOnly:    false,
 			Owner:           grafanaOperatorExperienceSquad,
 			RequiresRestart: true,
+			HideFromDocs:    true,
 		},
 		{
 			Name:        "awsAsyncQueryCaching",
@@ -1106,6 +1107,13 @@ var (
 			Owner:       grafanaSharingSquad,
 		},
 		{
+			Name:         "tlsMemcached",
+			Description:  "Use TLS-enabled memcached in the enterprise caching feature",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaOperatorExperienceSquad,
+			HideFromDocs: true,
+		},
+		{
 			Name:            "kubernetesAggregator",
 			Description:     "Enable grafana aggregator",
 			Stage:           FeatureStageExperimental,
@@ -1239,6 +1247,13 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: true,
+		},
+		{
+			Name:         "notificationBanner",
+			Description:  "Enables the notification banner UI and API",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			FrontendOnly: false,
 		},
 	}
 )

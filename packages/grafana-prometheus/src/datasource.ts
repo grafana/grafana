@@ -10,6 +10,7 @@ import {
   AnnotationEvent,
   AnnotationQueryRequest,
   CoreApp,
+  CustomVariableModel,
   DataFrame,
   DataQueryRequest,
   DataQueryResponse,
@@ -23,6 +24,7 @@ import {
   LegacyMetricFindQueryOptions,
   MetricFindValue,
   QueryFixAction,
+  QueryVariableModel,
   rangeUtil,
   renderLegendFormat,
   ScopedVars,
@@ -85,14 +87,14 @@ export class PrometheusDatasource
   id: number;
   access: 'direct' | 'proxy';
   basicAuth: any;
-  withCredentials: any;
+  withCredentials: boolean;
   interval: string;
   queryTimeout: string | undefined;
   httpMethod: string;
   languageProvider: PrometheusLanguageProvider;
   exemplarTraceIdDestinations: ExemplarTraceIdDestination[] | undefined;
   lookupsDisabled: boolean;
-  customQueryParameters: any;
+  customQueryParameters: URLSearchParams;
   datasourceConfigurationPrometheusFlavor?: PromApplication;
   datasourceConfigurationPrometheusVersion?: string;
   disableRecordingRules: boolean;
@@ -114,7 +116,7 @@ export class PrometheusDatasource
     this.url = instanceSettings.url!;
     this.access = instanceSettings.access;
     this.basicAuth = instanceSettings.basicAuth;
-    this.withCredentials = instanceSettings.withCredentials;
+    this.withCredentials = Boolean(instanceSettings.withCredentials);
     this.interval = instanceSettings.jsonData.timeInterval || '15s';
     this.queryTimeout = instanceSettings.jsonData.queryTimeout;
     this.httpMethod = instanceSettings.jsonData.httpMethod || 'GET';
@@ -322,7 +324,7 @@ export class PrometheusDatasource
     ); // toPromise until we change getTagValues, getLabelNames to Observable
   }
 
-  interpolateQueryExpr(value: string | string[] = [], variable: any) {
+  interpolateQueryExpr(value: string | string[] = [], variable: QueryVariableModel | CustomVariableModel) {
     // if no multi or include all do not regexEscape
     if (!variable.multi && !variable.includeAll) {
       return prometheusRegularEscape(value);

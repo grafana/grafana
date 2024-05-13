@@ -19,23 +19,22 @@ type DualWriterMode2 struct {
 	Storage Storage
 	Legacy  LegacyStorage
 	Log     klog.Logger
+	*dualWriterMetrics
 }
 
 // NewDualWriterMode2 returns a new DualWriter in mode 2.
 // Mode 2 represents writing to LegacyStorage and Storage and reading from LegacyStorage.
 func NewDualWriterMode2(legacy LegacyStorage, storage Storage) *DualWriterMode2 {
-	return &DualWriterMode2{Legacy: legacy, Storage: storage, Log: klog.NewKlogr().WithName("DualWriterMode2")}
+	metrics := &dualWriterMetrics{}
+	metrics.init()
+	return &DualWriterMode2{Legacy: legacy, Storage: storage, Log: klog.NewKlogr().WithName("DualWriterMode2"), dualWriterMetrics: metrics}
 }
 
 // Create overrides the behavior of the generic DualWriter and writes to LegacyStorage and Storage.
 func (d *DualWriterMode2) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	ctx = klog.NewContext(ctx, d.Log)
-	legacy, ok := d.Legacy.(rest.Creater)
-	if !ok {
-		return nil, errDualWriterCreaterMissing
-	}
 
-	created, err := legacy.Create(ctx, obj, createValidation, options)
+	created, err := d.Legacy.Create(ctx, obj, createValidation, options)
 	if err != nil {
 		d.Log.Error(err, "unable to create object in legacy storage")
 		return created, err
@@ -86,12 +85,7 @@ func (d *DualWriterMode2) Get(ctx context.Context, name string, options *metav1.
 func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
 	log := d.Log.WithValues("kind", options.Kind, "resourceVersion", options.ResourceVersion)
 	ctx = klog.NewContext(ctx, log)
-	legacy, ok := d.Legacy.(rest.Lister)
-	if !ok {
-		return nil, errDualWriterListerMissing
-	}
-
-	ll, err := legacy.List(ctx, options)
+	ll, err := d.Legacy.List(ctx, options)
 	if err != nil {
 		log.Error(err, "unable to list objects from legacy storage")
 		return nil, err
@@ -144,12 +138,7 @@ func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion
 func (d *DualWriterMode2) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
 	log := d.Log.WithValues("kind", options.Kind, "resourceVersion", listOptions.ResourceVersion)
 	ctx = klog.NewContext(ctx, log)
-	legacy, ok := d.Legacy.(rest.CollectionDeleter)
-	if !ok {
-		return nil, errDualWriterCollectionDeleterMissing
-	}
-
-	deleted, err := legacy.DeleteCollection(ctx, deleteValidation, options, listOptions)
+	deleted, err := d.Legacy.DeleteCollection(ctx, deleteValidation, options, listOptions)
 	if err != nil {
 		log.WithValues("deleted", deleted).Error(err, "failed to delete collection successfully from legacy storage")
 		return nil, err
@@ -180,12 +169,8 @@ func (d *DualWriterMode2) DeleteCollection(ctx context.Context, deleteValidation
 func (d *DualWriterMode2) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	log := d.Log.WithValues("name", name)
 	ctx = klog.NewContext(ctx, log)
-	legacy, ok := d.Legacy.(rest.GracefulDeleter)
-	if !ok {
-		return nil, false, errDualWriterDeleterMissing
-	}
 
-	deletedLS, async, err := legacy.Delete(ctx, name, deleteValidation, options)
+	deletedLS, async, err := d.Legacy.Delete(ctx, name, deleteValidation, options)
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
 			log.WithValues("objectList", deletedLS).Error(err, "could not delete from legacy store")
@@ -208,10 +193,6 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 	var notFound bool
 	log := d.Log.WithValues("name", name)
 	ctx = klog.NewContext(ctx, log)
-	legacy, ok := d.Legacy.(rest.Updater)
-	if !ok {
-		return nil, false, errDualWriterUpdaterMissing
-	}
 
 	// get old and new (updated) object so they can be stored in legacy store
 	old, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
@@ -231,7 +212,7 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 		return nil, false, err
 	}
 
-	obj, created, err := legacy.Update(ctx, name, &updateWrapper{upstream: objInfo, updated: updated}, createValidation, updateValidation, forceAllowCreate, options)
+	obj, created, err := d.Legacy.Update(ctx, name, &updateWrapper{upstream: objInfo, updated: updated}, createValidation, updateValidation, forceAllowCreate, options)
 	if err != nil {
 		log.WithValues("object", obj).Error(err, "could not update in legacy storage")
 		return obj, created, err

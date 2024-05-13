@@ -618,6 +618,9 @@
     "select": {
       "no-options-label": "No se ha encontrado ninguna opción",
       "placeholder": "Elegir"
+    },
+    "spinner": {
+      "aria-label": ""
     }
   },
   "graph": {
@@ -887,8 +890,8 @@
       "title": "Alertas"
     },
     "alerting-admin": {
-      "title": "",
-      "subtitle": ""
+      "subtitle": "",
+      "title": ""
     },
     "alerting-am-routes": {
       "subtitle": "Determinar cómo se enrutan las alertas a los puntos de contacto",
