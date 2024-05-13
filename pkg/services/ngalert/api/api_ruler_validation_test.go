@@ -321,6 +321,7 @@ func TestValidateRuleNode_NoUID(t *testing.T) {
 	testCases := []struct {
 		name   string
 		rule   func() *apimodels.PostableExtendedRuleNode
+		limits *RuleLimits
 		assert func(t *testing.T, model *apimodels.PostableExtendedRuleNode, rule *models.AlertRule)
 	}{
 		{
@@ -403,14 +404,58 @@ func TestValidateRuleNode_NoUID(t *testing.T) {
 				require.Equal(t, int64(panelId), *alert.PanelID)
 			},
 		},
+		{
+			name:   "accepts and converts recording rule when toggle is enabled",
+			limits: func() *RuleLimits { l := makeLimits(cfg); l.RecordingRulesAllowed = true; return &l }(),
+			rule: func() *apimodels.PostableExtendedRuleNode {
+				r := validRule()
+				r.GrafanaManagedAlert.Record = &apimodels.Record{Metric: "some_metric", From: "A"}
+				r.GrafanaManagedAlert.Condition = ""
+				r.GrafanaManagedAlert.NoDataState = ""
+				r.GrafanaManagedAlert.ExecErrState = ""
+				r.GrafanaManagedAlert.NotificationSettings = nil
+				r.ApiRuleNode.For = nil
+				return &r
+			},
+			assert: func(t *testing.T, api *apimodels.PostableExtendedRuleNode, alert *models.AlertRule) {
+				// Shared fields
+				require.Equal(t, int64(0), alert.ID)
+				require.Equal(t, orgId, alert.OrgID)
+				require.Equal(t, api.GrafanaManagedAlert.Title, alert.Title)
+				require.Equal(t, AlertQueriesFromApiAlertQueries(api.GrafanaManagedAlert.Data), alert.Data)
+				require.Equal(t, time.Time{}, alert.Updated)
+				require.Equal(t, int64(interval.Seconds()), alert.IntervalSeconds)
+				require.Equal(t, int64(0), alert.Version)
+				require.Equal(t, api.GrafanaManagedAlert.UID, alert.UID)
+				require.Equal(t, folder.UID, alert.NamespaceUID)
+				require.Nil(t, alert.DashboardUID)
+				require.Nil(t, alert.PanelID)
+				require.Equal(t, name, alert.RuleGroup)
+				require.Equal(t, api.ApiRuleNode.Annotations, alert.Annotations)
+				require.Equal(t, api.ApiRuleNode.Labels, alert.Labels)
+				// Alerting fields
+				require.Empty(t, alert.Condition)
+				require.Empty(t, alert.NoDataState)
+				require.Empty(t, alert.ExecErrState)
+				require.Nil(t, alert.NotificationSettings)
+				require.Zero(t, alert.For)
+				// Recording fields
+				require.Equal(t, api.GrafanaManagedAlert.Record.From, alert.Record.From)
+				require.Equal(t, api.GrafanaManagedAlert.Record.Metric, alert.Record.Metric)
+			},
+		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			r := testCase.rule()
 			r.GrafanaManagedAlert.UID = ""
+			lim := limits
+			if testCase.limits != nil {
+				lim = *testCase.limits
+			}
 
-			alert, err := validateRuleNode(r, name, interval, orgId, folder.UID, limits)
+			alert, err := validateRuleNode(r, name, interval, orgId, folder.UID, lim)
 			require.NoError(t, err)
 			testCase.assert(t, r, alert)
 		})

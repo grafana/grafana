@@ -72,9 +72,6 @@ func validateRuleNode(
 		IntervalSeconds: intervalSeconds,
 		NamespaceUID:    namespaceUID,
 		RuleGroup:       groupName,
-		// Recording Rule fields will be implemented in the future.
-		// For now, no rules can be recording rules. So, we force these to be empty.
-		Record: nil,
 	}
 
 	if isRecordingRule {
