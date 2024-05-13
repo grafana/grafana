@@ -105,13 +105,15 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
         background: theme.colors.action.disabledBackground,
         borderColor: theme.colors.border.weak,
         cursor: 'not-allowed',
-
-        '&:hover': {
-          background: theme.colors.action.disabledBackground,
-        },
       },
 
       '&:disabled:checked + label': {
+        background: theme.colors.primary.transparent,
+
+        '&:hover': {
+          background: theme.colors.primary.transparent,
+        },
+
         '&::after': {
           background: theme.colors.text.disabled,
         },
