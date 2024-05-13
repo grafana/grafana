@@ -48,6 +48,11 @@ func makeLimits(cfg *setting.UnifiedAlertingSettings) RuleLimits {
 	return RuleLimitsFromConfig(cfg, baseToggles)
 }
 
+func makeLimitsWith(cfg *setting.UnifiedAlertingSettings, spec ...any) RuleLimits {
+	baseToggles := featuremgmt.WithFeatures(spec...)
+	return RuleLimitsFromConfig(cfg, baseToggles)
+}
+
 func validRule() apimodels.PostableExtendedRuleNode {
 	forDuration := model.Duration(rand.Int63n(1000))
 	uid := util.GenerateShortUID()
@@ -479,6 +484,8 @@ func TestValidateRuleNodeFailures_NoUID(t *testing.T) {
 		name           string
 		interval       *time.Duration
 		rule           func() *apimodels.PostableExtendedRuleNode
+		limits         *RuleLimits
+		expErr         string
 		assert         func(t *testing.T, model *apimodels.PostableExtendedRuleNode, err error)
 		allowedIfNoUId bool
 	}{
@@ -603,6 +610,65 @@ func TestValidateRuleNodeFailures_NoUID(t *testing.T) {
 				return &r
 			},
 		},
+		{
+			name: "rejects valid recording rules if toggle is disabled",
+			rule: func() *apimodels.PostableExtendedRuleNode {
+				r := validRule()
+				r.GrafanaManagedAlert.Record = &apimodels.Record{Metric: "some_metric", From: "A"}
+				r.GrafanaManagedAlert.Condition = ""
+				r.GrafanaManagedAlert.NoDataState = ""
+				r.GrafanaManagedAlert.ExecErrState = ""
+				r.GrafanaManagedAlert.NotificationSettings = nil
+				r.ApiRuleNode.For = nil
+				return &r
+			},
+			expErr: "recording rules cannot be created",
+		},
+		{
+			name:   "rejects recording rule with invalid metric name",
+			limits: func() *RuleLimits { l := makeLimits(cfg); l.RecordingRulesAllowed = true; return &l }(),
+			rule: func() *apimodels.PostableExtendedRuleNode {
+				r := validRule()
+				r.GrafanaManagedAlert.Record = &apimodels.Record{Metric: "", From: "A"}
+				r.GrafanaManagedAlert.Condition = ""
+				r.GrafanaManagedAlert.NoDataState = ""
+				r.GrafanaManagedAlert.ExecErrState = ""
+				r.GrafanaManagedAlert.NotificationSettings = nil
+				r.ApiRuleNode.For = nil
+				return &r
+			},
+			expErr: "must be a valid Prometheus metric name",
+		},
+		{
+			name:   "rejects recording rule with empty from",
+			limits: func() *RuleLimits { l := makeLimits(cfg); l.RecordingRulesAllowed = true; return &l }(),
+			rule: func() *apimodels.PostableExtendedRuleNode {
+				r := validRule()
+				r.GrafanaManagedAlert.Record = &apimodels.Record{Metric: "my_metric", From: ""}
+				r.GrafanaManagedAlert.Condition = ""
+				r.GrafanaManagedAlert.NoDataState = ""
+				r.GrafanaManagedAlert.ExecErrState = ""
+				r.GrafanaManagedAlert.NotificationSettings = nil
+				r.ApiRuleNode.For = nil
+				return &r
+			},
+			expErr: "cannot be empty",
+		},
+		{
+			name:   "rejects recording rule with from not matching",
+			limits: func() *RuleLimits { l := makeLimits(cfg); l.RecordingRulesAllowed = true; return &l }(),
+			rule: func() *apimodels.PostableExtendedRuleNode {
+				r := validRule()
+				r.GrafanaManagedAlert.Record = &apimodels.Record{Metric: "my_metric", From: "NOTEXIST"}
+				r.GrafanaManagedAlert.Condition = ""
+				r.GrafanaManagedAlert.NoDataState = ""
+				r.GrafanaManagedAlert.ExecErrState = ""
+				r.GrafanaManagedAlert.NotificationSettings = nil
+				r.ApiRuleNode.For = nil
+				return &r
+			},
+			expErr: "NOTEXIST does not exist",
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -617,8 +683,16 @@ func TestValidateRuleNodeFailures_NoUID(t *testing.T) {
 				interval = *testCase.interval
 			}
 
-			_, err := validateRuleNode(r, "", interval, orgId, folder.UID, limits)
+			lim := limits
+			if testCase.limits != nil {
+				lim = *testCase.limits
+			}
+
+			_, err := validateRuleNode(r, "", interval, orgId, folder.UID, lim)
 			require.Error(t, err)
+			if testCase.expErr != "" {
+				require.ErrorContains(t, err, testCase.expErr)
+			}
 			if testCase.assert != nil {
 				testCase.assert(t, r, err)
 			}
