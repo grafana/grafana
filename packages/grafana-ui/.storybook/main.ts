@@ -92,13 +92,6 @@ const mainConfig: StorybookConfig = {
   typescript: {
     check: true,
     reactDocgen: 'react-docgen',
-    reactDocgenTypescriptOptions: {
-      tsconfigPath: path.resolve(__dirname, 'tsconfig.json'),
-      shouldExtractLiteralValuesFromEnum: true,
-      shouldRemoveUndefinedFromOptional: true,
-      propFilter: (prop: any) => (prop.parent ? !/node_modules/.test(prop.parent.fileName) : true),
-      savePropValueAsString: true,
-    },
   },
   webpackFinal: async (config) => {
     // expose jquery as a global so jquery plugins don't break at runtime.
