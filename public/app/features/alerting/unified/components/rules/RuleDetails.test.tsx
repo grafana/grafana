@@ -90,7 +90,7 @@ describe('RuleDetails RBAC', () => {
 
     it('Should not render Edit button for users with the update permission', async () => {
       // Arrange
-      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: true });
+      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: true, uninitialized: false });
 
       // Act
       renderRuleDetails(grafanaRule);
@@ -102,7 +102,7 @@ describe('RuleDetails RBAC', () => {
 
     it('Should not render Delete button for users with the delete permission', async () => {
       // Arrange
-      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: true });
+      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: true, uninitialized: false });
 
       // Act
       renderRuleDetails(grafanaRule);
@@ -118,7 +118,7 @@ describe('RuleDetails RBAC', () => {
 
     it('Should not render Edit button for users with the update permission', async () => {
       // Arrange
-      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: true });
+      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: true, uninitialized: false });
 
       // Act
       renderRuleDetails(cloudRule);
@@ -130,7 +130,7 @@ describe('RuleDetails RBAC', () => {
 
     it('Should not render Delete button for users with the delete permission', async () => {
       // Arrange
-      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: true });
+      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: true, uninitialized: false });
 
       // Act
       renderRuleDetails(cloudRule);

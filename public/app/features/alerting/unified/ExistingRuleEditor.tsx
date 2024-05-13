@@ -1,13 +1,11 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
-import { RuleIdentifier, RuleWithLocation } from 'app/types/unified-alerting';
-
-import { RulerRuleDTO } from '../../../types/unified-alerting-dto';
+import { RuleIdentifier } from 'app/types/unified-alerting';
 
 import { AlertWarning } from './AlertWarning';
 import { AlertRuleForm } from './components/rule-editor/alert-rule-form/AlertRuleForm';
-import { useCombinedRule } from './hooks/useCombinedRule';
+import { useRuleWithLocation } from './hooks/useCombinedRule';
 import { useIsRuleEditable } from './hooks/useIsRuleEditable';
 import { stringifyErrorLike } from './utils/misc';
 import * as ruleId from './utils/rule-id';
@@ -18,32 +16,19 @@ interface ExistingRuleEditorProps {
 }
 
 export function ExistingRuleEditor({ identifier, id }: ExistingRuleEditorProps) {
-  const { loading: loadingAlertRule, result, error } = useCombinedRule({ ruleIdentifier: identifier });
+  const {
+    loading: loadingAlertRule,
+    result: ruleWithLocation,
+    error,
+  } = useRuleWithLocation({ ruleIdentifier: identifier });
 
-  const ruleWithLocation = useMemo<RuleWithLocation<RulerRuleDTO> | undefined>(() => {
-    if (!result || !result.rulerRule) {
-      return undefined;
-    }
+  const {
+    isEditable,
+    loading: loadingEditable,
+    uninitialized: editableUnitialized,
+  } = useIsRuleEditable(ruleId.ruleIdentifierToRuleSourceName(identifier), ruleWithLocation?.rule);
 
-    // TODO Try to find a better way than going back from combined rule to ruler rule
-    return {
-      ruleSourceName: identifier.ruleSourceName,
-      group: {
-        ...result.group,
-        rules: result.group.rules.map((r) => r.rulerRule).filter((rr): rr is RulerRuleDTO => rr !== undefined),
-      },
-      namespace: result.namespace.name,
-      namespace_uid: result.namespace.uid,
-      rule: result.rulerRule,
-    };
-  }, [result, identifier]);
-
-  const { isEditable, loading: loadingEditable } = useIsRuleEditable(
-    ruleId.ruleIdentifierToRuleSourceName(identifier),
-    result?.rulerRule
-  );
-
-  const loading = loadingAlertRule || loadingEditable;
+  const loading = loadingAlertRule || loadingEditable || editableUnitialized;
 
   if (loading || isEditable === undefined) {
     return <LoadingPlaceholder text="Loading rule..." />;

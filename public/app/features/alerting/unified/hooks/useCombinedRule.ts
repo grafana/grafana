@@ -8,6 +8,7 @@ import {
   RuleNamespace,
   RulerDataSourceConfig,
   RulesSource,
+  RuleWithLocation,
 } from 'app/types/unified-alerting';
 import { RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
@@ -315,6 +316,71 @@ function getRulesSourceFromIdentifier(ruleIdentifier: RuleIdentifier): RulesSour
   }
 
   return getDataSourceByName(ruleIdentifier.ruleSourceName);
+}
+
+// This Hook fetches rule definition from the Ruler API only
+export function useRuleWithLocation({
+  ruleIdentifier,
+}: {
+  ruleIdentifier: RuleIdentifier;
+}): RequestState<RuleWithLocation> {
+  const ruleSource = getRulesSourceFromIdentifier(ruleIdentifier);
+
+  const { dsFeatures, isLoadingDsFeatures } = useDataSourceFeatures(ruleIdentifier.ruleSourceName);
+  const {
+    loading: isLoadingRuleLocation,
+    error: ruleLocationError,
+    result: ruleLocation,
+  } = useRuleLocation(ruleIdentifier);
+
+  const [
+    fetchRulerRuleGroup,
+    { currentData: rulerRuleGroup, isLoading: isLoadingRulerGroup, error: rulerRuleGroupError },
+  ] = alertRuleApi.endpoints.rulerRuleGroup.useLazyQuery();
+
+  useEffect(() => {
+    if (!dsFeatures?.rulerConfig || !ruleLocation) {
+      return;
+    }
+
+    fetchRulerRuleGroup(
+      {
+        rulerConfig: dsFeatures.rulerConfig,
+        namespace: ruleLocation.namespace,
+        group: ruleLocation.group,
+      },
+      true
+    );
+  }, [dsFeatures, fetchRulerRuleGroup, ruleLocation]);
+
+  const ruleWithLocation = useMemo(() => {
+    const { ruleSourceName } = ruleIdentifier;
+    if (!rulerRuleGroup || !ruleSource || !ruleLocation) {
+      return;
+    }
+
+    const rule = rulerRuleGroup.rules.find((rule) => {
+      const id = ruleId.fromRulerRule(ruleSourceName, ruleLocation.namespace, ruleLocation.group, rule);
+      return ruleId.equal(id, ruleIdentifier);
+    });
+
+    if (!rule) {
+      return;
+    }
+
+    return {
+      ruleSourceName: ruleSourceName,
+      group: rulerRuleGroup,
+      namespace: ruleLocation.namespace,
+      rule: rule,
+    };
+  }, [ruleIdentifier, rulerRuleGroup, ruleSource, ruleLocation]);
+
+  return {
+    loading: isLoadingRuleLocation || isLoadingDsFeatures || isLoadingRulerGroup,
+    error: ruleLocationError ?? rulerRuleGroupError,
+    result: ruleWithLocation,
+  };
 }
 
 export const grafanaRulerConfig: RulerDataSourceConfig = {
