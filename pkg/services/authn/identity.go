@@ -22,10 +22,10 @@ var _ Requester = (*Identity)(nil)
 
 type Identity struct {
 	// ID is the unique identifier for the entity in the Grafana database.
-	// It is in the format <namespace>:<id> where namespace is one of the
-	// Namespace* constants. For example, "user:1" or "api-key:1".
 	// If the entity is not found in the DB or this entity is non-persistent, this field will be empty.
 	ID NamespaceID
+	// UID is a unique uid stored for entity in Grafana datbase. Not all entities support uid so it can be empty.
+	UID NamespaceID
 	// OrgID is the active organization for the entity.
 	OrgID int64
 	// OrgName is the name of the active organization.
@@ -71,8 +71,6 @@ type Identity struct {
 	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
 	// Will only be set when featuremgmt.FlagIdForwarding is enabled.
 	IDToken string
-	// UserUID is the unique identifier for the entity in the Grafana database.
-	UserUID string
 }
 
 func (i *Identity) GetID() NamespaceID {
@@ -84,12 +82,7 @@ func (i *Identity) GetNamespacedID() (namespace identity.Namespace, identifier s
 }
 
 func (i *Identity) GetUID() NamespaceID {
-	ns, uid := i.GetNamespacedUID()
-	return identity.NewNamespaceIDString(ns, uid)
-}
-
-func (i *Identity) GetNamespacedUID() (namespace identity.Namespace, identifier string) {
-	return i.ID.Namespace(), i.UserUID
+	return i.UID
 }
 
 func (i *Identity) GetAuthID() string {
