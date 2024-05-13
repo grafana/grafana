@@ -2,6 +2,7 @@ import { produce } from 'immer';
 import React from 'react';
 
 import { Menu } from '@grafana/ui';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { isGrafanaRulerRule, isGrafanaRulerRulePaused } from 'app/features/alerting/unified/utils/rules';
 import { CombinedRule } from 'app/types/unified-alerting';
@@ -23,6 +24,7 @@ interface Props {
 const MenuItemPauseRule = ({ rule, onPauseChange }: Props) => {
   // we need to fetch the group again, as maybe the group has been filtered
   const [getGroup] = alertRuleApi.endpoints.rulerRuleGroup.useLazyQuery();
+  const notifyApp = useAppNotification();
 
   // Add any dependencies here
   const [updateRule] = alertRuleApi.endpoints.updateRule.useMutation();
@@ -43,6 +45,13 @@ const MenuItemPauseRule = ({ rule, onPauseChange }: Props) => {
       namespace: rule.namespace.uid || rule.rulerRule.grafana_alert.namespace_uid,
       group: rule.group.name,
     }).unwrap();
+
+    if (!targetGroup) {
+      notifyApp.error(
+        `Failed to ${newIsPaused ? 'pause' : 'resume'} the rule. Could not get the target group to update the rule.`
+      );
+      return;
+    }
 
     // Parse the rules into correct format for API
     const modifiedRules =
