@@ -44,6 +44,11 @@ var testRoutes = map[string]types.AzRoute{
 		Scopes:  []string{"https://api.loganalytics.io/.default"},
 		Headers: map[string]string{"x-ms-app": "Grafana", "Cache-Control": "public, max-age=60"},
 	},
+	traceExemplar: {
+		URL:     "https://api.loganalytics.io",
+		Scopes:  []string{"https://api.loganalytics.io/.default"},
+		Headers: map[string]string{"x-ms-app": "Grafana", "Cache-Control": "public, max-age=60"},
+	},
 	azurePortal: {
 		URL: "https://portal.azure.com",
 	},
