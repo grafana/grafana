@@ -6,6 +6,8 @@ import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { isGrafanaRulerRule, isGrafanaRulerRulePaused } from 'app/features/alerting/unified/utils/rules';
 import { CombinedRule } from 'app/types/unified-alerting';
 
+import { grafanaRulerConfig } from '../hooks/useCombinedRule';
+
 interface Props {
   rule: CombinedRule;
   /**
@@ -19,7 +21,10 @@ interface Props {
  * and triggering API call to do so
  */
 const MenuItemPauseRule = ({ rule, onPauseChange }: Props) => {
-  const { group } = rule;
+  // we need to fetch the group again, as maybe the group has been filtered
+  const [getGroup] = alertRuleApi.endpoints.rulerRuleGroup.useLazyQuery();
+
+  // Add any dependencies here
   const [updateRule] = alertRuleApi.endpoints.updateRule.useMutation();
   const isPaused = isGrafanaRulerRule(rule.rulerRule) && isGrafanaRulerRulePaused(rule.rulerRule);
   const icon = isPaused ? 'play' : 'pause';
@@ -33,30 +38,36 @@ const MenuItemPauseRule = ({ rule, onPauseChange }: Props) => {
       return;
     }
     const ruleUid = rule.rulerRule.grafana_alert.uid;
+    const targetGroup = await getGroup({
+      rulerConfig: grafanaRulerConfig,
+      namespace: rule.namespace.uid || rule.rulerRule.grafana_alert.namespace_uid,
+      group: rule.group.name,
+    }).unwrap();
 
     // Parse the rules into correct format for API
-    const modifiedRules = group.rules.map((groupRule) => {
-      if (!(isGrafanaRulerRule(groupRule.rulerRule) && groupRule.rulerRule.grafana_alert.uid === ruleUid)) {
-        return groupRule.rulerRule!;
-      }
-
-      return produce(groupRule.rulerRule, (updatedGroupRule) => {
-        updatedGroupRule.grafana_alert.is_paused = newIsPaused;
-      });
-    });
+    const modifiedRules =
+      targetGroup.rules.map((groupRule) => {
+        if (!(isGrafanaRulerRule(groupRule) && groupRule.grafana_alert.uid === ruleUid)) {
+          return groupRule;
+        }
+        return produce(groupRule, (updatedGroupRule) => {
+          updatedGroupRule.grafana_alert.is_paused = newIsPaused;
+        });
+      }) ?? [];
 
     const payload = {
-      interval: group.interval!,
-      name: group.name,
+      interval: targetGroup.interval! ?? '',
+      name: targetGroup.name ?? '',
       rules: modifiedRules,
     };
 
-    await updateRule({
-      nameSpaceUID: rule.namespace.uid || rule.rulerRule.grafana_alert.namespace_uid,
-      payload,
-    }).unwrap();
+    targetGroup &&
+      (await updateRule({
+        nameSpaceUID: rule.namespace.uid || rule.rulerRule.grafana_alert.namespace_uid,
+        payload,
+      }).unwrap());
 
-    onPauseChange?.();
+    targetGroup && onPauseChange?.();
   };
 
   return (
