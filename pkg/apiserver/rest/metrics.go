@@ -55,7 +55,6 @@ func (m *dualWriterMetrics) recordStorageDuration(isError bool, mode string, nam
 	m.storage.WithLabelValues(strconv.FormatBool(isError), mode, name, method).Observe(duration)
 }
 
-// TODO: change this into a validation function
 func (m *dualWriterMetrics) recordOutcome(mode string, name string, outcome bool, method string) {
 	var observeValue float64
 	if outcome {
@@ -64,6 +63,7 @@ func (m *dualWriterMetrics) recordOutcome(mode string, name string, outcome bool
 	m.outcome.WithLabelValues(mode, name, method).Observe(observeValue)
 }
 
+// TODO: change this into a validation interface
 func compareResourceVersion(obj1, obj2 runtime.Object) (bool, error) {
 	accessor1, err := meta.Accessor(obj1)
 	if err != nil {
