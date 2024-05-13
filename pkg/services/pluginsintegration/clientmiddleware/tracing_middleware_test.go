@@ -387,6 +387,18 @@ func (m *alwaysErrorFuncMiddleware) RunStream(ctx context.Context, req *backend.
 	return m.f()
 }
 
+func (m *alwaysErrorFuncMiddleware) ProcessInstanceSettings(ctx context.Context, req *backend.ProcessInstanceSettingsRequest) (*backend.ProcessInstanceSettingsResponse, error) {
+	return nil, m.f()
+}
+
+func (m *alwaysErrorFuncMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+	return nil, m.f()
+}
+
+func (m *alwaysErrorFuncMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+	return nil, m.f()
+}
+
 // newAlwaysErrorMiddleware returns a new middleware that always returns the specified error.
 func newAlwaysErrorMiddleware(err error) plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {

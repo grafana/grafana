@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 )
@@ -66,4 +67,16 @@ func (m *ResourceResponseMiddleware) PublishStream(ctx context.Context, req *bac
 
 func (m *ResourceResponseMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	return m.next.RunStream(ctx, req, sender)
+}
+
+func (m *ResourceResponseMiddleware) ProcessInstanceSettings(ctx context.Context, req *backend.ProcessInstanceSettingsRequest) (*backend.ProcessInstanceSettingsResponse, error) {
+	return m.next.ProcessInstanceSettings(ctx, req)
+}
+
+func (m *ResourceResponseMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+	return m.next.ValidateAdmission(ctx, req)
+}
+
+func (m *ResourceResponseMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+	return m.next.MutateAdmission(ctx, req)
 }

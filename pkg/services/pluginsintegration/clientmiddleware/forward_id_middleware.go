@@ -95,3 +95,15 @@ func (m *ForwardIDMiddleware) PublishStream(ctx context.Context, req *backend.Pu
 func (m *ForwardIDMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	return m.next.RunStream(ctx, req, sender)
 }
+
+func (m *ForwardIDMiddleware) ProcessInstanceSettings(ctx context.Context, req *backend.ProcessInstanceSettingsRequest) (*backend.ProcessInstanceSettingsResponse, error) {
+	return m.next.ProcessInstanceSettings(ctx, req)
+}
+
+func (m *ForwardIDMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+	return m.next.ValidateAdmission(ctx, req)
+}
+
+func (m *ForwardIDMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+	return m.next.MutateAdmission(ctx, req)
+}

@@ -184,3 +184,15 @@ func (m *CachingMiddleware) PublishStream(ctx context.Context, req *backend.Publ
 func (m *CachingMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	return m.next.RunStream(ctx, req, sender)
 }
+
+func (m *CachingMiddleware) ProcessInstanceSettings(ctx context.Context, req *backend.ProcessInstanceSettingsRequest) (*backend.ProcessInstanceSettingsResponse, error) {
+	return m.next.ProcessInstanceSettings(ctx, req)
+}
+
+func (m *CachingMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+	return m.next.ValidateAdmission(ctx, req)
+}
+
+func (m *CachingMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+	return m.next.MutateAdmission(ctx, req)
+}

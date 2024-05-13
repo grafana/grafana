@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
 	"github.com/grafana/grafana/pkg/plugins"
 	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
@@ -108,4 +109,16 @@ func (m *HTTPClientMiddleware) PublishStream(ctx context.Context, req *backend.P
 
 func (m *HTTPClientMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	return m.next.RunStream(ctx, req, sender)
+}
+
+func (m *HTTPClientMiddleware) ProcessInstanceSettings(ctx context.Context, req *backend.ProcessInstanceSettingsRequest) (*backend.ProcessInstanceSettingsResponse, error) {
+	return m.next.ProcessInstanceSettings(ctx, req)
+}
+
+func (m *HTTPClientMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+	return m.next.ValidateAdmission(ctx, req)
+}
+
+func (m *HTTPClientMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+	return m.next.MutateAdmission(ctx, req)
 }

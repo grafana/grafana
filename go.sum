@@ -2179,6 +2179,12 @@ github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79/
 github.com/grafana/grafana-plugin-sdk-go v0.114.0/go.mod h1:D7x3ah+1d4phNXpbnOaxa/osSaZlwh9/ZUnGGzegRbk=
 github.com/grafana/grafana-plugin-sdk-go v0.229.0 h1:0IeuzscdAYcDVsXvIatqdObff4oTkebsXWTtGT4X9bA=
 github.com/grafana/grafana-plugin-sdk-go v0.229.0/go.mod h1:6V6ikT4ryva8MrAp7Bdz5fTJx3/ztzKvpMJFfpzr4CI=
+github.com/grafana/grafana-plugin-sdk-go v0.230.1-0.20240510205933-479ee40f9282 h1:MKQ1UzTdZEZa6YTZ9igGKb8PrDa7z/Sc3AWzWpS3tYo=
+github.com/grafana/grafana-plugin-sdk-go v0.230.1-0.20240510205933-479ee40f9282/go.mod h1:6V6ikT4ryva8MrAp7Bdz5fTJx3/ztzKvpMJFfpzr4CI=
+github.com/grafana/grafana-plugin-sdk-go v0.230.1-0.20240513090909-53b94e1032f7 h1:Wq1T3Aea4c7RYcfi//UWWs/ZWWKfwd/txOVvt1MJdyg=
+github.com/grafana/grafana-plugin-sdk-go v0.230.1-0.20240513090909-53b94e1032f7/go.mod h1:6V6ikT4ryva8MrAp7Bdz5fTJx3/ztzKvpMJFfpzr4CI=
+github.com/grafana/grafana-plugin-sdk-go v0.230.1-0.20240513121833-20b1338d1c19 h1:bJcf7+uC1tRoibTowd/o9iTaYBhYRakGzlsRIbxxjkc=
+github.com/grafana/grafana-plugin-sdk-go v0.230.1-0.20240513121833-20b1338d1c19/go.mod h1:6V6ikT4ryva8MrAp7Bdz5fTJx3/ztzKvpMJFfpzr4CI=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240226124929-648abdbd0ea4 h1:hpyusz8c3yRFoJPlA0o34rWnsLbaOOBZleqRhFBi5Lg=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240226124929-648abdbd0ea4/go.mod h1:vrRQJuNprTWqwm6JPxHf3BoTJhvO15QMEjQ7Q/YUOnI=
 github.com/grafana/grafana/pkg/apiserver v0.0.0-20240226124929-648abdbd0ea4 h1:tIbI5zgos92vwJ8lV3zwHwuxkV03GR3FGLkFW9V5LxY=

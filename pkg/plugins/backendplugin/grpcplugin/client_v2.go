@@ -24,6 +24,7 @@ type ClientV2 struct {
 	grpcplugin.ResourceClient
 	grpcplugin.DataClient
 	grpcplugin.StreamClient
+	grpcplugin.AdmissionClient
 	pluginextensionv2.RendererPlugin
 	secretsmanagerplugin.SecretsManagerPlugin
 }
@@ -40,6 +41,11 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 	}
 
 	rawData, err := rpcClient.Dispense("data")
+	if err != nil {
+		return nil, err
+	}
+
+	rawAdmission, err := rpcClient.Dispense("admission")
 	if err != nil {
 		return nil, err
 	}
@@ -75,6 +81,12 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 	if rawData != nil {
 		if dataClient, ok := rawData.(grpcplugin.DataClient); ok {
 			c.DataClient = dataClient
+		}
+	}
+
+	if rawAdmission != nil {
+		if admissionClient, ok := rawAdmission.(grpcplugin.AdmissionClient); ok {
+			c.AdmissionClient = admissionClient
 		}
 	}
 
@@ -256,4 +268,61 @@ func (c *ClientV2) RunStream(ctx context.Context, req *backend.RunStreamRequest,
 			return err
 		}
 	}
+}
+
+func (c *ClientV2) ProcessInstanceSettings(ctx context.Context, req *backend.ProcessInstanceSettingsRequest) (*backend.ProcessInstanceSettingsResponse, error) {
+	if c.AdmissionClient == nil {
+		return nil, plugins.ErrMethodNotImplemented
+	}
+
+	protoReq := backend.ToProto().ProcessInstanceSettingsRequest(req)
+	protoResp, err := c.AdmissionClient.ProcessInstanceSettings(ctx, protoReq)
+
+	if err != nil {
+		if status.Code(err) == codes.Unimplemented {
+			return nil, plugins.ErrMethodNotImplemented
+		}
+
+		return nil, fmt.Errorf("%v: %w", "Failed to process settings", err)
+	}
+
+	return backend.FromProto().ProcessInstanceSettingsResponse(protoResp), nil
+}
+
+func (c *ClientV2) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+	if c.AdmissionClient == nil {
+		return nil, plugins.ErrMethodNotImplemented
+	}
+
+	protoReq := backend.ToProto().AdmissionRequest(req)
+	protoResp, err := c.AdmissionClient.ValidateAdmission(ctx, protoReq)
+
+	if err != nil {
+		if status.Code(err) == codes.Unimplemented {
+			return nil, plugins.ErrMethodNotImplemented
+		}
+
+		return nil, fmt.Errorf("%v: %w", "Failed to validate admission", err)
+	}
+
+	return backend.FromProto().AdmissionResponse(protoResp), nil
+}
+
+func (c *ClientV2) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+	if c.AdmissionClient == nil {
+		return nil, plugins.ErrMethodNotImplemented
+	}
+
+	protoReq := backend.ToProto().AdmissionRequest(req)
+	protoResp, err := c.AdmissionClient.MutateAdmission(ctx, protoReq)
+
+	if err != nil {
+		if status.Code(err) == codes.Unimplemented {
+			return nil, plugins.ErrMethodNotImplemented
+		}
+
+		return nil, fmt.Errorf("%v: %w", "Failed to mutate admission", err)
+	}
+
+	return backend.FromProto().AdmissionResponse(protoResp), nil
 }

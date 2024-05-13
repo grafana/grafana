@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -82,4 +83,16 @@ func (m *UserHeaderMiddleware) PublishStream(ctx context.Context, req *backend.P
 
 func (m *UserHeaderMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	return m.next.RunStream(ctx, req, sender)
+}
+
+func (m *UserHeaderMiddleware) ProcessInstanceSettings(ctx context.Context, req *backend.ProcessInstanceSettingsRequest) (*backend.ProcessInstanceSettingsResponse, error) {
+	return m.next.ProcessInstanceSettings(ctx, req)
+}
+
+func (m *UserHeaderMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+	return m.next.ValidateAdmission(ctx, req)
+}
+
+func (m *UserHeaderMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+	return m.next.MutateAdmission(ctx, req)
 }

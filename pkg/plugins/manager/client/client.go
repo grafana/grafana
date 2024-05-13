@@ -217,6 +217,45 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 	return plugin.RunStream(ctx, req, sender)
 }
 
+func (s *Service) ProcessInstanceSettings(ctx context.Context, req *backend.ProcessInstanceSettingsRequest) (*backend.ProcessInstanceSettingsResponse, error) {
+	if req == nil {
+		return nil, errNilRequest
+	}
+
+	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID, req.PluginContext.PluginVersion)
+	if !exists {
+		return nil, plugins.ErrPluginNotRegistered
+	}
+
+	return plugin.ProcessInstanceSettings(ctx, req)
+}
+
+func (s *Service) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+	if req == nil {
+		return nil, errNilRequest
+	}
+
+	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID, req.PluginContext.PluginVersion)
+	if !exists {
+		return nil, plugins.ErrPluginNotRegistered
+	}
+
+	return plugin.ValidateAdmission(ctx, req)
+}
+
+func (s *Service) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+	if req == nil {
+		return nil, errNilRequest
+	}
+
+	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID, req.PluginContext.PluginVersion)
+	if !exists {
+		return nil, plugins.ErrPluginNotRegistered
+	}
+
+	return plugin.ValidateAdmission(ctx, req)
+}
+
 // plugin finds a plugin with `pluginID` from the registry that is not decommissioned
 func (s *Service) plugin(ctx context.Context, pluginID, pluginVersion string) (*plugins.Plugin, bool) {
 	p, exists := s.pluginRegistry.Plugin(ctx, pluginID, pluginVersion)

@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
@@ -96,6 +97,33 @@ func (d *Decorator) RunStream(ctx context.Context, req *backend.RunStreamRequest
 
 	client := clientFromMiddlewares(d.middlewares, d.client)
 	return client.RunStream(ctx, req, sender)
+}
+
+func (d *Decorator) ProcessInstanceSettings(ctx context.Context, req *backend.ProcessInstanceSettingsRequest) (*backend.ProcessInstanceSettingsResponse, error) {
+	if req == nil {
+		return nil, errNilRequest
+	}
+
+	client := clientFromMiddlewares(d.middlewares, d.client)
+	return client.ProcessInstanceSettings(ctx, req)
+}
+
+func (d *Decorator) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+	if req == nil {
+		return nil, errNilRequest
+	}
+
+	client := clientFromMiddlewares(d.middlewares, d.client)
+	return client.ValidateAdmission(ctx, req)
+}
+
+func (d *Decorator) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+	if req == nil {
+		return nil, errNilRequest
+	}
+
+	client := clientFromMiddlewares(d.middlewares, d.client)
+	return client.MutateAdmission(ctx, req)
 }
 
 func clientFromMiddlewares(middlewares []plugins.ClientMiddleware, finalClient plugins.Client) plugins.Client {

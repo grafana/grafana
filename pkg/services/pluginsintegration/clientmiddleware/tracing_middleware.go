@@ -135,3 +135,24 @@ func (m *TracingMiddleware) RunStream(ctx context.Context, req *backend.RunStrea
 	err = m.next.RunStream(ctx, req, sender)
 	return err
 }
+
+func (m *TracingMiddleware) ProcessInstanceSettings(ctx context.Context, req *backend.ProcessInstanceSettingsRequest) (*backend.ProcessInstanceSettingsResponse, error) {
+	var err error
+	ctx, end := m.traceWrap(ctx, req.PluginContext, "ProcessInstanceSettings")
+	defer func() { end(err) }()
+	return m.next.ProcessInstanceSettings(ctx, req)
+}
+
+func (m *TracingMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+	var err error
+	ctx, end := m.traceWrap(ctx, req.PluginContext, "ValidateAdmission")
+	defer func() { end(err) }()
+	return m.next.ValidateAdmission(ctx, req)
+}
+
+func (m *TracingMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+	var err error
+	ctx, end := m.traceWrap(ctx, req.PluginContext, "MutateAdmission")
+	defer func() { end(err) }()
+	return m.next.MutateAdmission(ctx, req)
+}

@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 
@@ -18,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -44,6 +46,7 @@ type Service struct {
 	logger             log.Logger
 	db                 db.DB
 	pluginStore        pluginstore.Store
+	pluginClient       plugins.Client // access to everything
 
 	ptc proxyTransportCache
 }
@@ -61,7 +64,7 @@ type cachedRoundTripper struct {
 func ProvideService(
 	db db.DB, secretsService secrets.Service, secretsStore kvstore.SecretsKVStore, cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, datasourcePermissionsService accesscontrol.DatasourcePermissionsService,
-	quotaService quota.Service, pluginStore pluginstore.Store,
+	quotaService quota.Service, pluginStore pluginstore.Store, pluginClient plugins.Client,
 ) (*Service, error) {
 	dslogger := log.New("datasources")
 	store := &SqlStore{db: db, logger: dslogger, features: features}
@@ -79,6 +82,7 @@ func ProvideService(
 		logger:             dslogger,
 		db:                 db,
 		pluginStore:        pluginStore,
+		pluginClient:       pluginClient,
 	}
 
 	ac.RegisterScopeAttributeResolver(NewNameScopeResolver(store))
@@ -207,6 +211,51 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 
 	if err := validateFields(cmd.Name, cmd.URL); err != nil {
 		return nil, err
+	}
+
+	p, found := s.pluginStore.Plugin(ctx, cmd.Type)
+	if !found {
+		return nil, fmt.Errorf("plugin %s not found", cmd.Type)
+	}
+	jd, err := cmd.JsonData.Bytes()
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("todo, check if %s has admission hooks", p.Name)
+	rsp, err := s.pluginClient.ProcessInstanceSettings(ctx, &backend.ProcessInstanceSettingsRequest{
+		PluginContext: backend.PluginContext{
+			OrgID:    cmd.OrgID,
+			PluginID: cmd.Type,
+			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+				UID:                     cmd.UID,
+				Name:                    cmd.Name,
+				URL:                     cmd.URL,
+				Database:                cmd.Database,
+				Updated:                 time.Now(),
+				JSONData:                jd,
+				DecryptedSecureJSONData: cmd.SecureJsonData,
+			},
+		},
+		TargetAPIVersion: "",    // anything
+		CheckHealth:      false, // we never have in the past
+	})
+	if err != nil { // TODO, OK with not implemented?
+		return nil, err
+	}
+	if rsp != nil {
+		if !rsp.Allowed {
+			return nil, fmt.Errorf("not allowed")
+		}
+		// Use the mutated values
+		if rsp.DataSourceInstanceSettings != nil {
+			cmd.SecureJsonData = rsp.DataSourceInstanceSettings.DecryptedSecureJSONData
+			cmd.JsonData = simplejson.New()
+			err = cmd.JsonData.FromDB(rsp.DataSourceInstanceSettings.JSONData)
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	var dataSource *datasources.DataSource
