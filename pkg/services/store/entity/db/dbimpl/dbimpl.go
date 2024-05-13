@@ -2,8 +2,6 @@ package dbimpl
 
 import (
 	"fmt"
-	"strings"
-	"time"
 
 	"github.com/dlmiddlecote/sqlstats"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -13,7 +11,6 @@ import (
 	entitydb "github.com/grafana/grafana/pkg/services/store/entity/db"
 	"github.com/grafana/grafana/pkg/services/store/entity/db/migrations"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/jmoiron/sqlx"
 	"github.com/prometheus/client_golang/prometheus"
 	"xorm.io/xorm"
@@ -56,26 +53,8 @@ func (db *EntityDB) GetEngine() (*xorm.Engine, error) {
 
 	// if explicit connection settings are provided, use them
 	if dbType != "" {
-		dbHost := cfgSection.Key("db_host").MustString("")
-		dbName := cfgSection.Key("db_name").MustString("")
-		dbUser := cfgSection.Key("db_user").MustString("")
-		dbPass := cfgSection.Key("db_pass").MustString("")
-
 		if dbType == "postgres" {
-			// TODO: support all postgres connection options
-			dbSslMode := cfgSection.Key("db_sslmode").MustString("disable")
-
-			addr, err := util.SplitHostPortDefault(dbHost, "127.0.0.1", "5432")
-			if err != nil {
-				return nil, fmt.Errorf("invalid host specifier '%s': %w", dbHost, err)
-			}
-
-			connectionString := fmt.Sprintf(
-				"user=%s password=%s host=%s port=%s dbname=%s sslmode=%s", // sslcert='%s' sslkey='%s' sslrootcert='%s'",
-				dbUser, dbPass, addr.Host, addr.Port, dbName, dbSslMode, // ss.dbCfg.ClientCertPath, ss.dbCfg.ClientKeyPath, ss.dbCfg.CaCertPath
-			)
-
-			engine, err = xorm.NewEngine("postgres", connectionString)
+			engine, err = getEnginePostgres(cfgSection)
 			if err != nil {
 				return nil, err
 			}
@@ -87,24 +66,10 @@ func (db *EntityDB) GetEngine() (*xorm.Engine, error) {
 				// FIXME: return nil, err
 			}
 		} else if dbType == "mysql" {
-			// TODO: support all mysql connection options
-			protocol := "tcp"
-			if strings.HasPrefix(dbHost, "/") {
-				protocol = "unix"
-			}
-
-			connectionString := fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true",
-				dbUser, dbPass, protocol, dbHost, dbName)
-
-			engine, err = xorm.NewEngine("mysql", connectionString)
+			engine, err = getEngineMySQL(cfgSection)
 			if err != nil {
 				return nil, err
 			}
-
-			engine.SetMaxOpenConns(0)
-			engine.SetMaxIdleConns(2)
-			engine.SetConnMaxLifetime(time.Second * time.Duration(14400))
-
 			_, err = engine.Exec("SELECT 1")
 			if err != nil {
 				return nil, err
