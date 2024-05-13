@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/embedserver"
 
 	zclient "github.com/grafana/zanzana/pkg/service/client"
@@ -29,33 +30,38 @@ func (s *AccessControlStore) SynchronizeUserData(ctx context.Context, zanzanaSer
 		return err
 	}
 
+	// Sync grafana admin
+	if err := s.syncGrafanaAdmins(ctx, cl); err != nil {
+		return err
+	}
+
 	// sync Teams
 	if err := s.syncTeams(ctx, cl); err != nil {
 		return err
 	}
 
 	// Sync Team memberships
-	if err := s.SyncTeamMemberships(ctx, cl); err != nil {
+	if err := s.syncTeamMemberships(ctx, cl); err != nil {
 		return err
 	}
 
 	// Sync Managed permissions
-	if err := s.SyncManagedRolePermissions(ctx, cl); err != nil {
+	if err := s.syncManagedRolePermissions(ctx, cl); err != nil {
 		return err
 	}
 
 	// Sync Role assignments
-	if err := s.SyncRoleAssignments(ctx, cl); err != nil {
+	if err := s.syncRoleAssignments(ctx, cl); err != nil {
 		return err
 	}
 
 	// Sync Folder relations
-	if err := s.SyncFolderRelations(ctx, cl); err != nil {
+	if err := s.syncFolderRelations(ctx, cl); err != nil {
 		return err
 	}
 
 	// Sync Dashboard relations
-	if err := s.SyncDashboardRelations(ctx, cl); err != nil {
+	if err := s.syncDashboardRelations(ctx, cl); err != nil {
 		return err
 	}
 
@@ -167,6 +173,38 @@ func (s *AccessControlStore) syncOrgMembership(ctx context.Context, cl *zclient.
 	return batchWrite(ctx, tupleKeys, cl)
 }
 
+func (s *AccessControlStore) syncGrafanaAdmins(ctx context.Context, cl *zclient.GRPCClient) error {
+	tupleKeys := map[string]*openfgav1.TupleKey{}
+	query := "SELECT id FROM `user` WHERE is_admin"
+
+	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+		var ids []int64
+
+		err := sess.SQL(query).Find(&ids)
+		if err != nil {
+			return err
+		}
+
+		for _, id := range ids {
+			key := &openfgav1.TupleKey{
+				User:     "user:" + strconv.FormatInt(id, 10), // "user:1"
+				Relation: "assignee",
+				Object:   zclient.GenerateBasicRoleResource(accesscontrol.RoleGrafanaAdmin, 0),
+			}
+
+			tupleKeys[key.User+key.Relation+key.Object] = key
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil
+	}
+
+	return batchWrite(ctx, tupleKeys, cl)
+}
+
 func batchWrite(ctx context.Context, tupleKeys map[string]*openfgav1.TupleKey, cl *zclient.GRPCClient) error {
 	flatTuples := make([]*openfgav1.TupleKey, 0, len(tupleKeys))
 	for _, v := range tupleKeys {
@@ -246,7 +284,7 @@ func (s *AccessControlStore) syncTeams(ctx context.Context, cl *zclient.GRPCClie
 	return batchWrite(ctx, tupleKeys, cl)
 }
 
-func (s *AccessControlStore) SyncTeamMemberships(ctx context.Context, cl *zclient.GRPCClient) error {
+func (s *AccessControlStore) syncTeamMemberships(ctx context.Context, cl *zclient.GRPCClient) error {
 	tupleKeys := map[string]*openfgav1.TupleKey{}
 	logger := log.New("accesscontrol.syncTeamMemberships")
 
@@ -302,7 +340,7 @@ func (s *AccessControlStore) SyncTeamMemberships(ctx context.Context, cl *zclien
 	return batchWrite(ctx, tupleKeys, cl)
 }
 
-func (s *AccessControlStore) SyncRoleAssignments(ctx context.Context, cl *zclient.GRPCClient) error {
+func (s *AccessControlStore) syncRoleAssignments(ctx context.Context, cl *zclient.GRPCClient) error {
 	roleAssignmentKeys := map[string]*openfgav1.TupleKey{}
 	logger := log.New("accesscontrol.SyncRoleAssignments")
 
@@ -380,7 +418,7 @@ func (s *AccessControlStore) SyncRoleAssignments(ctx context.Context, cl *zclien
 	return batchWrite(ctx, roleAssignmentKeys, cl)
 }
 
-func (s *AccessControlStore) SyncManagedRolePermissions(ctx context.Context, cl *zclient.GRPCClient) error {
+func (s *AccessControlStore) syncManagedRolePermissions(ctx context.Context, cl *zclient.GRPCClient) error {
 	rolePermissionKeys := map[string]*openfgav1.TupleKey{}
 	logger := log.New("accesscontrol.SyncManagedRolePermissions")
 
@@ -439,7 +477,7 @@ func (s *AccessControlStore) SyncManagedRolePermissions(ctx context.Context, cl 
 	return batchWrite(ctx, rolePermissionKeys, cl)
 }
 
-func (s *AccessControlStore) SyncFolderRelations(ctx context.Context, cl *zclient.GRPCClient) error {
+func (s *AccessControlStore) syncFolderRelations(ctx context.Context, cl *zclient.GRPCClient) error {
 	tupleKeys := map[string]*openfgav1.TupleKey{}
 	logger := log.New("accesscontrol.syncFolderRelations")
 
@@ -502,7 +540,7 @@ func (s *AccessControlStore) SyncFolderRelations(ctx context.Context, cl *zclien
 	return batchWrite(ctx, tupleKeys, cl)
 }
 
-func (s *AccessControlStore) SyncDashboardRelations(ctx context.Context, cl *zclient.GRPCClient) error {
+func (s *AccessControlStore) syncDashboardRelations(ctx context.Context, cl *zclient.GRPCClient) error {
 	tupleKeys := map[string]*openfgav1.TupleKey{}
 	logger := log.New("accesscontrol.syncDashboardRelations")
 
