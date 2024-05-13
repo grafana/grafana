@@ -53,6 +53,7 @@ func (m *dualWriterMetrics) recordStorageDuration(isError bool, mode string, nam
 	m.storage.WithLabelValues(strconv.FormatBool(isError), mode, name, method).Observe(duration)
 }
 
+// no-lint: unused
 func (m *dualWriterMetrics) recordOutcome(mode string, name string, outcome bool, method string) {
 	var observeValue float64
 	if outcome {
