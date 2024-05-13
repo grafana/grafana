@@ -39,6 +39,8 @@ Once you’ve created a [dashboard](https://grafana.com/docs/grafana/<GRAFANA_VE
 
 {{< youtube id="QfJ480j9-KM" >}}
 
+{{< docs/play title="Histogram Examples" url="https://play.grafana.org/d/histogram_tests/" >}}
+
 ## Supported data formats
 
 Histograms support time series and any table results with one or more numerical fields.
