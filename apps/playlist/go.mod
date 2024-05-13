@@ -1,10 +1,11 @@
-module github.com/grafana/grafana/pkg/apimachinery
+module github.com/grafana/grafana/apps/playlist
 
-go 1.22.0
+go 1.22.2
 
 toolchain go1.22.3
 
 require (
+	github.com/grafana/grafana-app-sdk v0.16.0
 	k8s.io/apimachinery v0.30.0
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340
 )
@@ -25,9 +26,6 @@ require (
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
-	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/rogpeppe/go-internal v1.12.0 // indirect
-	github.com/stretchr/testify v1.9.0 // indirect
 	golang.org/x/net v0.25.0 // indirect
 	golang.org/x/text v0.15.0 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect

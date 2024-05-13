@@ -14,7 +14,7 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
 
-	playlist "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
+	playlist "github.com/grafana/grafana/apps/playlist/apis/playlist/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/builder"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -39,7 +39,7 @@ func RegisterAPIService(p playlistsvc.Service,
 	builder := &PlaylistAPIBuilder{
 		service:    p,
 		namespacer: request.GetNamespaceMapper(cfg),
-		gv:         playlist.PlaylistResourceInfo.GroupVersion(),
+		gv:         schema.GroupVersion{Group: playlist.PlaylistKind().Group(), Version: playlist.PlaylistKind().Version()},
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -81,16 +81,21 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 	optsGetter generic.RESTOptionsGetter,
 	dualWrite bool,
 ) (*genericapiserver.APIGroupInfo, error) {
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(playlist.GROUP, scheme, metav1.ParameterCodec, codecs)
+	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(playlist.PlaylistKind().Group(), scheme, metav1.ParameterCodec, codecs)
 	storage := map[string]rest.Storage{}
 
-	resource := playlist.PlaylistResourceInfo
+	gvr := schema.GroupVersionResource{
+		Group:    playlist.PlaylistKind().Group(),
+		Version:  playlist.PlaylistKind().Version(),
+		Resource: playlist.PlaylistKind().Plural(),
+	}
+
 	legacyStore := &legacyStorage{
 		service:    b.service,
 		namespacer: b.namespacer,
 	}
 	legacyStore.tableConverter = utils.NewTableConverter(
-		resource.GroupResource(),
+		gvr.GroupResource(),
 		[]metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
 			{Name: "Title", Type: "string", Format: "string", Description: "The playlist name"},
@@ -110,7 +115,7 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 			}, nil
 		},
 	)
-	storage[resource.StoragePath()] = legacyStore
+	storage[gvr.Resource] = legacyStore
 
 	// enable dual writes if a RESTOptionsGetter is provided
 	if optsGetter != nil && dualWrite {
@@ -118,10 +123,10 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 		if err != nil {
 			return nil, err
 		}
-		storage[resource.StoragePath()] = grafanarest.NewDualWriterMode2(legacyStore, store)
+		storage[gvr.Resource] = grafanarest.NewDualWriterMode2(legacyStore, store)
 	}
 
-	apiGroupInfo.VersionedResourcesStorageMap[playlist.VERSION] = storage
+	apiGroupInfo.VersionedResourcesStorageMap[gvr.Version] = storage
 	return &apiGroupInfo, nil
 }
 

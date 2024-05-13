@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 
-	playlist "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
+	playlist "github.com/grafana/grafana/apps/playlist/apis/playlist/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
@@ -66,13 +66,13 @@ func UnstructuredToLegacyPlaylistDTO(item unstructured.Unstructured) *playlistsv
 }
 
 func convertToK8sResource(v *playlistsvc.PlaylistDTO, namespacer request.NamespaceMapper) *playlist.Playlist {
-	spec := playlist.Spec{
+	spec := playlist.PlaylistSpec{
 		Title:    v.Name,
 		Interval: v.Interval,
 	}
 	for _, item := range v.Items {
-		spec.Items = append(spec.Items, playlist.Item{
-			Type:  playlist.ItemType(item.Type),
+		spec.Items = append(spec.Items, playlist.PlaylistItem{
+			Type:  playlist.PlaylistItemType(item.Type),
 			Value: item.Value,
 		})
 	}
@@ -113,7 +113,7 @@ func convertToLegacyUpdateCommand(p *playlist.Playlist, orgId int64) (*playlists
 		OrgId:    orgId,
 	}
 	for _, item := range spec.Items {
-		if item.Type == playlist.ItemTypeDashboardById {
+		if item.Type == playlist.PlaylistItemTypeDashboardById {
 			return nil, fmt.Errorf("unsupported item type: %s", item.Type)
 		}
 		cmd.Items = append(cmd.Items, playlistsvc.PlaylistItem{
