@@ -55,6 +55,7 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
       [AzureQueryType.AzureMonitor]: this.azureMonitorDatasource,
       [AzureQueryType.LogAnalytics]: this.azureLogAnalyticsDatasource,
       [AzureQueryType.AzureResourceGraph]: this.azureResourceGraphDatasource,
+      [AzureQueryType.AzureTraces]: this.azureLogAnalyticsDatasource,
     };
 
     this.variables = new VariableSupport(this);
