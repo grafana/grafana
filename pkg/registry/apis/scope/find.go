@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -66,15 +67,18 @@ func (r *findREST) Connect(ctx context.Context, name string, opts runtime.Object
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		parent := req.URL.Query().Get("parent")
+		query := req.URL.Query().Get("query")
 		results := &scope.TreeResults{}
 
 		raw, err := r.scopeNodeStorage.List(ctx, &internalversion.ListOptions{
 			Limit: 1000,
 		})
+
 		if err != nil {
 			responder.Error(err)
 			return
 		}
+
 		all, ok := raw.(*scope.ScopeNodeList)
 		if !ok {
 			responder.Error(fmt.Errorf("expected ScopeNodeList"))
@@ -82,18 +86,30 @@ func (r *findREST) Connect(ctx context.Context, name string, opts runtime.Object
 		}
 
 		for _, item := range all.Items {
-			if parent != item.Spec.ParentName {
-				continue // Someday this will have an index in raw storage on parentName
-			}
-			results.Items = append(results.Items, scope.TreeItem{
-				NodeID:      item.Name,
-				NodeType:    item.Spec.NodeType,
-				Title:       item.Spec.Title,
-				Description: item.Spec.Description,
-				LinkType:    item.Spec.LinkType,
-				LinkID:      item.Spec.LinkID,
-			})
+			filterAndAppendItem(item, parent, query, results)
 		}
+
 		responder.Object(200, results)
 	}), nil
+}
+
+func filterAndAppendItem(item scope.ScopeNode, parent string, query string, results *scope.TreeResults) {
+	if parent != item.Spec.ParentName {
+		return // Someday this will have an index in raw storage on parentName
+	}
+
+	// skip if query is passed and title doesn't match.
+	// HasPrefix is not the end goal but something that that gets us started.
+	if query != "" && !strings.HasPrefix(item.Spec.Title, query) {
+		return
+	}
+
+	results.Items = append(results.Items, scope.TreeItem{
+		NodeID:      item.Name,
+		NodeType:    item.Spec.NodeType,
+		Title:       item.Spec.Title,
+		Description: item.Spec.Description,
+		LinkType:    item.Spec.LinkType,
+		LinkID:      item.Spec.LinkID,
+	})
 }
