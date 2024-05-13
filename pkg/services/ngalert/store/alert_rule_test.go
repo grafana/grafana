@@ -643,6 +643,12 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		require.Truef(t, found, "Rule with key %#v was not found in database", keyWithID)
 	}
 
+	t.Run("inserted alerting rules should have nil recording rule fields on model", func(t *testing.T) {
+		for _, rule := range dbRules {
+			require.Nil(t, rule.Record)
+		}
+	})
+
 	t.Run("fail to insert rules with same ID", func(t *testing.T) {
 		_, err = store.InsertAlertRules(context.Background(), []models.AlertRule{deref[0]})
 		require.ErrorIs(t, err, models.ErrAlertRuleConflictBase)
