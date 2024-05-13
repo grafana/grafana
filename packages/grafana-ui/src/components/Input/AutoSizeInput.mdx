@@ -1,4 +1,4 @@
-import { ArgTypes, Preview } from '@storybook/blocks';
+import { ArgTypes, Canvas } from '@storybook/blocks';
 import { AutoSizeInput } from './AutoSizeInput';
 import { Field } from '../Forms/Field';
 import { Icon } from '../Icon/Icon';
@@ -15,9 +15,9 @@ To add more context to the input, you can add either text or an icon before or a
 <AutoSizeInput prefix={<Icon name="search" />} />
 ```
 
-<Preview>
+<Canvas>
   <AutoSizeInput prefix={<Icon name="search" />} />
-</Preview>
+</Canvas>
 
 ## Usage in forms with Field
 
@@ -29,9 +29,9 @@ Use `AutoSizeInput`with the`Field`component to get labels and descriptions. Also
 </Field>
 ```
 
-<Preview>
+<Canvas>
   <Field label="Important information!" description="Please enter the relevant information.">
     <AutoSizeInput name="importantInput" required />
   </Field>
-</Preview>
+</Canvas>
 <ArgTypes of={AutoSizeInput} />

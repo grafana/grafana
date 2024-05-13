@@ -1,4 +1,4 @@
-import { ArgTypes, Preview } from '@storybook/blocks';
+import { ArgTypes, Canvas } from '@storybook/blocks';
 import { Input } from './Input';
 import { Field } from '../Forms/Field';
 import { Icon } from '../Icon/Icon';
@@ -15,9 +15,9 @@ To add more context to the input you can add either text or an icon before or af
 <Input prefix={<Icon name="search" />} />
 ```
 
-<Preview>
+<Canvas>
   <Input prefix={<Icon name="search" />} />
-</Preview>
+</Canvas>
 
 ## Usage in forms with Field
 
@@ -29,12 +29,12 @@ To add more context to the input you can add either text or an icon before or af
 </Field>
 ```
 
-<Preview>
+<Canvas>
   <Field
     label="Important information"
     description="This information is very important, so you really need to fill it in"
   >
     <Input name="importantInput" required />
   </Field>
-</Preview>
+</Canvas>
 <ArgTypes of={Input} />
