@@ -316,7 +316,7 @@ const (
 	FlagGrafanaAPIServerEnsureKubectlAccess = "grafanaAPIServerEnsureKubectlAccess"
 
 	// FlagFeatureToggleAdminPage
-	// Enable admin page for managing feature toggles from the Grafana front-end
+	// Enable admin page for managing feature toggles from the Grafana front-end. Grafana Cloud only.
 	FlagFeatureToggleAdminPage = "featureToggleAdminPage"
 
 	// FlagAwsAsyncQueryCaching
@@ -603,6 +603,10 @@ const (
 	// New implementation for the dashboard-to-PDF rendering
 	FlagNewPDFRendering = "newPDFRendering"
 
+	// FlagTlsMemcached
+	// Use TLS-enabled memcached in the enterprise caching feature
+	FlagTlsMemcached = "tlsMemcached"
+
 	// FlagKubernetesAggregator
 	// Enable grafana aggregator
 	FlagKubernetesAggregator = "kubernetesAggregator"
@@ -670,4 +674,8 @@ const (
 	// FlagNewDashboardSharingComponent
 	// Enables the new sharing drawer design
 	FlagNewDashboardSharingComponent = "newDashboardSharingComponent"
+
+	// FlagNotificationBanner
+	// Enables the notification banner UI and API
+	FlagNotificationBanner = "notificationBanner"
 )
