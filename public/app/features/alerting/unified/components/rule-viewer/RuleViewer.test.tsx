@@ -189,7 +189,7 @@ describe('RuleViewer', () => {
       await user.click(ELEMENTS.actions.more.button.get());
       await user.click(ELEMENTS.actions.more.actions.silence.get());
 
-      expect(await screen.findByLabelText(/^alert rule/i)).toHaveTextContent(MOCK_GRAFANA_ALERT_RULE_TITLE);
+      expect(await screen.findByLabelText(/^alert rule/i)).toHaveValue(MOCK_GRAFANA_ALERT_RULE_TITLE);
     });
   });
 
