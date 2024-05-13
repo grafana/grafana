@@ -205,8 +205,6 @@ func (i *Identity) IsNil() bool {
 
 // SignedInUser returns a SignedInUser from the identity.
 func (i *Identity) SignedInUser() *user.SignedInUser {
-	namespace, id := i.GetNamespacedID()
-
 	u := &user.SignedInUser{
 		OrgID:           i.OrgID,
 		OrgName:         i.OrgName,
@@ -217,7 +215,7 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		AuthID:          i.AuthID,
 		AuthenticatedBy: i.AuthenticatedBy,
 		IsGrafanaAdmin:  i.GetIsGrafanaAdmin(),
-		IsAnonymous:     namespace == NamespaceAnonymous,
+		IsAnonymous:     i.ID.IsNamespace(NamespaceAnonymous),
 		IsDisabled:      i.IsDisabled,
 		HelpFlags1:      i.HelpFlags1,
 		LastSeenAt:      i.LastSeenAt,
@@ -227,11 +225,14 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		NamespacedID:    i.ID,
 	}
 
-	if namespace == NamespaceAPIKey {
-		u.ApiKeyID = intIdentifier(id)
+	if i.ID.IsNamespace(NamespaceAPIKey) {
+		id, _ := i.ID.ParseInt()
+		u.ApiKeyID = id
 	} else {
-		u.UserID = intIdentifier(id)
-		u.IsServiceAccount = namespace == NamespaceServiceAccount
+		id, _ := i.ID.UserID()
+		u.UserID = id
+		u.UserUID = i.UID.ID()
+		u.IsServiceAccount = i.ID.IsNamespace(NamespaceServiceAccount)
 	}
 
 	return u
@@ -248,12 +249,12 @@ func intIdentifier(identifier string) int64 {
 }
 
 func (i *Identity) ExternalUserInfo() login.ExternalUserInfo {
-	_, id := i.GetNamespacedID()
+	id, _ := i.ID.UserID()
 	return login.ExternalUserInfo{
 		OAuthToken:     i.OAuthToken,
 		AuthModule:     i.AuthenticatedBy,
 		AuthId:         i.AuthID,
-		UserId:         intIdentifier(id),
+		UserId:         id,
 		Email:          i.Email,
 		Login:          i.Login,
 		Name:           i.Name,

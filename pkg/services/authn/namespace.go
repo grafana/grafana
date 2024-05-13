@@ -16,10 +16,12 @@ const (
 var AnonymousNamespaceID = NewNamespaceID(NamespaceAnonymous, 0)
 
 type NamespaceID = identity.NamespaceID
+type Namespace = identity.Namespace
 
 var (
 	ParseNamespaceID      = identity.ParseNamespaceID
 	MustParseNamespaceID  = identity.MustParseNamespaceID
 	NewNamespaceID        = identity.NewNamespaceID
+	NewNamespaceIDString  = identity.NewNamespaceIDString
 	ErrInvalidNamespaceID = identity.ErrInvalidNamespaceID
 )
