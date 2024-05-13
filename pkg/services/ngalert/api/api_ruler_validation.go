@@ -12,6 +12,7 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/setting"
+	prommodels "github.com/prometheus/common/model"
 )
 
 type RuleLimits struct {
@@ -105,6 +106,10 @@ func validateRuleNode(
 func validateAlertingRule(in *apimodels.PostableExtendedRuleNode, newRule *ngmodels.AlertRule, canPatch bool) error {
 	var err error
 
+	if in.GrafanaManagedAlert.Record != nil {
+		return fmt.Errorf("%w: rule cannot be simultaneously an alerting and recording rule", ngmodels.ErrAlertRuleFailedValidation)
+	}
+
 	noDataState := ngmodels.NoData
 	if in.GrafanaManagedAlert.NoDataState == "" && canPatch {
 		noDataState = ""
@@ -146,12 +151,30 @@ func validateAlertingRule(in *apimodels.PostableExtendedRuleNode, newRule *ngmod
 		return err
 	}
 
-	newRule.Record = nil
-
 	return nil
 }
 
 func validateRecordingRule(in *apimodels.PostableExtendedRuleNode, newRule *ngmodels.AlertRule, canPatch bool) error {
+	err := validateCondition(in.GrafanaManagedAlert.Record.From, in.GrafanaManagedAlert.Data, canPatch)
+	if err != nil {
+		return fmt.Errorf("%w: %s", ngmodels.ErrAlertRuleFailedValidation, err.Error())
+	}
+
+	metricName := prommodels.LabelValue(in.GrafanaManagedAlert.Record.Metric)
+	if !metricName.IsValid() {
+		return fmt.Errorf("%w: %s", ngmodels.ErrAlertRuleFailedValidation, "metric name for recording rule must be a valid utf8 string")
+	}
+	if !prommodels.IsValidMetricName(metricName) {
+		return fmt.Errorf("%w: %s", ngmodels.ErrAlertRuleFailedValidation, "metric name for recording rule must be a valid Prometheus metric name")
+	}
+	newRule.Record = ModelRecordFromApiRecord(in.GrafanaManagedAlert.Record)
+
+	newRule.NoDataState = ""
+	newRule.ExecErrState = ""
+	newRule.Condition = ""
+	newRule.For = 0
+	newRule.NotificationSettings = nil
+
 	return nil
 }
 
