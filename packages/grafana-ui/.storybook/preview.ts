@@ -46,7 +46,7 @@ const preview: Preview = {
     knobs: {
       disable: true,
     },
-    layout: 'fullscreen',
+    layout: 'padded',
     options: {
       // Sort stories first by Docs Overview, then alphabetically
       // We should be able to use the builtin alphabetical sort, but is broken in SB 7.0
