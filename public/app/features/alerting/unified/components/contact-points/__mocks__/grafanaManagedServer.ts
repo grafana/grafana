@@ -28,7 +28,7 @@ export default (server: SetupServer) => {
     http.get('/api/alertmanager/grafana/api/v2/alerts', () => HttpResponse.json([])),
 
     // this endpoint returns preview of a template we're editing
-    http.post('/api/alertmanager/grafana/config/api/v1/templates/test', () => HttpResponse.json({}, {status: 200})),
+    http.post('/api/alertmanager/grafana/config/api/v1/templates/test', () => HttpResponse.json({}, { status: 200 }))
   );
 
   // this endpoint is for rendering the "additional AMs to configure" warning
