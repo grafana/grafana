@@ -1,4 +1,4 @@
-import { Story, Meta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 import React from 'react';
 
 import { Button, AutoSizeInput } from '@grafana/ui';
@@ -60,7 +60,7 @@ const meta: Meta = {
   },
 };
 
-export const Simple: Story = (args) => {
+export const Simple: StoryFn = (args) => {
   const addonAfter = <Button variant="secondary">Load</Button>;
   const addonBefore = <div style={{ display: 'flex', alignItems: 'center', padding: '5px' }}>AutoSizeInput</div>;
   const prefix = parseAccessory(args.prefixVisible);

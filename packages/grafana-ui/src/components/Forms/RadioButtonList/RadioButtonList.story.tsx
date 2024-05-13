@@ -1,4 +1,4 @@
-import { Meta, StoryFn, Story } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React, { useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
@@ -93,7 +93,7 @@ export const WithDescriptions: StoryFn<typeof RadioButtonList> = ({ disabled, di
   </div>
 );
 
-export const ControlledComponent: Story<RadioButtonListProps<string>> = ({ disabled, disabledOptions }) => {
+export const ControlledComponent: StoryFn<RadioButtonListProps<string>> = ({ disabled, disabledOptions }) => {
   const [selected, setSelected] = useState<string>(defaultOptions[0].value!);
 
   return (
@@ -126,7 +126,7 @@ DisabledList.args = {
   disabled: true,
 };
 
-export const Dots: Story = () => {
+export const Dots: StoryFn = () => {
   const Wrapper = ({ title, children }: React.PropsWithChildren<{ title: string }>) => (
     <div style={{ marginBottom: 20 }}>
       <h5>{title}</h5>
