@@ -297,6 +297,7 @@ export function LogsTableWrap(props: Props) {
     const pendingLabelState = { ...columnsWithMeta };
     let index = 0;
     Object.keys(pendingLabelState).forEach((key) => {
+      console.log('wat');
       const isDefaultField = !!pendingLabelState[key].type;
       // after reset the only active fields are the special time and body fields
       pendingLabelState[key].active = isDefaultField;

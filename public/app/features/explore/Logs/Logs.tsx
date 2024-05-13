@@ -53,8 +53,8 @@ import { LogRows } from 'app/features/logs/components/LogRows';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
 import { LogLevelColor, dedupLogRows, filterLogLevels } from 'app/features/logs/logsModel';
 import { getLogLevel, getLogLevelFromKey, getLogLevelInfo } from 'app/features/logs/utils';
-import { dispatch, getState } from 'app/store/store';
-import { ExploreItemState } from 'app/types';
+import { getState } from 'app/store/store';
+import { ExploreItemState, useDispatch } from 'app/types';
 
 import { useContentOutlineContext } from '../ContentOutline/ContentOutlineContext';
 import { getUrlStateFromPaneState } from '../hooks/useStateSync';
@@ -139,7 +139,7 @@ const getDefaultVisualisationType = (): LogsVisualisationType => {
   return 'logs';
 };
 
-export function UnthemedLogs(props: Props) {
+const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const {
     width,
     splitOpen,
@@ -190,6 +190,7 @@ export function UnthemedLogs(props: Props) {
     panelState?.logs?.visualisationType ?? getDefaultVisualisationType()
   );
   const [logsContainer, setLogsContainer] = useState<HTMLDivElement | undefined>(undefined);
+  const dispatch = useDispatch();
   const logsVolumeEventBus = eventBus.newScopedBus('logsvolume', { onlyLocal: false });
   const { outlineItems, register, unregisterAllChildren } = useContentOutlineContext() ?? {};
   let flipOrderTimer: number | undefined = undefined;
@@ -262,8 +263,11 @@ export function UnthemedLogs(props: Props) {
   };
 
   useEffect(() => {
+    console.log('useEffect init');
     registerLogLevelsWithContentOutline();
     return () => {
+      console.log('useEffect bye');
+
       if (flipOrderTimer) {
         window.clearTimeout(flipOrderTimer);
       }
@@ -887,7 +891,7 @@ export function UnthemedLogs(props: Props) {
       </PanelChrome>
     </>
   );
-}
+};
 
 export const Logs = withTheme2(UnthemedLogs);
 
