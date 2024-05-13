@@ -5,8 +5,6 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"k8s.io/apimachinery/pkg/api/meta"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 type dualWriterMetrics struct {
@@ -55,24 +53,11 @@ func (m *dualWriterMetrics) recordStorageDuration(isError bool, mode string, nam
 	m.storage.WithLabelValues(strconv.FormatBool(isError), mode, name, method).Observe(duration)
 }
 
+// no-lint: unused
 func (m *dualWriterMetrics) recordOutcome(mode string, name string, outcome bool, method string) {
 	var observeValue float64
 	if outcome {
 		observeValue = 1
 	}
 	m.outcome.WithLabelValues(mode, name, method).Observe(observeValue)
-}
-
-// TODO: change this into a validation interface
-func compareResourceVersion(obj1, obj2 runtime.Object) (bool, error) {
-	accessor1, err := meta.Accessor(obj1)
-	if err != nil {
-		return false, err
-	}
-	accessor2, err := meta.Accessor(obj2)
-	if err != nil {
-		return false, err
-	}
-	return accessor1.GetResourceVersion() == accessor2.GetResourceVersion(), nil
-
 }

@@ -35,7 +35,7 @@ func (d *DualWriterMode1) Create(ctx context.Context, obj runtime.Object, create
 	var method = "create"
 
 	startStorage := time.Now().UTC()
-	objStorage, err := d.Storage.Create(ctx, obj, createValidation, options)
+	_, err := d.Storage.Create(ctx, obj, createValidation, options)
 	d.recordStorageDuration(err != nil, mode, options.Kind, method, startStorage)
 
 	startLegacy := time.Now().UTC()
@@ -47,13 +47,6 @@ func (d *DualWriterMode1) Create(ctx context.Context, obj runtime.Object, create
 	}
 	d.recordLegacyDuration(false, mode, options.Kind, method, startLegacy)
 
-	areSame, err := compareResourceVersion(objStorage, res)
-	if err != nil {
-		// only log error but don't return error so we keep the same behavior as before
-		klog.Error(err, "unable to compare resource versions")
-	}
-
-	d.recordOutcome(mode, options.Kind, areSame, method)
 	return res, err
 }
 
@@ -63,7 +56,7 @@ func (d *DualWriterMode1) Get(ctx context.Context, name string, options *metav1.
 	var method = "get"
 
 	startStorage := time.Now().UTC()
-	objStorage, err := d.Storage.Get(ctx, name, options)
+	_, err := d.Storage.Get(ctx, name, options)
 	d.recordStorageDuration(err != nil, mode, name, method, startStorage)
 
 	startLegacy := time.Now().UTC()
@@ -75,13 +68,6 @@ func (d *DualWriterMode1) Get(ctx context.Context, name string, options *metav1.
 	}
 	d.recordLegacyDuration(false, mode, name, method, startLegacy)
 
-	areSame, err := compareResourceVersion(objStorage, res)
-	if err != nil {
-		// only log error but don't return error so we keep the same behavior as before
-		klog.Error(err, "unable to compare resource versions")
-	}
-
-	d.recordOutcome(mode, name, areSame, method)
 	return res, err
 }
 
@@ -91,7 +77,7 @@ func (d *DualWriterMode1) List(ctx context.Context, options *metainternalversion
 	var method = "list"
 
 	startStorage := time.Now().UTC()
-	objStorage, err := d.Storage.List(ctx, options)
+	_, err := d.Storage.List(ctx, options)
 	d.recordStorageDuration(err != nil, mode, options.Kind, method, startStorage)
 
 	startLegacy := time.Now().UTC()
@@ -103,13 +89,6 @@ func (d *DualWriterMode1) List(ctx context.Context, options *metainternalversion
 	}
 	d.recordLegacyDuration(false, mode, options.Kind, method, startLegacy)
 
-	areSame, err := compareResourceVersion(objStorage, res)
-	if err != nil {
-		// only log error but don't return error so we keep the same behavior as before
-		klog.Error(err, "unable to compare resource versions")
-	}
-
-	d.recordOutcome(mode, options.Kind, areSame, method)
 	return res, err
 }
 
@@ -118,7 +97,7 @@ func (d *DualWriterMode1) Delete(ctx context.Context, name string, deleteValidat
 	var method = "delete"
 
 	startStorage := time.Now().UTC()
-	objStorage, _, err := d.Storage.Delete(ctx, name, deleteValidation, options)
+	_, _, err := d.Storage.Delete(ctx, name, deleteValidation, options)
 	d.recordStorageDuration(err != nil, mode, name, method, startStorage)
 
 	startLegacy := time.Now().UTC()
@@ -130,13 +109,6 @@ func (d *DualWriterMode1) Delete(ctx context.Context, name string, deleteValidat
 	}
 	d.recordLegacyDuration(false, mode, name, method, startLegacy)
 
-	areSame, err := compareResourceVersion(objStorage, res)
-	if err != nil {
-		// only log error but don't return error so we keep the same behavior as before
-		klog.Error(err, "unable to compare resource versions")
-	}
-
-	d.recordOutcome(mode, name, areSame, method)
 	return res, async, err
 }
 
@@ -146,7 +118,7 @@ func (d *DualWriterMode1) DeleteCollection(ctx context.Context, deleteValidation
 	var method = "delete-collection"
 
 	startStorage := time.Now().UTC()
-	objStorage, err := d.Storage.DeleteCollection(ctx, deleteValidation, options, listOptions)
+	_, err := d.Storage.DeleteCollection(ctx, deleteValidation, options, listOptions)
 	d.recordStorageDuration(err != nil, mode, options.Kind, method, startStorage)
 
 	startLegacy := time.Now().UTC()
@@ -157,13 +129,6 @@ func (d *DualWriterMode1) DeleteCollection(ctx context.Context, deleteValidation
 	}
 	d.recordLegacyDuration(false, mode, options.Kind, method, startLegacy)
 
-	areSame, err := compareResourceVersion(objStorage, res)
-	if err != nil {
-		// only log error but don't return error so we keep the same behavior as before
-		klog.Error(err, "unable to compare resource versions")
-	}
-
-	d.recordOutcome(mode, options.Kind, areSame, method)
 	return res, err
 }
 
@@ -172,7 +137,7 @@ func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.
 	var method = "update"
 
 	startStorage := time.Now().UTC()
-	objStorage, _, err := d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+	_, _, err := d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 	d.recordStorageDuration(err != nil, mode, name, method, startStorage)
 
 	startLegacy := time.Now().UTC()
@@ -183,13 +148,6 @@ func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.
 	}
 	d.recordLegacyDuration(false, mode, name, method, startLegacy)
 
-	areSame, err := compareResourceVersion(objStorage, res)
-	if err != nil {
-		// only log error but don't return error so we keep the same behavior as before
-		klog.Error(err, "unable to compare resource versions")
-	}
-
-	d.recordOutcome(mode, name, areSame, method)
 	return res, async, err
 }
 
