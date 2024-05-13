@@ -1,8 +1,8 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { PropsWithChildren, ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, Badge, Button, Dropdown, Menu, Stack, Text, Icon, Tooltip } from '@grafana/ui';
+import { useStyles2, Badge, Button, Dropdown, Menu, Stack, Text, Icon } from '@grafana/ui';
 
 import { MetaText } from '../MetaText';
 import MoreButton from '../MoreButton';
@@ -52,8 +52,8 @@ const EvaluationGroupHeader = (props: EvaluationGroupProps) => {
   return (
     <div className={styles.headerWrapper}>
       <Stack direction="row" alignItems="center" gap={1}>
-        <button className={styles.hiddenButton} type="button" onClick={onToggle}>
-          <Stack alignItems="center" gap={1}>
+        <button className={cx(styles.hiddenButton, styles.largerClickTarget)} type="button" onClick={onToggle}>
+          <Stack alignItems="center" gap={0.5}>
             <Icon name={isOpen ? 'angle-down' : 'angle-right'} />
             <Text truncate variant="body">
               {name}
@@ -64,12 +64,10 @@ const EvaluationGroupHeader = (props: EvaluationGroupProps) => {
         {description && <MetaText>{description}</MetaText>}
         <Spacer />
         {interval && (
-          <Tooltip content="Evaluation interval">
-            <MetaText>
-              <Icon name={'history'} size="sm" />
-              {interval}
-            </MetaText>
-          </Tooltip>
+          <MetaText>
+            <Icon name={'history'} size="sm" />
+            {interval}
+          </MetaText>
         )}
         <Button
           variant="secondary"
@@ -106,7 +104,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
   }),
   headerWrapper: css({
-    padding: `${theme.spacing(1)} ${theme.spacing(1.5)}`,
+    padding: `${theme.spacing(0.5)} ${theme.spacing(1)}`,
 
     background: theme.colors.background.secondary,
 
@@ -118,6 +116,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   hiddenButton: css({
     border: 'none',
     background: 'transparent',
+  }),
+  largerClickTarget: css({
+    padding: theme.spacing(0.5),
+    margin: `-${theme.spacing(0.5)}`,
   }),
 });
 

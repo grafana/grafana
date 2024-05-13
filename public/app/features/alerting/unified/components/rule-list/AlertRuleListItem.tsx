@@ -1,14 +1,15 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, IconName } from '@grafana/data';
 import { useStyles2, Stack, Text, Icon, TextLink, Dropdown, Button, Menu, Tooltip } from '@grafana/ui';
+import { TextProps } from '@grafana/ui/src/components/Text/Text';
 import { RuleHealth } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { MetaText } from '../MetaText';
 import { Spacer } from '../Spacer';
-import { StateBadge } from '../rule-viewer/StateBadges';
+import { isErrorHealth } from '../rule-viewer/RuleViewer';
 
 interface AlertRuleListItemProps {
   name: string;
@@ -27,11 +28,13 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
   return (
     <li className={styles.alertListItemContainer} role="treeitem" aria-selected="false">
       <Stack direction="row" alignItems="start" gap={1} wrap="nowrap">
-        {state && <StateBadge state={state} health={health} includeState={false} />}
         <Stack direction="column" gap={0.5} flex="1">
           <div>
             <Stack direction="column" gap={0}>
-              <TextLink href={href}>{name}</TextLink>
+              <Stack direction="row" alignItems="flex-start" wrap="nowrap" gap={0.5}>
+                <RuleListIcon state={state} health={health} />
+                <TextLink href={href}>{name}</TextLink>
+              </Stack>
               {summary && (
                 <Text variant="bodySmall" color="secondary">
                   {summary}
@@ -115,21 +118,22 @@ interface RecordingRuleListItemProps {
   name: string;
   href: string;
   error?: string;
+  health?: RuleHealth;
   isProvisioned?: boolean;
 }
 
-export const RecordingRuleListItem = ({ name, error, isProvisioned, href }: RecordingRuleListItemProps) => {
+export const RecordingRuleListItem = ({ name, error, health, isProvisioned, href }: RecordingRuleListItemProps) => {
   const styles = useStyles2(getStyles);
 
   return (
     <li className={styles.alertListItemContainer} role="treeitem" aria-selected="false">
       <Stack direction="row" alignItems={'center'} gap={1}>
-        <Icon name="record-audio" size="lg" />
         <Stack direction="row" alignItems={'center'} gap={1} flex="1">
           <Stack direction="column" gap={0.5}>
             <div>
               <Stack direction="column" gap={0}>
-                <Stack direction="row" alignItems="center" gap={1}>
+                <Stack direction="row" alignItems="center" wrap="nowrap" gap={0.5}>
+                  <RuleListIcon health={health} recording={true} />
                   <TextLink href={href} variant="body" weight="bold">
                     {name}
                   </TextLink>
@@ -207,3 +211,47 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: `${theme.spacing(1)} ${theme.spacing(1.5)}`,
   }),
 });
+
+interface RuleListIconProps {
+  recording?: boolean;
+  state?: PromAlertingRuleState;
+  health?: string;
+}
+
+export function RuleListIcon({ state, health, recording = false }: RuleListIconProps) {
+  const icons: Record<PromAlertingRuleState, IconName> = {
+    [PromAlertingRuleState.Inactive]: 'check',
+    [PromAlertingRuleState.Pending]: 'hourglass',
+    [PromAlertingRuleState.Firing]: 'fire',
+  };
+
+  const color: Record<PromAlertingRuleState, 'success' | 'error' | 'warning'> = {
+    [PromAlertingRuleState.Inactive]: 'success',
+    [PromAlertingRuleState.Pending]: 'warning',
+    [PromAlertingRuleState.Firing]: 'error',
+  };
+
+  let iconName: IconName = state ? icons[state] : 'circle';
+  let iconColor: TextProps['color'] = state ? color[state] : 'secondary';
+
+  if (recording) {
+    iconName = 'record-audio';
+    iconColor = 'success';
+  }
+
+  if (health === 'nodata') {
+    iconName = 'exclamation-triangle';
+    iconColor = 'warning';
+  }
+
+  if (isErrorHealth(health)) {
+    iconName = 'exclamation-circle';
+    iconColor = 'error';
+  }
+
+  return (
+    <Text color={iconColor}>
+      <Icon name={iconName} size="md" />
+    </Text>
+  );
+}

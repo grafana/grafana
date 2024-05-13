@@ -181,6 +181,7 @@ Experimental features might be changed or removed without prior notice.
 | `autofixDSUID`                              | Automatically migrates invalid datasource UIDs                                                                                                                                                                                                                                    |
 | `logsExploreTableDefaultVisualization`      | Sets the logs table as default visualisation in logs explore                                                                                                                                                                                                                      |
 | `newDashboardSharingComponent`              | Enables the new sharing drawer design                                                                                                                                                                                                                                             |
+| `alertingListViewV2`                        | Enables the new alert list view design                                                                                                                                                                                                                                            |
 
 ## Development feature toggles
 

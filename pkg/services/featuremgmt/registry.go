@@ -1240,6 +1240,13 @@ var (
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: true,
 		},
+		{
+			Name:         "alertingListViewV2",
+			Description:  "Enables the new alert list view design",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			FrontendOnly: true,
+		},
 	}
 )
 

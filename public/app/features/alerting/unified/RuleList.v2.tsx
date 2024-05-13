@@ -8,7 +8,7 @@ import { Button, LinkButton, LoadingBar, useStyles2, withErrorBoundary } from '@
 import { useDispatch } from 'app/types';
 import { PromApplication } from 'app/types/unified-alerting-dto';
 
-import { CombinedRuleGroup, CombinedRuleNamespace } from '../../../types/unified-alerting';
+import { CombinedRuleGroup, CombinedRuleNamespace, RulesSource } from '../../../types/unified-alerting';
 
 import { LogMessages, logInfo, trackRuleListNavigation } from './Analytics';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
@@ -27,6 +27,7 @@ import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAllPromAndRulerRulesAction } from './state/actions';
 import { RULE_LIST_POLL_INTERVAL_MS } from './utils/constants';
 import { getAllRulesSourceNames, getRulesSourceUniqueKey, isGrafanaRulesSource } from './utils/datasource';
+import { createViewLink } from './utils/misc';
 import { hashRulerRule } from './utils/rule-id';
 import { isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from './utils/rules';
 
@@ -138,14 +139,14 @@ const RuleList = withErrorBoundary(
 
                 return (
                   <Namespace
-                    key={getRulesSourceUniqueKey(namespace.rulesSource) + namespace.name}
+                    key={getRulesSourceUniqueKey(rulesSource) + namespace.name}
                     name={namespace.name}
                     application={application}
                   >
                     {namespace.groups
                       .sort((a, b) => a.name.localeCompare(b.name))
                       .map((group) => (
-                        <ToggleEvaluationGroup key={group.name} group={group} />
+                        <EvaluationGroupWithRules key={group.name} group={group} rulesSource={rulesSource} />
                       ))}
                   </Namespace>
                 );
@@ -159,7 +160,12 @@ const RuleList = withErrorBoundary(
   { style: 'page' }
 );
 
-const ToggleEvaluationGroup = ({ group }: { group: CombinedRuleGroup }) => {
+interface EvaluationGroupWithRulesProps {
+  group: CombinedRuleGroup;
+  rulesSource: RulesSource;
+}
+
+const EvaluationGroupWithRules = ({ group, rulesSource }: EvaluationGroupWithRulesProps) => {
   const [open, toggleOpen] = useToggle(false);
 
   return (
@@ -167,21 +173,28 @@ const ToggleEvaluationGroup = ({ group }: { group: CombinedRuleGroup }) => {
       {group.rules.map((rule) => {
         const { rulerRule, promRule, annotations } = rule;
 
-        if (isAlertingRulerRule(rulerRule)) {
+        if (isAlertingRulerRule(rulerRule) && promRule) {
           return (
             <AlertRuleListItem
               key={hashRulerRule(rulerRule)}
               state={promRule?.state} // @TODO typescript ugh
               health={promRule?.health}
               name={rulerRule.alert}
-              href={'/'}
+              href={createViewLink(rulesSource, rule)}
               summary={annotations?.['summary']}
             />
           );
         }
 
         if (isRecordingRulerRule(rulerRule)) {
-          return <RecordingRuleListItem key={hashRulerRule(rulerRule)} name={rulerRule.record} href={'/'} />;
+          return (
+            <RecordingRuleListItem
+              key={hashRulerRule(rulerRule)}
+              name={rulerRule.record}
+              health={promRule?.health}
+              href={createViewLink(rulesSource, rule)}
+            />
+          );
         }
 
         if (isGrafanaRulerRule(rulerRule)) {
@@ -189,7 +202,9 @@ const ToggleEvaluationGroup = ({ group }: { group: CombinedRuleGroup }) => {
             <AlertRuleListItem
               key={rulerRule.grafana_alert.uid}
               name={rulerRule.grafana_alert.title}
-              href={'/'}
+              state={promRule?.state}
+              health={promRule?.health}
+              href={createViewLink(rulesSource, rule)}
               summary={rule.annotations?.['summary']}
               isProvisioned={Boolean(rulerRule.grafana_alert.provenance)}
             />

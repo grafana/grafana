@@ -23,9 +23,10 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     {
       path: '/alerting/list',
       roles: evaluateAccess([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]),
-      component: importAlertingComponent(
-        () => import(/* webpackChunkName: "AlertRuleListIndex" */ 'app/features/alerting/unified/RuleList.v2')
-      ),
+      component: importAlertingComponent(() => {
+        const ruleListComponent = config.featureToggles.alertingListViewV2 ? 'RuleList.v2' : 'RuleList';
+        return import(/* webpackChunkName: "AlertRuleListView" */ `app/features/alerting/unified/${ruleListComponent}`);
+      }),
     },
     {
       path: '/alerting/routes',

@@ -184,4 +184,5 @@ export interface FeatureToggles {
   autofixDSUID?: boolean;
   logsExploreTableDefaultVisualization?: boolean;
   newDashboardSharingComponent?: boolean;
+  alertingListViewV2?: boolean;
 }
