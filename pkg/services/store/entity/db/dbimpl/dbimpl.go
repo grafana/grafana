@@ -3,6 +3,7 @@ package dbimpl
 import (
 	"fmt"
 
+	"github.com/dlmiddlecote/sqlstats"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -11,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/entity/db/migrations"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/jmoiron/sqlx"
+	"github.com/prometheus/client_golang/prometheus"
 	"xorm.io/xorm"
 )
 
@@ -75,6 +77,11 @@ func (db *EntityDB) GetEngine() (*xorm.Engine, error) {
 		} else {
 			// TODO: sqlite support
 			return nil, fmt.Errorf("invalid db type specified: %s", dbType)
+		}
+
+		// register sql stat metrics
+		if err := prometheus.Register(sqlstats.NewStatsCollector("unified_storage", engine.DB().DB)); err != nil {
+			db.log.Warn("Failed to register unified storage sql stats collector", "error", err)
 		}
 
 		// configure sql logging
