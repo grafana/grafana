@@ -1,7 +1,7 @@
 import { map } from 'rxjs/operators';
 
 import { DataFrame, Field, FieldType } from '../../types';
-import { DataTransformerInfo, FieldMatcher } from '../../types/transformations';
+import { DataTransformerInfo, FieldMatcher, TransformationApplicabilityLevels } from '../../types/transformations';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 
@@ -69,6 +69,19 @@ export const formatStringTransformer: DataTransformerInfo<FormatStringTransforme
   name: 'Format string',
   description: 'Manipulate string fields formatting',
   defaultOptions: { stringField: '', outputFormat: FormatStringOutput.UpperCase },
+  isApplicable: (data: DataFrame[]) => {
+    // Search for a string field
+    // if there is one then we can use this transformation
+    for (const frame of data) {
+      for (const field of frame.fields) {
+        if (field.type === 'string') {
+          return TransformationApplicabilityLevels.Applicable;
+        }
+      }
+    }
+
+    return TransformationApplicabilityLevels.NotApplicable;
+  },
   operator: (options) => (source) =>
     source.pipe(
       map((data) => {
@@ -94,19 +107,19 @@ export const formatStringTransformer: DataTransformerInfo<FormatStringTransforme
  */
 export const createStringFormatter =
   (fieldMatches: FieldMatcher, formatStringFunction: (field: Field) => string[]) =>
-  (frame: DataFrame, allFrames: DataFrame[]) => {
-    return frame.fields.map((field) => {
-      // Find the configured field
-      if (fieldMatches(field, frame, allFrames)) {
-        const newVals = formatStringFunction(field);
+    (frame: DataFrame, allFrames: DataFrame[]) => {
+      return frame.fields.map((field) => {
+        // Find the configured field
+        if (fieldMatches(field, frame, allFrames)) {
+          const newVals = formatStringFunction(field);
 
-        return {
-          ...field,
-          type: FieldType.string,
-          values: newVals,
-        };
-      }
+          return {
+            ...field,
+            type: FieldType.string,
+            values: newVals,
+          };
+        }
 
-      return field;
-    });
-  };
+        return field;
+      });
+    };
