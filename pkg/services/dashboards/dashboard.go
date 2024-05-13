@@ -28,6 +28,7 @@ type DashboardService interface {
 	SearchDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) (model.HitList, error)
 	CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) (int64, error)
 	GetDashboardsSharedWithUser(ctx context.Context, user identity.Requester) ([]*Dashboard, error)
+	GetAllDashboards(ctx context.Context) ([]*Dashboard, error)
 }
 
 // PluginService is a service for operating on plugin dashboards.
@@ -76,4 +77,6 @@ type Store interface {
 	// the given parent folder ID.
 	CountDashboardsInFolders(ctx context.Context, request *CountDashboardsInFolderRequest) (int64, error)
 	DeleteDashboardsInFolders(ctx context.Context, request *DeleteDashboardsInFolderRequest) error
+
+	GetAllDashboards(ctx context.Context) ([]*Dashboard, error)
 }

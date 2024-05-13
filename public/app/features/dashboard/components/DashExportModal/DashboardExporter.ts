@@ -1,15 +1,15 @@
 import { defaults, each, sortBy } from 'lodash';
 
-import { DataSourceRef, PanelPluginMeta } from '@grafana/data';
+import { DataSourceRef, PanelPluginMeta, VariableOption, VariableRefresh } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
+import { variableRegex } from 'app/features/variables/utils';
 
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 import { LibraryElementKind } from '../../../library-panels/types';
 import { isConstant, isQuery } from '../../../variables/guard';
-import { VariableOption, VariableRefresh } from '../../../variables/types';
 import { DashboardModel } from '../../state/DashboardModel';
 import { GridPos } from '../../state/PanelModel';
 
@@ -110,14 +110,15 @@ export class DashboardExporter {
       let datasource = obj.datasource;
       let datasourceVariable: any = null;
 
-      const datasourceUid: string = datasource?.uid;
+      const datasourceUid: string | undefined = datasource?.uid;
+      const match = datasourceUid && variableRegex.exec(datasourceUid);
+
       // ignore data source properties that contain a variable
-      if (datasourceUid) {
-        if (datasourceUid.indexOf('$') === 0) {
-          datasourceVariable = variableLookup[datasourceUid.substring(1)];
-          if (datasourceVariable && datasourceVariable.current) {
-            datasource = datasourceVariable.current.value;
-          }
+      if (match) {
+        const varName = match[1] || match[2] || match[4];
+        datasourceVariable = variableLookup[varName];
+        if (datasourceVariable && datasourceVariable.current) {
+          datasource = datasourceVariable.current.value;
         }
       }
 

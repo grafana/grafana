@@ -53,8 +53,14 @@ const Parallelogram = (props: CanvasElementProps<CanvasElementConfig, CanvasElem
         />
         <polygon
           points="0,150 50,0 250,0 200,150"
-          className={styles.element}
           style={{ fill: data?.backgroundImage ? `url(#image-${uniqueId})` : data?.backgroundColor }}
+        />
+
+        {/* Border */}
+        <polygon
+          points="0,150 50,0 250,0 200,150"
+          clipPath={`url(#parallelogramClip-${uniqueId})`}
+          className={styles.elementBorder}
         />
       </svg>
       <span className={styles.text}>{data?.text}</span>
@@ -93,6 +99,7 @@ export const parallelogramItem: CanvasElementItem = {
       height: options?.placement?.height ?? 150,
       top: options?.placement?.top,
       left: options?.placement?.left,
+      rotation: options?.placement?.rotation ?? 0,
     },
   }),
 
@@ -177,6 +184,25 @@ export const parallelogramItem: CanvasElementItem = {
         },
       });
   },
+
+  customConnectionAnchors: [
+    { x: -0.6, y: 1 }, // Angled Top Left
+    { x: -0.1, y: 1 }, // Top Middle
+    { x: 0.5, y: 1 }, // Angled Top Right
+    { x: 1, y: 1 }, // Top Right
+    { x: 0.925, y: 0.6 }, // Angled Right Top
+    { x: 0.84, y: 0.2 }, // Right Middle
+    { x: 0.76, y: -0.2 }, // Angled Right Bottom
+    { x: 0.675, y: -0.6 }, // Bottom Right
+    { x: -0.5, y: -1 }, // Angled Bottom Right
+    { x: 0.1, y: -1 }, // Bottom Middle
+    { x: 0.6, y: -1 }, // Angled Bottom Left
+    { x: -1, y: -1 }, // Bottom Left
+    { x: -0.925, y: -0.6 }, // Angled Left Bottom
+    { x: -0.84, y: -0.2 }, // Left Middle
+    { x: -0.76, y: 0.2 }, // Angled Left Top
+    { x: -0.675, y: 0.6 }, // Top Left 2
+  ],
 };
 
 const getStyles = (theme: GrafanaTheme2, data: CanvasElementData | undefined) => {
@@ -199,9 +225,11 @@ const getStyles = (theme: GrafanaTheme2, data: CanvasElementData | undefined) =>
       fontSize: `${data?.size}px`,
       color: data?.color,
     }),
-    element: css({
-      stroke: data?.borderColor,
-      strokeWidth: data?.borderWidth,
+    elementBorder: css({
+      fill: 'none',
+      stroke: data?.borderColor ?? 'none',
+      strokeWidth: data?.borderWidth ?? 0,
+      strokeLinejoin: 'round',
     }),
   };
 };

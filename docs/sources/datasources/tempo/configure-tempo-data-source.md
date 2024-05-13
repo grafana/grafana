@@ -238,7 +238,7 @@ datasources:
         filterByTraceID: false
         filterBySpanID: false
         customQuery: true
-        query: 'method="${__span.tags.method}"'
+        query: 'method="$${__span.tags.method}"'
       tracesToMetrics:
         datasourceUid: 'prom'
         spanStartTimeShift: '1h'
@@ -247,12 +247,12 @@ datasources:
         queries:
           - name: 'Sample query'
             query: 'sum(rate(traces_spanmetrics_latency_bucket{$$__tags}[5m]))'
-      traceToProfiles:
+      tracesToProfiles:
         datasourceUid: 'grafana-pyroscope-datasource'
         tags: ['job', 'instance', 'pod', 'namespace']
         profileTypeId: 'process_cpu:cpu:nanoseconds:cpu:nanoseconds'
         customQuery: true
-        query: 'method="${__span.tags.method}"'
+        query: 'method="$${__span.tags.method}"'
       serviceMap:
         datasourceUid: 'prometheus'
       nodeGraph:

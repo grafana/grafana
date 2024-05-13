@@ -22,6 +22,8 @@ export interface DashboardUrlOptions {
   absolute?: boolean;
   // Add tz to query params
   timeZone?: string;
+  // Check if we are on the home dashboard
+  isHomeDashboard?: boolean;
 }
 
 export function getDashboardUrl(options: DashboardUrlOptions) {
@@ -54,10 +56,14 @@ export function getDashboardUrl(options: DashboardUrlOptions) {
     };
   }
 
+  if (options.isHomeDashboard) {
+    path = '/';
+  }
+
   const params = options.currentQueryParams ? locationSearchToObject(options.currentQueryParams) : {};
 
   if (options.updateQuery) {
-    for (const key of Object.keys(options.updateQuery)) {
+    for (const key in options.updateQuery) {
       // removing params with null | undefined
       if (options.updateQuery[key] === null || options.updateQuery[key] === undefined) {
         delete params[key];
@@ -77,7 +83,10 @@ export function getDashboardUrl(options: DashboardUrlOptions) {
 }
 
 export function getViewPanelUrl(vizPanel: VizPanel) {
-  return locationUtil.getUrlForPartial(locationService.getLocation(), { viewPanel: vizPanel.state.key });
+  return locationUtil.getUrlForPartial(locationService.getLocation(), {
+    viewPanel: vizPanel.state.key,
+    editPanel: undefined,
+  });
 }
 
 export function getEditPanelUrl(panelId: number) {

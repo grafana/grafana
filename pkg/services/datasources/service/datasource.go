@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -65,7 +64,7 @@ func ProvideService(
 	quotaService quota.Service, pluginStore pluginstore.Store,
 ) (*Service, error) {
 	dslogger := log.New("datasources")
-	store := &SqlStore{db: db, logger: dslogger}
+	store := &SqlStore{db: db, logger: dslogger, features: features}
 	s := &Service{
 		SQLStore:       store,
 		SecretsStore:   secretsStore,
@@ -173,6 +172,10 @@ func (s *Service) GetDataSources(ctx context.Context, query *datasources.GetData
 
 func (s *Service) GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) (res []*datasources.DataSource, err error) {
 	return s.SQLStore.GetAllDataSources(ctx, query)
+}
+
+func (s *Service) GetPrunableProvisionedDataSources(ctx context.Context) (res []*datasources.DataSource, err error) {
+	return s.SQLStore.GetPrunableProvisionedDataSources(ctx)
 }
 
 func (s *Service) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) ([]*datasources.DataSource, error) {
@@ -343,22 +346,6 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 	})
 }
 
-func (s *Service) GetDefaultDataSource(ctx context.Context, query *datasources.GetDefaultDataSourceQuery) (*datasources.DataSource, error) {
-	return s.SQLStore.GetDefaultDataSource(ctx, query)
-}
-
-func (s *Service) GetHTTPClient(ctx context.Context, ds *datasources.DataSource, provider httpclient.Provider) (*http.Client, error) {
-	transport, err := s.GetHTTPTransport(ctx, ds, provider)
-	if err != nil {
-		return nil, err
-	}
-
-	return &http.Client{
-		Timeout:   s.getTimeout(ds),
-		Transport: transport,
-	}, nil
-}
-
 func (s *Service) GetHTTPTransport(ctx context.Context, ds *datasources.DataSource, provider httpclient.Provider,
 	customMiddlewares ...sdkhttpclient.Middleware) (http.RoundTripper, error) {
 	s.ptc.Lock()
@@ -386,14 +373,6 @@ func (s *Service) GetHTTPTransport(ctx context.Context, ds *datasources.DataSour
 	}
 
 	return rt, nil
-}
-
-func (s *Service) GetTLSConfig(ctx context.Context, ds *datasources.DataSource, httpClientProvider httpclient.Provider) (*tls.Config, error) {
-	opts, err := s.httpClientOptions(ctx, ds)
-	if err != nil {
-		return nil, err
-	}
-	return httpClientProvider.GetTLSConfig(*opts)
 }
 
 func (s *Service) DecryptedValues(ctx context.Context, ds *datasources.DataSource) (map[string]string, error) {
@@ -616,7 +595,6 @@ func (s *Service) dsTLSOptions(ctx context.Context, ds *datasources.DataSource) 
 
 		if tlsClientAuth {
 			if val, exists, err := s.DecryptedValue(ctx, ds, "tlsClientCert"); err == nil {
-				fmt.Print("\n\n\n\n", val, exists, err, "\n\n\n\n")
 				if exists && len(val) > 0 {
 					opts.ClientCertificate = val
 				}

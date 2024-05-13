@@ -34,7 +34,10 @@ export const SelectMenu = ({ children, maxHeight, innerRef, innerProps }: React.
 SelectMenu.displayName = 'SelectMenu';
 
 const VIRTUAL_LIST_ITEM_HEIGHT = 37;
-const VIRTUAL_LIST_WIDTH_ESTIMATE_MULTIPLIER = 7;
+const VIRTUAL_LIST_WIDTH_ESTIMATE_MULTIPLIER = 8;
+const VIRTUAL_LIST_PADDING = 8;
+// Some list items have icons or checkboxes so we need some extra width
+const VIRTUAL_LIST_WIDTH_EXTRA = 36;
 
 // A virtualized version of the SelectMenu, descriptions for SelectableValue options not supported since those are of a variable height.
 //
@@ -57,7 +60,8 @@ export const VirtualizedSelectMenu = ({ children, maxHeight, options, getValue }
   }
 
   const longestOption = max(options.map((option) => option.label?.length)) ?? 0;
-  const widthEstimate = longestOption * VIRTUAL_LIST_WIDTH_ESTIMATE_MULTIPLIER;
+  const widthEstimate =
+    longestOption * VIRTUAL_LIST_WIDTH_ESTIMATE_MULTIPLIER + VIRTUAL_LIST_PADDING * 2 + VIRTUAL_LIST_WIDTH_EXTRA;
   const heightEstimate = Math.min(options.length * VIRTUAL_LIST_ITEM_HEIGHT, maxHeight);
 
   // Try to scroll to keep current value in the middle

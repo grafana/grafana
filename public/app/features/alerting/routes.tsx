@@ -98,6 +98,16 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
     {
+      path: '/alerting/notifications/templates/*',
+      roles: evaluateAccess([
+        AccessControlAction.AlertingNotificationsRead,
+        AccessControlAction.AlertingNotificationsExternalRead,
+      ]),
+      component: importAlertingComponent(
+        () => import(/* webpackChunkName: "Templates" */ 'app/features/alerting/unified/Templates')
+      ),
+    },
+    {
       path: '/alerting/notifications/:type/new',
       roles: evaluateAccess([
         AccessControlAction.AlertingNotificationsWrite,
@@ -207,7 +217,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       path: '/alerting/admin',
       roles: () => ['Admin'],
       component: importAlertingComponent(
-        () => import(/* webpackChunkName: "AlertingAdmin" */ 'app/features/alerting/unified/Admin')
+        () => import(/* webpackChunkName: "AlertingSettings" */ 'app/features/alerting/unified/Settings')
       ),
     },
   ];

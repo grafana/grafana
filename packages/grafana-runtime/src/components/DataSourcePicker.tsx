@@ -10,7 +10,7 @@ import {
   SelectableValue,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { ActionMeta, HorizontalGroup, PluginSignatureBadge, Select } from '@grafana/ui';
+import { ActionMeta, PluginSignatureBadge, Select, Stack } from '@grafana/ui';
 
 import { getDataSourceSrv } from '../services/dataSourceSrv';
 
@@ -209,9 +209,9 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
           getOptionLabel={(o) => {
             if (o.meta && isUnsignedPluginSignature(o.meta.signature) && o !== value) {
               return (
-                <HorizontalGroup align="center" justify="space-between" height="auto">
+                <Stack alignItems="center" justifyContent="space-between">
                   <span>{o.label}</span> <PluginSignatureBadge status={o.meta.signature} />
-                </HorizontalGroup>
+                </Stack>
               );
             }
             return o.label || '';

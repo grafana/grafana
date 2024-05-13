@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -24,10 +24,10 @@ type AccessControl interface {
 
 type Service interface {
 	registry.ProvidesUsageStats
+	// GetRoleByName returns a role by name
+	GetRoleByName(ctx context.Context, orgID int64, roleName string) (*RoleDTO, error)
 	// GetUserPermissions returns user permissions with only action and scope fields set.
 	GetUserPermissions(ctx context.Context, user identity.Requester, options Options) ([]Permission, error)
-	// GetUserPermissionsInOrg return user permission in a specific organization
-	GetUserPermissionsInOrg(ctx context.Context, user identity.Requester, orgID int64) ([]Permission, error)
 	// SearchUsersPermissions returns all users' permissions filtered by an action prefix
 	SearchUsersPermissions(ctx context.Context, user identity.Requester, options SearchOptions) (map[int64][]Permission, error)
 	// ClearUserPermissionCache removes the permission cache entry for the given user
@@ -54,6 +54,8 @@ type Service interface {
 //go:generate  mockery --name Store --structname MockStore --outpkg actest --filename store_mock.go --output ./actest/
 type Store interface {
 	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]Permission, error)
+	GetBasicRolesPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]Permission, error)
+	GetTeamsPermissions(ctx context.Context, query GetUserPermissionsQuery) (map[int64][]Permission, error)
 	SearchUsersPermissions(ctx context.Context, orgID int64, options SearchOptions) (map[int64][]Permission, error)
 	GetUsersBasicRoles(ctx context.Context, userFilter []int64, orgID int64) (map[int64][]string, error)
 	DeleteUserPermissions(ctx context.Context, orgID, userID int64) error
@@ -99,22 +101,18 @@ func (s *SearchOptions) ComputeUserID() (int64, error) {
 	if s.NamespacedID == "" {
 		return 0, errors.New("namespacedID must be set")
 	}
-	// Split namespaceID into namespace and ID
-	parts := strings.Split(s.NamespacedID, ":")
-	// Validate namespace ID format
-	if len(parts) != 2 {
-		return 0, fmt.Errorf("invalid namespaced ID: %s", s.NamespacedID)
-	}
-	// Validate namespace type is user or service account
-	if parts[0] != identity.NamespaceUser && parts[0] != identity.NamespaceServiceAccount {
-		return 0, fmt.Errorf("invalid namespace: %s", parts[0])
-	}
-	// Validate namespace ID is a number
-	id, err := strconv.ParseInt(parts[1], 10, 64)
+
+	id, err := identity.ParseNamespaceID(s.NamespacedID)
 	if err != nil {
-		return 0, fmt.Errorf("invalid namespaced ID: %s", s.NamespacedID)
+		return 0, err
 	}
-	return id, nil
+
+	// Validate namespace type is user or service account
+	if id.Namespace() != identity.NamespaceUser && id.Namespace() != identity.NamespaceServiceAccount {
+		return 0, fmt.Errorf("invalid namespace: %s", id.Namespace())
+	}
+
+	return id.ParseInt()
 }
 
 type SyncUserRolesCommand struct {
@@ -169,22 +167,28 @@ type User struct {
 }
 
 // HasGlobalAccess checks user access with globally assigned permissions only
-func HasGlobalAccess(ac AccessControl, service Service, c *contextmodel.ReqContext) func(evaluator Evaluator) bool {
+func HasGlobalAccess(ac AccessControl, authnService authn.Service, c *contextmodel.ReqContext) func(evaluator Evaluator) bool {
 	return func(evaluator Evaluator) bool {
 		var targetOrgID int64 = GlobalOrgID
-		tmpUser, err := makeTmpUser(c.Req.Context(), service, nil, nil, c.SignedInUser, targetOrgID)
+		orgUser, err := authnService.ResolveIdentity(c.Req.Context(), targetOrgID, c.SignedInUser.GetID())
 		if err != nil {
-			deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
+			// This will be an common error for entities that can't authenticate in global scope
+			c.Logger.Debug("Failed to authenticate user in global scope", "error", err)
+			return false
 		}
 
-		hasAccess, err := ac.Evaluate(c.Req.Context(), tmpUser, evaluator)
+		hasAccess, err := ac.Evaluate(c.Req.Context(), orgUser, evaluator)
 		if err != nil {
 			c.Logger.Error("Error from access control system", "error", err)
 			return false
 		}
 
+		// guard against nil map
+		if c.SignedInUser.Permissions == nil {
+			c.SignedInUser.Permissions = make(map[int64]map[string][]string)
+		}
 		// set on user so we don't fetch global permissions every time this is called
-		c.SignedInUser.Permissions[tmpUser.GetOrgID()] = tmpUser.GetPermissions()
+		c.SignedInUser.Permissions[orgUser.GetOrgID()] = orgUser.GetPermissions()
 
 		return hasAccess
 	}
