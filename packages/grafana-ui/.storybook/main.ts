@@ -1,4 +1,4 @@
-import path from 'path';
+import path, { dirname, join } from 'path';
 import type { StorybookConfig } from '@storybook/react-webpack5';
 // avoid importing from @grafana/data to prevent node error: ERR_REQUIRE_ESM
 import { availableIconsIndex, IconName } from '../../grafana-data/src/types/icon';
@@ -33,7 +33,7 @@ const mainConfig: StorybookConfig = {
         backgrounds: false,
       },
     },
-    '@storybook/addon-a11y',
+    getAbsolutePath('@storybook/addon-a11y'),
     {
       name: '@storybook/preset-scss',
       options: {
@@ -47,8 +47,8 @@ const mainConfig: StorybookConfig = {
         },
       },
     },
-    '@storybook/addon-storysource',
-    'storybook-dark-mode',
+    getAbsolutePath('@storybook/addon-storysource'),
+    getAbsolutePath('storybook-dark-mode'),
     {
       // replace babel-loader in manager and preview with esbuild-loader
       name: 'storybook-addon-turbo-build',
@@ -61,13 +61,15 @@ const mainConfig: StorybookConfig = {
         },
       },
     },
+    getAbsolutePath('@storybook/addon-mdx-gfm'),
+    '@storybook/addon-webpack5-compiler-swc',
   ],
   core: {},
   docs: {
     autodocs: true,
   },
   framework: {
-    name: '@storybook/react-webpack5',
+    name: getAbsolutePath('@storybook/react-webpack5'),
     options: {
       fastRefresh: true,
       builder: {
@@ -130,3 +132,7 @@ const mainConfig: StorybookConfig = {
   },
 };
 module.exports = mainConfig;
+
+function getAbsolutePath(value: string): any {
+  return dirname(require.resolve(join(value, 'package.json')));
+}
