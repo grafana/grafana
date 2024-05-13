@@ -243,10 +243,8 @@ export const RowsList = (props: RowsListProps) => {
     if (
       fieldOptions !== undefined &&
       fieldOptions.cellOptions !== undefined &&
-      (
-        fieldOptions.cellOptions.type === TableCellDisplayMode.Auto ||
-        fieldOptions.cellOptions.type === TableCellDisplayMode.ColorBackground
-      ) &&
+      (fieldOptions.cellOptions.type === TableCellDisplayMode.Auto ||
+        fieldOptions.cellOptions.type === TableCellDisplayMode.ColorBackground) &&
       fieldOptions.cellOptions.wrapText
     ) {
       textWrapField = field;
