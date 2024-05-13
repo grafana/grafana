@@ -432,7 +432,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       settings: {
         integer: true,
       },
-      showIf: (options) => options.tooltip?.mode !== TooltipDisplayMode.None,
+      showIf: (options) => options.tooltip?.mode === TooltipDisplayMode.Multi,
     });
 
     category = ['Legend'];

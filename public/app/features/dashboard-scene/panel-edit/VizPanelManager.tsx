@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { debounce } from 'lodash';
 import React, { useEffect } from 'react';
 
 import {
@@ -20,6 +21,7 @@ import {
   SceneObjectBase,
   SceneObjectRef,
   SceneObjectState,
+  SceneObjectStateChangedEvent,
   SceneQueryRunner,
   SceneVariables,
   VizPanel,
@@ -35,10 +37,12 @@ import { updateQueries } from 'app/features/query/state/updateQueries';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupOptions } from 'app/types';
 
+import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
+import { getPanelChanges } from '../saving/getDashboardChanges';
 import { DashboardGridItem, RepeatDirection } from '../scene/DashboardGridItem';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelTimeRange, PanelTimeRangeState } from '../scene/PanelTimeRange';
-import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
+import { gridItemToPanel, vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
 export interface VizPanelManagerState extends SceneObjectState {
@@ -50,6 +54,7 @@ export interface VizPanelManagerState extends SceneObjectState {
   repeat?: string;
   repeatDirection?: RepeatDirection;
   maxPerRow?: number;
+  isDirty?: boolean;
 }
 
 export enum DisplayMode {
@@ -103,7 +108,26 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
 
   private _onActivate() {
     this.loadDataSource();
+    const changesSub = this.subscribeToEvent(SceneObjectStateChangedEvent, this._handleStateChange);
+
+    return () => {
+      changesSub.unsubscribe();
+    };
   }
+
+  private _detectPanelModelChanges = debounce(() => {
+    const { hasChanges } = getPanelChanges(
+      vizPanelToPanel(this.state.sourcePanel.resolve()),
+      vizPanelToPanel(this.state.panel)
+    );
+    this.setState({ isDirty: hasChanges });
+  }, 250);
+
+  private _handleStateChange = (event: SceneObjectStateChangedEvent) => {
+    if (DashboardSceneChangeTracker.isUpdatingPersistedState(event)) {
+      this._detectPanelModelChanges();
+    }
+  };
 
   private async loadDataSource() {
     const dataObj = this.state.panel.state.$data;
