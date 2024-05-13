@@ -1,5 +1,5 @@
 ---
-description: Feature and improvement highlights for Grafana v11.0-preview
+description: Feature and improvement highlights for Grafana v11.0
 keywords:
   - grafana
   - new
@@ -12,24 +12,22 @@ products:
   - cloud
   - enterprise
   - oss
-title: What's new in Grafana v11.0-preview
+title: What's new in Grafana v11.0
 weight: -42
 ---
 
 <!-- vale GoogleWe = NO -->
 <!-- vale We = NO -->
 
-# What’s new in Grafana v11.0-preview
+# What’s new in Grafana v11.0
 
-Welcome to Grafana 11.0-preview! This release contains some major improvements: most notably, the ability to explore your Prometheus metrics and Loki logs without writing any PromQL or LogQL, using Explore Metrics and Explore Logs. The dashboard experience is better than ever with edit mode for dashboards, AI-generated dashboard names and descriptions, and general availability for subfolders. You can also take advantage of improvements to the canvas and table visualizations, new transformations, a revamp of the Alert Rule page, and more.
+Welcome to Grafana 11.0! This release contains some major improvements: most notably, the ability to explore your Prometheus metrics and Loki logs without writing any PromQL or LogQL, using Explore Metrics and Explore Logs. The dashboard experience is better than ever with edit mode for dashboards, AI-generated dashboard names and descriptions, and general availability for subfolders. You can also take advantage of improvements to the canvas and table visualizations, new transformations, a revamp of the Alert Rule page, and more.
 
-Why "preview?" The Grafana 11.0 stable release is planned for this May. This is an early release to coincide with [Grafanacon 2024](https://grafana.com/about/events/grafanacon/2024/), so that you can try the new functionality early. To understand the differences between preview and GA releases, review the [release life cycle](https://grafana.com/docs/release-life-cycle/).
-
-For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v11.0-preview, check out our [Upgrade Guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v11.0/).
+For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v11.0, check out our [Upgrade Guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v11.0/).
 
 ## Breaking changes
 
-For Grafana v11.0-preview, we've also provided a list of [breaking changes](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/breaking-changes/breaking-changes-v11-0) to help you upgrade with greater confidence. For information about these along with guidance on how to proceed, refer to [Breaking changes in Grafana v11.0-preview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/breaking-changes/breaking-changes-v11-0/).
+For Grafana v11.0, we've also provided a list of [breaking changes](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/breaking-changes/breaking-changes-v11-0) to help you upgrade with greater confidence. For information about these along with guidance on how to proceed, refer to [Breaking changes in Grafana v11.0](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/breaking-changes/breaking-changes-v11-0/).
 
 <!-- Template below
 
@@ -56,10 +54,10 @@ Use full URLs for links. When linking to versioned docs, replace the version wit
 
 _Public preview in all editions of Grafana_
 
-Explore Metrics is a query-less experience for browsing Prometheus-compatible metrics. Search or filter to find a metric. Quickly find related metrics - all in just a few clicks. No PromQL to be found anywhere! With Explore Metrics, you can:
+Explore Metrics is a query-less experience for browsing Prometheus-compatible metrics. Search for or filter to find a metric. Quickly find related metrics - all in just a few clicks. You do not need to learn PromQL! With Explore Metrics, you can:
 
 - easily slice and dice metrics based on their labels, so you can see anomalies right away
-- See the right visualization for your metric based on its type (e.g. gauge vs. counter) without writing it yourself
+- See the right visualization for your metric based on its type (e.g. gauge vs. counter) without building it yourself
 - surface other metrics relevant to the current metric
 - “explore in a drawer” - expand a drawer over a dashboard with more content, so you don’t lose your place
 - view a history of user steps when navigating through metrics and their filters
@@ -67,7 +65,7 @@ Explore Metrics is a query-less experience for browsing Prometheus-compatible me
 
 … all without writing any queries!
 
-To learn more, refer to the Explore Metrics [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/explore-metrics/) as well as the following video demo:
+To learn more, refer to [Explore Metrics](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/explore-metrics/) as well as the following video demo:
 
 {{< youtube id="JbaPufQs5LY" >}}
 
@@ -310,25 +308,19 @@ Debug or audit using the alert rule metadata and view the alert rule annotations
 
 ![Image shows details of an alert rule](/media/docs/alerting/alert-detail-view.png)
 
+### RBAC for alert rule provisioning APIs
+
+<!-- Yuri Tseretyan -->
+
+_Generally available in all editions of Grafana_
+
+The Alerting Provisioning HTTP API has been updated to enforce Role-Based Access Control (RBAC).
+
+- For Grafana OSS, users with the **Editor** role can now use the API.
+- For Grafana Enterprise and Grafana Cloud, users with the role **Rules Writer** and **Set Provisioning status** can access the API and limit access to alert rules that use a particular data source.
+- Other roles related to provisioning, for example **Access to alert rules** provisioning API still work.
+
 ## Data sources
-
-### Azure Monitor: Current User authentication
-
-<!-- #grafana-partner-datasources, @Andreas -->
-
-_Experimental in all editions of Grafana_
-
-You can now configure the Azure Monitor data source to authenticate as the logged-in Grafana user when making query and resource requests if you also use Azure Entra to sign your users into Grafana.
-
-Current User authentication allows you to enforce Azure RBAC restrictions on your Grafana users by removing the need to provide broad service credentials. Once a data source is configured with Current User authentication a user will **only** have access to resources they can access directly in Azure.
-
-Additionally, data sources configured to use Current User authentication are less likely to be impacted by throttling issues due to the individual level of access.
-
-Current User authentication does not inherently support backend features such as alerting. To account for this, data sources configured with Current User authentication can optionally specify service credentials that will be utilized for backend features when no signed-in user is available.
-
-To get started with Current User authentication, refer to the [Azure Monitor data source documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/#configure-current-user-authentication).
-
-{{< figure src="/media/docs/grafana/data-sources/screenshot-current-user.png" alt="Data source configured with Current User authentication" >}}
 
 ### Removal of old Tempo Search and Loki Search in Tempo
 
