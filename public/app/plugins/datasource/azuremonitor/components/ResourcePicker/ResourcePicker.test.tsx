@@ -154,7 +154,7 @@ describe('AzureMonitor ResourcePicker', () => {
     expect(applyButton).toBeEnabled();
     await userEvent.click(applyButton);
     expect(onApply).toBeCalledTimes(1);
-    expect(onApply).toBeCalledWith(['/subscriptions/def-123']);
+    expect(onApply).toHaveBeenCalledWith(['/subscriptions/def-123']);
   });
 
   it('should call onApply removing an element', async () => {
@@ -169,7 +169,7 @@ describe('AzureMonitor ResourcePicker', () => {
     const applyButton = screen.getByRole('button', { name: 'Apply' });
     await userEvent.click(applyButton);
     expect(onApply).toBeCalledTimes(1);
-    expect(onApply).toBeCalledWith([]);
+    expect(onApply).toHaveBeenCalledWith([]);
   });
 
   it('should call onApply removing an element ignoring the case', async () => {
@@ -186,7 +186,7 @@ describe('AzureMonitor ResourcePicker', () => {
     const applyButton = screen.getByRole('button', { name: 'Apply' });
     await userEvent.click(applyButton);
     expect(onApply).toBeCalledTimes(1);
-    expect(onApply).toBeCalledWith([]);
+    expect(onApply).toHaveBeenCalledWith([]);
   });
 
   it('should call onApply with a new resource when a user clicks on the checkbox in the row', async () => {
@@ -207,7 +207,7 @@ describe('AzureMonitor ResourcePicker', () => {
     await userEvent.click(applyButton);
 
     expect(onApply).toBeCalledTimes(1);
-    expect(onApply).toBeCalledWith([
+    expect(onApply).toHaveBeenCalledWith([
       {
         metricNamespace: 'Microsoft.Compute/virtualMachines',
         region: 'northeurope',
@@ -247,7 +247,7 @@ describe('AzureMonitor ResourcePicker', () => {
     const applyButton = screen.getByRole('button', { name: 'Apply' });
     await userEvent.click(applyButton);
     expect(onApply).toBeCalledTimes(1);
-    expect(onApply).toBeCalledWith([]);
+    expect(onApply).toHaveBeenCalledWith([]);
   });
 
   it('renders a search field which show search results when there are results', async () => {
