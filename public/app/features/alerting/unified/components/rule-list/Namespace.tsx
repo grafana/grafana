@@ -61,7 +61,6 @@ const NamespaceIcon = ({ application }: NamespaceIconProps) => {
         <img width={16} height={16} src="public/app/plugins/datasource/prometheus/img/mimir_logo.svg" alt="Mimir" />
       );
     case 'grafana':
-      return <img width={16} height={16} src="public/img/grafana_icon.svg" alt="Grafana-managed namespace" />;
     default:
       return <Icon name="folder" />;
   }

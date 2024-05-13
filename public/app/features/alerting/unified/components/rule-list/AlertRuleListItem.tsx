@@ -56,7 +56,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
                         }
                       >
                         <span>
-                          <Icon name="exclamation-circle" /> Last delivery attempt failed
+                          <Icon name="exclamation-circle" size="sm" /> Last delivery attempt failed
                         </span>
                       </Tooltip>
                     </Stack>

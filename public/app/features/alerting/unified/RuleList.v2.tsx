@@ -133,6 +133,8 @@ const RuleList = withErrorBoundary(
             <ul className={styles.rulesTree} role="tree">
               {sortedNamespaces.map((namespace) => {
                 const { rulesSource } = namespace;
+
+                // @TODO use buildinfo here to get the correct icon
                 const application = isGrafanaRulesSource(rulesSource)
                   ? 'grafana'
                   : rulesSource.jsonData?.prometheusType ?? PromApplication.Prometheus;
