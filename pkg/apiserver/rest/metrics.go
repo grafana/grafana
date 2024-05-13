@@ -5,6 +5,11 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+<<<<<<< HEAD
+=======
+	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/runtime"
+>>>>>>> 450c2086608 (Also call storage on mode1. Add metrics)
 )
 
 type dualWriterMetrics struct {
@@ -19,7 +24,11 @@ var DualWriterStorageDuration = prometheus.NewHistogramVec(prometheus.HistogramO
 	Help:                        "Histogram for the runtime of dual writer storage duration per mode",
 	Namespace:                   "grafana",
 	NativeHistogramBucketFactor: 1.1,
+<<<<<<< HEAD
 }, []string{"is_error", "mode", "kind", "method"})
+=======
+}, []string{"is_error", "mode", "name", "method"})
+>>>>>>> 450c2086608 (Also call storage on mode1. Add metrics)
 
 // DualWriterLegacyDuration is a metric summary for dual writer legacy duration per mode
 var DualWriterLegacyDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
@@ -27,7 +36,11 @@ var DualWriterLegacyDuration = prometheus.NewHistogramVec(prometheus.HistogramOp
 	Help:                        "Histogram for the runtime of dual writer legacy duration per mode",
 	Namespace:                   "grafana",
 	NativeHistogramBucketFactor: 1.1,
+<<<<<<< HEAD
 }, []string{"is_error", "mode", "kind", "method"})
+=======
+}, []string{"is_error", "mode", "name", "method"})
+>>>>>>> 450c2086608 (Also call storage on mode1. Add metrics)
 
 // DualWriterOutcome is a metric summary for dual writer outcome comparison between the 2 stores per mode
 var DualWriterOutcome = prometheus.NewHistogramVec(prometheus.HistogramOpts{
@@ -46,6 +59,7 @@ func (m *dualWriterMetrics) init() {
 func (m *dualWriterMetrics) recordLegacyDuration(isError bool, mode string, name string, method string, startFrom time.Time) {
 	duration := time.Since(startFrom).Seconds()
 	m.legacy.WithLabelValues(strconv.FormatBool(isError), mode, name, method).Observe(duration)
+<<<<<<< HEAD
 }
 
 func (m *dualWriterMetrics) recordStorageDuration(isError bool, mode string, name string, method string, startFrom time.Time) {
@@ -54,10 +68,36 @@ func (m *dualWriterMetrics) recordStorageDuration(isError bool, mode string, nam
 }
 
 // nolint:unused
+=======
+}
+
+func (m *dualWriterMetrics) recordStorageDuration(isError bool, mode string, name string, method string, startFrom time.Time) {
+	duration := time.Since(startFrom).Seconds()
+	m.storage.WithLabelValues(strconv.FormatBool(isError), mode, name, method).Observe(duration)
+}
+
+// TODO: change this into a validation function
+>>>>>>> 450c2086608 (Also call storage on mode1. Add metrics)
 func (m *dualWriterMetrics) recordOutcome(mode string, name string, outcome bool, method string) {
 	var observeValue float64
 	if outcome {
 		observeValue = 1
 	}
 	m.outcome.WithLabelValues(mode, name, method).Observe(observeValue)
+<<<<<<< HEAD
+=======
+}
+
+func compareResourceVersion(obj1, obj2 runtime.Object) (bool, error) {
+	accessor1, err := meta.Accessor(obj1)
+	if err != nil {
+		return false, err
+	}
+	accessor2, err := meta.Accessor(obj2)
+	if err != nil {
+		return false, err
+	}
+	return accessor1.GetResourceVersion() == accessor2.GetResourceVersion(), nil
+
+>>>>>>> 450c2086608 (Also call storage on mode1. Add metrics)
 }
