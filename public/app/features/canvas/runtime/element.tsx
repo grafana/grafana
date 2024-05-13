@@ -287,8 +287,10 @@ export class ElementState implements LayerElement {
 
     const placement: Placement = {};
 
-    const width = (elementContainer?.width ?? 100) / transformScale;
-    const height = (elementContainer?.height ?? 100) / transformScale;
+    // const width = (elementContainer?.width ?? 100) / transformScale;
+    // const height = (elementContainer?.height ?? 100) / transformScale;
+    const width = this.options.placement?.width ?? 100;
+    const height = this.options.placement?.height ?? 100;
 
     switch (vertical) {
       case VerticalConstraint.Top:
