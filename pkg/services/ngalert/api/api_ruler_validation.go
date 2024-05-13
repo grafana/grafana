@@ -60,11 +60,6 @@ func validateRuleNode(
 		return nil, fmt.Errorf("alert rule title is too long. Max length is %d", store.AlertRuleMaxTitleLength)
 	}
 
-	err = validateCondition(ruleNode.GrafanaManagedAlert.Condition, ruleNode.GrafanaManagedAlert.Data, canPatch)
-	if err != nil {
-		return nil, err
-	}
-
 	queries := AlertQueriesFromApiAlertQueries(ruleNode.GrafanaManagedAlert.Data)
 
 	newAlertRule := ngmodels.AlertRule{
@@ -133,6 +128,11 @@ func validateAlertingRule(in *apimodels.PostableExtendedRuleNode, newRule *ngmod
 		}
 	}
 	newRule.ExecErrState = errorState
+
+	err = validateCondition(in.GrafanaManagedAlert.Condition, in.GrafanaManagedAlert.Data, canPatch)
+	if err != nil {
+		return err
+	}
 
 	if in.GrafanaManagedAlert.NotificationSettings != nil {
 		newRule.NotificationSettings, err = validateNotificationSettings(in.GrafanaManagedAlert.NotificationSettings)
