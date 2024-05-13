@@ -72,7 +72,7 @@ func (cma *CloudMigrationAPI) CreateToken(c *contextmodel.ReqContext) response.R
 		return response.Error(http.StatusInternalServerError, "creating gcom access token", err)
 	}
 
-	return response.JSON(http.StatusOK, cloudmigration.CreateAccessTokenResponseDTO(resp))
+	return response.JSON(http.StatusOK, CreateAccessTokenResponseDTO(resp))
 }
 
 // swagger:route GET /cloudmigration/migration migrations getMigrationList
@@ -325,5 +325,9 @@ type CloudMigrationRunListResponse struct {
 // swagger:response cloudMigrationCreateTokenResponse
 type CloudMigrationCreateTokenResponse struct {
 	// in: body
-	Body cloudmigration.CreateAccessTokenResponseDTO
+	Body CreateAccessTokenResponseDTO
+}
+
+type CreateAccessTokenResponseDTO struct {
+	Token string `json:"token"`
 }

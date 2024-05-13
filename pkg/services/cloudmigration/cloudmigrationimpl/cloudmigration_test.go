@@ -10,6 +10,6 @@ import (
 
 func Test_NoopServiceDoesNothing(t *testing.T) {
 	s := &NoopServiceImpl{}
-	_, e := s.MigrateDatasources(context.Background(), &cloudmigration.MigrateDatasourcesRequest{})
+	_, e := s.CreateToken(context.Background())
 	assert.ErrorIs(t, e, cloudmigration.ErrFeatureDisabledError)
 }

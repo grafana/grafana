@@ -29,24 +29,6 @@ type CloudMigration struct {
 	Updated     time.Time `json:"updated"`
 }
 
-type MigratedResourceResult struct {
-	Status  string `json:"status"`
-	Message string `json:"message"`
-}
-
-type MigrationResult struct {
-	Status  string `json:"status"`
-	Message string `json:"message"`
-}
-
-type MigratedResource struct {
-	Type   string                 `json:"type"`
-	ID     string                 `json:"id"`
-	RefID  string                 `json:"refID"`
-	Name   string                 `json:"name"`
-	Result MigratedResourceResult `json:"result"`
-}
-
 type CloudMigrationRun struct {
 	ID                int64     `json:"id" xorm:"pk autoincr 'id'"`
 	UID               string    `json:"uid" xorm:"uid"`
@@ -71,13 +53,6 @@ type CloudMigrationRunList struct {
 	Runs []MigrateDataResponseListDTO `json:"runs"`
 }
 
-// swagger:parameters createMigration
-type CloudMigrationRequestParams struct {
-	// required: true
-	// in: body
-	Body CloudMigrationRequest `json:"body"`
-}
-
 type CloudMigrationRequest struct {
 	AuthToken string `json:"authToken"`
 }
@@ -93,32 +68,10 @@ type CloudMigrationListResponse struct {
 	Migrations []CloudMigrationResponse `json:"migrations"`
 }
 
-type MigrateDatasourcesRequest struct {
-	MigrateToPDC       bool
-	MigrateCredentials bool
-}
-
-type MigrateDatasourcesResponse struct {
-	DatasourcesMigrated int
-}
-
-type MigrateDatasourcesRequestDTO struct {
-	MigrateToPDC       bool `json:"migrateToPDC"`
-	MigrateCredentials bool `json:"migrateCredentials"`
-}
-
-type MigrateDatasourcesResponseDTO struct {
-	DatasourcesMigrated int `json:"datasourcesMigrated"`
-}
-
 // access token
 
 type CreateAccessTokenResponse struct {
 	Token string
-}
-
-type CreateAccessTokenResponseDTO struct {
-	Token string `json:"token"`
 }
 
 type Base64EncodedTokenPayload struct {
