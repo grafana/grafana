@@ -107,19 +107,19 @@ export const formatStringTransformer: DataTransformerInfo<FormatStringTransforme
  */
 export const createStringFormatter =
   (fieldMatches: FieldMatcher, formatStringFunction: (field: Field) => string[]) =>
-    (frame: DataFrame, allFrames: DataFrame[]) => {
-      return frame.fields.map((field) => {
-        // Find the configured field
-        if (fieldMatches(field, frame, allFrames)) {
-          const newVals = formatStringFunction(field);
+  (frame: DataFrame, allFrames: DataFrame[]) => {
+    return frame.fields.map((field) => {
+      // Find the configured field
+      if (fieldMatches(field, frame, allFrames)) {
+        const newVals = formatStringFunction(field);
 
-          return {
-            ...field,
-            type: FieldType.string,
-            values: newVals,
-          };
-        }
+        return {
+          ...field,
+          type: FieldType.string,
+          values: newVals,
+        };
+      }
 
-        return field;
-      });
-    };
+      return field;
+    });
+  };
