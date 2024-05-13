@@ -38,14 +38,17 @@ func (d *dualWriterMetrics) init() {
 	d.outcome = DualWriterOutcome
 }
 
+// nolint:unused
 func (m *dualWriterMetrics) recordLegacyDuration(statusCode string, mode string, name string, method string, duration float64) {
 	m.legacy.WithLabelValues(statusCode, mode, name, method).Observe(duration)
 }
 
+// nolint:unused
 func (m *dualWriterMetrics) recordStorageDuration(statusCode string, mode string, name string, method string, duration float64) {
 	m.storage.WithLabelValues(statusCode, mode, name, method).Observe(duration)
 }
 
+// nolint:unused
 func (m *dualWriterMetrics) recordOutcome(mode string, name string, outcome string, method string) {
 	m.outcome.WithLabelValues(mode, name, outcome, method).Observe(1)
 }
