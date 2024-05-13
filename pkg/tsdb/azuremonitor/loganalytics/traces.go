@@ -206,7 +206,7 @@ func buildAppInsightsQuery(ctx context.Context, query backend.DataQuery, dsInfo 
 		resources = []string{fmt.Sprintf("/subscriptions/%s", subscription)}
 	}
 
-	resourceOrWorkspace := azureTracesTarget.Resources[0]
+	resourceOrWorkspace := resources[0]
 	appInsightsQuery := appInsightsRegExp.Match([]byte(resourceOrWorkspace))
 	resourcesMap := make(map[string]bool, 0)
 	if len(resources) > 1 {
