@@ -98,10 +98,11 @@ export async function importPluginModule({
 }
 
 export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<GenericDataSourcePlugin> {
+  const isAngular = meta.angular?.detected ?? meta.angularDetected;
   return importPluginModule({
     path: meta.module,
     version: meta.info?.version,
-    isAngular: meta.angular?.detected,
+    isAngular,
     pluginId: meta.id,
   }).then((pluginExports) => {
     if (pluginExports.plugin) {
@@ -126,10 +127,11 @@ export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<Gene
 }
 
 export function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
+  const isAngular = meta.angular?.detected ?? meta.angularDetected;
   return importPluginModule({
     path: meta.module,
     version: meta.info?.version,
-    isAngular: meta.angular?.detected,
+    isAngular,
     pluginId: meta.id,
   }).then((pluginExports) => {
     const plugin: AppPlugin = pluginExports.plugin ? pluginExports.plugin : new AppPlugin();
