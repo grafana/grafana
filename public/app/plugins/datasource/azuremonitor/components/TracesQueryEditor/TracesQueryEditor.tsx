@@ -17,7 +17,7 @@ import FormatAsField from '../shared/FormatAsField';
 
 import Filters from './Filters';
 import TraceTypeField from './TraceTypeField';
-import { setFormatAs, setQueryOperationId } from './setQueryValue';
+import { setDefaultTracesQuery, setFormatAs, setQueryOperationId } from './setQueryValue';
 
 interface TracesQueryEditorProps {
   query: AzureMonitorQuery;
@@ -63,11 +63,18 @@ const TracesQueryEditor = ({
     }
   }, [setOperationId, previousOperationId, query, operationId]);
 
-  const handleChange = useCallback((ev: React.FormEvent) => {
-    if (ev.target instanceof HTMLInputElement) {
-      setOperationId(ev.target.value);
-    }
-  }, []);
+  const handleChange = useCallback(
+    (ev: React.FormEvent) => {
+      if (ev.target instanceof HTMLInputElement) {
+        setOperationId(ev.target.value);
+        if (query.queryType === AzureQueryType.TraceExemplar && ev.target.value === '') {
+          // If this is an exemplars query and the operation ID is cleared we reset this to a default traces query
+          onChange(setDefaultTracesQuery(query));
+        }
+      }
+    },
+    [onChange, query]
+  );
 
   const handleBlur = useCallback(
     (ev: React.FormEvent) => {
