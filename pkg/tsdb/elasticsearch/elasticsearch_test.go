@@ -157,6 +157,23 @@ func TestNewInstanceSettings(t *testing.T) {
 			require.NoError(t, err)
 		})
 
+		t.Run("float maxConcurrentShardRequests", func(t *testing.T) {
+			dsInfo := datasourceInfo{
+				TimeField:                  "@timestamp",
+				MaxConcurrentShardRequests: 10.5,
+			}
+			settingsJSON, err := json.Marshal(dsInfo)
+			require.NoError(t, err)
+
+			dsSettings := backend.DataSourceInstanceSettings{
+				JSONData: json.RawMessage(settingsJSON),
+			}
+
+			instance, err := newInstanceSettings(httpclient.NewProvider())(context.Background(), dsSettings)
+			require.Equal(t, int64(10), instance.(es.DatasourceInfo).MaxConcurrentShardRequests)
+			require.NoError(t, err)
+		})
+
 		t.Run("invalid maxConcurrentShardRequests", func(t *testing.T) {
 			dsInfo := datasourceInfo{
 				TimeField:                  "@timestamp",
