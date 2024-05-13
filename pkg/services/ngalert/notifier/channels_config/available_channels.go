@@ -1281,7 +1281,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 				}, {
 					Label:        "Override priority",
 					Element:      ElementTypeCheckbox,
-					Description:  "Allow the alert priority to be set using the og_priority annotation",
+					Description:  "Allow the alert priority to be set using the og_priority label.",
 					PropertyName: "overridePriority",
 				},
 				{

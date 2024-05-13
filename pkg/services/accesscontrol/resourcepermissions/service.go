@@ -57,7 +57,7 @@ type Store interface {
 func New(cfg *setting.Cfg,
 	options Options, features featuremgmt.FeatureToggles, router routing.RouteRegister, license licensing.Licensing,
 	ac accesscontrol.AccessControl, service accesscontrol.Service, sqlStore db.DB,
-	teamService team.Service, userService user.Service,
+	teamService team.Service, userService user.Service, actionSetService ActionSetService,
 ) (*Service, error) {
 	permissions := make([]string, 0, len(options.PermissionsToActions))
 	actionSet := make(map[string]struct{})
@@ -65,6 +65,9 @@ func New(cfg *setting.Cfg,
 		permissions = append(permissions, permission)
 		for _, a := range actions {
 			actionSet[a] = struct{}{}
+		}
+		if features.IsEnabled(context.Background(), featuremgmt.FlagAccessActionSets) {
+			actionSetService.StoreActionSet(options.Resource, permission, actions)
 		}
 	}
 

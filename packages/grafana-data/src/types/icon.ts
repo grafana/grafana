@@ -96,6 +96,7 @@ export const availableIconsIndex = {
   'exchange-alt': true,
   'exclamation-triangle': true,
   'exclamation-circle': true,
+  exclamation: true,
   'external-link-alt': true,
   eye: true,
   'eye-slash': true,
@@ -245,6 +246,8 @@ export const availableIconsIndex = {
   'wrap-text': true,
   rss: true,
   x: true,
+  'add-user': true,
+  attach: true,
 };
 
 export type IconName = keyof typeof availableIconsIndex;

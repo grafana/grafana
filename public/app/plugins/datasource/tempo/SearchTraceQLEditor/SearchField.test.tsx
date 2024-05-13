@@ -293,6 +293,7 @@ const renderSearchField = (
       tags={tags || []}
       hideTag={hideTag}
       query={'{}'}
+      addVariablesToOptions={true}
     />
   );
 };

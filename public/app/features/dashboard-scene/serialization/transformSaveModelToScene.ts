@@ -30,7 +30,6 @@ import {
   AdHocFiltersVariable,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { trackDashboardLoaded } from 'app/features/dashboard/utils/tracking';
 import { DashboardDTO } from 'app/types';
 
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
@@ -284,7 +283,6 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       }),
       new behaviors.SceneQueryController(),
       registerDashboardMacro,
-      registerDashboardSceneTracking(oldModel),
       registerPanelInteractionsReporter,
       new behaviors.LiveNowTimer({ enabled: oldModel.liveNow }),
     ],
@@ -321,6 +319,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       filters: variable.filters ?? [],
       baseFilters: variable.baseFilters ?? [],
       defaultKeys: variable.defaultKeys,
+      useQueriesAsFilterForOptions: true,
     });
   }
   if (variable.type === 'custom') {
@@ -392,9 +391,20 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       hide: variable.hide,
     });
   } else if (variable.type === 'textbox') {
+    let val;
+    if (!variable?.current?.value) {
+      val = variable.query;
+    } else {
+      if (typeof variable.current.value === 'string') {
+        val = variable.current.value;
+      } else {
+        val = variable.current.value[0];
+      }
+    }
+
     return new TextBoxVariable({
       ...commonProperties,
-      value: variable?.current?.value?.[0] ?? variable.query,
+      value: val,
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
     });
@@ -504,18 +514,6 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     ...repeatOptions,
     $behaviors: [hoverHeaderOffsetBehavior],
   });
-}
-
-function registerDashboardSceneTracking(model: DashboardModel) {
-  return () => {
-    const unsetDashboardInteractionsScenesContext = DashboardInteractions.setScenesContext();
-
-    trackDashboardLoaded(model, model.version);
-
-    return () => {
-      unsetDashboardInteractionsScenesContext();
-    };
-  };
 }
 
 function registerPanelInteractionsReporter(scene: DashboardScene) {

@@ -9,7 +9,6 @@ export const zIndex = {
   tooltip: 1040,
   modalBackdrop: 1050,
   modal: 1060,
-  tooltipWithinModal: 1060,
   portal: 1061,
 };
 

@@ -126,6 +126,9 @@ describe('transformSaveModelToScene', () => {
       expect(scene.state?.$variables?.state.variables).toHaveLength(2);
       expect(scene.state?.$variables?.getByName('constant')).toBeInstanceOf(ConstantVariable);
       expect(scene.state?.$variables?.getByName('CoolFilters')).toBeInstanceOf(AdHocFiltersVariable);
+      expect(
+        (scene.state?.$variables?.getByName('CoolFilters') as AdHocFiltersVariable).state.useQueriesAsFilterForOptions
+      ).toBe(true);
       expect(dashboardControls).toBeDefined();
 
       expect(dashboardControls.state.refreshPicker.state.intervals).toEqual(defaultTimePickerConfig.refresh_intervals);
@@ -415,6 +418,20 @@ describe('transformSaveModelToScene', () => {
 
       expect(vizPanel.state.displayMode).toEqual('transparent');
       expect(vizPanel.state.hoverHeader).toEqual(true);
+    });
+
+    it('should initalize the VizPanel with min interval set', () => {
+      const panel = {
+        title: '',
+        type: 'test-plugin',
+        gridPos: { x: 0, y: 0, w: 12, h: 8 },
+        interval: '20m',
+      };
+
+      const { vizPanel } = buildGridItemForTest(panel);
+
+      const queryRunner = getQueryRunnerFor(vizPanel);
+      expect(queryRunner?.state.minInterval).toBe('20m');
     });
 
     it('should set PanelTimeRange when timeFrom or timeShift is present', () => {
@@ -922,6 +939,7 @@ describe('transformSaveModelToScene', () => {
         baseFilters: [{ key: 'baseFilterTest', operator: '=', value: 'test' }],
         datasource: { uid: 'gdev-prometheus', type: 'prometheus' },
         applyMode: 'auto',
+        useQueriesAsFilterForOptions: true,
       });
     });
 
@@ -1004,6 +1022,7 @@ describe('transformSaveModelToScene', () => {
             value: '3',
           },
         ],
+        useQueriesAsFilterForOptions: true,
       });
     });
 

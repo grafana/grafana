@@ -15,17 +15,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 func TestAuthorizeInOrgMiddleware(t *testing.T) {
-	cfg := setting.NewCfg()
-	ac := acimpl.ProvideAccessControl(cfg)
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 
 	// Define test cases
 	testCases := []struct {
@@ -186,7 +185,7 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, "/api/endpoint", nil)
 
 			expectedIdentity := &authn.Identity{
-				ID:          fmt.Sprintf("user:%v", tc.ctxSignedInUser.UserID),
+				ID:          authn.NewNamespaceID(authn.NamespaceUser, tc.ctxSignedInUser.UserID),
 				OrgID:       tc.targetOrgId,
 				Permissions: map[int64]map[string][]string{},
 			}
