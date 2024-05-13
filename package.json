@@ -219,7 +219,7 @@
     "sass": "1.77.1",
     "sass-loader": "14.2.1",
     "style-loader": "4.0.0",
-    "stylelint": "16.3.1",
+    "stylelint": "16.5.0",
     "stylelint-config-sass-guidelines": "11.1.0",
     "terser-webpack-plugin": "5.3.10",
     "testing-library-selector": "0.3.1",
