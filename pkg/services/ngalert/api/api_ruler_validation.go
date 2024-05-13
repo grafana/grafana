@@ -78,7 +78,7 @@ func validateRuleNode(
 	}
 
 	if isRecordingRule {
-		if err := validateRecordingRule(ruleNode, &newAlertRule, canPatch); err != nil {
+		if err := validateRecordingRule(ruleNode, &newAlertRule, limits, canPatch); err != nil {
 			return nil, err
 		}
 	} else {
@@ -154,7 +154,11 @@ func validateAlertingRule(in *apimodels.PostableExtendedRuleNode, newRule *ngmod
 	return nil
 }
 
-func validateRecordingRule(in *apimodels.PostableExtendedRuleNode, newRule *ngmodels.AlertRule, canPatch bool) error {
+func validateRecordingRule(in *apimodels.PostableExtendedRuleNode, newRule *ngmodels.AlertRule, limits RuleLimits, canPatch bool) error {
+	if !limits.RecordingRulesAllowed {
+		return fmt.Errorf("%w: recording rules cannot be created on this instance", ngmodels.ErrAlertRuleFailedValidation)
+	}
+
 	err := validateCondition(in.GrafanaManagedAlert.Record.From, in.GrafanaManagedAlert.Data, canPatch)
 	if err != nil {
 		return fmt.Errorf("%w: %s", ngmodels.ErrAlertRuleFailedValidation, err.Error())
