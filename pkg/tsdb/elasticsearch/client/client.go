@@ -254,12 +254,7 @@ func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchReque
 
 func (c *baseClientImpl) getMultiSearchQueryParameters() string {
 	var qs []string
-
-	maxConcurrentShardRequests := c.ds.MaxConcurrentShardRequests
-	if maxConcurrentShardRequests == 0 {
-		maxConcurrentShardRequests = 5
-	}
-	qs = append(qs, fmt.Sprintf("max_concurrent_shard_requests=%d", maxConcurrentShardRequests))
+	qs = append(qs, fmt.Sprintf("max_concurrent_shard_requests=%d", c.ds.MaxConcurrentShardRequests))
 
 	if c.ds.IncludeFrozen {
 		qs = append(qs, "ignore_throttled=false")
