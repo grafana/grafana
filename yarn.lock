@@ -4662,8 +4662,8 @@ __metadata:
   linkType: hard
 
 "@kusto/monaco-kusto@npm:^10.0.0":
-  version: 10.0.20
-  resolution: "@kusto/monaco-kusto@npm:10.0.20"
+  version: 10.0.21
+  resolution: "@kusto/monaco-kusto@npm:10.0.21"
   dependencies:
     "@kusto/language-service": "npm:0.0.278"
     "@kusto/language-service-next": "npm:11.5.3"
@@ -4674,7 +4674,7 @@ __metadata:
     monaco-editor: ^0.46.0
   bin:
     copyMonacoFilesAMD: copyMonacoFilesAMD.js
-  checksum: 10/050cd997e8c30328cd2ac181a601bd6cc174023bf482d04e0e2655eb935a53c6dca25731cc0ac6fd365d3e0c388a9335896b156c763e86f3ce74bb0c19758154
+  checksum: 10/81640b12337239a90fde4432cf32e59d9ab77c8fc7442b20f5d16872f2084a750cd5c7654e61147ad68d40f55935d30115eb8b4d42e3a79c672e7934ce8efade
   languageName: node
   linkType: hard
 
