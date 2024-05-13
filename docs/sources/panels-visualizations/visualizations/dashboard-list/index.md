@@ -34,7 +34,7 @@ You can use a dashboard list visualization if you want to display a list of impo
 
 Once you’ve created a [dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/), the following video shows you how to configure a dashboard list visualization:
 
-<!-- video TBA here -->
+{{< youtube id="MserjWGWsh8" >}}
 
 ## Panel options
 
