@@ -211,6 +211,7 @@ export const SilencesEditor = ({
               {...register('comment', { required: { value: true, message: 'Required.' } })}
               rows={5}
               placeholder="Details about the silence"
+              id="comment"
             />
           </Field>
           {!userLogged && (

@@ -43,7 +43,7 @@ const MatchersField = ({ className, required, ruleUid }: Props) => {
             {alertRule && (
               <div>
                 <Field label="Alert rule" disabled>
-                  <Input defaultValue={alertRule.grafana_alert.title} disabled />
+                  <Input id="alert-rule-name" defaultValue={alertRule.grafana_alert.title} disabled />
                 </Field>
                 <Divider />
               </div>
@@ -62,6 +62,7 @@ const MatchersField = ({ className, required, ruleUid }: Props) => {
                       })}
                       defaultValue={matcher.name}
                       placeholder="label"
+                      id={`matcher-${index}-label`}
                     />
                   </Field>
                   <Field label="Operator">
@@ -74,6 +75,7 @@ const MatchersField = ({ className, required, ruleUid }: Props) => {
                           className={styles.matcherOptions}
                           options={matcherFieldOptions}
                           aria-label="operator"
+                          id={`matcher-${index}-operator`}
                         />
                       )}
                       defaultValue={matcher.operator || matcherFieldOptions[0].value}
@@ -92,6 +94,7 @@ const MatchersField = ({ className, required, ruleUid }: Props) => {
                       })}
                       defaultValue={matcher.value}
                       placeholder="value"
+                      id={`matcher-${index}-value`}
                     />
                   </Field>
                   {(matchers.length > 1 || !required) && (
