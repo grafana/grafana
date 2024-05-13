@@ -77,6 +77,8 @@ A button click will only trigger an API call when [inline editing](#inline-editi
 
 {{< video-embed src="/media/docs/grafana/2023-20-10-Canvas-Button-Element-Enablement-Video.mp4" max-width="750px" caption="Canvas button element demo" >}}
 
+{{< docs/play title="Canvas Visualization: Buttons" url="https://play.grafana.org/d/c9ea65f5-ed5a-45cf-8fb7-f82af7c3afdf/" >}}
+
 ## Connections
 
 When building a canvas, you can connect elements together to create more complex visualizations. Connections are created by dragging from the connection anchor of one element to the connection anchor of another element. You can also create connections to the background of the canvas. Connection anchors are displayed when you hover over an element and inline editing is turned on.
