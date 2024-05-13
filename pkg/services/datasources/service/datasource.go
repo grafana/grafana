@@ -205,7 +205,7 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 		cmd.Name = getAvailableName(cmd.Type, dataSources)
 	}
 
-	if err := s.validateFields(cmd.Name, cmd.URL, cmd.Type, cmd.APIVersion); err != nil {
+	if err := s.validateFields(ctx, cmd.Name, cmd.URL, cmd.Type, cmd.APIVersion); err != nil {
 		return nil, err
 	}
 
@@ -287,7 +287,7 @@ func (s *Service) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteD
 func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error) {
 	var dataSource *datasources.DataSource
 
-	if err := s.validateFields(cmd.Name, cmd.URL, cmd.Type, cmd.APIVersion); err != nil {
+	if err := s.validateFields(ctx, cmd.Name, cmd.URL, cmd.Type, cmd.APIVersion); err != nil {
 		return dataSource, err
 	}
 
@@ -716,7 +716,7 @@ func (s *Service) fillWithSecureJSONData(ctx context.Context, cmd *datasources.U
 	return nil
 }
 
-func (s *Service) validateFields(name, url, pluginID, apiVersion string) error {
+func (s *Service) validateFields(ctx context.Context, name, url, pluginID, apiVersion string) error {
 	if len(name) > maxDatasourceNameLen {
 		return datasources.ErrDataSourceNameInvalid.Errorf("max length is %d", maxDatasourceNameLen)
 	}

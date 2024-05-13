@@ -140,6 +140,6 @@ func addDataSourceMigration(mg *Migrator) {
 	}))
 
 	mg.AddMigration("Add api_version column", NewAddColumnMigration(tableV2, &Column{
-		Name: "api_version", Type: DB_Varchar, Nullable: true, Length: 40,
+		Name: "api_version", Type: DB_Varchar, Nullable: true, Length: 20,
 	}))
 }
