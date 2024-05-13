@@ -20,7 +20,7 @@ weight: 100
 
 # News
 
-The news visualization displays an RSS feed. By default, it displays articles from the Grafana Labs blog, and users can change this by entering a different RSS feed URL.
+The news visualization displays an RSS feed. By default, it displays articles from the Grafana Labs blog, but you can change this by entering a different RSS feed URL.
 
 {{< figure src="/static/img/docs/news/news-visualization.png" max-width="1025px" alt="A news visualization showing the latest Grafana news feed" >}}
 
@@ -28,11 +28,11 @@ The news visualization displays an RSS feed. By default, it displays articles fr
 In version 8.5, we discontinued the "Use Proxy" option for Grafana news visualizations. As a result, RSS feeds that are not configured for request by Grafana's frontend (with the appropriate [CORS headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)) may not load.
 {{% /admonition %}}
 
-You can use a news visualization if you need to provide regular news and updates to your users.
+You can use the news visualization to provide regular news and updates to your users.
 
 ## Configure a news visualization
 
-Once you’ve created a [dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/), enter the URL of an RSS in the [URL](#url) field in the News section. This visualization type does not accept any other queries, and users should not expect to be able to filter or query the RSS feed data in any way using this visualization.
+Once you’ve created a [dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/), enter the URL of an RSS in the [URL](#url) field in the **News** section. This visualization type doesn't accept any other queries, and you shouldn't expect to be able to filter or query the RSS feed data in any way using this visualization.
 
 If you're having trouble loading an RSS feed, you can try rehosting the feed on a different server or using a CORS proxy. A CORS proxy is a tool that allows you to bypass CORS restrictions by making requests to the RSS feed on your behalf. You can find more information about using CORS proxies online.
 
@@ -52,8 +52,8 @@ Use the following options to refine your news visualization.
 
 ### URL
 
-The URL of RSS and Atom feeds.
+The URL of the RSS or Atom feed.
 
 ### Show image
 
-Controls if the news social image is to be shown beside the text content.
+Controls if the news social image is to be displayed beside the text content.
