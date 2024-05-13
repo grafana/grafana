@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dlmiddlecote/sqlstats"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -14,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/jmoiron/sqlx"
+	"github.com/prometheus/client_golang/prometheus"
 	"xorm.io/xorm"
 )
 
@@ -69,7 +71,7 @@ func (db *EntityDB) GetEngine() (*xorm.Engine, error) {
 			}
 
 			connectionString := fmt.Sprintf(
-				"user='%s' password='%s' host='%s' port='%s' dbname='%s' sslmode='%s'", // sslcert='%s' sslkey='%s' sslrootcert='%s'",
+				"user=%s password=%s host=%s port=%s dbname=%s sslmode=%s", // sslcert='%s' sslkey='%s' sslrootcert='%s'",
 				dbUser, dbPass, addr.Host, addr.Port, dbName, dbSslMode, // ss.dbCfg.ClientCertPath, ss.dbCfg.ClientKeyPath, ss.dbCfg.CaCertPath
 			)
 
@@ -110,6 +112,11 @@ func (db *EntityDB) GetEngine() (*xorm.Engine, error) {
 		} else {
 			// TODO: sqlite support
 			return nil, fmt.Errorf("invalid db type specified: %s", dbType)
+		}
+
+		// register sql stat metrics
+		if err := prometheus.Register(sqlstats.NewStatsCollector("unified_storage", engine.DB().DB)); err != nil {
+			db.log.Warn("Failed to register unified storage sql stats collector", "error", err)
 		}
 
 		// configure sql logging
