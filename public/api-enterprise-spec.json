@@ -3058,14 +3058,6 @@
         }
       }
     },
-    "CloudMigrationRequest": {
-      "type": "object",
-      "properties": {
-        "authToken": {
-          "type": "string"
-        }
-      }
-    },
     "CloudMigrationResponse": {
       "type": "object",
       "properties": {
