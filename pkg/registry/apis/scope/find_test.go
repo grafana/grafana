@@ -8,54 +8,64 @@ import (
 )
 
 func TestFilterAndAppendItem(t *testing.T) {
-	t.Run("Appends item to results if parent matches and query is empty", func(t *testing.T) {
+	tcs := []struct {
+		Description string
+
+		ParentName string
+		Title      string
+
+		QueryParam  string
+		ParentParam string
+
+		ExpectedMatches int
+	}{
+		{
+			Description:     "Matching parent without query param",
+			ParentName:      "ParentNumberOne",
+			Title:           "item",
+			QueryParam:      "",
+			ParentParam:     "ParentNumberOne",
+			ExpectedMatches: 1,
+		},
+		{
+			Description:     "Not matching parent",
+			ParentName:      "ParentNumberOne",
+			Title:           "itemOne",
+			QueryParam:      "itemTwo",
+			ParentParam:     "ParentNumberTwo",
+			ExpectedMatches: 0,
+		},
+		{
+			Description:     "Matching parent and query param",
+			ParentName:      "ParentNumberOne",
+			Title:           "itemOne",
+			QueryParam:      "itemOne",
+			ParentParam:     "ParentNumberOne",
+			ExpectedMatches: 1,
+		},
+		{
+			Description:     "matching parent but not matching query param",
+			ParentName:      "ParentNumberOne",
+			Title:           "itemOne",
+			QueryParam:      "itemTwo",
+			ParentParam:     "ParentNumberOne",
+			ExpectedMatches: 0,
+		},
+	}
+
+	for _, tc := range tcs {
+		results := &scope.TreeResults{}
 		item := scope.ScopeNode{
 			Spec: scope.ScopeNodeSpec{
-				ParentName:  "parentNumberOne",
-				Title:       "item",
+				ParentName:  tc.ParentName,
+				Title:       tc.Title,
 				Description: "item description",
 				NodeType:    "item type",
 				LinkType:    "item link type",
 				LinkID:      "item link ID",
 			},
 		}
-
-		results := &scope.TreeResults{}
-		filterAndAppendItem(item, "parentNumberOne", "", results)
-		require.Equal(t, len(results.Items), 1)
-	})
-
-	t.Run("Does not append item to results if title doesn't start with query", func(t *testing.T) {
-		item := scope.ScopeNode{
-			Spec: scope.ScopeNodeSpec{
-				ParentName:  "parentNumberOne",
-				Title:       "itemOne",
-				Description: "item description",
-				NodeType:    "item type",
-				LinkType:    "item link type",
-				LinkID:      "item link ID",
-			},
-		}
-
-		results := &scope.TreeResults{}
-		filterAndAppendItem(item, "parentNumberOne", "itemTwo", results)
-		require.Equal(t, len(results.Items), 0)
-	})
-
-	t.Run("Does not append item to results if parent does not match", func(t *testing.T) {
-		item := scope.ScopeNode{
-			Spec: scope.ScopeNodeSpec{
-				ParentName:  "",
-				Title:       "itemOne",
-				Description: "item description",
-				NodeType:    "item type",
-				LinkType:    "item link type",
-				LinkID:      "item link ID",
-			},
-		}
-
-		results := &scope.TreeResults{}
-		filterAndAppendItem(item, "", "itemTwo", results)
-		require.Equal(t, len(results.Items), 0)
-	})
+		filterAndAppendItem(item, tc.ParentParam, tc.QueryParam, results)
+		require.Equal(t, len(results.Items), tc.ExpectedMatches, tc.Description)
+	}
 }
