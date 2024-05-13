@@ -1,6 +1,5 @@
-import { screen } from '@testing-library/react';
 import React from 'react';
-import { render } from 'test/redux-rtl';
+import { render, screen } from 'test/test-utils';
 
 import { AuthDrawerUnconnected, Props } from './AuthDrawer';
 
