@@ -56,4 +56,4 @@ The URL of the RSS or Atom feed.
 
 ### Show image
 
-Controls if the news social image is to be displayed beside the text content.
+Controls if the news social image is displayed beside the text content.
