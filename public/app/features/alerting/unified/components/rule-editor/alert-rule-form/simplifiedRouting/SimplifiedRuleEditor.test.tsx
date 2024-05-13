@@ -19,7 +19,7 @@ import {
 } from 'app/features/alerting/unified/api/ruler';
 import * as useContactPoints from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import * as dsByPermission from 'app/features/alerting/unified/hooks/useAlertManagerSources';
-import { mockApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { MockDataSourceSrv, grantUserPermissions, mockDataSource } from 'app/features/alerting/unified/mocks';
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { fetchRulerRulesIfNotFetchedYet } from 'app/features/alerting/unified/state/actions';
@@ -103,11 +103,10 @@ const mocks = {
   },
 };
 
-const server = setupMswServer();
+setupMswServer();
 
 describe('Can create a new grafana managed alert unsing simplified routing', () => {
   beforeEach(() => {
-    mockApi(server).eval({ results: {} });
     jest.clearAllMocks();
     contextSrv.isEditor = true;
     contextSrv.hasEditPermissionInFolders = true;
