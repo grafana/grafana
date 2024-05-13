@@ -1194,18 +1194,6 @@ clouds_config = `[
 				"prometheusResourceId":    "https://prometheus.monitor.azure.cloud1.contoso.com",
 				"resourceManager":         "https://management.azure.cloud1.contoso.com"
 			}
-		},
-		{
-			"name":"CustomCloud2",
-			"displayName":"Custom Cloud 2",
-			"aadAuthority":"https://login.cloud2.contoso.com/",
-			"properties":{
-				"azureDataExplorerSuffix": ".kusto.windows.cloud2.contoso.net",
-				"logAnalytics":            "https://api.loganalytics.cloud2.contoso.com",
-				"portal":                  "https://portal.azure.cloud2.contoso.com",
-				"prometheusResourceId":    "https://prometheus.monitor.azure.cloud2.contoso.com",
-				"resourceManager":         "https://management.azure.cloud2.contoso.com"
-			}
 		}]`
 ```
 
