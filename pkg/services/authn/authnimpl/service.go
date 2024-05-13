@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authnimpl/sync"
 	"github.com/grafana/grafana/pkg/services/authn/clients"
@@ -350,13 +351,14 @@ func (s *Service) Logout(ctx context.Context, user identity.Requester, sessionTo
 		redirect.URL = s.cfg.SignoutRedirectUrl
 	}
 
-	if !user.GetID().IsNamespace(authn.NamespaceUser) {
+	namespace, id := user.GetNamespacedID()
+	if namespace != authn.NamespaceUser {
 		return redirect, nil
 	}
 
-	id, err := user.GetID().ParseInt()
+	userID, err := identity.IntIdentifier(namespace, id)
 	if err != nil {
-		s.log.FromContext(ctx).Debug("Invalid user id", "id", id, "err", err)
+		s.log.FromContext(ctx).Debug("Invalid user id", "id", userID, "err", err)
 		return redirect, nil
 	}
 
