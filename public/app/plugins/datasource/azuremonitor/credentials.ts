@@ -1,4 +1,5 @@
 import { config } from '@grafana/runtime';
+import { getAzureClouds } from '@grafana/azure-sdk';
 
 import {
   AadCurrentUserCredentials,
@@ -40,20 +41,14 @@ function getDefaultAzureCloud(): string {
     case AzureCloud.USGovernment:
       return 'govazuremonitor';
     default:
-      throw new Error(`The cloud '${config.azure.cloud}' not supported.`);
-  }
-}
+      const cloudInfo = getAzureClouds();
 
-export function getAzurePortalUrl(azureCloud: string): string {
-  switch (azureCloud) {
-    case 'azuremonitor':
-      return 'https://portal.azure.com';
-    case 'chinaazuremonitor':
-      return 'https://portal.azure.cn';
-    case 'govazuremonitor':
-      return 'https://portal.azure.us';
-    default:
-      throw new Error('The cloud not supported.');
+      for (const cloud of cloudInfo) {
+        if (cloud.name === config.azure.cloud) {
+          return cloud.name;
+        }
+      }
+      throw new Error(`The cloud '${config.azure.cloud}' not supported.`);
   }
 }
 
