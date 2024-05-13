@@ -6,6 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 import { IconSize, isIconSize } from '../../types';
+import { t } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { getIconRoot, getIconSubDir } from '../Icon/utils';
 
@@ -91,7 +92,7 @@ export const Spinner = ({
         )}
         name={iconName}
         size={size}
-        aria-label="loading spinner"
+        aria-label={t('grafana-ui.spinner.aria-label', 'Loading')}
       />
     </div>
   );
