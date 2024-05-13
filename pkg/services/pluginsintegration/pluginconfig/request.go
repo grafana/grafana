@@ -96,9 +96,10 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 			m[azsettings.AzureCloud] = azureSettings.Cloud
 		}
 
-		if customClouds := azureSettings.CustomClouds(); len(customClouds) > 0 {
-			// TODO: CustomClouds() returns []AzureCloudInfo, but we need []AzureCloudSettings
+		if customClouds := azureSettings.CustomCloudList; len(customClouds) > 0 {
 			if jsonBytes, err := json.Marshal(customClouds); err != nil {
+				// TODO: how to log error?
+			} else {
 				m[azsettings.AzureCustomCloudsConfig] = string(jsonBytes)
 			}
 		}

@@ -307,6 +307,13 @@ func TestRequestConfigProvider_PluginRequestConfig_azure(t *testing.T) {
 			ClientSecret:      "mock_user_identity_client_secret",
 			UsernameAssertion: true,
 		},
+		CustomCloudList: []*azsettings.AzureCloudSettings{
+			{
+				Name:         "CustomCloud1",
+				DisplayName:  "Custom Cloud 1",
+				AadAuthority: "https://login.contoso.com/",
+			},
+		},
 		UserIdentityFallbackCredentialsEnabled: true,
 		ForwardSettingsPlugins:                 []string{"grafana-azure-monitor-datasource", "prometheus", "grafana-azure-data-explorer-datasource", "mssql"},
 	}
@@ -322,6 +329,7 @@ func TestRequestConfigProvider_PluginRequestConfig_azure(t *testing.T) {
 		require.Subset(t, p.PluginRequestConfig(context.Background(), "grafana-azure-monitor-datasource", nil), map[string]string{
 			"GFAZPL_AZURE_CLOUD": "AzureCloud", "GFAZPL_MANAGED_IDENTITY_ENABLED": "true",
 			"GFAZPL_MANAGED_IDENTITY_CLIENT_ID":                         "mock_managed_identity_client_id",
+			"GFAZPL_AZURE_CLOUDS_CONFIG":                                `[{"name":"CustomCloud1","displayName":"Custom Cloud 1","aadAuthority":"https://login.contoso.com/","properties":null}]`,
 			"GFAZPL_WORKLOAD_IDENTITY_ENABLED":                          "true",
 			"GFAZPL_WORKLOAD_IDENTITY_TENANT_ID":                        "mock_workload_identity_tenant_id",
 			"GFAZPL_WORKLOAD_IDENTITY_CLIENT_ID":                        "mock_workload_identity_client_id",
