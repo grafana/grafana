@@ -58,7 +58,7 @@ func (d *DualWriterMode2) Create(ctx context.Context, obj runtime.Object, create
 
 	rsp, err := d.Storage.Create(ctx, created, createValidation, options)
 	if err != nil {
-		d.Log.WithValues("name", accessorCreated.GetName(), "resourceVersion", accessorCreated.GetResourceVersion()).Error(err, "unable to create object in duplicate storage")
+		d.Log.WithValues("name", accessorCreated.GetName(), "resourceVersion", accessorCreated.GetResourceVersion()).Error(err, "unable to create object in storage")
 	}
 	return rsp, err
 }
