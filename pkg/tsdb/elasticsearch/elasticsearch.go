@@ -32,8 +32,9 @@ var eslog = log.New("tsdb.elasticsearch")
 const (
 	// headerFromExpression is used by data sources to identify expression queries
 	headerFromExpression = "X-Grafana-From-Expr"
-	// headerFromAlert is used by datasources to identify alert queries
-	headerFromAlert                   = "FromAlert"
+	// headerFromAlert is used by data sources to identify alert queries
+	headerFromAlert = "FromAlert"
+	// this is the default value for the maxConcurrentShardRequests setting - it should be in sync with the default value in the datasource config settings
 	defaultMaxConcurrentShardRequests = int64(5)
 )
 
