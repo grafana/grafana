@@ -44,7 +44,7 @@ export function TagsSection({ tags, state }: Props) {
   );
 
   return (
-    <>
+    <div>
       {tags.map((tag, index) => {
         return <TagEditor key={index} tagIndex={index} tag={tag} state={state} />;
       })}
@@ -60,7 +60,7 @@ export function TagsSection({ tags, state }: Props) {
         />
       )}
       {state.paused && <PlayButton />}
-    </>
+    </div>
   );
 }
 
