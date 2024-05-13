@@ -84,8 +84,10 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
   const vizSeries = useMemo(
     () => [
       {
-        ...info.series![0],
-        fields: info.series![0].fields.filter((field, i) => i === 0 || !field.state?.hideFrom?.viz),
+        ...(info.series[0] ?? {}),
+        fields: info.series[0]
+          ? info.series![0].fields.filter((field, i) => i === 0 || !field.state?.hideFrom?.viz)
+          : [],
       },
     ],
     [info.series]
