@@ -197,7 +197,7 @@
     "jest-matcher-utils": "29.7.0",
     "jest-watch-typeahead": "^2.2.2",
     "knip": "^5.10.0",
-    "lerna": "8.1.2",
+    "lerna": "8.1.3",
     "mini-css-extract-plugin": "2.9.0",
     "msw": "2.2.14",
     "mutationobserver-shim": "0.3.7",
