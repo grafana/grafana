@@ -25,6 +25,8 @@ For example, if you want to understand the temperature changes for the past few 
 
 {{< figure src="/static/img/docs/heatmap-panel/temperature_heatmap.png" max-width="1025px" alt="A heatmap visualization showing the random walk distribution over time" >}}
 
+{{< docs/play title="Grafana Heatmaps" url="https://play.grafana.org/d/heatmap-calculate-log/" >}}
+
 You can use a heatmap visualization if you need to:
 
 - Visualize a large density of your data distribution.
