@@ -3447,7 +3447,7 @@ __metadata:
     react: "npm:18.2.0"
     react-dom: "npm:18.2.0"
     react-use: "npm:17.5.0"
-    rimraf: "npm:5.0.5"
+    rimraf: "npm:5.0.7"
     rollup: "npm:2.79.1"
     rollup-plugin-dts: "npm:^5.0.0"
     rollup-plugin-esbuild: "npm:5.0.0"
@@ -3473,7 +3473,7 @@ __metadata:
     "@rollup/plugin-node-resolve": "npm:15.2.3"
     "@types/node": "npm:20.12.11"
     esbuild: "npm:0.20.2"
-    rimraf: "npm:5.0.5"
+    rimraf: "npm:5.0.7"
     rollup: "npm:2.79.1"
     rollup-plugin-dts: "npm:^5.0.0"
     rollup-plugin-esbuild: "npm:5.0.0"
@@ -3888,7 +3888,7 @@ __metadata:
     lodash: "npm:4.17.21"
     react: "npm:18.2.0"
     react-dom: "npm:18.2.0"
-    rimraf: "npm:5.0.5"
+    rimraf: "npm:5.0.7"
     rollup: "npm:2.79.1"
     rollup-plugin-dts: "npm:^5.0.0"
     rollup-plugin-esbuild: "npm:5.0.0"
@@ -3925,7 +3925,7 @@ __metadata:
     prettier: "npm:3.2.5"
     react: "npm:18.2.0"
     react-dom: "npm:18.2.0"
-    rimraf: "npm:5.0.5"
+    rimraf: "npm:5.0.7"
     rollup: "npm:2.79.1"
     rollup-plugin-dts: "npm:^6.1.0"
     rollup-plugin-esbuild: "npm:5.0.0"
@@ -3966,7 +3966,7 @@ __metadata:
     "@rollup/plugin-node-resolve": "npm:15.2.3"
     esbuild: "npm:0.20.2"
     glob: "npm:^10.2.7"
-    rimraf: "npm:5.0.5"
+    rimraf: "npm:5.0.7"
     rollup: "npm:2.79.1"
     rollup-plugin-dts: "npm:^5.0.0"
     rollup-plugin-esbuild: "npm:5.0.0"
@@ -4152,7 +4152,7 @@ __metadata:
     react-transition-group: "npm:4.4.5"
     react-use: "npm:17.5.0"
     react-window: "npm:1.8.10"
-    rimraf: "npm:5.0.5"
+    rimraf: "npm:5.0.7"
     rollup: "npm:2.79.1"
     rollup-plugin-copy: "npm:3.5.0"
     rollup-plugin-dts: "npm:^5.0.0"
@@ -18537,7 +18537,7 @@ __metadata:
     redux-thunk: "npm:3.1.0"
     regenerator-runtime: "npm:0.14.1"
     reselect: "npm:5.1.0"
-    rimraf: "npm:5.0.5"
+    rimraf: "npm:5.0.7"
     rudder-sdk-js: "npm:2.48.7"
     rxjs: "npm:7.8.1"
     sass: "npm:1.75.0"
@@ -27479,14 +27479,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rimraf@npm:5.0.5, rimraf@npm:^5.0.5":
-  version: 5.0.5
-  resolution: "rimraf@npm:5.0.5"
+"rimraf@npm:5.0.7, rimraf@npm:^5.0.5":
+  version: 5.0.7
+  resolution: "rimraf@npm:5.0.7"
   dependencies:
     glob: "npm:^10.3.7"
   bin:
     rimraf: dist/esm/bin.mjs
-  checksum: 10/a612c7184f96258b7d1328c486b12ca7b60aa30e04229a08bbfa7e964486deb1e9a1b52d917809311bdc39a808a4055c0f950c0280fba194ba0a09e6f0d404f6
+  checksum: 10/1e3cecfe59ee2383dfd9ba5373caeed48ed941318a0360119419b7dffc63115661408b9427f67e1f66b5bbb8855a3953db09e55a7362b3df904a44453dfa22fb
   languageName: node
   linkType: hard
 
