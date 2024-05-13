@@ -7,7 +7,7 @@ import { Input } from '@grafana/ui';
 
 import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
-import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery, ResultFormat } from '../../types';
+import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery, AzureQueryType, ResultFormat } from '../../types';
 import AdvancedResourcePicker from '../LogsQueryEditor/AdvancedResourcePicker';
 import ResourceField from '../ResourceField';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
@@ -80,35 +80,37 @@ const TracesQueryEditor = ({
   return (
     <span data-testid={selectors.components.queryEditor.tracesQueryEditor.container.input}>
       <EditorRows>
-        <EditorRow>
-          <EditorFieldGroup>
-            <ResourceField
-              query={query}
-              datasource={datasource}
-              subscriptionId={subscriptionId}
-              variableOptionGroup={variableOptionGroup}
-              onQueryChange={onChange}
-              setError={setError}
-              selectableEntryTypes={[
-                ResourceRowType.Subscription,
-                ResourceRowType.ResourceGroup,
-                ResourceRowType.Resource,
-                ResourceRowType.Variable,
-              ]}
-              resources={query.azureTraces?.resources ?? []}
-              queryType="traces"
-              disableRow={disableRow}
-              renderAdvanced={(resources, onChange) => (
-                // It's required to cast resources because the resource picker
-                // specifies the type to string | AzureMonitorResource.
-                // eslint-disable-next-line
-                <AdvancedResourcePicker resources={resources as string[]} onChange={onChange} />
-              )}
-              selectionNotice={() => 'You may only choose items of the same resource type.'}
-              range={range}
-            />
-          </EditorFieldGroup>
-        </EditorRow>
+        {query.queryType !== AzureQueryType.TraceExemplar && (
+          <EditorRow>
+            <EditorFieldGroup>
+              <ResourceField
+                query={query}
+                datasource={datasource}
+                subscriptionId={subscriptionId}
+                variableOptionGroup={variableOptionGroup}
+                onQueryChange={onChange}
+                setError={setError}
+                selectableEntryTypes={[
+                  ResourceRowType.Subscription,
+                  ResourceRowType.ResourceGroup,
+                  ResourceRowType.Resource,
+                  ResourceRowType.Variable,
+                ]}
+                resources={query.azureTraces?.resources ?? []}
+                queryType="traces"
+                disableRow={disableRow}
+                renderAdvanced={(resources, onChange) => (
+                  // It's required to cast resources because the resource picker
+                  // specifies the type to string | AzureMonitorResource.
+                  // eslint-disable-next-line
+                  <AdvancedResourcePicker resources={resources as string[]} onChange={onChange} />
+                )}
+                selectionNotice={() => 'You may only choose items of the same resource type.'}
+                range={range}
+              />
+            </EditorFieldGroup>
+          </EditorRow>
+        )}
         <EditorRow>
           <EditorFieldGroup>
             <TraceTypeField
