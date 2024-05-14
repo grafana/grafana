@@ -468,12 +468,13 @@ export const getLinksSupplier =
 
       let linkModel: LinkModel<Field>;
 
-      let href = link.onClick || !link.onBuildUrl 
-        ? link.url
-        : link.onBuildUrl({
-          origin: field,
-          replaceVariables: boundReplaceVariables,
-        });
+      let href =
+        link.onClick || !link.onBuildUrl
+          ? link.url
+          : link.onBuildUrl({
+              origin: field,
+              replaceVariables: boundReplaceVariables,
+            });
 
       if (href) {
         href = locationUtil.assureBaseUrl(href.replace(/\n/g, ''));
