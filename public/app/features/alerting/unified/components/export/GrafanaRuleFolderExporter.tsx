@@ -7,7 +7,7 @@ import { alertRuleApi } from '../../api/alertRuleApi';
 
 import { FileExportPreview } from './FileExportPreview';
 import { GrafanaExportDrawer } from './GrafanaExportDrawer';
-import { allGrafanaExportProviders, ExportFormats } from './providers';
+import { ExportFormats, providersFor } from './providers';
 
 interface GrafanaRuleFolderExporterProps {
   folder: FolderDTO;
@@ -23,7 +23,7 @@ export function GrafanaRuleFolderExporter({ folder, onClose }: GrafanaRuleFolder
       activeTab={activeTab}
       onTabChange={setActiveTab}
       onClose={onClose}
-      formatProviders={Object.values(allGrafanaExportProviders)}
+      formatProviders={providersFor('RuleFolder')}
     >
       <GrafanaRuleFolderExportPreview folder={folder} exportFormat={activeTab} onClose={onClose} />
     </GrafanaExportDrawer>

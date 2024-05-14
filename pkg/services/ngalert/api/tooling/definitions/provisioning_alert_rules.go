@@ -273,7 +273,7 @@ type AlertRuleExport struct {
 	ForString            *string                              `json:"-" yaml:"-" hcl:"for"`
 	Annotations          *map[string]string                   `json:"annotations,omitempty" yaml:"annotations,omitempty" hcl:"annotations"`
 	Labels               *map[string]string                   `json:"labels,omitempty" yaml:"labels,omitempty" hcl:"labels"`
-	IsPaused             bool                                 `json:"isPaused" yaml:"isPaused" hcl:"is_paused"`
+	IsPaused             bool                                 `json:"isPaused,omitempty" yaml:"isPaused,omitempty" hcl:"is_paused"`
 	NotificationSettings *AlertRuleNotificationSettingsExport `json:"notification_settings,omitempty" yaml:"notification_settings,omitempty" hcl:"notification_settings,block"`
 	Record               *AlertRuleRecordExport               `json:"record,omitempty" yaml:"record,omitempty" hcl:"record"`
 }
@@ -290,7 +290,7 @@ type AlertQueryExport struct {
 
 type RelativeTimeRangeExport struct {
 	FromSeconds int64 `json:"from" yaml:"from" hcl:"from"`
-	ToSeconds   int64 `json:"to" yaml:"to" hcl:"to"`
+	ToSeconds   int64 `json:"to,omitempty" yaml:"to,omitempty" hcl:"to"`
 }
 
 // AlertRuleNotificationSettingsExport is the provisioned export of models.NotificationSettings.

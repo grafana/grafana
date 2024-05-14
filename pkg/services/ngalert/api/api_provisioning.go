@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -14,11 +15,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/hcl"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/operator"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	alerting_models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/util"
+
+	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/yaml"
 )
 
 const disableProvenanceHeaderName = "X-Disable-Provenance"
@@ -551,7 +556,7 @@ func extractExportRequest(c *contextmodel.ReqContext) definitions.ExportQueryPar
 	}
 
 	queryFormat := c.Query("format")
-	if queryFormat == "yaml" || queryFormat == "json" || queryFormat == "hcl" {
+	if queryFormat == "yaml" || queryFormat == "json" || queryFormat == "hcl" || queryFormat == "operator" {
 		format = queryFormat
 	}
 
@@ -567,6 +572,9 @@ func exportResponse(c *contextmodel.ReqContext, body definitions.AlertingFileExp
 	params := extractExportRequest(c)
 	if params.Format == "hcl" {
 		return exportHcl(params.Download, body)
+	}
+	if params.Format == "operator" {
+		return exportOperator(params.Download, body)
 	}
 
 	if params.Download {
@@ -643,4 +651,42 @@ func exportHcl(download bool, body definitions.AlertingFileExport) response.Resp
 			SetHeader("Content-Disposition", `attachment;filename=export.tf`)
 	}
 	return resp.SetHeader("Content-Type", "text/hcl")
+}
+
+func exportOperator(download bool, body definitions.AlertingFileExport) response.Response {
+	var buf bytes.Buffer
+	convertToResources := func() error {
+		for idx, group := range body.Groups {
+			gr := group
+			out, err := yaml.Marshal(operator.BuildAlertRuleGroup(idx, gr))
+			if err != nil {
+				return fmt.Errorf("failed to marshal alert rule group as yaml: %w", err)
+			}
+			buf.WriteString("---\n")
+			buf.Write(out)
+		}
+		for idx, contactPoint := range body.ContactPoints {
+			cp := contactPoint
+			points := operator.BuildContactPoints(idx, cp)
+			for _, p := range points {
+				out, err := yaml.Marshal(p)
+				if err != nil {
+					return fmt.Errorf("failed to marshal contact point as yaml: %w", err)
+				}
+				buf.WriteString("---\n")
+				buf.Write(out)
+			}
+		}
+		return nil
+	}
+	if err := convertToResources(); err != nil {
+		return response.Error(http.StatusInternalServerError, "failed to convert to HCL resources", err)
+	}
+	resp := response.Respond(http.StatusOK, buf.Bytes())
+	if download {
+		return resp.
+			SetHeader("Content-Type", "application/yaml").
+			SetHeader("Content-Disposition", `attachment;filename=export.yaml`)
+	}
+	return resp.SetHeader("Content-Type", "application/yaml")
 }
