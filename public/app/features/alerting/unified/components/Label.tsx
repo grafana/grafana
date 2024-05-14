@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { CSSProperties, ReactNode } from 'react';
 import tinycolor2 from 'tinycolor2';
 
-import { GrafanaTheme2, IconName, ThemeTypographyVariant } from '@grafana/data';
+import { GrafanaTheme2, IconName } from '@grafana/data';
 import { Icon, Stack, useStyles2 } from '@grafana/ui';
 
 export type LabelSize = 'md' | 'sm' | 'xs';
@@ -59,15 +59,13 @@ const getStyles = (theme: GrafanaTheme2, color?: string, size?: string) => {
     : theme.colors.text.primary;
 
   let padding: CSSProperties['padding'] = `${theme.spacing(0.33)} ${theme.spacing(1)}`;
-  let fontSize: CSSProperties['fontSize'] = theme.typography.bodySmall.fontSize;
 
   switch (size) {
     case 'sm':
       padding = `${theme.spacing(0.2)} ${theme.spacing(0.6)}`;
       break;
     case 'xs':
-      padding = `${theme.spacing(0.1)} ${theme.spacing(0.6)}`;
-      fontSize = `calc(${theme.typography.bodySmall.fontSize} * 0.9)`;
+      padding = `${theme.spacing(0)} ${theme.spacing(0.5)}`;
       break;
     default:
       break;
@@ -76,7 +74,7 @@ const getStyles = (theme: GrafanaTheme2, color?: string, size?: string) => {
   return {
     wrapper: css({
       color: fontColor,
-      fontSize: fontSize,
+      fontSize: theme.typography.bodySmall.fontSize,
 
       borderRadius: theme.shape.borderRadius(2),
     }),

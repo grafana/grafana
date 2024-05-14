@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { formatDistanceToNowStrict } from 'date-fns';
 import { isEmpty, size } from 'lodash';
 import pluralize from 'pluralize';
 import React from 'react';
@@ -7,6 +6,7 @@ import React from 'react';
 import { GrafanaTheme2, IconName } from '@grafana/data';
 import { useStyles2, Stack, Text, Icon, TextLink, Dropdown, Button, Menu, Tooltip } from '@grafana/ui';
 import { TextProps } from '@grafana/ui/src/components/Text/Text';
+import { Time } from 'app/features/explore/Time';
 import { RuleHealth } from 'app/types/unified-alerting';
 import { Labels, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
@@ -17,6 +17,8 @@ import MoreButton from '../MoreButton';
 import { Spacer } from '../Spacer';
 import { isErrorHealth } from '../rule-viewer/RuleViewer';
 
+import { calculateNextEvaluationEstimate, getRelativeEvaluationInterval } from './util';
+
 interface AlertRuleListItemProps {
   name: string;
   href: string;
@@ -26,6 +28,9 @@ interface AlertRuleListItemProps {
   isPaused?: boolean;
   health?: RuleHealth;
   isProvisioned?: boolean;
+  lastEvaluation?: string;
+  evaluationInterval?: string;
+  evaluationDuration?: number;
   labels?: Labels;
   instancesCount?: number;
 }
@@ -39,6 +44,9 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     error,
     href,
     isProvisioned,
+    lastEvaluation,
+    evaluationDuration,
+    evaluationInterval,
     isPaused = false,
     instancesCount = 0,
     labels,
@@ -52,45 +60,28 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
         <Stack direction="column" gap={0.5} flex="1">
           <div>
             <Stack direction="column" gap={0}>
-              <Stack direction="row" gap={0.5} alignItems="start">
+              <Stack direction="row" alignItems="start">
                 <TextLink href={href} inline={false}>
                   {name}
                 </TextLink>
                 {labels && <AlertLabels labels={labels} size="xs" />}
               </Stack>
-              {summary && (
-                <Text variant="bodySmall" color="secondary">
-                  {summary}
-                </Text>
-              )}
+              <Summary content={summary} error={error} />
             </Stack>
           </div>
           <div>
             <Stack direction="row" gap={1}>
-              {error ? (
-                <>
-                  {/* TODO we might need an error variant for MetaText, dito for success */}
-                  {/* TODO show error details on hover or elsewhere */}
-                  <Text color="error" variant="bodySmall" weight="bold">
-                    <Stack direction="row" alignItems={'center'} gap={0.5}>
-                      <Tooltip
-                        content={
-                          'failed to send notification to email addresses: gilles.demey@grafana.com: dial tcp 192.168.1.21:1025: connect: connection refused'
-                        }
-                      >
-                        <span>
-                          <Icon name="exclamation-circle" size="sm" /> Last delivery attempt failed
-                        </span>
-                      </Tooltip>
-                    </Stack>
-                  </Text>
-                </>
+              {/* if the rule is paused we don't care about the evaluation metadata */}
+              {isPaused ? (
+                <></>
               ) : (
-                <>
-                  <MetaText icon="clock-nine">
-                    Firing for <Text weight="bold">2m 34s</Text>⋅ next evaluation in <Text weight="bold">34s</Text>
-                  </MetaText>
-                </>
+                <EvaluationMetadata
+                  lastEvaluation={lastEvaluation}
+                  evaluationDuration={evaluationDuration}
+                  evaluationInterval={evaluationInterval}
+                  health={health}
+                  error={error}
+                />
               )}
               <MetaText icon="layer-group">
                 <TextLink variant="bodySmall" color="secondary" href={href + '?tab=instances'} inline={false}>
@@ -99,7 +90,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
               </MetaText>
 
               {!isEmpty(labels) && (
-                <MetaText icon="tag">
+                <MetaText icon="tag-alt">
                   <TextLink variant="bodySmall" color="secondary" href={href} inline={false}>
                     {pluralize('label', size(labels), true)}
                   </TextLink>
@@ -139,6 +130,30 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
   );
 };
 
+interface SummaryProps {
+  content?: string;
+  error?: string;
+}
+
+function Summary({ content, error }: SummaryProps) {
+  if (error) {
+    return (
+      <Text variant="bodySmall" color="error" weight="light" truncate>
+        {error}
+      </Text>
+    );
+  }
+  if (content) {
+    return (
+      <Text variant="bodySmall" color="secondary">
+        {content}
+      </Text>
+    );
+  }
+
+  return null;
+}
+
 interface RecordingRuleListItemProps {
   name: string;
   href: string;
@@ -147,6 +162,7 @@ interface RecordingRuleListItemProps {
   labels?: Labels;
   isProvisioned?: boolean;
   lastEvaluation?: string;
+  evaluationInterval?: string;
   evaluationDuration?: number;
 }
 
@@ -158,15 +174,11 @@ export const RecordingRuleListItem = ({
   href,
   labels,
   lastEvaluation,
+  evaluationInterval,
   // evaluation duration is always in seconds
   evaluationDuration,
 }: RecordingRuleListItemProps) => {
   const styles = useStyles2(getStyles);
-
-  const relativeEvaluationTime = lastEvaluation ? formatDistanceToNowStrict(new Date(lastEvaluation)) : null;
-  const evaluationDurationString = evaluationDuration
-    ? formatPrometheusDuration(Math.round(evaluationDuration * 1000))
-    : null;
 
   return (
     <li className={styles.alertListItemContainer} role="treeitem" aria-selected="false">
@@ -174,48 +186,30 @@ export const RecordingRuleListItem = ({
         <Stack direction="row" alignItems="start" gap={1} flex="1">
           <RuleListIcon health={health} recording={true} />
           <Stack direction="column" gap={0.5}>
-            <Stack direction="row" gap={0.5} alignItems="start">
-              <TextLink href={href} variant="body" weight="bold" inline={false}>
-                {name}
-              </TextLink>
-              {labels && <AlertLabels labels={labels} size="xs" />}
+            <Stack direction="column" gap={0}>
+              <Stack direction="row" alignItems="start">
+                <TextLink href={href} variant="body" weight="bold" inline={false}>
+                  {name}
+                </TextLink>
+                {labels && <AlertLabels labels={labels} size="xs" />}
+              </Stack>
+              <Summary error={error} />
             </Stack>
             <div>
               <Stack direction="row" gap={1}>
-                {error ? (
-                  <>
-                    {/* TODO we might need an error variant for MetaText, dito for success */}
-                    {/* TODO show error details on hover or elsewhere */}
-                    <Text color="error" variant="bodySmall" weight="bold">
-                      <Stack direction="row" alignItems={'center'} gap={0.5}>
-                        <Tooltip
-                          content={
-                            'failed to send notification to email addresses: gilles.demey@grafana.com: dial tcp 192.168.1.21:1025: connect: connection refused'
-                          }
-                        >
-                          <span>
-                            <Icon name="exclamation-circle" /> Last delivery attempt failed
-                          </span>
-                        </Tooltip>
-                      </Stack>
-                    </Text>
-                  </>
-                ) : (
-                  <>
-                    {relativeEvaluationTime && evaluationDurationString && (
-                      <MetaText icon="clock-nine">
-                        Last evaluation <Text weight="bold">{relativeEvaluationTime}</Text>ago ⋅ took{' '}
-                        <Text weight="bold">{evaluationDurationString}</Text>
-                      </MetaText>
-                    )}
-                    {!isEmpty(labels) && (
-                      <MetaText icon="tag">
-                        <TextLink variant="bodySmall" color="secondary" href={href} inline={false}>
-                          {pluralize('label', size(labels), true)}
-                        </TextLink>
-                      </MetaText>
-                    )}
-                  </>
+                <EvaluationMetadata
+                  lastEvaluation={lastEvaluation}
+                  evaluationDuration={evaluationDuration}
+                  evaluationInterval={evaluationInterval}
+                  health={health}
+                  error={error}
+                />
+                {!isEmpty(labels) && (
+                  <MetaText icon="tag-alt">
+                    <TextLink variant="bodySmall" color="secondary" href={href} inline={false}>
+                      {pluralize('label', size(labels), true)}
+                    </TextLink>
+                  </MetaText>
                 )}
               </Stack>
             </div>
@@ -247,6 +241,65 @@ export const RecordingRuleListItem = ({
     </li>
   );
 };
+
+interface EvaluationMetadataProps {
+  lastEvaluation?: string;
+  evaluationDuration?: number; // in seconds
+  evaluationInterval?: string;
+  state?: PromAlertingRuleState;
+  health?: RuleHealth;
+  error?: string; // if health is "error" this should have error details for us
+}
+
+function EvaluationMetadata({
+  lastEvaluation,
+  evaluationDuration,
+  evaluationInterval,
+  state,
+}: EvaluationMetadataProps) {
+  const relativeEvaluationTime = getRelativeEvaluationInterval(evaluationInterval, lastEvaluation);
+
+  // @TODO this component doesn't support millis so it just shows "0s" – might want to make it support millis
+  const evaluationDurationString = evaluationDuration
+    ? Time({ timeInMs: evaluationDuration * 1000, humanize: true })
+    : null;
+
+  const nextEvaluation = calculateNextEvaluationEstimate(lastEvaluation, evaluationInterval);
+
+  if (state === PromAlertingRuleState.Firing && evaluationDurationString) {
+    const firingFor = '2m 34s';
+
+    return (
+      <MetaText icon="clock-nine">
+        Firing for <Text weight="bold">{firingFor}</Text>⋅ took {evaluationDurationString}
+        {nextEvaluation && (
+          <>
+            {' '}
+            ⋅ next evaluation in <Text weight="bold">{nextEvaluation.humanized}</Text>
+          </>
+        )}
+      </MetaText>
+    );
+  }
+
+  // for recording rules and normal or pending state alert rules we just show when we evaluated last and how long that took
+  if (relativeEvaluationTime && evaluationDurationString) {
+    return (
+      <MetaText icon="clock-nine">
+        Last evaluation <Text weight="bold">{relativeEvaluationTime}</Text>ago ⋅ took{' '}
+        <Text weight="bold">{evaluationDurationString}</Text>
+        {nextEvaluation && (
+          <>
+            {' '}
+            ⋅ next evaluation <Text weight="bold">{nextEvaluation.humanized}</Text>
+          </>
+        )}
+      </MetaText>
+    );
+  }
+
+  return null;
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   alertListItemContainer: css({

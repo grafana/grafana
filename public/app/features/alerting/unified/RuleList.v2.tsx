@@ -175,14 +175,20 @@ const EvaluationGroupWithRules = ({ group, rulesSource }: EvaluationGroupWithRul
       {group.rules.map((rule) => {
         const { rulerRule, promRule, annotations } = rule;
 
-        if (isAlertingRulerRule(rulerRule) && promRule) {
+        // keep in mind that we may not have a promRule for the ruler rule – this happens when the target
+        // rule source is eventually consistent - it may know about the rule definition but not its state
+        if (isAlertingRulerRule(rulerRule)) {
           return (
             <AlertRuleListItem
               key={hashRulerRule(rulerRule)}
               state={promRule?.state} // @TODO typescript ugh
               health={promRule?.health}
+              error={promRule?.lastError}
               name={rulerRule.alert}
               labels={rulerRule.labels}
+              lastEvaluation={promRule?.lastEvaluation}
+              evaluationDuration={promRule?.evaluationTime}
+              evaluationInterval={group.interval}
               href={createViewLink(rulesSource, rule)}
               summary={annotations?.['summary']}
             />
@@ -195,8 +201,10 @@ const EvaluationGroupWithRules = ({ group, rulesSource }: EvaluationGroupWithRul
               key={hashRulerRule(rulerRule)}
               name={rulerRule.record}
               health={promRule?.health}
+              error={promRule?.lastError}
               lastEvaluation={promRule?.lastEvaluation}
               evaluationDuration={promRule?.evaluationTime}
+              evaluationInterval={group.interval}
               labels={rulerRule.labels}
               href={createViewLink(rulesSource, rule)}
             />
@@ -211,7 +219,11 @@ const EvaluationGroupWithRules = ({ group, rulesSource }: EvaluationGroupWithRul
               state={promRule?.state}
               labels={rulerRule.labels}
               health={promRule?.health}
+              error={promRule?.lastError}
               isPaused={rulerRule.grafana_alert.is_paused}
+              lastEvaluation={promRule?.lastEvaluation}
+              evaluationDuration={promRule?.evaluationTime}
+              evaluationInterval={group.interval}
               href={createViewLink(rulesSource, rule)}
               summary={rule.annotations?.['summary']}
               isProvisioned={Boolean(rulerRule.grafana_alert.provenance)}
