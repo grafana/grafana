@@ -279,14 +279,14 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			payload:   &validAccessTokenClaims,
 			idPayload: &invalidWildcardNamespaceIDTokenClaims,
 			orgID:     1,
-			wantErr:   errJWTDisallowedNamespaceClaim,
+			wantErr:   errEtxJWTDisallowedNamespaceClaim,
 		},
 		{
 			name:      "should return error when id token has wildcard namespace",
 			payload:   &validAccessTokenClaims,
 			idPayload: &invalidNamespaceIDTokenClaims,
 			orgID:     1,
-			wantErr:   errJWTDisallowedNamespaceClaim,
+			wantErr:   errEtxJWTDisallowedNamespaceClaim,
 		},
 
 		{
@@ -294,7 +294,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			payload:   &validAccessTokenClaims,
 			idPayload: &invalidSubjectIDTokenClaims,
 			orgID:     1,
-			wantErr:   errJWTInvalid,
+			wantErr:   errExtJWTInvalid,
 		},
 
 		{
@@ -314,7 +314,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				},
 			},
 			orgID:   1,
-			wantErr: errJWTInvalid,
+			wantErr: errExtJWTInvalid,
 		},
 	}
 
