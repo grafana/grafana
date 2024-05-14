@@ -15,8 +15,8 @@ const (
 
 var AnonymousNamespaceID = NewNamespaceID(NamespaceAnonymous, 0)
 
-type NamespaceID = identity.NamespaceID
 type Namespace = identity.Namespace
+type NamespaceID = identity.NamespaceID
 
 var (
 	ParseNamespaceID      = identity.ParseNamespaceID
