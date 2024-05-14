@@ -338,6 +338,7 @@
    "type": "object"
   },
   "AlertRuleNotificationSettingsExport": {
+   "description": "Field name mismatches with Terraform provider schema are noted where applicable.",
    "properties": {
     "group_by": {
      "items": {
@@ -352,12 +353,14 @@
      "type": "string"
     },
     "mute_time_intervals": {
+     "description": "TF -\u003e `mute_timings`",
      "items": {
       "type": "string"
      },
      "type": "array"
     },
     "receiver": {
+     "description": "TF -\u003e `contact_point`",
      "type": "string"
     },
     "repeat_interval": {
@@ -967,7 +970,9 @@
    },
    "type": "object"
   },
-  "EvalQueriesResponse": {},
+  "EvalQueriesResponse": {
+   "type": "object"
+  },
   "ExplorePanelsState": {
    "description": "This is an object constructed with the keys as the values of the enum VisType and the value being a bag of properties"
   },
@@ -1572,6 +1577,9 @@
     },
     "provenance": {
      "$ref": "#/definitions/Provenance"
+    },
+    "record": {
+     "$ref": "#/definitions/Record"
     },
     "rule_group": {
      "type": "string"
@@ -2730,6 +2738,9 @@
     "notification_settings": {
      "$ref": "#/definitions/AlertRuleNotificationSettings"
     },
+    "record": {
+     "$ref": "#/definitions/Record"
+    },
     "title": {
      "type": "string"
     },
@@ -3245,6 +3256,18 @@
     }
    },
    "title": "ReceiverExport is the provisioned file export of alerting.ReceiverV1.",
+   "type": "object"
+  },
+  "Record": {
+   "properties": {
+    "from": {
+     "type": "string"
+    },
+    "metric": {
+     "type": "string"
+    }
+   },
+   "title": "Record defines how data produced by a recording rule is written.",
    "type": "object"
   },
   "RelativeTimeRange": {
@@ -4442,7 +4465,8 @@
   "alertGroups": {
    "description": "AlertGroups alert groups",
    "items": {
-    "$ref": "#/definitions/alertGroup"
+    "$ref": "#/definitions/alertGroup",
+    "type": "object"
    },
    "type": "array"
   },
@@ -4545,6 +4569,7 @@
    "type": "object"
   },
   "gettableAlert": {
+<<<<<<< HEAD
    "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
@@ -4588,6 +4613,8 @@
      "type": "string"
     }
    },
+=======
+>>>>>>> 961cef7f7de (Regenerate swagger docs)
    "required": [
     "labels",
     "annotations",
@@ -4601,8 +4628,10 @@
    "type": "object"
   },
   "gettableAlerts": {
+   "description": "GettableAlerts gettable alerts",
    "items": {
-    "$ref": "#/definitions/gettableAlert"
+    "$ref": "#/definitions/gettableAlert",
+    "type": "object"
    },
    "type": "array"
   },
@@ -4656,7 +4685,8 @@
   },
   "gettableSilences": {
    "items": {
-    "$ref": "#/definitions/gettableSilence"
+    "$ref": "#/definitions/gettableSilence",
+    "type": "object"
    },
    "type": "array"
   },
@@ -4805,6 +4835,7 @@
    "type": "array"
   },
   "postableSilence": {
+<<<<<<< HEAD
    "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
@@ -4833,6 +4864,8 @@
      "type": "string"
     }
    },
+=======
+>>>>>>> 961cef7f7de (Regenerate swagger docs)
    "required": [
     "comment",
     "createdBy",
@@ -4843,6 +4876,7 @@
    "type": "object"
   },
   "receiver": {
+   "description": "Receiver receiver",
    "properties": {
     "active": {
      "description": "active",
