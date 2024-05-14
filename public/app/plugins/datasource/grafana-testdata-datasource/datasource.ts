@@ -68,12 +68,12 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataDataQuery>
     const streams: Array<Observable<DataQueryResponse>> = [];
 
     // Start streams and prepare queries
-    for (const target of options.targets) {
+    for (let target of options.targets) {
       if (target.hide) {
         continue;
       }
 
-      this.resolveTemplateVariables(target, options.scopedVars);
+      target = this.resolveTemplateVariables(target, options.scopedVars);
 
       switch (target.scenarioId) {
         case 'live':
@@ -162,11 +162,12 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataDataQuery>
     if (result.rawFrameContent) {
       result.rawFrameContent = this.templateSrv.replace(result.rawFrameContent, scopedVars);
     }
+
+    return result;
   }
 
   applyTemplateVariables(query: TestDataDataQuery, scopedVars: ScopedVars): TestDataDataQuery {
-    this.resolveTemplateVariables(query, scopedVars);
-    return query;
+    return this.resolveTemplateVariables(query, scopedVars);
   }
 
   annotationDataTopicTest(
