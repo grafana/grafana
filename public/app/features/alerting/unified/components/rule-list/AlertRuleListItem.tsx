@@ -7,6 +7,7 @@ import { TextProps } from '@grafana/ui/src/components/Text/Text';
 import { RuleHealth } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
+import { Label } from '../../utils/matchers';
 import { MetaText } from '../MetaText';
 import { Spacer } from '../Spacer';
 import { isErrorHealth } from '../rule-viewer/RuleViewer';
@@ -17,12 +18,26 @@ interface AlertRuleListItemProps {
   summary?: string;
   error?: string;
   state?: PromAlertingRuleState;
+  isPaused?: boolean;
   health?: RuleHealth;
   isProvisioned?: boolean;
+  labels?: Label[];
+  instancesCount?: number;
 }
 
 export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
-  const { name, summary, state, health, error, href, isProvisioned } = props;
+  const {
+    name,
+    summary,
+    state,
+    health,
+    error,
+    href,
+    isProvisioned,
+    isPaused = false,
+    instancesCount = 0,
+    labels = [],
+  } = props;
   const styles = useStyles2(getStyles);
 
   return (
@@ -32,8 +47,10 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
           <div>
             <Stack direction="column" gap={0}>
               <Stack direction="row" alignItems="flex-start" wrap="nowrap" gap={0.5}>
-                <RuleListIcon state={state} health={health} />
-                <TextLink href={href}>{name}</TextLink>
+                <RuleListIcon state={state} health={health} isPaused={isPaused} />
+                <TextLink href={href} inline={false}>
+                  {name}
+                </TextLink>
               </Stack>
               {summary && (
                 <Text variant="bodySmall" color="secondary">
@@ -65,19 +82,26 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
               ) : (
                 <>
                   <MetaText icon="clock-nine">
-                    Firing for <Text weight="bold">2m 34s</Text>
-                  </MetaText>
-                  <MetaText icon="hourglass">
-                    Next evaluation in <Text weight="bold">34s</Text>
+                    Firing for <Text weight="bold">2m 34s</Text>⋅ next evaluation in <Text weight="bold">34s</Text>
                   </MetaText>
                 </>
               )}
+              <MetaText icon="layer-group">
+                <TextLink variant="bodySmall" color="secondary" href={href + '?tab=instances'} inline={false}>
+                  {`${instancesCount} instances`}
+                </TextLink>
+              </MetaText>
+
+              <MetaText icon="layer-group">
+                <TextLink variant="bodySmall" color="secondary" href={href} inline={false}>
+                  {`${labels.length} labels`}
+                </TextLink>
+              </MetaText>
             </Stack>
           </div>
         </Stack>
 
         <Stack direction="row" alignItems="center" gap={1} wrap="nowrap">
-          <MetaText icon="layer-group">9</MetaText>
           <Button
             variant="secondary"
             size="sm"
@@ -122,6 +146,7 @@ interface RecordingRuleListItemProps {
   isProvisioned?: boolean;
 }
 
+// @TODO maybe show for how long it has been recording? And the next recording time?
 export const RecordingRuleListItem = ({ name, error, health, isProvisioned, href }: RecordingRuleListItemProps) => {
   const styles = useStyles2(getStyles);
 
@@ -215,10 +240,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
 interface RuleListIconProps {
   recording?: boolean;
   state?: PromAlertingRuleState;
-  health?: string;
+  health?: RuleHealth;
+  isPaused?: boolean;
 }
 
-export function RuleListIcon({ state, health, recording = false }: RuleListIconProps) {
+/**
+ * Make sure that the order of importance here matches the one we use in the StateBadge component for the detail view
+ */
+export function RuleListIcon({ state, health, recording = false, isPaused = false }: RuleListIconProps) {
   const icons: Record<PromAlertingRuleState, IconName> = {
     [PromAlertingRuleState.Inactive]: 'check',
     [PromAlertingRuleState.Pending]: 'hourglass',
@@ -231,27 +260,47 @@ export function RuleListIcon({ state, health, recording = false }: RuleListIconP
     [PromAlertingRuleState.Firing]: 'error',
   };
 
+  const stateNames: Record<PromAlertingRuleState, string> = {
+    [PromAlertingRuleState.Inactive]: 'Normal',
+    [PromAlertingRuleState.Pending]: 'Pending',
+    [PromAlertingRuleState.Firing]: 'Firing',
+  };
+
   let iconName: IconName = state ? icons[state] : 'circle';
   let iconColor: TextProps['color'] = state ? color[state] : 'secondary';
+  let stateName: string = state ? stateNames[state] : 'unknown';
 
   if (recording) {
     iconName = 'record-audio';
     iconColor = 'success';
+    stateName = 'Recording';
   }
 
   if (health === 'nodata') {
     iconName = 'exclamation-triangle';
     iconColor = 'warning';
+    stateName = 'Insufficient data';
   }
 
   if (isErrorHealth(health)) {
     iconName = 'exclamation-circle';
     iconColor = 'error';
+    stateName = 'Failed to evaluate rule';
+  }
+
+  if (isPaused) {
+    iconName = 'pause';
+    iconColor = 'warning';
+    stateName = 'Paused';
   }
 
   return (
-    <Text color={iconColor}>
-      <Icon name={iconName} size="md" />
-    </Text>
+    <Tooltip content={stateName} placement="right">
+      <div>
+        <Text color={iconColor}>
+          <Icon name={iconName} size="md" />
+        </Text>
+      </div>
+    </Tooltip>
   );
 }

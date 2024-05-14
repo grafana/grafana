@@ -206,6 +206,7 @@ const EvaluationGroupWithRules = ({ group, rulesSource }: EvaluationGroupWithRul
               name={rulerRule.grafana_alert.title}
               state={promRule?.state}
               health={promRule?.health}
+              isPaused={rulerRule.grafana_alert.is_paused}
               href={createViewLink(rulesSource, rule)}
               summary={rule.annotations?.['summary']}
               isProvisioned={Boolean(rulerRule.grafana_alert.provenance)}

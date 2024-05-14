@@ -63,12 +63,7 @@ const EvaluationGroupHeader = (props: EvaluationGroupProps) => {
         {isProvisioned && <Badge color="purple" text="Provisioned" />}
         {description && <MetaText>{description}</MetaText>}
         <Spacer />
-        {interval && (
-          <MetaText>
-            <Icon name={'history'} size="sm" />
-            {interval}
-          </MetaText>
-        )}
+        {interval && <MetaText icon="history">{interval}</MetaText>}
         <Button
           variant="secondary"
           size="sm"
