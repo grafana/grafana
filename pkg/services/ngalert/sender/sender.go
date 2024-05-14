@@ -94,8 +94,11 @@ func NewExternalAlertmanagerSender(opts ...Option) *ExternalAlertmanager {
 		&Options{QueueCapacity: defaultMaxQueueCapacity, Registerer: prometheus.NewRegistry()},
 		s.logger,
 	)
-
-	s.sdManager = discovery.NewManager(sdCtx, s.logger)
+	sdMetrics, err := discovery.CreateAndRegisterSDMetrics(prometheus.DefaultRegisterer)
+	if err != nil {
+		s.logger.Error("failed to register service discovery metrics", "error", err)
+	}
+	s.sdManager = discovery.NewManager(sdCtx, s.logger, prometheus.DefaultRegisterer, sdMetrics)
 
 	for _, opt := range opts {
 		opt(s)

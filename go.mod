@@ -13,7 +13,7 @@ replace cuelang.org/go => github.com/grafana/cue v0.0.0-20230926092038-971951014
 // Override Prometheus version because Prometheus v2.X is tagged as v0.X for Go modules purposes and Go assumes
 // that v1.Y is higher than v0.X, so when we resolve dependencies if any dependency imports v1.Y we'd
 // import that instead of v0.X even though v0.X is newer.
-replace github.com/prometheus/prometheus => github.com/prometheus/prometheus v0.49.0
+replace github.com/prometheus/prometheus => github.com/prometheus/prometheus v0.52.0
 
 // Update when github.com/deepmap/oapi-codegen/v2 is updated to support later versions.
 replace github.com/getkin/kin-openapi => github.com/getkin/kin-openapi v0.122.0
