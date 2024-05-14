@@ -19,7 +19,7 @@ func TestGetEnginePostgresFromConfig(t *testing.T) {
 	s.Key("db_user").SetValue("user")
 	s.Key("db_password").SetValue("password")
 
-	engine, err := getEnginePostgres(cfg.SectionWithEnvOverrides("entity_api"))
+	engine, err := getEnginePostgres(cfg.SectionWithEnvOverrides("entity_api"), nil)
 
 	assert.NotNil(t, engine)
 	assert.NoError(t, err)
@@ -36,7 +36,7 @@ func TestGetEngineMySQLFromConfig(t *testing.T) {
 	s.Key("db_user").SetValue("user")
 	s.Key("db_password").SetValue("password")
 
-	engine, err := getEngineMySQL(cfg.SectionWithEnvOverrides("entity_api"))
+	engine, err := getEngineMySQL(cfg.SectionWithEnvOverrides("entity_api"), nil)
 
 	assert.NotNil(t, engine)
 	assert.NoError(t, err)

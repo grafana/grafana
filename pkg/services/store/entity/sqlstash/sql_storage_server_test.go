@@ -136,7 +136,9 @@ func setUpTestServer(t *testing.T) entity.EntityStoreServer {
 	entityDB, err := dbimpl.ProvideEntityDB(
 		sqlStore,
 		cfg,
-		featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorage))
+		featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorage),
+		nil,
+	)
 	require.NoError(t, err)
 
 	traceConfig, err := tracing.ParseTracingConfig(cfg)

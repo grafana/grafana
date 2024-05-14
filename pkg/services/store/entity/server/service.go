@@ -106,7 +106,7 @@ func (s *service) start(ctx context.Context) error {
 	// TODO: use wire
 
 	// TODO: support using grafana db connection?
-	eDB, err := dbimpl.ProvideEntityDB(nil, s.cfg, s.features)
+	eDB, err := dbimpl.ProvideEntityDB(nil, s.cfg, s.features, s.tracing)
 	if err != nil {
 		return err
 	}

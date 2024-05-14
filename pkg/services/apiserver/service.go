@@ -249,7 +249,7 @@ func (s *service) start(ctx context.Context) error {
 			return fmt.Errorf("unified storage requires the unifiedStorage feature flag")
 		}
 
-		eDB, err := dbimpl.ProvideEntityDB(s.db, s.cfg, s.features)
+		eDB, err := dbimpl.ProvideEntityDB(s.db, s.cfg, s.features, s.tracing)
 		if err != nil {
 			return err
 		}

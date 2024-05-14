@@ -80,7 +80,7 @@ func createTestContext(t *testing.T) testContext {
 
 	authToken, serviceAccountUser := createServiceAccountAdminToken(t, env)
 
-	eDB, err := dbimpl.ProvideEntityDB(env.SQLStore, env.Cfg, env.FeatureToggles)
+	eDB, err := dbimpl.ProvideEntityDB(env.SQLStore, env.Cfg, env.FeatureToggles, nil)
 	require.NoError(t, err)
 
 	err = eDB.Init()

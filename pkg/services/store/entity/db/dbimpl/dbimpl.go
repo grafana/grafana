@@ -6,6 +6,7 @@ import (
 	"github.com/dlmiddlecote/sqlstats"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	entitydb "github.com/grafana/grafana/pkg/services/store/entity/db"
@@ -18,12 +19,13 @@ import (
 
 var _ entitydb.EntityDBInterface = (*EntityDB)(nil)
 
-func ProvideEntityDB(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*EntityDB, error) {
+func ProvideEntityDB(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) (*EntityDB, error) {
 	return &EntityDB{
 		db:       db,
 		cfg:      cfg,
 		features: features,
 		log:      log.New("entity-db"),
+		tracer:   tracer,
 	}, nil
 }
 
@@ -33,6 +35,7 @@ type EntityDB struct {
 	engine   *xorm.Engine
 	cfg      *setting.Cfg
 	log      log.Logger
+	tracer   tracing.Tracer
 }
 
 func (db *EntityDB) Init() error {
@@ -54,7 +57,7 @@ func (db *EntityDB) GetEngine() (*xorm.Engine, error) {
 	// if explicit connection settings are provided, use them
 	if dbType != "" {
 		if dbType == "postgres" {
-			engine, err = getEnginePostgres(cfgSection)
+			engine, err = getEnginePostgres(cfgSection, db.tracer)
 			if err != nil {
 				return nil, err
 			}
@@ -66,7 +69,7 @@ func (db *EntityDB) GetEngine() (*xorm.Engine, error) {
 				// FIXME: return nil, err
 			}
 		} else if dbType == "mysql" {
-			engine, err = getEngineMySQL(cfgSection)
+			engine, err = getEngineMySQL(cfgSection, db.tracer)
 			if err != nil {
 				return nil, err
 			}
