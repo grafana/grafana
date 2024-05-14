@@ -619,8 +619,6 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		rrs := gen.GenerateMany(n)
 		for i := range rrs {
 			rrs[i].Condition = ""
-			// TODO: These fields do not apply to recording rules - for now, we just use the default values of them. This is validated at the storage level.
-			// TODO: Consider making it so recording rules allow for empty string here, or use some other sentinel value in the future.
 			rrs[i].NoDataState = ""
 			rrs[i].ExecErrState = ""
 			rrs[i].For = 0
