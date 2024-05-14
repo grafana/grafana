@@ -145,6 +145,8 @@ func parseTables(rawSQL string) ([]string, error) {
 	checkSql := strings.ToUpper(rawSQL)
 	rawSQL = strings.ReplaceAll(rawSQL, "\n", " ")
 	rawSQL = strings.ReplaceAll(rawSQL, "\r", " ")
+	rawSQL = strings.ReplaceAll(rawSQL, "\t", " ")
+
 	if strings.HasPrefix(checkSql, "SELECT") || strings.HasPrefix(rawSQL, "WITH") {
 		tables := []string{}
 		tokens := strings.Split(rawSQL, " ")
@@ -187,7 +189,7 @@ func parseTables(rawSQL string) ([]string, error) {
 				}
 				checkNext = false
 			}
-			if t == "FROM" {
+			if t == "FROM" || t == "JOIN" {
 				checkNext = true
 			}
 		}
