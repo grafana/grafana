@@ -13,3 +13,7 @@ export const CustomInput = (props: InputProps) => {
 
   return <components.Input {...props} data-testid={testId} />;
 };
+
+export const CustomInputAlwaysVisible = (props: InputProps) => {
+  return <CustomInput {...props} isHidden={false} />;
+};

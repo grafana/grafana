@@ -336,6 +336,7 @@ export const WidthAuto: Story = (args) => {
 
 export const CustomValueCreation: Story = (args) => {
   const [value, setValue] = useState<SelectableValue<string>>();
+  const [inputValue, setInputValue] = useState<string | undefined>('');
   const [customOptions, setCustomOptions] = useState<Array<SelectableValue<string>>>([]);
   const options = generateOptions();
   return (
@@ -345,6 +346,7 @@ export const CustomValueCreation: Story = (args) => {
         value={value}
         onChange={(v) => {
           setValue(v);
+          setInputValue(v?.label);
           action('onChange')(v);
         }}
         allowCustomValue={args.allowCustomValue}
@@ -354,7 +356,19 @@ export const CustomValueCreation: Story = (args) => {
           setValue(customValue);
           action('onCreateOption')(v);
         }}
+        onInputChange={(inputValue, { action }) => {
+          // onBlur => setInputValue to last selected value
+          if (action === 'input-blur') {
+            setInputValue(value ? value.label : '');
+          }
+
+          // onInputChange => update inputValue
+          else if (action === 'input-change') {
+            setInputValue(inputValue);
+          }
+        }}
         prefix={getPrefix(args.icon)}
+        inputValue={inputValue}
         {...args}
       />
     </>

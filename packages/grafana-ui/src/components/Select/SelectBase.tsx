@@ -1,6 +1,11 @@
 import { t } from 'i18next';
 import React, { ComponentProps, useCallback, useEffect, useRef, useState } from 'react';
-import { default as ReactSelect, IndicatorsContainerProps, Props as ReactSelectProps } from 'react-select';
+import {
+  default as ReactSelect,
+  IndicatorsContainerProps,
+  Props as ReactSelectProps,
+  ClearIndicatorProps,
+} from 'react-select';
 import { default as ReactAsyncSelect } from 'react-select/async';
 import { default as AsyncCreatable } from 'react-select/async-creatable';
 import Creatable from 'react-select/creatable';
@@ -11,7 +16,7 @@ import { useTheme2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { Spinner } from '../Spinner/Spinner';
 
-import { CustomInput } from './CustomInput';
+import { CustomInput, CustomInputAlwaysVisible } from './CustomInput';
 import { DropdownIndicator } from './DropdownIndicator';
 import { IndicatorsContainer } from './IndicatorsContainer';
 import { InputControl } from './InputControl';
@@ -19,7 +24,7 @@ import { MultiValueContainer, MultiValueRemove } from './MultiValue';
 import { SelectContainer } from './SelectContainer';
 import { SelectMenu, SelectMenuOptions, VirtualizedSelectMenu } from './SelectMenu';
 import { SelectOptionGroup } from './SelectOptionGroup';
-import { SingleValue } from './SingleValue';
+import { Props, SingleValue } from './SingleValue';
 import { ValueContainer } from './ValueContainer';
 import { getSelectStyles } from './getSelectStyles';
 import { useCustomSelectStyles } from './resetSelectStyles';
@@ -268,12 +273,13 @@ export function SelectBase<T, Rest = {}>({
   };
 
   if (allowCustomValue) {
-    ReactSelectComponent = Creatable as any;
+    ReactSelectComponent = Creatable;
     creatableProps.allowCreateWhileLoading = allowCreateWhileLoading;
     creatableProps.formatCreateLabel = formatCreateLabel ?? defaultFormatCreateLabel;
     creatableProps.onCreateOption = onCreateOption;
     creatableProps.createOptionPosition = createOptionPosition;
     creatableProps.isValidNewOption = isValidNewOption;
+    creatableProps.controlShouldRenderValue = false;
   }
 
   // Instead of having AsyncSelect, as a separate component we render ReactAsyncSelect
@@ -300,7 +306,7 @@ export function SelectBase<T, Rest = {}>({
           IndicatorSeparator: IndicatorSeparator,
           Control: CustomControl,
           Option: SelectMenuOptions,
-          ClearIndicator(props: any) {
+          ClearIndicator(props: ClearIndicatorProps) {
             const { clearValue } = props;
             return (
               <Icon
@@ -330,13 +336,13 @@ export function SelectBase<T, Rest = {}>({
             );
           },
           DropdownIndicator: DropdownIndicator,
-          SingleValue(props: any) {
+          SingleValue(props: Props<T>) {
             return <SingleValue {...props} isDisabled={disabled} />;
           },
           SelectContainer,
           MultiValueContainer: MultiValueContainer,
           MultiValueRemove: !disabled ? MultiValueRemove : () => null,
-          Input: CustomInput,
+          Input: allowCustomValue ? CustomInputAlwaysVisible : CustomInput,
           ...components,
         }}
         styles={selectStyles}
