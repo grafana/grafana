@@ -82,7 +82,6 @@ func (o *Options) Validate() []error {
 			return errs
 		}
 	}
-
 	return nil
 }
 
