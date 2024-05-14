@@ -10,6 +10,8 @@ import (
 
 var _ = plugins.Client(&baseMiddleware{})
 
+// The base middleware simply passes the request down the chain
+// This allows middleware to avoid implementing all the noop functions
 type baseMiddleware struct {
 	next plugins.Client
 }

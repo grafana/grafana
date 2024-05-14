@@ -47,8 +47,6 @@ func NewCachingMiddlewareWithFeatureManager(cachingService caching.CachingServic
 	})
 }
 
-var _ = plugins.Client(&CachingMiddleware{})
-
 type CachingMiddleware struct {
 	baseMiddleware
 
