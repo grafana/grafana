@@ -21,17 +21,17 @@ weight: 420
 
 # View alert state and history
 
-An alert rule can transition through distinct states during its evaluation. To view the state and health of your alert rules:
+An alert rule and its corresponding alert instances can transition through distinct states during their [evaluation][alert-rule-evaluation]. There are three key components that helps us understand the behavior of our alerts:
+
+- [Alert Instance State][alert-instance-state]: Refers to the state of the individual alert instances.
+- [Alert Rule State][alert-rule-state]: Determined by the "worst state" among its alert instances.
+- [Alert Rule Health][alert-rule-health]: Indicates the status in cases of `Error` or `NoData` events.
+
+To view the state and health of your alert rules:
 
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Alert rules** to view the list of existing alerts.
 1. Click an alert rule to view its state, health, and state history.
-
-There are three key components that help us understand the behavior how of our alerts:
-
-- [Alert Instance State][alert-instance-state]: Refers to the state of the individual alert instances that are produced.
-- [Alert Rule State][alert-rule-state]: Determined by the "worst state" among its alert instances.
-- [Alert Rule Health][alert-rule-health]: Indicates the health status in cases of `Error` or `NoData` events.
 
 ## View state history
 
@@ -66,6 +66,9 @@ To access the State history view, complete the following steps.
    {{< figure src="/media/docs/alerting/state-history.png" max-width="750px" >}}
 
 {{% docs/reference %}}
+
+[alert-rule-evaluation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation"
+[alert-rule-evaluation]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation"
 
 [alert-rule-state]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health#alert-rule-state"
 [alert-rule-state]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/state-and-health#alert-rule-state"
