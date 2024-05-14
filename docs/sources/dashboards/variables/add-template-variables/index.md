@@ -517,16 +517,6 @@ The more layers of dependency you have in variables, the longer it will take to 
 
 For example, if you have a series of four linked variables (country, region, server, metric) and you change a root variable value (country), then Grafana must run queries for all the dependent variables before it updates the visualizations in the dashboard.
 
-## Manage variables
-
-The variables page lets you [add][] variables and manage existing variables. It also allows you to [inspect][] variables and identify whether a variable is being referenced (or used) in other variables or dashboard.
-
-**Move:** You can move a variable up or down the list using drag and drop.
-
-**Clone:** To clone a variable, click the clone icon from the set of icons on the right. This creates a copy of the variable with the name of the original variable prefixed with `copy_of_`.
-
-**Delete:** To delete a variable, click the trash icon from the set of icons on the right.
-
 ## Filter variables with regex
 
 Using the Regex Query option, you filter the list of options returned by the variable query or modify the options returned.
