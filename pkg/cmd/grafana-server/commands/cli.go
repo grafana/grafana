@@ -24,6 +24,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+type InitFunc func(cfg *setting.Cfg, opts server.Options, apiOpts api.ServerOptions) (*server.Server, error)
+
 type ServerOptions struct {
 	Version          string
 	Commit           string
@@ -31,9 +33,10 @@ type ServerOptions struct {
 	BuildBranch      string
 	BuildStamp       string
 	Context          *cli.Context
+	InitializeFunc   InitFunc
 }
 
-func ServerCommand(version, commit, enterpriseCommit, buildBranch, buildstamp string) *cli.Command {
+func ServerCommand(version, commit, enterpriseCommit, buildBranch, buildstamp string, initFunc InitFunc) *cli.Command {
 	return &cli.Command{
 		Name:  "server",
 		Usage: "run the grafana server",
@@ -46,6 +49,7 @@ func ServerCommand(version, commit, enterpriseCommit, buildBranch, buildstamp st
 				BuildBranch:      buildBranch,
 				BuildStamp:       buildstamp,
 				Context:          context,
+				InitializeFunc:   initFunc,
 			})
 		},
 		Subcommands: []*cli.Command{TargetCommand(version, commit, buildBranch, buildstamp)},
@@ -53,6 +57,10 @@ func ServerCommand(version, commit, enterpriseCommit, buildBranch, buildstamp st
 }
 
 func RunServer(opts ServerOptions) error {
+	if opts.InitializeFunc == nil {
+		opts.InitializeFunc = server.Initialize
+	}
+
 	if Version || VerboseVersion {
 		if opts.EnterpriseCommit != gcli.DefaultCommitValue && opts.EnterpriseCommit != "" {
 			fmt.Printf("Version %s (commit: %s, branch: %s, enterprise-commit: %s)\n", opts.Version, opts.Commit, opts.BuildBranch, opts.EnterpriseCommit)
@@ -114,7 +122,7 @@ func RunServer(opts ServerOptions) error {
 
 	metrics.SetBuildInformation(metrics.ProvideRegisterer(), opts.Version, opts.Commit, opts.BuildBranch, getBuildstamp(opts))
 
-	s, err := server.Initialize(
+	s, err := opts.InitializeFunc(
 		cfg,
 		server.Options{
 			PidFile:     PidFile,

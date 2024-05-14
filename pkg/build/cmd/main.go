@@ -12,8 +12,7 @@ import (
 
 var additionalCommands []*cli.Command = make([]*cli.Command, 0, 5)
 
-//nolint:unused
-func registerAppCommand(c *cli.Command) {
+func RegisterAppCommand(c *cli.Command) {
 	additionalCommands = append(additionalCommands, c)
 }
 
@@ -337,7 +336,7 @@ func main() {
 					Flags: []cli.Flag{
 						&editionFlag,
 						&buildIDFlag,
-						&dryRunFlag,
+						&DryRunFlag,
 						&cli.StringFlag{
 							Name:  "src-bucket",
 							Value: "grafana-downloads",
@@ -350,7 +349,7 @@ func main() {
 					Usage:  "Publish packages to GitHub releases",
 					Action: PublishGithub,
 					Flags: []cli.Flag{
-						&dryRunFlag,
+						&DryRunFlag,
 						&cli.StringFlag{
 							Name:  "path",
 							Usage: "Path to the asset to be published",
@@ -375,7 +374,7 @@ func main() {
 					Usage:  "Publish image to AWS Marketplace releases",
 					Action: PublishAwsMarketplace,
 					Flags: []cli.Flag{
-						&dryRunFlag,
+						&DryRunFlag,
 						&cli.StringFlag{
 							Name:  "version",
 							Usage: "Release version (default from metadata)",

@@ -158,7 +158,7 @@ func setupPublishGithubTests(t *testing.T) (*cli.App, string) {
 	testApp := cli.NewApp()
 	testApp.Action = PublishGithub
 	testApp.Flags = []cli.Flag{
-		&dryRunFlag,
+		&DryRunFlag,
 		&cli.StringFlag{
 			Name:     "path",
 			Required: true,

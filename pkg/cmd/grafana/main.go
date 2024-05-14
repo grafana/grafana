@@ -10,6 +10,7 @@ import (
 	gcli "github.com/grafana/grafana/pkg/cmd/grafana-cli/commands"
 	gsrv "github.com/grafana/grafana/pkg/cmd/grafana-server/commands"
 	"github.com/grafana/grafana/pkg/cmd/grafana/apiserver"
+	"github.com/grafana/grafana/pkg/server"
 )
 
 // The following variables cannot be constants, since they can be overridden through the -X link flag
@@ -43,7 +44,7 @@ func MainApp() *cli.App {
 		Version: version,
 		Commands: []*cli.Command{
 			gcli.CLICommand(version),
-			gsrv.ServerCommand(version, commit, enterpriseCommit, buildBranch, buildstamp),
+			gsrv.ServerCommand(version, commit, enterpriseCommit, buildBranch, buildstamp, server.Initialize),
 			{
 				// The kubernetes standalone apiserver service runner
 				Name:  "apiserver",

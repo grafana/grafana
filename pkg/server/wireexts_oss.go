@@ -49,7 +49,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var wireExtsBasicSet = wire.NewSet(
+var WireExtsBasicSet = wire.NewSet(
 	authimpl.ProvideUserAuthTokenService,
 	wire.Bind(new(auth.UserTokenService), new(*authimpl.UserAuthTokenService)),
 	wire.Bind(new(auth.UserTokenBackgroundService), new(*authimpl.UserAuthTokenService)),
@@ -104,25 +104,25 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(plugins.Installer), new(*manager.PluginInstaller)),
 )
 
-var wireExtsSet = wire.NewSet(
-	wireSet,
-	wireExtsBasicSet,
+var WireExtsSet = wire.NewSet(
+	WireSet,
+	WireExtsBasicSet,
 )
 
-var wireExtsCLISet = wire.NewSet(
-	wireCLISet,
-	wireExtsBasicSet,
+var WireExtsCLISet = wire.NewSet(
+	WireCLISet,
+	WireExtsBasicSet,
 )
 
-var wireExtsTestSet = wire.NewSet(
-	wireTestSet,
-	wireExtsBasicSet,
+var WireExtsTestSet = wire.NewSet(
+	WireTestSet,
+	WireExtsBasicSet,
 )
 
 // The wireExtsBaseCLISet is a simplified set of dependencies for the OSS CLI,
 // suitable for running background services and targeted dskit modules without
 // starting up the full Grafana server.
-var wireExtsBaseCLISet = wire.NewSet(
+var WireExtsBaseCLISet = wire.NewSet(
 	NewModuleRunner,
 
 	metrics.WireSet,
@@ -134,11 +134,11 @@ var wireExtsBaseCLISet = wire.NewSet(
 )
 
 // wireModuleServerSet is a wire set for the ModuleServer.
-var wireExtsModuleServerSet = wire.NewSet(
+var WireExtsModuleServerSet = wire.NewSet(
 	NewModule,
-	wireExtsBaseCLISet,
+	WireExtsBaseCLISet,
 )
 
-var wireExtsStandaloneAPIServerSet = wire.NewSet(
+var WireExtsStandaloneAPIServerSet = wire.NewSet(
 	standalone.GetDummyAPIFactory,
 )

@@ -385,7 +385,7 @@ var wireBasicSet = wire.NewSet(
 	resourcepermissions.NewActionSetService,
 )
 
-var wireSet = wire.NewSet(
+var WireSet = wire.NewSet(
 	wireBasicSet,
 	metrics.WireSet,
 	sqlstore.ProvideService,
@@ -399,7 +399,7 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
 )
 
-var wireCLISet = wire.NewSet(
+var WireCLISet = wire.NewSet(
 	NewRunner,
 	wireBasicSet,
 	metrics.WireSet,
@@ -414,7 +414,7 @@ var wireCLISet = wire.NewSet(
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
 )
 
-var wireTestSet = wire.NewSet(
+var WireTestSet = wire.NewSet(
 	wireBasicSet,
 	ProvideTestEnv,
 	metrics.WireSetForTest,
@@ -432,36 +432,36 @@ var wireTestSet = wire.NewSet(
 )
 
 func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Server, error) {
-	wire.Build(wireExtsSet)
+	wire.Build(WireExtsSet)
 	return &Server{}, nil
 }
 
 func InitializeForTest(t sqlutil.ITestDB, cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*TestEnv, error) {
-	wire.Build(wireExtsTestSet)
+	wire.Build(WireExtsTestSet)
 	return &TestEnv{Server: &Server{}, SQLStore: &sqlstore.SQLStore{}, Cfg: &setting.Cfg{}}, nil
 }
 
 func InitializeForCLI(cfg *setting.Cfg) (Runner, error) {
-	wire.Build(wireExtsCLISet)
+	wire.Build(WireExtsCLISet)
 	return Runner{}, nil
 }
 
 // InitializeForCLITarget is a simplified set of dependencies for the CLI, used
 // by the server target subcommand to launch specific dskit modules.
 func InitializeForCLITarget(cfg *setting.Cfg) (ModuleRunner, error) {
-	wire.Build(wireExtsBaseCLISet)
+	wire.Build(WireExtsBaseCLISet)
 	return ModuleRunner{}, nil
 }
 
 // InitializeModuleServer is a simplified set of dependencies for the CLI,
 // suitable for running background services and targeting dskit modules.
 func InitializeModuleServer(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*ModuleServer, error) {
-	wire.Build(wireExtsModuleServerSet)
+	wire.Build(WireExtsModuleServerSet)
 	return &ModuleServer{}, nil
 }
 
 // Initialize the standalone APIServer factory
 func InitializeAPIServerFactory() (standalone.APIServerFactory, error) {
-	wire.Build(wireExtsStandaloneAPIServerSet)
+	wire.Build(WireExtsStandaloneAPIServerSet)
 	return &standalone.DummyAPIFactory{}, nil // Wire will replace this with a real interface
 }

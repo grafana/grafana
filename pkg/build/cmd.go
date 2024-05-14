@@ -65,6 +65,18 @@ func RunCmd() int {
 		case "setup":
 			setup(opts.goos)
 
+		case "build-enterprise":
+			if !opts.isDev {
+				clean(opts)
+			}
+
+			opts.enterprise = true
+
+			if err := doBuild("grafana", "./src/pkg/cmd/grafana", opts); err != nil {
+				log.Println(err)
+				return 1
+			}
+
 		case "build-backend":
 			if !opts.isDev {
 				clean(opts)

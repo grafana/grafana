@@ -138,7 +138,7 @@ func setupPublishAwsMarketplaceTests(t *testing.T) *cli.App {
 	testApp := cli.NewApp()
 	testApp.Action = PublishAwsMarketplace
 	testApp.Flags = []cli.Flag{
-		&dryRunFlag,
+		&DryRunFlag,
 		&cli.StringFlag{
 			Name:  "version",
 			Usage: "Release version (default from metadata)",
