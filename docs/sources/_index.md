@@ -3,22 +3,21 @@ aliases:
   - /docs/grafana/v1.1/
   - /docs/grafana/v3.1/
   - guides/reference/admin/
-description: Open source documentation for Grafana
+cascade:
+  TEMPO_VERSION: latest
+description: Guides, installation, and feature documentation
 keywords:
   - grafana
-  - open source
   - installation
   - documentation
 labels:
   products:
     - enterprise
     - oss
-cascade:
-  TEMPO_VERSION: latest
-title: Grafana open source documentation
+title: Grafana documentation
 ---
 
-# Grafana open source documentation
+# Grafana documentation
 
 ## Installing Grafana
 
