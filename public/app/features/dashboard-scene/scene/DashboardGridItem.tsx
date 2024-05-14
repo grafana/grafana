@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { isEqual } from 'lodash';
 import React, { useMemo } from 'react';
 import { Unsubscribable } from 'rxjs';
 
@@ -42,8 +41,6 @@ export type RepeatDirection = 'v' | 'h';
 
 export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> implements SceneGridItemLike {
   private _libPanelSubscription: Unsubscribable | undefined;
-  private _prevRepeatValues?: VariableValueSingle[];
-
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: this.state.variableName ? [this.state.variableName] : [],
     onVariableUpdateCompleted: this._onVariableUpdateCompleted.bind(this),
@@ -156,14 +153,8 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
       return;
     }
 
+    let panelToRepeat = this.state.body instanceof LibraryVizPanel ? this.state.body.state.panel! : this.state.body;
     const { values, texts } = getMultiVariableValues(variable);
-
-    if (isEqual(this._prevRepeatValues, values)) {
-      return;
-    }
-
-    this._prevRepeatValues = values;
-    const panelToRepeat = this.state.body instanceof LibraryVizPanel ? this.state.body.state.panel! : this.state.body;
     const repeatedPanels: VizPanel[] = [];
 
     // Loop through variable values and create repeats
