@@ -1,3 +1,5 @@
+import { selectors } from '@grafana/e2e-selectors';
+
 import { e2e } from '../utils';
 
 const PAGE_UNDER_TEST = '-Y-tnEDWk/templating-nested-template-variables';
@@ -85,7 +87,7 @@ describe('Variables - Set options from ui', () => {
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A,B').scrollIntoView().should('be.visible');
 
-    e2e.components.LoadingIndicator.icon().should('have.length', 0);
+    cy.get(`[data-testid="${selectors.components.LoadingIndicator.icon}"]`).should('not.exist');
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('AA')
       .should('be.visible')
@@ -134,10 +136,11 @@ describe('Variables - Set options from ui', () => {
     e2e.flows.openDashboard({
       uid: `${PAGE_UNDER_TEST}?orgId=1&var-datacenter=A&var-datacenter=B&var-server=AA&var-server=BB&var-pod=AAA&var-pod=BBB`,
     });
+
     cy.intercept({ pathname: '/api/ds/query' }).as('query');
 
     cy.wait('@query');
-    cy.wait(300);
+    cy.get(`[aria-label="${selectors.components.LoadingIndicator.icon}"]`).should('not.exist');
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A,B')
       .should('be.visible')
@@ -147,8 +150,8 @@ describe('Variables - Set options from ui', () => {
 
     cy.get('body').click();
 
-    cy.wait(300);
     cy.wait('@query');
+    cy.get(`[data-testid="${selectors.components.LoadingIndicator.icon}"]`).should('not.exist');
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('B')
       .scrollIntoView()
@@ -159,7 +162,7 @@ describe('Variables - Set options from ui', () => {
 
     cy.get('body').click();
 
-    e2e.components.LoadingIndicator.icon().should('have.length', 0);
+    cy.get(`[data-testid="${selectors.components.LoadingIndicator.icon}"]`).should('not.exist');
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('BB')
       .should('be.visible')
