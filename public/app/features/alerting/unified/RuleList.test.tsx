@@ -36,21 +36,23 @@ import * as analytics from './Analytics';
 import RuleList from './RuleList';
 import { discoverFeatures } from './api/buildInfo';
 import { fetchRules } from './api/prometheus';
+import * as apiRuler from './api/ruler';
 import { deleteNamespace, deleteRulerRulesGroup, fetchRulerRules, setRulerRuleGroup } from './api/ruler';
 import {
   MockDataSourceSrv,
+  getPotentiallyPausedRulerRules,
   grantUserPermissions,
   mockDataSource,
+  mockFolder,
   mockPromAlert,
   mockPromAlertingRule,
   mockPromRecordingRule,
   mockPromRuleGroup,
   mockPromRuleNamespace,
+  mockRulerGrafanaRule,
   pausedPromRules,
-  getPotentiallyPausedRulerRules,
   somePromRules,
   someRulerRules,
-  mockFolder,
 } from './mocks';
 import * as config from './utils/config';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
@@ -79,6 +81,7 @@ jest.mock('app/core/core', () => ({
 jest.spyOn(analytics, 'logInfo');
 jest.spyOn(config, 'getAllDataSources');
 jest.spyOn(actions, 'rulesInSameGroupHaveInvalidFor').mockReturnValue([]);
+jest.spyOn(apiRuler, 'rulerUrlBuilder');
 
 const mocks = {
   getAllDataSourcesMock: jest.mocked(config.getAllDataSources),
@@ -93,6 +96,7 @@ const mocks = {
     deleteGroup: jest.mocked(deleteRulerRulesGroup),
     deleteNamespace: jest.mocked(deleteNamespace),
     setRulerRuleGroup: jest.mocked(setRulerRuleGroup),
+    rulerBuilderMock: jest.mocked(apiRuler.rulerUrlBuilder),
   },
 };
 
@@ -186,6 +190,11 @@ const configureMockServer = () => {
   mockAlertRuleApi(server).updateRule('grafana', {
     message: 'rule group updated successfully',
     updated: ['foo', 'bar', 'baz'],
+  });
+  mockAlertRuleApi(server).rulerRuleGroup(GRAFANA_RULES_SOURCE_NAME, 'NAMESPACE_UID', 'groupPaused', {
+    name: 'group-1',
+    interval: '1m',
+    rules: [mockRulerGrafanaRule()],
   });
 };
 
@@ -634,6 +643,13 @@ describe('RuleList', () => {
       mocks.api.fetchRules.mockImplementation((sourceName) =>
         Promise.resolve(sourceName === 'grafana' ? pausedPromRules('grafana') : [])
       );
+      mocks.api.rulerBuilderMock.mockReturnValue({
+        rules: () => ({ path: `api/ruler/${GRAFANA_RULES_SOURCE_NAME}/api/v1/rules` }),
+        namespace: () => ({ path: 'ruler' }),
+        namespaceGroup: () => ({
+          path: `api/ruler/${GRAFANA_RULES_SOURCE_NAME}/api/v1/rules/NAMESPACE_UID/groupPaused`,
+        }),
+      });
     });
 
     test('resuming paused alert rule', async () => {
