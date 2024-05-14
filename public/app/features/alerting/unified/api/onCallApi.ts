@@ -33,6 +33,11 @@ export interface CreateIntegrationDTO {
   verbal_name: string;
 }
 
+export interface OnCallConfigChecks {
+  is_chatops_connected: boolean;
+  is_integration_chatops_connected: boolean;
+}
+
 const getProxyApiUrl = (path: string) => `/api/plugin-proxy/${SupportedPlugin.OnCall}${path}`;
 
 export const onCallApi = alertingApi.injectEndpoints({
@@ -76,6 +81,12 @@ export const onCallApi = alertingApi.injectEndpoints({
     features: build.query<OnCallFeature[], void>({
       query: () => ({
         url: getProxyApiUrl('/api/internal/v1/features/'),
+        showErrorAlert: false,
+      }),
+    }),
+    onCallConfigChecks: build.query<OnCallConfigChecks, void>({
+      query: () => ({
+        url: getProxyApiUrl('/api/internal/v1/organization/config-checks/'),
         showErrorAlert: false,
       }),
     }),
