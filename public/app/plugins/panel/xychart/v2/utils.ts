@@ -216,8 +216,6 @@ export function prepSeries(
 
     if (mapping === SeriesMapping.Manual) {
       series.forEach((xySeries, idx) => {
-        console.log('xySeries', xySeries);
-        console.log('xySeries.name', xySeries.y.field.name);
         if (xySeries.name.value === xySeries.y.field.name) {
           xySeries.name.value = `Series ${idx + 1}`;
         }
