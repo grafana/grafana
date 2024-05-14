@@ -75,6 +75,7 @@ type AlertRuleV1 struct {
 	Labels               values.StringMapValue   `json:"labels" yaml:"labels"`
 	IsPaused             values.BoolValue        `json:"isPaused" yaml:"isPaused"`
 	NotificationSettings *NotificationSettingsV1 `json:"notification_settings" yaml:"notification_settings"`
+	RecordV1             *RecordV1               `json:"record" yaml:"record"`
 }
 
 func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {
@@ -244,5 +245,17 @@ func (nsV1 *NotificationSettingsV1) mapToModel() (models.NotificationSettings, e
 		GroupInterval:     gi,
 		RepeatInterval:    ri,
 		MuteTimeIntervals: mute,
+	}, nil
+}
+
+type RecordV1 struct {
+	Metric values.StringValue `json:"metric" yaml:"metric"`
+	From   values.StringValue `json:"from" yaml:"from"`
+}
+
+func (record *RecordV1) mapToModel() (models.Record, error) {
+	return models.Record{
+		Metric: record.Metric.Value(),
+		From:   record.From.Value(),
 	}, nil
 }

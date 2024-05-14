@@ -31,9 +31,7 @@ func AlertRuleFromProvisionedAlertRule(a definitions.ProvisionedAlertRule) (mode
 		Labels:               a.Labels,
 		IsPaused:             a.IsPaused,
 		NotificationSettings: NotificationSettingsFromAlertRuleNotificationSettings(a.NotificationSettings),
-		// Recording Rule fields will be implemented in the future.
-		// For now, no rules can be recording rules. So, we force these to be empty.
-		Record: nil,
+		Record:               AlertRuleRecordFromRecord(a.Record),
 	}, nil
 }
 
@@ -57,6 +55,7 @@ func ProvisionedAlertRuleFromAlertRule(rule models.AlertRule, provenance models.
 		Provenance:           definitions.Provenance(provenance), // TODO validate enum conversion?
 		IsPaused:             rule.IsPaused,
 		NotificationSettings: AlertRuleNotificationSettingsFromNotificationSettings(rule.NotificationSettings),
+		Record:               RecordFromAlertRuleRecord(rule.Record),
 	}
 }
 
@@ -191,6 +190,7 @@ func AlertRuleExportFromAlertRule(rule models.AlertRule) (definitions.AlertRuleE
 		ExecErrState:         definitions.ExecutionErrorState(rule.ExecErrState),
 		IsPaused:             rule.IsPaused,
 		NotificationSettings: AlertRuleNotificationSettingsExportFromNotificationSettings(rule.NotificationSettings),
+		Record:               AlertRuleRecordExportFromRecord(rule.Record),
 	}
 	if rule.For.Seconds() > 0 {
 		result.ForString = util.Pointer(model.Duration(rule.For).String())
@@ -435,5 +435,35 @@ func NotificationSettingsFromAlertRuleNotificationSettings(ns *definitions.Alert
 			RepeatInterval:    ns.RepeatInterval,
 			MuteTimeIntervals: ns.MuteTimeIntervals,
 		},
+	}
+}
+
+func AlertRuleRecordFromRecord(r *definitions.Record) *models.Record {
+	if r == nil {
+		return nil
+	}
+	return &models.Record{
+		Metric: r.Metric,
+		From:   r.From,
+	}
+}
+
+func RecordFromAlertRuleRecord(r *models.Record) *definitions.Record {
+	if r == nil {
+		return nil
+	}
+	return &definitions.Record{
+		Metric: r.Metric,
+		From:   r.From,
+	}
+}
+
+func AlertRuleRecordExportFromRecord(r *models.Record) *definitions.AlertRuleRecordExport {
+	if r == nil {
+		return nil
+	}
+	return &definitions.AlertRuleRecordExport{
+		Metric: r.Metric,
+		From:   r.From,
 	}
 }
