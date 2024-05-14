@@ -27,6 +27,8 @@ Dashboard lists allow you to display dynamic links to other dashboards. The list
 
 On each dashboard load, this panel queries the dashboard list, always providing the most up-to-date results.
 
+{{< docs/play title="Dashboard List Visualization" url="https://play.grafana.org/d/fdlojrg7daebka/" >}}
+
 ## Options
 
 Use these options to refine your visualization.
