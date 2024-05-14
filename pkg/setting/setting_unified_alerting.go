@@ -7,6 +7,7 @@ import (
 	"time"
 
 	alertingCluster "github.com/grafana/alerting/cluster"
+	dstls "github.com/grafana/dskit/crypto/tls"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"gopkg.in/ini.v1"
 
@@ -79,6 +80,8 @@ type UnifiedAlertingSettings struct {
 	HARedisPassword                string
 	HARedisDB                      int
 	HARedisMaxConns                int
+	HARedisTLSEnabled              bool
+	HARedisTLSConfig               dstls.ClientConfig
 	MaxAttempts                    int64
 	MinInterval                    time.Duration
 	EvaluationTimeout              time.Duration
@@ -234,6 +237,14 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 			uaCfg.HAPeers = append(uaCfg.HAPeers, peer)
 		}
 	}
+	uaCfg.HARedisTLSEnabled = ua.Key("ha_redis_tls_enabled").MustBool(false)
+	uaCfg.HARedisTLSConfig.CertPath = ua.Key("ha_redis_tls_cert_path").MustString("")
+	uaCfg.HARedisTLSConfig.KeyPath = ua.Key("ha_redis_tls_key_path").MustString("")
+	uaCfg.HARedisTLSConfig.CAPath = ua.Key("ha_redis_tls_ca_path").MustString("")
+	uaCfg.HARedisTLSConfig.ServerName = ua.Key("ha_redis_tls_server_name").MustString("")
+	uaCfg.HARedisTLSConfig.InsecureSkipVerify = ua.Key("ha_redis_tls_insecure_skip_verify").MustBool(false)
+	uaCfg.HARedisTLSConfig.CipherSuites = ua.Key("ha_redis_tls_cipher_suites").MustString("")
+	uaCfg.HARedisTLSConfig.MinVersion = ua.Key("ha_redis_tls_min_version").MustString("")
 
 	// TODO load from ini file
 	uaCfg.DefaultConfiguration = alertmanagerDefaultConfiguration
