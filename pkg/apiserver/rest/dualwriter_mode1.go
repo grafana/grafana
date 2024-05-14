@@ -14,12 +14,15 @@ type DualWriterMode1 struct {
 	Legacy  LegacyStorage
 	Storage Storage
 	Log     klog.Logger
+	*dualWriterMetrics
 }
 
 // NewDualWriterMode1 returns a new DualWriter in mode 1.
 // Mode 1 represents writing to and reading from LegacyStorage.
 func NewDualWriterMode1(legacy LegacyStorage, storage Storage) *DualWriterMode1 {
-	return &DualWriterMode1{Legacy: legacy, Storage: storage, Log: klog.NewKlogr().WithName("DualWriterMode1")}
+	metrics := &dualWriterMetrics{}
+	metrics.init()
+	return &DualWriterMode1{Legacy: legacy, Storage: storage, Log: klog.NewKlogr().WithName("DualWriterMode1"), dualWriterMetrics: metrics}
 }
 
 // Create overrides the behavior of the generic DualWriter and writes only to LegacyStorage.

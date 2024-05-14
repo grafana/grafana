@@ -80,14 +80,24 @@ const (
 	Mode4
 )
 
-var CurrentMode = Mode2
-
-//TODO: make CurrentMode customisable and specific to each entity
-// change DualWriter signature to get the current mode as an argument
-
 // NewDualWriter returns a new DualWriter.
-func NewDualWriter(legacy LegacyStorage, storage Storage) DualWriter {
-	return selectDualWriter(CurrentMode, legacy, storage)
+func NewDualWriter(mode DualWriterMode, legacy LegacyStorage, storage Storage) DualWriter {
+	switch mode {
+	case Mode1:
+		// read and write only from legacy storage
+		return NewDualWriterMode1(legacy, storage)
+	case Mode2:
+		// write to both, read from storage but use legacy as backup
+		return NewDualWriterMode2(legacy, storage)
+	case Mode3:
+		// write to both, read from storage only
+		return NewDualWriterMode3(legacy, storage)
+	case Mode4:
+		// read and write only from storage
+		return NewDualWriterMode4(legacy, storage)
+	default:
+		return NewDualWriterMode1(legacy, storage)
+	}
 }
 
 type updateWrapper struct {
@@ -106,23 +116,4 @@ func (u *updateWrapper) Preconditions() *metav1.Preconditions {
 // The only time an empty oldObj should be passed in is if a "create on update" is occurring (there is no oldObj).
 func (u *updateWrapper) UpdatedObject(ctx context.Context, oldObj runtime.Object) (newObj runtime.Object, err error) {
 	return u.updated, nil
-}
-
-func selectDualWriter(mode DualWriterMode, legacy LegacyStorage, storage Storage) DualWriter {
-	switch mode {
-	case Mode1:
-		// read and write only from legacy storage
-		return NewDualWriterMode1(legacy, storage)
-	case Mode2:
-		// write to both, read from storage but use legacy as backup
-		return NewDualWriterMode2(legacy, storage)
-	case Mode3:
-		// write to both, read from storage only
-		return NewDualWriterMode3(legacy, storage)
-	case Mode4:
-		// read and write only from storage
-		return NewDualWriterMode4(legacy, storage)
-	default:
-		return NewDualWriterMode1(legacy, storage)
-	}
 }

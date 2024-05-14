@@ -37,7 +37,9 @@ func NewCachingMiddlewareWithFeatureManager(cachingService caching.CachingServic
 	}
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		return &CachingMiddleware{
-			next:     next,
+			baseMiddleware: baseMiddleware{
+				next: next,
+			},
 			caching:  cachingService,
 			log:      log,
 			features: features,
@@ -46,7 +48,8 @@ func NewCachingMiddlewareWithFeatureManager(cachingService caching.CachingServic
 }
 
 type CachingMiddleware struct {
-	next     plugins.Client
+	baseMiddleware
+
 	caching  caching.CachingService
 	log      log.Logger
 	features featuremgmt.FeatureToggles
@@ -163,24 +166,4 @@ func (m *CachingMiddleware) CallResource(ctx context.Context, req *backend.CallR
 	})
 
 	return m.next.CallResource(ctx, req, cacheSender)
-}
-
-func (m *CachingMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	return m.next.CheckHealth(ctx, req)
-}
-
-func (m *CachingMiddleware) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
-	return m.next.CollectMetrics(ctx, req)
-}
-
-func (m *CachingMiddleware) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	return m.next.SubscribeStream(ctx, req)
-}
-
-func (m *CachingMiddleware) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	return m.next.PublishStream(ctx, req)
-}
-
-func (m *CachingMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	return m.next.RunStream(ctx, req, sender)
 }

@@ -37,16 +37,12 @@ type userDisplayDTO struct {
 
 // Static function to parse a requester into a userDisplayDTO
 func newUserDisplayDTOFromRequester(requester identity.Requester) *userDisplayDTO {
-	userID := int64(0)
-	namespaceID, identifier := requester.GetNamespacedID()
-	if namespaceID == identity.NamespaceUser || namespaceID == identity.NamespaceServiceAccount {
-		userID, _ = identity.IntIdentifier(namespaceID, identifier)
-	}
-	namespaceID, uid := requester.GetNamespacedUID()
-	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
-		uid = ""
+	uid := ""
+	if requester.GetUID().IsNamespace(identity.NamespaceUser, identity.NamespaceServiceAccount) {
+		uid = requester.GetUID().ID()
 	}
 
+	userID, _ := requester.GetID().UserID()
 	return &userDisplayDTO{
 		ID:    userID,
 		UID:   uid,
