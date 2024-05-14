@@ -78,4 +78,8 @@ When evaluation of an alert rule produces state `NoData` or `Error`, Grafana Ale
 | **alertname**      | Either `DatasourceNoData` or `DatasourceError` depending on the state. |
 | **datasource_uid** | The UID of the data source that caused the state.                      |
 
+{{% admonition type="note" %}}
+You will need to set the No Data and Error Handling to `No Data` or `Error` in the alert rule as per this doc: <https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling> in order to generate the additional labels.
+{{% /admonition %}}
+
 You can handle these alerts the same way as regular alerts by adding a silence, route to a contact point, and so on.
