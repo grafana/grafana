@@ -22,21 +22,40 @@ weight: 100
 
 # Alert list
 
-Use alert lists to display your alerts. You can configure the list to show the current state. You can read more about alerts in [Grafana Alerting overview][].
+Alert lists allows you to display your alerts. You can configure the alert list to show the current state of your alert, such as firing, pending, or normal. You can read more about alerts in [Grafana Alerting overview][].
 
 {{< figure src="/static/img/docs/alert-list-panel/alert-list-panel.png" max-width="850px" alt="An alert list visualization" >}}
 
-Customize your visualization using the following settings.
+On each dashboard load, this panel queries the alert list, always providing the most up-to-date results.
+
+You can use an alert list visualization to display a list of important alerts that you want to track.
+
+## Configure an alert list
+
+Once you’ve created a [dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/), the following video shows you how to configure an alert list visualization:
+
+<!-- video TBA here -->
 
 ## Panel options
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Options
+## Alert list options
 
-- **Group mode -** Choose between "Default grouping" to show alert instances grouped by their alert rule, or "Custom grouping" to group alert instances by a custom set of labels.
-- **Max Items -** Sets the maximum number of alerts to list.
-- **Sort order -** Select how to order the alerts displayed:
+Use the following options to refine your alert list visualization.
+
+### Group mode
+
+Choose between "Default grouping" to show alert instances grouped by their alert rule, or "Custom grouping" to group alert instances by a custom set of labels.
+
+### Max items 
+
+Sets the maximum number of alerts to list. By default, Grafana sets this value to 10.
+
+### Sort order 
+
+Select how to order the alerts displayed:
+
   - **Alphabetical (asc) -** Alphabetical order.
   - **Alphabetical (desc) -** Reverse alphabetical order.
   - **Importance -** By importance according to the following values, with 1 being the highest:
@@ -49,18 +68,32 @@ Customize your visualization using the following settings.
     - inactive: 5
   - **Time (asc) -** Newest active alert instances first.
   - **Time (desc) -** Oldest active alert instances first.
-- **Alerts from this dashboard -** Shows alerts only from the dashboard the alert list is in.
+
+### Alerts linked to this dashboard 
+
+Shows alerts only from the dashboard the alert list is in.
 
 ## Filter
 
 These options allow you to limit alerts shown to only those that match the query, folder, or tags you choose.
 
-- **Alert name -** Enter an alert name query.
-- **Alert instance label -** Filter alert instances using label querying, ex: `{severity="critical", instance=~"cluster-us-.+"}`.
-- **Folder -** Select a folder. Only alerts from dashboards in the folder selected will be displayed.
-- **Datasource -** Filter alerts from the selected data source.
+### Alert name
 
-## State filter
+Enter an alert name query.
+
+### Alert instance label
+
+Filter alert instances using [label](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/annotation-label/) querying, ex: `{severity="critical", instance=~"cluster-us-.+"}`.
+
+### Datasource
+
+Filter alerts from the selected data source.
+
+### Folder
+
+Select a folder. Only alerts from dashboards in the folder selected will be displayed.
+
+## Alert state filter
 
 Choose which alert states to display in this visualization.
 
