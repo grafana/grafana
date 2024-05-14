@@ -2692,6 +2692,7 @@
         "type": "object"
       },
       "AlertRuleNotificationSettingsExport": {
+        "description": "Field name mismatches with Terraform provider schema are noted where applicable.",
         "properties": {
           "group_by": {
             "items": {
@@ -2706,12 +2707,14 @@
             "type": "string"
           },
           "mute_time_intervals": {
+            "description": "TF -\u003e `mute_timings`",
             "items": {
               "type": "string"
             },
             "type": "array"
           },
           "receiver": {
+            "description": "TF -\u003e `contact_point`",
             "type": "string"
           },
           "repeat_interval": {
@@ -5839,6 +5842,9 @@
           "provenance": {
             "$ref": "#/components/schemas/Provenance"
           },
+          "record": {
+            "$ref": "#/components/schemas/Record"
+          },
           "rule_group": {
             "type": "string"
           },
@@ -8049,6 +8055,9 @@
           "notification_settings": {
             "$ref": "#/components/schemas/AlertRuleNotificationSettings"
           },
+          "record": {
+            "$ref": "#/components/schemas/Record"
+          },
           "title": {
             "type": "string"
           },
@@ -8856,6 +8865,18 @@
           }
         },
         "title": "ReceiverExport is the provisioned file export of alerting.ReceiverV1.",
+        "type": "object"
+      },
+      "Record": {
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "metric": {
+            "type": "string"
+          }
+        },
+        "title": "Record defines how data produced by a recording rule is written.",
         "type": "object"
       },
       "RecordingRuleJSON": {
@@ -12020,6 +12041,7 @@
         "type": "object"
       },
       "gettableAlerts": {
+        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
@@ -12080,7 +12102,6 @@
         "type": "array"
       },
       "integration": {
-        "description": "Integration integration",
         "properties": {
           "lastNotifyAttempt": {
             "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -12290,6 +12311,7 @@
         "type": "object"
       },
       "receiver": {
+        "description": "Receiver receiver",
         "properties": {
           "active": {
             "description": "active",
