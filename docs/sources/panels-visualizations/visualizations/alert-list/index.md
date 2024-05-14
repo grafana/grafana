@@ -22,7 +22,7 @@ weight: 100
 
 # Alert list
 
-Alert lists allow you display a list of important alerts that you want to track. You can configure the alert list to show the current state of your alert, such as firing, pending, or normal. Learn more about alerts in [Grafana Alerting overview][].
+Alert lists allow you to display a list of important alerts that you want to track. You can configure the alert list to show the current state of your alert, such as firing, pending, or normal. Learn more about alerts in [Grafana Alerting overview][].
 
 {{< figure src="/static/img/docs/alert-list-panel/alert-list-panel.png" max-width="850px" alt="An alert list visualization" >}}
 
@@ -46,28 +46,28 @@ Use the following options to refine your alert list visualization.
 
 Choose between **Default grouping** to show alert instances grouped by their alert rule, or **Custom grouping** to show alert instances grouped by a custom set of labels.
 
-### Max items 
+### Max items
 
 Sets the maximum number of alerts to list. By default, Grafana sets this value to 10.
 
-### Sort order 
+### Sort order
 
 Select how to order the alerts displayed. Choose from:
 
-  - **Alphabetical (asc) -** Alphabetical order.
-  - **Alphabetical (desc) -** Reverse alphabetical order.
-  - **Importance -** By importance according to the following values, with 1 being the highest:
-    - alerting: 1
-    - firing: 1
-    - no_data: 2
-    - pending: 3
-    - ok: 4
-    - paused: 5
-    - inactive: 5
-  - **Time (asc) -** Newest active alert instances first.
-  - **Time (desc) -** Oldest active alert instances first.
+- **Alphabetical (asc) -** Alphabetical order.
+- **Alphabetical (desc) -** Reverse alphabetical order.
+- **Importance -** By importance according to the following values, with 1 being the highest:
+  - alerting: 1
+  - firing: 1
+  - no_data: 2
+  - pending: 3
+  - ok: 4
+  - paused: 5
+  - inactive: 5
+- **Time (asc) -** Newest active alert instances first.
+- **Time (desc) -** Oldest active alert instances first.
 
-### Alerts linked to this dashboard 
+### Alerts linked to this dashboard
 
 Toggle the switch on to only show alerts from the dashboard the alert list is in.
 
