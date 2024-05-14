@@ -6,6 +6,8 @@ import {
   ListOptionsLabelSelector,
   MetaStatus,
   Resource,
+  ResourceFind,
+  ResourceFindOpts,
   ResourceForCreate,
   ResourceList,
   ResourceServer,
@@ -32,6 +34,10 @@ export class ScopedResourceServer<T = object, K = string> implements ResourceSer
 
   public async get(name: string): Promise<Resource<T, K>> {
     return getBackendSrv().get<Resource<T, K>>(`${this.url}/${name}`);
+  }
+
+  public async find(opts: ResourceFindOpts): Promise<ResourceFind<T>> {
+    return getBackendSrv().get<ResourceFind<T>>(this.url, opts);
   }
 
   public async list(opts?: ListOptions | undefined): Promise<ResourceList<T, K>> {
@@ -69,7 +75,7 @@ export class ScopedResourceServer<T = object, K = string> implements ResourceSer
 
           case 'in':
           case 'notin':
-            return `${key}${operator}(${label.value.join(',')})`;
+            return `${key} ${operator} (${label.value.join(',')})`;
 
           case '':
           case '!':

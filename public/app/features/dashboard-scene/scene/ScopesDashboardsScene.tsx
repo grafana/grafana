@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-import { AppEvents, GrafanaTheme2, ScopeDashboardBindingSpec } from '@grafana/data';
+import { AppEvents, GrafanaTheme2, Scope, ScopeDashboardBindingSpec } from '@grafana/data';
 import { getAppEvents, getBackendSrv, locationService } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { CustomScrollbar, Icon, Input, useStyles2 } from '@grafana/ui';
@@ -40,14 +40,14 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
     });
   }
 
-  public async fetchDashboards(scope: string | undefined) {
-    if (!scope) {
+  public async fetchDashboards(scopes: Scope[]) {
+    if (scopes.length === 0) {
       return this.setState({ dashboards: [], filteredDashboards: [], isLoading: false });
     }
 
     this.setState({ isLoading: true });
 
-    const dashboardUids = await this.fetchDashboardsUids(scope);
+    const dashboardUids = await this.fetchDashboardsUids(scopes.map((scope) => scope.metadata.name));
     const dashboards = await this.fetchDashboardsDetails(dashboardUids);
 
     this.setState({
@@ -66,14 +66,14 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
     });
   }
 
-  private async fetchDashboardsUids(scope: string): Promise<string[]> {
+  private async fetchDashboardsUids(scopes: string[]): Promise<string[]> {
     try {
       const response = await this.server.list({
-        fieldSelector: [
+        labelSelector: [
           {
             key: 'spec.scope',
-            operator: '=',
-            value: scope,
+            operator: 'in',
+            value: scopes,
           },
         ],
       });

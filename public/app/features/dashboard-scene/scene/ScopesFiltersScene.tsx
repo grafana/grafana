@@ -1,6 +1,7 @@
+import { css, cx } from '@emotion/css';
 import React from 'react';
 
-import { AppEvents, Scope, ScopeSpec, SelectableValue } from '@grafana/data';
+import { AppEvents, GrafanaTheme2, Scope, ScopeSpec, ScopeTreeItemSpec } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 import {
   SceneComponentProps,
@@ -9,111 +10,269 @@ import {
   SceneObjectUrlSyncConfig,
   SceneObjectUrlValues,
 } from '@grafana/scenes';
-import { Select } from '@grafana/ui';
+import { Checkbox, Icon, Input, Toggletip, useStyles2 } from '@grafana/ui';
 
 import { ScopedResourceServer } from '../../apiserver/server';
 
+export interface Node {
+  item: ScopeTreeItemSpec;
+  isScope: boolean;
+  children: Record<string, Node>;
+}
+
 export interface ScopesFiltersSceneState extends SceneObjectState {
-  isLoading: boolean;
-  pendingValue: string | undefined;
+  nodes: Record<string, Node>;
+  expandedNodes: string[];
   scopes: Scope[];
-  value: string | undefined;
 }
 
 export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState> {
   static Component = ScopesFiltersSceneRenderer;
 
-  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['scope'] });
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['scopes'] });
 
-  private server = new ScopedResourceServer<ScopeSpec, 'Scope'>({
-    group: 'scope.grafana.app',
-    version: 'v0alpha1',
+  private serverGroup = 'scope.grafana.app';
+  private serverVersion = 'v0alpha1';
+
+  private treeServer = new ScopedResourceServer<ScopeTreeItemSpec, 'TreeItem'>({
+    group: this.serverGroup,
+    version: this.serverVersion,
+    resource: 'find',
+  });
+
+  private scopesServer = new ScopedResourceServer<ScopeSpec, 'Scope'>({
+    group: this.serverGroup,
+    version: this.serverVersion,
     resource: 'scopes',
   });
 
   constructor() {
     super({
-      isLoading: true,
-      pendingValue: undefined,
+      nodes: {},
+      expandedNodes: [],
       scopes: [],
-      value: undefined,
     });
   }
 
   getUrlState() {
-    return { scope: this.state.value };
+    return { scopes: this.state.scopes.map((scope) => scope.metadata.name) };
   }
 
   updateFromUrl(values: SceneObjectUrlValues) {
-    const scope = values.scope ?? undefined;
-    this.setScope(Array.isArray(scope) ? scope[0] : scope);
+    let scopes = values.scopes ?? [];
+    scopes = Array.isArray(scopes) ? scopes : [scopes];
+
+    const scopesPromises = scopes.map((scopeName) => this.scopesServer.get(scopeName));
+
+    Promise.all(scopesPromises).then((scopes) => {
+      this.setState({ scopes });
+    });
   }
 
-  public getSelectedScope(): Scope | undefined {
-    return this.state.scopes.find((scope) => scope.metadata.name === this.state.value);
-  }
-
-  public setScope(newScope: string | undefined) {
-    if (this.state.isLoading) {
-      return this.setState({ pendingValue: newScope });
-    }
-
-    if (!this.state.scopes.find((scope) => scope.metadata.name === newScope)) {
-      newScope = undefined;
-    }
-
-    this.setState({ value: newScope });
-  }
-
-  public async fetchScopes() {
-    this.setState({ isLoading: true });
-
+  public async fetchTreeItems(nodeId: string): Promise<Record<string, Node>> {
     try {
-      const response = await this.server.list();
+      return ((await this.treeServer.find({ parent: nodeId }))?.items ?? []).reduce<Record<string, Node>>(
+        (acc, item) => {
+          acc[item.nodeId] = {
+            item,
+            isScope: item.nodeType === 'leaf',
+            children: {},
+          };
 
-      this.setScopesAfterFetch(response.items);
+          return acc;
+        },
+        {}
+      );
+    } catch (err) {
+      getAppEvents().publish({
+        type: AppEvents.alertError.name,
+        payload: ['Failed to fetch tree items'],
+      });
+
+      return {};
+    }
+  }
+
+  public async fetchScopes(parent: string) {
+    try {
+      return (await this.scopesServer.list({ labelSelector: [{ key: 'category', operator: '=', value: parent }] }))
+        ?.items;
     } catch (err) {
       getAppEvents().publish({
         type: AppEvents.alertError.name,
         payload: ['Failed to fetch scopes'],
       });
-
-      this.setScopesAfterFetch([]);
-    } finally {
-      this.setState({ isLoading: false });
+      return [];
     }
   }
 
-  private setScopesAfterFetch(scopes: Scope[]) {
-    let value = this.state.pendingValue ?? this.state.value;
+  public async expandNode(path: string[]) {
+    let nodes = { ...this.state.nodes };
+    let currentLevel = nodes;
 
-    if (!scopes.find((scope) => scope.metadata.name === value)) {
-      value = undefined;
+    for (let idx = 0; idx < path.length; idx++) {
+      const nodeId = path[idx];
+      const isLast = idx === path.length - 1;
+      const currentNode = currentLevel[nodeId];
+
+      currentLevel[nodeId] = {
+        ...currentNode,
+        children: isLast ? await this.fetchTreeItems(nodeId) : currentLevel[nodeId].children,
+      };
+
+      currentLevel = currentNode.children;
     }
 
-    this.setState({ scopes, pendingValue: undefined, value });
+    this.setState({
+      nodes,
+      expandedNodes: path,
+    });
+  }
+
+  public async fetchBaseNodes() {
+    this.setState({
+      nodes: await this.fetchTreeItems(''),
+      expandedNodes: [],
+    });
+  }
+
+  public async toggleScope(linkID: string) {
+    let scopes = this.state.scopes;
+    const selectedIdx = scopes.findIndex((scope) => scope.metadata.name === linkID);
+
+    if (selectedIdx === -1) {
+      const scope = await this.scopesServer.get(linkID);
+
+      if (scope) {
+        scopes = [...scopes, scope];
+      }
+    } else {
+      scopes.splice(selectedIdx, 1);
+    }
+
+    this.setState({ scopes });
   }
 }
 
 export function ScopesFiltersSceneRenderer({ model }: SceneComponentProps<ScopesFiltersScene>) {
-  const { scopes, isLoading, value } = model.useState();
+  const { nodes, expandedNodes, scopes } = model.useState();
   const parentState = model.parent!.useState();
   const isViewing = 'isViewing' in parentState ? !!parentState.isViewing : false;
 
-  const options: Array<SelectableValue<string>> = scopes.map(({ metadata: { name }, spec: { title, category } }) => ({
-    label: title,
-    value: name,
-    description: category,
-  }));
-
   return (
-    <Select
-      isClearable
-      isLoading={isLoading}
-      disabled={isViewing}
-      options={options}
-      value={value}
-      onChange={(selectableValue) => model.setScope(selectableValue?.value ?? undefined)}
-    />
+    <Toggletip
+      content={
+        <ScopesTreeLevel
+          isExpanded
+          path={[]}
+          nodes={nodes}
+          expandedNodes={expandedNodes}
+          scopes={scopes}
+          model={model}
+        />
+      }
+      footer={'Open advanced scope selector'}
+      closeButton={false}
+    >
+      <Input disabled={isViewing} readOnly value={scopes.map((scope) => scope.spec.title)} />
+    </Toggletip>
   );
 }
+
+export interface ScopesTreeLevelProps {
+  isExpanded: boolean;
+  path: string[];
+  nodes: Record<string, Node>;
+  expandedNodes: string[];
+  scopes: Scope[];
+  model: ScopesFiltersScene;
+}
+
+export function ScopesTreeLevel({ isExpanded, path, nodes, expandedNodes, scopes, model }: ScopesTreeLevelProps) {
+  const styles = useStyles2(getStyles);
+
+  if (!isExpanded) {
+    return null;
+  }
+
+  return (
+    <div role="tree" className={path.length > 0 ? styles.innerLevelContainer : undefined}>
+      {Object.values(nodes).map((node) => {
+        const {
+          item: { nodeId, linkID },
+          isScope,
+          children,
+        } = node;
+        const nodePath = [...path, nodeId];
+        const isExpanded = expandedNodes.includes(nodeId);
+        const isSelected = isScope && !!scopes.find((scope) => scope.metadata.name === linkID);
+
+        return (
+          <div
+            key={nodeId}
+            role="treeitem"
+            aria-selected={isExpanded}
+            tabIndex={0}
+            className={cx(styles.item, isScope && styles.itemScope)}
+            onClick={(evt) => {
+              evt.stopPropagation();
+              model.expandNode(nodePath);
+            }}
+            onKeyDown={(evt) => {
+              evt.stopPropagation();
+              model.expandNode(nodePath);
+            }}
+          >
+            {!isScope ? (
+              <Icon className={styles.icon} name="folder" />
+            ) : (
+              <Checkbox
+                className={styles.checkbox}
+                checked={isSelected}
+                onChange={(evt) => {
+                  evt.stopPropagation();
+
+                  if (linkID) {
+                    model.toggleScope(linkID);
+                  }
+                }}
+              />
+            )}
+
+            <span>{node.item.title}</span>
+
+            <ScopesTreeLevel
+              isExpanded={isExpanded}
+              path={nodePath}
+              nodes={children}
+              expandedNodes={expandedNodes}
+              scopes={scopes}
+              model={model}
+            />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    innerLevelContainer: css({
+      marginLeft: theme.spacing(2),
+    }),
+    item: css({
+      cursor: 'pointer',
+      margin: theme.spacing(1, 0),
+    }),
+    itemScope: css({
+      cursor: 'default',
+    }),
+    icon: css({
+      marginRight: theme.spacing(1),
+    }),
+    checkbox: css({
+      marginRight: theme.spacing(1),
+    }),
+  };
+};
