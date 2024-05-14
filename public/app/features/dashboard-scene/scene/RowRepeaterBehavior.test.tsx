@@ -14,6 +14,7 @@ import { activateFullSceneTree } from '../utils/test-utils';
 import { RepeatDirection } from './DashboardGridItem';
 import { DashboardScene } from './DashboardScene';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';
+import { RowActions } from './row-actions/RowActions';
 
 describe('RowRepeaterBehavior', () => {
   describe('Given scene with variable with 5 values', () => {
@@ -38,9 +39,11 @@ describe('RowRepeaterBehavior', () => {
       const row1 = grid.state.children[1] as SceneGridRow;
       expect(row1.state.$behaviors?.[0]).toBeInstanceOf(RowRepeaterBehavior);
       expect(row1.state.$variables!.state.variables[0].getValue()).toBe('A1');
+      expect(row1.state.actions).toBeDefined();
 
       const row2 = grid.state.children[2] as SceneGridRow;
       expect(row2.state.$variables!.state.variables[0].getValueText?.()).toBe('B');
+      expect(row2.state.actions).toBeUndefined();
 
       // Should give repeated panels unique keys
       const gridItem = row2.state.children[0] as SceneGridItem;
@@ -142,6 +145,7 @@ function buildScene(options: SceneOptions) {
         y: 10,
         width: 24,
         height: 1,
+        actions: new RowActions({}),
         $behaviors: [repeatBehavior],
         children: [
           new SceneGridItem({
@@ -162,6 +166,7 @@ function buildScene(options: SceneOptions) {
         width: 24,
         height: 5,
         title: 'Row at the bottom',
+
         children: [
           new SceneGridItem({
             key: 'griditem-2',
