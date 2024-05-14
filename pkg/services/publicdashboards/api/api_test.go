@@ -173,7 +173,7 @@ func TestAPIDeletePublicDashboard(t *testing.T) {
 		DashboardUid            string
 		PublicDashboardUid      string
 		ResponseErr             error
-		ExpectedHttpResponse    int
+		ExpectedHttpResponse    int32
 		ExpectedMessageResponse string
 		ShouldCallService       bool
 	}{
