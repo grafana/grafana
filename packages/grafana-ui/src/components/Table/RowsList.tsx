@@ -25,8 +25,6 @@ import { TableStyles } from './styles';
 import { CellColors, TableFieldOptions, TableFilterActionCallback } from './types';
 import { calculateAroundPointThreshold, getCellColors, isPointTimeValAroundTableTimeVal } from './utils';
 
-const LINE_SCALE_FACTOR = 1.12;
-const LOW_LINE_PAD = 32;
 interface RowsListProps {
   data: DataFrame;
   rows: Row[];
@@ -79,11 +77,14 @@ export const RowsList = (props: RowsListProps) => {
   const theme = useTheme2();
   const panelContext = usePanelContext();
 
-  // Create off-screen canbas for measuring rows for virtualized rendering
+  // Create off-screen canvas for measuring rows for virtualized rendering
   // This line is like this because Jest doesn't have OffscreenCanvas mocked
   // nor is it a part of the jest-canvas-mock package
   let osContext = null;
   if (window.OffscreenCanvas !== undefined) {
+    // The canvas size is defined arbitrarily
+    // As we never actually visualize rendered content
+    // from the offscreen canvas, only perform text measurements
     osContext = new OffscreenCanvas(256, 1024).getContext('2d');
   }
 
@@ -224,10 +225,13 @@ export const RowsList = (props: RowsListProps) => {
   for (const field of data.fields) {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const fieldOptions = field.config.custom as TableFieldOptions;
+    const cellOptionsExist = (
+      fieldOptions !== undefined &&
+      fieldOptions.cellOptions !== undefined
+    );
 
     if (
-      fieldOptions !== undefined &&
-      fieldOptions.cellOptions !== undefined &&
+      cellOptionsExist &&
       fieldOptions.cellOptions.type === TableCellDisplayMode.ColorBackground &&
       fieldOptions.cellOptions.applyToRow
     ) {
@@ -238,13 +242,13 @@ export const RowsList = (props: RowsListProps) => {
       };
     }
 
-    // TODO: Also add option for colored background cell,
-    // and colored text cell
+
     if (
-      fieldOptions !== undefined &&
-      fieldOptions.cellOptions !== undefined &&
-      (fieldOptions.cellOptions.type === TableCellDisplayMode.Auto ||
-        fieldOptions.cellOptions.type === TableCellDisplayMode.ColorBackground) &&
+      cellOptionsExist &&
+      (
+        fieldOptions.cellOptions.type === TableCellDisplayMode.Auto ||
+        fieldOptions.cellOptions.type === TableCellDisplayMode.ColorBackground
+      ) &&
       fieldOptions.cellOptions.wrapText
     ) {
       textWrapField = field;
@@ -401,7 +405,7 @@ export const RowsList = (props: RowsListProps) => {
 };
 
 /**
- * Calculate an esimated bounding box for a block
+ * Calculate an estimated bounding box for a block
  * of text using an offscreen canvas.
  *
  * TODO: Move this 🚚
@@ -414,13 +418,15 @@ function getTextBoundingBox(
   defaultRowHeight: number
 ) {
   const width = Number(headerGroup.width ?? 300);
+  const LINE_SCALE_FACTOR = 1.12;
+  const LOW_LINE_PAD = 32;
 
   if (osContext !== null) {
     const words = text.split(/\s/);
     const lines = [];
     let currentLine = '';
 
-    // Let's just wrap the liens and see how well the measurement works
+    // Let's just wrap the lines and see how well the measurement works
     for (let i = 0; i < words.length; i++) {
       const currentWord = words[i];
       let lineWidth = osContext.measureText(currentLine + ' ' + currentWord).width;
