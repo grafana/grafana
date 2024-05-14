@@ -865,7 +865,7 @@ export class DashboardVariableDependency implements SceneVariableDependencyConfi
     }
 
     /**
-     * Propagete variable changes to repeat row behavior as it does not get it when it's nested under local value
+     * Propagate variable changes to repeat row behavior as it does not get it when it's nested under local value
      * The first repeated row has the row repeater behavior but it also has a local SceneVariableSet with a local variable value
      */
     const layout = this._dashboard.state.body;
