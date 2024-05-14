@@ -25,7 +25,7 @@ const (
 	extJWTAccessTokenExpectAudience = "grafana"
 )
 
-func ProvideExtendedJWT(userService user.Service, cfg *setting.Cfg, signingKeys signingkeys.Service) *ExtendedJWT {
+func ProvideExtendedJWT(cfg *setting.Cfg) *ExtendedJWT {
 	accessTokenVerifier := authlib.NewAccessTokenVerifier(authlib.VerifierConfig{
 		SigningKeysURL:   cfg.ExtJWTAuth.JWKSUrl,
 		AllowedAudiences: []string{extJWTAccessTokenExpectAudience},
@@ -40,8 +40,6 @@ func ProvideExtendedJWT(userService user.Service, cfg *setting.Cfg, signingKeys 
 	return &ExtendedJWT{
 		cfg:                 cfg,
 		log:                 log.New(authn.ClientExtendedJWT),
-		userService:         userService,
-		signingKeys:         signingKeys,
 		namespaceMapper:     request.GetNamespaceMapper(cfg),
 		accessTokenVerifier: accessTokenVerifier,
 		idTokenVerifier:     idTokenVerifier,

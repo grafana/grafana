@@ -85,7 +85,7 @@ func ProvideRegistration(
 	}
 
 	if cfg.ExtJWTAuth.Enabled && features.IsEnabledGlobally(featuremgmt.FlagAuthAPIAccessTokenAuth) {
-		authnSvc.RegisterClient(clients.ProvideExtendedJWT(userService, cfg))
+		authnSvc.RegisterClient(clients.ProvideExtendedJWT(cfg))
 	}
 
 	for name := range socialService.GetOAuthProviders() {

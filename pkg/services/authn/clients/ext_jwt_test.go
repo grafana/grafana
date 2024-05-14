@@ -17,10 +17,7 @@ import (
 
 	authnlib "github.com/grafana/authlib/authn"
 
-	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/authn"
-	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -209,7 +206,6 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 		idPayload   *idTokenClaims
 		orgID       int64
 		want        *authn.Identity
-		initTestEnv func(env *testEnv)
 		wantErr     error
 	}
 	testCases := []testCase{
@@ -248,16 +244,6 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			payload:   &validAccessTokenClaims,
 			idPayload: &validIDTokenClaims,
 			orgID:     1,
-			initTestEnv: func(env *testEnv) {
-				env.userSvc.ExpectedSignedInUser = &user.SignedInUser{
-					UserID:  2,
-					OrgID:   1,
-					OrgRole: roletype.RoleAdmin,
-					Name:    "John Doe",
-					Email:   "johndoe@grafana.com",
-					Login:   "johndoe",
-				}
-			},
 			want: &authn.Identity{
 				ID:              authn.MustParseNamespaceID("user:2"),
 				OrgID:           1,
@@ -277,16 +263,6 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			payload:   &validAcessTokenClaimsWildcard,
 			idPayload: &validIDTokenClaims,
 			orgID:     1,
-			initTestEnv: func(env *testEnv) {
-				env.userSvc.ExpectedSignedInUser = &user.SignedInUser{
-					UserID:  2,
-					OrgID:   1,
-					OrgRole: roletype.RoleAdmin,
-					Name:    "John Doe",
-					Email:   "johndoe@grafana.com",
-					Login:   "johndoe",
-				}
-			},
 			want: &authn.Identity{
 				ID:              authn.MustParseNamespaceID("user:2"),
 				OrgID:           1,
@@ -303,34 +279,14 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			payload:   &validAccessTokenClaims,
 			idPayload: &invalidWildcardNamespaceIDTokenClaims,
 			orgID:     1,
-			initTestEnv: func(env *testEnv) {
-				env.userSvc.ExpectedSignedInUser = &user.SignedInUser{
-					UserID:  2,
-					OrgID:   1,
-					OrgRole: roletype.RoleAdmin,
-					Name:    "John Doe",
-					Email:   "johndoe@grafana.com",
-					Login:   "johndoe",
-				}
-			},
-			wantErr: errJWTDisallowedNamespaceClaim,
+			wantErr:   errJWTDisallowedNamespaceClaim,
 		},
 		{
 			name:      "should return error when id token has wildcard namespace",
 			payload:   &validAccessTokenClaims,
 			idPayload: &invalidNamespaceIDTokenClaims,
 			orgID:     1,
-			initTestEnv: func(env *testEnv) {
-				env.userSvc.ExpectedSignedInUser = &user.SignedInUser{
-					UserID:  2,
-					OrgID:   1,
-					OrgRole: roletype.RoleAdmin,
-					Name:    "John Doe",
-					Email:   "johndoe@grafana.com",
-					Login:   "johndoe",
-				}
-			},
-			wantErr: errJWTDisallowedNamespaceClaim,
+			wantErr:   errJWTDisallowedNamespaceClaim,
 		},
 
 		{
@@ -338,17 +294,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			payload:   &validAccessTokenClaims,
 			idPayload: &invalidSubjectIDTokenClaims,
 			orgID:     1,
-			initTestEnv: func(env *testEnv) {
-				env.userSvc.ExpectedSignedInUser = &user.SignedInUser{
-					UserID:  2,
-					OrgID:   1,
-					OrgRole: roletype.RoleAdmin,
-					Name:    "John Doe",
-					Email:   "johndoe@grafana.com",
-					Login:   "johndoe",
-				}
-			},
-			wantErr: errJWTInvalid,
+			wantErr:   errJWTInvalid,
 		},
 
 		{
@@ -375,9 +321,6 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			env := setupTestCtx(nil)
-			if tc.initTestEnv != nil {
-				tc.initTestEnv(env)
-			}
 
 			validHTTPReq := &http.Request{
 				Header: map[string][]string{
@@ -598,19 +541,15 @@ func setupTestCtx(cfg *setting.Cfg) *testEnv {
 		}
 	}
 
-	userSvc := &usertest.FakeUserService{}
-
-	extJwtClient := ProvideExtendedJWT(userSvc, cfg)
+	extJwtClient := ProvideExtendedJWT(cfg)
 
 	return &testEnv{
-		userSvc: userSvc,
-		s:       extJwtClient,
+		s: extJwtClient,
 	}
 }
 
 type testEnv struct {
-	userSvc *usertest.FakeUserService
-	s       *ExtendedJWT
+	s *ExtendedJWT
 }
 
 func generateToken(payload accessTokenClaims, signingKey any, alg jose.SignatureAlgorithm) string {
