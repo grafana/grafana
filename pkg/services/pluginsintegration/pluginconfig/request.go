@@ -2,7 +2,6 @@ package pluginconfig
 
 import (
 	"context"
-	"encoding/json"
 	"slices"
 	"sort"
 	"strconv"
@@ -96,12 +95,8 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 			m[azsettings.AzureCloud] = azureSettings.Cloud
 		}
 
-		if customClouds := azureSettings.CustomCloudList; len(customClouds) > 0 {
-			if jsonBytes, err := json.Marshal(customClouds); err != nil {
-				// TODO: how to log error?
-			} else {
-				m[azsettings.AzureCustomCloudsConfig] = string(jsonBytes)
-			}
+		if len(azureSettings.CustomCloudListJSON) > 0 {
+			m[azsettings.AzureCustomCloudsConfig] = azureSettings.CustomCloudListJSON
 		}
 
 		if azureSettings.ManagedIdentityEnabled {
