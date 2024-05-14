@@ -68,7 +68,7 @@ func Write(ctx context.Context, err error, w http.ResponseWriter, opts ...func(E
 		status := &k8sError{
 			Status: metav1.Status{
 				Status:  metav1.StatusFailure,
-				Code:    int32(pub.StatusCode),
+				Code:    pub.StatusCode,
 				Message: pub.Message,
 				Details: &metav1.StatusDetails{
 					Name:  info.Name,

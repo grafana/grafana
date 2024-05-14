@@ -128,7 +128,7 @@ func convertToK8sError(err error) error {
 	if errors.As(err, &gErr) {
 		return &errorsK8s.StatusError{ErrStatus: metav1.Status{
 			Status:  metav1.StatusFailure,
-			Code:    int32(gErr.Reason.Status().HTTPStatus()),
+			Code:    gErr.Reason.Status().HTTPStatus(),
 			Reason:  metav1.StatusReason(gErr.Reason.Status()), // almost true
 			Message: gErr.PublicMessage,
 		}}
