@@ -338,11 +338,12 @@ export class LogContextProvider {
 
     const contextFilters: ContextFilter[] = [];
     Object.entries(rowLabels).forEach(([label, value]) => {
+      const labelType = getLabelTypeFromFrame(label, row.dataFrame, row.rowIndex);
       const filter: ContextFilter = {
         label,
         value: value,
         enabled: allLabels.includes(label),
-        nonIndexed: getLabelTypeFromFrame(label, row.dataFrame, row.rowIndex) !== LabelType.Indexed,
+        nonIndexed: labelType !== null && labelType !== LabelType.Indexed,
       };
 
       contextFilters.push(filter);
