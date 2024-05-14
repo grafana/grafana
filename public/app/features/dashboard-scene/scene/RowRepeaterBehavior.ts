@@ -162,6 +162,7 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
       $behaviors: [],
       children,
       y: sourceRowY + rowContentHeight * index + index,
+      actions: undefined,
     });
   }
 
