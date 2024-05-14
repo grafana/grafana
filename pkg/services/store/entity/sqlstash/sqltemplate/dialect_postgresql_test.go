@@ -5,10 +5,6 @@ import (
 	"testing"
 )
 
-func TestPostgreSQL_SelectFor(t *testing.T) {
-	PostgreSQL.SelectFor() //nolint: errcheck,gosec
-}
-
 func TestPostgreSQL_Ident(t *testing.T) {
 	t.Parallel()
 
