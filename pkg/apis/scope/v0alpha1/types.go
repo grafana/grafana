@@ -111,7 +111,7 @@ type ScopeNodeSpec struct {
 	Description string `json:"description,omitempty"`
 
 	LinkType LinkType `json:"linkType,omitempty"` // scope (later more things)
-	LinkID   string   `json:"linkID,omitempty"`   // the k8s name
+	LinkID   string   `json:"linkId,omitempty"`   // the k8s name
 	// ?? should this be a slice of links
 }
 
@@ -139,5 +139,5 @@ type TreeItem struct {
 	Description string `json:"description,omitempty"`
 
 	LinkType LinkType `json:"linkType,omitempty"` // scope (later more things)
-	LinkID   string   `json:"linkID,omitempty"`   // the k8s name
+	LinkID   string   `json:"linkId,omitempty"`   // the k8s name
 }
