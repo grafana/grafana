@@ -146,6 +146,7 @@ export function SelectBase<T, Rest = {}>({
   const reactSelectRef = useRef<{ controlRef: HTMLElement }>(null);
   const [closeToBottom, setCloseToBottom] = useState<boolean>(false);
   const selectStyles = useCustomSelectStyles(theme, width);
+  const [internalInputValue, setInternalInputValue] = useState(inputValue);
   const [hasInputValue, setHasInputValue] = useState<boolean>(!!inputValue);
 
   // Infer the menu position for asynchronously loaded options. menuPlacement="auto" doesn't work when the menu is
@@ -279,7 +280,30 @@ export function SelectBase<T, Rest = {}>({
     creatableProps.onCreateOption = onCreateOption;
     creatableProps.createOptionPosition = createOptionPosition;
     creatableProps.isValidNewOption = isValidNewOption;
+
+    // Needed to allow editing a custom value once entered
     creatableProps.controlShouldRenderValue = false;
+    creatableProps.inputValue = internalInputValue;
+    creatableProps.onInputChange = (val, actionMeta) => {
+      commonSelectProps.onInputChange(val, actionMeta);
+
+      // onBlur => setInputValue to last selected value
+      if (actionMeta.action === 'input-blur') {
+        setInternalInputValue(selectedValue ? selectedValue?.[0].label : '');
+      }
+
+      // onInputChange => update inputValue
+      else if (actionMeta.action === 'input-change') {
+        setInternalInputValue(val);
+      }
+    };
+    creatableProps.onChange = (value, action) => {
+      if (value === null) {
+        return;
+      }
+      commonSelectProps.onChange(value, action);
+      setInternalInputValue(value.label);
+    };
   }
 
   // Instead of having AsyncSelect, as a separate component we render ReactAsyncSelect
