@@ -1,6 +1,6 @@
 import { cx } from '@emotion/css';
 import { max } from 'lodash';
-import React, { RefCallback } from 'react';
+import React, { RefCallback, useEffect, useRef } from 'react';
 import { MenuListProps } from 'react-select';
 import { FixedSizeList as List } from 'react-window';
 
@@ -47,13 +47,21 @@ const VIRTUAL_LIST_WIDTH_EXTRA = 36;
 //
 // VIRTUAL_LIST_ITEM_HEIGHT and WIDTH_ESTIMATE_MULTIPLIER are both magic numbers.
 // Some characters (such as emojis and other unicode characters) may consist of multiple code points in which case the width would be inaccurate (but larger than needed).
-export const VirtualizedSelectMenu = ({ children, maxHeight, options, getValue }: MenuListProps<SelectableValue>) => {
+export const VirtualizedSelectMenu = ({
+  children,
+  maxHeight,
+  options,
+  focusedOption,
+}: MenuListProps<SelectableValue>) => {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
-  const [value] = getValue();
+  const listRef = useRef<List>(null);
 
-  const valueIndex = value ? options.findIndex((option: SelectableValue<unknown>) => option.value === value.value) : 0;
-  const valueYOffset = valueIndex * VIRTUAL_LIST_ITEM_HEIGHT;
+  const focusedIndex = options.findIndex((option: SelectableValue<unknown>) => option.value === focusedOption.value);
+
+  useEffect(() => {
+    listRef.current?.scrollToItem(focusedIndex);
+  }, [focusedIndex]);
 
   if (!Array.isArray(children)) {
     return null;
@@ -64,18 +72,15 @@ export const VirtualizedSelectMenu = ({ children, maxHeight, options, getValue }
     longestOption * VIRTUAL_LIST_WIDTH_ESTIMATE_MULTIPLIER + VIRTUAL_LIST_PADDING * 2 + VIRTUAL_LIST_WIDTH_EXTRA;
   const heightEstimate = Math.min(options.length * VIRTUAL_LIST_ITEM_HEIGHT, maxHeight);
 
-  // Try to scroll to keep current value in the middle
-  const scrollOffset = Math.max(0, valueYOffset - heightEstimate / 2);
-
   return (
     <List
+      ref={listRef}
       className={styles.menu}
       height={heightEstimate}
       width={widthEstimate}
       aria-label="Select options menu"
       itemCount={children.length}
       itemSize={VIRTUAL_LIST_ITEM_HEIGHT}
-      initialScrollOffset={scrollOffset}
     >
       {({ index, style }) => <div style={{ ...style, overflow: 'hidden' }}>{children[index]}</div>}
     </List>
