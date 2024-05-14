@@ -146,7 +146,6 @@ export function SelectBase<T, Rest = {}>({
   const reactSelectRef = useRef<{ controlRef: HTMLElement }>(null);
   const [closeToBottom, setCloseToBottom] = useState<boolean>(false);
   const selectStyles = useCustomSelectStyles(theme, width);
-  const [internalInputValue, setInternalInputValue] = useState(inputValue);
   const [hasInputValue, setHasInputValue] = useState<boolean>(!!inputValue);
 
   // Infer the menu position for asynchronously loaded options. menuPlacement="auto" doesn't work when the menu is
@@ -201,9 +200,12 @@ export function SelectBase<T, Rest = {}>({
       const hasValue = defaultValue || value;
       selectedValue = hasValue ? [hasValue] : [];
     } else {
-      selectedValue = cleanValue(value, options);
+      selectedValue = cleanValue(value, options, allowCustomValue);
     }
   }
+
+  const parsedValue = isMulti ? selectedValue : selectedValue?.[0];
+  const [internalInputValue, setInternalInputValue] = useState(parsedValue?.label);
 
   const commonSelectProps = {
     'aria-label': ariaLabel,
@@ -269,7 +271,7 @@ export function SelectBase<T, Rest = {}>({
     renderControl,
     showAllSelectedWhenOpen,
     tabSelectsValue,
-    value: isMulti ? selectedValue : selectedValue?.[0],
+    value: parsedValue,
     noMultiValueWrap,
   };
 
