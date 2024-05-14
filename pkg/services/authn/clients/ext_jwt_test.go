@@ -19,8 +19,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/authn"
-	"github.com/grafana/grafana/pkg/services/signingkeys"
-	"github.com/grafana/grafana/pkg/services/signingkeys/signingkeystest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
@@ -600,14 +598,9 @@ func setupTestCtx(cfg *setting.Cfg) *testEnv {
 		}
 	}
 
-	signingKeysSvc := &signingkeystest.FakeSigningKeysService{
-		ExpectedSinger: pk,
-		ExpectedKeyID:  signingkeys.ServerPrivateKeyID,
-	}
-
 	userSvc := &usertest.FakeUserService{}
 
-	extJwtClient := ProvideExtendedJWT(userSvc, cfg, signingKeysSvc)
+	extJwtClient := ProvideExtendedJWT(userSvc, cfg)
 
 	return &testEnv{
 		userSvc: userSvc,
