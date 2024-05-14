@@ -176,13 +176,7 @@ function createRowFromPanelModel(row: PanelModel, content: SceneGridItemLike[]):
 
   if (row.repeat) {
     // For repeated rows the children are stored in the behavior
-    children = [];
-    behaviors = [
-      new RowRepeaterBehavior({
-        variableName: row.repeat,
-        sources: content,
-      }),
-    ];
+    behaviors = [new RowRepeaterBehavior({ variableName: row.repeat })];
   }
 
   return new SceneGridRow({
@@ -319,6 +313,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       filters: variable.filters ?? [],
       baseFilters: variable.baseFilters ?? [],
       defaultKeys: variable.defaultKeys,
+      useQueriesAsFilterForOptions: true,
     });
   }
   if (variable.type === 'custom') {

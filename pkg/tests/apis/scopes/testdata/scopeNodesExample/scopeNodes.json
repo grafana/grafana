@@ -1,0 +1,179 @@
+{ 
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "scope.grafana.app/v0alpha1",
+      "kind": "ScopeNode",
+      "metadata": {
+          "name": "applications"
+      },
+      "spec": {
+          "description": "Application Scopes",
+          "title": "Applications",
+          "nodeType": "container"
+      }
+    },
+    {
+      "apiVersion": "scope.grafana.app/v0alpha1",
+      "kind": "ScopeNode",
+      "metadata": {
+        "name": "applications.clusters"
+      },
+      "spec": {
+        "description": "Application/Clusters Scopes",
+        "title": "Clusters",
+        "nodeType": "container",
+        "parentName": "applications",
+        "linkID": "indexHelperCluster",
+        "linkType": "scope"
+      }
+    },
+    {
+      "apiVersion": "scope.grafana.app/v0alpha1",
+      "kind": "ScopeNode",
+      "metadata": {
+        "name": "clusters"
+      },
+      "spec": {
+        "description": "Cluster Scopes",
+        "title": "Clusters",
+        "nodeType": "container",
+        "linkID": "indexHelperCluster",
+        "linkType": "scope"
+      }
+    },
+    {
+      "apiVersion": "scope.grafana.app/v0alpha1",
+      "kind": "ScopeNode",
+      "metadata": {
+        "name": "clusters.application"
+      },
+      "spec": {
+        "description": "Clusters/Application Scopes",
+        "title": "Applications",
+        "nodeType": "container",
+        "parentName": "clusters"
+      }
+    },
+    {
+      "apiVersion": "scope.grafana.app/v0alpha1",
+      "kind": "ScopeNode",
+      "metadata": {
+        "name": "applications-slothPictureFactory"
+      },
+      "spec": {
+        "description": "slothPictureFactory",
+        "title": "slothPictureFactory",
+        "nodeType": "leaf",
+        "parentName": "applications",
+        "linkID": "slothPictureFactory",
+        "linkType": "scope"
+      }
+    },
+    {
+      "apiVersion": "scope.grafana.app/v0alpha1",
+      "kind": "ScopeNode",
+      "metadata": {
+        "name": "applications-slothVoteTracker"
+      },
+      "spec": {
+        "description": "slothVoteTracker",
+        "title": "slothVoteTracker",
+        "nodeType": "leaf",
+        "parentName": "applications",
+        "linkID": "slothVoteTracker",
+        "linkType": "scope"
+      }
+    },
+    {
+      "apiVersion": "scope.grafana.app/v0alpha1",
+      "kind": "ScopeNode",
+      "metadata": {
+        "name": "applications.clusters-slothClusterNorth"
+      },
+      "spec": {
+        "description": "slothClusterNorth",
+        "title": "slothClusterNorth",
+        "nodeType": "leaf",
+        "parentName": "applications.clusters",
+        "linkID": "slothClusterNorth",
+        "linkType": "scope"
+      }
+    },
+    {
+      "apiVersion": "scope.grafana.app/v0alpha1",
+      "kind": "ScopeNode",
+      "metadata": {
+        "name": "applications.clusters-slothClusterSouth"
+      },
+      "spec": {
+        "description": "slothClusterSouth",
+        "title": "slothClusterSouth",
+        "nodeType": "leaf",
+        "parentName": "applications.clusters",
+        "linkID": "slothClusterSouth",
+        "linkType": "scope"
+      }
+    },
+    {
+      "apiVersion": "scope.grafana.app/v0alpha1",
+      "kind": "ScopeNode",
+      "metadata": {
+        "name": "clusters-slothClusterNorth"
+      },
+      "spec": {
+        "description": "slothClusterNorth",
+        "title": "slothClusterNorth",
+        "nodeType": "leaf",
+        "parentName": "clusters",
+        "linkID": "slothClusterNorth",
+        "linkType": "scope"
+      }
+    },
+    {
+      "apiVersion": "scope.grafana.app/v0alpha1",
+      "kind": "ScopeNode",
+      "metadata": {
+        "name": "clusters-slothClusterSouth"
+      },
+      "spec": {
+        "description": "slothClusterSouth",
+        "title": "slothClusterSouth",
+        "nodeType": "leaf",
+        "parentName": "clusters",
+        "linkID": "slothClusterSouth",
+        "linkType": "scope"
+      }
+    },
+    {
+      "apiVersion": "scope.grafana.app/v0alpha1",
+      "kind": "ScopeNode",
+      "metadata": {
+        "name": "clusters.applications-slothPictureFactory"
+      },
+      "spec": {
+        "description": "slothPictureFactory",
+        "title": "slothPictureFactory",
+        "nodeType": "leaf",
+        "parentName": "clusters.applications",
+        "linkID": "slothPictureFactory",
+        "linkType": "scope"
+      }
+    },
+    {
+      "apiVersion": "scope.grafana.app/v0alpha1",
+      "kind": "ScopeNode",
+      "metadata": {
+        "name": "clusters.applications-slothVoteTracker"
+      },
+      "spec": {
+        "description": "slothVoteTracker",
+        "title": "slothVoteTracker",
+        "nodeType": "leaf",
+        "parentName": "clusters.applications",
+        "linkID": "slothVoteTracker",
+        "linkType": "scope"
+      }
+    }
+  ]
+}

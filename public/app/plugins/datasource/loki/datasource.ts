@@ -40,6 +40,8 @@ import {
   DataSourceWithQueryModificationSupport,
   LogsVolumeOption,
   LogsSampleOptions,
+  QueryVariableModel,
+  CustomVariableModel,
 } from '@grafana/data';
 import { Duration } from '@grafana/lezer-logql';
 import { BackendSrvRequest, config, DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
@@ -680,16 +682,10 @@ export class LokiDatasource
       return [];
     }
 
-    // If we have stream selector, use /series endpoint
-    if (query.stream) {
-      const result = await this.languageProvider.fetchSeriesLabels(query.stream, { timeRange });
-      if (!result[query.label]) {
-        return [];
-      }
-      return result[query.label].map((value: string) => ({ text: value }));
-    }
-
-    const result = await this.languageProvider.fetchLabelValues(query.label, { timeRange });
+    const result = await this.languageProvider.fetchLabelValues(query.label, {
+      streamSelector: query.stream,
+      timeRange,
+    });
     return result.map((value: string) => ({ text: value }));
   }
 
@@ -765,7 +761,7 @@ export class LokiDatasource
    * Handles escaping of special characters based on variable type and value.
    * @returns The interpolated value with appropriate character escaping.
    */
-  interpolateQueryExpr(value: any, variable: any) {
+  interpolateQueryExpr(value: any, variable: QueryVariableModel | CustomVariableModel) {
     // if no multi or include all do not regexEscape
     if (!variable.multi && !variable.includeAll) {
       return lokiRegularEscape(value);
