@@ -2,6 +2,7 @@ import { each, find, findIndex, flattenDeep, isArray, isBoolean, isNumber, isStr
 
 import {
   AnnotationQuery,
+  ConstantVariableModel,
   DataLink,
   DataLinkBuiltInVars,
   DataQuery,
@@ -19,10 +20,12 @@ import {
   SpecialValueMatch,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
+  TextBoxVariableModel,
   ThresholdsConfig,
   urlUtil,
   ValueMap,
   ValueMapping,
+  VariableHide,
 } from '@grafana/data';
 import { labelsToFieldsTransformer } from '@grafana/data/src/transformations/transformers/labelsToFields';
 import { mergeTransformer } from '@grafana/data/src/transformations/transformers/merge';
@@ -59,7 +62,6 @@ import {
   migrateMultipleStatsAnnotationQuery,
   migrateMultipleStatsMetricsQuery,
 } from '../../../plugins/datasource/cloudwatch/migrations/dashboardMigrations';
-import { ConstantVariableModel, TextBoxVariableModel, VariableHide } from '../../variables/types';
 
 import { DashboardModel } from './DashboardModel';
 import { PanelModel } from './PanelModel';
@@ -157,7 +159,7 @@ export class DashboardMigrator {
     if (oldVersion < 3) {
       // ensure panel IDs
       let maxId = this.dashboard.getNextPanelId();
-      panelUpgrades.push((panel: any) => {
+      panelUpgrades.push((panel: PanelModel) => {
         if (!panel.id) {
           panel.id = maxId;
           maxId += 1;
@@ -278,7 +280,7 @@ export class DashboardMigrator {
     // schema version 9 changes
     if (oldVersion < 9) {
       // move aliasYAxis changes
-      panelUpgrades.push((panel: any) => {
+      panelUpgrades.push((panel: PanelModel) => {
         if (panel.type !== 'singlestat' && panel.thresholds !== '') {
           return panel;
         }
@@ -629,7 +631,7 @@ export class DashboardMigrator {
     }
 
     if (oldVersion < 26) {
-      panelUpgrades.push((panel: any) => {
+      panelUpgrades.push((panel: PanelModel) => {
         const wasReactText = panel.type === 'text2';
         if (!wasReactText) {
           return panel;
@@ -879,7 +881,7 @@ export class DashboardMigrator {
             let tableTransformOptions: TimeSeriesTableTransformerOptions = {};
 
             // For each {refIdtoStat} record which maps refId to a statistic
-            // we add that to the stat property of the the new
+            // we add that to the stat property of the new
             // RefIdTransformerOptions interface which includes multiple settings
             for (const [refId, stat] of Object.entries(transformation.options.refIdToStat)) {
               let newSettings: RefIdTransformerOptions = {};
@@ -1403,7 +1405,7 @@ function upgradeValueMappings(oldMappings: any, thresholds?: ThresholdsConfig): 
 }
 
 function migrateTooltipOptions(panel: PanelModel) {
-  if (panel.type === 'timeseries' || panel.type === 'xychart') {
+  if (panel.type === 'timeseries' || panel.type === 'xychart' || panel.type === 'xychart2') {
     if (panel.options.tooltipOptions) {
       panel.options = {
         ...panel.options,

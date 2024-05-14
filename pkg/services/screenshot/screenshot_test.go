@@ -39,22 +39,24 @@ func TestHeadlessScreenshotService(t *testing.T) {
 	d.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(qResult, nil)
 
 	renderOpts := rendering.Opts{
-		AuthOpts: rendering.AuthOpts{
-			OrgID:   2,
-			OrgRole: org.RoleAdmin,
+		CommonOpts: rendering.CommonOpts{
+			AuthOpts: rendering.AuthOpts{
+				OrgID:   2,
+				OrgRole: org.RoleAdmin,
+			},
+			TimeoutOpts: rendering.TimeoutOpts{
+				Timeout: DefaultTimeout,
+			},
+			Path:            "d-solo/foo/bar?from=now-6h&orgId=2&panelId=4&to=now-2h",
+			ConcurrentLimit: cfg.RendererConcurrentRequestLimit,
 		},
 		ErrorOpts: rendering.ErrorOpts{
 			ErrorConcurrentLimitReached: true,
 			ErrorRenderUnavailable:      true,
 		},
-		TimeoutOpts: rendering.TimeoutOpts{
-			Timeout: DefaultTimeout,
-		},
-		Width:           DefaultWidth,
-		Height:          DefaultHeight,
-		Theme:           DefaultTheme,
-		Path:            "d-solo/foo/bar?from=now-6h&orgId=2&panelId=4&to=now-2h",
-		ConcurrentLimit: cfg.AlertingRenderLimit,
+		Width:  DefaultWidth,
+		Height: DefaultHeight,
+		Theme:  DefaultTheme,
 	}
 
 	opts.From = "now-6h"

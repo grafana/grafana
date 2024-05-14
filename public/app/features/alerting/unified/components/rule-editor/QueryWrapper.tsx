@@ -161,7 +161,7 @@ export const QueryWrapper = ({
           queries={editorQueries}
           renderHeaderExtras={() => <HeaderExtras query={query} index={index} error={error} />}
           app={CoreApp.UnifiedAlerting}
-          hideDisableQuery={true}
+          hideHideQueryButton={true}
         />
       </div>
       {showVizualisation && (
@@ -264,22 +264,22 @@ export function MinIntervalOption({
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    label: AlertingQueryWrapper;
-    margin-bottom: ${theme.spacing(1)};
-    border: 1px solid ${theme.colors.border.weak};
-    border-radius: ${theme.shape.radius.default};
+  wrapper: css({
+    label: 'AlertingQueryWrapper',
+    marginBottom: theme.spacing(1),
+    border: `1px solid ${theme.colors.border.weak}`,
+    borderRadius: theme.shape.radius.default,
 
-    button {
-      overflow: visible;
-    }
-  `,
-  dsTooltip: css`
-    display: flex;
-    align-items: center;
-    &:hover {
-      opacity: 0.85;
-      cursor: pointer;
-    }
-  `,
+    button: {
+      overflow: 'visible',
+    },
+  }),
+  dsTooltip: css({
+    display: 'flex',
+    alignItems: 'center',
+    '&:hover': {
+      opacity: 0.85,
+      cursor: 'pointer',
+    },
+  }),
 });

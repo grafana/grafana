@@ -5,13 +5,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
+	"unsafe"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	alertingModels "github.com/grafana/alerting/models"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
@@ -53,6 +57,8 @@ func NoDataStateFromString(state string) (NoDataState, error) {
 		return NoData, nil
 	case string(OK):
 		return OK, nil
+	case string(KeepLast):
+		return KeepLast, nil
 	default:
 		return "", fmt.Errorf("unknown NoData state option %s", state)
 	}
@@ -62,6 +68,7 @@ const (
 	Alerting NoDataState = "Alerting"
 	NoData   NoDataState = "NoData"
 	OK       NoDataState = "OK"
+	KeepLast NoDataState = "KeepLast"
 )
 
 // swagger:enum ExecutionErrorState
@@ -79,6 +86,8 @@ func ErrStateFromString(opt string) (ExecutionErrorState, error) {
 		return ErrorErrState, nil
 	case string(OkErrState):
 		return OkErrState, nil
+	case string(KeepLastErrState):
+		return KeepLastErrState, nil
 	default:
 		return "", fmt.Errorf("unknown Error state option %s", opt)
 	}
@@ -88,6 +97,7 @@ const (
 	AlertingErrState ExecutionErrorState = "Alerting"
 	ErrorErrState    ExecutionErrorState = "Error"
 	OkErrState       ExecutionErrorState = "OK"
+	KeepLastErrState ExecutionErrorState = "KeepLast"
 )
 
 const (
@@ -137,7 +147,12 @@ const (
 	StateReasonPaused        = "Paused"
 	StateReasonUpdated       = "Updated"
 	StateReasonRuleDeleted   = "RuleDeleted"
+	StateReasonKeepLast      = "KeepLast"
 )
+
+func ConcatReasons(reasons ...string) string {
+	return strings.Join(reasons, ", ")
+}
 
 var (
 	// InternalLabelNameSet are labels that grafana automatically include as part of the labelset.
@@ -227,7 +242,8 @@ type AlertRule struct {
 	DashboardUID    *string `xorm:"dashboard_uid"`
 	PanelID         *int64  `xorm:"panel_id"`
 	RuleGroup       string
-	RuleGroupIndex  int `xorm:"rule_group_idx"`
+	RuleGroupIndex  int     `xorm:"rule_group_idx"`
+	Record          *Record `xorm:"text null 'record'"`
 	NoDataState     NoDataState
 	ExecErrState    ExecutionErrorState
 	// ideally this field should have been apimodels.ApiDuration
@@ -334,7 +350,11 @@ func (alertRule *AlertRule) Diff(rule *AlertRule, ignore ...string) cmputil.Diff
 
 	// json.RawMessage is a slice of bytes and therefore cmp's default behavior is to compare it by byte, which is not really useful
 	var jsonCmp = cmp.Transformer("", func(in json.RawMessage) string {
-		return string(in)
+		b, err := json.Marshal(in)
+		if err != nil {
+			return string(in)
+		}
+		return string(b)
 	})
 	ops = append(
 		ops,
@@ -498,6 +518,10 @@ func (alertRule *AlertRule) ValidateAlertRule(cfg setting.UnifiedAlertingSetting
 		}
 	}
 
+	if alertRule.Record != nil {
+		return fmt.Errorf("%w: storing recording rules is not yet allowed", ErrAlertRuleFailedValidation)
+	}
+
 	if len(alertRule.NotificationSettings) > 0 {
 		if len(alertRule.NotificationSettings) != 1 {
 			return fmt.Errorf("%w: only one notification settings entry is allowed", ErrAlertRuleFailedValidation)
@@ -545,6 +569,7 @@ type AlertRuleVersion struct {
 	Condition       string
 	Data            []AlertQuery
 	IntervalSeconds int64
+	Record          *Record `xorm:"text null 'record'"`
 	NoDataState     NoDataState
 	ExecErrState    ExecutionErrorState
 	// ideally this field should have been apimodels.ApiDuration
@@ -740,4 +765,27 @@ func GroupByAlertRuleGroupKey(rules []*AlertRule) map[AlertRuleGroupKey]RulesGro
 		group.SortByGroupIndex()
 	}
 	return result
+}
+
+// Record contains mapping information for Recording Rules.
+type Record struct {
+	// Metric indicates a metric name to send results to.
+	Metric string
+	// From contains a query RefID, indicating which expression node is the output of the recording rule.
+	From string
+}
+
+func (r *Record) Fingerprint() data.Fingerprint {
+	h := fnv.New64()
+
+	writeString := func(s string) {
+		// save on extra slice allocation when string is converted to bytes.
+		_, _ = h.Write(unsafe.Slice(unsafe.StringData(s), len(s))) //nolint:gosec
+		// ignore errors returned by Write method because fnv never returns them.
+		_, _ = h.Write([]byte{255}) // use an invalid utf-8 sequence as separator
+	}
+
+	writeString(r.Metric)
+	writeString(r.From)
+	return data.Fingerprint(h.Sum64())
 }

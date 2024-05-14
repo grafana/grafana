@@ -6,7 +6,6 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"path/filepath"
 	"strconv"
 	"time"
 
@@ -17,7 +16,6 @@ import (
 
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 
-	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -28,22 +26,24 @@ import (
 )
 
 const (
-	NotificationLogFilename = "notifications"
-	SilencesFilename        = "silences"
+	// How often we flush and garbage collect notifications and silences.
+	maintenanceInterval = 15 * time.Minute
 
-	workingDir = "alerting"
-	// maintenanceNotificationAndSilences how often should we flush and garbage collect notifications
-	notificationLogMaintenanceInterval = 15 * time.Minute
+	// How long we keep silences in the kvstore after they've expired.
+	silenceRetention = 5 * 24 * time.Hour
 )
-
-// How long should we keep silences and notification entries on-disk after they've served their purpose.
-var retentionNotificationsAndSilences = 5 * 24 * time.Hour
-var silenceMaintenanceInterval = 15 * time.Minute
 
 type AlertingStore interface {
 	store.AlertingStore
 	store.ImageStore
 	autogenRuleStore
+}
+
+type stateStore interface {
+	SaveSilences(ctx context.Context, st alertingNotify.State) (int64, error)
+	SaveNotificationLog(ctx context.Context, st alertingNotify.State) (int64, error)
+	GetSilences(ctx context.Context) (string, error)
+	GetNotificationLog(ctx context.Context) (string, error)
 }
 
 type alertmanager struct {
@@ -53,7 +53,7 @@ type alertmanager struct {
 	ConfigMetrics       *metrics.AlertmanagerConfigMetrics
 	Settings            *setting.Cfg
 	Store               AlertingStore
-	fileStore           *FileStore
+	stateStore          stateStore
 	NotificationService notifications.Service
 
 	decryptFn alertingNotify.GetDecryptedValueFn
@@ -65,14 +65,16 @@ type alertmanager struct {
 // maintenanceOptions represent the options for components that need maintenance on a frequency within the Alertmanager.
 // It implements the alerting.MaintenanceOptions interface.
 type maintenanceOptions struct {
-	filepath             string
+	initialState         string
 	retention            time.Duration
 	maintenanceFrequency time.Duration
 	maintenanceFunc      func(alertingNotify.State) (int64, error)
 }
 
-func (m maintenanceOptions) Filepath() string {
-	return m.filepath
+var _ alertingNotify.MaintenanceOptions = maintenanceOptions{}
+
+func (m maintenanceOptions) InitialState() string {
+	return m.initialState
 }
 
 func (m maintenanceOptions) Retention() time.Duration {
@@ -87,43 +89,39 @@ func (m maintenanceOptions) MaintenanceFunc(state alertingNotify.State) (int64, 
 	return m.maintenanceFunc(state)
 }
 
-func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store AlertingStore, kvStore kvstore.KVStore,
+func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store AlertingStore, stateStore stateStore,
 	peer alertingNotify.ClusterPeer, decryptFn alertingNotify.GetDecryptedValueFn, ns notifications.Service,
 	m *metrics.Alertmanager, withAutogen bool) (*alertmanager, error) {
-	workingPath := filepath.Join(cfg.DataPath, workingDir, strconv.Itoa(int(orgID)))
-	fileStore := NewFileStore(orgID, kvStore, workingPath)
-
-	nflogFilepath, err := fileStore.FilepathFor(ctx, NotificationLogFilename)
+	nflog, err := stateStore.GetNotificationLog(ctx)
 	if err != nil {
 		return nil, err
 	}
-	silencesFilepath, err := fileStore.FilepathFor(ctx, SilencesFilename)
+	silences, err := stateStore.GetSilences(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	silencesOptions := maintenanceOptions{
-		filepath:             silencesFilepath,
-		retention:            retentionNotificationsAndSilences,
-		maintenanceFrequency: silenceMaintenanceInterval,
+		initialState:         silences,
+		retention:            silenceRetention,
+		maintenanceFrequency: maintenanceInterval,
 		maintenanceFunc: func(state alertingNotify.State) (int64, error) {
 			// Detached context here is to make sure that when the service is shut down the persist operation is executed.
-			return fileStore.Persist(context.Background(), SilencesFilename, state)
+			return stateStore.SaveSilences(context.Background(), state)
 		},
 	}
 
 	nflogOptions := maintenanceOptions{
-		filepath:             nflogFilepath,
-		retention:            retentionNotificationsAndSilences,
-		maintenanceFrequency: notificationLogMaintenanceInterval,
+		initialState:         nflog,
+		retention:            cfg.UnifiedAlerting.NotificationLogRetention,
+		maintenanceFrequency: maintenanceInterval,
 		maintenanceFunc: func(state alertingNotify.State) (int64, error) {
 			// Detached context here is to make sure that when the service is shut down the persist operation is executed.
-			return fileStore.Persist(context.Background(), NotificationLogFilename, state)
+			return stateStore.SaveNotificationLog(context.Background(), state)
 		},
 	}
 
 	amcfg := &alertingNotify.GrafanaAlertmanagerConfig{
-		WorkingDirectory:   filepath.Join(cfg.DataPath, workingDir, strconv.Itoa(int(orgID))),
 		ExternalURL:        cfg.AppURL,
 		AlertStoreCallback: nil,
 		PeerTimeout:        cfg.UnifiedAlerting.HAPeerTimeout,
@@ -145,7 +143,7 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		NotificationService: ns,
 		orgID:               orgID,
 		decryptFn:           decryptFn,
-		fileStore:           fileStore,
+		stateStore:          stateStore,
 		logger:              l,
 
 		// TODO: Preferably, logic around autogen would be outside of the specific alertmanager implementation so that remote alertmanager will get it for free.
@@ -321,38 +319,28 @@ func (am *alertmanager) aggregateInhibitMatchers(rules []config.InhibitRule, amu
 // It is not safe to call concurrently.
 func (am *alertmanager) applyConfig(cfg *apimodels.PostableUserConfig) (bool, error) {
 	// First, let's make sure this config is not already loaded
-	var amConfigChanged bool
-	rawConfig, err := json.Marshal(cfg.AlertmanagerConfig)
+	rawConfig, err := json.Marshal(cfg)
 	if err != nil {
 		// In theory, this should never happen.
 		return false, err
 	}
 
-	if am.Base.ConfigHash() != md5.Sum(rawConfig) {
-		amConfigChanged = true
-	}
-
-	if cfg.TemplateFiles == nil {
-		cfg.TemplateFiles = map[string]string{}
-	}
-	cfg.TemplateFiles["__default__.tmpl"] = alertingTemplates.DefaultTemplateString
-
-	// next, we need to make sure we persist the templates to disk.
-	paths, templatesChanged, err := PersistTemplates(am.logger, cfg, am.Base.WorkingDirectory())
-	if err != nil {
-		return false, err
-	}
-	cfg.AlertmanagerConfig.Templates = paths
-
-	// If neither the configuration nor templates have changed, we've got nothing to do.
-	if !amConfigChanged && !templatesChanged {
-		am.logger.Debug("Neither config nor template have changed, skipping configuration sync.")
+	// If configuration hasn't changed, we've got nothing to do.
+	configHash := md5.Sum(rawConfig)
+	if am.Base.ConfigHash() == configHash {
+		am.logger.Debug("Config hasn't changed, skipping configuration sync.")
 		return false, nil
 	}
 
+	am.logger.Info("Applying new configuration to Alertmanager", "configHash", fmt.Sprintf("%x", configHash))
 	err = am.Base.ApplyConfig(AlertingConfiguration{
 		rawAlertmanagerConfig:    rawConfig,
-		alertmanagerConfig:       cfg.AlertmanagerConfig,
+		configHash:               configHash,
+		route:                    cfg.AlertmanagerConfig.Route.AsAMRoute(),
+		inhibitRules:             cfg.AlertmanagerConfig.InhibitRules,
+		muteTimeIntervals:        cfg.AlertmanagerConfig.MuteTimeIntervals,
+		timeIntervals:            cfg.AlertmanagerConfig.TimeIntervals,
+		templates:                ToTemplateDefinitions(cfg),
 		receivers:                PostableApiAlertingConfigToApiReceivers(cfg.AlertmanagerConfig),
 		receiverIntegrationsFunc: am.buildReceiverIntegrations,
 	})
@@ -429,9 +417,9 @@ func (am *alertmanager) PutAlerts(_ context.Context, postableAlerts apimodels.Po
 	return am.Base.PutAlerts(alerts)
 }
 
-// CleanUp removes the directory containing the alertmanager files from disk.
-func (am *alertmanager) CleanUp() {
-	am.fileStore.CleanUp()
+// SilenceState returns the current internal state of silences.
+func (am *alertmanager) SilenceState(_ context.Context) (alertingNotify.SilenceState, error) {
+	return am.Base.SilenceState()
 }
 
 // AlertValidationError is the error capturing the validation errors

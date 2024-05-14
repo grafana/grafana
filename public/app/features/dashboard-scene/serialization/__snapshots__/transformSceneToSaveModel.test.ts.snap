@@ -142,6 +142,101 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
       "type": "row",
     },
     {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A",
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic",
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false,
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear",
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none",
+            },
+            "thresholdsStyle": {
+              "mode": "off",
+            },
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+              },
+              {
+                "color": "red",
+                "value": 80,
+              },
+            ],
+          },
+        },
+        "overrides": [],
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 4,
+      },
+      "id": 2,
+      "maxPerRow": 3,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none",
+        },
+      },
+      "repeat": "pod",
+      "repeatDirection": "h",
+      "targets": [
+        {
+          "alias": "server = $server, pod id = $pod ",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A",
+          },
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "seriesCount": 1,
+        },
+      ],
+      "title": "server = $server, pod = $pod",
+      "type": "timeseries",
+    },
+    {
       "collapsed": true,
       "gridPos": {
         "h": 1,
@@ -183,6 +278,7 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
       "type": "row",
     },
   ],
+  "refresh": "",
   "schemaVersion": 39,
   "tags": [
     "templating",
@@ -329,6 +425,7 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
         "type": "testdata",
         "uid": "PD8C576611E62080A",
       },
+      "description": "This is a simple time series graph",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -448,6 +545,7 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
       "type": "text",
     },
   ],
+  "refresh": "5m",
   "schemaVersion": 39,
   "tags": [
     "tag1",
@@ -474,6 +572,58 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
           "value": "1m",
         },
         "name": "intervalVar",
+        "options": [
+          {
+            "selected": true,
+            "text": "1m",
+            "value": "1m",
+          },
+          {
+            "selected": false,
+            "text": "10m",
+            "value": "10m",
+          },
+          {
+            "selected": false,
+            "text": "30m",
+            "value": "30m",
+          },
+          {
+            "selected": false,
+            "text": "1h",
+            "value": "1h",
+          },
+          {
+            "selected": false,
+            "text": "6h",
+            "value": "6h",
+          },
+          {
+            "selected": false,
+            "text": "12h",
+            "value": "12h",
+          },
+          {
+            "selected": false,
+            "text": "1d",
+            "value": "1d",
+          },
+          {
+            "selected": false,
+            "text": "7d",
+            "value": "7d",
+          },
+          {
+            "selected": false,
+            "text": "14d",
+            "value": "14d",
+          },
+          {
+            "selected": false,
+            "text": "30d",
+            "value": "30d",
+          },
+        ],
         "query": "1m,10m,30m,1h,6h,12h,1d,7d,14d,30d",
         "refresh": 2,
         "type": "interval",
@@ -632,6 +782,7 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
         "type": "testdata",
         "uid": "PD8C576611E62080A",
       },
+      "description": "This is a simple time series graph",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -751,6 +902,7 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
       "type": "text",
     },
   ],
+  "refresh": "",
   "schemaVersion": 39,
   "tags": [
     "gdev",
@@ -778,6 +930,58 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
           "value": "1m",
         },
         "name": "intervalVar",
+        "options": [
+          {
+            "selected": true,
+            "text": "1m",
+            "value": "1m",
+          },
+          {
+            "selected": false,
+            "text": "10m",
+            "value": "10m",
+          },
+          {
+            "selected": false,
+            "text": "30m",
+            "value": "30m",
+          },
+          {
+            "selected": false,
+            "text": "1h",
+            "value": "1h",
+          },
+          {
+            "selected": false,
+            "text": "6h",
+            "value": "6h",
+          },
+          {
+            "selected": false,
+            "text": "12h",
+            "value": "12h",
+          },
+          {
+            "selected": false,
+            "text": "1d",
+            "value": "1d",
+          },
+          {
+            "selected": false,
+            "text": "7d",
+            "value": "7d",
+          },
+          {
+            "selected": false,
+            "text": "14d",
+            "value": "14d",
+          },
+          {
+            "selected": false,
+            "text": "30d",
+            "value": "30d",
+          },
+        ],
         "query": "1m,10m,30m,1h,6h,12h,1d,7d,14d,30d",
         "refresh": 2,
         "type": "interval",

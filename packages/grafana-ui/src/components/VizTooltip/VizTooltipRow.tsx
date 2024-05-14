@@ -8,9 +8,9 @@ import { InlineToast } from '../InlineToast/InlineToast';
 import { Tooltip } from '../Tooltip';
 
 import { ColorIndicatorPosition, VizTooltipColorIndicator } from './VizTooltipColorIndicator';
-import { ColorPlacement, LabelValue } from './types';
+import { ColorPlacement, VizTooltipItem } from './types';
 
-interface Props extends Omit<LabelValue, 'value'> {
+interface VizTooltipRowProps extends Omit<VizTooltipItem, 'value'> {
   value: string | number | null | ReactNode;
   justify?: string;
   isActive?: boolean; // for series list
@@ -36,7 +36,8 @@ export const VizTooltipRow = ({
   isActive = false,
   marginRight = '0px',
   isPinned,
-}: Props) => {
+  lineStyle,
+}: VizTooltipRowProps) => {
   const styles = useStyles2(getStyles, justify, marginRight);
 
   const [showLabelTooltip, setShowLabelTooltip] = useState(false);
@@ -118,7 +119,7 @@ export const VizTooltipRow = ({
       {(color || label) && (
         <div className={styles.valueWrapper}>
           {color && colorPlacement === ColorPlacement.first && (
-            <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator} />
+            <VizTooltipColorIndicator color={color} colorIndicator={colorIndicator} lineStyle={lineStyle} />
           )}
           {!isPinned ? (
             <div className={cx(styles.label, isActive && styles.activeSeries)}>{label}</div>
@@ -154,6 +155,7 @@ export const VizTooltipRow = ({
             color={color}
             colorIndicator={colorIndicator}
             position={ColorIndicatorPosition.Leading}
+            lineStyle={lineStyle}
           />
         )}
 
@@ -186,6 +188,7 @@ export const VizTooltipRow = ({
             color={color}
             colorIndicator={colorIndicator}
             position={ColorIndicatorPosition.Trailing}
+            lineStyle={lineStyle}
           />
         )}
       </div>

@@ -2,6 +2,7 @@ package accesscontrol
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -15,6 +16,9 @@ type Evaluator interface {
 	Evaluate(permissions map[string][]string) bool
 	// MutateScopes executes a sequence of ScopeModifier functions on all embedded scopes of an evaluator and returns a new Evaluator
 	MutateScopes(ctx context.Context, mutate ScopeAttributeMutator) (Evaluator, error)
+	// AppendActionSets extends the evaluator with relevant action sets
+	// (e.g. evaluator checking `folders:write` is extended to check for any of `folders:write`, `folders:edit`, `folders:admin`)
+	AppendActionSets(ctx context.Context, mutate ActionSetResolver) Evaluator
 	// String returns a string representation of permission required by the evaluator
 	fmt.Stringer
 	fmt.GoStringer
@@ -84,15 +88,37 @@ func (p permissionEvaluator) MutateScopes(ctx context.Context, mutate ScopeAttri
 		return EvalPermission(p.Action), nil
 	}
 
+	resolved := false
 	scopes := make([]string, 0, len(p.Scopes))
 	for _, scope := range p.Scopes {
 		mutated, err := mutate(ctx, scope)
 		if err != nil {
+			if errors.Is(err, ErrResolverNotFound) {
+				scopes = append(scopes, mutated...)
+				continue
+			}
 			return nil, err
 		}
+		resolved = true
 		scopes = append(scopes, mutated...)
 	}
+
+	if !resolved {
+		return nil, ErrResolverNotFound
+	}
+
 	return EvalPermission(p.Action, scopes...), nil
+}
+
+func (p permissionEvaluator) AppendActionSets(ctx context.Context, resolve ActionSetResolver) Evaluator {
+	resolvedActions := resolve(ctx, p.Action)
+
+	evals := make([]Evaluator, 0, len(resolvedActions))
+	for _, action := range resolvedActions {
+		evals = append(evals, EvalPermission(action, p.Scopes...))
+	}
+
+	return EvalAny(evals...)
 }
 
 func (p permissionEvaluator) String() string {
@@ -124,15 +150,35 @@ func (a allEvaluator) Evaluate(permissions map[string][]string) bool {
 }
 
 func (a allEvaluator) MutateScopes(ctx context.Context, mutate ScopeAttributeMutator) (Evaluator, error) {
+	resolved := false
 	modified := make([]Evaluator, 0, len(a.allOf))
 	for _, e := range a.allOf {
 		i, err := e.MutateScopes(ctx, mutate)
 		if err != nil {
+			if errors.Is(err, ErrResolverNotFound) {
+				modified = append(modified, e)
+				continue
+			}
 			return nil, err
 		}
+		resolved = true
 		modified = append(modified, i)
 	}
+
+	if !resolved {
+		return nil, ErrResolverNotFound
+	}
 	return EvalAll(modified...), nil
+}
+
+func (a allEvaluator) AppendActionSets(ctx context.Context, resolve ActionSetResolver) Evaluator {
+	evals := make([]Evaluator, 0, len(a.allOf))
+	for _, e := range a.allOf {
+		resolvedSets := e.AppendActionSets(ctx, resolve)
+		evals = append(evals, resolvedSets)
+	}
+
+	return EvalAll(evals...)
 }
 
 func (a allEvaluator) String() string {
@@ -174,15 +220,36 @@ func (a anyEvaluator) Evaluate(permissions map[string][]string) bool {
 }
 
 func (a anyEvaluator) MutateScopes(ctx context.Context, mutate ScopeAttributeMutator) (Evaluator, error) {
+	resolved := false
 	modified := make([]Evaluator, 0, len(a.anyOf))
 	for _, e := range a.anyOf {
 		i, err := e.MutateScopes(ctx, mutate)
 		if err != nil {
+			if errors.Is(err, ErrResolverNotFound) {
+				modified = append(modified, e)
+				continue
+			}
 			return nil, err
 		}
+		resolved = true
 		modified = append(modified, i)
 	}
+
+	if !resolved {
+		return nil, ErrResolverNotFound
+	}
+
 	return EvalAny(modified...), nil
+}
+
+func (a anyEvaluator) AppendActionSets(ctx context.Context, resolve ActionSetResolver) Evaluator {
+	evals := make([]Evaluator, 0, len(a.anyOf))
+	for _, e := range a.anyOf {
+		resolvedSets := e.AppendActionSets(ctx, resolve)
+		evals = append(evals, resolvedSets)
+	}
+
+	return EvalAny(evals...)
 }
 
 func (a anyEvaluator) String() string {

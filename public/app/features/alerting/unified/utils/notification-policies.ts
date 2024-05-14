@@ -127,7 +127,7 @@ export function normalizeRoute(rootRoute: RouteWithID): RouteWithID {
 export function unquoteRouteMatchers(route: RouteWithID): RouteWithID {
   function unquoteRoute(route: RouteWithID) {
     route.object_matchers = route.object_matchers?.map(([name, operator, value]) => {
-      return [name, operator, unquoteWithUnescape(value)];
+      return [unquoteWithUnescape(name), operator, unquoteWithUnescape(value)];
     });
     route.routes?.forEach(unquoteRoute);
   }

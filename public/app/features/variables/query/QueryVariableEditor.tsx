@@ -1,7 +1,14 @@
 import React, { FormEvent, PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { DataSourceInstanceSettings, getDataSourceRef, SelectableValue } from '@grafana/data';
+import {
+  DataSourceInstanceSettings,
+  getDataSourceRef,
+  QueryVariableModel,
+  SelectableValue,
+  VariableRefresh,
+  VariableSort,
+} from '@grafana/data';
 import { QueryVariableEditorForm } from 'app/features/dashboard-scene/settings/variables/components/QueryVariableForm';
 
 import { StoreState } from '../../../types';
@@ -11,7 +18,6 @@ import { getQueryVariableEditorState } from '../editor/selectors';
 import { VariableEditorProps } from '../editor/types';
 import { changeVariableMultiValue } from '../state/actions';
 import { getVariablesState } from '../state/selectors';
-import { QueryVariableModel, VariableRefresh, VariableSort } from '../types';
 import { toKeyedVariableIdentifier } from '../utils';
 
 import { changeQueryVariableDataSource, changeQueryVariableQuery, initQueryVariableEditor } from './actions';
@@ -125,23 +131,19 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
 
   render() {
     const { extended, variable } = this.props;
-
     if (!extended || !extended.dataSource || !extended.VariableQueryEditor) {
       return null;
     }
 
-    const datasource = extended.dataSource;
-    const VariableQueryEditor = extended.VariableQueryEditor;
     const timeRange = getTimeSrv().timeRange();
 
     return (
       <QueryVariableEditorForm
-        datasource={datasource}
+        datasource={variable.datasource ?? undefined}
         onDataSourceChange={this.onDataSourceChange}
         query={variable.query}
         onQueryChange={this.onQueryChange}
         onLegacyQueryChange={this.onLegacyQueryChange}
-        VariableQueryEditor={VariableQueryEditor}
         timeRange={timeRange}
         regex={variable.regex}
         onRegExChange={this.onRegExBlur}

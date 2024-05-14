@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FormEvent } from 'react';
+import React, { FormEvent, useCallback, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 import { lastValueFrom } from 'rxjs';
 
@@ -24,23 +24,44 @@ interface VariableEditorFormProps {
   onTypeChange: (type: EditableVariableType) => void;
   onGoBack: () => void;
   onDelete: (variableName: string) => void;
+  onValidateVariableName: (name: string, key: string | undefined) => [true, string] | [false, null];
 }
-
-export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete }: VariableEditorFormProps) {
+export function VariableEditorForm({
+  variable,
+  onTypeChange,
+  onGoBack,
+  onDelete,
+  onValidateVariableName,
+}: VariableEditorFormProps) {
   const styles = useStyles2(getStyles);
-  const { name, type, label, description, hide } = variable.useState();
+  const [nameError, setNameError] = useState<string | null>(null);
+  const { name, type, label, description, hide, key } = variable.useState();
   const EditorToRender = isEditableVariableType(type) ? getVariableEditor(type) : undefined;
   const [runQueryState, onRunQuery] = useAsyncFn(async () => {
     await lastValueFrom(variable.validateAndUpdate!());
   }, [variable]);
-
   const onVariableTypeChange = (option: SelectableValue<EditableVariableType>) => {
     if (option.value) {
       onTypeChange(option.value);
     }
   };
 
-  const onNameBlur = (e: FormEvent<HTMLInputElement>) => variable.setState({ name: e.currentTarget.value });
+  const onNameChange = useCallback(
+    (e: FormEvent<HTMLInputElement>) => {
+      const [, errorMessage] = onValidateVariableName(e.currentTarget.value, key);
+      if (nameError !== errorMessage) {
+        setNameError(errorMessage);
+      }
+    },
+    [key, nameError, onValidateVariableName]
+  );
+
+  const onNameBlur = (e: FormEvent<HTMLInputElement>) => {
+    if (!nameError) {
+      variable.setState({ name: e.currentTarget.value });
+    }
+  };
+
   const onLabelBlur = (e: FormEvent<HTMLInputElement>) => variable.setState({ label: e.currentTarget.value });
   const onDescriptionBlur = (e: FormEvent<HTMLTextAreaElement>) =>
     variable.setState({ description: e.currentTarget.value });
@@ -64,10 +85,13 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
         description="The name of the template variable. (Max. 50 characters)"
         placeholder="Variable name"
         defaultValue={name ?? ''}
+        onChange={onNameChange}
         onBlur={onNameBlur}
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2}
         maxLength={VariableNameConstraints.MaxSize}
         required
+        invalid={!!nameError}
+        error={nameError}
       />
       <VariableTextField
         name="Label"
@@ -128,7 +152,11 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
               data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.submitButton}
               onClick={onRunQuery}
             >
-              {runQueryState.loading ? <LoadingPlaceholder text="Running query..." /> : `Run query`}
+              {runQueryState.loading ? (
+                <LoadingPlaceholder className={styles.loadingPlaceHolder} text="Running query..." />
+              ) : (
+                `Run query`
+              )}
             </Button>
           )}
         </Stack>
@@ -140,5 +168,8 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
 const getStyles = (theme: GrafanaTheme2) => ({
   buttonContainer: css({
     marginTop: theme.spacing(2),
+  }),
+  loadingPlaceHolder: css({
+    marginBottom: 0,
   }),
 });

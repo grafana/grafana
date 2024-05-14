@@ -9,16 +9,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azcredentials"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
-)
-
-const (
-	TimeSeries = "time_series"
-	Table      = "table"
-	Trace      = "trace"
 )
 
 var (

@@ -100,14 +100,12 @@ For more information about dashboard permissions, refer to [Dashboard permission
 
 ## Set up generative AI features for dashboards
 
-{{< docs/public-preview product="Generative AI in dashboards" featureFlag="`dashgpt`" >}}
-
 You can use generative AI to help you with the following tasks:
 
 - **Generate panel and dashboard titles and descriptions**: Generate a title and description based on the data you’ve added for your panel or dashboard. This is useful when you want to visualize your data quickly and don’t want to spend time coming up with a title or description.
 - **Generate dashboard save changes summary**: Generate a summary of the changes you’ve made to a dashboard when you save it. This is great for easily tracking the history of a dashboard.
 
-To access these features, enable the `dashgpt` feature toggle. Then install and configure Grafana’s Large Language Model (LLM) app plugin. For more information, refer to the [Grafana LLM plugin documentation][].
+To access these features, install and configure Grafana’s Large Language Model (LLM) app plugin. For more information, refer to the [Grafana LLM plugin documentation][].
 
 When enabled, the **✨ Auto generate** option displays next to the **Title** and **Description** fields in your panels and dashboards, or when you press the **Save** button.
 

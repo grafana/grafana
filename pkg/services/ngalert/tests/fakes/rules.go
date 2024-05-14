@@ -2,7 +2,6 @@ package fakes
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"math/rand"
 	"sync"
@@ -69,10 +68,12 @@ mainloop:
 		}
 		if existing == nil {
 			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.NGAlerts).Inc()
+			title := "TEST-FOLDER-" + util.GenerateShortUID()
 			folders = append(folders, &folder.Folder{
-				ID:    rand.Int63(), // nolint:staticcheck
-				UID:   r.NamespaceUID,
-				Title: "TEST-FOLDER-" + util.GenerateShortUID(),
+				ID:       rand.Int63(), // nolint:staticcheck
+				UID:      r.NamespaceUID,
+				Title:    title,
+				Fullpath: "fullpath_" + title,
 			})
 			f.Folders[r.OrgID] = folders
 		}
@@ -283,6 +284,12 @@ func (f *RuleStore) InsertAlertRules(_ context.Context, q []models.AlertRule) ([
 	defer f.mtx.Unlock()
 	f.RecordedOps = append(f.RecordedOps, q)
 	ids := make([]models.AlertRuleKeyWithId, 0, len(q))
+	for _, rule := range q {
+		ids = append(ids, models.AlertRuleKeyWithId{
+			AlertRuleKey: rule.GetKey(),
+			ID:           rand.Int63(),
+		})
+	}
 	if err := f.Hook(q); err != nil {
 		return ids, err
 	}
@@ -296,12 +303,16 @@ func (f *RuleStore) InTransaction(ctx context.Context, fn func(c context.Context
 func (f *RuleStore) GetRuleGroupInterval(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string) (int64, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
+	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
+		Name:   "GetRuleGroupInterval",
+		Params: []any{orgID, namespaceUID, ruleGroup},
+	})
 	for _, rule := range f.Rules[orgID] {
 		if rule.RuleGroup == ruleGroup && rule.NamespaceUID == namespaceUID {
 			return rule.IntervalSeconds, nil
 		}
 	}
-	return 0, errors.New("rule group not found")
+	return 0, models.ErrAlertRuleGroupNotFound.Errorf("")
 }
 
 func (f *RuleStore) UpdateRuleGroup(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string, interval int64) error {
@@ -341,4 +352,29 @@ func (f *RuleStore) IncreaseVersionForAllRulesInNamespace(_ context.Context, org
 
 func (f *RuleStore) CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, u identity.Requester) (int64, error) {
 	return 0, nil
+}
+
+func (f *RuleStore) GetNamespacesByRuleUID(ctx context.Context, orgID int64, uids ...string) (map[string]string, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+
+	namespacesMap := make(map[string]string)
+
+	rules, ok := f.Rules[orgID]
+	if !ok {
+		return namespacesMap, nil
+	}
+
+	uidFilter := make(map[string]struct{}, len(uids))
+	for _, uid := range uids {
+		uidFilter[uid] = struct{}{}
+	}
+
+	for _, rule := range rules {
+		if _, ok := uidFilter[rule.UID]; ok {
+			namespacesMap[rule.UID] = rule.NamespaceUID
+		}
+	}
+
+	return namespacesMap, nil
 }

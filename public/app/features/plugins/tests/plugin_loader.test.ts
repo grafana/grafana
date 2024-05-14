@@ -10,9 +10,9 @@ jest.mock('app/core/core', () => {
 });
 
 import { AppPluginMeta, PluginMetaInfo, PluginType, AppPlugin } from '@grafana/data';
-import { SystemJS } from '@grafana/runtime';
 
 // Loaded after the `unmock` above
+import { SystemJS } from '../loader/systemjs';
 import { importAppPlugin } from '../plugin_loader';
 
 class MyCustomApp extends AppPlugin {

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Route, Redirect, Switch, useRouteMatch } from 'react-router-dom';
+import { Redirect, Route, Switch, useRouteMatch } from 'react-router-dom';
 
 import { NavModelItem } from '@grafana/data';
 import { Alert } from '@grafana/ui';
@@ -21,8 +21,9 @@ const MuteTimings = () => {
   const config = currentData?.alertmanager_config;
 
   const getMuteTimingByName = useCallback(
-    (id: string): MuteTimeInterval | undefined => {
-      const timing = config?.mute_time_intervals?.find(({ name }: MuteTimeInterval) => name === id);
+    (id: string, fromTimeIntervals: boolean): MuteTimeInterval | undefined => {
+      const time_intervals = fromTimeIntervals ? config?.time_intervals ?? [] : config?.mute_time_intervals ?? [];
+      const timing = time_intervals.find(({ name }: MuteTimeInterval) => name === id);
 
       if (timing) {
         const provenance = config?.muteTimeProvenances?.[timing.name];
@@ -53,13 +54,17 @@ const MuteTimings = () => {
           <Route exact path="/alerting/routes/mute-timing/edit">
             {() => {
               if (queryParams['muteName']) {
-                const muteTiming = getMuteTimingByName(String(queryParams['muteName']));
+                const muteTimingInMuteTimings = getMuteTimingByName(String(queryParams['muteName']), false);
+                const muteTimingInTimeIntervals = getMuteTimingByName(String(queryParams['muteName']), true);
+                const inTimeIntervals = Boolean(muteTimingInTimeIntervals);
+                const muteTiming = inTimeIntervals ? muteTimingInTimeIntervals : muteTimingInMuteTimings;
                 const provenance = muteTiming?.provenance;
 
                 return (
                   <MuteTimingForm
                     loading={isLoading}
-                    muteTiming={muteTiming}
+                    fromLegacyTimeInterval={muteTimingInMuteTimings}
+                    fromTimeIntervals={muteTimingInTimeIntervals}
                     showError={!muteTiming && !isLoading}
                     provenance={provenance}
                   />

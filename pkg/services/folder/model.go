@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -163,6 +164,10 @@ type GetFoldersQuery struct {
 	WithFullpathUIDs bool
 	BatchSize        uint64
 
+	// OrderByTitle is used to sort the folders by title
+	// Set to true when ordering is meaningful (used for listing folders)
+	// otherwise better to keep it false since ordering can have a performance impact
+	OrderByTitle bool
 	SignedInUser identity.Requester `json:"-"`
 }
 
@@ -184,6 +189,9 @@ type GetChildrenQuery struct {
 	// Pagination options
 	Limit int64
 	Page  int64
+
+	// Permission to filter by
+	Permission dashboardaccess.PermissionType
 
 	SignedInUser identity.Requester `json:"-"`
 

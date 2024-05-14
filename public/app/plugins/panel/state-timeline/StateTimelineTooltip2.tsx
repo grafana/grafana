@@ -1,17 +1,18 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 
-import { Field, FieldType, getFieldDisplayName, LinkModel, TimeRange } from '@grafana/data';
+import { FieldType, TimeRange } from '@grafana/data';
 import { SortOrder } from '@grafana/schema/dist/esm/common/common.gen';
 import { TooltipDisplayMode, useStyles2 } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
-import { LabelValue } from '@grafana/ui/src/components/VizTooltip/types';
+import { VizTooltipItem } from '@grafana/ui/src/components/VizTooltip/types';
 import { getContentItems } from '@grafana/ui/src/components/VizTooltip/utils';
 import { findNextStateIndex, fmtDuration } from 'app/core/components/TimelineChart/utils';
 
 import { getDataLinks } from '../status-history/utils';
 import { TimeSeriesTooltipProps, getStyles } from '../timeseries/TimeSeriesTooltip';
+import { isTooltipScrollable } from '../timeseries/utils';
 
 interface StateTimelineTooltip2Props extends TimeSeriesTooltipProps {
   timeRange: TimeRange;
@@ -19,21 +20,20 @@ interface StateTimelineTooltip2Props extends TimeSeriesTooltipProps {
 }
 
 export const StateTimelineTooltip2 = ({
-  frames,
-  seriesFrame,
+  series,
   dataIdxs,
   seriesIdx,
   mode = TooltipDisplayMode.Single,
   sortOrder = SortOrder.None,
-  scrollable = false,
   isPinned,
   annotate,
   timeRange,
   withDuration,
+  maxHeight,
 }: StateTimelineTooltip2Props) => {
   const styles = useStyles2(getStyles);
 
-  const xField = seriesFrame.fields[0];
+  const xField = series.fields[0];
 
   const dataIdx = seriesIdx != null ? dataIdxs[seriesIdx] : dataIdxs.find((idx) => idx != null);
 
@@ -41,11 +41,11 @@ export const StateTimelineTooltip2 = ({
 
   mode = isPinned ? TooltipDisplayMode.Single : mode;
 
-  const contentItems = getContentItems(seriesFrame.fields, xField, dataIdxs, seriesIdx, mode, sortOrder);
+  const contentItems = getContentItems(series.fields, xField, dataIdxs, seriesIdx, mode, sortOrder);
 
   // append duration in single mode
   if (withDuration && mode === TooltipDisplayMode.Single) {
-    const field = seriesFrame.fields[seriesIdx!];
+    const field = series.fields[seriesIdx!];
     const nextStateIdx = findNextStateIndex(field, dataIdx!);
     let nextStateTs;
     if (nextStateIdx) {
@@ -65,26 +65,31 @@ export const StateTimelineTooltip2 = ({
     contentItems.push({ label: 'Duration', value: duration });
   }
 
-  let links: Array<LinkModel<Field>> = [];
+  let footer: ReactNode;
 
-  if (seriesIdx != null) {
-    const field = seriesFrame.fields[seriesIdx];
+  if (isPinned && seriesIdx != null) {
+    const field = series.fields[seriesIdx];
     const dataIdx = dataIdxs[seriesIdx]!;
-    links = getDataLinks(field, dataIdx);
+    const links = getDataLinks(field, dataIdx);
+
+    footer = <VizTooltipFooter dataLinks={links} annotate={annotate} />;
   }
 
-  const headerItem: LabelValue = {
-    label: xField.type === FieldType.time ? '' : getFieldDisplayName(xField, seriesFrame, frames),
+  const headerItem: VizTooltipItem = {
+    label: xField.type === FieldType.time ? '' : xField.state?.displayName ?? xField.name,
     value: xVal,
   };
 
   return (
-    <div>
-      <div className={styles.wrapper}>
-        <VizTooltipHeader headerLabel={headerItem} isPinned={isPinned} />
-        <VizTooltipContent contentLabelValue={contentItems} isPinned={isPinned} scrollable={scrollable} />
-        {isPinned && <VizTooltipFooter dataLinks={links} annotate={annotate} />}
-      </div>
+    <div className={styles.wrapper}>
+      <VizTooltipHeader item={headerItem} isPinned={isPinned} />
+      <VizTooltipContent
+        items={contentItems}
+        isPinned={isPinned}
+        scrollable={isTooltipScrollable({ mode, maxHeight })}
+        maxHeight={maxHeight}
+      />
+      {footer}
     </div>
   );
 };

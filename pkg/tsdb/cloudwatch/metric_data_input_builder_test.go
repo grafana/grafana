@@ -1,6 +1,7 @@
 package cloudwatch
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -27,13 +28,13 @@ func TestMetricDataInputBuilder(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			executor := newExecutor(nil, &fakeSessionCache{}, log.NewNullLogger())
+			executor := newExecutor(nil, log.NewNullLogger())
 			query := getBaseQuery()
 			query.TimezoneUTCOffset = tc.timezoneUTCOffset
 
 			from := now.Add(time.Hour * -2)
 			to := now.Add(time.Hour * -1)
-			mdi, err := executor.buildMetricDataInput(from, to, []*models.CloudWatchQuery{query})
+			mdi, err := executor.buildMetricDataInput(context.Background(), from, to, []*models.CloudWatchQuery{query})
 
 			assert.NoError(t, err)
 			require.NotNil(t, mdi)

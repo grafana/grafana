@@ -4,8 +4,8 @@ import React from 'react';
 import { AnnotationQuery } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { Button, DeleteButton, IconButton, useStyles2, VerticalGroup } from '@grafana/ui';
-import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
+import { Button, DeleteButton, EmptyState, IconButton, Stack, TextLink, useStyles2 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 import { ListNewButton } from 'app/features/dashboard/components/DashboardSettings/ListNewButton';
 
 import { MoveDirection } from '../AnnotationsEditView';
@@ -39,7 +39,7 @@ export const AnnotationSettingsList = ({ annotations, onNew, onEdit, onMove, onD
 
   const dataSourceSrv = getDataSourceSrv();
   return (
-    <VerticalGroup>
+    <Stack direction="column">
       {annotations.length > 0 && (
         <div className={styles.table}>
           <table role="grid" className="filter-table filter-table--hover">
@@ -99,34 +99,54 @@ export const AnnotationSettingsList = ({ annotations, onNew, onEdit, onMove, onD
         </div>
       )}
       {showEmptyListCTA && (
-        <EmptyListCTA
-          onClick={onNew}
-          title="There are no custom annotation queries added yet"
-          buttonIcon="comment-alt"
-          buttonTitle={BUTTON_TITLE}
-          infoBoxTitle="What are annotation queries?"
-          infoBox={{
-            __html: `<p>Annotations provide a way to integrate event data into your graphs. They are visualized as vertical lines
-          and icons on all graph panels. When you hover over an annotation icon you can get event text &amp; tags for
-          the event. You can add annotation events directly from grafana by holding CTRL or CMD + click on graph (or
-          drag region). These will be stored in Grafana's annotation database.
-        </p>
-        Checkout the
-        <a class='external-link' target='_blank' href='http://docs.grafana.org/reference/annotations/'
-          >Annotations documentation</a
-        >
-        for more information.`,
-          }}
-        />
+        <Stack direction="column">
+          <EmptyState
+            variant="call-to-action"
+            button={
+              <Button
+                data-testid={selectors.components.CallToActionCard.buttonV2('Add annotation query')}
+                icon="comment-alt"
+                onClick={onNew}
+                size="lg"
+              >
+                <Trans i18nKey="annotations.empty-state.button-title">Add annotation query</Trans>
+              </Button>
+            }
+            message={t('annotations.empty-state.title', 'There are no custom annotation queries added yet')}
+          >
+            <Trans i18nKey="annotations.empty-state.info-box-content">
+              <p>
+                Annotations provide a way to integrate event data into your graphs. They are visualized as vertical
+                lines and icons on all graph panels. When you hover over an annotation icon you can get event text &amp;
+                tags for the event. You can add annotation events directly from grafana by holding CTRL or CMD + click
+                on graph (or drag region). These will be stored in Grafana&apos;s annotation database.
+              </p>
+            </Trans>
+            <Trans i18nKey="annotations.empty-state.info-box-content-2">
+              Checkout the{' '}
+              <TextLink external href="http://docs.grafana.org/reference/annotations/">
+                Annotations documentation
+              </TextLink>{' '}
+              for more information.
+            </Trans>
+          </EmptyState>
+        </Stack>
       )}
-      {!showEmptyListCTA && <ListNewButton onClick={onNew}>New query</ListNewButton>}
-    </VerticalGroup>
+      {!showEmptyListCTA && (
+        <ListNewButton
+          data-testid={selectors.pages.Dashboard.Settings.Annotations.List.addAnnotationCTAV2}
+          onClick={onNew}
+        >
+          New query
+        </ListNewButton>
+      )}
+    </Stack>
   );
 };
 
 const getStyles = () => ({
   table: css({
     width: '100%',
-    overflowX: 'scroll',
+    overflowX: 'auto',
   }),
 });

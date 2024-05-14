@@ -1,16 +1,18 @@
 import React, { FormEvent } from 'react';
+import { useAsync } from 'react-use';
 
-import { DataSourceApi, DataSourceInstanceSettings, SelectableValue, TimeRange } from '@grafana/data';
+import { DataSourceInstanceSettings, SelectableValue, TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryVariable } from '@grafana/scenes';
-import { VariableRefresh, VariableSort } from '@grafana/schema';
+import { DataSourceRef, VariableRefresh, VariableSort } from '@grafana/schema';
 import { Field } from '@grafana/ui';
 import { QueryEditor } from 'app/features/dashboard-scene/settings/variables/components/QueryEditor';
 import { SelectionOptionsForm } from 'app/features/dashboard-scene/settings/variables/components/SelectionOptionsForm';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
+import { getVariableQueryEditor } from 'app/features/variables/editor/getVariableQueryEditor';
 import { QueryVariableRefreshSelect } from 'app/features/variables/query/QueryVariableRefreshSelect';
 import { QueryVariableSortSelect } from 'app/features/variables/query/QueryVariableSortSelect';
-import { VariableQueryEditorType } from 'app/features/variables/types';
 
 import { VariableLegend } from './VariableLegend';
 import { VariableTextAreaField } from './VariableTextAreaField';
@@ -18,12 +20,11 @@ import { VariableTextAreaField } from './VariableTextAreaField';
 type VariableQueryType = QueryVariable['state']['query'];
 
 interface QueryVariableEditorFormProps {
-  datasource: DataSourceApi | undefined;
+  datasource?: DataSourceRef;
   onDataSourceChange: (dsSettings: DataSourceInstanceSettings) => void;
   query: VariableQueryType;
   onQueryChange: (query: VariableQueryType) => void;
   onLegacyQueryChange: (query: VariableQueryType, definition: string) => void;
-  VariableQueryEditor: VariableQueryEditorType | undefined;
   timeRange: TimeRange;
   regex: string | null;
   onRegExChange: (event: FormEvent<HTMLTextAreaElement>) => void;
@@ -40,12 +41,11 @@ interface QueryVariableEditorFormProps {
 }
 
 export function QueryVariableEditorForm({
-  datasource,
+  datasource: datasourceRef,
   onDataSourceChange,
   query,
   onQueryChange,
   onLegacyQueryChange,
-  VariableQueryEditor,
   timeRange,
   regex,
   onRegExChange,
@@ -60,11 +60,19 @@ export function QueryVariableEditorForm({
   allValue,
   onAllValueChange,
 }: QueryVariableEditorFormProps) {
+  const { value: dsConfig } = useAsync(async () => {
+    const datasource = await getDataSourceSrv().get(datasourceRef ?? '');
+    const VariableQueryEditor = await getVariableQueryEditor(datasource);
+
+    return { datasource, VariableQueryEditor };
+  }, [datasourceRef]);
+  const { datasource, VariableQueryEditor } = dsConfig ?? {};
+
   return (
     <>
       <VariableLegend>Query options</VariableLegend>
       <Field label="Data source" htmlFor="data-source-picker">
-        <DataSourcePicker current={datasource} onChange={onDataSourceChange} variables={true} width={30} />
+        <DataSourcePicker current={datasourceRef} onChange={onDataSourceChange} variables={true} width={30} />
       </Field>
 
       {datasource && VariableQueryEditor && (

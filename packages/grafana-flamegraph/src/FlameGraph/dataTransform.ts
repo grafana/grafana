@@ -91,7 +91,7 @@ export function nestedSetToLevels(
     levels[currentLevel].push(newItem);
   }
 
-  const collapsedMapContainer = new CollapsedMapContainer(options?.collapsingThreshold);
+  const collapsedMapContainer = new CollapsedMapBuilder(options?.collapsingThreshold);
   if (options?.collapsing) {
     // We collapse similar items here, where it seems like parent and child are the same thing and so the distinction
     // isn't that important. We create a map of items that should be collapsed together. We need to do it with complete
@@ -99,11 +99,66 @@ export function nestedSetToLevels(
     collapsedMapContainer.addTree(levels[0][0]);
   }
 
-  return [levels, uniqueLabels, collapsedMapContainer.getMap()];
+  return [levels, uniqueLabels, collapsedMapContainer.getCollapsedMap()];
 }
 
-export type CollapsedMap = Map<LevelItem, CollapseConfig>;
-export class CollapsedMapContainer {
+/**
+ * Small wrapper around the map of items that should be visually collapsed in the flame graph. Reason this is a wrapper
+ * is that we want to make sure that when this is in the state we don't update the map directly but create a new map
+ * and to have a place for the methods to collapse/expand either single item or all the items.
+ */
+export class CollapsedMap {
+  // The levelItem used as a key is the item that will always be rendered in the flame graph. The config.items are all
+  // the items that are in the group and if the config.collapsed is true they will be hidden.
+  private map: Map<LevelItem, CollapseConfig> = new Map();
+
+  constructor(map?: Map<LevelItem, CollapseConfig>) {
+    this.map = map || new Map();
+  }
+
+  get(item: LevelItem) {
+    return this.map.get(item);
+  }
+
+  keys() {
+    return this.map.keys();
+  }
+
+  values() {
+    return this.map.values();
+  }
+
+  size() {
+    return this.map.size;
+  }
+
+  setCollapsedStatus(item: LevelItem, collapsed: boolean) {
+    const newMap = new Map(this.map);
+    const collapsedConfig = this.map.get(item)!;
+    const newConfig = { ...collapsedConfig, collapsed };
+    for (const item of collapsedConfig.items) {
+      newMap.set(item, newConfig);
+    }
+    return new CollapsedMap(newMap);
+  }
+
+  setAllCollapsedStatus(collapsed: boolean) {
+    const newMap = new Map(this.map);
+    for (const item of this.map.keys()) {
+      const collapsedConfig = this.map.get(item)!;
+      const newConfig = { ...collapsedConfig, collapsed };
+      newMap.set(item, newConfig);
+    }
+
+    return new CollapsedMap(newMap);
+  }
+}
+
+/**
+ * Similar to CollapsedMap but this one is mutable and used during transformation of the dataFrame data into structure
+ * we use for rendering. This should not be passed to the React components.
+ */
+export class CollapsedMapBuilder {
   private map = new Map();
   private threshold = 0.99;
 
@@ -128,10 +183,10 @@ export class CollapsedMapContainer {
     }
   }
 
+  // The heuristics here is pretty simple right now. Just check if it's single child and if we are within threshold.
+  // We assume items with small self just aren't too important while we cannot really collapse items with siblings
+  // as it's not clear what to do with said sibling.
   addItem(item: LevelItem, parent?: LevelItem) {
-    // The heuristics here is pretty simple right now. Just check if it's single child and if we are within threshold.
-    // We assume items with small self just aren't too important while we cannot really collapse items with siblings
-    // as it's not clear what to do with said sibling.
     if (parent && item.value > parent.value * this.threshold && parent.children.length === 1) {
       if (this.map.has(parent)) {
         const config = this.map.get(parent)!;
@@ -145,8 +200,8 @@ export class CollapsedMapContainer {
     }
   }
 
-  getMap() {
-    return new Map(this.map);
+  getCollapsedMap() {
+    return new CollapsedMap(this.map);
   }
 }
 
@@ -225,7 +280,7 @@ export class FlameGraphDataContainer {
 
   private levels: LevelItem[][] | undefined;
   private uniqueLabelsMap: Record<string, LevelItem[]> | undefined;
-  private collapsedMap: Map<LevelItem, CollapseConfig> | undefined;
+  private collapsedMap: CollapsedMap | undefined;
 
   constructor(data: DataFrame, options: Options, theme: GrafanaTheme2 = createTheme()) {
     this.data = data;
@@ -272,7 +327,7 @@ export class FlameGraphDataContainer {
   }
 
   isDiffFlamegraph() {
-    return this.valueRightField && this.selfRightField;
+    return Boolean(this.valueRightField && this.selfRightField);
   }
 
   getLabel(index: number) {

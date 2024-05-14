@@ -1,8 +1,9 @@
 import { cloneDeep } from 'lodash';
 
+import { QueryVariableModel, VariableOption } from '@grafana/data';
+
 import { reducerTester } from '../../../../../test/core/redux/reducerTester';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../../constants';
-import { QueryVariableModel, VariableOption } from '../../types';
 
 import {
   cleanPickerState,
@@ -569,8 +570,11 @@ describe('optionsPickerReducer', () => {
           .whenActionIsDispatched(updateOptionsAndFilter(options))
           .thenStateShouldEqual({
             ...initialState,
-            options: [{ text: 'All', value: '$__all', selected: true }],
-            selectedValues: [{ text: 'All', value: '$__all', selected: true }],
+            options: [
+              { text: '> A', value: 'A', selected: false },
+              { text: 'All', value: '$__all', selected: false },
+            ],
+            selectedValues: [],
             queryValue: 'A',
             highlightIndex: 0,
           });
@@ -813,6 +817,45 @@ describe('optionsPickerReducer', () => {
           selectedValues: [],
           queryValue: 'C',
           highlightIndex: 0,
+        });
+    });
+
+    it('should offer as-typed option even when matches exist', () => {
+      const searchQuery = 'a.*';
+
+      const options: VariableOption[] = 'A AA AB C'.split(' ').map((v) => ({
+        selected: false,
+        text: v,
+        value: v,
+      }));
+
+      const expect: VariableOption[] = [
+        {
+          selected: false,
+          text: '> ' + searchQuery,
+          value: searchQuery,
+        },
+      ].concat(
+        'A AA AB'.split(' ').map((v) => ({
+          selected: false,
+          text: v,
+          value: v,
+        }))
+      );
+
+      const { initialState } = getVariableTestContext({
+        queryValue: searchQuery,
+      });
+
+      reducerTester<OptionsPickerState>()
+        .givenReducer(optionsPickerReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(updateOptionsAndFilter(options))
+        .thenStateShouldEqual({
+          ...cloneDeep(initialState),
+          options: expect,
+          selectedValues: [],
+          queryValue: searchQuery,
+          highlightIndex: 1,
         });
     });
   });

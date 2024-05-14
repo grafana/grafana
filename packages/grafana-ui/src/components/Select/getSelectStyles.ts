@@ -97,7 +97,8 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
       display: 'flex',
     }),
     valueContainerMultiNoWrap: css({
-      flexWrap: 'nowrap',
+      display: 'grid',
+      gridAutoFlow: 'column',
     }),
     loadingMessage: css({
       label: 'grafana-select-loading-message',

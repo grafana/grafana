@@ -1,4 +1,3 @@
-import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
 import { Observable, of, lastValueFrom } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 import { delay } from 'rxjs/operators';
@@ -85,6 +84,11 @@ const getTestContext = (overides?: object, mockFromFetch = true) => {
     expectRequestCallChain,
   };
 };
+
+jest.mock('app/core/utils/auth', () => ({
+  getSessionExpiry: () => 1,
+  hasSessionExpiry: () => true,
+}));
 
 describe('backendSrv', () => {
   describe('parseRequestOptions', () => {

@@ -15,10 +15,11 @@ import (
 	common "k8s.io/kube-openapi/pkg/common"
 
 	playlist "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/apiserver/builder"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	grafanarest "github.com/grafana/grafana/pkg/services/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -30,16 +31,19 @@ type PlaylistAPIBuilder struct {
 	service    playlistsvc.Service
 	namespacer request.NamespaceMapper
 	gv         schema.GroupVersion
+	features   featuremgmt.FeatureToggles
 }
 
 func RegisterAPIService(p playlistsvc.Service,
 	apiregistration builder.APIRegistrar,
 	cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
 ) *PlaylistAPIBuilder {
 	builder := &PlaylistAPIBuilder{
 		service:    p,
 		namespacer: request.GetNamespaceMapper(cfg),
 		gv:         playlist.PlaylistResourceInfo.GroupVersion(),
+		features:   features,
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -118,7 +122,12 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 		if err != nil {
 			return nil, err
 		}
-		storage[resource.StoragePath()] = grafanarest.NewDualWriter(legacyStore, store)
+
+		mode := grafanarest.Mode1
+		if b.features.IsEnabledGlobally(featuremgmt.FlagDualWritePlaylistsMode2) {
+			mode = grafanarest.Mode2
+		}
+		storage[resource.StoragePath()] = grafanarest.NewDualWriter(mode, legacyStore, store)
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[playlist.VERSION] = storage

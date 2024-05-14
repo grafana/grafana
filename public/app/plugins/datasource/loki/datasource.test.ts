@@ -18,6 +18,7 @@ import {
   TimeRange,
   ToggleFilterAction,
   DataQueryRequest,
+  ScopedVars,
 } from '@grafana/data';
 import {
   BackendSrv,
@@ -106,7 +107,7 @@ const testLogsResponse: FetchResponse = {
     },
   },
   ok: true,
-  headers: {} as unknown as Headers,
+  headers: new Headers(),
   redirected: false,
   status: 200,
   statusText: 'Success',
@@ -204,7 +205,7 @@ describe('LokiDatasource', () => {
     it('should report query interaction', async () => {
       await runTest(80, '40', 80, CoreApp.Explore);
       expect(reportInteraction).toHaveBeenCalledWith(
-        'grafana_loki_query_executed',
+        'grafana_explore_loki_query_executed',
         expect.objectContaining({
           query_type: 'logs',
           line_limit: 80,
@@ -218,16 +219,9 @@ describe('LokiDatasource', () => {
       expect(reportInteraction).not.toBeCalled();
     });
 
-    it('should not report query interaction for panel edit query', async () => {
-      await runTest(80, '40', 80, CoreApp.PanelEditor);
-      expect(reportInteraction).toHaveBeenCalledWith(
-        'grafana_loki_query_executed',
-        expect.objectContaining({
-          query_type: 'logs',
-          line_limit: 80,
-          obfuscated_query: '{Identifier=String}',
-        })
-      );
+    it('should not report query interaction for unknown app query', async () => {
+      await runTest(80, '40', 80, CoreApp.Unknown);
+      expect(reportInteraction).not.toBeCalled();
     });
   });
 
@@ -496,9 +490,9 @@ describe('LokiDatasource', () => {
       return { ds };
     };
 
-    it('should return empty array if /series returns empty', async () => {
+    it('should return empty array if label values returns empty', async () => {
       const ds = createLokiDatasource(templateSrvStub);
-      const spy = jest.spyOn(ds.languageProvider, 'fetchSeriesLabels').mockResolvedValue({});
+      const spy = jest.spyOn(ds.languageProvider, 'fetchLabelValues').mockResolvedValue([]);
 
       const result = await ds.metricFindQuery({
         refId: 'test',
@@ -1186,6 +1180,22 @@ describe('LokiDatasource', () => {
             defaultAdHocFilters
           );
         });
+        it('should add the filter after other label filters', () => {
+          assertAdHocFilters(
+            '{bar="baz"} | logfmt | test="value" | line_format "test"',
+            '{bar="baz"} | logfmt | test="value" | job=`grafana` | line_format "test"',
+            ds,
+            defaultAdHocFilters
+          );
+        });
+        it('should add the filter after label_format', () => {
+          assertAdHocFilters(
+            '{bar="baz"} | logfmt | test="value" | label_format process="{{.process}}"',
+            '{bar="baz"} | logfmt | test="value" | label_format process="{{.process}}" | job=`grafana`',
+            ds,
+            defaultAdHocFilters
+          );
+        });
       });
     });
 
@@ -1348,6 +1358,7 @@ describe('LokiDatasource', () => {
           queryType: LokiQueryType.Range,
           refId: 'log-volume-A',
           supportingQueryType: SupportingQueryType.LogsVolume,
+          legendFormat: '{{ level }}',
         });
       });
 
@@ -1366,6 +1377,7 @@ describe('LokiDatasource', () => {
           queryType: LokiQueryType.Range,
           refId: 'log-volume-A',
           supportingQueryType: SupportingQueryType.LogsVolume,
+          legendFormat: '{{ level }}',
         });
       });
 
@@ -1393,6 +1405,30 @@ describe('LokiDatasource', () => {
             }
           )
         ).toEqual(undefined);
+      });
+
+      it('return logs volume query with defined field', () => {
+        const query = ds.getSupplementaryQuery(
+          { type: SupplementaryQueryType.LogsVolume, field: 'test' },
+          {
+            expr: '{label="value"}',
+            queryType: LokiQueryType.Range,
+            refId: 'A',
+          }
+        );
+        expect(query?.expr).toEqual('sum by (test) (count_over_time({label="value"} | drop __error__[$__auto]))');
+      });
+
+      it('return logs volume query with level as field if no field specified', () => {
+        const query = ds.getSupplementaryQuery(
+          { type: SupplementaryQueryType.LogsVolume },
+          {
+            expr: '{label="value"}',
+            queryType: LokiQueryType.Range,
+            refId: 'A',
+          }
+        );
+        expect(query?.expr).toEqual('sum by (level) (count_over_time({label="value"} | drop __error__[$__auto]))');
       });
     });
 
@@ -1650,6 +1686,19 @@ describe('LokiDatasource', () => {
       expect(async () => {
         await ds.statsMetadataRequest('/index');
       }).rejects.toThrow('invalid metadata request url: /index');
+    });
+  });
+
+  describe('live tailing', () => {
+    it('interpolates variables with scopedVars and filters', () => {
+      const ds = createLokiDatasource();
+      const query: LokiQuery = { expr: '{app=$app}', refId: 'A' };
+      const scopedVars: ScopedVars = { app: { text: 'interpolated', value: 'interpolated' } };
+      const filters: AdHocFilter[] = [];
+
+      jest.spyOn(ds, 'applyTemplateVariables').mockImplementation((query) => query);
+      ds.query({ targets: [query], scopedVars, filters, liveStreaming: true } as DataQueryRequest<LokiQuery>);
+      expect(ds.applyTemplateVariables).toHaveBeenCalledWith(expect.objectContaining(query), scopedVars, filters);
     });
   });
 });

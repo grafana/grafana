@@ -1,4 +1,5 @@
 import React from 'react';
+import { Controller } from 'react-hook-form';
 
 import { locationUtil, SelectableValue } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
@@ -8,9 +9,7 @@ import {
   Input,
   Switch,
   RadioButtonGroup,
-  Form,
   Field,
-  InputControl,
   FieldSet,
   Icon,
   TextLink,
@@ -21,6 +20,7 @@ import {
 import { getConfig } from 'app/core/config';
 import { OrgRole, useDispatch } from 'app/types';
 
+import { Form } from '../../core/components/Form/Form';
 import { addInvitee } from '../invites/state/actions';
 
 const tooltipMessage = (
@@ -97,7 +97,7 @@ export const UserInviteForm = () => {
                   </Label>
                 }
               >
-                <InputControl
+                <Controller
                   render={({ field: { ref, ...field } }) => <RadioButtonGroup {...field} options={roles} />}
                   control={control}
                   name="role"

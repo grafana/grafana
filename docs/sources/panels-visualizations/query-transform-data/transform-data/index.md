@@ -39,7 +39,7 @@ labels:
     - enterprise
     - oss
 title: Transform data
-description: Use transformations to rename fields, join series data, apply mathematical operations, and more
+description: Use transformations to rename fields, join time series/SQL-like data, apply mathematical operations, and more
 weight: 100
 ---
 
@@ -48,7 +48,7 @@ weight: 100
 Transformations are a powerful way to manipulate data returned by a query before the system applies a visualization. Using transformations, you can:
 
 - Rename fields
-- Join time series data
+- Join time series/SQL-like data
 - Perform mathematical operations across queries
 - Use the output of one transformation as the input to another transformation
 
@@ -101,7 +101,9 @@ You can disable or hide one or more transformations by clicking on the eye icon 
 
 If your panel uses more than one query, you can filter these and apply the selected transformation to only one of the queries. To do this, click the filter icon on the top right of the transformation row. This opens a drop-down with a list of queries used on the panel. From here, you can select the query you want to transform.
 
-Note that the filter icon is always displayed if your panel has more than one query, but it may not work if previous transformations for merging the queries' outputs are applied. This is because one transformation takes the output of the previous one.
+You can also filter by annotations (which includes exemplars) to apply transformations to them. When you do so, the list of fields changes to reflect those in the annotation or exemplar tooltip.
+
+The filter icon is always displayed if your panel has more than one query or source of data (that is, panel or annotation data) but it may not work if previous transformations for merging the queries’ outputs are applied. This is because one transformation takes the output of the previous one.
 
 ## Delete a transformation
 
@@ -241,11 +243,11 @@ Config query result:
 
 In the field mapping specify:
 
-| Field | Use as                  | Select     |
-| ----- | ----------------------- | ---------- |
-| Value | Value mappings / Value  | All values |
-| Text  | Value mappings / Text   | All values |
-| Color | Value mappings / Ciolor | All values |
+| Field | Use as                 | Select     |
+| ----- | ---------------------- | ---------- |
+| Value | Value mappings / Value | All values |
+| Text  | Value mappings / Text  | All values |
+| Color | Value mappings / Color | All values |
 
 Grafana builds value mappings from your query result and applies them to the real data query results. You should see values being mapped and colored according to the config query results.
 
@@ -400,6 +402,11 @@ The available conditions for all fields are:
 - **Is Not Null** - Match if the value is not null.
 - **Equal** - Match if the value is equal to the specified value.
 - **Different** - Match if the value is different than the specified value.
+
+The available conditions for string fields are:
+
+- **Contains substring** - Match if the value contains the specified substring (case insensitive).
+- **Does not contain substring** - Match if the value doesn't contain the specified substring (case insensitive).
 
 The available conditions for number fields are:
 
@@ -627,6 +634,50 @@ We can generate a matrix using the values of 'Server Status' as column names, th
 
 Use this transformation to construct a matrix by specifying fields from your query results. The matrix output reflects the relationships between the unique values in these fields. This helps you present complex relationships in a clear and structured matrix format.
 
+### Group to nested table
+
+Use this transformation to group the data by a specified field (column) value and process calculations on each group. Records are generated that share the same grouped field value, to be displayed in a nested table.
+
+To calculate a statistic for a field, click the selection box next to it and select the **Calculate** option:
+
+{{< figure src="/static/img/docs/transformations/nested-table-select-calculation.png" class="docs-image--no-shadow" max-width= "1100px" alt="A select box showing the Group and Calculate options for the transformation." >}}
+
+Once **Calculate** has been selected, another selection box will appear next to the respective field which will allow statistics to be selected:
+
+{{< figure src="/static/img/docs/transformations/nested-table-select-stat.png" class="docs-image--no-shadow" max-width= "1100px" alt="A select box showing available statistic calculations once the calculate option for the field has been selected." >}}
+
+For information about available calculations, refer to [Calculation types][].
+
+Here's an example of original data:
+
+| Time                | Server ID | CPU Temperature | Server Status |
+| ------------------- | --------- | --------------- | ------------- |
+| 2020-07-07 11:34:20 | server 1  | 80              | Shutdown      |
+| 2020-07-07 11:34:20 | server 3  | 62              | OK            |
+| 2020-07-07 10:32:20 | server 2  | 90              | Overload      |
+| 2020-07-07 10:31:22 | server 3  | 55              | OK            |
+| 2020-07-07 09:30:57 | server 3  | 62              | Rebooting     |
+| 2020-07-07 09:30:05 | server 2  | 88              | OK            |
+| 2020-07-07 09:28:06 | server 1  | 80              | OK            |
+| 2020-07-07 09:25:05 | server 2  | 88              | OK            |
+| 2020-07-07 09:23:07 | server 1  | 86              | OK            |
+
+This transformation has two steps. First, specify one or more fields by which to group the data. This groups all the same values of those fields together, as if you sorted them. For instance, if you group by the Server ID field, Grafana groups the data this way:
+
+| Server ID |                                                                                                                                                                                                                                                                                                     |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| server 1  | <table><th><tr><td>Time</td><td>CPU Temperature</td><td>Server Status</td></tr></th><tbody><tr><td>2020-07-07 11:34:20</td><td>80</td><td>Shutdown</td></tr><tr><td>2020-07-07 09:28:06</td><td>80</td><td>OK</td></tr><tr><td>2020-07-07 09:23:07</td><td>86</td><td>OK</td></tr></tbody></table>  |
+| server 2  | <table><th><tr><td>Time</td><td>CPU Temperature</td><td>Server Status</td></tr></th><tbody><tr><td>2020-07-07 10:32:20</td><td>90</td><td>Overload</td></tr><tr><td>2020-07-07 09:30:05</td><td>88</td><td>OK</td></tr><tr><td>2020-07-07 09:25:05</td><td>88</td><td>OK</td></tr></tbody></table>  |
+| server 3  | <table><th><tr><td>Time</td><td>CPU Temperature</td><td>Server Status</td></tr></th><tbody><tr><td>2020-07-07 11:34:20</td><td>62</td><td>OK</td></tr><tr><td>2020-07-07 10:31:22</td><td>55</td><td>OK</td></tr><tr><td>2020-07-07 09:30:57</td><td>62</td><td>Rebooting</td></tr></tbody></table> |
+
+After choosing the field by which you want to group your data, you can add various calculations on the other fields and apply the calculation to each group of rows. For instance, you might want to calculate the average CPU temperature for each of those servers. To do so, add the **mean calculation** applied on the CPU Temperature field to get the following result:
+
+| Server ID | CPU Temperatute (mean) |                                                                                                                                                                                                                                            |
+| --------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| server 1  | 82                     | <table><th><tr><td>Time</td><td>Server Status</td></tr></th><tbody><tr><td>2020-07-07 11:34:20</td><td>Shutdown</td></tr><tr><td>2020-07-07 09:28:06</td><td>OK</td></tr><tr><td>2020-07-07 09:23:07</td><td>OK</td></tr></tbody></table>  |
+| server 2  | 88.6                   | <table><th><tr><td>Time</td><td>Server Status</td></tr></th><tbody><tr><td>2020-07-07 10:32:20</td><td>Overload</td></tr><tr><td>2020-07-07 09:30:05</td><td>OK</td></tr><tr><td>2020-07-07 09:25:05</td><td>OK</td></tr></tbody></table>  |
+| server 3  | 59.6                   | <table><th><tr><td>Time</td><td>Server Status</td></tr></th><tbody><tr><td>2020-07-07 11:34:20</td><td>OK</td></tr><tr><td>2020-07-07 10:31:22</td><td>OK</td></tr><tr><td>2020-07-07 09:30:57</td><td>Rebooting</td></tr></tbody></table> |
+
 ### Create heatmap
 
 Use this transformation to prepare histogram data for visualizing trends over time. Similar to the heatmap visualization, this transformation converts histogram metrics into temporal buckets.
@@ -710,13 +761,13 @@ Use this transformation to merge multiple results into a single table, enabling 
 
 This is especially useful for converting multiple time series results into a single wide table with a shared time field.
 
-#### Inner join
+#### Inner join (for Time Series or SQL-like data)
 
 An inner join merges data from multiple tables where all tables share the same value from the selected field. This type of join excludes data where values do not match in every result.
 
-Use this transformation to combine the results from multiple queries (combining on a passed join field or the first time column) into one result, and drop rows where a successful join cannot occur.
+Use this transformation to combine the results from multiple queries (combining on a passed join field or the first time column) into one result, and drop rows where a successful join cannot occur. This is not optimized for large Time Series datasets.
 
-In the following example, two queries return table data. It is visualized as two separate tables before applying the inner join transformation.
+In the following example, two queries return Time Series data. It is visualized as two separate tables before applying the inner join transformation.
 
 **Query A:**
 
@@ -741,7 +792,39 @@ The result after applying the inner join transformation looks like the following
 | 2020-07-07 11:34:20 | node    | 25260122  | server 1 | 15     |
 | 2020-07-07 11:24:20 | postgre | 123001233 | server 2 | 5      |
 
-#### Outer join
+This works in the same way for non-Time Series tabular data as well.
+
+**Students**
+
+| StudentID | Name     | Major            |
+| --------- | -------- | ---------------- |
+| 1         | John     | Computer Science |
+| 2         | Emily    | Mathematics      |
+| 3         | Michael  | Physics          |
+| 4         | Jennifer | Chemistry        |
+
+**Enrollments**
+
+| StudentID | CourseID | Grade |
+| --------- | -------- | ----- |
+| 1         | CS101    | A     |
+| 1         | CS102    | B     |
+| 2         | MATH201  | A     |
+| 3         | PHYS101  | B     |
+| 5         | HIST101  | B     |
+
+The result after applying the inner join transformation looks like the following:
+
+| StudentID | Name    | Major            | CourseID | Grade |
+| --------- | ------- | ---------------- | -------- | ----- |
+| 1         | John    | Computer Science | CS101    | A     |
+| 1         | John    | Computer Science | CS102    | B     |
+| 2         | Emily   | Mathematics      | MATH201  | A     |
+| 3         | Michael | Physics          | PHYS101  | B     |
+
+The inner join only includes rows where there is a match between the "StudentID" in both tables. In this case, the result does not include "Jennifer" from the "Students" table because there are no matching enrollments for her in the "Enrollments" table.
+
+#### Outer join (for Time Series data)
 
 An outer join includes all data from an inner join and rows where values do not match in every input. While the inner join joins Query A and Query B on the time field, the outer join includes all rows that don't match on the time field.
 
@@ -779,6 +862,38 @@ In the following example, a template query displays time series data from multip
 I applied a transformation to join the query results using the time field. Now I can run calculations, combine, and organize the results in this new table.
 
 {{< figure src="/static/img/docs/transformations/join-fields-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" alt="A table visualization showing results for multiple servers" >}}
+
+#### Outer join (for SQL-like data)
+
+A tabular outer join combining tables so that the result includes matched and unmatched rows from either or both tables.
+
+| StudentID | Name     | Major            |
+| --------- | -------- | ---------------- |
+| 1         | John     | Computer Science |
+| 2         | Emily    | Mathematics      |
+| 3         | Michael  | Physics          |
+| 4         | Jennifer | Chemistry        |
+
+Can now be joined with:
+
+| StudentID | CourseID | Grade |
+| --------- | -------- | ----- |
+| 1         | CS101    | A     |
+| 1         | CS102    | B     |
+| 2         | MATH201  | A     |
+| 3         | PHYS101  | B     |
+| 5         | HIST101  | B     |
+
+The result after applying the outer join transformation looks like the following:
+
+| StudentID | Name     | Major            | CourseID | Grade |
+| --------- | -------- | ---------------- | -------- | ----- |
+| 1         | John     | Computer Science | CS101    | A     |
+| 1         | John     | Computer Science | CS102    | B     |
+| 2         | Emily    | Mathematics      | MATH201  | A     |
+| 3         | Michael  | Physics          | PHYS101  | B     |
+| 4         | Jennifer | Chemistry        | NULL     | NULL  |
+| 5         | NULL     | NULL             | HIST101  | B     |
 
 Combine and analyze data from various queries with table joining for a comprehensive view of your information.
 
@@ -1114,15 +1229,17 @@ This flexible transformation simplifies the process of consolidating and summari
 
 Use this transformation to rename parts of the query results using a regular expression and replacement pattern.
 
-You can specify a regular expression, which is only applied to matches, along with a replacement pattern that support back references. For example, let's imagine you're visualizing CPU usage per host and you want to remove the domain name. You could set the regex to '([^.]+)..+' and the replacement pattern to '$1', 'web-01.example.com' would become 'web-01'.
+You can specify a regular expression, which is only applied to matches, along with a replacement pattern that support back references. For example, let's imagine you're visualizing CPU usage per host and you want to remove the domain name. You could set the regex to '/^([^.]+).\*/' and the replacement pattern to '$1', 'web-01.example.com' would become 'web-01'.
 
-In the following example, we are stripping the prefix from event types. In the before image, you can see everything is prefixed with 'system.'
+> **Note:** The Rename by regex transformation was improved in Grafana v9.0.0 to allow global patterns of the form '/<stringToReplace>/g'. Depending on the regex match used, this may cause some transformations to behave slightly differently. You can guarantee the same behavior as before by wrapping the match string in forward slashes '(/)', e.g. '(._)' would become '/(._)/'.
 
-{{< figure src="/static/img/docs/transformations/rename-by-regex-before-7-3.png" class="docs-image--no-shadow" max-width= "1100px" alt="A bar chart with long series names" >}}
+In the following example, we are stripping the 'A-' prefix from field names. In the before image, you can see everything is prefixed with 'A-':
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-rename-by-regex-before-v11.0.png" class="docs-image--no-shadow" max-width= "1100px" alt="A time series with full series names" >}}
 
 With the transformation applied, you can see we are left with just the remainder of the string.
 
-{{< figure src="/static/img/docs/transformations/rename-by-regex-after-7-3.png" class="docs-image--no-shadow" max-width= "1100px" alt="A bar chart with shortened series names" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-rename-by-regex-after-v11.0.png" class="docs-image--no-shadow" max-width= "1100px" alt="A time series with shortened series names" >}}
 
 This transformation lets you to tailor your data to meet your visualization needs, making your dashboards more informative and user-friendly.
 
@@ -1261,9 +1378,13 @@ This transformation allows you to manipulate and analyze geospatial data, enabli
 
 ### Time series to table transform
 
-Use this transformation to convert time series results into a table, transforming a time series data frame into a **Trend** field. The **Trend** field can then be rendered using the [sparkline cell type][], generating an inline sparkline for each table row. If there are multiple time series queries, each will result in a separate table data frame. These can be joined using join or merge transforms to produce a single table with multiple sparklines per row.
+Use this transformation to convert time series results into a table, transforming a time series data frame into a **Trend** field which can then be used with the [sparkline cell type][]. If there are multiple time series queries, each will result in a separate table data frame. These can be joined using join or merge transforms to produce a single table with multiple sparklines per row.
 
-For each generated **Trend** field value, a calculation function can be selected. The default is **Last non-null value**. This value is displayed next to the sparkline and used for sorting table rows.
+{{< figure src="/static/img/docs/transformations/table-sparklines.png" class="docs-image--no-shadow" max-width= "1100px" alt="A table panel showing multiple values and their corresponding sparklines." >}}
+
+For each generated **Trend** field value, a calculation function can be selected. This value is displayed next to the sparkline and will be used for sorting table rows.
+
+{{< figure src="/static/img/docs/transformations/timeseries-table-select-stat.png" class="docs-image--no-shadow" max-width= "1100px" alt="A select box showing available statistics that can be calculated." >}}
 
 > **Note:** This transformation is available in Grafana 9.5+ as an opt-in beta feature. Modify the Grafana [configuration file][] to use it.
 

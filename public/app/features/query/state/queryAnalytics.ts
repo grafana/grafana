@@ -29,7 +29,7 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
       datasourceType: datasource.type,
       dataSize: 0,
       panelId: 0,
-      panelPluginType: data.request?.panelPluginType,
+      panelPluginId: data.request?.panelPluginId,
       duration: data.request.endTime! - data.request.startTime,
     };
 

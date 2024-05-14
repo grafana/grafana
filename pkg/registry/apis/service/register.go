@@ -12,7 +12,7 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 
 	service "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
@@ -43,6 +43,13 @@ func (b *ServiceAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return service.SchemeGroupVersion
 }
 
+func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
+	scheme.AddKnownTypes(gv,
+		&service.ExternalName{},
+		&service.ExternalNameList{},
+	)
+}
+
 func (b *ServiceAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	gv := service.SchemeGroupVersion
 	err := service.AddToScheme(scheme)
@@ -53,10 +60,10 @@ func (b *ServiceAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	// Link this version to the internal representation.
 	// This is used for server-side-apply (PATCH), and avoids the error:
 	//   "no kind is registered for the type"
-	// addKnownTypes(scheme, schema.GroupVersion{
-	// 	Group:   service.GROUP,
-	// 	Version: runtime.APIVersionInternal,
-	// })
+	addKnownTypes(scheme, schema.GroupVersion{
+		Group:   service.GROUP,
+		Version: runtime.APIVersionInternal,
+	})
 	metav1.AddToGroupVersion(scheme, gv)
 	return scheme.SetVersionPriority(gv)
 }

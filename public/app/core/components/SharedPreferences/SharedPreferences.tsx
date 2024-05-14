@@ -18,7 +18,7 @@ import {
 } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { t, Trans } from 'app/core/internationalization';
-import { LANGUAGES } from 'app/core/internationalization/constants';
+import { LANGUAGES, PSEUDO_LOCALE } from 'app/core/internationalization/constants';
 import { PreferencesService } from 'app/core/services/PreferencesService';
 import { changeTheme } from 'app/core/services/theme';
 
@@ -35,7 +35,17 @@ function getLanguageOptions(): Array<SelectableValue<string>> {
   const languageOptions = LANGUAGES.map((v) => ({
     value: v.code,
     label: v.name,
-  }));
+  })).sort((a, b) => {
+    if (a.value === PSEUDO_LOCALE) {
+      return 1;
+    }
+
+    if (b.value === PSEUDO_LOCALE) {
+      return -1;
+    }
+
+    return a.label.localeCompare(b.label);
+  });
 
   const options = [
     {

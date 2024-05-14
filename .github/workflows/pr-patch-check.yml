@@ -18,6 +18,7 @@ on:
 jobs:
   trigger_downstream_patch_check:
     uses: grafana/security-patch-actions/.github/workflows/test-patches.yml@main
+    if: github.repository == 'grafana/grafana'
     with:
       src_repo: "${{ github.repository }}"
       src_ref: "${{ github.head_ref }}" # this is the source branch name, Ex: "feature/newthing"

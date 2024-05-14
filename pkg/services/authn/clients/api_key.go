@@ -10,11 +10,9 @@ import (
 	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apikey"
-	authidentity "github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -28,18 +26,17 @@ var (
 
 var _ authn.HookClient = new(APIKey)
 var _ authn.ContextAwareClient = new(APIKey)
+var _ authn.IdentityResolverClient = new(APIKey)
 
-func ProvideAPIKey(apiKeyService apikey.Service, userService user.Service) *APIKey {
+func ProvideAPIKey(apiKeyService apikey.Service) *APIKey {
 	return &APIKey{
 		log:           log.New(authn.ClientAPIKey),
-		userService:   userService,
 		apiKeyService: apiKeyService,
 	}
 }
 
 type APIKey struct {
 	log           log.Logger
-	userService   user.Service
 	apiKeyService apikey.Service
 }
 
@@ -48,7 +45,7 @@ func (s *APIKey) Name() string {
 }
 
 func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
-	apiKey, err := s.getAPIKey(ctx, getTokenFromRequest(r))
+	key, err := s.getAPIKey(ctx, getTokenFromRequest(r))
 	if err != nil {
 		if errors.Is(err, apikeygen.ErrInvalidApiKey) {
 			return nil, errAPIKeyInvalid.Errorf("API key is invalid")
@@ -56,41 +53,24 @@ func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 		return nil, err
 	}
 
-	if apiKey.Expires != nil && *apiKey.Expires <= time.Now().Unix() {
-		return nil, errAPIKeyExpired.Errorf("API key has expired")
-	}
-
-	if apiKey.IsRevoked != nil && *apiKey.IsRevoked {
-		return nil, errAPIKeyRevoked.Errorf("Api key is revoked")
-	}
-
 	if r.OrgID == 0 {
-		r.OrgID = apiKey.OrgID
-	} else if r.OrgID != apiKey.OrgID {
-		return nil, errAPIKeyOrgMismatch.Errorf("API does not belong in Organization %v", r.OrgID)
+		r.OrgID = key.OrgID
 	}
 
-	// if the api key don't belong to a service account construct the identity and return it
-	if apiKey.ServiceAccountId == nil || *apiKey.ServiceAccountId < 1 {
-		return &authn.Identity{
-			ID:              authn.NamespacedID(authn.NamespaceAPIKey, apiKey.ID),
-			OrgID:           apiKey.OrgID,
-			OrgRoles:        map[int64]org.RoleType{apiKey.OrgID: apiKey.Role},
-			ClientParams:    authn.ClientParams{SyncPermissions: true},
-			AuthenticatedBy: login.APIKeyAuthModule,
-		}, nil
-	}
-
-	usr, err := s.userService.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{
-		UserID: *apiKey.ServiceAccountId,
-		OrgID:  apiKey.OrgID,
-	})
-
-	if err != nil {
+	if err := validateApiKey(r.OrgID, key); err != nil {
 		return nil, err
 	}
 
-	return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceServiceAccount, usr.UserID), usr, authn.ClientParams{SyncPermissions: true}, login.APIKeyAuthModule), nil
+	// if the api key don't belong to a service account construct the identity and return it
+	if key.ServiceAccountId == nil || *key.ServiceAccountId < 1 {
+		return newAPIKeyIdentity(key), nil
+	}
+
+	return newServiceAccountIdentity(key), nil
+}
+
+func (s *APIKey) IsEnabled() bool {
+	return true
 }
 
 func (s *APIKey) getAPIKey(ctx context.Context, token string) (*apikey.APIKey, error) {
@@ -154,6 +134,38 @@ func (s *APIKey) Priority() uint {
 	return 30
 }
 
+func (s *APIKey) Namespace() string {
+	return authn.NamespaceAPIKey.String()
+}
+
+func (s *APIKey) ResolveIdentity(ctx context.Context, orgID int64, namespaceID authn.NamespaceID) (*authn.Identity, error) {
+	if !namespaceID.IsNamespace(authn.NamespaceAPIKey) {
+		return nil, authn.ErrInvalidNamespaceID.Errorf("got unspected namespace: %s", namespaceID.Namespace())
+	}
+
+	apiKeyID, err := namespaceID.ParseInt()
+	if err != nil {
+		return nil, err
+	}
+
+	key, err := s.apiKeyService.GetApiKeyById(ctx, &apikey.GetByIDQuery{
+		ApiKeyID: apiKeyID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if err := validateApiKey(orgID, key); err != nil {
+		return nil, err
+	}
+
+	if key.ServiceAccountId != nil && *key.ServiceAccountId >= 1 {
+		return nil, authn.ErrInvalidNamespaceID.Errorf("api key belongs to service account")
+	}
+
+	return newAPIKeyIdentity(key), nil
+}
+
 func (s *APIKey) Hook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
 	id, exists := s.getAPIKeyID(ctx, identity, r)
 
@@ -176,18 +188,17 @@ func (s *APIKey) Hook(ctx context.Context, identity *authn.Identity, r *authn.Re
 }
 
 func (s *APIKey) getAPIKeyID(ctx context.Context, identity *authn.Identity, r *authn.Request) (apiKeyID int64, exists bool) {
-	namespace, identifier := identity.GetNamespacedID()
-
-	id, err := authidentity.IntIdentifier(namespace, identifier)
+	id, err := identity.ID.ParseInt()
 	if err != nil {
 		s.log.Warn("Failed to parse ID from identifier", "err", err)
 		return -1, false
 	}
-	if namespace == authn.NamespaceAPIKey {
+
+	if identity.ID.IsNamespace(authn.NamespaceAPIKey) {
 		return id, true
 	}
 
-	if namespace == authn.NamespaceServiceAccount {
+	if identity.ID.IsNamespace(authn.NamespaceServiceAccount) {
 		// When the identity is service account, the ID in from the namespace is the service account ID.
 		// We need to fetch the API key in this scenario, as we could use it to uniquely identify a service account token.
 		apiKey, err := s.getAPIKey(ctx, getTokenFromRequest(r))
@@ -198,6 +209,7 @@ func (s *APIKey) getAPIKeyID(ctx context.Context, identity *authn.Identity, r *a
 
 		return apiKey.ID, true
 	}
+
 	return -1, false
 }
 
@@ -223,4 +235,39 @@ func getTokenFromRequest(r *authn.Request) string {
 		}
 	}
 	return ""
+}
+
+func validateApiKey(orgID int64, key *apikey.APIKey) error {
+	if key.Expires != nil && *key.Expires <= time.Now().Unix() {
+		return errAPIKeyExpired.Errorf("API key has expired")
+	}
+
+	if key.IsRevoked != nil && *key.IsRevoked {
+		return errAPIKeyRevoked.Errorf("Api key is revoked")
+	}
+
+	if orgID != key.OrgID {
+		return errAPIKeyOrgMismatch.Errorf("API does not belong in Organization")
+	}
+
+	return nil
+}
+
+func newAPIKeyIdentity(key *apikey.APIKey) *authn.Identity {
+	return &authn.Identity{
+		ID:              authn.NewNamespaceID(authn.NamespaceAPIKey, key.ID),
+		OrgID:           key.OrgID,
+		OrgRoles:        map[int64]org.RoleType{key.OrgID: key.Role},
+		ClientParams:    authn.ClientParams{SyncPermissions: true},
+		AuthenticatedBy: login.APIKeyAuthModule,
+	}
+}
+
+func newServiceAccountIdentity(key *apikey.APIKey) *authn.Identity {
+	return &authn.Identity{
+		ID:              authn.NewNamespaceID(authn.NamespaceServiceAccount, *key.ServiceAccountId),
+		OrgID:           key.OrgID,
+		AuthenticatedBy: login.APIKeyAuthModule,
+		ClientParams:    authn.ClientParams{FetchSyncedUser: true, SyncPermissions: true},
+	}
 }

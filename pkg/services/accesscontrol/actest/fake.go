@@ -41,6 +41,10 @@ func (f FakeService) DeleteUserPermissions(ctx context.Context, orgID, userID in
 	return f.ExpectedErr
 }
 
+func (f FakeService) DeleteTeamPermissions(ctx context.Context, orgID, teamID int64) error {
+	return f.ExpectedErr
+}
+
 func (f FakeService) DeclareFixedRoles(registrations ...accesscontrol.RoleRegistration) error {
 	return f.ExpectedErr
 }
@@ -72,14 +76,24 @@ func (f FakeAccessControl) RegisterScopeAttributeResolver(prefix string, resolve
 }
 
 type FakeStore struct {
-	ExpectedUserPermissions  []accesscontrol.Permission
-	ExpectedUsersPermissions map[int64][]accesscontrol.Permission
-	ExpectedUsersRoles       map[int64][]string
-	ExpectedErr              error
+	ExpectedUserPermissions       []accesscontrol.Permission
+	ExpectedBasicRolesPermissions []accesscontrol.Permission
+	ExpectedTeamsPermissions      map[int64][]accesscontrol.Permission
+	ExpectedUsersPermissions      map[int64][]accesscontrol.Permission
+	ExpectedUsersRoles            map[int64][]string
+	ExpectedErr                   error
 }
 
 func (f FakeStore) GetUserPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error) {
 	return f.ExpectedUserPermissions, f.ExpectedErr
+}
+
+func (f FakeStore) GetBasicRolesPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error) {
+	return f.ExpectedBasicRolesPermissions, f.ExpectedErr
+}
+
+func (f FakeStore) GetTeamsPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) (map[int64][]accesscontrol.Permission, error) {
+	return f.ExpectedTeamsPermissions, f.ExpectedErr
 }
 
 func (f FakeStore) SearchUsersPermissions(ctx context.Context, orgID int64, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
@@ -91,6 +105,10 @@ func (f FakeStore) GetUsersBasicRoles(ctx context.Context, userFilter []int64, o
 }
 
 func (f FakeStore) DeleteUserPermissions(ctx context.Context, orgID, userID int64) error {
+	return f.ExpectedErr
+}
+
+func (f FakeStore) DeleteTeamPermissions(ctx context.Context, orgID, teamID int64) error {
 	return f.ExpectedErr
 }
 

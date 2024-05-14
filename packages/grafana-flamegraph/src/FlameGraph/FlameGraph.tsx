@@ -22,9 +22,10 @@ import React, { useEffect, useState } from 'react';
 import { Icon } from '@grafana/ui';
 
 import { PIXELS_PER_LEVEL } from '../constants';
-import { ClickedItemData, ColorScheme, ColorSchemeDiff, TextAlign } from '../types';
+import { ClickedItemData, ColorScheme, ColorSchemeDiff, SelectedView, TextAlign } from '../types';
 
 import FlameGraphCanvas from './FlameGraphCanvas';
+import { GetExtraContextMenuButtonsFunction } from './FlameGraphContextMenu';
 import FlameGraphMetadata from './FlameGraphMetadata';
 import { CollapsedMap, FlameGraphDataContainer, LevelItem } from './dataTransform';
 
@@ -45,7 +46,12 @@ type Props = {
   onSandwichPillClick: () => void;
   colorScheme: ColorScheme | ColorSchemeDiff;
   showFlameGraphOnly?: boolean;
+  getExtraContextMenuButtons?: GetExtraContextMenuButtonsFunction;
   collapsing?: boolean;
+  selectedView: SelectedView;
+  search: string;
+  collapsedMap: CollapsedMap;
+  setCollapsedMap: (collapsedMap: CollapsedMap) => void;
 };
 
 const FlameGraph = ({
@@ -64,11 +70,15 @@ const FlameGraph = ({
   onSandwichPillClick,
   colorScheme,
   showFlameGraphOnly,
+  getExtraContextMenuButtons,
   collapsing,
+  selectedView,
+  search,
+  collapsedMap,
+  setCollapsedMap,
 }: Props) => {
   const styles = getStyles();
 
-  const [collapsedMap, setCollapsedMap] = useState<CollapsedMap>(new Map());
   const [levels, setLevels] = useState<LevelItem[][]>();
   const [levelsCallers, setLevelsCallers] = useState<LevelItem[][]>();
   const [totalProfileTicks, setTotalProfileTicks] = useState<number>(0);
@@ -77,8 +87,6 @@ const FlameGraph = ({
 
   useEffect(() => {
     if (data) {
-      setCollapsedMap(data.getCollapsedMap());
-
       let levels = data.getLevels();
       let totalProfileTicks = levels.length ? levels[0][0].value : 0;
       let totalProfileTicksRight = levels.length ? levels[0][0].valueRight : undefined;
@@ -122,7 +130,10 @@ const FlameGraph = ({
     showFlameGraphOnly,
     collapsedMap,
     setCollapsedMap,
+    getExtraContextMenuButtons,
     collapsing,
+    search,
+    selectedView,
   };
   const canvas = levelsCallers ? (
     <>
@@ -175,33 +186,32 @@ const FlameGraph = ({
 };
 
 const getStyles = () => ({
-  graph: css`
-    label: graph;
-    overflow: auto;
-    flex-grow: 1;
-    flex-basis: 50%;
-  `,
-  sandwichCanvasWrapper: css`
-    label: sandwichCanvasWrapper;
-    display: flex;
-    margin-bottom: ${PIXELS_PER_LEVEL / window.devicePixelRatio}px;
-  `,
-  sandwichMarker: css`
-    label: sandwichMarker;
-    writing-mode: vertical-lr;
-    transform: rotate(180deg);
-    overflow: hidden;
-    white-space: nowrap;
-  `,
-
-  sandwichMarkerCalees: css`
-    label: sandwichMarkerCalees;
-    text-align: right;
-  `,
-  sandwichMarkerIcon: css`
-    label: sandwichMarkerIcon;
-    vertical-align: baseline;
-  `,
+  graph: css({
+    label: 'graph',
+    overflow: 'auto',
+    flexGrow: 1,
+    flexBasis: '50%',
+  }),
+  sandwichCanvasWrapper: css({
+    label: 'sandwichCanvasWrapper',
+    display: 'flex',
+    marginBottom: `${PIXELS_PER_LEVEL / window.devicePixelRatio}px`,
+  }),
+  sandwichMarker: css({
+    label: 'sandwichMarker',
+    writingMode: 'vertical-lr',
+    transform: 'rotate(180deg)',
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
+  }),
+  sandwichMarkerCalees: css({
+    label: 'sandwichMarkerCalees',
+    textAlign: 'right',
+  }),
+  sandwichMarkerIcon: css({
+    label: 'sandwichMarkerIcon',
+    verticalAlign: 'baseline',
+  }),
 });
 
 export default FlameGraph;

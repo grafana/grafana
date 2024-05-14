@@ -1,7 +1,7 @@
-import { from, map, Unsubscribable, Observable } from 'rxjs';
+import { from, map, Observable, Unsubscribable } from 'rxjs';
 
 import { AlertState, AlertStateInfo, DataTopic, LoadingState, toDataFrame } from '@grafana/data';
-import { config, getBackendSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import {
   SceneDataLayerBase,
   SceneDataLayerProvider,
@@ -13,11 +13,15 @@ import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
 import { getMessageFromError } from 'app/core/utils/errors';
+import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
+import { ungroupRulesByFileName } from 'app/features/alerting/unified/api/prometheus';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { isAlertingRule } from 'app/features/alerting/unified/utils/rules';
 import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types';
-import { PromAlertingRuleState, PromRulesResponse } from 'app/types/unified-alerting-dto';
+import { RuleNamespace } from 'app/types/unified-alerting';
+import { PromAlertingRuleState, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { getDashboardSceneFor } from '../utils/utils';
 
@@ -67,148 +71,121 @@ export class AlertStatesDataLayer
     if (!this.canWork(timeRange)) {
       return;
     }
-
-    let alerStatesExecution: Observable<AlertStateInfo[]> | undefined;
-
-    if (this.isUsingLegacyAlerting()) {
-      alerStatesExecution = from(
-        getBackendSrv().get(
-          '/api/alerts/states-for-dashboard',
-          {
-            dashboardId: id,
-          },
-          `dashboard-query-runner-alert-states-${id}`
-        )
-      ).pipe(map((alertStates) => alertStates));
-    } else {
-      alerStatesExecution = from(
-        getBackendSrv().get(
-          '/api/prometheus/grafana/api/v1/rules',
-          {
-            dashboard_uid: uid!,
-          },
-          `dashboard-query-runner-unified-alert-states-${id}`
-        )
-      ).pipe(
-        map((result: PromRulesResponse) => {
-          if (result.status === 'success') {
-            this.hasAlertRules = false;
-            const panelIdToAlertState: Record<number, AlertStateInfo> = {};
-
-            result.data.groups.forEach((group) =>
-              group.rules.forEach((rule) => {
-                if (isAlertingRule(rule) && rule.annotations && rule.annotations[Annotation.panelID]) {
-                  this.hasAlertRules = true;
-                  const panelId = Number(rule.annotations[Annotation.panelID]);
-                  const state = promAlertStateToAlertState(rule.state);
-
-                  // there can be multiple alerts per panel, so we make sure we get the most severe state:
-                  // alerting > pending > ok
-                  if (!panelIdToAlertState[panelId]) {
-                    panelIdToAlertState[panelId] = {
-                      state,
-                      id: Object.keys(panelIdToAlertState).length,
-                      panelId,
-                      dashboardId: id!,
-                    };
-                  } else if (
-                    state === AlertState.Alerting &&
-                    panelIdToAlertState[panelId].state !== AlertState.Alerting
-                  ) {
-                    panelIdToAlertState[panelId].state = AlertState.Alerting;
-                  } else if (
-                    state === AlertState.Pending &&
-                    panelIdToAlertState[panelId].state !== AlertState.Alerting &&
-                    panelIdToAlertState[panelId].state !== AlertState.Pending
-                  ) {
-                    panelIdToAlertState[panelId].state = AlertState.Pending;
-                  }
-                }
-              })
-            );
-            return Object.values(panelIdToAlertState);
-          }
-
-          throw new Error(`Unexpected alert rules response.`);
+    const fetchData: () => Promise<RuleNamespace[]> = async () => {
+      const promRules = await dispatch(
+        alertRuleApi.endpoints.prometheusRuleNamespaces.initiate({
+          ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
+          dashboardUid: uid,
         })
       );
-    }
+      if (promRules.error) {
+        throw new Error(`Unexpected alert rules response.`);
+      }
+      return promRules.data;
+    };
+    const res: Observable<PromRuleGroupDTO[]> = from(fetchData()).pipe(
+      map((namespaces: RuleNamespace[]) => ungroupRulesByFileName(namespaces))
+    );
+
+    const alerStatesExecution = res.pipe(
+      map((groups: PromRuleGroupDTO[]) => {
+        this.hasAlertRules = false;
+        const panelIdToAlertState: Record<number, AlertStateInfo> = {};
+        groups.forEach((group) =>
+          group.rules.forEach((rule) => {
+            if (isAlertingRule(rule) && rule.annotations && rule.annotations[Annotation.panelID]) {
+              this.hasAlertRules = true;
+              const panelId = Number(rule.annotations[Annotation.panelID]);
+              const state = promAlertStateToAlertState(rule.state);
+
+              // there can be multiple alerts per panel, so we make sure we get the most severe state:
+              // alerting > pending > ok
+              if (!panelIdToAlertState[panelId]) {
+                panelIdToAlertState[panelId] = {
+                  state,
+                  id: Object.keys(panelIdToAlertState).length,
+                  panelId,
+                  dashboardId: id!,
+                };
+              } else if (state === AlertState.Alerting && panelIdToAlertState[panelId].state !== AlertState.Alerting) {
+                panelIdToAlertState[panelId].state = AlertState.Alerting;
+              } else if (
+                state === AlertState.Pending &&
+                panelIdToAlertState[panelId].state !== AlertState.Alerting &&
+                panelIdToAlertState[panelId].state !== AlertState.Pending
+              ) {
+                panelIdToAlertState[panelId].state = AlertState.Pending;
+              }
+            }
+          })
+        );
+        return Object.values(panelIdToAlertState);
+      })
+    );
+
     this.querySub = alerStatesExecution.subscribe({
       next: (stateUpdate) => {
-        this.publishResults(
-          {
-            state: LoadingState.Done,
-            series: [toDataFrame(stateUpdate)],
-            timeRange: timeRange.state.value,
-          },
-          DataTopic.AlertStates
-        );
+        const frame = toDataFrame(stateUpdate);
+        this.publishResults({
+          state: LoadingState.Done,
+          series: [
+            {
+              ...frame,
+              meta: {
+                ...frame.meta,
+                dataTopic: DataTopic.AlertStates,
+              },
+            },
+          ],
+          timeRange: timeRange.state.value,
+        });
       },
       error: (err) => {
         this.handleError(err);
-        this.publishResults(
-          {
-            state: LoadingState.Error,
-            series: [],
-            errors: [
-              {
-                message: getMessageFromError(err),
-              },
-            ],
-            timeRange: timeRange.state.value,
-          },
-          DataTopic.AlertStates
-        );
+        this.publishResults({
+          state: LoadingState.Error,
+          series: [],
+          errors: [
+            {
+              message: getMessageFromError(err),
+            },
+          ],
+          timeRange: timeRange.state.value,
+        });
       },
     });
   }
 
   private canWork(timeRange: SceneTimeRangeLike): boolean {
     const dashboard = getDashboardSceneFor(this);
-    const { uid, id } = dashboard.state;
+    const { uid } = dashboard.state;
 
-    if (this.isUsingLegacyAlerting()) {
-      if (!id) {
-        return false;
-      }
-
-      if (timeRange.state.value.raw.to !== 'now') {
-        return false;
-      }
-
-      return true;
-    } else {
-      if (!uid) {
-        return false;
-      }
-
-      // Cannot fetch rules while on a public dashboard since it's unauthenticated
-      if (config.publicDashboardAccessToken) {
-        return false;
-      }
-
-      if (timeRange.state.value.raw.to !== 'now') {
-        return false;
-      }
-
-      if (this.hasAlertRules === false) {
-        return false;
-      }
-
-      const hasRuleReadPermission =
-        contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) &&
-        contextSrv.hasPermission(AccessControlAction.AlertingRuleExternalRead);
-
-      if (!hasRuleReadPermission) {
-        return false;
-      }
-
-      return true;
+    if (!uid) {
+      return false;
     }
-  }
 
-  private isUsingLegacyAlerting(): boolean {
-    return !config.unifiedAlertingEnabled;
+    // Cannot fetch rules while on a public dashboard since it's unauthenticated
+    if (config.publicDashboardAccessToken) {
+      return false;
+    }
+
+    if (timeRange.state.value.raw.to !== 'now') {
+      return false;
+    }
+
+    if (this.hasAlertRules === false) {
+      return false;
+    }
+
+    const hasRuleReadPermission =
+      contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) &&
+      contextSrv.hasPermission(AccessControlAction.AlertingRuleExternalRead);
+
+    if (!hasRuleReadPermission) {
+      return false;
+    }
+
+    return true;
   }
 
   private handleError = (err: unknown) => {

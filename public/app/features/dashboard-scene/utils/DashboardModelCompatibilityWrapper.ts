@@ -4,20 +4,19 @@ import { AnnotationQuery, DashboardCursorSync, dateTimeFormat, DateTimeInput, Ev
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
 import {
   behaviors,
-  SceneDataLayers,
+  SceneDataLayerSet,
   sceneGraph,
-  SceneGridItem,
   SceneGridLayout,
   SceneGridRow,
   SceneObject,
   VizPanel,
 } from '@grafana/scenes';
 
+import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
 import { dataLayersToAnnotations } from '../serialization/dataLayersToAnnotations';
 
 import { PanelModelCompatibilityWrapper } from './PanelModelCompatibilityWrapper';
-import { dashboardSceneGraph } from './dashboardSceneGraph';
 import { findVizPanelByKey, getVizPanelKeyForPanelId } from './utils';
 
 /**
@@ -68,8 +67,8 @@ export class DashboardModelCompatibilityWrapper {
 
   public get timepicker() {
     return {
-      refresh_intervals: dashboardSceneGraph.getRefreshPicker(this._scene)?.state.intervals,
-      hidden: dashboardSceneGraph.getDashboardControls(this._scene)?.state.hideTimeControls ?? false,
+      refresh_intervals: this._scene.state.controls!.state.refreshPicker.state.intervals,
+      hidden: this._scene.state.controls!.state.hideTimeControls ?? false,
     };
   }
 
@@ -114,7 +113,7 @@ export class DashboardModelCompatibilityWrapper {
   public get annotations(): { list: AnnotationQuery[] } {
     const annotations: { list: AnnotationQuery[] } = { list: [] };
 
-    if (this._scene.state.$data instanceof SceneDataLayers) {
+    if (this._scene.state.$data instanceof SceneDataLayerSet) {
       annotations.list = dataLayersToAnnotations(this._scene.state.$data.state.layers);
     }
 
@@ -177,8 +176,8 @@ export class DashboardModelCompatibilityWrapper {
     }
 
     const gridItem = vizPanel.parent;
-    if (!(gridItem instanceof SceneGridItem)) {
-      console.error('Trying to remove a panel that is not wrapped in SceneGridItem');
+    if (!(gridItem instanceof DashboardGridItem)) {
+      console.error('Trying to remove a panel that is not wrapped in DashboardGridItem');
       return;
     }
 

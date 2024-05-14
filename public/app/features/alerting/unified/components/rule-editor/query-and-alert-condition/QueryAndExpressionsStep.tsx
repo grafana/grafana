@@ -1,24 +1,12 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, Controller } from 'react-hook-form';
 
 import { getDefaultRelativeTimeRange, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import {
-  Alert,
-  Button,
-  Dropdown,
-  Field,
-  Icon,
-  InputControl,
-  Menu,
-  MenuItem,
-  Stack,
-  Tooltip,
-  useStyles2,
-} from '@grafana/ui';
+import { Alert, Button, Dropdown, Field, Icon, Menu, MenuItem, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { Text } from '@grafana/ui/src/components/Text/Text';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { ExpressionDatasourceUID, ExpressionQueryType, expressionTypes } from 'app/features/expressions/types';
@@ -414,7 +402,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       {isCloudAlertRuleType && dataSourceName && (
         <Stack direction="column">
           <Field error={errors.expression?.message} invalid={!!errors.expression?.message}>
-            <InputControl
+            <Controller
               name="expression"
               render={({ field: { ref, ...field } }) => {
                 return (
@@ -509,7 +497,13 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
               </Button>
             )}
             {!isPreviewLoading && (
-              <Button icon="sync" type="button" onClick={() => runQueriesPreview()} disabled={emptyQueries}>
+              <Button
+                data-testid={selectors.components.AlertRules.previewButton}
+                icon="sync"
+                type="button"
+                onClick={() => runQueriesPreview()}
+                disabled={emptyQueries}
+              >
                 Preview
               </Button>
             )}
@@ -553,26 +547,26 @@ function TypeSelectorButton({ onClickType }: { onClickType: (type: ExpressionQue
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  addQueryButton: css`
-    width: fit-content;
-  `,
-  helpInfo: css`
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    width: fit-content;
-    font-weight: ${theme.typography.fontWeightMedium};
-    margin-left: ${theme.spacing(1)};
-    font-size: ${theme.typography.size.sm};
-    cursor: pointer;
-  `,
-  helpInfoText: css`
-    margin-left: ${theme.spacing(0.5)};
-    text-decoration: underline;
-  `,
-  infoLink: css`
-    color: ${theme.colors.text.link};
-  `,
+  addQueryButton: css({
+    width: 'fit-content',
+  }),
+  helpInfo: css({
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: 'fit-content',
+    fontWeight: theme.typography.fontWeightMedium,
+    marginLeft: theme.spacing(1),
+    fontSize: theme.typography.size.sm,
+    cursor: 'pointer',
+  }),
+  helpInfoText: css({
+    marginLeft: theme.spacing(0.5),
+    textDecoration: 'underline',
+  }),
+  infoLink: css({
+    color: theme.colors.text.link,
+  }),
 });
 
 const useSetExpressionAndDataSource = () => {

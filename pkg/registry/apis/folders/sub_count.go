@@ -17,7 +17,10 @@ type subCountREST struct {
 	service folder.Service
 }
 
-var _ = rest.Connecter(&subCountREST{})
+var (
+	_ = rest.Connecter(&subCountREST{})
+	_ = rest.StorageMetadata(&subCountREST{})
+)
 
 func (r *subCountREST) New() runtime.Object {
 	return &v0alpha1.DescendantCounts{}
@@ -28,6 +31,14 @@ func (r *subCountREST) Destroy() {
 
 func (r *subCountREST) ConnectMethods() []string {
 	return []string{"GET"}
+}
+
+func (r *subCountREST) ProducesMIMETypes(verb string) []string {
+	return nil
+}
+
+func (r *subCountREST) ProducesObject(verb string) interface{} {
+	return &v0alpha1.DescendantCounts{}
 }
 
 func (r *subCountREST) NewConnectOptions() (runtime.Object, bool, string) {

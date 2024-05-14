@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -24,14 +23,13 @@ const DEFAULT_BATCH_SIZE = 999
 type sqlStore struct {
 	db  db.DB
 	log log.Logger
-	cfg *setting.Cfg
 }
 
 // sqlStore implements the store interface.
 var _ store = (*sqlStore)(nil)
 
-func ProvideStore(db db.DB, cfg *setting.Cfg) *sqlStore {
-	return &sqlStore{db: db, log: log.New("folder-store"), cfg: cfg}
+func ProvideStore(db db.DB) *sqlStore {
+	return &sqlStore{db: db, log: log.New("folder-store")}
 }
 
 func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) (*folder.Folder, error) {
@@ -464,8 +462,11 @@ func (ss *sqlStore) GetFolders(ctx context.Context, q getFoldersQuery) ([]*folde
 				s.WriteString(getFullpathJoinsSQL())
 			}
 			// covered by UQE_folder_org_id_uid
-			s.WriteString(` WHERE f0.org_id=?`)
-			args := []any{q.OrgID}
+			args := []any{}
+			if q.OrgID > 0 {
+				s.WriteString(` WHERE f0.org_id=?`)
+				args = []any{q.OrgID}
+			}
 			if len(partialUIDs) > 0 {
 				s.WriteString(` AND f0.uid IN (?` + strings.Repeat(", ?", len(partialUIDs)-1) + `)`)
 				for _, uid := range partialUIDs {
@@ -474,6 +475,10 @@ func (ss *sqlStore) GetFolders(ctx context.Context, q getFoldersQuery) ([]*folde
 			}
 
 			if len(q.ancestorUIDs) == 0 {
+				if q.OrderByTitle {
+					s.WriteString(` ORDER BY f0.title ASC`)
+				}
+
 				err := sess.SQL(s.String(), args...).Find(&partialFolders)
 				if err != nil {
 					return err
@@ -485,6 +490,9 @@ func (ss *sqlStore) GetFolders(ctx context.Context, q getFoldersQuery) ([]*folde
 			// filter out folders if they are not in the subtree of the given ancestor folders
 			if err := batch(len(q.ancestorUIDs), int(q.BatchSize), func(start2, end2 int) error {
 				s2, args2 := getAncestorsSQL(ss.db.GetDialect(), q.ancestorUIDs, start2, end2, s.String(), args)
+				if q.OrderByTitle {
+					s2 += " ORDER BY f0.title ASC"
+				}
 				err := sess.SQL(s2, args2...).Find(&partialFolders)
 				if err != nil {
 					return err

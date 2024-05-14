@@ -54,7 +54,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/secrets"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -138,7 +137,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	var managedStreamRunner *managedstream.Runner
 	var redisClient *redis.Client
 	if g.IsHA() && redisHealthy {
-		redisClient := redis.NewClient(&redis.Options{
+		redisClient = redis.NewClient(&redis.Options{
 			Addr:     g.Cfg.LiveHAEngineAddress,
 			Password: g.Cfg.LiveHAEnginePassword,
 		})
@@ -414,10 +413,10 @@ type DashboardActivityChannel interface {
 	// gitops workflow that knows if the value was saved to the local database or not
 	// in many cases all direct save requests will fail, but the request should be forwarded
 	// to any gitops observers
-	DashboardSaved(orgID int64, user *user.UserDisplayDTO, message string, dashboard *dashboards.Dashboard, err error) error
+	DashboardSaved(orgID int64, requester identity.Requester, message string, dashboard *dashboards.Dashboard, err error) error
 
 	// Called when a dashboard is deleted
-	DashboardDeleted(orgID int64, user *user.UserDisplayDTO, uid string) error
+	DashboardDeleted(orgID int64, requester identity.Requester, uid string) error
 
 	// Experimental! Indicate is GitOps is active.  This really means
 	// someone is subscribed to the `grafana/dashboards/gitops` channel
@@ -1043,7 +1042,7 @@ func (g *GrafanaLive) HandleInfoHTTP(ctx *contextmodel.ReqContext) response.Resp
 			"active": g.GrafanaScope.Dashboards.HasGitOpsObserver(ctx.SignedInUser.GetOrgID()),
 		})
 	}
-	return response.JSONStreaming(404, util.DynMap{
+	return response.JSONStreaming(http.StatusNotFound, util.DynMap{
 		"message": "Info is not supported for this channel",
 	})
 }

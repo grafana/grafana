@@ -12,10 +12,10 @@ import (
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	example "github.com/grafana/grafana/pkg/apis/example/v0alpha1"
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	grafanaregistry "github.com/grafana/grafana/pkg/services/apiserver/registry/generic"
 )
 
 var (

@@ -93,7 +93,7 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 			alertingOptions: map[string]string{
 				"max_attempts":               strconv.FormatInt(schedulerDefaultMaxAttempts, 10),
 				"min_interval_seconds":       strconv.FormatInt(schedulerDefaultLegacyMinInterval, 10),
-				"execute_alerts":             strconv.FormatBool(schedulereDefaultExecuteAlerts),
+				"execute_alerts":             strconv.FormatBool(schedulerDefaultExecuteAlerts),
 				"evaluation_timeout_seconds": strconv.FormatInt(int64(evaluatorDefaultEvaluationTimeout.Seconds()), 10),
 			},
 			verifyCfg: func(t *testing.T, cfg Cfg) {
@@ -111,7 +111,7 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 			unifiedAlertingOptions: map[string]string{
 				"admin_config_poll_interval": "120s",
 				"min_interval":               SchedulerBaseInterval.String(),
-				"execute_alerts":             strconv.FormatBool(schedulereDefaultExecuteAlerts),
+				"execute_alerts":             strconv.FormatBool(schedulerDefaultExecuteAlerts),
 				"evaluation_timeout":         evaluatorDefaultEvaluationTimeout.String(),
 			},
 			alertingOptions: map[string]string{
@@ -148,7 +148,7 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 				require.Equal(t, alertmanagerDefaultConfigPollInterval, cfg.UnifiedAlerting.AdminConfigPollInterval)
 				require.Equal(t, int64(schedulerDefaultMaxAttempts), cfg.UnifiedAlerting.MaxAttempts)
 				require.Equal(t, SchedulerBaseInterval, cfg.UnifiedAlerting.MinInterval)
-				require.Equal(t, schedulereDefaultExecuteAlerts, cfg.UnifiedAlerting.ExecuteAlerts)
+				require.Equal(t, schedulerDefaultExecuteAlerts, cfg.UnifiedAlerting.ExecuteAlerts)
 				require.Equal(t, evaluatorDefaultEvaluationTimeout, cfg.UnifiedAlerting.EvaluationTimeout)
 				require.Equal(t, SchedulerBaseInterval, cfg.UnifiedAlerting.BaseInterval)
 				require.Equal(t, DefaultRuleEvaluationInterval, cfg.UnifiedAlerting.DefaultRuleEvaluationInterval)
@@ -297,4 +297,51 @@ func TestMinInterval(t *testing.T) {
 			testCase.verifyCfg(t, cfg, err)
 		})
 	}
+}
+
+func TestHARedisTLSSettings(t *testing.T) {
+	// Initialize .ini file with new HA Redis TLS Settings
+	f := ini.Empty()
+	section, err := f.NewSection("unified_alerting")
+	require.NoError(t, err)
+
+	const (
+		tlsEnabled         = true
+		certPath           = "path/to/cert"
+		keyPath            = "path/to/key"
+		caPath             = "path/to/ca"
+		serverName         = "server_name"
+		insecureSkipVerify = true
+		cipherSuites       = "TLS_AES_128_GCM_SHA256"
+		minVersion         = "VersionTLS13"
+	)
+	_, err = section.NewKey("ha_redis_tls_enabled", strconv.FormatBool(tlsEnabled))
+	require.NoError(t, err)
+	_, err = section.NewKey("ha_redis_tls_cert_path", certPath)
+	require.NoError(t, err)
+	_, err = section.NewKey("ha_redis_tls_key_path", keyPath)
+	require.NoError(t, err)
+	_, err = section.NewKey("ha_redis_tls_ca_path", caPath)
+	require.NoError(t, err)
+	_, err = section.NewKey("ha_redis_tls_server_name", serverName)
+	require.NoError(t, err)
+	_, err = section.NewKey("ha_redis_tls_insecure_skip_verify", strconv.FormatBool(insecureSkipVerify))
+	require.NoError(t, err)
+	_, err = section.NewKey("ha_redis_tls_cipher_suites", cipherSuites)
+	require.NoError(t, err)
+	_, err = section.NewKey("ha_redis_tls_min_version", minVersion)
+	require.NoError(t, err)
+
+	cfg := NewCfg()
+	err = cfg.ReadUnifiedAlertingSettings(f)
+	require.Nil(t, err)
+
+	require.Equal(t, tlsEnabled, cfg.UnifiedAlerting.HARedisTLSEnabled)
+	require.Equal(t, certPath, cfg.UnifiedAlerting.HARedisTLSConfig.CertPath)
+	require.Equal(t, keyPath, cfg.UnifiedAlerting.HARedisTLSConfig.KeyPath)
+	require.Equal(t, caPath, cfg.UnifiedAlerting.HARedisTLSConfig.CAPath)
+	require.Equal(t, serverName, cfg.UnifiedAlerting.HARedisTLSConfig.ServerName)
+	require.Equal(t, insecureSkipVerify, cfg.UnifiedAlerting.HARedisTLSConfig.InsecureSkipVerify)
+	require.Equal(t, cipherSuites, cfg.UnifiedAlerting.HARedisTLSConfig.CipherSuites)
+	require.Equal(t, minVersion, cfg.UnifiedAlerting.HARedisTLSConfig.MinVersion)
 }

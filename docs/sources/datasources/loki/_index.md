@@ -25,12 +25,18 @@ Unlike other logging systems, Loki is built around the idea of only indexing met
 
 The following guides will help you get started with Loki:
 
-- [Getting started with Loki](/docs/loki/latest/getting-started/)
+- [Getting started with Loki](/docs/loki/latest/get-started/)
 - [Install Loki](/docs/loki/latest/installation/)
 - [Loki best practices](/docs/loki/latest/best-practices/#best-practices)
 - [Configure the Loki data source](/docs/grafana/latest/datasources/loki/configure-loki-data-source/)
 - [LogQL](/docs/loki/latest/logql/)
 - [Loki query editor]({{< relref "./query-editor" >}})
+
+## Supported Loki versions
+
+This data source supports these versions of Loki:
+
+- v2.8+
 
 ## Adding a data source
 

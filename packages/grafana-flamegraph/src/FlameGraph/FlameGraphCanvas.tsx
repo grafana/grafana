@@ -3,11 +3,11 @@ import React, { MouseEvent as ReactMouseEvent, useCallback, useEffect, useRef, u
 import { useMeasure } from 'react-use';
 
 import { PIXELS_PER_LEVEL } from '../constants';
-import { ClickedItemData, ColorScheme, ColorSchemeDiff, TextAlign } from '../types';
+import { ClickedItemData, ColorScheme, ColorSchemeDiff, SelectedView, TextAlign } from '../types';
 
-import FlameGraphContextMenu from './FlameGraphContextMenu';
+import FlameGraphContextMenu, { GetExtraContextMenuButtonsFunction } from './FlameGraphContextMenu';
 import FlameGraphTooltip from './FlameGraphTooltip';
-import { CollapseConfig, CollapsedMap, FlameGraphDataContainer, LevelItem } from './dataTransform';
+import { CollapsedMap, FlameGraphDataContainer, LevelItem } from './dataTransform';
 import { getBarX, useFlameRender } from './rendering';
 
 type Props = {
@@ -37,6 +37,10 @@ type Props = {
   collapsedMap: CollapsedMap;
   setCollapsedMap: (collapsedMap: CollapsedMap) => void;
   collapsing?: boolean;
+  getExtraContextMenuButtons?: GetExtraContextMenuButtonsFunction;
+
+  selectedView: SelectedView;
+  search: string;
 };
 
 const FlameGraphCanvas = ({
@@ -61,6 +65,9 @@ const FlameGraphCanvas = ({
   collapsedMap,
   setCollapsedMap,
   collapsing,
+  getExtraContextMenuButtons,
+  selectedView,
+  search,
 }: Props) => {
   const styles = getStyles();
 
@@ -186,6 +193,7 @@ const FlameGraphCanvas = ({
       />
       {!showFlameGraphOnly && clickedItemData && (
         <FlameGraphContextMenu
+          data={data}
           itemData={clickedItemData}
           collapsing={collapsing}
           collapseConfig={collapsedMap.get(clickedItemData.item)}
@@ -201,45 +209,27 @@ const FlameGraphCanvas = ({
             onSandwich(data.getLabel(clickedItemData.item.itemIndexes[0]));
           }}
           onExpandGroup={() => {
-            setCollapsedMap(setCollapsedStatus(collapsedMap, clickedItemData.item, false));
+            setCollapsedMap(collapsedMap.setCollapsedStatus(clickedItemData.item, false));
           }}
           onCollapseGroup={() => {
-            setCollapsedMap(setCollapsedStatus(collapsedMap, clickedItemData.item, true));
+            setCollapsedMap(collapsedMap.setCollapsedStatus(clickedItemData.item, true));
           }}
           onExpandAllGroups={() => {
-            setCollapsedMap(setAllCollapsedStatus(collapsedMap, false));
+            setCollapsedMap(collapsedMap.setAllCollapsedStatus(false));
           }}
           onCollapseAllGroups={() => {
-            setCollapsedMap(setAllCollapsedStatus(collapsedMap, true));
+            setCollapsedMap(collapsedMap.setAllCollapsedStatus(true));
           }}
           allGroupsCollapsed={Array.from(collapsedMap.values()).every((i) => i.collapsed)}
           allGroupsExpanded={Array.from(collapsedMap.values()).every((i) => !i.collapsed)}
+          getExtraContextMenuButtons={getExtraContextMenuButtons}
+          selectedView={selectedView}
+          search={search}
         />
       )}
     </div>
   );
 };
-
-function setCollapsedStatus(collapsedMap: CollapsedMap, item: LevelItem, collapsed: boolean) {
-  const newMap = new Map(collapsedMap);
-  const collapsedConfig = collapsedMap.get(item)!;
-  const newConfig = { ...collapsedConfig, collapsed };
-  for (const item of collapsedConfig.items) {
-    newMap.set(item, newConfig);
-  }
-  return newMap;
-}
-
-function setAllCollapsedStatus(collapsedMap: CollapsedMap, collapsed: boolean) {
-  const newMap = new Map(collapsedMap);
-  for (const item of collapsedMap.keys()) {
-    const collapsedConfig = collapsedMap.get(item)!;
-    const newConfig = { ...collapsedConfig, collapsed };
-    newMap.set(item, newConfig);
-  }
-
-  return newMap;
-}
 
 const getStyles = () => ({
   graph: css({
@@ -280,7 +270,7 @@ export const convertPixelCoordinatesToBarCoordinates = (
   pixelsPerTick: number,
   totalTicks: number,
   rangeMin: number,
-  collapsedMap: Map<LevelItem, CollapseConfig>
+  collapsedMap: CollapsedMap
 ): LevelItem | undefined => {
   let next: LevelItem | undefined = root;
   let currentLevel = direction === 'children' ? 0 : depth - 1;

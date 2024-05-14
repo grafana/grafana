@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/access"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -152,4 +152,9 @@ func (s *dashboardStorage) Get(ctx context.Context, name string, options *metav1
 	}
 
 	return s.access.GetDashboard(ctx, info.OrgID, name)
+}
+
+// GracefulDeleter
+func (s *dashboardStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+	return nil, fmt.Errorf("DeleteCollection for dashboards not implemented")
 }

@@ -16,8 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/login/authinfotest"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -32,7 +30,7 @@ func Test_ProvideService(t *testing.T) {
 			},
 		}
 
-		_ = ProvideService(setting.NewCfg(), nil, nil, features, authnService, nil, nil)
+		_ = ProvideService(setting.NewCfg(), nil, nil, features, authnService, nil)
 		assert.True(t, hookRegistered)
 	})
 
@@ -46,7 +44,7 @@ func Test_ProvideService(t *testing.T) {
 			},
 		}
 
-		_ = ProvideService(setting.NewCfg(), nil, nil, features, authnService, nil, nil)
+		_ = ProvideService(setting.NewCfg(), nil, nil, features, authnService, nil)
 		assert.False(t, hookRegistered)
 	})
 }
@@ -58,7 +56,7 @@ func TestService_SignIdentity(t *testing.T) {
 			s, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.HS256, Key: key}, nil)
 			require.NoError(t, err)
 
-			token, err := jwt.Signed(s).Claims(claims).CompactSerialize()
+			token, err := jwt.Signed(s).Claims(claims.Claims).Claims(claims.Rest).CompactSerialize()
 			require.NoError(t, err)
 
 			return token, nil
@@ -69,9 +67,9 @@ func TestService_SignIdentity(t *testing.T) {
 		s := ProvideService(
 			setting.NewCfg(), signer, remotecache.NewFakeCacheStorage(),
 			featuremgmt.WithFeatures(featuremgmt.FlagIdForwarding),
-			&authntest.FakeService{}, &authinfotest.FakeService{ExpectedError: user.ErrUserNotFound}, nil,
+			&authntest.FakeService{}, nil,
 		)
-		token, err := s.SignIdentity(context.Background(), &authn.Identity{ID: "user:1"})
+		token, err := s.SignIdentity(context.Background(), &authn.Identity{ID: authn.MustParseNamespaceID("user:1")})
 		require.NoError(t, err)
 		require.NotEmpty(t, token)
 	})
@@ -80,16 +78,16 @@ func TestService_SignIdentity(t *testing.T) {
 		s := ProvideService(
 			setting.NewCfg(), signer, remotecache.NewFakeCacheStorage(),
 			featuremgmt.WithFeatures(featuremgmt.FlagIdForwarding),
-			&authntest.FakeService{}, &authinfotest.FakeService{ExpectedUserAuth: &login.UserAuth{AuthModule: login.AzureADAuthModule}}, nil,
+			&authntest.FakeService{}, nil,
 		)
-		token, err := s.SignIdentity(context.Background(), &authn.Identity{ID: "user:1"})
+		token, err := s.SignIdentity(context.Background(), &authn.Identity{ID: authn.MustParseNamespaceID("user:1"), AuthenticatedBy: login.AzureADAuthModule})
 		require.NoError(t, err)
 
 		parsed, err := jwt.ParseSigned(token)
 		require.NoError(t, err)
 
 		claims := &auth.IDClaims{}
-		require.NoError(t, parsed.UnsafeClaimsWithoutVerification(&claims))
-		assert.Equal(t, login.AzureADAuthModule, claims.AuthenticatedBy)
+		require.NoError(t, parsed.UnsafeClaimsWithoutVerification(&claims.Claims, &claims.Rest))
+		assert.Equal(t, login.AzureADAuthModule, claims.Rest.AuthenticatedBy)
 	})
 }

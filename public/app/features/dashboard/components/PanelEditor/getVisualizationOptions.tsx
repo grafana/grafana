@@ -11,11 +11,14 @@ import {
 } from '@grafana/data';
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
 import {
-  isNestedPanelOptions,
   NestedValueAccess,
   PanelOptionsEditorBuilder,
+  isNestedPanelOptions,
 } from '@grafana/data/src/utils/OptionsUIBuilders';
 import { VizPanel } from '@grafana/scenes';
+import { Input } from '@grafana/ui';
+import { LibraryVizPanelInfo } from 'app/features/dashboard-scene/panel-edit/LibraryVizPanelInfo';
+import { LibraryVizPanel } from 'app/features/dashboard-scene/scene/LibraryVizPanel';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
@@ -146,6 +149,43 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
   }
 
   return Object.values(categoryIndex);
+}
+
+export function getLibraryVizPanelOptionsCategory(libraryPanel: LibraryVizPanel): OptionsPaneCategoryDescriptor {
+  const descriptor = new OptionsPaneCategoryDescriptor({
+    title: 'Library panel options',
+    id: 'Library panel options',
+    isOpenDefault: true,
+  });
+
+  descriptor
+    .addItem(
+      new OptionsPaneItemDescriptor({
+        title: 'Name',
+        value: libraryPanel,
+        popularRank: 1,
+        render: function renderName() {
+          return (
+            <Input
+              id="LibraryPanelFrameName"
+              data-testid="library panel name input"
+              defaultValue={libraryPanel.state.name}
+              onBlur={(e) => libraryPanel.setState({ name: e.currentTarget.value })}
+            />
+          );
+        },
+      })
+    )
+    .addItem(
+      new OptionsPaneItemDescriptor({
+        title: 'Information',
+        render: function renderLibraryPanelInformation() {
+          return <LibraryVizPanelInfo libraryPanel={libraryPanel} />;
+        },
+      })
+    );
+
+  return descriptor;
 }
 
 export interface OptionPaneRenderProps2 {

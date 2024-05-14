@@ -10,7 +10,7 @@ import {
   DataSourceApi,
   DataSourceRef,
   DefaultTimeZone,
-  HistoryItem,
+  getNextRefId,
   IntervalValues,
   LogsDedupStrategy,
   LogsSortOrder,
@@ -28,16 +28,12 @@ import store from 'app/core/store';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { QueryOptions, QueryTransaction } from 'app/types/explore';
 
-import { getNextRefIdChar } from './query';
-
 export const DEFAULT_UI_STATE = {
   dedupStrategy: LogsDedupStrategy.none,
 };
 
 export const ID_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyz';
 const nanoid = customAlphabet(ID_ALPHABET, 3);
-
-const MAX_HISTORY_ITEMS = 100;
 
 const LAST_USED_DATASOURCE_KEY = 'grafana.explore.datasource';
 const lastUsedDatasourceKeyForOrgId = (orgId: number) => `${LAST_USED_DATASOURCE_KEY}.${orgId}`;
@@ -136,6 +132,7 @@ export function buildQueryTransaction(
     },
     maxDataPoints: queryOptions.maxDataPoints,
     liveStreaming: queryOptions.liveStreaming,
+    skipQueryCache: true,
   };
 
   return {
@@ -194,12 +191,12 @@ export async function generateEmptyQuery(
     defaultQuery = datasourceInstance.getDefaultQuery?.(CoreApp.Explore);
   }
 
-  return { ...defaultQuery, refId: getNextRefIdChar(queries), key: generateKey(index), datasource: datasourceRef };
+  return { ...defaultQuery, refId: getNextRefId(queries), key: generateKey(index), datasource: datasourceRef };
 }
 
 export const generateNewKeyAndAddRefIdIfMissing = (target: DataQuery, queries: DataQuery[], index = 0): DataQuery => {
   const key = generateKey(index);
-  const refId = target.refId || getNextRefIdChar(queries);
+  const refId = target.refId || getNextRefId(queries);
 
   return { ...target, refId, key };
 };
@@ -220,7 +217,7 @@ export async function ensureQueries(
       const key = generateKey(index);
       let refId = query.refId;
       if (!refId) {
-        refId = getNextRefIdChar(allQueries);
+        refId = getNextRefId(allQueries);
       }
 
       // if a query has a datasource, validate it and only add it if valid
@@ -274,35 +271,6 @@ export function hasNonEmptyQuery<TQuery extends DataQuery>(queries: TQuery[]): b
       return entries.length > 0;
     })
   );
-}
-
-/**
- * Update the query history. Side-effect: store history in local storage
- */
-export function updateHistory<T extends DataQuery>(
-  history: Array<HistoryItem<T>>,
-  datasourceId: string,
-  queries: T[]
-): Array<HistoryItem<T>> {
-  const ts = Date.now();
-  let updatedHistory = history;
-  queries.forEach((query) => {
-    updatedHistory = [{ query, ts }, ...updatedHistory];
-  });
-
-  if (updatedHistory.length > MAX_HISTORY_ITEMS) {
-    updatedHistory = updatedHistory.slice(0, MAX_HISTORY_ITEMS);
-  }
-
-  // Combine all queries of a datasource type into one history
-  const historyKey = `grafana.explore.history.${datasourceId}`;
-  try {
-    store.setObject(historyKey, updatedHistory);
-    return updatedHistory;
-  } catch (error) {
-    console.error(error);
-    return history;
-  }
 }
 
 export const getQueryKeys = (queries: DataQuery[]): string[] => {

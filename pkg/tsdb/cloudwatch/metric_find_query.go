@@ -17,7 +17,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/constants"
 )
 
 type suggestData struct {
@@ -38,54 +37,6 @@ func parseMultiSelectValue(input string) []string {
 	}
 
 	return []string{trimmedInput}
-}
-
-// Whenever this list is updated, the frontend list should also be updated.
-// Please update the region list in public/app/plugins/datasource/cloudwatch/partials/config.html
-func (e *cloudWatchExecutor) handleGetRegions(ctx context.Context, pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
-	instance, err := e.getInstance(ctx, pluginCtx)
-	if err != nil {
-		return nil, err
-	}
-
-	profile := instance.Settings.Profile
-	if cache, ok := e.regionCache.Load(profile); ok {
-		if cache2, ok2 := cache.([]suggestData); ok2 {
-			return cache2, nil
-		}
-	}
-
-	client, err := e.getEC2Client(ctx, pluginCtx, defaultRegion)
-	if err != nil {
-		return nil, err
-	}
-	regions := constants.Regions()
-	ec2Regions, err := client.DescribeRegionsWithContext(ctx, &ec2.DescribeRegionsInput{})
-	if err != nil {
-		// ignore error for backward compatibility
-		e.logger.FromContext(ctx).Error("Failed to get regions", "error", err)
-	} else {
-		mergeEC2RegionsAndConstantRegions(regions, ec2Regions.Regions)
-	}
-
-	result := make([]suggestData, 0)
-	for region := range regions {
-		result = append(result, suggestData{Text: region, Value: region, Label: region})
-	}
-	sort.Slice(result, func(i, j int) bool {
-		return result[i].Text < result[j].Text
-	})
-	e.regionCache.Store(profile, result)
-
-	return result, nil
-}
-
-func mergeEC2RegionsAndConstantRegions(regions map[string]struct{}, ec2Regions []*ec2.Region) {
-	for _, region := range ec2Regions {
-		if _, ok := regions[*region.RegionName]; !ok {
-			regions[*region.RegionName] = struct{}{}
-		}
-	}
 }
 
 func (e *cloudWatchExecutor) handleGetEbsVolumeIds(ctx context.Context, pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {

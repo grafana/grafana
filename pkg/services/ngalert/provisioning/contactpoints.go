@@ -80,7 +80,7 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactP
 		return nil, convertRecSvcErr(err)
 	}
 	grafanaReceivers := []*apimodels.GettableGrafanaReceiver{}
-	if q.Name != "" {
+	if q.Name != "" && len(res) > 0 {
 		grafanaReceivers = res[0].GettableGrafanaReceivers.GrafanaManagedReceivers // we only expect one receiver group
 	} else {
 		for _, r := range res {
@@ -338,7 +338,7 @@ func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID in
 		}
 	}
 	if fullRemoval && isContactPointInUse(name, []*apimodels.Route{revision.cfg.AlertmanagerConfig.Route}) {
-		return fmt.Errorf("contact point '%s' is currently used by a notification policy", name)
+		return ErrContactPointReferenced
 	}
 
 	return ecp.xact.InTransaction(ctx, func(ctx context.Context) error {

@@ -62,6 +62,10 @@ type DataSource struct {
 	SecureJsonData    map[string][]byte `json:"secureJsonData"`
 	ReadOnly          bool              `json:"readOnly"`
 	UID               string            `json:"uid" xorm:"uid"`
+	// swagger:ignore
+	APIVersion string `json:"apiVersion" xorm:"api_version"`
+	// swagger:ignore
+	IsPrunable bool `xorm:"is_prunable"`
 
 	Created time.Time `json:"created,omitempty"`
 	Updated time.Time `json:"updated,omitempty"`
@@ -161,6 +165,10 @@ type AddDataSourceCommand struct {
 	JsonData        *simplejson.Json  `json:"jsonData"`
 	SecureJsonData  map[string]string `json:"secureJsonData"`
 	UID             string            `json:"uid"`
+	// swagger:ignore
+	APIVersion string `json:"apiVersion"`
+	// swagger:ignore
+	IsPrunable bool
 
 	OrgID                   int64             `json:"-"`
 	UserID                  int64             `json:"-"`
@@ -185,6 +193,10 @@ type UpdateDataSourceCommand struct {
 	SecureJsonData  map[string]string `json:"secureJsonData"`
 	Version         int               `json:"version"`
 	UID             string            `json:"uid"`
+	// swagger:ignore
+	APIVersion string `json:"apiVersion"`
+	// swagger:ignore
+	IsPrunable bool
 
 	OrgID                   int64             `json:"-"`
 	ID                      int64             `json:"-"`
@@ -232,11 +244,6 @@ type GetDataSourcesByTypeQuery struct {
 	OrgID    int64 // optional: filter by org_id
 	Type     string
 	AliasIDs []string
-}
-
-type GetDefaultDataSourceQuery struct {
-	OrgID int64
-	User  *user.SignedInUser
 }
 
 // GetDataSourceQuery will get a DataSource based on OrgID as well as the UID (preferred), ID, or Name.

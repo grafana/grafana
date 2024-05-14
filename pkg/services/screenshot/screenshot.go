@@ -108,22 +108,24 @@ func (s *HeadlessScreenshotService) Take(ctx context.Context, opts ScreenshotOpt
 	u.RawQuery = p.Encode()
 
 	renderOpts := rendering.Opts{
-		AuthOpts: rendering.AuthOpts{
-			OrgID:   dashboard.OrgID,
-			OrgRole: org.RoleAdmin,
+		CommonOpts: rendering.CommonOpts{
+			AuthOpts: rendering.AuthOpts{
+				OrgID:   dashboard.OrgID,
+				OrgRole: org.RoleAdmin,
+			},
+			TimeoutOpts: rendering.TimeoutOpts{
+				Timeout: opts.Timeout,
+			},
+			ConcurrentLimit: s.cfg.RendererConcurrentRequestLimit,
+			Path:            u.String(),
 		},
 		ErrorOpts: rendering.ErrorOpts{
 			ErrorConcurrentLimitReached: true,
 			ErrorRenderUnavailable:      true,
 		},
-		TimeoutOpts: rendering.TimeoutOpts{
-			Timeout: opts.Timeout,
-		},
-		Width:           opts.Width,
-		Height:          opts.Height,
-		Theme:           opts.Theme,
-		ConcurrentLimit: s.cfg.AlertingRenderLimit,
-		Path:            u.String(),
+		Width:  opts.Width,
+		Height: opts.Height,
+		Theme:  opts.Theme,
 	}
 
 	result, err := s.rs.Render(ctx, rendering.RenderPNG, renderOpts, nil)
@@ -132,22 +134,22 @@ func (s *HeadlessScreenshotService) Take(ctx context.Context, opts ScreenshotOpt
 		return nil, fmt.Errorf("failed to take screenshot: %w", err)
 	}
 
-	defer s.successes.Inc()
+	s.successes.Inc()
 	screenshot := Screenshot{Path: result.FilePath}
 	return &screenshot, nil
 }
 
 func (s *HeadlessScreenshotService) instrumentError(err error) {
 	if errors.Is(err, dashboards.ErrDashboardNotFound) {
-		defer s.failures.With(prometheus.Labels{
+		s.failures.With(prometheus.Labels{
 			"reason": "dashboard_not_found",
 		}).Inc()
 	} else if errors.Is(err, context.Canceled) {
-		defer s.failures.With(prometheus.Labels{
+		s.failures.With(prometheus.Labels{
 			"reason": "context_canceled",
 		}).Inc()
 	} else {
-		defer s.failures.With(prometheus.Labels{
+		s.failures.With(prometheus.Labels{
 			"reason": "error",
 		}).Inc()
 	}

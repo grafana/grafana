@@ -63,11 +63,6 @@ func (t *TemplateService) SetTemplate(ctx context.Context, orgID int64, tmpl def
 		revision.cfg.TemplateFiles = map[string]string{}
 	}
 	revision.cfg.TemplateFiles[tmpl.Name] = tmpl.Template
-	tmpls := make([]string, 0, len(revision.cfg.TemplateFiles))
-	for name := range revision.cfg.TemplateFiles {
-		tmpls = append(tmpls, name)
-	}
-	revision.cfg.AlertmanagerConfig.Templates = tmpls
 
 	err = t.xact.InTransaction(ctx, func(ctx context.Context) error {
 		if err := t.configStore.Save(ctx, revision, orgID); err != nil {

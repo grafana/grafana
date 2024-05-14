@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -63,7 +64,14 @@ func TestService_AddDataSource(t *testing.T) {
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
 		mockPermission := acmock.NewMockedPermissionsService()
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), actest.FakeAccessControl{}, mockPermission, quotaService, &pluginstore.FakePluginStore{})
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), actest.FakeAccessControl{}, mockPermission, quotaService, &pluginstore.FakePluginStore{
+			PluginList: []pluginstore.Plugin{{
+				JSONData: plugins.JSONData{
+					Name:       "test",
+					APIVersion: "v0alpha1",
+				},
+			}},
+		})
 		require.NoError(t, err)
 
 		cmd := &datasources.AddDataSourceCommand{
@@ -81,6 +89,15 @@ func TestService_AddDataSource(t *testing.T) {
 
 		_, err = dsService.AddDataSource(context.Background(), cmd)
 		require.EqualError(t, err, "[datasource.urlInvalid] max length is 255")
+
+		cmd = &datasources.AddDataSourceCommand{
+			OrgID:      1,
+			Name:       "test",
+			APIVersion: "v0alpha2",
+		}
+
+		_, err = dsService.AddDataSource(context.Background(), cmd)
+		require.EqualError(t, err, "[datasource.apiVersionInvalid] expected v0alpha1, got v0alpha2")
 	})
 }
 
@@ -833,7 +850,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		require.NoError(t, err)
 
 		headers := dsService.getCustomHeaders(sjson, map[string]string{"httpHeaderValue1": "Bearer xf5yhfkpsnmgo"})
-		require.Equal(t, "Bearer xf5yhfkpsnmgo", headers["Authorization"])
+		require.Equal(t, "Bearer xf5yhfkpsnmgo", headers.Get("Authorization"))
 
 		// 1. Start HTTP test server which checks the request headers
 		backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -902,7 +919,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		require.NoError(t, err)
 
 		headers := dsService.getCustomHeaders(sjson, map[string]string{"httpHeaderValue1": "example.com"})
-		require.Equal(t, "example.com", headers["Host"])
+		require.Equal(t, "example.com", headers.Get("Host"))
 
 		// 1. Start HTTP test server which checks the request headers
 		backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -937,32 +954,6 @@ func TestService_GetHttpTransport(t *testing.T) {
 		require.NoError(t, err)
 		bodyStr := string(body)
 		require.Equal(t, "Ok", bodyStr)
-	})
-
-	t.Run("Should use request timeout if configured in JsonData", func(t *testing.T) {
-		provider := httpclient.NewProvider()
-
-		sjson := simplejson.NewFromAny(map[string]any{
-			"timeout": 19,
-		})
-
-		sqlStore := db.InitTestDB(t)
-		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
-		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
-		quotaService := quotatest.New(false, nil)
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{})
-		require.NoError(t, err)
-		ds := datasources.DataSource{
-			ID:       1,
-			URL:      "http://k8s:8001",
-			Type:     "Kubernetes",
-			JsonData: sjson,
-		}
-
-		client, err := dsService.GetHTTPClient(context.Background(), &ds, provider)
-		require.NoError(t, err)
-		require.NotNil(t, client)
-		require.Equal(t, 19*time.Second, client.Timeout)
 	})
 
 	t.Run("Should populate SigV4 options if configured in JsonData", func(t *testing.T) {
@@ -1192,7 +1183,7 @@ func TestDataSource_CustomHeaders(t *testing.T) {
 		name             string
 		jsonData         *simplejson.Json
 		secureJsonData   map[string][]byte
-		expectedHeaders  map[string]string
+		expectedHeaders  http.Header
 		expectedErrorMsg string
 	}{
 		{
@@ -1203,8 +1194,8 @@ func TestDataSource_CustomHeaders(t *testing.T) {
 			secureJsonData: map[string][]byte{
 				"httpHeaderValue1": encryptedValue,
 			},
-			expectedHeaders: map[string]string{
-				"X-Test-Header1": testValue,
+			expectedHeaders: http.Header{
+				"X-Test-Header1": []string{testValue},
 			},
 		},
 		{
@@ -1213,7 +1204,7 @@ func TestDataSource_CustomHeaders(t *testing.T) {
 				"httpHeaderName1": "X-Test-Header1",
 			}),
 			secureJsonData:  map[string][]byte{},
-			expectedHeaders: map[string]string{},
+			expectedHeaders: http.Header{},
 		},
 		{
 			name: "non customer header value",
@@ -1221,7 +1212,21 @@ func TestDataSource_CustomHeaders(t *testing.T) {
 				"someotherheader": "X-Test-Header1",
 			}),
 			secureJsonData:  map[string][]byte{},
-			expectedHeaders: map[string]string{},
+			expectedHeaders: http.Header{},
+		},
+		{
+			name: "add multiple header value",
+			jsonData: simplejson.NewFromAny(map[string]any{
+				"httpHeaderName1": "X-Test-Header1",
+				"httpHeaderName2": "X-Test-Header1",
+			}),
+			secureJsonData: map[string][]byte{
+				"httpHeaderValue1": encryptedValue,
+				"httpHeaderValue2": encryptedValue,
+			},
+			expectedHeaders: http.Header{
+				"X-Test-Header1": []string{testValue, testValue},
+			},
 		},
 	}
 
@@ -1284,6 +1289,7 @@ AU6WWoaAIEhhbWQfth/Diz3mivl1ARB+YqiWca2mjRPLTPcKJEURDVddQ423el0Q
 llG/Sw5+FquFuChaA6l5KWy7F3bQyA==
 -----END CERTIFICATE-----`
 
+// #nosec G101
 const clientKey string = `-----BEGIN RSA PRIVATE KEY-----
 MIIEpQIBAAKCAQEA4yWJpbI0RQkozfu9YKXlsa5veUyJzJECoZDJj+rEP3IoozYV
 u5xVyZaaDm+9OpBWXmuVD5zsYjw4Pqm2YWXxrbpygSSLtsWvxuSlLIFIRzmnbttn

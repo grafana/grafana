@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import React from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, Controller } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
-import { Field, InputControl, useStyles2 } from '@grafana/ui';
+import { Field, useStyles2 } from '@grafana/ui';
 
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { CloudRulesSourcePicker } from '../CloudRulesSourcePicker';
@@ -33,7 +33,7 @@ export const CloudDataSourceSelector = ({ disabled, onChangeCloudDatasource }: C
             error={errors.dataSourceName?.message}
             invalid={!!errors.dataSourceName?.message}
           >
-            <InputControl
+            <Controller
               render={({ field: { onChange, ref, ...field } }) => (
                 <CloudRulesSourcePicker
                   {...field}
@@ -60,16 +60,16 @@ export const CloudDataSourceSelector = ({ disabled, onChangeCloudDatasource }: C
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  formInput: css`
-    width: 330px;
-    & + & {
-      margin-left: ${theme.spacing(3)};
-    }
-  `,
-  flexRow: css`
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-start;
-    align-items: flex-end;
-  `,
+  formInput: css({
+    width: '330px',
+    '& + &': {
+      marginLeft: theme.spacing(3),
+    },
+  }),
+  flexRow: css({
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-end',
+  }),
 });

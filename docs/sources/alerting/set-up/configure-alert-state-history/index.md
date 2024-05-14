@@ -10,25 +10,25 @@ keywords:
 labels:
   products:
     - oss
-title: Configure Alert State History
-weight: 600
+title: Configure alert state history
+weight: 250
 ---
 
-# Configure Alert State History
+# Configure alert state history
 
 Starting with Grafana 10, Alerting can record all alert rule state changes for your Grafana managed alert rules in a Loki instance.
 
-This allows you to explore the behavior of your alert rules in the Grafana explore view and levels up the existing state history modal with a powerful new visualisation.
+This allows you to explore the behavior of your alert rules in the Grafana explore view and levels up the existing state history dialog box with a powerful new visualisation.
 
 <!-- image here, maybe the one from the blog? -->
 
 ## Configuring Loki
 
-To set up alert state history, make sure to have a Loki instance Grafana can write data to. The default settings might need some tweaking as the state history modal might query up to 30 days of data.
+To set up alert state history, make sure to have a Loki instance Grafana can write data to. The default settings might need some tweaking as the state history dialog box might query up to 30 days of data.
 
-The following change to the default configuration should work for most instances, but we recommend looking at the full Loki configuration settings and adjust according to your needs.
+The following change to the default configuration should work for most instances, but look at the full Loki configuration settings and adjust according to your needs.
 
-As this might impact the performances of an existing Loki instance, we recommend using a separate Loki instance for the alert state history.
+As this might impact the performances of an existing Loki instance, use a separate Loki instance for the alert state history.
 
 ```yaml
 limits_config:
@@ -38,7 +38,7 @@ limits_config:
 
 ## Configuring Grafana
 
-We need some additional configuration in the Grafana configuration file to have it working with the alert state history.
+Additional configuration is required in the Grafana configuration file to have it working with the alert state history.
 
 The example below instructs Grafana to write alert state history to a local Loki instance:
 
@@ -56,7 +56,7 @@ enable = alertStateHistoryLokiSecondary, alertStateHistoryLokiPrimary, alertStat
 
 ## Adding the Loki data source
 
-See our instructions on [adding a data source](/docs/grafana/latest/administration/data-source-management/).
+Refer to the instructions on [adding a data source](/docs/grafana/latest/administration/data-source-management/).
 
 ## Querying the history
 

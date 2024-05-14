@@ -1,4 +1,4 @@
-import { SceneGridItem, SceneGridLayout, SceneTimeRange } from '@grafana/scenes';
+import { SceneGridLayout, SceneTimeRange } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { activateFullSceneTree } from '../utils/test-utils';
@@ -163,16 +163,7 @@ async function buildTestScene() {
       canEdit: true,
     },
     body: new SceneGridLayout({
-      children: [
-        new SceneGridItem({
-          key: 'griditem-1',
-          x: 0,
-          y: 0,
-          width: 10,
-          height: 12,
-          body: undefined,
-        }),
-      ],
+      children: [],
     }),
     editview: versionsView,
   });
