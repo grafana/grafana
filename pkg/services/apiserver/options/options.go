@@ -20,7 +20,6 @@ const defaultEtcdPathPrefix = "/registry/grafana.app"
 
 type Options struct {
 	RecommendedOptions *genericoptions.RecommendedOptions
-	ServerRunOptions   *genericoptions.ServerRunOptions
 	AggregatorOptions  *AggregatorServerOptions
 	StorageOptions     *StorageOptions
 	ExtraOptions       *ExtraOptions
@@ -33,13 +32,11 @@ func NewOptions(codec runtime.Codec) *Options {
 		AggregatorOptions:  NewAggregatorServerOptions(),
 		StorageOptions:     NewStorageOptions(),
 		ExtraOptions:       NewExtraOptions(),
-		ServerRunOptions:   genericoptions.NewServerRunOptions(),
 	}
 }
 
 func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	o.RecommendedOptions.AddFlags(fs)
-	o.ServerRunOptions.AddUniversalFlags(fs)
 	o.AggregatorOptions.AddFlags(fs)
 	o.StorageOptions.AddFlags(fs)
 	o.ExtraOptions.AddFlags(fs)
@@ -86,10 +83,6 @@ func (o *Options) Validate() []error {
 		}
 	}
 
-	if errs := o.ServerRunOptions.Validate(); len(errs) != 0 {
-		return errs
-	}
-
 	return nil
 }
 
@@ -112,10 +105,6 @@ func (o *Options) ApplyTo(serverConfig *genericapiserver.RecommendedConfig) erro
 	}
 
 	if err := o.RecommendedOptions.Authentication.ApplyTo(&serverConfig.Authentication, serverConfig.SecureServing, serverConfig.OpenAPIConfig); err != nil {
-		return err
-	}
-
-	if err := o.ServerRunOptions.ApplyTo(&serverConfig.Config); err != nil {
 		return err
 	}
 
