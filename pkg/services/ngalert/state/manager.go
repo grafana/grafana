@@ -71,6 +71,8 @@ type ManagerCfg struct {
 	ApplyNoDataAndErrorToAllStates bool
 	RulesPerRuleGroupLimit         int64
 
+	DisableExecution bool
+
 	Tracer tracing.Tracer
 	Log    log.Logger
 }
@@ -78,7 +80,8 @@ type ManagerCfg struct {
 func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
 	// Metrics for the cache use a collector, so they need access to the register directly.
 	c := newCache()
-	if cfg.Metrics != nil {
+	// Only expose the metrics if this grafana server does execute alerts.
+	if cfg.Metrics != nil && !cfg.DisableExecution {
 		c.RegisterMetrics(cfg.Metrics.Registerer())
 	}
 
@@ -355,14 +358,13 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 
 	currentState.LastEvaluationTime = result.EvaluatedAt
 	currentState.EvaluationDuration = result.EvaluationDuration
-	currentState.Results = append(currentState.Results, Evaluation{
+	currentState.LatestResult = &Evaluation{
 		EvaluationTime:  result.EvaluatedAt,
 		EvaluationState: result.State,
 		Values:          NewEvaluationValues(result.Values),
 		Condition:       alertRule.Condition,
-	})
+	}
 	currentState.LastEvaluationString = result.EvaluationString
-	currentState.TrimResults(alertRule)
 	oldState := currentState.State
 	oldReason := currentState.StateReason
 

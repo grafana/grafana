@@ -16,7 +16,7 @@ title: Configure Slack for Alerting
 weight: 300
 ---
 
-## Configure Slack for Alerting
+# Configure Slack for Alerting
 
 Use the Grafana Alerting - Slack integration to send Slack notifications when your alerts are firing.
 
@@ -79,7 +79,7 @@ To create your Slack integration in Grafana Alerting, complete the following ste
 To add the contact point and integration you created to your default notification policy, complete the following steps.
 
 1. Navigate to **Alerts & IRM** -> **Alerting** -> **Notification policies**.
-1. In the **Default policy**, click the ellipsis icon (…) and then **Edit**,
+1. In the **Default policy**, click the ellipsis icon (…) and then **Edit**.
 1. Change the default policy to the contact point you created.
 1. Click **Update default policy**.
 

@@ -17,7 +17,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 	var configNodes []*navtree.NavLink
 	ctx := c.Req.Context()
 	hasAccess := ac.HasAccess(s.accessControl, c)
-	hasGlobalAccess := ac.HasGlobalAccess(s.accessControl, s.accesscontrolService, c)
+	hasGlobalAccess := ac.HasGlobalAccess(s.accessControl, s.authnService, c)
 	orgsAccessEvaluator := ac.EvalPermission(ac.ActionOrgsRead)
 	authConfigUIAvailable := s.license.FeatureEnabled(social.SAMLProviderName) || s.cfg.LDAPAuthEnabled
 

@@ -44,12 +44,12 @@ type Plugin struct {
 	Pinned          bool
 
 	// Signature fields
-	Signature      SignatureStatus
-	SignatureType  SignatureType
-	SignatureOrg   string
-	Parent         *Plugin
-	Children       []*Plugin
-	SignatureError *SignatureError
+	Signature     SignatureStatus
+	SignatureType SignatureType
+	SignatureOrg  string
+	Parent        *Plugin
+	Children      []*Plugin
+	Error         *Error
 
 	// SystemJS fields
 	Module  string
@@ -119,6 +119,9 @@ type JSONData struct {
 
 	// App Service Auth Registration
 	IAM *pfs.IAM `json:"iam,omitempty"`
+
+	// API Version: Temporary field while plugins don't expose a OpenAPI schema
+	APIVersion string `json:"apiVersion,omitempty"`
 }
 
 func ReadPluginJSON(reader io.Reader) (JSONData, error) {

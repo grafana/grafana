@@ -14,7 +14,7 @@ export default [
       {
         format: 'esm',
         sourcemap: true,
-        dir: path.dirname(pkg.publishConfig.module),
+        dir: path.dirname(pkg.publishConfig.main),
         preserveModules: true,
       },
     ],

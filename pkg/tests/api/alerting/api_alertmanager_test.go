@@ -19,13 +19,14 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
@@ -50,20 +51,20 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 		AppModeProduction:     true,
 	})
 
-	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
 	// Create a users to make authenticated requests
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleViewer),
 		Password:       "viewer",
 		Login:          "viewer",
 	})
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "editor",
 		Login:          "editor",
 	})
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
 		Login:          "admin",
@@ -425,7 +426,7 @@ func TestIntegrationAlertAndGroupsQuery(t *testing.T) {
 		AppModeProduction:     true,
 	})
 
-	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
 	// unauthenticated request to get the alerts should fail
 	{
@@ -444,7 +445,7 @@ func TestIntegrationAlertAndGroupsQuery(t *testing.T) {
 	}
 
 	// Create a user to make authenticated requests
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
@@ -587,20 +588,20 @@ func TestIntegrationRulerAccess(t *testing.T) {
 		AppModeProduction:     true,
 	})
 
-	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
 	// Create a users to make authenticated requests
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleViewer),
 		Password:       "viewer",
 		Login:          "viewer",
 	})
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "editor",
 		Login:          "editor",
 	})
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
 		Login:          "admin",
@@ -704,14 +705,14 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 		AppModeProduction:     true,
 	})
 
-	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleViewer),
 		Password:       "viewer",
 		Login:          "viewer",
 	})
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "editor",
 		Login:          "editor",
@@ -868,9 +869,9 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		AppModeProduction:     true,
 	})
 
-	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
@@ -1865,8 +1866,8 @@ func TestIntegrationAlertmanagerCreateSilence(t *testing.T) {
 		EnableUnifiedAlerting: true,
 		AppModeProduction:     true,
 	})
-	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-	createUser(t, store, user.CreateUserCommand{
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
 		Login:          "admin",
@@ -1973,7 +1974,7 @@ func TestIntegrationAlertmanagerCreateSilence(t *testing.T) {
 				StartsAt: util.Pointer(strfmt.DateTime(time.Now())),
 			},
 		},
-		expErr: "unable to save silence: silence invalid: invalid label matcher 0: invalid label name \"\": unable to create silence",
+		expErr: "unable to upsert silence: silence invalid: invalid label matcher 0: invalid label name \"\": unable to create silence",
 	}, {
 		name: "can't create silence for missing label value",
 		silence: apimodels.PostableSilence{
@@ -1990,18 +1991,23 @@ func TestIntegrationAlertmanagerCreateSilence(t *testing.T) {
 				StartsAt: util.Pointer(strfmt.DateTime(time.Now())),
 			},
 		},
-		expErr: "unable to save silence: silence invalid: at least one matcher must not match the empty string: unable to create silence",
+		expErr: "unable to upsert silence: silence invalid: at least one matcher must not match the empty string: unable to create silence",
 	}}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			silenceID, err := client.PostSilence(t, tc.silence)
+			silenceOkBody, status, body := client.PostSilence(t, tc.silence)
+			t.Log(body)
 			if tc.expErr != "" {
-				require.EqualError(t, err, tc.expErr)
-				require.Empty(t, silenceID)
+				assert.NotEqual(t, http.StatusAccepted, status)
+
+				var validationError errutil.PublicError
+				assert.NoError(t, json.Unmarshal([]byte(body), &validationError))
+				assert.Contains(t, validationError.Message, tc.expErr)
+				assert.Empty(t, silenceOkBody.SilenceID)
 			} else {
-				require.NoError(t, err)
-				require.NotEmpty(t, silenceID)
+				assert.Equal(t, http.StatusAccepted, status)
+				assert.NotEmpty(t, silenceOkBody.SilenceID)
 			}
 		})
 	}
@@ -2018,20 +2024,19 @@ func TestIntegrationAlertmanagerStatus(t *testing.T) {
 		AppModeProduction:     true,
 	})
 
-	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 	// Create a users to make authenticated requests
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleViewer),
 		Password:       "viewer",
 		Login:          "viewer",
 	})
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "editor",
 		Login:          "editor",
 	})
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
 		Login:          "admin",
@@ -2154,10 +2159,10 @@ func TestIntegrationQuota(t *testing.T) {
 		AppModeProduction:     true,
 	})
 
-	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
 	// Create a user to make authenticated requests
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		// needs permission to update org quota
 		IsAdmin:        true,
 		DefaultOrgRole: string(org.RoleEditor),
@@ -2355,9 +2360,9 @@ func TestIntegrationEval(t *testing.T) {
 		AppModeProduction:     true,
 	})
 
-	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
@@ -2641,16 +2646,19 @@ func rulesNamespaceWithoutVariableValues(t *testing.T, b []byte) (string, map[st
 	return string(json), m
 }
 
-func createUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserCommand) int64 {
+func createUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) int64 {
 	t.Helper()
 
-	store.Cfg.AutoAssignOrg = true
-	store.Cfg.AutoAssignOrgId = 1
+	cfg.AutoAssignOrg = true
+	cfg.AutoAssignOrgId = 1
 
-	quotaService := quotaimpl.ProvideService(store, store.Cfg)
-	orgService, err := orgimpl.ProvideService(store, store.Cfg, quotaService)
+	quotaService := quotaimpl.ProvideService(db, cfg)
+	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
 	require.NoError(t, err)
-	usrSvc, err := userimpl.ProvideService(store, orgService, store.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
+	usrSvc, err := userimpl.ProvideService(
+		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		quotaService, supportbundlestest.NewFakeBundleService(),
+	)
 	require.NoError(t, err)
 
 	u, err := usrSvc.Create(context.Background(), &cmd)

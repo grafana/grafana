@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryCodeEditor.tsx
 import { css } from '@emotion/css';
 import React from 'react';
 
@@ -43,10 +44,10 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     // This wrapper styling can be removed after the old PromQueryEditor is removed.
     // This is removing margin bottom on the old legacy inline form styles
-    wrapper: css`
-      .gf-form {
-        margin-bottom: 0;
-      }
-    `,
+    wrapper: css({
+      '.gf-form': {
+        marginBottom: 0,
+      },
+    }),
   };
 };

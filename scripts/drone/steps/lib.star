@@ -641,17 +641,15 @@ def lint_frontend_step():
 
 def verify_i18n_step():
     extract_error_message = "\nExtraction failed. Make sure that you have no dynamic translation phrases, such as 't(\\`preferences.theme.\\$${themeID}\\`, themeName)' and that no translation key is used twice. Search the output for '[warning]' to find the offending file."
-    uncommited_error_message = "\nTranslation extraction has not been committed. Please run 'yarn i18n:extract', commit the changes and push again."
+    uncommited_error_message = "\nTranslation extraction has not been committed. Please run 'make i18n-extract', commit the changes and push again."
     return {
         "name": "verify-i18n",
-        "image": images["node"],
+        "image": images["node_deb"],
         "depends_on": [
             "yarn-install",
         ],
-        "failure": "ignore",
         "commands": [
-            "apk add --update git",
-            "yarn run i18n:extract || (echo \"{}\" && false)".format(extract_error_message),
+            "make i18n-extract || (echo \"{}\" && false)".format(extract_error_message),
             # Verify that translation extraction has been committed
             '''
             file_diff=$(git diff --dirstat public/locales)
@@ -853,12 +851,13 @@ def playwright_e2e_tests_step():
             "PROV_DIR": "/grafana/scripts/grafana-server/tmp/conf/provisioning",
         },
         "name": "playwright-plugin-e2e",
-        "image": images["playwright"],
+        "image": images["node_deb"],
         "depends_on": [
             "grafana-server",
         ],
         "commands": [
-            "sleep 10s",  # it seems sometimes that grafana-server is not actually ready when the step starts, so waiting for a few seconds before running the tests
+            "npx wait-on@7.0.1 http://$HOST:$PORT",
+            "yarn playwright install --with-deps chromium",
             "yarn e2e:playwright",
         ],
     }

@@ -152,9 +152,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       fontWeight: theme.typography.fontWeightMedium,
       border: `1px solid ${theme.colors.secondary.border}`,
       whiteSpace: 'nowrap',
-      transition: theme.transitions.create(['background', 'box-shadow', 'border-color', 'color'], {
-        duration: theme.transitions.duration.short,
-      }),
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(['background', 'box-shadow', 'border-color', 'color'], {
+          duration: theme.transitions.duration.short,
+        }),
+      },
 
       '&:focus, &:focus-visible': {
         ...getFocusStyles(theme),

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	alertingCluster "github.com/grafana/alerting/cluster"
+	dstls "github.com/grafana/dskit/crypto/tls"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"gopkg.in/ini.v1"
 
@@ -34,7 +35,6 @@ const (
 				"uid": "",
 				"name": "email receiver",
 				"type": "email",
-				"isDefault": true,
 				"settings": {
 					"addresses": "<example@email.com>"
 				}
@@ -80,6 +80,8 @@ type UnifiedAlertingSettings struct {
 	HARedisPassword                string
 	HARedisDB                      int
 	HARedisMaxConns                int
+	HARedisTLSEnabled              bool
+	HARedisTLSConfig               dstls.ClientConfig
 	MaxAttempts                    int64
 	MinInterval                    time.Duration
 	EvaluationTimeout              time.Duration
@@ -101,6 +103,9 @@ type UnifiedAlertingSettings struct {
 	MaxStateSaveConcurrency   int
 	StatePeriodicSaveInterval time.Duration
 	RulesPerRuleGroupLimit    int64
+
+	// Retention period for Alertmanager notification log entries.
+	NotificationLogRetention time.Duration
 }
 
 // RemoteAlertmanagerSettings contains the configuration needed
@@ -173,6 +178,8 @@ func (cfg *Cfg) readUnifiedAlertingEnabledSetting(section *ini.Section) (*bool, 
 
 // ReadUnifiedAlertingSettings reads both the `unified_alerting` and `alerting` sections of the configuration while preferring configuration the `alerting` section.
 // It first reads the `unified_alerting` section, then looks for non-defaults on the `alerting` section and prefers those.
+//
+// nolint: gocyclo
 func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	var err error
 	uaCfg := UnifiedAlertingSettings{}
@@ -230,6 +237,14 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 			uaCfg.HAPeers = append(uaCfg.HAPeers, peer)
 		}
 	}
+	uaCfg.HARedisTLSEnabled = ua.Key("ha_redis_tls_enabled").MustBool(false)
+	uaCfg.HARedisTLSConfig.CertPath = ua.Key("ha_redis_tls_cert_path").MustString("")
+	uaCfg.HARedisTLSConfig.KeyPath = ua.Key("ha_redis_tls_key_path").MustString("")
+	uaCfg.HARedisTLSConfig.CAPath = ua.Key("ha_redis_tls_ca_path").MustString("")
+	uaCfg.HARedisTLSConfig.ServerName = ua.Key("ha_redis_tls_server_name").MustString("")
+	uaCfg.HARedisTLSConfig.InsecureSkipVerify = ua.Key("ha_redis_tls_insecure_skip_verify").MustBool(false)
+	uaCfg.HARedisTLSConfig.CipherSuites = ua.Key("ha_redis_tls_cipher_suites").MustString("")
+	uaCfg.HARedisTLSConfig.MinVersion = ua.Key("ha_redis_tls_min_version").MustString("")
 
 	// TODO load from ini file
 	uaCfg.DefaultConfiguration = alertmanagerDefaultConfiguration
@@ -374,6 +389,11 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.MaxStateSaveConcurrency = ua.Key("max_state_save_concurrency").MustInt(1)
 
 	uaCfg.StatePeriodicSaveInterval, err = gtime.ParseDuration(valueAsString(ua, "state_periodic_save_interval", (time.Minute * 5).String()))
+	if err != nil {
+		return err
+	}
+
+	uaCfg.NotificationLogRetention, err = gtime.ParseDuration(valueAsString(ua, "notification_log_retention", (5 * 24 * time.Hour).String()))
 	if err != nil {
 		return err
 	}

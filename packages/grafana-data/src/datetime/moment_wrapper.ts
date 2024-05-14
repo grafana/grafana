@@ -53,7 +53,7 @@ export interface DateTimeDuration {
 
 export interface DateTime extends Object {
   add: (amount?: DateTimeInput, unit?: DurationUnit) => DateTime;
-  set: (unit: DurationUnit, amount: DateTimeInput) => void;
+  set: (unit: DurationUnit | 'date', amount: DateTimeInput) => void;
   diff: (amount: DateTimeInput, unit?: DurationUnit, truncate?: boolean) => number;
   endOf: (unitOfTime: DurationUnit) => DateTime;
   format: (formatInput?: FormatInput) => string;
@@ -126,10 +126,6 @@ export const dateTimeForTimeZone = (
   input?: DateTimeInput,
   formatInput?: FormatInput
 ): DateTime => {
-  if (timezone === 'utc') {
-    return toUtc(input, formatInput);
-  }
-
   if (timezone && timezone !== 'browser') {
     let result: moment.Moment;
 

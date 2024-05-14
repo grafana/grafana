@@ -1,4 +1,3 @@
-import 'whatwg-fetch';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
@@ -358,7 +357,10 @@ describe('SharePublic - Report interactions', () => {
 
     await waitFor(() => {
       expect(DashboardInteractions.sharingTabChanged).toHaveBeenCalledTimes(1);
-      expect(DashboardInteractions.sharingTabChanged).lastCalledWith({ item: shareDashboardType.publicDashboard });
+      expect(DashboardInteractions.sharingTabChanged).lastCalledWith({
+        item: shareDashboardType.publicDashboard,
+        shareResource: 'dashboard',
+      });
     });
   });
 

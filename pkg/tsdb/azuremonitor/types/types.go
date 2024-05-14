@@ -15,12 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 )
 
-const (
-	TimeSeries = "time_series"
-	Table      = "table"
-	Trace      = "trace"
-)
-
 var (
 	LegendKeyFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 )

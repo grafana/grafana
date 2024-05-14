@@ -174,7 +174,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     const variables = scopedVars || {};
 
     // We want to interpolate these variables on backend.
-    // The pre-calculated values are replaced withe the variable strings.
+    // The pre-calculated values are replaced with the variable strings.
     variables.__interval = {
       value: '$__interval',
     };
@@ -254,7 +254,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         return selects.map((select) => {
           return {
             ...select,
-            params: select.params?.map((param) => this.templateSrv.replace(param.toString(), undefined)),
+            params: select.params?.map((param) => this.templateSrv.replace(param.toString(), scopedVars)),
           };
         });
       });
@@ -313,6 +313,13 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     // If there is no query just return the value directly
     if (!query) {
       return value;
+    }
+
+    if (typeof value === 'string') {
+      // Check the value is a number. If not run to escape special characters
+      if (!isNaN(parseFloat(value))) {
+        return value;
+      }
     }
 
     // If template variable is a multi-value variable
@@ -580,7 +587,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return 'time >= ' + from + ' and time <= ' + until;
   }
 
-  getInfluxTime(date: DateTime | string, roundUp: any, timezone: any) {
+  getInfluxTime(date: DateTime | string, roundUp: boolean, timezone: string) {
     let outPutDate;
     if (isString(date)) {
       if (date === 'now') {

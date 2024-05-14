@@ -1,3 +1,5 @@
+import { isEqual } from 'lodash';
+
 import {
   LocalValueVariable,
   MultiValueVariable,
@@ -18,7 +20,6 @@ import { DashboardRepeatsProcessedEvent } from './types';
 
 interface RowRepeaterBehaviorState extends SceneObjectState {
   variableName: string;
-  sources: SceneGridItemLike[];
 }
 
 /**
@@ -28,8 +29,11 @@ interface RowRepeaterBehaviorState extends SceneObjectState {
 export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorState> {
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: [this.state.variableName],
-    onVariableUpdateCompleted: this._onVariableUpdateCompleted.bind(this),
+    onVariableUpdateCompleted: () => {},
   });
+
+  public isWaitingForVariables = false;
+  private _prevRepeatValues?: VariableValueSingle[];
 
   public constructor(state: RowRepeaterBehaviorState) {
     super(state);
@@ -38,15 +42,31 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
   }
 
   private _activationHandler() {
-    this._performRepeat();
+    this.performRepeat();
   }
 
-  private _onVariableUpdateCompleted(): void {
-    this._performRepeat();
+  private _getRow(): SceneGridRow {
+    if (!(this.parent instanceof SceneGridRow)) {
+      throw new Error('RepeatedRowBehavior: Parent is not a SceneGridRow');
+    }
+
+    return this.parent;
   }
 
-  private _performRepeat() {
-    if (this._variableDependency.hasDependencyInLoadingState()) {
+  private _getLayout(): SceneGridLayout {
+    const layout = sceneGraph.getLayout(this);
+
+    if (!(layout instanceof SceneGridLayout)) {
+      throw new Error('RepeatedRowBehavior: Layout is not a SceneGridLayout');
+    }
+
+    return layout;
+  }
+
+  public performRepeat() {
+    this.isWaitingForVariables = this._variableDependency.hasDependencyInLoadingState();
+
+    if (this.isWaitingForVariables) {
       return;
     }
 
@@ -62,40 +82,39 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
       return;
     }
 
-    if (!(this.parent instanceof SceneGridRow)) {
-      console.error('RepeatedRowBehavior: Parent is not a SceneGridRow');
-      return;
-    }
-
-    const layout = sceneGraph.getLayout(this);
-
-    if (!(layout instanceof SceneGridLayout)) {
-      console.error('RepeatedRowBehavior: Layout is not a SceneGridLayout');
-      return;
-    }
-
-    const rowToRepeat = this.parent;
+    const rowToRepeat = this._getRow();
+    const layout = this._getLayout();
     const { values, texts } = getMultiVariableValues(variable);
+
+    // Do nothing if values are the same
+    if (isEqual(this._prevRepeatValues, values)) {
+      return;
+    }
+
+    this._prevRepeatValues = values;
+
     const rows: SceneGridRow[] = [];
-    const rowContentHeight = getRowContentHeight(this.state.sources);
+    const rowContent = rowToRepeat.state.children;
+    const rowContentHeight = getRowContentHeight(rowContent);
+
     let maxYOfRows = 0;
 
     // Loop through variable values and create repeates
     for (let index = 0; index < values.length; index++) {
       const children: SceneGridItemLike[] = [];
+      const localValue = values[index];
 
       // Loop through panels inside row
-      for (const source of this.state.sources) {
+      for (const source of rowContent) {
         const sourceItemY = source.state.y ?? 0;
         const itemY = sourceItemY + (rowContentHeight + 1) * index;
-
-        const itemClone = source.clone({
-          key: `${source.state.key}-clone-${index}`,
-          y: itemY,
-        });
+        const itemKey = index > 0 ? `${source.state.key}-clone-${localValue}` : source.state.key;
+        const itemClone = source.clone({ key: itemKey, y: itemY });
 
         //Make sure all the child scene objects have unique keys
-        ensureUniqueKeys(itemClone, index);
+        if (index > 0) {
+          ensureUniqueKeys(itemClone, localValue);
+        }
 
         children.push(itemClone);
 
@@ -104,7 +123,7 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
         }
       }
 
-      const rowClone = this.getRowClone(rowToRepeat, index, values[index], texts[index], rowContentHeight, children);
+      const rowClone = this.getRowClone(rowToRepeat, index, localValue, texts[index], rowContentHeight, children);
       rows.push(rowClone);
     }
 
@@ -136,20 +155,36 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
     const sourceRowY = rowToRepeat.state.y ?? 0;
 
     return rowToRepeat.clone({
-      key: `${rowToRepeat.state.key}-clone-${index}`,
+      key: `${rowToRepeat.state.key}-clone-${value}`,
       $variables: new SceneVariableSet({
         variables: [new LocalValueVariable({ name: this.state.variableName, value, text: String(text) })],
       }),
       $behaviors: [],
       children,
       y: sourceRowY + rowContentHeight * index + index,
+      actions: undefined,
     });
+  }
+
+  public removeBehavior() {
+    const row = this._getRow();
+    const layout = this._getLayout();
+    const children = getLayoutChildrenFilterOutRepeatClones(this._getLayout(), this._getRow());
+
+    layout.setState({ children: children });
+
+    // Remove behavior and the scoped local variable
+    row.setState({ $behaviors: row.state.$behaviors!.filter((b) => b !== this), $variables: undefined });
   }
 }
 
 function getRowContentHeight(panels: SceneGridItemLike[]): number {
   let maxY = 0;
   let minY = Number.MAX_VALUE;
+
+  if (panels.length === 0) {
+    return 0;
+  }
 
   for (const panel of panels) {
     if (panel.state.y! + panel.state.height! > maxY) {
@@ -203,9 +238,9 @@ function getLayoutChildrenFilterOutRepeatClones(layout: SceneGridLayout, rowToRe
   });
 }
 
-function ensureUniqueKeys(item: SceneGridItemLike, rowIndex: number) {
+function ensureUniqueKeys(item: SceneGridItemLike, localValue: VariableValueSingle) {
   item.forEachChild((child) => {
-    child.setState({ key: `${child.state.key}-row-${rowIndex}` });
-    ensureUniqueKeys(child, rowIndex);
+    child.setState({ key: `${child.state.key}-clone-${localValue}` });
+    ensureUniqueKeys(child, localValue);
   });
 }

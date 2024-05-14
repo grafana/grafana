@@ -35,14 +35,14 @@ var resourceInfo = v0alpha1.FolderResourceInfo
 // This is used just so wire has something unique to return
 type FolderAPIBuilder struct {
 	gv            schema.GroupVersion
-	features      *featuremgmt.FeatureManager
+	features      featuremgmt.FeatureToggles
 	namespacer    request.NamespaceMapper
 	folderSvc     folder.Service
 	accessControl accesscontrol.AccessControl
 }
 
 func RegisterAPIService(cfg *setting.Cfg,
-	features *featuremgmt.FeatureManager,
+	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	folderSvc folder.Service,
 	accessControl accesscontrol.AccessControl,
@@ -139,7 +139,7 @@ func (b *FolderAPIBuilder) GetAPIGroupInfo(
 		if err != nil {
 			return nil, err
 		}
-		storage[resourceInfo.StoragePath()] = grafanarest.NewDualWriter(legacyStore, store)
+		storage[resourceInfo.StoragePath()] = grafanarest.NewDualWriter(grafanarest.Mode1, legacyStore, store)
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[v0alpha1.VERSION] = storage

@@ -95,10 +95,6 @@ const (
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
 
-	// FlagNewVizTooltips
-	// New visualizations tooltips UX
-	FlagNewVizTooltips = "newVizTooltips"
-
 	// FlagScenes
 	// Experimental framework to build interactive dashboards
 	FlagScenes = "scenes"
@@ -126,6 +122,14 @@ const (
 	// FlagUnifiedStorage
 	// SQL-based k8s storage
 	FlagUnifiedStorage = "unifiedStorage"
+
+	// FlagDualWritePlaylistsMode2
+	// Enables dual writing of playlists to both legacy and k8s storage in mode 2
+	FlagDualWritePlaylistsMode2 = "dualWritePlaylistsMode2"
+
+	// FlagDualWritePlaylistsMode3
+	// Enables dual writing of playlists to both legacy and k8s storage in mode 3
+	FlagDualWritePlaylistsMode3 = "dualWritePlaylistsMode3"
 
 	// FlagCloudWatchCrossAccountQuerying
 	// Enables cross-account querying in CloudWatch datasources
@@ -263,10 +267,6 @@ const (
 	// Enables the plugins frontend sandbox
 	FlagPluginsFrontendSandbox = "pluginsFrontendSandbox"
 
-	// FlagDashboardEmbed
-	// Allow embedding dashboard for external use in Code editors
-	FlagDashboardEmbed = "dashboardEmbed"
-
 	// FlagFrontendSandboxMonitorOnly
 	// Enables monitor only in the plugin frontend sandbox (if enabled)
 	FlagFrontendSandboxMonitorOnly = "frontendSandboxMonitorOnly"
@@ -282,10 +282,6 @@ const (
 	// FlagRecordedQueriesMulti
 	// Enables writing multiple items from a single query within Recorded Queries
 	FlagRecordedQueriesMulti = "recordedQueriesMulti"
-
-	// FlagPluginsDynamicAngularDetectionPatterns
-	// Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones
-	FlagPluginsDynamicAngularDetectionPatterns = "pluginsDynamicAngularDetectionPatterns"
 
 	// FlagVizAndWidgetSplit
 	// Split panels between visualizations and widgets
@@ -328,7 +324,7 @@ const (
 	FlagGrafanaAPIServerEnsureKubectlAccess = "grafanaAPIServerEnsureKubectlAccess"
 
 	// FlagFeatureToggleAdminPage
-	// Enable admin page for managing feature toggles from the Grafana front-end
+	// Enable admin page for managing feature toggles from the Grafana front-end. Grafana Cloud only.
 	FlagFeatureToggleAdminPage = "featureToggleAdminPage"
 
 	// FlagAwsAsyncQueryCaching
@@ -346,10 +342,6 @@ const (
 	// FlagConfigurableSchedulerTick
 	// Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval
 	FlagConfigurableSchedulerTick = "configurableSchedulerTick"
-
-	// FlagInfluxdbSqlSupport
-	// Enable InfluxDB SQL query language support with new querying UI
-	FlagInfluxdbSqlSupport = "influxdbSqlSupport"
 
 	// FlagAlertingNoDataErrorExecution
 	// Changes how Alerting state manager handles execution of NoData/Error
@@ -431,9 +423,17 @@ const (
 	// Routes snapshot requests from /api to the /apis endpoint
 	FlagKubernetesSnapshots = "kubernetesSnapshots"
 
-	// FlagKubernetesQueryServiceRewrite
+	// FlagQueryService
+	// Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query
+	FlagQueryService = "queryService"
+
+	// FlagQueryServiceRewrite
 	// Rewrite requests targeting /ds/query to the query service
-	FlagKubernetesQueryServiceRewrite = "kubernetesQueryServiceRewrite"
+	FlagQueryServiceRewrite = "queryServiceRewrite"
+
+	// FlagQueryServiceFromUI
+	// Routes requests to the new query service
+	FlagQueryServiceFromUI = "queryServiceFromUI"
 
 	// FlagCloudWatchBatchQueries
 	// Runs CloudWatch metrics queries as separate batches
@@ -470,6 +470,10 @@ const (
 	// FlagPrometheusPromQAIL
 	// Prometheus and AI/ML to assist users in creating a query
 	FlagPrometheusPromQAIL = "prometheusPromQAIL"
+
+	// FlagPrometheusCodeModeMetricNamesSearch
+	// Enables search for metric names in Code Mode, to improve performance when working with an enormous number of metric names
+	FlagPrometheusCodeModeMetricNamesSearch = "prometheusCodeModeMetricNamesSearch"
 
 	// FlagAddFieldFromCalculationStatFunctions
 	// Add cumulative and window functions to the add field from calculation transformation
@@ -531,9 +535,9 @@ const (
 	// Allow collapsing of flame graph items
 	FlagFlameGraphItemCollapsing = "flameGraphItemCollapsing"
 
-	// FlagDatatrails
-	// Enables the new core app datatrails
-	FlagDatatrails = "datatrails"
+	// FlagExploreMetrics
+	// Enables the new Explore Metrics core app
+	FlagExploreMetrics = "exploreMetrics"
 
 	// FlagAlertingSimplifiedRouting
 	// Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule
@@ -562,10 +566,6 @@ const (
 	// FlagKubernetesFeatureToggles
 	// Use the kubernetes API for feature toggle management in the frontend
 	FlagKubernetesFeatureToggles = "kubernetesFeatureToggles"
-
-	// FlagEnablePluginsTracingByDefault
-	// Enable plugin tracing for all external plugins
-	FlagEnablePluginsTracingByDefault = "enablePluginsTracingByDefault"
 
 	// FlagCloudRBACRoles
 	// Enabled grafana cloud specific RBAC roles
@@ -611,6 +611,10 @@ const (
 	// New implementation for the dashboard-to-PDF rendering
 	FlagNewPDFRendering = "newPDFRendering"
 
+	// FlagTlsMemcached
+	// Use TLS-enabled memcached in the enterprise caching feature
+	FlagTlsMemcached = "tlsMemcached"
+
 	// FlagKubernetesAggregator
 	// Enable grafana aggregator
 	FlagKubernetesAggregator = "kubernetesAggregator"
@@ -627,6 +631,10 @@ const (
 	// Removes CustomScrollbar from the UI, relying on native browser scrollbars
 	FlagBetterPageScrolling = "betterPageScrolling"
 
+	// FlagAuthAPIAccessTokenAuth
+	// Enables the use of Auth API access tokens for authentication
+	FlagAuthAPIAccessTokenAuth = "authAPIAccessTokenAuth"
+
 	// FlagScopeFilters
 	// Enables the use of scope filters in Grafana
 	FlagScopeFilters = "scopeFilters"
@@ -635,11 +643,47 @@ const (
 	// Use the new SSO Settings API to configure the SAML connector
 	FlagSsoSettingsSAML = "ssoSettingsSAML"
 
-	// FlagUsePrometheusFrontendPackage
-	// Use the @grafana/prometheus frontend package in core Prometheus.
-	FlagUsePrometheusFrontendPackage = "usePrometheusFrontendPackage"
-
 	// FlagOauthRequireSubClaim
 	// Require that sub claims is present in oauth tokens.
 	FlagOauthRequireSubClaim = "oauthRequireSubClaim"
+
+	// FlagNewDashboardWithFiltersAndGroupBy
+	// Enables filters and group by variables on all new dashboards. Variables are added only if default data source supports filtering.
+	FlagNewDashboardWithFiltersAndGroupBy = "newDashboardWithFiltersAndGroupBy"
+
+	// FlagCloudWatchNewLabelParsing
+	// Updates CloudWatch label parsing to be more accurate
+	FlagCloudWatchNewLabelParsing = "cloudWatchNewLabelParsing"
+
+	// FlagAccessActionSets
+	// Introduces action sets for resource permissions
+	FlagAccessActionSets = "accessActionSets"
+
+	// FlagDisableNumericMetricsSortingInExpressions
+	// In server-side expressions, disable the sorting of numeric-kind metrics by their metric name or labels.
+	FlagDisableNumericMetricsSortingInExpressions = "disableNumericMetricsSortingInExpressions"
+
+	// FlagGrafanaManagedRecordingRules
+	// Enables Grafana-managed recording rules.
+	FlagGrafanaManagedRecordingRules = "grafanaManagedRecordingRules"
+
+	// FlagQueryLibrary
+	// Enables Query Library feature in Explore
+	FlagQueryLibrary = "queryLibrary"
+
+	// FlagAutofixDSUID
+	// Automatically migrates invalid datasource UIDs
+	FlagAutofixDSUID = "autofixDSUID"
+
+	// FlagLogsExploreTableDefaultVisualization
+	// Sets the logs table as default visualisation in logs explore
+	FlagLogsExploreTableDefaultVisualization = "logsExploreTableDefaultVisualization"
+
+	// FlagNewDashboardSharingComponent
+	// Enables the new sharing drawer design
+	FlagNewDashboardSharingComponent = "newDashboardSharingComponent"
+
+	// FlagNotificationBanner
+	// Enables the notification banner UI and API
+	FlagNotificationBanner = "notificationBanner"
 )

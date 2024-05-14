@@ -120,9 +120,9 @@ function OptionPaneLabel({ title, description, overrides, addon }: OptionPanelLa
 
 function getLabelStyles(theme: GrafanaTheme2) {
   return {
-    container: css`
-      display: flex;
-      justify-content: space-between;
-    `,
+    container: css({
+      display: 'flex',
+      justifyContent: 'space-between',
+    }),
   };
 }

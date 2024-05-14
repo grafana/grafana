@@ -191,7 +191,7 @@ func (ng *AlertNG) init() error {
 					}
 
 					// Create remote Alertmanager.
-					remoteAM, err := createRemoteAlertmanager(orgID, ng.Cfg.UnifiedAlerting.RemoteAlertmanager, ng.KVStore, ng.SecretsService.Decrypt, m)
+					remoteAM, err := createRemoteAlertmanager(orgID, ng.Cfg.UnifiedAlerting.RemoteAlertmanager, ng.KVStore, ng.SecretsService.Decrypt, ng.Cfg.UnifiedAlerting.DefaultConfiguration, m)
 					if err != nil {
 						moaLogger.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
 						return internalAM, nil
@@ -279,6 +279,7 @@ func (ng *AlertNG) init() error {
 	cfg := state.ManagerCfg{
 		Metrics:                        ng.Metrics.GetStateMetrics(),
 		ExternalURL:                    appUrl,
+		DisableExecution:               !ng.Cfg.UnifiedAlerting.ExecuteAlerts,
 		InstanceStore:                  ng.store,
 		Images:                         ng.ImageService,
 		Clock:                          clk,
@@ -471,7 +472,8 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 	}
 	if backend == historian.BackendTypeAnnotations {
 		store := historian.NewAnnotationStore(ar, ds, met)
-		return historian.NewAnnotationBackend(store, rs, met), nil
+		annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
+		return historian.NewAnnotationBackend(annotationBackendLogger, store, rs, met), nil
 	}
 	if backend == historian.BackendTypeLoki {
 		lcfg, err := historian.NewLokiConfig(cfg)
@@ -479,7 +481,8 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 			return nil, fmt.Errorf("invalid remote loki configuration: %w", err)
 		}
 		req := historian.NewRequester()
-		backend := historian.NewRemoteLokiBackend(lcfg, req, met)
+		lokiBackendLogger := log.New("ngalert.state.historian", "backend", "loki")
+		backend := historian.NewRemoteLokiBackend(lokiBackendLogger, lcfg, req, met)
 
 		testConnCtx, cancelFunc := context.WithTimeout(ctx, 10*time.Second)
 		defer cancelFunc()
@@ -537,12 +540,12 @@ func ApplyStateHistoryFeatureToggles(cfg *setting.UnifiedAlertingStateHistorySet
 	}
 }
 
-func createRemoteAlertmanager(orgID int64, amCfg setting.RemoteAlertmanagerSettings, kvstore kvstore.KVStore, decryptFn remote.DecryptFn, m *metrics.RemoteAlertmanager) (*remote.Alertmanager, error) {
+func createRemoteAlertmanager(orgID int64, amCfg setting.RemoteAlertmanagerSettings, kvstore kvstore.KVStore, decryptFn remote.DecryptFn, defaultConfig string, m *metrics.RemoteAlertmanager) (*remote.Alertmanager, error) {
 	externalAMCfg := remote.AlertmanagerConfig{
 		OrgID:             orgID,
 		URL:               amCfg.URL,
 		TenantID:          amCfg.TenantID,
 		BasicAuthPassword: amCfg.Password,
 	}
-	return remote.NewAlertmanager(externalAMCfg, notifier.NewFileStore(orgID, kvstore), decryptFn, m)
+	return remote.NewAlertmanager(externalAMCfg, notifier.NewFileStore(orgID, kvstore), decryptFn, defaultConfig, m)
 }

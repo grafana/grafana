@@ -53,15 +53,15 @@ const SilencedAlertsTable = ({ silencedAlerts }: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  tableMargin: css`
-    margin-bottom: ${theme.spacing(1)};
-  `,
-  colState: css`
-    width: 110px;
-  `,
-  colName: css`
-    width: 65%;
-  `,
+  tableMargin: css({
+    marginBottom: theme.spacing(1),
+  }),
+  colState: css({
+    width: '110px',
+  }),
+  colName: css({
+    width: '65%',
+  }),
 });
 
 export default SilencedAlertsTable;

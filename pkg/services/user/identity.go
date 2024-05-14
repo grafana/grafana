@@ -2,7 +2,7 @@ package user
 
 import (
 	"fmt"
-	"strings"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models/roletype"
@@ -14,14 +14,18 @@ const (
 )
 
 type SignedInUser struct {
-	UserID           int64  `xorm:"user_id"`
-	UserUID          string `xorm:"user_uid"`
-	OrgID            int64  `xorm:"org_id"`
-	OrgName          string
-	OrgRole          roletype.RoleType
-	Login            string
-	Name             string
-	Email            string
+	UserID        int64  `xorm:"user_id"`
+	UserUID       string `xorm:"user_uid"`
+	OrgID         int64  `xorm:"org_id"`
+	OrgName       string
+	OrgRole       roletype.RoleType
+	Login         string
+	Name          string
+	Email         string
+	EmailVerified bool
+	// AuthID will be set if user signed in using external method
+	AuthID string
+	// AuthenticatedBy be set if user signed in using external method
 	AuthenticatedBy  string
 	ApiKeyID         int64 `xorm:"api_key_id"`
 	IsServiceAccount bool  `xorm:"is_service_account"`
@@ -35,7 +39,8 @@ type SignedInUser struct {
 	Permissions map[int64]map[string][]string `json:"-"`
 	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
 	// Will only be set when featuremgmt.FlagIdForwarding is enabled.
-	IDToken string `json:"-" xorm:"-"`
+	IDToken      string `json:"-" xorm:"-"`
+	NamespacedID identity.NamespaceID
 }
 
 func (u *SignedInUser) ShouldUpdateLastSeenAt() bool {
@@ -50,36 +55,6 @@ func (u *SignedInUser) NameOrFallback() string {
 		return u.Login
 	}
 	return u.Email
-}
-
-// TODO: There's a need to remove this struct since it creates a circular dependency
-
-// DEPRECATED: This function uses `UserDisplayDTO` model which we want to remove
-// In order to retrieve the user URL, we need the dto library. However, adding
-// the dto library to the user service creates a circular dependency
-func (u *SignedInUser) ToUserDisplayDTO() *UserDisplayDTO {
-	return &UserDisplayDTO{
-		ID:    u.UserID,
-		UID:   u.UserUID,
-		Login: u.Login,
-		Name:  u.Name,
-		// AvatarURL: dtos.GetGravatarUrl(u.GetEmail()),
-	}
-}
-
-// Static function to parse a requester into a UserDisplayDTO
-func NewUserDisplayDTOFromRequester(requester identity.Requester) (*UserDisplayDTO, error) {
-	userID := int64(0)
-	namespaceID, identifier := requester.GetNamespacedID()
-	if namespaceID == identity.NamespaceUser || namespaceID == identity.NamespaceServiceAccount {
-		userID, _ = identity.IntIdentifier(namespaceID, identifier)
-	}
-
-	return &UserDisplayDTO{
-		ID:    userID,
-		Login: requester.GetLogin(),
-		Name:  requester.GetDisplayName(),
-	}, nil
 }
 
 func (u *SignedInUser) HasRole(role roletype.RoleType) bool {
@@ -191,30 +166,54 @@ func (u *SignedInUser) GetOrgRole() roletype.RoleType {
 }
 
 // GetID returns namespaced id for the entity
-func (u *SignedInUser) GetID() string {
-	switch {
-	case u.ApiKeyID != 0:
-		return namespacedID(identity.NamespaceAPIKey, u.ApiKeyID)
-	case u.IsServiceAccount:
-		return namespacedID(identity.NamespaceServiceAccount, u.UserID)
-	case u.UserID > 0:
-		return namespacedID(identity.NamespaceUser, u.UserID)
-	case u.IsAnonymous:
-		return identity.NamespaceAnonymous + ":"
-	case u.AuthenticatedBy == "render" && u.UserID == 0:
-		return namespacedID(identity.NamespaceRenderService, 0)
-	}
-
-	// backwards compatibility
-	return namespacedID(identity.NamespaceUser, u.UserID)
+func (u *SignedInUser) GetID() identity.NamespaceID {
+	ns, id := u.GetNamespacedID()
+	return identity.NewNamespaceIDString(ns, id)
 }
 
 // GetNamespacedID returns the namespace and ID of the active entity
 // The namespace is one of the constants defined in pkg/services/auth/identity
-func (u *SignedInUser) GetNamespacedID() (string, string) {
-	parts := strings.Split(u.GetID(), ":")
-	// Safety: GetID always returns a ':' separated string
-	return parts[0], parts[1]
+func (u *SignedInUser) GetNamespacedID() (identity.Namespace, string) {
+	switch {
+	case u.ApiKeyID != 0:
+		return identity.NamespaceAPIKey, strconv.FormatInt(u.ApiKeyID, 10)
+	case u.IsServiceAccount:
+		return identity.NamespaceServiceAccount, strconv.FormatInt(u.UserID, 10)
+	case u.UserID > 0:
+		return identity.NamespaceUser, strconv.FormatInt(u.UserID, 10)
+	case u.IsAnonymous:
+		return identity.NamespaceAnonymous, "0"
+	case u.AuthenticatedBy == "render" && u.UserID == 0:
+		return identity.NamespaceRenderService, "0"
+	}
+
+	return u.NamespacedID.Namespace(), u.NamespacedID.ID()
+}
+
+// GetUID returns namespaced uid for the entity
+func (u *SignedInUser) GetUID() identity.NamespaceID {
+	switch {
+	case u.ApiKeyID != 0:
+		return identity.NewNamespaceIDString(identity.NamespaceAPIKey, strconv.FormatInt(u.ApiKeyID, 10))
+	case u.IsServiceAccount:
+		return identity.NewNamespaceIDString(identity.NamespaceServiceAccount, u.UserUID)
+	case u.UserID > 0:
+		return identity.NewNamespaceIDString(identity.NamespaceUser, u.UserUID)
+	case u.IsAnonymous:
+		return identity.NewNamespaceIDString(identity.NamespaceAnonymous, "0")
+	case u.AuthenticatedBy == "render" && u.UserID == 0:
+		return identity.NewNamespaceIDString(identity.NamespaceRenderService, "0")
+	}
+
+	return identity.NewNamespaceIDString(identity.NamespaceEmpty, "0")
+}
+
+func (u *SignedInUser) GetAuthID() string {
+	return u.AuthID
+}
+
+func (u *SignedInUser) GetAuthenticatedBy() string {
+	return u.AuthenticatedBy
 }
 
 func (u *SignedInUser) IsAuthenticatedBy(providers ...string) bool {
@@ -237,21 +236,16 @@ func (u *SignedInUser) GetEmail() string {
 	return u.Email
 }
 
+func (u *SignedInUser) IsEmailVerified() bool {
+	return u.EmailVerified
+}
+
 // GetDisplayName returns the display name of the active entity
 // The display name is the name if it is set, otherwise the login or email
 func (u *SignedInUser) GetDisplayName() string {
 	return u.NameOrFallback()
 }
 
-// DEPRECATEAD: Returns the authentication method used
-func (u *SignedInUser) GetAuthenticatedBy() string {
-	return u.AuthenticatedBy
-}
-
 func (u *SignedInUser) GetIDToken() string {
 	return u.IDToken
-}
-
-func namespacedID(namespace string, id int64) string {
-	return fmt.Sprintf("%s:%d", namespace, id)
 }

@@ -15,7 +15,9 @@ export interface DashboardChangeInfo {
   hasChanges: boolean;
   hasTimeChanges: boolean;
   hasVariableValueChanges: boolean;
+  hasRefreshChange: boolean;
   isNew?: boolean;
+  hasFolderChanges?: boolean;
 }
 
 export function isVersionMismatchError(error?: Error) {
@@ -63,9 +65,9 @@ export function SaveButton({ overwrite, isLoading, isValid, onSave }: SaveButton
     <Button
       disabled={!isValid || isLoading}
       icon={isLoading ? 'spinner' : undefined}
-      aria-label={selectors.pages.SaveDashboardModal.save}
       onClick={() => onSave(overwrite)}
       variant={overwrite ? 'destructive' : 'primary'}
+      data-testid={selectors.components.Drawer.DashboardSaveDrawer.saveButton}
     >
       {isLoading ? 'Saving...' : overwrite ? 'Save and overwrite' : 'Save'}
     </Button>

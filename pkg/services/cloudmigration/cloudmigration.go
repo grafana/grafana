@@ -6,15 +6,16 @@ import (
 
 type Service interface {
 	CreateToken(context.Context) (CreateAccessTokenResponse, error)
-	ValidateToken(context.Context, string) error
-	SaveEncryptedToken(context.Context, string) error
-	// migration
-	GetMigration(context.Context, int64) (*CloudMigrationResponse, error)
-	GetMigrationList(context.Context) (*CloudMigrationListResponse, error)
+	ValidateToken(context.Context, CloudMigration) error
+
 	CreateMigration(context.Context, CloudMigrationRequest) (*CloudMigrationResponse, error)
-	UpdateMigration(context.Context, int64, CloudMigrationRequest) (*CloudMigrationResponse, error)
-	RunMigration(context.Context, string) (*CloudMigrationRun, error)
-	GetMigrationStatus(context.Context, string, string) (*CloudMigrationRun, error)
-	GetMigrationStatusList(context.Context, string) ([]CloudMigrationRun, error)
-	DeleteMigration(context.Context, string) error
+	GetMigration(ctx context.Context, uid string) (*CloudMigration, error)
+	DeleteMigration(ctx context.Context, uid string) (*CloudMigration, error)
+	UpdateMigration(ctx context.Context, uid string, request CloudMigrationRequest) (*CloudMigrationResponse, error)
+	GetMigrationList(context.Context) (*CloudMigrationListResponse, error)
+
+	RunMigration(ctx context.Context, uid string) (*MigrateDataResponseDTO, error)
+	CreateMigrationRun(context.Context, CloudMigrationRun) (string, error)
+	GetMigrationStatus(ctx context.Context, runUID string) (*CloudMigrationRun, error)
+	GetMigrationRunList(context.Context, string) (*CloudMigrationRunList, error)
 }

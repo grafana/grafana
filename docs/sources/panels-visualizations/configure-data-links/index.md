@@ -26,7 +26,7 @@ weight: 80
 
 # Configure data links
 
-Data links allow you to provide more granular context to your links. You can create links that include the series name or even the value under the cursor. For example, if your visualization shows four servers, you can add a data link to one or two of them. You can also link panels using data links.
+Data links allow you to link to other panels, dashboards, and external resources while maintaining the context of the source panel. You can create links that include the series name or even the value under the cursor. For example, if your visualization shows four servers, you can add a data link to one or two of them.
 
 The link itself is accessible in different ways depending on the visualization. For the time series visualization you need to click a data point or line:
 
@@ -42,15 +42,14 @@ If there's only one data link in the visualization, clicking anywhere on the vis
 
 You can configure data links for the following visualizations:
 
-|                            |                        |                                  |
-| -------------------------- | ---------------------- | -------------------------------- |
-| [Bar chart][bar chart]     | [Geomap][geomap]       | [State timeline][state timeline] |
-| [Bar gauge][bar gauge]     | [Heatmap][heatmap]     | [Status history][status history] |
-| [Candlestick][candlestick] | [Histogram][histogram] | [Table][table]                   |
-| [Canvas][canvas]           | [Pie chart][pie chart] | [Time series][time series]       |
-| [Gauge][gauge]             | [Stat][stat]           | [Trend][trend]                   |
-
-<!--Also xy chart -->
+|                            |                                  |                                  |
+| -------------------------- | -------------------------------- | -------------------------------- |
+| [Bar chart][bar chart]     | [Heatmap][heatmap]               | [Status history][status history] |
+| [Bar gauge][bar gauge]     | [Histogram][histogram]           | [Table][table]                   |
+| [Candlestick][candlestick] | [Pie chart][pie chart]           | [Time series][time series]       |
+| [Canvas][canvas]           | [Stat][stat]                     | [Trend][trend]                   |
+| [Gauge][gauge]             | [State timeline][state timeline] | [XY chart][xy chart]             |
+| [Geomap][geomap]           |                                  |                                  |
 
 ## Data link variables
 
@@ -198,6 +197,9 @@ If you want to add all of the current dashboard's variables to the URL, then use
 
 [trend]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/trend"
 [trend]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/trend"
+
+[xy chart]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/xy-chart"
+[xy chart]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/xy-chart"
 
 [Cloudwatch]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/aws-cloudwatch/query-editor#deep-link-grafana-panels-to-the-cloudwatch-console-1"
 [Cloudwatch]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources/aws-cloudwatch/query-editor#deep-link-grafana-panels-to-the-cloudwatch-console-1"
