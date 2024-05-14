@@ -104,7 +104,7 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
   const useTemplates = option.placeholder.includes('{{ template');
 
   function onSelectTemplate(template: string) {
-    Boolean(template) && setValue(name, template);
+    setValue(name, template);
   }
 
   switch (option.element) {
