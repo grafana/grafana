@@ -182,6 +182,7 @@ const EvaluationGroupWithRules = ({ group, rulesSource }: EvaluationGroupWithRul
               state={promRule?.state} // @TODO typescript ugh
               health={promRule?.health}
               name={rulerRule.alert}
+              labels={rulerRule.labels}
               href={createViewLink(rulesSource, rule)}
               summary={annotations?.['summary']}
             />
@@ -196,6 +197,7 @@ const EvaluationGroupWithRules = ({ group, rulesSource }: EvaluationGroupWithRul
               health={promRule?.health}
               lastEvaluation={promRule?.lastEvaluation}
               evaluationDuration={promRule?.evaluationTime}
+              labels={rulerRule.labels}
               href={createViewLink(rulesSource, rule)}
             />
           );
@@ -207,6 +209,7 @@ const EvaluationGroupWithRules = ({ group, rulesSource }: EvaluationGroupWithRul
               key={rulerRule.grafana_alert.uid}
               name={rulerRule.grafana_alert.title}
               state={promRule?.state}
+              labels={rulerRule.labels}
               health={promRule?.health}
               isPaused={rulerRule.grafana_alert.is_paused}
               href={createViewLink(rulesSource, rule)}

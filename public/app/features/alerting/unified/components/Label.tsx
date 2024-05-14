@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import React, { ReactNode } from 'react';
+import React, { CSSProperties, ReactNode } from 'react';
 import tinycolor2 from 'tinycolor2';
 
-import { GrafanaTheme2, IconName } from '@grafana/data';
+import { GrafanaTheme2, IconName, ThemeTypographyVariant } from '@grafana/data';
 import { Icon, Stack, useStyles2 } from '@grafana/ui';
 
-export type LabelSize = 'md' | 'sm';
+export type LabelSize = 'md' | 'sm' | 'xs';
 
 interface Props {
   icon?: IconName;
@@ -58,13 +58,25 @@ const getStyles = (theme: GrafanaTheme2, color?: string, size?: string) => {
     ? tinycolor2.mostReadable(backgroundColor, ['#000', '#fff']).toString()
     : theme.colors.text.primary;
 
-  const padding =
-    size === 'md' ? `${theme.spacing(0.33)} ${theme.spacing(1)}` : `${theme.spacing(0.2)} ${theme.spacing(0.6)}`;
+  let padding: CSSProperties['padding'] = `${theme.spacing(0.33)} ${theme.spacing(1)}`;
+  let fontSize: CSSProperties['fontSize'] = theme.typography.bodySmall.fontSize;
+
+  switch (size) {
+    case 'sm':
+      padding = `${theme.spacing(0.2)} ${theme.spacing(0.6)}`;
+      break;
+    case 'xs':
+      padding = `${theme.spacing(0.1)} ${theme.spacing(0.6)}`;
+      fontSize = `calc(${theme.typography.bodySmall.fontSize} * 0.9)`;
+      break;
+    default:
+      break;
+  }
 
   return {
     wrapper: css({
       color: fontColor,
-      fontSize: theme.typography.bodySmall.fontSize,
+      fontSize: fontSize,
 
       borderRadius: theme.shape.borderRadius(2),
     }),

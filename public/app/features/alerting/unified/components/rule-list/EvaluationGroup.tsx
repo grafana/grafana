@@ -5,7 +5,6 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Badge, Button, Dropdown, Menu, Stack, Text, Icon } from '@grafana/ui';
 
 import { MetaText } from '../MetaText';
-import MoreButton from '../MoreButton';
 import { Spacer } from '../Spacer';
 
 interface EvaluationGroupProps extends PropsWithChildren {
@@ -64,21 +63,16 @@ const EvaluationGroupHeader = (props: EvaluationGroupProps) => {
         {description && <MetaText>{description}</MetaText>}
         <Spacer />
         {interval && <MetaText icon="history">{interval}</MetaText>}
-        <Button
-          variant="secondary"
-          size="sm"
-          icon="pen"
-          type="button"
-          disabled={isProvisioned}
-          tooltipPlacement="top"
-          aria-label="edit-group-action"
-          data-testid="edit-group-action"
-        >
-          Edit
-        </Button>
         <Dropdown
           overlay={
             <Menu>
+              <Menu.Item
+                label="Edit"
+                icon="pen"
+                disabled={isProvisioned}
+                aria-label="edit-group-action"
+                data-testid="edit-group-action"
+              />
               <Menu.Item label="Re-order rules" icon="flip" disabled={isProvisioned} />
               <Menu.Divider />
               <Menu.Item label="Export" icon="download-alt" />
@@ -86,7 +80,9 @@ const EvaluationGroupHeader = (props: EvaluationGroupProps) => {
             </Menu>
           }
         >
-          <MoreButton />
+          <Button size="sm" variant="secondary">
+            Actions <Icon name="angle-down" />
+          </Button>
         </Dropdown>
       </Stack>
     </div>

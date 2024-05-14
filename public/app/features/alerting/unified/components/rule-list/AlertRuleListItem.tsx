@@ -1,16 +1,19 @@
 import { css } from '@emotion/css';
-import { formatDistanceToNowStrict, formatDuration } from 'date-fns';
+import { formatDistanceToNowStrict } from 'date-fns';
+import { isEmpty, size } from 'lodash';
+import pluralize from 'pluralize';
 import React from 'react';
 
 import { GrafanaTheme2, IconName } from '@grafana/data';
 import { useStyles2, Stack, Text, Icon, TextLink, Dropdown, Button, Menu, Tooltip } from '@grafana/ui';
 import { TextProps } from '@grafana/ui/src/components/Text/Text';
 import { RuleHealth } from 'app/types/unified-alerting';
-import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+import { Labels, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-import { Label } from '../../utils/matchers';
 import { formatPrometheusDuration } from '../../utils/time';
+import { AlertLabels } from '../AlertLabels';
 import { MetaText } from '../MetaText';
+import MoreButton from '../MoreButton';
 import { Spacer } from '../Spacer';
 import { isErrorHealth } from '../rule-viewer/RuleViewer';
 
@@ -23,7 +26,7 @@ interface AlertRuleListItemProps {
   isPaused?: boolean;
   health?: RuleHealth;
   isProvisioned?: boolean;
-  labels?: Label[];
+  labels?: Labels;
   instancesCount?: number;
 }
 
@@ -38,7 +41,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     isProvisioned,
     isPaused = false,
     instancesCount = 0,
-    labels = [],
+    labels,
   } = props;
   const styles = useStyles2(getStyles);
 
@@ -49,9 +52,12 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
         <Stack direction="column" gap={0.5} flex="1">
           <div>
             <Stack direction="column" gap={0}>
-              <TextLink href={href} inline={false}>
-                {name}
-              </TextLink>
+              <Stack direction="row" gap={0.5} alignItems="start">
+                <TextLink href={href} inline={false}>
+                  {name}
+                </TextLink>
+                {labels && <AlertLabels labels={labels} size="xs" />}
+              </Stack>
               {summary && (
                 <Text variant="bodySmall" color="secondary">
                   {summary}
@@ -88,15 +94,17 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
               )}
               <MetaText icon="layer-group">
                 <TextLink variant="bodySmall" color="secondary" href={href + '?tab=instances'} inline={false}>
-                  {`${instancesCount} instances`}
+                  {pluralize('instance', instancesCount, true)}
                 </TextLink>
               </MetaText>
 
-              <MetaText icon="tag">
-                <TextLink variant="bodySmall" color="secondary" href={href} inline={false}>
-                  {`${labels.length} labels`}
-                </TextLink>
-              </MetaText>
+              {!isEmpty(labels) && (
+                <MetaText icon="tag">
+                  <TextLink variant="bodySmall" color="secondary" href={href} inline={false}>
+                    {pluralize('label', size(labels), true)}
+                  </TextLink>
+                </MetaText>
+              )}
             </Stack>
           </div>
         </Stack>
@@ -105,7 +113,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
           <Button
             variant="secondary"
             size="sm"
-            icon="edit"
+            icon="pen"
             type="button"
             disabled={isProvisioned}
             aria-label="edit-rule-action"
@@ -123,14 +131,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
               </Menu>
             }
           >
-            <Button
-              variant="secondary"
-              size="sm"
-              icon="ellipsis-h"
-              type="button"
-              aria-label="more-rule-actions"
-              data-testid="more-rule-actions"
-            />
+            <MoreButton />
           </Dropdown>
         </Stack>
       </Stack>
@@ -143,6 +144,7 @@ interface RecordingRuleListItemProps {
   href: string;
   error?: string;
   health?: RuleHealth;
+  labels?: Labels;
   isProvisioned?: boolean;
   lastEvaluation?: string;
   evaluationDuration?: number;
@@ -154,6 +156,7 @@ export const RecordingRuleListItem = ({
   health,
   isProvisioned,
   href,
+  labels,
   lastEvaluation,
   // evaluation duration is always in seconds
   evaluationDuration,
@@ -171,9 +174,12 @@ export const RecordingRuleListItem = ({
         <Stack direction="row" alignItems="start" gap={1} flex="1">
           <RuleListIcon health={health} recording={true} />
           <Stack direction="column" gap={0.5}>
-            <TextLink href={href} variant="body" weight="bold" inline={false}>
-              {name}
-            </TextLink>
+            <Stack direction="row" gap={0.5} alignItems="start">
+              <TextLink href={href} variant="body" weight="bold" inline={false}>
+                {name}
+              </TextLink>
+              {labels && <AlertLabels labels={labels} size="xs" />}
+            </Stack>
             <div>
               <Stack direction="row" gap={1}>
                 {error ? (
@@ -202,6 +208,13 @@ export const RecordingRuleListItem = ({
                         <Text weight="bold">{evaluationDurationString}</Text>
                       </MetaText>
                     )}
+                    {!isEmpty(labels) && (
+                      <MetaText icon="tag">
+                        <TextLink variant="bodySmall" color="secondary" href={href} inline={false}>
+                          {pluralize('label', size(labels), true)}
+                        </TextLink>
+                      </MetaText>
+                    )}
                   </>
                 )}
               </Stack>
@@ -227,14 +240,7 @@ export const RecordingRuleListItem = ({
               </Menu>
             }
           >
-            <Button
-              variant="secondary"
-              size="sm"
-              icon="ellipsis-h"
-              type="button"
-              aria-label="more-rule-actions"
-              data-testid="more-rule-actions"
-            />
+            <MoreButton />
           </Dropdown>
         </Stack>
       </Stack>
