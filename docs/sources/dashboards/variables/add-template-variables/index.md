@@ -46,7 +46,7 @@ description: Learn about the types of variables you can add to dashboards and ho
 weight: 100
 ---
 
-# Add and manage variables
+# Add variables
 
 The following table lists the types of variables shipped with Grafana.
 
