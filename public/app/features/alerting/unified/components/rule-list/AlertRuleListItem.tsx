@@ -267,6 +267,7 @@ function EvaluationMetadata({
   const nextEvaluation = calculateNextEvaluationEstimate(lastEvaluation, evaluationInterval);
 
   if (state === PromAlertingRuleState.Firing && evaluationDurationString) {
+    // @TODO support firing for calculation
     const firingFor = '2m 34s';
 
     return (

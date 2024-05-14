@@ -1,8 +1,14 @@
-import { addMilliseconds, formatDistanceToNow, formatDistanceToNowStrict, isBefore } from 'date-fns';
+import {
+  addMilliseconds,
+  differenceInMilliseconds,
+  formatDistanceToNow,
+  formatDistanceToNowStrict,
+  isBefore,
+} from 'date-fns';
 
 import { dateTime, dateTimeFormat, isValidDate } from '@grafana/data';
 
-import { isNullDate, parsePrometheusDuration } from '../../utils/time';
+import { formatPrometheusDuration, isNullDate, parsePrometheusDuration } from '../../utils/time';
 
 type NextEvaluation = {
   humanized: string;
@@ -67,5 +73,9 @@ export function getRelativeEvaluationInterval(evaluationInterval?: string, lastE
     return;
   }
 
-  return formatDistanceToNowStrict(new Date(lastEvaluation));
+  const diffMillis = differenceInMilliseconds(new Date(lastEvaluation), new Date());
+  // let's round to seconds because we don't care about the millis
+  const roundedDiff = Math.round(diffMillis / 1000) * 1000;
+
+  return formatPrometheusDuration(roundedDiff);
 }
