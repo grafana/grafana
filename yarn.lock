@@ -3719,7 +3719,7 @@ __metadata:
     "@storybook/addon-mdx-gfm": "npm:^8.0.10"
     "@storybook/addon-storysource": "npm:^8.0.10"
     "@storybook/addon-webpack5-compiler-swc": "npm:^1.0.2"
-    "@storybook/blocks": "npm:^8.0.10"
+    "@storybook/blocks": "patch:@storybook/blocks@npm%3A8.0.10#~/.yarn/patches/@storybook-blocks-npm-8.0.10-6f477cd35f.patch"
     "@storybook/components": "npm:^8.0.10"
     "@storybook/core-events": "npm:^8.0.10"
     "@storybook/mdx2-csf": "npm:1.1.0"
@@ -6614,7 +6614,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@storybook/blocks@npm:8.0.10, @storybook/blocks@npm:^8.0.10":
+"@storybook/blocks@npm:8.0.10":
   version: 8.0.10
   resolution: "@storybook/blocks@npm:8.0.10"
   dependencies:
@@ -6651,6 +6651,46 @@ __metadata:
     react-dom:
       optional: true
   checksum: 10/5c54a4a8ccec6eadde872c166da0a3f21f3636a98e2f47f369e9223a8dc3941eafeba633a8c27f6159cf9fa43bfc7fa83ae8614a15fb2d2bf2d869bd073eb206
+  languageName: node
+  linkType: hard
+
+"@storybook/blocks@patch:@storybook/blocks@npm%3A8.0.10#~/.yarn/patches/@storybook-blocks-npm-8.0.10-6f477cd35f.patch":
+  version: 8.0.10
+  resolution: "@storybook/blocks@patch:@storybook/blocks@npm%3A8.0.10#~/.yarn/patches/@storybook-blocks-npm-8.0.10-6f477cd35f.patch::version=8.0.10&hash=723f14"
+  dependencies:
+    "@storybook/channels": "npm:8.0.10"
+    "@storybook/client-logger": "npm:8.0.10"
+    "@storybook/components": "npm:8.0.10"
+    "@storybook/core-events": "npm:8.0.10"
+    "@storybook/csf": "npm:^0.1.4"
+    "@storybook/docs-tools": "npm:8.0.10"
+    "@storybook/global": "npm:^5.0.0"
+    "@storybook/icons": "npm:^1.2.5"
+    "@storybook/manager-api": "npm:8.0.10"
+    "@storybook/preview-api": "npm:8.0.10"
+    "@storybook/theming": "npm:8.0.10"
+    "@storybook/types": "npm:8.0.10"
+    "@types/lodash": "npm:^4.14.167"
+    color-convert: "npm:^2.0.1"
+    dequal: "npm:^2.0.2"
+    lodash: "npm:^4.17.21"
+    markdown-to-jsx: "npm:7.3.2"
+    memoizerific: "npm:^1.11.3"
+    polished: "npm:^4.2.2"
+    react-colorful: "npm:^5.1.2"
+    telejson: "npm:^7.2.0"
+    tocbot: "npm:^4.20.1"
+    ts-dedent: "npm:^2.0.0"
+    util-deprecate: "npm:^1.0.2"
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0
+    react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+  peerDependenciesMeta:
+    react:
+      optional: true
+    react-dom:
+      optional: true
+  checksum: 10/f3e10d25a7ca20698593c4fd0e5bc7384df4c4247b7c58b321fbd92a3f305ee464490bd4c65a55ed4440446c7c3227a58914f3c1db11d613388dcf639e072c3e
   languageName: node
   linkType: hard
 

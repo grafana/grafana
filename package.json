@@ -413,7 +413,8 @@
     "react-split-pane@0.1.92": "patch:react-split-pane@npm:0.1.92#.yarn/patches/react-split-pane-npm-0.1.92-93dbf51dff.patch",
     "history@4.10.1": "patch:history@npm%3A4.10.1#./.yarn/patches/history-npm-4.10.1-ee217563ae.patch",
     "history@^4.9.0": "patch:history@npm%3A4.10.1#./.yarn/patches/history-npm-4.10.1-ee217563ae.patch",
-    "redux": "^5.0.0"
+    "redux": "^5.0.0",
+    "@storybook/blocks@npm:8.0.10": "patch:@storybook/blocks@npm%3A8.0.10#~/.yarn/patches/@storybook-blocks-npm-8.0.10-6f477cd35f.patch"
   },
   "workspaces": {
     "packages": [

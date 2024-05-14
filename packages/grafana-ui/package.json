@@ -119,7 +119,7 @@
     "@storybook/addon-mdx-gfm": "^8.0.10",
     "@storybook/addon-storysource": "^8.0.10",
     "@storybook/addon-webpack5-compiler-swc": "^1.0.2",
-    "@storybook/blocks": "^8.0.10",
+    "@storybook/blocks": "patch:@storybook/blocks@npm%3A8.0.10#~/.yarn/patches/@storybook-blocks-npm-8.0.10-6f477cd35f.patch",
     "@storybook/components": "^8.0.10",
     "@storybook/core-events": "^8.0.10",
     "@storybook/mdx2-csf": "1.1.0",
