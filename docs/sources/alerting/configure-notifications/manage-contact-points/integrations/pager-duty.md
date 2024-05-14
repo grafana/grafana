@@ -53,7 +53,7 @@ To create your PagerDuty integration in Grafana Alerting, complete the following
 1. Navigate to **Alerts & IRM** -> **Alerting** -> **Contact points**.
 1. Click **+ Add contact point**.
 1. Enter a contact point name.
-   F1. rom the Integration list, select **PagerDuty**.
+1. From the Integration list, select **PagerDuty**.
 1. In the **Integration Key** field, copy in your integration key.
 1. Click **Test** to check that your integration works.
 
