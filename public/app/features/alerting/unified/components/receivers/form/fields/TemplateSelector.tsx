@@ -16,6 +16,11 @@ import {
   TextArea,
   useStyles2,
 } from '@grafana/ui';
+import {
+  trackEditInputWithTemplate,
+  trackUseCustomInputInTemplate,
+  trackUseSingleTemplateInInput,
+} from 'app/features/alerting/unified/Analytics';
 import { useAlertmanagerConfig } from 'app/features/alerting/unified/hooks/useAlertmanagerConfig';
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { NotificationChannelOption } from 'app/types';
@@ -31,13 +36,16 @@ interface TemplatesPickerProps {
 }
 export function TemplatesPicker({ onSelect, option, valueInForm }: TemplatesPickerProps) {
   const [showTemplates, setShowTemplates] = React.useState(false);
-
+  const onClick = () => {
+    setShowTemplates(true);
+    trackEditInputWithTemplate();
+  };
   return (
     <>
       <Button
         icon="edit"
         tooltip={'Edit using existing templates.'}
-        onClick={() => setShowTemplates(true)}
+        onClick={onClick}
         variant="secondary"
         size="sm"
         aria-label={'Select available template from the list of available templates.'}
@@ -215,6 +223,11 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
           onClick={() => {
             onSelect(templateOption === 'Custom' ? inputToUpdateCustom : inputToUpdate);
             onClose();
+            if (templateOption === 'Custom') {
+              trackUseCustomInputInTemplate();
+            } else {
+              trackUseSingleTemplateInInput();
+            }
           }}
         >
           Save
