@@ -28,6 +28,7 @@ export const Page: PageType = ({
   layout = PageLayoutType.Standard,
   scrollTop,
   scrollRef,
+  stickyHeader,
   ...otherProps
 }) => {
   const styles = useStyles2(getStyles);
@@ -54,7 +55,7 @@ export const Page: PageType = ({
     <div className={cx(styles.wrapper, className)} {...otherProps}>
       {layout === PageLayoutType.Standard && (
         <FlaggedScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
-          <div className={styles.pageInner}>
+          <div className={cx(styles.pageInner, { [styles.ifSticky]: stickyHeader })}>
             {pageHeaderNav && (
               <PageHeader
                 actions={actions}
@@ -63,6 +64,7 @@ export const Page: PageType = ({
                 renderTitle={renderTitle}
                 info={info}
                 subTitle={subTitle}
+                stickyHeader={stickyHeader}
               />
             )}
             {pageNav && pageNav.children && <PageTabs navItem={pageNav} />}
@@ -122,6 +124,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(2),
       flexBasis: '100%',
       flexGrow: 1,
+    }),
+    // If we have a sticky header, then we don't need to add padding to the top
+    // otherwise this will end up as too much spacing with the header
+    ifSticky: css({
+      [theme.breakpoints.up('sm')]: {
+        paddingTop: 0,
+      },
     }),
   };
 };

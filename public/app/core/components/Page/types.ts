@@ -30,6 +30,17 @@ export interface PageProps extends HTMLAttributes<HTMLDivElement> {
    * */
   // Probably will deprecate this in the future in favor of just scrolling document.body directly
   scrollTop?: number;
+
+  /**
+   * Should the header be sticky? Defaults to off.
+   *
+   * If enabled, will also show a divider below the header, to aid
+   * in separating header and page contents.
+   *
+   * Header will not be sticky in small screen sizes, to avoid
+   * blocking page contents
+   */
+  stickyHeader?: boolean;
 }
 
 export interface PageInfoItem {

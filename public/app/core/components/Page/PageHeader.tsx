@@ -1,8 +1,8 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { NavModelItem, GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { Divider, useStyles2 } from '@grafana/ui';
 
 import { PageInfo } from '../PageInfo/PageInfo';
 
@@ -16,9 +16,10 @@ export interface Props {
   info?: PageInfoItem[];
   subTitle?: React.ReactNode;
   onEditTitle?: (newValue: string) => Promise<void>;
+  stickyHeader?: boolean;
 }
 
-export function PageHeader({ navItem, renderTitle, actions, info, subTitle, onEditTitle }: Props) {
+export function PageHeader({ navItem, renderTitle, actions, info, subTitle, onEditTitle, stickyHeader }: Props) {
   const styles = useStyles2(getStyles);
   const sub = subTitle ?? navItem.subTitle;
 
@@ -32,7 +33,7 @@ export function PageHeader({ navItem, renderTitle, actions, info, subTitle, onEd
   );
 
   return (
-    <div className={styles.pageHeader}>
+    <div className={cx(styles.pageHeader, { [styles.sticky]: stickyHeader })}>
       <div className={styles.topRow}>
         <div className={styles.titleInfoContainer}>
           {titleElement}
@@ -41,12 +42,31 @@ export function PageHeader({ navItem, renderTitle, actions, info, subTitle, onEd
         <div className={styles.actions}>{actions}</div>
       </div>
       {sub && <div className={styles.subTitle}>{sub}</div>}
+      {stickyHeader && <Divider />}
     </div>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    sticky: css({
+      [theme.breakpoints.up('sm')]: {
+        position: 'sticky',
+        top: 0,
+        zIndex: theme.zIndex.navbarFixed,
+        backgroundColor: theme.colors.background.primary,
+        paddingTop: theme.spacing(2),
+        paddingRight: theme.spacing(4),
+        paddingLeft: theme.spacing(4),
+        marginBottom: theme.spacing(1),
+
+        // Add a negative margin to the sides of the header
+        // so that it can overlap any content that may be breaking out
+        // of the page container
+        marginRight: theme.spacing(-4),
+        marginLeft: theme.spacing(-4),
+      },
+    }),
     topRow: css({
       alignItems: 'flex-start',
       display: 'flex',
