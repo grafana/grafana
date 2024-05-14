@@ -23,7 +23,7 @@ type Identity struct {
 	// ID is the unique identifier for the entity in the Grafana database.
 	// If the entity is not found in the DB or this entity is non-persistent, this field will be empty.
 	ID NamespaceID
-	// UID is a unique identifier stored for the entity in Grafana datbase. Not all entities support uid so it can be empty.
+	// UID is a unique identifier stored for the entity in Grafana database. Not all entities support uid so it can be empty.
 	UID NamespaceID
 	// OrgID is the active organization for the entity.
 	OrgID int64
