@@ -141,7 +141,7 @@ If a Grafana user has read access to the parent dashboard, they can view the pub
 ## Assess public dashboard usage
 
 {{< admonition type="note" >}}
-Available in [Grafana Enterprise](https://grafana.com/docs/grafana/latest/introduction/grafana-enterprise/) and [Grafana Cloud](https://grafana.com/docs/grafana-cloud/).
+Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](https://grafana.com/docs/grafana-cloud/).
 {{< /admonition >}}
 
 You can check usage analytics about your public dashboard by clicking the insights icon in the dashboard header:
@@ -270,4 +270,4 @@ guaranteed because plugin developers can override this functionality. The follow
 
 ## Custom branding
 
-If you're a Grafana Enterprise customer, you can use custom branding to change the appearance of a public dashboard footer. For more information, refer to [Custom branding](ref:custom-branding).
+If you're a Grafana Enterprise customer, you can use custom branding to change the appearance of a public dashboard footer. For more information, refer to [Configure custom branding](ref:custom-branding).
