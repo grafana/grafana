@@ -610,18 +610,32 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		Cfg:           cfg.UnifiedAlerting,
 	}
 
-	gen := models.RuleGen
-	rules := gen.With(
-		gen.WithOrgID(orgID),
-		gen.WithIntervalMatching(store.Cfg.BaseInterval),
-	).GenerateManyRef(5)
+	gen := models.RuleGen.With(
+		models.RuleGen.WithOrgID(orgID),
+		models.RuleGen.WithIntervalMatching(store.Cfg.BaseInterval),
+	)
 
-	deref := make([]models.AlertRule, 0, len(rules))
-	for _, rule := range rules {
-		deref = append(deref, *rule)
+	generateRecordingRules := func(n int) []models.AlertRule {
+		rrs := gen.GenerateMany(n)
+		for i := range rrs {
+			rrs[i].Condition = ""
+			// TODO: These fields do not apply to recording rules - for now, we just use the default values of them. This is validated at the storage level.
+			// TODO: Consider making it so recording rules allow for empty string here, or use some other sentinel value in the future.
+			rrs[i].NoDataState = models.NoData
+			rrs[i].ExecErrState = models.ErrorErrState
+			rrs[i].For = 0
+			rrs[i].NotificationSettings = nil
+			rrs[i].Record = &models.Record{
+				Metric: "my_metric",
+				From:   "A",
+			}
+		}
+		return rrs
 	}
 
-	ids, err := store.InsertAlertRules(context.Background(), deref)
+	rules := append(gen.GenerateMany(5), generateRecordingRules(5)...)
+
+	ids, err := store.InsertAlertRules(context.Background(), rules)
 	require.NoError(t, err)
 	require.Len(t, ids, len(rules))
 
@@ -645,29 +659,53 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 
 	t.Run("inserted alerting rules should have nil recording rule fields on model", func(t *testing.T) {
 		for _, rule := range dbRules {
-			require.Nil(t, rule.Record)
+			if !rule.IsRecordingRule() {
+				require.Nil(t, rule.Record)
+			}
+		}
+	})
+
+	t.Run("inserted recording rules map identical fields when listed", func(t *testing.T) {
+		for _, rule := range dbRules {
+			if rule.IsRecordingRule() {
+				require.NotNil(t, rule.Record)
+				require.Equal(t, "my_metric", rule.Record.Metric)
+				require.Equal(t, "A", rule.Record.From)
+			}
+		}
+	})
+
+	t.Run("inserted recording rules have empty or default alert-specific settings", func(t *testing.T) {
+		for _, rule := range dbRules {
+			if rule.IsRecordingRule() {
+				require.Empty(t, rule.Condition)
+				require.Equal(t, models.NoData, rule.NoDataState)
+				require.Equal(t, models.ErrorErrState, rule.ExecErrState)
+				require.Zero(t, rule.For)
+				require.Nil(t, rule.NotificationSettings)
+			}
 		}
 	})
 
 	t.Run("fail to insert rules with same ID", func(t *testing.T) {
-		_, err = store.InsertAlertRules(context.Background(), []models.AlertRule{deref[0]})
+		_, err = store.InsertAlertRules(context.Background(), []models.AlertRule{rules[0]})
 		require.ErrorIs(t, err, models.ErrAlertRuleConflictBase)
 	})
 	t.Run("fail insert rules with the same title in a folder", func(t *testing.T) {
-		cp := models.CopyRule(&deref[0])
+		cp := models.CopyRule(&rules[0])
 		cp.UID = cp.UID + "-new"
 		_, err = store.InsertAlertRules(context.Background(), []models.AlertRule{*cp})
 		require.ErrorIs(t, err, models.ErrAlertRuleConflictBase)
 		require.ErrorIs(t, err, models.ErrAlertRuleUniqueConstraintViolation)
-		require.NotEqual(t, deref[0].UID, "")
-		require.NotEqual(t, deref[0].Title, "")
-		require.NotEqual(t, deref[0].NamespaceUID, "")
-		require.ErrorContains(t, err, deref[0].UID)
-		require.ErrorContains(t, err, deref[0].Title)
-		require.ErrorContains(t, err, deref[0].NamespaceUID)
+		require.NotEqual(t, rules[0].UID, "")
+		require.NotEqual(t, rules[0].Title, "")
+		require.NotEqual(t, rules[0].NamespaceUID, "")
+		require.ErrorContains(t, err, rules[0].UID)
+		require.ErrorContains(t, err, rules[0].Title)
+		require.ErrorContains(t, err, rules[0].NamespaceUID)
 	})
 	t.Run("should not let insert rules with the same UID", func(t *testing.T) {
-		cp := models.CopyRule(&deref[0])
+		cp := models.CopyRule(&rules[0])
 		cp.Title = "unique-test-title"
 		_, err = store.InsertAlertRules(context.Background(), []models.AlertRule{*cp})
 		require.ErrorIs(t, err, models.ErrAlertRuleConflictBase)
