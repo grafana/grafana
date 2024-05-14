@@ -284,6 +284,7 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 			ReadOnly:        cmd.ReadOnly,
 			UID:             cmd.UID,
 			IsPrunable:      cmd.IsPrunable,
+			APIVersion:      cmd.APIVersion,
 		}
 
 		if _, err := sess.Insert(ds); err != nil {
@@ -361,6 +362,7 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 			Version:         cmd.Version + 1,
 			UID:             cmd.UID,
 			IsPrunable:      cmd.IsPrunable,
+			APIVersion:      cmd.APIVersion,
 		}
 
 		sess.UseBool("is_default")
@@ -378,6 +380,7 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 		// Make sure secure json data is zeroed out if empty. We do this as we want to migrate secrets from
 		// secure json data to the unified secrets table.
 		sess.MustCols("secure_json_data")
+		sess.MustCols("api_version")
 
 		var updateSession *xorm.Session
 		if cmd.Version != 0 {

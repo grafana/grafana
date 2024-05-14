@@ -63,6 +63,8 @@ type DataSource struct {
 	ReadOnly          bool              `json:"readOnly"`
 	UID               string            `json:"uid" xorm:"uid"`
 	// swagger:ignore
+	APIVersion string `json:"apiVersion" xorm:"api_version"`
+	// swagger:ignore
 	IsPrunable bool `xorm:"is_prunable"`
 
 	Created time.Time `json:"created,omitempty"`
@@ -164,6 +166,8 @@ type AddDataSourceCommand struct {
 	SecureJsonData  map[string]string `json:"secureJsonData"`
 	UID             string            `json:"uid"`
 	// swagger:ignore
+	APIVersion string `json:"apiVersion"`
+	// swagger:ignore
 	IsPrunable bool
 
 	OrgID                   int64             `json:"-"`
@@ -189,6 +193,8 @@ type UpdateDataSourceCommand struct {
 	SecureJsonData  map[string]string `json:"secureJsonData"`
 	Version         int               `json:"version"`
 	UID             string            `json:"uid"`
+	// swagger:ignore
+	APIVersion string `json:"apiVersion"`
 	// swagger:ignore
 	IsPrunable bool
 

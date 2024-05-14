@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -63,7 +64,14 @@ func TestService_AddDataSource(t *testing.T) {
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
 		mockPermission := acmock.NewMockedPermissionsService()
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), actest.FakeAccessControl{}, mockPermission, quotaService, &pluginstore.FakePluginStore{})
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), actest.FakeAccessControl{}, mockPermission, quotaService, &pluginstore.FakePluginStore{
+			PluginList: []pluginstore.Plugin{{
+				JSONData: plugins.JSONData{
+					Name:       "test",
+					APIVersion: "v0alpha1",
+				},
+			}},
+		})
 		require.NoError(t, err)
 
 		cmd := &datasources.AddDataSourceCommand{
@@ -81,6 +89,15 @@ func TestService_AddDataSource(t *testing.T) {
 
 		_, err = dsService.AddDataSource(context.Background(), cmd)
 		require.EqualError(t, err, "[datasource.urlInvalid] max length is 255")
+
+		cmd = &datasources.AddDataSourceCommand{
+			OrgID:      1,
+			Name:       "test",
+			APIVersion: "v0alpha2",
+		}
+
+		_, err = dsService.AddDataSource(context.Background(), cmd)
+		require.EqualError(t, err, "[datasource.apiVersionInvalid] expected v0alpha1, got v0alpha2")
 	})
 }
 

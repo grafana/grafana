@@ -56,13 +56,14 @@ func TestIntegrationDataAccess(t *testing.T) {
 			db := db.InitTestDB(t)
 			ss := SqlStore{db: db}
 			_, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-				OrgID:    10,
-				Name:     "laban",
-				Type:     datasources.DS_GRAPHITE,
-				Access:   datasources.DS_ACCESS_DIRECT,
-				URL:      "http://test",
-				Database: "site",
-				ReadOnly: true,
+				OrgID:      10,
+				Name:       "laban",
+				Type:       datasources.DS_GRAPHITE,
+				Access:     datasources.DS_ACCESS_DIRECT,
+				URL:        "http://test",
+				Database:   "site",
+				ReadOnly:   true,
+				APIVersion: "v0alpha1",
 			})
 			require.NoError(t, err)
 
@@ -76,6 +77,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			require.EqualValues(t, 10, ds.OrgID)
 			require.Equal(t, "site", ds.Database)
 			require.True(t, ds.ReadOnly)
+			require.Equal(t, "v0alpha1", ds.APIVersion)
 		})
 
 		t.Run("generates uid if not specified", func(t *testing.T) {
@@ -146,9 +148,11 @@ func TestIntegrationDataAccess(t *testing.T) {
 			cmd := defaultUpdateDatasourceCommand
 			cmd.ID = ds.ID
 			cmd.Version = ds.Version
+			cmd.APIVersion = "v0alpha1"
 			ss := SqlStore{db: db}
-			_, err := ss.UpdateDataSource(context.Background(), &cmd)
+			ds, err := ss.UpdateDataSource(context.Background(), &cmd)
 			require.NoError(t, err)
+			require.Equal(t, "v0alpha1", ds.APIVersion)
 		})
 
 		t.Run("does not overwrite UID if not specified", func(t *testing.T) {

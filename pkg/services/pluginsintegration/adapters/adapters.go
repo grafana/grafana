@@ -40,6 +40,7 @@ func ModelToInstanceSettings(ds *datasources.DataSource, decryptFn func(ds *data
 		JSONData:                jsonDataBytes,
 		DecryptedSecureJSONData: decrypted,
 		Updated:                 ds.Updated,
+		APIVersion:              ds.APIVersion,
 	}, err
 }
 
