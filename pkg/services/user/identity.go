@@ -192,27 +192,20 @@ func (u *SignedInUser) GetNamespacedID() (identity.Namespace, string) {
 
 // GetUID returns namespaced uid for the entity
 func (u *SignedInUser) GetUID() identity.NamespaceID {
-	ns, uid := u.GetNamespacedUID()
-	return identity.NewNamespaceIDString(ns, uid)
-}
-
-// GetNamespacedUID returns the namespace and UID of the active entity
-// The namespace is one of the constants defined in pkg/services/auth/identity
-func (u *SignedInUser) GetNamespacedUID() (identity.Namespace, string) {
 	switch {
 	case u.ApiKeyID != 0:
-		return identity.NamespaceAPIKey, fmt.Sprint(u.ApiKeyID)
+		return identity.NewNamespaceIDString(identity.NamespaceAPIKey, strconv.FormatInt(u.ApiKeyID, 10))
 	case u.IsServiceAccount:
-		return identity.NamespaceServiceAccount, u.UserUID
+		return identity.NewNamespaceIDString(identity.NamespaceServiceAccount, u.UserUID)
 	case u.UserID > 0:
-		return identity.NamespaceUser, u.UserUID
+		return identity.NewNamespaceIDString(identity.NamespaceUser, u.UserUID)
 	case u.IsAnonymous:
-		return identity.NamespaceAnonymous, ""
+		return identity.NewNamespaceIDString(identity.NamespaceAnonymous, "0")
 	case u.AuthenticatedBy == "render" && u.UserID == 0:
-		return identity.NamespaceRenderService, ""
+		return identity.NewNamespaceIDString(identity.NamespaceRenderService, "0")
 	}
 
-	return identity.NamespaceEmpty, ""
+	return identity.NewNamespaceIDString(identity.NamespaceEmpty, "0")
 }
 
 func (u *SignedInUser) GetAuthID() string {
