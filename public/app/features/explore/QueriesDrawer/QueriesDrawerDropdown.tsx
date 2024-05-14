@@ -40,6 +40,7 @@ export function QueriesDrawerDropdown({ variant }: Props) {
         icon="book"
         variant={drawerOpened ? 'active' : 'canvas'}
         onClick={() => setDrawerOpened(!drawerOpened)}
+        aria-label={selectedTab}
       >
         {variant === 'full' ? selectedTab : undefined}
       </ToolbarButton>

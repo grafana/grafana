@@ -32,6 +32,12 @@ export const openQueryHistory = async () => {
   expect(await screen.findByPlaceholderText('Search queries')).toBeInTheDocument();
 };
 
+export const openQueryLibrary = async () => {
+  const explore = withinExplore('left');
+  const button = explore.getByRole('button', { name: 'Query library' });
+  await userEvent.click(button);
+};
+
 export const closeQueryHistory = async () => {
   const selector = withinQueryHistory();
   const closeButton = selector.getByRole('button', { name: 'Close query history' });
