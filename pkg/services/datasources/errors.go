@@ -17,4 +17,5 @@ var (
 	ErrDatasourceIsReadOnly              = errors.New("data source is readonly, can only be updated from configuration")
 	ErrDataSourceNameInvalid             = errutil.ValidationFailed("datasource.nameInvalid", errutil.WithPublicMessage("Invalid datasource name."))
 	ErrDataSourceURLInvalid              = errutil.ValidationFailed("datasource.urlInvalid", errutil.WithPublicMessage("Invalid datasource url."))
+	ErrDataSourceAPIVersionInvalid       = errutil.ValidationFailed("datasource.apiVersionInvalid", errutil.WithPublicMessage("Invalid datasource apiVersion."))
 )
