@@ -269,8 +269,7 @@ function EvaluationMetadata({
 
     return (
       <MetaText icon="clock-nine">
-        Firing for <Text weight="bold">{firingFor}</Text>⋅ took
-        <Tooltip content={String(evaluationDuration)}>{evaluationDurationString}</Tooltip>
+        Firing for <Text weight="bold">{firingFor}</Text>⋅ took <Text weight="bold">{evaluationDurationString}</Text>
         {nextEvaluation && (
           <>
             {' '}
