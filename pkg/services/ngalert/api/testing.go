@@ -157,10 +157,6 @@ func (f fakeRuleAccessControlService) AuthorizeRuleChanges(ctx context.Context, 
 	return nil
 }
 
-func (f fakeRuleAccessControlService) HasDatasourceAccessForRule(ctx context.Context, user identity.Requester, rule *models.AlertRule) (bool, error) {
-	return true, nil
-}
-
 func (f fakeRuleAccessControlService) AuthorizeDatasourceAccessForRule(ctx context.Context, user identity.Requester, rule *models.AlertRule) error {
 	return nil
 }
