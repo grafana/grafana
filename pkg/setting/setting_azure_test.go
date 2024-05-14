@@ -261,6 +261,40 @@ func TestAzureSettings(t *testing.T) {
 			assert.Equal(t, "ID_2", cfg.Azure.UserIdentityTokenEndpoint.ClientId)
 			assert.Empty(t, cfg.Azure.UserIdentityTokenEndpoint.ClientSecret)
 		})
+
+		t.Run("does not enable username assertion by default", func(t *testing.T) {
+			cfg := NewCfg()
+
+			azureSection, err := cfg.Raw.NewSection("azure")
+			require.NoError(t, err)
+			_, err = azureSection.NewKey("user_identity_enabled", "true")
+			require.NoError(t, err)
+
+			cfg.readAzureSettings()
+			require.NotNil(t, cfg.Azure)
+			require.NotNil(t, cfg.Azure.UserIdentityTokenEndpoint)
+
+			assert.True(t, cfg.Azure.UserIdentityEnabled)
+			assert.False(t, cfg.Azure.UserIdentityTokenEndpoint.UsernameAssertion)
+		})
+
+		t.Run("should appropriately set username assertion", func(t *testing.T) {
+			cfg := NewCfg()
+
+			azureSection, err := cfg.Raw.NewSection("azure")
+			require.NoError(t, err)
+			_, err = azureSection.NewKey("user_identity_enabled", "true")
+			require.NoError(t, err)
+			_, err = azureSection.NewKey("username_assertion", "username")
+			require.NoError(t, err)
+
+			cfg.readAzureSettings()
+			require.NotNil(t, cfg.Azure)
+			require.NotNil(t, cfg.Azure.UserIdentityTokenEndpoint)
+
+			assert.True(t, cfg.Azure.UserIdentityEnabled)
+			assert.True(t, cfg.Azure.UserIdentityTokenEndpoint.UsernameAssertion)
+		})
 	})
 
 	t.Run("forward settings to plugins", func(t *testing.T) {
