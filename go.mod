@@ -337,7 +337,7 @@ require (
 	github.com/jcmturner/goidentity/v6 v6.0.1 // indirect
 	github.com/jcmturner/gokrb5/v8 v8.4.4 // indirect
 	github.com/jcmturner/rpc/v2 v2.0.3 // indirect
-	github.com/jeremywohl/flatten v1.0.1
+	github.com/jeremywohl/flatten v1.0.1 // @grafana/grafana-app-platform-squad
 	github.com/jessevdk/go-flags v1.5.0 // indirect
 	github.com/jhump/protoreflect v1.15.1 // indirect
 	github.com/jonboulle/clockwork v0.4.0 // indirect
