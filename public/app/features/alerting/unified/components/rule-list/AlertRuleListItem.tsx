@@ -260,9 +260,7 @@ function EvaluationMetadata({
   const relativeEvaluationTime = getRelativeEvaluationInterval(evaluationInterval, lastEvaluation);
 
   // @TODO this component doesn't support millis so it just shows "0s" – might want to make it support millis
-  const evaluationDurationString = evaluationDuration
-    ? Time({ timeInMs: evaluationDuration * 1000, humanize: true })
-    : null;
+  const evaluationDurationString = evaluationDuration ? Time({ timeInMs: evaluationDuration, humanize: true }) : null;
 
   const nextEvaluation = calculateNextEvaluationEstimate(lastEvaluation, evaluationInterval);
 
@@ -272,7 +270,8 @@ function EvaluationMetadata({
 
     return (
       <MetaText icon="clock-nine">
-        Firing for <Text weight="bold">{firingFor}</Text>⋅ took {evaluationDurationString}
+        Firing for <Text weight="bold">{firingFor}</Text>⋅ took
+        <Tooltip content={String(evaluationDuration)}>{evaluationDurationString}</Tooltip>
         {nextEvaluation && (
           <>
             {' '}
