@@ -64,7 +64,7 @@ Please contact support to have the feature enabled.
 
 {{% /admonition %}}
 
-Email sharing allows you to share your public dashboard with only specific people by email, instead of having it accessible to anyone with the URL. When you use email sharing, recipients receive a one-time use link that's valid for **one hour**. Once the link is used, the viewer has access to the public dashboard for **30 days**.
+Email sharing allows you to share your public dashboard with only specific people by email, instead of having it accessible to anyone with the URL. When you use email sharing, recipients receive a one-time use link that's valid for _one hour_. Once the link is used, the viewer has access to the public dashboard for _30 days_.
 
 ### Invite a viewer
 
@@ -113,7 +113,7 @@ From here, you can see the earliest time a user has been active in a dashboard, 
 
 One-time use links use browser cookies, so when a viewer is granted access through one of these links, they will only have access on the browser they used to claim the link.
 
-A single viewer cannot generate multiple valid one-time use links. When a new one-time use link is issued for a viewer, all previous ones are invalidated.
+Multiple valid one-time use links can't be generated for a single viewer. When a new one-time use link is issued for a viewer, all previous ones are invalidated.
 
 If a Grafana user has read access to the parent dashboard, they can view the public dashboard without needing to have access granted.
 
