@@ -2996,7 +2996,7 @@ __metadata:
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "npm:11.0.0"
     "@grafana/e2e-selectors": "npm:11.0.0"
-    "@grafana/experimental": "npm:1.7.10"
+    "@grafana/experimental": "npm:1.7.11"
     "@grafana/plugin-configs": "npm:11.0.0"
     "@grafana/runtime": "npm:11.0.0"
     "@grafana/schema": "npm:11.0.0"
@@ -3040,7 +3040,7 @@ __metadata:
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "npm:11.0.0"
     "@grafana/e2e-selectors": "npm:11.0.0"
-    "@grafana/experimental": "npm:1.7.10"
+    "@grafana/experimental": "npm:1.7.11"
     "@grafana/plugin-configs": "npm:11.0.0"
     "@grafana/runtime": "npm:11.0.0"
     "@grafana/sql": "npm:11.0.0"
@@ -3112,7 +3112,7 @@ __metadata:
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "npm:11.0.0"
     "@grafana/e2e-selectors": "npm:11.0.0"
-    "@grafana/experimental": "npm:1.7.10"
+    "@grafana/experimental": "npm:1.7.11"
     "@grafana/plugin-configs": "npm:11.0.0"
     "@grafana/runtime": "npm:11.0.0"
     "@grafana/schema": "npm:11.0.0"
@@ -3153,7 +3153,7 @@ __metadata:
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
-    "@grafana/experimental": "npm:1.7.10"
+    "@grafana/experimental": "npm:1.7.11"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-configs": "workspace:*"
     "@grafana/runtime": "workspace:*"
@@ -3195,7 +3195,7 @@ __metadata:
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "npm:11.0.0"
     "@grafana/e2e-selectors": "npm:11.0.0"
-    "@grafana/experimental": "npm:1.7.10"
+    "@grafana/experimental": "npm:1.7.11"
     "@grafana/plugin-configs": "npm:11.0.0"
     "@grafana/runtime": "npm:11.0.0"
     "@grafana/sql": "npm:11.0.0"
@@ -3258,7 +3258,7 @@ __metadata:
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "npm:11.0.0"
     "@grafana/e2e-selectors": "npm:11.0.0"
-    "@grafana/experimental": "npm:1.7.10"
+    "@grafana/experimental": "npm:1.7.11"
     "@grafana/google-sdk": "npm:0.1.2"
     "@grafana/plugin-configs": "npm:11.0.0"
     "@grafana/runtime": "npm:11.0.0"
@@ -3306,7 +3306,7 @@ __metadata:
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
-    "@grafana/experimental": "npm:1.7.10"
+    "@grafana/experimental": "npm:1.7.11"
     "@grafana/lezer-logql": "npm:0.2.3"
     "@grafana/lezer-traceql": "npm:0.0.16"
     "@grafana/monaco-logql": "npm:^0.0.7"
@@ -3366,7 +3366,7 @@ __metadata:
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
-    "@grafana/experimental": "npm:1.7.10"
+    "@grafana/experimental": "npm:1.7.11"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-configs": "workspace:*"
     "@grafana/runtime": "workspace:*"
@@ -3546,9 +3546,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/experimental@npm:1.7.10":
-  version: 1.7.10
-  resolution: "@grafana/experimental@npm:1.7.10"
+"@grafana/experimental@npm:1.7.11":
+  version: 1.7.11
+  resolution: "@grafana/experimental@npm:1.7.11"
   dependencies:
     "@types/uuid": "npm:^8.3.3"
     lodash: "npm:^4.17.21"
@@ -3568,7 +3568,7 @@ __metadata:
     react-dom: 17.0.2
     react-select: ^5.2.1
     rxjs: 7.8.0
-  checksum: 10/3de84835b6927449a796e9f9f6c48a9bf71d8e5eee414532b173a77b131f9e795bfc2ac3df10eb751b204197903f09ecb627ff208ad844ae2cd83b7797d95c19
+  checksum: 10/c0950b943f10b490f768046a081cc29a3dc8103d0154574a36beaa2af6fab4e429bbfb0767c5c89b5fd8ac3f3fc5936997b62e9db4e75ceaeb40837b234bb84e
   languageName: node
   linkType: hard
 
@@ -3687,7 +3687,7 @@ __metadata:
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "npm:11.0.0"
     "@grafana/e2e-selectors": "npm:11.0.0"
-    "@grafana/experimental": "npm:1.7.10"
+    "@grafana/experimental": "npm:1.7.11"
     "@grafana/runtime": "npm:11.0.0"
     "@grafana/schema": "npm:11.0.0"
     "@grafana/tsconfig": "npm:^1.3.0-rc1"
@@ -3758,7 +3758,7 @@ __metadata:
     "@floating-ui/react": "npm:0.26.14"
     "@grafana/data": "npm:11.0.0"
     "@grafana/e2e-selectors": "npm:11.0.0"
-    "@grafana/experimental": "npm:1.7.10"
+    "@grafana/experimental": "npm:1.7.11"
     "@grafana/faro-web-sdk": "npm:1.7.2"
     "@grafana/runtime": "npm:11.0.0"
     "@grafana/schema": "npm:11.0.0"
@@ -3983,7 +3983,7 @@ __metadata:
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "npm:11.0.0"
     "@grafana/e2e-selectors": "npm:11.0.0"
-    "@grafana/experimental": "npm:1.7.10"
+    "@grafana/experimental": "npm:1.7.11"
     "@grafana/runtime": "npm:11.0.0"
     "@grafana/tsconfig": "npm:^1.3.0-rc1"
     "@grafana/ui": "npm:11.0.0"
@@ -18265,7 +18265,7 @@ __metadata:
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/eslint-config": "npm:7.0.0"
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules"
-    "@grafana/experimental": "npm:1.7.10"
+    "@grafana/experimental": "npm:1.7.11"
     "@grafana/faro-core": "npm:^1.3.6"
     "@grafana/faro-web-sdk": "npm:^1.3.6"
     "@grafana/flamegraph": "workspace:*"
@@ -22681,7 +22681,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"minipass@npm:^4.0.0, minipass@npm:^4.2.4":
+"minipass@npm:^4.2.4":
   version: 4.2.8
   resolution: "minipass@npm:4.2.8"
   checksum: 10/e148eb6dcb85c980234cad889139ef8ddf9d5bdac534f4f0268446c8792dd4c74f4502479be48de3c1cce2f6450f6da4d0d4a86405a8a12be04c1c36b339569a
@@ -29564,7 +29564,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tar@npm:6.2.1":
+"tar@npm:6.2.1, tar@npm:^6.0.2, tar@npm:^6.1.11, tar@npm:^6.1.13, tar@npm:^6.1.2":
   version: 6.2.1
   resolution: "tar@npm:6.2.1"
   dependencies:
@@ -29575,20 +29575,6 @@ __metadata:
     mkdirp: "npm:^1.0.3"
     yallist: "npm:^4.0.0"
   checksum: 10/bfbfbb2861888077fc1130b84029cdc2721efb93d1d1fb80f22a7ac3a98ec6f8972f29e564103bbebf5e97be67ebc356d37fa48dbc4960600a1eb7230fbd1ea0
-  languageName: node
-  linkType: hard
-
-"tar@npm:^6.0.2, tar@npm:^6.1.11, tar@npm:^6.1.13, tar@npm:^6.1.2":
-  version: 6.1.13
-  resolution: "tar@npm:6.1.13"
-  dependencies:
-    chownr: "npm:^2.0.0"
-    fs-minipass: "npm:^2.0.0"
-    minipass: "npm:^4.0.0"
-    minizlib: "npm:^2.1.1"
-    mkdirp: "npm:^1.0.3"
-    yallist: "npm:^4.0.0"
-  checksum: 10/add2c3c6d0d71192186ec118d265b92d94be5cd57a0b8fdf0d29ee46dc846574925a5fc57170eefffd78201eda4c45d7604070b5a4b0648e4d6e1d65918b5a82
   languageName: node
   linkType: hard
 
