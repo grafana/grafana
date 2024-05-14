@@ -43,5 +43,12 @@ function getPanelStateBadgeDisplayModel(featureState: FeatureState): BadgeProps 
         icon: 'rocket',
         color: 'blue',
       };
+
+    case FeatureState.privatePreview:
+      return {
+        text: 'Private preview',
+        icon: 'rocket',
+        color: 'blue',
+      };
   }
 }

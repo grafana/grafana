@@ -13,7 +13,7 @@ const meta: Meta<typeof FeatureBadge> = {
     docs: { page: mdx },
   },
   argTypes: {
-    featureState: { control: { type: 'select', options: ['experimental', 'preview'] } },
+    featureState: { control: { type: 'select', options: ['experimental', 'private preview', 'preview'] } },
     tooltip: { control: 'text' },
   },
 };
@@ -24,7 +24,7 @@ export const Basic = Template.bind({});
 
 Basic.args = {
   featureState: FeatureState.preview,
-  tooltip: 'This feature is in preview mode',
+  tooltip: `This feature is in selected mode`,
 };
 
 export default meta;

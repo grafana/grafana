@@ -130,6 +130,10 @@ export enum FeatureState {
   alpha = 'alpha',
   /** @deprecated in favor of preview */
   beta = 'beta',
+  /** used to mark experimental features with high/unknown risk */
   experimental = 'experimental',
+  /** used to mark features that are in public preview with medium/hight risk */
+  privatePreview = 'private preview',
+  /** used to mark features that are in public preview with low/medium risk, or as a shared badge for public and private previews */
   preview = 'preview',
 }
