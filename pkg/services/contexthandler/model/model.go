@@ -124,7 +124,7 @@ func (ctx *ReqContext) writeErrOrFallback(status int, message string, err error)
 			data["messageId"] = publicErr.MessageID
 			data["statusCode"] = publicErr.StatusCode
 
-			statusResponse = publicErr.StatusCode
+			statusResponse = int(publicErr.StatusCode)
 		} else {
 			if message != "" {
 				logMessage = message

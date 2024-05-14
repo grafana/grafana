@@ -269,7 +269,7 @@ func Err(err error) *NormalResponse {
 		return Error(http.StatusInternalServerError, "", fmt.Errorf("unexpected error type [%s]: %w", reflect.TypeOf(err), err))
 	}
 
-	resp := JSON(grafanaErr.Reason.Status().HTTPStatus(), grafanaErr.Public())
+	resp := JSON(int(grafanaErr.Reason.Status().HTTPStatus()), grafanaErr.Public())
 	resp.errMessage = string(grafanaErr.Reason.Status())
 	resp.err = grafanaErr
 
