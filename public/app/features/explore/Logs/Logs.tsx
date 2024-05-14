@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { capitalize, groupBy } from 'lodash';
 import memoizeOne from 'memoize-one';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import {
   SplitOpen,
@@ -205,18 +205,15 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const hasData = logRows && logRows.length > 0;
   const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
 
-  const getNumberOfLogVolumes = () => {
-    const data = logsVolumeData?.data.filter((frame: DataFrame) => frame.meta?.dataTopic !== DataTopic.Annotations);
-    const grouped = groupBy(data, 'meta.custom.datasourceName');
-    const numberOfLogVolumes = Object.keys(grouped).length;
-    return numberOfLogVolumes;
-  };
-
-  const registerLogLevelsWithContentOutline = () => {
+  const registerLogLevelsWithContentOutline = useCallback(() => {
     const levelsArr = Object.keys(LogLevelColor);
     const logVolumeDataFrames = new Set(logsVolumeData?.data);
     // TODO remove this once filtering multiple log volumes is supported
-    const numberOfLogVolumes = getNumberOfLogVolumes();
+    const logVolData = logsVolumeData?.data.filter(
+      (frame: DataFrame) => frame.meta?.dataTopic !== DataTopic.Annotations
+    );
+    const grouped = groupBy(logVolData, 'meta.custom.datasourceName');
+    const numberOfLogVolumes = Object.keys(grouped).length;
 
     // clean up all current log levels
     const logsParent = outlineItems?.find((item) => item.panelId === 'Logs' && item.level === 'root');
@@ -260,14 +257,11 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         }
       });
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [logsVolumeData?.data]);
 
   useEffect(() => {
-    console.log('useEffect init');
-    registerLogLevelsWithContentOutline();
     return () => {
-      console.log('useEffect bye');
-
       if (flipOrderTimer) {
         window.clearTimeout(flipOrderTimer);
       }
@@ -279,7 +273,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       // If we're unmounting logs (e.g. switching to another datasource), we need to remove the table specific panel state, otherwise it will persist in the explore url
       if (panelState?.logs?.columns || panelState?.logs?.refId || panelState?.logs?.labelFieldName) {
         dispatch(
-          changePanelState(props.exploreId, 'logs', {
+          changePanelState(exploreId, 'logs', {
             ...panelState?.logs,
             columns: undefined,
             visualisationType: visualisationType,
@@ -291,6 +285,33 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (loading && panelState?.logs?.id) {
+      // loading stopped, so we need to remove any permalinked log lines
+      delete panelState.logs.id;
+
+      dispatch(
+        changePanelState(exploreId, 'logs', {
+          ...panelState,
+        })
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch, exploreId, panelState?.logs?.id, loading]);
+
+  useEffect(() => {
+    const visualisationType = panelState?.logs?.visualisationType ?? getDefaultVisualisationType();
+    setVisualisationType(visualisationType);
+
+    store.set(visualisationTypeKey, visualisationType);
+  }, [panelState?.logs?.visualisationType]);
+
+  useEffect(() => {
+    console.log('wat', hiddenLogLevels, JSON.stringify(logsVolumeData?.data));
+    registerLogLevelsWithContentOutline();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [logsVolumeData?.data, hiddenLogLevels]);
 
   const updatePanelState = (logsPanelState: Partial<ExploreLogsPanelState>) => {
     const state: ExploreItemState | undefined = getState().explore.panes[exploreId];
