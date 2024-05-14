@@ -12,7 +12,6 @@ import {
   DataQueryResponseData,
   DataSourceGetTagValuesOptions,
   DataSourceInstanceSettings,
-  dateTime,
   FieldType,
   LoadingState,
   rangeUtil,
@@ -669,7 +668,10 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     request.range = options.range && {
       ...options.range,
       from: this.traceQuery?.timeShiftEnabled
-        ? options.range.from.subtract(rangeUtil.intervalToMs(this.traceQuery?.spanStartTimeShift || '30m'), 'milliseconds')
+        ? options.range.from.subtract(
+            rangeUtil.intervalToMs(this.traceQuery?.spanStartTimeShift || '30m'),
+            'milliseconds'
+          )
         : options.range.from,
       to: this.traceQuery?.timeShiftEnabled
         ? options.range.to.add(rangeUtil.intervalToMs(this.traceQuery?.spanEndTimeShift || '30m'), 'milliseconds')

@@ -434,8 +434,8 @@ describe('Tempo data source', () => {
       [{ refId: 'refid1', queryType: 'traceql', query: '' } as TempoQuery]
     );
 
-    expect(request.range.from.unix()).toBe(dateTime(0).unix());
-    expect(request.range.to.unix()).toBe(dateTime(0).unix());
+    expect(request.range.from.unix()).toBe(dateTime(new Date(2022, 8, 13, 16, 0, 0, 0)).unix());
+    expect(request.range.to.unix()).toBe(dateTime(new Date(2022, 8, 13, 16, 15, 0, 0)).unix());
   });
 });
 
