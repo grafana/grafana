@@ -350,6 +350,35 @@ The deprecated `email` field to send a report via `/api/reports/email` endpoint 
 - **Grafana UI:** Add code variant to Text component. [#82318](https://github.com/grafana/grafana/issues/82318), [@tskarhed](https://github.com/tskarhed)
 
 <!-- 11.0.0-preview END -->
+<!-- 10.4.3 START -->
+
+# 10.4.3 (2024-05-13)
+
+### Features and enhancements
+
+- **Chore:** Upgrade go to 1.21.10. [#87473](https://github.com/grafana/grafana/issues/87473), [@stephaniehingtgen](https://github.com/stephaniehingtgen)
+- **Chore:** Upgrade go to 1.21.10. (Enterprise)
+
+### Bug fixes
+
+- **CloudMonitoring:** Improve legacy query migrations. [#87647](https://github.com/grafana/grafana/issues/87647), [@aangelisc](https://github.com/aangelisc)
+- **Azure data sources:** Set selected config type before save. [#87585](https://github.com/grafana/grafana/issues/87585), [@bossinc](https://github.com/bossinc)
+- **Provisioning:** Look up provisioned folders by UID when possible. [#87467](https://github.com/grafana/grafana/issues/87467), [@DanCech](https://github.com/DanCech)
+- **Cloudwatch:** Update grafana-aws-sdk to fix sts endpoints. [#87348](https://github.com/grafana/grafana/issues/87348), [@iwysiu](https://github.com/iwysiu)
+- **Alerting:** Prevent search from locking the browser. [#87231](https://github.com/grafana/grafana/issues/87231), [@gillesdemey](https://github.com/gillesdemey)
+- **SQLStore:** Disable redundant create and drop unique index migrations on dashboard table. [#86866](https://github.com/grafana/grafana/issues/86866), [@papagian](https://github.com/papagian)
+- **Alerting:** Take receivers into account when custom grouping Alertmanager groups. [#86697](https://github.com/grafana/grafana/issues/86697), [@konrad147](https://github.com/konrad147)
+- **LDAP:** Fix listing all non-matching groups. [#86690](https://github.com/grafana/grafana/issues/86690), [@mgyongyosi](https://github.com/mgyongyosi)
+- **Alerting:** Fix simplified routing group by override. [#86620](https://github.com/grafana/grafana/issues/86620), [@JacobsonMT](https://github.com/JacobsonMT)
+- **Alerting:** Return a 400 and errutil error when trying to delete a contact point that is referenced by a policy. [#86162](https://github.com/grafana/grafana/issues/86162), [@alexweav](https://github.com/alexweav)
+- **LibraryPanelRBAC:** Fix issue with importing dashboards containing library panels. [#86150](https://github.com/grafana/grafana/issues/86150), [@kaydelaney](https://github.com/kaydelaney)
+- **Google Cloud Monitor:** Fix `res` being accessed after it becomes `nil` in `promql_query.go`. [#85959](https://github.com/grafana/grafana/issues/85959), [@adamyeats](https://github.com/adamyeats)
+- **Google Cloud Monitor:** Fix interface conversion for incorrect type in cloudMonitoringProm.run. [#85957](https://github.com/grafana/grafana/issues/85957), [@adamyeats](https://github.com/adamyeats)
+- **Dashboard:** Allow `auto` refresh option when saving a dashboard. [#85921](https://github.com/grafana/grafana/issues/85921), [@bfmatei](https://github.com/bfmatei)
+- **Reporting:** Fix monthly schedule text and modify monthly schedule inputs behavior. (Enterprise)
+- **SAML:** Fix Authn request generation in case of HTTP-POST binding. (Enterprise)
+
+<!-- 10.4.3 END -->
 <!-- 10.4.2 START -->
 
 # 10.4.2 (2024-04-10)
