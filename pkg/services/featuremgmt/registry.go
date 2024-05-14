@@ -229,6 +229,18 @@ var (
 			Owner:           grafanaAppPlatformSquad,
 		},
 		{
+			Name:        "dualWritePlaylistsMode2",
+			Description: "Enables dual writing of playlists to both legacy and k8s storage in mode 2",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+		},
+		{
+			Name:        "dualWritePlaylistsMode3",
+			Description: "Enables dual writing of playlists to both legacy and k8s storage in mode 3",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+		},
+		{
 			Name:           "cloudWatchCrossAccountQuerying",
 			Description:    "Enables cross-account querying in CloudWatch datasources",
 			Stage:          FeatureStageGeneralAvailability,
@@ -578,11 +590,12 @@ var (
 		},
 		{
 			Name:            "featureToggleAdminPage",
-			Description:     "Enable admin page for managing feature toggles from the Grafana front-end",
+			Description:     "Enable admin page for managing feature toggles from the Grafana front-end. Grafana Cloud only.",
 			Stage:           FeatureStageExperimental,
 			FrontendOnly:    false,
 			Owner:           grafanaOperatorExperienceSquad,
 			RequiresRestart: true,
+			HideFromDocs:    true,
 		},
 		{
 			Name:        "awsAsyncQueryCaching",
@@ -1246,6 +1259,13 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: true,
+		},
+		{
+			Name:         "notificationBanner",
+			Description:  "Enables the notification banner UI and API",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			FrontendOnly: false,
 		},
 	}
 )
