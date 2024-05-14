@@ -194,6 +194,8 @@ const EvaluationGroupWithRules = ({ group, rulesSource }: EvaluationGroupWithRul
               key={hashRulerRule(rulerRule)}
               name={rulerRule.record}
               health={promRule?.health}
+              lastEvaluation={promRule?.lastEvaluation}
+              evaluationDuration={promRule?.evaluationTime}
               href={createViewLink(rulesSource, rule)}
             />
           );

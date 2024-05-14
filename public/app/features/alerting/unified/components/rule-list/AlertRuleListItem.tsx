@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { formatDistanceToNowStrict, formatDuration } from 'date-fns';
 import React from 'react';
 
 import { GrafanaTheme2, IconName } from '@grafana/data';
@@ -8,6 +9,7 @@ import { RuleHealth } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { Label } from '../../utils/matchers';
+import { formatPrometheusDuration } from '../../utils/time';
 import { MetaText } from '../MetaText';
 import { Spacer } from '../Spacer';
 import { isErrorHealth } from '../rule-viewer/RuleViewer';
@@ -43,15 +45,13 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
   return (
     <li className={styles.alertListItemContainer} role="treeitem" aria-selected="false">
       <Stack direction="row" alignItems="start" gap={1} wrap="nowrap">
+        <RuleListIcon state={state} health={health} isPaused={isPaused} />
         <Stack direction="column" gap={0.5} flex="1">
           <div>
             <Stack direction="column" gap={0}>
-              <Stack direction="row" alignItems="flex-start" wrap="nowrap" gap={0.5}>
-                <RuleListIcon state={state} health={health} isPaused={isPaused} />
-                <TextLink href={href} inline={false}>
-                  {name}
-                </TextLink>
-              </Stack>
+              <TextLink href={href} inline={false}>
+                {name}
+              </TextLink>
               {summary && (
                 <Text variant="bodySmall" color="secondary">
                   {summary}
@@ -92,7 +92,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
                 </TextLink>
               </MetaText>
 
-              <MetaText icon="layer-group">
+              <MetaText icon="tag">
                 <TextLink variant="bodySmall" color="secondary" href={href} inline={false}>
                   {`${labels.length} labels`}
                 </TextLink>
@@ -144,27 +144,36 @@ interface RecordingRuleListItemProps {
   error?: string;
   health?: RuleHealth;
   isProvisioned?: boolean;
+  lastEvaluation?: string;
+  evaluationDuration?: number;
 }
 
-// @TODO maybe show for how long it has been recording? And the next recording time?
-export const RecordingRuleListItem = ({ name, error, health, isProvisioned, href }: RecordingRuleListItemProps) => {
+export const RecordingRuleListItem = ({
+  name,
+  error,
+  health,
+  isProvisioned,
+  href,
+  lastEvaluation,
+  // evaluation duration is always in seconds
+  evaluationDuration,
+}: RecordingRuleListItemProps) => {
   const styles = useStyles2(getStyles);
+
+  const relativeEvaluationTime = lastEvaluation ? formatDistanceToNowStrict(new Date(lastEvaluation)) : null;
+  const evaluationDurationString = evaluationDuration
+    ? formatPrometheusDuration(Math.round(evaluationDuration * 1000))
+    : null;
 
   return (
     <li className={styles.alertListItemContainer} role="treeitem" aria-selected="false">
-      <Stack direction="row" alignItems={'center'} gap={1}>
-        <Stack direction="row" alignItems={'center'} gap={1} flex="1">
+      <Stack direction="row" alignItems="center" gap={1}>
+        <Stack direction="row" alignItems="start" gap={1} flex="1">
+          <RuleListIcon health={health} recording={true} />
           <Stack direction="column" gap={0.5}>
-            <div>
-              <Stack direction="column" gap={0}>
-                <Stack direction="row" alignItems="center" wrap="nowrap" gap={0.5}>
-                  <RuleListIcon health={health} recording={true} />
-                  <TextLink href={href} variant="body" weight="bold">
-                    {name}
-                  </TextLink>
-                </Stack>
-              </Stack>
-            </div>
+            <TextLink href={href} variant="body" weight="bold" inline={false}>
+              {name}
+            </TextLink>
             <div>
               <Stack direction="row" gap={1}>
                 {error ? (
@@ -186,7 +195,14 @@ export const RecordingRuleListItem = ({ name, error, health, isProvisioned, href
                     </Text>
                   </>
                 ) : (
-                  <></>
+                  <>
+                    {relativeEvaluationTime && evaluationDurationString && (
+                      <MetaText icon="clock-nine">
+                        Last evaluation <Text weight="bold">{relativeEvaluationTime}</Text>ago ⋅ took{' '}
+                        <Text weight="bold">{evaluationDurationString}</Text>
+                      </MetaText>
+                    )}
+                  </>
                 )}
               </Stack>
             </div>
@@ -195,7 +211,7 @@ export const RecordingRuleListItem = ({ name, error, health, isProvisioned, href
           <Button
             variant="secondary"
             size="sm"
-            icon="edit"
+            icon="pen"
             type="button"
             disabled={isProvisioned}
             aria-label="edit-rule-action"
@@ -249,9 +265,9 @@ interface RuleListIconProps {
  */
 export function RuleListIcon({ state, health, recording = false, isPaused = false }: RuleListIconProps) {
   const icons: Record<PromAlertingRuleState, IconName> = {
-    [PromAlertingRuleState.Inactive]: 'check',
-    [PromAlertingRuleState.Pending]: 'hourglass',
-    [PromAlertingRuleState.Firing]: 'fire',
+    [PromAlertingRuleState.Inactive]: 'check-circle',
+    [PromAlertingRuleState.Pending]: 'circle',
+    [PromAlertingRuleState.Firing]: 'exclamation-circle',
   };
 
   const color: Record<PromAlertingRuleState, 'success' | 'error' | 'warning'> = {
@@ -283,13 +299,13 @@ export function RuleListIcon({ state, health, recording = false, isPaused = fals
   }
 
   if (isErrorHealth(health)) {
-    iconName = 'exclamation-circle';
+    iconName = 'times-circle';
     iconColor = 'error';
     stateName = 'Failed to evaluate rule';
   }
 
   if (isPaused) {
-    iconName = 'pause';
+    iconName = 'pause-circle';
     iconColor = 'warning';
     stateName = 'Paused';
   }
@@ -298,7 +314,7 @@ export function RuleListIcon({ state, health, recording = false, isPaused = fals
     <Tooltip content={stateName} placement="right">
       <div>
         <Text color={iconColor}>
-          <Icon name={iconName} size="md" />
+          <Icon name={iconName} size="lg" />
         </Text>
       </div>
     </Tooltip>
