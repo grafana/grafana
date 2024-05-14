@@ -2632,8 +2632,8 @@ The `database` field has been deprecated in the Elasticsearch datasource provisi
 - **Toolkit:** Remove plugin:create and component:create commands. [#66729](https://github.com/grafana/grafana/issues/66729), [@academo](https://github.com/academo)
 - **InteractiveTable:** Updated design and minor tweak to Correlactions page. [#66443](https://github.com/grafana/grafana/issues/66443), [@torkelo](https://github.com/torkelo)
 
-<!-- 10.0.0-preview END -->
-=======
+# <!-- 10.0.0-preview END -->
+
 <!-- 11.0.0 START -->
 
 # 11.0.0 (2024-05-14)
