@@ -55,7 +55,7 @@ func getEnginePostgres(cfgSection *setting.DynamicSection, tracer tracing.Tracer
 
 	connectionString := connectionStringPostgres(dbUser, dbPass, addr.Host, addr.Port, dbName, dbSslMode)
 
-	driverName := sqlstore.WrapDatabaseDriverWithHooks("mysql", tracer)
+	driverName := sqlstore.WrapDatabaseDriverWithHooks("postgres", tracer)
 	engine, err := xorm.NewEngine(driverName, connectionString)
 	if err != nil {
 		return nil, err
