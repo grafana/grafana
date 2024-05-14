@@ -2,7 +2,6 @@ package authn
 
 import (
 	"fmt"
-	"strconv"
 	"time"
 
 	"golang.org/x/oauth2"
@@ -24,7 +23,7 @@ type Identity struct {
 	// ID is the unique identifier for the entity in the Grafana database.
 	// If the entity is not found in the DB or this entity is non-persistent, this field will be empty.
 	ID NamespaceID
-	// UID is a unique uid stored for entity in Grafana datbase. Not all entities support uid so it can be empty.
+	// UID is a unique identifier stored for the entity in Grafana datbase. Not all entities support uid so it can be empty.
 	UID NamespaceID
 	// OrgID is the active organization for the entity.
 	OrgID int64
@@ -236,16 +235,6 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 	}
 
 	return u
-}
-
-func intIdentifier(identifier string) int64 {
-	id, err := strconv.ParseInt(identifier, 10, 64)
-	if err != nil {
-		// FIXME (kalleep): Improve error handling
-		return -1
-	}
-
-	return id
 }
 
 func (i *Identity) ExternalUserInfo() login.ExternalUserInfo {
