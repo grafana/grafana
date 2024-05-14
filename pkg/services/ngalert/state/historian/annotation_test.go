@@ -131,7 +131,8 @@ func createTestAnnotationSutWithStore(t *testing.T, annotations AnnotationStore)
 	rules.Rules[1] = []*models.AlertRule{
 		models.RuleGen.With(models.RuleMuts.WithOrgID(1), withUID("my-rule")).GenerateRef(),
 	}
-	return NewAnnotationBackend(annotations, rules, met)
+	annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
+	return NewAnnotationBackend(annotationBackendLogger, annotations, rules, met)
 }
 
 func createTestAnnotationBackendSutWithMetrics(t *testing.T, met *metrics.Historian) *AnnotationBackend {
@@ -144,7 +145,8 @@ func createTestAnnotationBackendSutWithMetrics(t *testing.T, met *metrics.Histor
 	dbs := &dashboards.FakeDashboardService{}
 	dbs.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil)
 	store := NewAnnotationStore(fakeAnnoRepo, dbs, met)
-	return NewAnnotationBackend(store, rules, met)
+	annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
+	return NewAnnotationBackend(annotationBackendLogger, store, rules, met)
 }
 
 func createFailingAnnotationSut(t *testing.T, met *metrics.Historian) *AnnotationBackend {
@@ -155,8 +157,9 @@ func createFailingAnnotationSut(t *testing.T, met *metrics.Historian) *Annotatio
 	}
 	dbs := &dashboards.FakeDashboardService{}
 	dbs.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil)
+	annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
 	store := NewAnnotationStore(fakeAnnoRepo, dbs, met)
-	return NewAnnotationBackend(store, rules, met)
+	return NewAnnotationBackend(annotationBackendLogger, store, rules, met)
 }
 
 func createAnnotation() annotations.Item {

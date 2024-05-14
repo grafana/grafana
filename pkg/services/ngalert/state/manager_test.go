@@ -234,7 +234,8 @@ func TestDashboardAnnotations(t *testing.T) {
 	fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
 	historianMetrics := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
 	store := historian.NewAnnotationStore(fakeAnnoRepo, &dashboards.FakeDashboardService{}, historianMetrics)
-	hist := historian.NewAnnotationBackend(store, nil, historianMetrics)
+	annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
+	hist := historian.NewAnnotationBackend(annotationBackendLogger, store, nil, historianMetrics)
 	cfg := state.ManagerCfg{
 		Metrics:       metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
 		ExternalURL:   nil,
@@ -1280,7 +1281,8 @@ func TestProcessEvalResults(t *testing.T) {
 			stateMetrics := metrics.NewStateMetrics(reg)
 			m := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
 			store := historian.NewAnnotationStore(fakeAnnoRepo, &dashboards.FakeDashboardService{}, m)
-			hist := historian.NewAnnotationBackend(store, nil, m)
+			annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
+			hist := historian.NewAnnotationBackend(annotationBackendLogger, store, nil, m)
 			clk := clock.NewMock()
 			cfg := state.ManagerCfg{
 				Metrics:       stateMetrics,
