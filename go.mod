@@ -127,6 +127,7 @@ require (
 	github.com/lib/pq v1.10.9 // @grafana/grafana-backend-group
 	github.com/linkedin/goavro/v2 v2.10.0 // @grafana/grafana-backend-group
 	github.com/m3db/prometheus_remote_client_golang v0.4.4 // @grafana/grafana-backend-group
+	github.com/madflojo/testcerts v1.1.1 // @grafana/alerting-squad-backend
 	github.com/magefile/mage v1.15.0 // @grafana/grafana-release-guild
 	github.com/matryer/is v1.4.0 // @grafana/grafana-as-code
 	github.com/mattn/go-isatty v0.0.20 // @grafana/grafana-backend-group
