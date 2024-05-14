@@ -158,8 +158,8 @@ func createFailingAnnotationSut(t *testing.T, met *metrics.Historian) *Annotatio
 	dbs := &dashboards.FakeDashboardService{}
 	dbs.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil)
 	annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
-	store := NewAnnotationStore(annotationBackendLogger, fakeAnnoRepo, dbs, met)
-	return NewAnnotationBackend(store, rules, met)
+	store := NewAnnotationStore(fakeAnnoRepo, dbs, met)
+	return NewAnnotationBackend(annotationBackendLogger, store, rules, met)
 }
 
 func createAnnotation() annotations.Item {
