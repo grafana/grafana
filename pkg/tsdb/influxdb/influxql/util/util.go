@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	legendFormat = regexp.MustCompile(`\[\[([\@\/\w-]+)(\.[\@\/\w-]+)*\]\]*|\$([\@\w]+?)*`)
+	legendFormat = regexp.MustCompile(`\$(\w+)|\[\[([\s\S]+?)\]\]`)
 )
 
 const (
