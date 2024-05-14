@@ -634,6 +634,23 @@ Any consumers of the specific API should be appropriately adapted. Issue [#74600
 - **Grafana/UI:** Add new Splitter component . [#82357](https://github.com/grafana/grafana/issues/82357), [@torkelo](https://github.com/torkelo)
 
 <!-- 10.4.0 END -->
+<!-- 10.3.6 START -->
+
+# 10.3.6 (2024-05-13)
+
+### Features and enhancements
+
+- **Chore:** Upgrade go to 1.21.10. [#87474](https://github.com/grafana/grafana/issues/87474), [@stephaniehingtgen](https://github.com/stephaniehingtgen)
+- **Chore:** Upgrade go to 1.21.10. (Enterprise)
+
+### Bug fixes
+
+- **Azure data sources:** Set selected config type before save. [#87584](https://github.com/grafana/grafana/issues/87584), [@bossinc](https://github.com/bossinc)
+- **LibraryPanelRBAC:** Fix issue with importing dashboards containing library panels. [#86148](https://github.com/grafana/grafana/issues/86148), [@kaydelaney](https://github.com/kaydelaney)
+- **AuthProxy:** Fix missing session for ldap auth proxy users. [#85250](https://github.com/grafana/grafana/issues/85250), [@Jguer](https://github.com/Jguer)
+- **PDF:** Fix initialization when SMTP is disabled. (Enterprise)
+
+<!-- 10.3.6 END -->
 <!-- 10.3.5 START -->
 
 # 10.3.5 (2024-03-20)
