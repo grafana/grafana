@@ -312,7 +312,7 @@ func TestHARedisTLSSettings(t *testing.T) {
 		caPath             = "path/to/ca"
 		serverName         = "server_name"
 		insecureSkipVerify = true
-		cipherSuite        = "TLS_AES_128_GCM_SHA256"
+		cipherSuites       = "TLS_AES_128_GCM_SHA256"
 		minVersion         = "VersionTLS13"
 	)
 	_, err = section.NewKey("ha_redis_tls_enabled", strconv.FormatBool(tlsEnabled))
@@ -327,7 +327,7 @@ func TestHARedisTLSSettings(t *testing.T) {
 	require.NoError(t, err)
 	_, err = section.NewKey("ha_redis_tls_insecure_skip_verify", strconv.FormatBool(insecureSkipVerify))
 	require.NoError(t, err)
-	_, err = section.NewKey("ha_redis_tls_cipher_suites", cipherSuite)
+	_, err = section.NewKey("ha_redis_tls_cipher_suites", cipherSuites)
 	require.NoError(t, err)
 	_, err = section.NewKey("ha_redis_tls_min_version", minVersion)
 	require.NoError(t, err)
@@ -337,11 +337,11 @@ func TestHARedisTLSSettings(t *testing.T) {
 	require.Nil(t, err)
 
 	require.Equal(t, tlsEnabled, cfg.UnifiedAlerting.HARedisTLSEnabled)
-	require.Equal(t, certPath, cfg.UnifiedAlerting.HARedisTLSCertPath)
-	require.Equal(t, keyPath, cfg.UnifiedAlerting.HARedisTLSKeyPath)
-	require.Equal(t, caPath, cfg.UnifiedAlerting.HARedisTLSCAPath)
-	require.Equal(t, serverName, cfg.UnifiedAlerting.HARedisTLSServerName)
-	require.Equal(t, insecureSkipVerify, cfg.UnifiedAlerting.HARedisTLSInsecureSkipVerify)
-	require.Equal(t, cipherSuite, cfg.UnifiedAlerting.HARedisTLSCipherSuites)
-	require.Equal(t, minVersion, cfg.UnifiedAlerting.HARedisTLSMinVersion)
+	require.Equal(t, certPath, cfg.UnifiedAlerting.HARedisTLSConfig.CertPath)
+	require.Equal(t, keyPath, cfg.UnifiedAlerting.HARedisTLSConfig.KeyPath)
+	require.Equal(t, caPath, cfg.UnifiedAlerting.HARedisTLSConfig.CAPath)
+	require.Equal(t, serverName, cfg.UnifiedAlerting.HARedisTLSConfig.ServerName)
+	require.Equal(t, insecureSkipVerify, cfg.UnifiedAlerting.HARedisTLSConfig.InsecureSkipVerify)
+	require.Equal(t, cipherSuites, cfg.UnifiedAlerting.HARedisTLSConfig.CipherSuites)
+	require.Equal(t, minVersion, cfg.UnifiedAlerting.HARedisTLSConfig.MinVersion)
 }

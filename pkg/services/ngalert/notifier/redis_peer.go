@@ -107,6 +107,7 @@ func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
 		tlsClientConfig, err := cfg.tls.GetTLSConfig()
 		if err != nil {
 			logger.Error("Failed to get TLS config", "err", err)
+			return nil, err
 		} else {
 			opts.TLSConfig = tlsClientConfig
 		}
