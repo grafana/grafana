@@ -169,13 +169,15 @@ func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
 	// Redis setup.
 	if cfg.UnifiedAlerting.HARedisAddr != "" {
 		redisPeer, err := newRedisPeer(redisConfig{
-			addr:     cfg.UnifiedAlerting.HARedisAddr,
-			name:     cfg.UnifiedAlerting.HARedisPeerName,
-			prefix:   cfg.UnifiedAlerting.HARedisPrefix,
-			password: cfg.UnifiedAlerting.HARedisPassword,
-			username: cfg.UnifiedAlerting.HARedisUsername,
-			db:       cfg.UnifiedAlerting.HARedisDB,
-			maxConns: cfg.UnifiedAlerting.HARedisMaxConns,
+			addr:       cfg.UnifiedAlerting.HARedisAddr,
+			name:       cfg.UnifiedAlerting.HARedisPeerName,
+			prefix:     cfg.UnifiedAlerting.HARedisPrefix,
+			password:   cfg.UnifiedAlerting.HARedisPassword,
+			username:   cfg.UnifiedAlerting.HARedisUsername,
+			db:         cfg.UnifiedAlerting.HARedisDB,
+			maxConns:   cfg.UnifiedAlerting.HARedisMaxConns,
+			tlsEnabled: cfg.UnifiedAlerting.HARedisTLSEnabled,
+			tls:        cfg.UnifiedAlerting.HARedisTLSConfig,
 		}, clusterLogger, moa.metrics.Registerer, cfg.UnifiedAlerting.HAPushPullInterval)
 		if err != nil {
 			return fmt.Errorf("unable to initialize redis: %w", err)
