@@ -14,7 +14,7 @@ type Requester interface {
 	// The namespace is one of the constants defined in pkg/services/auth/identity.
 	// Deprecated: use GetID instead
 	GetNamespacedID() (namespace Namespace, identifier string)
-	// GetID returns namespaced id for the entity
+	// GetUID returns namespaced uid for the entity
 	GetUID() NamespaceID
 	// GetDisplayName returns the display name of the active entity.
 	// The display name is the name if it is set, otherwise the login or email.
