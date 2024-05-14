@@ -10,7 +10,6 @@ import { Time } from 'app/features/explore/Time';
 import { RuleHealth } from 'app/types/unified-alerting';
 import { Labels, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-import { formatPrometheusDuration } from '../../utils/time';
 import { AlertLabels } from '../AlertLabels';
 import { MetaText } from '../MetaText';
 import MoreButton from '../MoreButton';
