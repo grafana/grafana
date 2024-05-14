@@ -2179,6 +2179,30 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform"
       }
+    },
+    {
+      "metadata": {
+        "name": "dualWritePlaylistsMode2",
+        "resourceVersion": "1715369873132",
+        "creationTimestamp": "2024-05-10T19:37:53Z"
+      },
+      "spec": {
+        "description": "Enables dual writing of playlists to both legacy and k8s storage in mode 2",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dualWritePlaylistsMode3",
+        "resourceVersion": "1715369873132",
+        "creationTimestamp": "2024-05-10T19:37:53Z"
+      },
+      "spec": {
+        "description": "Enables dual writing of playlists to both legacy and k8s storage in mode 3",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage"
+      }
     }
   ]
 }

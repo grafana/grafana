@@ -28,6 +28,8 @@ topnav,deprecated,@grafana/grafana-frontend-platform,false,false,false
 returnToPrevious,GA,@grafana/grafana-frontend-platform,false,false,true
 grpcServer,preview,@grafana/grafana-app-platform-squad,false,false,false
 unifiedStorage,experimental,@grafana/grafana-app-platform-squad,false,true,false
+dualWritePlaylistsMode2,experimental,@grafana/search-and-storage,false,false,false
+dualWritePlaylistsMode3,experimental,@grafana/search-and-storage,false,false,false
 cloudWatchCrossAccountQuerying,GA,@grafana/aws-datasources,false,false,false
 showDashboardValidationWarnings,experimental,@grafana/dashboards-squad,false,false,false
 mysqlAnsiQuotes,experimental,@grafana/search-and-storage,false,false,false
