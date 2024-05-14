@@ -1,4 +1,4 @@
-import { Meta, Canvas, ArgTypes } from '@storybook/blocks';
+import { Meta, Preview, ArgTypes } from '@storybook/blocks';
 import { PluginSignatureBadge } from './PluginSignatureBadge';
 
 <Meta title="MDX|PluginSignatureBadge" component={PluginSignatureBadge} />
@@ -12,32 +12,32 @@ This is a security measure to make sure plugins haven't been tampered with. Upon
 
 1.- Core: this badge indicates that the plugin has been built into Grafana.
 
-<Canvas>
+<Preview>
   <PluginSignatureBadge status="internal" />
-</Canvas>
+</Preview>
 
 2.- Signed: the plugin's signature was successfully verified.
 
-<Canvas>
+<Preview>
   <PluginSignatureBadge status="valid" />
-</Canvas>
+</Preview>
 
 3.- Invalid signature: this plugin has a invalid signature.
 
-<Canvas>
+<Preview>
   <PluginSignatureBadge status="invalid" />
-</Canvas>
+</Preview>
 
 4.- Modified signature: this plugin has changed since it was signed. This may indicate malicious intent.
 
-<Canvas>
+<Preview>
   <PluginSignatureBadge status="modified" />
-</Canvas>
+</Preview>
 
 5.- Unsigned: the plugin is not signed. In this case, as upon loading Grafana checks the plugins signature, Grafana will not load or start it. Furthermore, it will write an error message to the server log.
 
-<Canvas>
+<Preview>
   <PluginSignatureBadge status="unsigned" />
-</Canvas>
+</Preview>
 
 <ArgTypes of={PluginSignatureBadge} />

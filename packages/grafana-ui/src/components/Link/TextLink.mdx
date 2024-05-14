@@ -1,4 +1,4 @@
-import { Meta, Canvas, ArgTypes } from '@storybook/blocks';
+import { Meta, Preview, ArgTypes } from '@storybook/blocks';
 import { TextLink } from './TextLink';
 import { Basic } from './TextLink.story.tsx';
 
@@ -81,30 +81,30 @@ The following is the default behaviour and so, it will be applied according to i
 
 ### <a name="inline-behaviour"/>**Inline**:<br/>
 
-<Canvas>
+<Preview>
   <TextLink href="https://google.es" external inline>
     {'This an inline link example'}
   </TextLink>
-</Canvas>
+</Preview>
 - _Initial appearence_: Blue and underlined at first. - _On hover_: blue and not underlined
 
 ### <a name="standalone-behaviour"/>**Standalone**:
 
-<Canvas>
+<Preview>
   <TextLink href="https://google.es" inline={false} external>
     {'This an standalone link example'}
   </TextLink>
-</Canvas>
+</Preview>
 - _Initial appearence_: Blue and not underlined at first. - _On hover_: blue and underlined.
 
 _Example_: We should take into account that through the color prop the user will be able to change this value,
 but the rest will be kept. So, in this example, if the user renders an external and standalone _text link_ setting the color value to 'primary' the result will be a text link 'white' in dark theme or 'black' in light theme, as set by the user, and not underlined at first while blue and underlined when onhover, as it inherits from the standalone default behaviour.
 
-<Canvas>
+<Preview>
   <TextLink href="https://google.es" color="primary" inline={false} external>
     {'This an external standalone link example'}
   </TextLink>
-</Canvas>
+</Preview>
 
 ```jsx
 <TextLink href="https://google.es" color="primary" inline={false} external>
@@ -116,11 +116,11 @@ but the rest will be kept. So, in this example, if the user renders an external 
 
 By default, **external _text links_** will show an `external-alt-icon`. If by design reasons, the user needs to set another icon it can be done through the correspondent prop.
 
-<Canvas>
+<Preview>
   <TextLink href="https://google.es" external>
     {'This an external with the default icon'}
   </TextLink>
-</Canvas>
+</Preview>
 
 ```jsx
 <TextLink href="https://google.es" external>
@@ -130,11 +130,11 @@ By default, **external _text links_** will show an `external-alt-icon`. If by de
 
 Both, **external** and **internal** links can show a specific icon using the `icon` prop.
 
-<Canvas>
+<Preview>
   <TextLink href="https://google.es" icon="google" external>
     {'This an external with a specific icon'}
   </TextLink>
-</Canvas>
+</Preview>
 ```jsx
 <TextLink href="https://google.es" icon="google" external>
   This an external with a specific icon

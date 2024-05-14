@@ -1,4 +1,4 @@
-import { ArgTypes, Canvas } from '@storybook/blocks';
+import { ArgTypes, Preview } from '@storybook/blocks';
 import { Field } from '../Forms/Field';
 import { TextArea } from './TextArea';
 
@@ -22,13 +22,13 @@ Use for multi line inputs like descriptions.
 </Field>
 ```
 
-<Canvas>
+<Preview>
   <Field
     label="Important information"
     description="This information is very important, so you really need to fill it in"
   >
     <TextArea name="importantTextarea" required />
   </Field>
-</Canvas>
+</Preview>
 
 <ArgTypes of={TextArea} />

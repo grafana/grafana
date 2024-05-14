@@ -1,4 +1,4 @@
-import { ArgTypes, Canvas } from '@storybook/blocks';
+import { ArgTypes, Preview } from '@storybook/blocks';
 import { AutoSizeInput } from './AutoSizeInput';
 import { Field } from '../Forms/Field';
 import { Icon } from '../Icon/Icon';
@@ -9,15 +9,15 @@ You can use it or regular text input. When used, AutoSizeInput resizes itself to
 
 ## Prefix and suffix
 
-To add more context to the input, you can add either text or an icon before or after the input using the `prefix` and `suffix`. Here are some examples for you to try in the canvas!
+To add more context to the input, you can add either text or an icon before or after the input using the `prefix` and `suffix`. Here are some examples for you to try in the Preview!
 
 ```jsx
 <AutoSizeInput prefix={<Icon name="search" />} />
 ```
 
-<Canvas>
+<Preview>
   <AutoSizeInput prefix={<Icon name="search" />} />
-</Canvas>
+</Preview>
 
 ## Usage in forms with Field
 
@@ -29,9 +29,9 @@ Use `AutoSizeInput`with the`Field`component to get labels and descriptions. Also
 </Field>
 ```
 
-<Canvas>
+<Preview>
   <Field label="Important information!" description="Please enter the relevant information.">
     <AutoSizeInput name="importantInput" required />
   </Field>
-</Canvas>
+</Preview>
 <ArgTypes of={AutoSizeInput} />
