@@ -32,12 +32,16 @@ export const SeriesEditor = ({
 
   const defaultFrame = { frame: { matcher: { id: FrameMatcherID.byIndex, options: 0 } } };
 
+  const [selectedIdx, setSelectedIdx] = useState(0);
+
   if (mappingChanged || seriesCfg == null) {
     seriesCfg = [{ ...defaultFrame }];
     onChange([...seriesCfg]);
-  }
 
-  const [selectedIdx, setSelectedIdx] = useState(0);
+    if (selectedIdx > 0) {
+      setSelectedIdx(0);
+    }
+  }
 
   const addSeries = () => {
     seriesCfg = seriesCfg.concat({ ...defaultFrame });
