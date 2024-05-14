@@ -11421,9 +11421,6 @@
         "access": {
           "$ref": "#/definitions/DsAccess"
         },
-        "apiVersion": {
-          "type": "string"
-        },
         "basicAuth": {
           "type": "boolean"
         },
@@ -13942,9 +13939,6 @@
         },
         "accessControl": {
           "$ref": "#/definitions/Metadata"
-        },
-        "apiVersion": {
-          "type": "string"
         },
         "basicAuth": {
           "type": "boolean"
@@ -20455,9 +20449,6 @@
       "properties": {
         "access": {
           "$ref": "#/definitions/DsAccess"
-        },
-        "apiVersion": {
-          "type": "string"
         },
         "basicAuth": {
           "type": "boolean"
