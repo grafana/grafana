@@ -250,6 +250,7 @@ build-docker-full-local:
 
 build-docker-full: ## Build Docker image for development.
 	@echo "build docker container"
+	tar -ch . | \
 	docker buildx build - \
     -f Dockerfile.local \
 	--platform $(PLATFORM) \
