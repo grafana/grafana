@@ -136,12 +136,12 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
     });
   }
 
-  public async toggleScope(linkID: string) {
+  public async toggleScope(linkId: string) {
     let scopes = this.state.scopes;
-    const selectedIdx = scopes.findIndex((scope) => scope.metadata.name === linkID);
+    const selectedIdx = scopes.findIndex((scope) => scope.metadata.name === linkId);
 
     if (selectedIdx === -1) {
-      const scope = await this.scopesServer.get(linkID);
+      const scope = await this.scopesServer.get(linkId);
 
       if (scope) {
         scopes = [...scopes, scope];
@@ -199,13 +199,13 @@ export function ScopesTreeLevel({ isExpanded, path, nodes, expandedNodes, scopes
     <div role="tree" className={path.length > 0 ? styles.innerLevelContainer : undefined}>
       {Object.values(nodes).map((node) => {
         const {
-          item: { nodeId, linkID },
+          item: { nodeId, linkId },
           isScope,
           children,
         } = node;
         const nodePath = [...path, nodeId];
         const isExpanded = expandedNodes.includes(nodeId);
-        const isSelected = isScope && !!scopes.find((scope) => scope.metadata.name === linkID);
+        const isSelected = isScope && !!scopes.find((scope) => scope.metadata.name === linkId);
 
         return (
           <div
@@ -232,8 +232,8 @@ export function ScopesTreeLevel({ isExpanded, path, nodes, expandedNodes, scopes
                 onChange={(evt) => {
                   evt.stopPropagation();
 
-                  if (linkID) {
-                    model.toggleScope(linkID);
+                  if (linkId) {
+                    model.toggleScope(linkId);
                   }
                 }}
               />

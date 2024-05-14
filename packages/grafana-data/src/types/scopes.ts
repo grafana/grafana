@@ -43,6 +43,6 @@ export interface ScopeTreeItemSpec {
   title: string;
 
   description?: string;
-  linkID?: string;
+  linkId?: string;
   linkType?: ScopeTreeItemLinkType;
 }
