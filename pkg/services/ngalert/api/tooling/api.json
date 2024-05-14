@@ -970,9 +970,7 @@
    },
    "type": "object"
   },
-  "EvalQueriesResponse": {
-   "type": "object"
-  },
+  "EvalQueriesResponse": {},
   "ExplorePanelsState": {
    "description": "This is an object constructed with the keys as the values of the enum VisType and the value being a bag of properties"
   },
@@ -4465,8 +4463,7 @@
   "alertGroups": {
    "description": "AlertGroups alert groups",
    "items": {
-    "$ref": "#/definitions/alertGroup",
-    "type": "object"
+    "$ref": "#/definitions/alertGroup"
    },
    "type": "array"
   },
@@ -4570,7 +4567,10 @@
   },
   "gettableAlert": {
 <<<<<<< HEAD
+<<<<<<< HEAD
    "description": "GettableAlert gettable alert",
+=======
+>>>>>>> fa144e1652b (Re-generate swagger docs with backdated v0.30.2 version)
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -4613,8 +4613,11 @@
      "type": "string"
     }
    },
+<<<<<<< HEAD
 =======
 >>>>>>> 961cef7f7de (Regenerate swagger docs)
+=======
+>>>>>>> fa144e1652b (Re-generate swagger docs with backdated v0.30.2 version)
    "required": [
     "labels",
     "annotations",
@@ -4630,8 +4633,7 @@
   "gettableAlerts": {
    "description": "GettableAlerts gettable alerts",
    "items": {
-    "$ref": "#/definitions/gettableAlert",
-    "type": "object"
+    "$ref": "#/definitions/gettableAlert"
    },
    "type": "array"
   },
@@ -4684,14 +4686,13 @@
    "type": "object"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
-    "$ref": "#/definitions/gettableSilence",
-    "type": "object"
+    "$ref": "#/definitions/gettableSilence"
    },
    "type": "array"
   },
   "integration": {
-   "description": "Integration integration",
    "properties": {
     "lastNotifyAttempt": {
      "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -4836,7 +4837,10 @@
   },
   "postableSilence": {
 <<<<<<< HEAD
+<<<<<<< HEAD
    "description": "PostableSilence postable silence",
+=======
+>>>>>>> fa144e1652b (Re-generate swagger docs with backdated v0.30.2 version)
    "properties": {
     "comment": {
      "description": "comment",
@@ -4864,8 +4868,11 @@
      "type": "string"
     }
    },
+<<<<<<< HEAD
 =======
 >>>>>>> 961cef7f7de (Regenerate swagger docs)
+=======
+>>>>>>> fa144e1652b (Re-generate swagger docs with backdated v0.30.2 version)
    "required": [
     "comment",
     "createdBy",
