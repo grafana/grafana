@@ -39,7 +39,7 @@ jest.mock('@grafana/runtime', () => ({
 describe('NavToolbarActions', () => {
   describe('Given an already saved dashboard', () => {
     it('Should show correct buttons when not in editing', async () => {
-      await setup();
+      setup();
 
       expect(screen.queryByText('Save dashboard')).not.toBeInTheDocument();
       expect(screen.queryByLabelText('Add')).not.toBeInTheDocument();
@@ -49,7 +49,7 @@ describe('NavToolbarActions', () => {
 
     it('Should show the correct buttons when playing a playlist', async () => {
       jest.mocked(playlistSrv).useState.mockReturnValueOnce({ isPlaying: true });
-      await setup();
+      setup();
 
       expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.prev)).toBeInTheDocument();
       expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.stop)).toBeInTheDocument();
@@ -60,7 +60,7 @@ describe('NavToolbarActions', () => {
 
     it('Should call the playlist srv when using playlist controls', async () => {
       jest.mocked(playlistSrv).useState.mockReturnValueOnce({ isPlaying: true });
-      await setup();
+      setup();
 
       // Previous dashboard
       expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.prev)).toBeInTheDocument();
@@ -79,14 +79,14 @@ describe('NavToolbarActions', () => {
     });
 
     it('Should hide the playlist controls when it is not playing', async () => {
-      await setup();
+      setup();
       expect(screen.queryByText(selectors.pages.Dashboard.DashNav.playlistControls.prev)).not.toBeInTheDocument();
       expect(screen.queryByText(selectors.pages.Dashboard.DashNav.playlistControls.stop)).not.toBeInTheDocument();
       expect(screen.queryByText(selectors.pages.Dashboard.DashNav.playlistControls.next)).not.toBeInTheDocument();
     });
 
     it('Should show correct buttons when editing', async () => {
-      await setup();
+      setup();
 
       await userEvent.click(await screen.findByText('Edit'));
 
@@ -101,7 +101,7 @@ describe('NavToolbarActions', () => {
     });
 
     it('Should show correct buttons when in settings menu', async () => {
-      await setup();
+      setup();
 
       await act(async () => {
         await userEvent.click(await screen.findByText('Edit'));
@@ -120,7 +120,7 @@ describe('NavToolbarActions', () => {
     });
 
     it('Should show correct buttons when editing a new panel', async () => {
-      const { dashboard } = await setup();
+      const { dashboard } = setup();
       await act(() => {
         const editingPanel = ((dashboard.state.body as SceneGridLayout).state.children[0] as DashboardGridItem).state
           .body as VizPanel;
@@ -133,7 +133,7 @@ describe('NavToolbarActions', () => {
     });
 
     it('Should show correct buttons when editing an existing panel', async () => {
-      const { dashboard } = await setup();
+      const { dashboard } = setup();
       await act(() => {
         const editingPanel = ((dashboard.state.body as SceneGridLayout).state.children[0] as DashboardGridItem).state
           .body as VizPanel;
@@ -145,7 +145,7 @@ describe('NavToolbarActions', () => {
     });
 
     it('Should set the correct params to indicate it is adding a panel', async () => {
-      await setup();
+      setup();
 
       await act(async () => {
         await userEvent.click(await screen.findByText('Edit'));
@@ -163,7 +163,7 @@ describe('NavToolbarActions', () => {
 
   describe('Given new sharing button', () => {
     it('Should show old share button when newDashboardSharingComponent FF is disabled', async () => {
-      await setup();
+      setup();
 
       expect(await screen.findByText('Share')).toBeInTheDocument();
       const newShareButton = screen.queryByTestId(selectors.pages.Dashboard.DashNav.newShareButton.container);
@@ -171,7 +171,7 @@ describe('NavToolbarActions', () => {
     });
     it('Should show new share button when newDashboardSharingComponent FF is enabled', async () => {
       config.featureToggles.newDashboardSharingComponent = true;
-      await setup();
+      setup();
 
       expect(await screen.queryByTestId(selectors.pages.Dashboard.DashNav.shareButton)).not.toBeInTheDocument();
       const newShareButton = screen.getByTestId(selectors.pages.Dashboard.DashNav.newShareButton.container);
@@ -180,55 +180,53 @@ describe('NavToolbarActions', () => {
   });
 });
 
-async function setup() {
-  return act(() => {
-    const dashboard = new DashboardScene({
-      $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
-      meta: {
-        canEdit: true,
-        isNew: false,
-        canMakeEditable: true,
-        canSave: true,
-        canShare: true,
-        canStar: true,
-        canAdmin: true,
-        canDelete: true,
-      },
-      title: 'hello',
-      uid: 'dash-1',
-      body: new SceneGridLayout({
-        children: [
-          new DashboardGridItem({
-            key: 'griditem-1',
-            x: 0,
-            body: new VizPanel({
-              title: 'Panel A',
-              key: 'panel-1',
-              pluginId: 'table',
-              $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
-            }),
+function setup() {
+  const dashboard = new DashboardScene({
+    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+    meta: {
+      canEdit: true,
+      isNew: false,
+      canMakeEditable: true,
+      canSave: true,
+      canShare: true,
+      canStar: true,
+      canAdmin: true,
+      canDelete: true,
+    },
+    title: 'hello',
+    uid: 'dash-1',
+    body: new SceneGridLayout({
+      children: [
+        new DashboardGridItem({
+          key: 'griditem-1',
+          x: 0,
+          body: new VizPanel({
+            title: 'Panel A',
+            key: 'panel-1',
+            pluginId: 'table',
+            $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
           }),
-          new DashboardGridItem({
-            body: new VizPanel({
-              title: 'Panel B',
-              key: 'panel-2',
-              pluginId: 'table',
-            }),
+        }),
+        new DashboardGridItem({
+          body: new VizPanel({
+            title: 'Panel B',
+            key: 'panel-2',
+            pluginId: 'table',
           }),
-        ],
-      }),
-    });
-
-    const context = getGrafanaContextMock();
-
-    render(
-      <TestProvider grafanaContext={context}>
-        <ToolbarActions dashboard={dashboard} />
-      </TestProvider>
-    );
-
-    const actions = context.chrome.state.getValue().actions;
-
-    return { dashboard, actions };
+        }),
+      ],
+    }),
   });
+
+  const context = getGrafanaContextMock();
+
+  render(
+    <TestProvider grafanaContext={context}>
+      <ToolbarActions dashboard={dashboard} />
+    </TestProvider>
+  );
+
+  const actions = context.chrome.state.getValue().actions;
+
+  return { dashboard, actions };
 }
