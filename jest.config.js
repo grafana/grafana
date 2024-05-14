@@ -22,8 +22,8 @@ const esModules = [
   'vscode-languageserver-types',
 ].join('|');
 
-module.exports = {
-  verbose: false,
+const coreConfig = {
+  displayName: 'core',
   testEnvironment: 'jsdom',
   transform: {
     '^.+\\.(ts|tsx|js|jsx)$': [require.resolve('ts-jest'), { isolatedModules: true }],
@@ -36,7 +36,6 @@ module.exports = {
   testRegex: '(\\.|/)(test)\\.(jsx?|tsx?)$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   setupFiles: ['jest-canvas-mock', './public/test/jest-setup.ts'],
-  testTimeout: 30000,
   resolver: `<rootDir>/public/test/jest-resolver.js`,
   setupFilesAfterEnv: ['./public/test/setupTests.ts'],
   globals: {
@@ -55,7 +54,22 @@ module.exports = {
     // prevent systemjs amd extra from breaking tests.
     'systemjs/dist/extras/amd': '<rootDir>/public/test/mocks/systemjsAMDExtra.ts',
   },
+  modulePathIgnorePatterns: ['<rootDir>/public/app/features/alerting/unified'],
+};
+
+const alertingConfig = {
+  ...coreConfig,
+  displayName: 'alerting',
+  testRegex: '(.*/app/features/alerting/.*)(\\.|/)(test)\\.(jsx?|tsx?)$',
+  modulePathIgnorePatterns: [],
+  setupFilesAfterEnv: [...coreConfig.setupFilesAfterEnv, './public/app/features/alerting/setupTests.ts'],
+};
+
+module.exports = {
+  projects: [coreConfig, alertingConfig],
+  verbose: false,
+  testTimeout: 30000,
   // Log the test results with dynamic Loki tags. Drone CI only
   reporters: ['default', ['<rootDir>/public/test/log-reporter.js', { enable: process.env.DRONE === 'true' }]],
-  watchPlugins: ['jest-watch-typeahead/filename', 'jest-watch-typeahead/testname'],
+  watchPlugins: ['jest-watch-typeahead/filename', 'jest-watch-typeahead/testname', 'jest-watch-select-projects'],
 };

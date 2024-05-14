@@ -18446,13 +18446,14 @@ __metadata:
     i18next-parser: "npm:8.13.0"
     immer: "npm:10.1.1"
     immutable: "npm:4.3.6"
-    jest: "npm:29.7.0"
+    jest: "npm:^29.7.0"
     jest-canvas-mock: "npm:2.5.2"
     jest-date-mock: "npm:1.0.10"
     jest-environment-jsdom: "npm:29.7.0"
     jest-fail-on-console: "npm:3.3.0"
     jest-junit: "npm:16.0.0"
     jest-matcher-utils: "npm:29.7.0"
+    jest-watch-select-projects: "npm:^2.0.0"
     jest-watch-typeahead: "npm:^2.2.2"
     jquery: "npm:3.7.1"
     js-yaml: "npm:^4.1.0"
@@ -20896,6 +20897,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"jest-watch-select-projects@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "jest-watch-select-projects@npm:2.0.0"
+  dependencies:
+    ansi-escapes: "npm:^4.3.0"
+    chalk: "npm:^3.0.0"
+    prompts: "npm:^2.2.1"
+  checksum: 10/67b7a08d8e7b5ecfba67d86f02be29e4917c4416c9f169246f10cc40792b1c5fa38fcfeb25195643db080ace1f4fdf2f827bd244e7cdff7512d1ddfbc94270f0
+  languageName: node
+  linkType: hard
+
 "jest-watch-typeahead@npm:^2.2.2":
   version: 2.2.2
   resolution: "jest-watch-typeahead@npm:2.2.2"
@@ -20952,7 +20964,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jest@npm:29.7.0, jest@npm:^29.6.4":
+"jest@npm:29.7.0, jest@npm:^29.6.4, jest@npm:^29.7.0":
   version: 29.7.0
   resolution: "jest@npm:29.7.0"
   dependencies:
@@ -25368,7 +25380,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prompts@npm:^2.0.1, prompts@npm:^2.4.0":
+"prompts@npm:^2.0.1, prompts@npm:^2.2.1, prompts@npm:^2.4.0":
   version: 2.4.2
   resolution: "prompts@npm:2.4.2"
   dependencies:
