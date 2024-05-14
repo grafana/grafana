@@ -2,6 +2,7 @@ package loginattemptimpl
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -54,14 +55,14 @@ func (s *Service) Add(ctx context.Context, username, IPAddress string) error {
 	}
 
 	_, err := s.store.CreateLoginAttempt(ctx, CreateLoginAttemptCommand{
-		Username:  username,
+		Username:  strings.ToLower(username),
 		IpAddress: IPAddress,
 	})
 	return err
 }
 
 func (s *Service) Reset(ctx context.Context, username string) error {
-	return s.store.DeleteLoginAttempts(ctx, DeleteLoginAttemptsCommand{username})
+	return s.store.DeleteLoginAttempts(ctx, DeleteLoginAttemptsCommand{strings.ToLower(username)})
 }
 
 func (s *Service) Validate(ctx context.Context, username string) (bool, error) {
@@ -70,7 +71,7 @@ func (s *Service) Validate(ctx context.Context, username string) (bool, error) {
 	}
 
 	loginAttemptCountQuery := GetUserLoginAttemptCountQuery{
-		Username: username,
+		Username: strings.ToLower(username),
 		Since:    time.Now().Add(-loginAttemptsWindow),
 	}
 
