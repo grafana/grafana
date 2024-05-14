@@ -15,6 +15,7 @@ type Options struct {
 	RecommendedOptions *genericoptions.RecommendedOptions
 	TracingOptions     *TracingOptions
 	MetricsOptions     *MetricsOptions
+	ServerRunOptions   *genericoptions.ServerRunOptions
 }
 
 func New(logger log.Logger, codec runtime.Codec) *Options {
@@ -24,6 +25,7 @@ func New(logger log.Logger, codec runtime.Codec) *Options {
 		RecommendedOptions: options.NewRecommendedOptions(codec),
 		TracingOptions:     NewTracingOptions(logger),
 		MetricsOptions:     NewMetrcicsOptions(logger),
+		ServerRunOptions:   genericoptions.NewServerRunOptions(),
 	}
 }
 
@@ -33,6 +35,7 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	o.RecommendedOptions.AddFlags(fs)
 	o.TracingOptions.AddFlags(fs)
 	o.MetricsOptions.AddFlags(fs)
+	o.ServerRunOptions.AddUniversalFlags(fs)
 }
 
 func (o *Options) Validate() []error {
@@ -49,6 +52,10 @@ func (o *Options) Validate() []error {
 	}
 
 	if errs := o.MetricsOptions.Validate(); len(errs) != 0 {
+		return errs
+	}
+
+	if errs := o.ServerRunOptions.Validate(); len(errs) != 0 {
 		return errs
 	}
 
@@ -117,6 +124,10 @@ func (o *Options) ModifiedApplyTo(config *genericapiserver.RecommendedConfig) er
 		return err
 	}
 
+	if err := o.ServerRunOptions.ApplyTo(&config.Config); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -151,6 +162,12 @@ func (o *Options) ApplyTo(serverConfig *genericapiserver.RecommendedConfig) erro
 
 	if o.MetricsOptions != nil {
 		if err := o.MetricsOptions.ApplyTo(serverConfig); err != nil {
+			return err
+		}
+	}
+
+	if o.ServerRunOptions != nil {
+		if err := o.ServerRunOptions.ApplyTo(&serverConfig.Config); err != nil {
 			return err
 		}
 	}
