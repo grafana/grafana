@@ -14,12 +14,13 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Inspect variables
+title: Manage and inspect variables
+menuTitle: Inspect variables
 description: Review and manage your dashboard variables
 weight: 200
 ---
 
-# Inspect variables
+# Manage and inspect variables
 
 The variables page lets you easily identify whether a variable is being referenced (or used) in other variables or dashboard. In addition, you can also [add][] and [manage variables][] on this page.
 
