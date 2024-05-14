@@ -5,6 +5,11 @@ import { getBackendSrv, isFetchError } from '@grafana/runtime/src/services/backe
 
 import { DataQuerySpecResponse } from './types';
 
+/**
+ * Query Library is an experimental feature. API (including the URL path) will likely change.
+ *
+ * @alpha
+ */
 export const BASE_URL = '/apis/peakq.grafana.app/v0alpha1/namespaces/default/querytemplates/';
 
 /**
