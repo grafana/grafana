@@ -1,4 +1,4 @@
-import { Meta, Story } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
 import { TextArea } from '@grafana/ui';
@@ -21,7 +21,7 @@ const meta: Meta = {
   },
 };
 
-export const Basic: Story = (args) => {
+export const Basic: StoryFn = (args) => {
   return (
     <div style={{ width: args.containerWidth }}>
       <TextArea invalid={args.invalid} placeholder={args.placeholder} cols={args.cols} disabled={args.disabled} />

@@ -1,4 +1,4 @@
-import { Meta, Story } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React, { useEffect, useState } from 'react';
 
 import { VizLayout } from './VizLayout';
@@ -25,7 +25,7 @@ const createArray = (legendItems: number) => {
   return newArray;
 };
 
-export const BottomLegend: Story = ({ height, width, legendItems }) => {
+export const BottomLegend: StoryFn = ({ height, width, legendItems }) => {
   const [items, setItems] = useState(createArray(legendItems));
   useEffect(() => {
     setItems(createArray(legendItems));
@@ -55,7 +55,7 @@ BottomLegend.args = {
   legendItems: 2,
 };
 
-export const RightLegend: Story = ({ height, width, legendItems, legendWidth }) => {
+export const RightLegend: StoryFn = ({ height, width, legendItems, legendWidth }) => {
   const [items, setItems] = useState(createArray(legendItems));
   useEffect(() => {
     setItems(createArray(legendItems));
