@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { AppEvents, GrafanaTheme2, Scope, ScopeSpec, ScopeTreeItemSpec } from '@grafana/data';
-import { getAppEvents } from '@grafana/runtime';
+import { getAppEvents, getBackendSrv } from '@grafana/runtime';
 import {
   SceneComponentProps,
   SceneObjectBase,
@@ -32,14 +32,9 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
 
   private serverGroup = 'scope.grafana.app';
   private serverVersion = 'v0alpha1';
+  private serverNamespace = 'default';
 
-  private treeServer = new ScopedResourceServer<ScopeTreeItemSpec, 'TreeItem'>({
-    group: this.serverGroup,
-    version: this.serverVersion,
-    resource: 'find',
-  });
-
-  private scopesServer = new ScopedResourceServer<ScopeSpec, 'Scope'>({
+  private server = new ScopedResourceServer<ScopeSpec, 'Scope'>({
     group: this.serverGroup,
     version: this.serverVersion,
     resource: 'scopes',
@@ -61,7 +56,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
     let scopes = values.scopes ?? [];
     scopes = Array.isArray(scopes) ? scopes : [scopes];
 
-    const scopesPromises = scopes.map((scopeName) => this.scopesServer.get(scopeName));
+    const scopesPromises = scopes.map((scopeName) => this.server.get(scopeName));
 
     Promise.all(scopesPromises).then((scopes) => {
       this.setState({ scopes });
@@ -70,18 +65,22 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
 
   public async fetchTreeItems(nodeId: string): Promise<Record<string, Node>> {
     try {
-      return ((await this.treeServer.find({ parent: nodeId }))?.items ?? []).reduce<Record<string, Node>>(
-        (acc, item) => {
-          acc[item.nodeId] = {
-            item,
-            isScope: item.nodeType === 'leaf',
-            children: {},
-          };
+      return (
+        (
+          await getBackendSrv().get<{ items: ScopeTreeItemSpec[] }>(
+            `/apis/${this.serverGroup}/${this.serverVersion}/namespaces/${this.serverNamespace}/find`,
+            { parent: nodeId }
+          )
+        )?.items ?? []
+      ).reduce<Record<string, Node>>((acc, item) => {
+        acc[item.nodeId] = {
+          item,
+          isScope: item.nodeType === 'leaf',
+          children: {},
+        };
 
-          return acc;
-        },
-        {}
-      );
+        return acc;
+      }, {});
     } catch (err) {
       getAppEvents().publish({
         type: AppEvents.alertError.name,
@@ -94,8 +93,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
 
   public async fetchScopes(parent: string) {
     try {
-      return (await this.scopesServer.list({ labelSelector: [{ key: 'category', operator: '=', value: parent }] }))
-        ?.items;
+      return (await this.server.list({ labelSelector: [{ key: 'category', operator: '=', value: parent }] }))?.items;
     } catch (err) {
       getAppEvents().publish({
         type: AppEvents.alertError.name,
@@ -140,7 +138,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
     const selectedIdx = scopes.findIndex((scope) => scope.metadata.name === linkId);
 
     if (selectedIdx === -1) {
-      const scope = await this.scopesServer.get(linkId);
+      const scope = await this.server.get(linkId);
 
       if (scope) {
         scopes = [...scopes, scope];

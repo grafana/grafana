@@ -195,7 +195,7 @@ jest.mock('@grafana/runtime', () => ({
     get: jest.fn().mockImplementation((url: string) => {
       const search = new URLSearchParams(url.split('?').pop() || '');
 
-      if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/filter')) {
+      if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/find')) {
         const parent = search.get('parent')?.replace('parent=', '');
 
         return {

@@ -121,15 +121,6 @@ export interface ListOptions {
   limit?: number;
 }
 
-export type ResourceFindOpts = Record<string, string>;
-
-export interface FindMeta {}
-
-export interface ResourceFind<T> {
-  metadata: FindMeta;
-  items: T[];
-}
-
 export interface MetaStatus {
   // Status of the operation. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
   status: 'Success' | 'Failure';
