@@ -38,6 +38,7 @@ import {
   withPromRulesMetadataLogging,
   withRulerRulesMetadataLogging,
 } from '../Analytics';
+import { alertRuleApi } from '../api/alertRuleApi';
 import {
   deleteAlertManagerConfig,
   fetchAlertGroups,
@@ -69,7 +70,7 @@ import { makeAMLink } from '../utils/misc';
 import { AsyncRequestMapSlice, withAppEvents, withSerializedError } from '../utils/redux';
 import * as ruleId from '../utils/rule-id';
 import { getRulerClient } from '../utils/rulerClient';
-import { getAlertInfo, isGrafanaRulerRule, isRulerNotSupportedResponse } from '../utils/rules';
+import { getAlertInfo, isGrafanaRuleIdentifier, isGrafanaRulerRule, isRulerNotSupportedResponse } from '../utils/rules';
 import { safeParsePrometheusDuration } from '../utils/time';
 
 function getDataSourceConfig(getState: () => unknown, rulesSourceName: string) {
@@ -421,6 +422,10 @@ export const saveRuleFormAction = createAsyncThunk(
             await thunkAPI.dispatch(fetchRulerRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME }));
           } else {
             throw new Error('Unexpected rule form type');
+          }
+
+          if (isGrafanaRuleIdentifier(identifier)) {
+            thunkAPI.dispatch(alertRuleApi.util.invalidateTags([{ type: 'GrafanaRulerRule', id: identifier.uid }]));
           }
 
           logInfo(LogMessages.successSavingAlertRule, { type, isNew: (!existing).toString() });

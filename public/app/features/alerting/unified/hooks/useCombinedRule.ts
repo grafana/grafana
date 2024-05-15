@@ -171,6 +171,9 @@ interface RequestState<T> {
   error?: unknown;
 }
 
+// Many places still use the old way of fetching code so synchronizing cache expiration is difficult
+// Hence, this hook fetches a fresh version of a rule most of the time
+// Due to enabled filtering for Prometheus and Ruler rules it shouldn't be a problem
 export function useCombinedRule({ ruleIdentifier }: { ruleIdentifier: RuleIdentifier }): RequestState<CombinedRule> {
   const { ruleSourceName } = ruleIdentifier;
   const ruleSource = getRulesSourceFromIdentifier(ruleIdentifier);
@@ -195,9 +198,7 @@ export function useCombinedRule({ ruleIdentifier }: { ruleIdentifier: RuleIdenti
     },
     {
       skip: !ruleLocation || isLoadingRuleLocation,
-      // TODO Should we enable?
-      // refetchOnFocus: true,
-      // refetchOnReconnect: true,
+      refetchOnMountOrArgChange: true,
     }
   );
 
@@ -211,14 +212,11 @@ export function useCombinedRule({ ruleIdentifier }: { ruleIdentifier: RuleIdenti
       return;
     }
 
-    fetchRulerRuleGroup(
-      {
-        rulerConfig: dsFeatures.rulerConfig,
-        namespace: ruleLocation.namespace,
-        group: ruleLocation.group,
-      },
-      true
-    );
+    fetchRulerRuleGroup({
+      rulerConfig: dsFeatures.rulerConfig,
+      namespace: ruleLocation.namespace,
+      group: ruleLocation.group,
+    });
   }, [dsFeatures, fetchRulerRuleGroup, ruleLocation]);
 
   const rule = useMemo(() => {
@@ -263,7 +261,7 @@ interface RuleLocation {
 function useRuleLocation(ruleIdentifier: RuleIdentifier): RequestState<RuleLocation> {
   const { isLoading, currentData, error } = alertRuleApi.endpoints.getAlertRule.useQuery(
     { uid: isGrafanaRuleIdentifier(ruleIdentifier) ? ruleIdentifier.uid : '' },
-    { skip: !isGrafanaRuleIdentifier(ruleIdentifier) }
+    { skip: !isGrafanaRuleIdentifier(ruleIdentifier), refetchOnMountOrArgChange: true }
   );
 
   return useMemo(() => {
@@ -343,14 +341,11 @@ export function useRuleWithLocation({
       return;
     }
 
-    fetchRulerRuleGroup(
-      {
-        rulerConfig: dsFeatures.rulerConfig,
-        namespace: ruleLocation.namespace,
-        group: ruleLocation.group,
-      },
-      true
-    );
+    fetchRulerRuleGroup({
+      rulerConfig: dsFeatures.rulerConfig,
+      namespace: ruleLocation.namespace,
+      group: ruleLocation.group,
+    });
   }, [dsFeatures, fetchRulerRuleGroup, ruleLocation]);
 
   const ruleWithLocation = useMemo(() => {

@@ -30,7 +30,13 @@ export const useFolderGroupOptions = (folderUid: string, enableProvisionedGroups
   // fetch the ruler rules from the database so we can figure out what other "groups" are already defined
   // for our folders
   const { isLoading: isLoadingRulerNamespace, currentData: rulerNamespace = {} } =
-    alertRuleApi.endpoints.rulerNamespace.useQuery({ namespace: folderUid, rulerConfig: grafanaRulerConfig });
+    alertRuleApi.endpoints.rulerNamespace.useQuery(
+      {
+        namespace: folderUid,
+        rulerConfig: grafanaRulerConfig,
+      },
+      { refetchOnMountOrArgChange: true }
+    );
 
   // There should be only one entry in the rulerNamespace object
   // However it uses folder name as key, so to avoid fetching folder name, we use Object.values
