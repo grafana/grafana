@@ -282,8 +282,8 @@ export function SelectBase<T, Rest = {}>({
     creatableProps.createOptionPosition = createOptionPosition;
     creatableProps.isValidNewOption = isValidNewOption;
 
-    // needed to allow editing a custom value once entered
-    // We only want to do this for single selects, not multi
+    // code needed to allow editing a custom value once entered
+    // we only want to do this for single selects, not multi
     if (!isMulti) {
       creatableProps.inputValue = internalInputValue;
       creatableProps.onMenuOpen = () => {
@@ -292,12 +292,12 @@ export function SelectBase<T, Rest = {}>({
       creatableProps.onInputChange = (val, actionMeta) => {
         commonSelectProps.onInputChange(val, actionMeta);
 
-        // onInputChange => update inputValue
+        // update the input value state on change since we're explicitly controlling it
         if (actionMeta.action === 'input-change') {
           setInternalInputValue(val);
         }
 
-        // onMenuClose => setInputValue to empty
+        // clear the input state on menu close, else react-select won't show the SingleValue component correctly
         if (actionMeta.action === 'menu-close') {
           setInternalInputValue('');
         }
