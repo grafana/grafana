@@ -43,7 +43,7 @@ func (r *recordingRule) Run(key ngmodels.AlertRuleKey) error {
 	logger := r.logger.FromContext(ctx)
 	logger.Debug("Recording rule routine started")
 
-	// nolint:gosimple - this erroneously trips a linter rule because there's only one channel in the select. there will be more in the future.
+	// nolint:gosimple
 	for {
 		select {
 		case <-ctx.Done():
