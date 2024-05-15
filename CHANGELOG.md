@@ -810,6 +810,20 @@ Users who have InfluxDB datasource configured with SQL querying language must up
 Removes `NamespaceID` from responses of all GET routes underneath the path `/api/ruler/grafana/api/v1/rules` - 3 affected endpoints. All affected routes are not in the publicly documented or `stable` marked portion of the ngalert API. This only breaks clients who are directly using the unstable portion of the API. Such clients should use `NamespaceUID` rather than `NamespaceID` to identify namespaces. Issue [#79359](https://github.com/grafana/grafana/issues/79359)
 
 <!-- 10.3.0 END -->
+<!-- 10.2.7 START -->
+
+# 10.2.7 (2024-05-13)
+
+### Features and enhancements
+
+- **Chore:** Upgrade go to 1.21.10. [#87475](https://github.com/grafana/grafana/issues/87475), [@stephaniehingtgen](https://github.com/stephaniehingtgen)
+- **Chore:** Upgrade go to 1.21.10. (Enterprise)
+
+### Bug fixes
+
+- **Azure data sources:** Set selected config type before save. [#87583](https://github.com/grafana/grafana/issues/87583), [@bossinc](https://github.com/bossinc)
+
+<!-- 10.2.7 END -->
 <!-- 10.2.6 START -->
 
 # 10.2.6 (2024-03-25)
@@ -1522,6 +1536,16 @@ Starting with 10.2, `parentRowIndex` is deprecated. It will be removed in a futu
 - **Drawer:** Make content scroll by default. [#75287](https://github.com/grafana/grafana/issues/75287), [@ashharrison90](https://github.com/ashharrison90)
 
 <!-- 10.2.0 END -->
+<!-- 10.1.10 START -->
+
+# 10.1.10 (2024-05-13)
+
+### Features and enhancements
+
+- **Chore:** Upgrade go to 1.21.10. [#87476](https://github.com/grafana/grafana/issues/87476), [@stephaniehingtgen](https://github.com/stephaniehingtgen)
+- **Chore:** Upgrade go to 1.21.10. (Enterprise)
+
+<!-- 10.1.10 END -->
 <!-- 10.1.9 START -->
 
 # 10.1.9 (2024-03-25)
@@ -2609,6 +2633,20 @@ The `database` field has been deprecated in the Elasticsearch datasource provisi
 - **InteractiveTable:** Updated design and minor tweak to Correlactions page. [#66443](https://github.com/grafana/grafana/issues/66443), [@torkelo](https://github.com/torkelo)
 
 <!-- 10.0.0-preview END -->
+<!-- 9.5.19 START -->
+
+# 9.5.19 (2024-05-13)
+
+### Features and enhancements
+
+- **Chore:** Upgrade go to 1.21.10. [#87478](https://github.com/grafana/grafana/issues/87478), [@stephaniehingtgen](https://github.com/stephaniehingtgen)
+- **Chore:** Upgrade go to 1.21.10. (Enterprise)
+
+### Bug fixes
+
+- **Provisioning:** Look up provisioned folders by UID when possible. [#87504](https://github.com/grafana/grafana/issues/87504), [@DanCech](https://github.com/DanCech)
+
+<!-- 9.5.19 END -->
 <!-- 9.5.18 START -->
 
 # 9.5.18 (2024-03-25)
