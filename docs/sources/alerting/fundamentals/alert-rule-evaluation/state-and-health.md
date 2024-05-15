@@ -56,7 +56,7 @@ However, in situations where strict monitoring is critical, relying solely on th
 
 ### Special alerts for `NoData` and `Error`
 
-When evaluation of an alert rule produces state `NoData` or `Error`, Grafana Alerting generates alert instances that have the following additional labels:
+When evaluation of an alert rule produces state `NoData` or `Error`, Grafana Alerting generates a new alert instance that have the following additional labels:
 
 - `alertname`: Either `DatasourceNoData` or `DatasourceError` depending on the state.
 - `datasource_uid`: The UID of the data source that caused the state.
