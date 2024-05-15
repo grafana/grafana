@@ -1,4 +1,4 @@
-import { Meta, Story } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
 import { FileListItem as FileListItemComponent, FileListItemProps } from './FileListItem';
@@ -22,7 +22,7 @@ const meta: Meta = {
   },
 };
 
-export const FileListItem: Story<FileListItemProps> = (args) => {
+export const FileListItem: StoryFn<FileListItemProps> = (args) => {
   return <FileListItemComponent {...args} />;
 };
 

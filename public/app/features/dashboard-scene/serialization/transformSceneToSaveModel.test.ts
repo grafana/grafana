@@ -226,7 +226,7 @@ describe('transformSceneToSaveModel', () => {
       const rowRepeater = rowWithRepeat.state.$behaviors![0] as RowRepeaterBehavior;
 
       // trigger row repeater
-      rowRepeater.variableDependency?.variableUpdateCompleted(variable, true);
+      rowRepeater.performRepeat();
 
       // Make sure the repeated rows have been added to runtime scene model
       expect(grid.state.children.length).toBe(5);

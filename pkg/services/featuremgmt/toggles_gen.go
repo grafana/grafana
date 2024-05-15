@@ -123,6 +123,14 @@ const (
 	// SQL-based k8s storage
 	FlagUnifiedStorage = "unifiedStorage"
 
+	// FlagDualWritePlaylistsMode2
+	// Enables dual writing of playlists to both legacy and k8s storage in mode 2
+	FlagDualWritePlaylistsMode2 = "dualWritePlaylistsMode2"
+
+	// FlagDualWritePlaylistsMode3
+	// Enables dual writing of playlists to both legacy and k8s storage in mode 3
+	FlagDualWritePlaylistsMode3 = "dualWritePlaylistsMode3"
+
 	// FlagCloudWatchCrossAccountQuerying
 	// Enables cross-account querying in CloudWatch datasources
 	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"
@@ -674,4 +682,8 @@ const (
 	// FlagNewDashboardSharingComponent
 	// Enables the new sharing drawer design
 	FlagNewDashboardSharingComponent = "newDashboardSharingComponent"
+
+	// FlagNotificationBanner
+	// Enables the notification banner UI and API
+	FlagNotificationBanner = "notificationBanner"
 )
