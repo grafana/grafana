@@ -13,7 +13,13 @@ import { labelsMatchMatchers, matcherToMatcherField, parseMatchers } from '../ut
 import { Annotation } from '../utils/constants';
 import { isCloudRulesSource } from '../utils/datasource';
 import { parseMatcher } from '../utils/matchers';
-import { getRuleHealth, isAlertingRule, isGrafanaRulerRule, isPromRuleType } from '../utils/rules';
+import {
+  getRuleHealth,
+  isAlertingRule,
+  isGrafanaRulerRule,
+  isPluginProvidedRule,
+  isPromRuleType,
+} from '../utils/rules';
 
 import { calculateGroupTotals, calculateRuleFilteredTotals, calculateRuleTotals } from './useCombinedRuleNamespaces';
 import { useURLSearchParams } from './useURLSearchParams';
@@ -26,7 +32,9 @@ export function useRulesFilter() {
   const [queryParams, updateQueryParams] = useURLSearchParams();
   const searchQuery = queryParams.get('search') ?? '';
 
-  const filterState = useMemo(() => getSearchFilterFromQuery(searchQuery), [searchQuery]);
+  const filterState = useMemo<RulesFilter>(() => {
+    return getSearchFilterFromQuery(searchQuery);
+  }, [searchQuery]);
   const hasActiveFilters = useMemo(() => Object.values(filterState).some((filter) => !isEmpty(filter)), [filterState]);
 
   const updateFilters = useCallback(
@@ -208,13 +216,17 @@ const reduceGroups = (filterState: RulesFilter) => {
       const matchesFilterFor = chain(filterState)
         // ⚠️ keep this list of properties we filter for here up-to-date ⚠️
         // We are ignoring predicates we've matched before we get here (like "freeFormWords")
-        .pick(['ruleType', 'dataSourceNames', 'ruleHealth', 'labels', 'ruleState', 'dashboardUid'])
+        .pick(['ruleType', 'dataSourceNames', 'ruleHealth', 'labels', 'ruleState', 'dashboardUid', 'plugins'])
         .omitBy(isEmpty)
         .mapValues(() => false)
         .value();
 
       if ('ruleType' in matchesFilterFor && filterState.ruleType === promRuleDefition?.type) {
         matchesFilterFor.ruleType = true;
+      }
+
+      if ('plugins' in matchesFilterFor && filterState.plugins === 'hide') {
+        matchesFilterFor.plugins = !isPluginProvidedRule(rule);
       }
 
       if ('dataSourceNames' in matchesFilterFor) {
