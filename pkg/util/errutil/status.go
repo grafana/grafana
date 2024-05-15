@@ -95,7 +95,7 @@ func (s CoreStatus) Status() CoreStatus {
 }
 
 // HTTPStatus converts the CoreStatus to an HTTP status code.
-func (s CoreStatus) HTTPStatus() int32 {
+func (s CoreStatus) HTTPStatus() int {
 	switch s {
 	case StatusUnauthorized:
 		return http.StatusUnauthorized

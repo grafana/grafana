@@ -373,11 +373,12 @@ func (e Error) Error() string {
 
 // When the error is rendered by an apiserver, this format is used
 func (e Error) Status() metav1.Status {
+	public := e.Public()
 	return metav1.Status{
 		Status:  metav1.StatusFailure,
-		Code:    e.Reason.Status().HTTPStatus(),
+		Code:    int32(public.StatusCode),
 		Reason:  metav1.StatusReason(e.Reason.Status()), // almost true
-		Message: e.PublicMessage,
+		Message: public.Message,
 	}
 }
 
@@ -418,7 +419,7 @@ func (e Error) Is(other error) bool {
 // PublicError is derived from Error and only contains information
 // available to the end user.
 type PublicError struct {
-	StatusCode int32          `json:"statusCode"`
+	StatusCode int            `json:"statusCode"`
 	MessageID  string         `json:"messageId"`
 	Message    string         `json:"message,omitempty"`
 	Extra      map[string]any `json:"extra,omitempty"`

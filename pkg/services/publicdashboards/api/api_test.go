@@ -173,7 +173,7 @@ func TestAPIDeletePublicDashboard(t *testing.T) {
 		DashboardUid            string
 		PublicDashboardUid      string
 		ResponseErr             error
-		ExpectedHttpResponse    int32
+		ExpectedHttpResponse    int
 		ExpectedMessageResponse string
 		ShouldCallService       bool
 	}{
@@ -266,7 +266,7 @@ func TestAPIDeletePublicDashboard(t *testing.T) {
 			testServer := setupTestServer(t, nil, service, test.User, true)
 
 			response := callAPI(testServer, http.MethodDelete, fmt.Sprintf("/api/dashboards/uid/%s/public-dashboards/%s", test.DashboardUid, test.PublicDashboardUid), nil, t)
-			assert.Equal(t, test.ExpectedHttpResponse, int32(response.Code))
+			assert.Equal(t, test.ExpectedHttpResponse, response.Code)
 
 			if test.ExpectedHttpResponse == http.StatusOK {
 				assert.Equal(t, []byte(nil), response.Body.Bytes())
@@ -616,7 +616,7 @@ func TestAPIUpdatePublicDashboard(t *testing.T) {
 				var errResp errutil.PublicError
 				err := json.Unmarshal(response.Body.Bytes(), &errResp)
 				require.NoError(t, err)
-				assert.Equal(t, test.ExpectedHttpResponse, int(errResp.StatusCode))
+				assert.Equal(t, test.ExpectedHttpResponse, errResp.StatusCode)
 				assert.Equal(t, test.ExpectedError.(errutil.Error).MessageID, errResp.MessageID)
 			}
 		})
