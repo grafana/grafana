@@ -12,9 +12,9 @@ import (
 
 func TestFolderSupport(t *testing.T) {
 	root, lost, err := buildFolderTree([]*folderInfo{
-		{Guid: "GA", UID: "A", parentUID: "", Name: "A", Slug: "a"},
-		{Guid: "GAA", UID: "AA", parentUID: "A", Name: "AA", Slug: "aa"},
-		{Guid: "GB", UID: "B", parentUID: "", Name: "B", Slug: "b"},
+		{GUID: "GA", UID: "A", ParentUID: "", Name: "A", Slug: "a"},
+		{GUID: "GAA", UID: "AA", ParentUID: "A", Name: "AA", Slug: "aa"},
+		{GUID: "GB", UID: "B", ParentUID: "", Name: "B", Slug: "b"},
 	})
 	require.NoError(t, err)
 	require.NotNil(t, root)

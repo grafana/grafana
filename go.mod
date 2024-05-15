@@ -458,6 +458,8 @@ require (
 	sigs.k8s.io/yaml v1.3.0 // indirect; @grafana-app-platform-squad
 )
 
+require github.com/DATA-DOG/go-sqlmock v1.5.2 // indirect
+
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20231025143828-a6c0e9b86a4c
 

@@ -2,18 +2,21 @@ package dbimpl
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/dlmiddlecote/sqlstats"
+	"github.com/jmoiron/sqlx"
+	"github.com/prometheus/client_golang/prometheus"
+	"xorm.io/xorm"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	entitydb "github.com/grafana/grafana/pkg/services/store/entity/db"
+	iface "github.com/grafana/grafana/pkg/services/store/entity/db"
 	"github.com/grafana/grafana/pkg/services/store/entity/db/migrations"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/jmoiron/sqlx"
-	"github.com/prometheus/client_golang/prometheus"
-	"xorm.io/xorm"
 )
 
 var _ entitydb.EntityDBInterface = (*EntityDB)(nil)
@@ -28,6 +31,8 @@ func ProvideEntityDB(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureTog
 }
 
 type EntityDB struct {
+	mu sync.RWMutex
+
 	db       db.DB
 	features featuremgmt.FeatureToggles
 	engine   *xorm.Engine
@@ -41,11 +46,16 @@ func (db *EntityDB) Init() error {
 }
 
 func (db *EntityDB) GetEngine() (*xorm.Engine, error) {
-	if db.engine != nil {
-		return db.engine, nil
-	}
+	db.mu.RLock()
+	engine := db.engine
+	db.mu.RUnlock()
 
-	var engine *xorm.Engine
+	if engine != nil {
+		return engine, nil
+	}
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
 	var err error
 
 	cfgSection := db.cfg.SectionWithEnvOverrides("entity_api")
@@ -53,7 +63,7 @@ func (db *EntityDB) GetEngine() (*xorm.Engine, error) {
 
 	// if explicit connection settings are provided, use them
 	if dbType != "" {
-		if dbType == "postgres" {
+		if dbType == iface.DriverPostgres {
 			engine, err = getEnginePostgres(cfgSection)
 			if err != nil {
 				return nil, err
@@ -65,7 +75,7 @@ func (db *EntityDB) GetEngine() (*xorm.Engine, error) {
 				db.log.Error("error connecting to postgres", "msg", err.Error())
 				// FIXME: return nil, err
 			}
-		} else if dbType == "mysql" {
+		} else if dbType == iface.DriverMySQL {
 			engine, err = getEngineMySQL(cfgSection)
 			if err != nil {
 				return nil, err
@@ -124,4 +134,15 @@ func (db *EntityDB) GetSession() (*session.SessionDB, error) {
 
 func (db *EntityDB) GetCfg() *setting.Cfg {
 	return db.cfg
+}
+
+func (db *EntityDB) GetDB() (iface.DB, error) {
+	engine, err := db.GetEngine()
+	if err != nil {
+		return nil, err
+	}
+
+	ret := NewDB(engine.DB().DB, engine.Dialect().DriverName())
+
+	return ret, nil
 }

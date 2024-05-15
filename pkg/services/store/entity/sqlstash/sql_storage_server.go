@@ -11,6 +11,7 @@ import (
 	"math/rand"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/bwmarrin/snowflake"
@@ -26,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/store/entity/db"
+	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash/sqltemplate"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -35,7 +37,10 @@ const entityTable = "entity"
 const entityHistoryTable = "entity_history"
 
 var (
-	errorUserNotFoundInContext     = errors.New("can not find user in context")
+	ErrNotFound                = errors.New("entity not found")
+	ErrOptimisticLockingFailed = errors.New("optimistic locking failed")
+	ErrUserNotFoundInContext   = errors.New("can not find user in context")
+
 	errorNextPageTokenNotSupported = errors.New("nextPageToken not yet supported")
 	errorEntityAlreadyExists       = errors.New("entity already exists")
 )
@@ -58,6 +63,10 @@ func ProvideSQLEntityServer(db db.EntityDBInterface, tracer tracing.Tracer /*, c
 		entityServer.log.Warn("error registering storage server metrics", "error", err)
 	}
 
+	if err := entityServer.Init(); err != nil {
+		return nil, fmt.Errorf("initialize Entity Server: %w", err)
+	}
+
 	return entityServer, nil
 }
 
@@ -75,24 +84,46 @@ type sqlEntityServer struct {
 	dialect     migrator.Dialect
 	snowflake   *snowflake.Node
 	broadcaster Broadcaster[*entity.EntityWatchResponse]
-	ctx         context.Context
+	ctx         context.Context // TODO: remove
 	cancel      context.CancelFunc
 	stream      chan *entity.EntityWatchResponse
 	tracer      tracing.Tracer
+
+	mu         sync.RWMutex
+	sqlDB      db.DB
+	sqlDialect sqltemplate.Dialect
 }
 
 func (s *sqlEntityServer) Init() error {
-	if s.sess != nil {
+	s.mu.RLock()
+	initialized := s.sess != nil
+	s.mu.RUnlock()
+
+	if initialized {
 		return nil
 	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	if s.db == nil {
 		return errors.New("missing db")
 	}
 
-	err := s.db.Init()
+	sqlDB, err := s.db.GetDB()
 	if err != nil {
 		return err
+	}
+	s.sqlDB = sqlDB
+
+	switch driverName := sqlDB.DriverName(); driverName {
+	case "postgres":
+		s.sqlDialect = sqltemplate.PostgreSQL
+	case "mysql":
+		s.sqlDialect = sqltemplate.MySQL
+	case "sqlite":
+		s.sqlDialect = sqltemplate.SQLite
+	default:
+		return fmt.Errorf("no dialect for driver %q", driverName)
 	}
 
 	sess, err := s.db.GetSession()
@@ -131,14 +162,10 @@ func (s *sqlEntityServer) Init() error {
 }
 
 func (s *sqlEntityServer) IsHealthy(ctx context.Context, r *entity.HealthCheckRequest) (*entity.HealthCheckResponse, error) {
-	sess, err := s.db.GetSession()
-	if err != nil {
+	if err := s.sqlDB.PingContext(ctx); err != nil {
 		return nil, err
 	}
-	_, err = sess.Query(ctx, "SELECT 1")
-	if err != nil {
-		return nil, err
-	}
+	// TODO: check the status of the watcher implementation as well
 
 	return &entity.HealthCheckResponse{Status: entity.HealthCheckResponse_SERVING}, nil
 }
@@ -191,7 +218,7 @@ func (s *sqlEntityServer) getReadSelect(r FieldSelectRequest) (string, error) {
 	return "SELECT " + strings.Join(quotedFields, ","), nil
 }
 
-func readEntity(rows *sql.Rows, r FieldSelectRequest) (*entity.Entity, error) {
+func oldReadEntity(rows *sql.Rows, r FieldSelectRequest) (*entity.Entity, error) {
 	raw := &entity.Entity{
 		Origin: &entity.EntityOriginInfo{},
 	}
@@ -246,7 +273,7 @@ func readEntity(rows *sql.Rows, r FieldSelectRequest) (*entity.Entity, error) {
 	return raw, nil
 }
 
-func (s *sqlEntityServer) Read(ctx context.Context, r *entity.ReadEntityRequest) (*entity.Entity, error) {
+func (s *sqlEntityServer) oldRead(ctx context.Context, r *entity.ReadEntityRequest) (*entity.Entity, error) {
 	ctx, span := s.tracer.Start(ctx, "storage_server.Read")
 	defer span.End()
 	ctxLogger := s.log.FromContext(log.WithContextualAttributes(ctx, []any{"method", "read"}))
@@ -256,14 +283,14 @@ func (s *sqlEntityServer) Read(ctx context.Context, r *entity.ReadEntityRequest)
 		return nil, err
 	}
 
-	res, err := s.read(ctx, s.sess, r)
+	res, err := s.oldread(ctx, s.sess, r)
 	if err != nil {
 		ctxLogger.Error("read error", "error", err)
 	}
 	return res, err
 }
 
-func (s *sqlEntityServer) read(ctx context.Context, tx session.SessionQuerier, r *entity.ReadEntityRequest) (*entity.Entity, error) {
+func (s *sqlEntityServer) oldread(ctx context.Context, tx session.SessionQuerier, r *entity.ReadEntityRequest) (*entity.Entity, error) {
 	ctx, span := s.tracer.Start(ctx, "storage_server.read")
 	defer span.End()
 
@@ -318,11 +345,11 @@ func (s *sqlEntityServer) read(ctx context.Context, tx session.SessionQuerier, r
 		return &entity.Entity{}, nil
 	}
 
-	return readEntity(rows, r)
+	return oldReadEntity(rows, r)
 }
 
 //nolint:gocyclo
-func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequest) (*entity.CreateEntityResponse, error) {
+func (s *sqlEntityServer) oldCreate(ctx context.Context, r *entity.CreateEntityRequest) (*entity.CreateEntityResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "storage_server.Create")
 	defer span.End()
 	ctxLogger := s.log.FromContext(log.WithContextualAttributes(ctx, []any{"method", "create"}))
@@ -345,7 +372,7 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 			return nil, err
 		}
 		if modifier == nil {
-			ctxLogger.Error("could not find user in context", "error", errorUserNotFoundInContext)
+			ctxLogger.Error("could not find user in context", "error", ErrUserNotFoundInContext)
 			return nil, err
 		}
 		createdBy = store.GetUserIDString(modifier)
@@ -360,7 +387,7 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 	}
 
 	err := s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
-		current, err := s.read(ctx, tx, &entity.ReadEntityRequest{
+		current, err := s.oldread(ctx, tx, &entity.ReadEntityRequest{
 			Key:        r.Entity.Key,
 			WithBody:   true,
 			WithStatus: true,
@@ -368,7 +395,6 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 		if err != nil {
 			return err
 		}
-
 		// if we found an existing entity
 		if current.Guid != "" {
 			ctxLogger.Error("entity already exists", "error", errorEntityAlreadyExists)
@@ -524,7 +550,7 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 		case folder.GROUP:
 			switch current.Resource {
 			case folder.RESOURCE:
-				err = s.updateFolderTree(ctx, tx, current.Namespace)
+				err = s.oldUpdateFolderTree(ctx, tx, current.Namespace)
 				if err != nil {
 					ctxLogger.Error("error updating folder tree", "error", err.Error())
 					return err
@@ -551,7 +577,7 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 }
 
 //nolint:gocyclo
-func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequest) (*entity.UpdateEntityResponse, error) {
+func (s *sqlEntityServer) oldUpdate(ctx context.Context, r *entity.UpdateEntityRequest) (*entity.UpdateEntityResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "storage_server.Update")
 	defer span.End()
 	ctxLogger := s.log.FromContext(log.WithContextualAttributes(ctx, []any{"method", "update"}))
@@ -574,8 +600,8 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 			return nil, err
 		}
 		if modifier == nil {
-			ctxLogger.Error("could not find user in context", "error", errorUserNotFoundInContext)
-			return nil, errorUserNotFoundInContext
+			ctxLogger.Error("could not find user in context", "error", ErrUserNotFoundInContext)
+			return nil, ErrUserNotFoundInContext
 		}
 		updatedBy = store.GetUserIDString(modifier)
 	}
@@ -589,7 +615,7 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 	var err error
 
 	err = s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
-		previous, err = s.read(ctx, tx, &entity.ReadEntityRequest{
+		previous, err = s.oldread(ctx, tx, &entity.ReadEntityRequest{
 			Key:        r.Entity.Key,
 			WithBody:   true,
 			WithStatus: true,
@@ -771,7 +797,7 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 		case folder.GROUP:
 			switch updated.Resource {
 			case folder.RESOURCE:
-				err = s.updateFolderTree(ctx, tx, updated.Namespace)
+				err = s.oldUpdateFolderTree(ctx, tx, updated.Namespace)
 				if err != nil {
 					ctxLogger.Error("error updating folder tree", "msg", err.Error())
 					return err
@@ -833,7 +859,7 @@ func (s *sqlEntityServer) setLabels(ctx context.Context, tx *session.SessionTx, 
 	return nil
 }
 
-func (s *sqlEntityServer) Delete(ctx context.Context, r *entity.DeleteEntityRequest) (*entity.DeleteEntityResponse, error) {
+func (s *sqlEntityServer) oldDelete(ctx context.Context, r *entity.DeleteEntityRequest) (*entity.DeleteEntityResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "storage_server.Delete")
 	defer span.End()
 	ctxLogger := s.log.FromContext(log.WithContextualAttributes(ctx, []any{"method", "delete"}))
@@ -1005,7 +1031,7 @@ func (s *sqlEntityServer) doDelete(ctx context.Context, tx *session.SessionTx, e
 	case folder.GROUP:
 		switch updated.Resource {
 		case folder.RESOURCE:
-			err = s.updateFolderTree(ctx, tx, updated.Namespace)
+			err = s.oldUpdateFolderTree(ctx, tx, updated.Namespace)
 			if err != nil {
 				s.log.Error("error updating folder tree", "msg", err.Error())
 				return nil, err
@@ -1032,8 +1058,8 @@ func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRe
 		return nil, err
 	}
 	if user == nil {
-		ctxLogger.Error("could not find user in context", "error", errorUserNotFoundInContext)
-		return nil, errorUserNotFoundInContext
+		ctxLogger.Error("could not find user in context", "error", ErrUserNotFoundInContext)
+		return nil, ErrUserNotFoundInContext
 	}
 
 	res, err := s.history(ctx, r)
@@ -1125,7 +1151,7 @@ func (s *sqlEntityServer) history(ctx context.Context, r *entity.EntityHistoryRe
 		ResourceVersion: s.snowflake.Generate().Int64(),
 	}
 	for rows.Next() {
-		v, err := readEntity(rows, r)
+		v, err := oldReadEntity(rows, r)
 		if err != nil {
 			return nil, err
 		}
@@ -1238,8 +1264,8 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 		return nil, err
 	}
 	if user == nil {
-		ctxLogger.Error("could not find user in context", "error", errorUserNotFoundInContext)
-		return nil, errorUserNotFoundInContext
+		ctxLogger.Error("could not find user in context", "error", ErrUserNotFoundInContext)
+		return nil, ErrUserNotFoundInContext
 	}
 
 	fields := s.getReadFields(r)
@@ -1432,7 +1458,7 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 	}
 	defer func() { _ = rows.Close() }()
 	for rows.Next() {
-		result, err := readEntity(rows, r)
+		result, err := oldReadEntity(rows, r)
 		if err != nil {
 			ctxLogger.Error("error reading rows to entity", "error", err)
 			return rsp, err
@@ -1466,8 +1492,8 @@ func (s *sqlEntityServer) Watch(w entity.EntityStore_WatchServer) error {
 		return err
 	}
 	if user == nil {
-		ctxLogger.Error("could not find user in context", "error", errorUserNotFoundInContext)
-		return errorUserNotFoundInContext
+		ctxLogger.Error("could not find user in context", "error", ErrUserNotFoundInContext)
+		return ErrUserNotFoundInContext
 	}
 
 	r, err := w.Recv()
@@ -1604,7 +1630,7 @@ func (s *sqlEntityServer) watchInit(ctx context.Context, r *entity.EntityWatchRe
 					return nil
 				}
 
-				result, err := readEntity(rows, r)
+				result, err := oldReadEntity(rows, r)
 				if err != nil {
 					return err
 				}
@@ -1724,7 +1750,7 @@ func (s *sqlEntityServer) poll(since int64, out chan *entity.EntityWatchResponse
 					return nil
 				}
 
-				updated, err := readEntity(rows, rr)
+				updated, err := oldReadEntity(rows, rr)
 				if err != nil {
 					ctxLogger.Error("poll error readEntity", "error", err)
 					return err
@@ -1954,8 +1980,8 @@ func (s *sqlEntityServer) FindReferences(ctx context.Context, r *entity.Referenc
 		return nil, err
 	}
 	if user == nil {
-		ctxLogger.Error("could not find user in context", "error", errorUserNotFoundInContext)
-		return nil, errorUserNotFoundInContext
+		ctxLogger.Error("could not find user in context", "error", ErrUserNotFoundInContext)
+		return nil, ErrUserNotFoundInContext
 	}
 
 	if r.NextPageToken != "" {

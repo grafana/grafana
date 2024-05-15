@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	iface "github.com/grafana/grafana/pkg/services/store/entity/db"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"xorm.io/xorm"
@@ -24,7 +25,9 @@ func getEngineMySQL(cfgSection *setting.DynamicSection) (*xorm.Engine, error) {
 
 	connectionString := connectionStringMySQL(dbUser, dbPass, protocol, dbHost, dbName)
 
-	engine, err := xorm.NewEngine("mysql", connectionString)
+	// TODO: replace xorm.NewEngine with sql.Open once we're able to get rid of
+	// GetSession and GetEngine methods.
+	engine, err := xorm.NewEngine(iface.DriverMySQL, connectionString)
 	if err != nil {
 		return nil, err
 	}
@@ -52,12 +55,17 @@ func getEnginePostgres(cfgSection *setting.DynamicSection) (*xorm.Engine, error)
 
 	connectionString := connectionStringPostgres(dbUser, dbPass, addr.Host, addr.Port, dbName, dbSslMode)
 
-	engine, err := xorm.NewEngine("postgres", connectionString)
+	// TODO: replace xorm.NewEngine with sql.Open once we're able to get rid of
+	// GetSession and GetEngine methods.
+	engine, err := xorm.NewEngine(iface.DriverPostgres, connectionString)
 	if err != nil {
 		return nil, err
 	}
 	return engine, nil
 }
+
+// FIXME: connection strings are not properly escaping arguments like `user` or
+// `dbName`.
 
 func connectionStringMySQL(user, password, protocol, host, dbName string) string {
 	return fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true", user, password, protocol, host, dbName)

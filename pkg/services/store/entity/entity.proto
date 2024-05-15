@@ -192,6 +192,7 @@ message UpdateEntityResponse {
     ERROR = 0;
     UPDATED = 1;
     UNCHANGED = 2;
+    NOTFOUND = 3;
   }
 }
 
