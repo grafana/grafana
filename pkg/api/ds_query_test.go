@@ -230,7 +230,7 @@ func TestDataSourceQueryError(t *testing.T) {
 	tcs := []struct {
 		request        string
 		clientErr      error
-		expectedStatus int
+		expectedStatus int32
 		expectedBody   string
 	}{
 		{
@@ -311,7 +311,7 @@ func TestDataSourceQueryError(t *testing.T) {
 			resp, err := srv.SendJSON(req)
 			require.NoError(t, err)
 
-			require.Equal(t, tc.expectedStatus, resp.StatusCode)
+			require.Equal(t, tc.expectedStatus, int32(resp.StatusCode))
 			body, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedBody, string(body))
