@@ -48,7 +48,7 @@ func (e *AzureLogAnalyticsDatasource) GetBasicLogsUsage(ctx context.Context, url
 	var payload BasicLogsUsagePayload
 	jsonErr := json.Unmarshal(originalPayload, &payload)
 	if jsonErr != nil {
-		return rw, fmt.Errorf("when getting basic logs table usage, failed to decode the query object from JSON: %w", jsonErr)
+		return rw, fmt.Errorf("error decoding basic logs table usage payload: %w", jsonErr)
 	}
 	table := payload.Table
 
