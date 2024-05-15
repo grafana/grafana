@@ -46,11 +46,13 @@ Alert instances will be routed for [notifications][notifications] when they are 
 
 ### Keep last state
 
-In the alert rule settings, you can configure to keep the last state of the alert instance when a `NoData` and/or `Error` state is encountered.
+The "Keep Last State" option helps mitigate temporary data source issues, preventing alerts from unintentionally firing, resolving, and re-firing.
 
-The "Keep Last State" option can prevent unintentional alerts from firing, and from resolving and re-firing. Just like normal evaluation, the alert instance transitions from `Pending` to `Alerting` after the pending period has elapsed.
+In the alert rule settings, you can configure to keep the last state of the alert instance when a `NoData` and/or `Error` state is encountered. Just like normal evaluation, the alert instance transitions from `Pending` to `Alerting` after the pending period has elapsed.
 
 {{< figure src="/media/docs/alerting/alert-rule-configure-no-data-and-error.png" max-width="500px" >}}
+
+However, in situations where strict monitoring is critical, relying solely on the "Keep Last State" option may not be appropriate. Instead, consider using an alternative or implementing additional alert rules to ensure that issues with prolonged data source disruptions are detected.
 
 ### Special alerts for `NoData` and `Error`
 
