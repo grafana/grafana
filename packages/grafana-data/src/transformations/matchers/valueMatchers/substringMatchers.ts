@@ -12,7 +12,11 @@ const isSubstringMatcher: ValueMatcherInfo<BasicValueMatcherOptions> = {
     return (valueIndex: number, field: Field) => {
       const value = field.values[valueIndex];
       return (
-        (value && options.value && value.toLowerCase().includes(options.value.toLowerCase())) || options.value === ''
+        (value &&
+          options.value &&
+          typeof value === 'string' &&
+          value.toLowerCase().includes(options.value.toLowerCase())) ||
+        options.value === ''
       );
     };
   },
