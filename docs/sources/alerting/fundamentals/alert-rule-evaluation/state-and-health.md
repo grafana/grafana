@@ -28,13 +28,13 @@ There are three key components that help you understand how your alerts behave d
 
 An alert instance can be in either of the following states:
 
-| State        | Description                                                                                 |
-| ------------ | ------------------------------------------------------------------------------------------- |
-| **Normal**   | The state of an alert when the condition (threshold) is not met.                            |
-| **Pending**  | The state of an alert that has breached the threshold but for less than the pending period. |
-| **Alerting** | The state of an alert that has breached the threshold for longer than the pending period.   |
-| **NoData**   | The state of an alert whose query returns no data or all values are null.                   |
-| **Error**    | The state of an alert when an error or timeout occurred evaluating the alert rule.          |
+| State        | Description                                                                                                   |
+| ------------ | ------------------------------------------------------------------------------------------------------------- |
+| **Normal**   | The state of an alert when the condition (threshold) is not met.                                              |
+| **Pending**  | The state of an alert that has breached the threshold but for less than the [pending period][pending-period]. |
+| **Alerting** | The state of an alert that has breached the threshold for longer than the [pending period][pending-period].   |
+| **NoData**   | The state of an alert whose query returns no data or all values are null.                                     |
+| **Error**    | The state of an alert when an error or timeout occurred evaluating the alert rule.                            |
 
 {{< figure src="/media/docs/alerting/alert-instance-states-v3.png" caption="Alert instance state diagram" alt="Alert instance state diagram" max-width="750px" >}}
 
@@ -46,15 +46,17 @@ Alert instances will be routed for [notifications][notifications] when they are 
 
 ### Keep last state
 
-In the alert rule settings, you can configure to keep the last state of the alert instance when a `NoData` and/or `Error` state is encountered.
+The "Keep Last State" option helps mitigate temporary data source issues, preventing alerts from unintentionally firing, resolving, and re-firing.
 
-The "Keep Last State" option can prevent unintentional alerts from firing, and from resolving and re-firing. Just like normal evaluation, the alert instance transitions from `Pending` to `Alerting` after the pending period has elapsed.
+In the alert rule settings, you can configure to keep the last state of the alert instance when a `NoData` and/or `Error` state is encountered. Just like normal evaluation, the alert instance transitions from `Pending` to `Alerting` after the pending period has elapsed.
 
 {{< figure src="/media/docs/alerting/alert-rule-configure-no-data-and-error.png" max-width="500px" >}}
 
-### Labels for `NoData` and `Error`
+However, in situations where strict monitoring is critical, relying solely on the "Keep Last State" option may not be appropriate. Instead, consider using an alternative or implementing additional alert rules to ensure that issues with prolonged data source disruptions are detected.
 
-When an alert instance is on the `NoData` or `Error` state, Grafana Alerting includes the following additional labels:
+### Special alerts for `NoData` and `Error`
+
+When evaluation of an alert rule produces state `NoData` or `Error`, Grafana Alerting generates a new alert instance that have the following additional labels:
 
 - `alertname`: Either `DatasourceNoData` or `DatasourceError` depending on the state.
 - `datasource_uid`: The UID of the data source that caused the state.
@@ -88,5 +90,8 @@ An alert rule can have one of the following health statuses:
 
 [notifications]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications"
 [notifications]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications"
+
+[pending-period]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation#pending-period"
+[pending-period]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation#pending-period"
 
 {{% /docs/reference %}}
