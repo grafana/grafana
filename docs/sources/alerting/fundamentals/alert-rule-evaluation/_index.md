@@ -49,9 +49,9 @@ Keep in mind:
 
 - One alert rule can generate multiple alert instances - one for each time series produced by the alert rule's query.
 - Alert instances from the same alert rule may be in different states. For instance, only one observed machine might start firing.
-- Only firing and resolved alert instances are routed to manage their notifications.
+- Only **Alerting** and **Resolved** alert instances are routed to manage their notifications.
 
-{{< figure src="/media/docs/alerting/alert-rule-evaluation-overview-statediagram.png" max-width="750px" >}}
+{{< figure src="/media/docs/alerting/alert-rule-evaluation-overview-statediagram-v2.png" max-width="750px" >}}
 
 <!--
 Remove ///
@@ -62,23 +62,23 @@ stateDiagram-v2
             Route "Resolved" alert instances
             for notifications
         end note
-        Pending --///> Firing
-        Firing --///> Normal: Resolved
-        note right of Firing
-            Route "Firing" alert instances
+        Pending --///> Alerting
+        Alerting --///> Normal: Resolved
+        note right of Alerting
+            Route "Alerting" alert instances
             for notifications
         end note
 -->
 
 Consider an alert rule with an **evaluation interval** set at every 30 seconds and a **pending period** of 90 seconds. The evaluation occurs as follows:
 
-| Time                      | Condition | Alert instance state | Pending counter |
-| ------------------------- | --------- | -------------------- | --------------- |
-| 00:30 (first evaluation)  | Not met   | Normal               | -               |
-| 01:00 (second evaluation) | Breached  | Pending              | 0s              |
-| 01:30 (third evaluation)  | Breached  | Pending              | 30s             |
-| 02:00 (fourth evaluation) | Breached  | Pending              | 60s             |
-| 02:30 (fifth evaluation)  | Breached  | Firing<sup>\*</sup>  | 90s             |
+| Time                      | Condition | Alert instance state  | Pending counter |
+| ------------------------- | --------- | --------------------- | --------------- |
+| 00:30 (first evaluation)  | Not met   | Normal                | -               |
+| 01:00 (second evaluation) | Breached  | Pending               | 0s              |
+| 01:30 (third evaluation)  | Breached  | Pending               | 30s             |
+| 02:00 (fourth evaluation) | Breached  | Pending               | 60s             |
+| 02:30 (fifth evaluation)  | Breached  | Alerting<sup>\*</sup> | 90s             |
 
 An alert instance is resolved when it transitions from the `Firing` to the `Normal` state. For instance, in the previous example:
 
