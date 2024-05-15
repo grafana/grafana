@@ -28,6 +28,8 @@ topnav,deprecated,@grafana/grafana-frontend-platform,false,false,false
 returnToPrevious,GA,@grafana/grafana-frontend-platform,false,false,true
 grpcServer,preview,@grafana/grafana-app-platform-squad,false,false,false
 unifiedStorage,experimental,@grafana/grafana-app-platform-squad,false,true,false
+dualWritePlaylistsMode2,experimental,@grafana/search-and-storage,false,false,false
+dualWritePlaylistsMode3,experimental,@grafana/search-and-storage,false,false,false
 cloudWatchCrossAccountQuerying,GA,@grafana/aws-datasources,false,false,false
 showDashboardValidationWarnings,experimental,@grafana/dashboards-squad,false,false,false
 mysqlAnsiQuotes,experimental,@grafana/search-and-storage,false,false,false
@@ -108,7 +110,7 @@ cloudWatchBatchQueries,preview,@grafana/aws-datasources,false,false,false
 recoveryThreshold,GA,@grafana/alerting-squad,false,true,false
 lokiStructuredMetadata,GA,@grafana/observability-logs,false,false,false
 teamHttpHeaders,preview,@grafana/identity-access-team,false,false,false
-awsDatasourcesNewFormStyling,preview,@grafana/aws-datasources,false,false,true
+awsDatasourcesNewFormStyling,GA,@grafana/aws-datasources,false,false,true
 cachingOptimizeSerializationMemoryUsage,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 panelTitleSearchInV1,experimental,@grafana/search-and-storage,true,false,false
 managedPluginsInstall,GA,@grafana/plugins-platform-backend,false,false,false
@@ -166,3 +168,4 @@ queryLibrary,experimental,@grafana/explore-squad,false,false,false
 autofixDSUID,experimental,@grafana/plugins-platform-backend,false,false,false
 logsExploreTableDefaultVisualization,experimental,@grafana/observability-logs,false,false,true
 newDashboardSharingComponent,experimental,@grafana/sharing-squad,false,false,true
+notificationBanner,experimental,@grafana/grafana-frontend-platform,false,false,false

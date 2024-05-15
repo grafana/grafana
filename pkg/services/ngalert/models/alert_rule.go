@@ -243,7 +243,7 @@ type AlertRule struct {
 	PanelID         *int64  `xorm:"panel_id"`
 	RuleGroup       string
 	RuleGroupIndex  int     `xorm:"rule_group_idx"`
-	Record          *Record `xorm:"text null 'record'"`
+	Record          *Record `xorm:"json"`
 	NoDataState     NoDataState
 	ExecErrState    ExecutionErrorState
 	// ideally this field should have been apimodels.ApiDuration
@@ -498,12 +498,14 @@ func (alertRule *AlertRule) ValidateAlertRule(cfg setting.UnifiedAlertingSetting
 		return fmt.Errorf("%w: cannot have Panel ID without a Dashboard UID", ErrAlertRuleFailedValidation)
 	}
 
-	if _, err := ErrStateFromString(string(alertRule.ExecErrState)); err != nil {
-		return err
-	}
+	if !alertRule.IsRecordingRule() {
+		if _, err := ErrStateFromString(string(alertRule.ExecErrState)); err != nil {
+			return err
+		}
 
-	if _, err := NoDataStateFromString(string(alertRule.NoDataState)); err != nil {
-		return err
+		if _, err := NoDataStateFromString(string(alertRule.NoDataState)); err != nil {
+			return err
+		}
 	}
 
 	if alertRule.For < 0 {
@@ -516,10 +518,6 @@ func (alertRule *AlertRule) ValidateAlertRule(cfg setting.UnifiedAlertingSetting
 				return fmt.Errorf("%w: system reserved label %s cannot be defined", ErrAlertRuleFailedValidation, label)
 			}
 		}
-	}
-
-	if alertRule.Record != nil {
-		return fmt.Errorf("%w: storing recording rules is not yet allowed", ErrAlertRuleFailedValidation)
 	}
 
 	if len(alertRule.NotificationSettings) > 0 {
@@ -552,6 +550,10 @@ func (alertRule *AlertRule) GetFolderKey() FolderKey {
 	}
 }
 
+func (alertRule *AlertRule) IsRecordingRule() bool {
+	return alertRule.Record != nil
+}
+
 // AlertRuleVersion is the model for alert rule versions in unified alerting.
 type AlertRuleVersion struct {
 	ID               int64  `xorm:"pk autoincr 'id'"`
@@ -569,7 +571,7 @@ type AlertRuleVersion struct {
 	Condition       string
 	Data            []AlertQuery
 	IntervalSeconds int64
-	Record          *Record `xorm:"text null 'record'"`
+	Record          *Record `xorm:"json"`
 	NoDataState     NoDataState
 	ExecErrState    ExecutionErrorState
 	// ideally this field should have been apimodels.ApiDuration

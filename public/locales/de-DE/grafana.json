@@ -618,6 +618,9 @@
     "select": {
       "no-options-label": "Keine Optionen gefunden",
       "placeholder": "Auswählen"
+    },
+    "spinner": {
+      "aria-label": ""
     }
   },
   "graph": {
