@@ -41,12 +41,14 @@ func TestFilterByAccess(t *testing.T) {
 		name             string
 		user             identity.Requester
 		expected         []*models.Silence
+		expectedErr      error
 		expectedDbAccess bool
 	}{
 		{
-			name:             "no silence access, empty list",
+			name:             "no silence access, cannot read",
 			user:             newUser(),
 			expected:         []*models.Silence{},
+			expectedErr:      ErrAuthorizationBase,
 			expectedDbAccess: false,
 		},
 		{
@@ -69,6 +71,14 @@ func TestFilterByAccess(t *testing.T) {
 			},
 			expectedDbAccess: true,
 		},
+		{
+			name: "silence reader with no accessible rule silences, global only",
+			user: newUser(ac.Permission{Action: silenceRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("unknown-folder")}),
+			expected: []*models.Silence{
+				global,
+			},
+			expectedDbAccess: true,
+		},
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
@@ -83,8 +93,12 @@ func TestFilterByAccess(t *testing.T) {
 
 			actual, err := svc.FilterByAccess(context.Background(), testCase.user, silences...)
 
-			require.NoError(t, err)
-			require.ElementsMatch(t, testCase.expected, actual)
+			if testCase.expectedErr != nil {
+				assert.ErrorIs(t, err, testCase.expectedErr)
+			} else {
+				assert.NoError(t, err)
+				require.ElementsMatch(t, testCase.expected, actual)
+			}
 
 			if testCase.expectedDbAccess {
 				require.Equal(t, store.Calls, 1)
@@ -176,9 +190,9 @@ func TestAuthorizeReadSilence(t *testing.T) {
 						assert.NoError(t, err)
 					}
 					if testCase.expectedDbAccess {
-						require.Equal(t, store.Calls, 1)
+						require.Equal(t, 1, store.Calls)
 					} else {
-						require.Equal(t, store.Calls, 0)
+						require.Equal(t, 0, store.Calls)
 					}
 				})
 			}
