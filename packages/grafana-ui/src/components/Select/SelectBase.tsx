@@ -200,11 +200,11 @@ export function SelectBase<T, Rest = {}>({
       const hasValue = defaultValue || value;
       selectedValue = hasValue ? [hasValue] : [];
     } else {
-      selectedValue = cleanValue(value, options, allowCustomValue);
+      selectedValue = cleanValue(value, options);
     }
   }
 
-  const [internalInputValue, setInternalInputValue] = useState(selectedValue?.[0]?.label);
+  const [internalInputValue, setInternalInputValue] = useState('');
 
   const commonSelectProps = {
     'aria-label': ariaLabel,

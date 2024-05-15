@@ -7,8 +7,7 @@ import { SelectableOptGroup } from './types';
  */
 export const cleanValue = (
   value: unknown,
-  options: Array<SelectableValue | SelectableOptGroup | SelectableOptGroup[]>,
-  allowCustomValue: boolean
+  options: Array<SelectableValue | SelectableOptGroup | SelectableOptGroup[]>
 ) => {
   if (Array.isArray(value)) {
     const filtered = value.filter(Boolean);
@@ -19,14 +18,6 @@ export const cleanValue = (
     return [value];
   }
   if (typeof value === 'string' || typeof value === 'number') {
-    if (allowCustomValue) {
-      return [
-        {
-          label: String(value),
-          value,
-        },
-      ];
-    }
     const selectedValue = findSelectedValue(value, options);
     if (selectedValue) {
       return [selectedValue];

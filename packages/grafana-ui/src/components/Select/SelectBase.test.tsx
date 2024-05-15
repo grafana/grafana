@@ -76,7 +76,6 @@ describe('SelectBase', () => {
           }}
         />
       );
-      expect(await screen.findByRole('combobox')).toHaveValue('my custom value');
 
       await userEvent.click(screen.getByRole('combobox'));
       await userEvent.type(screen.getByRole('combobox'), '{backspace}{backspace}{enter}');
@@ -88,7 +87,6 @@ describe('SelectBase', () => {
 
     it('allows editing a custom basic value', async () => {
       render(<SelectBase onChange={onChangeHandler} allowCustomValue value="my custom value" />);
-      expect(await screen.findByRole('combobox')).toHaveValue('my custom value');
 
       await userEvent.click(screen.getByRole('combobox'));
       await userEvent.type(screen.getByRole('combobox'), '{backspace}{backspace}{enter}');

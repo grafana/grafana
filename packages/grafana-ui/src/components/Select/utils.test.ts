@@ -64,35 +64,26 @@ describe('Select utils', () => {
   describe('cleanValue', () => {
     it('should return filtered array of values for value of array type', () => {
       const value = [null, { value: 'test', label: 'Test' }, undefined, undefined];
-      expect(cleanValue(value, options, false)).toEqual([{ value: 'test', label: 'Test' }]);
+      expect(cleanValue(value, options)).toEqual([{ value: 'test', label: 'Test' }]);
     });
 
     it('should return array when value is a single object', () => {
-      expect(cleanValue({ value: 'test', label: 'Test' }, options, false)).toEqual([{ value: 'test', label: 'Test' }]);
+      expect(cleanValue({ value: 'test', label: 'Test' }, options)).toEqual([{ value: 'test', label: 'Test' }]);
     });
 
     it('should return correct value when value argument is a string', () => {
-      expect(cleanValue('test1', optGroup, false)).toEqual([{ label: 'Group 4 - Option 1', value: 'test1' }]);
-      expect(cleanValue(3, options, false)).toEqual([{ label: 'Option 3', value: 3 }]);
+      expect(cleanValue('test1', optGroup)).toEqual([{ label: 'Group 4 - Option 1', value: 'test1' }]);
+      expect(cleanValue(3, options)).toEqual([{ label: 'Option 3', value: 3 }]);
     });
 
     it('should return null for null values', () => {
-      expect(cleanValue(null, options, false)).toEqual([null]);
+      expect(cleanValue(null, options)).toEqual([null]);
     });
 
     it('should return undefined for undefined/empty values', () => {
-      expect(cleanValue([undefined], options, false)).toEqual(undefined);
-      expect(cleanValue(undefined, options, false)).toEqual(undefined);
-      expect(cleanValue('', options, false)).toEqual(undefined);
-    });
-
-    it('should return the value if allowCustomValues is true', () => {
-      expect(cleanValue('option-does-not-exist', options, true)).toEqual([
-        {
-          label: 'option-does-not-exist',
-          value: 'option-does-not-exist',
-        },
-      ]);
+      expect(cleanValue([undefined], options)).toEqual(undefined);
+      expect(cleanValue(undefined, options)).toEqual(undefined);
+      expect(cleanValue('', options)).toEqual(undefined);
     });
   });
 });
