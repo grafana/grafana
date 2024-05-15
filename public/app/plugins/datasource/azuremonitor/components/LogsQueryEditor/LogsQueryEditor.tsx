@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 
 import { PanelData, TimeRange } from '@grafana/data';
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
+import { getTemplateSrv } from '@grafana/runtime';
 import { Alert, LinkButton, Text, TextLink } from '@grafana/ui';
 
 import Datasource from '../../datasource';
@@ -48,6 +49,7 @@ const LogsQueryEditor = ({
   const [showBasicLogsToggle, setShowBasicLogsToggle] = useState<boolean>(false);
   const [dataIngestedWarning, setDataIngestedWarning] = useState<React.ReactNode | null>(null);
   const [dataIngested, setDataIngested] = useState<number | undefined>(undefined);
+  const templateSrv = getTemplateSrv();
 
   const disableRow = (row: ResourceRow, selectedRows: ResourceRowGroup) => {
     if (selectedRows.length === 0) {
@@ -74,14 +76,15 @@ const LogsQueryEditor = ({
 
   useEffect(() => {
     if (query.azureLogAnalytics?.resources && query.azureLogAnalytics.resources.length === 1) {
-      const resource = parseResourceURI(query.azureLogAnalytics.resources[0]);
+      const selectedResource = templateSrv.replace(query.azureLogAnalytics.resources[0]);
+      const parsedResource = parseResourceURI(selectedResource);
       setShowBasicLogsToggle(
-        resource.metricNamespace?.toLowerCase() === 'microsoft.operationalinsights/workspaces' && basicLogsEnabled
+        parsedResource.metricNamespace?.toLowerCase() === 'microsoft.operationalinsights/workspaces' && basicLogsEnabled
       );
     } else {
       setShowBasicLogsToggle(false);
     }
-  }, [basicLogsEnabled, query.azureLogAnalytics?.resources]);
+  }, [basicLogsEnabled, query.azureLogAnalytics?.resources, templateSrv]);
 
   useEffect(() => {
     if ((!basicLogsEnabled || !showBasicLogsToggle) && query.azureLogAnalytics?.basicLogsQuery) {

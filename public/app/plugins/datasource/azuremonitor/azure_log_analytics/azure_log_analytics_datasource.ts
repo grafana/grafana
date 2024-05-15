@@ -257,7 +257,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     const templateSrv = getTemplateSrv();
     const data = {
       table: table,
-      resource: query.azureLogAnalytics?.resources?.[0],
+      resource: templateSrv.replace(query.azureLogAnalytics?.resources?.[0]),
       queryType: query.queryType,
       from: templateSrv.replace('$__from'),
       to: templateSrv.replace('$__to'),
