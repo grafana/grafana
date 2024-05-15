@@ -66,7 +66,7 @@ func createTestContext(t *testing.T) (entityStore.EntityStoreClient, factory.Des
 	db := sqlstore.InitTestDBWithMigration(t, nil, sqlstore.InitTestDBOpt{EnsureDefaultOrgAndUser: false})
 	require.NoError(t, err)
 
-	eDB, err := dbimpl.ProvideEntityDB(db, cfg, featureToggles)
+	eDB, err := dbimpl.ProvideEntityDB(db, cfg, featureToggles, nil)
 	require.NoError(t, err)
 
 	err = eDB.Init()

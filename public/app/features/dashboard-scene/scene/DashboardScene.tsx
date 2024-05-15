@@ -64,6 +64,7 @@ import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryVizPanel } from './LibraryVizPanel';
+import { RowRepeaterBehavior } from './RowRepeaterBehavior';
 import { ScopesScene } from './ScopesScene';
 import { ViewPanelScene } from './ViewPanelScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
@@ -127,7 +128,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   /**
    * Get notified when variables change
    */
-  protected _variableDependency = new DashboardVariableDependency();
+  protected _variableDependency = new DashboardVariableDependency(this);
 
   /**
    * State before editing started
@@ -847,6 +848,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 export class DashboardVariableDependency implements SceneVariableDependencyConfigLike {
   private _emptySet = new Set<string>();
 
+  public constructor(private _dashboard: DashboardScene) {}
+
   getNames(): Set<string> {
     return this._emptySet;
   }
@@ -859,6 +862,29 @@ export class DashboardVariableDependency implements SceneVariableDependencyConfi
     if (hasChanged) {
       // Temp solution for some core panels (like dashlist) to know that variables have changed
       appEvents.publish(new VariablesChanged({ refreshAll: true, panelIds: [] }));
+    }
+
+    /**
+     * Propagate variable changes to repeat row behavior as it does not get it when it's nested under local value
+     * The first repeated row has the row repeater behavior but it also has a local SceneVariableSet with a local variable value
+     */
+    const layout = this._dashboard.state.body;
+    if (!(layout instanceof SceneGridLayout)) {
+      return;
+    }
+
+    for (const child of layout.state.children) {
+      if (!(child instanceof SceneGridRow) || !child.state.$behaviors) {
+        continue;
+      }
+
+      for (const behavior of child.state.$behaviors) {
+        if (behavior instanceof RowRepeaterBehavior) {
+          if (behavior.isWaitingForVariables || (behavior.state.variableName === variable.state.name && hasChanged)) {
+            behavior.performRepeat();
+          }
+        }
+      }
     }
   }
 }
