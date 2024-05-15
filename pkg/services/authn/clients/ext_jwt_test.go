@@ -202,17 +202,16 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 	type testCase struct {
 		name        string
 		accessToken *accessTokenClaims
-		payload     *accessTokenClaims
-		idPayload   *idTokenClaims
+		idToken     *idTokenClaims
 		orgID       int64
 		want        *authn.Identity
 		wantErr     error
 	}
 	testCases := []testCase{
 		{
-			name:    "should authenticate as service",
-			payload: &validAccessTokenClaims,
-			orgID:   1,
+			name:        "should authenticate as service",
+			accessToken: &validAccessTokenClaims,
+			orgID:       1,
 			want: &authn.Identity{
 				ID:              authn.MustParseNamespaceID("access-policy:this-uid"),
 				UID:             authn.MustParseNamespaceID("access-policy:this-uid"),
@@ -225,9 +224,9 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			},
 		},
 		{
-			name:    "should authenticate as service using wildcard namespace",
-			payload: &validAcessTokenClaimsWildcard,
-			orgID:   1,
+			name:        "should authenticate as service using wildcard namespace",
+			accessToken: &validAcessTokenClaimsWildcard,
+			orgID:       1,
 			want: &authn.Identity{
 				ID:              authn.MustParseNamespaceID("access-policy:this-uid"),
 				UID:             authn.MustParseNamespaceID("access-policy:this-uid"),
@@ -240,10 +239,10 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			},
 		},
 		{
-			name:      "should authenticate as user",
-			payload:   &validAccessTokenClaims,
-			idPayload: &validIDTokenClaims,
-			orgID:     1,
+			name:        "should authenticate as user",
+			accessToken: &validAccessTokenClaims,
+			idToken:     &validIDTokenClaims,
+			orgID:       1,
 			want: &authn.Identity{
 				ID:              authn.MustParseNamespaceID("user:2"),
 				OrgID:           1,
@@ -259,10 +258,10 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			},
 		},
 		{
-			name:      "should authenticate as user using wildcard namespace for access token",
-			payload:   &validAcessTokenClaimsWildcard,
-			idPayload: &validIDTokenClaims,
-			orgID:     1,
+			name:        "should authenticate as user using wildcard namespace for access token",
+			accessToken: &validAcessTokenClaimsWildcard,
+			idToken:     &validIDTokenClaims,
+			orgID:       1,
 			want: &authn.Identity{
 				ID:              authn.MustParseNamespaceID("user:2"),
 				OrgID:           1,
@@ -275,31 +274,31 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			},
 		},
 		{
-			name:      "should return error when id token namespece is a wilrdcard",
-			payload:   &validAccessTokenClaims,
-			idPayload: &invalidWildcardNamespaceIDTokenClaims,
-			orgID:     1,
-			wantErr:   errEtxJWTDisallowedNamespaceClaim,
+			name:        "should return error when id token namespece is a wilrdcard",
+			accessToken: &validAccessTokenClaims,
+			idToken:     &invalidWildcardNamespaceIDTokenClaims,
+			orgID:       1,
+			wantErr:     errEtxJWTDisallowedNamespaceClaim,
 		},
 		{
-			name:      "should return error when id token has wildcard namespace",
-			payload:   &validAccessTokenClaims,
-			idPayload: &invalidNamespaceIDTokenClaims,
-			orgID:     1,
-			wantErr:   errEtxJWTDisallowedNamespaceClaim,
+			name:        "should return error when id token has wildcard namespace",
+			accessToken: &validAccessTokenClaims,
+			idToken:     &invalidNamespaceIDTokenClaims,
+			orgID:       1,
+			wantErr:     errEtxJWTDisallowedNamespaceClaim,
 		},
 
 		{
-			name:      "should return error when id token subject is not tied to a user",
-			payload:   &validAccessTokenClaims,
-			idPayload: &invalidSubjectIDTokenClaims,
-			orgID:     1,
-			wantErr:   errExtJWTInvalid,
+			name:        "should return error when id token subject is not tied to a user",
+			accessToken: &validAccessTokenClaims,
+			idToken:     &invalidSubjectIDTokenClaims,
+			orgID:       1,
+			wantErr:     errExtJWTInvalid,
 		},
 
 		{
 			name: "should return error when the subject is not an access-policy",
-			payload: &accessTokenClaims{
+			accessToken: &accessTokenClaims{
 				Claims: &jwt.Claims{
 					Issuer:   "http://localhost:3000",
 					Subject:  "user:2",
@@ -324,15 +323,15 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 
 			validHTTPReq := &http.Request{
 				Header: map[string][]string{
-					"X-Access-Token": {generateToken(*tc.payload, pk, jose.RS256)},
+					"X-Access-Token": {generateToken(*tc.accessToken, pk, jose.RS256)},
 				},
 			}
 
-			env.s.accessTokenVerifier = &mockVerifier{Claims: *tc.payload}
-			if tc.idPayload != nil {
-				env.s.accessTokenVerifier = &mockVerifier{Claims: *tc.payload}
-				env.s.idTokenVerifier = &mockIDVerifier{Claims: *tc.idPayload}
-				validHTTPReq.Header.Add(extJWTAuthorizationHeaderName, generateIDToken(*tc.idPayload, pk, jose.RS256))
+			env.s.accessTokenVerifier = &mockVerifier{Claims: *tc.accessToken}
+			if tc.idToken != nil {
+				env.s.accessTokenVerifier = &mockVerifier{Claims: *tc.accessToken}
+				env.s.idTokenVerifier = &mockIDVerifier{Claims: *tc.idToken}
+				validHTTPReq.Header.Add(extJWTAuthorizationHeaderName, generateIDToken(*tc.idToken, pk, jose.RS256))
 			}
 
 			id, err := env.s.Authenticate(context.Background(), &authn.Request{
@@ -343,7 +342,6 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			if tc.wantErr != nil {
 				assert.ErrorIs(t, err, tc.wantErr)
 				assert.Nil(t, id)
-
 			} else {
 				require.NoError(t, err)
 				assert.EqualValues(t, tc.want, id, fmt.Sprintf("%+v", id))
