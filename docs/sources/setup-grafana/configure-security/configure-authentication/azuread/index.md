@@ -19,7 +19,7 @@ weight: 800
 
 # Configure Azure AD OAuth2 authentication
 
-The Azure AD authentication allows you to use an Azure Active Directory tenant as an identity provider for Grafana. You can use Azure AD application roles to assign users and groups to Grafana roles from the Azure Portal.
+The Azure AD authentication allows you to use a Microsoft Entra ID (formerly known as Azure Active Directory) tenant as an identity provider for Grafana. You can use Azure AD application roles to assign users and groups to Grafana roles from the Azure Portal.
 
 {{% admonition type="note" %}}
 If Users use the same email address in Azure AD that they use with other authentication providers (such as Grafana.com), you need to do additional configuration to ensure that the users are matched correctly. Please refer to [Using the same email address to login with different identity providers]({{< relref "../../configure-authentication#using-the-same-email-address-to-login-with-different-identity-providers" >}}) for more information.
@@ -29,7 +29,7 @@ If Users use the same email address in Azure AD that they use with other authent
 
 To enable the Azure AD OAuth2, register your application with Azure AD.
 
-1. Log in to [Azure Portal](https://portal.azure.com), then click **Azure Active Directory** in the side menu.
+1. Log in to [Azure Portal](https://portal.azure.com), then click **Microsoft Entra ID** in the side menu.
 
 1. If you have access to more than one tenant, select your account in the upper right. Set your session to the Azure AD tenant you wish to use.
 
@@ -46,7 +46,7 @@ To enable the Azure AD OAuth2, register your application with Azure AD.
    - Note the **OAuth 2.0 authorization endpoint (v2)** URL. This is the authorization URL.
    - Note the **OAuth 2.0 token endpoint (v2)**. This is the token URL.
 
-1. Click **Certificates & secrets**, then add a new entry under **Client secrets** with the following configuration.
+1. Click **Certificates & secrets** in the side menu, then add a new entry under **Client secrets** with the following configuration.
 
    - Description: Grafana OAuth
    - Expires: Select an expiration period
@@ -55,7 +55,7 @@ To enable the Azure AD OAuth2, register your application with Azure AD.
 
 1. Define the required application roles for Grafana [using the Azure Portal](#configure-application-roles-for-grafana-in-the-azure-portal) or [using the manifest file](#configure-application-roles-for-grafana-in-the-manifest-file).
 
-1. Go to **Azure Active Directory** and then to **Enterprise Applications**.
+1. Go to **Microsoft Entra ID** and then to **Enterprise Applications**, under **Manage**.
 
 1. Search for your application and click it.
 
@@ -88,7 +88,7 @@ If you prefer to configure the application roles for Grafana in the manifest fil
 
 1. Go to **App Registrations**, search for your application, and click it.
 
-1. Click **Manifest** and then click **Edit**.
+1. Click **Manifest**.
 
 1. Add a Universally Unique Identifier to each role.
 
@@ -268,7 +268,7 @@ Refresh token fetching and access token expiration check is enabled by default f
 ### Configure allowed tenants
 
 To limit access to authenticated users who are members of one or more tenants, set `allowed_organizations`
-to a comma- or space-separated list of tenant IDs. You can find tenant IDs on the Azure portal under **Azure Active Directory -> Overview**.
+to a comma- or space-separated list of tenant IDs. You can find tenant IDs on the Azure portal under **Microsoft Entra ID -> Overview**.
 
 Make sure to include the tenant IDs of all the federated Users' root directory if your Azure AD contains external identities.
 
@@ -285,7 +285,7 @@ Azure AD groups can be used to limit user access to Grafana. For more informatio
 To limit access to authenticated users who are members of one or more AzureAD groups, set `allowed_groups`
 to a **comma-** or **space-separated** list of group object IDs.
 
-1. To find object IDs for a specific group on the Azure portal, go to **Azure Active Directory > Groups**.
+1. To find object IDs for a specific group on the Azure portal, go to **Microsoft Entra ID > Manage > Groups**.
 
    You can find the Object Id of a group by clicking on the group and then clicking on **Properties**. The object ID is listed under **Object ID**. If you want to only give access to members of the group `example` with an Object Id of `8bab1c86-8fba-33e5-2089-1d1c80ec267d`, then set the following:
 
@@ -302,7 +302,7 @@ To ensure that the `groups` claim is included in the token, add the `groups` cla
 To configure group membership claims from the Azure Portal UI, complete the following steps:
 
 1. Navigate to the **App Registrations** page and select your application.
-1. Select **Token configuration**.
+1. Under **Manage** in the side menu, select **Token configuration**.
 1. Click **Add groups claim** and select the relevant option for your use case (for example, **Security groups** and **Groups assigned to the application**).
 
 For more information, see [Configure groups optional claims](https://learn.microsoft.com/en-us/entra/identity-platform/optional-claims#configure-groups-optional-claims).
@@ -315,7 +315,7 @@ If the user is a member of more than 200 groups, Azure AD does not emit the grou
 
 1. Go to **App Registrations**, search for your application, and click it.
 
-1. Click **Manifest** and then click **Edit**.
+1. Click **Manifest**.
 
 1. Add the following to the root of the manifest file:
 
@@ -386,7 +386,7 @@ Admin consent might be required for this permission.
 
 #### Configure the required Graph API permissions
 
-1. Navigate to **Azure Active Directory > App registrations** and select your application.
+1. Navigate to **Microsoft Entra ID > Manage > App registrations** and select your application.
 1. Select **API permissions** and then click on **Add a permission**.
 1. Select **Microsoft Graph** from the list of APIs.
 1. Select **Delegated permissions**.
