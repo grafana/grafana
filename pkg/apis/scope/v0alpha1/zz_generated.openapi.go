@@ -397,7 +397,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeNodeSpec(ref common.ReferenceCallback) 
 							Enum:        []interface{}{"scope"},
 						},
 					},
-					"linkID": {
+					"linkId": {
 						SchemaProps: spec.SchemaProps{
 							Description: "scope (later more things)",
 							Type:        []string{"string"},
@@ -514,7 +514,7 @@ func schema_pkg_apis_scope_v0alpha1_TreeItem(ref common.ReferenceCallback) commo
 							Enum:        []interface{}{"scope"},
 						},
 					},
-					"linkID": {
+					"linkId": {
 						SchemaProps: spec.SchemaProps{
 							Description: "scope (later more things)",
 							Type:        []string{"string"},

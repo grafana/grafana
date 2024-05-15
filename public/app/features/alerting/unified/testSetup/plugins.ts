@@ -1,8 +1,9 @@
 import { RequestHandler } from 'msw';
 
 import { PluginMeta, PluginType } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, setPluginExtensionsHook } from '@grafana/runtime';
 
+import { mockPluginLinkExtension } from '../mocks';
 import { pluginsHandler } from '../mocks/plugins';
 
 export function setupPlugins(plugins: PluginMeta[]): { apiHandlers: RequestHandler[] } {
@@ -19,6 +20,19 @@ export function setupPlugins(plugins: PluginMeta[]): { apiHandlers: RequestHandl
   return {
     apiHandlers: [pluginsHandler(plugins)],
   };
+}
+
+export function setupPluginsExtensionsHook() {
+  setPluginExtensionsHook(() => ({
+    extensions: plugins.map((plugin) =>
+      mockPluginLinkExtension({
+        pluginId: plugin.id,
+        title: plugin.name,
+        path: `/a/${plugin.id}`,
+      })
+    ),
+    isLoading: false,
+  }));
 }
 
 export const plugins: PluginMeta[] = [

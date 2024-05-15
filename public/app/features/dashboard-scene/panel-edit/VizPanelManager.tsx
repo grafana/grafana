@@ -23,6 +23,7 @@ import {
   SceneObjectState,
   SceneObjectStateChangedEvent,
   SceneQueryRunner,
+  SceneVariables,
   VizPanel,
   sceneUtils,
 } from '@grafana/scenes';
@@ -91,7 +92,14 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     const { variableName: repeat, repeatDirection, maxPerRow } = gridItem.state;
     repeatOptions = { repeat, repeatDirection, maxPerRow };
 
+    let variables: SceneVariables | undefined;
+
+    if (gridItem.parent?.state.$variables) {
+      variables = gridItem.parent.state.$variables.clone();
+    }
+
     return new VizPanelManager({
+      $variables: variables,
       panel: sourcePanel.clone(),
       sourcePanel: sourcePanel.getRef(),
       ...repeatOptions,
