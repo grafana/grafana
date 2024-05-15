@@ -223,6 +223,12 @@ func (root *NavTreeRoot) ApplyAdminIA() {
 			costManagementMetricsNode.Children = append(costManagementMetricsNode.Children, adaptiveMetricsNode)
 		}
 
+		attributionsNode := root.FindById("plugin-page-grafana-attributions-app")
+
+		if costManagementMetricsNode != nil && attributionsNode != nil {
+			costManagementMetricsNode.Children = append(costManagementMetricsNode.Children, attributionsNode)
+		}
+
 		costManagementLogsNode := root.FindByURL("/a/grafana-costmanagementui-app/logs")
 		logVolumeExplorerNode := root.FindById("plugin-page-grafana-logvolumeexplorer-app")
 
