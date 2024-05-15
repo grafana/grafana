@@ -1,7 +1,7 @@
 import { FieldType, LoadingState } from '@grafana/data';
 import { SceneCSSGridItem, sceneGraph } from '@grafana/scenes';
 
-import { MetricSelectScene } from '../MetricSelectScene';
+import { MetricSelectScene } from './MetricSelectScene';
 
 export function hideEmptyPreviews(metric: string) {
   return (gridItem: SceneCSSGridItem) => {
