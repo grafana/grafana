@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"reflect"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -21,14 +20,6 @@ var defaultLogger = log.New("requestErrors")
 type ErrorOptions struct {
 	fallback *errutil.Error
 	logger   log.Logger
-}
-
-type k8sError struct {
-	metav1.Status `json:",inline"`
-
-	// Internal values that do not have a clean home in the standard Status object
-	MessageID string         `json:"messageId"`
-	Extra     map[string]any `json:"extra,omitempty"`
 }
 
 // Write writes an error to the provided [http.ResponseWriter] with the
