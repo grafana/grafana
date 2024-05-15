@@ -365,7 +365,6 @@ func setXScopeOrgIDHeader(req *http.Request, ctx context.Context) *http.Request 
 		return req
 	}
 
-
 	tenantids := md.Get("tenantid")
 	if len(tenantids) == 0 {
 		// We assume we are not using multi-tenant mode, which is fine
