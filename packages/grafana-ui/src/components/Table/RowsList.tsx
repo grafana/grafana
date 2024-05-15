@@ -46,6 +46,7 @@ interface RowsListProps {
   footerPaginationEnabled: boolean;
   initialRowIndex?: number;
   headerGroups: HeaderGroup[];
+  longestField?: Field;
 }
 
 export const RowsList = (props: RowsListProps) => {
@@ -70,6 +71,7 @@ export const RowsList = (props: RowsListProps) => {
     enableSharedCrosshair = false,
     initialRowIndex = undefined,
     headerGroups,
+    longestField
   } = props;
 
   const [rowHighlightIndex, setRowHighlightIndex] = useState<number | undefined>(initialRowIndex);
@@ -221,14 +223,11 @@ export const RowsList = (props: RowsListProps) => {
   );
 
   let rowBg: Function | undefined = undefined;
-  let textWrapField: Field | undefined = undefined;
+  let textWrapField: Field | undefined = longestField;
   for (const field of data.fields) {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const fieldOptions = field.config.custom as TableFieldOptions;
-    const cellOptionsExist = (
-      fieldOptions !== undefined &&
-      fieldOptions.cellOptions !== undefined
-    );
+    const cellOptionsExist = fieldOptions !== undefined && fieldOptions.cellOptions !== undefined;
 
     if (
       cellOptionsExist &&
@@ -243,14 +242,16 @@ export const RowsList = (props: RowsListProps) => {
     }
 
 
+    console.log(textWrapField);
     if (
+      textWrapField === undefined &&
       cellOptionsExist &&
-      (
-        fieldOptions.cellOptions.type === TableCellDisplayMode.Auto ||
-        fieldOptions.cellOptions.type === TableCellDisplayMode.ColorBackground
-      ) &&
+      field.type === FieldType.string &&
+      (fieldOptions.cellOptions.type === TableCellDisplayMode.Auto ||
+        fieldOptions.cellOptions.type === TableCellDisplayMode.ColorBackground) &&
       fieldOptions.cellOptions.wrapText
     ) {
+      console.log('went here', field);
       textWrapField = field;
     }
   }

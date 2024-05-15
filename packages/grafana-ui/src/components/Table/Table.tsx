@@ -1,3 +1,4 @@
+import { sample } from 'lodash';
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   useAbsoluteLayout,
@@ -10,7 +11,7 @@ import {
 } from 'react-table';
 import { VariableSizeList } from 'react-window';
 
-import { FieldType, ReducerID, getRowUniqueId } from '@grafana/data';
+import { Field, FieldType, ReducerID, getRowUniqueId } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TableCellHeight } from '@grafana/schema';
 
@@ -98,9 +99,9 @@ export const Table = memo((props: Props) => {
   // This checks whether `Show table footer` is toggled on, the `Calculation` is set to `Count`, and finally, whether `Count rows` is toggled on.
   const isCountRowsSet = Boolean(
     footerOptions?.countRows &&
-      footerOptions.reducer &&
-      footerOptions.reducer.length &&
-      footerOptions.reducer[0] === ReducerID.count
+    footerOptions.reducer &&
+    footerOptions.reducer.length &&
+    footerOptions.reducer[0] === ReducerID.count
   );
 
   const nestedDataField = data.fields.find((f) => f.type === FieldType.nestedFrames);
@@ -287,6 +288,57 @@ export const Table = memo((props: Props) => {
     );
   }
 
+  // If the default field option is set to allow text wrapping
+  // we determine the field to wrap text with here and then 
+  // pass it to the RowsList
+  let longestField = undefined;
+  if (
+    fieldConfig !== undefined &&
+    fieldConfig.defaults.custom.cellOptions.wrapText &&
+    fieldConfig.overrides.length === 0
+  ) {
+    const stringFields = data.fields.filter((field: Field) => field.type === FieldType.string);
+
+    if (stringFields.length >= 1) {
+      const numValues = stringFields[0].values.length;
+      let longestLength = 0;
+
+      // If we have less than 20 values we assume
+      // that the first record is representative
+      // of the overall data
+      if (numValues <= 30) {
+        for (const field of stringFields) {
+          const fieldLength = field.values[0].length;
+          if (fieldLength > longestLength) {
+            longestLength = fieldLength;
+            longestField = field;
+          }
+        }
+      }
+      // Otherwise we randomly sample 3 values and take
+      // the mean length
+      else {
+        for (const field of stringFields) {
+          // This could result in duplicate values but 
+          // that should be fairly. This could potentially
+          // be improved using a Set datastructure but 
+          // going to leave that one as an exercise for 
+          // the reader to contemplate and possibly code
+          const val1 = sample(field.values);
+          const val2 = sample(field.values);
+          const val3 = sample(field.values);
+          const meanLength = (val1.length + val2.length + val3.length) / 3;
+
+          if (meanLength > longestLength) {
+            longestLength = meanLength;
+            longestField = field;
+          }
+        }
+      }
+
+    }
+  }
+
   return (
     <div
       {...getTableProps()}
@@ -324,6 +376,7 @@ export const Table = memo((props: Props) => {
                 footerPaginationEnabled={Boolean(enablePagination)}
                 enableSharedCrosshair={enableSharedCrosshair}
                 initialRowIndex={initialRowIndex}
+                longestField={longestField}
               />
             </div>
           ) : (
