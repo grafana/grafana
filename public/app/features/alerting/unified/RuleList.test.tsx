@@ -14,6 +14,7 @@ import {
   locationService,
   setBackendSrv,
   setDataSourceSrv,
+  setPluginExtensionsHook,
   usePluginLinkExtensions,
 } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -53,7 +54,9 @@ import {
   pausedPromRules,
   somePromRules,
   someRulerRules,
+  mockPluginLinkExtension,
 } from './mocks';
+import { setupPluginsExtensionsHook } from './testSetup/plugins';
 import * as config from './utils/config';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
@@ -82,6 +85,8 @@ jest.spyOn(analytics, 'logInfo');
 jest.spyOn(config, 'getAllDataSources');
 jest.spyOn(actions, 'rulesInSameGroupHaveInvalidFor').mockReturnValue([]);
 jest.spyOn(apiRuler, 'rulerUrlBuilder');
+
+setupPluginsExtensionsHook();
 
 const mocks = {
   getAllDataSourcesMock: jest.mocked(config.getAllDataSources),
