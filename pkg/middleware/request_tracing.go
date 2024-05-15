@@ -57,7 +57,7 @@ var unnamedHandlers = []struct {
 
 // RouteOperationName receives the route operation name from context, if set.
 func RouteOperationName(req *http.Request) (string, bool) {
-	// all requests to the grafana k8s api server have a handler of /apis/*. This modifies that to be /apis/{kind}.
+	// all requests to the grafana k8s api server have a handler of /apis/*. This modifies that to be /apis/{group}.
 	if strings.HasPrefix(req.URL.Path, "/apis/") {
 		parts := strings.Split(req.URL.Path, "/")
 		if len(parts) > 2 {

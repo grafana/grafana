@@ -39,7 +39,7 @@ func TestCanGetRouteNameFromContext(t *testing.T) {
 	}
 }
 
-func TestWillModifyHandlerForGrafanaApiserverKinds(t *testing.T) {
+func TestWillModifyHandlerForGrafanaApiserverGroups(t *testing.T) {
 	req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "https://grafana.com/apis/playlist.grafana.app/v0alpha1/namespaces/default/playlists", nil)
 
 	handler, exists := RouteOperationName(req)
