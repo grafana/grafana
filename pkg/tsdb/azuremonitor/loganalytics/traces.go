@@ -227,7 +227,7 @@ func buildAppInsightsQuery(ctx context.Context, query backend.DataQuery, dsInfo 
 		return nil, err
 	}
 
-	apiURL := getApiURL(resourceOrWorkspace, appInsightsQuery)
+	apiURL := getApiURL(resourceOrWorkspace, appInsightsQuery, false)
 
 	rawQuery, err := macros.KqlInterpolate(query, dsInfo, queryString, "TimeGenerated")
 	if err != nil {

@@ -10,7 +10,7 @@ import { selectors } from '../../e2e/selectors';
 import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery, ResultFormat, EngineSchema } from '../../types';
 import ResourceField from '../ResourceField';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
-import { parseResourceDetails, parseResourceURI } from '../ResourcePicker/utils';
+import { parseResourceDetails } from '../ResourcePicker/utils';
 import FormatAsField from '../shared/FormatAsField';
 
 import AdvancedResourcePicker from './AdvancedResourcePicker';
@@ -19,6 +19,9 @@ import QueryField from './QueryField';
 import { TimeManagement } from './TimeManagement';
 import { setBasicLogsQuery, setFormatAs, setKustoQuery } from './setQueryValue';
 import useMigrations from './useMigrations';
+import { calculateTimeRange, shouldShowBasicLogsToggle } from './utils';
+
+const MAX_DATA_RETENTION_DAYS = 8; // limit is only for basic logs
 
 interface LogsQueryEditorProps {
   query: AzureMonitorQuery;
@@ -46,9 +49,14 @@ const LogsQueryEditor = ({
   data,
 }: LogsQueryEditorProps) => {
   const migrationError = useMigrations(datasource, query, onChange);
-  const [showBasicLogsToggle, setShowBasicLogsToggle] = useState<boolean>(false);
+  const [showBasicLogsToggle, setShowBasicLogsToggle] = useState<boolean>(
+    shouldShowBasicLogsToggle(query.azureLogAnalytics?.resources || [], basicLogsEnabled)
+  );
+  const [showDataRetentionWarning, setShowDataRetentionWarning] = useState<boolean>(false);
   const [dataIngestedWarning, setDataIngestedWarning] = useState<React.ReactNode | null>(null);
   const templateSrv = getTemplateSrv();
+  const from = templateSrv?.replace('$__from');
+  const to = templateSrv?.replace('$__to');
 
   const disableRow = (row: ResourceRow, selectedRows: ResourceRowGroup) => {
     if (selectedRows.length === 0) {
@@ -74,12 +82,8 @@ const LogsQueryEditor = ({
   }, [query.azureLogAnalytics?.resources, datasource.azureLogAnalyticsDatasource]);
 
   useEffect(() => {
-    if (query.azureLogAnalytics?.resources && query.azureLogAnalytics.resources.length === 1) {
-      const selectedResource = templateSrv?.replace(query.azureLogAnalytics.resources[0]);
-      const parsedResource = parseResourceURI(selectedResource);
-      setShowBasicLogsToggle(
-        parsedResource.metricNamespace?.toLowerCase() === 'microsoft.operationalinsights/workspaces' && basicLogsEnabled
-      );
+    if (shouldShowBasicLogsToggle(query.azureLogAnalytics?.resources || [], basicLogsEnabled)) {
+      setShowBasicLogsToggle(true);
     } else {
       setShowBasicLogsToggle(false);
     }
@@ -91,6 +95,17 @@ const LogsQueryEditor = ({
       onChange(setKustoQuery(updatedBasicLogsQuery, ''));
     }
   }, [basicLogsEnabled, onChange, query, showBasicLogsToggle]);
+
+  useEffect(() => {
+    const timeRange = calculateTimeRange(parseInt(from, 10), parseInt(to, 10));
+    // Basic logs data retention is fixed at 8 days
+    // need to add this check to make user aware of this limitation in case they have selected a longer time range
+    if (showBasicLogsToggle && query.azureLogAnalytics?.basicLogsQuery && timeRange > MAX_DATA_RETENTION_DAYS) {
+      setShowDataRetentionWarning(true);
+    } else {
+      setShowDataRetentionWarning(false);
+    }
+  }, [query.azureLogAnalytics?.basicLogsQuery, showBasicLogsToggle, from, to]);
 
   useEffect(() => {
     const getBasicLogsUsage = async (query: AzureMonitorQuery) => {
@@ -232,6 +247,13 @@ const LogsQueryEditor = ({
           </EditorFieldGroup>
         </EditorRow>
       </EditorRows>
+      {showDataRetentionWarning && (
+        <Alert severity="warning" title="Basic Logs data retention">
+          <Text>
+            Data retention for Basic Logs is fixed at eight days. You will only see data within this timeframe.
+          </Text>
+        </Alert>
+      )}
     </span>
   );
 };
