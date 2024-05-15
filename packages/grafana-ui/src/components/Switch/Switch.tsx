@@ -118,10 +118,6 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
       '&:disabled:checked + label': {
         background: theme.colors.primary.transparent,
 
-        '&:hover': {
-          background: theme.colors.primary.transparent,
-        },
-
         svg: {
           color: theme.colors.primary.contrastText,
         },
