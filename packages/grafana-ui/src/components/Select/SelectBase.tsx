@@ -16,7 +16,7 @@ import { useTheme2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { Spinner } from '../Spinner/Spinner';
 
-import { CustomInput, CustomInputAlwaysVisible } from './CustomInput';
+import { CustomInput } from './CustomInput';
 import { DropdownIndicator } from './DropdownIndicator';
 import { IndicatorsContainer } from './IndicatorsContainer';
 import { InputControl } from './InputControl';
@@ -204,8 +204,7 @@ export function SelectBase<T, Rest = {}>({
     }
   }
 
-  const parsedValue = isMulti ? selectedValue : selectedValue?.[0];
-  const [internalInputValue, setInternalInputValue] = useState(parsedValue?.label);
+  const [internalInputValue, setInternalInputValue] = useState(selectedValue?.[0]?.label);
 
   const commonSelectProps = {
     'aria-label': ariaLabel,
@@ -271,7 +270,7 @@ export function SelectBase<T, Rest = {}>({
     renderControl,
     showAllSelectedWhenOpen,
     tabSelectsValue,
-    value: parsedValue,
+    value: isMulti ? selectedValue : selectedValue?.[0],
     noMultiValueWrap,
   };
 
@@ -283,29 +282,33 @@ export function SelectBase<T, Rest = {}>({
     creatableProps.createOptionPosition = createOptionPosition;
     creatableProps.isValidNewOption = isValidNewOption;
 
-    // Needed to allow editing a custom value once entered
-    creatableProps.controlShouldRenderValue = false;
-    creatableProps.inputValue = internalInputValue;
-    creatableProps.onInputChange = (val, actionMeta) => {
-      commonSelectProps.onInputChange(val, actionMeta);
+    // needed to allow editing a custom value once entered
+    // We only want to do this for single selects, not multi
+    if (!isMulti) {
+      creatableProps.inputValue = internalInputValue;
+      creatableProps.onMenuOpen = () => {
+        setInternalInputValue(selectedValue?.[0]?.label ?? '');
+      };
+      creatableProps.onInputChange = (val, actionMeta) => {
+        commonSelectProps.onInputChange(val, actionMeta);
 
-      // onBlur => setInputValue to last selected value
-      if (actionMeta.action === 'input-blur') {
-        setInternalInputValue(selectedValue ? selectedValue?.[0].label : '');
-      }
+        // onInputChange => update inputValue
+        if (actionMeta.action === 'input-change') {
+          setInternalInputValue(val);
+        }
 
-      // onInputChange => update inputValue
-      else if (actionMeta.action === 'input-change') {
-        setInternalInputValue(val);
-      }
-    };
-    creatableProps.onChange = (value, action) => {
-      if (value === null) {
-        return;
-      }
-      commonSelectProps.onChange(value, action);
-      setInternalInputValue(value.label);
-    };
+        // onBlur => setInputValue to empty
+        if (actionMeta.action === 'input-blur' || actionMeta.action === 'menu-close') {
+          setInternalInputValue('');
+        }
+      };
+      creatableProps.onChange = (value, action) => {
+        if (value === null) {
+          return;
+        }
+        commonSelectProps.onChange(value, action);
+      };
+    }
   }
 
   // Instead of having AsyncSelect, as a separate component we render ReactAsyncSelect
@@ -368,7 +371,7 @@ export function SelectBase<T, Rest = {}>({
           SelectContainer,
           MultiValueContainer: MultiValueContainer,
           MultiValueRemove: !disabled ? MultiValueRemove : () => null,
-          Input: allowCustomValue ? CustomInputAlwaysVisible : CustomInput,
+          Input: CustomInput,
           ...components,
         }}
         styles={selectStyles}
