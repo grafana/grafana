@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	sdkapi "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
-	"github.com/prometheus/prometheus/model/labels"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -67,7 +66,7 @@ type PrometheusQueryProperties struct {
 	LegendFormat string `json:"legendFormat,omitempty"`
 
 	// A set of filters applied to apply to the query
-	Scope *ScopeSpec `json:"scope,omitempty"`
+	Scopes []ScopeSpec `json:"scopes,omitempty"`
 
 	// Additional Ad-hoc filters that take precedence over Scope on conflict.
 	AdhocFilters []ScopeFilter `json:"adhocFilters,omitempty"`
@@ -167,11 +166,8 @@ type Query struct {
 	RangeQuery    bool
 	ExemplarQuery bool
 	UtcOffsetSec  int64
-	Scope         *ScopeSpec
-}
 
-type Scope struct {
-	Matchers []*labels.Matcher
+	Scopes []ScopeSpec
 }
 
 // This internal query struct is just like QueryModel, except it does not include:
@@ -214,8 +210,8 @@ func Parse(span trace.Span, query backend.DataQuery, dsScrapeInterval string, in
 
 	if enableScope {
 		var scopeFilters []ScopeFilter
-		if model.Scope != nil {
-			scopeFilters = model.Scope.Filters
+		for _, scope := range model.Scopes {
+			scopeFilters = append(scopeFilters, scope.Filters...)
 		}
 
 		if len(scopeFilters) > 0 {

@@ -561,7 +561,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   // Used to correlate multiple related requests
   queryGroupId?: string;
 
-  scope?: Scope | undefined;
+  scopes?: Scope[] | undefined;
 }
 
 export interface DataQueryTimings {

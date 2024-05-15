@@ -2,12 +2,12 @@ import { css } from '@emotion/css';
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-import { AppEvents, GrafanaTheme2, ScopeDashboardBindingSpec } from '@grafana/data';
-import { getAppEvents, getBackendSrv, locationService } from '@grafana/runtime';
+import { AppEvents, GrafanaTheme2, Scope, ScopeDashboardBindingSpec, urlUtil } from '@grafana/data';
+import { getAppEvents, getBackendSrv } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { CustomScrollbar, Icon, Input, useStyles2 } from '@grafana/ui';
-
-import { ScopedResourceServer } from '../../apiserver/server';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { ScopedResourceServer } from 'app/features/apiserver/server';
 
 export interface ScopeDashboard {
   uid: string;
@@ -40,15 +40,17 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
     });
   }
 
-  public async fetchDashboards(scope: string | undefined) {
-    if (!scope) {
+  public async fetchDashboards(scopes: Scope[]) {
+    if (scopes.length === 0) {
       return this.setState({ dashboards: [], filteredDashboards: [], isLoading: false });
     }
 
     this.setState({ isLoading: true });
 
-    const dashboardUids = await this.fetchDashboardsUids(scope);
-    const dashboards = await this.fetchDashboardsDetails(dashboardUids);
+    const dashboardUids = await Promise.all(
+      scopes.map((scope) => this.fetchDashboardsUids(scope.metadata.name).catch(() => []))
+    );
+    const dashboards = await this.fetchDashboardsDetails(dashboardUids.flat());
 
     this.setState({
       dashboards,
@@ -125,6 +127,8 @@ export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<Sco
   const { filteredDashboards, isLoading } = model.useState();
   const styles = useStyles2(getStyles);
 
+  const [queryParams] = useQueryParams();
+
   return (
     <>
       <div className={styles.searchInputContainer}>
@@ -138,9 +142,7 @@ export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<Sco
       <CustomScrollbar>
         {filteredDashboards.map((dashboard, idx) => (
           <div key={idx} className={styles.dashboardItem}>
-            <Link to={{ pathname: dashboard.url, search: locationService.getLocation().search }}>
-              {dashboard.title}
-            </Link>
+            <Link to={urlUtil.renderUrl(dashboard.url, queryParams)}>{dashboard.title}</Link>
           </div>
         ))}
       </CustomScrollbar>

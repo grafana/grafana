@@ -33,3 +33,16 @@ export interface Scope {
   };
   spec: ScopeSpec;
 }
+
+export type ScopeTreeItemNodeType = 'container' | 'leaf';
+export type ScopeTreeItemLinkType = 'scope';
+
+export interface ScopeTreeItemSpec {
+  nodeId: string;
+  nodeType: ScopeTreeItemNodeType;
+  title: string;
+
+  description?: string;
+  linkId?: string;
+  linkType?: ScopeTreeItemLinkType;
+}
