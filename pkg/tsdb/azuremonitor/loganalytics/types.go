@@ -32,6 +32,7 @@ type AzureLogAnalyticsQuery struct {
 	AppInsightsQuery        bool
 	DashboardTime           bool
 	TimeColumn              string
+	BasicLogs               bool
 }
 
 // Error definition has been inferred from real data and other model definitions like
