@@ -223,18 +223,17 @@ func (root *NavTreeRoot) ApplyAdminIA() {
 			costManagementMetricsNode.Children = append(costManagementMetricsNode.Children, adaptiveMetricsNode)
 		}
 
+		attributionsNode := root.FindById("plugin-page-grafana-attributions-app")
+
+		if costManagementMetricsNode != nil && attributionsNode != nil {
+			costManagementMetricsNode.Children = append(costManagementMetricsNode.Children, attributionsNode)
+		}
+
 		costManagementLogsNode := root.FindByURL("/a/grafana-costmanagementui-app/logs")
 		logVolumeExplorerNode := root.FindById("plugin-page-grafana-logvolumeexplorer-app")
 
 		if costManagementLogsNode != nil && logVolumeExplorerNode != nil {
 			costManagementLogsNode.Children = append(costManagementLogsNode.Children, logVolumeExplorerNode)
-		}
-
-		costManagementAttributionsNode := root.FindByURL("/a/grafana-costmanagementui-app/attributions")
-		attributionsNode := root.FindById("plugin-page-grafana-attributions-app")
-
-		if costManagementAttributionsNode != nil && attributionsNode != nil {
-			costManagementAttributionsNode.Children = append(costManagementAttributionsNode.Children, attributionsNode)
 		}
 
 		if len(adminNodeLinks) > 0 {
