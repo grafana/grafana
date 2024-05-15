@@ -24,6 +24,13 @@ These are set-up instructions for Grafana Alerting Open Source.
 - Configure your [data sources][data-source-management]
 - Check which data sources are compatible with and supported by [Grafana Alerting][data-source-alerting]
 
+<<<<<<< HEAD
+=======
+Watch this short video to get started, or follow the [written tutorial](http://grafana.com/tutorials/alerting-get-started/).
+
+{{< youtube id="6W8Nu4b_PXM" >}}
+
+>>>>>>> f24eb3165b5 (alerting: adding links to get-started tutorial (#87811))
 ## Set up Alerting
 
 To set up Alerting, you need to:
