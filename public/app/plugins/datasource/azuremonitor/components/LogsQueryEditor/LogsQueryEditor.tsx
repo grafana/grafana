@@ -21,6 +21,8 @@ import { setBasicLogsQuery, setFormatAs, setKustoQuery } from './setQueryValue';
 import useMigrations from './useMigrations';
 import { calculateTimeRange, shouldShowBasicLogsToggle } from './utils';
 
+const MAX_DATA_RETENTION_DAYS = 8; // limit is only for basic logs
+
 interface LogsQueryEditorProps {
   query: AzureMonitorQuery;
   datasource: Datasource;
@@ -52,8 +54,8 @@ const LogsQueryEditor = ({
   );
   const [showDataRetentionWarning, setShowDataRetentionWarning] = useState<boolean>(false);
   const templateSrv = getTemplateSrv();
-  const from = templateSrv.replace('$__from');
-  const to = templateSrv.replace('$__to');
+  const from = templateSrv?.replace('$__from');
+  const to = templateSrv?.replace('$__to');
 
   const disableRow = (row: ResourceRow, selectedRows: ResourceRowGroup) => {
     if (selectedRows.length === 0) {
@@ -95,7 +97,9 @@ const LogsQueryEditor = ({
 
   useEffect(() => {
     const timeRange = calculateTimeRange(parseInt(from, 10), parseInt(to, 10));
-    if (showBasicLogsToggle && query.azureLogAnalytics?.basicLogsQuery && timeRange > 8) {
+    // Basic logs data retention is fixed at 8 days
+    // need to add this check to make user aware of this limitation in case they have selected a longer time range
+    if (showBasicLogsToggle && query.azureLogAnalytics?.basicLogsQuery && timeRange > MAX_DATA_RETENTION_DAYS) {
       setShowDataRetentionWarning(true);
     } else {
       setShowDataRetentionWarning(false);
