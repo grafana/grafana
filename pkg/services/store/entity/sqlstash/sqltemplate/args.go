@@ -12,3 +12,7 @@ func (a *Args) Arg(x any) string {
 	*a = append(*a, x)
 	return "?"
 }
+
+func (a *Args) GetArgs() Args {
+	return *a
+}

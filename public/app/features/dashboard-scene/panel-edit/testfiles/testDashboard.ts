@@ -591,6 +591,18 @@ export const panelWithQueriesAndMixedDatasource = {
   type: 'timeseries',
 };
 
+const row = {
+  id: 8,
+  type: 'row',
+  gridPos: { h: 1, w: 24, x: 0, y: 20 },
+};
+
+const rowChild = {
+  id: 9,
+  type: 'timeseries',
+  gridPos: { h: 2, w: 24, x: 0, y: 21 },
+};
+
 export const testDashboard = {
   annotations: {
     list: [
@@ -622,6 +634,8 @@ export const testDashboard = {
     panelWithNoDataSource,
     panelWithDataSourceNotFound,
     panelWithQueriesAndMixedDatasource,
+    row,
+    rowChild,
   ],
   refresh: '',
   schemaVersion: 39,

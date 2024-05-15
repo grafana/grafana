@@ -24,7 +24,8 @@ func BenchmarkProcessEvalResults(b *testing.B) {
 	as.On("SaveMany", mock.Anything, mock.Anything).Return(nil)
 	metrics := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
 	store := historian.NewAnnotationStore(&as, nil, metrics)
-	hist := historian.NewAnnotationBackend(store, nil, metrics)
+	annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
+	hist := historian.NewAnnotationBackend(annotationBackendLogger, store, nil, metrics)
 	cfg := state.ManagerCfg{
 		Historian: hist,
 		Tracer:    tracing.InitializeTracerForTest(),
