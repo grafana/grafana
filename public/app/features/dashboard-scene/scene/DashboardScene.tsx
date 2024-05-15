@@ -818,7 +818,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       dashboardUID: this.state.uid,
       panelId,
       panelPluginId: panel?.state.pluginId,
-      scope: this.state.scopes?.state.filters.getSelectedScope(),
+      scopes: this.state.scopes?.getSelectedScopes(),
     };
   }
 
