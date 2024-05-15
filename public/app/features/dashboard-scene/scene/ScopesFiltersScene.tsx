@@ -11,8 +11,7 @@ import {
   SceneObjectUrlValues,
 } from '@grafana/scenes';
 import { Checkbox, Icon, Input, Toggletip, useStyles2 } from '@grafana/ui';
-
-import { ScopedResourceServer } from '../../apiserver/server';
+import { ScopedResourceServer } from 'app/features/apiserver/server';
 
 export interface Node {
   item: ScopeTreeItemSpec;
@@ -159,6 +158,9 @@ export function ScopesFiltersSceneRenderer({ model }: SceneComponentProps<Scopes
   const parentState = model.parent!.useState();
   const isViewing = 'isViewing' in parentState ? !!parentState.isViewing : false;
 
+  const handleNodeExpand = (path: string[]) => model.expandNode(path);
+  const handleScopeToggle = (linkId: string) => model.toggleScope(linkId);
+
   return (
     <Toggletip
       content={
@@ -168,7 +170,8 @@ export function ScopesFiltersSceneRenderer({ model }: SceneComponentProps<Scopes
           nodes={nodes}
           expandedNodes={expandedNodes}
           scopes={scopes}
-          model={model}
+          onNodeExpand={handleNodeExpand}
+          onScopeToggle={handleScopeToggle}
         />
       }
       footer={'Open advanced scope selector'}
@@ -185,10 +188,19 @@ export interface ScopesTreeLevelProps {
   nodes: Record<string, Node>;
   expandedNodes: string[];
   scopes: Scope[];
-  model: ScopesFiltersScene;
+  onNodeExpand: (path: string[]) => void;
+  onScopeToggle: (linkId: string) => void;
 }
 
-export function ScopesTreeLevel({ isExpanded, path, nodes, expandedNodes, scopes, model }: ScopesTreeLevelProps) {
+export function ScopesTreeLevel({
+  isExpanded,
+  path,
+  nodes,
+  expandedNodes,
+  scopes,
+  onNodeExpand,
+  onScopeToggle,
+}: ScopesTreeLevelProps) {
   const styles = useStyles2(getStyles);
 
   if (!isExpanded) {
@@ -216,11 +228,11 @@ export function ScopesTreeLevel({ isExpanded, path, nodes, expandedNodes, scopes
             className={cx(styles.item, isScope && styles.itemScope)}
             onClick={(evt) => {
               evt.stopPropagation();
-              model.expandNode(nodePath);
+              onNodeExpand(nodePath);
             }}
             onKeyDown={(evt) => {
               evt.stopPropagation();
-              model.expandNode(nodePath);
+              onNodeExpand(nodePath);
             }}
           >
             {!isScope ? (
@@ -233,7 +245,7 @@ export function ScopesTreeLevel({ isExpanded, path, nodes, expandedNodes, scopes
                   evt.stopPropagation();
 
                   if (linkId) {
-                    model.toggleScope(linkId);
+                    onScopeToggle(linkId);
                   }
                 }}
               />
@@ -247,7 +259,8 @@ export function ScopesTreeLevel({ isExpanded, path, nodes, expandedNodes, scopes
               nodes={children}
               expandedNodes={expandedNodes}
               scopes={scopes}
-              model={model}
+              onNodeExpand={onNodeExpand}
+              onScopeToggle={onScopeToggle}
             />
           </div>
         );

@@ -598,11 +598,6 @@ export class PrometheusDatasource
   // it is used in metric_find_query.ts
   // and in Tempo here grafana/public/app/plugins/datasource/tempo/QueryEditor/ServiceGraphSection.tsx
   async getTagKeys(options: DataSourceGetTagKeysOptions<PromQuery>): Promise<MetricFindValue[]> {
-    return Promise.resolve([
-      { value: 'key', text: 'Key' },
-      { value: 'anotherKey', text: 'anotherKey' },
-    ]);
-
     if (!options || options.filters.length === 0) {
       await this.languageProvider.fetchLabels(options.timeRange, options.queries);
       return this.languageProvider.getLabelKeys().map((k) => ({ value: k, text: k }));
@@ -625,11 +620,6 @@ export class PrometheusDatasource
 
   // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
   async getTagValues(options: DataSourceGetTagValuesOptions<PromQuery>) {
-    return Promise.resolve([
-      { value: 'value', text: 'Value' },
-      { value: 'anotherValue', text: 'anotherValue' },
-    ]);
-
     const labelFilters: QueryBuilderLabelFilter[] = options.filters.map((f) => ({
       label: f.key,
       value: f.value,
