@@ -4,7 +4,6 @@ aliases:
 description: Grafana JWT Authentication
 labels:
   products:
-    - cloud
     - enterprise
     - oss
 menuTitle: JWT

@@ -11,7 +11,6 @@ import (
 
 	"github.com/go-jose/go-jose/v3"
 	"github.com/go-jose/go-jose/v3/jwt"
-	"golang.org/x/oauth2"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,7 +18,6 @@ import (
 	authlib "github.com/grafana/authlib/authn"
 
 	"github.com/grafana/grafana/pkg/models/roletype"
-	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/services/signingkeys/signingkeystest"
@@ -209,20 +207,16 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			name:    "successful authentication as service",
 			payload: &validPayload,
 			orgID:   1,
-			want: &authn.Identity{OrgID: 1, OrgName: "",
-				OrgRoles: map[int64]roletype.RoleType(nil),
-				ID:       authn.MustParseNamespaceID("access-policy:this-uid"), Login: "", Name: "", Email: "",
-				IsGrafanaAdmin: (*bool)(nil), AuthenticatedBy: "extendedjwt",
-				AuthID: "access-policy:this-uid", IsDisabled: false, HelpFlags1: 0x0,
-				LastSeenAt: time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC),
-				Teams:      []int64(nil), Groups: []string(nil),
-				OAuthToken: (*oauth2.Token)(nil), SessionToken: (*usertoken.UserToken)(nil),
-				ClientParams: authn.ClientParams{SyncUser: false,
-					AllowSignUp: false, EnableUser: false, FetchSyncedUser: false,
-					SyncTeams: false, SyncOrgRoles: false, CacheAuthProxyKey: "",
+			want: &authn.Identity{
+				ID:              authn.MustParseNamespaceID("access-policy:this-uid"),
+				UID:             authn.MustParseNamespaceID("access-policy:this-uid"),
+				OrgID:           1,
+				AuthenticatedBy: "extendedjwt",
+				AuthID:          "access-policy:this-uid",
+				ClientParams: authn.ClientParams{
 					SyncPermissions:        true,
-					FetchPermissionsParams: authn.FetchPermissionsParams{ActionsLookup: []string(nil), Roles: []string{"fixed:folders:reader"}}},
-				Permissions: map[int64]map[string][]string(nil), IDToken: ""},
+					FetchPermissionsParams: authn.FetchPermissionsParams{Roles: []string{"fixed:folders:reader"}}},
+			},
 			wantErr: nil,
 		},
 		{
@@ -240,21 +234,19 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 					Login:   "johndoe",
 				}
 			},
-			want: &authn.Identity{OrgID: 1, OrgName: "",
-				OrgRoles: map[int64]roletype.RoleType(nil), ID: authn.MustParseNamespaceID("user:2"),
-				Login: "", Name: "", Email: "",
-				IsGrafanaAdmin: (*bool)(nil), AuthenticatedBy: "extendedjwt",
-				AuthID: "access-policy:this-uid", IsDisabled: false, HelpFlags1: 0x0,
-				LastSeenAt: time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC),
-				Teams:      []int64(nil), Groups: []string(nil),
-				OAuthToken: (*oauth2.Token)(nil), SessionToken: (*usertoken.UserToken)(nil),
-				ClientParams: authn.ClientParams{SyncUser: false, AllowSignUp: false,
-					EnableUser: false, FetchSyncedUser: true, SyncTeams: false,
-					SyncOrgRoles: false, CacheAuthProxyKey: "",
+			want: &authn.Identity{
+				ID:              authn.MustParseNamespaceID("user:2"),
+				OrgID:           1,
+				AuthenticatedBy: "extendedjwt",
+				AuthID:          "access-policy:this-uid",
+				ClientParams: authn.ClientParams{
+					FetchSyncedUser: true,
 					SyncPermissions: true,
-					FetchPermissionsParams: authn.FetchPermissionsParams{ActionsLookup: []string{"dashboards:create",
-						"folders:read", "datasources:explore", "datasources.insights:read"},
-						Roles: []string(nil)}}, Permissions: map[int64]map[string][]string(nil), IDToken: ""},
+					FetchPermissionsParams: authn.FetchPermissionsParams{
+						ActionsLookup: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
+					},
+				},
+			},
 			wantErr: nil,
 		},
 		{
