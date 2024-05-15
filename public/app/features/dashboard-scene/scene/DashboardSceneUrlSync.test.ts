@@ -41,6 +41,17 @@ describe('DashboardSceneUrlSync', () => {
     });
   });
 
+  describe('entering edit mode', () => {
+    it('it should be possible to go from the view panel view to the edit view when the dashboard is not in edit mdoe', () => {
+      const scene = buildTestScene();
+      scene.setState({ isEditing: false });
+      scene.urlSync?.updateFromUrl({ viewPanel: 'panel-1' });
+      expect(scene.state.viewPanelScene).toBeDefined();
+      scene.urlSync?.updateFromUrl({ editPanel: 'panel-1' });
+      expect(scene.state.editPanel).toBeDefined();
+    });
+  });
+
   describe('Given a viewPanelKey with clone that is not found', () => {
     const scene = buildTestScene();
 

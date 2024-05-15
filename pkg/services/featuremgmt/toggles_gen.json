@@ -135,12 +135,15 @@
     {
       "metadata": {
         "name": "awsDatasourcesNewFormStyling",
-        "resourceVersion": "1713545444177",
-        "creationTimestamp": "2024-04-19T16:50:44Z"
+        "resourceVersion": "1715590364201",
+        "creationTimestamp": "2024-04-19T16:50:44Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-05-13 08:52:44.201182 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Applies new form styling for configuration and query editors in AWS plugins",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/aws-datasources",
         "frontend": true
       }
@@ -784,14 +787,18 @@
     {
       "metadata": {
         "name": "featureToggleAdminPage",
-        "resourceVersion": "1713545444177",
-        "creationTimestamp": "2024-04-19T16:50:44Z"
+        "resourceVersion": "1715364932183",
+        "creationTimestamp": "2024-04-19T16:50:44Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-05-10 18:15:32.183828 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enable admin page for managing feature toggles from the Grafana front-end",
+        "description": "Enable admin page for managing feature toggles from the Grafana front-end. Grafana Cloud only.",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
-        "requiresRestart": true
+        "requiresRestart": true,
+        "hideFromDocs": true
       }
     },
     {
@@ -2162,6 +2169,42 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "notificationBanner",
+        "resourceVersion": "1715582792356",
+        "creationTimestamp": "2024-05-13T06:46:32Z"
+      },
+      "spec": {
+        "description": "Enables the notification banner UI and API",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dualWritePlaylistsMode2",
+        "resourceVersion": "1715369873132",
+        "creationTimestamp": "2024-05-10T19:37:53Z"
+      },
+      "spec": {
+        "description": "Enables dual writing of playlists to both legacy and k8s storage in mode 2",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dualWritePlaylistsMode3",
+        "resourceVersion": "1715369873132",
+        "creationTimestamp": "2024-05-10T19:37:53Z"
+      },
+      "spec": {
+        "description": "Enables dual writing of playlists to both legacy and k8s storage in mode 3",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage"
       }
     }
   ]

@@ -784,7 +784,7 @@ func TestStore_StoreActionSet(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			store, _, _ := setupTestEnv(t)
 			store.features = featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets)
-			ac := acimpl.ProvideAccessControl(setting.NewCfg())
+			ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 			asService := NewActionSetService(ac)
 			asService.StoreActionSet(tt.resource, tt.action, tt.actions)
 
@@ -800,7 +800,7 @@ func TestStore_ResolveActionSet(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	actionSetService := NewActionSetService(acimpl.ProvideAccessControl(setting.NewCfg()))
+	actionSetService := NewActionSetService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures()))
 	actionSetService.StoreActionSet("folders", "edit", []string{"folders:read", "folders:write", "dashboards:read", "dashboards:write"})
 	actionSetService.StoreActionSet("folders", "view", []string{"folders:read", "dashboards:read"})
 	actionSetService.StoreActionSet("dashboards", "view", []string{"dashboards:read"})

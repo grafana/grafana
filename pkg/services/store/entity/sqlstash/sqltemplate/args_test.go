@@ -1,8 +1,6 @@
 package sqltemplate
 
-import (
-	"testing"
-)
+import "testing"
 
 func TestArgs_Arg(t *testing.T) {
 	t.Parallel()
@@ -22,7 +20,7 @@ func TestArgs_Arg(t *testing.T) {
 	shouldBeQuestionMark(t, a.Arg(3))
 	shouldBeQuestionMark(t, a.Arg(4))
 
-	for i, arg := range *a {
+	for i, arg := range a.GetArgs() {
 		v, ok := arg.(int)
 		if !ok {
 			t.Fatalf("unexpected value: %T(%v)", arg, arg)

@@ -434,6 +434,8 @@ export function prepData(xySeries: XYSeries[]): FacetedData {
   //   return [null];
   // }
 
+  const { size: sizeRange } = getGlobalRanges(xySeries);
+
   return [
     null,
     ...xySeries.map((s, idx) => {
@@ -450,12 +452,9 @@ export function prepData(xySeries: XYSeries[]): FacetedData {
         // use quadratic size scaling in byValue modes
         let pxRange = maxPx - minPx;
 
-        // todo: add shared, local, or key-group min/max option?
-        // todo: better min/max with ignoring non-finite values
-        // todo: allow this to come from fieldConfig min/max ? or field.state.min/max (shared)
         let vals = s.size.field.values;
-        let minVal = Math.min(...vals);
-        let maxVal = Math.max(...vals);
+        let minVal = sizeRange.min;
+        let maxVal = sizeRange.max;
         let valRange = maxVal - minVal;
 
         diams = Array(len);
@@ -474,9 +473,48 @@ export function prepData(xySeries: XYSeries[]): FacetedData {
       return [
         s.x.field.values, // X
         s.y.field.values, // Y
-        diams, // TODO: fails for by value
+        diams,
         Array(len).fill(s.color.fixed!), // TODO: fails for by value
       ];
     }),
   ];
 }
+
+const getGlobalRanges = (xySeries: XYSeries[]) => {
+  const ranges = {
+    size: {
+      min: Infinity,
+      max: -Infinity,
+    },
+    color: {
+      min: Infinity,
+      max: -Infinity,
+    },
+  };
+
+  xySeries.forEach((series) => {
+    [series.size, series.color].forEach((facet, fi) => {
+      if (facet.field != null) {
+        let range = fi === 0 ? ranges.size : ranges.color;
+
+        const vals = facet.field.values;
+
+        for (let i = 0; i < vals.length; i++) {
+          const v = vals[i];
+
+          if (v != null) {
+            if (v < range.min) {
+              range.min = v;
+            }
+
+            if (v > range.max) {
+              range.max = v;
+            }
+          }
+        }
+      }
+    });
+  });
+
+  return ranges;
+};
