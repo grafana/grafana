@@ -1,5 +1,5 @@
 import server from 'app/features/alerting/unified/mockApi';
-import { grafanaAlertingConfigurationStatusHandler } from 'app/features/alerting/unified/mocks/alertmanagerApi';
+import { grafanaAlertingConfigurationStatusHandler } from 'app/features/alerting/unified/mocks/server/handlers/alertmanagers';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 
 /**
