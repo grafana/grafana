@@ -67,7 +67,7 @@ func TestSocialService_ProvideService(t *testing.T) {
 	cfg.Raw = iniFile
 
 	secrets := secretsfake.NewMockService(t)
-	accessControl := acimpl.ProvideAccessControl(cfg)
+	accessControl := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	sqlStore := db.InitTestDB(t)
 
 	ssoSettingsSvc := ssosettingsimpl.ProvideService(
@@ -115,7 +115,7 @@ func TestSocialService_ProvideService_GrafanaComGrafanaNet(t *testing.T) {
 			[auth.grafana_com]
 			enabled = true
 			client_id = grafanaComClientId
-			
+
 			[auth.grafananet]
 			enabled = false
 			client_id = grafanaNetClientId`,
@@ -133,7 +133,7 @@ func TestSocialService_ProvideService_GrafanaComGrafanaNet(t *testing.T) {
 			[auth.grafana_com]
 			enabled = false
 			client_id = grafanaComClientId
-			
+
 			[auth.grafananet]
 			enabled = true
 			client_id = grafanaNetClientId`,
@@ -151,7 +151,7 @@ func TestSocialService_ProvideService_GrafanaComGrafanaNet(t *testing.T) {
 			[auth.grafana_com]
 			enabled = true
 			client_id = grafanaComClientId
-			
+
 			[auth.grafananet]
 			enabled = true
 			client_id = grafanaNetClientId`,
@@ -169,7 +169,7 @@ func TestSocialService_ProvideService_GrafanaComGrafanaNet(t *testing.T) {
 			[auth.grafana_com]
 			enabled = false
 			client_id = grafanaComClientId
-			
+
 			[auth.grafananet]
 			enabled = false
 			client_id = grafanaNetClientId`,
@@ -179,7 +179,7 @@ func TestSocialService_ProvideService_GrafanaComGrafanaNet(t *testing.T) {
 
 	cfg := setting.NewCfg()
 	secrets := secretsfake.NewMockService(t)
-	accessControl := acimpl.ProvideAccessControl(cfg)
+	accessControl := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	sqlStore := db.InitTestDB(t)
 
 	ssoSettingsSvc := ssosettingsimpl.ProvideService(cfg, sqlStore, accessControl, routing.NewRouteRegister(), featuremgmt.WithFeatures(), secrets, &usagestats.UsageStatsMock{}, nil, nil, &licensing.OSSLicensingService{})

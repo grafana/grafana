@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/satokengen"
@@ -79,13 +80,17 @@ func createTestContext(t *testing.T) testContext {
 
 	authToken, serviceAccountUser := createServiceAccountAdminToken(t, env)
 
-	eDB, err := dbimpl.ProvideEntityDB(env.SQLStore, env.Cfg, env.FeatureToggles)
+	eDB, err := dbimpl.ProvideEntityDB(env.SQLStore, env.Cfg, env.FeatureToggles, nil)
 	require.NoError(t, err)
 
 	err = eDB.Init()
 	require.NoError(t, err)
 
-	store, err := sqlstash.ProvideSQLEntityServer(eDB)
+	traceConfig, err := tracing.ParseTracingConfig(env.Cfg)
+	require.NoError(t, err)
+	tracer, err := tracing.ProvideService(traceConfig)
+	require.NoError(t, err)
+	store, err := sqlstash.ProvideSQLEntityServer(eDB, tracer)
 	require.NoError(t, err)
 
 	client := entity.NewEntityStoreClientLocal(store)

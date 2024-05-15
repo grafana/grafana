@@ -3,7 +3,7 @@ package entity
 import (
 	"github.com/fullstorydev/grpchan"
 	"github.com/fullstorydev/grpchan/inprocgrpc"
-	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
+	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"google.golang.org/grpc"
 
 	grpcUtils "github.com/grafana/grafana/pkg/services/store/entity/grpc"

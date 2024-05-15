@@ -29,12 +29,12 @@ export const RuleHealth = ({ rule }: Prom) => {
 };
 
 const getStyle = (theme: GrafanaTheme2) => ({
-  warn: css`
-    display: inline-flex;
-    flex-direction: row;
-    align-items: center;
-    gap: ${theme.spacing(1)};
+  warn: css({
+    display: 'inline-flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing(1),
 
-    color: ${theme.colors.warning.text};
-  `,
+    color: theme.colors.warning.text,
+  }),
 });

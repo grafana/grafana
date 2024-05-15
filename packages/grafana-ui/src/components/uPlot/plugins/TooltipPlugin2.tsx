@@ -545,7 +545,12 @@ export const TooltipPlugin2 = ({
 
       // if not viaSync, re-dispatch real event
       if (event != null) {
-        plot!.over.dispatchEvent(event);
+        // this works around the fact that uPlot does not unset cursor.event (for perf reasons)
+        // so if the last real mouse event was mouseleave and you manually trigger u.setCursor()
+        // it would end up re-dispatching mouseleave
+        const isStaleEvent = performance.now() - event.timeStamp > 16;
+
+        !isStaleEvent && plot!.over.dispatchEvent(event);
       } else {
         plot!.setCursor(
           {
@@ -584,7 +589,7 @@ const getStyles = (theme: GrafanaTheme2, maxWidth?: number) => ({
   tooltipWrapper: css({
     top: 0,
     left: 0,
-    zIndex: theme.zIndex.tooltip,
+    zIndex: theme.zIndex.portal,
     whiteSpace: 'pre',
     borderRadius: theme.shape.radius.default,
     position: 'fixed',

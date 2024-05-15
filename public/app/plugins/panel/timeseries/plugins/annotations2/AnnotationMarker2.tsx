@@ -85,7 +85,7 @@ export const AnnotationMarker2 = ({
     >
       {contents &&
         createPortal(
-          <div ref={refs.setFloating} className={styles.annoBox} style={floatingStyles}>
+          <div ref={refs.setFloating} className={styles.annoBox} style={floatingStyles} data-testid="annotation-marker">
             {contents}
           </div>,
           portalRoot

@@ -1,31 +1,21 @@
 package identity
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/models/roletype"
 )
 
-const (
-	NamespaceUser           = "user"
-	NamespaceAPIKey         = "api-key"
-	NamespaceServiceAccount = "service-account"
-	NamespaceAnonymous      = "anonymous"
-	NamespaceRenderService  = "render"
-	NamespaceAccessPolicy   = "access-policy"
-)
-
-var ErrNotIntIdentifier = errors.New("identifier is not an int64")
-var ErrIdentifierNotInitialized = errors.New("identifier is not initialized")
-
 type Requester interface {
 	// GetID returns namespaced id for the entity
-	GetID() string
+	GetID() NamespaceID
 	// GetNamespacedID returns the namespace and ID of the active entity.
 	// The namespace is one of the constants defined in pkg/services/auth/identity.
-	GetNamespacedID() (namespace string, identifier string)
+	// Deprecated: use GetID instead
+	GetNamespacedID() (namespace Namespace, identifier string)
+	// GetUID returns namespaced uid for the entity
+	GetUID() NamespaceID
 	// GetDisplayName returns the display name of the active entity.
 	// The display name is the name if it is set, otherwise the login or email.
 	GetDisplayName() string
@@ -78,7 +68,7 @@ type Requester interface {
 }
 
 // IsNamespace returns true if namespace matches any expected namespace
-func IsNamespace(namespace string, expected ...string) bool {
+func IsNamespace(namespace Namespace, expected ...Namespace) bool {
 	for _, e := range expected {
 		if namespace == e {
 			return true
@@ -91,7 +81,7 @@ func IsNamespace(namespace string, expected ...string) bool {
 // IntIdentifier converts a string identifier to an int64.
 // Applicable for users, service accounts, api keys and renderer service.
 // Errors if the identifier is not initialized or if namespace is not recognized.
-func IntIdentifier(namespace, identifier string) (int64, error) {
+func IntIdentifier(namespace Namespace, identifier string) (int64, error) {
 	if IsNamespace(namespace, NamespaceUser, NamespaceAPIKey, NamespaceServiceAccount, NamespaceRenderService) {
 		id, err := strconv.ParseInt(identifier, 10, 64)
 		if err != nil {
@@ -111,7 +101,7 @@ func IntIdentifier(namespace, identifier string) (int64, error) {
 // UserIdentifier converts a string identifier to an int64.
 // Errors if the identifier is not initialized or if namespace is not recognized.
 // Returns 0 if the namespace is not user or service account
-func UserIdentifier(namespace, identifier string) (int64, error) {
+func UserIdentifier(namespace Namespace, identifier string) (int64, error) {
 	userID, err := IntIdentifier(namespace, identifier)
 	if err != nil {
 		// FIXME: return this error once entity namespaces are handled by stores

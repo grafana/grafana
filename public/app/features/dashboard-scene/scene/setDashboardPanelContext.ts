@@ -121,11 +121,6 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     //return onUpdatePanelSnapshotData(this.props.panel, frames);
     return Promise.resolve(true);
   };
-
-  // Backward compatibility with id
-  context.instanceState = {
-    legacyPanelId: getPanelIdForVizPanel(vizPanel),
-  };
 }
 
 function getBuiltInAnnotationsLayer(scene: DashboardScene): dataLayers.AnnotationsDataLayer | undefined {
@@ -165,6 +160,7 @@ export function getAdHocFilterVariableFor(scene: DashboardScene, ds: DataSourceR
   const newVariable = new AdHocFiltersVariable({
     name: 'Filters',
     datasource: ds,
+    useQueriesAsFilterForOptions: true,
   });
 
   // Add it to the scene

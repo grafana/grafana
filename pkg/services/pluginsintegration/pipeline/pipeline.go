@@ -54,6 +54,7 @@ func ProvideValidationStage(cfg *config.PluginManagementCfg, sv signature.Valida
 			SignatureValidationStep(sv),
 			validation.ModuleJSValidationStep(),
 			validation.AngularDetectionStep(cfg, ai),
+			validation.APIVersionValidationStep(),
 		},
 	})
 }
@@ -65,10 +66,10 @@ func ProvideInitializationStage(cfg *config.PluginManagementCfg, pr registry.Ser
 		InitializeFuncs: []initialization.InitializeFunc{
 			ExternalServiceRegistrationStep(cfg, externalServiceRegistry, tracer),
 			initialization.BackendClientInitStep(pluginEnvProvider, bp),
-			initialization.PluginRegistrationStep(pr),
 			initialization.BackendProcessStartStep(pm),
 			RegisterPluginRolesStep(roleRegistry),
 			ReportBuildMetrics,
+			initialization.PluginRegistrationStep(pr),
 		},
 	})
 }

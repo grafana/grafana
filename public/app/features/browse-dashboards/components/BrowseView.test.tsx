@@ -149,7 +149,7 @@ describe('browse-dashboards BrowseView', () => {
   describe('when there is no item in the folder', () => {
     it('shows a CTA for creating a dashboard if the user has editor rights', async () => {
       render(<BrowseView canSelect={true} folderUID={folderB_empty.item.uid} width={WIDTH} height={HEIGHT} />);
-      expect(await screen.findByText('Create Dashboard')).toBeInTheDocument();
+      expect(await screen.findByText('Create dashboard')).toBeInTheDocument();
     });
 
     it('shows a simple message if the user has viewer rights', async () => {

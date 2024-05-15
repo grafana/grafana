@@ -9,6 +9,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/apitesting"
@@ -65,13 +66,17 @@ func createTestContext(t *testing.T) (entityStore.EntityStoreClient, factory.Des
 	db := sqlstore.InitTestDBWithMigration(t, nil, sqlstore.InitTestDBOpt{EnsureDefaultOrgAndUser: false})
 	require.NoError(t, err)
 
-	eDB, err := dbimpl.ProvideEntityDB(db, cfg, featureToggles)
+	eDB, err := dbimpl.ProvideEntityDB(db, cfg, featureToggles, nil)
 	require.NoError(t, err)
 
 	err = eDB.Init()
 	require.NoError(t, err)
 
-	store, err := sqlstash.ProvideSQLEntityServer(eDB)
+	traceConfig, err := tracing.ParseTracingConfig(cfg)
+	require.NoError(t, err)
+	tracer, err := tracing.ProvideService(traceConfig)
+	require.NoError(t, err)
+	store, err := sqlstash.ProvideSQLEntityServer(eDB, tracer)
 	require.NoError(t, err)
 
 	client := entityStore.NewEntityStoreClientLocal(store)

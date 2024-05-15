@@ -23,6 +23,7 @@ import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverVi
 
 import { getDataLinks } from '../status-history/utils';
 import { getStyles } from '../timeseries/TimeSeriesTooltip';
+import { isTooltipScrollable } from '../timeseries/utils';
 
 import { HeatmapData } from './fields';
 import { renderHistogram } from './renderHistogram';
@@ -39,7 +40,6 @@ interface HeatmapTooltipProps {
   dismiss: () => void;
   panelData: PanelData;
   annotate?: () => void;
-  scrollable?: boolean;
   maxHeight?: number;
 }
 
@@ -66,7 +66,6 @@ const HeatmapHoverCell = ({
   showColorScale = false,
   mode,
   annotate,
-  scrollable,
   maxHeight,
 }: HeatmapTooltipProps) => {
   const index = dataIdxs[1]!;
@@ -112,7 +111,11 @@ const HeatmapHoverCell = ({
 
   let contentItems: VizTooltipItem[] = [];
 
-  const yValueIdx = index % (data.yBucketCount ?? 1);
+  const getYValueIndex = (idx: number) => {
+    return idx % (data.yBucketCount ?? 1);
+  };
+
+  let yValueIdx = getYValueIndex(index);
   const xValueIdx = Math.floor(index / (data.yBucketCount ?? 1));
 
   const getData = (idx: number = index) => {
@@ -182,6 +185,7 @@ const HeatmapHoverCell = ({
       if (isSparse) {
         ({ xBucketMin, xBucketMax, yBucketMin, yBucketMax } = getSparseCellMinMax(data!, idx));
       } else {
+        yValueIdx = getYValueIndex(idx);
         getData(idx);
       }
 
@@ -353,7 +357,12 @@ const HeatmapHoverCell = ({
   return (
     <div className={styles.wrapper}>
       <VizTooltipHeader item={headerItem} isPinned={isPinned} />
-      <VizTooltipContent items={contentItems} isPinned={isPinned} scrollable={scrollable} maxHeight={maxHeight}>
+      <VizTooltipContent
+        items={contentItems}
+        isPinned={isPinned}
+        scrollable={isTooltipScrollable({ mode, maxHeight })}
+        maxHeight={maxHeight}
+      >
         {customContent?.map((content, i) => (
           <div key={i} style={{ padding: `${theme.spacing(1)} 0` }}>
             {content}

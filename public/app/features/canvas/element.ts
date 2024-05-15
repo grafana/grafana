@@ -17,6 +17,7 @@ import { BackgroundConfig, Constraint, LineConfig, Placement, StandardEditorConf
  *
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface CanvasElementOptions<TConfig = any> {
   name: string; // configured unique display name
   type: string;
@@ -61,10 +62,12 @@ export interface CanvasConnection {
   vertices?: ConnectionCoordinates[];
   radius?: ScaleDimensionConfig;
   direction?: ConnectionDirection;
+  sourceOriginal?: ConnectionCoordinates;
+  targetOriginal?: ConnectionCoordinates;
   // See https://github.com/anseki/leader-line#options for more examples of more properties
 }
 
-export interface CanvasElementProps<TConfig = any, TData = any> {
+export interface CanvasElementProps<TConfig = unknown, TData = unknown> {
   // Saved config
   config: TConfig;
 
@@ -80,6 +83,7 @@ export interface CanvasElementProps<TConfig = any, TData = any> {
  *
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface CanvasElementItem<TConfig = any, TData = any> extends RegistryItem {
   /** The default width/height to use when adding  */
   defaultSize?: Placement;
@@ -99,6 +103,12 @@ export interface CanvasElementItem<TConfig = any, TData = any> extends RegistryI
 
   /** Optional config to customize what standard element editor options are available for the item */
   standardEditorConfig?: StandardEditorConfig;
+
+  /** Custom connection anchor coordinates, like for svg elements such as triangle, cloud, etc */
+  customConnectionAnchors?: Array<{
+    x: number;
+    y: number;
+  }>;
 }
 
 export const defaultBgColor = '#D9D9D9';
