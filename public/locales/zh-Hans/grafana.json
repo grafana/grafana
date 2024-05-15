@@ -613,6 +613,9 @@
     "select": {
       "no-options-label": "未找到选项",
       "placeholder": "选择"
+    },
+    "spinner": {
+      "aria-label": ""
     }
   },
   "graph": {

@@ -22,6 +22,17 @@ export const assertQueryHistory = async (expectedQueryTexts: string[]) => {
   });
 };
 
+export const assertQueryLibraryTemplateExists = async (datasource: string, description: string) => {
+  const selector = withinQueryHistory();
+  await waitFor(() => {
+    const cell = selector.getByRole('cell', {
+      name: new RegExp(`query template for ${datasource.toLowerCase()}: ${description.toLowerCase()}`, 'i'),
+    });
+
+    expect(cell).toBeInTheDocument();
+  });
+};
+
 export const assertQueryHistoryIsEmpty = async () => {
   const selector = withinQueryHistory();
   const queryTexts = selector.queryAllByLabelText('Query text');

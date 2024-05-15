@@ -68,12 +68,12 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataDataQuery>
     const streams: Array<Observable<DataQueryResponse>> = [];
 
     // Start streams and prepare queries
-    for (const target of options.targets) {
+    for (let target of options.targets) {
       if (target.hide) {
         continue;
       }
 
-      this.resolveTemplateVariables(target, options.scopedVars);
+      target = this.resolveTemplateVariables(target, options.scopedVars);
 
       switch (target.scenarioId) {
         case 'live':
@@ -142,29 +142,32 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataDataQuery>
   }
 
   resolveTemplateVariables(query: TestDataDataQuery, scopedVars: ScopedVars) {
-    if (query.labels) {
-      query.labels = this.templateSrv.replace(query.labels, scopedVars);
+    const result = { ...query };
+
+    if (result.labels) {
+      result.labels = this.templateSrv.replace(result.labels, scopedVars);
     }
-    if (query.alias) {
-      query.alias = this.templateSrv.replace(query.alias, scopedVars);
+    if (result.alias) {
+      result.alias = this.templateSrv.replace(result.alias, scopedVars);
     }
-    if (query.scenarioId) {
-      query.scenarioId = this.templateSrv.replace(query.scenarioId, scopedVars) as TestDataQueryType;
+    if (result.scenarioId) {
+      result.scenarioId = this.templateSrv.replace(result.scenarioId, scopedVars) as TestDataQueryType;
     }
-    if (query.stringInput) {
-      query.stringInput = this.templateSrv.replace(query.stringInput, scopedVars);
+    if (result.stringInput) {
+      result.stringInput = this.templateSrv.replace(result.stringInput, scopedVars);
     }
-    if (query.csvContent) {
-      query.csvContent = this.templateSrv.replace(query.csvContent, scopedVars);
+    if (result.csvContent) {
+      result.csvContent = this.templateSrv.replace(result.csvContent, scopedVars);
     }
-    if (query.rawFrameContent) {
-      query.rawFrameContent = this.templateSrv.replace(query.rawFrameContent, scopedVars);
+    if (result.rawFrameContent) {
+      result.rawFrameContent = this.templateSrv.replace(result.rawFrameContent, scopedVars);
     }
+
+    return result;
   }
 
   applyTemplateVariables(query: TestDataDataQuery, scopedVars: ScopedVars): TestDataDataQuery {
-    this.resolveTemplateVariables(query, scopedVars);
-    return query;
+    return this.resolveTemplateVariables(query, scopedVars);
   }
 
   annotationDataTopicTest(
