@@ -6,6 +6,7 @@ import { GrafanaTheme2, deprecationWarning } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
+import { Icon } from '../Icon/Icon';
 
 export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
   value?: boolean;
@@ -35,7 +36,9 @@ export const Switch = React.forwardRef<HTMLInputElement, Props>(
           {...inputProps}
           ref={ref}
         />
-        <label htmlFor={switchIdRef.current} aria-label={label ?? 'Toggle switch'} />
+        <label htmlFor={switchIdRef.current} aria-label={label ?? 'Toggle switch'}>
+          <Icon name="check" size="xs" />
+        </label>
       </div>
     );
   }
@@ -95,9 +98,10 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
           background: theme.colors.primary.shade,
         },
 
-        '&::after': {
-          transform: 'translate3d(18px, -50%, 0)',
+        svg: {
+          transform: 'translate3d(17px, -50%, 0)',
           background: theme.colors.primary.contrastText,
+          color: theme.colors.primary.main,
         },
       },
 
@@ -106,14 +110,16 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
         borderColor: theme.colors.border.weak,
         cursor: 'not-allowed',
 
-        '&:hover': {
-          background: theme.colors.action.disabledBackground,
+        svg: {
+          background: theme.colors.text.disabled,
         },
       },
 
       '&:disabled:checked + label': {
-        '&::after': {
-          background: theme.colors.text.disabled,
+        background: theme.colors.primary.transparent,
+
+        svg: {
+          color: theme.colors.primary.contrastText,
         },
       },
 
@@ -135,21 +141,21 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
         borderColor: theme.components.input.borderHover,
       },
 
-      '&::after': {
+      svg: {
         position: 'absolute',
         display: 'block',
-        content: '""',
+        color: 'transparent',
         width: '12px',
         height: '12px',
         borderRadius: theme.shape.radius.circle,
         background: theme.colors.text.secondary,
         boxShadow: theme.shadows.z1,
         top: '50%',
-        transform: 'translate3d(2px, -50%, 0)',
+        transform: 'translate3d(1px, -50%, 0)',
         transition: 'transform 0.2s cubic-bezier(0.19, 1, 0.22, 1)',
 
         '@media (forced-colors: active)': {
-          border: '1px solid transparent',
+          border: `1px solid ${theme.colors.primary.contrastText}`,
         },
       },
     },
