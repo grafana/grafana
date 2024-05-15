@@ -14,7 +14,6 @@ import {
   locationService,
   setBackendSrv,
   setDataSourceSrv,
-  setPluginExtensionsHook,
   usePluginLinkExtensions,
 } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -54,7 +53,6 @@ import {
   pausedPromRules,
   somePromRules,
   someRulerRules,
-  mockPluginLinkExtension,
 } from './mocks';
 import { setupPluginsExtensionsHook } from './testSetup/plugins';
 import * as config from './utils/config';
