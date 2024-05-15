@@ -3134,6 +3134,9 @@ exports[`better eslint`] = {
     "public/app/features/teams/state/selectors.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
+    "public/app/features/template-gallery/components/TemplateGallery/TemplateGallery.tsx:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
     "public/app/features/templating/fieldAccessorCache.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],

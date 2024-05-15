@@ -110,6 +110,12 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/dashboard/templates',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "DashboardImport"*/ '../features/template-gallery/TemplateGalleryPage')
+      ),
+    },
+    {
       path: DATASOURCES_ROUTES.List,
       component: () => <Redirect to={CONNECTIONS_ROUTES.DataSources} />,
     },
