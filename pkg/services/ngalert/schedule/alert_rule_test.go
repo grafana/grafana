@@ -279,7 +279,7 @@ func TestRuleRoutine(t *testing.T) {
 			factory := ruleFactoryFromScheduler(sch)
 			ctx, cancel := context.WithCancel(context.Background())
 			t.Cleanup(cancel)
-			ruleInfo := factory.new(ctx)
+			ruleInfo := factory.new(ctx, rule)
 			go func() {
 				_ = ruleInfo.Run(rule.GetKey())
 			}()
@@ -442,7 +442,7 @@ func TestRuleRoutine(t *testing.T) {
 
 			factory := ruleFactoryFromScheduler(sch)
 			ctx, cancel := context.WithCancel(context.Background())
-			ruleInfo := factory.new(ctx)
+			ruleInfo := factory.new(ctx, rule)
 			go func() {
 				err := ruleInfo.Run(models.AlertRuleKey{})
 				stoppedChan <- err
@@ -462,7 +462,7 @@ func TestRuleRoutine(t *testing.T) {
 			require.NotEmpty(t, sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
 
 			factory := ruleFactoryFromScheduler(sch)
-			ruleInfo := factory.new(context.Background())
+			ruleInfo := factory.new(context.Background(), rule)
 			go func() {
 				err := ruleInfo.Run(rule.GetKey())
 				stoppedChan <- err
@@ -492,7 +492,7 @@ func TestRuleRoutine(t *testing.T) {
 		factory := ruleFactoryFromScheduler(sch)
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
-		ruleInfo := factory.new(ctx)
+		ruleInfo := factory.new(ctx, rule)
 
 		go func() {
 			_ = ruleInfo.Run(rule.GetKey())
@@ -574,7 +574,7 @@ func TestRuleRoutine(t *testing.T) {
 		factory := ruleFactoryFromScheduler(sch)
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
-		ruleInfo := factory.new(ctx)
+		ruleInfo := factory.new(ctx, rule)
 
 		go func() {
 			_ = ruleInfo.Run(rule.GetKey())
@@ -693,7 +693,7 @@ func TestRuleRoutine(t *testing.T) {
 			factory := ruleFactoryFromScheduler(sch)
 			ctx, cancel := context.WithCancel(context.Background())
 			t.Cleanup(cancel)
-			ruleInfo := factory.new(ctx)
+			ruleInfo := factory.new(ctx, rule)
 
 			go func() {
 				_ = ruleInfo.Run(rule.GetKey())
@@ -727,7 +727,7 @@ func TestRuleRoutine(t *testing.T) {
 		factory := ruleFactoryFromScheduler(sch)
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
-		ruleInfo := factory.new(ctx)
+		ruleInfo := factory.new(ctx, rule)
 
 		go func() {
 			_ = ruleInfo.Run(rule.GetKey())
