@@ -65,14 +65,14 @@ func (e *AzureLogAnalyticsDatasource) GetBasicLogsUsage(ctx context.Context, url
 	dataVolumeQueryRaw := GetDataVolumeRawQuery(table)
 	dataVolumeQuery := &AzureLogAnalyticsQuery{
 		Query:         dataVolumeQueryRaw,
-		DashboardTime: true,
+		DashboardTime: true, // necessary to ensure TimeRange property is used since query will not have an in-query time filter
 		TimeRange: backend.TimeRange{
 			From: from,
 			To:   to,
 		},
 		TimeColumn: "TimeGenerated",
 		Resources:  []string{payload.Resource},
-		QueryType:  dataquery.AzureQueryType(payload.QueryType),
+		QueryType:  dataquery.AzureQueryTypeAzureLogAnalytics,
 		URL:        getApiURL(payload.Resource, false),
 	}
 
