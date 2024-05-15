@@ -957,11 +957,21 @@ func TestResults_HasNonRetryableErrors(t *testing.T) {
 		expected bool
 	}{
 		{
-			name: "with non-retryable errors",
+			name: "with invalid format error",
 			eval: Results{
 				{
 					State: Error,
 					Error: &invalidEvalResultFormatError{refID: "A", reason: "unable to get frame row length", err: errors.New("weird error")},
+				},
+			},
+			expected: true,
+		},
+		{
+			name: "with expected wide series but got type long error",
+			eval: Results{
+				{
+					State: Error,
+					Error: fmt.Errorf("%w but got type long", expr.ErrSeriesMustBeWide),
 				},
 			},
 			expected: true,

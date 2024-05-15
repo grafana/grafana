@@ -11,7 +11,7 @@ import {
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { setPluginImportUtils } from '@grafana/runtime';
-import { SceneGridLayout, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { SceneDataTransformer, SceneGridLayout, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 
@@ -104,12 +104,12 @@ describe('DashboardDatasourceBehaviour', () => {
 
     it('Should re-run query of dashboardDS panel when source query re-runs', async () => {
       // spy on runQueries that will be called by the behaviour
-      const spy = jest.spyOn(dashboardDSPanel.state.$data as SceneQueryRunner, 'runQueries');
+      const spy = jest.spyOn(dashboardDSPanel.state.$data!.state.$data as SceneQueryRunner, 'runQueries');
 
       // deactivate scene to mimic going into panel edit
       sceneDeactivate();
       // run source panel queries and update request ID
-      (sourcePanel.state.$data as SceneQueryRunner).runQueries();
+      (sourcePanel.state.$data!.state.$data as SceneQueryRunner).runQueries();
 
       await new Promise((r) => setTimeout(r, 1));
 
@@ -121,7 +121,7 @@ describe('DashboardDatasourceBehaviour', () => {
 
     it('Should not run query of dashboardDS panel when source panel queries do not change', async () => {
       // spy on runQueries
-      const spy = jest.spyOn(dashboardDSPanel.state.$data as SceneQueryRunner, 'runQueries');
+      const spy = jest.spyOn(dashboardDSPanel.state.$data!.state.$data as SceneQueryRunner, 'runQueries');
 
       // deactivate scene to mimic going into panel edit
       sceneDeactivate();
@@ -273,10 +273,10 @@ describe('DashboardDatasourceBehaviour', () => {
 
     it('Should exit behaviour early if not in a dashboard scene', async () => {
       // spy on runQueries
-      const spy = jest.spyOn(dashboardDSPanel.state.$data as SceneQueryRunner, 'runQueries');
+      const spy = jest.spyOn(dashboardDSPanel.state.$data!.state.$data as SceneQueryRunner, 'runQueries');
 
       const vizPanelManager = new VizPanelManager({
-        panel: dashboardDSPanel.clone({ $data: undefined }),
+        panel: dashboardDSPanel.clone(),
         $data: dashboardDSPanel.state.$data?.clone(),
         sourcePanel: dashboardDSPanel.getRef(),
       });
@@ -576,9 +576,12 @@ async function buildTestScene() {
     title: 'Panel A',
     pluginId: 'table',
     key: 'panel-1',
-    $data: new SceneQueryRunner({
-      datasource: { uid: 'grafana' },
-      queries: [{ refId: 'A', queryType: 'randomWalk' }],
+    $data: new SceneDataTransformer({
+      transformations: [],
+      $data: new SceneQueryRunner({
+        datasource: { uid: 'grafana' },
+        queries: [{ refId: 'A', queryType: 'randomWalk' }],
+      }),
     }),
   });
 
@@ -586,10 +589,13 @@ async function buildTestScene() {
     title: 'Panel B',
     pluginId: 'table',
     key: 'panel-2',
-    $data: new SceneQueryRunner({
-      datasource: { uid: SHARED_DASHBOARD_QUERY },
-      queries: [{ refId: 'A', panelId: 1 }],
-      $behaviors: [new DashboardDatasourceBehaviour({})],
+    $data: new SceneDataTransformer({
+      transformations: [],
+      $data: new SceneQueryRunner({
+        datasource: { uid: SHARED_DASHBOARD_QUERY },
+        queries: [{ refId: 'A', panelId: 1 }],
+        $behaviors: [new DashboardDatasourceBehaviour({})],
+      }),
     }),
   });
 

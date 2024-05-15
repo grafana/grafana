@@ -40,7 +40,9 @@ To make a backup of your configuration and to be able to restore deleted alertin
 
 In the following sections, we’ll guide you through the process of creating your Grafana-managed alert rules.
 
-To create a Grafana-managed alert rule, use the in-product alert creation flow and follow these steps to help you.
+To create a Grafana-managed alert rule, use the in-product alert creation flow and follow these steps.
+
+To get started quickly, refer to our [tutorial on getting started with Grafana alerting](http://grafana.com/tutorials/alerting-get-started/).
 
 ## Set alert rule name
 

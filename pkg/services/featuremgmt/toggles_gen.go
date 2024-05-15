@@ -123,6 +123,14 @@ const (
 	// SQL-based k8s storage
 	FlagUnifiedStorage = "unifiedStorage"
 
+	// FlagDualWritePlaylistsMode2
+	// Enables dual writing of playlists to both legacy and k8s storage in mode 2
+	FlagDualWritePlaylistsMode2 = "dualWritePlaylistsMode2"
+
+	// FlagDualWritePlaylistsMode3
+	// Enables dual writing of playlists to both legacy and k8s storage in mode 3
+	FlagDualWritePlaylistsMode3 = "dualWritePlaylistsMode3"
+
 	// FlagCloudWatchCrossAccountQuerying
 	// Enables cross-account querying in CloudWatch datasources
 	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"
@@ -316,7 +324,7 @@ const (
 	FlagGrafanaAPIServerEnsureKubectlAccess = "grafanaAPIServerEnsureKubectlAccess"
 
 	// FlagFeatureToggleAdminPage
-	// Enable admin page for managing feature toggles from the Grafana front-end
+	// Enable admin page for managing feature toggles from the Grafana front-end. Grafana Cloud only.
 	FlagFeatureToggleAdminPage = "featureToggleAdminPage"
 
 	// FlagAwsAsyncQueryCaching
@@ -603,6 +611,10 @@ const (
 	// New implementation for the dashboard-to-PDF rendering
 	FlagNewPDFRendering = "newPDFRendering"
 
+	// FlagTlsMemcached
+	// Use TLS-enabled memcached in the enterprise caching feature
+	FlagTlsMemcached = "tlsMemcached"
+
 	// FlagKubernetesAggregator
 	// Enable grafana aggregator
 	FlagKubernetesAggregator = "kubernetesAggregator"
@@ -674,4 +686,8 @@ const (
 	// FlagAlertingListViewV2
 	// Enables the new alert list view design
 	FlagAlertingListViewV2 = "alertingListViewV2"
+
+	// FlagNotificationBanner
+	// Enables the notification banner UI and API
+	FlagNotificationBanner = "notificationBanner"
 )
