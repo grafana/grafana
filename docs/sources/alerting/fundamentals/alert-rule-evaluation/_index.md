@@ -49,7 +49,7 @@ Keep in mind:
 
 - One alert rule can generate multiple alert instances - one for each time series produced by the alert rule's query.
 - Alert instances from the same alert rule may be in different states. For instance, only one observed machine might start firing.
-- Only "Alerting" and "Resolved" alert instances are routed to manage their notifications.
+- Only **Alerting** and **Resolved** alert instances are routed to manage their notifications.
 
 {{< figure src="/media/docs/alerting/alert-rule-evaluation-overview-statediagram-v2.png" max-width="750px" >}}
 
