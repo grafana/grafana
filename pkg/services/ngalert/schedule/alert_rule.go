@@ -58,6 +58,9 @@ func newRuleFactory(
 	stopAppliedHook stopAppliedFunc,
 ) ruleFactoryFunc {
 	return func(ctx context.Context, rule *ngmodels.AlertRule) Rule {
+		if rule.IsRecordingRule() {
+			return newRecordingRule(ctx, logger)
+		}
 		return newAlertRule(
 			ctx,
 			appURL,
