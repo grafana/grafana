@@ -76,7 +76,7 @@ const LogsQueryEditor = ({
 
   useEffect(() => {
     if (query.azureLogAnalytics?.resources && query.azureLogAnalytics.resources.length === 1) {
-      const selectedResource = templateSrv.replace(query.azureLogAnalytics.resources[0]);
+      const selectedResource = templateSrv?.replace(query.azureLogAnalytics.resources[0]);
       const parsedResource = parseResourceURI(selectedResource);
       setShowBasicLogsToggle(
         parsedResource.metricNamespace?.toLowerCase() === 'microsoft.operationalinsights/workspaces' && basicLogsEnabled
