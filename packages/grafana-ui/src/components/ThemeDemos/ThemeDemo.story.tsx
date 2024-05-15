@@ -1,4 +1,4 @@
-import { Meta, Story } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
 import { EmotionPerfTest } from './EmotionPerfTest';
@@ -16,11 +16,11 @@ const meta: Meta = {
   },
 };
 
-export const ThemeDemo: Story = () => {
+export const ThemeDemo: StoryFn = () => {
   return <NewThemeDemoComponent />;
 };
 
-export const PerfTest: Story = () => {
+export const PerfTest: StoryFn = () => {
   return <EmotionPerfTest />;
 };
 

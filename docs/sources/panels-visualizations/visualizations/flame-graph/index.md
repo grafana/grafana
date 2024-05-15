@@ -45,6 +45,8 @@ Once you’ve created a [dashboard](https://grafana.com/docs/grafana/<GRAFANA_VE
 
 {{< youtube id="VEvK0JkPlOY" >}}
 
+{{< docs/play title="Flame Graphs" url="https://play.grafana.org/d/cdl34qv4zzg8wa/" >}}
+
 ## Supported data formats
 
 To render a flame graph, you must format the data frame data using a _nested set model_.
