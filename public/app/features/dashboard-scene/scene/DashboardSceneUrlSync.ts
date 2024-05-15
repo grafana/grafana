@@ -129,6 +129,11 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         return;
       }
 
+      // We cannot simultaneously be in edit and view panel state.
+      if (this._scene.state.viewPanelScene) {
+        this._scene.setState({ viewPanelScene: undefined });
+      }
+
       // If we are not in editing (for example after full page reload)
       if (!isEditing) {
         this._scene.onEnterEditMode();
