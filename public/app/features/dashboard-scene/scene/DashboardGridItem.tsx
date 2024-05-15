@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { isEqual } from 'lodash';
 import React, { useMemo } from 'react';
 
 import { config } from '@grafana/runtime';
@@ -17,6 +18,7 @@ import {
   CustomVariable,
   VizPanelMenu,
   VizPanelState,
+  VariableValueSingle,
 } from '@grafana/scenes';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
@@ -27,7 +29,7 @@ import { LibraryVizPanel } from './LibraryVizPanel';
 import { repeatPanelMenuBehavior } from './PanelMenuBehavior';
 import { DashboardRepeatsProcessedEvent } from './types';
 
-interface DashboardGridItemState extends SceneGridItemStateLike {
+export interface DashboardGridItemState extends SceneGridItemStateLike {
   body: VizPanel | LibraryVizPanel | AddLibraryPanelDrawer;
   repeatedPanels?: VizPanel[];
   variableName?: string;
@@ -39,6 +41,8 @@ interface DashboardGridItemState extends SceneGridItemStateLike {
 export type RepeatDirection = 'v' | 'h';
 
 export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> implements SceneGridItemLike {
+  private _prevRepeatValues?: VariableValueSingle[];
+
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: this.state.variableName ? [this.state.variableName] : [],
     onVariableUpdateCompleted: this._onVariableUpdateCompleted.bind(this),
@@ -111,8 +115,14 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
       return;
     }
 
-    let panelToRepeat = this.state.body instanceof LibraryVizPanel ? this.state.body.state.panel! : this.state.body;
     const { values, texts } = getMultiVariableValues(variable);
+
+    if (isEqual(this._prevRepeatValues, values)) {
+      return;
+    }
+
+    this._prevRepeatValues = values;
+    const panelToRepeat = this.state.body instanceof LibraryVizPanel ? this.state.body.state.panel! : this.state.body;
     const repeatedPanels: VizPanel[] = [];
 
     // Loop through variable values and create repeats
