@@ -97,7 +97,6 @@ v1.tagValues(
 class UnthemedFluxQueryEditor extends PureComponent<Props> {
   onFluxQueryChange = (query: string) => {
     this.props.onChange({ ...this.props.query, query });
-    // this.props.onRunQuery();
   };
 
   onSampleChange = (val: SelectableValue<string>) => {
@@ -108,7 +107,6 @@ class UnthemedFluxQueryEditor extends PureComponent<Props> {
 
     // Angular HACK: Since the target does not actually change!
     this.forceUpdate();
-    // this.props.onRunQuery();
   };
 
   getSuggestions = (): CodeEditorSuggestionItem[] => {
