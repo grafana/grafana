@@ -297,16 +297,10 @@ export function SelectBase<T, Rest = {}>({
           setInternalInputValue(val);
         }
 
-        // onBlur => setInputValue to empty
-        if (actionMeta.action === 'input-blur' || actionMeta.action === 'menu-close') {
+        // onMenuClose => setInputValue to empty
+        if (actionMeta.action === 'menu-close') {
           setInternalInputValue('');
         }
-      };
-      creatableProps.onChange = (value, action) => {
-        if (value === null) {
-          return;
-        }
-        commonSelectProps.onChange(value, action);
       };
     }
   }
