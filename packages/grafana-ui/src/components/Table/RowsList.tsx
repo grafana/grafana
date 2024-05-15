@@ -225,10 +225,7 @@ export const RowsList = (props: RowsListProps) => {
   for (const field of data.fields) {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const fieldOptions = field.config.custom as TableFieldOptions;
-    const cellOptionsExist = (
-      fieldOptions !== undefined &&
-      fieldOptions.cellOptions !== undefined
-    );
+    const cellOptionsExist = fieldOptions !== undefined && fieldOptions.cellOptions !== undefined;
 
     if (
       cellOptionsExist &&
@@ -242,13 +239,10 @@ export const RowsList = (props: RowsListProps) => {
       };
     }
 
-
     if (
       cellOptionsExist &&
-      (
-        fieldOptions.cellOptions.type === TableCellDisplayMode.Auto ||
-        fieldOptions.cellOptions.type === TableCellDisplayMode.ColorBackground
-      ) &&
+      (fieldOptions.cellOptions.type === TableCellDisplayMode.Auto ||
+        fieldOptions.cellOptions.type === TableCellDisplayMode.ColorBackground) &&
       fieldOptions.cellOptions.wrapText
     ) {
       textWrapField = field;
