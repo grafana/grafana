@@ -85,7 +85,7 @@
             ],
             "x-enum-description": {}
           },
-          "groupBy": {
+          "groupByKeys": {
             "description": "Group By parameters to apply to aggregate expressions in the query",
             "type": "array",
             "items": {
