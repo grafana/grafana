@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Label, Select, Stack, Text, useStyles2 } from '@grafana/ui';
 import { publicDashboardApi, useUpdatePublicDashboardMutation } from 'app/features/dashboard/api/publicDashboardApi';
 import { PublicDashboardShareType } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
@@ -11,6 +12,7 @@ import { DashboardInteractions } from 'app/features/dashboard-scene/utils/intera
 import { contextSrv } from '../../../../../core/services/context_srv';
 import { AccessControlAction } from '../../../../../types';
 
+const selectors = e2eSelectors.pages.ShareDashboardDrawer.ShareExternally;
 export default function ShareTypeSelect({
   dashboard,
   setShareType,
@@ -55,6 +57,7 @@ export default function ShareTypeSelect({
       <Label description="Only people with access can open with the link">Link access</Label>
       <Stack direction="row" gap={1} alignItems="center">
         <Select
+          data-testid={selectors.shareTypeSelect}
           options={options}
           value={value}
           disabled={!hasWritePermissions}

@@ -277,6 +277,8 @@ export const Pages = {
     ShareExternally: {
       container: 'data-testid share externally drawer container',
       copyUrlButton: 'data-testid share externally copy url button',
+      shareTypeSelect: 'data-testid share externally share type select',
+      // options: (opt: PublicDashboardShareType) => `data-testid share externally ${opt} select option`,
     },
   },
   PublicDashboard: {
