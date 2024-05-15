@@ -287,9 +287,13 @@ export function SelectBase<T, Rest = {}>({
     if (!isMulti) {
       creatableProps.inputValue = internalInputValue;
       creatableProps.onMenuOpen = () => {
+        // make sure we call the base onMenuOpen if it exists
+        commonSelectProps.onMenuOpen?.();
+
         setInternalInputValue(selectedValue?.[0]?.label ?? '');
       };
       creatableProps.onInputChange = (val, actionMeta) => {
+        // make sure we call the base onInputChange
         commonSelectProps.onInputChange(val, actionMeta);
 
         // update the input value state on change since we're explicitly controlling it
