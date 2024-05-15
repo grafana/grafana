@@ -290,6 +290,7 @@ export function SelectBase<T, Rest = {}>({
         // make sure we call the base onMenuOpen if it exists
         commonSelectProps.onMenuOpen?.();
 
+        // restore the input state to the selected value
         setInternalInputValue(selectedValue?.[0]?.label ?? '');
       };
       creatableProps.onInputChange = (val, actionMeta) => {
@@ -300,11 +301,13 @@ export function SelectBase<T, Rest = {}>({
         if (actionMeta.action === 'input-change') {
           setInternalInputValue(val);
         }
+      };
+      creatableProps.onMenuClose = () => {
+        // make sure we call the base onMenuClose if it exists
+        commonSelectProps.onMenuClose?.();
 
         // clear the input state on menu close, else react-select won't show the SingleValue component correctly
-        if (actionMeta.action === 'menu-close') {
-          setInternalInputValue('');
-        }
+        setInternalInputValue('');
       };
     }
   }
