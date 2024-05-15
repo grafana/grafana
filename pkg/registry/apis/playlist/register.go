@@ -1,6 +1,7 @@
 package playlist
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -17,6 +18,7 @@ import (
 	playlist "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/builder"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -32,18 +34,21 @@ type PlaylistAPIBuilder struct {
 	namespacer request.NamespaceMapper
 	gv         schema.GroupVersion
 	features   featuremgmt.FeatureToggles
+	kvStore    kvstore.KVStore
 }
 
 func RegisterAPIService(p playlistsvc.Service,
 	apiregistration builder.APIRegistrar,
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
+	kvStore kvstore.KVStore,
 ) *PlaylistAPIBuilder {
 	builder := &PlaylistAPIBuilder{
 		service:    p,
 		namespacer: request.GetNamespaceMapper(cfg),
 		gv:         playlist.PlaylistResourceInfo.GroupVersion(),
 		features:   features,
+		kvStore:    kvStore,
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -123,15 +128,56 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 			return nil, err
 		}
 
-		mode := grafanarest.Mode1
-		if b.features.IsEnabledGlobally(featuremgmt.FlagDualWritePlaylistsMode2) {
-			mode = grafanarest.Mode2
-		}
-		storage[resource.StoragePath()] = grafanarest.NewDualWriter(mode, legacyStore, store)
+		storage[resource.StoragePath()] = setDualWritingMode(b.kvStore, b.features, legacyStore, store)
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[playlist.VERSION] = storage
 	return &apiGroupInfo, nil
+}
+
+/*
+TODOS
+- pass cfg.StackID into GetAPIGRoupInfo so that we can include it in the key for the kvstore entry
+- fix kvstore get request to include orgID and namespace. potentially switch to namespacedkvstore instead.
+- review how to define modes in code. kvstore returns string mode but currently modes are defined as iota.
+- figure out where setDualWritingMode should live
+- what should the key name for the kvstore entry? what about value? decide between iota versus integer
+- Figure out if we want pods to acquire a lock to go from mode 1 to mode 2
+- Add error handling
+- context.Background() --> use something else?
+*/
+
+func setDualWritingMode(kv kvstore.KVStore, features featuremgmt.FeatureToggles, legacy grafanarest.LegacyStorage, storage grafanarest.Storage) grafanarest.DualWriter {
+	toMode := map[string]grafanarest.DualWriterMode{
+		"1": grafanarest.Mode1,
+		"2": grafanarest.Mode2,
+		"3": grafanarest.Mode3,
+		"4": grafanarest.Mode4,
+	}
+
+	key := "playlist-" // + stackID
+	m, ok, err := kv.Get(context.Background(), 0, "", key)
+	if err != nil {
+		fmt.Println(err)
+	}
+	if !ok {
+		// default to mode 1
+		m = "1"
+		err := kv.Set(context.Background(), 0, "", key, m)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+
+	mode := toMode[m]
+
+	if features.IsEnabledGlobally(featuremgmt.FlagDualWritePlaylistsMode2) {
+		// This is where we go through the different gates to allow the instance to migrate from mode 1 to mode 2.
+		// There are none between mode 1 and mode 2
+		mode = grafanarest.Mode2
+	}
+
+	return grafanarest.NewDualWriter(mode, legacy, storage)
 }
 
 func (b *PlaylistAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
