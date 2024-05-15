@@ -253,10 +253,10 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	for _, item := range alertRules {
 		key := item.GetKey()
 		ruleRoutine, newRoutine := sch.registry.getOrCreate(ctx, key, ruleFactory)
-
+		logger := sch.log.FromContext(ctx).New(key.LogContext()...)
 		// enforce minimum evaluation interval
 		if item.IntervalSeconds < int64(sch.minRuleInterval.Seconds()) {
-			sch.log.Debug("Interval adjusted", append(key.LogContext(), "originalInterval", item.IntervalSeconds, "adjustedInterval", sch.minRuleInterval.Seconds())...)
+			logger.Debug("Interval adjusted", "originalInterval", item.IntervalSeconds, "adjustedInterval", sch.minRuleInterval.Seconds())
 			item.IntervalSeconds = int64(sch.minRuleInterval.Seconds())
 		}
 
@@ -271,7 +271,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		if invalidInterval {
 			// this is expected to be always false
 			// given that we validate interval during alert rule updates
-			sch.log.Warn("Rule has an invalid interval and will be ignored. Interval should be divided exactly by scheduler interval", append(key.LogContext(), "ruleInterval", time.Duration(item.IntervalSeconds)*time.Second, "schedulerInterval", sch.baseInterval)...)
+			logger.Warn("Rule has an invalid interval and will be ignored. Interval should be divided exactly by scheduler interval", "ruleInterval", time.Duration(item.IntervalSeconds)*time.Second, "schedulerInterval", sch.baseInterval)
 			continue
 		}
 
@@ -290,7 +290,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		}
 
 		if isReadyToRun {
-			sch.log.Debug("Rule is ready to run on the current tick", "uid", item.UID, "tick", tickNum, "frequency", itemFrequency, "offset", offset)
+			logger.Debug("Rule is ready to run on the current tick", "tick", tickNum, "frequency", itemFrequency, "offset", offset)
 			readyToRun = append(readyToRun, readyToRunItem{ruleRoutine: ruleRoutine, Evaluation: Evaluation{
 				scheduledAt: tick,
 				rule:        item,
@@ -299,7 +299,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		}
 		if _, isUpdated := updated[key]; isUpdated && !isReadyToRun {
 			// if we do not need to eval the rule, check the whether rule was just updated and if it was, notify evaluation routine about that
-			sch.log.Debug("Rule has been updated. Notifying evaluation routine", key.LogContext()...)
+			logger.Debug("Rule has been updated. Notifying evaluation routine")
 			go func(routine Rule, rule *ngmodels.AlertRule) {
 				routine.Update(RuleVersionAndPauseStatus{
 					Fingerprint: ruleWithFolder{rule: rule, folderTitle: folderTitle}.Fingerprint(),
