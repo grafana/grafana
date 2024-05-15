@@ -3,6 +3,7 @@ import { lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 import {
+  AdHocVariableFilter,
   AnnotationEvent,
   DataFrame,
   DataQueryError,
@@ -31,10 +32,11 @@ import {
   FetchResponse,
   frameToMetricFindValue,
   getBackendSrv,
+  getTemplateSrv,
+  TemplateSrv,
 } from '@grafana/runtime';
 import { QueryFormat, SQLQuery } from '@grafana/sql';
 import config from 'app/core/config';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
 import { AnnotationEditor } from './components/editor/annotation/AnnotationEditor';
 import { FluxQueryEditor } from './components/editor/query/flux/FluxQueryEditor';
@@ -170,7 +172,11 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return true;
   }
 
-  applyTemplateVariables(query: InfluxQuery, scopedVars: ScopedVars): InfluxQuery & SQLQuery {
+  applyTemplateVariables(
+    query: InfluxQuery,
+    scopedVars: ScopedVars,
+    filters?: AdHocVariableFilter[]
+  ): InfluxQuery & SQLQuery {
     const variables = scopedVars || {};
 
     // We want to interpolate these variables on backend.
@@ -190,7 +196,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     }
 
     if (this.version === InfluxVersion.SQL || this.isMigrationToggleOnAndIsAccessProxy()) {
-      query = this.applyVariables(query, variables);
+      query = this.applyVariables(query, variables, filters);
       if (query.adhocFilters?.length) {
         const adhocFiltersToTags: InfluxQueryTag[] = (query.adhocFilters ?? []).map((af) => {
           const { condition, ...asTag } = af;
@@ -238,7 +244,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     });
   }
 
-  applyVariables(query: InfluxQuery & SQLQuery, scopedVars: ScopedVars) {
+  applyVariables(query: InfluxQuery & SQLQuery, scopedVars: ScopedVars, filters?: AdHocVariableFilter[]) {
     const expandedQuery = { ...query };
     if (query.groupBy) {
       expandedQuery.groupBy = query.groupBy.map((groupBy) => {
@@ -282,7 +288,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
     return {
       ...expandedQuery,
-      adhocFilters: this.templateSrv.getAdhocFilters(this.name) ?? [],
+      adhocFilters: filters ?? [],
       query: this.templateSrv.replace(
         query.query ?? '',
         scopedVars,
@@ -651,7 +657,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     }
 
     // add global adhoc filters to timeFilter
-    const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
+    const adhocFilters = options.filters;
     const adhocFiltersFromDashboard = options.targets.flatMap((target: InfluxQuery) => target.adhocFilters ?? []);
     if (adhocFilters?.length || adhocFiltersFromDashboard?.length) {
       const ahFilters = adhocFilters?.length ? adhocFilters : adhocFiltersFromDashboard;

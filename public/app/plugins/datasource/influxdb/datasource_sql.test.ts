@@ -14,7 +14,7 @@ mockBackendService(mockInfluxSQLFetchResponse);
 
 describe('InfluxDB SQL Support', () => {
   const replaceMock = jest.fn();
-  const templateSrv = mockTemplateSrv(jest.fn(), replaceMock);
+  const templateSrv = mockTemplateSrv(replaceMock);
 
   let sqlQuery: SQLQuery;
 
