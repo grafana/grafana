@@ -80,6 +80,15 @@ func (e *AzureLogAnalyticsDatasource) GetBasicLogsUsage(ctx context.Context, url
 	if err != nil {
 		return rw, err
 	}
+
+	_, span := tracing.DefaultTracer().Start(ctx, "azure basic logs usage query", trace.WithAttributes(
+		attribute.String("target", dataVolumeQuery.Query),
+		attribute.String("table", table),
+		attribute.Int64("from", dataVolumeQuery.TimeRange.From.UnixNano()/int64(time.Millisecond)),
+		attribute.Int64("until", dataVolumeQuery.TimeRange.To.UnixNano()/int64(time.Millisecond)),
+	))
+	defer span.End()
+
 	resp, err := client.Do(req)
 	if err != nil {
 		return rw, err
