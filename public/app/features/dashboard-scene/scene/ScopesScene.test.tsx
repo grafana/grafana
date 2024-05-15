@@ -1,6 +1,6 @@
 import { waitFor } from '@testing-library/react';
 
-import { Scope } from '@grafana/data';
+import { Scope, ScopeDashboardBindingSpec, ScopeTreeItemSpec } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   behaviors,
@@ -18,125 +18,209 @@ import { ScopeDashboard, ScopesDashboardsScene } from './ScopesDashboardsScene';
 import { ScopesFiltersScene } from './ScopesFiltersScene';
 import { ScopesScene } from './ScopesScene';
 
-const dashboardsMocks = {
-  dashboard1: {
-    uid: 'dashboard1',
-    title: 'Dashboard 1',
-    url: '/d/dashboard1',
+const mocksScopes: Scope[] = [
+  {
+    metadata: { name: 'indexHelperCluster' },
+    spec: {
+      title: 'Cluster Index Helper',
+      type: 'indexHelper',
+      description: 'redundant label filter but makes queries faster',
+      category: 'indexHelpers',
+      filters: [{ key: 'indexHelper', value: 'cluster', operator: 'equals' }],
+    },
   },
-  dashboard2: {
-    uid: 'dashboard2',
-    title: 'Dashboard 2',
-    url: '/d/dashboard2',
+  {
+    metadata: { name: 'slothClusterNorth' },
+    spec: {
+      title: 'slothClusterNorth',
+      type: 'cluster',
+      description: 'slothClusterNorth',
+      category: 'clusters',
+      filters: [{ key: 'cluster', value: 'slothClusterNorth', operator: 'equals' }],
+    },
   },
-  dashboard3: {
-    uid: 'dashboard3',
-    title: 'Dashboard 3',
-    url: '/d/dashboard3',
+  {
+    metadata: { name: 'slothClusterSouth' },
+    spec: {
+      title: 'slothClusterSouth',
+      type: 'cluster',
+      description: 'slothClusterSouth',
+      category: 'clusters',
+      filters: [{ key: 'cluster', value: 'slothClusterSouth', operator: 'equals' }],
+    },
   },
-};
+  {
+    metadata: { name: 'slothPictureFactory' },
+    spec: {
+      title: 'slothPictureFactory',
+      type: 'app',
+      description: 'slothPictureFactory',
+      category: 'apps',
+      filters: [{ key: 'app', value: 'slothPictureFactory', operator: 'equals' }],
+    },
+  },
+  {
+    metadata: { name: 'slothVoteTracker' },
+    spec: {
+      title: 'slothVoteTracker',
+      type: 'app',
+      description: 'slothVoteTracker',
+      category: 'apps',
+      filters: [{ key: 'app', value: 'slothVoteTracker', operator: 'equals' }],
+    },
+  },
+] as const;
 
-const scopesMocks: Record<
-  string,
-  Scope & {
-    dashboards: ScopeDashboard[];
-  }
-> = {
-  scope1: {
-    metadata: {
-      name: 'scope1',
-    },
-    spec: {
-      title: 'Scope 1',
-      type: 'Type 1',
-      description: 'Description 1',
-      category: 'Category 1',
-      filters: [
-        { key: 'a-key', operator: 'equals', value: 'a-value' },
-        { key: 'b-key', operator: 'not-equals', value: 'b-value' },
-      ],
-    },
-    dashboards: [dashboardsMocks.dashboard1, dashboardsMocks.dashboard2, dashboardsMocks.dashboard3],
+const mocksScopeDashboardBindings: ScopeDashboardBindingSpec[] = [
+  { dashboard: '1', scope: 'slothPictureFactory' },
+  { dashboard: '2', scope: 'slothPictureFactory' },
+  { dashboard: '3', scope: 'slothVoteTracker' },
+  { dashboard: '4', scope: 'slothVoteTracker' },
+] as const;
+
+const mocksNodes: ScopeTreeItemSpec[] = [
+  {
+    nodeId: 'applications',
+    nodeType: 'container',
+    title: 'Applications',
+    description: 'Application Scopes',
   },
-  scope2: {
-    metadata: {
-      name: 'scope2',
-    },
-    spec: {
-      title: 'Scope 2',
-      type: 'Type 2',
-      description: 'Description 2',
-      category: 'Category 2',
-      filters: [{ key: 'c-key', operator: 'not-equals', value: 'c-value' }],
-    },
-    dashboards: [dashboardsMocks.dashboard3],
+  {
+    nodeId: 'clusters',
+    nodeType: 'container',
+    title: 'Clusters',
+    description: 'Cluster Scopes',
+    linkType: 'scope',
+    linkId: 'indexHelperCluster',
   },
-  scope3: {
-    metadata: {
-      name: 'scope3',
-    },
-    spec: {
-      title: 'Scope 3',
-      type: 'Type 1',
-      description: 'Description 3',
-      category: 'Category 1',
-      filters: [{ key: 'd-key', operator: 'equals', value: 'd-value' }],
-    },
-    dashboards: [dashboardsMocks.dashboard1, dashboardsMocks.dashboard2],
+  {
+    nodeId: 'applications-slothPictureFactory',
+    nodeType: 'leaf',
+    title: 'slothPictureFactory',
+    description: 'slothPictureFactory',
+    linkType: 'scope',
+    linkId: 'slothPictureFactory',
   },
-};
+  {
+    nodeId: 'applications-slothVoteTracker',
+    nodeType: 'leaf',
+    title: 'slothVoteTracker',
+    description: 'slothVoteTracker',
+    linkType: 'scope',
+    linkId: 'slothVoteTracker',
+  },
+  {
+    nodeId: 'applications.clusters',
+    nodeType: 'container',
+    title: 'Clusters',
+    description: 'Application/Clusters Scopes',
+    linkType: 'scope',
+    linkId: 'indexHelperCluster',
+  },
+  {
+    nodeId: 'applications.clusters-slothClusterNorth',
+    nodeType: 'leaf',
+    title: 'slothClusterNorth',
+    description: 'slothClusterNorth',
+    linkType: 'scope',
+    linkId: 'slothClusterNorth',
+  },
+  {
+    nodeId: 'applications.clusters-slothClusterSouth',
+    nodeType: 'leaf',
+    title: 'slothClusterSouth',
+    description: 'slothClusterSouth',
+    linkType: 'scope',
+    linkId: 'slothClusterSouth',
+  },
+  {
+    nodeId: 'clusters-slothClusterNorth',
+    nodeType: 'leaf',
+    title: 'slothClusterNorth',
+    description: 'slothClusterNorth',
+    linkType: 'scope',
+    linkId: 'slothClusterNorth',
+  },
+  {
+    nodeId: 'clusters-slothClusterSouth',
+    nodeType: 'leaf',
+    title: 'slothClusterSouth',
+    description: 'slothClusterSouth',
+    linkType: 'scope',
+    linkId: 'slothClusterSouth',
+  },
+  {
+    nodeId: 'clusters.applications',
+    nodeType: 'container',
+    title: 'Applications',
+    description: 'Clusters/Application Scopes',
+  },
+  {
+    nodeId: 'clusters.applications-slothPictureFactory',
+    nodeType: 'leaf',
+    title: 'slothPictureFactory',
+    description: 'slothPictureFactory',
+    linkType: 'scope',
+    linkId: 'slothPictureFactory',
+  },
+  {
+    nodeId: 'clusters.applications-slothVoteTracker',
+    nodeType: 'leaf',
+    title: 'slothVoteTracker',
+    description: 'slothVoteTracker',
+    linkType: 'scope',
+    linkId: 'slothVoteTracker',
+  },
+] as const;
+
+const getDashboardDetailsForUid = (uid: string) => ({
+  dashboard: {
+    title: `Dashboard ${uid}`,
+    uid,
+  },
+  meta: {
+    url: `/d/dashboard${uid}`,
+  },
+});
+const getDashboardScopeForUid = (uid: string) => ({
+  title: `Dashboard ${uid}`,
+  uid,
+  url: `/d/dashboard${uid}`,
+});
 
 jest.mock('@grafana/runtime', () => ({
   __esModule: true,
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
     get: jest.fn().mockImplementation((url: string) => {
-      if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/scopes')) {
+      const search = new URLSearchParams(url.split('?').pop() || '');
+
+      if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/find')) {
+        const parent = search.get('parent')?.replace('parent=', '');
+
         return {
-          items: Object.values(scopesMocks).map(({ dashboards: _dashboards, ...scope }) => scope),
+          items: mocksNodes.filter((node) => (parent ? node.nodeId.startsWith(parent) : !node.nodeId.includes('-'))),
         };
       }
 
+      if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/scopes/')) {
+        const name = url.replace('/apis/scope.grafana.app/v0alpha1/namespaces/default/scopes/', '');
+
+        return mocksScopes.find((scope) => scope.metadata.name === name) ?? {};
+      }
+
       if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/scopedashboardbindings')) {
-        const search = new URLSearchParams(url.split('?').pop() || '');
         const scope = search.get('fieldSelector')?.replace('spec.scope=', '') ?? '';
 
-        if (scope in scopesMocks) {
-          return {
-            items: scopesMocks[scope].dashboards.map(({ uid }) => ({
-              scope,
-              dashboard: uid,
-            })),
-          };
-        }
-
         return {
-          items: [],
+          items: mocksScopeDashboardBindings.filter((binding) => binding.scope === scope),
         };
       }
 
       if (url.startsWith('/api/dashboards/uid/')) {
         const uid = url.split('/').pop();
 
-        if (!uid) {
-          return {};
-        }
-
-        const dashboard = Object.values(dashboardsMocks).find((dashboard) => dashboard.uid === uid);
-
-        if (!dashboard) {
-          return {};
-        }
-
-        return {
-          dashboard: {
-            title: dashboard.title,
-            uid,
-          },
-          meta: {
-            url: dashboard.url,
-          },
-        };
+        return uid ? getDashboardDetailsForUid(uid) : {};
       }
 
       return {};
@@ -160,10 +244,15 @@ describe('ScopesScene', () => {
   });
 
   describe('Feature flag on', () => {
+    let scopesNames: string[];
+    let scopes: Scope[];
+    let scopeDashboardBindings: ScopeDashboardBindingSpec[][];
+    let dashboards: ScopeDashboard[][];
     let dashboardScene: DashboardScene;
     let scopesScene: ScopesScene;
     let filtersScene: ScopesFiltersScene;
     let dashboardsScene: ScopesDashboardsScene;
+    let fetchBaseNodesSpy: jest.SpyInstance;
     let fetchScopesSpy: jest.SpyInstance;
     let fetchDashboardsSpy: jest.SpyInstance;
 
@@ -172,10 +261,19 @@ describe('ScopesScene', () => {
     });
 
     beforeEach(() => {
+      scopesNames = ['slothClusterNorth', 'slothClusterSouth'];
+      scopes = scopesNames.map((scopeName) => mocksScopes.find((scope) => scope.metadata.name === scopeName)!);
+      scopeDashboardBindings = scopesNames.map(
+        (scopeName) => mocksScopeDashboardBindings.filter((binding) => binding.scope === scopeName)!
+      );
+      dashboards = scopeDashboardBindings.map((bindings) =>
+        bindings.map((binding) => getDashboardScopeForUid(binding.dashboard))
+      );
       dashboardScene = buildTestScene();
       scopesScene = dashboardScene.state.scopes!;
       filtersScene = scopesScene.state.filters;
       dashboardsScene = scopesScene.state.dashboards;
+      fetchBaseNodesSpy = jest.spyOn(filtersScene!, 'fetchBaseNodes');
       fetchScopesSpy = jest.spyOn(filtersScene!, 'fetchScopes');
       fetchDashboardsSpy = jest.spyOn(dashboardsScene!, 'fetchDashboards');
       dashboardScene.activate();
@@ -190,50 +288,89 @@ describe('ScopesScene', () => {
       expect(dashboardsScene).toBeInstanceOf(ScopesDashboardsScene);
     });
 
-    it('Fetches scopes list', async () => {
-      expect(fetchScopesSpy).toHaveBeenCalled();
+    it('Fetches nodes list', () => {
+      expect(fetchBaseNodesSpy).toHaveBeenCalled();
+    });
+
+    it('Fetches scope details', () => {
+      filtersScene.toggleScope(scopesNames[0]);
+      waitFor(() => {
+        expect(fetchScopesSpy).toHaveBeenCalled();
+        expect(filtersScene.state.scopes).toEqual(scopes.filter((scope) => scope.metadata.name === scopesNames[0]));
+      });
+
+      filtersScene.toggleScope(scopesNames[1]);
+      waitFor(() => {
+        expect(fetchScopesSpy).toHaveBeenCalled();
+        expect(filtersScene.state.scopes).toEqual(scopes);
+      });
+
+      filtersScene.toggleScope(scopesNames[0]);
+      waitFor(() => {
+        expect(fetchScopesSpy).toHaveBeenCalled();
+        expect(filtersScene.state.scopes).toEqual(scopes.filter((scope) => scope.metadata.name === scopesNames[1]));
+      });
     });
 
     it('Fetches dashboards list', () => {
-      filtersScene.setScope(scopesMocks.scope1.metadata.name);
-
+      filtersScene.toggleScope(scopesNames[0]);
       waitFor(() => {
         expect(fetchDashboardsSpy).toHaveBeenCalled();
-        expect(dashboardsScene.state.dashboards).toEqual(scopesMocks.scope1.dashboards);
+        expect(dashboardsScene.state.dashboards).toEqual(dashboards[0]);
       });
 
-      filtersScene.setScope(scopesMocks.scope2.metadata.name);
+      filtersScene.toggleScope(scopesNames[1]);
+      waitFor(() => {
+        expect(fetchDashboardsSpy).toHaveBeenCalled();
+        expect(dashboardsScene.state.dashboards).toEqual(dashboards.flat());
+      });
+
+      filtersScene.toggleScope(scopesNames[0]);
 
       waitFor(() => {
         expect(fetchDashboardsSpy).toHaveBeenCalled();
-        expect(dashboardsScene.state.dashboards).toEqual(scopesMocks.scope2.dashboards);
+        expect(dashboardsScene.state.dashboards).toEqual(dashboards[1]);
       });
     });
 
     it('Enriches data requests', () => {
-      const { dashboards: _dashboards, ...scope1 } = scopesMocks.scope1;
+      filtersScene.toggleScope(scopesNames[0]);
+      waitFor(() => {
+        const queryRunner = sceneGraph.findObject(dashboardScene, (o) => o.state.key === 'data-query-runner')!;
+        expect(dashboardScene.enrichDataRequest(queryRunner).scopes).toEqual(
+          scopes.filter((scope) => scope.metadata.name === scopesNames[0])
+        );
+      });
 
-      filtersScene.setScope(scope1.metadata.name);
+      filtersScene.toggleScope(scopesNames[1]);
+      waitFor(() => {
+        const queryRunner = sceneGraph.findObject(dashboardScene, (o) => o.state.key === 'data-query-runner')!;
+        expect(dashboardScene.enrichDataRequest(queryRunner).scopes).toEqual(scopes);
+      });
 
-      const queryRunner = sceneGraph.findObject(dashboardScene, (o) => o.state.key === 'data-query-runner')!;
-
-      expect(dashboardScene.enrichDataRequest(queryRunner).scope).toEqual(scope1);
+      filtersScene.toggleScope(scopesNames[0]);
+      waitFor(() => {
+        const queryRunner = sceneGraph.findObject(dashboardScene, (o) => o.state.key === 'data-query-runner')!;
+        expect(dashboardScene.enrichDataRequest(queryRunner).scopes).toEqual(
+          scopes.filter((scope) => scope.metadata.name === scopesNames[1])
+        );
+      });
     });
 
-    it('Toggles expanded state', async () => {
+    it('Toggles expanded state', () => {
       scopesScene.toggleIsExpanded();
 
       expect(scopesScene.state.isExpanded).toEqual(true);
     });
 
-    it('Enters view mode', async () => {
+    it('Enters view mode', () => {
       dashboardScene.onEnterEditMode();
 
       expect(scopesScene.state.isViewing).toEqual(true);
       expect(scopesScene.state.isExpanded).toEqual(false);
     });
 
-    it('Exits view mode', async () => {
+    it('Exits view mode', () => {
       dashboardScene.onEnterEditMode();
       dashboardScene.exitEditMode({ skipConfirm: true });
 

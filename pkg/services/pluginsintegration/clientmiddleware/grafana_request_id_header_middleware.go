@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -30,17 +31,19 @@ const GrafanaInternalRequest = "X-Grafana-Internal-Request"
 func NewHostedGrafanaACHeaderMiddleware(cfg *setting.Cfg) plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		return &HostedGrafanaACHeaderMiddleware{
-			next: next,
-			log:  log.New("ip_header_middleware"),
-			cfg:  cfg,
+			baseMiddleware: baseMiddleware{
+				next: next,
+			},
+			log: log.New("ip_header_middleware"),
+			cfg: cfg,
 		}
 	})
 }
 
 type HostedGrafanaACHeaderMiddleware struct {
-	next plugins.Client
-	log  log.Logger
-	cfg  *setting.Cfg
+	baseMiddleware
+	log log.Logger
+	cfg *setting.Cfg
 }
 
 func (m *HostedGrafanaACHeaderMiddleware) applyGrafanaRequestIDHeader(ctx context.Context, pCtx backend.PluginContext, h backend.ForwardHTTPHeaders) {
@@ -143,20 +146,4 @@ func (m *HostedGrafanaACHeaderMiddleware) CheckHealth(ctx context.Context, req *
 	m.applyGrafanaRequestIDHeader(ctx, req.PluginContext, req)
 
 	return m.next.CheckHealth(ctx, req)
-}
-
-func (m *HostedGrafanaACHeaderMiddleware) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
-	return m.next.CollectMetrics(ctx, req)
-}
-
-func (m *HostedGrafanaACHeaderMiddleware) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	return m.next.SubscribeStream(ctx, req)
-}
-
-func (m *HostedGrafanaACHeaderMiddleware) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	return m.next.PublishStream(ctx, req)
-}
-
-func (m *HostedGrafanaACHeaderMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	return m.next.RunStream(ctx, req, sender)
 }

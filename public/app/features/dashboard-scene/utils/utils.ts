@@ -229,6 +229,7 @@ export function getDefaultVizPanel(dashboard: DashboardScene): VizPanel {
     key: getVizPanelKeyForPanelId(panelId),
     pluginId: 'timeseries',
     titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
+    hoverHeaderOffset: 0,
     menu: new VizPanelMenu({
       $behaviors: [panelMenuBehavior],
     }),
