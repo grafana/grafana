@@ -102,6 +102,15 @@ function countEslintErrors() {
     const nonTestFilesRules: Partial<Linter.RulesRecord> = {
       ...baseRules,
       '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'never' }],
+      'react/jsx-no-literals': [
+        'error',
+        {
+          noStrings: true,
+          allowedStrings: ['&gt;', '&lt;', ':', '/', '.', ',', ';', '@', '?', '!', '-', '_', '=', '+', "'", '(', ')'],
+          ignoreProps: true,
+          noAttributeStrings: true,
+        },
+      ],
     };
 
     const grafanaRules: Partial<Linter.RulesRecord> = {
