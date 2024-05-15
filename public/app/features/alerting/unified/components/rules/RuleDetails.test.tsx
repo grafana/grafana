@@ -13,7 +13,7 @@ import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { configureStore } from 'app/store/configureStore';
 import { CombinedRule } from 'app/types/unified-alerting';
 
-import { AlertmanagersChoiceResponse } from '../../api/alertmanagerApi';
+import { GrafanaAlertingConfigurationStatusResponse } from '../../api/alertmanagerApi';
 import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';
 import { getCloudRule, getGrafanaRule } from '../../mocks';
 import { mockAlertmanagerChoiceResponse } from '../../mocks/alertmanagerApi';
@@ -50,7 +50,7 @@ const server = setupServer(
   })
 );
 
-const alertmanagerChoiceMockedResponse: AlertmanagersChoiceResponse = {
+const alertmanagerChoiceMockedResponse: GrafanaAlertingConfigurationStatusResponse = {
   alertmanagersChoice: AlertmanagerChoice.Internal,
   numExternalAlertmanagers: 0,
 };

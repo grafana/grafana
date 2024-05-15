@@ -41,24 +41,19 @@ type PropsType = {
   tooltipTitle: string;
 };
 
-export default function CopyIcon(props: PropsType) {
+export default function CopyIcon({ copyText, icon = 'copy', tooltipTitle }: PropsType) {
   const styles = useStyles2(getStyles);
 
   const [hasCopied, setHasCopied] = useState(false);
 
   const handleClick = () => {
-    navigator.clipboard.writeText(props.copyText);
+    navigator.clipboard.writeText(copyText);
     setHasCopied(true);
   };
 
   return (
-    <Tooltip content={hasCopied ? 'Copied' : props.tooltipTitle}>
-      <Button className={cx(styles.CopyIcon)} type="button" icon={props.icon} onClick={handleClick} />
+    <Tooltip content={hasCopied ? 'Copied' : tooltipTitle}>
+      <Button className={cx(styles.CopyIcon)} type="button" icon={icon} onClick={handleClick} />
     </Tooltip>
   );
 }
-
-CopyIcon.defaultProps = {
-  icon: 'copy',
-  className: undefined,
-};

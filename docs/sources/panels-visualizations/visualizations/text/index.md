@@ -27,11 +27,17 @@ For example, if you want to display important links to your dashboard, you can u
 
 {{< figure src="/static/img/docs/text-panel/text-panel.png" max-width="1025px" alt="A text panel showing important links" >}}
 
+{{< docs/play title="Text Panel" url="https://play.grafana.org/d/adl33bxy1ih34b/" >}}
+
 Use a text visualization when you need to:
 
 - Add important links or useful annotations.
 - Provide instructions or guidance on how to interpret different panels, configure settings, or take specific actions based on the displayed data.
 - Announce any scheduled maintenance or downtime that might impact your dashboards.
+
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Mode
 
@@ -60,9 +66,9 @@ to the embedded text.
 [Variables][] in the content will be expanded for display.
 
 {{% docs/reference %}}
-[disable_sanitize_html]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#disable_sanitize_html"
-[disable_sanitize_html]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#disable_sanitize_html"
+[disable_sanitize_html]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana#disable_sanitize_html"
+[disable_sanitize_html]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana#disable_sanitize_html"
 
-[Variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/variable-syntax"
-[Variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/variable-syntax"
+[Variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax"
+[Variables]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/variables/variable-syntax"
 {{% /docs/reference %}}

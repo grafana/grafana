@@ -3055,14 +3055,6 @@
         }
       }
     },
-    "CloudMigrationRequest": {
-      "type": "object",
-      "properties": {
-        "authToken": {
-          "type": "string"
-        }
-      }
-    },
     "CloudMigrationResponse": {
       "type": "object",
       "properties": {
@@ -3070,11 +3062,10 @@
           "type": "string",
           "format": "date-time"
         },
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
         "stack": {
+          "type": "string"
+        },
+        "uid": {
           "type": "string"
         },
         "updated": {
@@ -3089,7 +3080,7 @@
         "runs": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/MigrateDataResponseDTO"
+            "$ref": "#/definitions/MigrateDataResponseListDTO"
           }
         }
       }
@@ -5166,15 +5157,14 @@
     "MigrateDataResponseDTO": {
       "type": "object",
       "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
         "items": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/MigrateDataResponseItemDTO"
           }
+        },
+        "uid": {
+          "type": "string"
         }
       }
     },
@@ -5206,6 +5196,14 @@
             "DATASOURCE",
             "FOLDER"
           ]
+        }
+      }
+    },
+    "MigrateDataResponseListDTO": {
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string"
         }
       }
     },

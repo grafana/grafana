@@ -224,9 +224,21 @@ var (
 			Name:            "unifiedStorage",
 			Description:     "SQL-based k8s storage",
 			Stage:           FeatureStageExperimental,
-			RequiresDevMode: true,
+			RequiresDevMode: false,
 			RequiresRestart: true, // new SQL tables created
 			Owner:           grafanaAppPlatformSquad,
+		},
+		{
+			Name:        "dualWritePlaylistsMode2",
+			Description: "Enables dual writing of playlists to both legacy and k8s storage in mode 2",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+		},
+		{
+			Name:        "dualWritePlaylistsMode3",
+			Description: "Enables dual writing of playlists to both legacy and k8s storage in mode 3",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
 		},
 		{
 			Name:           "cloudWatchCrossAccountQuerying",
@@ -578,11 +590,12 @@ var (
 		},
 		{
 			Name:            "featureToggleAdminPage",
-			Description:     "Enable admin page for managing feature toggles from the Grafana front-end",
+			Description:     "Enable admin page for managing feature toggles from the Grafana front-end. Grafana Cloud only.",
 			Stage:           FeatureStageExperimental,
 			FrontendOnly:    false,
 			Owner:           grafanaOperatorExperienceSquad,
 			RequiresRestart: true,
+			HideFromDocs:    true,
 		},
 		{
 			Name:        "awsAsyncQueryCaching",
@@ -816,7 +829,8 @@ var (
 		{
 			Name:         "awsDatasourcesNewFormStyling",
 			Description:  "Applies new form styling for configuration and query editors in AWS plugins",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
+			Expression:   "true",
 			FrontendOnly: true,
 			Owner:        awsDatasourcesSquad,
 		},
@@ -935,7 +949,8 @@ var (
 		{
 			Name:           "ssoSettingsApi",
 			Description:    "Enables the SSO settings API and the OAuth configuration UIs in Grafana",
-			Stage:          FeatureStagePublicPreview,
+			Stage:          FeatureStageGeneralAvailability,
+			Expression:     "true",
 			AllowSelfServe: true,
 			FrontendOnly:   false,
 			Owner:          identityAccessTeam,
@@ -1105,6 +1120,13 @@ var (
 			Owner:       grafanaSharingSquad,
 		},
 		{
+			Name:         "tlsMemcached",
+			Description:  "Use TLS-enabled memcached in the enterprise caching feature",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaOperatorExperienceSquad,
+			HideFromDocs: true,
+		},
+		{
 			Name:            "kubernetesAggregator",
 			Description:     "Enable grafana aggregator",
 			Stage:           FeatureStageExperimental,
@@ -1218,6 +1240,33 @@ var (
 			Owner:          grafanaExploreSquad,
 			FrontendOnly:   false,
 			AllowSelfServe: false,
+		},
+		{
+			Name:        "autofixDSUID",
+			Description: "Automatically migrates invalid datasource UIDs",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:         "logsExploreTableDefaultVisualization",
+			Description:  "Sets the logs table as default visualisation in logs explore",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityLogsSquad,
+			FrontendOnly: true,
+		},
+		{
+			Name:         "newDashboardSharingComponent",
+			Description:  "Enables the new sharing drawer design",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: true,
+		},
+		{
+			Name:         "notificationBanner",
+			Description:  "Enables the notification banner UI and API",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			FrontendOnly: false,
 		},
 	}
 )

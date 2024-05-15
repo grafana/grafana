@@ -11,8 +11,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 func TestIntegrationDataAccess(t *testing.T) {
@@ -54,13 +56,14 @@ func TestIntegrationDataAccess(t *testing.T) {
 			db := db.InitTestDB(t)
 			ss := SqlStore{db: db}
 			_, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-				OrgID:    10,
-				Name:     "laban",
-				Type:     datasources.DS_GRAPHITE,
-				Access:   datasources.DS_ACCESS_DIRECT,
-				URL:      "http://test",
-				Database: "site",
-				ReadOnly: true,
+				OrgID:      10,
+				Name:       "laban",
+				Type:       datasources.DS_GRAPHITE,
+				Access:     datasources.DS_ACCESS_DIRECT,
+				URL:        "http://test",
+				Database:   "site",
+				ReadOnly:   true,
+				APIVersion: "v0alpha1",
 			})
 			require.NoError(t, err)
 
@@ -74,6 +77,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			require.EqualValues(t, 10, ds.OrgID)
 			require.Equal(t, "site", ds.Database)
 			require.True(t, ds.ReadOnly)
+			require.Equal(t, "v0alpha1", ds.APIVersion)
 		})
 
 		t.Run("generates uid if not specified", func(t *testing.T) {
@@ -94,6 +98,19 @@ func TestIntegrationDataAccess(t *testing.T) {
 			_, err = ss.AddDataSource(context.Background(), &cmd2)
 			require.Error(t, err)
 			require.IsType(t, datasources.ErrDataSourceUidExists, err)
+		})
+
+		t.Run("fails to create a datasource with an invalid uid", func(t *testing.T) {
+			db := db.InitTestDB(t)
+			ss := SqlStore{
+				db:       db,
+				logger:   log.NewNopLogger(),
+				features: featuremgmt.WithFeatures(featuremgmt.FlagAutofixDSUID),
+			}
+			cmd := defaultAddDatasourceCommand
+			cmd.UID = "test/uid"
+			_, err := ss.AddDataSource(context.Background(), &cmd)
+			require.ErrorContains(t, err, "invalid format of UID")
 		})
 
 		t.Run("fires an event when the datasource is added", func(t *testing.T) {
@@ -131,9 +148,11 @@ func TestIntegrationDataAccess(t *testing.T) {
 			cmd := defaultUpdateDatasourceCommand
 			cmd.ID = ds.ID
 			cmd.Version = ds.Version
+			cmd.APIVersion = "v0alpha1"
 			ss := SqlStore{db: db}
-			_, err := ss.UpdateDataSource(context.Background(), &cmd)
+			ds, err := ss.UpdateDataSource(context.Background(), &cmd)
 			require.NoError(t, err)
+			require.Equal(t, "v0alpha1", ds.APIVersion)
 		})
 
 		t.Run("does not overwrite UID if not specified", func(t *testing.T) {
@@ -212,6 +231,30 @@ func TestIntegrationDataAccess(t *testing.T) {
 
 			_, err := ss.UpdateDataSource(context.Background(), cmd)
 			require.NoError(t, err)
+		})
+
+		t.Run("updates UID with a valid one", func(t *testing.T) {
+			db := db.InitTestDB(t)
+			ds := initDatasource(db)
+			ss := SqlStore{
+				db:       db,
+				logger:   log.NewNopLogger(),
+				features: featuremgmt.WithFeatures(featuremgmt.FlagAutofixDSUID),
+			}
+			require.NotEmpty(t, ds.UID)
+
+			cmd := defaultUpdateDatasourceCommand
+			cmd.ID = ds.ID
+			cmd.UID = "new/uid"
+			res, err := ss.UpdateDataSource(context.Background(), &cmd)
+			require.NoError(t, err)
+			require.Equal(t, "new-uid", res.UID)
+
+			// Return the datasource with the valid UID
+			query := datasources.GetDataSourceQuery{UID: "new-uid", OrgID: 10}
+			dataSource, err := ss.GetDataSource(context.Background(), &query)
+			require.NoError(t, err)
+			require.Equal(t, "new-uid", dataSource.UID)
 		})
 	})
 

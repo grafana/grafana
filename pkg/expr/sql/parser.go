@@ -1,99 +1,79 @@
 package sql
 
 import (
-	"errors"
+	"encoding/json"
+	"fmt"
+	"sort"
 	"strings"
 
-	parser "github.com/krasun/gosqlparser"
-	"github.com/xwb1989/sqlparser"
+	"github.com/jeremywohl/flatten"
+	"github.com/scottlepp/go-duck/duck"
+)
+
+const (
+	TABLE_NAME    = "table_name"
+	ERROR         = ".error"
+	ERROR_MESSAGE = ".error_message"
 )
 
 // TablesList returns a list of tables for the sql statement
 func TablesList(rawSQL string) ([]string, error) {
-	stmt, err := sqlparser.Parse(rawSQL)
+	duckDB := duck.NewInMemoryDB()
+	cmd := fmt.Sprintf("SELECT json_serialize_sql('%s')", rawSQL)
+	ret, err := duckDB.RunCommands([]string{cmd})
 	if err != nil {
-		tables, err := parse(rawSQL)
-		if err != nil {
-			return parseTables(rawSQL)
-		}
-		return tables, nil
+		return nil, fmt.Errorf("error serializing sql: %s", err.Error())
+	}
+
+	ast := []map[string]any{}
+	err = json.Unmarshal([]byte(ret), &ast)
+	if err != nil {
+		return nil, fmt.Errorf("error converting json to ast: %s", err.Error())
+	}
+
+	return tablesFromAST(ast)
+}
+
+func tablesFromAST(ast []map[string]any) ([]string, error) {
+	flat, err := flatten.Flatten(ast[0], "", flatten.DotStyle)
+	if err != nil {
+		return nil, fmt.Errorf("error flattening ast: %s", err.Error())
 	}
 
 	tables := []string{}
-	switch kind := stmt.(type) {
-	case *sqlparser.Select:
-		for _, t := range kind.From {
-			buf := sqlparser.NewTrackedBuffer(nil)
-			t.Format(buf)
-			table := buf.String()
-			if table != "dual" {
-				tables = append(tables, buf.String())
+	for k, v := range flat {
+		if strings.HasSuffix(k, ERROR) {
+			v, ok := v.(bool)
+			if ok && v {
+				return nil, astError(k, flat)
 			}
 		}
-	default:
-		return nil, errors.New("not a select statement")
+		if strings.Contains(k, TABLE_NAME) {
+			table, ok := v.(string)
+			if ok && !existsInList(table, tables) {
+				tables = append(tables, v.(string))
+			}
+		}
 	}
+	sort.Strings(tables)
+
 	return tables, nil
 }
 
-// uses a simple tokenizer
-func parse(rawSQL string) ([]string, error) {
-	query, err := parser.Parse(rawSQL)
-	if err != nil {
-		return nil, err
+func astError(k string, flat map[string]any) error {
+	key := strings.Replace(k, ERROR, "", 1)
+	message, ok := flat[key+ERROR_MESSAGE]
+	if !ok {
+		message = "unknown error in sql"
 	}
-	if query.GetType() == parser.StatementSelect {
-		sel, ok := query.(*parser.Select)
-		if ok {
-			return []string{sel.Table}, nil
-		}
-	}
-	return nil, err
+	return fmt.Errorf("error in sql: %s", message)
 }
 
-func parseTables(rawSQL string) ([]string, error) {
-	checkSql := strings.ToUpper(rawSQL)
-	if strings.HasPrefix(checkSql, "SELECT") || strings.HasPrefix(rawSQL, "WITH") {
-		tables := []string{}
-		tokens := strings.Split(rawSQL, " ")
-		checkNext := false
-		takeNext := false
-		for _, t := range tokens {
-			t = strings.ToUpper(t)
-			t = strings.TrimSpace(t)
-
-			if takeNext {
-				tables = append(tables, t)
-				checkNext = false
-				takeNext = false
-				continue
-			}
-			if checkNext {
-				if strings.Contains(t, "(") {
-					checkNext = false
-					continue
-				}
-				if strings.Contains(t, ",") {
-					values := strings.Split(t, ",")
-					for _, v := range values {
-						v := strings.TrimSpace(v)
-						if v != "" {
-							tables = append(tables, v)
-						} else {
-							takeNext = true
-							break
-						}
-					}
-					continue
-				}
-				tables = append(tables, t)
-				checkNext = false
-			}
-			if t == "FROM" {
-				checkNext = true
-			}
+func existsInList(table string, list []string) bool {
+	for _, t := range list {
+		if t == table {
+			return true
 		}
-		return tables, nil
 	}
-	return nil, errors.New("not a select statement")
+	return false
 }

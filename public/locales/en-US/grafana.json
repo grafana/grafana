@@ -618,6 +618,9 @@
     "select": {
       "no-options-label": "No options found",
       "placeholder": "Choose"
+    },
+    "spinner": {
+      "aria-label": "Loading"
     }
   },
   "graph": {
@@ -727,10 +730,12 @@
     "forgot-password": "Forgot your password?",
     "form": {
       "password-label": "Password",
+      "password-placeholder": "password",
       "password-required": "Password is required",
       "submit-label": "Log in",
       "submit-loading-label": "Logging in...",
       "username-label": "Email or username",
+      "username-placeholder": "email or username",
       "username-required": "Email or username is required"
     },
     "services": {
@@ -885,7 +890,8 @@
       "title": "Alerting"
     },
     "alerting-admin": {
-      "title": "Admin"
+      "subtitle": "Manage Alertmanager configurations and configure where alert instances generated from Grafana managed alert rules are sent",
+      "title": "Settings"
     },
     "alerting-am-routes": {
       "subtitle": "Determine how alerts are routed to contact points",

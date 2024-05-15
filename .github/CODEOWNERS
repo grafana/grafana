@@ -275,7 +275,7 @@
 /pkg/services/store/ @grafana/grafana-app-platform-squad
 /pkg/infra/filestorage/ @grafana/grafana-app-platform-squad
 /pkg/modules/ @grafana/grafana-app-platform-squad
-/pkg/services/grpcserver/ @grafana/grafana-app-platform-squad
+/pkg/services/grpcserver/ @grafana/grafana-search-and-storage
 /pkg/generated @grafana/grafana-app-platform-squad
 
 # Alerting
@@ -283,6 +283,7 @@
 /pkg/services/sqlstore/migrations/ualert/ @grafana/alerting-backend-product
 /pkg/tests/api/alerting/ @grafana/alerting-backend-product
 /public/app/features/alerting/ @grafana/alerting-frontend
+/public/app/features/gops/ @grafana/alerting-frontend
 
 # Library Services
 /pkg/services/libraryelements/ @grafana/dashboards-squad
@@ -419,6 +420,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/playlist/ @grafana/dashboards-squad
 /public/app/features/plugins/ @grafana/plugins-platform-frontend
 /public/app/features/profile/ @grafana/grafana-frontend-platform
+/public/app/features/query-library/ @grafana/explore-squad
 /public/app/features/runtime/ @ryantxu
 /public/app/features/query/ @grafana/dashboards-squad
 /public/app/features/sandbox/ @grafana/grafana-frontend-platform
@@ -695,6 +697,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/i18n-crowdin-upload.yml @grafana/grafana-frontend-platform
 /.github/workflows/i18n-crowdin-download.yml @grafana/grafana-frontend-platform
 /.github/workflows/pr-go-workspace-check.yml @grafana/grafana-app-platform-squad
+/.github/workflows/run-scenes-e2e.yml @grafana/dashboards-squad
 
 # Generated files not requiring owner approval
 /packages/grafana-data/src/types/featureToggles.gen.ts @grafanabot

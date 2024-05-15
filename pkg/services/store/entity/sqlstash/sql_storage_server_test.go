@@ -18,6 +18,13 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
+func TestIsHealthy(t *testing.T) {
+	s := setUpTestServer(t)
+
+	_, err := s.IsHealthy(context.Background(), &entity.HealthCheckRequest{})
+	require.NoError(t, err)
+}
+
 func TestCreate(t *testing.T) {
 	s := setUpTestServer(t)
 
@@ -129,7 +136,9 @@ func setUpTestServer(t *testing.T) entity.EntityStoreServer {
 	entityDB, err := dbimpl.ProvideEntityDB(
 		sqlStore,
 		cfg,
-		featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorage))
+		featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorage),
+		nil,
+	)
 	require.NoError(t, err)
 
 	traceConfig, err := tracing.ParseTracingConfig(cfg)

@@ -320,44 +320,44 @@ export function GrafanaEvaluationBehavior({
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  inlineField: css`
-    margin-bottom: 0;
-  `,
-  evaluateLabel: css`
-    margin-right: ${theme.spacing(1)};
-  `,
-  evaluationContainer: css`
-    color: ${theme.colors.text.secondary};
-    max-width: ${theme.breakpoints.values.sm}px;
-    font-size: ${theme.typography.size.sm};
-  `,
-  intervalChangedLabel: css`
-    margin-bottom: ${theme.spacing(1)};
-  `,
-  warningIcon: css`
-    justify-self: center;
-    margin-right: ${theme.spacing(1)};
-    color: ${theme.colors.warning.text};
-  `,
-  infoIcon: css`
-    margin-left: 10px;
-  `,
-  warningMessage: css`
-    color: ${theme.colors.warning.text};
-  `,
-  bold: css`
-    font-weight: bold;
-  `,
-  alignInterval: css`
-    margin-top: ${theme.spacing(1)};
-    margin-left: -${theme.spacing(1)};
-  `,
-  marginTop: css`
-    margin-top: ${theme.spacing(1)};
-  `,
-  switchLabel: css(`
-    color: ${theme.colors.text.primary},
+  inlineField: css({
+    marginBottom: 0,
+  }),
+  evaluateLabel: css({
+    marginRight: theme.spacing(1),
+  }),
+  evaluationContainer: css({
+    color: theme.colors.text.secondary,
+    maxWidth: `${theme.breakpoints.values.sm}px`,
+    fontSize: theme.typography.size.sm,
+  }),
+  intervalChangedLabel: css({
+    marginBottom: theme.spacing(1),
+  }),
+  warningIcon: css({
+    justifySelf: 'center',
+    marginRight: theme.spacing(1),
+    color: theme.colors.warning.text,
+  }),
+  infoIcon: css({
+    marginLeft: '10px',
+  }),
+  warningMessage: css({
+    color: theme.colors.warning.text,
+  }),
+  bold: css({
+    fontWeight: 'bold',
+  }),
+  alignInterval: css({
+    marginTop: theme.spacing(1),
+    marginLeft: `-${theme.spacing(1)}`,
+  }),
+  marginTop: css({
+    marginTop: theme.spacing(1),
+  }),
+  switchLabel: css({
+    color: theme.colors.text.primary,
     cursor: 'pointer',
-    fontSize: ${theme.typography.bodySmall.fontSize},
-  `),
+    fontSize: theme.typography.bodySmall.fontSize,
+  }),
 });

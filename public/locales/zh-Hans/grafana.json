@@ -613,6 +613,9 @@
     "select": {
       "no-options-label": "未找到选项",
       "placeholder": "选择"
+    },
+    "spinner": {
+      "aria-label": ""
     }
   },
   "graph": {
@@ -721,10 +724,12 @@
     "forgot-password": "忘记密码？",
     "form": {
       "password-label": "密码",
+      "password-placeholder": "",
       "password-required": "必须输入密码",
       "submit-label": "登录",
       "submit-loading-label": "正在登录...",
       "username-label": "电子邮箱或用户名",
+      "username-placeholder": "",
       "username-required": "电子邮箱或用户名是必填项"
     },
     "services": {
@@ -879,7 +884,8 @@
       "title": "警报"
     },
     "alerting-admin": {
-      "title": "管理员"
+      "subtitle": "",
+      "title": ""
     },
     "alerting-am-routes": {
       "subtitle": "确定警报如何路由到联络点",

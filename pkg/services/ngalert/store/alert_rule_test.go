@@ -610,18 +610,30 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		Cfg:           cfg.UnifiedAlerting,
 	}
 
-	gen := models.RuleGen
-	rules := gen.With(
-		gen.WithOrgID(orgID),
-		gen.WithIntervalMatching(store.Cfg.BaseInterval),
-	).GenerateManyRef(5)
+	gen := models.RuleGen.With(
+		models.RuleGen.WithOrgID(orgID),
+		models.RuleGen.WithIntervalMatching(store.Cfg.BaseInterval),
+	)
 
-	deref := make([]models.AlertRule, 0, len(rules))
-	for _, rule := range rules {
-		deref = append(deref, *rule)
+	generateRecordingRules := func(n int) []models.AlertRule {
+		rrs := gen.GenerateMany(n)
+		for i := range rrs {
+			rrs[i].Condition = ""
+			rrs[i].NoDataState = ""
+			rrs[i].ExecErrState = ""
+			rrs[i].For = 0
+			rrs[i].NotificationSettings = nil
+			rrs[i].Record = &models.Record{
+				Metric: "my_metric",
+				From:   "A",
+			}
+		}
+		return rrs
 	}
 
-	ids, err := store.InsertAlertRules(context.Background(), deref)
+	rules := append(gen.GenerateMany(5), generateRecordingRules(5)...)
+
+	ids, err := store.InsertAlertRules(context.Background(), rules)
 	require.NoError(t, err)
 	require.Len(t, ids, len(rules))
 
@@ -643,25 +655,55 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		require.Truef(t, found, "Rule with key %#v was not found in database", keyWithID)
 	}
 
+	t.Run("inserted alerting rules should have nil recording rule fields on model", func(t *testing.T) {
+		for _, rule := range dbRules {
+			if !rule.IsRecordingRule() {
+				require.Nil(t, rule.Record)
+			}
+		}
+	})
+
+	t.Run("inserted recording rules map identical fields when listed", func(t *testing.T) {
+		for _, rule := range dbRules {
+			if rule.IsRecordingRule() {
+				require.NotNil(t, rule.Record)
+				require.Equal(t, "my_metric", rule.Record.Metric)
+				require.Equal(t, "A", rule.Record.From)
+			}
+		}
+	})
+
+	t.Run("inserted recording rules have empty or default alert-specific settings", func(t *testing.T) {
+		for _, rule := range dbRules {
+			if rule.IsRecordingRule() {
+				require.Empty(t, rule.Condition)
+				require.Equal(t, models.NoDataState(""), rule.NoDataState)
+				require.Equal(t, models.ExecutionErrorState(""), rule.ExecErrState)
+				require.Zero(t, rule.For)
+				require.Nil(t, rule.NotificationSettings)
+			}
+		}
+	})
+
 	t.Run("fail to insert rules with same ID", func(t *testing.T) {
-		_, err = store.InsertAlertRules(context.Background(), []models.AlertRule{deref[0]})
+		_, err = store.InsertAlertRules(context.Background(), []models.AlertRule{rules[0]})
 		require.ErrorIs(t, err, models.ErrAlertRuleConflictBase)
 	})
 	t.Run("fail insert rules with the same title in a folder", func(t *testing.T) {
-		cp := models.CopyRule(&deref[0])
+		cp := models.CopyRule(&rules[0])
 		cp.UID = cp.UID + "-new"
 		_, err = store.InsertAlertRules(context.Background(), []models.AlertRule{*cp})
 		require.ErrorIs(t, err, models.ErrAlertRuleConflictBase)
 		require.ErrorIs(t, err, models.ErrAlertRuleUniqueConstraintViolation)
-		require.NotEqual(t, deref[0].UID, "")
-		require.NotEqual(t, deref[0].Title, "")
-		require.NotEqual(t, deref[0].NamespaceUID, "")
-		require.ErrorContains(t, err, deref[0].UID)
-		require.ErrorContains(t, err, deref[0].Title)
-		require.ErrorContains(t, err, deref[0].NamespaceUID)
+		require.NotEqual(t, rules[0].UID, "")
+		require.NotEqual(t, rules[0].Title, "")
+		require.NotEqual(t, rules[0].NamespaceUID, "")
+		require.ErrorContains(t, err, rules[0].UID)
+		require.ErrorContains(t, err, rules[0].Title)
+		require.ErrorContains(t, err, rules[0].NamespaceUID)
 	})
 	t.Run("should not let insert rules with the same UID", func(t *testing.T) {
-		cp := models.CopyRule(&deref[0])
+		cp := models.CopyRule(&rules[0])
 		cp.Title = "unique-test-title"
 		_, err = store.InsertAlertRules(context.Background(), []models.AlertRule{*cp})
 		require.ErrorIs(t, err, models.ErrAlertRuleConflictBase)
@@ -807,6 +849,57 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 			assert.Contains(t, expectedUIDs, ruleKey)
 		}
 	})
+}
+
+func TestIntegrationGetNamespacesByRuleUID(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	sqlStore := db.InitTestDB(t)
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting.BaseInterval = 1 * time.Second
+	store := &DBstore{
+		SQLStore:      sqlStore,
+		FolderService: setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures()),
+		Logger:        log.New("test-dbstore"),
+		Cfg:           cfg.UnifiedAlerting,
+	}
+
+	rules := models.RuleGen.With(models.RuleMuts.WithOrgID(1)).GenerateMany(5)
+	_, err := store.InsertAlertRules(context.Background(), rules)
+	require.NoError(t, err)
+
+	uids := make([]string, 0, len(rules))
+	for _, rule := range rules {
+		uids = append(uids, rule.UID)
+	}
+
+	result, err := store.GetNamespacesByRuleUID(context.Background(), 1, uids...)
+	require.NoError(t, err)
+	require.Len(t, result, len(rules))
+	for _, rule := range rules {
+		if !assert.Contains(t, result, rule.UID) {
+			continue
+		}
+		assert.EqualValues(t, rule.NamespaceUID, result[rule.UID])
+	}
+
+	// Now test with a subset of uids.
+	subset := uids[:3]
+	result, err = store.GetNamespacesByRuleUID(context.Background(), 1, subset...)
+	require.NoError(t, err)
+	require.Len(t, result, len(subset))
+	for _, uid := range subset {
+		if !assert.Contains(t, result, uid) {
+			continue
+		}
+		for _, rule := range rules {
+			if rule.UID == uid {
+				assert.EqualValues(t, rule.NamespaceUID, result[uid])
+			}
+		}
+	}
 }
 
 // createAlertRule creates an alert rule in the database and returns it.
