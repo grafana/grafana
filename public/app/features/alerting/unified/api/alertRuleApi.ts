@@ -215,8 +215,10 @@ export const alertRuleApi = alertingApi.injectEndpoints({
       providesTags: ['CombinedAlertRule'],
     }),
 
-    getAlertRule: build.query<RulerGrafanaRuleDTO, { uid: string; ruler?: string }>({
-      query: ({ uid, ruler = GRAFANA_RULES_SOURCE_NAME }) => ({ url: `/api/ruler/${ruler}/api/v1/rule/${uid}` }),
+    getAlertRule: build.query<RulerGrafanaRuleDTO, { uid: string }>({
+      // TODO: In future, if supported in other rulers, parametrize ruler source name
+      // For now, to make the consumption of this hook clearer, only support Grafana ruler
+      query: ({ uid }) => ({ url: `/api/ruler/${GRAFANA_RULES_SOURCE_NAME}/api/v1/rule/${uid}` }),
     }),
 
     exportRules: build.query<string, ExportRulesParams>({
