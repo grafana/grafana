@@ -619,10 +619,8 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		rrs := gen.GenerateMany(n)
 		for i := range rrs {
 			rrs[i].Condition = ""
-			// TODO: These fields do not apply to recording rules - for now, we just use the default values of them. This is validated at the storage level.
-			// TODO: Consider making it so recording rules allow for empty string here, or use some other sentinel value in the future.
-			rrs[i].NoDataState = models.NoData
-			rrs[i].ExecErrState = models.ErrorErrState
+			rrs[i].NoDataState = ""
+			rrs[i].ExecErrState = ""
 			rrs[i].For = 0
 			rrs[i].NotificationSettings = nil
 			rrs[i].Record = &models.Record{
@@ -679,8 +677,8 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		for _, rule := range dbRules {
 			if rule.IsRecordingRule() {
 				require.Empty(t, rule.Condition)
-				require.Equal(t, models.NoData, rule.NoDataState)
-				require.Equal(t, models.ErrorErrState, rule.ExecErrState)
+				require.Equal(t, models.NoDataState(""), rule.NoDataState)
+				require.Equal(t, models.ExecutionErrorState(""), rule.ExecErrState)
 				require.Zero(t, rule.For)
 				require.Nil(t, rule.NotificationSettings)
 			}
