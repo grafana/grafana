@@ -7,7 +7,12 @@ import (
 )
 
 type store interface {
-	MigrateDatasources(context.Context, *cloudmigration.MigrateDatasourcesRequest) (*cloudmigration.MigrateDatasourcesResponse, error)
-	CreateMigration(ctx context.Context, token cloudmigration.CloudMigration) error
+	CreateMigration(ctx context.Context, token cloudmigration.CloudMigration) (*cloudmigration.CloudMigration, error)
+	GetMigrationByUID(ctx context.Context, uid string) (*cloudmigration.CloudMigration, error)
 	GetAllCloudMigrations(ctx context.Context) ([]*cloudmigration.CloudMigration, error)
+	DeleteMigration(ctx context.Context, uid string) (*cloudmigration.CloudMigration, error)
+
+	CreateMigrationRun(ctx context.Context, cmr cloudmigration.CloudMigrationRun) (string, error)
+	GetMigrationStatus(ctx context.Context, cmrUID string) (*cloudmigration.CloudMigrationRun, error)
+	GetMigrationStatusList(ctx context.Context, migrationUID string) ([]*cloudmigration.CloudMigrationRun, error)
 }

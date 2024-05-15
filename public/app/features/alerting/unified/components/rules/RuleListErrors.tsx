@@ -143,14 +143,14 @@ const ErrorSummaryButton: FC<ErrorSummaryProps> = ({ count, onClick }) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  moreButton: css`
-    padding: 0;
-  `,
-  floatRight: css`
-    display: flex;
-    justify-content: flex-end;
-  `,
-  dsLink: css`
-    font-weight: ${theme.typography.fontWeightBold};
-  `,
+  moreButton: css({
+    padding: 0,
+  }),
+  floatRight: css({
+    display: 'flex',
+    justifyContent: 'flex-end',
+  }),
+  dsLink: css({
+    fontWeight: theme.typography.fontWeightBold,
+  }),
 });

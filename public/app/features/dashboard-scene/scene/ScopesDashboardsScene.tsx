@@ -2,10 +2,18 @@ import { css } from '@emotion/css';
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-import { AppEvents, GrafanaTheme2, ScopeDashboard } from '@grafana/data';
-import { config, getAppEvents, getBackendSrv, locationService } from '@grafana/runtime';
+import { AppEvents, GrafanaTheme2, Scope, ScopeDashboardBindingSpec, urlUtil } from '@grafana/data';
+import { getAppEvents, getBackendSrv } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { CustomScrollbar, Icon, Input, useStyles2 } from '@grafana/ui';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { ScopedResourceServer } from 'app/features/apiserver/server';
+
+export interface ScopeDashboard {
+  uid: string;
+  title: string;
+  url: string;
+}
 
 export interface ScopesDashboardsSceneState extends SceneObjectState {
   dashboards: ScopeDashboard[];
@@ -17,8 +25,11 @@ export interface ScopesDashboardsSceneState extends SceneObjectState {
 export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsSceneState> {
   static Component = ScopesDashboardsSceneRenderer;
 
-  private _url =
-    config.bootData.settings.listDashboardScopesEndpoint || '/apis/scope.grafana.app/v0alpha1/scopedashboards';
+  private server = new ScopedResourceServer<ScopeDashboardBindingSpec, 'ScopeDashboardBinding'>({
+    group: 'scope.grafana.app',
+    version: 'v0alpha1',
+    resource: 'scopedashboardbindings',
+  });
 
   constructor() {
     super({
@@ -29,15 +40,17 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
     });
   }
 
-  public async fetchDashboards(scope: string | undefined) {
-    if (!scope) {
+  public async fetchDashboards(scopes: Scope[]) {
+    if (scopes.length === 0) {
       return this.setState({ dashboards: [], filteredDashboards: [], isLoading: false });
     }
 
     this.setState({ isLoading: true });
 
-    const dashboardUids = await this.fetchDashboardsUids(scope);
-    const dashboards = await this.fetchDashboardsDetails(dashboardUids);
+    const dashboardUids = await Promise.all(
+      scopes.map((scope) => this.fetchDashboardsUids(scope.metadata.name).catch(() => []))
+    );
+    const dashboards = await this.fetchDashboardsDetails(dashboardUids.flat());
 
     this.setState({
       dashboards,
@@ -57,11 +70,17 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
 
   private async fetchDashboardsUids(scope: string): Promise<string[]> {
     try {
-      const response = await getBackendSrv().get<{
-        items: Array<{ spec: { dashboards: null | string[]; scope: string } }>;
-      }>(this._url, { scope });
+      const response = await this.server.list({
+        fieldSelector: [
+          {
+            key: 'spec.scope',
+            operator: '=',
+            value: scope,
+          },
+        ],
+      });
 
-      return response.items.find((item) => !!item.spec.dashboards && item.spec.scope === scope)?.spec.dashboards ?? [];
+      return response.items.map((item) => item.spec.dashboard).filter((dashboardUid) => !!dashboardUid) ?? [];
     } catch (err) {
       return [];
     }
@@ -108,6 +127,8 @@ export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<Sco
   const { filteredDashboards, isLoading } = model.useState();
   const styles = useStyles2(getStyles);
 
+  const [queryParams] = useQueryParams();
+
   return (
     <>
       <div className={styles.searchInputContainer}>
@@ -121,9 +142,7 @@ export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<Sco
       <CustomScrollbar>
         {filteredDashboards.map((dashboard, idx) => (
           <div key={idx} className={styles.dashboardItem}>
-            <Link to={{ pathname: dashboard.url, search: locationService.getLocation().search }}>
-              {dashboard.title}
-            </Link>
+            <Link to={urlUtil.renderUrl(dashboard.url, queryParams)}>{dashboard.title}</Link>
           </div>
         ))}
       </CustomScrollbar>

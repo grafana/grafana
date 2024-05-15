@@ -282,7 +282,7 @@ export function useCombinedRule({ ruleIdentifier }: { ruleIdentifier: RuleIdenti
   };
 }
 
-const grafanaRulerConfig: RulerDataSourceConfig = {
+export const grafanaRulerConfig: RulerDataSourceConfig = {
   dataSourceName: GRAFANA_RULES_SOURCE_NAME,
   apiVersion: 'legacy',
 };

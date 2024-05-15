@@ -46,7 +46,7 @@ export const LdapUserGroups = ({ groups }: Props) => {
       }}
       columns={columns}
       data={items}
-      getRowId={(row) => row.orgId + row.orgRole}
+      getRowId={(row) => row.orgId + row.orgRole + row.groupDN}
     />
   );
 };

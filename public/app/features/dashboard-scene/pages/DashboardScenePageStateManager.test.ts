@@ -1,7 +1,9 @@
 import { advanceBy } from 'jest-date-mock';
 
-import { locationService } from '@grafana/runtime';
+import { BackendSrv, locationService, setBackendSrv } from '@grafana/runtime';
 import { getUrlSyncManager } from '@grafana/scenes';
+import store from 'app/core/store';
+import { DASHBOARD_FROM_LS_KEY } from 'app/features/dashboard/state/initDashboard';
 import { DashboardRoutes } from 'app/types';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -10,6 +12,10 @@ import { setupLoadDashboardMock } from '../utils/test-utils';
 import { DashboardScenePageStateManager, DASHBOARD_CACHE_TTL } from './DashboardScenePageStateManager';
 
 describe('DashboardScenePageStateManager', () => {
+  afterEach(() => {
+    store.delete(DASHBOARD_FROM_LS_KEY);
+  });
+
   describe('when fetching/loading a dashboard', () => {
     it('should call loader from server if the dashboard is not cached', async () => {
       const loadDashboardMock = setupLoadDashboardMock({ dashboard: { uid: 'fake-dash', editable: true }, meta: {} });
@@ -33,6 +39,29 @@ describe('DashboardScenePageStateManager', () => {
       expect(loader.state.dashboard).toBeUndefined();
       expect(loader.state.isLoading).toBe(false);
       expect(loader.state.loadError).toBe('Error: Dashboard not found');
+    });
+
+    it('should handle home dashboard redirect', async () => {
+      setBackendSrv({
+        get: () => Promise.resolve({ redirectUri: '/d/asd' }),
+      } as unknown as BackendSrv);
+
+      const loader = new DashboardScenePageStateManager({});
+      await loader.loadDashboard({ uid: '', route: DashboardRoutes.Home });
+
+      expect(loader.state.dashboard).toBeUndefined();
+      expect(loader.state.loadError).toBeUndefined();
+    });
+
+    it('shoud fetch dashboard from local storage and remove it after if it exists', async () => {
+      const loader = new DashboardScenePageStateManager({});
+      const localStorageDashboard = { uid: 'fake-dash' };
+      store.setObject(DASHBOARD_FROM_LS_KEY, localStorageDashboard);
+
+      const result = await loader.fetchDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+      expect(result).toEqual(localStorageDashboard);
+      expect(store.getObject(DASHBOARD_FROM_LS_KEY)).toBeUndefined();
     });
 
     it('should initialize the dashboard scene with the loaded dashboard', async () => {
@@ -185,6 +214,37 @@ describe('DashboardScenePageStateManager', () => {
         advanceBy(DASHBOARD_CACHE_TTL / 2 + 1);
         await loader.fetchDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
         expect(loadDashSpy).toHaveBeenCalledTimes(2);
+      });
+    });
+
+    describe('When coming from explore', () => {
+      it('shoud fetch dashboard from local storage and keep it there after when asked', async () => {
+        const loader = new DashboardScenePageStateManager({});
+        const localStorageDashboard = { uid: 'fake-dash' };
+        store.setObject(DASHBOARD_FROM_LS_KEY, { dashboard: localStorageDashboard });
+
+        const result = await loader.fetchDashboard({
+          uid: 'fake-dash',
+          route: DashboardRoutes.Normal,
+          keepDashboardFromExploreInLocalStorage: true,
+        });
+
+        expect(result).toEqual({ dashboard: localStorageDashboard });
+        expect(store.getObject(DASHBOARD_FROM_LS_KEY)).toEqual({ dashboard: localStorageDashboard });
+      });
+
+      it('shoud not store dashboard in cache when coming from Explore', async () => {
+        const loader = new DashboardScenePageStateManager({});
+        const localStorageDashboard = { uid: 'fake-dash' };
+        store.setObject(DASHBOARD_FROM_LS_KEY, { dashboard: localStorageDashboard });
+
+        await loader.loadDashboard({
+          uid: 'fake-dash',
+          route: DashboardRoutes.Normal,
+          keepDashboardFromExploreInLocalStorage: false,
+        });
+
+        expect(loader.getFromCache('fake-dash')).toBeNull();
       });
     });
   });

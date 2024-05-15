@@ -3,6 +3,7 @@ import { lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 import {
+  AdHocVariableFilter,
   AnnotationEvent,
   DataFrame,
   DataQueryError,
@@ -31,10 +32,11 @@ import {
   FetchResponse,
   frameToMetricFindValue,
   getBackendSrv,
+  getTemplateSrv,
+  TemplateSrv,
 } from '@grafana/runtime';
 import { QueryFormat, SQLQuery } from '@grafana/sql';
 import config from 'app/core/config';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
 import { AnnotationEditor } from './components/editor/annotation/AnnotationEditor';
 import { FluxQueryEditor } from './components/editor/query/flux/FluxQueryEditor';
@@ -170,11 +172,15 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return true;
   }
 
-  applyTemplateVariables(query: InfluxQuery, scopedVars: ScopedVars): InfluxQuery & SQLQuery {
+  applyTemplateVariables(
+    query: InfluxQuery,
+    scopedVars: ScopedVars,
+    filters?: AdHocVariableFilter[]
+  ): InfluxQuery & SQLQuery {
     const variables = scopedVars || {};
 
     // We want to interpolate these variables on backend.
-    // The pre-calculated values are replaced withe the variable strings.
+    // The pre-calculated values are replaced with the variable strings.
     variables.__interval = {
       value: '$__interval',
     };
@@ -190,7 +196,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     }
 
     if (this.version === InfluxVersion.SQL || this.isMigrationToggleOnAndIsAccessProxy()) {
-      query = this.applyVariables(query, variables);
+      query = this.applyVariables(query, variables, filters);
       if (query.adhocFilters?.length) {
         const adhocFiltersToTags: InfluxQueryTag[] = (query.adhocFilters ?? []).map((af) => {
           const { condition, ...asTag } = af;
@@ -238,7 +244,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     });
   }
 
-  applyVariables(query: InfluxQuery & SQLQuery, scopedVars: ScopedVars) {
+  applyVariables(query: InfluxQuery & SQLQuery, scopedVars: ScopedVars, filters?: AdHocVariableFilter[]) {
     const expandedQuery = { ...query };
     if (query.groupBy) {
       expandedQuery.groupBy = query.groupBy.map((groupBy) => {
@@ -254,7 +260,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         return selects.map((select) => {
           return {
             ...select,
-            params: select.params?.map((param) => this.templateSrv.replace(param.toString(), undefined)),
+            params: select.params?.map((param) => this.templateSrv.replace(param.toString(), scopedVars)),
           };
         });
       });
@@ -282,7 +288,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
     return {
       ...expandedQuery,
-      adhocFilters: this.templateSrv.getAdhocFilters(this.name) ?? [],
+      adhocFilters: filters ?? [],
       query: this.templateSrv.replace(
         query.query ?? '',
         scopedVars,
@@ -297,7 +303,12 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       ), // The raw sql query text
       alias: this.templateSrv.replace(query.alias ?? '', scopedVars),
       limit: this.templateSrv.replace(query.limit?.toString() ?? '', scopedVars),
-      measurement: this.templateSrv.replace(query.measurement ?? '', scopedVars),
+      measurement: this.templateSrv.replace(
+        query.measurement ?? '',
+        scopedVars,
+        (value: string | string[] = [], variable: QueryVariableModel) =>
+          this.interpolateQueryExpr(value, variable, query.measurement)
+      ),
       policy: this.templateSrv.replace(query.policy ?? '', scopedVars),
       slimit: this.templateSrv.replace(query.slimit?.toString() ?? '', scopedVars),
       tz: this.templateSrv.replace(query.tz ?? '', scopedVars),
@@ -308,6 +319,13 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     // If there is no query just return the value directly
     if (!query) {
       return value;
+    }
+
+    if (typeof value === 'string') {
+      // Check the value is a number. If not run to escape special characters
+      if (!isNaN(parseFloat(value))) {
+        return value;
+      }
     }
 
     // If template variable is a multi-value variable
@@ -404,7 +422,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return this.metricFindQuery(query);
   }
 
-  getTagValues(options: DataSourceGetTagValuesOptions) {
+  getTagValues(options: DataSourceGetTagValuesOptions<InfluxQuery>) {
     const query = buildMetadataQuery({
       type: 'TAG_VALUES',
       templateService: this.templateSrv,
@@ -575,7 +593,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return 'time >= ' + from + ' and time <= ' + until;
   }
 
-  getInfluxTime(date: DateTime | string, roundUp: any, timezone: any) {
+  getInfluxTime(date: DateTime | string, roundUp: boolean, timezone: string) {
     let outPutDate;
     if (isString(date)) {
       if (date === 'now') {
@@ -639,7 +657,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     }
 
     // add global adhoc filters to timeFilter
-    const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
+    const adhocFilters = options.filters;
     const adhocFiltersFromDashboard = options.targets.flatMap((target: InfluxQuery) => target.adhocFilters ?? []);
     if (adhocFilters?.length || adhocFiltersFromDashboard?.length) {
       const ahFilters = adhocFilters?.length ? adhocFilters : adhocFiltersFromDashboard;

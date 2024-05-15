@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"embed"
 	"encoding/json"
@@ -9,7 +10,6 @@ import (
 	"path"
 	"sort"
 	"strings"
-	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -43,8 +43,12 @@ func TestExportFromPayload(t *testing.T) {
 	requestFile := "post-rulegroup-101.json"
 	rawBody, err := testData.ReadFile(path.Join("test-data", requestFile))
 	require.NoError(t, err)
+	// compact the json to remove any extra whitespace
+	var buf bytes.Buffer
+	require.NoError(t, json.Compact(&buf, rawBody))
+	// unmarshal the compacted json
 	var body apimodels.PostableRuleGroupConfig
-	require.NoError(t, json.Unmarshal(rawBody, &body))
+	require.NoError(t, json.Unmarshal(buf.Bytes(), &body))
 
 	createRequest := func() *contextmodel.ReqContext {
 		return createRequestContextWithPerms(orgID, map[int64]map[string][]string{}, nil)
@@ -198,7 +202,6 @@ func TestExportFromPayload(t *testing.T) {
 }
 
 func TestExportRules(t *testing.T) {
-	uids := sync.Map{}
 	orgID := int64(1)
 	f1 := randFolder()
 	f2 := randFolder()
@@ -210,33 +213,27 @@ func TestExportRules(t *testing.T) {
 		NamespaceUID: f1.UID,
 		RuleGroup:    "HAS-ACCESS-1",
 	}
-	accessQuery := ngmodels.GenerateAlertQuery()
-	noAccessQuery := ngmodels.GenerateAlertQuery()
 
-	_, hasAccess1 := ngmodels.GenerateUniqueAlertRules(5,
-		ngmodels.AlertRuleGen(
-			ngmodels.WithUniqueUID(&uids),
-			withGroupKey(hasAccessKey1),
-			ngmodels.WithQuery(accessQuery),
-			ngmodels.WithUniqueGroupIndex(),
-		))
+	gen := ngmodels.RuleGen
+	accessQuery := gen.GenerateQuery()
+	noAccessQuery := gen.GenerateQuery()
+	mdl := map[string]any{
+		"foo": "bar",
+		"baz": "a <=> b", // explicitly check greater/less than characters
+	}
+	model, err := json.Marshal(mdl)
+	require.NoError(t, err)
+	accessQuery.Model = model
+
+	hasAccess1 := gen.With(gen.WithGroupKey(hasAccessKey1), gen.WithQuery(accessQuery), gen.WithUniqueGroupIndex()).GenerateManyRef(5)
 	ruleStore.PutRule(context.Background(), hasAccess1...)
 	noAccessKey1 := ngmodels.AlertRuleGroupKey{
 		OrgID:        orgID,
 		NamespaceUID: f1.UID,
 		RuleGroup:    "NO-ACCESS",
 	}
-	_, noAccess1 := ngmodels.GenerateUniqueAlertRules(5,
-		ngmodels.AlertRuleGen(
-			ngmodels.WithUniqueUID(&uids),
-			withGroupKey(noAccessKey1),
-			ngmodels.WithQuery(noAccessQuery),
-		))
-	noAccessRule := ngmodels.AlertRuleGen(
-		ngmodels.WithUniqueUID(&uids),
-		withGroupKey(noAccessKey1),
-		ngmodels.WithQuery(accessQuery),
-	)()
+	noAccess1 := gen.With(gen.WithGroupKey(noAccessKey1), gen.WithQuery(noAccessQuery)).GenerateManyRef(5)
+	noAccessRule := gen.With(gen.WithGroupKey(noAccessKey1), gen.WithQuery(accessQuery)).GenerateRef()
 	noAccess1 = append(noAccess1, noAccessRule)
 	ruleStore.PutRule(context.Background(), noAccess1...)
 
@@ -245,21 +242,10 @@ func TestExportRules(t *testing.T) {
 		NamespaceUID: f2.UID,
 		RuleGroup:    "HAS-ACCESS-2",
 	}
-	_, hasAccess2 := ngmodels.GenerateUniqueAlertRules(5,
-		ngmodels.AlertRuleGen(
-			ngmodels.WithUniqueUID(&uids),
-			withGroupKey(hasAccessKey2),
-			ngmodels.WithQuery(accessQuery),
-			ngmodels.WithUniqueGroupIndex(),
-		))
+	hasAccess2 := gen.With(gen.WithGroupKey(hasAccessKey2), gen.WithQuery(accessQuery), gen.WithUniqueGroupIndex()).GenerateManyRef(5)
 	ruleStore.PutRule(context.Background(), hasAccess2...)
 
-	_, noAccessByFolder := ngmodels.GenerateUniqueAlertRules(10,
-		ngmodels.AlertRuleGen(
-			ngmodels.WithUniqueUID(&uids),
-			ngmodels.WithQuery(accessQuery), // no access because of folder
-			ngmodels.WithNamespaceUIDNotIn(f1.UID, f2.UID),
-		))
+	noAccessByFolder := gen.With(gen.WithQuery(accessQuery), gen.WithNamespaceUIDNotIn(f1.UID, f2.UID)).GenerateManyRef(10)
 
 	ruleStore.PutRule(context.Background(), noAccessByFolder...)
 	// overwrite the folders visible to user because PutRule automatically creates folders in the fake store.

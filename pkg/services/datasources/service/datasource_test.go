@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -63,7 +64,14 @@ func TestService_AddDataSource(t *testing.T) {
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
 		mockPermission := acmock.NewMockedPermissionsService()
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), actest.FakeAccessControl{}, mockPermission, quotaService, &pluginstore.FakePluginStore{})
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), actest.FakeAccessControl{}, mockPermission, quotaService, &pluginstore.FakePluginStore{
+			PluginList: []pluginstore.Plugin{{
+				JSONData: plugins.JSONData{
+					Name:       "test",
+					APIVersion: "v0alpha1",
+				},
+			}},
+		})
 		require.NoError(t, err)
 
 		cmd := &datasources.AddDataSourceCommand{
@@ -81,6 +89,15 @@ func TestService_AddDataSource(t *testing.T) {
 
 		_, err = dsService.AddDataSource(context.Background(), cmd)
 		require.EqualError(t, err, "[datasource.urlInvalid] max length is 255")
+
+		cmd = &datasources.AddDataSourceCommand{
+			OrgID:      1,
+			Name:       "test",
+			APIVersion: "v0alpha2",
+		}
+
+		_, err = dsService.AddDataSource(context.Background(), cmd)
+		require.EqualError(t, err, "[datasource.apiVersionInvalid] expected v0alpha1, got v0alpha2")
 	})
 }
 
@@ -937,32 +954,6 @@ func TestService_GetHttpTransport(t *testing.T) {
 		require.NoError(t, err)
 		bodyStr := string(body)
 		require.Equal(t, "Ok", bodyStr)
-	})
-
-	t.Run("Should use request timeout if configured in JsonData", func(t *testing.T) {
-		provider := httpclient.NewProvider()
-
-		sjson := simplejson.NewFromAny(map[string]any{
-			"timeout": 19,
-		})
-
-		sqlStore := db.InitTestDB(t)
-		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
-		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
-		quotaService := quotatest.New(false, nil)
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{})
-		require.NoError(t, err)
-		ds := datasources.DataSource{
-			ID:       1,
-			URL:      "http://k8s:8001",
-			Type:     "Kubernetes",
-			JsonData: sjson,
-		}
-
-		client, err := dsService.GetHTTPClient(context.Background(), &ds, provider)
-		require.NoError(t, err)
-		require.NotNil(t, client)
-		require.Equal(t, 19*time.Second, client.Timeout)
 	})
 
 	t.Run("Should populate SigV4 options if configured in JsonData", func(t *testing.T) {

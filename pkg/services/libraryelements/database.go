@@ -140,8 +140,7 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 
 	userID := int64(0)
 	namespaceID, identifier := signedInUser.GetNamespacedID()
-	switch namespaceID {
-	case identity.NamespaceUser, identity.NamespaceServiceAccount:
+	if namespaceID == identity.NamespaceUser || namespaceID == identity.NamespaceServiceAccount {
 		userID, err = identity.IntIdentifier(namespaceID, identifier)
 		if err != nil {
 			l.log.Warn("Error while parsing userID", "namespaceID", namespaceID, "userID", identifier)
@@ -149,14 +148,20 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 	}
 
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
+	// folderUID *string will be changed to string
+	var folderUID string
+	if cmd.FolderUID != nil {
+		folderUID = *cmd.FolderUID
+	}
 	element := model.LibraryElement{
-		OrgID:    signedInUser.GetOrgID(),
-		FolderID: cmd.FolderID, // nolint:staticcheck
-		UID:      createUID,
-		Name:     cmd.Name,
-		Model:    updatedModel,
-		Version:  1,
-		Kind:     cmd.Kind,
+		OrgID:     signedInUser.GetOrgID(),
+		FolderID:  cmd.FolderID, // nolint:staticcheck
+		FolderUID: folderUID,
+		UID:       createUID,
+		Name:      cmd.Name,
+		Model:     updatedModel,
+		Version:   1,
+		Kind:      cmd.Kind,
 
 		Created: time.Now(),
 		Updated: time.Now(),
@@ -296,7 +301,12 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 		builder.Write(getFromLibraryElementDTOWithMeta(store.GetDialect()))
 		builder.Write(" INNER JOIN dashboard AS dashboard on le.folder_id = dashboard.id AND le.folder_id <> 0")
 		writeParamSelectorSQL(&builder, params...)
-		builder.WriteDashboardPermissionFilter(signedInUser, dashboardaccess.PERMISSION_VIEW, searchstore.TypeFolder)
+
+		// use permission filter if lib panel RBAC isn't enabled
+		if !l.features.IsEnabled(c, featuremgmt.FlagLibraryPanelRBAC) {
+			builder.WriteDashboardPermissionFilter(signedInUser, dashboardaccess.PERMISSION_VIEW, searchstore.TypeFolder)
+		}
+
 		builder.Write(` OR dashboard.id=0`)
 		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&libraryElements); err != nil {
 			return err
@@ -578,8 +588,7 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 
 		var userID int64
 		namespaceID, identifier := signedInUser.GetNamespacedID()
-		switch namespaceID {
-		case identity.NamespaceUser, identity.NamespaceServiceAccount:
+		if namespaceID == identity.NamespaceUser || namespaceID == identity.NamespaceServiceAccount {
 			var errID error
 			userID, errID = identity.IntIdentifier(namespaceID, identifier)
 			if errID != nil {
@@ -787,8 +796,7 @@ func (l *LibraryElementService) connectElementsToDashboardID(c context.Context, 
 
 			namespaceID, identifier := signedInUser.GetNamespacedID()
 			userID := int64(0)
-			switch namespaceID {
-			case identity.NamespaceUser, identity.NamespaceServiceAccount:
+			if namespaceID == identity.NamespaceUser || namespaceID == identity.NamespaceServiceAccount {
 				userID, err = identity.IntIdentifier(namespaceID, identifier)
 				if err != nil {
 					l.log.Warn("Failed to parse user ID from namespace identifier", "namespace", namespaceID, "identifier", identifier, "error", err)

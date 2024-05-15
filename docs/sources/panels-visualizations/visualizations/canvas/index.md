@@ -77,6 +77,8 @@ A button click will only trigger an API call when [inline editing](#inline-editi
 
 {{< video-embed src="/media/docs/grafana/2023-20-10-Canvas-Button-Element-Enablement-Video.mp4" max-width="750px" caption="Canvas button element demo" >}}
 
+{{< docs/play title="Canvas Visualization: Buttons" url="https://play.grafana.org/d/c9ea65f5-ed5a-45cf-8fb7-f82af7c3afdf/" >}}
+
 ## Connections
 
 When building a canvas, you can connect elements together to create more complex visualizations. Connections are created by dragging from the connection anchor of one element to the connection anchor of another element. You can also create connections to the background of the canvas. Connection anchors are displayed when you hover over an element and inline editing is turned on.
@@ -87,19 +89,19 @@ To remove a connection, simply click on the connection directly and then press t
 
 ### Adjust connectors
 
-You can adjust connectors, adding angles to them, to fit the canvas you're working in. When you move connected elements, the connector resizes to fit the space. To adjust a connector, click it to display the midpoint controls and move those as needed. To make a connector a straight line again, move the element or connector until the midpoint controls disappear.
+You can adjust connectors, adding angles to them, to fit the canvas you're working in. When you move connected elements, the connector resizes to fit the space. To adjust a connector, click it to display the midpoint controls and move those as needed. To make a connector a straight line again, move the midpoint back until the midpoint controls disappear.
 
-By default, if you move a connector so that it's almost a right angle or a straight line, the connector snaps into that angle or into a straight line. To disable this behavior, press and hold the Ctrl key while adjusting the connector.
+If you move a connector so that it's almost a right angle or a straight line, the connector snaps into that angle or into a straight line.
 
-{{< video-embed src="/media/docs/grafana/panels-visualizations/gif-canvas-connector-vertex-control-v11.0.mp4>" alt="Changing a connector from a straight line to a right angle" >}}
+<!-- TODO: Use updated demo from what's new when uploaded to YouTube -->
+
+{{< video-embed src="/media/docs/grafana/panels-visualizations/gif-canvas-connector-vertex-control-v11.0.mp4" alt="Changing a connector from a straight line to a right angle" >}}
 
 ### Style connectors
 
 You can set the size, color, direction, and style of connections based on fixed or field values. To do so, enter into panel edit mode, select the connection, and modify the connection's properties in the panel editor.
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-0-canvas-service-graph.png" max-width="750px" caption="Canvas service graph" >}}
-
-You can also change the shape of a connection anchor to a circle or remove the anchor entirely.
 
 ## Canvas editing
 
@@ -118,6 +120,16 @@ You can enable panning and zooming in a canvas. This allows you to both create a
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-3-canvas-pan-zoom-setting.png" max-width="300px" alt="Canvas pan zoom control" >}}
 
 {{< video-embed src="/media/docs/grafana/2024-01-05-Canvas-Pan-&-Zoom-Enablement-Video.mp4" max-width="750px" caption="Canvas pan and zoom enablement video" >}}
+
+#### Infinite panning
+
+You can enable infinite panning in a canvas when pan and zoom is enabled. This allows you to pan and zoom the canvas and uncover larger designs.
+
+{{% admonition type="note" %}}
+Infinite panning is an experimental feature that may not work as expected in all scenarios. For example, elements that are not top-left constrained may experience unexpected movement when panning.
+{{% /admonition %}}
+
+<!-- TODO: Add gif -->
 
 ### Context menu
 
@@ -141,7 +153,7 @@ The inline editing toggle lets you lock or unlock the canvas. When turned off th
 
 ### Data links
 
-Canvases support [data links](https://grafana.com/docs/grafana/latest/panels-visualizations/configure-data-links/), but only for all elements except drone and button elements. You can add a data link by following these steps:
+Canvases support [data links][] for all elements except drone and button elements. You can add a data link by following these steps:
 
 1. Set an element to be tied to a field value.
 1. Turn off the inline editing toggle.
@@ -152,7 +164,7 @@ Canvases support [data links](https://grafana.com/docs/grafana/latest/panels-vis
 1. Hover over the element to display the data link tooltip.
 1. Click on the element to be able to open the data link.
 
-If multiple elements use the same field name, and you want to control which elements display the data link, you can create a unique field name using the [add field from calculation transform](https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation). The alias you create in the transformation will appear as a field you can use with an element.
+If multiple elements use the same field name, and you want to control which elements display the data link, you can create a unique field name using the [add field from calculation transform][]. The alias you create in the transformation will appear as a field you can use with an element.
 
 1. In the panel editor for the canvas, click the **Transform** tab.
 1. Select **Add field from calculation** from the list of transformations, or click **+ Add transformation** to display the list first.
@@ -162,3 +174,31 @@ If multiple elements use the same field name, and you want to control which elem
 1. Reference the new unique field alias to create the element and field override.
 
 {{< video-embed src="/media/docs/grafana/canvas-data-links-9-4-0.mp4" max-width="750px" caption="Data links demo" >}}
+
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Standard options
+
+{{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Thresholds
+
+{{< docs/shared lookup="visualizations/thresholds-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Value mappings
+
+{{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Field overrides
+
+{{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+{{% docs/reference %}}
+[data links]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-data-links"
+[data links]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-data-links"
+
+[add field from calculation transform]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data#add-field-from-calculation"
+[add field from calculation transform]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data#add-field-from-calculation"
+{{% /docs/reference %}}

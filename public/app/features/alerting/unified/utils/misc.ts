@@ -1,11 +1,12 @@
 import { sortBy } from 'lodash';
 
-import { UrlQueryMap, Labels } from '@grafana/data';
+import { Labels, UrlQueryMap } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/src/types/config';
 import { config, isFetchError } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
+import { contextSrv } from 'app/core/services/context_srv';
 import { escapePathSeparators } from 'app/features/alerting/unified/utils/rule-id';
-import { alertInstanceKey } from 'app/features/alerting/unified/utils/rules';
+import { alertInstanceKey, isGrafanaRulerRule } from 'app/features/alerting/unified/utils/rules';
 import { SortOrder } from 'app/plugins/panel/alertlist/types';
 import { Alert, CombinedRule, FilterState, RulesSource, SilenceFilterState } from 'app/types/unified-alerting';
 import {
@@ -54,14 +55,16 @@ export function createMuteTimingLink(muteTimingName: string, alertManagerSourceN
   });
 }
 
-export function createShareLink(ruleSource: RulesSource, rule: CombinedRule): string {
+export function createShareLink(ruleSource: RulesSource, rule: CombinedRule): string | undefined {
   if (isCloudRulesSource(ruleSource)) {
     return createAbsoluteUrl(
       `/alerting/${encodeURIComponent(ruleSource.name)}/${encodeURIComponent(escapePathSeparators(rule.name))}/find`
     );
+  } else if (isGrafanaRulerRule(rule.rulerRule)) {
+    return createUrl(`/alerting/grafana/${rule.rulerRule.grafana_alert.uid}/view`);
   }
 
-  return window.location.href.split('?')[0];
+  return;
 }
 
 export function arrayToRecord(items: Array<{ key: string; value: string }>): Record<string, string> {
@@ -220,19 +223,33 @@ export function isOpenSourceEdition() {
   return buildInfo.edition === GrafanaEdition.OpenSource;
 }
 
+export function isAdmin() {
+  return contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
+}
+
 export function isLocalDevEnv() {
   const buildInfo = config.buildInfo;
   return buildInfo.env === 'development';
 }
 
 export function isErrorLike(error: unknown): error is Error {
-  return 'message' in (error as Error);
+  return Boolean(error && typeof error === 'object' && 'message' in error);
 }
 
 export function stringifyErrorLike(error: unknown): string {
   const fetchError = isFetchError(error);
   if (fetchError) {
-    return error.data.message;
+    if (error.message) {
+      return error.message;
+    }
+    if ('message' in error.data && typeof error.data.message === 'string') {
+      return error.data.message;
+    }
+    if (error.statusText) {
+      return error.statusText;
+    }
+
+    return String(error.status) || 'Unknown error';
   }
 
   return isErrorLike(error) ? error.message : String(error);

@@ -27,6 +27,8 @@ weight: 1
 
 This topic provides an overview of dashboard features and shortcuts, and describes how to use dashboard search.
 
+{{< youtube id="vTiIkdDwT-0" >}}
+
 ## Dashboard feature overview
 
 The dashboard user interface provides a number of features that you can use to customize the presentation of your data.
@@ -62,7 +64,7 @@ The following image and descriptions highlight all dashboard features.
 
 ## Keyboard shortcuts
 
-Grafana has a number of keyboard shortcuts available. Press `?` or `Ctrl+h` on your keyboard to display all keyboard shortcuts available in your version of Grafana.
+Grafana has a number of keyboard shortcuts available. Press `?` on your keyboard to display all keyboard shortcuts available in your version of Grafana.
 
 - `Ctrl+S`: Saves the current dashboard.
 - `f`: Opens the dashboard finder / search.

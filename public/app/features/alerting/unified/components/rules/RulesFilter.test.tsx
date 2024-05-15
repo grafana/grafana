@@ -5,12 +5,15 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { byLabelText, byRole } from 'testing-library-selector';
 
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { mockSearchApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 
 import * as analytics from '../../Analytics';
 import { MockDataSourceSrv } from '../../mocks';
+import { setupPluginsExtensionsHook } from '../../testSetup/plugins';
 
 import RulesFilter from './RulesFilter';
 
+const server = setupMswServer();
 jest.spyOn(analytics, 'logInfo');
 
 jest.mock('./MultipleDataSourcePicker', () => {
@@ -22,6 +25,8 @@ jest.mock('./MultipleDataSourcePicker', () => {
 });
 
 setDataSourceSrv(new MockDataSourceSrv({}));
+
+setupPluginsExtensionsHook();
 
 const ui = {
   stateFilter: {
@@ -39,6 +44,7 @@ const ui = {
 
 beforeEach(() => {
   locationService.replace({ search: '' });
+  mockSearchApi(server).search([]);
 });
 
 describe('RulesFilter', () => {

@@ -3,6 +3,7 @@ package models
 import (
 	"embed"
 	"encoding/json"
+	"fmt"
 	"math"
 	"strconv"
 	"strings"
@@ -11,7 +12,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	sdkapi "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
-	"github.com/prometheus/prometheus/model/labels"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/promlib/intervalv2"
 )
@@ -63,8 +65,11 @@ type PrometheusQueryProperties struct {
 	// Series name override or template. Ex. {{hostname}} will be replaced with label value for hostname
 	LegendFormat string `json:"legendFormat,omitempty"`
 
-	// ???
-	Scope *ScopeSpec `json:"scope,omitempty"`
+	// A set of filters applied to apply to the query
+	Scopes []ScopeSpec `json:"scopes,omitempty"`
+
+	// Additional Ad-hoc filters that take precedence over Scope on conflict.
+	AdhocFilters []ScopeFilter `json:"adhocFilters,omitempty"`
 }
 
 // ScopeSpec is a hand copy of the ScopeSpec struct from pkg/apis/scope/v0alpha1/types.go
@@ -131,6 +136,8 @@ const (
 var safeResolution = 11000
 
 // QueryModel includes both the common and specific values
+// NOTE: this struct may have issues when decoding JSON that requires the special handling
+// registered in https://github.com/grafana/grafana-plugin-sdk-go/blob/v0.228.0/experimental/apis/data/v0alpha1/query.go#L298
 type QueryModel struct {
 	PrometheusQueryProperties    `json:",inline"`
 	sdkapi.CommonQueryProperties `json:",inline"`
@@ -159,18 +166,30 @@ type Query struct {
 	RangeQuery    bool
 	ExemplarQuery bool
 	UtcOffsetSec  int64
-	Scope         *ScopeSpec
+
+	Scopes []ScopeSpec
 }
 
-type Scope struct {
-	Matchers []*labels.Matcher
+// This internal query struct is just like QueryModel, except it does not include:
+// sdkapi.CommonQueryProperties -- this avoids errors where the unused "datasource" property
+// may be either a string or DataSourceRef
+type internalQueryModel struct {
+	PrometheusQueryProperties `json:",inline"`
+	//sdkapi.CommonQueryProperties `json:",inline"`
+	IntervalMS float64 `json:"intervalMs,omitempty"`
+
+	// The following properties may be part of the request payload, however they are not saved in panel JSON
+	// Timezone offset to align start & end time on backend
+	UtcOffsetSec int64  `json:"utcOffsetSec,omitempty"`
+	Interval     string `json:"interval,omitempty"`
 }
 
-func Parse(query backend.DataQuery, dsScrapeInterval string, intervalCalculator intervalv2.Calculator, fromAlert bool, enableScope bool) (*Query, error) {
-	model := &QueryModel{}
+func Parse(span trace.Span, query backend.DataQuery, dsScrapeInterval string, intervalCalculator intervalv2.Calculator, fromAlert bool, enableScope bool) (*Query, error) {
+	model := &internalQueryModel{}
 	if err := json.Unmarshal(query.JSON, model); err != nil {
 		return nil, err
 	}
+	span.SetAttributes(attribute.String("rawExpr", model.Expr))
 
 	// Final step value for prometheus
 	calculatedStep, err := calculatePrometheusInterval(model.Interval, dsScrapeInterval, int64(model.IntervalMS), model.IntervalFactor, query, intervalCalculator)
@@ -188,12 +207,39 @@ func Parse(query backend.DataQuery, dsScrapeInterval string, intervalCalculator 
 		dsScrapeInterval,
 		timeRange,
 	)
-	if enableScope && model.Scope != nil && len(model.Scope.Filters) > 0 {
-		expr, err = ApplyQueryScope(expr, *model.Scope)
+
+	if enableScope {
+		var scopeFilters []ScopeFilter
+		for _, scope := range model.Scopes {
+			scopeFilters = append(scopeFilters, scope.Filters...)
+		}
+
+		if len(scopeFilters) > 0 {
+			span.SetAttributes(attribute.StringSlice("scopeFilters", func() []string {
+				var filters []string
+				for _, f := range scopeFilters {
+					filters = append(filters, fmt.Sprintf("%q %q %q", f.Key, f.Operator, f.Value))
+				}
+				return filters
+			}()))
+		}
+
+		if len(model.AdhocFilters) > 0 {
+			span.SetAttributes(attribute.StringSlice("adhocFilters", func() []string {
+				var filters []string
+				for _, f := range model.AdhocFilters {
+					filters = append(filters, fmt.Sprintf("%q %q %q", f.Key, f.Operator, f.Value))
+				}
+				return filters
+			}()))
+		}
+
+		expr, err = ApplyQueryFilters(expr, scopeFilters, model.AdhocFilters)
 		if err != nil {
 			return nil, err
 		}
 	}
+
 	if !model.Instant && !model.Range {
 		// In older dashboards, we were not setting range query param and !range && !instant was run as range query
 		model.Range = true
@@ -203,6 +249,12 @@ func Parse(query backend.DataQuery, dsScrapeInterval string, intervalCalculator 
 	if fromAlert {
 		model.Exemplar = false
 	}
+
+	span.SetAttributes(
+		attribute.String("expr", expr),
+		attribute.Int64("start_unixnano", query.TimeRange.From.UnixNano()),
+		attribute.Int64("stop_unixnano", query.TimeRange.To.UnixNano()),
+	)
 
 	return &Query{
 		Expr:          expr,

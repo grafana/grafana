@@ -8,12 +8,12 @@ import {
   isDataFrame,
   MetricFindValue,
   PanelData,
+  QueryVariableModel,
 } from '@grafana/data';
 
 import { ThunkDispatch } from '../../../types';
 import { validateVariableSelectionState } from '../state/actions';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
-import { QueryVariableModel } from '../types';
 import { getTemplatedRegex, toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 import { updateVariableOptions } from './reducer';

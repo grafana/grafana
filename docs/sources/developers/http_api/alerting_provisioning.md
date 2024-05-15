@@ -20,4 +20,4 @@ title: 'Alerting Provisioning HTTP API '
 
 # Alerting provisioning HTTP API
 
-{{< docs/shared lookup="alerts/alerting_provisioning.md" source="grafana" version="latest" >}}
+{{< docs/shared lookup="alerts/alerting_provisioning.md" source="grafana" version="<GRAFANA_VERSION>" >}}

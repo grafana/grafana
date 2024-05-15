@@ -23,6 +23,14 @@ export interface Props {
   xySeries: XYSeries[];
 }
 
+function stripSeriesName(fieldName: string, seriesName: string) {
+  if (fieldName !== seriesName && fieldName.includes(' ')) {
+    fieldName = fieldName.replace(seriesName, '').trim();
+  }
+
+  return fieldName;
+}
+
 export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, xySeries, dismiss, isPinned }: Props) => {
   const styles = useStyles2(getStyles);
 
@@ -31,6 +39,9 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, xySeries, dismiss, i
   const series = xySeries[seriesIdx! - 1];
   const xField = series.x.field;
   const yField = series.y.field;
+
+  const sizeField = series.size.field;
+  const colorField = series.color.field;
 
   let label = series.name.value;
 
@@ -51,18 +62,33 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, xySeries, dismiss, i
 
   const contentItems: VizTooltipItem[] = [
     {
-      label: xField.state?.displayName ?? xField.name,
+      label: stripSeriesName(xField.state?.displayName ?? xField.name, label),
       value: fmt(xField, xField.values[rowIndex]),
     },
     {
-      label: yField.state?.displayName ?? yField.name,
+      label: stripSeriesName(yField.state?.displayName ?? yField.name, label),
       value: fmt(yField, yField.values[rowIndex]),
     },
   ];
 
+  // mapped fields for size/color
+  if (sizeField != null) {
+    contentItems.push({
+      label: stripSeriesName(sizeField.state?.displayName ?? sizeField.name, label),
+      value: fmt(sizeField, sizeField.values[rowIndex]),
+    });
+  }
+
+  if (colorField != null) {
+    contentItems.push({
+      label: stripSeriesName(colorField.state?.displayName ?? colorField.name, label),
+      value: fmt(colorField, colorField.values[rowIndex]),
+    });
+  }
+
   series._rest.forEach((field) => {
     contentItems.push({
-      label: field.state?.displayName ?? field.name,
+      label: stripSeriesName(field.state?.displayName ?? field.name, label),
       value: fmt(field, field.values[rowIndex]),
     });
   });

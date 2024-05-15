@@ -107,7 +107,7 @@ export class BackendSrv implements BackendService {
     }
   }
 
-  async request<T = any>(options: BackendSrvRequest): Promise<T> {
+  async request<T = unknown>(options: BackendSrvRequest): Promise<T> {
     return await lastValueFrom(this.fetch<T>(options).pipe(map((response: FetchResponse<T>) => response.data)));
   }
 
@@ -181,8 +181,8 @@ export class BackendSrv implements BackendService {
     this.inFlightRequests.next(CANCEL_ALL_REQUESTS_REQUEST_ID);
   }
 
-  async datasourceRequest(options: BackendSrvRequest): Promise<any> {
-    return lastValueFrom(this.fetch(options));
+  async datasourceRequest<T = unknown>(options: BackendSrvRequest) {
+    return lastValueFrom(this.fetch<T>(options));
   }
 
   private parseRequestOptions(options: BackendSrvRequest): BackendSrvRequest {
@@ -371,7 +371,7 @@ export class BackendSrv implements BackendService {
 
     return (inputStream) =>
       inputStream.pipe(
-        retryWhen((attempts: Observable<any>) =>
+        retryWhen((attempts) =>
           attempts.pipe(
             mergeMap((error, i) => {
               const firstAttempt = i === 0 && options.retry === 0;
@@ -508,7 +508,7 @@ export class BackendSrv implements BackendService {
   }
 
   /** @deprecated */
-  search(query: any): Promise<DashboardSearchItem[]> {
+  search(query: Parameters<typeof this.get>[1]): Promise<DashboardSearchItem[]> {
     return this.get('/api/search', query);
   }
 

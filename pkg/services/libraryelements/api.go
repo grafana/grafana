@@ -26,7 +26,7 @@ func (l *LibraryElementService) registerAPIEndpoints() {
 			entities.Post("/", authorize(ac.EvalPermission(ActionLibraryPanelsCreate)), routing.Wrap(l.createHandler))
 			entities.Delete("/:uid", authorize(ac.EvalPermission(ActionLibraryPanelsDelete, uidScope)), routing.Wrap(l.deleteHandler))
 			entities.Get("/", authorize(ac.EvalPermission(ActionLibraryPanelsRead)), routing.Wrap(l.getAllHandler))
-			entities.Get("/:uid", authorize(ac.EvalPermission(ActionLibraryPanelsRead, uidScope)), routing.Wrap(l.getHandler))
+			entities.Get("/:uid", authorize(ac.EvalPermission(ActionLibraryPanelsRead)), routing.Wrap(l.getHandler))
 			entities.Get("/:uid/connections/", authorize(ac.EvalPermission(ActionLibraryPanelsRead, uidScope)), routing.Wrap(l.getConnectionsHandler))
 			entities.Get("/name/:name", routing.Wrap(l.getByNameHandler))
 			entities.Patch("/:uid", authorize(ac.EvalPermission(ActionLibraryPanelsWrite, uidScope)), routing.Wrap(l.patchHandler))
@@ -140,7 +140,8 @@ func (l *LibraryElementService) deleteHandler(c *contextmodel.ReqContext) respon
 // 404: notFoundError
 // 500: internalServerError
 func (l *LibraryElementService) getHandler(c *contextmodel.ReqContext) response.Response {
-	element, err := l.getLibraryElementByUid(c.Req.Context(), c.SignedInUser,
+	ctx := c.Req.Context()
+	element, err := l.getLibraryElementByUid(ctx, c.SignedInUser,
 		model.GetLibraryElementCommand{
 			UID:        web.Params(c.Req)[":uid"],
 			FolderName: dashboards.RootFolderName,
@@ -148,6 +149,15 @@ func (l *LibraryElementService) getHandler(c *contextmodel.ReqContext) response.
 	)
 	if err != nil {
 		return toLibraryElementError(err, "Failed to get library element")
+	}
+
+	if l.features.IsEnabled(ctx, featuremgmt.FlagLibraryPanelRBAC) {
+		allowed, err := l.AccessControl.Evaluate(ctx, c.SignedInUser, ac.EvalPermission(ActionLibraryPanelsRead, ScopeLibraryPanelsProvider.GetResourceScopeUID(web.Params(c.Req)[":uid"])))
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "unable to evaluate library panel permissions", err)
+		} else if !allowed {
+			return response.Error(http.StatusForbidden, "insufficient permissions for getting library panel", err)
+		}
 	}
 
 	return response.JSON(http.StatusOK, model.LibraryElementResponse{Result: element})

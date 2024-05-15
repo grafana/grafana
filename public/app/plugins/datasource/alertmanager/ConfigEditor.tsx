@@ -1,5 +1,5 @@
 import { produce } from 'immer';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
@@ -32,6 +32,17 @@ const IMPL_OPTIONS: Array<SelectableValue<AlertManagerImplementation>> = [
 
 export const ConfigEditor = (props: Props) => {
   const { options, onOptionsChange } = props;
+
+  // As we default to Mimir, we need to make sure the implementation is set from the start
+  useEffect(() => {
+    if (!options.jsonData.implementation) {
+      onOptionsChange(
+        produce(options, (draft) => {
+          draft.jsonData.implementation = AlertManagerImplementation.mimir;
+        })
+      );
+    }
+  }, [options, onOptionsChange]);
 
   return (
     <>
@@ -76,7 +87,7 @@ export const ConfigEditor = (props: Props) => {
         </div>
         {options.jsonData.handleGrafanaManagedAlerts && (
           <Text variant="bodySmall" color="secondary">
-            Make sure to enable the alert forwarding on the <Link to="/alerting/admin">admin page</Link>.
+            Make sure to enable the alert forwarding on the <Link to="/alerting/admin">settings page</Link>.
           </Text>
         )}
       </div>

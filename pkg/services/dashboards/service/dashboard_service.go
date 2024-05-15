@@ -236,13 +236,14 @@ func resolveUserID(user identity.Requester, log log.Logger) (int64, error) {
 	namespaceID, identifier := user.GetNamespacedID()
 	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
 		log.Debug("User does not belong to a user or service account namespace", "namespaceID", namespaceID, "userID", identifier)
+	} else {
+		var err error
+		userID, err = identity.IntIdentifier(namespaceID, identifier)
+		if err != nil {
+			log.Debug("failed to parse user ID", "namespaceID", namespaceID, "userID", identifier, "error", err)
+		}
 	}
 
-	userID, err := identity.IntIdentifier(namespaceID, identifier)
-
-	if err != nil {
-		log.Debug("failed to parse user ID", "namespaceID", namespaceID, "userID", identifier, "error", err)
-	}
 	return userID, nil
 }
 
@@ -278,7 +279,7 @@ func validateDashboardRefreshInterval(minRefreshInterval string, dash *dashboard
 	}
 
 	refresh := dash.Data.Get("refresh").MustString("")
-	if refresh == "" {
+	if refresh == "" || refresh == "auto" {
 		// since no refresh is set it is a valid refresh rate
 		return nil
 	}
@@ -621,6 +622,10 @@ func (dr *DashboardServiceImpl) SearchDashboards(ctx context.Context, query *das
 	hits := makeQueryResult(query, res)
 
 	return hits, nil
+}
+
+func (dr *DashboardServiceImpl) GetAllDashboards(ctx context.Context) ([]*dashboards.Dashboard, error) {
+	return dr.dashboardStore.GetAllDashboards(ctx)
 }
 
 func getHitType(item dashboards.DashboardSearchProjection) model.HitType {

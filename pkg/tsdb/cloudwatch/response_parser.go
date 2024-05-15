@@ -1,6 +1,7 @@
 package cloudwatch
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"sort"
@@ -10,13 +11,14 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
 
 // matches a dynamic label
 var dynamicLabel = regexp.MustCompile(`\$\{.+\}`)
 
-func (e *cloudWatchExecutor) parseResponse(startTime time.Time, endTime time.Time, metricDataOutputs []*cloudwatch.GetMetricDataOutput,
+func (e *cloudWatchExecutor) parseResponse(ctx context.Context, startTime time.Time, endTime time.Time, metricDataOutputs []*cloudwatch.GetMetricDataOutput,
 	queries []*models.CloudWatchQuery) ([]*responseWrapper, error) {
 	aggregatedResponse := aggregateResponse(metricDataOutputs)
 	queriesById := map[string]*models.CloudWatchQuery{}
@@ -34,7 +36,7 @@ func (e *cloudWatchExecutor) parseResponse(startTime time.Time, endTime time.Tim
 		}
 
 		var err error
-		dataRes.Frames, err = buildDataFrames(startTime, endTime, response, queryRow)
+		dataRes.Frames, err = buildDataFrames(ctx, startTime, endTime, response, queryRow)
 		if err != nil {
 			return nil, err
 		}
@@ -87,17 +89,53 @@ func aggregateResponse(getMetricDataOutputs []*cloudwatch.GetMetricDataOutput) m
 	return responseByID
 }
 
-func getLabels(cloudwatchLabel string, query *models.CloudWatchQuery) data.Labels {
+func parseLabels(cloudwatchLabel string, query *models.CloudWatchQuery) (string, data.Labels) {
+	dims := make([]string, 0, len(query.Dimensions))
+	for k := range query.Dimensions {
+		dims = append(dims, k)
+	}
+	sort.Strings(dims)
+
+	splitLabels := strings.Split(cloudwatchLabel, keySeparator)
+	// The first part is the name of the time series, followed by the labels
+	labelsIndex := 1
+
+	labels := data.Labels{}
+	for _, dim := range dims {
+		values := query.Dimensions[dim]
+		if isSingleValue(values) {
+			labels[dim] = values[0]
+			continue
+		}
+
+		labels[dim] = splitLabels[labelsIndex]
+		labelsIndex++
+	}
+	return splitLabels[0], labels
+}
+
+func getLabels(cloudwatchLabel string, query *models.CloudWatchQuery, addSeriesLabelAsFallback bool) data.Labels {
 	dims := make([]string, 0, len(query.Dimensions))
 	for k := range query.Dimensions {
 		dims = append(dims, k)
 	}
 	sort.Strings(dims)
 	labels := data.Labels{}
+
+	if addSeriesLabelAsFallback {
+		labels["Series"] = cloudwatchLabel
+	}
+
 	for _, dim := range dims {
 		values := query.Dimensions[dim]
 		if len(values) == 1 && values[0] != "*" {
 			labels[dim] = values[0]
+		} else if len(values) == 0 {
+			// Metric Insights metrics might not have a value for a dimension specified in the `GROUP BY` clause for Metric Query type queries. When this happens, CloudWatch returns "Other" in the label for the dimension so `len(values)` would be 0.
+			// We manually add "Other" as the value for the dimension to match what CloudWatch returns in the label.
+			// See the note under `GROUP BY` in https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/cloudwatch-metrics-insights-querylanguage.html
+			labels[dim] = "Other"
+			continue
 		} else {
 			for _, value := range values {
 				if value == cloudwatchLabel || value == "*" {
@@ -111,7 +149,7 @@ func getLabels(cloudwatchLabel string, query *models.CloudWatchQuery) data.Label
 	return labels
 }
 
-func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse models.QueryRowResponse,
+func buildDataFrames(ctx context.Context, startTime time.Time, endTime time.Time, aggregatedResponse models.QueryRowResponse,
 	query *models.CloudWatchQuery) (data.Frames, error) {
 	frames := data.Frames{}
 	hasStaticLabel := query.Label != "" && !dynamicLabel.MatchString(query.Label)
@@ -127,6 +165,9 @@ func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse 
 		// In case a multi-valued dimension is used and the cloudwatch query yields no values, create one empty time
 		// series for each dimension value. Use that dimension value to expand the alias field
 		if len(metric.Values) == 0 && query.IsMultiValuedDimensionExpression() {
+			if features.IsEnabled(ctx, features.FlagCloudWatchNewLabelParsing) {
+				label, _, _ = strings.Cut(label, keySeparator)
+			}
 			series := 0
 			multiValuedDimension := ""
 			for key, values := range query.Dimensions {
@@ -163,7 +204,15 @@ func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse 
 			continue
 		}
 
-		labels := getLabels(label, query)
+		name := label
+		var labels data.Labels
+		if query.GetGetMetricDataAPIMode() == models.GMDApiModeSQLExpression {
+			labels = getLabels(label, query, true)
+		} else if features.IsEnabled(ctx, features.FlagCloudWatchNewLabelParsing) {
+			name, labels = parseLabels(label, query)
+		} else {
+			labels = getLabels(label, query, false)
+		}
 		timestamps := []*time.Time{}
 		points := []*float64{}
 		for j, t := range metric.Timestamps {
@@ -175,7 +224,6 @@ func buildDataFrames(startTime time.Time, endTime time.Time, aggregatedResponse 
 		timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, timestamps)
 		valueField := data.NewField(data.TimeSeriesValueFieldName, labels, points)
 
-		name := label
 		// CloudWatch appends the dimensions to the returned label if the query label is not dynamic, so static labels need to be set
 		if hasStaticLabel {
 			name = query.Label

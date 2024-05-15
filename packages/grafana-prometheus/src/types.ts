@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/types.ts
 import { DataSourceJsonData } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 
@@ -51,6 +52,7 @@ export interface PromOptions extends DataSourceJsonData {
   disableRecordingRules?: boolean;
   sigV4Auth?: boolean;
   oauthPassThru?: boolean;
+  codeModeMetricNamesSuggestionLimit?: number;
 }
 
 export type ExemplarTraceIdDestination = {
