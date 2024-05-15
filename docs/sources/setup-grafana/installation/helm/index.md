@@ -4,7 +4,6 @@ aliases:
 description: Guide for deploying Grafana using Helm Charts
 labels:
   products:
-    - enterprise
     - oss
 menuTitle: Grafana on Helm Charts
 title: Deploy Grafana using Helm Charts
