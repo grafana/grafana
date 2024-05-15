@@ -186,7 +186,7 @@ export function SelectBase<T, Rest = {}>({
         const selectableValue = findSelectedValue(v.value ?? v, options);
         // If the select allows custom values there likely won't be a selectableValue in options
         // so we must return a new selectableValue
-        if (!allowCustomValue || selectableValue) {
+        if (selectableValue) {
           return selectableValue;
         }
         return typeof v === 'string' ? toOption(v) : v;
