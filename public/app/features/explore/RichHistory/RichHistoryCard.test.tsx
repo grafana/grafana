@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, getByText, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, getByText } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
@@ -213,12 +213,6 @@ describe('RichHistoryCard', () => {
     expect(datasourceName).toHaveTextContent('Data source does not exist anymore');
   });
 
-  it('should disable run query button if there are no explore IDs', async () => {
-    setup({}, true);
-    const runQueryButton = await screen.findByRole('button', { name: /run query/i });
-    expect(runQueryButton).toBeDisabled();
-  });
-
   describe('copy queries to clipboard', () => {
     it('should copy query model to clipboard when copying a query from a non existent datasource', async () => {
       setup({
@@ -301,117 +295,6 @@ describe('RichHistoryCard', () => {
       await userEvent.click(copyQueriesButton);
       expect(copyStringToClipboard).toHaveBeenCalledTimes(1);
       expect(copyStringToClipboard).toHaveBeenCalledWith(`query1\n${JSON.stringify({ query: 'query2' })}`);
-    });
-  });
-
-  describe('run queries', () => {
-    it('should be disabled if at least one query datasource is missing when using mixed', async () => {
-      const setQueries = jest.fn();
-      const changeDatasource = jest.fn();
-      const queries: MockQuery[] = [
-        { query: 'query1', refId: 'A', datasource: { uid: 'nonexistent-ds' } },
-        { query: 'query2', refId: 'B', datasource: { uid: 'loki' } },
-      ];
-      setup({
-        setQueries,
-        changeDatasource,
-        queryHistoryItem: {
-          id: '2',
-          createdAt: 1,
-          datasourceUid: 'mixed',
-          datasourceName: 'Mixed',
-          starred: false,
-          comment: '',
-          queries,
-        },
-      });
-      const runQueryButton = await screen.findByRole('button', { name: /run query/i });
-
-      expect(runQueryButton).toBeDisabled();
-    });
-
-    it('should be disabled if at datasource is missing', async () => {
-      const setQueries = jest.fn();
-      const changeDatasource = jest.fn();
-      const queries: MockQuery[] = [
-        { query: 'query1', refId: 'A' },
-        { query: 'query2', refId: 'B' },
-      ];
-      setup({
-        setQueries,
-        changeDatasource,
-        queryHistoryItem: {
-          id: '2',
-          createdAt: 1,
-          datasourceUid: 'nonexistent-ds',
-          datasourceName: 'nonexistent-ds',
-          starred: false,
-          comment: '',
-          queries,
-        },
-      });
-      const runQueryButton = await screen.findByRole('button', { name: /run query/i });
-
-      expect(runQueryButton).toBeDisabled();
-    });
-
-    it('should only set new queries when running queries from the same datasource', async () => {
-      const setQueries = jest.fn();
-      const changeDatasource = jest.fn();
-      const queries: MockQuery[] = [
-        { query: 'query1', refId: 'A' },
-        { query: 'query2', refId: 'B' },
-      ];
-      setup({
-        setQueries,
-        changeDatasource,
-        queryHistoryItem: {
-          id: '2',
-          createdAt: 1,
-          datasourceUid: 'loki',
-          datasourceName: 'Loki',
-          starred: false,
-          comment: '',
-          queries,
-        },
-      });
-
-      const runQueryButton = await screen.findByRole('button', { name: /run query/i });
-      await userEvent.click(runQueryButton);
-
-      expect(setQueries).toHaveBeenCalledWith(expect.any(String), queries);
-      expect(changeDatasource).not.toHaveBeenCalled();
-    });
-
-    it('should change datasource to mixed and set new queries when running queries from mixed datasource', async () => {
-      const setQueries = jest.fn();
-      const changeDatasource = jest.fn();
-      const queries: MockQuery[] = [
-        { query: 'query1', refId: 'A', datasource: { type: 'loki', uid: 'loki' } },
-        { query: 'query2', refId: 'B', datasource: { type: 'prometheus', uid: 'prometheus' } },
-      ];
-      setup({
-        setQueries,
-        changeDatasource,
-        queryHistoryItem: {
-          id: '2',
-          createdAt: 1,
-          datasourceUid: 'mixed',
-          datasourceName: 'Mixed',
-          starred: false,
-          comment: '',
-          queries,
-        },
-        datasourceInstances: [dsStore.loki, dsStore.prometheus, dsStore.mixed],
-      });
-
-      const runQueryButton = await screen.findByRole('button', { name: /run query/i });
-      await userEvent.click(runQueryButton);
-
-      await waitFor(() => {
-        expect(setQueries).toHaveBeenCalledWith(expect.any(String), queries);
-        expect(changeDatasource).toHaveBeenCalledWith({ datasource: 'mixed', exploreId: 'left' });
-      });
     });
   });
 

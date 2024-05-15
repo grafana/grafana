@@ -568,6 +568,12 @@
       "saving-failed": "Saving rich history failed",
       "update-failed": "Rich History update failed"
     },
+    "run-query": {
+      "left-pane": "Left pane",
+      "right-pane": "Right pane",
+      "run-query-button": "Run query",
+      "switch-datasource-button": "Switch data source and run query"
+    },
     "secondary-actions": {
       "query-add-button": "Add query",
       "query-add-button-aria-label": "Add query",
