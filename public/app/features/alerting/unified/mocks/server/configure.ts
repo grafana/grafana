@@ -1,7 +1,7 @@
 import server from 'app/features/alerting/unified/mockApi';
 import { mockFolder } from 'app/features/alerting/unified/mocks';
-import { grafanaAlertingConfigurationStatusHandler } from 'app/features/alerting/unified/mocks/alertmanagerApi';
-import { folderHandler } from 'app/features/alerting/unified/mocks/folders';
+import { grafanaAlertingConfigurationStatusHandler } from 'app/features/alerting/unified/mocks/server/handlers/alertmanagers';
+import { getFolderHandler } from 'app/features/alerting/unified/mocks/server/handlers/folders';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { FolderDTO } from 'app/types';
 
@@ -21,5 +21,5 @@ export const setAlertmanagerChoices = (alertmanagersChoice: AlertmanagerChoice, 
  * Makes the mock server respond with different folder access control settings
  */
 export const setFolderAccessControl = (accessControl: FolderDTO['accessControl']) => {
-  server.use(folderHandler(mockFolder({ hasAcl: true, accessControl })));
+  server.use(getFolderHandler(mockFolder({ hasAcl: true, accessControl })));
 };

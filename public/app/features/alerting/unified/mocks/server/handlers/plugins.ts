@@ -8,7 +8,7 @@ import { plugins } from 'app/features/alerting/unified/testSetup/plugins';
  * Returns a handler that maps from plugin ID to PluginMeta, and additionally sets up necessary
  * config side effects that are expected to come along with this API behaviour
  */
-export const pluginsHandler = (pluginsArray: PluginMeta[] = plugins) => {
+export const getPluginsHandler = (pluginsArray: PluginMeta[] = plugins) => {
   plugins.forEach(({ id, baseUrl, info, angular }) => {
     config.apps[id] = {
       id,
@@ -26,3 +26,6 @@ export const pluginsHandler = (pluginsArray: PluginMeta[] = plugins) => {
       : HttpResponse.json({ message: 'Plugin not found, no installed plugin with that id' }, { status: 404 });
   });
 };
+
+const handlers = [getPluginsHandler()];
+export default handlers;
