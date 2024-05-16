@@ -191,20 +191,27 @@ func (ng *AlertNG) init() error {
 					}
 
 					// Create remote Alertmanager.
-					remoteAM, err := createRemoteAlertmanager(orgID, ng.Cfg.UnifiedAlerting.RemoteAlertmanager, ng.KVStore, ng.SecretsService.Decrypt, ng.Cfg.UnifiedAlerting.DefaultConfiguration, m)
+					cfg := remote.AlertmanagerConfig{
+						BasicAuthPassword: ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Password,
+						DefaultConfig:     ng.Cfg.UnifiedAlerting.DefaultConfiguration,
+						OrgID:             orgID,
+						TenantID:          ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
+						URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
+					}
+					remoteAM, err := createRemoteAlertmanager(cfg, ng.KVStore, ng.SecretsService.Decrypt, m)
 					if err != nil {
 						moaLogger.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
 						return internalAM, nil
 					}
 
 					// Use both Alertmanager implementations in the forked Alertmanager.
-					cfg := remote.RemoteSecondaryConfig{
+					rsCfg := remote.RemoteSecondaryConfig{
 						Logger:       log.New("ngalert.forked-alertmanager.remote-secondary"),
 						OrgID:        orgID,
 						Store:        ng.store,
 						SyncInterval: ng.Cfg.UnifiedAlerting.RemoteAlertmanager.SyncInterval,
 					}
-					return remote.NewRemoteSecondaryForkedAlertmanager(cfg, internalAM, remoteAM)
+					return remote.NewRemoteSecondaryForkedAlertmanager(rsCfg, internalAM, remoteAM)
 				}
 			})
 
@@ -472,7 +479,8 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 	}
 	if backend == historian.BackendTypeAnnotations {
 		store := historian.NewAnnotationStore(ar, ds, met)
-		return historian.NewAnnotationBackend(store, rs, met), nil
+		annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
+		return historian.NewAnnotationBackend(annotationBackendLogger, store, rs, met), nil
 	}
 	if backend == historian.BackendTypeLoki {
 		lcfg, err := historian.NewLokiConfig(cfg)
@@ -539,12 +547,6 @@ func ApplyStateHistoryFeatureToggles(cfg *setting.UnifiedAlertingStateHistorySet
 	}
 }
 
-func createRemoteAlertmanager(orgID int64, amCfg setting.RemoteAlertmanagerSettings, kvstore kvstore.KVStore, decryptFn remote.DecryptFn, defaultConfig string, m *metrics.RemoteAlertmanager) (*remote.Alertmanager, error) {
-	externalAMCfg := remote.AlertmanagerConfig{
-		OrgID:             orgID,
-		URL:               amCfg.URL,
-		TenantID:          amCfg.TenantID,
-		BasicAuthPassword: amCfg.Password,
-	}
-	return remote.NewAlertmanager(externalAMCfg, notifier.NewFileStore(orgID, kvstore), decryptFn, defaultConfig, m)
+func createRemoteAlertmanager(cfg remote.AlertmanagerConfig, kvstore kvstore.KVStore, decryptFn remote.DecryptFn, m *metrics.RemoteAlertmanager) (*remote.Alertmanager, error) {
+	return remote.NewAlertmanager(cfg, notifier.NewFileStore(cfg.OrgID, kvstore), decryptFn, m)
 }

@@ -47,6 +47,8 @@ export interface FeatureToggles {
   returnToPrevious?: boolean;
   grpcServer?: boolean;
   unifiedStorage?: boolean;
+  dualWritePlaylistsMode2?: boolean;
+  dualWritePlaylistsMode3?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
@@ -185,5 +187,6 @@ export interface FeatureToggles {
   autofixDSUID?: boolean;
   logsExploreTableDefaultVisualization?: boolean;
   newDashboardSharingComponent?: boolean;
+  notificationBanner?: boolean;
   dashboardRestore?: boolean;
 }

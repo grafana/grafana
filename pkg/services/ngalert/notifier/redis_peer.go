@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	alertingCluster "github.com/grafana/alerting/cluster"
 	alertingClusterPB "github.com/grafana/alerting/cluster/clusterpb"
+	dstls "github.com/grafana/dskit/crypto/tls"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/redis/go-redis/v9"
@@ -27,6 +28,9 @@ type redisConfig struct {
 	name     string
 	prefix   string
 	maxConns int
+
+	tlsEnabled bool
+	tls        dstls.ClientConfig
 }
 
 const (
@@ -90,13 +94,26 @@ func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
 	if cfg.maxConns >= 0 {
 		poolSize = cfg.maxConns
 	}
-	rdb := redis.NewClient(&redis.Options{
+
+	opts := &redis.Options{
 		Addr:     cfg.addr,
 		Username: cfg.username,
 		Password: cfg.password,
 		DB:       cfg.db,
 		PoolSize: poolSize,
-	})
+	}
+
+	if cfg.tlsEnabled {
+		tlsClientConfig, err := cfg.tls.GetTLSConfig()
+		if err != nil {
+			logger.Error("Failed to get TLS config", "err", err)
+			return nil, err
+		} else {
+			opts.TLSConfig = tlsClientConfig
+		}
+	}
+
+	rdb := redis.NewClient(opts)
 	cmd := rdb.Ping(context.Background())
 	if cmd.Err() != nil {
 		logger.Error("Failed to ping redis - redis-based alertmanager clustering may not be available", "err", cmd.Err())

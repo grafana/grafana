@@ -1,9 +1,10 @@
 import { sortBy } from 'lodash';
 
-import { UrlQueryMap, Labels } from '@grafana/data';
+import { Labels, UrlQueryMap } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/src/types/config';
 import { config, isFetchError } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
+import { contextSrv } from 'app/core/services/context_srv';
 import { escapePathSeparators } from 'app/features/alerting/unified/utils/rule-id';
 import { alertInstanceKey, isGrafanaRulerRule } from 'app/features/alerting/unified/utils/rules';
 import { SortOrder } from 'app/plugins/panel/alertlist/types';
@@ -117,16 +118,6 @@ export function wrapWithQuotes(input: string) {
   return alreadyWrapped ? escapeQuotes(input) : `"${escapeQuotes(input)}"`;
 }
 
-export function makeRuleBasedSilenceLink(alertManagerSourceName: string, rule: CombinedRule) {
-  // we wrap the name of the alert with quotes since it might contain starting and trailing spaces
-  const labels: Labels = {
-    alertname: rule.name,
-    ...rule.labels,
-  };
-
-  return makeLabelBasedSilenceLink(alertManagerSourceName, labels);
-}
-
 export function makeLabelBasedSilenceLink(alertManagerSourceName: string, labels: Labels) {
   const silenceUrlParams = new URLSearchParams();
   silenceUrlParams.append('alertmanager', alertManagerSourceName);
@@ -220,6 +211,10 @@ export function sortAlerts(sortOrder: SortOrder, alerts: Alert[]): Alert[] {
 export function isOpenSourceEdition() {
   const buildInfo = config.buildInfo;
   return buildInfo.edition === GrafanaEdition.OpenSource;
+}
+
+export function isAdmin() {
+  return contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
 }
 
 export function isLocalDevEnv() {

@@ -840,6 +840,7 @@ func (hs *HTTPServer) convertModelToDtos(ctx context.Context, ds *datasources.Da
 		SecureJsonFields: map[string]bool{},
 		Version:          ds.Version,
 		ReadOnly:         ds.ReadOnly,
+		APIVersion:       ds.APIVersion,
 	}
 
 	if hs.pluginStore != nil {
