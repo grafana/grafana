@@ -161,7 +161,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
               datasource: {
                 uid: lastUsedDatasource?.datasourceUid,
                 type: dsSettings.type,
-                apiVersion: dsSettings.meta.apiVersion,
+                apiVersion: dsSettings.meta?.apiVersion,
               },
             });
           }
@@ -178,7 +178,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
           {
             type: dsSettings.type,
             uid: dsSettings.uid,
-            apiVersion: dsSettings.meta.apiVersion,
+            apiVersion: dsSettings.meta?.apiVersion,
           } || { default: true }
         );
       }
@@ -197,7 +197,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
           datasource: {
             uid: dsSettings.uid,
             type: dsSettings.type,
-            apiVersion: dsSettings.meta.apiVersion,
+            apiVersion: dsSettings.meta?.apiVersion,
           },
         });
       }
@@ -301,7 +301,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       datasource: {
         type: newSettings.type,
         uid: newSettings.uid,
-        apiVersion: newSettings.meta.apiVersion,
+        apiVersion: newSettings.meta?.apiVersion,
       },
       queries,
     });

@@ -102,7 +102,7 @@ export class DatasourceSrv implements DataSourceService {
         isDefault: false,
         name: nameOrUid,
         uid: nameOrUid,
-        rawRef: { type: dsSettings.type, uid: dsSettings.uid, apiVersion: dsSettings.meta.apiVersion },
+        rawRef: { type: dsSettings.type, uid: dsSettings.uid, apiVersion: dsSettings.meta?.apiVersion },
       };
     }
 

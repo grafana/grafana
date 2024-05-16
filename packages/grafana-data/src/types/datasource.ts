@@ -322,7 +322,7 @@ abstract class DataSourceApi<
 
   /** Get an identifier object for this datasource instance */
   getRef(): DataSourceRef {
-    return { type: this.type, uid: this.uid, apiVersion: this.meta.apiVersion };
+    return { type: this.type, uid: this.uid, apiVersion: this.meta?.apiVersion };
   }
 
   /**

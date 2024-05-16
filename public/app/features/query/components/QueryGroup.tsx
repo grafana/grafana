@@ -150,7 +150,7 @@ export class QueryGroup extends PureComponent<Props, State> {
         uid: newSettings.uid,
         type: newSettings.meta.id,
         default: newSettings.isDefault,
-        apiVersion: newSettings.meta.apiVersion,
+        apiVersion: newSettings.meta?.apiVersion,
       },
     });
 
