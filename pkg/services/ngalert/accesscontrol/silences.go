@@ -314,7 +314,7 @@ func (s SilenceService) SilenceAccess(ctx context.Context, user identity.Request
 
 		permSet := make(map[models.SilencePermission]struct{})
 		if !canReadAll {
-			if err := s.authorizeUpdateSilence(ctx, user, silWithFolder); err != nil {
+			if err := s.authorizeReadSilence(ctx, user, silWithFolder); err != nil {
 				// Read permission is required for all actions. If user can't read the silence, we don't need to check other permissions.
 				result[silWithFolder.Silence] = permSet
 				namespacesByAccess[silWithFolder.folderUID] = permSet
