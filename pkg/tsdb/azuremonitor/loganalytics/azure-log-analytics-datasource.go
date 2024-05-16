@@ -73,7 +73,7 @@ func (e *AzureLogAnalyticsDatasource) GetBasicLogsUsage(ctx context.Context, url
 		TimeColumn: "TimeGenerated",
 		Resources:  []string{payload.Resource},
 		QueryType:  dataquery.AzureQueryTypeAzureLogAnalytics,
-		URL:        getApiURL(payload.Resource, false),
+		URL:        getApiURL(payload.Resource, false, false),
 	}
 
 	req, err := e.createRequest(ctx, url, dataVolumeQuery)
