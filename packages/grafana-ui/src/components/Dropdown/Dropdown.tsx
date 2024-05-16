@@ -73,12 +73,12 @@ export const Dropdown = React.memo(({ children, overlay, placement, offset, onVi
   const animationStyles = useStyles2(getStyles, animationDuration);
 
   const onOverlayClicked = () => {
-    setShow(false);
+    handleOpenChange(false);
   };
 
   const handleKeys = (event: React.KeyboardEvent) => {
     if (event.key === 'Tab') {
-      setShow(false);
+      handleOpenChange(false);
     }
   };
 
