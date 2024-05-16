@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	entitydb "github.com/grafana/grafana/pkg/services/store/entity/db"
-	iface "github.com/grafana/grafana/pkg/services/store/entity/db"
 	"github.com/grafana/grafana/pkg/services/store/entity/db/migrations"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -131,7 +130,7 @@ func (db *EntityDB) GetCfg() *setting.Cfg {
 	return db.cfg
 }
 
-func (db *EntityDB) GetDB() (iface.DB, error) {
+func (db *EntityDB) GetDB() (entitydb.DB, error) {
 	engine, err := db.GetEngine()
 	if err != nil {
 		return nil, err

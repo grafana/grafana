@@ -5,10 +5,10 @@ import (
 	"database/sql"
 	"fmt"
 
-	iface "github.com/grafana/grafana/pkg/services/store/entity/db"
+	entitydb "github.com/grafana/grafana/pkg/services/store/entity/db"
 )
 
-func NewDB(d *sql.DB, driverName string) iface.DB {
+func NewDB(d *sql.DB, driverName string) entitydb.DB {
 	return sqldb{
 		DB:         d,
 		driverName: driverName,
@@ -24,7 +24,7 @@ func (d sqldb) DriverName() string {
 	return d.driverName
 }
 
-func (d sqldb) BeginTx(ctx context.Context, opts *sql.TxOptions) (iface.Tx, error) {
+func (d sqldb) BeginTx(ctx context.Context, opts *sql.TxOptions) (entitydb.Tx, error) {
 	t, err := d.DB.BeginTx(ctx, opts)
 	if err != nil {
 		return nil, err
@@ -34,7 +34,7 @@ func (d sqldb) BeginTx(ctx context.Context, opts *sql.TxOptions) (iface.Tx, erro
 	}, nil
 }
 
-func (d sqldb) WithTx(ctx context.Context, opts *sql.TxOptions, f iface.TxFunc) error {
+func (d sqldb) WithTx(ctx context.Context, opts *sql.TxOptions, f entitydb.TxFunc) error {
 	t, err := d.BeginTx(ctx, opts)
 	if err != nil {
 		return fmt.Errorf("begin tx: %w", err)

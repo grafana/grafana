@@ -9,7 +9,7 @@ import (
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/require"
 
-	iface "github.com/grafana/grafana/pkg/services/store/entity/db"
+	entitydb "github.com/grafana/grafana/pkg/services/store/entity/db"
 )
 
 func newCtx(t *testing.T) context.Context {
@@ -71,8 +71,8 @@ func TestDB_BeginTx(t *testing.T) {
 func TestDB_WithTx(t *testing.T) {
 	t.Parallel()
 
-	newTxFunc := func(err error) iface.TxFunc {
-		return func(context.Context, iface.Tx) error {
+	newTxFunc := func(err error) entitydb.TxFunc {
+		return func(context.Context, entitydb.Tx) error {
 			return err
 		}
 	}
