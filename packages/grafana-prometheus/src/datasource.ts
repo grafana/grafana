@@ -374,7 +374,7 @@ export class PrometheusDatasource
     };
 
     if (config.featureToggles.promQLScope) {
-      processedTarget.scopes = (request.scopes ?? []).map((scope) => scope.spec);
+      processedTarget.scopes = request.scopes;
     }
 
     if (config.featureToggles.groupByVariable) {
