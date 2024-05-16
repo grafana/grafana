@@ -219,7 +219,7 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 
 		objInfo = &updateWrapper{
 			upstream: objInfo,
-			updated:  obj,
+			updated:  updated,
 		}
 	}
 
