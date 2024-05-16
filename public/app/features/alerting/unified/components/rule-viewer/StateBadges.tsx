@@ -25,10 +25,9 @@ export const RecordingBadge = ({ health }: RecordingBadgeProps) => {
 interface StateBadgeProps {
   state: PromAlertingRuleState;
   health?: RuleHealth;
-  includeState?: boolean;
 }
 
-export const StateBadge = ({ state, health, includeState = true }: StateBadgeProps) => {
+export const StateBadge = ({ state, health }: StateBadgeProps) => {
   let stateLabel: string;
   let color: BadgeColor;
 
@@ -58,7 +57,7 @@ export const StateBadge = ({ state, health, includeState = true }: StateBadgePro
     stateLabel = 'No data';
   }
 
-  return <Badge color={color} text={stateLabel} includeState={includeState} />;
+  return <Badge color={color} text={stateLabel} />;
 };
 
 // the generic badge component
@@ -67,13 +66,12 @@ type BadgeColor = 'success' | 'error' | 'warning';
 interface BadgeProps {
   color: BadgeColor;
   text: NonNullable<ReactNode>;
-  includeState?: boolean;
 }
 
-function Badge({ color, text, includeState }: BadgeProps) {
+function Badge({ color, text }: BadgeProps) {
   return (
     <Stack direction="row" gap={0.5} wrap={'nowrap'} flex={'0 0 auto'}>
-      <AlertStateDot color={color} includeState={includeState} />
+      <AlertStateDot color={color} />
       <Text variant="bodySmall" color={color}>
         {text}
       </Text>

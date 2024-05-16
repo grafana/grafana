@@ -11,8 +11,8 @@ import { PromApplication } from 'app/types/unified-alerting-dto';
 import { CombinedRuleGroup, CombinedRuleNamespace, RulesSource } from '../../../types/unified-alerting';
 
 import { LogMessages, logInfo, trackRuleListNavigation } from './Analytics';
-import { EvaluationGroupWithRules } from './EvaluationGroupWithRules';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
+import { EvaluationGroupWithRules } from './components/rule-list/EvaluationGroupWithRules';
 import Namespace from './components/rule-list/Namespace';
 import { NoRulesSplash } from './components/rules/NoRulesCTA';
 import { INSTANCES_DISPLAY_LIMIT } from './components/rules/RuleDetails';

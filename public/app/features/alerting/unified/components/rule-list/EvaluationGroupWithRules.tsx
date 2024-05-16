@@ -1,18 +1,19 @@
 import React from 'react';
 import { useToggle } from 'react-use';
 
-import { EvaluationGroupWithRulesProps } from './RuleList.v2';
-import { AlertRuleListItem, RecordingRuleListItem } from './components/rule-list/AlertRuleListItem';
-import EvaluationGroup from './components/rule-list/EvaluationGroup';
-import { createViewLink } from './utils/misc';
-import { hashRulerRule } from './utils/rule-id';
+import { EvaluationGroupWithRulesProps } from '../../RuleList.v2';
+import { createViewLink } from '../../utils/misc';
+import { hashRulerRule } from '../../utils/rule-id';
 import {
   isAlertingRule,
   isAlertingRulerRule,
   isGrafanaRulerRule,
   isRecordingRule,
   isRecordingRulerRule,
-} from './utils/rules';
+} from '../../utils/rules';
+
+import { AlertRuleListItem, RecordingRuleListItem } from './AlertRuleListItem';
+import EvaluationGroup from './EvaluationGroup';
 
 export const EvaluationGroupWithRules = ({ group, rulesSource }: EvaluationGroupWithRulesProps) => {
   const [open, toggleOpen] = useToggle(false);
