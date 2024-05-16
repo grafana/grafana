@@ -2,7 +2,7 @@ import React, { Suspense } from 'react';
 
 import { config } from '@grafana/runtime';
 
-const RuleListV1 = React.lazy(() => import('./RuleList.v1'));
+import RuleListV1 from './RuleList.v1';
 const RuleListV2 = React.lazy(() => import('./RuleList.v2'));
 
 const RuleList = () => {
