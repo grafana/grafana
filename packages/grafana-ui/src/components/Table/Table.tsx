@@ -99,9 +99,9 @@ export const Table = memo((props: Props) => {
   // This checks whether `Show table footer` is toggled on, the `Calculation` is set to `Count`, and finally, whether `Count rows` is toggled on.
   const isCountRowsSet = Boolean(
     footerOptions?.countRows &&
-      footerOptions.reducer &&
-      footerOptions.reducer.length &&
-      footerOptions.reducer[0] === ReducerID.count
+    footerOptions.reducer &&
+    footerOptions.reducer.length &&
+    footerOptions.reducer[0] === ReducerID.count
   );
 
   const nestedDataField = data.fields.find((f) => f.type === FieldType.nestedFrames);
@@ -292,7 +292,11 @@ export const Table = memo((props: Props) => {
   // we determine the field to wrap text with here and then
   // pass it to the RowsList
   let longestField = undefined;
-  if (fieldConfig !== undefined && fieldConfig.defaults.custom.cellOptions.wrapText) {
+  if (
+    fieldConfig !== undefined &&
+    fieldConfig.defaults.custom !== undefined &&
+    fieldConfig.defaults.custom.cellOptions.wrapText
+  ) {
     const stringFields = data.fields.filter((field: Field) => field.type === FieldType.string);
 
     if (stringFields.length >= 1) {
