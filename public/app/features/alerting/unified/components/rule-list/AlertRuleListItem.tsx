@@ -256,7 +256,7 @@ function EvaluationMetadata({
   evaluationInterval,
   state,
 }: EvaluationMetadataProps) {
-  const relativeEvaluationTime = getRelativeEvaluationInterval(evaluationInterval, lastEvaluation);
+  const relativeEvaluationTime = getRelativeEvaluationInterval(lastEvaluation);
 
   // @TODO this component doesn't support millis so it just shows "0s" – might want to make it support millis
   const evaluationDurationString = evaluationDuration ? Time({ timeInMs: evaluationDuration, humanize: true }) : null;

@@ -1,31 +1,35 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useAsyncFn, useInterval, useMeasure } from 'react-use';
+import { useAsyncFn, useInterval } from 'react-use';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
-import { Button, LinkButton, LoadingBar, useStyles2, withErrorBoundary } from '@grafana/ui';
+import { Button, LinkButton, useStyles2, withErrorBoundary } from '@grafana/ui';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types';
-import { PromApplication } from 'app/types/unified-alerting-dto';
 
-import { CombinedRuleGroup, CombinedRuleNamespace, RulesSource } from '../../../types/unified-alerting';
+import { CombinedRuleNamespace } from '../../../../../types/unified-alerting';
+import { LogMessages, logInfo, trackRuleListNavigation } from '../../Analytics';
+import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
+import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces';
+import { useFilteredRules, useRulesFilter } from '../../hooks/useFilteredRules';
+import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
+import { fetchAllPromAndRulerRulesAction } from '../../state/actions';
+import { RULE_LIST_POLL_INTERVAL_MS } from '../../utils/constants';
+import { getAllRulesSourceNames } from '../../utils/datasource';
+import { AlertingPageWrapper } from '../AlertingPageWrapper';
+import { NoRulesSplash } from '../rules/NoRulesCTA';
+import { INSTANCES_DISPLAY_LIMIT } from '../rules/RuleDetails';
+import { RuleListErrors } from '../rules/RuleListErrors';
+import { RuleListGroupView } from '../rules/RuleListGroupView';
+import { RuleListStateView } from '../rules/RuleListStateView';
+import { RuleStats } from '../rules/RuleStats';
+import RulesFilter from '../rules/RulesFilter';
 
-import { LogMessages, logInfo, trackRuleListNavigation } from './Analytics';
-import { AlertingPageWrapper } from './components/AlertingPageWrapper';
-import { EvaluationGroupWithRules } from './components/rule-list/EvaluationGroupWithRules';
-import Namespace from './components/rule-list/Namespace';
-import { NoRulesSplash } from './components/rules/NoRulesCTA';
-import { INSTANCES_DISPLAY_LIMIT } from './components/rules/RuleDetails';
-import { RuleListErrors } from './components/rules/RuleListErrors';
-import { RuleStats } from './components/rules/RuleStats';
-import RulesFilter from './components/rules/RulesFilter';
-import { AlertingAction, useAlertingAbility } from './hooks/useAbilities';
-import { useCombinedRuleNamespaces } from './hooks/useCombinedRuleNamespaces';
-import { useFilteredRules, useRulesFilter } from './hooks/useFilteredRules';
-import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
-import { fetchAllPromAndRulerRulesAction } from './state/actions';
-import { RULE_LIST_POLL_INTERVAL_MS } from './utils/constants';
-import { getAllRulesSourceNames, getRulesSourceUniqueKey, isGrafanaRulesSource } from './utils/datasource';
+const VIEWS = {
+  groups: RuleListGroupView,
+  state: RuleListStateView,
+};
 
 // make sure we ask for 1 more so we show the "show x more" button
 const LIMIT_ALERTS = INSTANCES_DISPLAY_LIMIT + 1;
@@ -39,7 +43,13 @@ const RuleList = withErrorBoundary(
 
     const onFilterCleared = useCallback(() => setExpandAll(false), []);
 
+    const [queryParams] = useQueryParams();
     const { filterState, hasActiveFilters } = useRulesFilter();
+
+    const queryParamView = queryParams['view'] as keyof typeof VIEWS;
+    const view = VIEWS[queryParamView] ? queryParamView : 'groups';
+
+    const ViewComponent = VIEWS[view];
 
     const promRuleRequests = useUnifiedAlertingSelector((state) => state.promRules);
     const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
@@ -91,11 +101,6 @@ const RuleList = withErrorBoundary(
 
     const combinedNamespaces: CombinedRuleNamespace[] = useCombinedRuleNamespaces();
     const filteredNamespaces = useFilteredRules(combinedNamespaces, filterState);
-
-    const sortedNamespaces = filteredNamespaces.sort((a: CombinedRuleNamespace, b: CombinedRuleNamespace) =>
-      a.name.localeCompare(b.name)
-    );
-
     return (
       // We don't want to show the Loading... indicator for the whole page.
       // We show separate indicators for Grafana-managed and Cloud rules
@@ -107,7 +112,7 @@ const RuleList = withErrorBoundary(
             <div className={styles.break} />
             <div className={styles.buttonsContainer}>
               <div className={styles.statsContainer}>
-                {hasActiveFilters && (
+                {view === 'groups' && hasActiveFilters && (
                   <Button
                     className={styles.expandAllButton}
                     icon={expandAll ? 'angle-double-up' : 'angle-double-down'}
@@ -123,57 +128,14 @@ const RuleList = withErrorBoundary(
           </>
         )}
         {hasNoAlertRulesCreatedYet && <NoRulesSplash />}
-        {hasAlertRulesCreated && (
-          <>
-            <LoadingIndicator visible={loading} />
-            <ul className={styles.rulesTree} role="tree">
-              {sortedNamespaces.map((namespace) => {
-                const { rulesSource } = namespace;
-
-                // @TODO use buildinfo here to get the correct icon
-                const application = isGrafanaRulesSource(rulesSource)
-                  ? 'grafana'
-                  : rulesSource.jsonData?.prometheusType ?? PromApplication.Prometheus;
-
-                return (
-                  <Namespace
-                    key={getRulesSourceUniqueKey(rulesSource) + namespace.name}
-                    name={namespace.name}
-                    application={application}
-                  >
-                    {namespace.groups
-                      .sort((a, b) => a.name.localeCompare(b.name))
-                      .map((group) => (
-                        <EvaluationGroupWithRules key={group.name} group={group} rulesSource={rulesSource} />
-                      ))}
-                  </Namespace>
-                );
-              })}
-            </ul>
-          </>
-        )}
+        {hasAlertRulesCreated && <ViewComponent expandAll={expandAll} namespaces={filteredNamespaces} />}
       </AlertingPageWrapper>
     );
   },
   { style: 'page' }
 );
 
-export interface EvaluationGroupWithRulesProps {
-  group: CombinedRuleGroup;
-  rulesSource: RulesSource;
-}
-
-const LoadingIndicator = ({ visible = false }) => {
-  const [measureRef, { width }] = useMeasure<HTMLDivElement>();
-  return <div ref={measureRef}>{visible && <LoadingBar width={width} />}</div>;
-};
-
 const getStyles = (theme: GrafanaTheme2) => ({
-  rulesTree: css({
-    display: 'flex',
-    flexDirection: 'column',
-    gap: theme.spacing(1),
-  }),
   break: css({
     width: '100%',
     height: 0,

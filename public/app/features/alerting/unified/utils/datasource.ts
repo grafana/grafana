@@ -8,6 +8,7 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 import { RulesSource } from 'app/types/unified-alerting';
+import { PromApplication, RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { useAlertManagersByPermission } from '../hooks/useAlertManagerSources';
@@ -276,4 +277,20 @@ export function getDefaultOrFirstCompatibleDataSource(): DataSourceInstanceSetti
 
 export function isDataSourceManagingAlerts(ds: DataSourceInstanceSettings<DataSourceJsonData>) {
   return ds.jsonData.manageAlerts !== false; //if this prop is undefined it defaults to true
+}
+
+export function getApplicationFromRulesSource(rulesSource: RulesSource): RulesSourceApplication {
+  if (isGrafanaRulesSource(rulesSource)) {
+    return 'grafana';
+  }
+
+  if ('prometheusType' in rulesSource.jsonData) {
+    return rulesSource.jsonData?.prometheusType ?? PromApplication.Prometheus;
+  }
+
+  if (rulesSource.type === 'loki') {
+    return 'loki';
+  }
+
+  return PromApplication.Prometheus; // assume Prometheus if nothing matches
 }

@@ -3,14 +3,14 @@ import React, { PropsWithChildren } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Button, Stack, TextLink, Icon } from '@grafana/ui';
-import { PromApplication } from 'app/types/unified-alerting-dto';
+import { PromApplication, RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { Spacer } from '../Spacer';
 
 interface NamespaceProps extends PropsWithChildren {
   name: string;
   href?: string;
-  application?: PromApplication | 'grafana';
+  application?: RulesSourceApplication;
 }
 
 const Namespace = ({ children, name, href, application }: NamespaceProps) => {
@@ -42,7 +42,7 @@ const Namespace = ({ children, name, href, application }: NamespaceProps) => {
 };
 
 interface NamespaceIconProps {
-  application?: PromApplication | 'grafana';
+  application?: RulesSourceApplication;
 }
 
 const NamespaceIcon = ({ application }: NamespaceIconProps) => {
@@ -60,6 +60,8 @@ const NamespaceIcon = ({ application }: NamespaceIconProps) => {
       return (
         <img width={16} height={16} src="public/app/plugins/datasource/prometheus/img/mimir_logo.svg" alt="Mimir" />
       );
+    case 'loki':
+      return <img width={16} height={16} src="public/app/plugins/datasource/loki/img/loki_icon.svg" alt="Loki" />;
     case 'grafana':
     default:
       return <Icon name="folder" />;

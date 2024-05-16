@@ -2,6 +2,7 @@
 
 import { AlertState, DataSourceInstanceSettings } from '@grafana/data';
 import { PromOptions } from '@grafana/prometheus';
+import { LokiOptions } from 'app/plugins/datasource/loki/types';
 
 import {
   Annotations,
@@ -90,7 +91,7 @@ export interface RulesSourceResult {
   namespaces?: RuleNamespace[];
 }
 
-export type RulesSource = DataSourceInstanceSettings<PromOptions> | 'grafana';
+export type RulesSource = DataSourceInstanceSettings<PromOptions | LokiOptions> | 'grafana';
 
 // combined prom and ruler result
 export interface CombinedRule {

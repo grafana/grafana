@@ -1,19 +1,14 @@
+import { size } from 'lodash';
 import React from 'react';
 import { useToggle } from 'react-use';
 
-import { EvaluationGroupWithRulesProps } from '../../RuleList.v2';
 import { createViewLink } from '../../utils/misc';
 import { hashRulerRule } from '../../utils/rule-id';
-import {
-  isAlertingRule,
-  isAlertingRulerRule,
-  isGrafanaRulerRule,
-  isRecordingRule,
-  isRecordingRulerRule,
-} from '../../utils/rules';
+import { isAlertingRule, isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from '../../utils/rules';
 
 import { AlertRuleListItem, RecordingRuleListItem } from './AlertRuleListItem';
 import EvaluationGroup from './EvaluationGroup';
+import { EvaluationGroupWithRulesProps } from './RuleList.v2';
 
 export const EvaluationGroupWithRules = ({ group, rulesSource }: EvaluationGroupWithRulesProps) => {
   const [open, toggleOpen] = useToggle(false);
@@ -25,11 +20,13 @@ export const EvaluationGroupWithRules = ({ group, rulesSource }: EvaluationGroup
 
         // keep in mind that we may not have a promRule for the ruler rule – this happens when the target
         // rule source is eventually consistent - it may know about the rule definition but not its state
-        if (isAlertingRulerRule(rulerRule) && isAlertingRule(promRule)) {
+        const isAlertingPromRule = isAlertingRule(promRule);
+
+        if (isAlertingRulerRule(rulerRule)) {
           return (
             <AlertRuleListItem
               key={hashRulerRule(rulerRule)}
-              state={promRule?.state}
+              state={isAlertingPromRule ? promRule?.state : undefined}
               health={promRule?.health}
               error={promRule?.lastError}
               name={rulerRule.alert}
@@ -37,13 +34,14 @@ export const EvaluationGroupWithRules = ({ group, rulesSource }: EvaluationGroup
               lastEvaluation={promRule?.lastEvaluation}
               evaluationDuration={promRule?.evaluationTime}
               evaluationInterval={group.interval}
+              instancesCount={isAlertingPromRule ? size(promRule.alerts) : undefined}
               href={createViewLink(rulesSource, rule)}
               summary={annotations?.['summary']}
             />
           );
         }
 
-        if (isRecordingRulerRule(rulerRule) && isRecordingRule(promRule)) {
+        if (isRecordingRulerRule(rulerRule)) {
           return (
             <RecordingRuleListItem
               key={hashRulerRule(rulerRule)}
@@ -59,12 +57,12 @@ export const EvaluationGroupWithRules = ({ group, rulesSource }: EvaluationGroup
           );
         }
 
-        if (isGrafanaRulerRule(rulerRule) && isAlertingRule(promRule)) {
+        if (isGrafanaRulerRule(rulerRule)) {
           return (
             <AlertRuleListItem
               key={rulerRule.grafana_alert.uid}
               name={rulerRule.grafana_alert.title}
-              state={promRule?.state}
+              state={isAlertingPromRule ? promRule?.state : undefined}
               labels={rulerRule.labels}
               health={promRule?.health}
               error={promRule?.lastError}
@@ -72,6 +70,7 @@ export const EvaluationGroupWithRules = ({ group, rulesSource }: EvaluationGroup
               lastEvaluation={promRule?.lastEvaluation}
               evaluationDuration={promRule?.evaluationTime}
               evaluationInterval={group.interval}
+              instancesCount={isAlertingPromRule ? size(promRule.alerts) : undefined}
               href={createViewLink(rulesSource, rule)}
               summary={rule.annotations?.['summary']}
               isProvisioned={Boolean(rulerRule.grafana_alert.provenance)}

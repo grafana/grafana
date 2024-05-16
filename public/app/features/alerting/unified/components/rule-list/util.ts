@@ -58,8 +58,8 @@ export function calculateNextEvaluationEstimate(
   };
 }
 
-export function getRelativeEvaluationInterval(evaluationInterval?: string, lastEvaluation?: string) {
-  if (!lastEvaluation || !evaluationInterval) {
+export function getRelativeEvaluationInterval(lastEvaluation?: string) {
+  if (!lastEvaluation) {
     return null;
   }
 
