@@ -46,7 +46,6 @@ const LogsQueryEditor = ({
   timeRange,
   data,
 }: LogsQueryEditorProps) => {
-  console.log('here');
   const migrationError = useMigrations(datasource, query, onChange);
   const [showBasicLogsToggle, setShowBasicLogsToggle] = useState<boolean>(
     shouldShowBasicLogsToggle(query.azureLogAnalytics?.resources || [], basicLogsEnabled)
@@ -134,12 +133,12 @@ const LogsQueryEditor = ({
           setDataIngestedWarning(null);
         }
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
     };
 
-    getBasicLogsUsage(query).catch((err) => console.log(err));
-  }, [datasource.azureLogAnalyticsDatasource, query, showBasicLogsToggle]);
+    getBasicLogsUsage(query).catch((err) => console.error(err));
+  }, [datasource.azureLogAnalyticsDatasource, query, showBasicLogsToggle, from, to]);
   let portalLinkButton = null;
 
   if (data?.series) {
