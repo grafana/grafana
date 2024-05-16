@@ -308,11 +308,6 @@ func enrichObject(accessorO, accessorC metav1.Object) {
 	if ac == nil {
 		ac = map[string]string{}
 	}
-	annotations := accessorO.GetAnnotations()
-	if annotations == nil {
-		ac = annotations
-		return
-	}
 	for k, v := range accessorO.GetAnnotations() {
 		ac[k] = v
 	}
