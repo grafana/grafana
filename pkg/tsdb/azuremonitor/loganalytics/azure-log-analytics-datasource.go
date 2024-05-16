@@ -62,6 +62,13 @@ func (e *AzureLogAnalyticsDatasource) GetBasicLogsUsage(ctx context.Context, url
 		return rw, fmt.Errorf("failed to convert to time: %w", toErr)
 	}
 
+	// basic logs queries only show data for last 8 days or less
+	// data volume query should also only calculate volume for last 8 days if time range exceeds that.
+	diff := to.Sub(from).Hours()
+	if diff > float64(MaxHoursBasicLogs) {
+		from = to.Add(-time.Duration(MaxHoursBasicLogs) * time.Hour)
+	}
+
 	dataVolumeQueryRaw := GetDataVolumeRawQuery(table)
 	dataVolumeQuery := &AzureLogAnalyticsQuery{
 		Query:         dataVolumeQueryRaw,

@@ -4,7 +4,6 @@ import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 import ResponseParser from '../azure_monitor/response_parser';
-import { checkTime } from '../components/LogsQueryEditor/utils';
 import { getAuthType, getAzureCloud, getAzurePortalUrl } from '../credentials';
 import {
   AzureAPIResponse,
@@ -257,15 +256,13 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
 
   async getBasicLogsQueryUsage(query: AzureMonitorQuery, table: string): Promise<number> {
     const templateSrv = getTemplateSrv();
-    const from = templateSrv.replace('$__from');
-    const to = templateSrv.replace('$__to');
 
     const data = {
       table: table,
       resource: templateSrv.replace(query.azureLogAnalytics?.resources?.[0]),
       queryType: query.queryType,
-      from: from,
-      to: checkTime(parseInt(from, 10), parseInt(to, 10)),
+      from: templateSrv.replace('$__from'),
+      to: templateSrv.replace('$__to'),
     };
     return await this.postResource(`${this.resourcePath}/usage/basiclogs`, data);
   }

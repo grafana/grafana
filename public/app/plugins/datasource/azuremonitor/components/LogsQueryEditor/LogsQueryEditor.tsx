@@ -19,7 +19,9 @@ import QueryField from './QueryField';
 import { TimeManagement } from './TimeManagement';
 import { setBasicLogsQuery, setFormatAs, setKustoQuery } from './setQueryValue';
 import useMigrations from './useMigrations';
-import { MAX_DATA_RETENTION_DAYS, calculateTimeRange, shouldShowBasicLogsToggle } from './utils';
+import { calculateTimeRange, shouldShowBasicLogsToggle } from './utils';
+
+const MAX_DATA_RETENTION_DAYS = 8; // limit is only for basic logs
 
 interface LogsQueryEditorProps {
   query: AzureMonitorQuery;
