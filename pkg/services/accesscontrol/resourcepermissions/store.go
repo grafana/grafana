@@ -766,7 +766,7 @@ func NewActionSetService(a *acimpl.AccessControl) ActionSetService {
 	return actionSets
 }
 
-func (s *InMemoryActionSets) Resolve(action string) []string {
+func (s *InMemoryActionSets) ResolveAction(action string) []string {
 	actionSets := s.actionToActionSets[action]
 	sets := make([]string, 0, len(actionSets))
 
@@ -786,6 +786,26 @@ func (s *InMemoryActionSets) Resolve(action string) []string {
 	}
 
 	return sets
+}
+
+func (s *InMemoryActionSets) ResolveActionSet(actionSet string) []string {
+	return s.actionSetToActions[actionSet]
+}
+
+func (s *InMemoryActionSets) ExpandActions(permissions []accesscontrol.Permission) []accesscontrol.Permission {
+	var expandedPermissions []accesscontrol.Permission
+	for _, permission := range permissions {
+		resolvedActions := s.ResolveActionSet(permission.Action)
+		if len(resolvedActions) == 0 {
+			expandedPermissions = append(expandedPermissions, permission)
+			continue
+		}
+		for _, action := range resolvedActions {
+			permission.Action = action
+			expandedPermissions = append(expandedPermissions, permission)
+		}
+	}
+	return expandedPermissions
 }
 
 // GetActionSet returns the action set for the given action.
