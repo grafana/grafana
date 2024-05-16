@@ -223,7 +223,7 @@ export const RowsList = (props: RowsListProps) => {
   );
 
   let rowBg: Function | undefined = undefined;
-  let textWrapField: Field | undefined = longestField;
+  let textWrapField: Field | undefined = undefined;
   for (const field of data.fields) {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const fieldOptions = field.config.custom as TableFieldOptions;
@@ -242,14 +242,15 @@ export const RowsList = (props: RowsListProps) => {
     }
 
     if (
-      textWrapField === undefined &&
       cellOptionsExist &&
       (fieldOptions.cellOptions.type === TableCellDisplayMode.Auto ||
         fieldOptions.cellOptions.type === TableCellDisplayMode.ColorBackground) &&
       fieldOptions.cellOptions.wrapText
     ) {
-      console.log('went here', field);
       textWrapField = field;
+    }
+    else if (longestField !== undefined) {
+      textWrapField = longestField;
     }
   }
 

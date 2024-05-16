@@ -294,8 +294,7 @@ export const Table = memo((props: Props) => {
   let longestField = undefined;
   if (
     fieldConfig !== undefined &&
-    fieldConfig.defaults.custom.cellOptions.wrapText &&
-    fieldConfig.overrides.length === 0
+    fieldConfig.defaults.custom.cellOptions.wrapText
   ) {
     const stringFields = data.fields.filter((field: Field) => field.type === FieldType.string);
 
@@ -335,7 +334,6 @@ export const Table = memo((props: Props) => {
           }
         }
       }
-
     }
   }
 
