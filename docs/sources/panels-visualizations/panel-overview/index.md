@@ -37,17 +37,16 @@ To get started adding panels, ensure that you have configured a data source:
 
 ## Panel feature overview
 
-The panel has the following features:
+The following image and descriptions highlight the panel features:
 
-<!-- The following image and descriptions highlight all panel features. -->
+![Annotated panel with time series visualization](/media/docs/grafana/panels-visualizations/screenshot-panel-overview-ann-v11.0.png)
 
-<!-- {{< figure src="tbd" width="700px" alt="An annotated image of a panel" >}} -->
-
-- **Panel title** - You can create your own panel titles or have Grafana create them for you using [generative AI features][ai].
-- **Links** - Add [panel links][] to other dashboards, panels, or external sites.
-- **Panel menu** - In the [panel menu](#panel-menu), access actions such as **View**, **Edit**, **Inspect**, and **Remove**.
-- **Tooltips** - View [tooltips][] to get more information about data points.
-- **Legend** - Change series colors, y-axis and series visibility directly from the [legend][].
+1. **Panel title** - You can create your own panel titles or have Grafana create them for you using [generative AI features][ai].
+1. **Panel description** - You can create your own panel descriptions or have Grafana create them for you using [generative AI features][ai]
+1. **Links** - Add [panel links][] to other dashboards, panels, or external sites.
+1. **Panel menu** - In the [panel menu](#panel-menu), access actions such as **View**, **Edit**, **Inspect**, and **Remove**.
+1. **Legend** - Change series colors, y-axis, and series visibility directly from the [legend][].
+1. **Tooltips** - View [tooltips][] to get more information about data points.
 
 ## Panel menu
 

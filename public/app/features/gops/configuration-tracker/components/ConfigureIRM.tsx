@@ -41,14 +41,6 @@ export function ConfigureIRM() {
   const styles = useStyles2(getStyles);
   const history = useHistory();
 
-  // track only once when the component is mounted
-  useEffect(() => {
-    trackIrmConfigurationTrackerEvent(IRMInteractionNames.ViewIRMMainPage, {
-      essentialStepsDone: 0,
-      essentialStepsToDo: 0,
-    });
-  }, []);
-
   // get all the configuration data
   const dataSourceConfigurationData = useGetDataSourceConfiguration();
   const essentialsConfigurationData = useGetEssentialsConfiguration();
@@ -57,9 +49,23 @@ export function ConfigureIRM() {
     essentialsConfigurationData,
   });
 
+  // track only once when the component is mounted
+  useEffect(() => {
+    trackIrmConfigurationTrackerEvent(IRMInteractionNames.ViewIRMMainPage, {
+      essentialStepsDone: 0,
+      essentialStepsToDo: 0,
+      dataSourceCompatibleWithAlerting: dataSourceConfigurationData.dataSourceCompatibleWithAlerting,
+    });
+  }, [dataSourceConfigurationData.dataSourceCompatibleWithAlerting]);
+
   const [essentialsOpen, setEssentialsOpen] = useState(false);
 
   const handleActionClick = (configID: number, isDone?: boolean) => {
+    trackIrmConfigurationTrackerEvent(IRMInteractionNames.ClickDataSources, {
+      essentialStepsDone: essentialsConfigurationData.stepsDone,
+      essentialStepsToDo: essentialsConfigurationData.totalStepsToDo,
+      dataSourceCompatibleWithAlerting: dataSourceConfigurationData.dataSourceCompatibleWithAlerting,
+    });
     switch (configID) {
       case ConfigurationStepsEnum.CONNECT_DATASOURCE:
         if (isDone) {
@@ -73,6 +79,7 @@ export function ConfigureIRM() {
         trackIrmConfigurationTrackerEvent(IRMInteractionNames.OpenEssentials, {
           essentialStepsDone: essentialsConfigurationData.stepsDone,
           essentialStepsToDo: essentialsConfigurationData.totalStepsToDo,
+          dataSourceCompatibleWithAlerting: dataSourceConfigurationData.dataSourceCompatibleWithAlerting,
         });
         break;
       default:
@@ -85,6 +92,7 @@ export function ConfigureIRM() {
     trackIrmConfigurationTrackerEvent(IRMInteractionNames.CloseEssentials, {
       essentialStepsDone: essentialsConfigurationData.stepsDone,
       essentialStepsToDo: essentialsConfigurationData.totalStepsToDo,
+      dataSourceCompatibleWithAlerting: dataSourceConfigurationData.dataSourceCompatibleWithAlerting,
     });
   }
 
