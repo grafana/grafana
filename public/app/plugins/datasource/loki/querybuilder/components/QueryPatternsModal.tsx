@@ -2,9 +2,10 @@ import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
 import React, { useMemo, useState } from 'react';
 
-import { CoreApp, DataQuery, GrafanaTheme2, getNextRefId } from '@grafana/data';
+import { CoreApp, GrafanaTheme2, getNextRefId } from '@grafana/data';
 import { getOperationDefinitions } from '@grafana/prometheus/src/querybuilder/operations';
 import { reportInteraction } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { Button, Collapse, Modal, useStyles2 } from '@grafana/ui';
 
 import { LokiQuery } from '../../types';
