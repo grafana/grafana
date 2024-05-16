@@ -688,8 +688,7 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, cmd SetResourc
 		return nil
 	}
 
-	fmt.Printf("cmd %v\n", cmd)
-	// If we are only working with action sets, we don't need to insert any actions
+	// skip adding the actions to the permissions table, if we are only working with action sets
 	if !cmd.OnlyActionSets {
 		for action := range missingActions {
 			p := managedPermission(action, resource, resourceID, resourceAttribute)

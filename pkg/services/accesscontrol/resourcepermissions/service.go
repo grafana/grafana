@@ -167,6 +167,7 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user acces
 		Resource:          s.options.Resource,
 		ResourceID:        resourceID,
 		ResourceAttribute: s.options.ResourceAttribute,
+		OnlyActionSets:    s.options.OnlyActionSets,
 	}, s.options.OnSetUser)
 }
 
@@ -190,6 +191,7 @@ func (s *Service) SetTeamPermission(ctx context.Context, orgID, teamID int64, re
 		Resource:          s.options.Resource,
 		ResourceID:        resourceID,
 		ResourceAttribute: s.options.ResourceAttribute,
+		OnlyActionSets:    s.options.OnlyActionSets,
 	}, s.options.OnSetTeam)
 }
 
