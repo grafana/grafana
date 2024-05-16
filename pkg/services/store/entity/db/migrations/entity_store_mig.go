@@ -196,9 +196,7 @@ func initEntityTables(mg *migrator.Migrator) string {
 			{Name: "resource_version", Type: migrator.DB_BigInt, Nullable: false},
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"guid"}, Type: migrator.IndexType},
-			{Cols: []string{"namespace", "group", "resource", "name"}, Type: migrator.IndexType},
-			{Cols: []string{"resolved_to"}, Type: migrator.IndexType},
+			{Cols: []string{"group", "group_version", "resource"}, Type: migrator.UniqueIndex},
 		},
 	})
 

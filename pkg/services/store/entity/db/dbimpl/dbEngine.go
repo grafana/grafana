@@ -26,8 +26,6 @@ func getEngineMySQL(cfgSection *setting.DynamicSection, tracer tracing.Tracer) (
 
 	connectionString := connectionStringMySQL(dbUser, dbPass, protocol, dbHost, dbName)
 
-	// TODO: replace xorm.NewEngine with sql.Open once we're able to get rid of
-	// GetSession and GetEngine methods.
 	driverName := sqlstore.WrapDatabaseDriverWithHooks("mysql", tracer)
 	engine, err := xorm.NewEngine(driverName, connectionString)
 	if err != nil {
@@ -57,8 +55,6 @@ func getEnginePostgres(cfgSection *setting.DynamicSection, tracer tracing.Tracer
 
 	connectionString := connectionStringPostgres(dbUser, dbPass, addr.Host, addr.Port, dbName, dbSslMode)
 
-	// TODO: replace xorm.NewEngine with sql.Open once we're able to get rid of
-	// GetSession and GetEngine methods.
 	driverName := sqlstore.WrapDatabaseDriverWithHooks("postgres", tracer)
 	engine, err := xorm.NewEngine(driverName, connectionString)
 	if err != nil {
@@ -66,9 +62,6 @@ func getEnginePostgres(cfgSection *setting.DynamicSection, tracer tracing.Tracer
 	}
 	return engine, nil
 }
-
-// FIXME: connection strings are not properly escaping arguments like `user` or
-// `dbName`.
 
 func connectionStringMySQL(user, password, protocol, host, dbName string) string {
 	return fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true", user, password, protocol, host, dbName)

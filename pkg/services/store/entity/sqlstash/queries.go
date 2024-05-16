@@ -2,7 +2,6 @@ package sqlstash
 
 import (
 	"embed"
-	_ "embed"
 	"fmt"
 	"text/template"
 
@@ -161,34 +160,19 @@ type withSerialized struct {
 	Errors []byte
 }
 
-// TODO: remove once we start using the variables. Prevents `unused` linter.
+// TODO: remove once we start using these symbols. Prevents `unused` linter
+// until the next PR.
 var (
-	_ = sqlEntityDelete
-	_ = sqlEntityInsert
-	_ = sqlEntityListFolderElements
-	_ = sqlEntityUpdate
-	_ = sqlEntityRead
-	_ = sqlEntityFolderInsert
-	_ = sqlEntityRefFind
-	_ = sqlEntityLabelsDelete
-	_ = sqlEntityLabelsInsert
-	_ = sqlKindVersionInsert
-	_ = sqlKindVersionInsert
-	_ = sqlKindVersionLock
-
-	_ = sqlEntityFolderInsertRequest{}
-	_ = sqlEntityFolderInsertRequestItem{}
-	_ = sqlEntityRefFindRequest{}
-	_ = sqlEntityLabelsInsertRequest{}
-	_ = sqlEntityLabelsInsertRequest{}
-	_ = sqlEntityLabelsDeleteRequest{}
-	_ = sqlKindVersionLockRequest{}
-	_ = sqlKindVersionIncRequest{}
-	_ = sqlKindVersionInsertRequest{}
-	_ = sqlEntityListFolderElementsRequest{}
-	_ = sqlEntityReadRequest{}
-	_ = sqlEntityDeleteRequest{}
-	_ = sqlEntityInsertRequest{}
-	_ = sqlEntityUpdateRequest{}
-	_ = withSerialized{}
+	_, _, _ = sqlEntityDelete, sqlEntityInsert, sqlEntityListFolderElements
+	_, _, _ = sqlEntityUpdate, sqlEntityRead, sqlEntityFolderInsert
+	_, _, _ = sqlEntityRefFind, sqlEntityLabelsDelete, sqlEntityLabelsInsert
+	_, _, _ = sqlKindVersionInsert, sqlKindVersionInsert, sqlKindVersionLock
+	_, _    = sqlEntityFolderInsertRequest{}, sqlEntityFolderInsertRequestItem{}
+	_, _    = sqlEntityRefFindRequest{}, sqlEntityLabelsInsertRequest{}
+	_, _    = sqlEntityLabelsInsertRequest{}, sqlEntityLabelsDeleteRequest{}
+	_, _    = sqlKindVersionLockRequest{}, sqlKindVersionIncRequest{}
+	_, _    = sqlKindVersionInsertRequest{}, sqlEntityListFolderElementsRequest{}
+	_, _    = sqlEntityReadRequest{}, sqlEntityDeleteRequest{}
+	_, _    = sqlEntityInsertRequest{}, sqlEntityUpdateRequest{}
+	_       = withSerialized{}
 )
