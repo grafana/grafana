@@ -27,11 +27,10 @@ export const QueryEditor = (props: Props) => {
   const query = useMemo(() => {
     // We should only set the migrated query on the first load of the editor. On subsequent re-renders there's no need to migrate again.
     if (!migratedQuery) {
-      const migratedQuery = datasource.migrateQuery(oldQ);
-      setMigratedQuery(migratedQuery);
+      const migrated = datasource.migrateQuery(oldQ);
       // Update the query once the migrations have been completed.
-      onChange({ ...migratedQuery });
-      return migratedQuery;
+      setMigratedQuery(migrated);
+      return migrated;
     }
 
     // If the migrated query is the same as the updated query we can return the migrated query
@@ -41,7 +40,14 @@ export const QueryEditor = (props: Props) => {
     }
 
     return oldQ;
-  }, [oldQ, datasource, onChange, migratedQuery]);
+  }, [oldQ, datasource, onChange]);
+
+  useEffect(() => {
+    if (migratedQuery) {
+      onChange({ ...migratedQuery });
+    }
+  }, [migratedQuery]);
+
   const [currentQuery, setCurrentQuery] = useState<CloudMonitoringQuery>(query);
   const [queryHasBeenEdited, setQueryHasBeenEdited] = useState<boolean>(false);
 
