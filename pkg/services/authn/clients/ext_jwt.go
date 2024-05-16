@@ -149,6 +149,7 @@ func (s *ExtendedJWT) authenticateAsService(claims *authlib.Claims[authlib.Acces
 
 	return &authn.Identity{
 		ID:              id,
+		UID:             id,
 		OrgID:           s.getDefaultOrgID(),
 		AuthenticatedBy: login.ExtendedJWTModule,
 		AuthID:          claims.Subject,

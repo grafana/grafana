@@ -243,7 +243,7 @@ type AlertRule struct {
 	PanelID         *int64  `xorm:"panel_id"`
 	RuleGroup       string
 	RuleGroupIndex  int     `xorm:"rule_group_idx"`
-	Record          *Record `xorm:"text null 'record'"`
+	Record          *Record `xorm:"json"`
 	NoDataState     NoDataState
 	ExecErrState    ExecutionErrorState
 	// ideally this field should have been apimodels.ApiDuration
@@ -518,10 +518,6 @@ func (alertRule *AlertRule) ValidateAlertRule(cfg setting.UnifiedAlertingSetting
 		}
 	}
 
-	if alertRule.Record != nil {
-		return fmt.Errorf("%w: storing recording rules is not yet allowed", ErrAlertRuleFailedValidation)
-	}
-
 	if len(alertRule.NotificationSettings) > 0 {
 		if len(alertRule.NotificationSettings) != 1 {
 			return fmt.Errorf("%w: only one notification settings entry is allowed", ErrAlertRuleFailedValidation)
@@ -552,6 +548,10 @@ func (alertRule *AlertRule) GetFolderKey() FolderKey {
 	}
 }
 
+func (alertRule *AlertRule) IsRecordingRule() bool {
+	return alertRule.Record != nil
+}
+
 // AlertRuleVersion is the model for alert rule versions in unified alerting.
 type AlertRuleVersion struct {
 	ID               int64  `xorm:"pk autoincr 'id'"`
@@ -569,7 +569,7 @@ type AlertRuleVersion struct {
 	Condition       string
 	Data            []AlertQuery
 	IntervalSeconds int64
-	Record          *Record `xorm:"text null 'record'"`
+	Record          *Record `xorm:"json"`
 	NoDataState     NoDataState
 	ExecErrState    ExecutionErrorState
 	// ideally this field should have been apimodels.ApiDuration

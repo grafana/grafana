@@ -241,12 +241,9 @@ export const RowsList = (props: RowsListProps) => {
       };
     }
 
-
-    console.log(textWrapField);
     if (
       textWrapField === undefined &&
       cellOptionsExist &&
-      field.type === FieldType.string &&
       (fieldOptions.cellOptions.type === TableCellDisplayMode.Auto ||
         fieldOptions.cellOptions.type === TableCellDisplayMode.ColorBackground) &&
       fieldOptions.cellOptions.wrapText
