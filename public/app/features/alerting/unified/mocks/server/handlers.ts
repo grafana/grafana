@@ -15,6 +15,13 @@ import {
   silencesListHandler,
 } from 'app/features/alerting/unified/mocks/silences';
 
+import {
+  getAlertRuleHandler,
+  rulerRuleGroupHandler,
+  rulerRuleNamespaceHandler,
+  rulerRulesHandler,
+} from '../alertRuleApi';
+
 /**
  * All mock handlers that are required across Alerting tests
  */
@@ -31,6 +38,11 @@ const allHandlers = [
   silenceCreateHandler(),
 
   datasourceBuildInfoHandler(),
+
+  rulerRulesHandler(),
+  rulerRuleNamespaceHandler(),
+  rulerRuleGroupHandler(),
+  getAlertRuleHandler(),
 ];
 
 export default allHandlers;

@@ -20,10 +20,12 @@ import { GrafanaAlertStateDecision, PromApplication } from 'app/types/unified-al
 import { searchFolders } from '../../../../app/features/manage-dashboards/state/actions';
 
 import { discoverFeatures } from './api/buildInfo';
-import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
+import * as ruler from './api/ruler';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
 import { MockDataSourceSrv, grantUserPermissions, mockDataSource } from './mocks';
+import { grafanaRulerGroup, grafanaRulerRule } from './mocks/alertRuleApi';
 import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
+import { setupDataSources } from './testSetup/datasources';
 import * as config from './utils/config';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { getDefaultQueries } from './utils/rule-form';
@@ -35,8 +37,8 @@ jest.mock('./components/rule-editor/ExpressionEditor', () => ({
   ),
 }));
 
-jest.mock('./api/buildInfo');
-jest.mock('./api/ruler');
+// jest.mock('./api/buildInfo');
+// jest.mock('./api/ruler');
 jest.mock('../../../../app/features/manage-dashboards/state/actions');
 
 jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
@@ -59,11 +61,11 @@ const mocks = {
   searchFolders: jest.mocked(searchFolders),
   api: {
     discoverFeatures: jest.mocked(discoverFeatures),
-    fetchRulerRulesGroup: jest.mocked(fetchRulerRulesGroup),
-    setRulerRuleGroup: jest.mocked(setRulerRuleGroup),
-    fetchRulerRulesNamespace: jest.mocked(fetchRulerRulesNamespace),
-    fetchRulerRules: jest.mocked(fetchRulerRules),
-    fetchRulerRulesIfNotFetchedYet: jest.mocked(fetchRulerRulesIfNotFetchedYet),
+    // fetchRulerRulesGroup: jest.mocked(fetchRulerRulesGroup),
+    setRulerRuleGroup: jest.spyOn(ruler, 'setRulerRuleGroup'),
+    // fetchRulerRulesNamespace: jest.mocked(fetchRulerRulesNamespace),
+    // fetchRulerRules: jest.mocked(fetchRulerRules),
+    // fetchRulerRulesIfNotFetchedYet: jest.mocked(fetchRulerRulesIfNotFetchedYet),
   },
 };
 
@@ -103,66 +105,13 @@ describe('RuleEditor grafana managed rules', () => {
       ),
     };
 
-    setDataSourceSrv(new MockDataSourceSrv(dataSources));
+    setupDataSources(dataSources.default);
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.api.setRulerRuleGroup.mockResolvedValue();
-    mocks.api.fetchRulerRulesNamespace.mockResolvedValue([]);
-    mocks.api.fetchRulerRulesGroup.mockResolvedValue({
-      name: 'group2',
-      rules: [],
-    });
-    mocks.api.fetchRulerRules.mockResolvedValue({
-      'Folder A': [
-        {
-          interval: '1m',
-          name: 'group1',
-          rules: [
-            {
-              annotations: { description: 'some description', summary: 'some summary' },
-              labels: { severity: 'warn', team: 'the a-team' },
-              for: '1m',
-              grafana_alert: {
-                uid: '23',
-                namespace_uid: 'abcd',
-                rule_group: 'my-group',
-                condition: 'B',
-                data: getDefaultQueries(),
-                exec_err_state: GrafanaAlertStateDecision.Error,
-                no_data_state: GrafanaAlertStateDecision.NoData,
-                title: 'my great new rule',
-              },
-            },
-          ],
-        },
-      ],
-      namespace2: [
-        {
-          interval: '1m',
-          name: 'group1',
-          rules: [
-            {
-              annotations: { description: 'some description', summary: 'some summary' },
-              labels: { severity: 'warn', team: 'the a-team' },
-              for: '1m',
-              grafana_alert: {
-                uid: '23',
-                namespace_uid: 'b',
-                rule_group: 'my-group',
-                condition: 'B',
-                data: getDefaultQueries(),
-                exec_err_state: GrafanaAlertStateDecision.Error,
-                no_data_state: GrafanaAlertStateDecision.NoData,
-                title: 'my great new rule',
-              },
-            },
-          ],
-        },
-      ],
-    });
     mocks.searchFolders.mockResolvedValue([
       {
         title: 'Folder A',
-        uid: 'abcd',
+        uid: grafanaRulerRule.grafana_alert.namespace_uid,
         id: 1,
         type: DashboardSearchItemType.DashDB,
       },
@@ -180,22 +129,17 @@ describe('RuleEditor grafana managed rules', () => {
       },
     ] as DashboardSearchHit[]);
 
-    mocks.api.discoverFeatures.mockResolvedValue({
-      application: PromApplication.Prometheus,
-      features: {
-        rulerApiEnabled: false,
-      },
-    });
     renderRuleEditor();
     await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
 
     await userEvent.type(await ui.inputs.name.find(), 'my great new rule');
 
     const folderInput = await ui.inputs.folder.find();
+    screen.debug(folderInput);
     await clickSelectOption(folderInput, 'Folder A');
     const groupInput = await ui.inputs.group.find();
     await userEvent.click(byRole('combobox').get(groupInput));
-    await clickSelectOption(groupInput, 'group1');
+    await clickSelectOption(groupInput, grafanaRulerGroup.name);
     await userEvent.type(ui.inputs.annotationValue(1).get(), 'some description');
 
     // save and check what was sent to backend
@@ -205,11 +149,12 @@ describe('RuleEditor grafana managed rules', () => {
     // 9seg
     expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledWith(
       { dataSourceName: GRAFANA_RULES_SOURCE_NAME, apiVersion: 'legacy' },
-      'abcd',
+      grafanaRulerRule.grafana_alert.namespace_uid,
       {
         interval: '1m',
-        name: 'group1',
+        name: grafanaRulerGroup.name,
         rules: [
+          grafanaRulerRule,
           {
             annotations: { description: 'some description' },
             labels: {},
