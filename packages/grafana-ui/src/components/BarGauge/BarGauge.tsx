@@ -657,6 +657,7 @@ function getValueStyles(
     width: `${width}px`,
     display: 'flex',
     alignItems: 'center',
+    textWrap: 'nowrap',
     lineHeight: VALUE_LINE_HEIGHT,
   };
 
