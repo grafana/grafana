@@ -185,19 +185,14 @@ func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.
 	}
 
 	// get the object to be updated
-	old, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
+	foundObj, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
-		log.WithValues("object", old).Error(err, "could not get object to update")
+		log.WithValues("object", foundObj).Error(err, "could not get object to update")
 	}
 
 	// if the object is found, create a new updateWrapper with the object found
-	if old != nil {
-		objInfo = &updateWrapper{
-			upstream: objInfo,
-			updated:  old,
-		}
-
-		accessorOld, err := meta.Accessor(old)
+	if foundObj != nil {
+		accessorOld, err := meta.Accessor(foundObj)
 		if err != nil {
 			log.Error(err, "unable to get accessor for original updated object")
 		}
