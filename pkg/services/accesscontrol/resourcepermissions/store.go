@@ -756,7 +756,7 @@ type InMemoryActionSets struct {
 }
 
 // NewActionSetService returns a new instance of InMemoryActionSetService.
-func NewActionSetService(a *acimpl.AccessControl) ActionSetService {
+func NewActionSetService(a *acimpl.AccessControl) *InMemoryActionSets {
 	actionSets := &InMemoryActionSets{
 		log:                log.New("resourcepermissions.actionsets"),
 		actionSetToActions: make(map[string][]string),
