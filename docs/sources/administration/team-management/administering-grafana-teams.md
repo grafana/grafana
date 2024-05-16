@@ -9,12 +9,12 @@ keywords:
   - authorization
   - microservices
   - architecture
-menuTitle: Administering Grafana Teams
-title: Administering Grafana Teams
+menuTitle: Administer Grafana Teams
+title: Administer Grafana Teams
 weight: 300
 ---
 
-# Administering Grafana Teams
+# Administer Grafana Teams
 
 This topic describes how to administer Grafana Teams.
 
