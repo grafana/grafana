@@ -185,7 +185,7 @@ Annotations add metadata to provide more information on the alert in your alert 
 
 1. Click **Save rule**.
 
-## Configure no data and error handling
+### Configure no data and error handling
 
 Configure alerting behavior when your alert rule evaluation returns no data or an error.
 
@@ -207,13 +207,13 @@ If your evaluation returns an error, you can set the state on your alert rule to
 | Alerting | Sets alert rule state to `Alerting`. The alert rule waits until the time set in the **For** field has finished before firing.                   |
 | Ok       | Sets alert rule state to `Normal`.                                                                                                              |
 
-## Resolve stale alert instances
+### Resolve stale alert instances
 
 An alert instance is considered stale if its dimension or series has disappeared from the query results entirely for two evaluation intervals.
 
 Stale alert instances that are in the **Alerting**/**NoData**/**Error** states are automatically marked as **Resolved** and the grafana_state_reason annotation is added to the alert instance with the reason **MissingSeries**.
 
-## Create alerts from panels
+### Create alerts from panels
 
 Create alerts from any panel type. This means you can reuse the queries in the panel and create alerts based on them.
 
