@@ -231,11 +231,27 @@ func BuildPermissionsMap(permissions []Permission) map[string]bool {
 
 // GroupScopesByAction will group scopes on action
 func GroupScopesByAction(permissions []Permission) map[string][]string {
-	m := make(map[string][]string)
+	// Use a map to deduplicate scopes
+	m := make(map[string]map[string]struct{})
 	for i := range permissions {
-		m[permissions[i].Action] = append(m[permissions[i].Action], permissions[i].Scope)
+		if _, ok := m[permissions[i].Action]; !ok {
+			m[permissions[i].Action] = make(map[string]struct{})
+		}
+		m[permissions[i].Action][permissions[i].Scope] = struct{}{}
 	}
-	return m
+
+	res := make(map[string][]string, len(m))
+	for action, scopes := range m {
+		scopeList := make([]string, len(scopes))
+		i := 0
+		for scope := range scopes {
+			scopeList[i] = scope
+			i++
+		}
+		res[action] = scopeList
+	}
+
+	return res
 }
 
 // Reduce will reduce a list of permissions to its minimal form, grouping scopes by action
