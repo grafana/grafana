@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useAsyncFn, useInterval, useMeasure, useToggle } from 'react-use';
+import { useAsyncFn, useInterval, useMeasure } from 'react-use';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
 import { Button, LinkButton, LoadingBar, useStyles2, withErrorBoundary } from '@grafana/ui';
@@ -11,9 +11,8 @@ import { PromApplication } from 'app/types/unified-alerting-dto';
 import { CombinedRuleGroup, CombinedRuleNamespace, RulesSource } from '../../../types/unified-alerting';
 
 import { LogMessages, logInfo, trackRuleListNavigation } from './Analytics';
+import { EvaluationGroupWithRules } from './EvaluationGroupWithRules';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
-import { AlertRuleListItem, RecordingRuleListItem } from './components/rule-list/AlertRuleListItem';
-import EvaluationGroup from './components/rule-list/EvaluationGroup';
 import Namespace from './components/rule-list/Namespace';
 import { NoRulesSplash } from './components/rules/NoRulesCTA';
 import { INSTANCES_DISPLAY_LIMIT } from './components/rules/RuleDetails';
@@ -27,9 +26,6 @@ import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAllPromAndRulerRulesAction } from './state/actions';
 import { RULE_LIST_POLL_INTERVAL_MS } from './utils/constants';
 import { getAllRulesSourceNames, getRulesSourceUniqueKey, isGrafanaRulesSource } from './utils/datasource';
-import { createViewLink } from './utils/misc';
-import { hashRulerRule } from './utils/rule-id';
-import { isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from './utils/rules';
 
 // make sure we ask for 1 more so we show the "show x more" button
 const LIMIT_ALERTS = INSTANCES_DISPLAY_LIMIT + 1;
@@ -162,80 +158,10 @@ const RuleList = withErrorBoundary(
   { style: 'page' }
 );
 
-interface EvaluationGroupWithRulesProps {
+export interface EvaluationGroupWithRulesProps {
   group: CombinedRuleGroup;
   rulesSource: RulesSource;
 }
-
-const EvaluationGroupWithRules = ({ group, rulesSource }: EvaluationGroupWithRulesProps) => {
-  const [open, toggleOpen] = useToggle(false);
-
-  return (
-    <EvaluationGroup name={group.name} interval={group.interval} isOpen={open} onToggle={toggleOpen}>
-      {group.rules.map((rule) => {
-        const { rulerRule, promRule, annotations } = rule;
-
-        // keep in mind that we may not have a promRule for the ruler rule – this happens when the target
-        // rule source is eventually consistent - it may know about the rule definition but not its state
-        if (isAlertingRulerRule(rulerRule)) {
-          return (
-            <AlertRuleListItem
-              key={hashRulerRule(rulerRule)}
-              state={promRule?.state} // @TODO typescript ugh
-              health={promRule?.health}
-              error={promRule?.lastError}
-              name={rulerRule.alert}
-              labels={rulerRule.labels}
-              lastEvaluation={promRule?.lastEvaluation}
-              evaluationDuration={promRule?.evaluationTime}
-              evaluationInterval={group.interval}
-              href={createViewLink(rulesSource, rule)}
-              summary={annotations?.['summary']}
-            />
-          );
-        }
-
-        if (isRecordingRulerRule(rulerRule)) {
-          return (
-            <RecordingRuleListItem
-              key={hashRulerRule(rulerRule)}
-              name={rulerRule.record}
-              health={promRule?.health}
-              error={promRule?.lastError}
-              lastEvaluation={promRule?.lastEvaluation}
-              evaluationDuration={promRule?.evaluationTime}
-              evaluationInterval={group.interval}
-              labels={rulerRule.labels}
-              href={createViewLink(rulesSource, rule)}
-            />
-          );
-        }
-
-        if (isGrafanaRulerRule(rulerRule)) {
-          return (
-            <AlertRuleListItem
-              key={rulerRule.grafana_alert.uid}
-              name={rulerRule.grafana_alert.title}
-              state={promRule?.state}
-              labels={rulerRule.labels}
-              health={promRule?.health}
-              error={promRule?.lastError}
-              isPaused={rulerRule.grafana_alert.is_paused}
-              lastEvaluation={promRule?.lastEvaluation}
-              evaluationDuration={promRule?.evaluationTime}
-              evaluationInterval={group.interval}
-              href={createViewLink(rulesSource, rule)}
-              summary={rule.annotations?.['summary']}
-              isProvisioned={Boolean(rulerRule.grafana_alert.provenance)}
-            />
-          );
-        }
-
-        return null;
-      })}
-    </EvaluationGroup>
-  );
-};
 
 const LoadingIndicator = ({ visible = false }) => {
   const [measureRef, { width }] = useMeasure<HTMLDivElement>();
