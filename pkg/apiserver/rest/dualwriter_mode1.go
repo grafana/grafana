@@ -202,7 +202,7 @@ func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.
 			log.Error(err, "unable to get accessor for original updated object")
 		}
 
-		accessor, err := meta.Accessor(updated)
+		accessor, err := meta.Accessor(res)
 		if err != nil {
 			log.Error(err, "unable to get accessor for updated object")
 		}
@@ -211,6 +211,10 @@ func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.
 		accessor.SetUID(accessorOld.GetUID())
 
 		enrichObject(accessorOld, accessor)
+		objInfo = &updateWrapper{
+			upstream: objInfo,
+			updated:  res,
+		}
 	}
 
 	go func() {

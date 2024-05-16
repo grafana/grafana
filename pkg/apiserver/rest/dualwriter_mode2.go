@@ -211,6 +211,12 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 		return nil, false, err
 	}
 
+	obj, created, err := d.Legacy.Update(ctx, name, &updateWrapper{upstream: objInfo, updated: updated}, createValidation, updateValidation, forceAllowCreate, options)
+	if err != nil {
+		log.WithValues("object", obj).Error(err, "could not update in legacy storage")
+		return obj, created, err
+	}
+
 	// if the object is found, create a new updateWrapper with the object found
 	if old != nil {
 		accessorOld, err := meta.Accessor(old)
@@ -218,7 +224,7 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 			log.Error(err, "unable to get accessor for original updated object")
 		}
 
-		accessor, err := meta.Accessor(updated)
+		accessor, err := meta.Accessor(obj)
 		if err != nil {
 			log.Error(err, "unable to get accessor for updated object")
 		}
@@ -230,7 +236,7 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 
 		objInfo = &updateWrapper{
 			upstream: objInfo,
-			updated:  old,
+			updated:  obj,
 		}
 	}
 	// TODO: relies on GuaranteedUpdate creating the object if
@@ -299,6 +305,14 @@ func enrichObject(accessorO, accessorC metav1.Object) {
 	accessorC.SetLabels(accessorO.GetLabels())
 
 	ac := accessorC.GetAnnotations()
+	if ac == nil {
+		ac = map[string]string{}
+	}
+	annotations := accessorO.GetAnnotations()
+	if annotations == nil {
+		ac = annotations
+		return
+	}
 	for k, v := range accessorO.GetAnnotations() {
 		ac[k] = v
 	}
