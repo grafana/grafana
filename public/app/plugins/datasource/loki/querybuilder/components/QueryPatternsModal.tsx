@@ -3,13 +3,13 @@ import { capitalize } from 'lodash';
 import React, { useMemo, useState } from 'react';
 
 import { CoreApp, GrafanaTheme2, getNextRefId } from '@grafana/data';
-import { getOperationDefinitions } from '@grafana/prometheus/src/querybuilder/operations';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Button, Collapse, Modal, useStyles2 } from '@grafana/ui';
 
 import { LokiQuery } from '../../types';
 import { lokiQueryModeller } from '../LokiQueryModeller';
+import { operationDefinitions } from '../operations';
 import { buildVisualQueryFromString } from '../parsing';
 import {
   LokiOperationOrder,
@@ -36,9 +36,9 @@ const keepOperationOrderRanks = [
   LokiOperationOrder.NoErrors,
   LokiOperationOrder.Unwrap,
 ];
-const keepOperations = getOperationDefinitions().filter(
+const keepOperations = operationDefinitions.filter(
   (operation) => operation.orderRank && keepOperationOrderRanks.includes(operation.orderRank)
-);
+).map(operation => operation.id);
 
 export const QueryPatternsModal = (props: Props) => {
   const { isOpen, onClose, onChange, onAddQuery, query, queries, app } = props;
