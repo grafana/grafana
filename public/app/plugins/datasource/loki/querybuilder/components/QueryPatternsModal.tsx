@@ -3,13 +3,18 @@ import { capitalize } from 'lodash';
 import React, { useMemo, useState } from 'react';
 
 import { CoreApp, DataQuery, GrafanaTheme2, getNextRefId } from '@grafana/data';
+import { getOperationDefinitions } from '@grafana/prometheus/src/querybuilder/operations';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Collapse, Modal, useStyles2 } from '@grafana/ui';
 
 import { LokiQuery } from '../../types';
 import { lokiQueryModeller } from '../LokiQueryModeller';
 import { buildVisualQueryFromString } from '../parsing';
-import { LokiOperationId, LokiQueryPattern, LokiQueryPatternType } from '../types';
+import {
+  LokiOperationOrder,
+  LokiQueryPattern,
+  LokiQueryPatternType,
+} from '../types';
 
 import { QueryPattern } from './QueryPattern';
 
@@ -23,26 +28,16 @@ type Props = {
   onAddQuery?: (query: LokiQuery) => void;
 };
 
-const keepOperations: string[] = [
-  LokiOperationId.Json,
-  LokiOperationId.Logfmt,
-  LokiOperationId.Pattern,
-  LokiOperationId.Unpack,
-  LokiOperationId.LineFormat,
-  LokiOperationId.LabelFormat,
-  LokiOperationId.Drop,
-  LokiOperationId.Keep,
-  LokiOperationId.LineContains,
-  LokiOperationId.LineContainsNot,
-  LokiOperationId.LineContainsCaseInsensitive,
-  LokiOperationId.LineMatchesRegex,
-  LokiOperationId.LineMatchesRegexNot,
-  LokiOperationId.LineFilterIpMatches,
-  LokiOperationId.LabelFilter,
-  LokiOperationId.LabelFilterNoErrors,
-  LokiOperationId.LabelFilterIpMatches,
-  LokiOperationId.Unwrap,
+const keepOperationOrderRanks = [
+  LokiOperationOrder.Parsers,
+  LokiOperationOrder.PipeOperations,
+  LokiOperationOrder.LineFilters,
+  LokiOperationOrder.NoErrors,
+  LokiOperationOrder.Unwrap,
 ];
+const keepOperations = getOperationDefinitions().filter(
+  (operation) => operation.orderRank && keepOperationOrderRanks.includes(operation.orderRank)
+);
 
 export const QueryPatternsModal = (props: Props) => {
   const { isOpen, onClose, onChange, onAddQuery, query, queries, app } = props;
@@ -69,9 +64,11 @@ export const QueryPatternsModal = (props: Props) => {
     });
 
     // Filter operations in the original query except those we configured to keep
-    visualQuery.query.operations = visualQuery.query.operations.filter(op => keepOperations.includes(op.id));
+    visualQuery.query.operations = visualQuery.query.operations.filter((op) => keepOperations.includes(op.id));
     // Filter operations in the pattern that are present in the original query
-    const patternOperations = pattern.operations.filter(patternOp => visualQuery.query.operations.findIndex(op => op.id === patternOp.id) < 0);
+    const patternOperations = pattern.operations.filter(
+      (patternOp) => visualQuery.query.operations.findIndex((op) => op.id === patternOp.id) < 0
+    );
     visualQuery.query.operations = [...visualQuery.query.operations, ...patternOperations];
 
     if (hasNewQueryOption && selectAsNewQuery) {
