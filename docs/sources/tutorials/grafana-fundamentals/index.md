@@ -283,11 +283,11 @@ The most basic alert consists of two parts:
 
    Some popular channels include:
 
-   - Email
-   - [Webhooks](#create-a-contact-point-for-grafana-managed-alerts)
-   - [Telegram](https://grafana.com/blog/2023/12/28/how-to-integrate-grafana-alerting-and-telegram/)
-   - [Slack](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/manage-contact-points/integrations/configure-slack/)
-   - PagerDuty
+   - [Email][email]
+   - [Webhooks][webhook]
+   - [Telegram][telegram]
+   - [Slack][slack]
+   - [PagerDuty][pagerduty]
 
 1. An _Alert rule_ - An Alert rule defines one or more _conditions_ that Grafana regularly evaluates. When these evaluations meet the rule's criteria, the alert is triggered.
 
@@ -404,3 +404,24 @@ Check out the links below to continue your learning journey with Grafana's LGTM 
 - [Alerting Overview](/docs/grafana/latest/alerting/)
 - [Alert rules](/docs/grafana/latest/alerting/create-alerts/)
 - [Contact points](/docs/grafana/latest/alerting/fundamentals/contact-points/)
+
+
+{{% docs/reference %}}
+
+[email]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-email"
+[email]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-email"
+
+[pagerduty]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/pager-duty"
+[pagerduty]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/pager-duty"
+
+[telegram]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-telegram"
+[telegram]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-telegram"
+
+[slack]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-slack"
+[slack]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-slack"
+
+[webhook]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier"
+[webhook]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier"
+
+
+{{% /docs/reference %}}
