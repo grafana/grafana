@@ -33,7 +33,7 @@ export const ElasticsearchProvider = ({
   const onStateChange = useCallback(
     (query: ElasticsearchQuery, prevQuery: ElasticsearchQuery) => {
       onChange(query);
-      if (query.query === prevQuery.query) {
+      if (query.query === prevQuery.query || prevQuery.query === undefined) {
         onRunQuery();
       }
     },
