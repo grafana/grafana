@@ -35,3 +35,23 @@ func isEqualMatcher(m amv2.Matcher) bool {
 	// If IsEqual is nil, it is considered to be true.
 	return (m.IsEqual == nil || *m.IsEqual) && (m.IsRegex == nil || !*m.IsRegex)
 }
+
+type SilenceWithMetadata struct {
+	*Silence
+	Metadata *SilenceMetadata
+}
+
+type SilenceMetadata struct {
+	RuleUID     string
+	RuleTitle   string
+	FolderUID   string
+	Permissions map[SilencePermission]struct{}
+}
+
+type SilencePermission string
+
+const (
+	SilencePermissionRead   SilencePermission = "read"
+	SilencePermissionCreate SilencePermission = "create"
+	SilencePermissionWrite  SilencePermission = "write"
+)

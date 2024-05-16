@@ -8,12 +8,13 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
-	"github.com/grafana/alerting/definition"
 	"github.com/mohae/deepcopy"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/common/model"
 	"gopkg.in/yaml.v3"
+
+	"github.com/grafana/alerting/definition"
 )
 
 // swagger:route POST /alertmanager/grafana/config/api/v1/alerts alertmanager RoutePostGrafanaAlertingConfig
@@ -182,7 +183,7 @@ import (
 // get silences
 //
 //     Responses:
-//       200: gettableSilences
+//       200: gettableGrafanaSilences
 //       400: ValidationError
 
 // swagger:route GET /alertmanager/{DatasourceUID}/api/v2/silences alertmanager RouteGetSilences
@@ -216,7 +217,7 @@ import (
 // get silence
 //
 //     Responses:
-//       200: gettableSilence
+//       200: gettableGrafanaSilence
 //       400: ValidationError
 
 // swagger:route GET /alertmanager/{DatasourceUID}/api/v2/silence/{SilenceId} alertmanager RouteGetSilence
@@ -389,6 +390,8 @@ type GetDeleteSilenceParams struct {
 type GetSilencesParams struct {
 	// in:query
 	Filter []string `json:"filter"`
+	// in:query
+	WithMetadata bool `json:"withMetadata"`
 }
 
 // swagger:model
@@ -478,6 +481,50 @@ type GettableSilences = amv2.GettableSilences
 
 // swagger:model gettableSilence
 type GettableSilence = amv2.GettableSilence
+
+// swagger:model gettableGrafanaSilence
+type GettableGrafanaSilence struct {
+	*GettableSilence `json:",inline"`
+	Metadata         *SilenceMetadata `json:"metadata,omitempty"`
+}
+
+type SilenceMetadata struct {
+	RuleUID     string                         `json:"rule_uid,omitempty"`
+	RuleTitle   string                         `json:"rule_title,omitempty"`
+	FolderUID   string                         `json:"folder_uid,omitempty"`
+	Permissions map[SilencePermission]struct{} `json:"permissions,omitempty"`
+}
+
+type SilencePermission string
+
+const (
+	SilencePermissionRead   SilencePermission = "read"
+	SilencePermissionCreate SilencePermission = "create"
+	SilencePermissionWrite  SilencePermission = "write"
+)
+
+// Correctly embed the GettableSilence into the GettableGrafanaSilence struct. This is needed because GettableSilence
+// has a custom UnmarshalJSON method.
+func (s GettableGrafanaSilence) MarshalJSON() ([]byte, error) {
+	gettable, err := json.Marshal(s.GettableSilence)
+	if err != nil {
+		return nil, err
+	}
+
+	var data map[string]interface{}
+	if err := json.Unmarshal(gettable, &data); err != nil {
+		return nil, err
+	}
+
+	if s.Metadata != nil {
+		data["metadata"] = s.Metadata
+	}
+
+	return json.Marshal(data)
+}
+
+// swagger:model gettableGrafanaSilences
+type GettableGrafanaSilences []*GettableGrafanaSilence
 
 // swagger:model gettableAlerts
 type GettableAlerts = amv2.GettableAlerts

@@ -16,8 +16,8 @@ import (
 
 // SilenceService is the service for managing and authenticating silences access in Grafana AM.
 type SilenceService interface {
-	GetSilence(ctx context.Context, user identity.Requester, silenceID string) (*models.Silence, error)
-	ListSilences(ctx context.Context, user identity.Requester, filter []string) ([]*models.Silence, error)
+	GetSilence(ctx context.Context, user identity.Requester, silenceID string, withMetadata bool) (*models.SilenceWithMetadata, error)
+	ListSilences(ctx context.Context, user identity.Requester, filter []string, withMetadata bool) ([]*models.SilenceWithMetadata, error)
 	CreateSilence(ctx context.Context, user identity.Requester, ps models.Silence) (string, error)
 	UpdateSilence(ctx context.Context, user identity.Requester, ps models.Silence) (string, error)
 	DeleteSilence(ctx context.Context, user identity.Requester, silenceID string) error
@@ -25,20 +25,20 @@ type SilenceService interface {
 
 // RouteGetSilence is the single silence GET endpoint for Grafana AM.
 func (srv AlertmanagerSrv) RouteGetSilence(c *contextmodel.ReqContext, silenceID string) response.Response {
-	silence, err := srv.silenceSvc.GetSilence(c.Req.Context(), c.SignedInUser, silenceID)
+	silence, err := srv.silenceSvc.GetSilence(c.Req.Context(), c.SignedInUser, silenceID, c.QueryBoolWithDefault("withMetadata", false))
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get silence", err)
 	}
-	return response.JSON(http.StatusOK, SilenceToGettableSilence(*silence))
+	return response.JSON(http.StatusOK, SilenceToGettableGrafanaSilence(silence))
 }
 
 // RouteGetSilences is the silence list GET endpoint for Grafana AM.
 func (srv AlertmanagerSrv) RouteGetSilences(c *contextmodel.ReqContext) response.Response {
-	silences, err := srv.silenceSvc.ListSilences(c.Req.Context(), c.SignedInUser, c.QueryStrings("filter"))
+	silences, err := srv.silenceSvc.ListSilences(c.Req.Context(), c.SignedInUser, c.QueryStrings("filter"), c.QueryBoolWithDefault("withMetadata", false))
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to list silence", err)
 	}
-	return response.JSON(http.StatusOK, SilencesToGettableSilences(silences))
+	return response.JSON(http.StatusOK, SilencesToGettableGrafanaSilences(silences))
 }
 
 // RouteCreateSilence is the silence POST (create + update) endpoint for Grafana AM.
