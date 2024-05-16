@@ -43,9 +43,12 @@ All members of a Grafana Team have the same exact permissions. A single Team can
 
 A user can be a `Member` or an `Administrator` for a given Team. `Members` of a Team inherit permissions from the team, but they do not have team administrator privileges, and cannot edit the team itself. Team `Administrators` can add members to a team and update its settings, such as the team name, team member’s team roles, UI preferences, and home dashboard.
 
-Teams can either be `isolated` or `collaborative`. Isolated teams can only see their own resources. They cannot see other team’s dashboards, data, alerts, etc. Collaborative teams have access to other team’s resources. Refer to [Create isolated or collaborative}](/docs/grafana/latest/administration/team-management/configure-grafana-teams/#create-isolated-or-collaborative-teams) for information on setting up collaborative and isolated teams.
+Teams can either be `isolated` or `collaborative`.
+Isolated teams can only see their own resources.
+They cannot see other team’s resources like dashboards, data, or alerts.
 
-For more information about Teams and permissions refer to [Teams and permissions](/docs/grafana/latest/administration/team-management/).
+Collaborative teams have access to other team’s resources.
+Refer to [Create isolated or collaborative](/docs/grafana/<GRAFANA_VERSION>/administration/team-management/configure-grafana-teams/#create-isolated-or-collaborative-teams) for information on setting up collaborative and isolated teams.
 
 For information about how to optimize Teams, refer to [How to best organize your teams and resources in Grafana](https://grafana.com/blog/2022/03/14/how-to-best-organize-your-teams-and-resources-in-grafana/).
 
