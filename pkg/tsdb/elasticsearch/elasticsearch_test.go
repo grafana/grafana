@@ -14,7 +14,7 @@ import (
 
 type datasourceInfo struct {
 	TimeField                  any    `json:"timeField"`
-	MaxConcurrentShardRequests int64  `json:"maxConcurrentShardRequests"`
+	MaxConcurrentShardRequests any    `json:"maxConcurrentShardRequests,omitempty"`
 	Interval                   string `json:"interval"`
 }
 
@@ -69,6 +69,126 @@ func TestNewInstanceSettings(t *testing.T) {
 
 			_, err = newInstanceSettings(httpclient.NewProvider())(context.Background(), dsSettings)
 			require.EqualError(t, err, "elasticsearch time field name is required")
+		})
+	})
+
+	t.Run("maxConcurrentShardRequests", func(t *testing.T) {
+		t.Run("no maxConcurrentShardRequests", func(t *testing.T) {
+			dsInfo := datasourceInfo{
+				TimeField: "@timestamp",
+			}
+			settingsJSON, err := json.Marshal(dsInfo)
+			require.NoError(t, err)
+
+			dsSettings := backend.DataSourceInstanceSettings{
+				JSONData: json.RawMessage(settingsJSON),
+			}
+
+			instance, err := newInstanceSettings(httpclient.NewProvider())(context.Background(), dsSettings)
+			require.Equal(t, defaultMaxConcurrentShardRequests, instance.(es.DatasourceInfo).MaxConcurrentShardRequests)
+			require.NoError(t, err)
+		})
+
+		t.Run("string maxConcurrentShardRequests", func(t *testing.T) {
+			dsInfo := datasourceInfo{
+				TimeField:                  "@timestamp",
+				MaxConcurrentShardRequests: "10",
+			}
+			settingsJSON, err := json.Marshal(dsInfo)
+			require.NoError(t, err)
+
+			dsSettings := backend.DataSourceInstanceSettings{
+				JSONData: json.RawMessage(settingsJSON),
+			}
+
+			instance, err := newInstanceSettings(httpclient.NewProvider())(context.Background(), dsSettings)
+			require.Equal(t, int64(10), instance.(es.DatasourceInfo).MaxConcurrentShardRequests)
+			require.NoError(t, err)
+		})
+
+		t.Run("number maxConcurrentShardRequests", func(t *testing.T) {
+			dsInfo := datasourceInfo{
+				TimeField:                  "@timestamp",
+				MaxConcurrentShardRequests: 10,
+			}
+			settingsJSON, err := json.Marshal(dsInfo)
+			require.NoError(t, err)
+
+			dsSettings := backend.DataSourceInstanceSettings{
+				JSONData: json.RawMessage(settingsJSON),
+			}
+
+			instance, err := newInstanceSettings(httpclient.NewProvider())(context.Background(), dsSettings)
+			require.Equal(t, int64(10), instance.(es.DatasourceInfo).MaxConcurrentShardRequests)
+			require.NoError(t, err)
+		})
+
+		t.Run("zero maxConcurrentShardRequests", func(t *testing.T) {
+			dsInfo := datasourceInfo{
+				TimeField:                  "@timestamp",
+				MaxConcurrentShardRequests: 0,
+			}
+			settingsJSON, err := json.Marshal(dsInfo)
+			require.NoError(t, err)
+
+			dsSettings := backend.DataSourceInstanceSettings{
+				JSONData: json.RawMessage(settingsJSON),
+			}
+
+			instance, err := newInstanceSettings(httpclient.NewProvider())(context.Background(), dsSettings)
+			require.Equal(t, defaultMaxConcurrentShardRequests, instance.(es.DatasourceInfo).MaxConcurrentShardRequests)
+			require.NoError(t, err)
+		})
+
+		t.Run("negative maxConcurrentShardRequests", func(t *testing.T) {
+			dsInfo := datasourceInfo{
+				TimeField:                  "@timestamp",
+				MaxConcurrentShardRequests: -10,
+			}
+			settingsJSON, err := json.Marshal(dsInfo)
+			require.NoError(t, err)
+
+			dsSettings := backend.DataSourceInstanceSettings{
+				JSONData: json.RawMessage(settingsJSON),
+			}
+
+			instance, err := newInstanceSettings(httpclient.NewProvider())(context.Background(), dsSettings)
+			require.Equal(t, defaultMaxConcurrentShardRequests, instance.(es.DatasourceInfo).MaxConcurrentShardRequests)
+			require.NoError(t, err)
+		})
+
+		t.Run("float maxConcurrentShardRequests", func(t *testing.T) {
+			dsInfo := datasourceInfo{
+				TimeField:                  "@timestamp",
+				MaxConcurrentShardRequests: 10.5,
+			}
+			settingsJSON, err := json.Marshal(dsInfo)
+			require.NoError(t, err)
+
+			dsSettings := backend.DataSourceInstanceSettings{
+				JSONData: json.RawMessage(settingsJSON),
+			}
+
+			instance, err := newInstanceSettings(httpclient.NewProvider())(context.Background(), dsSettings)
+			require.Equal(t, int64(10), instance.(es.DatasourceInfo).MaxConcurrentShardRequests)
+			require.NoError(t, err)
+		})
+
+		t.Run("invalid maxConcurrentShardRequests", func(t *testing.T) {
+			dsInfo := datasourceInfo{
+				TimeField:                  "@timestamp",
+				MaxConcurrentShardRequests: "invalid",
+			}
+			settingsJSON, err := json.Marshal(dsInfo)
+			require.NoError(t, err)
+
+			dsSettings := backend.DataSourceInstanceSettings{
+				JSONData: json.RawMessage(settingsJSON),
+			}
+
+			instance, err := newInstanceSettings(httpclient.NewProvider())(context.Background(), dsSettings)
+			require.Equal(t, defaultMaxConcurrentShardRequests, instance.(es.DatasourceInfo).MaxConcurrentShardRequests)
+			require.NoError(t, err)
 		})
 	})
 }

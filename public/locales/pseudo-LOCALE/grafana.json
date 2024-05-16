@@ -618,6 +618,9 @@
     "select": {
       "no-options-label": "Ńő őpŧįőŉş ƒőūŉđ",
       "placeholder": "Cĥőőşę"
+    },
+    "spinner": {
+      "aria-label": "Ŀőäđįŉģ"
     }
   },
   "graph": {

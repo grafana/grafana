@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"time"
 
@@ -204,6 +205,17 @@ func AlertRuleExportFromAlertRule(rule models.AlertRule) (definitions.AlertRuleE
 	return result, nil
 }
 
+func encodeQueryModel(m map[string]any) (string, error) {
+	var buf bytes.Buffer
+	enc := json.NewEncoder(&buf)
+	enc.SetEscapeHTML(false)
+	err := enc.Encode(m)
+	if err != nil {
+		return "", err
+	}
+	return string(bytes.TrimRight(buf.Bytes(), "\n")), nil
+}
+
 // AlertQueryExportFromAlertQuery creates a definitions.AlertQueryExport DTO from models.AlertQuery.
 func AlertQueryExportFromAlertQuery(query models.AlertQuery) (definitions.AlertQueryExport, error) {
 	// We unmarshal the json.RawMessage model into a map in order to facilitate yaml marshalling.
@@ -216,6 +228,12 @@ func AlertQueryExportFromAlertQuery(query models.AlertQuery) (definitions.AlertQ
 	if query.QueryType != "" {
 		queryType = &query.QueryType
 	}
+
+	modelString, err := encodeQueryModel(mdl)
+	if err != nil {
+		return definitions.AlertQueryExport{}, err
+	}
+
 	return definitions.AlertQueryExport{
 		RefID:     query.RefID,
 		QueryType: queryType,
@@ -225,7 +243,7 @@ func AlertQueryExportFromAlertQuery(query models.AlertQuery) (definitions.AlertQ
 		},
 		DatasourceUID: query.DatasourceUID,
 		Model:         mdl,
-		ModelString:   string(query.Model),
+		ModelString:   modelString,
 	}, nil
 }
 
