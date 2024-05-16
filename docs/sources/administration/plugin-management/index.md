@@ -25,7 +25,7 @@ This guide shows you how to [install](#install-a-plugin) plugins that are built 
 Grafana supports three types of plugins:
 
 - [Panels](/grafana/plugins/panel-plugins) - These plugins make it easy to create and add any kind of panel, to show your data, or improve your favorite dashboards.
-- [Data sources](/grafana/plugins/data-source-plugins) - These plugins allow you to pull data from various data sources such as databases, APIs, log files, etc and display it in the form of graphs, charts, and dashboards in Grafana.
+- [Data sources](/grafana/plugins/data-source-plugins) - These plugins allow you to pull data from various data sources such as databases, APIs, log files, and so on, and display it in the form of graphs, charts, and dashboards in Grafana.
 - [Apps](/grafana/plugins/app-plugins) - These plugins enable the bundling of data sources, panels, dashboards, and Grafana pages into a cohesive experience.
 
 ## Panel plugins
@@ -139,7 +139,7 @@ When the update is complete, you'll see a confirmation message that the uninstal
 
 Grafana supports data source, panel, and app plugins.
 
-1. In a web browser, navigate to the [Grafana plugin catalog](/plugins) and find a plugin that you want to install.
+1. In a web browser, navigate to the [Grafana plugin catalog](https://grafana.com/plugins) and find a plugin that you want to install.
 1. Click the plugin, and then click the **Installation** tab.
 
 ### Install plugin on Grafana Cloud
