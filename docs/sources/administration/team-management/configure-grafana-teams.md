@@ -24,12 +24,15 @@ For a tutorial on working with Teams, refer to [Create users and teams](https://
 
 Before you begin creating and working with Grafana Teams:
 
-- Ensure that you have either the `Organization Administrator` role or team administrator permissions. Refer to [Organization roles](https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/#organization-roles) and [RBAC permissions, actions, and scopes](https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/#rbac-permissions-actions-and-scopes) for a list of Grafana roles and role-based access control actions.
+- Ensure that you have either the `Organization Administrator` role or team administrator permissions.
+  Refer to [Organization roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#organization-roles) and [RBAC permissions, actions, and scopes](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/#rbac-permissions-actions-and-scopes) for a list of Grafana roles and role-based access control actions.
 - Decide which users belong to which teams and what permissions team members receive.
 - Configure the default basic role for users to join Grafana. This role applies to users where no role is set by the identity provider (IDP).
-  - No basic role - by default cannot view any resources. Recommended for `isolated` teams.
+  - No basic role - by default cannot view any resources.
+      Recommended for `isolated` teams.
   - Viewer role - by default can view all resources. Recommended for `collaborative` teams.
-- Ensure team sync is turned on if you plan to manage team members through team sync. Refer to [Configure Team Sync](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-team-sync/)  for  a list of providers and instructions on how to turn on team sync for each provider.
+- Ensure team sync is turned on if you plan to manage team members through team sync.
+  Refer to [Configure Team Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-team-sync/)  for  a list of providers and instructions on how to turn on team sync for each provider.
 <!-- - Turn on nested folders.  __This is a new feature, add when it goes live.__ -->
 
 {{< admonition type="note" >}}
