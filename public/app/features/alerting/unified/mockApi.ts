@@ -419,7 +419,9 @@ export function mockDashboardApi(server: SetupServer) {
 
 const server = setupServer(...allHandlers);
 
-// Creates a MSW server and sets up beforeAll, afterAll and beforeEach handlers for it
+/**
+ * Sets up beforeAll, afterAll and beforeEach handlers for mock server
+ */
 export function setupMswServer() {
   beforeAll(() => {
     setBackendSrv(backendSrv);
