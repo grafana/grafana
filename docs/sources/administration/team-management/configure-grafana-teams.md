@@ -9,7 +9,7 @@ keywords:
   - authorization
   - microservices
   - architecture
-menuTitle: Configure  Grafana Teams
+menuTitle: Configure Grafana Teams
 title: Configure Grafana Teams
 weight: 200
 ---
