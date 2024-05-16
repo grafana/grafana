@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { isEmpty, size } from 'lodash';
+import { isEmpty } from 'lodash';
 import pluralize from 'pluralize';
 import React from 'react';
 
@@ -10,6 +10,7 @@ import { Time } from 'app/features/explore/Time';
 import { RuleHealth } from 'app/types/unified-alerting';
 import { Labels, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
+import { labelsSize } from '../../utils/labels';
 import { AlertLabels } from '../AlertLabels';
 import { MetaText } from '../MetaText';
 import MoreButton from '../MoreButton';
@@ -91,7 +92,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
               {!isEmpty(labels) && (
                 <MetaText icon="tag-alt">
                   <TextLink variant="bodySmall" color="secondary" href={href} inline={false}>
-                    {pluralize('label', size(labels), true)}
+                    {pluralize('label', labelsSize(labels), true)}
                   </TextLink>
                 </MetaText>
               )}
@@ -206,7 +207,7 @@ export const RecordingRuleListItem = ({
                 {!isEmpty(labels) && (
                   <MetaText icon="tag-alt">
                     <TextLink variant="bodySmall" color="secondary" href={href} inline={false}>
-                      {pluralize('label', size(labels), true)}
+                      {pluralize('label', labelsSize(labels), true)}
                     </TextLink>
                   </MetaText>
                 )}
