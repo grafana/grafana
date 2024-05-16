@@ -57,7 +57,6 @@
 @import 'components/dashboard_grid';
 @import 'components/page_header';
 @import 'components/add_data_source';
-@import 'components/page_loader';
 @import 'components/panel_header';
 
 // LOAD @grafana/ui components
@@ -65,7 +64,6 @@
 
 // PAGES
 @import 'pages/dashboard';
-@import 'pages/admin';
 @import 'pages/alerting';
 @import 'pages/history';
 @import 'pages/explore';
