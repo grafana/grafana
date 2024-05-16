@@ -10,8 +10,13 @@ describe('Variables - Set options from ui', () => {
   it('clicking a value that is not part of dependents options should change these to All', () => {
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&var-datacenter=A&var-server=AA&var-pod=AAA` });
 
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A').should('be.visible').click().click();
-    e2e.components.Select.option().contains('B').click();
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A')
+      .should('be.visible')
+      .within(() => {
+        cy.get('input').click();
+      });
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('A').should('be.visible').click();
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('B').should('be.visible').click();
     cy.get('body').click();
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('B').scrollIntoView().should('be.visible');
@@ -25,21 +30,16 @@ describe('Variables - Set options from ui', () => {
       });
 
     e2e.components.Select.option().parent().should('have.length', 9);
-    e2e.components.Select.option()
-      .first()
-      .should('have.text', 'All')
-      .parent()
-      .next()
-      .should('have.text', 'BA')
-      .next()
-      .should('have.text', 'BB')
-      .next()
-      .should('have.text', 'BC');
+
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BA').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BB').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BC').should('be.visible');
 
     cy.get('body').click();
 
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('pod')
-      .next()
+      .parent()
       .within(() => {
         cy.get('input').click();
       });
@@ -47,22 +47,13 @@ describe('Variables - Set options from ui', () => {
     // length is 11 because of virtualized select options
     e2e.components.Select.option().parent().should('have.length', 11);
 
-    e2e.components.Select.option()
-      .first()
-      .should('have.text', 'All')
-      .parent()
-      .next()
-      .should('have.text', 'BAA')
-      .next()
-      .should('have.text', 'BAB')
-      .next()
-      .should('have.text', 'BAC')
-      .next()
-      .should('have.text', 'BAD')
-      .next()
-      .should('have.text', 'BAE')
-      .next()
-      .should('have.text', 'BAF');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BAA').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BAB').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BAC').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BAD').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BAE').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BAF').should('be.visible');
   });
 
   it('adding a value that is not part of dependents options should add the new values dependant options', () => {
@@ -78,7 +69,7 @@ describe('Variables - Set options from ui', () => {
       .within(() => {
         cy.get('input').click();
       });
-    e2e.components.Select.option().contains('B').click();
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('B').should('be.visible').click();
     cy.get('body').click();
 
     cy.wait('@query');
@@ -93,20 +84,13 @@ describe('Variables - Set options from ui', () => {
         cy.get('input').click();
       });
 
-    e2e.components.Select.option().should('have.length', 11);
+    e2e.components.Select.option().should('have.length', 12);
 
-    e2e.components.Select.option()
-      .first()
-      .should('have.text', 'All')
-      .parent()
-      .next()
-      .should('have.text', 'AA')
-      .next()
-      .should('have.text', 'AB')
-      .next()
-      .should('have.text', 'AC')
-      .next()
-      .should('have.text', 'AD');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('AA').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('AB').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('AC').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('AD').should('be.visible');
 
     cy.get('body').click();
 
@@ -118,16 +102,10 @@ describe('Variables - Set options from ui', () => {
 
     e2e.components.Select.option().should('have.length', 9);
 
-    e2e.components.Select.option()
-      .first()
-      .should('have.text', 'All')
-      .parent()
-      .next()
-      .should('have.text', 'AAA')
-      .next()
-      .should('have.text', 'AAB')
-      .next()
-      .should('have.text', 'AAC');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('AAA').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('AAB').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('AAC').should('be.visible');
   });
 
   it('removing a value that is part of dependents options should remove the new values dependant options', () => {
@@ -140,23 +118,18 @@ describe('Variables - Set options from ui', () => {
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A,B')
       .should('be.visible')
-      .children()
-      .first()
-      .click();
+      .within(() => {
+        cy.get('input').click();
+      });
+
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('A').should('be.visible').click();
 
     cy.get('body').click();
 
     cy.wait(300);
     cy.wait('@query');
 
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('B')
-      .scrollIntoView()
-      .should('be.visible')
-      .within(() => {
-        cy.get('input').click();
-      });
-
-    cy.get('body').click();
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('B').should('be.visible');
 
     e2e.components.LoadingIndicator.icon().should('have.length', 0);
 
@@ -168,16 +141,10 @@ describe('Variables - Set options from ui', () => {
 
     e2e.components.Select.option().should('have.length', 9);
 
-    e2e.components.Select.option()
-      .first()
-      .should('have.text', 'All')
-      .parent()
-      .next()
-      .should('have.text', 'BA')
-      .next()
-      .should('have.text', 'BB')
-      .next()
-      .should('have.text', 'BC');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BA').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BB').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BC').should('be.visible');
 
     cy.get('body').click(0, 0);
 
@@ -188,15 +155,8 @@ describe('Variables - Set options from ui', () => {
       });
     e2e.components.Select.option().should('have.length', 9);
 
-    e2e.components.Select.option()
-      .first()
-      .should('have.text', 'All')
-      .parent()
-      .next()
-      .should('have.text', 'BBA')
-      .next()
-      .should('have.text', 'BBB')
-      .next()
-      .should('have.text', 'BBC');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BBA').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BBB').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BBC').should('be.visible');
   });
 });
