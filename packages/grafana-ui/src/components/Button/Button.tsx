@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import React, { AnchorHTMLAttributes, ButtonHTMLAttributes } from 'react';
 
-import { GrafanaTheme2, isIconName, ThemeRichColor } from '@grafana/data';
+import { GrafanaTheme2, ThemeRichColor } from '@grafana/data';
 
 import { useTheme2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
@@ -161,17 +161,16 @@ interface IconRendererProps {
   iconType?: IconType;
 }
 export const IconRenderer = ({ icon, size, className, iconType }: IconRendererProps) => {
+  if (!icon) {
+    return null;
+  }
   if (React.isValidElement(icon)) {
     return React.cloneElement(icon, {
       className,
       size,
     });
   }
-  if (isIconName(icon)) {
-    return <Icon name={icon} size={size} className={className} type={iconType} />;
-  }
-
-  return null;
+  return <Icon name={icon} size={size} className={className} type={iconType} />;
 };
 
 export interface StyleProps {
