@@ -160,7 +160,7 @@ func (api *Api) getProviderSettings(c *contextmodel.ReqContext) response.Respons
 // You need to have a permission with action `settings:write` and scope `settings:auth.<provider>:*`.
 //
 // Responses:
-// 204: okResponse
+// 204: description: The provider settings was updated successfully.
 // 400: badRequestError
 // 401: unauthorisedError
 // 403: forbiddenError
@@ -195,7 +195,7 @@ func (api *Api) updateProviderSettings(c *contextmodel.ReqContext) response.Resp
 // You need to have a permission with action `settings:write` and scope `settings:auth.<provider>:*`.
 //
 // Responses:
-// 204: okResponse
+// 204: description: The provider settings was deleted successfully.
 // 400: badRequestError
 // 401: unauthorisedError
 // 403: forbiddenError
