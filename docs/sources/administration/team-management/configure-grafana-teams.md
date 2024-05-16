@@ -113,7 +113,7 @@ Grafana Teams can either be `isolated` or `collaborative`. Isolated teams can on
 
 To create an isolated team add the following to the Grafana configuration file:
 
-```
+```ini
 auto_assign_org_role = None
 role_attribute_path = contains(groups[*], 'admin') && 'Admin' || 'None'
 ```
