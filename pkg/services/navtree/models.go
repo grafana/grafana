@@ -150,6 +150,7 @@ func (root *NavTreeRoot) ApplyAdminIA() {
 		generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("feature-toggles"))
 		generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("storage"))
 		generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("migrate-to-cloud"))
+		generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("banner-settings"))
 
 		generalNode := &NavLink{
 			Text:     "General",
