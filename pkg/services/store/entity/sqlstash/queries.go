@@ -152,7 +152,7 @@ var (
 	_, _, _ = sqlEntityDelete, sqlEntityInsert, sqlEntityListFolderElements
 	_, _, _ = sqlEntityUpdate, sqlEntityRead, sqlEntityFolderInsert
 	_, _, _ = sqlEntityRefFind, sqlEntityLabelsDelete, sqlEntityLabelsInsert
-	_, _, _ = sqlKindVersionInsert, sqlKindVersionInsert, sqlKindVersionLock
+	_, _, _ = sqlKindVersionInc, sqlKindVersionInsert, sqlKindVersionLock
 	_, _    = sqlEntityFolderInsertRequest{}, sqlEntityFolderInsertRequestItem{}
 	_, _    = sqlEntityRefFindRequest{}, sqlEntityLabelsInsertRequest{}
 	_, _    = sqlEntityLabelsInsertRequest{}, sqlEntityLabelsDeleteRequest{}
