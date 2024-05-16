@@ -15,7 +15,6 @@ const server = setupMswServer();
 
 describe('useOnCallIntegration', () => {
   afterEach(() => {
-    server.resetHandlers();
     clearPluginSettingsCache();
   });
 
