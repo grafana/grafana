@@ -38,6 +38,9 @@ func signedInUserAuthenticator(req *http.Request) (*authenticator.Response, bool
 	if signedInUser.IDToken != "" {
 		userInfo.Extra["id-token"] = []string{signedInUser.IDToken}
 	}
+	if signedInUser.OrgRole.IsValid() {
+		userInfo.Extra["user-instance-role"] = []string{string(signedInUser.OrgRole)}
+	}
 
 	return &authenticator.Response{
 		User: userInfo,
