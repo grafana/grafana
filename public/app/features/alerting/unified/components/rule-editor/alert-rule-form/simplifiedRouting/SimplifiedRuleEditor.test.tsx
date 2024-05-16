@@ -7,33 +7,28 @@ import { ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { byRole } from 'testing-library-selector';
 
-import { config, locationService, setDataSourceSrv } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import RuleEditor from 'app/features/alerting/unified/RuleEditor';
-import { discoverFeatures } from 'app/features/alerting/unified/api/buildInfo';
 import * as ruler from 'app/features/alerting/unified/api/ruler';
 import * as useContactPoints from 'app/features/alerting/unified/components/contact-points/useContactPoints';
-import * as dsByPermission from 'app/features/alerting/unified/hooks/useAlertManagerSources';
 import { mockApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
-import { MockDataSourceSrv, grantUserPermissions, mockDataSource } from 'app/features/alerting/unified/mocks';
+import { grantUserPermissions, mockDataSource } from 'app/features/alerting/unified/mocks';
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
-import { fetchRulerRulesIfNotFetchedYet } from 'app/features/alerting/unified/state/actions';
 import * as utils_config from 'app/features/alerting/unified/utils/config';
 import {
-  AlertManagerDataSource,
   DataSourceType,
   GRAFANA_DATASOURCE_NAME,
   GRAFANA_RULES_SOURCE_NAME,
-  getAlertManagerDataSourcesByPermission,
   useGetAlertManagerDataSourcesByPermissionAndConfig,
 } from 'app/features/alerting/unified/utils/datasource';
 import { getDefaultQueries } from 'app/features/alerting/unified/utils/rule-form';
 import { searchFolders } from 'app/features/manage-dashboards/state/actions';
 import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types';
-import { GrafanaAlertStateDecision, PromApplication } from 'app/types/unified-alerting-dto';
+import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
-import { grafanaRulerRule } from '../../../../mocks/alertRuleApi';
+import { grafanaRulerEmptyGroup, grafanaRulerNamespace2, grafanaRulerRule } from '../../../../mocks/alertRuleApi';
 import { setupDataSources } from '../../../../testSetup/datasources';
 import { RECEIVER_META_KEY } from '../../../contact-points/useContactPoints';
 import { ContactPointWithMetadata } from '../../../contact-points/utils';
@@ -62,11 +57,11 @@ jest.mock('app/features/query/components/QueryEditorRow', () => ({
 }));
 
 // simplified routing mocks
-const grafanaAlertManagerDataSource: AlertManagerDataSource = {
-  name: GRAFANA_RULES_SOURCE_NAME,
-  imgUrl: 'public/img/grafana_icon.svg',
-  hasConfigurationAPI: true,
-};
+// const grafanaAlertManagerDataSource: AlertManagerDataSource = {
+//   name: GRAFANA_RULES_SOURCE_NAME,
+//   imgUrl: 'public/img/grafana_icon.svg',
+//   hasConfigurationAPI: true,
+// };
 // jest.mock('app/features/alerting/unified/utils/datasource', () => {
 //   return {
 //     ...jest.requireActual('app/features/alerting/unified/utils/datasource'),
@@ -78,8 +73,8 @@ const grafanaAlertManagerDataSource: AlertManagerDataSource = {
 
 const user = userEvent.setup();
 
-jest.spyOn(utils_config, 'getAllDataSources');
-jest.spyOn(dsByPermission, 'useAlertManagersByPermission');
+// jest.spyOn(utils_config, 'getAllDataSources');
+// jest.spyOn(dsByPermission, 'useAlertManagersByPermission');
 jest.spyOn(useContactPoints, 'useContactPointsWithStatus');
 
 jest.setTimeout(60 * 1000);
@@ -130,10 +125,10 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
 
     // mocks.useGetAlertManagerDataSourcesByPermissionAndConfig.mockReturnValue([grafanaAlertManagerDataSource]);
 
-    jest.mocked(dsByPermission.useAlertManagersByPermission).mockReturnValue({
-      availableInternalDataSources: [grafanaAlertManagerDataSource],
-      availableExternalDataSources: [],
-    });
+    // jest.mocked(dsByPermission.useAlertManagersByPermission).mockReturnValue({
+    //   availableInternalDataSources: [grafanaAlertManagerDataSource],
+    //   availableExternalDataSources: [],
+    // });
   });
 
   const dataSources = {
@@ -218,7 +213,7 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
     mocks.searchFolders.mockResolvedValue([
       {
         title: 'Folder A',
-        uid: 'abcd',
+        uid: grafanaRulerRule.grafana_alert.namespace_uid,
         id: 1,
         type: DashboardSearchItemType.DashDB,
       },
@@ -287,9 +282,9 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
       error: undefined,
       refetchReceivers: jest.fn(),
     });
-
-    setDataSourceSrv(new MockDataSourceSrv(dataSources));
-    mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
+    //
+    // setDataSourceSrv(new MockDataSourceSrv(dataSources));
+    // mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.api.setRulerRuleGroup.mockResolvedValue();
     // mocks.api.fetchRulerRulesNamespace.mockResolvedValue([]);
     // mocks.api.fetchRulerRulesGroup.mockResolvedValue({
@@ -347,7 +342,7 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
     mocks.searchFolders.mockResolvedValue([
       {
         title: 'Folder A',
-        uid: grafanaRulerRule.grafana_alert.namespace_uid,
+        uid: grafanaRulerNamespace2.uid,
         id: 1,
         type: DashboardSearchItemType.DashDB,
       },
@@ -381,7 +376,7 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
     await clickSelectOption(folderInput, 'Folder A');
     const groupInput = await ui.inputs.group.find();
     await user.click(byRole('combobox').get(groupInput));
-    await clickSelectOption(groupInput, 'group1');
+    await clickSelectOption(groupInput, grafanaRulerEmptyGroup.name);
     //select contact point routing
     await user.click(ui.inputs.simplifiedRouting.contactPointRouting.get());
     const contactPointInput = await ui.inputs.simplifiedRouting.contactPoint.find();
@@ -393,10 +388,10 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
     await waitFor(() => expect(mocks.api.setRulerRuleGroup).toHaveBeenCalled());
     expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledWith(
       { dataSourceName: GRAFANA_RULES_SOURCE_NAME, apiVersion: 'legacy' },
-      'abcd',
+      grafanaRulerNamespace2.uid,
       {
-        interval: '1m',
-        name: 'group1',
+        interval: grafanaRulerEmptyGroup.interval,
+        name: grafanaRulerEmptyGroup.name,
         rules: [
           {
             annotations: {},
