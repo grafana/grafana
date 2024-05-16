@@ -118,7 +118,7 @@ role_attribute_path = contains(groups[*], 'admin') && 'Admin' || 'None'
 
 To create a collaborative team add the following to the Grafana configuration file:
 
-```
+```ini
 auto_assign_org_role = Viewer
 role_attribute_path = contains(groups[*], 'admin') && 'Admin' || 'None'
 ```
