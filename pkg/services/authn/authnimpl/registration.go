@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -34,7 +33,7 @@ func ProvideRegistration(
 	loginAttempts loginattempt.Service, quotaService quota.Service,
 	authInfoService login.AuthInfoService, renderService rendering.Service,
 	features *featuremgmt.FeatureManager, oauthTokenService oauthtoken.OAuthTokenService,
-	socialService social.Service, cache *remotecache.RemoteCache, signingKeysService signingkeys.Service,
+	socialService social.Service, cache *remotecache.RemoteCache,
 	ldapService service.LDAP, settingsProviderService setting.Provider,
 ) Registration {
 	logger := log.New("authn.registration")
@@ -86,7 +85,7 @@ func ProvideRegistration(
 	}
 
 	if cfg.ExtJWTAuth.Enabled && features.IsEnabledGlobally(featuremgmt.FlagAuthAPIAccessTokenAuth) {
-		authnSvc.RegisterClient(clients.ProvideExtendedJWT(userService, cfg, signingKeysService))
+		authnSvc.RegisterClient(clients.ProvideExtendedJWT(cfg))
 	}
 
 	for name := range socialService.GetOAuthProviders() {

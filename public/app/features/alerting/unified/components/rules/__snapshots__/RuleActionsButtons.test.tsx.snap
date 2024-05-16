@@ -12,11 +12,11 @@ exports[`RuleActionsButtons renders correct options for Cloud rule 1`] = `
 exports[`RuleActionsButtons renders correct options for grafana managed rule 1`] = `
 [
   "Pause evaluation",
+  "Silence notifications",
   "Duplicate",
   "Copy link",
   "Export",
   "Delete",
-  "Silence notifications",
   "Declare incident",
 ]
 `;
