@@ -1,6 +1,4 @@
 ---
-aliases:
-  - 
 description: Learn how to configure Grafana Teams
 labels:
   products:
