@@ -177,9 +177,11 @@ Annotations add metadata to provide more information on the alert in your alert 
    Webpage where you keep your runbook for the alert
 
 1. [Optional] Add a custom annotation
-1. [Optional] Add a dashboard and panel link.
+1. [Optional] Add a **dashboard and panel link**.
 
    Links alerts to panels in a dashboard.
+
+   {{< docs/play title="visualizations with linked alerts in Grafana" url="https://play.grafana.org/d/000000074/" >}}
 
 1. Click **Save rule**.
 

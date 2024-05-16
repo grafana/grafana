@@ -4,27 +4,20 @@ import React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { byRole } from 'testing-library-selector';
-import 'whatwg-fetch';
 
-import { setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
-import { mockApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
-import {
-  defaultGrafanaAlertingConfigurationStatusResponse,
-  mockAlertmanagerChoiceResponse,
-} from 'app/features/alerting/unified/mocks/alertmanagerApi';
+import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types';
-import { GrafanaAlertStateDecision, PromApplication } from 'app/types/unified-alerting-dto';
+import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
 import { searchFolders } from '../../../../app/features/manage-dashboards/state/actions';
 
 import { discoverFeatures } from './api/buildInfo';
 import * as ruler from './api/ruler';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
-import { MockDataSourceSrv, grantUserPermissions, mockDataSource } from './mocks';
+import { grantUserPermissions, mockDataSource } from './mocks';
 import { grafanaRulerGroup, grafanaRulerRule } from './mocks/alertRuleApi';
-import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
 import { setupDataSources } from './testSetup/datasources';
 import * as config from './utils/config';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
@@ -69,12 +62,10 @@ const mocks = {
   },
 };
 
-const server = setupMswServer();
+setupMswServer();
 
 describe('RuleEditor grafana managed rules', () => {
   beforeEach(() => {
-    mockApi(server).eval({ results: {} });
-    mockAlertmanagerChoiceResponse(server, defaultGrafanaAlertingConfigurationStatusResponse);
     jest.clearAllMocks();
     contextSrv.isEditor = true;
     contextSrv.hasEditPermissionInFolders = true;

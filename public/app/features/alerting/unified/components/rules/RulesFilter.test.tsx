@@ -9,6 +9,7 @@ import { mockSearchApi, setupMswServer } from 'app/features/alerting/unified/moc
 
 import * as analytics from '../../Analytics';
 import { MockDataSourceSrv } from '../../mocks';
+import { setupPluginsExtensionsHook } from '../../testSetup/plugins';
 
 import RulesFilter from './RulesFilter';
 
@@ -24,6 +25,8 @@ jest.mock('./MultipleDataSourcePicker', () => {
 });
 
 setDataSourceSrv(new MockDataSourceSrv({}));
+
+setupPluginsExtensionsHook();
 
 const ui = {
   stateFilter: {
