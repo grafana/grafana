@@ -187,6 +187,21 @@ func initEntityTables(mg *migrator.Migrator) string {
 		},
 	})
 
+	tables = append(tables, migrator.Table{
+		Name: "kind_version",
+		Columns: []*migrator.Column{
+			{Name: "group", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "group_version", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "resource", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "resource_version", Type: migrator.DB_BigInt, Nullable: false},
+		},
+		Indices: []*migrator.Index{
+			{Cols: []string{"guid"}, Type: migrator.IndexType},
+			{Cols: []string{"namespace", "group", "resource", "name"}, Type: migrator.IndexType},
+			{Cols: []string{"resolved_to"}, Type: migrator.IndexType},
+		},
+	})
+
 	// Initialize all tables
 	for t := range tables {
 		mg.AddMigration("drop table "+tables[t].Name, migrator.NewDropTableMigration(tables[t].Name))
