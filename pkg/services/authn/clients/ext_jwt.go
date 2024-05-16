@@ -40,16 +40,18 @@ var (
 )
 
 func ProvideExtendedJWT(cfg *setting.Cfg) *ExtendedJWT {
-	accessTokenVerifier := authlib.NewAccessTokenVerifier(authlib.VerifierConfig{
-		SigningKeysURL:   cfg.ExtJWTAuth.JWKSUrl,
-		AllowedAudiences: []string{extJWTAccessTokenExpectAudience},
+
+	keys := authlib.NewKeyRetriever(authlib.KeyRetrieverConfig{
+		SigningKeysURL: cfg.ExtJWTAuth.JWKSUrl,
 	})
+
+	accessTokenVerifier := authlib.NewAccessTokenVerifier(authlib.VerifierConfig{
+		AllowedAudiences: []string{extJWTAccessTokenExpectAudience},
+	}, keys)
 
 	// For ID tokens, we explicitly do not validate audience, hence an empty AllowedAudiences
 	// Namespace claim will be checked
-	idTokenVerifier := authlib.NewIDTokenVerifier(authlib.VerifierConfig{
-		SigningKeysURL: cfg.ExtJWTAuth.JWKSUrl,
-	})
+	idTokenVerifier := authlib.NewIDTokenVerifier(authlib.VerifierConfig{}, keys)
 
 	return &ExtendedJWT{
 		cfg:                 cfg,
