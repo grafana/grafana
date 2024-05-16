@@ -148,7 +148,7 @@ export class LogContextProvider {
       refId: `${REF_ID_STARTER_LOG_ROW_CONTEXT}_${Math.random().toString()}`,
       maxLines: limit,
       direction: queryDirection,
-      datasource: { uid: this.datasource.uid, type: this.datasource.type },
+      datasource: { uid: this.datasource.uid, type: this.datasource.type, apiVersion: this.datasource.meta.apiVersion },
     };
 
     const fieldCache = new FieldCache(row.dataFrame);

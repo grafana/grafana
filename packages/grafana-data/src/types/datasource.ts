@@ -139,6 +139,7 @@ export interface DataSourcePluginMeta<T extends KeyValue = {}> extends PluginMet
   unlicensed?: boolean;
   backend?: boolean;
   isBackend?: boolean;
+  apiVersion?: string;
 }
 
 interface PluginMetaQueryOptions {
@@ -321,7 +322,7 @@ abstract class DataSourceApi<
 
   /** Get an identifier object for this datasource instance */
   getRef(): DataSourceRef {
-    return { type: this.type, uid: this.uid };
+    return { type: this.type, uid: this.uid, apiVersion: this.meta.apiVersion };
   }
 
   /**

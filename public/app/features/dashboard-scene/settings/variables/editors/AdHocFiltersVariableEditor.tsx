@@ -29,6 +29,7 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
     const dsRef: DataSourceRef = {
       uid: ds.uid,
       type: ds.type,
+      apiVersion: ds.meta.apiVersion,
     };
 
     variable.setState({

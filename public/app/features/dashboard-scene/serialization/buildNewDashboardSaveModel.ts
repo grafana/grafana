@@ -14,6 +14,7 @@ export async function buildNewDashboardSaveModel(urlFolderUid?: string): Promise
       const datasourceRef = {
         type: defaultDs.meta.id,
         uid: defaultDs.uid,
+        apiVersion: defaultDs.meta.apiVersion,
       };
 
       const fitlerVariable: VariableModel = {

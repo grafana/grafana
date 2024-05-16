@@ -422,6 +422,7 @@ export function graphToTimeseriesOptions(angular: any): {
         datasource: {
           type: 'datasource',
           uid: 'grafana',
+          apiVersion: '',
         },
         enable: true,
         hide: true, // don't show the toggle at the top of the dashboard

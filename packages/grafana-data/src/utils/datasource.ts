@@ -16,7 +16,7 @@ import {
  * @public
  */
 export function getDataSourceRef(ds: DataSourceInstanceSettings): DataSourceRef {
-  return { uid: ds.uid, type: ds.type };
+  return { uid: ds.uid, type: ds.type, apiVersion: ds.meta.apiVersion };
 }
 
 /**

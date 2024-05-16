@@ -498,7 +498,7 @@ const dataQueriesToGrafanaQueries = async (
 
   for (const target of queries) {
     const datasource = await getDataSourceSrv().get(target.datasource?.uid ? target.datasource : panelDataSourceRef);
-    const dsRef = { uid: datasource.uid, type: datasource.type };
+    const dsRef = { uid: datasource.uid, type: datasource.type, apiVersion: datasource.meta.apiVersion };
 
     const range = rangeUtil.relativeToTimeRange(relativeTimeRange);
     const { interval, intervalMs } = getIntervals(range, minInterval ?? datasource.interval, maxDataPoints);

@@ -547,6 +547,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.datasource = {
       uid: dataSource.uid,
       type: dataSource.type,
+      apiVersion: dataSource.apiVersion,
     };
 
     this.cacheTimeout = options.cacheTimeout;
