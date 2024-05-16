@@ -159,6 +159,8 @@ composableKinds: PanelCfg: lineage: {
 				}
 				// Controls which axis to allow selection on
 				selectMode?: HeatmapSelectionMode
+				// Controls whether to keep or clear the selected area after the user finished dragging
+				keepSelectedArea?: bool
 			} @cuetsy(kind="interface")
 			FieldConfig: {
 				ui.HideableFieldConfig

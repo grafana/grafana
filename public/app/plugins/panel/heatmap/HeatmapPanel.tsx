@@ -5,15 +5,15 @@ import { DashboardCursorSync, PanelProps, TimeRange } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { ScaleDistributionConfig } from '@grafana/schema';
 import {
+  EventBusPlugin,
   ScaleDistribution,
-  TooltipPlugin2,
   TooltipDisplayMode,
+  TooltipPlugin2,
   UPlotChart,
   usePanelContext,
   useStyles2,
   useTheme2,
   VizLayout,
-  EventBusPlugin,
 } from '@grafana/ui';
 import { TimeRange2, TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
@@ -45,7 +45,7 @@ export const HeatmapPanel = ({
 }: HeatmapPanelProps) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
-  const { sync, eventsScope, canAddAnnotations } = usePanelContext();
+  const { sync, eventsScope, canAddAnnotations, onSelect } = usePanelContext();
   const cursorSync = sync?.() ?? DashboardCursorSync.Off;
 
   // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
@@ -113,6 +113,7 @@ export const HeatmapPanel = ({
       exemplarColor: options.exemplars?.color ?? 'rgba(255,0,255,0.7)',
       yAxisConfig: options.yAxis,
       ySizeDivisor: scaleConfig?.type === ScaleDistribution.Log ? +(options.calculation?.yBuckets?.value || 1) : 1,
+      // selectMode: HeatmapSelectionMode.Xy,
       selectMode: options.selectMode,
     });
 
@@ -180,7 +181,8 @@ export const HeatmapPanel = ({
                   options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
                 }
                 queryZoom={onChangeTimeRange}
-                onSelect={(selections) => console.log(selections)}
+                keepSelectedArea={options.keepSelectedArea}
+                onSelect={onSelect}
                 syncMode={cursorSync}
                 syncScope={eventsScope}
                 render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync) => {

@@ -54,5 +54,3 @@ export interface PlotSelection {
     height: number;
   };
 }
-
-export type OnSelectCallback = (selections: Array<{ key: string; from: number; to: number }>) => void;

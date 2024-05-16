@@ -8,3 +8,5 @@ export enum SeriesVisibilityChangeMode {
   ToggleSelection = 'select',
   AppendToSelection = 'append',
 }
+
+export type OnSelectCallback = (selections: Array<{ key: string; from: number; to: number }>) => void;

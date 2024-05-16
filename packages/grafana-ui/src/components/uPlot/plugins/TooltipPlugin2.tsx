@@ -7,9 +7,9 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { DashboardCursorSync } from '@grafana/schema';
 
 import { useStyles2 } from '../../../themes';
+import { OnSelectCallback } from '../../PanelChrome';
 import { getPortalContainer } from '../../Portal/Portal';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
-import { OnSelectCallback } from '../types';
 
 import { CloseButton } from './CloseButton';
 
@@ -39,6 +39,8 @@ interface TooltipPlugin2Props {
   clientZoom?: boolean;
 
   onSelect?: OnSelectCallback;
+  // Whether to clear or keep the selected area rendered after the user has finished dragging
+  keepSelectedArea?: boolean;
 
   render: (
     u: uPlot,
@@ -111,6 +113,7 @@ export const TooltipPlugin2 = ({
   clientZoom = false,
   queryZoom,
   onSelect,
+  keepSelectedArea,
   maxWidth,
   syncMode = DashboardCursorSync.Off,
   syncScope = 'global', // eventsScope
@@ -390,8 +393,10 @@ export const TooltipPlugin2 = ({
         }
       }
 
-      // manually hide selected region (since cursor.drag.setScale = false)
-      u.setSelect({ left: 0, width: 0, top: 0, height: 0 }, false);
+      if (!keepSelectedArea) {
+        // manually hide selected region (since cursor.drag.setScale = false)
+        u.setSelect({ left: 0, width: 0, top: 0, height: 0 }, false);
+      }
     });
 
     if (clientZoom || queryZoom != null) {

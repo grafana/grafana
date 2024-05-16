@@ -221,6 +221,10 @@ export interface Options {
    */
   filterValues?: FilterValueRange;
   /**
+   * Controls whether to keep or clear the selected area after the user finished dragging
+   */
+  keepSelectedArea?: boolean;
+  /**
    * | *{
    * 	axisPlacement: ui.AxisPlacement & "left" // TODO: fix after remove when https://github.com/grafana/cuetsy/issues/74 is fixed
    * }

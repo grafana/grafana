@@ -1,19 +1,19 @@
 import React from 'react';
 
 import {
-  EventBusSrv,
-  EventBus,
-  DashboardCursorSync,
   AnnotationEventUIModel,
-  ThresholdsConfig,
   CoreApp,
+  DashboardCursorSync,
   DataFrame,
   DataLinkPostProcessor,
+  EventBus,
+  EventBusSrv,
+  ThresholdsConfig,
 } from '@grafana/data';
 
 import { AdHocFilterItem } from '../Table/types';
 
-import { SeriesVisibilityChangeMode } from './types';
+import { OnSelectCallback, SeriesVisibilityChangeMode } from './types';
 
 /** @alpha */
 export interface PanelContext {
@@ -42,6 +42,12 @@ export interface PanelContext {
   onAnnotationCreate?: (annotation: AnnotationEventUIModel) => void;
   onAnnotationUpdate?: (annotation: AnnotationEventUIModel) => void;
   onAnnotationDelete?: (id: string) => void;
+
+  /**
+   * Called when a user selects an area on the panel, if defined will override the default behavior of the panel,
+   * which is to update the time range
+   */
+  onSelect?: OnSelectCallback;
 
   /**
    * Used from visualizations like Table to add ad-hoc filters from cell values
