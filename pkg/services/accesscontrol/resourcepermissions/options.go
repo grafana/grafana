@@ -18,6 +18,8 @@ type Options struct {
 	ResourceAttribute string
 	// OnlyManaged will tell the service to return all permissions if set to false and only managed permissions if set to true
 	OnlyManaged bool
+	// OnlyActionSets will tell the service to only write and read actionsets
+	OnlyActionSets bool
 	// ResourceValidator is a validator function that will be called before each assignment.
 	// If set to nil the validator will be skipped
 	ResourceValidator ResourceValidator

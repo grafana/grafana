@@ -81,6 +81,10 @@ func New(cfg *setting.Cfg,
 		actions = append(actions, action)
 	}
 
+	// cfg to only enable actionsets being written and read
+	if features.IsEnabled(context.Background(), featuremgmt.FlagAccessActionSets) {
+		options.OnlyActionSets = cfg.OnlyAccessActionSets
+	}
 	s := &Service{
 		ac:          ac,
 		store:       NewStore(sqlStore, features),
@@ -209,6 +213,7 @@ func (s *Service) SetBuiltInRolePermission(ctx context.Context, orgID int64, bui
 		Resource:          s.options.Resource,
 		ResourceID:        resourceID,
 		ResourceAttribute: s.options.ResourceAttribute,
+		OnlyActionSets:    s.options.OnlyActionSets,
 	}, s.options.OnSetBuiltInRole)
 }
 

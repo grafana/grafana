@@ -319,6 +319,9 @@ type Cfg struct {
 	DashboardAnnotationCleanupSettings AnnotationCleanupSettings
 	APIAnnotationCleanupSettings       AnnotationCleanupSettings
 
+	// AccessActionSets
+	OnlyAccessActionSets bool
+
 	// GrafanaJavascriptAgent config
 	GrafanaJavascriptAgent GrafanaJavascriptAgent
 
@@ -1633,6 +1636,8 @@ func readAccessControlSettings(iniFile *ini.File, cfg *Cfg) {
 	cfg.RBACPermissionValidationEnabled = rbac.Key("permission_validation_enabled").MustBool(false)
 	cfg.RBACResetBasicRoles = rbac.Key("reset_basic_roles").MustBool(false)
 	cfg.RBACSingleOrganization = rbac.Key("single_organization").MustBool(false)
+	// TODO @eleijonmarck: remove me once we have migrated to actionsets
+	cfg.OnlyAccessActionSets = rbac.Key("only_access_action_sets").MustBool(false)
 }
 
 func readOAuth2ServerSettings(cfg *Cfg) {

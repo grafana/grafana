@@ -269,7 +269,7 @@ func (s *store) setResourcePermission(
 		return nil, err
 	}
 
-	if err := s.createPermissions(sess, role.ID, cmd.Resource, cmd.ResourceID, cmd.ResourceAttribute, missing, cmd.Permission); err != nil {
+	if err := s.createPermissions(sess, role.ID, cmd, missing); err != nil {
 		return nil, err
 	}
 
@@ -660,8 +660,12 @@ func (s *store) getPermissions(sess *db.Session, resource, resourceID, resourceA
 	return result, nil
 }
 
-func (s *store) createPermissions(sess *db.Session, roleID int64, resource, resourceID, resourceAttribute string, missingActions map[string]struct{}, permission string) error {
+func (s *store) createPermissions(sess *db.Session, roleID int64, cmd SetResourcePermissionCommand, missingActions map[string]struct{}) error {
 	permissions := make([]accesscontrol.Permission, 0, len(missingActions))
+	resource := cmd.Resource
+	resourceID := cmd.ResourceID
+	resourceAttribute := cmd.ResourceAttribute
+	permission := cmd.Permission
 	/*
 		Add ACTION SET of managed permissions to in-memory store
 	*/
@@ -675,24 +679,26 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, resource, reso
 		permissions = append(permissions, p)
 	}
 
-	// If there are no missing actions for the resource (in case of access level downgrade or resource removal), we don't need to insert any prior actions
+	// If there are no missing actions for the resource (in case of access level downgrade or resource removal), we don't need to insert any actions
 	// we still want to add the action set in case of access level downgrade, but not in case of resource removal (when permission == "")
-	if len(missingActions) == 0 {
-		if s.features.IsEnabled(context.TODO(), featuremgmt.FlagAccessActionSets) && permission != "" {
-			if _, err := sess.InsertMulti(&permissions); err != nil {
-				return err
-			}
+	if len(missingActions) == 0 && permission != "" && s.features.IsEnabled(context.TODO(), featuremgmt.FlagAccessActionSets) {
+		if _, err := sess.InsertMulti(&permissions); err != nil {
+			return err
 		}
 		return nil
 	}
 
-	for action := range missingActions {
-		p := managedPermission(action, resource, resourceID, resourceAttribute)
-		p.RoleID = roleID
-		p.Created = time.Now()
-		p.Updated = time.Now()
-		p.Kind, p.Attribute, p.Identifier = p.SplitScope()
-		permissions = append(permissions, p)
+	fmt.Printf("cmd %v\n", cmd)
+	// If we are only working with action sets, we don't need to insert any actions
+	if !cmd.OnlyActionSets {
+		for action := range missingActions {
+			p := managedPermission(action, resource, resourceID, resourceAttribute)
+			p.RoleID = roleID
+			p.Created = time.Now()
+			p.Updated = time.Now()
+			p.Kind, p.Attribute, p.Identifier = p.SplitScope()
+			permissions = append(permissions, p)
+		}
 	}
 
 	if _, err := sess.InsertMulti(&permissions); err != nil {
