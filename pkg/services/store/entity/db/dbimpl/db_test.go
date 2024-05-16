@@ -41,6 +41,7 @@ func TestDB_BeginTx(t *testing.T) {
 		t.Parallel()
 
 		sqldb, mock, err := sqlmock.New()
+		require.NoError(t, err)
 		db := NewDB(sqldb, driverName)
 		require.Equal(t, driverName, db.DriverName())
 
@@ -55,6 +56,7 @@ func TestDB_BeginTx(t *testing.T) {
 		t.Parallel()
 
 		sqldb, mock, err := sqlmock.New()
+		require.NoError(t, err)
 		db := NewDB(sqldb, "sqlmock")
 
 		mock.ExpectBegin().WillReturnError(errTest)
@@ -79,6 +81,7 @@ func TestDB_WithTx(t *testing.T) {
 		t.Parallel()
 
 		sqldb, mock, err := sqlmock.New()
+		require.NoError(t, err)
 		db := NewDB(sqldb, "sqlmock")
 
 		mock.ExpectBegin()
@@ -92,6 +95,7 @@ func TestDB_WithTx(t *testing.T) {
 		t.Parallel()
 
 		sqldb, mock, err := sqlmock.New()
+		require.NoError(t, err)
 		db := NewDB(sqldb, "sqlmock")
 
 		mock.ExpectBegin().WillReturnError(errTest)
@@ -105,6 +109,7 @@ func TestDB_WithTx(t *testing.T) {
 		t.Parallel()
 
 		sqldb, mock, err := sqlmock.New()
+		require.NoError(t, err)
 		db := NewDB(sqldb, "sqlmock")
 
 		mock.ExpectBegin()
@@ -119,6 +124,7 @@ func TestDB_WithTx(t *testing.T) {
 		t.Parallel()
 
 		sqldb, mock, err := sqlmock.New()
+		require.NoError(t, err)
 		db := NewDB(sqldb, "sqlmock")
 		errTest2 := errors.New("yet another err")
 
@@ -135,6 +141,7 @@ func TestDB_WithTx(t *testing.T) {
 		t.Parallel()
 
 		sqldb, mock, err := sqlmock.New()
+		require.NoError(t, err)
 		db := NewDB(sqldb, "sqlmock")
 
 		mock.ExpectBegin()
