@@ -40,7 +40,6 @@ var (
 )
 
 func ProvideExtendedJWT(cfg *setting.Cfg) *ExtendedJWT {
-
 	keys := authlib.NewKeyRetriever(authlib.KeyRetrieverConfig{
 		SigningKeysURL: cfg.ExtJWTAuth.JWKSUrl,
 	})
