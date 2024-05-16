@@ -83,18 +83,22 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
                   error={error}
                 />
               )}
-              <MetaText icon="layer-group">
-                <TextLink variant="bodySmall" color="secondary" href={href + '?tab=instances'} inline={false}>
-                  {pluralize('instance', instancesCount, true)}
-                </TextLink>
-              </MetaText>
+              {!isPaused && (
+                <>
+                  <MetaText icon="layer-group">
+                    <TextLink variant="bodySmall" color="secondary" href={href + '?tab=instances'} inline={false}>
+                      {pluralize('instance', instancesCount, true)}
+                    </TextLink>
+                  </MetaText>
 
-              {!isEmpty(labels) && (
-                <MetaText icon="tag-alt">
-                  <TextLink variant="bodySmall" color="secondary" href={href} inline={false}>
-                    {pluralize('label', labelsSize(labels), true)}
-                  </TextLink>
-                </MetaText>
+                  {!isEmpty(labels) && (
+                    <MetaText icon="tag-alt">
+                      <TextLink variant="bodySmall" color="secondary" href={href} inline={false}>
+                        {pluralize('label', labelsSize(labels), true)}
+                      </TextLink>
+                    </MetaText>
+                  )}
+                </>
               )}
             </Stack>
           </div>
