@@ -47,7 +47,7 @@ func (db *EntityDB) Init() error {
 
 func (db *EntityDB) GetEngine() (*xorm.Engine, error) {
 	if db.engine != nil {
-		return engine, nil
+		return db.engine, nil
 	}
 
 	var engine *xorm.Engine
