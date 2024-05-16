@@ -198,6 +198,8 @@ curl --request PUT \
   --data '{ "updates": { "auth": { "oauth_allow_insecure_email_lookup": "true" }}}'
 ```
 
+Finally, you can also enable it using the UI by going to **Administration -> Authentication -> Auth settings**.
+
 ### Automatic OAuth login
 
 Set to true to attempt login with specific OAuth provider automatically, skipping the login screen.
