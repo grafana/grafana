@@ -61,6 +61,11 @@ type AlertmanagerConfig struct {
 	URL               string
 	TenantID          string
 	BasicAuthPassword string
+
+	DefaultConfig string
+	// PromoteConfig is a flag that determines whether the configuration should be used in the remote Alertmanager.
+	// The same flag is used for promoting state.
+	PromoteConfig bool
 }
 
 func (cfg *AlertmanagerConfig) Validate() error {
@@ -78,7 +83,7 @@ func (cfg *AlertmanagerConfig) Validate() error {
 	return nil
 }
 
-func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn DecryptFn, defaultConfig string, metrics *metrics.RemoteAlertmanager) (*Alertmanager, error) {
+func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn DecryptFn, metrics *metrics.RemoteAlertmanager) (*Alertmanager, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
@@ -90,10 +95,11 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn Decrypt
 	logger := log.New("ngalert.remote.alertmanager")
 
 	mcCfg := &remoteClient.Config{
-		URL:      u,
-		TenantID: cfg.TenantID,
-		Password: cfg.BasicAuthPassword,
-		Logger:   logger,
+		Logger:        logger,
+		Password:      cfg.BasicAuthPassword,
+		TenantID:      cfg.TenantID,
+		URL:           u,
+		PromoteConfig: cfg.PromoteConfig,
 	}
 	mc, err := remoteClient.New(mcCfg, metrics)
 	if err != nil {
@@ -124,7 +130,7 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn Decrypt
 	}
 
 	// Parse the default configuration into a postable config.
-	pCfg, err := notifier.Load([]byte(defaultConfig))
+	pCfg, err := notifier.Load([]byte(cfg.DefaultConfig))
 	if err != nil {
 		return nil, err
 	}
@@ -526,6 +532,10 @@ func (am *Alertmanager) shouldSendConfig(ctx context.Context, config *apimodels.
 	if err != nil {
 		// Log the error and return true so we try to upload our config anyway.
 		am.log.Error("Unable to get the remote Alertmanager configuration for comparison", "err", err)
+		return true
+	}
+
+	if rc.Promoted != am.mimirClient.ShouldPromoteConfig() {
 		return true
 	}
 

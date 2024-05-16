@@ -63,9 +63,10 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 				URL:               testsrv.URL,
 				TenantID:          tenantID,
 				BasicAuthPassword: password,
+				DefaultConfig:     setting.GetAlertmanagerDefaultConfiguration(),
 			}
 			m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-			remoteAM, err := remote.NewAlertmanager(externalAMCfg, notifier.NewFileStore(orgID, kvStore), secretsService.Decrypt, setting.GetAlertmanagerDefaultConfiguration(), m)
+			remoteAM, err := remote.NewAlertmanager(externalAMCfg, notifier.NewFileStore(orgID, kvStore), secretsService.Decrypt, m)
 			require.NoError(t, err)
 
 			// Use both Alertmanager implementations in the forked Alertmanager.
