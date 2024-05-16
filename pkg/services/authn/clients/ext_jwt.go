@@ -28,11 +28,14 @@ var (
 	errExtJWTInvalid = errutil.Unauthorized(
 		"ext.jwt.invalid", errutil.WithPublicMessage("Failed to verify JWT"),
 	)
-	errEtxJWTMismatchedNamespaceClaims = errutil.Unauthorized(
-		"ext.jwt.namespace_mismatch", errutil.WithPublicMessage("Namespace claims didn't match between id token and access token"),
+	errExtJWTInvalidSubject = errutil.Unauthorized(
+		"ext.jwt.invalid-subject", errutil.WithPublicMessage("Invalid token subject"),
 	)
-	errEtxJWTDisallowedNamespaceClaim = errutil.Unauthorized(
-		"ext.jwt.namespace_mismatch", errutil.WithPublicMessage("Namespace claim doesn't allow access to requested namespace"),
+	errExtJWTMisMatchedNamespaceClaims = errutil.Unauthorized(
+		"ext.jwt.namespace-mismatch", errutil.WithPublicMessage("Namespace claims didn't match between id token and access token"),
+	)
+	errExtJWTDisallowedNamespaceClaim = errutil.Unauthorized(
+		"ext.jwt.namespace-disallowed", errutil.WithPublicMessage("Namespace claim doesn't allow access to requested namespace"),
 	)
 )
 
@@ -98,17 +101,17 @@ func (s *ExtendedJWT) authenticateAsUser(
 ) (*authn.Identity, error) {
 	// Only allow id tokens signed for namespace configured for this instance.
 	if allowedNamespace := s.namespaceMapper(s.getDefaultOrgID()); idTokenClaims.Rest.Namespace != allowedNamespace {
-		return nil, errEtxJWTDisallowedNamespaceClaim.Errorf("unexpected id token namespace: %s", idTokenClaims.Rest.Namespace)
+		return nil, errExtJWTDisallowedNamespaceClaim.Errorf("unexpected id token namespace: %s", idTokenClaims.Rest.Namespace)
 	}
 
 	// Allow access tokens with either the same namespace as the validated id token namespace or wildcard (`*`).
 	if !accessTokenClaims.Rest.NamespaceMatches(idTokenClaims.Rest.Namespace) {
-		return nil, errEtxJWTMismatchedNamespaceClaims.Errorf("unexpected access token namespace: %s", accessTokenClaims.Rest.Namespace)
+		return nil, errExtJWTMisMatchedNamespaceClaims.Errorf("unexpected access token namespace: %s", accessTokenClaims.Rest.Namespace)
 	}
 
 	accessID, err := authn.ParseNamespaceID(accessTokenClaims.Subject)
 	if err != nil {
-		return nil, errExtJWTInvalid.Errorf("failed to parse access token subject: %w", err)
+		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", accessID.String())
 	}
 
 	if !accessID.IsNamespace(authn.NamespaceAccessPolicy) {
@@ -121,7 +124,7 @@ func (s *ExtendedJWT) authenticateAsUser(
 	}
 
 	if !userID.IsNamespace(authn.NamespaceUser) {
-		return nil, errExtJWTInvalid.Errorf("unexpected user identity: %s", userID.String())
+		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", userID.String())
 	}
 
 	return &authn.Identity{
@@ -141,7 +144,7 @@ func (s *ExtendedJWT) authenticateAsUser(
 func (s *ExtendedJWT) authenticateAsService(claims *authlib.Claims[authlib.AccessTokenClaims]) (*authn.Identity, error) {
 	// Allow access tokens with that has a wildcard namespace or a namespace matching this instance.
 	if allowedNamespace := s.namespaceMapper(s.getDefaultOrgID()); !claims.Rest.NamespaceMatches(allowedNamespace) {
-		return nil, errEtxJWTDisallowedNamespaceClaim.Errorf("unexpected access token namespace: %s", claims.Rest.Namespace)
+		return nil, errExtJWTDisallowedNamespaceClaim.Errorf("unexpected access token namespace: %s", claims.Rest.Namespace)
 	}
 
 	id, err := authn.ParseNamespaceID(claims.Subject)
@@ -150,7 +153,7 @@ func (s *ExtendedJWT) authenticateAsService(claims *authlib.Claims[authlib.Acces
 	}
 
 	if !id.IsNamespace(authn.NamespaceAccessPolicy) {
-		return nil, errExtJWTInvalid.Errorf("Failed to parse sub: %s", "invalid subject format")
+		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", id.String())
 	}
 
 	return &authn.Identity{

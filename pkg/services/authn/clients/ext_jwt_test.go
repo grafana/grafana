@@ -274,18 +274,18 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			},
 		},
 		{
-			name:        "should return error when id token namespece is a wilrdcard",
+			name:        "should return error when id token namespace is a wildcard",
 			accessToken: &validAccessTokenClaims,
 			idToken:     &invalidWildcardNamespaceIDTokenClaims,
 			orgID:       1,
-			wantErr:     errEtxJWTDisallowedNamespaceClaim,
+			wantErr:     errExtJWTDisallowedNamespaceClaim,
 		},
 		{
 			name:        "should return error when id token has wildcard namespace",
 			accessToken: &validAccessTokenClaims,
 			idToken:     &invalidNamespaceIDTokenClaims,
 			orgID:       1,
-			wantErr:     errEtxJWTDisallowedNamespaceClaim,
+			wantErr:     errExtJWTDisallowedNamespaceClaim,
 		},
 
 		{
