@@ -4,6 +4,7 @@ DELETE FROM {{ .Ident "entity_labels" }}
     {{ if gt (len .KeepLabels) 0 }}
       AND {{ .Ident "label" }} NOT IN
         (
+          {{ $this := . }}
           {{ $addComma := false }}
           {{ range .KeepLabels }}
             {{ if $addComma }}
@@ -11,7 +12,7 @@ DELETE FROM {{ .Ident "entity_labels" }}
             {{ end }}
             {{ $addComma = true }}
 
-            {{ .Arg . }}
+            {{ $this.Arg . }}
           {{ end }}
         )
     {{ end }}

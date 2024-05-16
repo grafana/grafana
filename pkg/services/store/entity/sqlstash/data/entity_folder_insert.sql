@@ -11,7 +11,8 @@ INSERT INTO {{ .Ident "entity_folder" }}
     {{ .Ident "detached" }}
   )
 
-  VALUES (
+  VALUES
+    {{ $this := . }}
     {{ $addComma := false }}
     {{ range .Items }}
       {{ if $addComma }}
@@ -20,16 +21,15 @@ INSERT INTO {{ .Ident "entity_folder" }}
       {{ $addComma = true }}
 
       (
-        {{ .Arg .GUID }},
-        {{ .Arg .Namespace }},
-        {{ .Arg .UID }},
-        {{ .Arg .SlugPath }},
-        {{ .Arg .JS }},
-        {{ .Arg .Depth }},
-        {{ .Arg .Left }},
-        {{ .Arg .Right }},
-        {{ .Arg .Detached }}
+        {{ $this.Arg .GUID }},
+        {{ $this.Arg .Namespace }},
+        {{ $this.Arg .UID }},
+        {{ $this.Arg .SlugPath }},
+        {{ $this.Arg .JS }},
+        {{ $this.Arg .Depth }},
+        {{ $this.Arg .Left }},
+        {{ $this.Arg .Right }},
+        {{ $this.Arg .Detached }}
       )
     {{ end }}
-  )
 ;

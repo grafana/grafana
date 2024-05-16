@@ -123,19 +123,25 @@ type sqlEntityLabelsDeleteRequest struct {
 
 type sqlKindVersionLockRequest struct {
 	*sqltemplate.SQLTemplate
-	*entity.Key
+	Group           string
+	GroupVersion    string
+	Resource        string
 	ResourceVersion int64
 }
 
 type sqlKindVersionIncRequest struct {
 	*sqltemplate.SQLTemplate
-	*entity.Key
+	Group           string
+	GroupVersion    string
+	Resource        string
 	ResourceVersion int64
 }
 
 type sqlKindVersionInsertRequest struct {
 	*sqltemplate.SQLTemplate
-	*entity.Key
+	Group        string
+	GroupVersion string
+	Resource     string
 }
 
 // entity and entity_history tables requests.
@@ -338,19 +344,23 @@ func tmplDBExec(tx db.Tx, tmpl *template.Template, data sqltemplate.SQLTemplateI
 
 // common SQL routines shared among several methods.
 
-func kindVersionAtomicInc(tx db.Tx, d sqltemplate.Dialect, k *entity.Key) (newVersion int64, err error) {
+func kindVersionAtomicInc(tx db.Tx, d sqltemplate.Dialect, group, groupVersion, resource string) (newVersion int64, err error) {
 	// 1. Lock the kind and get the latest version
-	lockReq := sqlKindVersionLockRequest{
-		SQLTemplate: sqltemplate.New(d),
-		Key:         k,
+	lockReq := &sqlKindVersionLockRequest{
+		SQLTemplate:  sqltemplate.New(d),
+		Group:        group,
+		GroupVersion: groupVersion,
+		Resource:     resource,
 	}
 	err = tmplDBQueryRow(tx, sqlKindVersionLock, lockReq)
 	if errors.Is(err, sql.ErrNoRows) {
 		// if there wasn't a row associated with the given kind, we create one
 		// with version 1
 		insReq := sqlKindVersionInsertRequest{
-			SQLTemplate: sqltemplate.New(d),
-			Key:         k,
+			SQLTemplate:  sqltemplate.New(d),
+			Group:        group,
+			GroupVersion: groupVersion,
+			Resource:     resource,
 		}
 		if _, err = tmplDBExec(tx, sqlKindVersionInsert, insReq); err != nil {
 			return 0, fmt.Errorf("insert into kind_version: %w", err)
@@ -365,7 +375,9 @@ func kindVersionAtomicInc(tx db.Tx, d sqltemplate.Dialect, k *entity.Key) (newVe
 
 	incReq := sqlKindVersionIncRequest{
 		SQLTemplate:     sqltemplate.New(d),
-		Key:             k,
+		Group:           group,
+		GroupVersion:    groupVersion,
+		Resource:        resource,
 		ResourceVersion: lockReq.ResourceVersion,
 	}
 	if _, err = tmplDBExec(tx, sqlKindVersionInc, incReq); err != nil {

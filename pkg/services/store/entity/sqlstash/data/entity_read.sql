@@ -74,6 +74,5 @@ SELECT
 
     {{ if .SelectForUpdate }}
       {{ .SelectFor "UPDATE" }}
-      {{/*  */}}
     {{ end }}
 ;
