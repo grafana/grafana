@@ -24,7 +24,7 @@ export function addRootReducer(reducers: any) {
 const listenerMiddleware = createListenerMiddleware();
 const extraMiddleware: Middleware[] = [];
 
-export function addExtraMiddleware(middleware: any) {
+export function addExtraMiddleware(middleware: Middleware) {
   extraMiddleware.push(middleware);
 }
 
