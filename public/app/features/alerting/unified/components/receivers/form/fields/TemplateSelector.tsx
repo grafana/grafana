@@ -83,13 +83,13 @@ type TemplateFieldOption = 'Existing' | 'Custom';
  */
 function parseTemplates(templatesString: string): Template[] {
   const result: Template[] = [];
-  const regex = /{{-?\s*define "(.*?)"\s*-?}}(.*?){{-?\s*end\s*-?}}/gs;
+  const regex = /({{-?\s*define "(.*?)"\s*-?}}(.*?){{-?\s*end\s*-?}})/gs;
 
   let match;
   while ((match = regex.exec(templatesString)) !== null) {
     result.push({
-      name: match[1],
-      content: match[2],
+      name: match[2],
+      content: match[1],
     });
   }
 

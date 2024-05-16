@@ -23,21 +23,22 @@ describe('getTemplateOptions function', () => {
         value: {
           name: 'template1',
           content:
-            '{{ len .Alerts.Firing }} firing alert(s), {{ len .Alerts.Resolved }} resolved alert(s) this is the last one',
+            '{{ define "template1" }}{{ len .Alerts.Firing }} firing alert(s), {{ len .Alerts.Resolved }} resolved alert(s) this is the last one{{ end }}',
         },
       },
       {
         label: 'email.subject',
         value: {
           name: 'email.subject',
-          content: '{{ len .Alerts.Firing }} firing alert(s), {{ len .Alerts.Resolved }} resolved alert(s)',
+          content:
+            '{{ define "email.subject" }}{{ len .Alerts.Firing }} firing alert(s), {{ len .Alerts.Resolved }} resolved alert(s){{ end }}',
         },
       },
       {
         label: 'template_with_minus',
         value: {
           name: 'template_with_minus',
-          content: '{{ .Annotations.summary }}',
+          content: '{{ define "template_with_minus" -}}{{ .Annotations.summary }}{{- end }}',
         },
       },
     ]);
