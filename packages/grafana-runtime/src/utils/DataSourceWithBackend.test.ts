@@ -95,6 +95,7 @@ describe('DataSourceWithBackend', () => {
             {
               "applyTemplateVariablesCalled": true,
               "datasource": {
+                "apiVersion": undefined,
                 "type": "dummy",
                 "uid": "abc",
               },
@@ -113,6 +114,7 @@ describe('DataSourceWithBackend', () => {
             },
             {
               "datasource": {
+                "apiVersion": undefined,
                 "type": "sample",
                 "uid": "<mockuid>",
               },
@@ -163,6 +165,7 @@ describe('DataSourceWithBackend', () => {
             {
               "applyTemplateVariablesCalled": true,
               "datasource": {
+                "apiVersion": undefined,
                 "type": "dummy",
                 "uid": "abc",
               },
@@ -237,6 +240,7 @@ describe('DataSourceWithBackend', () => {
             {
               "applyTemplateVariablesCalled": true,
               "datasource": {
+                "apiVersion": undefined,
                 "type": "dummy",
                 "uid": "abc",
               },
@@ -249,6 +253,7 @@ describe('DataSourceWithBackend', () => {
             },
             {
               "datasource": {
+                "apiVersion": undefined,
                 "type": "sample",
                 "uid": "<mockuid>",
               },
@@ -379,6 +384,7 @@ describe('DataSourceWithBackend', () => {
             {
               "applyTemplateVariablesCalled": true,
               "datasource": {
+                "apiVersion": undefined,
                 "type": "dummy",
                 "uid": "abc",
               },
