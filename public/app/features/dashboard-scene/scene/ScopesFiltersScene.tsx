@@ -15,7 +15,8 @@ import { ScopedResourceClient } from 'app/features/apiserver/client';
 
 export interface Node {
   item: ScopeTreeItemSpec;
-  isScope: boolean;
+  hasChildren: boolean;
+  isSelectable: boolean;
   children: Record<string, Node>;
 }
 
@@ -79,7 +80,8 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
       ).reduce<Record<string, Node>>((acc, item) => {
         acc[item.nodeId] = {
           item,
-          isScope: item.nodeType === 'leaf',
+          hasChildren: item.nodeType === 'container',
+          isSelectable: item.linkType === 'scope',
           children: {},
         };
 
@@ -107,7 +109,15 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
     }
   }
 
-  public async expandNode(path: string[]) {
+  public async toggleNodeExpand(path: string[]) {
+    const isExpanded = this.state.expandedNodes.includes(path[path.length - 1]);
+
+    if (isExpanded) {
+      path.splice(path.length - 1, 1);
+
+      return this.setState({ expandedNodes: path });
+    }
+
     let nodes = { ...this.state.nodes };
     let currentLevel = nodes;
 
@@ -137,7 +147,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
     });
   }
 
-  public async toggleScope(linkId: string) {
+  public async toggleScopeSelect(linkId: string) {
     let scopes = [...this.state.scopes];
     const selectedIdx = scopes.findIndex((scope) => scope.metadata.name === linkId);
 
@@ -176,8 +186,8 @@ export function ScopesFiltersSceneRenderer({ model }: SceneComponentProps<Scopes
   const parentState = model.parent!.useState();
   const isViewing = 'isViewing' in parentState ? !!parentState.isViewing : false;
 
-  const handleNodeExpand = (path: string[]) => model.expandNode(path);
-  const handleScopeToggle = (linkId: string) => model.toggleScope(linkId);
+  const handleNodeExpandToggle = (path: string[]) => model.toggleNodeExpand(path);
+  const handleScopeSelectToggle = (linkId: string) => model.toggleScopeSelect(linkId);
 
   return (
     <Toggletip
@@ -188,8 +198,8 @@ export function ScopesFiltersSceneRenderer({ model }: SceneComponentProps<Scopes
           nodes={nodes}
           expandedNodes={expandedNodes}
           scopes={scopes}
-          onNodeExpand={handleNodeExpand}
-          onScopeToggle={handleScopeToggle}
+          onNodeExpandToggle={handleNodeExpandToggle}
+          onScopeSelectToggle={handleScopeSelectToggle}
         />
       }
       footer={'Open advanced scope selector'}
@@ -206,8 +216,8 @@ export interface ScopesTreeLevelProps {
   nodes: Record<string, Node>;
   expandedNodes: string[];
   scopes: Scope[];
-  onNodeExpand: (path: string[]) => void;
-  onScopeToggle: (linkId: string) => void;
+  onNodeExpandToggle: (path: string[]) => void;
+  onScopeSelectToggle: (linkId: string) => void;
 }
 
 export function ScopesTreeLevel({
@@ -216,8 +226,8 @@ export function ScopesTreeLevel({
   nodes,
   expandedNodes,
   scopes,
-  onNodeExpand,
-  onScopeToggle,
+  onNodeExpandToggle,
+  onScopeSelectToggle,
 }: ScopesTreeLevelProps) {
   const styles = useStyles2(getStyles);
 
@@ -225,17 +235,26 @@ export function ScopesTreeLevel({
     return null;
   }
 
+  const anyChildExpanded = Object.values(nodes).some((node) => expandedNodes.includes(node.item.nodeId));
+
   return (
     <div role="tree" className={path.length > 0 ? styles.innerLevelContainer : undefined}>
       {Object.values(nodes).map((node) => {
         const {
           item: { nodeId, linkId },
-          isScope,
+          isSelectable,
+          hasChildren,
           children,
         } = node;
-        const nodePath = [...path, nodeId];
+
         const isExpanded = expandedNodes.includes(nodeId);
-        const isSelected = isScope && !!scopes.find((scope) => scope.metadata.name === linkId);
+
+        if (anyChildExpanded && !isExpanded) {
+          return null;
+        }
+
+        const nodePath = [...path, nodeId];
+        const isSelected = isSelectable && !!scopes.find((scope) => scope.metadata.name === linkId);
 
         return (
           <div
@@ -243,31 +262,30 @@ export function ScopesTreeLevel({
             role="treeitem"
             aria-selected={isExpanded}
             tabIndex={0}
-            className={cx(styles.item, isScope && styles.itemScope)}
+            className={cx(styles.item, isSelectable && styles.itemScope)}
             onClick={(evt) => {
               evt.stopPropagation();
-              onNodeExpand(nodePath);
+              onNodeExpandToggle(nodePath);
             }}
             onKeyDown={(evt) => {
               evt.stopPropagation();
-              onNodeExpand(nodePath);
+              onNodeExpandToggle(nodePath);
             }}
           >
-            {!isScope ? (
-              <Icon className={styles.icon} name="folder" />
-            ) : (
+            {isSelectable && (
               <Checkbox
                 className={styles.checkbox}
                 checked={isSelected}
                 onChange={(evt) => {
                   evt.stopPropagation();
-
                   if (linkId) {
-                    onScopeToggle(linkId);
+                    onScopeSelectToggle(linkId);
                   }
                 }}
               />
             )}
+
+            {hasChildren && <Icon className={styles.icon} name={isExpanded ? 'folder-open' : 'folder'} />}
 
             <span>{node.item.title}</span>
 
@@ -277,8 +295,8 @@ export function ScopesTreeLevel({
               nodes={children}
               expandedNodes={expandedNodes}
               scopes={scopes}
-              onNodeExpand={onNodeExpand}
-              onScopeToggle={onScopeToggle}
+              onNodeExpandToggle={onNodeExpandToggle}
+              onScopeSelectToggle={onScopeSelectToggle}
             />
           </div>
         );
