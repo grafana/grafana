@@ -35,7 +35,10 @@ export const useFolderGroupOptions = (folderUid: string, enableProvisionedGroups
         namespace: folderUid,
         rulerConfig: grafanaRulerConfig,
       },
-      { refetchOnMountOrArgChange: true }
+      {
+        skip: !folderUid,
+        refetchOnMountOrArgChange: true,
+      }
     );
 
   // There should be only one entry in the rulerNamespace object
