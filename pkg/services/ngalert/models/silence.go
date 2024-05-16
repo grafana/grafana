@@ -2,6 +2,7 @@ package models
 
 import (
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
+	"golang.org/x/exp/maps"
 
 	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/alerting/notify"
@@ -45,7 +46,7 @@ type SilenceMetadata struct {
 	RuleUID     string
 	RuleTitle   string
 	FolderUID   string
-	Permissions map[SilencePermission]struct{}
+	Permissions SilencePermissionSet
 }
 
 type SilencePermission string
@@ -55,3 +56,35 @@ const (
 	SilencePermissionCreate SilencePermission = "create"
 	SilencePermissionWrite  SilencePermission = "write"
 )
+
+// SilencePermissions returns all possible silence permissions.
+func SilencePermissions() [3]SilencePermission {
+	return [3]SilencePermission{
+		SilencePermissionRead,
+		SilencePermissionCreate,
+		SilencePermissionWrite,
+	}
+}
+
+// SilencePermissionSet is a helper type for managing a set of silence permissions.
+type SilencePermissionSet map[SilencePermission]bool
+
+// Clone returns a deep copy of the permission set.
+func (p SilencePermissionSet) Clone() SilencePermissionSet {
+	return maps.Clone(p)
+}
+
+// AllSet returns true if all possible permissions are set.
+func (p SilencePermissionSet) AllSet() bool {
+	for _, permission := range SilencePermissions() {
+		if _, ok := p[permission]; !ok {
+			return false
+		}
+	}
+	return true
+}
+
+// Has returns true if the given permission is allowed in the set.
+func (p SilencePermissionSet) Has(permission SilencePermission) bool {
+	return p[permission]
+}

@@ -35,7 +35,7 @@ type SilenceAccessControlService interface {
 	AuthorizeReadSilence(ctx context.Context, user identity.Requester, silence *models.Silence) error
 	AuthorizeCreateSilence(ctx context.Context, user identity.Requester, silence *models.Silence) error
 	AuthorizeUpdateSilence(ctx context.Context, user identity.Requester, silence *models.Silence) error
-	SilenceAccess(ctx context.Context, user identity.Requester, silences []*models.Silence) (map[*models.Silence]map[models.SilencePermission]struct{}, error)
+	SilenceAccess(ctx context.Context, user identity.Requester, silences []*models.Silence) (map[*models.Silence]models.SilencePermissionSet, error)
 }
 
 // SilenceStore is the interface for storing and retrieving silences. Currently, this is implemented by

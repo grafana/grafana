@@ -1,7 +1,7 @@
 package api
 
 import (
-	"strings"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -20,8 +20,15 @@ func SilenceToGettableGrafanaSilence(s *models.SilenceWithMetadata) definitions.
 			FolderUID:   s.Metadata.FolderUID,
 			Permissions: make(map[definitions.SilencePermission]struct{}, len(s.Metadata.Permissions)),
 		}
-		for perm := range s.Metadata.Permissions {
-			gettable.Metadata.Permissions[SilencePermissionToAPI(perm)] = struct{}{}
+		for _, permission := range models.SilencePermissions() {
+			if s.Metadata.Permissions.Has(permission) {
+				p, err := SilencePermissionToAPI(permission)
+				if err != nil {
+					// Skip unknown permissions in response.
+					continue
+				}
+				gettable.Metadata.Permissions[p] = struct{}{}
+			}
 		}
 	}
 	return gettable
@@ -45,15 +52,15 @@ func PostableSilenceToSilence(s definitions.PostableSilence) models.Silence {
 	}
 }
 
-func SilencePermissionToAPI(p models.SilencePermission) definitions.SilencePermission {
-	switch s := strings.ToLower(string(p)); s {
-	case "read":
-		return definitions.SilencePermissionRead
-	case "create":
-		return definitions.SilencePermissionCreate
-	case "write":
-		return definitions.SilencePermissionWrite
+func SilencePermissionToAPI(p models.SilencePermission) (definitions.SilencePermission, error) {
+	switch p {
+	case models.SilencePermissionRead:
+		return definitions.SilencePermissionRead, nil
+	case models.SilencePermissionCreate:
+		return definitions.SilencePermissionCreate, nil
+	case models.SilencePermissionWrite:
+		return definitions.SilencePermissionWrite, nil
 	default:
-		return ""
+		return "", fmt.Errorf("unknown permission: %s", p)
 	}
 }

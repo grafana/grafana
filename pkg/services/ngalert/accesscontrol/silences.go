@@ -123,15 +123,15 @@ func (s SilenceService) FilterByAccess(ctx context.Context, user identity.Reques
 	}
 
 	result := make([]*models.Silence, 0, len(silences))
-	namespacesByAccess := make(map[string]bool) // caches results of permissions check for each namespace to avoid repeated checks for the same folder
+	accessCacheByFolder := make(map[string]bool)
 	for _, silWithFolder := range silencesWithFolders {
-		hasAccess, ok := namespacesByAccess[silWithFolder.folderUID]
+		hasAccess, ok := accessCacheByFolder[silWithFolder.folderUID]
 		if !ok {
 			hasAccess = s.authorizeReadSilence(ctx, user, silWithFolder) == nil
 
 			// Cache non-empty namespaces to avoid repeated checks for the same folder.
 			if silWithFolder.folderUID != "" {
-				namespacesByAccess[silWithFolder.folderUID] = hasAccess
+				accessCacheByFolder[silWithFolder.folderUID] = hasAccess
 			}
 		}
 		if hasAccess {
@@ -284,19 +284,24 @@ func (s SilenceService) authorizeUpdateSilence(ctx context.Context, user identit
 	})
 }
 
-func (s SilenceService) SilenceAccess(ctx context.Context, user identity.Requester, silences []*models.Silence) (map[*models.Silence]map[models.SilencePermission]struct{}, error) {
-	canReadAll, readAnyErr := s.authorizeReadSilencePreConditions(ctx, user)
-	if readAnyErr != nil {
-		// Read permission is required for all actions.
-		// If user can't read any silences, we don't need to check other permissions.
-		return toPermissions(silences), nil
+func (s SilenceService) SilenceAccess(ctx context.Context, user identity.Requester, silences []*models.Silence) (map[*models.Silence]models.SilencePermissionSet, error) {
+	basePerms := make(models.SilencePermissionSet, 3)
+	canReadAll, err := s.authorizeReadSilencePreConditions(ctx, user)
+	if err != nil || canReadAll {
+		basePerms[models.SilencePermissionRead] = err == nil
+	}
+	canUpdateAny, err := s.authorizeUpdateSilencePreConditions(ctx, user)
+	if err != nil || canUpdateAny {
+		basePerms[models.SilencePermissionWrite] = err == nil
+	}
+	canCreateAny, err := s.authorizeCreateSilencePreConditions(ctx, user)
+	if err != nil || canCreateAny {
+		basePerms[models.SilencePermissionCreate] = err == nil
 	}
 
-	canUpdateAny, updateErr := s.authorizeUpdateSilencePreConditions(ctx, user)
-	canCreateAny, createErr := s.authorizeCreateSilencePreConditions(ctx, user)
-	if canReadAll && canUpdateAny && canCreateAny {
-		// Shortcut for the case when user has full permissions. We don't need to hit the database to find folder UIDs.
-		return toPermissions(silences, models.SilencePermissionRead, models.SilencePermissionWrite, models.SilencePermissionCreate), nil
+	if basePerms.AllSet() {
+		// Shortcut for the case when all permissions are known based on preconditions. We don't need to hit the database to find folder UIDs.
+		return withPermissionSet(silences, basePerms), nil
 	}
 
 	silencesWithFolders, err := s.withFolders(ctx, user.GetOrgID(), silences...)
@@ -304,41 +309,35 @@ func (s SilenceService) SilenceAccess(ctx context.Context, user identity.Request
 		return nil, err
 	}
 
-	result := make(map[*models.Silence]map[models.SilencePermission]struct{}, len(silences))
-	namespacesByAccess := make(map[string]map[models.SilencePermission]struct{}) // caches results of permissions check for each namespace to avoid repeated checks for the same folder
+	result := make(map[*models.Silence]models.SilencePermissionSet, len(silences))
+	accessCacheByFolder := make(map[string]models.SilencePermissionSet)
 	for _, silWithFolder := range silencesWithFolders {
-		if perms, ok := namespacesByAccess[silWithFolder.folderUID]; ok {
-			result[silWithFolder.Silence] = maps.Clone(perms)
+		if perms, ok := accessCacheByFolder[silWithFolder.folderUID]; ok {
+			result[silWithFolder.Silence] = perms.Clone()
 			continue
 		}
 
-		permSet := make(map[models.SilencePermission]struct{})
-		if !canReadAll {
-			if err := s.authorizeReadSilence(ctx, user, silWithFolder); err != nil {
-				// Read permission is required for all actions. If user can't read the silence, we don't need to check other permissions.
-				result[silWithFolder.Silence] = permSet
-				namespacesByAccess[silWithFolder.folderUID] = permSet
-				continue
-			}
+		permSet := basePerms.Clone()
+		if _, ok := permSet[models.SilencePermissionRead]; !ok {
+			err := s.authorizeReadSilence(ctx, user, silWithFolder)
+			permSet[models.SilencePermissionRead] = err == nil
 		}
 
-		permSet[models.SilencePermissionRead] = struct{}{}
-		if canUpdateAny {
-			permSet[models.SilencePermissionWrite] = struct{}{}
-		} else if updateErr == nil {
-			if err := s.authorizeUpdateSilence(ctx, user, silWithFolder); err == nil {
-				permSet[models.SilencePermissionWrite] = struct{}{}
-			}
+		if _, ok := permSet[models.SilencePermissionWrite]; !ok {
+			err := s.authorizeUpdateSilence(ctx, user, silWithFolder)
+			permSet[models.SilencePermissionWrite] = err == nil
 		}
-		if canCreateAny {
-			permSet[models.SilencePermissionCreate] = struct{}{}
-		} else if createErr == nil {
-			if err := s.authorizeCreateSilence(ctx, user, silWithFolder); err == nil {
-				permSet[models.SilencePermissionCreate] = struct{}{}
-			}
+
+		if _, ok := permSet[models.SilencePermissionCreate]; !ok {
+			err := s.authorizeCreateSilence(ctx, user, silWithFolder)
+			permSet[models.SilencePermissionCreate] = err == nil
 		}
+
 		result[silWithFolder.Silence] = permSet
-		namespacesByAccess[silWithFolder.folderUID] = permSet
+		// Cache non-empty namespaces to avoid repeated checks for the same folder.
+		if silWithFolder.folderUID != "" {
+			accessCacheByFolder[silWithFolder.folderUID] = permSet
+		}
 	}
 	return result, nil
 }
@@ -373,14 +372,10 @@ func (s SilenceService) withFolders(ctx context.Context, orgID int64, silences .
 	return result, nil
 }
 
-func toPermissions(silences []*models.Silence, perms ...models.SilencePermission) map[*models.Silence]map[models.SilencePermission]struct{} {
-	permSet := make(map[models.SilencePermission]struct{}, len(perms))
-	for _, perm := range perms {
-		permSet[perm] = struct{}{}
-	}
-	result := make(map[*models.Silence]map[models.SilencePermission]struct{}, len(silences))
+func withPermissionSet(silences []*models.Silence, perms models.SilencePermissionSet) map[*models.Silence]models.SilencePermissionSet {
+	result := make(map[*models.Silence]models.SilencePermissionSet, len(silences))
 	for _, silence := range silences {
-		result[silence] = maps.Clone(permSet)
+		result[silence] = perms.Clone()
 	}
 	return result
 }
