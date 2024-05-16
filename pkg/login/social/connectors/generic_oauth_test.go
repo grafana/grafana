@@ -427,6 +427,19 @@ func TestUserInfoSearchesForEmailAndOrgRoles(t *testing.T) {
 			ExpectedEmail:       "john.doe@example.com",
 			ExpectedOrgRoles:    map[int64]org.RoleType{4: org.RoleViewer, 5: org.RoleEditor},
 		},
+		{
+			Name:         "Give AutoAssignOrgRole in AutoAssignOrgId when OrgMapping returns no OrgRoles",
+			ResponseBody: map[string]any{},
+			OAuth2Extra: map[string]any{
+				// { "email": "john.doe@example.com",
+				//   "info": { "roles": [ "dev", "engineering" ] }}
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg"},
+			RoleAttributePath: "",
+			OrgAttributePath:  "info.roles",
+			OrgMapping:        []string{"foo:org_dev:Viewer", "bar:org_engineering:Editor"},
+			ExpectedEmail:     "john.doe@example.com",
+			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleViewer},
+		},
 	}
 
 	cfg := &setting.Cfg{
