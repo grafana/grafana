@@ -18,7 +18,7 @@ weight: 200
 
 This topic describes how to set up and configure Grafana Teams.
 
-For a tutorial on working with Teams see [Create users and teams](https://grafana.com/tutorials/create-users-and-teams/).
+For a tutorial on working with Teams, refer to [Create users and teams](https://grafana.com/tutorials/create-users-and-teams/).
 
 ## Before you begin
 
