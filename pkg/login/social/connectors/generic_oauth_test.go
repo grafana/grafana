@@ -413,6 +413,20 @@ func TestUserInfoSearchesForEmailAndOrgRoles(t *testing.T) {
 			ExpectedEmail:       "john.doe@example.com",
 			ExpectedError:       errRoleAttributeStrictViolation,
 		},
+		{
+			Name:         "Should get orgs from API when not in token",
+			ResponseBody: map[string]any{"anotherInfo": map[string]any{"roles": []string{"fromApiOne", "fromApiTwo"}}},
+			OAuth2Extra: map[string]any{
+				// { "email": "john.doe@example.com",
+				//   "info": { "roles": [ "dev", "engineering" ] }}
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg"},
+			RoleAttributePath:   "",
+			RoleAttributeStrict: true,
+			OrgAttributePath:    "anotherInfo.roles",
+			OrgMapping:          []string{"fromApiOne:org_dev:Viewer", "fromApiTwo:org_engineering:Editor"},
+			ExpectedEmail:       "john.doe@example.com",
+			ExpectedOrgRoles:    map[int64]org.RoleType{4: org.RoleViewer, 5: org.RoleEditor},
+		},
 	}
 
 	cfg := &setting.Cfg{
