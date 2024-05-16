@@ -293,7 +293,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			accessToken: &validAccessTokenClaims,
 			idToken:     &invalidSubjectIDTokenClaims,
 			orgID:       1,
-			wantErr:     errExtJWTInvalid,
+			wantErr:     errExtJWTInvalidSubject,
 		},
 
 		{
@@ -313,7 +313,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				},
 			},
 			orgID:   1,
-			wantErr: errExtJWTInvalid,
+			wantErr: errExtJWTInvalidSubject,
 		},
 	}
 
