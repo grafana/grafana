@@ -126,7 +126,7 @@ role_attribute_path = contains(groups[*], 'admin') && 'Admin' || 'None'
 ```
 You can also use a terraform script as shown in the following example:
 
-```terraform
+```hcl
 terraform {  
   required_providers {  
     grafana = {  
