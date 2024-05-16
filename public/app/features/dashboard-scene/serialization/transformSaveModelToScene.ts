@@ -1,6 +1,6 @@
 import { uniqueId } from 'lodash';
 
-import { DataFrameDTO, DataFrameJSON, TypedVariableModel } from '@grafana/data';
+import { DataFrameDTO, DataFrameJSON, TypedVariableModel, UrlQueryMap } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   VizPanel,
@@ -29,6 +29,7 @@ import {
   GroupByVariable,
   AdHocFiltersVariable,
 } from '@grafana/scenes';
+import store from 'app/core/store';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardDTO } from 'app/types';
 
@@ -48,6 +49,7 @@ import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { RowActions } from '../scene/row-actions/RowActions';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
+import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { DashboardInteractions } from '../utils/interactions';
 import {
   getCurrentValueForOldIntervalModel,
@@ -278,6 +280,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       registerDashboardMacro,
       registerPanelInteractionsReporter,
       new behaviors.LiveNowTimer({ enabled: oldModel.liveNow }),
+      preserveFiltersAndGroupByUrl,
     ],
     $data: new DashboardDataLayerSet({ annotationLayers, alertStatesLayer }),
     controls: new DashboardControls({
@@ -572,5 +575,40 @@ function trackIfEmpty(grid: SceneGridLayout) {
 
   return () => {
     sub.unsubscribe();
+  };
+}
+
+/**
+ * Behavior that will capture currently selecteg filters and group by dimensions and save them to local storage,
+ * so that they can be applied when the next dashboard with filters and group by is loaded.
+ * It's working only for dashboards that use filters created automatically for the default data source that supports filtering (newDashboardWithFiltersAndGroupBy feature toggle)
+ */
+function preserveFiltersAndGroupByUrl(scene: DashboardScene) {
+  if (!config.featureToggles.newDashboardWithFiltersAndGroupBy) {
+    return;
+  }
+
+  return () => {
+    const variables = dashboardSceneGraph.getFilterAndGroupByVariables(scene);
+    if (variables.length === 0) {
+      return;
+    }
+    const urlStates: UrlQueryMap = variables.reduce((acc, v) => {
+      // @ts-ignore - accessing protected property
+      const urlState = v['_urlSync'].getUrlState();
+      return {
+        ...acc,
+        ...urlState,
+      };
+    }, {});
+
+    const nonEmptyUrlStates = Object.fromEntries(
+      Object.entries(urlStates).filter(([key, value]) => !(Array.isArray(value) && value.length === 0))
+    );
+
+    // If there's anything to preserve, save it to local storage
+    if (Object.keys(nonEmptyUrlStates).length > 0) {
+      store.set('grafana.dashboard.preservedUrlFiltersState', JSON.stringify(nonEmptyUrlStates));
+    }
   };
 }

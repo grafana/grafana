@@ -70,6 +70,7 @@ import { GAEchoBackend } from './core/services/echo/backends/analytics/GABackend
 import { RudderstackBackend } from './core/services/echo/backends/analytics/RudderstackBackend';
 import { GrafanaJavascriptAgentBackend } from './core/services/echo/backends/grafana-javascript-agent/GrafanaJavascriptAgentBackend';
 import { KeybindingSrv } from './core/services/keybindingSrv';
+import store from './core/store';
 import { startMeasure, stopMeasure } from './core/utils/metrics';
 import { initDevFeatures } from './dev';
 import { initAlerting } from './features/alerting/unified/initAlerting';
@@ -255,6 +256,13 @@ export class GrafanaApp {
       };
 
       setReturnToPreviousHook(useReturnToPreviousInternal);
+
+      if (config.featureToggles.newDashboardWithFiltersAndGroupBy) {
+        // Clear the preserved filters and group by dimensions when navigating away from Grafana
+        window.addEventListener('beforeunload', () => {
+          store.delete('grafana.dashboard.preservedUrlFiltersState');
+        });
+      }
 
       const root = createRoot(document.getElementById('reactRoot')!);
       root.render(

@@ -1,4 +1,12 @@
-import { VizPanel, SceneGridRow, sceneGraph, SceneGridLayout, behaviors } from '@grafana/scenes';
+import {
+  VizPanel,
+  SceneGridRow,
+  sceneGraph,
+  SceneGridLayout,
+  behaviors,
+  AdHocFiltersVariable,
+  GroupByVariable,
+} from '@grafana/scenes';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardGridItem } from '../scene/DashboardGridItem';
@@ -128,6 +136,14 @@ export function getNextPanelId(dashboard: DashboardScene): number {
   return max + 1;
 }
 
+export function getFilterAndGroupByVariables(scene: DashboardScene): Array<AdHocFiltersVariable | GroupByVariable> {
+  const vars = scene.state.$variables?.state.variables.filter(
+    (v) => v instanceof AdHocFiltersVariable || v instanceof GroupByVariable
+  ) as Array<AdHocFiltersVariable | GroupByVariable>;
+
+  return vars || [];
+}
+
 // Returns the LibraryVizPanel that corresponds to the given VizPanel if it exists
 export const getLibraryVizPanelFromVizPanel = (vizPanel: VizPanel): LibraryVizPanel | null => {
   if (vizPanel.parent instanceof LibraryVizPanel) {
@@ -149,4 +165,5 @@ export const dashboardSceneGraph = {
   getDataLayers,
   getNextPanelId,
   getCursorSync,
+  getFilterAndGroupByVariables,
 };

@@ -1,7 +1,7 @@
-import { locationUtil } from '@grafana/data';
+import { locationUtil, urlUtil } from '@grafana/data';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
-import { default as localStorageStore } from 'app/core/store';
+import store, { default as localStorageStore } from 'app/core/store';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -16,6 +16,7 @@ import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
 import { buildNewDashboardSaveModel } from '../serialization/buildNewDashboardSaveModel';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 
 import { updateNavModel } from './utils';
 
@@ -175,6 +176,29 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
       const dashboard = await this.loadScene(options);
       if (!dashboard) {
         return;
+      }
+
+      if (config.featureToggles.newDashboardWithFiltersAndGroupBy && Boolean(options.uid)) {
+        // Set preseved filtes from url, only if the
+        const hasFiltersAndGroupBy = dashboardSceneGraph.getFilterAndGroupByVariables(dashboard).length > 0;
+        const preservedQueryParams =
+          store.get('grafana.dashboard.preservedUrlFiltersState') &&
+          JSON.parse(store.get('grafana.dashboard.preservedUrlFiltersState'));
+        if (hasFiltersAndGroupBy && preservedQueryParams) {
+          const currentQueryParams = locationService.getLocation().search;
+
+          // TODO: deduplicate params with the same value, i.e. for a case when someone navigates back to the same dashboard
+          let nextQueryParams = currentQueryParams;
+          if (currentQueryParams) {
+            nextQueryParams += '&' + urlUtil.renderUrl('', preservedQueryParams).slice(1);
+          } else {
+            nextQueryParams = urlUtil.renderUrl('', preservedQueryParams);
+          }
+          console.log('setting preserved filters from url', nextQueryParams);
+          locationService.replace({
+            search: nextQueryParams,
+          });
+        }
       }
 
       if (!(config.publicDashboardAccessToken && dashboard.state.controls?.state.hideTimeControls)) {
