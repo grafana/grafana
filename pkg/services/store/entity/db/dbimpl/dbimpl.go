@@ -56,8 +56,13 @@ func (db *EntityDB) GetEngine() (*xorm.Engine, error) {
 	if engine != nil {
 		return engine, nil
 	}
+
 	db.mu.Lock()
 	defer db.mu.Unlock()
+
+	if db.engine != nil {
+		return db.engine, nil
+	}
 
 	var err error
 
