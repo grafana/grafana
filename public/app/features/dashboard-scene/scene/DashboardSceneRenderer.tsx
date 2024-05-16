@@ -23,7 +23,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   const pageNav = model.getPageNav(location, navIndex);
   const bodyToRender = model.getBodyToRender();
   const navModel = getNavModel(navIndex, 'dashboards/browse');
-  const isHomePage = !meta.url && !meta.slug && !meta.isNew;
+  const isHomePage = !meta.url && !meta.slug && !meta.isNew && !meta.isSnapshot;
 
   if (editview) {
     return (
