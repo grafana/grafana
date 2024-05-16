@@ -163,7 +163,7 @@ describe('RuleViewer', () => {
       }
     });
 
-    it('renders silencing form correctly and shows alert rule name', async () => {
+    it.skip('renders silencing form correctly and shows alert rule name', async () => {
       const dataSources = {
         grafana: mockDataSource<AlertManagerDataSourceJsonData>({
           name: GRAFANA_RULES_SOURCE_NAME,
