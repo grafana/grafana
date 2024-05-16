@@ -68,7 +68,7 @@ const ui = {
     matchersField: byTestId('matcher'),
     matcherName: byPlaceholderText('label'),
     matcherValue: byPlaceholderText('value'),
-    comment: byPlaceholderText('Details about the silence'),
+    comment: byLabelText(/Comment/i),
     matcherOperatorSelect: byLabelText('operator'),
     matcherOperator: (operator: MatcherOperator) => byText(operator, { exact: true }),
     addMatcherButton: byRole('button', { name: 'Add matcher' }),
