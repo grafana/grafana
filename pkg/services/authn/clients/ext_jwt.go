@@ -108,7 +108,7 @@ func (s *ExtendedJWT) authenticateAsUser(
 
 	accessID, err := authn.ParseNamespaceID(accessTokenClaims.Subject)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse access token subject: %w", err)
+		return nil, errExtJWTInvalid.Errorf("failed to parse access token subject: %w", err)
 	}
 
 	if !accessID.IsNamespace(authn.NamespaceAccessPolicy) {
@@ -117,7 +117,7 @@ func (s *ExtendedJWT) authenticateAsUser(
 
 	userID, err := authn.ParseNamespaceID(idTokenClaims.Subject)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse id token subject: %w", err)
+		return nil, errExtJWTInvalid.Errorf("failed to parse id token subject: %w", err)
 	}
 
 	if !userID.IsNamespace(authn.NamespaceUser) {
