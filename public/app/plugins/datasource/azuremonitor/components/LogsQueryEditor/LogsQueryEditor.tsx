@@ -19,9 +19,7 @@ import QueryField from './QueryField';
 import { TimeManagement } from './TimeManagement';
 import { setBasicLogsQuery, setFormatAs, setKustoQuery } from './setQueryValue';
 import useMigrations from './useMigrations';
-import { calculateTimeRange, shouldShowBasicLogsToggle } from './utils';
-
-const MAX_DATA_RETENTION_DAYS = 8; // limit is only for basic logs
+import { MAX_DATA_RETENTION_DAYS, calculateTimeRange, shouldShowBasicLogsToggle } from './utils';
 
 interface LogsQueryEditorProps {
   query: AzureMonitorQuery;
@@ -48,6 +46,7 @@ const LogsQueryEditor = ({
   timeRange,
   data,
 }: LogsQueryEditorProps) => {
+  console.log('here');
   const migrationError = useMigrations(datasource, query, onChange);
   const [showBasicLogsToggle, setShowBasicLogsToggle] = useState<boolean>(
     shouldShowBasicLogsToggle(query.azureLogAnalytics?.resources || [], basicLogsEnabled)
