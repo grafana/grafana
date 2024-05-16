@@ -31,7 +31,10 @@ export class ScopesScene extends SceneObjectBase<ScopesSceneState> {
 
       const filtersValueSubscription = this.state.filters.subscribeToState((newState, prevState) => {
         if (newState.scopes !== prevState.scopes) {
-          this.state.dashboards.fetchDashboards(newState.scopes);
+          if (this.state.isExpanded) {
+            this.state.dashboards.fetchDashboards(newState.scopes);
+          }
+
           sceneGraph.getTimeRange(this.parent!).onRefresh();
         }
       });
@@ -60,7 +63,13 @@ export class ScopesScene extends SceneObjectBase<ScopesSceneState> {
   }
 
   public toggleIsExpanded() {
-    this.setState({ isExpanded: !this.state.isExpanded });
+    const isExpanded = !this.state.isExpanded;
+
+    if (isExpanded) {
+      this.state.dashboards.fetchDashboards(this.getSelectedScopes());
+    }
+
+    this.setState({ isExpanded });
   }
 
   private enterViewMode() {
