@@ -191,7 +191,6 @@ func (d *DualWriterMode2) Delete(ctx context.Context, name string, deleteValidat
 
 // Update overrides the generic behavior of the Storage and writes first to the legacy storage and then to storage.
 func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	var notFound bool
 	log := d.Log.WithValues("name", name, "kind", options.Kind)
 	ctx = klog.NewContext(ctx, log)
 
@@ -202,7 +201,6 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 			log.WithValues("object", old).Error(err, "could not get object to update")
 			return nil, false, err
 		}
-		notFound = true
 		log.Info("object not found for update, creating one")
 	}
 
@@ -213,37 +211,28 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 		return nil, false, err
 	}
 
-	obj, created, err := d.Legacy.Update(ctx, name, &updateWrapper{upstream: objInfo, updated: updated}, createValidation, updateValidation, forceAllowCreate, options)
-	if err != nil {
-		log.WithValues("object", obj).Error(err, "could not update in legacy storage")
-		return obj, created, err
+	// if the object is found, create a new updateWrapper with the object found
+	if old != nil {
+		accessorOld, err := meta.Accessor(old)
+		if err != nil {
+			log.Error(err, "unable to get accessor for original updated object")
+		}
+
+		accessor, err := meta.Accessor(updated)
+		if err != nil {
+			log.Error(err, "unable to get accessor for updated object")
+		}
+
+		enrichObject(accessorOld, accessor)
+
+		accessor.SetResourceVersion(accessorOld.GetResourceVersion())
+		accessor.SetUID(accessorOld.GetUID())
+
+		objInfo = &updateWrapper{
+			upstream: objInfo,
+			updated:  old,
+		}
 	}
-
-	if notFound {
-		return d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
-	}
-
-	accessor, err := meta.Accessor(obj)
-	if err != nil {
-		return nil, false, err
-	}
-
-	// only if object exists
-	accessorOld, err := meta.Accessor(old)
-	if err != nil {
-		return nil, false, err
-	}
-
-	enrichObject(accessorOld, accessor)
-
-	// keep the same UID and resource_version
-	accessor.SetResourceVersion(accessorOld.GetResourceVersion())
-	accessor.SetUID(accessorOld.GetUID())
-	objInfo = &updateWrapper{
-		upstream: objInfo,
-		updated:  obj,
-	}
-
 	// TODO: relies on GuaranteedUpdate creating the object if
 	// it doesn't exist: https://github.com/grafana/grafana/pull/85206
 	return d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)

@@ -172,9 +172,9 @@ func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.
 	var method = "update"
 
 	startLegacy := time.Now().UTC()
-	res, async, err := d.Legacy.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
-	if err != nil {
-		log.Error(err, "unable to update collection in legacy storage")
+	res, async, errLegacy := d.Legacy.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+	if errLegacy != nil {
+		log.Error(errLegacy, "unable to update in legacy storage")
 		d.recordLegacyDuration(true, mode, name, method, startLegacy)
 	}
 	d.recordLegacyDuration(false, mode, name, method, startLegacy)
@@ -184,17 +184,34 @@ func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.
 		log.WithValues("object", updated).Error(err, "could not update or create object")
 	}
 
-	accessor, err := meta.Accessor(updated)
+	// get the object to be updated
+	old, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
-		log.Error(err, "unable to get accessor for updated object")
+		log.WithValues("object", old).Error(err, "could not get object to update")
 	}
 
-	accessorOld, err := meta.Accessor(res)
-	if err != nil {
-		log.Error(err, "unable to get accessor for original updated object")
-	}
+	// if the object is found, create a new updateWrapper with the object found
+	if old != nil {
+		objInfo = &updateWrapper{
+			upstream: objInfo,
+			updated:  old,
+		}
 
-	enrichObject(accessorOld, accessor)
+		accessorOld, err := meta.Accessor(old)
+		if err != nil {
+			log.Error(err, "unable to get accessor for original updated object")
+		}
+
+		accessor, err := meta.Accessor(updated)
+		if err != nil {
+			log.Error(err, "unable to get accessor for updated object")
+		}
+
+		accessor.SetResourceVersion(accessorOld.GetResourceVersion())
+		accessor.SetUID(accessorOld.GetUID())
+
+		enrichObject(accessorOld, accessor)
+	}
 
 	go func() {
 		startStorage := time.Now().UTC()
@@ -203,7 +220,7 @@ func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.
 		defer d.recordStorageDuration(err != nil, mode, name, method, startStorage)
 	}()
 
-	return res, async, err
+	return res, async, errLegacy
 }
 
 func (d *DualWriterMode1) Destroy() {
