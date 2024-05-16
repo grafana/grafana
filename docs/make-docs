@@ -6,6 +6,18 @@
 # [Semantic versioning](https://semver.org/) is used to help the reader identify the significance of changes.
 # Changes are relevant to this script and the support docs.mk GNU Make interface.
 #
+# ## 7.0.0 (2024-05-03)
+#
+# ### Changed
+#
+# - Pull images for all recipes that use containers by default.
+#
+#   Use the `PULL=false` variable to disable this behavior.
+#
+# ### Removed
+#
+# - The `docs-no-pull` target as it's redundant with the new `PULL=false` variable.
+#
 # ## 6.1.0 (2024-04-22)
 #
 # ### Changed
@@ -13,8 +25,6 @@
 # - Mount volumes with SELinux labels.
 #
 #   https://docs.docker.com/storage/bind-mounts/#configure-the-selinux-label
-#
-# ## 6.1.0 (2024-04-22)
 #
 # ### Added
 #

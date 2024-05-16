@@ -65,6 +65,11 @@ ifeq ($(origin HUGO_REFLINKSERRORLEVEL), undefined)
 export HUGO_REFLINKSERRORLEVEL := WARNING
 endif
 
+# Whether to pull the latest container image before running the container.
+ifeq ($(origin PULL), undefined)
+export PULL := true
+endif
+
 .PHONY: docs-rm
 docs-rm: ## Remove the docs container.
 	$(PODMAN) rm -f $(DOCS_CONTAINER)
@@ -81,13 +86,12 @@ make-docs:
 	fi
 
 .PHONY: docs
-docs: ## Serve documentation locally, which includes pulling the latest `DOCS_IMAGE` (default: `grafana/docs-base:latest`) container image. See also `docs-no-pull`.
+docs: ## Serve documentation locally, which includes pulling the latest `DOCS_IMAGE` (default: `grafana/docs-base:latest`) container image. To not pull the image, set `PULL=false`.
+ifeq ($(PULL), true)
 docs: docs-pull make-docs
-	$(CURDIR)/make-docs $(PROJECTS)
-
-.PHONY: docs-no-pull
-docs-no-pull: ## Serve documentation locally without pulling the `DOCS_IMAGE` (default: `grafana/docs-base:latest`) container image.
-docs-no-pull: make-docs
+else
+docs: make-docs
+endif
 	$(CURDIR)/make-docs $(PROJECTS)
 
 .PHONY: docs-debug
@@ -96,13 +100,19 @@ docs-debug: make-docs
 	WEBSITE_EXEC='hugo server --bind 0.0.0.0 --port 3002 --debug' $(CURDIR)/make-docs $(PROJECTS)
 
 .PHONY: doc-validator
-doc-validator: ## Run doc-validator on the entire docs folder.
+doc-validator: ## Run doc-validator on the entire docs folder which includes pulling the latest `DOC_VALIDATOR_IMAGE` (default: `grafana/doc-validator:latest`) container image. To not pull the image, set `PULL=false`.
 doc-validator: make-docs
+ifeq ($(PULL), true)
+	$(PODMAN) pull -q $(DOC_VALIDATOR_IMAGE)
+endif
 	DOCS_IMAGE=$(DOC_VALIDATOR_IMAGE) $(CURDIR)/make-docs $(PROJECTS)
 
 .PHONY: vale
-vale: ## Run vale on the entire docs folder.
+vale: ## Run vale on the entire docs folder which includes pulling the latest `VALE_IMAGE` (default: `grafana/vale:latest`) container image. To not pull the image, set `PULL=false`.
 vale: make-docs
+ifeq ($(PULL), true)
+	$(PODMAN) pull -q $(VALE_IMAGE)
+endif
 	DOCS_IMAGE=$(VALE_IMAGE) $(CURDIR)/make-docs $(PROJECTS)
 
 .PHONY: update
