@@ -339,15 +339,8 @@ Now that Grafana knows how to notify us, it's time to set up an alert rule:
 1. Choose an Evaluation interval (how often the alert will be evaluated). For example, every `10s` (10 seconds).
 1. Set the pending period. This is the time that a condition has to be met until the alert enters in Firing state and a notification is sent. Enter `0s`. For the purposes of this tutorial, the evaluation interval is intentionally short. This makes it easier to test. This setting makes Grafana wait until an alert has fired for a given time before Grafana sends the notification.
 1. In **Section 4**, choose **RequestBin** as the **Contact point**.
-1. In **Section 5**, you can optionally add some sample text to your summary message. [Read more about message templating here](/docs/grafana/latest/alerting/unified-alerting/message-templating/).
 1. Click **Save rule and exit** at the top of the page.
 1. In Grafana's sidebar, navigate to **Notification policies**.
-1. Under **Default policy**, select **...** &rsaquo; **Edit** and change the **Default contact point** from **grafana-default-email** to **RequestBin**.
-1. Expand the **Timing options** dropdown and under **Group wait** and **Group interval** update the value to `30s` for testing purposes. Group wait is the time Grafana waits before sending the first notification for a new group of alerts. In contrast, group interval is the time Grafana waits before sending notifications about changes to the group.
-1. Click **Update default policy**.
-
-   As a system grows, admins can use the **Notification policies** setting to organize and match alert rules to
-   specific contact points.
 
 ### Trigger a Grafana Managed Alert
 
