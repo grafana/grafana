@@ -36,7 +36,10 @@ Before you begin creating and working with Grafana Teams:
 <!-- - Turn on nested folders.  __This is a new feature, add when it goes live.__ -->
 
 {{< admonition type="note" >}}
-[Grafana Organizations](https://grafana.com/docs/grafana/latest/administration/organization-management/) do not exist in Grafana Cloud. Grafana Cloud uses the term “organization” to refer to accounts in grafana.com, or GCOM. In Grafana Enterprise and OSS, Teams belong to Grafana Organizations. Refer to [About organizations](/docs/grafana/latest/administration/organization-management/#about-organizations) for more information.
+[Grafana Organizations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/organization-management/) do not exist in Grafana Cloud.
+Grafana Cloud uses the term _organization_ to refer to accounts in grafana.com, or GCOM.
+In Grafana Enterprise and OSS, Teams belong to Grafana Organizations.
+Refer to [About organizations](/docs/grafana/<GRAFANA_VERSION>/administration/organization-management/#about-organizations) for more information.
 {{< /admonition >}}
 
 ## Create a Grafana Team
