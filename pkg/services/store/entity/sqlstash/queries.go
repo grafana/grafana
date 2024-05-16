@@ -1,69 +1,46 @@
 package sqlstash
 
 import (
+	"embed"
 	_ "embed"
 	"fmt"
 	"text/template"
 
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash/sqltemplate"
-	"google.golang.org/protobuf/proto"
-)
-
-// Embedded data.
-var (
-	//go:embed data/entity_delete.sql
-	sqlEntityDeleteData string
-	//go:embed data/entity_insert.sql
-	sqlEntityInsertData string
-	//go:embed data/entity_list_folder_elements.sql
-	sqlEntityListFolderElementsData string
-	//go:embed data/entity_update.sql
-	sqlEntityUpdateData string
-	//go:embed data/entity_read.sql
-	sqlEntityReadData string
-
-	//go:embed data/entity_folder_insert.sql
-	sqlEntityFolderInsertData string
-
-	//go:embed data/entity_ref_find.sql
-	sqlEntityRefFindData string
-
-	//go:embed data/entity_labels_delete.sql
-	sqlEntityLabelsDeleteData string
-	//go:embed data/entity_labels_insert.sql
-	sqlEntityLabelsInsertData string
-
-	//go:embed data/kind_version_inc.sql
-	sqlKindVersionIncData string
-	//go:embed data/kind_version_insert.sql
-	sqlKindVersionInsertData string
-	//go:embed data/kind_version_lock.sql
-	sqlKindVersionLockData string
 )
 
 // Templates.
 var (
-	sqlEntityDelete             = newSQLTemplate(sqlEntityDeleteData)
-	sqlEntityInsert             = newSQLTemplate(sqlEntityInsertData)
-	sqlEntityListFolderElements = newSQLTemplate(sqlEntityListFolderElementsData)
-	sqlEntityUpdate             = newSQLTemplate(sqlEntityUpdateData)
-	sqlEntityRead               = newSQLTemplate(sqlEntityReadData)
+	//go:embed data
+	templatesFs embed.FS
 
-	sqlEntityFolderInsert = newSQLTemplate(sqlEntityFolderInsertData)
+	// all templates
+	templates = template.Must(template.ParseFS(templatesFs, `data/*.sql`))
 
-	sqlEntityRefFind = newSQLTemplate(sqlEntityRefFindData)
+	sqlEntityDelete             = getTemplate("entity_delete.sql")
+	sqlEntityInsert             = getTemplate("entity_insert.sql")
+	sqlEntityListFolderElements = getTemplate("entity_list_folder_elements.sql")
+	sqlEntityUpdate             = getTemplate("entity_update.sql")
+	sqlEntityRead               = getTemplate("entity_read.sql")
 
-	sqlEntityLabelsDelete = newSQLTemplate(sqlEntityLabelsDeleteData)
-	sqlEntityLabelsInsert = newSQLTemplate(sqlEntityLabelsInsertData)
+	sqlEntityFolderInsert = getTemplate("entity_folder_insert.sql")
 
-	sqlKindVersionInc    = newSQLTemplate(sqlKindVersionIncData)
-	sqlKindVersionInsert = newSQLTemplate(sqlKindVersionInsertData)
-	sqlKindVersionLock   = newSQLTemplate(sqlKindVersionLockData)
+	sqlEntityRefFind = getTemplate("entity_ref_find.sql")
+
+	sqlEntityLabelsDelete = getTemplate("entity_labels_delete.sql")
+	sqlEntityLabelsInsert = getTemplate("entity_labels_insert.sql")
+
+	sqlKindVersionInc    = getTemplate("kind_version_inc.sql")
+	sqlKindVersionInsert = getTemplate("kind_version_insert.sql")
+	sqlKindVersionLock   = getTemplate("kind_version_lock.sql")
 )
 
-func newSQLTemplate(text string) *template.Template {
-	return template.Must(template.New("sql").Parse(text))
+func getTemplate(filename string) *template.Template {
+	if t := templates.Lookup(filename); t != nil {
+		return t
+	}
+	panic(fmt.Sprintf("template file not found: %s", filename))
 }
 
 // entity_folder table requests.
@@ -91,14 +68,6 @@ type sqlEntityRefFindRequest struct {
 	*sqltemplate.SQLTemplate
 	Request *entity.ReferenceRequest
 	Entity  *withSerialized
-}
-
-func (r sqlEntityRefFindRequest) Results() (*entity.Entity, error) {
-	if err := r.Entity.unmarshal(); err != nil {
-		return nil, fmt.Errorf("deserialize entity from db: %w", err)
-	}
-
-	return proto.Clone(r.Entity.Entity).(*entity.Entity), nil
 }
 
 // entity_labels table requests.
@@ -194,19 +163,6 @@ type withSerialized struct {
 
 // TODO: remove once we start using the variables. Prevents `unused` linter.
 var (
-	_ = sqlEntityDeleteData
-	_ = sqlEntityInsertData
-	_ = sqlEntityListFolderElementsData
-	_ = sqlEntityUpdateData
-	_ = sqlEntityReadData
-	_ = sqlEntityFolderInsertData
-	_ = sqlEntityRefFindData
-	_ = sqlEntityLabelsDeleteData
-	_ = sqlEntityLabelsInsertData
-	_ = sqlKindVersionIncData
-	_ = sqlKindVersionInsertData
-	_ = sqlKindVersionLockData
-
 	_ = sqlEntityDelete
 	_ = sqlEntityInsert
 	_ = sqlEntityListFolderElements
@@ -219,8 +175,6 @@ var (
 	_ = sqlKindVersionInsert
 	_ = sqlKindVersionInsert
 	_ = sqlKindVersionLock
-
-	_ = newSQLTemplate
 
 	_ = sqlEntityFolderInsertRequest{}
 	_ = sqlEntityFolderInsertRequestItem{}
