@@ -1,18 +1,12 @@
-import { render, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Route } from 'react-router-dom';
 import { Props } from 'react-virtualized-auto-sizer';
+import { render, waitFor, waitForElementToBeRemoved, userEvent } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
-import { locationService } from '@grafana/runtime';
-
-import { TestProvider } from '../../../../../../test/helpers/TestProvider';
-import { AlertmanagerChoice } from '../../../../../plugins/datasource/alertmanager/types';
 import { DashboardSearchItemType } from '../../../../search/types';
-import { mockAlertRuleApi, mockApi, mockExportApi, mockSearchApi, setupMswServer } from '../../mockApi';
+import { mockAlertRuleApi, mockExportApi, mockSearchApi, setupMswServer } from '../../mockApi';
 import { getGrafanaRule, mockDashboardSearchItem, mockDataSource } from '../../mocks';
-import { mockAlertmanagerChoiceResponse } from '../../mocks/alertmanagerApi';
 import { setupDataSources } from '../../testSetup/datasources';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
@@ -62,16 +56,12 @@ const dataSources = {
 };
 
 function renderModifyExport(ruleId: string) {
-  locationService.push(`/alerting/${ruleId}/modify-export`);
-  render(<Route path="/alerting/:id/modify-export" component={GrafanaModifyExport} />, { wrapper: TestProvider });
+  render(<Route path="/alerting/:id/modify-export" component={GrafanaModifyExport} />, {
+    historyOptions: { initialEntries: [`/alerting/${ruleId}/modify-export`] },
+  });
 }
 
 const server = setupMswServer();
-
-mockAlertmanagerChoiceResponse(server, {
-  alertmanagersChoice: AlertmanagerChoice.Internal,
-  numExternalAlertmanagers: 0,
-});
 
 describe('GrafanaModifyExport', () => {
   setupDataSources(dataSources.default);
@@ -97,7 +87,6 @@ describe('GrafanaModifyExport', () => {
   });
 
   it('Should render edit form for the specified rule', async () => {
-    mockApi(server).eval({ results: { A: { frames: [] } } });
     mockSearchApi(server).search([
       mockDashboardSearchItem({
         title: grafanaRule.namespace.name,

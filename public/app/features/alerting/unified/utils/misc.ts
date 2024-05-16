@@ -118,16 +118,6 @@ export function wrapWithQuotes(input: string) {
   return alreadyWrapped ? escapeQuotes(input) : `"${escapeQuotes(input)}"`;
 }
 
-export function makeRuleBasedSilenceLink(alertManagerSourceName: string, rule: CombinedRule) {
-  // we wrap the name of the alert with quotes since it might contain starting and trailing spaces
-  const labels: Labels = {
-    alertname: rule.name,
-    ...rule.labels,
-  };
-
-  return makeLabelBasedSilenceLink(alertManagerSourceName, labels);
-}
-
 export function makeLabelBasedSilenceLink(alertManagerSourceName: string, labels: Labels) {
   const silenceUrlParams = new URLSearchParams();
   silenceUrlParams.append('alertmanager', alertManagerSourceName);
