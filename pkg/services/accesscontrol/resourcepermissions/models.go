@@ -11,8 +11,6 @@ type SetResourcePermissionCommand struct {
 	ResourceID        string
 	ResourceAttribute string
 	Permission        string
-	// Only Actionsets operations
-	OnlyActionSets bool
 }
 
 type SetResourcePermissionsCommand struct {

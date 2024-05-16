@@ -81,13 +81,9 @@ func New(cfg *setting.Cfg,
 		actions = append(actions, action)
 	}
 
-	// cfg to only enable actionsets being written and read
-	if features.IsEnabled(context.Background(), featuremgmt.FlagAccessActionSets) {
-		options.OnlyActionSets = cfg.OnlyAccessActionSets
-	}
 	s := &Service{
 		ac:          ac,
-		store:       NewStore(sqlStore, features),
+		store:       NewStore(cfg, sqlStore, features),
 		options:     options,
 		license:     license,
 		permissions: permissions,
@@ -167,7 +163,6 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user acces
 		Resource:          s.options.Resource,
 		ResourceID:        resourceID,
 		ResourceAttribute: s.options.ResourceAttribute,
-		OnlyActionSets:    s.options.OnlyActionSets,
 	}, s.options.OnSetUser)
 }
 
@@ -191,7 +186,6 @@ func (s *Service) SetTeamPermission(ctx context.Context, orgID, teamID int64, re
 		Resource:          s.options.Resource,
 		ResourceID:        resourceID,
 		ResourceAttribute: s.options.ResourceAttribute,
-		OnlyActionSets:    s.options.OnlyActionSets,
 	}, s.options.OnSetTeam)
 }
 
@@ -215,7 +209,6 @@ func (s *Service) SetBuiltInRolePermission(ctx context.Context, orgID int64, bui
 		Resource:          s.options.Resource,
 		ResourceID:        resourceID,
 		ResourceAttribute: s.options.ResourceAttribute,
-		OnlyActionSets:    s.options.OnlyActionSets,
 	}, s.options.OnSetBuiltInRole)
 }
 

@@ -15,15 +15,17 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func NewStore(sql db.DB, features featuremgmt.FeatureToggles) *store {
-	store := &store{sql: sql, features: features}
+func NewStore(cfg *setting.Cfg, sql db.DB, features featuremgmt.FeatureToggles) *store {
+	store := &store{cfg: cfg, sql: sql, features: features}
 	return store
 }
 
 type store struct {
+	cfg      *setting.Cfg
 	sql      db.DB
 	features featuremgmt.FeatureToggles
 }
@@ -688,8 +690,9 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, cmd SetResourc
 		return nil
 	}
 
+	// if we have actionsets enabled, we only want to add the action sets to the permissions table
 	// skip adding the actions to the permissions table, if we are only working with action sets
-	if !cmd.OnlyActionSets {
+	if !s.features.IsEnabled(context.TODO(), featuremgmt.FlagAccessActionSets) && !s.cfg.OnlyAccessActionSets {
 		for action := range missingActions {
 			p := managedPermission(action, resource, resourceID, resourceAttribute)
 			p.RoleID = roleID
