@@ -344,10 +344,7 @@ export function RichHistoryCard(props: Props) {
         </div>
         {!activeUpdateComment && (
           <div className={styles.runButton}>
-            <ExploreRunQueryButton
-              queries={queryHistoryItem.queries}
-              rootDatasourceUid={queryHistoryItem.datasourceUid}
-            />
+            <ExploreRunQueryButton queries={queryHistoryItem.queries} rootDatasourceUid={cardRootDatasource?.uid} />
           </div>
         )}
       </div>

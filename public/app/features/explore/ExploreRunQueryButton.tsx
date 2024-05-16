@@ -1,9 +1,7 @@
-import { uniq } from 'lodash';
 import React, { useState } from 'react';
 import { ConnectedProps, connect } from 'react-redux';
 
-import { DataSourceApi } from '@grafana/data';
-import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Button, Dropdown, Menu, ToolbarButton } from '@grafana/ui';
 import { t } from '@grafana/ui/src/utils/i18n';
@@ -23,11 +21,23 @@ const connector = connect(undefined, mapDispatchToProps);
 interface ExploreRunQueryButtonProps {
   queries: DataQuery[];
   rootDatasourceUid?: string;
+  disabled?: boolean;
 }
 
 export type Props = ConnectedProps<typeof connector> & ExploreRunQueryButtonProps;
 
-export function ExploreRunQueryButton({ rootDatasourceUid, queries, changeDatasource, setQueries }: Props) {
+/* 
+This component does not validate datasources before running them. Root datasource validation should happen outside this component and can pass in an undefined if invalid
+If query level validation is done and a query datasource is invalid, pass in disabled = true
+*/
+
+export function ExploreRunQueryButton({
+  rootDatasourceUid,
+  queries,
+  disabled = false,
+  changeDatasource,
+  setQueries,
+}: Props) {
   const [openRunQueryButton, setOpenRunQueryButton] = useState(false);
   const isPaneSplit = useSelector(isSplit);
   const exploreActiveDS = useSelector(selectExploreDSMaps);
@@ -52,6 +62,9 @@ export function ExploreRunQueryButton({ rootDatasourceUid, queries, changeDataso
 
   const runQuery = async (exploreId: string) => {
     const differentDataSource = isDifferentDatasource(rootDatasourceUid!, exploreId);
+    if (differentDataSource) {
+      await changeDatasource({ exploreId, datasource: rootDatasourceUid! });
+    }
     setQueries(exploreId, queries);
 
     reportInteraction('grafana_explore_query_history_run', {
@@ -60,32 +73,8 @@ export function ExploreRunQueryButton({ rootDatasourceUid, queries, changeDataso
     });
   };
 
-  const validateDatasources = async (datasourceUids: Array<string | undefined>): Promise<Promise<boolean>> => {
-    const uniqueDSUids = uniq(datasourceUids);
-    const dsGetProm = await datasourceUids.map(async (dsf) => {
-      try {
-        // this get works off datasource names
-        console.log('wat2');
-        return getDataSourceSrv().get(dsf);
-      } catch (e) {
-        return Promise.resolve();
-      }
-    });
-
-    if (dsGetProm !== undefined) {
-      const enhancedDatasourceData = (await Promise.all(dsGetProm)).filter((dsi): dsi is DataSourceApi => !!dsi);
-      return enhancedDatasourceData.length === uniqueDSUids.length;
-    } else {
-      return datasourceUids.length === 0; // if the list was empty, it's valid.
-    }
-  };
-
-  const runButton = async () => {
-    const isValidDatasources = await validateDatasources([
-      rootDatasourceUid,
-      ...queries.map((query) => query.datasource?.uid),
-    ]);
-    const isInvalid = queries.length === 0 || rootDatasourceUid === undefined || !isValidDatasources;
+  const runButton = () => {
+    const isInvalid = disabled || queries.length === 0 || rootDatasourceUid === undefined;
     if (!isPaneSplit) {
       const exploreId = exploreActiveDS.exploreToDS[0]?.exploreId; // may be undefined if explore is refreshed while the pane is up
       const buttonText = runQueryText(exploreId, rootDatasourceUid);
