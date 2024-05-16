@@ -145,6 +145,7 @@ func TestIntegrationSimpleQuery(t *testing.T) {
 			"status": "Failure",
 			"message": "did not execute expression [Y] due to a failure to of the dependent expression or query [X]",
 			"reason": "BadRequest",
+			"details": { "uid": "sse.dependencyError" },
 			"code": 400
 		  }`, string(body))
 		// require.JSONEq(t, `{
