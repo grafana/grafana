@@ -22,7 +22,7 @@ jobs:
         with:
           node-version: 20
       - name: Install dependencies
-        run: yarn install
+        run: yarn install --immutable
       - name: Build grafana
         run: make build
       - name: Install Cypress dependencies
