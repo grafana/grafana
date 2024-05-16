@@ -1276,6 +1276,13 @@ var (
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
 		},
+		{
+			Name:         "datasourceProxyDisableRBAC",
+			Description:  "Disables applying a plugin route's ReqAction field to authorization",
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+		},
 	}
 )
 
