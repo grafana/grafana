@@ -1,32 +1,23 @@
 import { of } from 'rxjs';
 
-import { AdHocVariableFilter, DataSourceInstanceSettings, PluginType, ScopedVars } from '@grafana/data';
-import { FetchResponse, getBackendSrv, setBackendSrv, VariableInterpolation } from '@grafana/runtime';
+import { DataSourceInstanceSettings, PluginType, ScopedVars } from '@grafana/data';
+import { FetchResponse, getBackendSrv, setBackendSrv, TemplateSrv, VariableInterpolation } from '@grafana/runtime';
 
-import { TemplateSrv } from '../../../../features/templating/template_srv';
 import InfluxDatasource from '../datasource';
 import { InfluxOptions, InfluxVersion } from '../types';
 
-const getAdhocFiltersMock = jest.fn().mockImplementation(() => []);
-const replaceMock = jest.fn().mockImplementation((a: string, ...rest: unknown[]) => a);
-
-export const templateSrvStub = {
-  getAdhocFilters: getAdhocFiltersMock,
-  replace: replaceMock,
-} as unknown as TemplateSrv;
-
+export const replaceMock = jest.fn().mockImplementation((a: string, ...rest: unknown[]) => a);
+export const templateSrvStub = mockTemplateSrv(replaceMock);
 export function mockTemplateSrv(
-  getAdhocFiltersMock: (datasourceName: string) => AdHocVariableFilter[],
-  replaceMock: (
+  rm: (
     target?: string,
     scopedVars?: ScopedVars,
     format?: string | Function | undefined,
     interpolations?: VariableInterpolation[]
-  ) => string
+  ) => string = replaceMock
 ): TemplateSrv {
   return {
-    getAdhocFilters: getAdhocFiltersMock,
-    replace: replaceMock,
+    replace: rm,
   } as unknown as TemplateSrv;
 }
 
@@ -42,7 +33,7 @@ export function mockBackendService(response: FetchResponse) {
 
 export function getMockInfluxDS(
   instanceSettings: DataSourceInstanceSettings<InfluxOptions> = getMockDSInstanceSettings(),
-  templateSrv: TemplateSrv = templateSrvStub
+  templateSrv: TemplateSrv = mockTemplateSrv(replaceMock)
 ): InfluxDatasource {
   return new InfluxDatasource(instanceSettings, templateSrv);
 }

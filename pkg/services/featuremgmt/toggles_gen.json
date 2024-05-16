@@ -135,12 +135,15 @@
     {
       "metadata": {
         "name": "awsDatasourcesNewFormStyling",
-        "resourceVersion": "1713545444177",
-        "creationTimestamp": "2024-04-19T16:50:44Z"
+        "resourceVersion": "1715590364201",
+        "creationTimestamp": "2024-04-19T16:50:44Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-05-13 08:52:44.201182 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Applies new form styling for configuration and query editors in AWS plugins",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/aws-datasources",
         "frontend": true
       }

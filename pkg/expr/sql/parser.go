@@ -19,6 +19,7 @@ const (
 // TablesList returns a list of tables for the sql statement
 func TablesList(rawSQL string) ([]string, error) {
 	duckDB := duck.NewInMemoryDB()
+	rawSQL = strings.Replace(rawSQL, "'", "''", -1)
 	cmd := fmt.Sprintf("SELECT json_serialize_sql('%s')", rawSQL)
 	ret, err := duckDB.RunCommands([]string{cmd})
 	if err != nil {

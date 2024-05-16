@@ -69,7 +69,7 @@ export class ScopedResourceServer<T = object, K = string> implements ResourceSer
 
           case 'in':
           case 'notin':
-            return `${key}${operator}(${label.value.join(',')})`;
+            return `${key} ${operator} (${label.value.join(',')})`;
 
           case '':
           case '!':
