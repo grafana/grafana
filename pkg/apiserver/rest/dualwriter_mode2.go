@@ -211,6 +211,7 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 		return obj, created, err
 	}
 
+	// if the object is found, create a new updateWrapper with the object found
 	if foundObj != nil {
 		obj, err = enrichLegacyObject(foundObj, obj, false)
 		if err != nil {
