@@ -1,6 +1,6 @@
 import deepEqual from 'fast-deep-equal';
 import { isEqual } from 'lodash';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { QueryEditorProps, getDefaultTimeRange, toOption } from '@grafana/data';
 import { EditorRows } from '@grafana/experimental';
@@ -21,32 +21,15 @@ import { MetricQueryEditor, SLOQueryEditor } from './';
 export type Props = QueryEditorProps<CloudMonitoringDatasource, CloudMonitoringQuery, CloudMonitoringOptions>;
 
 export const QueryEditor = (props: Props) => {
-  const { datasource, query: oldQ, onRunQuery, onChange, range } = props;
+  const { datasource, query, onRunQuery, onChange, range } = props;
   const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
-  const [migratedQuery, setMigratedQuery] = useState<CloudMonitoringQuery | undefined>();
-  const query = useMemo(() => {
-    // We should only set the migrated query on the first load of the editor. On subsequent re-renders there's no need to migrate again.
-    if (!migratedQuery) {
-      const migrated = datasource.migrateQuery(oldQ);
-      // Update the query once the migrations have been completed.
-      setMigratedQuery(migrated);
-      return migrated;
-    }
-
-    // If the migrated query is the same as the updated query we can return the migrated query
-    // Otherwise the query has changed so we return the updated query
-    if (migratedQuery && deepEqual(migratedQuery, oldQ)) {
-      return migratedQuery;
-    }
-
-    return oldQ;
-  }, [oldQ, datasource, onChange]);
 
   useEffect(() => {
-    if (migratedQuery) {
-      onChange({ ...migratedQuery });
+    const migrated = datasource.migrateQuery(query);
+    if (!deepEqual(migrated, query)) {
+      onChange({ ...migrated });
     }
-  }, [migratedQuery]);
+  }, [query, datasource, onChange]);
 
   const [currentQuery, setCurrentQuery] = useState<CloudMonitoringQuery>(query);
   const [queryHasBeenEdited, setQueryHasBeenEdited] = useState<boolean>(false);

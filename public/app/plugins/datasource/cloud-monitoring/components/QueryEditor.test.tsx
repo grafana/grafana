@@ -32,9 +32,9 @@ describe('QueryEditor', () => {
     const onChange = jest.fn();
     datasource.migrateQuery = jest.fn().mockReturnValue(defaultProps.query);
 
-    render(<QueryEditor {...defaultProps} datasource={datasource} onChange={onChange} />);
+    render(<QueryEditor {...defaultProps} query={{ refId: 'A' }} datasource={datasource} onChange={onChange} />);
     await waitFor(() => expect(datasource.migrateQuery).toHaveBeenCalledTimes(1));
-    await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(onChange).toHaveBeenCalled());
     await waitFor(() => expect(onChange).toHaveBeenCalledWith(defaultProps.query));
   });
 
