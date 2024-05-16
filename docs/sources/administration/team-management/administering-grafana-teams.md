@@ -1,6 +1,4 @@
 ---
-aliases:
-  - 
 description: Learn how to administer Grafana Teams.
 labels:
   products:
