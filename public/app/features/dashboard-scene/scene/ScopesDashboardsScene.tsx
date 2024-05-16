@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { uniq } from 'lodash';
 import React from 'react';
 import { Link } from 'react-router-dom';
 
@@ -16,7 +17,13 @@ export interface ScopeDashboard {
 }
 
 export interface ScopesDashboardsSceneState extends SceneObjectState {
+  // A map where we keep all the loaded dashboards
+  dashboardsMap: Record<string, ScopeDashboard>;
+  // A map where we keep all the dashboards UIDs for each scope
+  scopesToDashboardsMap: Record<string, string[]>;
+  // Available dashboards for the selected scopes
   dashboards: ScopeDashboard[];
+  // Filtered dashboards to be shown
   filteredDashboards: ScopeDashboard[];
   isLoading: boolean;
   searchQuery: string;
@@ -33,6 +40,8 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
 
   constructor() {
     super({
+      dashboardsMap: {},
+      scopesToDashboardsMap: {},
       dashboards: [],
       filteredDashboards: [],
       isLoading: false,
@@ -45,14 +54,50 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
       return this.setState({ dashboards: [], filteredDashboards: [], isLoading: false });
     }
 
+    const scopesNames = scopes.map((scope) => scope.metadata.name);
+
+    // The scopes for which we haven't loaded the dashboards yet
+    const fetchedScopesDiff = scopesNames.filter((scopeName) => !this.state.scopesToDashboardsMap[scopeName]);
+
     this.setState({ isLoading: true });
 
-    const dashboardUids = await Promise.all(
-      scopes.map((scope) => this.fetchDashboardsUids(scope.metadata.name).catch(() => []))
+    // Dashboard UIDs for each scope
+    const dashboardBindings = await Promise.all(
+      fetchedScopesDiff.map((scopeName) => this.fetchDashboardsUids(scopeName).catch(() => []))
     );
-    const dashboards = await this.fetchDashboardsDetails(dashboardUids.flat());
+
+    // Dashboard UIDs for which we haven't fetched the details
+    const dashboardsToBeFetched = uniq(
+      dashboardBindings.flat().filter((dashboardUid) => !this.state.dashboardsMap[dashboardUid])
+    );
+
+    // The new dashboards map to be saved
+    const dashboardsMap = (await this.fetchDashboardsDetails(dashboardsToBeFetched)).reduce(
+      (acc, dashboard) => {
+        acc[dashboard.uid] = dashboard;
+
+        return acc;
+      },
+      { ...this.state.dashboardsMap }
+    );
+
+    // The new scopes to dashboards map to be saved
+    const scopesToDashboardsMap = fetchedScopesDiff.reduce(
+      (acc, scopeName, scopeNameIdx) => {
+        acc[scopeName] = dashboardBindings[scopeNameIdx];
+
+        return acc;
+      },
+      { ...this.state.scopesToDashboardsMap }
+    );
+
+    const dashboards = uniq(scopesNames.map((scopeName) => scopesToDashboardsMap[scopeName]).flat()).map(
+      (dashboardUid) => dashboardsMap[dashboardUid]
+    );
 
     this.setState({
+      dashboardsMap,
+      scopesToDashboardsMap,
       dashboards,
       filteredDashboards: this.filterDashboards(dashboards, this.state.searchQuery),
       isLoading: false,

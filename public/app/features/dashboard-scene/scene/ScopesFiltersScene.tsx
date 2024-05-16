@@ -134,14 +134,14 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
   }
 
   public async toggleScope(linkId: string) {
-    let scopes = this.state.scopes;
+    let scopes = [...this.state.scopes];
     const selectedIdx = scopes.findIndex((scope) => scope.metadata.name === linkId);
 
     if (selectedIdx === -1) {
       const scope = await this.server.get(linkId);
 
       if (scope) {
-        scopes = [...scopes, scope];
+        scopes.push(scope);
       }
     } else {
       scopes.splice(selectedIdx, 1);
