@@ -2,7 +2,6 @@ package dbimpl
 
 import (
 	"fmt"
-	"sync"
 
 	"github.com/dlmiddlecote/sqlstats"
 	"github.com/jmoiron/sqlx"
@@ -33,8 +32,6 @@ func ProvideEntityDB(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureTog
 }
 
 type EntityDB struct {
-	mu sync.RWMutex
-
 	db       db.DB
 	features featuremgmt.FeatureToggles
 	engine   *xorm.Engine
@@ -49,21 +46,11 @@ func (db *EntityDB) Init() error {
 }
 
 func (db *EntityDB) GetEngine() (*xorm.Engine, error) {
-	db.mu.RLock()
-	engine := db.engine
-	db.mu.RUnlock()
-
-	if engine != nil {
+	if db.engine != nil {
 		return engine, nil
 	}
 
-	db.mu.Lock()
-	defer db.mu.Unlock()
-
-	if db.engine != nil {
-		return db.engine, nil
-	}
-
+	var engine *xorm.Engine
 	var err error
 
 	cfgSection := db.cfg.SectionWithEnvOverrides("entity_api")
