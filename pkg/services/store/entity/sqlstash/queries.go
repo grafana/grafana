@@ -1,15 +1,12 @@
 package sqlstash
 
 import (
-	"database/sql"
 	_ "embed"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"text/template"
 
 	"github.com/grafana/grafana/pkg/services/store/entity"
-	"github.com/grafana/grafana/pkg/services/store/entity/db"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash/sqltemplate"
 	"google.golang.org/protobuf/proto"
 )
@@ -268,121 +265,4 @@ func (e *withSerialized) unmarshal() error {
 	}
 
 	return nil
-}
-
-// Template and database operation routines.
-
-// tmplDBQuery uses `data` as input and output for a zero or more row-returning
-// query generated with `tmpl`, and executed in `tx`.
-func tmplDBQuery[T any](tx db.Tx, tmpl *template.Template, data sqltemplate.WithResults[T]) ([]T, error) {
-	query, err := sqltemplate.Execute(tmpl, data)
-	if err != nil {
-		return nil, fmt.Errorf("execute template: %w", err)
-	}
-
-	rows, err := tx.Query(query, data.GetArgs()...)
-	if err != nil {
-		return nil, fmt.Errorf("query: %w", err)
-	}
-
-	var ret []T
-	for rows.Next() {
-		if err = rows.Scan(data.GetScanDest()...); err != nil {
-			return nil, fmt.Errorf("rows scan: %w", err)
-		}
-
-		res, err := data.Results()
-		if err != nil {
-			return nil, fmt.Errorf("rows results: %w", err)
-		}
-
-		ret = append(ret, res)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("rows: %w", err)
-	}
-
-	return ret, nil
-}
-
-// tmplDBQueryRow uses `data` as input and output for a single-row returning
-// query generated with `tmpl`, and executed in `tx`.
-func tmplDBQueryRow(tx db.Tx, tmpl *template.Template, data sqltemplate.SQLTemplateIface) error {
-	query, err := sqltemplate.Execute(tmpl, data)
-	if err != nil {
-		return fmt.Errorf("execute template: %w", err)
-	}
-
-	row := tx.QueryRow(query, data.GetArgs()...)
-	if err = row.Err(); err != nil {
-		return fmt.Errorf("query row: %w", err)
-	}
-
-	if err = row.Scan(data.GetScanDest()...); err != nil {
-		return fmt.Errorf("row scan: %w", err)
-	}
-
-	return nil
-}
-
-// tmplDBQueryRow uses `data` as input for a non-data returning query generated
-// with `tmpl`, and executed in `tx`.
-func tmplDBExec(tx db.Tx, tmpl *template.Template, data sqltemplate.SQLTemplateIface) (sql.Result, error) {
-	query, err := sqltemplate.Execute(tmpl, data)
-	if err != nil {
-		return nil, fmt.Errorf("execute template: %w", err)
-	}
-
-	res, err := tx.Exec(query, data.GetArgs()...)
-	if err != nil {
-		return nil, fmt.Errorf("exec query: %w", err)
-	}
-
-	return res, nil
-}
-
-// common SQL routines shared among several methods.
-
-func kindVersionAtomicInc(tx db.Tx, d sqltemplate.Dialect, group, groupVersion, resource string) (newVersion int64, err error) {
-	// 1. Lock the kind and get the latest version
-	lockReq := &sqlKindVersionLockRequest{
-		SQLTemplate:  sqltemplate.New(d),
-		Group:        group,
-		GroupVersion: groupVersion,
-		Resource:     resource,
-	}
-	err = tmplDBQueryRow(tx, sqlKindVersionLock, lockReq)
-	if errors.Is(err, sql.ErrNoRows) {
-		// if there wasn't a row associated with the given kind, we create one
-		// with version 1
-		insReq := sqlKindVersionInsertRequest{
-			SQLTemplate:  sqltemplate.New(d),
-			Group:        group,
-			GroupVersion: groupVersion,
-			Resource:     resource,
-		}
-		if _, err = tmplDBExec(tx, sqlKindVersionInsert, insReq); err != nil {
-			return 0, fmt.Errorf("insert into kind_version: %w", err)
-		}
-
-		return 1, nil
-	}
-
-	if err != nil {
-		return 0, fmt.Errorf("lock kind: %w", err)
-	}
-
-	incReq := sqlKindVersionIncRequest{
-		SQLTemplate:     sqltemplate.New(d),
-		Group:           group,
-		GroupVersion:    groupVersion,
-		Resource:        resource,
-		ResourceVersion: lockReq.ResourceVersion,
-	}
-	if _, err = tmplDBExec(tx, sqlKindVersionInc, incReq); err != nil {
-		return 0, fmt.Errorf("increase kind version: %w", err)
-	}
-
-	return lockReq.ResourceVersion + 1, nil
 }
