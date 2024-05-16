@@ -1,3 +1,4 @@
+import deepEqual from 'fast-deep-equal';
 import { isEqual } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
 
@@ -31,7 +32,7 @@ export const QueryEditor = (props: Props) => {
       return migratedQuery;
     }
 
-    if (migratedQuery) {
+    if (migratedQuery && deepEqual(migratedQuery, oldQ)) {
       return migratedQuery;
     }
 
