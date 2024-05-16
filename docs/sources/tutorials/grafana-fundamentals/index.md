@@ -398,7 +398,6 @@ Check out the links below to continue your learning journey with Grafana's LGTM 
 - [Alert rules](/docs/grafana/latest/alerting/create-alerts/)
 - [Contact points](/docs/grafana/latest/alerting/fundamentals/contact-points/)
 
-
 {{% docs/reference %}}
 
 [email]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-email"
@@ -415,6 +414,5 @@ Check out the links below to continue your learning journey with Grafana's LGTM 
 
 [webhook]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier"
 [webhook]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier"
-
 
 {{% /docs/reference %}}
