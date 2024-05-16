@@ -18,7 +18,7 @@ weight: 200
 
 Grafana ships with built-in support for [Loki](/docs/loki/latest/), an open-source log aggregation system by Grafana Labs. If you are new to Loki the following documentation will help you get started:
 
-- [Getting started](/docs/loki/latest/getting-started/)
+- [Getting started](/docs/loki/latest/get-started/)
 - [Best practices](/docs/loki/latest/best-practices/#best-practices)
 
 ## Configure the Loki data source
