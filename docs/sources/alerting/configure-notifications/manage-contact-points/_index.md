@@ -110,7 +110,7 @@ Once configured, you can use integrations as part of your contact points to rece
 | ------------------------ | ------------------------- |
 | DingDing                 | `dingding`                |
 | Discord                  | `discord`                 |
-| Email[email]             | `email`                   |
+| [Email][email]           | `email`                   |
 | Google Chat              | `googlechat`              |
 | [Grafana Oncall][oncall] | `oncall`                  |
 | Hipchat                  | `hipchat`                 |
@@ -124,7 +124,7 @@ Once configured, you can use integrations as part of your contact points to rece
 | Sensu                    | `sensu`                   |
 | Sensu Go                 | `sensugo`                 |
 | [Slack][slack]           | `slack`                   |
-| Telegram[telegram]       | `telegram`                |
+| [Telegram][telegram]     | `telegram`                |
 | Threema                  | `threema`                 |
 | VictorOps                | `victorops`               |
 | [Webhook][webhook]       | `webhook`                 |
