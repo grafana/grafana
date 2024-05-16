@@ -42,8 +42,6 @@ func getTemplate(filename string) *template.Template {
 	panic(fmt.Sprintf("template file not found: %s", filename))
 }
 
-// entity_folder table requests.
-
 type sqlEntityFolderInsertRequest struct {
 	*sqltemplate.SQLTemplate
 	Items []*sqlEntityFolderInsertRequestItem
@@ -61,15 +59,11 @@ type sqlEntityFolderInsertRequestItem struct {
 	Detached  bool
 }
 
-// entity_ref table requests.
-
 type sqlEntityRefFindRequest struct {
 	*sqltemplate.SQLTemplate
 	Request *entity.ReferenceRequest
 	Entity  *withSerialized
 }
-
-// entity_labels table requests.
 
 type sqlEntityLabelsInsertRequest struct {
 	*sqltemplate.SQLTemplate
@@ -82,8 +76,6 @@ type sqlEntityLabelsDeleteRequest struct {
 	GUID       string
 	KeepLabels []string
 }
-
-// entity_kind table requests.
 
 type sqlKindVersionLockRequest struct {
 	*sqltemplate.SQLTemplate
@@ -108,8 +100,6 @@ type sqlKindVersionInsertRequest struct {
 	Resource     string
 }
 
-// entity and entity_history tables requests.
-
 type sqlEntityListFolderElementsRequest struct {
 	*sqltemplate.SQLTemplate
 	Group      string
@@ -118,10 +108,6 @@ type sqlEntityListFolderElementsRequest struct {
 	FolderInfo *folderInfo
 }
 
-// sqlEntityReadRequest can be used to retrieve a row from either the "entity"
-// or the "entity_history" tables. In particular, don't use this template
-// directly. Instead, use the readEntity function, which provides all common use
-// cases and proper database deserialization.
 type sqlEntityReadRequest struct {
 	*sqltemplate.SQLTemplate
 	Key             *entity.Key
