@@ -2,7 +2,6 @@ package sqlstash
 
 import (
 	_ "embed"
-	"encoding/json"
 	"fmt"
 	"text/template"
 
@@ -193,76 +192,49 @@ type withSerialized struct {
 	Errors []byte
 }
 
-func newWithSerialized() *withSerialized {
-	return &withSerialized{
-		Entity: &entity.Entity{
-			// we need to allocate all internal pointer types so that they
-			// are available to be populated in the template
-			Origin: new(entity.EntityOriginInfo),
-		},
-	}
-}
-
+// TODO: remove once we start using the variables. Prevents `unused` linter.
 var (
-	jsonEmptyObject = []byte{'{', '}'}
-	jsonEmptyArray  = []byte{'[', ']'}
+	_ = sqlEntityDeleteData
+	_ = sqlEntityInsertData
+	_ = sqlEntityListFolderElementsData
+	_ = sqlEntityUpdateData
+	_ = sqlEntityReadData
+	_ = sqlEntityFolderInsertData
+	_ = sqlEntityRefFindData
+	_ = sqlEntityLabelsDeleteData
+	_ = sqlEntityLabelsInsertData
+	_ = sqlKindVersionIncData
+	_ = sqlKindVersionInsertData
+	_ = sqlKindVersionLockData
+
+	_ = sqlEntityDelete
+	_ = sqlEntityInsert
+	_ = sqlEntityListFolderElements
+	_ = sqlEntityUpdate
+	_ = sqlEntityRead
+	_ = sqlEntityFolderInsert
+	_ = sqlEntityRefFind
+	_ = sqlEntityLabelsDelete
+	_ = sqlEntityLabelsInsert
+	_ = sqlKindVersionInsert
+	_ = sqlKindVersionInsert
+	_ = sqlKindVersionLock
+
+	_ = newSQLTemplate
+
+	_ = sqlEntityFolderInsertRequest{}
+	_ = sqlEntityFolderInsertRequestItem{}
+	_ = sqlEntityRefFindRequest{}
+	_ = sqlEntityLabelsInsertRequest{}
+	_ = sqlEntityLabelsInsertRequest{}
+	_ = sqlEntityLabelsDeleteRequest{}
+	_ = sqlKindVersionLockRequest{}
+	_ = sqlKindVersionIncRequest{}
+	_ = sqlKindVersionInsertRequest{}
+	_ = sqlEntityListFolderElementsRequest{}
+	_ = sqlEntityReadRequest{}
+	_ = sqlEntityDeleteRequest{}
+	_ = sqlEntityInsertRequest{}
+	_ = sqlEntityUpdateRequest{}
+	_ = withSerialized{}
 )
-
-// marshal serializes the fields from the wire protocol representation so they
-// can be written to the database.
-func (e *withSerialized) marshal() error {
-	var err error
-
-	if len(e.Entity.Labels) == 0 {
-		e.Labels = jsonEmptyObject
-	} else {
-		e.Labels, err = json.Marshal(e.Entity.Labels)
-		if err != nil {
-			return fmt.Errorf("serialize entity \"labels\" field: %w", err)
-		}
-	}
-
-	if len(e.Entity.Fields) == 0 {
-		e.Fields = jsonEmptyObject
-	} else {
-		e.Fields, err = json.Marshal(e.Entity.Fields)
-		if err != nil {
-			return fmt.Errorf("serialize entity \"fields\" field: %w", err)
-		}
-	}
-
-	if len(e.Entity.Errors) == 0 {
-		e.Errors = jsonEmptyArray
-	} else {
-		e.Errors, err = json.Marshal(e.Entity.Errors)
-		if err != nil {
-			return fmt.Errorf("serialize entity \"errors\" field: %w", err)
-		}
-	}
-
-	return nil
-}
-
-// unmarshal deserializes the fields in the database representation so they can
-// be written to the wire protocol.
-func (e *withSerialized) unmarshal() error {
-	if len(e.Labels) > 0 {
-		if err := json.Unmarshal(e.Labels, &e.Entity.Labels); err != nil {
-			return fmt.Errorf("deserialize entity \"labels\" field: %w", err)
-		}
-	}
-
-	if len(e.Fields) > 0 {
-		if err := json.Unmarshal(e.Fields, &e.Entity.Fields); err != nil {
-			return fmt.Errorf("deserialize entity \"fields\" field: %w", err)
-		}
-	}
-
-	if len(e.Errors) > 0 {
-		if err := json.Unmarshal(e.Errors, &e.Entity.Errors); err != nil {
-			return fmt.Errorf("deserialize entity \"errors\" field: %w", err)
-		}
-	}
-
-	return nil
-}
