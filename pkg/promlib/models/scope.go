@@ -7,7 +7,7 @@ import (
 	"github.com/prometheus/prometheus/promql/parser"
 )
 
-func ApplyQueryFilters(rawExpr string, scopeFilters, adHocFilters []ScopeFilter) (string, error) {
+func ApplyFiltersAndGroupBy(rawExpr string, scopeFilters, adHocFilters []ScopeFilter, groupBy []string) (string, error) {
 	expr, err := parser.ParseExpr(rawExpr)
 	if err != nil {
 		return "", err
@@ -50,7 +50,17 @@ func ApplyQueryFilters(rawExpr string, scopeFilters, adHocFilters []ScopeFilter)
 			}
 
 			return nil
-
+		case *parser.AggregateExpr:
+			found := make(map[string]bool)
+			for _, lName := range v.Grouping {
+				found[lName] = true
+			}
+			for _, k := range groupBy {
+				if !found[k] {
+					v.Grouping = append(v.Grouping, k)
+				}
+			}
+			return nil
 		default:
 			return nil
 		}

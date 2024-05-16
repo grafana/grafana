@@ -377,6 +377,10 @@ export class PrometheusDatasource
       processedTarget.scopes = (request.scopes ?? []).map((scope) => scope.spec);
     }
 
+    if (config.featureToggles.groupByVariable) {
+      processedTarget.groupByKeys = request.groupByKeys;
+    }
+
     if (target.instant && target.range) {
       // We have query type "Both" selected
       // We should send separate queries with different refId
