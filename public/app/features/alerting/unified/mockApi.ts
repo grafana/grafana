@@ -5,7 +5,7 @@ import { setupServer, SetupServer } from 'msw/node';
 import { DataSourceInstanceSettings, PluginMeta } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
 import { AlertRuleUpdated } from 'app/features/alerting/unified/api/alertRuleApi';
-import allHandlers from 'app/features/alerting/unified/mocks/server/handlers';
+import allHandlers from 'app/features/alerting/unified/mocks/server/all-handlers';
 import { DashboardDTO, FolderDTO, NotifierDTO, OrgUser } from 'app/types';
 import {
   PromBuildInfoResponse,
@@ -28,7 +28,6 @@ import {
 import { DashboardSearchItem } from '../../search/types';
 
 import { CreateIntegrationDTO, NewOnCallIntegrationDTO, OnCallIntegrationDTO } from './api/onCallApi';
-import { AlertingQueryResponse } from './state/AlertingQueryRunner';
 
 type Configurator<T> = (builder: T) => T;
 
@@ -203,13 +202,6 @@ export function mockApi(server: SetupServer) {
       );
     },
 
-    eval: (response: AlertingQueryResponse) => {
-      server.use(
-        http.post('/api/v1/eval', () => {
-          return HttpResponse.json(response);
-        })
-      );
-    },
     grafanaNotifiers: (response: NotifierDTO[]) => {
       server.use(http.get(`api/alert-notifiers`, () => HttpResponse.json(response)));
     },

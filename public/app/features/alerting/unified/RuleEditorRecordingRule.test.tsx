@@ -4,11 +4,10 @@ import React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { byText } from 'testing-library-selector';
-import 'whatwg-fetch';
 
 import { setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
-import { mockApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { AccessControlAction } from 'app/types';
 import { PromApplication } from 'app/types/unified-alerting-dto';
 
@@ -17,7 +16,7 @@ import { searchFolders } from '../../manage-dashboards/state/actions';
 import { discoverFeatures } from './api/buildInfo';
 import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
 import { RecordingRuleEditorProps } from './components/rule-editor/RecordingRuleEditor';
-import { MockDataSourceSrv, grantUserPermissions, labelsPluginMetaMock, mockDataSource } from './mocks';
+import { MockDataSourceSrv, grantUserPermissions, mockDataSource } from './mocks';
 import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
 import * as config from './utils/config';
 
@@ -93,13 +92,10 @@ const mocks = {
   },
 };
 
-const server = setupMswServer();
-mockApi(server).plugins.getPluginSettings({ ...labelsPluginMetaMock, enabled: false });
-mockApi(server).eval({ results: { A: { frames: [] } } });
+setupMswServer();
 
 describe('RuleEditor recording rules', () => {
   beforeEach(() => {
-    mockApi(server).eval({ results: {} });
     jest.clearAllMocks();
     contextSrv.isEditor = true;
     contextSrv.hasEditPermissionInFolders = true;
