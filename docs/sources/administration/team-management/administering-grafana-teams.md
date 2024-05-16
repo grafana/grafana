@@ -48,7 +48,7 @@ Grafana recommends you use Teams to organize and manage access to Grafana’s co
 
 Grafana recommends that you use Instances or Stacks to separate Teams if you want true isolation, to ensure that no information leaks between Teams. You can synchronize some resources between instances using provisioning.
 
-## Securing Grafana Teams
+## Secure Grafana Teams
 
 The most important thing to consider for securing Teams is to only grant team admin rights to the users you trust to administer the Team.
 
