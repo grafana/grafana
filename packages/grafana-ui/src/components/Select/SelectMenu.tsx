@@ -57,7 +57,7 @@ export const VirtualizedSelectMenu = ({
   const styles = getSelectStyles(theme);
   const listRef = useRef<List>(null);
 
-  const focusedIndex = options.findIndex((option: SelectableValue<unknown>) => option.value === focusedOption.value);
+  const focusedIndex = options.findIndex((option: SelectableValue<unknown>) => option.value === focusedOption?.value);
 
   useEffect(() => {
     listRef.current?.scrollToItem(focusedIndex);

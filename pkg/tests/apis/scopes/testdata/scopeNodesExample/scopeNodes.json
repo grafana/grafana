@@ -24,7 +24,7 @@
         "title": "Clusters",
         "nodeType": "container",
         "parentName": "applications",
-        "linkID": "indexHelperCluster",
+        "linkId": "indexHelperCluster",
         "linkType": "scope"
       }
     },
@@ -38,7 +38,7 @@
         "description": "Cluster Scopes",
         "title": "Clusters",
         "nodeType": "container",
-        "linkID": "indexHelperCluster",
+        "linkId": "indexHelperCluster",
         "linkType": "scope"
       }
     },
@@ -66,7 +66,7 @@
         "title": "slothPictureFactory",
         "nodeType": "leaf",
         "parentName": "applications",
-        "linkID": "slothPictureFactory",
+        "linkId": "slothPictureFactory",
         "linkType": "scope"
       }
     },
@@ -81,7 +81,7 @@
         "title": "slothVoteTracker",
         "nodeType": "leaf",
         "parentName": "applications",
-        "linkID": "slothVoteTracker",
+        "linkId": "slothVoteTracker",
         "linkType": "scope"
       }
     },
@@ -96,7 +96,7 @@
         "title": "slothClusterNorth",
         "nodeType": "leaf",
         "parentName": "applications.clusters",
-        "linkID": "slothClusterNorth",
+        "linkId": "slothClusterNorth",
         "linkType": "scope"
       }
     },
@@ -111,7 +111,7 @@
         "title": "slothClusterSouth",
         "nodeType": "leaf",
         "parentName": "applications.clusters",
-        "linkID": "slothClusterSouth",
+        "linkId": "slothClusterSouth",
         "linkType": "scope"
       }
     },
@@ -126,7 +126,7 @@
         "title": "slothClusterNorth",
         "nodeType": "leaf",
         "parentName": "clusters",
-        "linkID": "slothClusterNorth",
+        "linkId": "slothClusterNorth",
         "linkType": "scope"
       }
     },
@@ -141,7 +141,7 @@
         "title": "slothClusterSouth",
         "nodeType": "leaf",
         "parentName": "clusters",
-        "linkID": "slothClusterSouth",
+        "linkId": "slothClusterSouth",
         "linkType": "scope"
       }
     },
@@ -156,7 +156,7 @@
         "title": "slothPictureFactory",
         "nodeType": "leaf",
         "parentName": "clusters.applications",
-        "linkID": "slothPictureFactory",
+        "linkId": "slothPictureFactory",
         "linkType": "scope"
       }
     },
@@ -171,7 +171,7 @@
         "title": "slothVoteTracker",
         "nodeType": "leaf",
         "parentName": "clusters.applications",
-        "linkID": "slothVoteTracker",
+        "linkId": "slothVoteTracker",
         "linkType": "scope"
       }
     }

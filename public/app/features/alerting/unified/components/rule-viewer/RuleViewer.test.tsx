@@ -2,12 +2,17 @@ import React from 'react';
 import { render, waitFor, screen, userEvent } from 'test/test-utils';
 import { byText, byRole } from 'testing-library-selector';
 
-import { setBackendSrv, setPluginExtensionsHook } from '@grafana/runtime';
+import { setBackendSrv, setDataSourceSrv, setPluginExtensionsHook } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { setFolderAccessControl } from 'app/features/alerting/unified/mocks/server/configure';
+import { MOCK_GRAFANA_ALERT_RULE_TITLE } from 'app/features/alerting/unified/mocks/server/handlers/alertRules';
+import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
 
 import {
+  MockDataSourceSrv,
   getCloudRule,
   getGrafanaRule,
   grantUserPermissions,
@@ -15,14 +20,12 @@ import {
   mockPluginLinkExtension,
 } from '../../mocks';
 import { setupDataSources } from '../../testSetup/datasources';
-import { plugins, setupPlugins } from '../../testSetup/plugins';
 import { Annotation } from '../../utils/constants';
-import { DataSourceType } from '../../utils/datasource';
+import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import * as ruleId from '../../utils/rule-id';
 
 import { AlertRuleProvider } from './RuleContext';
 import RuleViewer from './RuleViewer';
-import { createMockGrafanaServer } from './__mocks__/server';
 
 // metadata and interactive elements
 const ELEMENTS = {
@@ -39,7 +42,7 @@ const ELEMENTS = {
     more: {
       button: byRole('button', { name: /More/i }),
       actions: {
-        silence: byRole('link', { name: /Silence/i }),
+        silence: byRole('menuitem', { name: /Silence/i }),
         duplicate: byRole('menuitem', { name: /Duplicate/i }),
         copyLink: byRole('menuitem', { name: /Copy link/i }),
         export: byRole('menuitem', { name: /Export/i }),
@@ -54,10 +57,7 @@ const ELEMENTS = {
   },
 };
 
-const { apiHandlers: pluginApiHandlers } = setupPlugins(plugins);
-
-const server = createMockGrafanaServer(...pluginApiHandlers);
-
+setupMswServer();
 setupDataSources(mockDataSource({ type: DataSourceType.Prometheus, name: 'mimir-1' }));
 setPluginExtensionsHook(() => ({
   extensions: [
@@ -80,14 +80,6 @@ beforeAll(() => {
     AccessControlAction.AlertingInstanceCreate,
   ]);
   setBackendSrv(backendSrv);
-});
-
-beforeEach(() => {
-  server.listen();
-});
-
-afterAll(() => {
-  server.close();
 });
 
 describe('RuleViewer', () => {
@@ -115,6 +107,25 @@ describe('RuleViewer', () => {
       { uid: 'test1' }
     );
     const mockRuleIdentifier = ruleId.fromCombinedRule('grafana', mockRule);
+
+    beforeAll(() => {
+      grantUserPermissions([
+        AccessControlAction.AlertingRuleCreate,
+        AccessControlAction.AlertingRuleRead,
+        AccessControlAction.AlertingRuleUpdate,
+        AccessControlAction.AlertingRuleDelete,
+        AccessControlAction.AlertingInstanceCreate,
+      ]);
+      setBackendSrv(backendSrv);
+
+      setFolderAccessControl({
+        [AccessControlAction.AlertingRuleCreate]: true,
+        [AccessControlAction.AlertingRuleRead]: true,
+        [AccessControlAction.AlertingRuleUpdate]: true,
+        [AccessControlAction.AlertingRuleDelete]: true,
+        [AccessControlAction.AlertingInstanceCreate]: true,
+      });
+    });
 
     it('should render a Grafana managed alert rule', async () => {
       await renderRuleViewer(mockRule, mockRuleIdentifier);
@@ -150,6 +161,35 @@ describe('RuleViewer', () => {
       for (const menuItem of menuItems) {
         expect(menuItem.get()).toBeInTheDocument();
       }
+    });
+
+    it('renders silencing form correctly and shows alert rule name', async () => {
+      const dataSources = {
+        grafana: mockDataSource<AlertManagerDataSourceJsonData>({
+          name: GRAFANA_RULES_SOURCE_NAME,
+          type: DataSourceType.Alertmanager,
+          jsonData: {
+            handleGrafanaManagedAlerts: true,
+          },
+        }),
+        am: mockDataSource<AlertManagerDataSourceJsonData>({
+          name: 'Alertmanager',
+          type: DataSourceType.Alertmanager,
+          jsonData: {
+            handleGrafanaManagedAlerts: true,
+          },
+        }),
+      };
+      setupDataSources(dataSources.grafana, dataSources.am);
+      setDataSourceSrv(new MockDataSourceSrv(dataSources));
+
+      await renderRuleViewer(mockRule, mockRuleIdentifier);
+
+      const user = userEvent.setup();
+      await user.click(ELEMENTS.actions.more.button.get());
+      await user.click(ELEMENTS.actions.more.actions.silence.get());
+
+      expect(await screen.findByLabelText(/^alert rule/i)).toHaveValue(MOCK_GRAFANA_ALERT_RULE_TITLE);
     });
   });
 
