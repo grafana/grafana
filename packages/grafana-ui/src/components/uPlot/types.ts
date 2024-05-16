@@ -1,5 +1,5 @@
 import React from 'react';
-import uPlot, { Options, AlignedData } from 'uplot';
+import uPlot, { AlignedData, Options } from 'uplot';
 
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 
@@ -54,3 +54,5 @@ export interface PlotSelection {
     height: number;
   };
 }
+
+export type OnSelectCallback = (selections: Array<{ key: string; from: number; to: number }>) => void;

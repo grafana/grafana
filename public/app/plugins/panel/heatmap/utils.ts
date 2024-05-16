@@ -3,22 +3,22 @@ import uPlot, { Cursor } from 'uplot';
 
 import {
   DataFrameType,
+  FieldType,
   formattedValueToString,
   getValueFormat,
   GrafanaTheme2,
   incrRoundDn,
   incrRoundUp,
   TimeRange,
-  FieldType,
 } from '@grafana/data';
-import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation, HeatmapCellLayout } from '@grafana/schema';
+import { AxisPlacement, HeatmapCellLayout, ScaleDirection, ScaleDistribution, ScaleOrientation } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 
 import { HeatmapData } from './fields';
-import { FieldConfig, YAxisConfig } from './types';
+import { FieldConfig, HeatmapSelectionMode, YAxisConfig } from './types';
 
 interface PathbuilderOpts {
   each: (u: uPlot, seriesIdx: number, dataIdx: number, lft: number, top: number, wid: number, hgt: number) => void;
@@ -51,10 +51,22 @@ interface PrepConfigOpts {
   hideGE?: number;
   yAxisConfig: YAxisConfig;
   ySizeDivisor?: number;
+  selectMode?: HeatmapSelectionMode;
 }
 
 export function prepConfig(opts: PrepConfigOpts) {
-  const { dataRef, theme, timeZone, getTimeRange, cellGap, hideLE, hideGE, yAxisConfig, ySizeDivisor } = opts;
+  const {
+    dataRef,
+    theme,
+    timeZone,
+    getTimeRange,
+    cellGap,
+    hideLE,
+    hideGE,
+    yAxisConfig,
+    ySizeDivisor,
+    selectMode = 'x',
+  } = opts;
 
   const xScaleKey = 'x';
   let isTime = true;
@@ -449,10 +461,13 @@ export function prepConfig(opts: PrepConfigOpts) {
     scaleKey: '', // facets' scales used (above)
   });
 
+  const dragX = selectMode === 'x' || selectMode === 'xy';
+  const dragY = selectMode === 'y' || selectMode === 'xy';
+
   const cursor: Cursor = {
     drag: {
-      x: true,
-      y: false,
+      x: dragX,
+      y: dragY,
       setScale: false,
     },
     dataIdx: (u, seriesIdx) => {

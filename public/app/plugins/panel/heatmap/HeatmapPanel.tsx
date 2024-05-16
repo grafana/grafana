@@ -113,6 +113,7 @@ export const HeatmapPanel = ({
       exemplarColor: options.exemplars?.color ?? 'rgba(255,0,255,0.7)',
       yAxisConfig: options.yAxis,
       ySizeDivisor: scaleConfig?.type === ScaleDistribution.Log ? +(options.calculation?.yBuckets?.value || 1) : 1,
+      selectMode: options.selectMode,
     });
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -179,6 +180,7 @@ export const HeatmapPanel = ({
                   options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
                 }
                 queryZoom={onChangeTimeRange}
+                onSelect={(selections) => console.log(selections)}
                 syncMode={cursorSync}
                 syncScope={eventsScope}
                 render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync) => {

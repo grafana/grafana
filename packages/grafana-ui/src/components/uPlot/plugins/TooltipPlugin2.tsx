@@ -9,6 +9,7 @@ import { DashboardCursorSync } from '@grafana/schema';
 import { useStyles2 } from '../../../themes';
 import { getPortalContainer } from '../../Portal/Portal';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
+import { OnSelectCallback } from '../types';
 
 import { CloseButton } from './CloseButton';
 
@@ -36,6 +37,8 @@ interface TooltipPlugin2Props {
   queryZoom?: (range: { from: number; to: number }) => void;
   // y-only, via shiftKey
   clientZoom?: boolean;
+
+  onSelect?: OnSelectCallback;
 
   render: (
     u: uPlot,
@@ -107,6 +110,7 @@ export const TooltipPlugin2 = ({
   render,
   clientZoom = false,
   queryZoom,
+  onSelect,
   maxWidth,
   syncMode = DashboardCursorSync.Off,
   syncScope = 'global', // eventsScope
@@ -321,7 +325,29 @@ export const TooltipPlugin2 = ({
       const isXAxisHorizontal = u.scales.x.ori === 0;
       if (!viaSync && (clientZoom || queryZoom != null)) {
         if (maybeZoomAction(u.cursor!.event)) {
-          if (clientZoom && yDrag) {
+          if (onSelect) {
+            const selections = Object.entries(u.scales!).map(([key, scale]) => {
+              const isXAxis = key === 'x';
+              let min = 0;
+              let max = 0;
+              if (isXAxis) {
+                min = isXAxisHorizontal
+                  ? u.posToVal(u.select.left!, 'x')
+                  : u.posToVal(u.select.top + u.select.height, 'x');
+                max = isXAxisHorizontal
+                  ? u.posToVal(u.select.left! + u.select.width, 'x')
+                  : u.posToVal(u.select.top, 'x');
+              } else {
+                min = isXAxisHorizontal ? u.posToVal(u.select.top, key) : u.posToVal(u.select.left, key);
+                max = isXAxisHorizontal
+                  ? u.posToVal(u.select.top + u.select.height, key)
+                  : u.posToVal(u.select.left + u.select.width, key);
+              }
+              return { key, from: min, to: max };
+            });
+
+            onSelect(selections);
+          } else if (clientZoom && yDrag) {
             if (u.select.height >= MIN_ZOOM_DIST) {
               for (let key in u.scales!) {
                 if (key !== 'x') {
