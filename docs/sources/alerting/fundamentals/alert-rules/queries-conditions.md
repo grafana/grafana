@@ -50,9 +50,9 @@ Some common types of query components include:
 
 **Grouping**: Group the data by specific dimensions or tags to create aggregated views or breakdowns.
 
-**Note**:
-
-Grafana does not support alert queries with template variables. More information is available [here](https://community.grafana.com/t/template-variables-are-not-supported-in-alert-queries-while-setting-up-alert/2514).
+{{% admonition type="note" %}}
+Grafana doesn't support alert queries with template variables. More details [here.](https://community.grafana.com/t/template-variables-are-not-supported-in-alert-queries-while-setting-up-alert/2514)
+{{% /admonition %}}
 
 ## Expression queries
 
@@ -60,21 +60,20 @@ In Grafana, an expression is used to perform calculations, transformations, or a
 
 By leveraging expression queries, users can perform tasks such as calculating the percentage change between two values, applying functions like logarithmic or trigonometric functions, aggregating data over specific time ranges or dimensions, and implementing conditional logic to handle different scenarios.
 
-In Alerting, you can only use expressions for Grafana-managed alert rules. For each expression, you can choose from the math, reduce, and resample expressions. These are called multi-dimensional rules, because they generate a separate alert for each series.
-
-You can also use classic condition, which creates an alert rule that triggers a single alert when its condition is met. As a result, Grafana sends only a single alert even when alert conditions are met for multiple series.
-
-**Note:**
-
-Classic conditions exist mainly for compatibility reasons and should be avoided if possible.
+In Alerting, you can only use expressions for Grafana-managed alert rules. For each expression, you can choose from the math, reduce, and resample expressions. These are called multi-dimensional rules, because they generate an alert instance for each series.
 
 **Reduce**
 
-Aggregates time series values in the selected time range into a single value.
+Aggregates time series values in the selected time range into a single value. It's not necessary for [rules using numeric data.](#alert-on-numeric-data)
 
 **Math**
 
-Performs free-form math functions/operations on time series and number data. Can be used to preprocess time series data or to define an alert condition for number data.
+Performs free-form math functions/operations on time series and number data. Can be used to preprocess time series data or to define an alert condition for number data. For example:
+
+- `$B > 70` should fire if the value of B (query or expression) is more than 70.
+- `$B < $C * 100` should fire if the value of B is less than the value of C multiplied by 100.
+
+If queries being compared have multiple series in their results, series from different queries are matched if they have the same labels or one is a subset of the other.
 
 **Resample**
 
@@ -91,14 +90,11 @@ The threshold expression allows you to compare two single values. It returns `0`
 - Is within range (x > y1 AND x < y2)
 - Is outside range (x < y1 AND x > y2)
 
-**Classic condition**
+**Classic condition (legacy)**
 
-Checks if any time series data matches the alert condition.
-
-**Note**:
-
-Classic condition expression queries always produce one alert instance only, no matter how many time series meet the condition.
 Classic conditions exist mainly for compatibility reasons and should be avoided if possible.
+
+Classic condition checks if any time series data matches the alert condition. It always produce one alert instance only, no matter how many time series meet the condition.
 
 ## Aggregations
 
