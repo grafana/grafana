@@ -283,11 +283,11 @@ The most basic alert consists of two parts:
 
    Some popular channels include:
 
-   - [Email][email]
-   - [Webhooks][webhook]
-   - [Telegram][telegram]
-   - [Slack][slack]
-   - [PagerDuty][pagerduty]
+   - [Email](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/integrations/configure-email/)
+   - [Webhooks](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier/)
+   - [Telegram](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/integrations/configure-telegram/)
+   - [Slack](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/integrations/configure-slack/)
+   - [PagerDuty](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/integrations/pager-duty/)
 
 1. An _Alert rule_ - An Alert rule defines one or more _conditions_ that Grafana regularly evaluates. When these evaluations meet the rule's criteria, the alert is triggered.
 
@@ -340,7 +340,6 @@ Now that Grafana knows how to notify us, it's time to set up an alert rule:
 1. Set the pending period. This is the time that a condition has to be met until the alert enters in Firing state and a notification is sent. Enter `0s`. For the purposes of this tutorial, the evaluation interval is intentionally short. This makes it easier to test. This setting makes Grafana wait until an alert has fired for a given time before Grafana sends the notification.
 1. In **Section 4**, choose **RequestBin** as the **Contact point**.
 1. Click **Save rule and exit** at the top of the page.
-1. In Grafana's sidebar, navigate to **Notification policies**.
 
 ### Trigger a Grafana Managed Alert
 
@@ -397,22 +396,3 @@ Check out the links below to continue your learning journey with Grafana's LGTM 
 - [Alerting Overview](/docs/grafana/latest/alerting/)
 - [Alert rules](/docs/grafana/latest/alerting/create-alerts/)
 - [Contact points](/docs/grafana/latest/alerting/fundamentals/contact-points/)
-
-{{% docs/reference %}}
-
-[email]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-email"
-[email]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-email"
-
-[pagerduty]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/pager-duty"
-[pagerduty]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/pager-duty"
-
-[telegram]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-telegram"
-[telegram]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-telegram"
-
-[slack]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-slack"
-[slack]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-slack"
-
-[webhook]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier"
-[webhook]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier"
-
-{{% /docs/reference %}}
