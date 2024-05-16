@@ -71,7 +71,7 @@ export const RowsList = (props: RowsListProps) => {
     enableSharedCrosshair = false,
     initialRowIndex = undefined,
     headerGroups,
-    longestField
+    longestField,
   } = props;
 
   const [rowHighlightIndex, setRowHighlightIndex] = useState<number | undefined>(initialRowIndex);
@@ -248,8 +248,7 @@ export const RowsList = (props: RowsListProps) => {
       fieldOptions.cellOptions.wrapText
     ) {
       textWrapField = field;
-    }
-    else if (longestField !== undefined) {
+    } else if (longestField !== undefined) {
       textWrapField = longestField;
     }
   }
