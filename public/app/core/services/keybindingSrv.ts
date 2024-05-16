@@ -27,13 +27,22 @@ import { contextSrv } from '../core';
 import { RouteDescriptor } from '../navigation/types';
 
 import { toggleTheme } from './theme';
-import { withFocusedPanel } from './withFocusedPanelId';
 
 export class KeybindingSrv {
   constructor(
     private locationService: LocationService,
     private chromeService: AppChromeService
   ) {}
+
+  private panelWithAttention: HTMLDivElement | null = null;
+
+  setPanelWithAttention(panel: HTMLDivElement | null) {
+    this.panelWithAttention = panel;
+  }
+
+  getPanelWithAttention() {
+    return this.panelWithAttention;
+  }
 
   clearAndInitGlobalBindings(route: RouteDescriptor) {
     Mousetrap.reset();
@@ -182,7 +191,18 @@ export class KeybindingSrv {
   }
 
   bindWithPanelId(keyArg: string, fn: (panelId: number) => void) {
-    this.bind(keyArg, withFocusedPanel(fn));
+    this.bind(keyArg, this.withFocusedPanel(fn));
+  }
+
+  withFocusedPanel(fn: (panelId: number) => void) {
+    return () => {
+      const focusedElement = this.panelWithAttention?.closest('[data-panelid]');
+
+      if (focusedElement instanceof HTMLElement && focusedElement.dataset?.panelid) {
+        fn(parseInt(focusedElement.dataset?.panelid, 10));
+        return;
+      }
+    };
   }
 
   setupTimeRangeBindings(updateUrl = true) {

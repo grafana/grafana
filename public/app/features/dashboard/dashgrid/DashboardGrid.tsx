@@ -1,11 +1,12 @@
 import classNames from 'classnames';
-import React, { PureComponent, CSSProperties } from 'react';
+import React, { PureComponent, CSSProperties, Ref } from 'react';
 import ReactGridLayout, { ItemCallback } from 'react-grid-layout';
 import { Subscription } from 'rxjs';
 
 import { config } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/services/context_srv';
 import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardPanelsChangedEvent } from 'app/types/events';
@@ -232,10 +233,6 @@ export class DashboardGrid extends PureComponent<Props, State> {
           windowHeight={this.windowHeight}
           windowWidth={this.windowWidth}
           isViewing={panel.isViewing}
-          hasAttention={panel.id === this.state.attention}
-          setAttention={() => {
-            this.setState({ attention: panel.id });
-          }}
         >
           {(width: number, height: number) => {
             return this.renderPanel(panel, width, height, isDashboardDraggable);
@@ -367,19 +364,19 @@ interface GrafanaGridItemProps extends React.HTMLAttributes<HTMLDivElement> {
   windowHeight: number;
   windowWidth: number;
   children: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-  hasAttention: boolean;
-  setAttention: () => void;
 }
 
 /**
  * A hacky way to intercept the react-layout-grid item dimensions and pass them to DashboardPanel
  */
 const GrafanaGridItem = React.forwardRef<HTMLDivElement, GrafanaGridItemProps>((props, ref) => {
+  const { keybindings } = useGrafana();
+
   const theme = config.theme2;
   let width = 100;
   let height = 100;
 
-  const { gridWidth, gridPos, isViewing, windowHeight, windowWidth, hasAttention, setAttention, ...divProps } = props;
+  const { gridWidth, gridPos, isViewing, windowHeight, windowWidth, ...divProps } = props;
   const style: CSSProperties = props.style ?? {};
 
   if (isViewing) {
@@ -407,14 +404,15 @@ const GrafanaGridItem = React.forwardRef<HTMLDivElement, GrafanaGridItemProps>((
     }
   }
 
+  const hasAttention = keybindings.getPanelWithAttention() === getRefCurrent(ref);
+
   // props.children[0] is our main children. RGL adds the drag handle at props.children[1]
   return (
     <div
       {...divProps}
       style={{ ...divProps.style }}
-      data-attention={hasAttention}
-      onFocus={() => !hasAttention && setAttention()}
-      onMouseMove={() => !hasAttention && setAttention()}
+      onFocus={() => !hasAttention && keybindings.setPanelWithAttention(getRefCurrent(ref))}
+      onMouseMove={() => !hasAttention && keybindings.setPanelWithAttention(getRefCurrent(ref))}
       ref={ref}
     >
       {/* Pass width and height to children as render props */}
@@ -422,6 +420,11 @@ const GrafanaGridItem = React.forwardRef<HTMLDivElement, GrafanaGridItemProps>((
     </div>
   );
 });
+
+/** Need bcasue ref provided by forwardRef may be a function, hence causes weird typing */
+function getRefCurrent(ref: Ref<HTMLDivElement> | null): HTMLDivElement | null {
+  return ref && typeof ref !== 'function' ? ref.current : null;
+}
 
 /**
  * This translates grid height dimensions to real pixels
