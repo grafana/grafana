@@ -10,8 +10,6 @@ import folderHandlers from 'app/features/alerting/unified/mocks/server/handlers/
 import pluginsHandlers from 'app/features/alerting/unified/mocks/server/handlers/plugins';
 import silenceHandlers from 'app/features/alerting/unified/mocks/server/handlers/silences';
 
-import { alertRuleHandlers } from './handlers/alertRule';
-
 /**
  * Array of all mock handlers that are required across Alerting tests
  */
