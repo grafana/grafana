@@ -3934,6 +3934,7 @@ steps:
 - commands:
   - 'dagger run --silent /src/grafana-build artifacts -a $${ARTIFACTS} --grafana-ref=$${GRAFANA_REF}
     --enterprise-ref=$${ENTERPRISE_REF} --grafana-repo=$${GRAFANA_REPO} --version=$${VERSION} '
+  - --go-version=1.22.3
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
@@ -4921,6 +4922,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 7397697ccc703dc375a0f90ba8a12fd978c2972f37fdffbdca1f72ff3991b339
+hmac: 29140f7ab2d57bd4c05b27863ab1227c722f793d9e1373e470c3e6b5681e7fb8
 
 ...
