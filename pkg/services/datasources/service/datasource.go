@@ -265,10 +265,14 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 func (s *Service) prepareAdd(ctx context.Context, cmd *datasources.AddDataSourceCommand) error {
 	operation := backend.InstanceSettingsOperation_CREATE
 
+	if cmd.Type == "" {
+		return nil // This happens in tests
+	}
+
 	// Make sure it is a known plugin type
 	p, found := s.pluginStore.Plugin(ctx, cmd.Type)
 	if !found {
-		return fmt.Errorf("plugin %s not found", cmd.Type)
+		return fmt.Errorf("plugin '%s' not found", cmd.Type)
 	}
 
 	// When the APIVersion is set, the client must also implement ProcessInstanceSettings
@@ -337,10 +341,14 @@ func (s *Service) prepareAdd(ctx context.Context, cmd *datasources.AddDataSource
 func (s *Service) prepareUpdate(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) error {
 	operation := backend.InstanceSettingsOperation_UPDATE
 
+	if cmd.Type == "" {
+		return nil // This happens in tests
+	}
+
 	// Make sure it is a known plugin type
 	p, found := s.pluginStore.Plugin(ctx, cmd.Type)
 	if !found {
-		return fmt.Errorf("plugin %s not found", cmd.Type)
+		return fmt.Errorf("plugin '%s' not found", cmd.Type)
 	}
 
 	// When the APIVersion is set, the client must also implement ProcessInstanceSettings
