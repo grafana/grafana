@@ -259,7 +259,7 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 
 // This will valid validate the instance settings and mutate the cmd with the processed values
 func (s *Service) prepareAdd(ctx context.Context, cmd *datasources.AddDataSourceCommand) error {
-	operation := backend.InstanceSettingsOperation_CREATE
+	operation := backend.InstanceSettingsOperationCREATE
 
 	if len(cmd.Name) > maxDatasourceNameLen {
 		return datasources.ErrDataSourceNameInvalid.Errorf("max length is %d", maxDatasourceNameLen)
@@ -347,7 +347,7 @@ func (s *Service) prepareAdd(ctx context.Context, cmd *datasources.AddDataSource
 
 // identical to prepareAdd -- but the types do not overlap :(
 func (s *Service) prepareUpdate(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) error {
-	operation := backend.InstanceSettingsOperation_UPDATE
+	operation := backend.InstanceSettingsOperationUPDATE
 
 	if len(cmd.Name) > maxDatasourceNameLen {
 		return datasources.ErrDataSourceNameInvalid.Errorf("max length is %d", maxDatasourceNameLen)

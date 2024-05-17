@@ -3,6 +3,7 @@ package testdatasource
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -17,6 +18,13 @@ func (s *Service) ProcessInstanceSettings(ctx context.Context, req *backend.Proc
 	}
 	if req.PluginContext.AppInstanceSettings != nil {
 		return getBadRequest("not expecting app instance settings"), nil
+	}
+
+	switch settings.APIVersion {
+	case "", "v0alpha1":
+		// OK!
+	default:
+		return getBadRequest(fmt.Sprintf("expected apiVersion: v0alpha1, got: %s", settings.APIVersion)), nil
 	}
 
 	if settings.JSONData != nil {

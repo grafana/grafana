@@ -23,7 +23,9 @@ func TestSettingsHandler(t *testing.T) {
 	// Empty is OK
 	s, _ = svc.ProcessInstanceSettings(context.Background(), &backend.ProcessInstanceSettingsRequest{
 		PluginContext: backend.PluginContext{
-			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+				APIVersion: "v0alpha1",
+			},
 		},
 	})
 	require.True(t, s.Allowed)
@@ -47,6 +49,18 @@ func TestSettingsHandler(t *testing.T) {
 				DecryptedSecureJSONData: map[string]string{
 					"A": "Value",
 				},
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.False(t, s.Allowed)
+	require.Equal(t, int32(400), s.Result.Code)
+
+	// Invalid API Version
+	s, err = svc.ProcessInstanceSettings(context.Background(), &backend.ProcessInstanceSettingsRequest{
+		PluginContext: backend.PluginContext{
+			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+				APIVersion: "v1234",
 			},
 		},
 	})

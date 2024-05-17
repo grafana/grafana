@@ -34,6 +34,7 @@ import (
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 )
 
 func TestMain(m *testing.M) {
@@ -60,6 +61,7 @@ func TestService_AddDataSource(t *testing.T) {
 	cfg := &setting.Cfg{}
 
 	t.Run("should return validation error if command validation failed", func(t *testing.T) {
+		dsplugin := &testdatasource.Service{}
 		sqlStore := db.InitTestDB(t)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
@@ -68,11 +70,15 @@ func TestService_AddDataSource(t *testing.T) {
 		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), actest.FakeAccessControl{}, mockPermission, quotaService, &pluginstore.FakePluginStore{
 			PluginList: []pluginstore.Plugin{{
 				JSONData: plugins.JSONData{
+					ID:         "test",
+					Type:       plugins.TypeDataSource,
 					Name:       "test",
-					APIVersion: "v0alpha1",
+					APIVersion: "v0alpha1", // When a value exists in plugin.json, the callback will be executed
 				},
 			}},
-		}, &pluginfakes.FakePluginClient{})
+		}, &pluginfakes.FakePluginClient{
+			ProcessInstanceSettingsFunc: dsplugin.ProcessInstanceSettings, // The actual callback
+		})
 		require.NoError(t, err)
 
 		cmd := &datasources.AddDataSourceCommand{
@@ -93,12 +99,13 @@ func TestService_AddDataSource(t *testing.T) {
 
 		cmd = &datasources.AddDataSourceCommand{
 			OrgID:      1,
+			Type:       "test", // required to validate apiserver
 			Name:       "test",
-			APIVersion: "v0alpha2",
+			APIVersion: "v123", // invalid apiVersion
 		}
 
 		_, err = dsService.AddDataSource(context.Background(), cmd)
-		require.EqualError(t, err, "[datasource.apiVersionInvalid] expected v0alpha1, got v0alpha2")
+		require.EqualError(t, err, "not allowed (&{Status:Failure Message:expected apiVersion: v0alpha1, got: v123 Reason:BadRequest Code:400})")
 	})
 }
 

@@ -70,6 +70,7 @@ type FakePluginClient struct {
 	backend.CheckHealthHandlerFunc
 	backend.QueryDataHandlerFunc
 	backend.CallResourceHandlerFunc
+	backend.ProcessInstanceSettingsFunc
 	mutex sync.RWMutex
 
 	backendplugin.Plugin
@@ -164,6 +165,14 @@ func (pc *FakePluginClient) PublishStream(_ context.Context, _ *backend.PublishS
 
 func (pc *FakePluginClient) RunStream(_ context.Context, _ *backend.RunStreamRequest, _ *backend.StreamSender) error {
 	return plugins.ErrMethodNotImplemented
+}
+
+func (pc *FakePluginClient) ProcessInstanceSettings(ctx context.Context, req *backend.ProcessInstanceSettingsRequest) (*backend.ProcessInstanceSettingsResponse, error) {
+	if pc.ProcessInstanceSettingsFunc != nil {
+		return pc.ProcessInstanceSettingsFunc(ctx, req)
+	}
+
+	return nil, plugins.ErrMethodNotImplemented
 }
 
 type FakePluginRegistry struct {
