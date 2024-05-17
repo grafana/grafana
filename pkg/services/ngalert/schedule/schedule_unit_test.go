@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net/url"
+	"slices"
 	"testing"
 	"time"
 
@@ -353,6 +354,47 @@ func TestProcessTicks(t *testing.T) {
 
 		require.Len(t, updated, 1)
 		require.Equal(t, expectedUpdated, updated[0])
+	})
+	t.Run("on 12th tick all rules should be stopped", func(t *testing.T) {
+		expectedToBeStopped, err := ruleStore.GetAlertRulesKeysForScheduling(ctx)
+		require.NoError(t, err)
+
+		ruleStore.rules = map[string]*models.AlertRule{}
+		tick = tick.Add(cfg.BaseInterval)
+		scheduled, stopped, updated := sched.processTick(ctx, dispatcherGroup, tick)
+
+		require.Emptyf(t, scheduled, "None rules should be scheduled")
+
+		require.Len(t, stopped, len(expectedToBeStopped))
+
+		require.Emptyf(t, updated, "No rules should be updated")
+	})
+
+	t.Run("scheduled rules should be sorted", func(t *testing.T) {
+		rules := gen.With(gen.WithOrgID(mainOrgID), gen.WithInterval(cfg.BaseInterval)).GenerateManyRef(10, 20)
+		ruleStore.rules = map[string]*models.AlertRule{}
+		ruleStore.PutRule(context.Background(), rules...)
+
+		expectedUids := make([]string, 0, len(rules))
+		for _, rule := range rules {
+			expectedUids = append(expectedUids, rule.UID)
+		}
+		slices.Sort(expectedUids)
+
+		tick = tick.Add(cfg.BaseInterval)
+
+		scheduled, stopped, updated := sched.processTick(ctx, dispatcherGroup, tick)
+		require.Emptyf(t, stopped, "None rules are expected to be stopped")
+		require.Emptyf(t, updated, "None rules are expected to be updated")
+
+		actualUids := make([]string, 0, len(scheduled))
+		for _, rule := range scheduled {
+			actualUids = append(actualUids, rule.rule.UID)
+		}
+
+		require.Len(t, scheduled, len(rules))
+		assert.Truef(t, slices.IsSorted(actualUids), "The scheduler rules should be sorted by UID but they aren't")
+		require.Equal(t, expectedUids, actualUids)
 	})
 }
 
