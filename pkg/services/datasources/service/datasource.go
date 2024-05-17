@@ -213,49 +213,9 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 		return nil, err
 	}
 
-	p, found := s.pluginStore.Plugin(ctx, cmd.Type)
-	if !found {
-		return nil, fmt.Errorf("plugin %s not found", cmd.Type)
-	}
-	jd, err := cmd.JsonData.Bytes()
-	if err != nil {
+	// Validate the command
+	if err := s.prepareAdd(ctx, cmd); err != nil {
 		return nil, err
-	}
-
-	fmt.Printf("todo, check if %s has admission hooks", p.Name)
-	rsp, err := s.pluginClient.ProcessInstanceSettings(ctx, &backend.ProcessInstanceSettingsRequest{
-		PluginContext: backend.PluginContext{
-			OrgID:    cmd.OrgID,
-			PluginID: cmd.Type,
-			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				UID:                     cmd.UID,
-				Name:                    cmd.Name,
-				URL:                     cmd.URL,
-				Database:                cmd.Database,
-				Updated:                 time.Now(),
-				JSONData:                jd,
-				DecryptedSecureJSONData: cmd.SecureJsonData,
-			},
-		},
-		Operation:   backend.InstanceSettingsOperation_CREATE,
-		CheckHealth: false, // we never have in the past
-	})
-	if err != nil { // TODO, OK with not implemented?
-		return nil, err
-	}
-	if rsp != nil {
-		if !rsp.Allowed {
-			return nil, fmt.Errorf("not allowed")
-		}
-		// Use the mutated values
-		if rsp.DataSourceInstanceSettings != nil {
-			cmd.SecureJsonData = rsp.DataSourceInstanceSettings.DecryptedSecureJSONData
-			cmd.JsonData = simplejson.New()
-			err = cmd.JsonData.FromDB(rsp.DataSourceInstanceSettings.JSONData)
-			if err != nil {
-				return nil, err
-			}
-		}
 	}
 
 	var dataSource *datasources.DataSource
@@ -301,6 +261,150 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 	})
 }
 
+// This will valid validate the instance settings and mutate the cmd with the processed values
+func (s *Service) prepareAdd(ctx context.Context, cmd *datasources.AddDataSourceCommand) error {
+	operation := backend.InstanceSettingsOperation_CREATE
+
+	// Make sure it is a known plugin type
+	p, found := s.pluginStore.Plugin(ctx, cmd.Type)
+	if !found {
+		return fmt.Errorf("plugin %s not found", cmd.Type)
+	}
+
+	// When the APIVersion is set, the client must also implement ProcessInstanceSettings
+	if p.APIVersion == "" {
+		if cmd.APIVersion != "" {
+			return fmt.Errorf("invalid request apiVersion (datasource does not have one configured)")
+		}
+		return nil
+	}
+
+	jd, err := cmd.JsonData.ToDB()
+	if err != nil {
+		return fmt.Errorf("invalid jsonData (%v)", operation)
+	}
+
+	rsp, err := s.pluginClient.ProcessInstanceSettings(ctx, &backend.ProcessInstanceSettingsRequest{
+		PluginContext: backend.PluginContext{
+			OrgID:    cmd.OrgID,
+			PluginID: cmd.Type,
+			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+				UID:                     cmd.UID,
+				Name:                    cmd.Name,
+				URL:                     cmd.URL,
+				Database:                cmd.Database,
+				Updated:                 time.Now(),
+				JSONData:                jd,
+				DecryptedSecureJSONData: cmd.SecureJsonData,
+				Type:                    cmd.Type,
+				User:                    cmd.User,
+				BasicAuthEnabled:        cmd.BasicAuth,
+				BasicAuthUser:           cmd.BasicAuthUser,
+				APIVersion:              cmd.APIVersion,
+			},
+		},
+		Operation:   operation,
+		CheckHealth: false, // we have never checked in the past, should we start?
+	})
+	if err != nil {
+		if errors.Is(err, plugins.ErrMethodNotImplemented) {
+			return fmt.Errorf("plugin (%s) with apiVersion=%s must implement ProcessInstanceSettings", p.ID, p.APIVersion)
+		}
+	}
+	if rsp == nil {
+		return fmt.Errorf("expected response (%v)", operation)
+	}
+	settings := rsp.DataSourceInstanceSettings
+	if !rsp.Allowed || settings == nil {
+		return fmt.Errorf("not allowed")
+	}
+
+	// Use the mutated values
+	cmd.APIVersion = settings.APIVersion
+	cmd.BasicAuth = settings.BasicAuthEnabled
+	cmd.BasicAuthUser = settings.BasicAuthUser
+	cmd.URL = settings.URL
+	cmd.Database = settings.Database
+	cmd.SecureJsonData = settings.DecryptedSecureJSONData
+	err = cmd.JsonData.FromDB(settings.JSONData)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// identical to prepareAdd -- but the types do not overlap :(
+func (s *Service) prepareUpdate(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) error {
+	operation := backend.InstanceSettingsOperation_UPDATE
+
+	// Make sure it is a known plugin type
+	p, found := s.pluginStore.Plugin(ctx, cmd.Type)
+	if !found {
+		return fmt.Errorf("plugin %s not found", cmd.Type)
+	}
+
+	// When the APIVersion is set, the client must also implement ProcessInstanceSettings
+	if p.APIVersion == "" {
+		if cmd.APIVersion != "" {
+			return fmt.Errorf("invalid request apiVersion (datasource does not have one configured)")
+		}
+		return nil
+	}
+
+	jd, err := cmd.JsonData.ToDB()
+	if err != nil {
+		return fmt.Errorf("invalid jsonData (%v)", operation)
+	}
+
+	rsp, err := s.pluginClient.ProcessInstanceSettings(ctx, &backend.ProcessInstanceSettingsRequest{
+		PluginContext: backend.PluginContext{
+			OrgID:    cmd.OrgID,
+			PluginID: cmd.Type,
+			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+				UID:                     cmd.UID,
+				Name:                    cmd.Name,
+				URL:                     cmd.URL,
+				Database:                cmd.Database,
+				Updated:                 time.Now(),
+				JSONData:                jd,
+				DecryptedSecureJSONData: cmd.SecureJsonData,
+				Type:                    cmd.Type,
+				User:                    cmd.User,
+				BasicAuthEnabled:        cmd.BasicAuth,
+				BasicAuthUser:           cmd.BasicAuthUser,
+				APIVersion:              cmd.APIVersion,
+			},
+		},
+		Operation:   operation,
+		CheckHealth: false, // we have never checked in the past, should we start?
+	})
+	if err != nil {
+		if errors.Is(err, plugins.ErrMethodNotImplemented) {
+			return fmt.Errorf("plugin (%s) with apiVersion=%s must implement ProcessInstanceSettings", p.ID, p.APIVersion)
+		}
+	}
+	if rsp == nil {
+		return fmt.Errorf("expected response (%v)", operation)
+	}
+	settings := rsp.DataSourceInstanceSettings
+	if !rsp.Allowed || settings == nil {
+		return fmt.Errorf("not allowed")
+	}
+
+	// Use the mutated values
+	cmd.APIVersion = settings.APIVersion
+	cmd.BasicAuth = settings.BasicAuthEnabled
+	cmd.BasicAuthUser = settings.BasicAuthUser
+	cmd.URL = settings.URL
+	cmd.Database = settings.Database
+	cmd.SecureJsonData = settings.DecryptedSecureJSONData
+	err = cmd.JsonData.FromDB(settings.JSONData)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // getAvailableName finds the first available name for a datasource of the given type.
 func getAvailableName(dsType string, dataSources []*datasources.DataSource) string {
 	dsNames := make(map[string]bool)
@@ -338,6 +442,11 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 
 	if err := s.validateFields(ctx, cmd.Name, cmd.URL, cmd.Type, cmd.APIVersion); err != nil {
 		return dataSource, err
+	}
+
+	// Validate the command
+	if err := s.prepareUpdate(ctx, cmd); err != nil {
+		return nil, err
 	}
 
 	return dataSource, s.db.InTransaction(ctx, func(ctx context.Context) error {

@@ -102,8 +102,6 @@ type MiddlewareScenarioContext struct {
 	PublishStreamCallChain           []string
 	RunStreamCallChain               []string
 	ProcessInstanceSettingsCallChain []string
-	ValidateAdmissionCallChain       []string
-	MutateAdmissionCallChain         []string
 }
 
 func (ctx *MiddlewareScenarioContext) NewMiddleware(name string) plugins.ClientMiddleware {
