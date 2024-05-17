@@ -2065,54 +2065,6 @@
         }
       }
     },
-    "AddDataSourceCommand": {
-      "description": "Also acts as api DTO",
-      "type": "object",
-      "properties": {
-        "access": {
-          "$ref": "#/definitions/DsAccess"
-        },
-        "basicAuth": {
-          "type": "boolean"
-        },
-        "basicAuthUser": {
-          "type": "string"
-        },
-        "database": {
-          "type": "string"
-        },
-        "isDefault": {
-          "type": "boolean"
-        },
-        "jsonData": {
-          "$ref": "#/definitions/Json"
-        },
-        "name": {
-          "type": "string"
-        },
-        "secureJsonData": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "type": {
-          "type": "string"
-        },
-        "uid": {
-          "type": "string"
-        },
-        "url": {
-          "type": "string"
-        },
-        "user": {
-          "type": "string"
-        },
-        "withCredentials": {
-          "type": "boolean"
-        }
-      }
-    },
     "AddInviteForm": {
       "type": "object",
       "properties": {
@@ -3956,6 +3908,58 @@
           "type": "string"
         },
         "typeLogoUrl": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "user": {
+          "type": "string"
+        },
+        "version": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "withCredentials": {
+          "type": "boolean"
+        }
+      }
+    },
+    "DataSourceCommand": {
+      "description": "Add|Update Command (Also acts as api DTO)",
+      "type": "object",
+      "properties": {
+        "access": {
+          "$ref": "#/definitions/DsAccess"
+        },
+        "basicAuth": {
+          "type": "boolean"
+        },
+        "basicAuthUser": {
+          "type": "string"
+        },
+        "database": {
+          "type": "string"
+        },
+        "isDefault": {
+          "type": "boolean"
+        },
+        "jsonData": {
+          "$ref": "#/definitions/Json"
+        },
+        "name": {
+          "type": "string"
+        },
+        "secureJsonData": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "type": {
           "type": "string"
         },
         "uid": {
@@ -7502,58 +7506,6 @@
           "items": {
             "$ref": "#/definitions/DashboardACLUpdateItem"
           }
-        }
-      }
-    },
-    "UpdateDataSourceCommand": {
-      "description": "Also acts as api DTO",
-      "type": "object",
-      "properties": {
-        "access": {
-          "$ref": "#/definitions/DsAccess"
-        },
-        "basicAuth": {
-          "type": "boolean"
-        },
-        "basicAuthUser": {
-          "type": "string"
-        },
-        "database": {
-          "type": "string"
-        },
-        "isDefault": {
-          "type": "boolean"
-        },
-        "jsonData": {
-          "$ref": "#/definitions/Json"
-        },
-        "name": {
-          "type": "string"
-        },
-        "secureJsonData": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "type": {
-          "type": "string"
-        },
-        "uid": {
-          "type": "string"
-        },
-        "url": {
-          "type": "string"
-        },
-        "user": {
-          "type": "string"
-        },
-        "version": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "withCredentials": {
-          "type": "boolean"
         }
       }
     },

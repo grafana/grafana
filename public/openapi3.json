@@ -2060,54 +2060,6 @@
         },
         "type": "object"
       },
-      "AddDataSourceCommand": {
-        "description": "Also acts as api DTO",
-        "properties": {
-          "access": {
-            "$ref": "#/components/schemas/DsAccess"
-          },
-          "basicAuth": {
-            "type": "boolean"
-          },
-          "basicAuthUser": {
-            "type": "string"
-          },
-          "database": {
-            "type": "string"
-          },
-          "isDefault": {
-            "type": "boolean"
-          },
-          "jsonData": {
-            "$ref": "#/components/schemas/Json"
-          },
-          "name": {
-            "type": "string"
-          },
-          "secureJsonData": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object"
-          },
-          "type": {
-            "type": "string"
-          },
-          "uid": {
-            "type": "string"
-          },
-          "url": {
-            "type": "string"
-          },
-          "user": {
-            "type": "string"
-          },
-          "withCredentials": {
-            "type": "boolean"
-          }
-        },
-        "type": "object"
-      },
       "AddInviteForm": {
         "properties": {
           "loginOrEmail": {
@@ -4624,6 +4576,58 @@
             "type": "string"
           },
           "typeLogoUrl": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "user": {
+            "type": "string"
+          },
+          "version": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "withCredentials": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "DataSourceCommand": {
+        "description": "Add|Update Command (Also acts as api DTO)",
+        "properties": {
+          "access": {
+            "$ref": "#/components/schemas/DsAccess"
+          },
+          "basicAuth": {
+            "type": "boolean"
+          },
+          "basicAuthUser": {
+            "type": "string"
+          },
+          "database": {
+            "type": "string"
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "jsonData": {
+            "$ref": "#/components/schemas/Json"
+          },
+          "name": {
+            "type": "string"
+          },
+          "secureJsonData": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "type": {
             "type": "string"
           },
           "uid": {
@@ -11115,58 +11119,6 @@
         },
         "type": "object"
       },
-      "UpdateDataSourceCommand": {
-        "description": "Also acts as api DTO",
-        "properties": {
-          "access": {
-            "$ref": "#/components/schemas/DsAccess"
-          },
-          "basicAuth": {
-            "type": "boolean"
-          },
-          "basicAuthUser": {
-            "type": "string"
-          },
-          "database": {
-            "type": "string"
-          },
-          "isDefault": {
-            "type": "boolean"
-          },
-          "jsonData": {
-            "$ref": "#/components/schemas/Json"
-          },
-          "name": {
-            "type": "string"
-          },
-          "secureJsonData": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object"
-          },
-          "type": {
-            "type": "string"
-          },
-          "uid": {
-            "type": "string"
-          },
-          "url": {
-            "type": "string"
-          },
-          "user": {
-            "type": "string"
-          },
-          "version": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "withCredentials": {
-            "type": "boolean"
-          }
-        },
-        "type": "object"
-      },
       "UpdateFolderCommand": {
         "description": "UpdateFolderCommand captures the information required by the folder service\nto update a folder. Use Move to update a folder's parent folder.",
         "properties": {
@@ -16253,7 +16205,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AddDataSourceCommand"
+                "$ref": "#/components/schemas/DataSourceCommand"
               }
             }
           },
@@ -17021,7 +16973,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateDataSourceCommand"
+                "$ref": "#/components/schemas/DataSourceCommand"
               }
             }
           },
@@ -17451,7 +17403,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateDataSourceCommand"
+                "$ref": "#/components/schemas/DataSourceCommand"
               }
             }
           },
