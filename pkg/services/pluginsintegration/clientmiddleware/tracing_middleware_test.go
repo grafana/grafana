@@ -405,7 +405,6 @@ func newAlwaysPanicMiddleware(message string) plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		return &alwaysErrorFuncMiddleware{func() error {
 			panic(message)
-			return nil // nolint:govet
 		}}
 	})
 }

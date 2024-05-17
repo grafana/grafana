@@ -116,26 +116,30 @@ func (m *TracingMiddleware) SubscribeStream(ctx context.Context, req *backend.Su
 	var err error
 	ctx, end := m.traceWrap(ctx, req.PluginContext, "subscribeStream")
 	defer func() { end(err) }()
-	return m.next.SubscribeStream(ctx, req)
+	resp, err := m.next.SubscribeStream(ctx, req)
+	return resp, err
 }
 
 func (m *TracingMiddleware) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
 	var err error
 	ctx, end := m.traceWrap(ctx, req.PluginContext, "publishStream")
 	defer func() { end(err) }()
-	return m.next.PublishStream(ctx, req)
+	resp, err := m.next.PublishStream(ctx, req)
+	return resp, err
 }
 
 func (m *TracingMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	var err error
 	ctx, end := m.traceWrap(ctx, req.PluginContext, "runStream")
 	defer func() { end(err) }()
-	return m.next.RunStream(ctx, req, sender)
+	err = m.next.RunStream(ctx, req, sender)
+	return err
 }
 
 func (m *TracingMiddleware) ProcessInstanceSettings(ctx context.Context, req *backend.ProcessInstanceSettingsRequest) (*backend.ProcessInstanceSettingsResponse, error) {
 	var err error
 	ctx, end := m.traceWrap(ctx, req.PluginContext, "processInstanceSettings")
 	defer func() { end(err) }()
-	return m.next.ProcessInstanceSettings(ctx, req)
+	resp, err := m.next.ProcessInstanceSettings(ctx, req)
+	return resp, err
 }
