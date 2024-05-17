@@ -9122,12 +9122,28 @@
         }
       },
       "put": {
-        "description": "Any current team members and admins not in the provided lists will be removed.",
+        "description": "Takes user emails, and updates team members and admins to the provided lists of users.\nAny current team members and admins not in the provided lists will be removed.",
         "tags": [
           "teams"
         ],
-        "summary": "Set team memberships. Takes user emails, and updates team members and admins to the provided lists of users.",
+        "summary": "Set team memberships.",
         "operationId": "setTeamMemberships",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SetTeamMembershipsCommand"
+            }
+          },
+          {
+            "type": "string",
+            "name": "team_id",
+            "in": "path",
+            "required": true
+          }
+        ],
         "responses": {
           "200": {
             "$ref": "#/responses/okResponse"
@@ -19439,6 +19455,23 @@
           "items": {
             "type": "integer",
             "format": "int64"
+          }
+        }
+      }
+    },
+    "SetTeamMembershipsCommand": {
+      "type": "object",
+      "properties": {
+        "admins": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "type": "string"
           }
         }
       }

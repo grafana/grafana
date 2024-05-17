@@ -144,7 +144,9 @@ func (tapi *TeamAPI) updateTeamMember(c *contextmodel.ReqContext) response.Respo
 
 // swagger:route PUT /teams/{team_id}/members teams setTeamMemberships
 //
-// Set team memberships. Takes user emails, and updates team members and admins to the provided lists of users.
+// Set team memberships.
+//
+// Takes user emails, and updates team members and admins to the provided lists of users.
 // Any current team members and admins not in the provided lists will be removed.
 //
 // Responses:
@@ -335,6 +337,16 @@ type UpdateTeamMemberParams struct {
 	// in:path
 	// required:true
 	UserID int64 `json:"user_id"`
+}
+
+// swagger:parameters setTeamMemberships
+type SetTeamMembershipsParams struct {
+	// in:body
+	// required:true
+	Body team.SetTeamMembershipsCommand `json:"body"`
+	// in:path
+	// required:true
+	TeamID string `json:"team_id"`
 }
 
 // swagger:parameters removeTeamMember
