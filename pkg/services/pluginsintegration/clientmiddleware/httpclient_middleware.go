@@ -18,13 +18,15 @@ const forwardPluginRequestHTTPHeaders = "forward-plugin-request-http-headers"
 func NewHTTPClientMiddleware() plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		return &HTTPClientMiddleware{
-			next: next,
+			baseMiddleware: baseMiddleware{
+				next: next,
+			},
 		}
 	})
 }
 
 type HTTPClientMiddleware struct {
-	next plugins.Client
+	baseMiddleware
 }
 
 func (m *HTTPClientMiddleware) applyHeaders(ctx context.Context, pReq any) context.Context {
@@ -93,32 +95,4 @@ func (m *HTTPClientMiddleware) CheckHealth(ctx context.Context, req *backend.Che
 	ctx = m.applyHeaders(ctx, req)
 
 	return m.next.CheckHealth(ctx, req)
-}
-
-func (m *HTTPClientMiddleware) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
-	return m.next.CollectMetrics(ctx, req)
-}
-
-func (m *HTTPClientMiddleware) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	return m.next.SubscribeStream(ctx, req)
-}
-
-func (m *HTTPClientMiddleware) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	return m.next.PublishStream(ctx, req)
-}
-
-func (m *HTTPClientMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	return m.next.RunStream(ctx, req, sender)
-}
-
-func (m *HTTPClientMiddleware) ProcessInstanceSettings(ctx context.Context, req *backend.ProcessInstanceSettingsRequest) (*backend.ProcessInstanceSettingsResponse, error) {
-	return m.next.ProcessInstanceSettings(ctx, req)
-}
-
-func (m *HTTPClientMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
-	return m.next.ValidateAdmission(ctx, req)
-}
-
-func (m *HTTPClientMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
-	return m.next.MutateAdmission(ctx, req)
 }

@@ -209,7 +209,7 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 		cmd.Name = getAvailableName(cmd.Type, dataSources)
 	}
 
-	if err := validateFields(cmd.Name, cmd.URL); err != nil {
+	if err := s.validateFields(ctx, cmd.Name, cmd.URL, cmd.Type, cmd.APIVersion); err != nil {
 		return nil, err
 	}
 
@@ -237,8 +237,8 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 				DecryptedSecureJSONData: cmd.SecureJsonData,
 			},
 		},
-		TargetAPIVersion: "",    // anything
-		CheckHealth:      false, // we never have in the past
+		Operation:   backend.InstanceSettingsOperation_CREATE,
+		CheckHealth: false, // we never have in the past
 	})
 	if err != nil { // TODO, OK with not implemented?
 		return nil, err
@@ -336,7 +336,7 @@ func (s *Service) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteD
 func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error) {
 	var dataSource *datasources.DataSource
 
-	if err := validateFields(cmd.Name, cmd.URL); err != nil {
+	if err := s.validateFields(ctx, cmd.Name, cmd.URL, cmd.Type, cmd.APIVersion); err != nil {
 		return dataSource, err
 	}
 
@@ -765,13 +765,27 @@ func (s *Service) fillWithSecureJSONData(ctx context.Context, cmd *datasources.U
 	return nil
 }
 
-func validateFields(name, url string) error {
+func (s *Service) validateFields(ctx context.Context, name, url, pluginID, apiVersion string) error {
 	if len(name) > maxDatasourceNameLen {
 		return datasources.ErrDataSourceNameInvalid.Errorf("max length is %d", maxDatasourceNameLen)
 	}
 
 	if len(url) > maxDatasourceUrlLen {
 		return datasources.ErrDataSourceURLInvalid.Errorf("max length is %d", maxDatasourceUrlLen)
+	}
+
+	if apiVersion == "" {
+		return nil
+	}
+
+	p, found := s.pluginStore.Plugin(context.Background(), pluginID)
+	if !found {
+		// Plugin not installed, ignore apiVersion check
+		return nil
+	}
+
+	if p.APIVersion != "" && p.APIVersion != apiVersion {
+		return datasources.ErrDataSourceAPIVersionInvalid.Errorf("expected %s, got %s", p.APIVersion, apiVersion)
 	}
 
 	return nil

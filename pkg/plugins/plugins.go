@@ -119,6 +119,9 @@ type JSONData struct {
 
 	// App Service Auth Registration
 	IAM *pfs.IAM `json:"iam,omitempty"`
+
+	// API Version: Temporary field while plugins don't expose a OpenAPI schema
+	APIVersion string `json:"apiVersion,omitempty"`
 }
 
 func ReadPluginJSON(reader io.Reader) (JSONData, error) {
@@ -337,22 +340,6 @@ func (p *Plugin) ProcessInstanceSettings(ctx context.Context, req *backend.Proce
 	return pluginClient.ProcessInstanceSettings(ctx, req)
 }
 
-func (p *Plugin) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
-	pluginClient, ok := p.Client()
-	if !ok {
-		return nil, ErrPluginUnavailable
-	}
-	return pluginClient.ValidateAdmission(ctx, req)
-}
-
-func (p *Plugin) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
-	pluginClient, ok := p.Client()
-	if !ok {
-		return nil, ErrPluginUnavailable
-	}
-	return pluginClient.MutateAdmission(ctx, req)
-}
-
 func (p *Plugin) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
 	pluginClient, ok := p.Client()
 	if !ok {
@@ -443,7 +430,7 @@ type PluginClient interface {
 	backend.CollectMetricsHandler
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
-	backend.AdmissionHandler
+	backend.InstanceSettingsHandler
 	backend.StreamHandler
 }
 

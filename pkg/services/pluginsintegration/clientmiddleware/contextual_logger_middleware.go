@@ -75,13 +75,3 @@ func (m *ContextualLoggerMiddleware) ProcessInstanceSettings(ctx context.Context
 	ctx = instrumentContext(ctx, endpointProcessSettings, req.PluginContext)
 	return m.next.ProcessInstanceSettings(ctx, req)
 }
-
-func (m *ContextualLoggerMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
-	ctx = instrumentContext(ctx, endpointValidateAdmission, req.PluginContext)
-	return m.next.ValidateAdmission(ctx, req)
-}
-
-func (m *ContextualLoggerMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
-	ctx = instrumentContext(ctx, endpointMutateAdmission, req.PluginContext)
-	return m.next.MutateAdmission(ctx, req)
-}

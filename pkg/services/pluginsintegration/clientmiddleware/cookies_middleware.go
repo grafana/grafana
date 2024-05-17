@@ -20,14 +20,16 @@ const cookieHeaderName = "Cookie"
 func NewCookiesMiddleware(skipCookiesNames []string) plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		return &CookiesMiddleware{
-			next:             next,
+			baseMiddleware: baseMiddleware{
+				next: next,
+			},
 			skipCookiesNames: skipCookiesNames,
 		}
 	})
 }
 
 type CookiesMiddleware struct {
-	next             plugins.Client
+	baseMiddleware
 	skipCookiesNames []string
 }
 
@@ -115,32 +117,4 @@ func (m *CookiesMiddleware) CheckHealth(ctx context.Context, req *backend.CheckH
 	}
 
 	return m.next.CheckHealth(ctx, req)
-}
-
-func (m *CookiesMiddleware) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
-	return m.next.CollectMetrics(ctx, req)
-}
-
-func (m *CookiesMiddleware) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	return m.next.SubscribeStream(ctx, req)
-}
-
-func (m *CookiesMiddleware) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	return m.next.PublishStream(ctx, req)
-}
-
-func (m *CookiesMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	return m.next.RunStream(ctx, req, sender)
-}
-
-func (m *CookiesMiddleware) ProcessInstanceSettings(ctx context.Context, req *backend.ProcessInstanceSettingsRequest) (*backend.ProcessInstanceSettingsResponse, error) {
-	return m.next.ProcessInstanceSettings(ctx, req)
-}
-
-func (m *CookiesMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
-	return m.next.ValidateAdmission(ctx, req)
-}
-
-func (m *CookiesMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
-	return m.next.MutateAdmission(ctx, req)
 }

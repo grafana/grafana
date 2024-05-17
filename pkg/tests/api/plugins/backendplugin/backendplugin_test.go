@@ -846,6 +846,7 @@ type testPlugin struct {
 	backend.CallResourceHandler
 	backend.QueryDataHandler
 	backend.StreamHandler
+	backend.InstanceSettingsHandler
 }
 
 func (tp *testPlugin) PluginID() string {
@@ -931,6 +932,13 @@ func (tp *testPlugin) RunStream(ctx context.Context, req *backend.RunStreamReque
 		return tp.StreamHandler.RunStream(ctx, req, sender)
 	}
 	return plugins.ErrMethodNotImplemented
+}
+
+func (tp *testPlugin) ProcessInstanceSettings(ctx context.Context, req *backend.ProcessInstanceSettingsRequest) (*backend.ProcessInstanceSettingsResponse, error) {
+	if tp.InstanceSettingsHandler != nil {
+		return tp.InstanceSettingsHandler.ProcessInstanceSettings(ctx, req)
+	}
+	return nil, plugins.ErrMethodNotImplemented
 }
 
 func metricRequestWithQueries(t *testing.T, rawQueries ...string) dtos.MetricRequest {

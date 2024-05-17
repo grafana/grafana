@@ -108,24 +108,6 @@ func (d *Decorator) ProcessInstanceSettings(ctx context.Context, req *backend.Pr
 	return client.ProcessInstanceSettings(ctx, req)
 }
 
-func (d *Decorator) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
-	if req == nil {
-		return nil, errNilRequest
-	}
-
-	client := clientFromMiddlewares(d.middlewares, d.client)
-	return client.ValidateAdmission(ctx, req)
-}
-
-func (d *Decorator) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
-	if req == nil {
-		return nil, errNilRequest
-	}
-
-	client := clientFromMiddlewares(d.middlewares, d.client)
-	return client.MutateAdmission(ctx, req)
-}
-
 func clientFromMiddlewares(middlewares []plugins.ClientMiddleware, finalClient plugins.Client) plugins.Client {
 	if len(middlewares) == 0 {
 		return finalClient

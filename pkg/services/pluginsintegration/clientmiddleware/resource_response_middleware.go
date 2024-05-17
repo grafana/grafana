@@ -14,13 +14,15 @@ import (
 func NewResourceResponseMiddleware() plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		return &ResourceResponseMiddleware{
-			next: next,
+			baseMiddleware: baseMiddleware{
+				next: next,
+			},
 		}
 	})
 }
 
 type ResourceResponseMiddleware struct {
-	next plugins.Client
+	baseMiddleware
 }
 
 func (m *ResourceResponseMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -47,36 +49,4 @@ func (m *ResourceResponseMiddleware) CallResource(ctx context.Context, req *back
 	})
 
 	return m.next.CallResource(ctx, req, wrappedSender)
-}
-
-func (m *ResourceResponseMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	return m.next.CheckHealth(ctx, req)
-}
-
-func (m *ResourceResponseMiddleware) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
-	return m.next.CollectMetrics(ctx, req)
-}
-
-func (m *ResourceResponseMiddleware) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	return m.next.SubscribeStream(ctx, req)
-}
-
-func (m *ResourceResponseMiddleware) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	return m.next.PublishStream(ctx, req)
-}
-
-func (m *ResourceResponseMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	return m.next.RunStream(ctx, req, sender)
-}
-
-func (m *ResourceResponseMiddleware) ProcessInstanceSettings(ctx context.Context, req *backend.ProcessInstanceSettingsRequest) (*backend.ProcessInstanceSettingsResponse, error) {
-	return m.next.ProcessInstanceSettings(ctx, req)
-}
-
-func (m *ResourceResponseMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
-	return m.next.ValidateAdmission(ctx, req)
-}
-
-func (m *ResourceResponseMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
-	return m.next.MutateAdmission(ctx, req)
 }

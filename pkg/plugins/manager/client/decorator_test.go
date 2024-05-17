@@ -6,8 +6,9 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/plugins"
 )
 
 func TestDecorator(t *testing.T) {
@@ -146,13 +147,14 @@ func (c *TestClient) CheckHealth(ctx context.Context, req *backend.CheckHealthRe
 }
 
 type MiddlewareScenarioContext struct {
-	QueryDataCallChain       []string
-	CallResourceCallChain    []string
-	CollectMetricsCallChain  []string
-	CheckHealthCallChain     []string
-	SubscribeStreamCallChain []string
-	PublishStreamCallChain   []string
-	RunStreamCallChain       []string
+	QueryDataCallChain        []string
+	CallResourceCallChain     []string
+	CollectMetricsCallChain   []string
+	CheckHealthCallChain      []string
+	SubscribeStreamCallChain  []string
+	PublishStreamCallChain    []string
+	RunStreamCallChain        []string
+	InstanceSettingsCallChain []string
 }
 
 func (ctx *MiddlewareScenarioContext) NewMiddleware(name string) plugins.ClientMiddleware {
@@ -218,6 +220,13 @@ func (m *TestMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRe
 	err := m.next.RunStream(ctx, req, sender)
 	m.sCtx.RunStreamCallChain = append(m.sCtx.RunStreamCallChain, fmt.Sprintf("after %s", m.Name))
 	return err
+}
+
+func (m *TestMiddleware) ProcessInstanceSettings(ctx context.Context, req *backend.ProcessInstanceSettingsRequest) (*backend.ProcessInstanceSettingsResponse, error) {
+	m.sCtx.InstanceSettingsCallChain = append(m.sCtx.InstanceSettingsCallChain, fmt.Sprintf("before %s", m.Name))
+	res, err := m.next.ProcessInstanceSettings(ctx, req)
+	m.sCtx.InstanceSettingsCallChain = append(m.sCtx.InstanceSettingsCallChain, fmt.Sprintf("after %s", m.Name))
+	return res, err
 }
 
 var _ plugins.Client = &TestClient{}

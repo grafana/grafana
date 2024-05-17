@@ -64,7 +64,7 @@ func TestMode2_Create(t *testing.T) {
 			tt.setupStorageFn(m, tt.input)
 		}
 
-		dw := selectDualWriter(Mode2, ls, us)
+		dw := NewDualWriter(Mode2, ls, us)
 
 		obj, err := dw.Create(context.Background(), tt.input, createFn, &metav1.CreateOptions{})
 
@@ -138,7 +138,7 @@ func TestMode2_Get(t *testing.T) {
 			tt.setupStorageFn(m, tt.input)
 		}
 
-		dw := selectDualWriter(Mode2, ls, us)
+		dw := NewDualWriter(Mode2, ls, us)
 
 		obj, err := dw.Get(context.Background(), tt.input, &metav1.GetOptions{})
 
@@ -189,7 +189,7 @@ func TestMode2_List(t *testing.T) {
 			tt.setupStorageFn(m)
 		}
 
-		dw := selectDualWriter(Mode2, ls, us)
+		dw := NewDualWriter(Mode2, ls, us)
 
 		obj, err := dw.List(context.Background(), &metainternalversion.ListOptions{})
 
@@ -281,7 +281,7 @@ func TestMode2_Delete(t *testing.T) {
 			tt.setupStorageFn(m, tt.input)
 		}
 
-		dw := selectDualWriter(Mode2, ls, us)
+		dw := NewDualWriter(Mode2, ls, us)
 
 		obj, _, err := dw.Delete(context.Background(), tt.input, func(context.Context, runtime.Object) error { return nil }, &metav1.DeleteOptions{})
 
@@ -351,7 +351,7 @@ func TestMode2_DeleteCollection(t *testing.T) {
 			tt.setupStorageFn(m)
 		}
 
-		dw := selectDualWriter(Mode2, ls, us)
+		dw := NewDualWriter(Mode2, ls, us)
 
 		obj, err := dw.DeleteCollection(context.Background(), func(ctx context.Context, obj runtime.Object) error { return nil }, &metav1.DeleteOptions{TypeMeta: metav1.TypeMeta{Kind: tt.input}}, &metainternalversion.ListOptions{})
 
@@ -458,7 +458,7 @@ func TestMode2_Update(t *testing.T) {
 			tt.setupStorageFn(m, tt.input)
 		}
 
-		dw := selectDualWriter(Mode2, ls, us)
+		dw := NewDualWriter(Mode2, ls, us)
 
 		obj, _, err := dw.Update(context.Background(), tt.input, UpdatedObjInfoObj{}, func(ctx context.Context, obj runtime.Object) error { return nil }, func(ctx context.Context, obj, old runtime.Object) error { return nil }, false, &metav1.UpdateOptions{})
 

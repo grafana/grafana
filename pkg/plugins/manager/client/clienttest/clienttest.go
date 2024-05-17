@@ -26,6 +26,7 @@ type TestClient struct {
 	CollectMetricsFunc  backend.CollectMetricsHandlerFunc
 	SubscribeStreamFunc func(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error)
 	PublishStreamFunc   func(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error)
+	ProcessSettingsFunc func(ctx context.Context, req *backend.ProcessInstanceSettingsRequest) (*backend.ProcessInstanceSettingsResponse, error)
 	RunStreamFunc       func(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error
 }
 
@@ -72,6 +73,14 @@ func (c *TestClient) PublishStream(ctx context.Context, req *backend.PublishStre
 func (c *TestClient) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	if c.SubscribeStreamFunc != nil {
 		return c.SubscribeStreamFunc(ctx, req)
+	}
+
+	return nil, nil
+}
+
+func (c *TestClient) ProcessInstanceSettings(ctx context.Context, req *backend.ProcessInstanceSettingsRequest) (*backend.ProcessInstanceSettingsResponse, error) {
+	if c.ProcessSettingsFunc != nil {
+		return c.ProcessSettingsFunc(ctx, req)
 	}
 
 	return nil, nil
@@ -138,20 +147,6 @@ func (m *TestMiddleware) ProcessInstanceSettings(ctx context.Context, req *backe
 	m.sCtx.CollectMetricsCallChain = append(m.sCtx.ProcessInstanceSettingsCallChain, fmt.Sprintf("before %s", m.Name))
 	res, err := m.next.ProcessInstanceSettings(ctx, req)
 	m.sCtx.CollectMetricsCallChain = append(m.sCtx.ProcessInstanceSettingsCallChain, fmt.Sprintf("after %s", m.Name))
-	return res, err
-}
-
-func (m *TestMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
-	m.sCtx.CollectMetricsCallChain = append(m.sCtx.ValidateAdmissionCallChain, fmt.Sprintf("before %s", m.Name))
-	res, err := m.next.ValidateAdmission(ctx, req)
-	m.sCtx.CollectMetricsCallChain = append(m.sCtx.ValidateAdmissionCallChain, fmt.Sprintf("after %s", m.Name))
-	return res, err
-}
-
-func (m *TestMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
-	m.sCtx.CollectMetricsCallChain = append(m.sCtx.MutateAdmissionCallChain, fmt.Sprintf("before %s", m.Name))
-	res, err := m.next.MutateAdmission(ctx, req)
-	m.sCtx.CollectMetricsCallChain = append(m.sCtx.MutateAdmissionCallChain, fmt.Sprintf("after %s", m.Name))
 	return res, err
 }
 

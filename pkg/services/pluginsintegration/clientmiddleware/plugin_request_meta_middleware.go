@@ -69,13 +69,6 @@ func (m *PluginRequestMetaMiddleware) RunStream(ctx context.Context, req *backen
 }
 
 func (m *PluginRequestMetaMiddleware) ProcessInstanceSettings(ctx context.Context, req *backend.ProcessInstanceSettingsRequest) (*backend.ProcessInstanceSettingsResponse, error) {
+	ctx = m.withDefaultPluginRequestMeta(ctx)
 	return m.next.ProcessInstanceSettings(ctx, req)
-}
-
-func (m *PluginRequestMetaMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
-	return m.next.ValidateAdmission(ctx, req)
-}
-
-func (m *PluginRequestMetaMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
-	return m.next.MutateAdmission(ctx, req)
 }

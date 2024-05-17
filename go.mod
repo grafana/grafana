@@ -99,7 +99,7 @@ require (
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.0.3 // @grafana/partner-datasources
 	github.com/grafana/grafana-google-sdk-go v0.1.0 // @grafana/partner-datasources
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 // @grafana/grafana-backend-group
-	github.com/grafana/grafana-plugin-sdk-go v0.230.1-0.20240513121833-20b1338d1c19 // @grafana/plugins-platform-backend
+	github.com/grafana/grafana-plugin-sdk-go v0.231.1-0.20240517081351-bb043338fb05 // @grafana/plugins-platform-backend
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240226124929-648abdbd0ea4 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/apiserver v0.0.0-20240226124929-648abdbd0ea4 // @grafana/grafana-app-platform-squad
 	// This needs to be here for other projects that import grafana/grafana
@@ -113,7 +113,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0 // @grafana/grafana-backend-group
 	github.com/hashicorp/go-hclog v1.6.3 // @grafana/plugins-platform-backend
 	github.com/hashicorp/go-multierror v1.1.1 // @grafana/alerting-squad
-	github.com/hashicorp/go-plugin v1.6.0 // @grafana/plugins-platform-backend
+	github.com/hashicorp/go-plugin v1.6.1 // @grafana/plugins-platform-backend
 	github.com/hashicorp/go-version v1.6.0 // @grafana/grafana-backend-group
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // @grafana/alerting-squad-backend
 	github.com/hashicorp/hcl/v2 v2.17.0 // @grafana/alerting-squad-backend
@@ -123,10 +123,10 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // @grafana/grafana-backend-group
 	github.com/jmoiron/sqlx v1.3.5 // @grafana/grafana-backend-group
 	github.com/json-iterator/go v1.1.12 // @grafana/grafana-backend-group
-	github.com/krasun/gosqlparser v1.0.5 // @grafana/grafana-app-platform-squad
 	github.com/lib/pq v1.10.9 // @grafana/grafana-backend-group
 	github.com/linkedin/goavro/v2 v2.10.0 // @grafana/grafana-backend-group
 	github.com/m3db/prometheus_remote_client_golang v0.4.4 // @grafana/grafana-backend-group
+	github.com/madflojo/testcerts v1.1.1 // @grafana/alerting-squad-backend
 	github.com/magefile/mage v1.15.0 // @grafana/grafana-release-guild
 	github.com/matryer/is v1.4.0 // @grafana/grafana-as-code
 	github.com/mattn/go-isatty v0.0.20 // @grafana/grafana-backend-group
@@ -159,7 +159,6 @@ require (
 	github.com/vectordotdev/go-datemath v0.1.1-0.20220323213446-f3954d0b18ae // @grafana/grafana-backend-group
 	github.com/wk8/go-ordered-map v1.0.0 // @grafana/grafana-backend-group
 	github.com/xlab/treeprint v1.2.0 // @grafana/observability-traces-and-profiling
-	github.com/xwb1989/sqlparser v0.0.0-20180606152119-120387863bf2 // @grafana/grafana-app-platform-squad
 	github.com/yudai/gojsondiff v1.0.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/collector/pdata v1.6.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.51.0 // @grafana/plugins-platform-backend
@@ -175,10 +174,10 @@ require (
 	go.uber.org/atomic v1.11.0 // @grafana/alerting-squad-backend
 	go.uber.org/goleak v1.3.0 // @grafana/grafana-search-and-storage
 	gocloud.dev v0.25.0 // @grafana/grafana-app-platform-squad
-	golang.org/x/crypto v0.22.0 // @grafana/grafana-backend-group
+	golang.org/x/crypto v0.23.0 // @grafana/grafana-backend-group
 	golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb // @grafana/alerting-squad-backend
 	golang.org/x/mod v0.15.0 // @grafana/grafana-backend-group
-	golang.org/x/net v0.24.0 // @grafana/oss-big-tent @grafana/partner-datasources
+	golang.org/x/net v0.25.0 // @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/oauth2 v0.20.0 // @grafana/identity-access-team
 	golang.org/x/sync v0.7.0 // @grafana/alerting-squad-backend
 	golang.org/x/text v0.15.0 // @grafana/grafana-backend-group
@@ -338,6 +337,7 @@ require (
 	github.com/jcmturner/goidentity/v6 v6.0.1 // indirect
 	github.com/jcmturner/gokrb5/v8 v8.4.4 // indirect
 	github.com/jcmturner/rpc/v2 v2.0.3 // indirect
+	github.com/jeremywohl/flatten v1.0.1 // @grafana/grafana-app-platform-squad
 	github.com/jessevdk/go-flags v1.5.0 // indirect
 	github.com/jhump/protoreflect v1.15.1 // indirect
 	github.com/jonboulle/clockwork v0.4.0 // indirect
@@ -431,7 +431,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.26.0 // indirect
 	golang.org/x/sys v0.20.0 // indirect
-	golang.org/x/term v0.19.0 // indirect
+	golang.org/x/term v0.20.0 // indirect
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
 	google.golang.org/genproto v0.0.0-20240227224415-6ceb2ff114de // indirect; @grafana/grafana-backend-group
 	google.golang.org/genproto/googleapis/api v0.0.0-20240415180920-8c6c420018be // indirect

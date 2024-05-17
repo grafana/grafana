@@ -15,13 +15,15 @@ import (
 func NewClearAuthHeadersMiddleware() plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		return &ClearAuthHeadersMiddleware{
-			next: next,
+			baseMiddleware: baseMiddleware{
+				next: next,
+			},
 		}
 	})
 }
 
 type ClearAuthHeadersMiddleware struct {
-	next plugins.Client
+	baseMiddleware
 }
 
 func (m *ClearAuthHeadersMiddleware) clearHeaders(ctx context.Context, h backend.ForwardHTTPHeaders) {
@@ -67,32 +69,4 @@ func (m *ClearAuthHeadersMiddleware) CheckHealth(ctx context.Context, req *backe
 	m.clearHeaders(ctx, req)
 
 	return m.next.CheckHealth(ctx, req)
-}
-
-func (m *ClearAuthHeadersMiddleware) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
-	return m.next.CollectMetrics(ctx, req)
-}
-
-func (m *ClearAuthHeadersMiddleware) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	return m.next.SubscribeStream(ctx, req)
-}
-
-func (m *ClearAuthHeadersMiddleware) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	return m.next.PublishStream(ctx, req)
-}
-
-func (m *ClearAuthHeadersMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	return m.next.RunStream(ctx, req, sender)
-}
-
-func (m *ClearAuthHeadersMiddleware) ProcessInstanceSettings(ctx context.Context, req *backend.ProcessInstanceSettingsRequest) (*backend.ProcessInstanceSettingsResponse, error) {
-	return m.next.ProcessInstanceSettings(ctx, req)
-}
-
-func (m *ClearAuthHeadersMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
-	return m.next.ValidateAdmission(ctx, req)
-}
-
-func (m *ClearAuthHeadersMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
-	return m.next.MutateAdmission(ctx, req)
 }
