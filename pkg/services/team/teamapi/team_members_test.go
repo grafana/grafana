@@ -259,7 +259,7 @@ func Test_getTeamMembershipUpdates(t *testing.T) {
 			tapi := ProvideTeamAPI(routing.NewRouteRegister(),
 				teamSvc,
 				actest.FakeService{},
-				acimpl.ProvideAccessControl(cfg),
+				acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 				&actest.FakePermissionsService{},
 				userService,
 				&licensing.OSSLicensingService{},
