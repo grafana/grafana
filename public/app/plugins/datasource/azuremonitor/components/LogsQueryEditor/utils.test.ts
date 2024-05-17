@@ -1,5 +1,17 @@
 import { calculateTimeRange, shouldShowBasicLogsToggle } from './utils';
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getTemplateSrv: () => ({
+    replace: (val: string) => {
+      if (val === '$ws') {
+        return '/subscriptions/def-456/resourceGroups/dev-3/providers/microsoft.operationalinsights/workspaces/la-workspace';
+      }
+      return val;
+    },
+  }),
+}));
+
 describe('LogsQueryEditor utils', () => {
   describe('shouldShowBasicLogsToggle', () => {
     it('should return false if basic logs are not enabled', () => {
@@ -49,6 +61,10 @@ describe('LogsQueryEditor utils', () => {
           true
         )
       ).toBe(true);
+    });
+
+    it('should return true if basic logs are enabled and selected single resource is an LA workspace variable', () => {
+      expect(shouldShowBasicLogsToggle(['$ws'], true)).toBe(true);
     });
   });
 

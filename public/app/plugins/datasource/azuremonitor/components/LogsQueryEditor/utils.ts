@@ -3,7 +3,7 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { parseResourceURI } from '../ResourcePicker/utils';
 
 export function shouldShowBasicLogsToggle(resources: string[], basicLogsEnabled: boolean) {
-  const selectedResource = getTemplateSrv().replace(resources[0]);
+  const selectedResource = getTemplateSrv()?.replace(resources[0]);
   return (
     basicLogsEnabled &&
     resources.length === 1 &&
