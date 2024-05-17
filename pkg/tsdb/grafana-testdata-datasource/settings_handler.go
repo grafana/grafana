@@ -6,8 +6,7 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-
-	"github.com/grafana/grafana/pkg/util/errutil"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // Testdata has empty configuration
@@ -44,7 +43,7 @@ func getBadRequest(msg string) *backend.ProcessInstanceSettingsResponse {
 		Result: &backend.StatusResult{
 			Status:  "Failure",
 			Message: msg,
-			Reason:  string(errutil.StatusBadRequest),
+			Reason:  string(metav1.StatusReasonBadRequest),
 			Code:    http.StatusBadRequest,
 		},
 	}

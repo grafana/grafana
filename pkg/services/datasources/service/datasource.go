@@ -209,10 +209,6 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 		cmd.Name = getAvailableName(cmd.Type, dataSources)
 	}
 
-	if err := s.validateFields(ctx, cmd.Name, cmd.URL, cmd.Type, cmd.APIVersion); err != nil {
-		return nil, err
-	}
-
 	// Validate the command
 	if err := s.prepareAdd(ctx, cmd); err != nil {
 		return nil, err
@@ -264,6 +260,14 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 // This will valid validate the instance settings and mutate the cmd with the processed values
 func (s *Service) prepareAdd(ctx context.Context, cmd *datasources.AddDataSourceCommand) error {
 	operation := backend.InstanceSettingsOperation_CREATE
+
+	if len(cmd.Name) > maxDatasourceNameLen {
+		return datasources.ErrDataSourceNameInvalid.Errorf("max length is %d", maxDatasourceNameLen)
+	}
+
+	if len(cmd.URL) > maxDatasourceUrlLen {
+		return datasources.ErrDataSourceURLInvalid.Errorf("max length is %d", maxDatasourceUrlLen)
+	}
 
 	if cmd.Type == "" {
 		return nil // This happens in tests
@@ -345,6 +349,14 @@ func (s *Service) prepareAdd(ctx context.Context, cmd *datasources.AddDataSource
 func (s *Service) prepareUpdate(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) error {
 	operation := backend.InstanceSettingsOperation_UPDATE
 
+	if len(cmd.Name) > maxDatasourceNameLen {
+		return datasources.ErrDataSourceNameInvalid.Errorf("max length is %d", maxDatasourceNameLen)
+	}
+
+	if len(cmd.URL) > maxDatasourceUrlLen {
+		return datasources.ErrDataSourceURLInvalid.Errorf("max length is %d", maxDatasourceUrlLen)
+	}
+
 	if cmd.Type == "" {
 		return nil // This happens in tests
 	}
@@ -400,7 +412,7 @@ func (s *Service) prepareUpdate(ctx context.Context, cmd *datasources.UpdateData
 	}
 	settings := rsp.DataSourceInstanceSettings
 	if !rsp.Allowed || settings == nil {
-		return fmt.Errorf("not allowed")
+		return fmt.Errorf("not allowed (%+v)", rsp.Result)
 	}
 
 	// Use the mutated values
@@ -410,9 +422,13 @@ func (s *Service) prepareUpdate(ctx context.Context, cmd *datasources.UpdateData
 	cmd.URL = settings.URL
 	cmd.Database = settings.Database
 	cmd.SecureJsonData = settings.DecryptedSecureJSONData
-	err = cmd.JsonData.FromDB(settings.JSONData)
-	if err != nil {
-		return err
+	cmd.JsonData = nil
+	if settings.JSONData != nil {
+		cmd.JsonData = simplejson.New()
+		err := cmd.JsonData.FromDB(settings.JSONData)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -451,10 +467,6 @@ func (s *Service) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteD
 
 func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error) {
 	var dataSource *datasources.DataSource
-
-	if err := s.validateFields(ctx, cmd.Name, cmd.URL, cmd.Type, cmd.APIVersion); err != nil {
-		return dataSource, err
-	}
 
 	// Validate the command
 	if err := s.prepareUpdate(ctx, cmd); err != nil {
@@ -881,32 +893,6 @@ func (s *Service) fillWithSecureJSONData(ctx context.Context, cmd *datasources.U
 		if err != nil {
 			return err
 		}
-	}
-
-	return nil
-}
-
-func (s *Service) validateFields(ctx context.Context, name, url, pluginID, apiVersion string) error {
-	if len(name) > maxDatasourceNameLen {
-		return datasources.ErrDataSourceNameInvalid.Errorf("max length is %d", maxDatasourceNameLen)
-	}
-
-	if len(url) > maxDatasourceUrlLen {
-		return datasources.ErrDataSourceURLInvalid.Errorf("max length is %d", maxDatasourceUrlLen)
-	}
-
-	if apiVersion == "" {
-		return nil
-	}
-
-	p, found := s.pluginStore.Plugin(context.Background(), pluginID)
-	if !found {
-		// Plugin not installed, ignore apiVersion check
-		return nil
-	}
-
-	if p.APIVersion != "" && p.APIVersion != apiVersion {
-		return datasources.ErrDataSourceAPIVersionInvalid.Errorf("expected %s, got %s", p.APIVersion, apiVersion)
 	}
 
 	return nil
