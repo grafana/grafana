@@ -69,16 +69,22 @@ func (d *DualWriterMode1) Create(ctx context.Context, original runtime.Object, c
 
 // Get overrides the behavior of the generic DualWriter and reads only from LegacyStorage.
 func (d *DualWriterMode1) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	log := d.Log.WithValues("name", name, "resourceVersion", options.ResourceVersion, "kind", options.Kind)
 	ctx = klog.NewContext(ctx, log)
-	var method = "get"
-
 	startLegacy := time.Now()
 	res, errLegacy := d.Legacy.Get(ctx, name, options)
 	if errLegacy != nil {
 		log.Error(errLegacy, "unable to get object in legacy storage")
 	}
 	d.recordLegacyDuration(errLegacy != nil, mode1Str, options.Kind, method, startLegacy)
+=======
+	startLegacy := time.Now().UTC()
+	res, errLegacy := d.Legacy.Get(ctx, name, options)
+	if errLegacy != nil {
+		log.Error(errLegacy, "unable to get object in legacy storage")
+		d.recordLegacyDuration(errLegacy != nil, mode, name, method, startLegacy)
+	}
+	d.recordLegacyDuration(errLegacy != nil, mode, name, method, startLegacy)
+>>>>>>> c250b3d8caa (Return error from legacy write)
 
 	go func() {
 		startStorage := time.Now()
