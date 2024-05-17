@@ -437,7 +437,7 @@ func evaluateTeamHTTPHeaderPermissions(hs *HTTPServer, c *contextmodel.ReqContex
 // 409: conflictError
 // 500: internalServerError
 func (hs *HTTPServer) AddDataSource(c *contextmodel.ReqContext) response.Response {
-	cmd := datasources.AddDataSourceCommand{}
+	cmd := datasources.DataSourceCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
@@ -509,7 +509,7 @@ func (hs *HTTPServer) AddDataSource(c *contextmodel.ReqContext) response.Respons
 // 500: internalServerError
 
 func (hs *HTTPServer) UpdateDataSourceByID(c *contextmodel.ReqContext) response.Response {
-	cmd := datasources.UpdateDataSourceCommand{}
+	cmd := datasources.DataSourceCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
@@ -559,7 +559,7 @@ func (hs *HTTPServer) UpdateDataSourceByID(c *contextmodel.ReqContext) response.
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) UpdateDataSourceByUID(c *contextmodel.ReqContext) response.Response {
-	cmd := datasources.UpdateDataSourceCommand{}
+	cmd := datasources.DataSourceCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
@@ -602,7 +602,7 @@ func getEncodedString(jsonData *simplejson.Json, key string) string {
 	return string(val)
 }
 
-func checkTeamHTTPHeaderPermissions(hs *HTTPServer, c *contextmodel.ReqContext, ds *datasources.DataSource, cmd datasources.UpdateDataSourceCommand) (bool, error) {
+func checkTeamHTTPHeaderPermissions(hs *HTTPServer, c *contextmodel.ReqContext, ds *datasources.DataSource, cmd datasources.DataSourceCommand) (bool, error) {
 	currentTeamHTTPHeaders := getEncodedString(ds.JsonData, "teamHttpHeaders")
 	newTeamHTTPHeaders := getEncodedString(cmd.JsonData, "teamHttpHeaders")
 	if (currentTeamHTTPHeaders != "" || newTeamHTTPHeaders != "") && currentTeamHTTPHeaders != newTeamHTTPHeaders {
@@ -611,7 +611,7 @@ func checkTeamHTTPHeaderPermissions(hs *HTTPServer, c *contextmodel.ReqContext, 
 	return true, nil
 }
 
-func (hs *HTTPServer) updateDataSourceByID(c *contextmodel.ReqContext, ds *datasources.DataSource, cmd datasources.UpdateDataSourceCommand) response.Response {
+func (hs *HTTPServer) updateDataSourceByID(c *contextmodel.ReqContext, ds *datasources.DataSource, cmd datasources.DataSourceCommand) response.Response {
 	if ds.ReadOnly {
 		return response.Error(http.StatusForbidden, "Cannot update read-only data source", nil)
 	}
@@ -1051,14 +1051,14 @@ type GetDataSourceIdByNameParams struct {
 type AddDataSourceParams struct {
 	// in:body
 	// required:true
-	Body datasources.AddDataSourceCommand
+	Body datasources.DataSourceCommand
 }
 
 // swagger:parameters updateDataSourceByID
 type UpdateDataSourceByIDParams struct {
 	// in:body
 	// required:true
-	Body datasources.UpdateDataSourceCommand
+	Body datasources.DataSourceCommand
 	// in:path
 	// required:true
 	DatasourceID string `json:"id"`
@@ -1068,7 +1068,7 @@ type UpdateDataSourceByIDParams struct {
 type UpdateDataSourceByUIDParams struct {
 	// in:body
 	// required:true
-	Body datasources.UpdateDataSourceCommand
+	Body datasources.DataSourceCommand
 	// in:path
 	// required:true
 	DatasourceUID string `json:"uid"`

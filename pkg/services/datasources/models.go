@@ -150,8 +150,8 @@ func (e ErrDatasourceSecretsPluginUserFriendly) Error() string {
 // ----------------------
 // COMMANDS
 
-// Also acts as api DTO
-type AddDataSourceCommand struct {
+// Add|Update Command (Also acts as api DTO)
+type DataSourceCommand struct {
 	Name            string            `json:"name"`
 	Type            string            `json:"type" binding:"Required"`
 	Access          DsAccess          `json:"access" binding:"Required"`
@@ -165,45 +165,23 @@ type AddDataSourceCommand struct {
 	JsonData        *simplejson.Json  `json:"jsonData"`
 	SecureJsonData  map[string]string `json:"secureJsonData"`
 	UID             string            `json:"uid"`
+	Version         int               `json:"version,omitempty"`
 	// swagger:ignore
 	APIVersion string `json:"apiVersion"`
 	// swagger:ignore
 	IsPrunable bool
 
 	OrgID                   int64             `json:"-"`
-	UserID                  int64             `json:"-"`
 	ReadOnly                bool              `json:"-"`
 	EncryptedSecureJsonData map[string][]byte `json:"-"`
 	UpdateSecretFn          UpdateSecretFn    `json:"-"`
-}
 
-// Also acts as api DTO
-type UpdateDataSourceCommand struct {
-	Name            string            `json:"name" binding:"Required"`
-	Type            string            `json:"type" binding:"Required"`
-	Access          DsAccess          `json:"access" binding:"Required"`
-	URL             string            `json:"url"`
-	User            string            `json:"user"`
-	Database        string            `json:"database"`
-	BasicAuth       bool              `json:"basicAuth"`
-	BasicAuthUser   string            `json:"basicAuthUser"`
-	WithCredentials bool              `json:"withCredentials"`
-	IsDefault       bool              `json:"isDefault"`
-	JsonData        *simplejson.Json  `json:"jsonData"`
-	SecureJsonData  map[string]string `json:"secureJsonData"`
-	Version         int               `json:"version"`
-	UID             string            `json:"uid"`
-	// swagger:ignore
-	APIVersion string `json:"apiVersion"`
-	// swagger:ignore
-	IsPrunable bool
+	// Only used in the Add command
+	UserID int64 `json:"-"`
 
-	OrgID                   int64             `json:"-"`
-	ID                      int64             `json:"-"`
-	ReadOnly                bool              `json:"-"`
-	EncryptedSecureJsonData map[string][]byte `json:"-"`
-	UpdateSecretFn          UpdateSecretFn    `json:"-"`
-	IgnoreOldSecureJsonData bool              `json:"-"`
+	// Only Valid for the Update Command
+	ID                      int64 `json:"-"`
+	IgnoreOldSecureJsonData bool  `json:"-"`
 }
 
 // DeleteDataSourceCommand will delete a DataSource based on OrgID as well as the UID (preferred), ID, or Name.

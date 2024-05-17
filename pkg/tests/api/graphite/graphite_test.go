@@ -59,7 +59,7 @@ func TestIntegrationGraphite(t *testing.T) {
 	}
 
 	uid := "graphite"
-	_, err := testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx, &datasources.AddDataSourceCommand{
+	_, err := testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx, &datasources.DataSourceCommand{
 		OrgID:          u.OrgID,
 		Access:         datasources.DS_ACCESS_PROXY,
 		Name:           "graphite",

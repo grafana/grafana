@@ -28,8 +28,8 @@ type Store interface {
 	GetDataSources(context.Context, *datasources.GetDataSourcesQuery) ([]*datasources.DataSource, error)
 	GetDataSourcesByType(context.Context, *datasources.GetDataSourcesByTypeQuery) ([]*datasources.DataSource, error)
 	DeleteDataSource(context.Context, *datasources.DeleteDataSourceCommand) error
-	AddDataSource(context.Context, *datasources.AddDataSourceCommand) (*datasources.DataSource, error)
-	UpdateDataSource(context.Context, *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error)
+	AddDataSource(context.Context, *datasources.DataSourceCommand) (*datasources.DataSource, error)
+	UpdateDataSource(context.Context, *datasources.DataSourceCommand) (*datasources.DataSource, error)
 	GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) (res []*datasources.DataSource, err error)
 	GetPrunableProvisionedDataSources(ctx context.Context) (res []*datasources.DataSource, err error)
 
@@ -236,7 +236,7 @@ func (ss *SqlStore) Count(ctx context.Context, scopeParams *quota.ScopeParameter
 	return u, nil
 }
 
-func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error) {
+func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.DataSourceCommand) (*datasources.DataSource, error) {
 	var ds *datasources.DataSource
 
 	return ds, ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
@@ -326,7 +326,7 @@ func updateIsDefaultFlag(ds *datasources.DataSource, sess *db.Session) error {
 	return nil
 }
 
-func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error) {
+func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.DataSourceCommand) (*datasources.DataSource, error) {
 	var ds *datasources.DataSource
 	return ds, ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		if cmd.JsonData == nil {

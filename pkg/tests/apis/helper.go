@@ -491,7 +491,7 @@ func (c *K8sTestHelper) GetGroupVersionInfoJSON(group string) string {
 	return ""
 }
 
-func (c *K8sTestHelper) CreateDS(cmd *datasources.AddDataSourceCommand) *datasources.DataSource {
+func (c *K8sTestHelper) CreateDS(cmd *datasources.DataSourceCommand) *datasources.DataSource {
 	c.t.Helper()
 
 	dataSource, err := c.env.Server.HTTPServer.DataSourcesService.AddDataSource(context.Background(), cmd)

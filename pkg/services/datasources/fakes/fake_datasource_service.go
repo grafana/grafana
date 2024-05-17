@@ -69,7 +69,7 @@ func (s *FakeDataSourceService) GetDataSourcesByType(ctx context.Context, query 
 	return dataSources, nil
 }
 
-func (s *FakeDataSourceService) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error) {
+func (s *FakeDataSourceService) AddDataSource(ctx context.Context, cmd *datasources.DataSourceCommand) (*datasources.DataSource, error) {
 	if s.lastID == 0 {
 		s.lastID = int64(len(s.DataSources) - 1)
 	}
@@ -97,7 +97,7 @@ func (s *FakeDataSourceService) DeleteDataSource(ctx context.Context, cmd *datas
 	return datasources.ErrDataSourceNotFound
 }
 
-func (s *FakeDataSourceService) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error) {
+func (s *FakeDataSourceService) UpdateDataSource(ctx context.Context, cmd *datasources.DataSourceCommand) (*datasources.DataSource, error) {
 	for _, datasource := range s.DataSources {
 		idMatch := cmd.ID != 0 && cmd.ID == datasource.ID
 		uidMatch := cmd.UID != "" && cmd.UID == datasource.UID

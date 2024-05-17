@@ -5,18 +5,19 @@ import (
 	"errors"
 	"fmt"
 
+	jsoniter "github.com/json-iterator/go"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/org"
-	jsoniter "github.com/json-iterator/go"
 )
 
 type Store interface {
 	GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error)
 	GetPrunableProvisionedDataSources(ctx context.Context) ([]*datasources.DataSource, error)
-	AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error)
-	UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error)
+	AddDataSource(ctx context.Context, cmd *datasources.DataSourceCommand) (*datasources.DataSource, error)
+	UpdateDataSource(ctx context.Context, cmd *datasources.DataSourceCommand) (*datasources.DataSource, error)
 	DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error
 }
 

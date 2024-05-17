@@ -403,7 +403,7 @@ type testScenarioContext struct {
 }
 
 type testScenarioInput struct {
-	ds                         *datasources.AddDataSourceCommand
+	ds                         *datasources.DataSourceCommand
 	token                      *oauth2.Token
 	modifyIncomingRequest      func(req *http.Request)
 	modifyCallResourceResponse func(sender backend.CallResourceResponseSender) error
@@ -507,7 +507,7 @@ func newTestScenario(t *testing.T, name string, opts []testScenarioOption, callb
 	secureJSONData := map[string]string{}
 
 	tsCtx.uid = "test-plugin"
-	cmd := &datasources.AddDataSourceCommand{
+	cmd := &datasources.DataSourceCommand{
 		OrgID:          u.OrgID,
 		Access:         datasources.DS_ACCESS_PROXY,
 		Name:           "TestPlugin",

@@ -199,7 +199,7 @@ func (cfg *configsV0) mapToDatasourceFromConfig(apiVersion int64) *configs {
 	return r
 }
 
-func createInsertCommand(ds *upsertDataSourceFromConfig) *datasources.AddDataSourceCommand {
+func createInsertCommand(ds *upsertDataSourceFromConfig) *datasources.DataSourceCommand {
 	jsonData := simplejson.New()
 	if len(ds.JSONData) > 0 {
 		for k, v := range ds.JSONData {
@@ -207,7 +207,7 @@ func createInsertCommand(ds *upsertDataSourceFromConfig) *datasources.AddDataSou
 		}
 	}
 
-	cmd := &datasources.AddDataSourceCommand{
+	cmd := &datasources.DataSourceCommand{
 		OrgID:           ds.OrgID,
 		Name:            ds.Name,
 		Type:            ds.Type,
@@ -239,7 +239,7 @@ func safeUIDFromName(name string) string {
 	return strings.ToUpper(fmt.Sprintf("P%x", bs[:8]))
 }
 
-func createUpdateCommand(ds *upsertDataSourceFromConfig, id int64) *datasources.UpdateDataSourceCommand {
+func createUpdateCommand(ds *upsertDataSourceFromConfig, id int64) *datasources.DataSourceCommand {
 	jsonData := simplejson.New()
 	if len(ds.JSONData) > 0 {
 		for k, v := range ds.JSONData {
@@ -247,7 +247,7 @@ func createUpdateCommand(ds *upsertDataSourceFromConfig, id int64) *datasources.
 		}
 	}
 
-	return &datasources.UpdateDataSourceCommand{
+	return &datasources.DataSourceCommand{
 		ID:                      id,
 		Version:                 ds.Version,
 		UID:                     ds.UID,

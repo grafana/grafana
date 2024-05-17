@@ -449,9 +449,9 @@ func (m *mockCorrelationsStore) DeleteCorrelationsByTargetUID(c context.Context,
 }
 
 type spyStore struct {
-	inserted []*datasources.AddDataSourceCommand
+	inserted []*datasources.DataSourceCommand
 	deleted  []*datasources.DeleteDataSourceCommand
-	updated  []*datasources.UpdateDataSourceCommand
+	updated  []*datasources.DataSourceCommand
 	items    []*datasources.DataSource
 }
 
@@ -486,14 +486,14 @@ func (s *spyStore) DeleteDataSource(ctx context.Context, cmd *datasources.Delete
 	return nil
 }
 
-func (s *spyStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error) {
+func (s *spyStore) AddDataSource(ctx context.Context, cmd *datasources.DataSourceCommand) (*datasources.DataSource, error) {
 	s.inserted = append(s.inserted, cmd)
 	newDataSource := &datasources.DataSource{UID: cmd.UID, Name: cmd.Name, OrgID: cmd.OrgID, IsPrunable: cmd.IsPrunable}
 	s.items = append(s.items, newDataSource)
 	return newDataSource, nil
 }
 
-func (s *spyStore) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error) {
+func (s *spyStore) UpdateDataSource(ctx context.Context, cmd *datasources.DataSourceCommand) (*datasources.DataSource, error) {
 	s.updated = append(s.updated, cmd)
 	return nil, nil
 }

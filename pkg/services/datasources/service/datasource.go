@@ -190,7 +190,7 @@ func (s *Service) GetDataSourcesByType(ctx context.Context, query *datasources.G
 	return s.SQLStore.GetDataSourcesByType(ctx, query)
 }
 
-func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error) {
+func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.DataSourceCommand) (*datasources.DataSource, error) {
 	dataSources, err := s.SQLStore.GetDataSources(ctx, &datasources.GetDataSourcesQuery{OrgID: cmd.OrgID})
 	if err != nil {
 		return nil, err
@@ -284,7 +284,7 @@ func (s *Service) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteD
 	})
 }
 
-func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error) {
+func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.DataSourceCommand) (*datasources.DataSource, error) {
 	var dataSource *datasources.DataSource
 
 	if err := s.validateFields(ctx, cmd.Name, cmd.URL, cmd.Type, cmd.APIVersion); err != nil {
@@ -687,7 +687,7 @@ func awsServiceNamespace(dsType string, jsonData *simplejson.Json) string {
 	}
 }
 
-func (s *Service) fillWithSecureJSONData(ctx context.Context, cmd *datasources.UpdateDataSourceCommand, ds *datasources.DataSource) error {
+func (s *Service) fillWithSecureJSONData(ctx context.Context, cmd *datasources.DataSourceCommand, ds *datasources.DataSource) error {
 	decrypted, err := s.DecryptedValues(ctx, ds)
 	if err != nil {
 		return err

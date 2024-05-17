@@ -176,7 +176,7 @@ func (c TestContext) createUser(cmd user.CreateUserCommand) User {
 	}
 }
 
-func (c TestContext) createDs(cmd *datasources.AddDataSourceCommand) *datasources.DataSource {
+func (c TestContext) createDs(cmd *datasources.DataSourceCommand) *datasources.DataSource {
 	c.t.Helper()
 
 	dataSource, err := c.env.Server.HTTPServer.DataSourcesService.AddDataSource(context.Background(), cmd)

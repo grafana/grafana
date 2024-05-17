@@ -90,7 +90,7 @@ func TestAddDataSource_InvalidURL(t *testing.T) {
 	}
 
 	sc.m.Post(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
-		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
+		c.Req.Body = mockRequestBody(datasources.DataSourceCommand{
 			Name:   "Test",
 			URL:    "invalid:url",
 			Access: "direct",
@@ -122,7 +122,7 @@ func TestAddDataSource_URLWithoutProtocol(t *testing.T) {
 	sc := setupScenarioContext(t, "/api/datasources")
 
 	sc.m.Post(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
-		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
+		c.Req.Body = mockRequestBody(datasources.DataSourceCommand{
 			Name:   name,
 			URL:    url,
 			Access: "direct",
@@ -153,7 +153,7 @@ func TestAddDataSource_InvalidJSONData(t *testing.T) {
 	jsonData.Set("httpHeaderName1", hs.Cfg.AuthProxy.HeaderName)
 
 	sc.m.Post(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
-		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
+		c.Req.Body = mockRequestBody(datasources.DataSourceCommand{
 			Name:     "Test",
 			URL:      "localhost:5432",
 			Access:   "direct",
@@ -178,7 +178,7 @@ func TestUpdateDataSource_InvalidURL(t *testing.T) {
 	sc := setupScenarioContext(t, "/api/datasources/1234")
 
 	sc.m.Put(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
-		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
+		c.Req.Body = mockRequestBody(datasources.DataSourceCommand{
 			Name:   "Test",
 			URL:    "invalid:url",
 			Access: "direct",
@@ -207,7 +207,7 @@ func TestUpdateDataSource_InvalidJSONData(t *testing.T) {
 	jsonData.Set("httpHeaderName1", hs.Cfg.AuthProxy.HeaderName)
 
 	sc.m.Put(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
-		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
+		c.Req.Body = mockRequestBody(datasources.DataSourceCommand{
 			Name:     "Test",
 			URL:      "localhost:5432",
 			Access:   "direct",
@@ -302,7 +302,7 @@ func TestUpdateDataSourceTeamHTTPHeaders_InvalidJSONData(t *testing.T) {
 			jsonData := simplejson.New()
 			jsonData.Set("teamHttpHeaders", tc.data)
 			sc.m.Put(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
-				c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
+				c.Req.Body = mockRequestBody(datasources.DataSourceCommand{
 					Name:     "Test",
 					URL:      "localhost:5432",
 					Access:   "direct",
@@ -339,7 +339,7 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 	sc := setupScenarioContext(t, "/api/datasources/1234")
 
 	sc.m.Put(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
-		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
+		c.Req.Body = mockRequestBody(datasources.DataSourceCommand{
 			Name:   name,
 			URL:    url,
 			Access: "direct",
@@ -360,7 +360,7 @@ func TestUpdateDataSourceByID_DataSourceNameExists(t *testing.T) {
 	hs := &HTTPServer{
 		DataSourcesService: &dataSourcesServiceMock{
 			expectedDatasource: &datasources.DataSource{},
-			mockUpdateDataSource: func(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error) {
+			mockUpdateDataSource: func(ctx context.Context, cmd *datasources.DataSourceCommand) (*datasources.DataSource, error) {
 				return nil, datasources.ErrDataSourceNameExists
 			},
 		},
@@ -374,7 +374,7 @@ func TestUpdateDataSourceByID_DataSourceNameExists(t *testing.T) {
 
 	sc.m.Put(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.Req = web.SetURLParams(c.Req, map[string]string{":id": "1"})
-		c.Req.Body = mockRequestBody(datasources.UpdateDataSourceCommand{
+		c.Req.Body = mockRequestBody(datasources.DataSourceCommand{
 			Access: "direct",
 			Type:   "test",
 			Name:   "test",
@@ -528,7 +528,7 @@ type dataSourcesServiceMock struct {
 	expectedDatasource  *datasources.DataSource
 	expectedError       error
 
-	mockUpdateDataSource func(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error)
+	mockUpdateDataSource func(ctx context.Context, cmd *datasources.DataSourceCommand) (*datasources.DataSource, error)
 }
 
 func (m *dataSourcesServiceMock) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
@@ -547,11 +547,11 @@ func (m *dataSourcesServiceMock) DeleteDataSource(ctx context.Context, cmd *data
 	return m.expectedError
 }
 
-func (m *dataSourcesServiceMock) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error) {
+func (m *dataSourcesServiceMock) AddDataSource(ctx context.Context, cmd *datasources.DataSourceCommand) (*datasources.DataSource, error) {
 	return m.expectedDatasource, m.expectedError
 }
 
-func (m *dataSourcesServiceMock) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error) {
+func (m *dataSourcesServiceMock) UpdateDataSource(ctx context.Context, cmd *datasources.DataSourceCommand) (*datasources.DataSource, error) {
 	if m.mockUpdateDataSource != nil {
 		return m.mockUpdateDataSource(ctx, cmd)
 	}

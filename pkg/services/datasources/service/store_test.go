@@ -21,7 +21,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	defaultAddDatasourceCommand := datasources.AddDataSourceCommand{
+	defaultAddDatasourceCommand := datasources.DataSourceCommand{
 		OrgID:  10,
 		Name:   "nisse",
 		Type:   datasources.DS_GRAPHITE,
@@ -29,7 +29,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 		URL:    "http://test",
 	}
 
-	defaultUpdateDatasourceCommand := datasources.UpdateDataSourceCommand{
+	defaultUpdateDatasourceCommand := datasources.DataSourceCommand{
 		OrgID:  10,
 		Name:   "nisse_updated",
 		Type:   datasources.DS_GRAPHITE,
@@ -55,7 +55,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 		t.Run("Can add datasource", func(t *testing.T) {
 			db := db.InitTestDB(t)
 			ss := SqlStore{db: db}
-			_, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			_, err := ss.AddDataSource(context.Background(), &datasources.DataSourceCommand{
 				OrgID:      10,
 				Name:       "laban",
 				Type:       datasources.DS_GRAPHITE,
@@ -177,7 +177,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			ds := initDatasource(db)
 			ss := SqlStore{db: db}
 
-			cmd := datasources.UpdateDataSourceCommand{
+			cmd := datasources.DataSourceCommand{
 				ID:      ds.ID,
 				OrgID:   10,
 				Name:    "nisse",
@@ -201,7 +201,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			ds := initDatasource(db)
 			ss := SqlStore{db: db}
 
-			cmd := &datasources.UpdateDataSourceCommand{
+			cmd := &datasources.DataSourceCommand{
 				ID:     ds.ID,
 				OrgID:  10,
 				Name:   "nisse",
@@ -219,7 +219,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			ds := initDatasource(db)
 			ss := SqlStore{db: db}
 
-			cmd := &datasources.UpdateDataSourceCommand{
+			cmd := &datasources.DataSourceCommand{
 				ID:      ds.ID,
 				OrgID:   10,
 				Name:    "nisse",
@@ -396,7 +396,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			ss := SqlStore{db: db}
 			datasourceLimit := 6
 			for i := 0; i < datasourceLimit+1; i++ {
-				_, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+				_, err := ss.AddDataSource(context.Background(), &datasources.DataSourceCommand{
 					OrgID:    10,
 					Name:     "laban" + strconv.Itoa(i),
 					Type:     datasources.DS_GRAPHITE,
@@ -420,7 +420,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			ss := SqlStore{db: db}
 			numberOfDatasource := 5100
 			for i := 0; i < numberOfDatasource; i++ {
-				_, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+				_, err := ss.AddDataSource(context.Background(), &datasources.DataSourceCommand{
 					OrgID:    10,
 					Name:     "laban" + strconv.Itoa(i),
 					Type:     datasources.DS_GRAPHITE,
@@ -444,7 +444,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			ss := SqlStore{db: db}
 			numberOfDatasource := 5100
 			for i := 0; i < numberOfDatasource; i++ {
-				_, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+				_, err := ss.AddDataSource(context.Background(), &datasources.DataSourceCommand{
 					OrgID:    10,
 					Name:     "laban" + strconv.Itoa(i),
 					Type:     datasources.DS_GRAPHITE,
@@ -469,7 +469,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			db := db.InitTestDB(t)
 			ss := SqlStore{db: db}
 
-			_, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			_, err := ss.AddDataSource(context.Background(), &datasources.DataSourceCommand{
 				OrgID:    10,
 				Name:     "Elasticsearch",
 				Type:     datasources.DS_ES,
@@ -480,7 +480,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			_, err = ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			_, err = ss.AddDataSource(context.Background(), &datasources.DataSourceCommand{
 				OrgID:    10,
 				Name:     "Graphite",
 				Type:     datasources.DS_GRAPHITE,
@@ -514,7 +514,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			db := db.InitTestDB(t)
 			ss := SqlStore{db: db}
 
-			_, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			_, err := ss.AddDataSource(context.Background(), &datasources.DataSourceCommand{
 				OrgID:    10,
 				Name:     "Elasticsearch",
 				Type:     "other",
@@ -537,7 +537,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			db := db.InitTestDB(t)
 			ss := SqlStore{db: db}
 
-			_, errPrunable := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			_, errPrunable := ss.AddDataSource(context.Background(), &datasources.DataSourceCommand{
 				OrgID:      10,
 				Name:       "ElasticsearchPrunable",
 				Type:       "other",
@@ -549,7 +549,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			})
 			require.NoError(t, errPrunable)
 
-			_, errNotPrunable := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			_, errNotPrunable := ss.AddDataSource(context.Background(), &datasources.DataSourceCommand{
 				OrgID:    10,
 				Name:     "ElasticsearchNotPrunable",
 				Type:     "other",

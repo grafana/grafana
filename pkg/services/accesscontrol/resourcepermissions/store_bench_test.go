@@ -84,7 +84,7 @@ func setupResourceBenchmark(b *testing.B, dsNum, usersNum int) (*store, []int64)
 func GenerateDatasourcePermissions(b *testing.B, db db.DB, cfg *setting.Cfg, ac *store, dsNum, usersNum, permissionsPerDs int) []int64 {
 	dataSources := make([]int64, 0)
 	for i := 0; i < dsNum; i++ {
-		addDSCommand := &datasources.AddDataSourceCommand{
+		addDSCommand := &datasources.DataSourceCommand{
 			OrgID:  0,
 			Name:   fmt.Sprintf("ds_%d", i),
 			Type:   datasources.DS_GRAPHITE,

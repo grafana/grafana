@@ -177,7 +177,7 @@ func TestFilter_Datasources(t *testing.T) {
 				// seed 10 data sources
 				for i := 1; i <= 10; i++ {
 					dsStore := dsService.CreateStore(store, log.New("accesscontrol.test"))
-					_, err := dsStore.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{Name: fmt.Sprintf("ds:%d", i), UID: fmt.Sprintf("uid%d", i)})
+					_, err := dsStore.AddDataSource(context.Background(), &datasources.DataSourceCommand{Name: fmt.Sprintf("ds:%d", i), UID: fmt.Sprintf("uid%d", i)})
 					require.NoError(t, err)
 				}
 

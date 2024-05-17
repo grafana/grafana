@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -24,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/gcom"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 // Service Define the cloudmigration.Service Implementation.
@@ -402,14 +403,14 @@ func (s *Service) getMigrationDataJSON(ctx context.Context) (*cloudmigration.Mig
 	return migrationData, nil
 }
 
-func (s *Service) getDataSources(ctx context.Context) ([]datasources.AddDataSourceCommand, error) {
+func (s *Service) getDataSources(ctx context.Context) ([]datasources.DataSourceCommand, error) {
 	dataSources, err := s.dsService.GetAllDataSources(ctx, &datasources.GetAllDataSourcesQuery{})
 	if err != nil {
 		s.log.Error("Failed to get all datasources", "err", err)
 		return nil, err
 	}
 
-	result := []datasources.AddDataSourceCommand{}
+	result := []datasources.DataSourceCommand{}
 	for _, dataSource := range dataSources {
 		// Decrypt secure json to send raw credentials
 		decryptedData, err := s.secretsService.DecryptJsonData(ctx, dataSource.SecureJsonData)
@@ -417,7 +418,7 @@ func (s *Service) getDataSources(ctx context.Context) ([]datasources.AddDataSour
 			s.log.Error("Failed to decrypt secure json data", "err", err)
 			return nil, err
 		}
-		dataSourceCmd := datasources.AddDataSourceCommand{
+		dataSourceCmd := datasources.DataSourceCommand{
 			OrgID:           dataSource.OrgID,
 			Name:            dataSource.Name,
 			Type:            dataSource.Type,

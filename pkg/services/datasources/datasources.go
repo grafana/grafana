@@ -28,13 +28,13 @@ type DataSourceService interface {
 	GetDataSourcesByType(ctx context.Context, query *GetDataSourcesByTypeQuery) ([]*DataSource, error)
 
 	// AddDataSource adds a new datasource.
-	AddDataSource(ctx context.Context, cmd *AddDataSourceCommand) (*DataSource, error)
+	AddDataSource(ctx context.Context, cmd *DataSourceCommand) (*DataSource, error)
 
 	// DeleteDataSource deletes an existing datasource.
 	DeleteDataSource(ctx context.Context, cmd *DeleteDataSourceCommand) error
 
 	// UpdateDataSource updates an existing datasource.
-	UpdateDataSource(ctx context.Context, cmd *UpdateDataSourceCommand) (*DataSource, error)
+	UpdateDataSource(ctx context.Context, cmd *DataSourceCommand) (*DataSource, error)
 
 	// GetHTTPTransport gets a datasource specific HTTP transport.
 	GetHTTPTransport(ctx context.Context, ds *DataSource, provider httpclient.Provider, customMiddlewares ...sdkhttpclient.Middleware) (http.RoundTripper, error)
