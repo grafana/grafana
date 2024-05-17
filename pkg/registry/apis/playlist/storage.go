@@ -38,3 +38,8 @@ func newStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter, le
 	}
 	return &storage{Store: store}, nil
 }
+
+func (s *storage) Compare(storageObj, legacyObj runtime.Object) bool {
+	//TODO: define the comparison logic between a playlist returned by the storage and a playlist returned by the legacy storage
+	return false
+}
