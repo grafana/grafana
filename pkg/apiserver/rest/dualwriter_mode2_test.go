@@ -81,7 +81,6 @@ func TestMode2_Create(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, accessor.GetResourceVersion(), "")
 		})
-
 	}
 }
 
@@ -156,7 +155,6 @@ func TestMode2_Get(t *testing.T) {
 			assert.Equal(t, obj, exampleObj)
 			assert.NotEqual(t, obj, anotherObj)
 		})
-
 	}
 }
 
@@ -208,7 +206,6 @@ func TestMode2_List(t *testing.T) {
 			}
 			assert.Equal(t, exampleList, obj)
 		})
-
 	}
 }
 
