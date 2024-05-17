@@ -2,7 +2,6 @@ package rest
 
 import (
 	"context"
-	"errors"
 	"strconv"
 	"time"
 
@@ -82,12 +81,9 @@ func (d *DualWriterMode2) Get(ctx context.Context, name string, options *metav1.
 	}
 	d.recordLegacyDuration(false, mode2, name, method, startLegacy)
 
-	go func() {
-		startStorage := time.Now().UTC()
-		ctx, _ := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage get timeout"))
-		_, err := d.Storage.Get(ctx, name, options)
-		defer d.recordStorageDuration(err != nil, mode2, name, method, startStorage)
-	}()
+	startStorage := time.Now().UTC()
+	res, err = d.Storage.Get(ctx, name, options)
+	d.recordStorageDuration(err != nil, mode2, name, method, startStorage)
 
 	return res, err
 }
@@ -103,8 +99,10 @@ func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion
 	ll, err := d.Legacy.List(ctx, options)
 	if err != nil {
 		log.Error(err, "unable to list objects from legacy storage")
+		d.recordLegacyDuration(true, mode2, options.Kind, method, startLegacy)
+		return ll, err
 	}
-	d.recordLegacyDuration(err != nil, mode2, options.Kind, method, startLegacy)
+	d.recordLegacyDuration(false, mode2, options.Kind, method, startLegacy)
 
 	legacyList, err := meta.ExtractList(ll)
 	if err != nil {
@@ -128,8 +126,10 @@ func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion
 	sl, err := d.Storage.List(ctx, &optionsStorage)
 	if err != nil {
 		log.Error(err, "unable to list objects from storage")
+		d.recordStorageDuration(true, mode2, options.Kind, method, startStorage)
+		return sl, err
 	}
-	d.recordStorageDuration(err != nil, mode2, options.Kind, method, startStorage)
+	d.recordStorageDuration(false, mode2, options.Kind, method, startStorage)
 
 	storageList, err := meta.ExtractList(sl)
 	if err != nil {
