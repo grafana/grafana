@@ -36,9 +36,9 @@ const MetaText = ({ children, icon, color = 'secondary', direction = 'row', ...r
 };
 
 const getStyles = () => ({
-  interactive: css`
-    cursor: pointer;
-  `,
+  interactive: css({
+    cursor: 'pointer',
+  }),
 });
 
 export { MetaText };

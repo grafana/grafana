@@ -311,13 +311,13 @@ func TestRuleRoutine(t *testing.T) {
 				require.Len(t, states, 1)
 				s := states[0]
 				require.Equal(t, rule.UID, s.AlertRuleUID)
-				require.Len(t, s.Results, 1)
+				require.NotNil(t, s.LatestResult)
 				var expectedStatus = evalState
 				if evalState == eval.Pending {
 					expectedStatus = eval.Alerting
 				}
-				require.Equal(t, expectedStatus.String(), s.Results[0].EvaluationState.String())
-				require.Equal(t, expectedTime, s.Results[0].EvaluationTime)
+				require.Equal(t, expectedStatus.String(), s.LatestResult.EvaluationState.String())
+				require.Equal(t, expectedTime, s.LatestResult.EvaluationTime)
 			})
 			t.Run("it should save alert instances to storage", func(t *testing.T) {
 				// TODO rewrite when we are able to mock/fake state manager

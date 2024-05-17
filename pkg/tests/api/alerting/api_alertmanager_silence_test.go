@@ -306,8 +306,7 @@ func TestIntegrationSilenceAuth(t *testing.T) {
 			apiClient := newAlertingApiClient(grafanaListedAddr, randomLogin, randomLogin)
 
 			// Set permissions.
-			asService := resourcepermissions.NewActionSetService()
-			permissionsStore := resourcepermissions.NewStore(env.SQLStore, featuremgmt.WithFeatures(), &asService)
+			permissionsStore := resourcepermissions.NewStore(env.SQLStore, featuremgmt.WithFeatures())
 			for _, cmd := range tt.permissions {
 				_, err := permissionsStore.SetUserResourcePermission(
 					context.Background(),

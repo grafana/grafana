@@ -1,5 +1,7 @@
 import React, { useCallback } from 'react';
 
+import { LineStyle } from '@grafana/schema';
+
 import { SeriesColorPicker } from '../ColorPicker/ColorPicker';
 import { usePanelContext } from '../PanelChrome';
 
@@ -10,12 +12,13 @@ interface Props {
   color?: string;
   gradient?: string;
   readonly?: boolean;
+  lineStyle?: LineStyle;
 }
 
 /**
  * @internal
  */
-export const VizLegendSeriesIcon = React.memo(({ seriesName, color, gradient, readonly }: Props) => {
+export const VizLegendSeriesIcon = React.memo(({ seriesName, color, gradient, readonly, lineStyle }: Props) => {
   const { onSeriesColorChange } = usePanelContext();
   const onChange = useCallback(
     (color: string) => {
@@ -34,12 +37,13 @@ export const VizLegendSeriesIcon = React.memo(({ seriesName, color, gradient, re
             ref={ref}
             onClick={showColorPicker}
             onMouseLeave={hideColorPicker}
+            lineStyle={lineStyle}
           />
         )}
       </SeriesColorPicker>
     );
   }
-  return <SeriesIcon color={color} gradient={gradient} />;
+  return <SeriesIcon color={color} gradient={gradient} lineStyle={lineStyle} />;
 });
 
 VizLegendSeriesIcon.displayName = 'VizLegendSeriesIcon';

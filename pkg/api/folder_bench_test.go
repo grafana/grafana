@@ -448,7 +448,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
 
-	acSvc := acimpl.ProvideOSSService(sc.cfg, acdb.ProvideService(sc.db), localcache.ProvideService(), features)
+	acSvc := acimpl.ProvideOSSService(sc.cfg, acdb.ProvideService(sc.db), localcache.ProvideService(), features, tracing.InitializeTracerForTest())
 
 	quotaSrv := quotatest.New(false, nil)
 
@@ -457,15 +457,16 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 
 	folderStore := folderimpl.ProvideDashboardFolderStore(sc.db)
 
-	ac := acimpl.ProvideAccessControl(sc.cfg)
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderStore, sc.db, features, supportbundlestest.NewFakeBundleService(), nil)
 
 	cfg := setting.NewCfg()
+	actionSets := resourcepermissions.NewActionSetService(ac)
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
-		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, resourcepermissions.NewActionSetService())
+		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, actionSets)
 	require.NoError(b, err)
 	dashboardPermissions, err := ossaccesscontrol.ProvideDashboardPermissions(
-		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, resourcepermissions.NewActionSetService())
+		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, actionSets)
 	require.NoError(b, err)
 
 	dashboardSvc, err := dashboardservice.ProvideDashboardServiceImpl(
@@ -489,7 +490,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 		DashboardService: dashboardSvc,
 	}
 
-	hs.AccessControl = acimpl.ProvideAccessControl(hs.Cfg)
+	hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	guardian.InitAccessControlGuardian(hs.Cfg, hs.AccessControl, hs.DashboardService)
 
 	m.Get("/api/folders", hs.GetFolders)

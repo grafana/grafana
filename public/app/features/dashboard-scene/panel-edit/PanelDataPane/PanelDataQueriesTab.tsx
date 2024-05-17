@@ -5,7 +5,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { SceneObjectBase, SceneComponentProps, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
-import { Button, HorizontalGroup, Tab } from '@grafana/ui';
+import { Button, Stack, Tab } from '@grafana/ui';
 import { addQuery } from 'app/core/utils/query';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { GroupActionComponents } from 'app/features/query/components/QueryActionComponent';
@@ -48,13 +48,6 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     };
 
     this._panelManager = panelManager;
-    this.addActivationHandler(this.onActivate.bind(this));
-  }
-
-  private onActivate() {
-    // This is to preserve SceneQueryRunner stays alive when switching between visualizations and table view
-    const deactivate = this._panelManager.queryRunner.activate();
-    return () => deactivate();
   }
 
   buildQueryOptions(): QueryGroupOptions {
@@ -216,7 +209,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
         onRunQueries={model.onRunQueries}
       />
 
-      <HorizontalGroup spacing="md" align="flex-start">
+      <Stack gap={2}>
         {showAddButton && (
           <Button
             icon="plus"
@@ -238,7 +231,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
           </Button>
         )}
         {model.renderExtraActions()}
-      </HorizontalGroup>
+      </Stack>
     </>
   );
 }

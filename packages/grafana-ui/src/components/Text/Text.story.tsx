@@ -41,6 +41,7 @@ const meta: Meta = {
     },
     truncate: { control: 'boolean' },
     italic: { control: 'boolean' },
+    tabular: { control: 'boolean' },
     textAlignment: {
       control: 'select',
       options: ['inherit', 'initial', 'left', 'right', 'center', 'justify', undefined],
@@ -90,7 +91,7 @@ export const Example: StoryFn = (args) => {
 
 Example.parameters = {
   controls: {
-    exclude: ['element', 'variant', 'weight', 'textAlignment', 'truncate', 'italic', 'color', 'children'],
+    exclude: ['element', 'variant', 'weight', 'textAlignment', 'truncate', 'italic', 'tabular', 'color', 'children'],
   },
 };
 

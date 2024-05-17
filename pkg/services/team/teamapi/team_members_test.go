@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
@@ -36,7 +37,7 @@ func SetupAPITestServer(t *testing.T, opts ...func(a *TeamAPI)) *webtest.Server 
 	a := ProvideTeamAPI(router,
 		teamtest.NewFakeService(),
 		actest.FakeService{},
-		acimpl.ProvideAccessControl(cfg),
+		acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		&actest.FakePermissionsService{},
 		&usertest.FakeUserService{},
 		&licensing.OSSLicensingService{},
