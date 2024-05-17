@@ -166,6 +166,7 @@ type DataSourceCommand struct {
 	SecureJsonData  map[string]string `json:"secureJsonData"`
 	UID             string            `json:"uid"`
 	Version         int               `json:"version,omitempty"`
+
 	// swagger:ignore
 	APIVersion string `json:"apiVersion"`
 	// swagger:ignore
@@ -176,7 +177,7 @@ type DataSourceCommand struct {
 	EncryptedSecureJsonData map[string][]byte `json:"-"`
 	UpdateSecretFn          UpdateSecretFn    `json:"-"`
 
-	// Only used in the Add command
+	// If this is set on the "add" command, the user is given admin permissions
 	UserID int64 `json:"-"`
 
 	// Only Valid for the Update Command
