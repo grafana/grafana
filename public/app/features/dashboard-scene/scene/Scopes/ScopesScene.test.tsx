@@ -11,9 +11,9 @@ import {
   SceneTimeRange,
   VizPanel,
 } from '@grafana/scenes';
+import { DashboardControls } from 'app/features/dashboard-scene/scene//DashboardControls';
+import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
-import { DashboardControls } from './DashboardControls';
-import { DashboardScene } from './DashboardScene';
 import { ScopeDashboard, ScopesDashboardsScene } from './ScopesDashboardsScene';
 import { ScopesFiltersScene } from './ScopesFiltersScene';
 import { ScopesScene } from './ScopesScene';
@@ -293,19 +293,19 @@ describe('ScopesScene', () => {
     });
 
     it('Fetches scope details', () => {
-      filtersScene.toggleScope(scopesNames[0]);
+      filtersScene.toggleScopeSelect(scopesNames[0]);
       waitFor(() => {
         expect(fetchScopesSpy).toHaveBeenCalled();
         expect(filtersScene.state.scopes).toEqual(scopes.filter((scope) => scope.metadata.name === scopesNames[0]));
       });
 
-      filtersScene.toggleScope(scopesNames[1]);
+      filtersScene.toggleScopeSelect(scopesNames[1]);
       waitFor(() => {
         expect(fetchScopesSpy).toHaveBeenCalled();
         expect(filtersScene.state.scopes).toEqual(scopes);
       });
 
-      filtersScene.toggleScope(scopesNames[0]);
+      filtersScene.toggleScopeSelect(scopesNames[0]);
       waitFor(() => {
         expect(fetchScopesSpy).toHaveBeenCalled();
         expect(filtersScene.state.scopes).toEqual(scopes.filter((scope) => scope.metadata.name === scopesNames[1]));
@@ -313,20 +313,19 @@ describe('ScopesScene', () => {
     });
 
     it('Fetches dashboards list', () => {
-      filtersScene.toggleScope(scopesNames[0]);
+      filtersScene.toggleScopeSelect(scopesNames[0]);
       waitFor(() => {
         expect(fetchDashboardsSpy).toHaveBeenCalled();
         expect(dashboardsScene.state.dashboards).toEqual(dashboards[0]);
       });
 
-      filtersScene.toggleScope(scopesNames[1]);
+      filtersScene.toggleScopeSelect(scopesNames[1]);
       waitFor(() => {
         expect(fetchDashboardsSpy).toHaveBeenCalled();
         expect(dashboardsScene.state.dashboards).toEqual(dashboards.flat());
       });
 
-      filtersScene.toggleScope(scopesNames[0]);
-
+      filtersScene.toggleScopeSelect(scopesNames[0]);
       waitFor(() => {
         expect(fetchDashboardsSpy).toHaveBeenCalled();
         expect(dashboardsScene.state.dashboards).toEqual(dashboards[1]);
@@ -334,7 +333,7 @@ describe('ScopesScene', () => {
     });
 
     it('Enriches data requests', () => {
-      filtersScene.toggleScope(scopesNames[0]);
+      filtersScene.toggleScopeSelect(scopesNames[0]);
       waitFor(() => {
         const queryRunner = sceneGraph.findObject(dashboardScene, (o) => o.state.key === 'data-query-runner')!;
         expect(dashboardScene.enrichDataRequest(queryRunner).scopes).toEqual(
@@ -342,13 +341,13 @@ describe('ScopesScene', () => {
         );
       });
 
-      filtersScene.toggleScope(scopesNames[1]);
+      filtersScene.toggleScopeSelect(scopesNames[1]);
       waitFor(() => {
         const queryRunner = sceneGraph.findObject(dashboardScene, (o) => o.state.key === 'data-query-runner')!;
         expect(dashboardScene.enrichDataRequest(queryRunner).scopes).toEqual(scopes);
       });
 
-      filtersScene.toggleScope(scopesNames[0]);
+      filtersScene.toggleScopeSelect(scopesNames[0]);
       waitFor(() => {
         const queryRunner = sceneGraph.findObject(dashboardScene, (o) => o.state.key === 'data-query-runner')!;
         expect(dashboardScene.enrichDataRequest(queryRunner).scopes).toEqual(

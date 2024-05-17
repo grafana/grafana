@@ -6,11 +6,12 @@ import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectState } fr
 import { IconButton, useStyles2 } from '@grafana/ui';
 
 import { ScopesDashboardsScene } from './ScopesDashboardsScene';
-import { ScopesFiltersScene } from './ScopesFiltersScene';
+import { ScopesFiltersScene, ScopesFiltersSceneState } from './ScopesFiltersScene';
 
 export interface ScopesSceneState extends SceneObjectState {
   dashboards: ScopesDashboardsScene;
   filters: ScopesFiltersScene;
+  advancedFilters: ScopesFiltersScene | undefined;
   isExpanded: boolean;
   isViewing: boolean;
 }
@@ -22,6 +23,7 @@ export class ScopesScene extends SceneObjectBase<ScopesSceneState> {
     super({
       dashboards: new ScopesDashboardsScene(),
       filters: new ScopesFiltersScene(),
+      advancedFilters: undefined,
       isExpanded: false,
       isViewing: false,
     });
@@ -63,6 +65,27 @@ export class ScopesScene extends SceneObjectBase<ScopesSceneState> {
     this.setState({ isExpanded: !this.state.isExpanded });
   }
 
+  public openAdvancedSelector() {
+    this.state.filters.closeBasicSelector();
+
+    const advancedFilters = this.state.filters.clone();
+
+    advancedFilters.setState({ ...this.state.filters.state, isAdvanced: true });
+
+    this.setState({ advancedFilters });
+  }
+
+  public closeAdvancedSelector(newState: ScopesFiltersSceneState | undefined) {
+    this.setState({ advancedFilters: undefined });
+
+    if (newState) {
+      this.state.filters.setState({
+        ...newState,
+        isAdvanced: false,
+      });
+    }
+  }
+
   private enterViewMode() {
     this.setState({ isExpanded: false, isViewing: true });
   }
@@ -73,7 +96,7 @@ export class ScopesScene extends SceneObjectBase<ScopesSceneState> {
 }
 
 export function ScopesSceneRenderer({ model }: SceneComponentProps<ScopesScene>) {
-  const { filters, dashboards, isExpanded, isViewing } = model.useState();
+  const { filters, advancedFilters, dashboards, isExpanded, isViewing } = model.useState();
   const styles = useStyles2(getStyles);
 
   return (
@@ -96,6 +119,8 @@ export function ScopesSceneRenderer({ model }: SceneComponentProps<ScopesScene>)
           <dashboards.Component model={dashboards} />
         </div>
       )}
+
+      {advancedFilters && <advancedFilters.Component model={advancedFilters} />}
     </div>
   );
 }
