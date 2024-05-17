@@ -35,6 +35,7 @@ type Storage interface {
 	rest.CreaterUpdater
 	rest.GracefulDeleter
 	rest.CollectionDeleter
+	// Compare asserts on the equality of objects returned from both stores	(object storage and legacy storage)
 	Compare(storageObj, legacyObj runtime.Object) bool
 }
 
