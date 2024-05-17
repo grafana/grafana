@@ -62,7 +62,7 @@ func (d *DualWriterMode1) Create(ctx context.Context, obj runtime.Object, create
 		startStorage := time.Now().UTC()
 		ctx, _ := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage create timeout"))
 		_, err := d.Storage.Create(ctx, obj, createValidation, options)
-		defer d.recordStorageDuration(err != nil, mode, options.Kind, method, startStorage)
+		d.recordStorageDuration(err != nil, mode, options.Kind, method, startStorage)
 	}()
 
 	return res, errLegacy
@@ -86,7 +86,7 @@ func (d *DualWriterMode1) Get(ctx context.Context, name string, options *metav1.
 		startStorage := time.Now().UTC()
 		ctx, _ := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage get timeout"))
 		_, err := d.Storage.Get(ctx, name, options)
-		defer d.recordStorageDuration(err != nil, mode, name, method, startStorage)
+		d.recordStorageDuration(err != nil, mode, name, method, startStorage)
 	}()
 
 	return res, errLegacy
@@ -110,7 +110,7 @@ func (d *DualWriterMode1) List(ctx context.Context, options *metainternalversion
 		startStorage := time.Now().UTC()
 		ctx, _ := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage list timeout"))
 		_, err := d.Storage.List(ctx, options)
-		defer d.recordStorageDuration(err != nil, mode, options.Kind, method, startStorage)
+		d.recordStorageDuration(err != nil, mode, options.Kind, method, startStorage)
 	}()
 
 	return res, errLegacy
@@ -134,7 +134,7 @@ func (d *DualWriterMode1) Delete(ctx context.Context, name string, deleteValidat
 		startStorage := time.Now().UTC()
 		ctx, _ := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage delete timeout"))
 		_, _, err := d.Storage.Delete(ctx, name, deleteValidation, options)
-		defer d.recordStorageDuration(err != nil, mode, name, method, startStorage)
+		d.recordStorageDuration(err != nil, mode, name, method, startStorage)
 	}()
 
 	return res, async, err
@@ -158,7 +158,7 @@ func (d *DualWriterMode1) DeleteCollection(ctx context.Context, deleteValidation
 		startStorage := time.Now().UTC()
 		ctx, _ := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage deletecollection timeout"))
 		_, err := d.Storage.DeleteCollection(ctx, deleteValidation, options, listOptions)
-		defer d.recordStorageDuration(err != nil, mode, options.Kind, method, startStorage)
+		d.recordStorageDuration(err != nil, mode, options.Kind, method, startStorage)
 	}()
 
 	return res, errLegacy
@@ -214,7 +214,7 @@ func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.
 		startStorage := time.Now().UTC()
 		ctx, _ := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage update timeout"))
 		_, _, err := d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
-		defer d.recordStorageDuration(err != nil, mode, name, method, startStorage)
+		d.recordStorageDuration(err != nil, mode, name, method, startStorage)
 	}()
 
 	return res, async, errLegacy
