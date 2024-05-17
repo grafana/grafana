@@ -184,3 +184,8 @@ func SelectableScopeNodeFields(obj *scope.ScopeNode) fields.Set {
 		"spec.parentName": parentName,
 	})
 }
+
+func (s *storage) Compare(storageObj, legacyObj runtime.Object) bool {
+	//TODO: define the comparison logic between a scope returned by the storage and a scope returned by the legacy storage
+	return false
+}

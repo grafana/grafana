@@ -122,7 +122,7 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 	legacyStore := &dashboardStorage{
 		resource:       resourceInfo,
 		access:         b.access,
-		tableConverter: store.Store.TableConvertor,
+		tableConverter: store.TableConvertor,
 	}
 
 	storage := map[string]rest.Storage{}

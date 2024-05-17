@@ -60,3 +60,8 @@ func newStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter) (*
 	}
 	return &storage{Store: store}, nil
 }
+
+func (s *storage) Compare(storageObj, legacyObj runtime.Object) bool {
+	//TODO: define the comparison logic between a generic object returned by the storage and a generic object returned by the legacy storage
+	return false
+}
