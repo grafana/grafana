@@ -27,7 +27,107 @@ import (
 )
 
 func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) (http.ResponseWriter, error) {
+	if req.URL.Path == "/usage/basiclogs" {
+		newUrl := &url.URL{
+			Scheme: req.URL.Scheme,
+			Host:   req.URL.Host,
+			Path:   "/v1/query",
+		}
+		return e.GetBasicLogsUsage(req.Context(), newUrl.String(), cli, rw, req.Body)
+	}
 	return e.Proxy.Do(rw, req, cli)
+}
+
+// builds and executes a new query request that will get the data ingeted for the given table in the basic logs query
+func (e *AzureLogAnalyticsDatasource) GetBasicLogsUsage(ctx context.Context, url string, client *http.Client, rw http.ResponseWriter, reqBody io.ReadCloser) (http.ResponseWriter, error) {
+	// read the full body
+	originalPayload, readErr := io.ReadAll(reqBody)
+	if readErr != nil {
+		return rw, fmt.Errorf("failed to read request body %w", readErr)
+	}
+	var payload BasicLogsUsagePayload
+	jsonErr := json.Unmarshal(originalPayload, &payload)
+	if jsonErr != nil {
+		return rw, fmt.Errorf("error decoding basic logs table usage payload: %w", jsonErr)
+	}
+	table := payload.Table
+
+	from, fromErr := ConvertTime(payload.From)
+	if fromErr != nil {
+		return rw, fmt.Errorf("failed to convert from time: %w", fromErr)
+	}
+
+	to, toErr := ConvertTime(payload.To)
+	if toErr != nil {
+		return rw, fmt.Errorf("failed to convert to time: %w", toErr)
+	}
+
+	// basic logs queries only show data for last 8 days or less
+	// data volume query should also only calculate volume for last 8 days if time range exceeds that.
+	diff := to.Sub(from).Hours()
+	if diff > float64(MaxHoursBasicLogs) {
+		from = to.Add(-time.Duration(MaxHoursBasicLogs) * time.Hour)
+	}
+
+	dataVolumeQueryRaw := GetDataVolumeRawQuery(table)
+	dataVolumeQuery := &AzureLogAnalyticsQuery{
+		Query:         dataVolumeQueryRaw,
+		DashboardTime: true, // necessary to ensure TimeRange property is used since query will not have an in-query time filter
+		TimeRange: backend.TimeRange{
+			From: from,
+			To:   to,
+		},
+		TimeColumn: "TimeGenerated",
+		Resources:  []string{payload.Resource},
+		QueryType:  dataquery.AzureQueryTypeAzureLogAnalytics,
+		URL:        getApiURL(payload.Resource, false, false),
+	}
+
+	req, err := e.createRequest(ctx, url, dataVolumeQuery)
+	if err != nil {
+		return rw, err
+	}
+
+	_, span := tracing.DefaultTracer().Start(ctx, "azure basic logs usage query", trace.WithAttributes(
+		attribute.String("target", dataVolumeQuery.Query),
+		attribute.String("table", table),
+		attribute.Int64("from", dataVolumeQuery.TimeRange.From.UnixNano()/int64(time.Millisecond)),
+		attribute.Int64("until", dataVolumeQuery.TimeRange.To.UnixNano()/int64(time.Millisecond)),
+	))
+	defer span.End()
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return rw, err
+	}
+
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			e.Logger.Warn("Failed to close response body for data volume request", "err", err)
+		}
+	}()
+
+	logResponse, err := e.unmarshalResponse(resp)
+	if err != nil {
+		return rw, err
+	}
+
+	t, err := logResponse.GetPrimaryResultTable()
+	if err != nil {
+		return rw, err
+	}
+
+	num := t.Rows[0][0].(json.Number)
+	value, err := num.Float64()
+	if err != nil {
+		return rw, err
+	}
+	_, err = rw.Write([]byte(fmt.Sprintf("%f", value)))
+	if err != nil {
+		return rw, err
+	}
+
+	return rw, err
 }
 
 // executeTimeSeriesQuery does the following:

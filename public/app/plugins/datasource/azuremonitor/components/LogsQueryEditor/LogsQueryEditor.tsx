@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { PanelData, TimeRange } from '@grafana/data';
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
 import { getTemplateSrv } from '@grafana/runtime';
-import { Alert, LinkButton, Text } from '@grafana/ui';
+import { Alert, LinkButton, Text, TextLink } from '@grafana/ui';
 
 import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
@@ -53,6 +53,7 @@ const LogsQueryEditor = ({
     shouldShowBasicLogsToggle(query.azureLogAnalytics?.resources || [], basicLogsEnabled)
   );
   const [showDataRetentionWarning, setShowDataRetentionWarning] = useState<boolean>(false);
+  const [dataIngestedWarning, setDataIngestedWarning] = useState<React.ReactNode | null>(null);
   const templateSrv = getTemplateSrv();
   const from = templateSrv?.replace('$__from');
   const to = templateSrv?.replace('$__to');
@@ -86,7 +87,7 @@ const LogsQueryEditor = ({
     } else {
       setShowBasicLogsToggle(false);
     }
-  }, [basicLogsEnabled, query.azureLogAnalytics?.resources]);
+  }, [basicLogsEnabled, query.azureLogAnalytics?.resources, templateSrv]);
 
   useEffect(() => {
     if ((!basicLogsEnabled || !showBasicLogsToggle) && query.azureLogAnalytics?.basicLogsQuery) {
@@ -106,6 +107,40 @@ const LogsQueryEditor = ({
     }
   }, [query.azureLogAnalytics?.basicLogsQuery, showBasicLogsToggle, from, to]);
 
+  useEffect(() => {
+    const getBasicLogsUsage = async (query: AzureMonitorQuery) => {
+      try {
+        if (showBasicLogsToggle && query.azureLogAnalytics?.basicLogsQuery && !!query.azureLogAnalytics.query) {
+          const querySplit = query.azureLogAnalytics.query.split('|');
+          // Basic Logs queries are required to start the query with a table
+          const table = querySplit[0].trim();
+          const dataIngested = await datasource.azureLogAnalyticsDatasource.getBasicLogsQueryUsage(query, table);
+          const textToShow = !!dataIngested
+            ? `This query is processing ${dataIngested} GiB when run. `
+            : 'This is a Basic Logs query and incurs cost per GiB scanned. ';
+          setDataIngestedWarning(
+            <>
+              <Text color="primary">
+                {textToShow}{' '}
+                <TextLink
+                  href="https://learn.microsoft.com/en-us/azure/azure-monitor/logs/basic-logs-configure?tabs=portal-1"
+                  external
+                >
+                  Learn More
+                </TextLink>
+              </Text>
+            </>
+          );
+        } else {
+          setDataIngestedWarning(null);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    getBasicLogsUsage(query).catch((err) => console.error(err));
+  }, [datasource.azureLogAnalyticsDatasource, query, showBasicLogsToggle, from, to]);
   let portalLinkButton = null;
 
   if (data?.series) {
@@ -185,6 +220,7 @@ const LogsQueryEditor = ({
           setError={setError}
           schema={schema}
         />
+        {dataIngestedWarning}
         <EditorRow>
           <EditorFieldGroup>
             {!hideFormatAs && (
