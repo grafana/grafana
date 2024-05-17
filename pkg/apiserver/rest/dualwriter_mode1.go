@@ -76,15 +76,6 @@ func (d *DualWriterMode1) Get(ctx context.Context, name string, options *metav1.
 		log.Error(errLegacy, "unable to get object in legacy storage")
 	}
 	d.recordLegacyDuration(errLegacy != nil, mode1Str, options.Kind, method, startLegacy)
-=======
-	startLegacy := time.Now().UTC()
-	res, errLegacy := d.Legacy.Get(ctx, name, options)
-	if errLegacy != nil {
-		log.Error(errLegacy, "unable to get object in legacy storage")
-		d.recordLegacyDuration(errLegacy != nil, mode, name, method, startLegacy)
-	}
-	d.recordLegacyDuration(errLegacy != nil, mode, name, method, startLegacy)
->>>>>>> c250b3d8caa (Return error from legacy write)
 
 	go func() {
 		startStorage := time.Now()
