@@ -22,6 +22,7 @@ var (
 )
 
 const MemberPermissionName = "Member"
+const AdminPermissionName = "Admin"
 
 // Team model
 type Team struct {
@@ -131,6 +132,11 @@ type AddTeamMemberCommand struct {
 
 type UpdateTeamMemberCommand struct {
 	Permission dashboardaccess.PermissionType `json:"permission"`
+}
+
+type SetTeamMembershipsCommand struct {
+	Members []string `json:"members"`
+	Admins  []string `json:"admins"`
 }
 
 type RemoveTeamMemberCommand struct {

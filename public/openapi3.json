@@ -9979,6 +9979,23 @@
         },
         "type": "object"
       },
+      "SetTeamMembershipsCommand": {
+        "properties": {
+          "admins": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "members": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "SetUserRolesCommand": {
         "properties": {
           "global": {
@@ -22320,6 +22337,52 @@
           }
         },
         "summary": "Add Team Member.",
+        "tags": [
+          "teams"
+        ]
+      },
+      "put": {
+        "description": "Takes user emails, and updates team members and admins to the provided lists of users.\nAny current team members and admins not in the provided lists will be removed.",
+        "operationId": "setTeamMemberships",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "team_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetTeamMembershipsCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Set team memberships.",
         "tags": [
           "teams"
         ]

@@ -126,6 +126,7 @@ type SyncUserRolesCommand struct {
 type TeamPermissionsService interface {
 	GetPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]ResourcePermission, error)
 	SetUserPermission(ctx context.Context, orgID int64, user User, resourceID, permission string) (*ResourcePermission, error)
+	SetPermissions(ctx context.Context, orgID int64, resourceID string, commands ...SetResourcePermissionCommand) ([]ResourcePermission, error)
 }
 
 type FolderPermissionsService interface {
