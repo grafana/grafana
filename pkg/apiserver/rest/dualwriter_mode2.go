@@ -2,6 +2,9 @@ package rest
 
 import (
 	"context"
+	"errors"
+	"strconv"
+	"time"
 
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -22,6 +25,8 @@ type DualWriterMode2 struct {
 	Log klog.Logger
 }
 
+var mode2 = strconv.Itoa(int(Mode2))
+
 // NewDualWriterMode2 returns a new DualWriter in mode 2.
 // Mode 2 represents writing to LegacyStorage and Storage and reading from LegacyStorage.
 func NewDualWriterMode2(legacy LegacyStorage, storage Storage) *DualWriterMode2 {
@@ -39,12 +44,16 @@ func (d *DualWriterMode2) Mode() DualWriterMode {
 func (d *DualWriterMode2) Create(ctx context.Context, original runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	log := d.Log.WithValues("kind", options.Kind)
 	ctx = klog.NewContext(ctx, log)
+	var method = "create"
 
-	created, err := d.Legacy.Create(ctx, original, createValidation, options)
+	startLegacy := time.Now()
+	created, err := d.Legacy.Create(ctx, obj, createValidation, options)
 	if err != nil {
 		log.Error(err, "unable to create object in legacy storage")
+		d.recordLegacyDuration(true, mode2, options.Kind, method, startLegacy)
 		return created, err
 	}
+	d.recordLegacyDuration(false, mode2, options.Kind, method, startLegacy)
 
 	createdLegacy, err := enrichLegacyObject(original, created, true)
 	if err != nil {
@@ -54,25 +63,33 @@ func (d *DualWriterMode2) Create(ctx context.Context, original runtime.Object, c
 	rsp, err := d.Storage.Create(ctx, created, createValidation, options)
 	if err != nil {
 		log.WithValues("name").Error(err, "unable to create object in storage")
-		return rsp, err
 	}
-	return rsp, nil
+	return rsp, err
 }
 
 // It retrieves an object from Storage if possible, and if not it falls back to LegacyStorage.
 func (d *DualWriterMode2) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	log := d.Log.WithValues("name", name, "resourceVersion", options.ResourceVersion, "kind", options.Kind)
 	ctx = klog.NewContext(ctx, log)
-	s, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
+	var method = "get"
+
+	startLegacy := time.Now().UTC()
+	res, err := d.Legacy.Get(ctx, name, options)
 	if err != nil {
-		if apierrors.IsNotFound(err) {
-			log.Info("object not found in storage")
-			return d.Legacy.Get(ctx, name, &metav1.GetOptions{})
-		}
-		log.Error(err, "unable to fetch object from storage")
-		return d.Legacy.Get(ctx, name, &metav1.GetOptions{})
+		log.Error(err, "unable to get object in legacy storage")
+		d.recordLegacyDuration(true, mode2, name, method, startLegacy)
+		return res, err
 	}
-	return s, nil
+	d.recordLegacyDuration(false, mode2, name, method, startLegacy)
+
+	go func() {
+		startStorage := time.Now().UTC()
+		ctx, _ := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage get timeout"))
+		_, err := d.Storage.Get(ctx, name, options)
+		defer d.recordStorageDuration(err != nil, mode2, name, method, startStorage)
+	}()
+
+	return res, err
 }
 
 // List overrides the behavior of the generic DualWriter.
@@ -80,11 +97,15 @@ func (d *DualWriterMode2) Get(ctx context.Context, name string, options *metav1.
 func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
 	log := d.Log.WithValues("kind", options.Kind, "resourceVersion", options.ResourceVersion, "kind", options.Kind)
 	ctx = klog.NewContext(ctx, log)
+	var method = "list"
+
+	startLegacy := time.Now().UTC()
 	ll, err := d.Legacy.List(ctx, options)
 	if err != nil {
 		log.Error(err, "unable to list objects from legacy storage")
-		return nil, err
 	}
+	d.recordLegacyDuration(err != nil, mode2, options.Kind, method, startLegacy)
+
 	legacyList, err := meta.ExtractList(ll)
 	if err != nil {
 		log.Error(err, "unable to extract list from legacy storage")
@@ -98,15 +119,18 @@ func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion
 		return nil, err
 	}
 
+	// TODO: why do we need this?
 	if optionsStorage.LabelSelector == nil {
 		return ll, nil
 	}
 
+	startStorage := time.Now().UTC()
 	sl, err := d.Storage.List(ctx, &optionsStorage)
 	if err != nil {
 		log.Error(err, "unable to list objects from storage")
-		return nil, err
 	}
+	d.recordStorageDuration(err != nil, mode2, options.Kind, method, startStorage)
+
 	storageList, err := meta.ExtractList(sl)
 	if err != nil {
 		log.Error(err, "unable to extract list from storage")
@@ -133,11 +157,15 @@ func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion
 func (d *DualWriterMode2) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
 	log := d.Log.WithValues("kind", options.Kind, "resourceVersion", listOptions.ResourceVersion)
 	ctx = klog.NewContext(ctx, log)
+	var method = "delete-collection"
+
+	startLegacy := time.Now().UTC()
 	deleted, err := d.Legacy.DeleteCollection(ctx, deleteValidation, options, listOptions)
 	if err != nil {
 		log.WithValues("deleted", deleted).Error(err, "failed to delete collection successfully from legacy storage")
-		return nil, err
 	}
+	d.recordLegacyDuration(err != nil, mode2, options.Kind, method, startLegacy)
+
 	legacyList, err := meta.ExtractList(deleted)
 	if err != nil {
 		log.Error(err, "unable to extract list from legacy storage")

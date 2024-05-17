@@ -124,7 +124,7 @@ func (d *DualWriterMode1) Delete(ctx context.Context, name string, deleteValidat
 		d.recordLegacyDuration(true, mode1Str, options.Kind, method, startLegacy)
 		return res, async, err
 	}
-	d.recordLegacyDuration(false, mode1Str, options.Kind, method, startLegacy)
+		d.recordLegacyDuration(false, mode1, name, method, startLegacy)
 
 	go func() {
 		startStorage := time.Now()
