@@ -320,7 +320,7 @@ func (s *Service) prepareAdd(ctx context.Context, cmd *datasources.AddDataSource
 	}
 	settings := rsp.DataSourceInstanceSettings
 	if !rsp.Allowed || settings == nil {
-		return fmt.Errorf("not allowed")
+		return fmt.Errorf("not allowed (%+v)", rsp.Result)
 	}
 
 	// Use the mutated values
@@ -330,9 +330,13 @@ func (s *Service) prepareAdd(ctx context.Context, cmd *datasources.AddDataSource
 	cmd.URL = settings.URL
 	cmd.Database = settings.Database
 	cmd.SecureJsonData = settings.DecryptedSecureJSONData
-	err = cmd.JsonData.FromDB(settings.JSONData)
-	if err != nil {
-		return err
+	cmd.JsonData = nil
+	if settings.JSONData != nil {
+		cmd.JsonData = simplejson.New()
+		err := cmd.JsonData.FromDB(settings.JSONData)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
