@@ -13,6 +13,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apiserver/pkg/apis/example"
 )
 
 var createFn = func(context.Context, runtime.Object) error { return nil }
@@ -50,33 +52,36 @@ func TestMode2_Create(t *testing.T) {
 		}
 
 	for _, tt := range tests {
-		l := (LegacyStorage)(nil)
-		s := (Storage)(nil)
-		m := &mock.Mock{}
+		t.Run(tt.name, func(t *testing.T) {
+			l := (LegacyStorage)(nil)
+			s := (Storage)(nil)
+			m := &mock.Mock{}
 
-		ls := legacyStoreMock{m, l}
-		us := storageMock{m, s}
+			ls := legacyStoreMock{m, l}
+			us := storageMock{m, s}
 
-		if tt.setupLegacyFn != nil {
-			tt.setupLegacyFn(m, tt.input)
-		}
-		if tt.setupStorageFn != nil {
-			tt.setupStorageFn(m, tt.input)
-		}
+			if tt.setupLegacyFn != nil {
+				tt.setupLegacyFn(m, tt.input)
+			}
+			if tt.setupStorageFn != nil {
+				tt.setupStorageFn(m, tt.input)
+			}
 
-		dw := NewDualWriter(Mode2, ls, us)
+			dw := NewDualWriter(Mode2, ls, us)
 
-		obj, err := dw.Create(context.Background(), tt.input, createFn, &metav1.CreateOptions{})
+			obj, err := dw.Create(context.Background(), tt.input, createFn, &metav1.CreateOptions{})
 
-		if tt.wantErr {
-			assert.Error(t, err)
-			continue
-		}
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
 
-		assert.Equal(t, exampleObj, obj)
-		accessor, err := meta.Accessor(obj)
-		assert.NoError(t, err)
-		assert.Equal(t, accessor.GetResourceVersion(), "")
+			assert.Equal(t, exampleObj, obj)
+			accessor, err := meta.Accessor(obj)
+			assert.NoError(t, err)
+			assert.Equal(t, accessor.GetResourceVersion(), "")
+		})
+
 	}
 }
 
@@ -124,31 +129,34 @@ func TestMode2_Get(t *testing.T) {
 		}
 
 	for _, tt := range tests {
-		l := (LegacyStorage)(nil)
-		s := (Storage)(nil)
-		m := &mock.Mock{}
+		t.Run(tt.name, func(t *testing.T) {
+			l := (LegacyStorage)(nil)
+			s := (Storage)(nil)
+			m := &mock.Mock{}
 
-		ls := legacyStoreMock{m, l}
-		us := storageMock{m, s}
+			ls := legacyStoreMock{m, l}
+			us := storageMock{m, s}
 
-		if tt.setupLegacyFn != nil {
-			tt.setupLegacyFn(m, tt.input)
-		}
-		if tt.setupStorageFn != nil {
-			tt.setupStorageFn(m, tt.input)
-		}
+			if tt.setupLegacyFn != nil {
+				tt.setupLegacyFn(m, tt.input)
+			}
+			if tt.setupStorageFn != nil {
+				tt.setupStorageFn(m, tt.input)
+			}
 
-		dw := NewDualWriter(Mode2, ls, us)
+			dw := NewDualWriter(Mode2, ls, us)
 
-		obj, err := dw.Get(context.Background(), tt.input, &metav1.GetOptions{})
+			obj, err := dw.Get(context.Background(), tt.input, &metav1.GetOptions{})
 
-		if tt.wantErr {
-			assert.Error(t, err)
-			continue
-		}
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
 
-		assert.Equal(t, obj, exampleObj)
-		assert.NotEqual(t, obj, anotherObj)
+			assert.Equal(t, obj, exampleObj)
+			assert.NotEqual(t, obj, anotherObj)
+		})
+
 	}
 }
 
@@ -175,30 +183,32 @@ func TestMode2_List(t *testing.T) {
 		}
 
 	for _, tt := range tests {
-		l := (LegacyStorage)(nil)
-		s := (Storage)(nil)
-		m := &mock.Mock{}
+		t.Run(tt.name, func(t *testing.T) {
+			l := (LegacyStorage)(nil)
+			s := (Storage)(nil)
+			m := &mock.Mock{}
 
-		ls := legacyStoreMock{m, l}
-		us := storageMock{m, s}
+			ls := legacyStoreMock{m, l}
+			us := storageMock{m, s}
 
-		if tt.setupLegacyFn != nil {
-			tt.setupLegacyFn(m)
-		}
-		if tt.setupStorageFn != nil {
-			tt.setupStorageFn(m)
-		}
+			if tt.setupLegacyFn != nil {
+				tt.setupLegacyFn(m)
+			}
+			if tt.setupStorageFn != nil {
+				tt.setupStorageFn(m)
+			}
 
-		dw := NewDualWriter(Mode2, ls, us)
+			dw := NewDualWriter(Mode2, ls, us)
 
-		obj, err := dw.List(context.Background(), &metainternalversion.ListOptions{})
+			obj, err := dw.List(context.Background(), &metainternalversion.ListOptions{})
 
-		if tt.wantErr {
-			assert.Error(t, err)
-			continue
-		}
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			assert.Equal(t, exampleList, obj)
+		})
 
-		assert.Equal(t, exampleList, obj)
 	}
 }
 
@@ -267,31 +277,33 @@ func TestMode2_Delete(t *testing.T) {
 		}
 
 	for _, tt := range tests {
-		l := (LegacyStorage)(nil)
-		s := (Storage)(nil)
-		m := &mock.Mock{}
+		t.Run(tt.name, func(t *testing.T) {
+			l := (LegacyStorage)(nil)
+			s := (Storage)(nil)
+			m := &mock.Mock{}
 
-		ls := legacyStoreMock{m, l}
-		us := storageMock{m, s}
+			ls := legacyStoreMock{m, l}
+			us := storageMock{m, s}
 
-		if tt.setupLegacyFn != nil {
-			tt.setupLegacyFn(m, tt.input)
-		}
-		if tt.setupStorageFn != nil {
-			tt.setupStorageFn(m, tt.input)
-		}
+			if tt.setupLegacyFn != nil {
+				tt.setupLegacyFn(m, tt.input)
+			}
+			if tt.setupStorageFn != nil {
+				tt.setupStorageFn(m, tt.input)
+			}
 
-		dw := NewDualWriter(Mode2, ls, us)
+			dw := NewDualWriter(Mode2, ls, us)
 
-		obj, _, err := dw.Delete(context.Background(), tt.input, func(context.Context, runtime.Object) error { return nil }, &metav1.DeleteOptions{})
+			obj, _, err := dw.Delete(context.Background(), tt.input, func(context.Context, runtime.Object) error { return nil }, &metav1.DeleteOptions{})
 
-		if tt.wantErr {
-			assert.Error(t, err)
-			continue
-		}
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
 
-		assert.Equal(t, obj, exampleObj)
-		assert.NotEqual(t, obj, anotherObj)
+			assert.Equal(t, obj, exampleObj)
+			assert.NotEqual(t, obj, anotherObj)
+		})
 	}
 }
 
@@ -337,30 +349,31 @@ func TestMode2_DeleteCollection(t *testing.T) {
 		}
 
 	for _, tt := range tests {
-		l := (LegacyStorage)(nil)
-		s := (Storage)(nil)
-		m := &mock.Mock{}
+		t.Run(tt.name, func(t *testing.T) {
+			l := (LegacyStorage)(nil)
+			s := (Storage)(nil)
+			m := &mock.Mock{}
 
-		ls := legacyStoreMock{m, l}
-		us := storageMock{m, s}
+			ls := legacyStoreMock{m, l}
+			us := storageMock{m, s}
 
-		if tt.setupLegacyFn != nil {
-			tt.setupLegacyFn(m)
-		}
-		if tt.setupStorageFn != nil {
-			tt.setupStorageFn(m)
-		}
+			if tt.setupLegacyFn != nil {
+				tt.setupLegacyFn(m)
+			}
+			if tt.setupStorageFn != nil {
+				tt.setupStorageFn(m)
+			}
 
-		dw := NewDualWriter(Mode2, ls, us)
+			dw := NewDualWriter(Mode2, ls, us)
 
-		obj, err := dw.DeleteCollection(context.Background(), func(ctx context.Context, obj runtime.Object) error { return nil }, &metav1.DeleteOptions{TypeMeta: metav1.TypeMeta{Kind: tt.input}}, &metainternalversion.ListOptions{})
+			obj, err := dw.DeleteCollection(context.Background(), func(ctx context.Context, obj runtime.Object) error { return nil }, &metav1.DeleteOptions{TypeMeta: metav1.TypeMeta{Kind: tt.input}}, &metainternalversion.ListOptions{})
 
-		if tt.wantErr {
-			assert.Error(t, err)
-			continue
-		}
-
-		assert.Equal(t, exampleList, obj)
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			assert.Equal(t, exampleList, obj)
+		})
 	}
 }
 
@@ -440,34 +453,236 @@ func TestMode2_Update(t *testing.T) {
 		}
 
 	for _, tt := range tests {
-		l := (LegacyStorage)(nil)
-		s := (Storage)(nil)
-		m := &mock.Mock{}
+		t.Run(tt.name, func(t *testing.T) {
+			l := (LegacyStorage)(nil)
+			s := (Storage)(nil)
+			m := &mock.Mock{}
 
-		ls := legacyStoreMock{m, l}
-		us := storageMock{m, s}
+			ls := legacyStoreMock{m, l}
+			us := storageMock{m, s}
 
-		if tt.setupGetFn != nil {
-			tt.setupGetFn(m, tt.input)
-		}
+			if tt.setupGetFn != nil {
+				tt.setupGetFn(m, tt.input)
+			}
 
-		if tt.setupLegacyFn != nil {
-			tt.setupLegacyFn(m, tt.input)
-		}
-		if tt.setupStorageFn != nil {
-			tt.setupStorageFn(m, tt.input)
-		}
+			if tt.setupLegacyFn != nil {
+				tt.setupLegacyFn(m, tt.input)
+			}
+			if tt.setupStorageFn != nil {
+				tt.setupStorageFn(m, tt.input)
+			}
 
-		dw := NewDualWriter(Mode2, ls, us)
+			dw := NewDualWriter(Mode2, ls, us)
 
-		obj, _, err := dw.Update(context.Background(), tt.input, UpdatedObjInfoObj{}, func(ctx context.Context, obj runtime.Object) error { return nil }, func(ctx context.Context, obj, old runtime.Object) error { return nil }, false, &metav1.UpdateOptions{})
+			obj, _, err := dw.Update(context.Background(), tt.input, UpdatedObjInfoObj{}, func(ctx context.Context, obj runtime.Object) error { return nil }, func(ctx context.Context, obj, old runtime.Object) error { return nil }, false, &metav1.UpdateOptions{})
 
-		if tt.wantErr {
-			assert.Error(t, err)
-			continue
-		}
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
 
-		assert.Equal(t, tt.expectedObj, obj)
-		assert.NotEqual(t, anotherObj, obj)
+			assert.Equal(t, tt.expectedObj, obj)
+			assert.NotEqual(t, anotherObj, obj)
+		})
+	}
+}
+func TestEnrichReturnedObject(t *testing.T) {
+	testCase := []struct {
+		name           string
+		inputOriginal  runtime.Object
+		inputReturned  runtime.Object
+		isCreated      bool
+		expectedObject runtime.Object
+		wantErr        bool
+	}{
+		{
+			name: "create: original object does not have labels and annotations",
+			inputOriginal: &example.Pod{
+				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
+				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "1", UID: types.UID("5")},
+				Spec:       example.PodSpec{}, Status: example.PodStatus{},
+			},
+			inputReturned: &example.Pod{
+				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
+				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "2", UID: types.UID("6"), Labels: map[string]string{"label1": "1"}, Annotations: map[string]string{"annotation1": "1"}},
+				Spec:       example.PodSpec{}, Status: example.PodStatus{},
+			},
+			isCreated: true,
+			expectedObject: &example.Pod{
+				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
+				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "", UID: types.UID("")},
+				Spec:       example.PodSpec{}, Status: example.PodStatus{},
+			},
+		},
+		{
+			name: "create: returned object does not have labels and annotations",
+			inputOriginal: &example.Pod{
+				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
+				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "1", UID: types.UID("5"), Labels: map[string]string{"label1": "1"}, Annotations: map[string]string{"annotation1": "1"}},
+				Spec:       example.PodSpec{}, Status: example.PodStatus{},
+			},
+			inputReturned: &example.Pod{
+				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
+				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "2", UID: types.UID("6")},
+				Spec:       example.PodSpec{}, Status: example.PodStatus{},
+			},
+			isCreated: true,
+			expectedObject: &example.Pod{
+				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
+				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "", UID: types.UID(""), Labels: map[string]string{"label1": "1"}, Annotations: map[string]string{"annotation1": "1"}},
+				Spec:       example.PodSpec{}, Status: example.PodStatus{},
+			},
+		},
+		{
+			name: "create: both objects have labels and annotations",
+			inputOriginal: &example.Pod{
+				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
+				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "1", UID: types.UID("5"), Labels: map[string]string{"label1": "1"}, Annotations: map[string]string{"annotation1": "1"}},
+				Spec:       example.PodSpec{}, Status: example.PodStatus{},
+			},
+			inputReturned: &example.Pod{
+				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
+				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "2", UID: types.UID("6"), Labels: map[string]string{"label2": "2"}, Annotations: map[string]string{"annotation2": "2"}},
+				Spec:       example.PodSpec{}, Status: example.PodStatus{},
+			},
+			isCreated: true,
+			expectedObject: &example.Pod{
+				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
+				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "", UID: types.UID(""), Labels: map[string]string{"label1": "1"}, Annotations: map[string]string{"annotation1": "1"}},
+				Spec:       example.PodSpec{}, Status: example.PodStatus{},
+			},
+		},
+		{
+			name: "create: both objects have labels and annotations with duplicated keys",
+			inputOriginal: &example.Pod{
+				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
+				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "1", UID: types.UID("5"), Labels: map[string]string{"label1": "1"}, Annotations: map[string]string{"annotation1": "1"}},
+				Spec:       example.PodSpec{}, Status: example.PodStatus{},
+			},
+			inputReturned: &example.Pod{
+				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
+				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "2", UID: types.UID("6"), Labels: map[string]string{"label1": "11"}, Annotations: map[string]string{"annotation1": "11"}},
+				Spec:       example.PodSpec{}, Status: example.PodStatus{},
+			},
+			isCreated: true,
+			expectedObject: &example.Pod{
+				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
+				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "", UID: types.UID(""), Labels: map[string]string{"label1": "1"}, Annotations: map[string]string{"annotation1": "1"}},
+				Spec:       example.PodSpec{}, Status: example.PodStatus{},
+			},
+		},
+		{
+			name: "update: original object does not have labels and annotations",
+			inputOriginal: &example.Pod{
+				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
+				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "1", UID: types.UID("5")},
+				Spec:       example.PodSpec{}, Status: example.PodStatus{},
+			},
+			inputReturned: &example.Pod{
+				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
+				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "2", UID: types.UID("6"), Labels: map[string]string{"label1": "1"}, Annotations: map[string]string{"annotation1": "1"}},
+				Spec:       example.PodSpec{}, Status: example.PodStatus{},
+			},
+			expectedObject: &example.Pod{
+				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
+				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "1", UID: types.UID("5")},
+				Spec:       example.PodSpec{}, Status: example.PodStatus{},
+			},
+		},
+		{
+			name: "update: returned object does not have labels and annotations",
+			inputOriginal: &example.Pod{
+				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
+				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "1", UID: types.UID("5"), Labels: map[string]string{"label1": "1"}, Annotations: map[string]string{"annotation1": "1"}},
+				Spec:       example.PodSpec{}, Status: example.PodStatus{},
+			},
+			inputReturned: &example.Pod{
+				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
+				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "2", UID: types.UID("6")},
+				Spec:       example.PodSpec{}, Status: example.PodStatus{},
+			},
+			expectedObject: &example.Pod{
+				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
+				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "1", UID: types.UID("5"), Labels: map[string]string{"label1": "1"}, Annotations: map[string]string{"annotation1": "1"}},
+				Spec:       example.PodSpec{}, Status: example.PodStatus{},
+			},
+		},
+		{
+			name: "update: both objects have labels and annotations",
+			inputOriginal: &example.Pod{
+				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
+				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "1", UID: types.UID("5"), Labels: map[string]string{"label1": "1"}, Annotations: map[string]string{"annotation1": "1"}},
+				Spec:       example.PodSpec{}, Status: example.PodStatus{},
+			},
+			inputReturned: &example.Pod{
+				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
+				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "2", UID: types.UID("6"), Labels: map[string]string{"label2": "2"}, Annotations: map[string]string{"annotation2": "2"}},
+				Spec:       example.PodSpec{}, Status: example.PodStatus{},
+			},
+			expectedObject: &example.Pod{
+				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
+				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "1", UID: types.UID("5"), Labels: map[string]string{"label1": "1"}, Annotations: map[string]string{"annotation1": "1"}},
+				Spec:       example.PodSpec{}, Status: example.PodStatus{},
+			},
+		},
+		{
+			name: "update: both objects have labels and annotations with duplicated keys",
+			inputOriginal: &example.Pod{
+				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
+				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "1", UID: types.UID("5"), Labels: map[string]string{"label1": "1"}, Annotations: map[string]string{"annotation1": "1"}},
+				Spec:       example.PodSpec{}, Status: example.PodStatus{},
+			},
+			inputReturned: &example.Pod{
+				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
+				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "2", UID: types.UID("6"), Labels: map[string]string{"label1": "11"}, Annotations: map[string]string{"annotation1": "11"}},
+				Spec:       example.PodSpec{}, Status: example.PodStatus{},
+			},
+			expectedObject: &example.Pod{
+				TypeMeta:   metav1.TypeMeta{Kind: "foo"},
+				ObjectMeta: metav1.ObjectMeta{Name: "foo", ResourceVersion: "1", UID: types.UID("5"), Labels: map[string]string{"label1": "1"}, Annotations: map[string]string{"annotation1": "1"}},
+				Spec:       example.PodSpec{}, Status: example.PodStatus{},
+			},
+		},
+		{
+			name:           "original object does not exist",
+			inputOriginal:  nil,
+			inputReturned:  &example.Pod{},
+			expectedObject: nil,
+			wantErr:        true,
+		},
+		{
+			name:           "returned object does not exist",
+			inputOriginal:  &example.Pod{},
+			inputReturned:  nil,
+			expectedObject: nil,
+			wantErr:        true,
+		},
+	}
+
+	for _, tt := range testCase {
+		t.Run(tt.name, func(t *testing.T) {
+			returned, err := enrichReturnedObject(tt.inputOriginal, tt.inputReturned, tt.isCreated)
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+
+			accessorReturned, err := meta.Accessor(returned)
+			assert.NoError(t, err)
+
+			accessorExpected, err := meta.Accessor(tt.expectedObject)
+			assert.NoError(t, err)
+
+			assert.Equal(t, accessorExpected.GetLabels(), accessorReturned.GetLabels())
+
+			returnedAnnotations := accessorReturned.GetAnnotations()
+			expectedAnnotations := accessorExpected.GetAnnotations()
+			for k, v := range expectedAnnotations {
+				assert.Equal(t, v, returnedAnnotations[k])
+			}
+
+			assert.Equal(t, accessorExpected.GetResourceVersion(), accessorReturned.GetResourceVersion())
+			assert.Equal(t, accessorExpected.GetUID(), accessorReturned.GetUID())
+		})
 	}
 }

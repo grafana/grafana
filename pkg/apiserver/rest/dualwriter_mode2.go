@@ -46,8 +46,9 @@ func (d *DualWriterMode2) Create(ctx context.Context, original runtime.Object, c
 		return created, err
 	}
 
-	if err := enrichReturnedObject(&original, &created); err != nil {
-		return nil, err
+	created, err = enrichReturnedObject(original, created, true)
+	if err != nil {
+		return created, err
 	}
 
 	rsp, err := d.Storage.Create(ctx, created, createValidation, options)
@@ -55,6 +56,7 @@ func (d *DualWriterMode2) Create(ctx context.Context, original runtime.Object, c
 		log.WithValues("name").Error(err, "unable to create object in storage")
 		return rsp, err
 	}
+	return created, nil
 }
 
 // It retrieves an object from Storage if possible, and if not it falls back to LegacyStorage.
@@ -209,21 +211,9 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 		return obj, created, err
 	}
 
-	// if the object is found, create a new updateWrapper with the object found
-	if original != nil {
-		err := enrichReturnedObject(&original, &obj)
-		if err != nil {
-			return obj, false, err
-		}
-
-		objInfo = &updateWrapper{
-			upstream: objInfo,
-			updated:  obj,
-		}
-	}
-
-	if err := enrichReturnedObject(&original, &obj); err != nil {
-		return nil, false, err
+	obj, err = enrichReturnedObject(original, obj, false)
+	if err != nil {
+		return obj, false, err
 	}
 
 	objInfo = &updateWrapper{
@@ -291,25 +281,35 @@ func parseList(legacyList []runtime.Object) (metainternalversion.ListOptions, ma
 	return options, indexMap, nil
 }
 
-func enrichReturnedObject(originalObj, returnedObj *runtime.Object) error {
+func enrichReturnedObject(originalObj, returnedObj runtime.Object, created bool) (runtime.Object, error) {
 	accessorReturned, err := meta.Accessor(returnedObj)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	accessorOriginal, err := meta.Accessor(originalObj)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	accessorReturned.SetLabels(accessorOriginal.GetLabels())
 
 	ac := accessorReturned.GetAnnotations()
+	if ac == nil {
+		ac = map[string]string{}
+	}
 	for k, v := range accessorOriginal.GetAnnotations() {
 		ac[k] = v
 	}
 	accessorReturned.SetAnnotations(ac)
+
+	// if the object is created, we need to reset the resource version and UID
+	if created {
+		accessorReturned.SetResourceVersion("")
+		accessorReturned.SetUID("")
+		return returnedObj, nil
+	}
 	accessorReturned.SetResourceVersion(accessorOriginal.GetResourceVersion())
 	accessorReturned.SetUID(accessorOriginal.GetUID())
-	return nil
+	return returnedObj, nil
 }
