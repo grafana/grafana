@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apiserver/pkg/registry/generic"
 
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -21,7 +20,7 @@ type storage struct {
 	*genericregistry.Store
 }
 
-func newStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter) (*storage, error) {
+func newStorage(scheme *runtime.Scheme) (*storage, error) {
 	strategy := grafanaregistry.NewStrategy(scheme)
 	resourceInfo := v0alpha1.DashboardResourceInfo
 	store := &genericregistry.Store{
@@ -45,11 +44,13 @@ func newStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter) (*
 		func(obj any) ([]interface{}, error) {
 			dash, ok := obj.(*v0alpha1.Dashboard)
 			if ok {
-				return []interface{}{
-					dash.Name,
-					dash.Spec.GetNestedString("title"),
-					dash.CreationTimestamp.UTC().Format(time.RFC3339),
-				}, nil
+				if dash != nil {
+					return []interface{}{
+						dash.Name,
+						dash.Spec.GetNestedString("title"),
+						dash.CreationTimestamp.UTC().Format(time.RFC3339),
+					}, nil
+				}
 			}
 			summary, ok := obj.(*v0alpha1.DashboardSummary)
 			if ok {

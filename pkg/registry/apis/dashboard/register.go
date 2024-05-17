@@ -114,7 +114,7 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(v0alpha1.GROUP, scheme, metav1.ParameterCodec, codecs)
 
 	resourceInfo := v0alpha1.DashboardResourceInfo
-	store, err := newStorage(scheme, optsGetter)
+	store, err := newStorage(scheme)
 	if err != nil {
 		return nil, err
 	}
