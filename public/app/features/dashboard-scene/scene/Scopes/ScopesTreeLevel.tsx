@@ -1,29 +1,36 @@
 import { css } from '@emotion/css';
-import React, { KeyboardEvent, MouseEvent } from 'react';
+import { debounce } from 'lodash';
+import React, { ChangeEvent, KeyboardEvent, MouseEvent } from 'react';
 
 import { GrafanaTheme2, Scope } from '@grafana/data';
-import { Checkbox, Icon, useStyles2 } from '@grafana/ui';
+import { Checkbox, Icon, Input, useStyles2 } from '@grafana/ui';
 
-import { Node } from './ScopesFiltersScene';
+import { ExpandedNode, Node } from './ScopesFiltersBaseSelectorScene';
 
 export interface ScopesTreeLevelProps {
-  isExpanded: boolean;
-  path: string[];
   nodes: Record<string, Node>;
-  expandedNodes: string[];
+  expandedNodes: ExpandedNode[];
   scopes: Scope[];
-  onNodeExpandToggle: (path: string[]) => void;
-  onScopeSelectToggle: (linkId: string, parentNodeId: string) => void;
+  onNodeQuery: (nodeId: string, query: string) => void;
+  onNodeExpandToggle: (nodeId: string) => void;
+  onNodeSelectToggle: (linkId: string, path: string[]) => void;
+
+  isExpanded?: boolean;
+  showQuery?: boolean;
+  upperNodePath?: string[];
 }
 
 export function ScopesTreeLevel({
-  isExpanded,
-  path,
   nodes,
   expandedNodes,
   scopes,
+  onNodeQuery,
   onNodeExpandToggle,
-  onScopeSelectToggle,
+  onNodeSelectToggle,
+
+  isExpanded = true,
+  showQuery = false,
+  upperNodePath = [''],
 }: ScopesTreeLevelProps) {
   const styles = useStyles2(getStyles);
 
@@ -31,108 +38,135 @@ export function ScopesTreeLevel({
     return null;
   }
 
-  const anyChildExpanded = Object.values(nodes).some((node) => expandedNodes.includes(node.item.nodeId));
+  const upperNodeId = upperNodePath[upperNodePath.length - 1] ?? '';
+
+  const anyChildExpanded = Object.values(nodes).some((node) =>
+    expandedNodes.some((expandedNode) => expandedNode.nodeId === node.item.nodeId)
+  );
+
+  const handleInputChange = debounce((evt: ChangeEvent<HTMLInputElement>) => {
+    onNodeQuery(upperNodeId, evt.target.value);
+  }, 500);
 
   return (
-    <div role="tree">
-      {Object.values(nodes).map((node) => {
-        const {
-          item: { nodeId, linkId },
-          isSelectable,
-          hasChildren,
-          children,
-        } = node;
+    <>
+      {showQuery && !anyChildExpanded && (
+        <Input
+          prefix={<Icon name="filter" />}
+          className={styles.searchInput}
+          placeholder="Filter"
+          defaultValue={expandedNodes.find((expandedNode) => expandedNode.nodeId === upperNodeId)?.query ?? ''}
+          onChange={handleInputChange}
+        />
+      )}
 
-        const isExpanded = expandedNodes.includes(nodeId);
+      <div role="tree">
+        {Object.values(nodes).map((node) => {
+          const {
+            item: { nodeId, linkId },
+            isSelectable,
+            hasChildren,
+            children,
+          } = node;
 
-        if (anyChildExpanded && !isExpanded) {
-          return null;
-        }
+          const isExpanded = expandedNodes.some((expandedNode) => expandedNode.nodeId === nodeId);
+          const isSelected = isSelectable && !!scopes.find((scope) => scope.metadata.name === linkId);
 
-        const parentNodeId = path[path.length - 1] ?? '';
-        const nodePath = [...path, nodeId];
-        const isSelected = isSelectable && !!scopes.find((scope) => scope.metadata.name === linkId);
-
-        const handleTitleClick = (evt: MouseEvent<HTMLSpanElement | SVGElement>) => {
-          evt.stopPropagation();
-
-          if (hasChildren) {
-            onNodeExpandToggle(nodePath);
-          } else if (linkId) {
-            onScopeSelectToggle(linkId, parentNodeId);
+          if (anyChildExpanded && !isExpanded && !isSelected) {
+            return null;
           }
-        };
 
-        const handleTitleKeyDown = (evt: KeyboardEvent<HTMLDivElement>) => {
-          evt.stopPropagation();
+          const nodePath = [...upperNodePath, nodeId];
 
-          switch (evt.key) {
-            case 'Space':
-              break;
+          const handleTitleClick = (evt: MouseEvent<HTMLSpanElement | SVGElement>) => {
+            evt.stopPropagation();
 
-            case 'Enter':
-              if (hasChildren) {
-                onNodeExpandToggle(nodePath);
-              }
-              break;
+            if (hasChildren) {
+              onNodeExpandToggle(nodeId);
+            } else if (linkId) {
+              onNodeSelectToggle(linkId, nodePath);
+            }
+          };
 
-            default:
-              return;
-          }
-        };
+          const handleTitleKeyDown = (evt: KeyboardEvent<HTMLDivElement>) => {
+            evt.stopPropagation();
 
-        const handleCheckboxClick = (evt: MouseEvent<HTMLInputElement>) => {
-          evt.stopPropagation();
+            switch (evt.key) {
+              case 'Space':
+                if (linkId) {
+                  onNodeSelectToggle(linkId, nodePath);
+                }
+                break;
 
-          if (linkId) {
-            onScopeSelectToggle(linkId, parentNodeId);
-          }
-        };
+              case 'Enter':
+                if (hasChildren) {
+                  onNodeExpandToggle(nodeId);
+                }
+                break;
 
-        return (
-          <div key={nodeId} role="treeitem" aria-selected={isExpanded}>
-            <div role="button" tabIndex={0} className={styles.itemTitle}>
-              {isSelectable && <Checkbox checked={isSelected} onChange={handleCheckboxClick} />}
+              default:
+                return;
+            }
+          };
 
-              {hasChildren && (
-                <Icon
-                  className={styles.itemIcon}
-                  name={isExpanded ? 'folder-open' : 'folder'}
+          const handleCheckboxClick = (evt: MouseEvent<HTMLInputElement>) => {
+            evt.stopPropagation();
+
+            if (linkId) {
+              onNodeSelectToggle(linkId, nodePath);
+            }
+          };
+
+          return (
+            <div key={nodeId} role="treeitem" aria-selected={isExpanded}>
+              <div role="button" tabIndex={0} className={styles.itemTitle}>
+                {isSelectable && <Checkbox checked={isSelected} onChange={handleCheckboxClick} />}
+
+                {hasChildren && (
+                  <Icon
+                    className={styles.itemIcon}
+                    name={isExpanded ? 'folder-open' : 'folder'}
+                    onClick={handleTitleClick}
+                  />
+                )}
+
+                <span
+                  role="button"
+                  tabIndex={0}
+                  className={styles.itemText}
                   onClick={handleTitleClick}
+                  onKeyDown={handleTitleKeyDown}
+                >
+                  {node.item.title}
+                </span>
+              </div>
+
+              <div className={styles.itemChildren}>
+                <ScopesTreeLevel
+                  showQuery={showQuery}
+                  isExpanded={isExpanded}
+                  upperNodePath={nodePath}
+                  nodes={children}
+                  expandedNodes={expandedNodes}
+                  scopes={scopes}
+                  onNodeQuery={onNodeQuery}
+                  onNodeExpandToggle={onNodeExpandToggle}
+                  onNodeSelectToggle={onNodeSelectToggle}
                 />
-              )}
-
-              <span
-                role="button"
-                tabIndex={0}
-                className={styles.itemText}
-                onClick={handleTitleClick}
-                onKeyDown={handleTitleKeyDown}
-              >
-                {node.item.title}
-              </span>
+              </div>
             </div>
-
-            <div className={styles.itemChildren}>
-              <ScopesTreeLevel
-                isExpanded={isExpanded}
-                path={nodePath}
-                nodes={children}
-                expandedNodes={expandedNodes}
-                scopes={scopes}
-                onNodeExpandToggle={onNodeExpandToggle}
-                onScopeSelectToggle={onScopeSelectToggle}
-              />
-            </div>
-          </div>
-        );
-      })}
-    </div>
+          );
+        })}
+      </div>
+    </>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    searchInput: css({
+      margin: theme.spacing(1, 0),
+    }),
     itemTitle: css({
       alignItems: 'center',
       cursor: 'pointer',
