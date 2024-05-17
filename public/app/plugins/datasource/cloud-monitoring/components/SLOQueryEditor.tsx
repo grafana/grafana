@@ -5,6 +5,7 @@ import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/experimental'
 
 import { ALIGNMENT_PERIODS, SLO_BURN_RATE_SELECTOR_NAME } from '../constants';
 import CloudMonitoringDatasource from '../datasource';
+import { selectors } from '../e2e/selectors';
 import { alignmentPeriodLabel } from '../functions';
 import { AlignmentTypes, SLOQuery } from '../types/query';
 import { CustomMetaData } from '../types/types';
@@ -54,7 +55,7 @@ export function SLOQueryEditor({
 }: React.PropsWithChildren<Props>) {
   const alignmentLabel = useMemo(() => alignmentPeriodLabel(customMetaData, datasource), [customMetaData, datasource]);
   return (
-    <>
+    <span data-testid={selectors.components.queryEditor.sloQueryEditor.container.input}>
       <EditorRow>
         <Project
           refId={refId}
@@ -107,6 +108,6 @@ export function SLOQueryEditor({
 
         <AliasBy refId={refId} value={aliasBy} onChange={onChangeAliasBy} />
       </EditorRow>
-    </>
+    </span>
   );
 }
