@@ -260,6 +260,7 @@ type Cfg struct {
 	OAuthAutoLogin                bool
 	OAuthCookieMaxAge             int
 	OAuthAllowInsecureEmailLookup bool
+	OAuthProviderDeniedLoginError string
 
 	JWTAuth    AuthJWTSettings
 	ExtJWTAuth ExtJWTSettings
@@ -1579,6 +1580,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	cfg.OAuthCookieMaxAge = auth.Key("oauth_state_cookie_max_age").MustInt(600)
 	cfg.SignoutRedirectUrl = valueAsString(auth, "signout_redirect_url", "")
+	cfn.OAuthProviderDeniedLoginError = auth.Key("oauth_provider_denied_login_error").MustString("login provider denied login request")
 
 	// Deprecated
 	cfg.OAuthSkipOrgRoleUpdateSync = false
