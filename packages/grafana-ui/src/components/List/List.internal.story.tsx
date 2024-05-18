@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { Story, Meta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 import React from 'react';
 import tinycolor from 'tinycolor2';
 
@@ -69,7 +69,7 @@ const getItem = (inline = false) => {
   };
 };
 
-export const basic: Story = (args) => {
+export const basic: StoryFn = (args) => {
   const { rawRenderer, customRenderer } = getItem();
   return (
     <List
@@ -79,7 +79,7 @@ export const basic: Story = (args) => {
   );
 };
 
-export const inline: Story = (args) => {
+export const inline: StoryFn = (args) => {
   const { rawRenderer, customRenderer } = getItem(true);
   return (
     <InlineList

@@ -353,3 +353,28 @@ func (f *RuleStore) IncreaseVersionForAllRulesInNamespace(_ context.Context, org
 func (f *RuleStore) CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, u identity.Requester) (int64, error) {
 	return 0, nil
 }
+
+func (f *RuleStore) GetNamespacesByRuleUID(ctx context.Context, orgID int64, uids ...string) (map[string]string, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+
+	namespacesMap := make(map[string]string)
+
+	rules, ok := f.Rules[orgID]
+	if !ok {
+		return namespacesMap, nil
+	}
+
+	uidFilter := make(map[string]struct{}, len(uids))
+	for _, uid := range uids {
+		uidFilter[uid] = struct{}{}
+	}
+
+	for _, rule := range rules {
+		if _, ok := uidFilter[rule.UID]; ok {
+			namespacesMap[rule.UID] = rule.NamespaceUID
+		}
+	}
+
+	return namespacesMap, nil
+}

@@ -291,12 +291,15 @@ type RelativeTimeRangeExport struct {
 }
 
 // AlertRuleNotificationSettingsExport is the provisioned export of models.NotificationSettings.
+// Field name mismatches with Terraform provider schema are noted where applicable.
 type AlertRuleNotificationSettingsExport struct {
-	Receiver string `yaml:"receiver,omitempty" json:"receiver,omitempty" hcl:"receiver"`
+	// TF -> `contact_point`
+	Receiver string `yaml:"receiver,omitempty" json:"receiver,omitempty" hcl:"contact_point"`
 
-	GroupBy           []string `yaml:"group_by,omitempty" json:"group_by,omitempty" hcl:"group_by"`
-	GroupWait         *string  `yaml:"group_wait,omitempty" json:"group_wait,omitempty" hcl:"group_wait,optional"`
-	GroupInterval     *string  `yaml:"group_interval,omitempty" json:"group_interval,omitempty" hcl:"group_interval,optional"`
-	RepeatInterval    *string  `yaml:"repeat_interval,omitempty" json:"repeat_interval,omitempty" hcl:"repeat_interval,optional"`
-	MuteTimeIntervals []string `yaml:"mute_time_intervals,omitempty" json:"mute_time_intervals,omitempty" hcl:"mute_time_intervals"`
+	GroupBy        []string `yaml:"group_by,omitempty" json:"group_by,omitempty" hcl:"group_by"`
+	GroupWait      *string  `yaml:"group_wait,omitempty" json:"group_wait,omitempty" hcl:"group_wait,optional"`
+	GroupInterval  *string  `yaml:"group_interval,omitempty" json:"group_interval,omitempty" hcl:"group_interval,optional"`
+	RepeatInterval *string  `yaml:"repeat_interval,omitempty" json:"repeat_interval,omitempty" hcl:"repeat_interval,optional"`
+	// TF -> `mute_timings`
+	MuteTimeIntervals []string `yaml:"mute_time_intervals,omitempty" json:"mute_time_intervals,omitempty" hcl:"mute_timings"`
 }

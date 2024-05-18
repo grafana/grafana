@@ -6,7 +6,7 @@ import { getBackendSrv } from '@grafana/runtime';
 import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectRef, VizPanel } from '@grafana/scenes';
 import { Button, ClipboardButton, Field, Input, Modal, RadioButtonGroup } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
-import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
+import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { getDashboardSnapshotSrv, SnapshotSharingOptions } from 'app/features/dashboard/services/SnapshotSrv';
 
 import { transformSceneToSaveModel, trimDashboardForSnapshot } from '../serialization/transformSceneToSaveModel';
@@ -124,9 +124,15 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> {
       return await getDashboardSnapshotSrv().create(cmdData);
     } finally {
       if (external) {
-        DashboardInteractions.publishSnapshotClicked({ expires: cmdData.expires });
+        DashboardInteractions.publishSnapshotClicked({
+          expires: cmdData.expires,
+          shareResource: getTrackingSource(this.state.panelRef),
+        });
       } else {
-        DashboardInteractions.publishSnapshotLocalClicked({ expires: cmdData.expires });
+        DashboardInteractions.publishSnapshotLocalClicked({
+          expires: cmdData.expires,
+          shareResource: getTrackingSource(this.state.panelRef),
+        });
       }
     }
   };

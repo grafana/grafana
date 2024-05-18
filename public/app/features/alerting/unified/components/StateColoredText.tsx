@@ -16,16 +16,16 @@ export const StateColoredText = ({ children, status }: React.PropsWithChildren<P
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  [PromAlertingRuleState.Inactive]: css`
-    color: ${theme.colors.success.text};
-  `,
-  [PromAlertingRuleState.Pending]: css`
-    color: ${theme.colors.warning.text};
-  `,
-  [PromAlertingRuleState.Firing]: css`
-    color: ${theme.colors.error.text};
-  `,
-  neutral: css`
-    color: ${theme.colors.text.secondary};
-  `,
+  [PromAlertingRuleState.Inactive]: css({
+    color: theme.colors.success.text,
+  }),
+  [PromAlertingRuleState.Pending]: css({
+    color: theme.colors.warning.text,
+  }),
+  [PromAlertingRuleState.Firing]: css({
+    color: theme.colors.error.text,
+  }),
+  neutral: css({
+    color: theme.colors.text.secondary,
+  }),
 });

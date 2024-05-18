@@ -9,6 +9,7 @@ import {
   DataSourceApi,
   LoadingState,
   PanelData,
+  QueryVariableModel,
   ScopedVars,
 } from '@grafana/data';
 
@@ -18,7 +19,6 @@ import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { runRequest } from '../../query/state/runRequest';
 import { getLastKey, getVariable } from '../state/selectors';
 import { KeyedVariableIdentifier } from '../state/types';
-import { QueryVariableModel } from '../types';
 import { getTemplatedRegex } from '../utils';
 
 import { toMetricFindValuesOperator, updateOptionsState, validateVariableSelection } from './operators';

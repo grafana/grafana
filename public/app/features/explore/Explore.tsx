@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
 import { get, groupBy } from 'lodash';
-import memoizeOne from 'memoize-one';
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer, { HorizontalSize } from 'react-virtualized-auto-sizer';
@@ -31,7 +30,6 @@ import {
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/src/components/Table/types';
 import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { getNodeGraphDataFrames } from 'app/plugins/panel/nodeGraph/utils';
 import { StoreState } from 'app/types';
 
 import { getTimeZone } from '../profile/state/selectors';
@@ -145,7 +143,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   scrollElement: HTMLDivElement | undefined;
   graphEventBus: EventBus;
   logsEventBus: EventBus;
-  memoizedGetNodeGraphDataFrames = memoizeOne(getNodeGraphDataFrames);
 
   constructor(props: Props) {
     super(props);
@@ -474,7 +471,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     return (
       <ContentOutlineItem panelId="Node Graph" title="Node Graph" icon="code-branch">
         <NodeGraphContainer
-          dataFrames={this.memoizedGetNodeGraphDataFrames(queryResponse.series)}
+          dataFrames={queryResponse.nodeGraphFrames}
           exploreId={exploreId}
           withTraceView={showTrace}
           datasourceType={datasourceType}

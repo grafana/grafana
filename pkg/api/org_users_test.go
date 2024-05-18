@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/socialtest"
 	"github.com/grafana/grafana/pkg/models/roletype"
@@ -43,7 +44,10 @@ func setUpGetOrgUsersDB(t *testing.T, sqlStore db.DB, cfg *setting.Cfg) {
 	quotaService := quotaimpl.ProvideService(sqlStore, cfg)
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	require.NoError(t, err)
-	usrSvc, err := userimpl.ProvideService(sqlStore, orgService, cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
+	usrSvc, err := userimpl.ProvideService(
+		sqlStore, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		quotaService, supportbundlestest.NewFakeBundleService(),
+	)
 	require.NoError(t, err)
 
 	id, err := orgService.GetOrCreate(context.Background(), "testOrg")

@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -24,14 +23,13 @@ const DEFAULT_BATCH_SIZE = 999
 type sqlStore struct {
 	db  db.DB
 	log log.Logger
-	cfg *setting.Cfg
 }
 
 // sqlStore implements the store interface.
 var _ store = (*sqlStore)(nil)
 
-func ProvideStore(db db.DB, cfg *setting.Cfg) *sqlStore {
-	return &sqlStore{db: db, log: log.New("folder-store"), cfg: cfg}
+func ProvideStore(db db.DB) *sqlStore {
+	return &sqlStore{db: db, log: log.New("folder-store")}
 }
 
 func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) (*folder.Folder, error) {

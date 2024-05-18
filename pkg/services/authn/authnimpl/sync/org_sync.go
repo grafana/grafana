@@ -120,9 +120,9 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 	if _, ok := id.OrgRoles[id.OrgID]; !ok {
 		if len(orgIDs) > 0 {
 			id.OrgID = orgIDs[0]
-			return s.userService.SetUsingOrg(ctx, &user.SetUsingOrgCommand{
+			return s.userService.Update(ctx, &user.UpdateUserCommand{
 				UserID: userID,
-				OrgID:  id.OrgID,
+				OrgID:  &id.OrgID,
 			})
 		}
 	}
@@ -159,8 +159,8 @@ func (s *OrgSync) SetDefaultOrgHook(ctx context.Context, currentIdentity *authn.
 		return
 	}
 
-	cmd := user.SetUsingOrgCommand{UserID: userID, OrgID: s.cfg.LoginDefaultOrgId}
-	if svcErr := s.userService.SetUsingOrg(ctx, &cmd); svcErr != nil {
+	cmd := user.UpdateUserCommand{UserID: userID, OrgID: &s.cfg.LoginDefaultOrgId}
+	if svcErr := s.userService.Update(ctx, &cmd); svcErr != nil {
 		ctxLogger.Error("Failed to set default org", "id", currentIdentity.ID, "err", svcErr)
 	}
 }

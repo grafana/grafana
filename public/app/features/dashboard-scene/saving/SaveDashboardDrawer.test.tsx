@@ -122,7 +122,7 @@ describe('SaveDashboardDrawer', () => {
 
       mockSaveDashboard();
 
-      await userEvent.click(await screen.findByTestId(selectors.pages.SaveDashboardModal.save));
+      await userEvent.click(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
 
       const dataSent = saveDashboardMutationMock.mock.calls[0][0];
       expect(dataSent.dashboard.title).toEqual('New title');
@@ -140,13 +140,13 @@ describe('SaveDashboardDrawer', () => {
 
       mockSaveDashboard({ saveError: 'version-mismatch' });
 
-      await userEvent.click(await screen.findByTestId(selectors.pages.SaveDashboardModal.save));
+      await userEvent.click(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
 
       expect(await screen.findByText('Someone else has updated this dashboard')).toBeInTheDocument();
       expect(await screen.findByText('Save and overwrite')).toBeInTheDocument();
 
       // Now save and overwrite
-      await userEvent.click(await screen.findByTestId(selectors.pages.SaveDashboardModal.save));
+      await userEvent.click(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
 
       const dataSent = saveDashboardMutationMock.mock.calls[1][0];
       expect(dataSent.overwrite).toEqual(true);
@@ -162,7 +162,7 @@ describe('SaveDashboardDrawer', () => {
 
       mockSaveDashboard();
 
-      await userEvent.click(await screen.findByTestId(selectors.pages.SaveDashboardModal.save));
+      await userEvent.click(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
 
       const dataSent = saveDashboardMutationMock.mock.calls[0][0];
       expect(dataSent.dashboard.uid).toEqual('');
