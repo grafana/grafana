@@ -110,7 +110,7 @@ func (ss *sqlStore) DeleteMigration(ctx context.Context, uid string) (*cloudmigr
 			ID: id,
 		})
 		if affected == 0 {
-			return cloudmigration.ErrMigrationNotDeleted.Errorf("0 affected rows for id %d", id)
+			return cloudmigration.ErrMigrationNotDeleted
 		}
 		return err
 	})

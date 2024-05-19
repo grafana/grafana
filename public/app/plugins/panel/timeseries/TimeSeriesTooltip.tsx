@@ -13,6 +13,8 @@ import { getContentItems } from '@grafana/ui/src/components/VizTooltip/utils';
 import { getDataLinks } from '../status-history/utils';
 import { fmt } from '../xychart/utils';
 
+import { isTooltipScrollable } from './utils';
+
 // exemplar / annotation / time region hovering?
 // add annotation UI / alert dismiss UI?
 
@@ -31,7 +33,6 @@ export interface TimeSeriesTooltipProps {
   sortOrder?: SortOrder;
 
   isPinned: boolean;
-  scrollable?: boolean;
 
   annotate?: () => void;
   maxHeight?: number;
@@ -44,7 +45,6 @@ export const TimeSeriesTooltip = ({
   seriesIdx,
   mode = TooltipDisplayMode.Single,
   sortOrder = SortOrder.None,
-  scrollable = false,
   isPinned,
   annotate,
   maxHeight,
@@ -94,7 +94,12 @@ export const TimeSeriesTooltip = ({
   return (
     <div className={styles.wrapper}>
       {headerItem != null && <VizTooltipHeader item={headerItem} isPinned={isPinned} />}
-      <VizTooltipContent items={contentItems} isPinned={isPinned} scrollable={scrollable} maxHeight={maxHeight} />
+      <VizTooltipContent
+        items={contentItems}
+        isPinned={isPinned}
+        scrollable={isTooltipScrollable({ mode, maxHeight })}
+        maxHeight={maxHeight}
+      />
       {footer}
     </div>
   );

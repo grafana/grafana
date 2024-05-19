@@ -12,6 +12,7 @@ import { findNextStateIndex, fmtDuration } from 'app/core/components/TimelineCha
 
 import { getDataLinks } from '../status-history/utils';
 import { TimeSeriesTooltipProps, getStyles } from '../timeseries/TimeSeriesTooltip';
+import { isTooltipScrollable } from '../timeseries/utils';
 
 interface StateTimelineTooltip2Props extends TimeSeriesTooltipProps {
   timeRange: TimeRange;
@@ -24,7 +25,6 @@ export const StateTimelineTooltip2 = ({
   seriesIdx,
   mode = TooltipDisplayMode.Single,
   sortOrder = SortOrder.None,
-  scrollable = false,
   isPinned,
   annotate,
   timeRange,
@@ -83,7 +83,12 @@ export const StateTimelineTooltip2 = ({
   return (
     <div className={styles.wrapper}>
       <VizTooltipHeader item={headerItem} isPinned={isPinned} />
-      <VizTooltipContent items={contentItems} isPinned={isPinned} scrollable={scrollable} maxHeight={maxHeight} />
+      <VizTooltipContent
+        items={contentItems}
+        isPinned={isPinned}
+        scrollable={isTooltipScrollable({ mode, maxHeight })}
+        maxHeight={maxHeight}
+      />
       {footer}
     </div>
   );
