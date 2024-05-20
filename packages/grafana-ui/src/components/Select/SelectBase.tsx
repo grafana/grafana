@@ -1,6 +1,11 @@
 import { t } from 'i18next';
 import React, { ComponentProps, useCallback, useEffect, useRef, useState } from 'react';
-import { default as ReactSelect, IndicatorsContainerProps, Props as ReactSelectProps } from 'react-select';
+import {
+  default as ReactSelect,
+  IndicatorsContainerProps,
+  Props as ReactSelectProps,
+  ClearIndicatorProps,
+} from 'react-select';
 import { default as ReactAsyncSelect } from 'react-select/async';
 import { default as AsyncCreatable } from 'react-select/async-creatable';
 import Creatable from 'react-select/creatable';
@@ -19,7 +24,7 @@ import { MultiValueContainer, MultiValueRemove } from './MultiValue';
 import { SelectContainer } from './SelectContainer';
 import { SelectMenu, SelectMenuOptions, VirtualizedSelectMenu } from './SelectMenu';
 import { SelectOptionGroup } from './SelectOptionGroup';
-import { SingleValue } from './SingleValue';
+import { Props, SingleValue } from './SingleValue';
 import { ValueContainer } from './ValueContainer';
 import { getSelectStyles } from './getSelectStyles';
 import { useCustomSelectStyles } from './resetSelectStyles';
@@ -199,6 +204,8 @@ export function SelectBase<T, Rest = {}>({
     }
   }
 
+  const [internalInputValue, setInternalInputValue] = useState('');
+
   const commonSelectProps = {
     'aria-label': ariaLabel,
     'data-testid': dataTestid,
@@ -268,12 +275,41 @@ export function SelectBase<T, Rest = {}>({
   };
 
   if (allowCustomValue) {
-    ReactSelectComponent = Creatable as any;
+    ReactSelectComponent = Creatable;
     creatableProps.allowCreateWhileLoading = allowCreateWhileLoading;
     creatableProps.formatCreateLabel = formatCreateLabel ?? defaultFormatCreateLabel;
     creatableProps.onCreateOption = onCreateOption;
     creatableProps.createOptionPosition = createOptionPosition;
     creatableProps.isValidNewOption = isValidNewOption;
+
+    // code needed to allow editing a custom value once entered
+    // we only want to do this for single selects, not multi
+    if (!isMulti) {
+      creatableProps.inputValue = internalInputValue;
+      creatableProps.onMenuOpen = () => {
+        // make sure we call the base onMenuOpen if it exists
+        commonSelectProps.onMenuOpen?.();
+
+        // restore the input state to the selected value
+        setInternalInputValue(selectedValue?.[0]?.label ?? '');
+      };
+      creatableProps.onInputChange = (val, actionMeta) => {
+        // make sure we call the base onInputChange
+        commonSelectProps.onInputChange(val, actionMeta);
+
+        // update the input value state on change since we're explicitly controlling it
+        if (actionMeta.action === 'input-change') {
+          setInternalInputValue(val);
+        }
+      };
+      creatableProps.onMenuClose = () => {
+        // make sure we call the base onMenuClose if it exists
+        commonSelectProps.onMenuClose?.();
+
+        // clear the input state on menu close, else react-select won't show the SingleValue component correctly
+        setInternalInputValue('');
+      };
+    }
   }
 
   // Instead of having AsyncSelect, as a separate component we render ReactAsyncSelect
@@ -300,7 +336,7 @@ export function SelectBase<T, Rest = {}>({
           IndicatorSeparator: IndicatorSeparator,
           Control: CustomControl,
           Option: SelectMenuOptions,
-          ClearIndicator(props: any) {
+          ClearIndicator(props: ClearIndicatorProps) {
             const { clearValue } = props;
             return (
               <Icon
@@ -330,7 +366,7 @@ export function SelectBase<T, Rest = {}>({
             );
           },
           DropdownIndicator: DropdownIndicator,
-          SingleValue(props: any) {
+          SingleValue(props: Props<T>) {
             return <SingleValue {...props} isDisabled={disabled} />;
           },
           SelectContainer,
