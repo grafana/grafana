@@ -26,37 +26,37 @@ var (
 	_ rest.StorageMetadata      = (*findScopedDashboardsREST)(nil)
 )
 
-func (r *findScopedDashboardsREST) New() runtime.Object {
+func (f *findScopedDashboardsREST) New() runtime.Object {
 	return &scope.FindScopedDashboardsResults{}
 }
 
-func (r *findScopedDashboardsREST) Destroy() {}
+func (f *findScopedDashboardsREST) Destroy() {}
 
-func (s *findScopedDashboardsREST) NamespaceScoped() bool {
+func (f *findScopedDashboardsREST) NamespaceScoped() bool {
 	return true
 }
 
-func (s *findScopedDashboardsREST) GetSingularName() string {
+func (f *findScopedDashboardsREST) GetSingularName() string {
 	return "results" // not sure if this is actually used, but it is required to exist
 }
 
-func (r *findScopedDashboardsREST) ProducesMIMETypes(verb string) []string {
+func (f *findScopedDashboardsREST) ProducesMIMETypes(verb string) []string {
 	return []string{"application/json"} // and parquet!
 }
 
-func (r *findScopedDashboardsREST) ProducesObject(verb string) interface{} {
+func (f *findScopedDashboardsREST) ProducesObject(verb string) interface{} {
 	return &scope.FindScopedDashboardsResults{}
 }
 
-func (r *findScopedDashboardsREST) ConnectMethods() []string {
+func (f *findScopedDashboardsREST) ConnectMethods() []string {
 	return []string{"GET"}
 }
 
-func (r *findScopedDashboardsREST) NewConnectOptions() (runtime.Object, bool, string) {
+func (f *findScopedDashboardsREST) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, false, "" // true means you can use the trailing path as a variable
 }
 
-func (r *findScopedDashboardsREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+func (f *findScopedDashboardsREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	// See: /pkg/apiserver/builder/helper.go#L34
 	// The name is set with a rewriter hack
 	if name != "name" {
@@ -64,7 +64,7 @@ func (r *findScopedDashboardsREST) Connect(ctx context.Context, name string, opt
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		raw, err := r.scopeDashboardStorage.List(ctx, &internalversion.ListOptions{})
+		raw, err := f.scopeDashboardStorage.List(ctx, &internalversion.ListOptions{})
 		if err != nil {
 			w.WriteHeader(500)
 			return
