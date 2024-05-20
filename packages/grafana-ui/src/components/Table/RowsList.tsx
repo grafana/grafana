@@ -243,11 +243,9 @@ export const RowsList = (props: RowsListProps) => {
 
     if (
       cellOptionsExist &&
-      (
-        fieldOptions.cellOptions.type === TableCellDisplayMode.Auto ||
+      (fieldOptions.cellOptions.type === TableCellDisplayMode.Auto ||
         fieldOptions.cellOptions.type === TableCellDisplayMode.ColorBackground ||
-        fieldOptions.cellOptions.type === TableCellDisplayMode.ColorText
-      ) &&
+        fieldOptions.cellOptions.type === TableCellDisplayMode.ColorText) &&
       fieldOptions.cellOptions.wrapText
     ) {
       textWrapField = field;

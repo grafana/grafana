@@ -5,7 +5,10 @@ import { Field, Switch } from '@grafana/ui';
 
 import { TableCellEditorProps } from '../TableCellOptionEditor';
 
-export const AutoCellOptionsEditor = ({ cellOptions, onChange }: TableCellEditorProps<TableAutoCellOptions | TableColorTextCellOptions>) => {
+export const AutoCellOptionsEditor = ({
+  cellOptions,
+  onChange,
+}: TableCellEditorProps<TableAutoCellOptions | TableColorTextCellOptions>) => {
   // Handle row coloring changes
   const onWrapTextChange = () => {
     cellOptions.wrapText = !cellOptions.wrapText;
