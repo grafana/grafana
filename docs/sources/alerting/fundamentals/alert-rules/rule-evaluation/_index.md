@@ -44,16 +44,16 @@ Imagine you have an alert rule evaluation interval set at every 30 seconds and t
 
 Evaluation will occur as follows:
 
-[00:30][] First evaluation - condition not met.
+[00:30] First evaluation - condition not met.
 
-[01:00][] Second evaluation - condition breached.
+[01:00] Second evaluation - condition breached.
 Pending counter starts. **Alert starts pending.**
 
-[01:30][] Third evaluation - condition breached. Pending counter = 30s. **Pending state.**
+[01:30] Third evaluation - condition breached. Pending counter = 30s. **Pending state.**
 
-[02:00][] Fourth evaluation - condition breached. Pending counter = 60s **Pending state.**
+[02:00] Fourth evaluation - condition breached. Pending counter = 60s **Pending state.**
 
-[02:30][] Fifth evaluation - condition breached. Pending counter = 90s. **Alert starts firing**
+[02:30] Fifth evaluation - condition breached. Pending counter = 90s. **Alert starts firing**
 
 If the alert rule has a condition that needs to be in breach for a certain amount of time before it takes action, then its state changes as follows:
 
