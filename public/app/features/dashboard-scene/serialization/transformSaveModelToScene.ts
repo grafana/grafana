@@ -280,7 +280,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       registerDashboardMacro,
       registerPanelInteractionsReporter,
       new behaviors.LiveNowTimer({ enabled: oldModel.liveNow }),
-      preserveFiltersAndGroupByUrl,
+      preserveDashboardSceneStateInLocalStorage,
     ],
     $data: new DashboardDataLayerSet({ annotationLayers, alertStatesLayer }),
     controls: new DashboardControls({
@@ -579,28 +579,37 @@ function trackIfEmpty(grid: SceneGridLayout) {
 }
 
 /**
- * Behavior that will capture currently selecteg filters and group by dimensions and save them to local storage,
- * so that they can be applied when the next dashboard with filters and group by is loaded.
- * It's working only for dashboards that use filters created automatically for the default data source that supports filtering (newDashboardWithFiltersAndGroupBy feature toggle)
+ * Behavior that will capture currently selected variables and time range and save them to local storage, so that they can be applied when the next dashboard is loaded.
  */
-function preserveFiltersAndGroupByUrl(scene: DashboardScene) {
+function preserveDashboardSceneStateInLocalStorage(scene: DashboardScene) {
   if (!config.featureToggles.newDashboardWithFiltersAndGroupBy) {
     return;
   }
 
   return () => {
-    const variables = dashboardSceneGraph.getFilterAndGroupByVariables(scene);
-    if (variables.length === 0) {
+    // Skipping saving state for default home dashboard
+    if (!scene.state.uid) {
       return;
     }
-    const urlStates: UrlQueryMap = variables.reduce((acc, v) => {
-      // @ts-ignore - accessing protected property
-      const urlState = v['_urlSync'].getUrlState();
-      return {
-        ...acc,
-        ...urlState,
+    const variables = scene.state.$variables?.state.variables;
+    const timeRange = scene.state.$timeRange;
+
+    let urlStates: UrlQueryMap = variables
+      ? variables.reduce((acc, v) => {
+          const urlState = v.urlSync?.getUrlState();
+          return {
+            ...acc,
+            ...urlState,
+          };
+        }, {})
+      : {};
+
+    if (timeRange) {
+      urlStates = {
+        ...urlStates,
+        ...timeRange.urlSync?.getUrlState(),
       };
-    }, {});
+    }
 
     const nonEmptyUrlStates = Object.fromEntries(
       Object.entries(urlStates).filter(([key, value]) => !(Array.isArray(value) && value.length === 0))
@@ -608,7 +617,7 @@ function preserveFiltersAndGroupByUrl(scene: DashboardScene) {
 
     // If there's anything to preserve, save it to local storage
     if (Object.keys(nonEmptyUrlStates).length > 0) {
-      store.set('grafana.dashboard.preservedUrlFiltersState', JSON.stringify(nonEmptyUrlStates));
+      store.set(`grafana.dashboard.preservedUrlFiltersState[${window.name}]`, JSON.stringify(nonEmptyUrlStates));
     }
   };
 }
