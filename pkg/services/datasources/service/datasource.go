@@ -259,7 +259,7 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 
 // This will valid validate the instance settings and mutate the cmd with the processed values
 func (s *Service) prepareAdd(ctx context.Context, cmd *datasources.AddDataSourceCommand) error {
-	operation := backend.InstanceSettingsOperationCREATE
+	operation := backend.StorageOperationCREATE
 
 	if len(cmd.Name) > maxDatasourceNameLen {
 		return datasources.ErrDataSourceNameInvalid.Errorf("max length is %d", maxDatasourceNameLen)
@@ -292,7 +292,7 @@ func (s *Service) prepareAdd(ctx context.Context, cmd *datasources.AddDataSource
 		return fmt.Errorf("invalid jsonData (%v)", operation)
 	}
 
-	rsp, err := s.pluginClient.ProcessInstanceSettings(ctx, &backend.ProcessInstanceSettingsRequest{
+	rsp, err := s.pluginClient.MutateInstanceSettings(ctx, &backend.InstanceSettingsAdmissionRequest{
 		PluginContext: backend.PluginContext{
 			OrgID:    cmd.OrgID,
 			PluginID: cmd.Type,
@@ -311,8 +311,7 @@ func (s *Service) prepareAdd(ctx context.Context, cmd *datasources.AddDataSource
 				APIVersion:              cmd.APIVersion,
 			},
 		},
-		Operation:   operation,
-		CheckHealth: false, // we have never checked in the past, should we start?
+		Operation: operation,
 	})
 	if err != nil {
 		if errors.Is(err, plugins.ErrMethodNotImplemented) {
@@ -347,7 +346,7 @@ func (s *Service) prepareAdd(ctx context.Context, cmd *datasources.AddDataSource
 
 // identical to prepareAdd -- but the types do not overlap :(
 func (s *Service) prepareUpdate(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) error {
-	operation := backend.InstanceSettingsOperationUPDATE
+	operation := backend.StorageOperationUPDATE
 
 	if len(cmd.Name) > maxDatasourceNameLen {
 		return datasources.ErrDataSourceNameInvalid.Errorf("max length is %d", maxDatasourceNameLen)
@@ -380,7 +379,7 @@ func (s *Service) prepareUpdate(ctx context.Context, cmd *datasources.UpdateData
 		return fmt.Errorf("invalid jsonData (%v)", operation)
 	}
 
-	rsp, err := s.pluginClient.ProcessInstanceSettings(ctx, &backend.ProcessInstanceSettingsRequest{
+	rsp, err := s.pluginClient.MutateInstanceSettings(ctx, &backend.InstanceSettingsAdmissionRequest{
 		PluginContext: backend.PluginContext{
 			OrgID:    cmd.OrgID,
 			PluginID: cmd.Type,
@@ -399,8 +398,7 @@ func (s *Service) prepareUpdate(ctx context.Context, cmd *datasources.UpdateData
 				APIVersion:              cmd.APIVersion,
 			},
 		},
-		Operation:   operation,
-		CheckHealth: false, // we have never checked in the past, should we start?
+		Operation: operation,
 	})
 	if err != nil {
 		if errors.Is(err, plugins.ErrMethodNotImplemented) {

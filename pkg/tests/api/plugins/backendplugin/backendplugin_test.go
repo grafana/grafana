@@ -846,7 +846,7 @@ type testPlugin struct {
 	backend.CallResourceHandler
 	backend.QueryDataHandler
 	backend.StreamHandler
-	backend.InstanceSettingsHandler
+	backend.StorageHandler
 }
 
 func (tp *testPlugin) PluginID() string {
@@ -934,10 +934,39 @@ func (tp *testPlugin) RunStream(ctx context.Context, req *backend.RunStreamReque
 	return plugins.ErrMethodNotImplemented
 }
 
-func (tp *testPlugin) ProcessInstanceSettings(ctx context.Context, req *backend.ProcessInstanceSettingsRequest) (*backend.ProcessInstanceSettingsResponse, error) {
-	if tp.InstanceSettingsHandler != nil {
-		return tp.InstanceSettingsHandler.ProcessInstanceSettings(ctx, req)
+// ValidateAdmission implements backend.StorageHandler.
+func (tp *testPlugin) MutateInstanceSettings(ctx context.Context, req *backend.InstanceSettingsAdmissionRequest) (*backend.InstanceSettingsResponse, error) {
+	if tp.StorageHandler != nil {
+		return tp.StorageHandler.MutateInstanceSettings(ctx, req)
 	}
+
+	return nil, plugins.ErrMethodNotImplemented
+}
+
+// ValidateAdmission implements backend.StorageHandler.
+func (tp *testPlugin) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
+	if tp.StorageHandler != nil {
+		return tp.StorageHandler.ValidateAdmission(ctx, req)
+	}
+
+	return nil, plugins.ErrMethodNotImplemented
+}
+
+// MutateAdmission implements backend.StorageHandler.
+func (tp *testPlugin) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
+	if tp.StorageHandler != nil {
+		return tp.StorageHandler.MutateAdmission(ctx, req)
+	}
+
+	return nil, plugins.ErrMethodNotImplemented
+}
+
+// ConvertObject implements backend.StorageHandler.
+func (tp *testPlugin) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.StorageResponse, error) {
+	if tp.StorageHandler != nil {
+		return tp.StorageHandler.ConvertObject(ctx, req)
+	}
+
 	return nil, plugins.ErrMethodNotImplemented
 }
 

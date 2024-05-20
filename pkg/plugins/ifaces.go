@@ -90,7 +90,7 @@ type Client interface {
 	backend.QueryDataHandler
 	backend.CheckHealthHandler
 	backend.StreamHandler
-	backend.InstanceSettingsHandler
+	backend.StorageHandler
 	backend.CallResourceHandler
 	backend.CollectMetricsHandler
 }

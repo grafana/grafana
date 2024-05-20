@@ -71,7 +71,26 @@ func (m *ContextualLoggerMiddleware) RunStream(ctx context.Context, req *backend
 	return m.next.RunStream(ctx, req, sender)
 }
 
-func (m *ContextualLoggerMiddleware) ProcessInstanceSettings(ctx context.Context, req *backend.ProcessInstanceSettingsRequest) (*backend.ProcessInstanceSettingsResponse, error) {
-	ctx = instrumentContext(ctx, endpointProcessSettings, req.PluginContext)
-	return m.next.ProcessInstanceSettings(ctx, req)
+// MutateInstanceSettings implements backend.StorageHandler.
+func (m *ContextualLoggerMiddleware) MutateInstanceSettings(ctx context.Context, req *backend.InstanceSettingsAdmissionRequest) (*backend.InstanceSettingsResponse, error) {
+	ctx = instrumentContext(ctx, endpointRunStream, req.PluginContext)
+	return m.next.MutateInstanceSettings(ctx, req)
+}
+
+// ValidateAdmission implements backend.StorageHandler.
+func (m *ContextualLoggerMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
+	ctx = instrumentContext(ctx, endpointRunStream, req.PluginContext)
+	return m.next.ValidateAdmission(ctx, req)
+}
+
+// MutateAdmission implements backend.StorageHandler.
+func (m *ContextualLoggerMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
+	ctx = instrumentContext(ctx, endpointRunStream, req.PluginContext)
+	return m.next.MutateAdmission(ctx, req)
+}
+
+// ConvertObject implements backend.StorageHandler.
+func (m *ContextualLoggerMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.StorageResponse, error) {
+	ctx = instrumentContext(ctx, endpointRunStream, req.PluginContext)
+	return m.next.ConvertObject(ctx, req)
 }

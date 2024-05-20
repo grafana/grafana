@@ -18,20 +18,20 @@ type corePlugin struct {
 	backend.CallResourceHandler
 	backend.QueryDataHandler
 	backend.StreamHandler
-	backend.InstanceSettingsHandler
+	backend.StorageHandler
 }
 
 // New returns a new backendplugin.PluginFactoryFunc for creating a core (built-in) backendplugin.Plugin.
 func New(opts backend.ServeOpts) backendplugin.PluginFactoryFunc {
 	return func(pluginID string, logger log.Logger, _ func() []string) (backendplugin.Plugin, error) {
 		return &corePlugin{
-			pluginID:                pluginID,
-			logger:                  logger,
-			CheckHealthHandler:      opts.CheckHealthHandler,
-			CallResourceHandler:     opts.CallResourceHandler,
-			QueryDataHandler:        opts.QueryDataHandler,
-			InstanceSettingsHandler: opts.InstanceSettingsHandler,
-			StreamHandler:           opts.StreamHandler,
+			pluginID:            pluginID,
+			logger:              logger,
+			CheckHealthHandler:  opts.CheckHealthHandler,
+			CallResourceHandler: opts.CallResourceHandler,
+			QueryDataHandler:    opts.QueryDataHandler,
+			StorageHandler:      opts.StorageHandler,
+			StreamHandler:       opts.StreamHandler,
 		}, nil
 	}
 }
@@ -127,10 +127,34 @@ func (cp *corePlugin) RunStream(ctx context.Context, req *backend.RunStreamReque
 	return plugins.ErrMethodNotImplemented
 }
 
-func (cp *corePlugin) ProcessInstanceSettings(ctx context.Context, req *backend.ProcessInstanceSettingsRequest) (*backend.ProcessInstanceSettingsResponse, error) {
-	if cp.InstanceSettingsHandler != nil {
+func (cp *corePlugin) MutateInstanceSettings(ctx context.Context, req *backend.InstanceSettingsAdmissionRequest) (*backend.InstanceSettingsResponse, error) {
+	if cp.StorageHandler != nil {
 		ctx = backend.WithGrafanaConfig(ctx, req.PluginContext.GrafanaConfig)
-		return cp.InstanceSettingsHandler.ProcessInstanceSettings(ctx, req)
+		return cp.StorageHandler.MutateInstanceSettings(ctx, req)
+	}
+	return nil, plugins.ErrMethodNotImplemented
+}
+
+func (cp *corePlugin) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
+	if cp.StorageHandler != nil {
+		ctx = backend.WithGrafanaConfig(ctx, req.PluginContext.GrafanaConfig)
+		return cp.StorageHandler.MutateAdmission(ctx, req)
+	}
+	return nil, plugins.ErrMethodNotImplemented
+}
+
+func (cp *corePlugin) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
+	if cp.StorageHandler != nil {
+		ctx = backend.WithGrafanaConfig(ctx, req.PluginContext.GrafanaConfig)
+		return cp.StorageHandler.ValidateAdmission(ctx, req)
+	}
+	return nil, plugins.ErrMethodNotImplemented
+}
+
+func (cp *corePlugin) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.StorageResponse, error) {
+	if cp.StorageHandler != nil {
+		ctx = backend.WithGrafanaConfig(ctx, req.PluginContext.GrafanaConfig)
+		return cp.StorageHandler.ConvertObject(ctx, req)
 	}
 	return nil, plugins.ErrMethodNotImplemented
 }

@@ -146,8 +146,8 @@ func asBackendPlugin(svc any) backendplugin.PluginFactoryFunc {
 	if healthHandler, ok := svc.(backend.CheckHealthHandler); ok {
 		opts.CheckHealthHandler = healthHandler
 	}
-	if settingsHandler, ok := svc.(backend.InstanceSettingsHandler); ok {
-		opts.InstanceSettingsHandler = settingsHandler
+	if storageHandler, ok := svc.(backend.StorageHandler); ok {
+		opts.StorageHandler = storageHandler
 	}
 
 	if opts.QueryDataHandler != nil || opts.CallResourceHandler != nil ||

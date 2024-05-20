@@ -24,7 +24,7 @@ type ClientV2 struct {
 	grpcplugin.ResourceClient
 	grpcplugin.DataClient
 	grpcplugin.StreamClient
-	grpcplugin.InstanceSettingsClient
+	grpcplugin.StorageClient
 	pluginextensionv2.RendererPlugin
 	secretsmanagerplugin.SecretsManagerPlugin
 }
@@ -45,7 +45,7 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 		return nil, err
 	}
 
-	rawSettings, err := rpcClient.Dispense("instanceSettings")
+	rawStorage, err := rpcClient.Dispense("storage")
 	if err != nil {
 		return nil, err
 	}
@@ -84,9 +84,9 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 		}
 	}
 
-	if rawSettings != nil {
-		if settingsClient, ok := rawSettings.(grpcplugin.InstanceSettingsClient); ok {
-			c.InstanceSettingsClient = settingsClient
+	if rawStorage != nil {
+		if storageClient, ok := rawStorage.(grpcplugin.StorageClient); ok {
+			c.StorageClient = storageClient
 		}
 	}
 
@@ -270,21 +270,78 @@ func (c *ClientV2) RunStream(ctx context.Context, req *backend.RunStreamRequest,
 	}
 }
 
-func (c *ClientV2) ProcessInstanceSettings(ctx context.Context, req *backend.ProcessInstanceSettingsRequest) (*backend.ProcessInstanceSettingsResponse, error) {
-	if c.InstanceSettingsClient == nil {
+func (c *ClientV2) MutateInstanceSettings(ctx context.Context, req *backend.InstanceSettingsAdmissionRequest) (*backend.InstanceSettingsResponse, error) {
+	if c.StorageClient == nil {
 		return nil, plugins.ErrMethodNotImplemented
 	}
 
-	protoReq := backend.ToProto().ProcessInstanceSettingsRequest(req)
-	protoResp, err := c.InstanceSettingsClient.ProcessInstanceSettings(ctx, protoReq)
+	protoReq := backend.ToProto().InstanceSettingsAdmissionRequest(req)
+	protoResp, err := c.StorageClient.MutateInstanceSettings(ctx, protoReq)
 
 	if err != nil {
 		if status.Code(err) == codes.Unimplemented {
 			return nil, plugins.ErrMethodNotImplemented
 		}
 
-		return nil, fmt.Errorf("%v: %w", "Failed to process instance settings", err)
+		return nil, fmt.Errorf("%v: %w", "Failed to MutateInstanceSettings", err)
 	}
 
-	return backend.FromProto().ProcessInstanceSettingsResponse(protoResp), nil
+	return backend.FromProto().InstanceSettingsResponse(protoResp), nil
+}
+
+func (c *ClientV2) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
+	if c.StorageClient == nil {
+		return nil, plugins.ErrMethodNotImplemented
+	}
+
+	protoReq := backend.ToProto().AdmissionRequest(req)
+	protoResp, err := c.StorageClient.ValidateAdmission(ctx, protoReq)
+
+	if err != nil {
+		if status.Code(err) == codes.Unimplemented {
+			return nil, plugins.ErrMethodNotImplemented
+		}
+
+		return nil, fmt.Errorf("%v: %w", "Failed to ValidateAdmission", err)
+	}
+
+	return backend.FromProto().StorageResponse(protoResp), nil
+}
+
+func (c *ClientV2) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
+	if c.StorageClient == nil {
+		return nil, plugins.ErrMethodNotImplemented
+	}
+
+	protoReq := backend.ToProto().AdmissionRequest(req)
+	protoResp, err := c.StorageClient.MutateAdmission(ctx, protoReq)
+
+	if err != nil {
+		if status.Code(err) == codes.Unimplemented {
+			return nil, plugins.ErrMethodNotImplemented
+		}
+
+		return nil, fmt.Errorf("%v: %w", "Failed to MutateAdmission", err)
+	}
+
+	return backend.FromProto().StorageResponse(protoResp), nil
+}
+
+func (c *ClientV2) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.StorageResponse, error) {
+	if c.StorageClient == nil {
+		return nil, plugins.ErrMethodNotImplemented
+	}
+
+	protoReq := backend.ToProto().ConversionRequest(req)
+	protoResp, err := c.StorageClient.ConvertObject(ctx, protoReq)
+
+	if err != nil {
+		if status.Code(err) == codes.Unimplemented {
+			return nil, plugins.ErrMethodNotImplemented
+		}
+
+		return nil, fmt.Errorf("%v: %w", "Failed to ConvertObject", err)
+	}
+
+	return backend.FromProto().StorageResponse(protoResp), nil
 }

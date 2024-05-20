@@ -23,7 +23,7 @@ type Plugin interface {
 	backend.CheckHealthHandler
 	backend.QueryDataHandler
 	backend.CallResourceHandler
-	backend.InstanceSettingsHandler
+	backend.StorageHandler
 	backend.StreamHandler
 }
 

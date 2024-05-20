@@ -3,7 +3,7 @@ module github.com/grafana/grafana/pkg/promlib
 go 1.21.10
 
 require (
-	github.com/grafana/grafana-plugin-sdk-go v0.231.1-0.20240517150920-f850b5fd893b
+	github.com/grafana/grafana-plugin-sdk-go v0.231.1-0.20240520181950-43b23be31e50
 	github.com/json-iterator/go v1.1.12
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v1.19.0

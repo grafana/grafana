@@ -136,10 +136,38 @@ func (m *TracingMiddleware) RunStream(ctx context.Context, req *backend.RunStrea
 	return err
 }
 
-func (m *TracingMiddleware) ProcessInstanceSettings(ctx context.Context, req *backend.ProcessInstanceSettingsRequest) (*backend.ProcessInstanceSettingsResponse, error) {
+// MutateInstanceSettings implements backend.StorageHandler.
+func (m *TracingMiddleware) MutateInstanceSettings(ctx context.Context, req *backend.InstanceSettingsAdmissionRequest) (*backend.InstanceSettingsResponse, error) {
 	var err error
-	ctx, end := m.traceWrap(ctx, req.PluginContext, "processInstanceSettings")
+	ctx, end := m.traceWrap(ctx, req.PluginContext, "MutateInstanceSettings")
 	defer func() { end(err) }()
-	resp, err := m.next.ProcessInstanceSettings(ctx, req)
+	resp, err := m.next.MutateInstanceSettings(ctx, req)
+	return resp, err
+}
+
+// ValidateAdmission implements backend.StorageHandler.
+func (m *TracingMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
+	var err error
+	ctx, end := m.traceWrap(ctx, req.PluginContext, "ValidateAdmission")
+	defer func() { end(err) }()
+	resp, err := m.next.ValidateAdmission(ctx, req)
+	return resp, err
+}
+
+// MutateAdmission implements backend.StorageHandler.
+func (m *TracingMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
+	var err error
+	ctx, end := m.traceWrap(ctx, req.PluginContext, "MutateAdmission")
+	defer func() { end(err) }()
+	resp, err := m.next.MutateAdmission(ctx, req)
+	return resp, err
+}
+
+// ConvertObject implements backend.StorageHandler.
+func (m *TracingMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.StorageResponse, error) {
+	var err error
+	ctx, end := m.traceWrap(ctx, req.PluginContext, "ConvertObject")
+	defer func() { end(err) }()
+	resp, err := m.next.ConvertObject(ctx, req)
 	return resp, err
 }

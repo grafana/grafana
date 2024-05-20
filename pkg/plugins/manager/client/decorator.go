@@ -15,6 +15,10 @@ type Decorator struct {
 	middlewares []plugins.ClientMiddleware
 }
 
+var (
+	_ = plugins.Client(&Decorator{})
+)
+
 // NewDecorator creates a new plugins.client decorator.
 func NewDecorator(client plugins.Client, middlewares ...plugins.ClientMiddleware) (*Decorator, error) {
 	if client == nil {
@@ -99,13 +103,40 @@ func (d *Decorator) RunStream(ctx context.Context, req *backend.RunStreamRequest
 	return client.RunStream(ctx, req, sender)
 }
 
-func (d *Decorator) ProcessInstanceSettings(ctx context.Context, req *backend.ProcessInstanceSettingsRequest) (*backend.ProcessInstanceSettingsResponse, error) {
+func (d *Decorator) MutateInstanceSettings(ctx context.Context, req *backend.InstanceSettingsAdmissionRequest) (*backend.InstanceSettingsResponse, error) {
 	if req == nil {
 		return nil, errNilRequest
 	}
 
 	client := clientFromMiddlewares(d.middlewares, d.client)
-	return client.ProcessInstanceSettings(ctx, req)
+	return client.MutateInstanceSettings(ctx, req)
+}
+
+func (d *Decorator) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
+	if req == nil {
+		return nil, errNilRequest
+	}
+
+	client := clientFromMiddlewares(d.middlewares, d.client)
+	return client.ValidateAdmission(ctx, req)
+}
+
+func (d *Decorator) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
+	if req == nil {
+		return nil, errNilRequest
+	}
+
+	client := clientFromMiddlewares(d.middlewares, d.client)
+	return client.MutateAdmission(ctx, req)
+}
+
+func (d *Decorator) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.StorageResponse, error) {
+	if req == nil {
+		return nil, errNilRequest
+	}
+
+	client := clientFromMiddlewares(d.middlewares, d.client)
+	return client.ConvertObject(ctx, req)
 }
 
 func clientFromMiddlewares(middlewares []plugins.ClientMiddleware, finalClient plugins.Client) plugins.Client {
@@ -133,5 +164,3 @@ func reverseMiddlewares(middlewares []plugins.ClientMiddleware) []plugins.Client
 
 	return reversed
 }
-
-var _ plugins.Client = &Decorator{}

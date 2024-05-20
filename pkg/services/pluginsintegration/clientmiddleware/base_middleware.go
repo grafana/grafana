@@ -44,6 +44,22 @@ func (m *baseMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRe
 	return m.next.RunStream(ctx, req, sender)
 }
 
-func (m *baseMiddleware) ProcessInstanceSettings(ctx context.Context, req *backend.ProcessInstanceSettingsRequest) (*backend.ProcessInstanceSettingsResponse, error) {
-	return m.next.ProcessInstanceSettings(ctx, req)
+// MutateInstanceSettings implements backend.StorageHandler.
+func (m *baseMiddleware) MutateInstanceSettings(ctx context.Context, req *backend.InstanceSettingsAdmissionRequest) (*backend.InstanceSettingsResponse, error) {
+	return m.next.MutateInstanceSettings(ctx, req)
+}
+
+// ValidateAdmission implements backend.StorageHandler.
+func (m *baseMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
+	return m.next.ValidateAdmission(ctx, req)
+}
+
+// MutateAdmission implements backend.StorageHandler.
+func (m *baseMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
+	return m.next.MutateAdmission(ctx, req)
+}
+
+// ConvertObject implements backend.StorageHandler.
+func (m *baseMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.StorageResponse, error) {
+	return m.next.ConvertObject(ctx, req)
 }

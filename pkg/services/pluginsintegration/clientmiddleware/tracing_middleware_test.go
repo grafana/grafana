@@ -387,7 +387,23 @@ func (m *alwaysErrorFuncMiddleware) RunStream(ctx context.Context, req *backend.
 	return m.f()
 }
 
-func (m *alwaysErrorFuncMiddleware) ProcessInstanceSettings(ctx context.Context, req *backend.ProcessInstanceSettingsRequest) (*backend.ProcessInstanceSettingsResponse, error) {
+// MutateInstanceSettings implements backend.StorageHandler.
+func (m *alwaysErrorFuncMiddleware) MutateInstanceSettings(ctx context.Context, req *backend.InstanceSettingsAdmissionRequest) (*backend.InstanceSettingsResponse, error) {
+	return nil, m.f()
+}
+
+// ValidateAdmission implements backend.StorageHandler.
+func (m *alwaysErrorFuncMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
+	return nil, m.f()
+}
+
+// MutateAdmission implements backend.StorageHandler.
+func (m *alwaysErrorFuncMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
+	return nil, m.f()
+}
+
+// ConvertObject implements backend.StorageHandler.
+func (m *alwaysErrorFuncMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.StorageResponse, error) {
 	return nil, m.f()
 }
 

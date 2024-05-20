@@ -147,14 +147,17 @@ func (c *TestClient) CheckHealth(ctx context.Context, req *backend.CheckHealthRe
 }
 
 type MiddlewareScenarioContext struct {
-	QueryDataCallChain        []string
-	CallResourceCallChain     []string
-	CollectMetricsCallChain   []string
-	CheckHealthCallChain      []string
-	SubscribeStreamCallChain  []string
-	PublishStreamCallChain    []string
-	RunStreamCallChain        []string
-	InstanceSettingsCallChain []string
+	QueryDataCallChain         []string
+	CallResourceCallChain      []string
+	CollectMetricsCallChain    []string
+	CheckHealthCallChain       []string
+	SubscribeStreamCallChain   []string
+	PublishStreamCallChain     []string
+	RunStreamCallChain         []string
+	InstanceSettingsCallChain  []string
+	ValidateAdmissionCallChain []string
+	MutateAdmissionCallChain   []string
+	ConvertObjectCallChain     []string
 }
 
 func (ctx *MiddlewareScenarioContext) NewMiddleware(name string) plugins.ClientMiddleware {
@@ -222,10 +225,31 @@ func (m *TestMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRe
 	return err
 }
 
-func (m *TestMiddleware) ProcessInstanceSettings(ctx context.Context, req *backend.ProcessInstanceSettingsRequest) (*backend.ProcessInstanceSettingsResponse, error) {
+func (m *TestMiddleware) MutateInstanceSettings(ctx context.Context, req *backend.InstanceSettingsAdmissionRequest) (*backend.InstanceSettingsResponse, error) {
 	m.sCtx.InstanceSettingsCallChain = append(m.sCtx.InstanceSettingsCallChain, fmt.Sprintf("before %s", m.Name))
-	res, err := m.next.ProcessInstanceSettings(ctx, req)
+	res, err := m.next.MutateInstanceSettings(ctx, req)
 	m.sCtx.InstanceSettingsCallChain = append(m.sCtx.InstanceSettingsCallChain, fmt.Sprintf("after %s", m.Name))
+	return res, err
+}
+
+func (m *TestMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
+	m.sCtx.ValidateAdmissionCallChain = append(m.sCtx.ValidateAdmissionCallChain, fmt.Sprintf("before %s", m.Name))
+	res, err := m.next.ValidateAdmission(ctx, req)
+	m.sCtx.ValidateAdmissionCallChain = append(m.sCtx.ValidateAdmissionCallChain, fmt.Sprintf("after %s", m.Name))
+	return res, err
+}
+
+func (m *TestMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
+	m.sCtx.MutateAdmissionCallChain = append(m.sCtx.MutateAdmissionCallChain, fmt.Sprintf("before %s", m.Name))
+	res, err := m.next.MutateAdmission(ctx, req)
+	m.sCtx.MutateAdmissionCallChain = append(m.sCtx.MutateAdmissionCallChain, fmt.Sprintf("after %s", m.Name))
+	return res, err
+}
+
+func (m *TestMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.StorageResponse, error) {
+	m.sCtx.ConvertObjectCallChain = append(m.sCtx.ConvertObjectCallChain, fmt.Sprintf("before %s", m.Name))
+	res, err := m.next.ConvertObject(ctx, req)
+	m.sCtx.ConvertObjectCallChain = append(m.sCtx.ConvertObjectCallChain, fmt.Sprintf("after %s", m.Name))
 	return res, err
 }
 

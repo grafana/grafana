@@ -70,7 +70,10 @@ type FakePluginClient struct {
 	backend.CheckHealthHandlerFunc
 	backend.QueryDataHandlerFunc
 	backend.CallResourceHandlerFunc
-	backend.ProcessInstanceSettingsFunc
+	backend.MutateInstanceSettingsFunc
+	backend.MutateAdmissionFunc
+	backend.ValidateAdmissionFunc
+	backend.ConvertObjectFunc
 	mutex sync.RWMutex
 
 	backendplugin.Plugin
@@ -167,9 +170,33 @@ func (pc *FakePluginClient) RunStream(_ context.Context, _ *backend.RunStreamReq
 	return plugins.ErrMethodNotImplemented
 }
 
-func (pc *FakePluginClient) ProcessInstanceSettings(ctx context.Context, req *backend.ProcessInstanceSettingsRequest) (*backend.ProcessInstanceSettingsResponse, error) {
-	if pc.ProcessInstanceSettingsFunc != nil {
-		return pc.ProcessInstanceSettingsFunc(ctx, req)
+func (pc *FakePluginClient) MutateInstanceSettings(ctx context.Context, req *backend.InstanceSettingsAdmissionRequest) (*backend.InstanceSettingsResponse, error) {
+	if pc.MutateInstanceSettingsFunc != nil {
+		return pc.MutateInstanceSettingsFunc(ctx, req)
+	}
+
+	return nil, plugins.ErrMethodNotImplemented
+}
+
+func (pc *FakePluginClient) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
+	if pc.ValidateAdmissionFunc != nil {
+		return pc.ValidateAdmissionFunc(ctx, req)
+	}
+
+	return nil, plugins.ErrMethodNotImplemented
+}
+
+func (pc *FakePluginClient) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
+	if pc.MutateAdmissionFunc != nil {
+		return pc.MutateAdmissionFunc(ctx, req)
+	}
+
+	return nil, plugins.ErrMethodNotImplemented
+}
+
+func (pc *FakePluginClient) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.StorageResponse, error) {
+	if pc.ConvertObjectFunc != nil {
+		return pc.ConvertObjectFunc(ctx, req)
 	}
 
 	return nil, plugins.ErrMethodNotImplemented

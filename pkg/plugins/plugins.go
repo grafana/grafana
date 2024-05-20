@@ -69,6 +69,15 @@ type Plugin struct {
 	mu sync.Mutex
 }
 
+var (
+	_ = backend.CollectMetricsHandler(&Plugin{})
+	_ = backend.CheckHealthHandler(&Plugin{})
+	_ = backend.QueryDataHandler(&Plugin{})
+	_ = backend.CallResourceHandler(&Plugin{})
+	_ = backend.StreamHandler(&Plugin{})
+	_ = backend.StorageHandler(&Plugin{})
+)
+
 type AngularMeta struct {
 	Detected        bool `json:"detected"`
 	HideDeprecation bool `json:"hideDeprecation"`
@@ -332,14 +341,6 @@ func (p *Plugin) CheckHealth(ctx context.Context, req *backend.CheckHealthReques
 	return pluginClient.CheckHealth(ctx, req)
 }
 
-func (p *Plugin) ProcessInstanceSettings(ctx context.Context, req *backend.ProcessInstanceSettingsRequest) (*backend.ProcessInstanceSettingsResponse, error) {
-	pluginClient, ok := p.Client()
-	if !ok {
-		return nil, ErrPluginUnavailable
-	}
-	return pluginClient.ProcessInstanceSettings(ctx, req)
-}
-
 func (p *Plugin) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
 	pluginClient, ok := p.Client()
 	if !ok {
@@ -370,6 +371,42 @@ func (p *Plugin) RunStream(ctx context.Context, req *backend.RunStreamRequest, s
 		return ErrPluginUnavailable
 	}
 	return pluginClient.RunStream(ctx, req, sender)
+}
+
+// MutateInstanceSettings implements backend.StorageHandler.
+func (p *Plugin) MutateInstanceSettings(ctx context.Context, req *backend.InstanceSettingsAdmissionRequest) (*backend.InstanceSettingsResponse, error) {
+	pluginClient, ok := p.Client()
+	if !ok {
+		return nil, ErrPluginUnavailable
+	}
+	return pluginClient.MutateInstanceSettings(ctx, req)
+}
+
+// ValidateAdmission implements backend.StorageHandler.
+func (p *Plugin) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
+	pluginClient, ok := p.Client()
+	if !ok {
+		return nil, ErrPluginUnavailable
+	}
+	return pluginClient.ValidateAdmission(ctx, req)
+}
+
+// MutateAdmission implements backend.StorageHandler.
+func (p *Plugin) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
+	pluginClient, ok := p.Client()
+	if !ok {
+		return nil, ErrPluginUnavailable
+	}
+	return pluginClient.MutateAdmission(ctx, req)
+}
+
+// ConvertObject implements backend.StorageHandler.
+func (p *Plugin) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.StorageResponse, error) {
+	pluginClient, ok := p.Client()
+	if !ok {
+		return nil, ErrPluginUnavailable
+	}
+	return pluginClient.ConvertObject(ctx, req)
 }
 
 func (p *Plugin) File(name string) (fs.File, error) {
@@ -430,7 +467,7 @@ type PluginClient interface {
 	backend.CollectMetricsHandler
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
-	backend.InstanceSettingsHandler
+	backend.StorageHandler
 	backend.StreamHandler
 }
 
