@@ -18,9 +18,9 @@ weight: 390
 refs:
   transform-data:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/transform-data/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/transform-data/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/
 ---
 
 # Grafana dashboards overview
