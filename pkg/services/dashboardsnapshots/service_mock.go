@@ -5,7 +5,6 @@ package dashboardsnapshots
 import (
 	context "context"
 
-	dashboards "github.com/grafana/grafana/pkg/services/dashboards"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -68,32 +67,6 @@ func (_m *MockService) DeleteExpiredSnapshots(_a0 context.Context, _a1 *DeleteEx
 	return r0
 }
 
-// FindDashboard provides a mock function with given fields: _a0, _a1, _a2
-func (_m *MockService) FindDashboard(_a0 context.Context, _a1 int64, _a2 int64) (*dashboards.Dashboard, error) {
-	ret := _m.Called(_a0, _a1, _a2)
-
-	var r0 *dashboards.Dashboard
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64, int64) (*dashboards.Dashboard, error)); ok {
-		return rf(_a0, _a1, _a2)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, int64, int64) *dashboards.Dashboard); ok {
-		r0 = rf(_a0, _a1, _a2)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*dashboards.Dashboard)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, int64, int64) error); ok {
-		r1 = rf(_a0, _a1, _a2)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // GetDashboardSnapshot provides a mock function with given fields: _a0, _a1
 func (_m *MockService) GetDashboardSnapshot(_a0 context.Context, _a1 *GetDashboardSnapshotQuery) (*DashboardSnapshot, error) {
 	ret := _m.Called(_a0, _a1)
@@ -139,6 +112,30 @@ func (_m *MockService) SearchDashboardSnapshots(_a0 context.Context, _a1 *GetDas
 
 	if rf, ok := ret.Get(1).(func(context.Context, *GetDashboardSnapshotsQuery) error); ok {
 		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ValidateDashboardExists provides a mock function with given fields: _a0, _a1, _a2
+func (_m *MockService) ValidateDashboardExists(_a0 context.Context, _a1 int64, _a2 string) (bool, error) {
+	ret := _m.Called(_a0, _a1, _a2)
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string) (bool, error)); ok {
+		return rf(_a0, _a1, _a2)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string) bool); ok {
+		r0 = rf(_a0, _a1, _a2)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int64, string) error); ok {
+		r1 = rf(_a0, _a1, _a2)
 	} else {
 		r1 = ret.Error(1)
 	}

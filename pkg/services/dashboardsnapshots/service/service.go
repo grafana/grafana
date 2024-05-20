@@ -28,7 +28,7 @@ func ProvideService(store dashboardsnapshots.Store, secretsService secrets.Servi
 	return s
 }
 
-func (s *ServiceImpl) FindDashboard(ctx context.Context, orgId int64, dashboardUid string) (bool, error) {
+func (s *ServiceImpl) ValidateDashboardExists(ctx context.Context, orgId int64, dashboardUid string) (bool, error) {
 	dash, err := s.dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{UID: dashboardUid, OrgID: orgId})
 	if err != nil {
 		return false, err

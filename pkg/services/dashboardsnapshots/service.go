@@ -26,7 +26,7 @@ type Service interface {
 	DeleteExpiredSnapshots(context.Context, *DeleteExpiredSnapshotsCommand) error
 	GetDashboardSnapshot(context.Context, *GetDashboardSnapshotQuery) (*DashboardSnapshot, error)
 	SearchDashboardSnapshots(context.Context, *GetDashboardSnapshotsQuery) (DashboardSnapshotsList, error)
-	FindDashboard(context.Context, int64, string) (bool, error)
+	ValidateDashboardExists(context.Context, int64, string) (bool, error)
 }
 
 var client = &http.Client{
@@ -42,7 +42,7 @@ func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg dashboardsnapshot.S
 
 	uid := cmd.DashboardCreateCommand.Dashboard.GetNestedString("uid")
 
-	dashboardExists, err := svc.FindDashboard(c.Req.Context(), c.SignedInUser.GetOrgID(), uid)
+	dashboardExists, err := svc.ValidateDashboardExists(c.Req.Context(), c.SignedInUser.GetOrgID(), uid)
 	if !dashboardExists || err != nil {
 		c.JsonApiErr(http.StatusBadRequest, "Failed to find dashboard", err)
 		return
