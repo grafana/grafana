@@ -380,7 +380,7 @@ func TestProvisioningApi(t *testing.T) {
 	})
 
 	t.Run("recording rules", func(t *testing.T) {
-		t.Run("are allowed", func(t *testing.T) {
+		t.Run("are enabled", func(t *testing.T) {
 			env := createTestEnv(t, testConfig)
 			env.features = featuremgmt.WithFeatures(featuremgmt.FlagGrafanaManagedRecordingRules)
 
@@ -416,8 +416,7 @@ func TestProvisioningApi(t *testing.T) {
 			})
 		})
 
-		t.Run("are not allowed", func(t *testing.T) {
-
+		t.Run("are not enabled", func(t *testing.T) {
 			t.Run("POST returns 400", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
