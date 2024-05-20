@@ -11,7 +11,7 @@ import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 import { findFieldIndex } from 'app/features/dimensions';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
-import { isTooltipScrollable, prepareGraphableFields } from '../timeseries/utils';
+import { prepareGraphableFields } from '../timeseries/utils';
 
 import { Options } from './panelcfg.gen';
 
@@ -129,7 +129,6 @@ export const TrendPanel = ({
                       mode={options.tooltip.mode}
                       sortOrder={options.tooltip.sort}
                       isPinned={isPinned}
-                      scrollable={isTooltipScrollable(options.tooltip)}
                       maxHeight={options.tooltip.maxHeight}
                     />
                   );

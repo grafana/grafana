@@ -584,6 +584,11 @@
           }
         }
       }
+    },
+    "apiVersion": {
+      "type": "string",
+      "description": "[internal only] The API version for the plugin. Used for Datasource API servers. This metadata is temporary and will be removed in the future.",
+      "pattern": "^v([\\d]+)(?:(alpha|beta)([\\d]+))?$"
     }
   }
 }
