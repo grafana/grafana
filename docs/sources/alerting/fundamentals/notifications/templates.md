@@ -158,4 +158,3 @@ Once the template is created, you need to make reference to it in your **Contact
 {{<admonition type="note">}}
 It's not recommended to include individual alert information within notification templates. Instead, it's more effective to incorporate such details within the rule using labels and annotations.
 {{</admonition>}}
-
