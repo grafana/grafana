@@ -185,7 +185,7 @@ Annotations add metadata to provide more information on the alert in your alert 
 
 1. Click **Save rule**.
 
-### Configure no data and error handling
+## Configure no data and error handling
 
 In **Configure no data and error handling**, you can define the alerting behavior when the evaluation returns no data or an error.
 
@@ -209,7 +209,7 @@ You can also configure the alert instance state when its evaluation returns an e
 | Ok                  | Sets alert instance state to `Normal`.                                                                                                                                                                                                 |
 | Keep Last State     | Maintains the alert instance in its last state. Useful for mitigating temporary issues, refer to [Keep last state][keep-last-state].                                                                                                   |
 
-### Create alerts from panels
+## Create alerts from panels
 
 Create alerts from any panel type. This means you can reuse the queries in the panel and create alerts based on them.
 
