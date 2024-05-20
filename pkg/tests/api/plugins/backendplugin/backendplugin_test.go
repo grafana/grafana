@@ -508,14 +508,16 @@ func newTestScenario(t *testing.T, name string, opts []testScenarioOption, callb
 
 	tsCtx.uid = "test-plugin"
 	cmd := &datasources.AddDataSourceCommand{
-		OrgID:          u.OrgID,
-		Access:         datasources.DS_ACCESS_PROXY,
-		Name:           "TestPlugin",
-		Type:           tsCtx.testPluginID,
-		UID:            tsCtx.uid,
-		URL:            tsCtx.outgoingServer.URL,
-		JsonData:       jsonData,
-		SecureJsonData: secureJSONData,
+		BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+			OrgID:          u.OrgID,
+			Access:         datasources.DS_ACCESS_PROXY,
+			Name:           "TestPlugin",
+			Type:           tsCtx.testPluginID,
+			UID:            tsCtx.uid,
+			URL:            tsCtx.outgoingServer.URL,
+			JsonData:       jsonData,
+			SecureJsonData: secureJSONData,
+		},
 	}
 
 	in := &testScenarioInput{ds: cmd}

@@ -58,12 +58,14 @@ func TestBacktesting(t *testing.T) {
 		}
 		t.Logf("Creating a new test data source with UID %s", query.DatasourceUID)
 		dsCmd := &datasources.AddDataSourceCommand{
-			Name:   "Backtesting-TestDatasource",
-			Type:   "testdata",
-			Access: datasources.DS_ACCESS_PROXY,
-			UID:    query.DatasourceUID,
 			UserID: userId,
-			OrgID:  1,
+			BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+				Name:   "Backtesting-TestDatasource",
+				Type:   "testdata",
+				Access: datasources.DS_ACCESS_PROXY,
+				UID:    query.DatasourceUID,
+				OrgID:  1,
+			},
 		}
 		_, err := env.Server.HTTPServer.DataSourcesService.AddDataSource(context.Background(), dsCmd)
 		require.NoError(t, err)

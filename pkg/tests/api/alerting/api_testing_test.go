@@ -59,12 +59,14 @@ func TestGrafanaRuleConfig(t *testing.T) {
 	apiCli.CreateFolder(t, "NamespaceUID", "NamespaceTitle")
 
 	dsCmd := &datasources.AddDataSourceCommand{
-		Name:   "TestDatasource",
-		Type:   "testdata",
-		Access: datasources.DS_ACCESS_PROXY,
-		UID:    TESTDATA_UID,
 		UserID: userId,
-		OrgID:  1,
+		BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+			Name:   "TestDatasource",
+			Type:   "testdata",
+			Access: datasources.DS_ACCESS_PROXY,
+			UID:    TESTDATA_UID,
+			OrgID:  1,
+		},
 	}
 	_, err := env.Server.HTTPServer.DataSourcesService.AddDataSource(context.Background(), dsCmd)
 	require.NoError(t, err)

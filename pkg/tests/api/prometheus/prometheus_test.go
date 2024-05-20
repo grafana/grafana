@@ -60,16 +60,18 @@ func TestIntegrationPrometheus(t *testing.T) {
 
 	uid := "prometheus"
 	_, err := testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx, &datasources.AddDataSourceCommand{
-		OrgID:          u.OrgID,
-		Access:         datasources.DS_ACCESS_PROXY,
-		Name:           "Prometheus",
-		Type:           datasources.DS_PROMETHEUS,
-		UID:            uid,
-		URL:            outgoingServer.URL,
-		BasicAuth:      true,
-		BasicAuthUser:  "basicAuthUser",
-		JsonData:       jsonData,
-		SecureJsonData: secureJSONData,
+		BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+			OrgID:          u.OrgID,
+			Access:         datasources.DS_ACCESS_PROXY,
+			Name:           "Prometheus",
+			Type:           datasources.DS_PROMETHEUS,
+			UID:            uid,
+			URL:            outgoingServer.URL,
+			BasicAuth:      true,
+			BasicAuthUser:  "basicAuthUser",
+			JsonData:       jsonData,
+			SecureJsonData: secureJSONData,
+		},
 	})
 	require.NoError(t, err)
 

@@ -22,19 +22,23 @@ func TestIntegrationDataAccess(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	defaultAddDatasourceCommand := datasources.AddDataSourceCommand{
-		OrgID:  10,
-		Name:   "nisse",
-		Type:   datasources.DS_GRAPHITE,
-		Access: datasources.DS_ACCESS_DIRECT,
-		URL:    "http://test",
+		BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+			OrgID:  10,
+			Name:   "nisse",
+			Type:   datasources.DS_GRAPHITE,
+			Access: datasources.DS_ACCESS_DIRECT,
+			URL:    "http://test",
+		},
 	}
 
 	defaultUpdateDatasourceCommand := datasources.UpdateDataSourceCommand{
-		OrgID:  10,
-		Name:   "nisse_updated",
-		Type:   datasources.DS_GRAPHITE,
-		Access: datasources.DS_ACCESS_DIRECT,
-		URL:    "http://test",
+		BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+			OrgID:  10,
+			Name:   "nisse_updated",
+			Type:   datasources.DS_GRAPHITE,
+			Access: datasources.DS_ACCESS_DIRECT,
+			URL:    "http://test",
+		},
 	}
 
 	initDatasource := func(db db.DB) *datasources.DataSource {
@@ -56,14 +60,16 @@ func TestIntegrationDataAccess(t *testing.T) {
 			db := db.InitTestDB(t)
 			ss := SqlStore{db: db}
 			_, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-				OrgID:      10,
-				Name:       "laban",
-				Type:       datasources.DS_GRAPHITE,
-				Access:     datasources.DS_ACCESS_DIRECT,
-				URL:        "http://test",
-				Database:   "site",
-				ReadOnly:   true,
-				APIVersion: "v0alpha1",
+				BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+					OrgID:      10,
+					Name:       "laban",
+					Type:       datasources.DS_GRAPHITE,
+					Access:     datasources.DS_ACCESS_DIRECT,
+					URL:        "http://test",
+					Database:   "site",
+					ReadOnly:   true,
+					APIVersion: "v0alpha1",
+				},
 			})
 			require.NoError(t, err)
 
@@ -179,12 +185,14 @@ func TestIntegrationDataAccess(t *testing.T) {
 
 			cmd := datasources.UpdateDataSourceCommand{
 				ID:      ds.ID,
-				OrgID:   10,
-				Name:    "nisse",
-				Type:    datasources.DS_GRAPHITE,
-				Access:  datasources.DS_ACCESS_PROXY,
-				URL:     "http://test",
 				Version: ds.Version,
+				BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+					OrgID:  10,
+					Name:   "nisse",
+					Type:   datasources.DS_GRAPHITE,
+					Access: datasources.DS_ACCESS_PROXY,
+					URL:    "http://test",
+				},
 			}
 			// Make a copy as UpdateDataSource modifies it
 			cmd2 := cmd
@@ -202,12 +210,14 @@ func TestIntegrationDataAccess(t *testing.T) {
 			ss := SqlStore{db: db}
 
 			cmd := &datasources.UpdateDataSourceCommand{
-				ID:     ds.ID,
-				OrgID:  10,
-				Name:   "nisse",
-				Type:   datasources.DS_GRAPHITE,
-				Access: datasources.DS_ACCESS_PROXY,
-				URL:    "http://test",
+				ID: ds.ID,
+				BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+					OrgID:  10,
+					Name:   "nisse",
+					Type:   datasources.DS_GRAPHITE,
+					Access: datasources.DS_ACCESS_PROXY,
+					URL:    "http://test",
+				},
 			}
 
 			_, err := ss.UpdateDataSource(context.Background(), cmd)
@@ -221,12 +231,14 @@ func TestIntegrationDataAccess(t *testing.T) {
 
 			cmd := &datasources.UpdateDataSourceCommand{
 				ID:      ds.ID,
-				OrgID:   10,
-				Name:    "nisse",
-				Type:    datasources.DS_GRAPHITE,
-				Access:  datasources.DS_ACCESS_PROXY,
-				URL:     "http://test",
 				Version: 90000,
+				BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+					OrgID:  10,
+					Name:   "nisse",
+					Type:   datasources.DS_GRAPHITE,
+					Access: datasources.DS_ACCESS_PROXY,
+					URL:    "http://test",
+				},
 			}
 
 			_, err := ss.UpdateDataSource(context.Background(), cmd)
@@ -397,13 +409,15 @@ func TestIntegrationDataAccess(t *testing.T) {
 			datasourceLimit := 6
 			for i := 0; i < datasourceLimit+1; i++ {
 				_, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-					OrgID:    10,
-					Name:     "laban" + strconv.Itoa(i),
-					Type:     datasources.DS_GRAPHITE,
-					Access:   datasources.DS_ACCESS_DIRECT,
-					URL:      "http://test",
-					Database: "site",
-					ReadOnly: true,
+					BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+						OrgID:    10,
+						Name:     "laban" + strconv.Itoa(i),
+						Type:     datasources.DS_GRAPHITE,
+						Access:   datasources.DS_ACCESS_DIRECT,
+						URL:      "http://test",
+						Database: "site",
+						ReadOnly: true,
+					},
 				})
 				require.NoError(t, err)
 			}
@@ -421,13 +435,15 @@ func TestIntegrationDataAccess(t *testing.T) {
 			numberOfDatasource := 5100
 			for i := 0; i < numberOfDatasource; i++ {
 				_, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-					OrgID:    10,
-					Name:     "laban" + strconv.Itoa(i),
-					Type:     datasources.DS_GRAPHITE,
-					Access:   datasources.DS_ACCESS_DIRECT,
-					URL:      "http://test",
-					Database: "site",
-					ReadOnly: true,
+					BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+						OrgID:    10,
+						Name:     "laban" + strconv.Itoa(i),
+						Type:     datasources.DS_GRAPHITE,
+						Access:   datasources.DS_ACCESS_DIRECT,
+						URL:      "http://test",
+						Database: "site",
+						ReadOnly: true,
+					},
 				})
 				require.NoError(t, err)
 			}
@@ -445,13 +461,15 @@ func TestIntegrationDataAccess(t *testing.T) {
 			numberOfDatasource := 5100
 			for i := 0; i < numberOfDatasource; i++ {
 				_, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-					OrgID:    10,
-					Name:     "laban" + strconv.Itoa(i),
-					Type:     datasources.DS_GRAPHITE,
-					Access:   datasources.DS_ACCESS_DIRECT,
-					URL:      "http://test",
-					Database: "site",
-					ReadOnly: true,
+					BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+						OrgID:    10,
+						Name:     "laban" + strconv.Itoa(i),
+						Type:     datasources.DS_GRAPHITE,
+						Access:   datasources.DS_ACCESS_DIRECT,
+						URL:      "http://test",
+						Database: "site",
+						ReadOnly: true,
+					},
 				})
 				require.NoError(t, err)
 			}
@@ -470,24 +488,28 @@ func TestIntegrationDataAccess(t *testing.T) {
 			ss := SqlStore{db: db}
 
 			_, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-				OrgID:    10,
-				Name:     "Elasticsearch",
-				Type:     datasources.DS_ES,
-				Access:   datasources.DS_ACCESS_DIRECT,
-				URL:      "http://test",
-				Database: "site",
-				ReadOnly: true,
+				BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+					OrgID:    10,
+					Name:     "Elasticsearch",
+					Type:     datasources.DS_ES,
+					Access:   datasources.DS_ACCESS_DIRECT,
+					URL:      "http://test",
+					Database: "site",
+					ReadOnly: true,
+				},
 			})
 			require.NoError(t, err)
 
 			_, err = ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-				OrgID:    10,
-				Name:     "Graphite",
-				Type:     datasources.DS_GRAPHITE,
-				Access:   datasources.DS_ACCESS_DIRECT,
-				URL:      "http://test",
-				Database: "site",
-				ReadOnly: true,
+				BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+					OrgID:    10,
+					Name:     "Graphite",
+					Type:     datasources.DS_GRAPHITE,
+					Access:   datasources.DS_ACCESS_DIRECT,
+					URL:      "http://test",
+					Database: "site",
+					ReadOnly: true,
+				},
 			})
 			require.NoError(t, err)
 
@@ -515,13 +537,15 @@ func TestIntegrationDataAccess(t *testing.T) {
 			ss := SqlStore{db: db}
 
 			_, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-				OrgID:    10,
-				Name:     "Elasticsearch",
-				Type:     "other",
-				Access:   datasources.DS_ACCESS_DIRECT,
-				URL:      "http://test",
-				Database: "site",
-				ReadOnly: true,
+				BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+					OrgID:    10,
+					Name:     "Elasticsearch",
+					Type:     "other",
+					Access:   datasources.DS_ACCESS_DIRECT,
+					URL:      "http://test",
+					Database: "site",
+					ReadOnly: true,
+				},
 			})
 			require.NoError(t, err)
 
@@ -538,25 +562,29 @@ func TestIntegrationDataAccess(t *testing.T) {
 			ss := SqlStore{db: db}
 
 			_, errPrunable := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-				OrgID:      10,
-				Name:       "ElasticsearchPrunable",
-				Type:       "other",
-				Access:     datasources.DS_ACCESS_DIRECT,
-				URL:        "http://test",
-				Database:   "site",
-				ReadOnly:   true,
-				IsPrunable: true,
+				BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+					OrgID:      10,
+					Name:       "ElasticsearchPrunable",
+					Type:       "other",
+					Access:     datasources.DS_ACCESS_DIRECT,
+					URL:        "http://test",
+					Database:   "site",
+					ReadOnly:   true,
+					IsPrunable: true,
+				},
 			})
 			require.NoError(t, errPrunable)
 
 			_, errNotPrunable := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-				OrgID:    10,
-				Name:     "ElasticsearchNotPrunable",
-				Type:     "other",
-				Access:   datasources.DS_ACCESS_DIRECT,
-				URL:      "http://test",
-				Database: "site",
-				ReadOnly: true,
+				BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+					OrgID:    10,
+					Name:     "ElasticsearchNotPrunable",
+					Type:     "other",
+					Access:   datasources.DS_ACCESS_DIRECT,
+					URL:      "http://test",
+					Database: "site",
+					ReadOnly: true,
+				},
 			})
 			require.NoError(t, errNotPrunable)
 

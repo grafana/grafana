@@ -53,13 +53,15 @@ func TestMigrate(t *testing.T) {
 		dataSourceName := "Test"
 		dataSourceOrg := int64(1)
 		_, err := ds.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-			OrgID:  dataSourceOrg,
-			Name:   dataSourceName,
-			Type:   datasources.DS_MYSQL,
-			Access: datasources.DS_ACCESS_DIRECT,
-			URL:    "http://test",
-			EncryptedSecureJsonData: map[string][]byte{
-				"password": []byte("9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"),
+			BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+				OrgID:  dataSourceOrg,
+				Name:   dataSourceName,
+				Type:   datasources.DS_MYSQL,
+				Access: datasources.DS_ACCESS_DIRECT,
+				URL:    "http://test",
+				EncryptedSecureJsonData: map[string][]byte{
+					"password": []byte("9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"),
+				},
 			},
 		})
 		assert.NoError(t, err)
@@ -119,13 +121,15 @@ func TestMigrate(t *testing.T) {
 
 		// Add test data source
 		_, err := ds.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-			OrgID:  dataSourceOrg,
-			Name:   dataSourceName,
-			Type:   datasources.DS_MYSQL,
-			Access: datasources.DS_ACCESS_DIRECT,
-			URL:    "http://test",
-			EncryptedSecureJsonData: map[string][]byte{
-				"password": []byte("9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"),
+			BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+				OrgID:  dataSourceOrg,
+				Name:   dataSourceName,
+				Type:   datasources.DS_MYSQL,
+				Access: datasources.DS_ACCESS_DIRECT,
+				URL:    "http://test",
+				EncryptedSecureJsonData: map[string][]byte{
+					"password": []byte("9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"),
+				},
 			},
 		})
 		assert.NoError(t, err)
@@ -187,13 +191,15 @@ func TestMigrate(t *testing.T) {
 
 		// Add test data source
 		_, err := ds.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-			OrgID:  dataSourceOrg,
-			Name:   dataSourceName,
-			Type:   datasources.DS_MYSQL,
-			Access: datasources.DS_ACCESS_DIRECT,
-			URL:    "http://test",
-			EncryptedSecureJsonData: map[string][]byte{
-				"password": []byte("9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"),
+			BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+				OrgID:  dataSourceOrg,
+				Name:   dataSourceName,
+				Type:   datasources.DS_MYSQL,
+				Access: datasources.DS_ACCESS_DIRECT,
+				URL:    "http://test",
+				EncryptedSecureJsonData: map[string][]byte{
+					"password": []byte("9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"),
+				},
 			},
 		})
 		assert.NoError(t, err)
@@ -278,13 +284,15 @@ func TestMigrate(t *testing.T) {
 
 		// Add test data source
 		_, err := ds.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-			OrgID:  dataSourceOrg,
-			Name:   dataSourceName,
-			Type:   datasources.DS_MYSQL,
-			Access: datasources.DS_ACCESS_DIRECT,
-			URL:    "http://test",
-			EncryptedSecureJsonData: map[string][]byte{
-				"password": []byte("9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"),
+			BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+				OrgID:  dataSourceOrg,
+				Name:   dataSourceName,
+				Type:   datasources.DS_MYSQL,
+				Access: datasources.DS_ACCESS_DIRECT,
+				URL:    "http://test",
+				EncryptedSecureJsonData: map[string][]byte{
+					"password": []byte("9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"),
+				},
 			},
 		})
 		assert.NoError(t, err)

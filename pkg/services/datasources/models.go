@@ -150,14 +150,15 @@ func (e ErrDatasourceSecretsPluginUserFriendly) Error() string {
 // ----------------------
 // COMMANDS
 
-// Also acts as api DTO
-type AddDataSourceCommand struct {
+// The input values shared with both Add+Update commands (also part of the DTO)
+// This part of the command can share validation between add and update actions
+type BaseDataSourceCommand struct {
 	Name            string            `json:"name"`
 	Type            string            `json:"type" binding:"Required"`
 	Access          DsAccess          `json:"access" binding:"Required"`
 	URL             string            `json:"url"`
-	Database        string            `json:"database"`
 	User            string            `json:"user"`
+	Database        string            `json:"database"`
 	BasicAuth       bool              `json:"basicAuth"`
 	BasicAuthUser   string            `json:"basicAuthUser"`
 	WithCredentials bool              `json:"withCredentials"`
@@ -165,45 +166,38 @@ type AddDataSourceCommand struct {
 	JsonData        *simplejson.Json  `json:"jsonData"`
 	SecureJsonData  map[string]string `json:"secureJsonData"`
 	UID             string            `json:"uid"`
+
 	// swagger:ignore
-	APIVersion string `json:"apiVersion"`
+	APIVersion string `json:"apiVersion,omitempty"`
 	// swagger:ignore
 	IsPrunable bool
 
 	OrgID                   int64             `json:"-"`
-	UserID                  int64             `json:"-"`
 	ReadOnly                bool              `json:"-"`
 	EncryptedSecureJsonData map[string][]byte `json:"-"`
 	UpdateSecretFn          UpdateSecretFn    `json:"-"`
 }
 
 // Also acts as api DTO
-type UpdateDataSourceCommand struct {
-	Name            string            `json:"name" binding:"Required"`
-	Type            string            `json:"type" binding:"Required"`
-	Access          DsAccess          `json:"access" binding:"Required"`
-	URL             string            `json:"url"`
-	User            string            `json:"user"`
-	Database        string            `json:"database"`
-	BasicAuth       bool              `json:"basicAuth"`
-	BasicAuthUser   string            `json:"basicAuthUser"`
-	WithCredentials bool              `json:"withCredentials"`
-	IsDefault       bool              `json:"isDefault"`
-	JsonData        *simplejson.Json  `json:"jsonData"`
-	SecureJsonData  map[string]string `json:"secureJsonData"`
-	Version         int               `json:"version"`
-	UID             string            `json:"uid"`
-	// swagger:ignore
-	APIVersion string `json:"apiVersion"`
-	// swagger:ignore
-	IsPrunable bool
+type AddDataSourceCommand struct {
+	BaseDataSourceCommand
 
-	OrgID                   int64             `json:"-"`
-	ID                      int64             `json:"-"`
-	ReadOnly                bool              `json:"-"`
-	EncryptedSecureJsonData map[string][]byte `json:"-"`
-	UpdateSecretFn          UpdateSecretFn    `json:"-"`
-	IgnoreOldSecureJsonData bool              `json:"-"`
+	// When UserID is non zero, this user gets admin permissions
+	UserID int64 `json:"-"`
+}
+
+// Also acts as api DTO
+type UpdateDataSourceCommand struct {
+	BaseDataSourceCommand
+
+	// The internal ID for the previous value
+	ID int64 `json:"-"`
+
+	// Used for optimistic locking
+	Version int `json:"version"`
+
+	// Replace all previous values
+	IgnoreOldSecureJsonData bool `json:"-"`
 }
 
 // DeleteDataSourceCommand will delete a DataSource based on OrgID as well as the UID (preferred), ID, or Name.

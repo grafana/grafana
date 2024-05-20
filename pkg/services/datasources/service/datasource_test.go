@@ -75,25 +75,31 @@ func TestService_AddDataSource(t *testing.T) {
 		require.NoError(t, err)
 
 		cmd := &datasources.AddDataSourceCommand{
-			OrgID: 1,
-			Name:  string(make([]byte, 256)),
+			BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+				OrgID: 1,
+				Name:  string(make([]byte, 256)),
+			},
 		}
 
 		_, err = dsService.AddDataSource(context.Background(), cmd)
 		require.EqualError(t, err, "[datasource.nameInvalid] max length is 190")
 
 		cmd = &datasources.AddDataSourceCommand{
-			OrgID: 1,
-			URL:   string(make([]byte, 256)),
+			BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+				OrgID: 1,
+				URL:   string(make([]byte, 256)),
+			},
 		}
 
 		_, err = dsService.AddDataSource(context.Background(), cmd)
 		require.EqualError(t, err, "[datasource.urlInvalid] max length is 255")
 
 		cmd = &datasources.AddDataSourceCommand{
-			OrgID:      1,
-			Name:       "test",
-			APIVersion: "v0alpha2",
+			BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+				OrgID:      1,
+				Name:       "test",
+				APIVersion: "v0alpha2",
+			},
 		}
 
 		_, err = dsService.AddDataSource(context.Background(), cmd)
@@ -193,9 +199,11 @@ func TestService_UpdateDataSource(t *testing.T) {
 		require.NoError(t, err)
 
 		cmd := &datasources.UpdateDataSourceCommand{
-			UID:   uuid.New().String(),
-			ID:    1,
-			OrgID: 1,
+			ID: 1,
+			BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+				OrgID: 1,
+				UID:   uuid.New().String(),
+			},
 		}
 
 		_, err = dsService.UpdateDataSource(context.Background(), cmd)
@@ -212,18 +220,22 @@ func TestService_UpdateDataSource(t *testing.T) {
 		require.NoError(t, err)
 
 		cmd := &datasources.UpdateDataSourceCommand{
-			ID:    1,
-			OrgID: 1,
-			Name:  string(make([]byte, 256)),
+			ID: 1,
+			BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+				OrgID: 1,
+				Name:  string(make([]byte, 256)),
+			},
 		}
 
 		_, err = dsService.UpdateDataSource(context.Background(), cmd)
 		require.EqualError(t, err, "[datasource.nameInvalid] max length is 190")
 
 		cmd = &datasources.UpdateDataSourceCommand{
-			ID:    1,
-			OrgID: 1,
-			URL:   string(make([]byte, 256)),
+			ID: 1,
+			BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+				OrgID: 1,
+				URL:   string(make([]byte, 256)),
+			},
 		}
 
 		_, err = dsService.UpdateDataSource(context.Background(), cmd)
@@ -242,15 +254,19 @@ func TestService_UpdateDataSource(t *testing.T) {
 		mockPermission.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 
 		ds, err := dsService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-			OrgID: 1,
-			Name:  "test-datasource",
+			BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+				OrgID: 1,
+				Name:  "test-datasource",
+			},
 		})
 		require.NoError(t, err)
 
 		cmd := &datasources.UpdateDataSourceCommand{
-			ID:    ds.ID,
-			OrgID: ds.OrgID,
-			Name:  "test-datasource-updated",
+			ID: ds.ID,
+			BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+				OrgID: ds.OrgID,
+				Name:  "test-datasource-updated",
+			},
 		}
 
 		_, err = dsService.UpdateDataSource(context.Background(), cmd)
@@ -269,21 +285,27 @@ func TestService_UpdateDataSource(t *testing.T) {
 		mockPermission.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 
 		dsToUpdate, err := dsService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-			OrgID: 1,
-			Name:  "test-datasource",
+			BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+				OrgID: 1,
+				Name:  "test-datasource",
+			},
 		})
 		require.NoError(t, err)
 
 		existingDs, err := dsService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-			OrgID: 1,
-			Name:  "name already taken",
+			BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+				OrgID: 1,
+				Name:  "name already taken",
+			},
 		})
 		require.NoError(t, err)
 
 		cmd := &datasources.UpdateDataSourceCommand{
-			ID:    dsToUpdate.ID,
-			OrgID: dsToUpdate.OrgID,
-			Name:  existingDs.Name,
+			ID: dsToUpdate.ID,
+			BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+				OrgID: dsToUpdate.OrgID,
+				Name:  existingDs.Name,
+			},
 		}
 
 		_, err = dsService.UpdateDataSource(context.Background(), cmd)
@@ -304,10 +326,12 @@ func TestService_UpdateDataSource(t *testing.T) {
 		expectedDbKey := "db-secure-key"
 		expectedDbValue := "db-secure-value"
 		ds, err := dsService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-			OrgID: 1,
-			Name:  "test-datasource",
-			SecureJsonData: map[string]string{
-				expectedDbKey: expectedDbValue,
+			BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+				OrgID: 1,
+				Name:  "test-datasource",
+				SecureJsonData: map[string]string{
+					expectedDbKey: expectedDbValue,
+				},
 			},
 		})
 		require.NoError(t, err)
@@ -316,11 +340,13 @@ func TestService_UpdateDataSource(t *testing.T) {
 		expectedOgValue := "cmd-secure-value"
 
 		cmd := &datasources.UpdateDataSourceCommand{
-			ID:    ds.ID,
-			OrgID: ds.OrgID,
-			Name:  "test-datasource-updated",
-			SecureJsonData: map[string]string{
-				expectedOgKey: expectedOgValue,
+			ID: ds.ID,
+			BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+				OrgID: ds.OrgID,
+				Name:  "test-datasource-updated",
+				SecureJsonData: map[string]string{
+					expectedOgKey: expectedOgValue,
+				},
 			},
 		}
 
@@ -348,10 +374,12 @@ func TestService_UpdateDataSource(t *testing.T) {
 		notExpectedDbKey := "db-secure-key"
 		dbValue := "db-secure-value"
 		ds, err := dsService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-			OrgID: 1,
-			Name:  "test-datasource",
-			SecureJsonData: map[string]string{
-				notExpectedDbKey: dbValue,
+			BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+				OrgID: 1,
+				Name:  "test-datasource",
+				SecureJsonData: map[string]string{
+					notExpectedDbKey: dbValue,
+				},
 			},
 		})
 		require.NoError(t, err)
@@ -360,13 +388,15 @@ func TestService_UpdateDataSource(t *testing.T) {
 		expectedOgValue := "cmd-secure-value"
 
 		cmd := &datasources.UpdateDataSourceCommand{
-			ID:    ds.ID,
-			OrgID: ds.OrgID,
-			Name:  "test-datasource-updated",
-			SecureJsonData: map[string]string{
-				expectedOgKey: expectedOgValue,
-			},
+			ID:                      ds.ID,
 			IgnoreOldSecureJsonData: true,
+			BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+				OrgID: ds.OrgID,
+				Name:  "test-datasource-updated",
+				SecureJsonData: map[string]string{
+					expectedOgKey: expectedOgValue,
+				},
+			},
 		}
 
 		ds, err = dsService.UpdateDataSource(context.Background(), cmd)

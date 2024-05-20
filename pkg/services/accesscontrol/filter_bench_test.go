@@ -57,8 +57,10 @@ func setupFilterBenchmark(b *testing.B, numDs, numPermissions int) (db.DB, []acc
 	store := dsService.CreateStore(sqlStore, log.New("accesscontrol.test"))
 	for i := 1; i <= numDs; i++ {
 		_, err := store.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-			Name:  fmt.Sprintf("ds:%d", i),
-			OrgID: 1,
+			BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+				Name:  fmt.Sprintf("ds:%d", i),
+				OrgID: 1,
+			},
 		})
 		require.NoError(b, err)
 	}

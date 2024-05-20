@@ -61,16 +61,18 @@ func TestIntegrationElasticsearch(t *testing.T) {
 
 	uid := "es"
 	_, err := testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx, &datasources.AddDataSourceCommand{
-		OrgID:          u.OrgID,
-		Access:         datasources.DS_ACCESS_PROXY,
-		Name:           "Elasticsearch",
-		Type:           datasources.DS_ES,
-		UID:            uid,
-		URL:            outgoingServer.URL,
-		BasicAuth:      true,
-		BasicAuthUser:  "basicAuthUser",
-		JsonData:       jsonData,
-		SecureJsonData: secureJSONData,
+		BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+			OrgID:          u.OrgID,
+			Access:         datasources.DS_ACCESS_PROXY,
+			Name:           "Elasticsearch",
+			Type:           datasources.DS_ES,
+			UID:            uid,
+			URL:            outgoingServer.URL,
+			BasicAuth:      true,
+			BasicAuthUser:  "basicAuthUser",
+			JsonData:       jsonData,
+			SecureJsonData: secureJSONData,
+		},
 	})
 	require.NoError(t, err)
 

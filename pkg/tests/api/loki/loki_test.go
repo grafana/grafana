@@ -60,16 +60,18 @@ func TestIntegrationLoki(t *testing.T) {
 
 	uid := "loki"
 	_, err := testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx, &datasources.AddDataSourceCommand{
-		OrgID:          u.OrgID,
-		Access:         datasources.DS_ACCESS_PROXY,
-		Name:           "Loki",
-		Type:           datasources.DS_LOKI,
-		UID:            uid,
-		URL:            outgoingServer.URL,
-		BasicAuth:      true,
-		BasicAuthUser:  "basicAuthUser",
-		JsonData:       jsonData,
-		SecureJsonData: secureJSONData,
+		BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+			OrgID:          u.OrgID,
+			Access:         datasources.DS_ACCESS_PROXY,
+			Name:           "Loki",
+			Type:           datasources.DS_LOKI,
+			UID:            uid,
+			URL:            outgoingServer.URL,
+			BasicAuth:      true,
+			BasicAuthUser:  "basicAuthUser",
+			JsonData:       jsonData,
+			SecureJsonData: secureJSONData,
+		},
 	})
 	require.NoError(t, err)
 

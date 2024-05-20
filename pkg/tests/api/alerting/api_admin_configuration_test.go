@@ -131,15 +131,17 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 	// Add an alertmanager datasource
 	{
 		cmd := datasources.AddDataSourceCommand{
-			OrgID:  1,
-			Name:   "AM1",
-			Type:   datasources.DS_ALERTMANAGER,
-			Access: "proxy",
-			URL:    fakeAM1.URL(),
-			JsonData: simplejson.NewFromAny(map[string]any{
-				"handleGrafanaManagedAlerts": true,
-				"implementation":             "prometheus",
-			}),
+			BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+				OrgID:  1,
+				Name:   "AM1",
+				Type:   datasources.DS_ALERTMANAGER,
+				Access: "proxy",
+				URL:    fakeAM1.URL(),
+				JsonData: simplejson.NewFromAny(map[string]any{
+					"handleGrafanaManagedAlerts": true,
+					"implementation":             "prometheus",
+				}),
+			},
 		}
 		buf := bytes.Buffer{}
 		enc := json.NewEncoder(&buf)
@@ -158,15 +160,17 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 	// Add another alertmanager datasource
 	{
 		cmd := datasources.AddDataSourceCommand{
-			OrgID:  1,
-			Name:   "AM2",
-			Type:   datasources.DS_ALERTMANAGER,
-			Access: "proxy",
-			URL:    fakeAM2.URL(),
-			JsonData: simplejson.NewFromAny(map[string]any{
-				"handleGrafanaManagedAlerts": true,
-				"implementation":             "prometheus",
-			}),
+			BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+				OrgID:  1,
+				Name:   "AM2",
+				Type:   datasources.DS_ALERTMANAGER,
+				Access: "proxy",
+				URL:    fakeAM2.URL(),
+				JsonData: simplejson.NewFromAny(map[string]any{
+					"handleGrafanaManagedAlerts": true,
+					"implementation":             "prometheus",
+				}),
+			},
 		}
 		buf := bytes.Buffer{}
 		enc := json.NewEncoder(&buf)
@@ -287,15 +291,17 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 	// Add an alertmanager datasource fot the other organisation
 	{
 		cmd := datasources.AddDataSourceCommand{
-			OrgID:  2,
-			Name:   "AM3",
-			Type:   datasources.DS_ALERTMANAGER,
-			Access: "proxy",
-			URL:    fakeAM3.URL(),
-			JsonData: simplejson.NewFromAny(map[string]any{
-				"handleGrafanaManagedAlerts": true,
-				"implementation":             "prometheus",
-			}),
+			BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+				OrgID:  2,
+				Name:   "AM3",
+				Type:   datasources.DS_ALERTMANAGER,
+				Access: "proxy",
+				URL:    fakeAM3.URL(),
+				JsonData: simplejson.NewFromAny(map[string]any{
+					"handleGrafanaManagedAlerts": true,
+					"implementation":             "prometheus",
+				}),
+			},
 		}
 		buf := bytes.Buffer{}
 		enc := json.NewEncoder(&buf)

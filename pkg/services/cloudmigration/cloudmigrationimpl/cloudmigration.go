@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -24,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/gcom"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 // Service Define the cloudmigration.Service Implementation.
@@ -418,21 +419,23 @@ func (s *Service) getDataSources(ctx context.Context) ([]datasources.AddDataSour
 			return nil, err
 		}
 		dataSourceCmd := datasources.AddDataSourceCommand{
-			OrgID:           dataSource.OrgID,
-			Name:            dataSource.Name,
-			Type:            dataSource.Type,
-			Access:          dataSource.Access,
-			URL:             dataSource.URL,
-			User:            dataSource.User,
-			Database:        dataSource.Database,
-			BasicAuth:       dataSource.BasicAuth,
-			BasicAuthUser:   dataSource.BasicAuthUser,
-			WithCredentials: dataSource.WithCredentials,
-			IsDefault:       dataSource.IsDefault,
-			JsonData:        dataSource.JsonData,
-			SecureJsonData:  decryptedData,
-			ReadOnly:        dataSource.ReadOnly,
-			UID:             dataSource.UID,
+			BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+				OrgID:           dataSource.OrgID,
+				Name:            dataSource.Name,
+				Type:            dataSource.Type,
+				Access:          dataSource.Access,
+				URL:             dataSource.URL,
+				User:            dataSource.User,
+				Database:        dataSource.Database,
+				BasicAuth:       dataSource.BasicAuth,
+				BasicAuthUser:   dataSource.BasicAuthUser,
+				WithCredentials: dataSource.WithCredentials,
+				IsDefault:       dataSource.IsDefault,
+				JsonData:        dataSource.JsonData,
+				SecureJsonData:  decryptedData,
+				ReadOnly:        dataSource.ReadOnly,
+				UID:             dataSource.UID,
+			},
 		}
 		result = append(result, dataSourceCmd)
 	}
