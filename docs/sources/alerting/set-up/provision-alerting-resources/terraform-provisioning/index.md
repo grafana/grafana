@@ -15,6 +15,27 @@ labels:
     - oss
 title: Use Terraform to manage alerting resources
 weight: 200
+refs:
+  service-accounts:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/
+  api-keys:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/api-keys/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/api-keys/
+  alerting-rules:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/
+  testdata:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/testdata/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/testdata/
 ---
 
 # Use Terraform to manage alerting resources
@@ -38,9 +59,9 @@ Complete the following tasks to create and manage your alerting resources using 
 
 ## Create an API key for provisioning
 
-You can [create a normal Grafana API key][api-keys] to authenticate Terraform with Grafana. Most existing tooling using API keys should automatically work with the new Grafana Alerting support.
+You can [create a normal Grafana API key](ref:api-keys) to authenticate Terraform with Grafana. Most existing tooling using API keys should automatically work with the new Grafana Alerting support.
 
-There are also dedicated RBAC roles for alerting provisioning. This lets you easily authenticate as a [service account][service-accounts] with the minimum permissions needed to provision your Alerting infrastructure.
+There are also dedicated RBAC roles for alerting provisioning. This lets you easily authenticate as a [service account](ref:service-accounts) with the minimum permissions needed to provision your Alerting infrastructure.
 
 To create an API key for provisioning, complete the following steps.
 
@@ -252,13 +273,13 @@ By default, you cannot edit resources provisioned from Terraform from the UI. Th
 
 ## Provision alert rules
 
-[Alert rules][alerting-rules] enable you to alert against any Grafana data source. This can be a data source that you already have configured, or you can [define your data sources in Terraform](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/data_source) alongside your alert rules.
+[Alert rules](ref:alerting-rules) enable you to alert against any Grafana data source. This can be a data source that you already have configured, or you can [define your data sources in Terraform](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/data_source) alongside your alert rules.
 
 To provision alert rules, complete the following steps.
 
 1. Create a data source to query and a folder to store your rules in.
 
-In this example, the [TestData][testdata] data source is used.
+In this example, the [TestData](ref:testdata) data source is used.
 
 Alerts can be defined against any backend datasource in Grafana.
 
@@ -352,16 +373,3 @@ When the alert fires, Grafana routes a notification through the policy you defin
 
 For example, if you chose Slack as a contact point, Grafana’s embedded [Alertmanager](https://github.com/prometheus/alertmanager) automatically posts a message to Slack.
 
-{{% docs/reference %}}
-[alerting-rules]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules"
-[alerting-rules]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules"
-
-[api-keys]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/administration/api-keys"
-[api-keys]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/administration/api-keys"
-
-[service-accounts]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/administration/service-accounts"
-[service-accounts]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/administration/service-accounts"
-
-[testdata]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/datasources/testdata"
-[testdata]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/datasources/testdata"
-{{% /docs/reference %}}

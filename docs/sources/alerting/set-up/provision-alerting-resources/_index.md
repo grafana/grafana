@@ -16,6 +16,17 @@ labels:
     - oss
 title: Import and export Grafana Alerting resources
 weight: 300
+refs:
+  alerting_provisioning:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/alerting_provisioning/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/alerting_provisioning/
+  provisioning:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/
 ---
 
 # Import and export Grafana Alerting resources
@@ -38,20 +49,13 @@ Choose from the options below to import your Grafana Alerting resources.
 
 2. Use the Alerting Provisioning HTTP API.
 
-   For more information on the Alerting Provisioning HTTP API, refer to [Alerting provisioning HTTP API][alerting_provisioning].
+   For more information on the Alerting Provisioning HTTP API, refer to [Alerting provisioning HTTP API](ref:alerting_provisioning).
 
 3. Use [Terraform](https://www.terraform.io/).
 
 **Useful Links:**
 
-[Grafana provisioning][provisioning]
+[Grafana provisioning](ref:provisioning)
 
-[Grafana Alerting provisioning API][alerting_provisioning]
+[Grafana Alerting provisioning API](ref:alerting_provisioning)
 
-{{% docs/reference %}}
-[alerting_provisioning]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/developers/http_api/alerting_provisioning"
-[alerting_provisioning]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/developers/http_api/alerting_provisioning"
-
-[provisioning]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/administration/provisioning"
-[provisioning]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/administration/provisioning"
-{{% /docs/reference %}}

@@ -18,6 +18,17 @@ labels:
     - oss
 title: Configure data source-managed alert rules
 weight: 200
+refs:
+  alerting:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/
+  annotation-label:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/annotation-label/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/annotation-label/
 ---
 
 # Configure data source-managed alert rules
@@ -92,7 +103,7 @@ Use alert rule evaluation to determine how frequently an alert rule should be ev
 
 ## Add annotations
 
-Add [annotations][annotation-label]. to provide more context on the alert in your alert notifications.
+Add [annotations](ref:annotation-label). to provide more context on the alert in your alert notifications.
 
 Annotations add metadata to provide more information on the alert in your alert notifications. For example, add a **Summary** annotation to tell you which value caused the alert to fire or which server it happened on.
 
@@ -125,10 +136,3 @@ All alert rules and instances, irrespective of their labels, match the default n
 
 1. Click **Save rule**.
 
-{{% docs/reference %}}
-[alerting]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting"
-[alerting]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting"
-
-[annotation-label]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/annotation-label"
-[annotation-label]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/annotation-label"
-{{% /docs/reference %}}

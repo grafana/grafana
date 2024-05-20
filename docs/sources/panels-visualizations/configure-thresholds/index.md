@@ -16,6 +16,42 @@ labels:
 menuTitle: Configure thresholds
 title: Configure thresholds
 weight: 100
+refs:
+  geomap-visualization:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/geomap/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/geomap/
+  gauge-visualization:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/gauge/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/gauge/
+  state-timeline-visualization:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/state-timeline/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/state-timeline/
+  time-series-visualization:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series/#from-thresholds
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series/#from-thresholds
+  stat-visualization:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/stat/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/stat/
+  visualization-panels:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/
+  table-visualization:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table/
 ---
 
 # Configure thresholds
@@ -26,17 +62,17 @@ This section includes information about using thresholds in your visualizations.
 
 A threshold is a value that you specify for a metric that is visually reflected in a dashboard when the threshold value is met or exceeded.
 
-Thresholds provide one method for you to conditionally style and color your visualizations based on query results. You can apply thresholds to most, but not all, visualizations. For more information about visualizations, refer to [Visualization panels][].
+Thresholds provide one method for you to conditionally style and color your visualizations based on query results. You can apply thresholds to most, but not all, visualizations. For more information about visualizations, refer to [Visualization panels](ref:visualization-panels).
 
 You can use thresholds to:
 
-- Color grid lines or grid areas in the [Time-series visualization][]
-- Color lines in the [Time-series visualization][]
-- Color the background or value text in the [Stat visualization][]
-- Color the gauge and threshold markers in the [Gauge visualization][]
-- Color markers in the [Geomap visualization][]
-- Color cell text or background in the [Table visualization][]
-- Define regions and region colors in the [State timeline visualization][]
+- Color grid lines or grid areas in the [Time-series visualization](ref:time-series-visualization)
+- Color lines in the [Time-series visualization](ref:time-series-visualization)
+- Color the background or value text in the [Stat visualization](ref:stat-visualization)
+- Color the gauge and threshold markers in the [Gauge visualization](ref:gauge-visualization)
+- Color markers in the [Geomap visualization](ref:geomap-visualization)
+- Color cell text or background in the [Table visualization](ref:table-visualization)
+- Define regions and region colors in the [State timeline visualization](ref:state-timeline-visualization)
 
 There are two types of thresholds:
 
@@ -95,25 +131,3 @@ In the Graph panel visualization, thresholds enable you to add lines or sections
    - **Y-Axis -** Choose to display the y-axis on either the **left** or **right** of the panel.
 1. Click **Save** to save the changes in the dashboard.
 
-{{% docs/reference %}}
-[Table visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
-[Table visualization]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
-
-[Stat visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/stat"
-[Stat visualization]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/stat"
-
-[Time-series visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series#from-thresholds"
-[Time-series visualization]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series#from-thresholds"
-
-[State timeline visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/state-timeline"
-[State timeline visualization]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/state-timeline"
-
-[Gauge visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/gauge"
-[Gauge visualization]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/gauge"
-
-[Visualization panels]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations"
-[Visualization panels]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations"
-
-[Geomap visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/geomap"
-[Geomap visualization]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/geomap"
-{{% /docs/reference %}}

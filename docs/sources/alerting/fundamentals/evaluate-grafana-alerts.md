@@ -11,6 +11,12 @@ labels:
     - oss
 title: Alerting on numeric data
 weight: 110
+refs:
+  set-up-grafana-monitoring:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/set-up-grafana-monitoring/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/set-up-grafana-monitoring/
 ---
 
 # Alerting on numeric data
@@ -34,7 +40,7 @@ Grafana managed alerts query the following backend data sources that have alerti
 
 ### Metrics from the alerting engine
 
-The alerting engine publishes some internal metrics about itself. You can read more about how Grafana publishes [internal metrics][set-up-grafana-monitoring].
+The alerting engine publishes some internal metrics about itself. You can read more about how Grafana publishes [internal metrics](ref:set-up-grafana-monitoring).
 
 | Metric Name                                       | Type      | Description                                                                              |
 | ------------------------------------------------- | --------- | ---------------------------------------------------------------------------------------- |
@@ -107,8 +113,3 @@ When this query is used as the **condition** in an alert rule, then the non-zero
 | {Host=web2,disk=/var} | Alerting |
 | {Host=web3,disk=/var} | Normal   |
 
-{{% docs/reference %}}
-
-[set-up-grafana-monitoring]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/setup-grafana/set-up-grafana-monitoring"
-[set-up-grafana-monitoring]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/setup-grafana/set-up-grafana-monitoring"
-{{% /docs/reference %}}

@@ -14,6 +14,32 @@ labels:
 menuTitle: Configure
 title: Configure Alerting
 weight: 120
+refs:
+  create-mimir-loki-managed-rule:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-mimir-loki-managed-rule/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-mimir-loki-managed-rule/
+  create-notification-policy:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-notification-policy/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-notification-policy/
+  manage-contact-points:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/manage-contact-points/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/manage-contact-points/
+  create-grafana-managed-rule:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule/
+  create-mimir-loki-managed-recording-rule:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-mimir-loki-managed-recording-rule/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-mimir-loki-managed-recording-rule/
 ---
 
 # Configure Alerting
@@ -22,37 +48,21 @@ Configure the features and integrations that you need to create and manage your 
 
 **Configure alert rules**
 
-[Configure Grafana-managed alert rules][create-grafana-managed-rule].
+[Configure Grafana-managed alert rules](ref:create-grafana-managed-rule).
 
-[Configure data source-managed alert rules][create-mimir-loki-managed-rule]
+[Configure data source-managed alert rules](ref:create-mimir-loki-managed-rule)
 
 **Configure recording rules**
 
 _Recording rules are only available for compatible Prometheus or Loki data sources._
 
-For more information, see [Configure recording rules][create-mimir-loki-managed-recording-rule].
+For more information, see [Configure recording rules](ref:create-mimir-loki-managed-recording-rule).
 
 **Configure contact points**
 
-For information on how to configure contact points, see [Configure contact points][manage-contact-points].
+For information on how to configure contact points, see [Configure contact points](ref:manage-contact-points).
 
 **Configure notification policies**
 
-For information on how to configure notification policies, see [Configure notification policies][create-notification-policy].
+For information on how to configure notification policies, see [Configure notification policies](ref:create-notification-policy).
 
-{{% docs/reference %}}
-[create-mimir-loki-managed-rule]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-mimir-loki-managed-rule"
-[create-mimir-loki-managed-rule]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-mimir-loki-managed-rule"
-
-[create-mimir-loki-managed-recording-rule]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-mimir-loki-managed-recording-rule"
-[create-mimir-loki-managed-recording-rule]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-mimir-loki-managed-recording-rule"
-
-[create-grafana-managed-rule]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule"
-[create-grafana-managed-rule]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule"
-
-[manage-contact-points]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/manage-contact-points"
-[manage-contact-points]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/manage-contact-points"
-
-[create-notification-policy]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-notification-policy"
-[create-notification-policy]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-notification-policy"
-{{% /docs/reference %}}

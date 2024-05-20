@@ -13,6 +13,12 @@ labels:
     - oss
 title: Alertmanager
 weight: 140
+refs:
+  configure-alertmanager:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-alertmanager/
 ---
 
 # Alertmanager
@@ -51,9 +57,5 @@ If you are provisioning your data source, set the flag `handleGrafanaManagedAler
 
 [Prometheus Alertmanager documentation](https://prometheus.io/docs/alerting/latest/alertmanager/)
 
-[Add an external Alertmanager][configure-alertmanager]
+[Add an external Alertmanager](ref:configure-alertmanager)
 
-{{% docs/reference %}}
-[configure-alertmanager]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager"
-[configure-alertmanager]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-alertmanager"
-{{% /docs/reference %}}

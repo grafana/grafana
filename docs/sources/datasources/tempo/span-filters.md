@@ -13,6 +13,52 @@ labels:
 menuTitle: Span filters
 title: Span filters
 weight: 600
+refs:
+  explore-trace-integration:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA VERSION>/explore/trace-integration/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA VERSION>/explore/trace-integration/
+  build-dashboards:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/
+  node-graph:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/node-graph/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/node-graph/
+  configure-grafana-feature-toggles:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana/#feature_toggles
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana/#feature_toggles
+  provisioning-data-sources:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA VERSION>/administration/provisioning/#data-sources
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA VERSION>/administration/provisioning/#data-sources
+  exemplars:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA VERSION>/fundamentals/exemplars/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA VERSION>/fundamentals/exemplars/
+  explore:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA VERSION>/explore/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA VERSION>/explore/
+  data-source-management:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA VERSION>/administration/data-source-management/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA VERSION>/administration/data-source-management/
+  variable-syntax:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/variables/variable-syntax/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/variables/variable-syntax/
 ---
 
 # Span Filters
@@ -32,31 +78,3 @@ To only show the spans you have matched, select the `Show matches only` toggle.
 
 <!-- Adding these in case they are needed. -->
 
-{{% docs/reference %}}
-[build-dashboards]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards"
-[build-dashboards]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards"
-
-[configure-grafana-feature-toggles]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#feature_toggles"
-[configure-grafana-feature-toggles]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#feature_toggles"
-
-[data-source-management]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
-[data-source-management]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
-
-[exemplars]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/exemplars"
-[exemplars]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/exemplars"
-
-[explore-trace-integration]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore/trace-integration"
-[explore-trace-integration]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore/trace-integration"
-
-[explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore"
-[explore]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore"
-
-[node-graph]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/node-graph"
-[node-graph]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/node-graph"
-
-[provisioning-data-sources]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning#data-sources"
-[provisioning-data-sources]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning#data-sources"
-
-[variable-syntax]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/variable-syntax"
-[variable-syntax]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/variable-syntax"
-{{% /docs/reference %}}

@@ -15,6 +15,17 @@ labels:
 menuTitle: Annotate visualizations
 title: Annotate visualizations
 weight: 600
+refs:
+  annotations-api:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA VERSION>/developers/http_api/annotations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA VERSION>/developers/http_api/annotations/
+  data-source:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA VERSION>/datasources/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA VERSION>/datasources/
 ---
 
 # Annotate visualizations
@@ -33,7 +44,7 @@ You can annotate visualizations in three ways:
 
 In the first two cases, you're creating new annotations, while in the last you're querying existing annotations from data sources. The built-in annotation query also supports this.
 
-This page explains the first and third options; for information about using the HTTP API, refer to [Annotations API][].
+This page explains the first and third options; for information about using the HTTP API, refer to [Annotations API](ref:annotations-api).
 
 Annotations are supported for the following visualization types:
 
@@ -126,7 +137,7 @@ To add a new annotation query to a dashboard, take the following steps:
 
 1. Configure the query.
 
-   The annotation query options are different for each data source. For information about annotations in a specific data source, refer to the specific [data source][] topic.
+   The annotation query options are different for each data source. For information about annotations in a specific data source, refer to the specific [data source](ref:data-source) topic.
 
 ## Built-in query
 
@@ -179,10 +190,3 @@ The above configuration will produce the following result in the Time series pan
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-0-timeseries-time-regions.png" max-width="600px" caption="Time series time regions business hours" >}}
 
-{{% docs/reference %}}
-[Annotations API]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api/annotations"
-[Annotations API]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api/annotations"
-
-[data source]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources"
-[data source]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources"
-{{% /docs/reference %}}

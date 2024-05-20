@@ -16,6 +16,17 @@ labels:
     - oss
 title: Use file provisioning to manage alerting resources
 weight: 100
+refs:
+  alerting_provisioning:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/alerting_provisioning/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/alerting_provisioning/
+  reload-provisioning-configurations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/admin/#reload-provisioning-configurations
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/admin/#reload-provisioning-configurations
 ---
 
 ## Use file provisioning to manage alerting resources
@@ -28,14 +39,14 @@ Details on how to set up the files and which fields are required for each object
 
 **Note:**
 
-Importing takes place during the initial set up of your Grafana system, but you can re-run it at any time using the [Grafana Admin API][reload-provisioning-configurations].
+Importing takes place during the initial set up of your Grafana system, but you can re-run it at any time using the [Grafana Admin API](ref:reload-provisioning-configurations).
 
 ### Import alert rules
 
 Create or delete alert rules in your Grafana instance(s).
 
 1. Create alert rules in Grafana.
-1. Use the [Alerting provisioning API][alerting_provisioning] export endpoints to download a provisioning file for your alert rules.
+1. Use the [Alerting provisioning API](ref:alerting_provisioning) export endpoints to download a provisioning file for your alert rules.
 1. Copy the contents into a YAML or JSON configuration file in the default provisioning directory or in your configured directory.
 
    Example configuration files can be found below.
@@ -138,7 +149,7 @@ deleteRules:
 Create or delete contact points in your Grafana instance(s).
 
 1. Create a contact point in Grafana.
-1. Use the [Alerting provisioning API][alerting_provisioning] export endpoints to download a provisioning file for your contact point.
+1. Use the [Alerting provisioning API](ref:alerting_provisioning) export endpoints to download a provisioning file for your contact point.
 1. Copy the contents into a YAML or JSON configuration file in the default provisioning directory or in your configured directory.
 
    Example configuration files can be found below.
@@ -497,7 +508,7 @@ settings:
 Create or reset the notification policy tree in your Grafana instance(s).
 
 1. Create a notification policy in Grafana.
-1. Use the [Alerting provisioning API][alerting_provisioning] export endpoints to download a provisioning file for your notification policy.
+1. Use the [Alerting provisioning API](ref:alerting_provisioning) export endpoints to download a provisioning file for your notification policy.
 1. Copy the contents into a YAML or JSON configuration file in the default provisioning directory or in your configured directory.
 
    Example configuration files can be found below.
@@ -728,10 +739,3 @@ spec:
 
 This eliminates the need for a persistent database to use Grafana Alerting in Kubernetes; all your provisioned resources appear after each restart or re-deployment. Grafana still requires a database for normal operation, you do not need to persist the contents of the database between restarts if all objects are provisioned using files.
 
-{{% docs/reference %}}
-[alerting_provisioning]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/developers/http_api/alerting_provisioning"
-[alerting_provisioning]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/developers/http_api/alerting_provisioning"
-
-[reload-provisioning-configurations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/developers/http_api/admin#reload-provisioning-configurations"
-[reload-provisioning-configurations]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/developers/http_api/admin#reload-provisioning-configurations"
-{{% /docs/reference %}}

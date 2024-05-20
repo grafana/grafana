@@ -21,6 +21,27 @@ labels:
 menuTitle: Configure data links
 title: Configure data links
 weight: 80
+refs:
+  templates-and-variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/variables/
+  google-cloud-monitoring:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA VERSION>/datasources/google-cloud-monitoring/query-editor/#deep-link-from-grafana-panels-to-the-google-cloud-console-metrics-explorer
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/google-cloud-monitoring/query-editor/#deep-link-from-grafana-panels-to-the-google-cloud-console-metrics-explorer
+  cloudwatch:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA VERSION>/datasources/aws-cloudwatch/query-editor/#deep-link-grafana-panels-to-the-cloudwatch-console-1
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/aws-cloudwatch/query-editor/#deep-link-grafana-panels-to-the-cloudwatch-console-1
+  global-variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables/#**from-and-**to
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables/#**from-and-**to
 ---
 
 # Configure data links
@@ -37,16 +58,16 @@ To see a list of available variables, type `$` in the data link **URL** field to
 These variables changed in 6.4 so if you have an older version of Grafana, then use the version picker to select docs for an older version of Grafana.
 {{% /admonition %}}
 
-Azure Monitor, [CloudWatch][], and [Google Cloud Monitoring][] have pre-configured data links called _deep links_.
+Azure Monitor, [CloudWatch][], and [Google Cloud Monitoring](ref:google-cloud-monitoring) have pre-configured data links called _deep links_.
 
-You can also use template variables in your data links URLs, refer to [Templates and variables][] for more information on template variables.
+You can also use template variables in your data links URLs, refer to [Templates and variables](ref:templates-and-variables) for more information on template variables.
 
 ## Time range panel variables
 
 These variables allow you to include the current time range in the data link URL.
 
 - `__url_time_range` - current dashboard's time range (i.e. `?from=now-6h&to=now`)
-- `$__from and $__to` - For more information, refer to [Global variables][].
+- `$__from and $__to` - For more information, refer to [Global variables](ref:global-variables).
 
 When you create data links using time range variables like `__url_time_range` in the URL, you have to form the query parameter syntax yourself; that is, you must format the URL by appending query parameters using the question mark (`?`) and ampersand (`&`) syntax. These characters aren't automatically generated.
 
@@ -147,16 +168,3 @@ When creating or updating a data link, press Cmd+Space or Ctrl+Space on your key
 1. Click the **X** icon next to the link you want to delete.
 1. Click **Save** in the upper right to save your changes to the dashboard.
 
-{{% docs/reference %}}
-[Cloudwatch]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/aws-cloudwatch/query-editor#deep-link-grafana-panels-to-the-cloudwatch-console-1"
-[Cloudwatch]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources/aws-cloudwatch/query-editor#deep-link-grafana-panels-to-the-cloudwatch-console-1"
-
-[Google Cloud Monitoring]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/google-cloud-monitoring/query-editor#deep-link-from-grafana-panels-to-the-google-cloud-console-metrics-explorer"
-[Google Cloud Monitoring]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources/google-cloud-monitoring/query-editor#deep-link-from-grafana-panels-to-the-google-cloud-console-metrics-explorer"
-
-[Templates and variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
-[Templates and variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
-
-[Global variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#**from-and-**to"
-[Global variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#**from-and-**to"
-{{% /docs/reference %}}

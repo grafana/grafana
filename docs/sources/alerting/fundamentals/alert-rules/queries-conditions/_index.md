@@ -13,13 +13,24 @@ labels:
     - oss
 title: Queries and conditions
 weight: 104
+refs:
+  data-source-alerting:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/data-source-alerting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/data-source-alerting/
+  query-transform-data:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
 ---
 
 # Queries and conditions
 
 In Grafana, queries play a vital role in fetching and transforming data from supported data sources, which include databases like MySQL and PostgreSQL, time series databases like Prometheus, InfluxDB and Graphite, and services like Elasticsearch, AWS CloudWatch, Azure Monitor and Google Cloud Monitoring.
 
-For more information on supported data sources, see [Data sources][data-source-alerting].
+For more information on supported data sources, see [Data sources](ref:data-source-alerting).
 
 The process of executing a query involves defining the data source, specifying the desired data to retrieve, and applying relevant filters or transformations. Query languages or syntaxes specific to the chosen data source are utilized for constructing these queries.
 
@@ -27,7 +38,7 @@ In Alerting, you define a query to get the data you want to measure and a condit
 
 An alert rule consists of one or more queries and expressions that select the data you want to measure.
 
-For more information on queries and expressions, see [Query and transform data][query-transform-data].
+For more information on queries and expressions, see [Query and transform data](ref:query-transform-data).
 
 ## Data source queries
 
@@ -107,10 +118,3 @@ When the queried data satisfies the defined condition, Grafana triggers the asso
 
 By default, the last expression added is used as the alert condition.
 
-{{% docs/reference %}}
-[data-source-alerting]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/data-source-alerting"
-[data-source-alerting]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/data-source-alerting"
-
-[query-transform-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data"
-[query-transform-data]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data"
-{{% /docs/reference %}}

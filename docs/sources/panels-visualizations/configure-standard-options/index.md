@@ -20,6 +20,12 @@ labels:
 menuTitle: Configure standard options
 title: Configure standard options
 weight: 60
+refs:
+  variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/variables/
 ---
 
 # Configure standard options
@@ -100,7 +106,7 @@ To display all decimals, set the unit to `String`.
 
 ### Display name
 
-Lets you set the display title of all fields. You can use [variables][] in the field title.
+Lets you set the display title of all fields. You can use [variables](ref:variables) in the field title.
 
 When multiple stats, fields, or series are shown, this field controls the title in each stat. You can use expressions like `${__field.name}` to use only the series name or the field name in title.
 
@@ -151,8 +157,3 @@ Select one of the following palettes:
 
 Enter what Grafana should display if the field value is empty or null. The default value is a hyphen (-).
 
-{{% docs/reference %}}
-
-[variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
-[variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
-{{% /docs/reference %}}

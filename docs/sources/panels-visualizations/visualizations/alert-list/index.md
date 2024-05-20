@@ -17,11 +17,17 @@ labels:
     - oss
 title: Alert list
 weight: 100
+refs:
+  grafana-alerting-overview:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA VERSION>/alerting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA VERSION>/alerting/
 ---
 
 # Alert list
 
-Use alert lists to display your alerts. You can configure the list to show the current state. You can read more about alerts in [Grafana Alerting overview][].
+Use alert lists to display your alerts. You can configure the list to show the current state. You can read more about alerts in [Grafana Alerting overview](ref:grafana-alerting-overview).
 
 {{< figure src="/static/img/docs/alert-list-panel/alert-list-panel.png" max-width="850px" >}}
 
@@ -65,7 +71,3 @@ Choose which alert states to display in this visualization.
 - Normal
 - Error
 
-{{% docs/reference %}}
-[Grafana Alerting overview]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting"
-[Grafana Alerting overview]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting"
-{{% /docs/reference %}}

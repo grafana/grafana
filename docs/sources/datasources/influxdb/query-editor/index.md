@@ -10,12 +10,38 @@ labels:
     - oss
 title: Flux support in Grafana
 weight: 200
+refs:
+  annotate-visualizations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/annotate-visualizations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/annotate-visualizations/
+  panel-inspector:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/panel-inspector/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/panel-inspector/
+  query-transform-data:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/
+  explore:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA VERSION>/explore/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA VERSION>/explore/
+  logs:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/logs/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/logs/
 ---
 
 # InfluxDB query editor
 
 This topic explains querying specific to the InfluxDB data source.
-For general documentation on querying data sources in Grafana, see [Query and transform data][query-transform-data].
+For general documentation on querying data sources in Grafana, see [Query and transform data](ref:query-transform-data).
 
 ## Choose a query editing mode
 
@@ -161,11 +187,11 @@ from(bucket: "grafana")
   |> yield(name: "mean")
 ```
 
-To view the interpolated version of a query with the query inspector, refer to [Panel Inspector][panel-inspector].
+To view the interpolated version of a query with the query inspector, refer to [Panel Inspector](ref:panel-inspector).
 
 ## Query logs
 
-You can query and display log data from InfluxDB in [Explore][explore] and with the [Logs panel][logs] for dashboards.
+You can query and display log data from InfluxDB in [Explore](ref:explore) and with the [Logs panel](ref:logs) for dashboards.
 
 Select the InfluxDB data source, then enter a query to display your logs.
 
@@ -184,7 +210,7 @@ To remove tag filters, click the first select, then choose **--remove filter--**
 
 ## Apply annotations
 
-[Annotations][annotate-visualizations] overlay rich event information on top of graphs.
+[Annotations](ref:annotate-visualizations) overlay rich event information on top of graphs.
 You can add annotation queries in the Dashboard menu's Annotations view.
 
 For InfluxDB, your query **must** include `WHERE $timeFilter`.
@@ -199,19 +225,3 @@ The **Tags** field's value can be a comma-separated string.
 SELECT title, description from events WHERE $timeFilter ORDER BY time ASC
 ```
 
-{{% docs/reference %}}
-[annotate-visualizations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/annotate-visualizations"
-[annotate-visualizations]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/annotate-visualizations"
-
-[explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore"
-[explore]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore"
-
-[logs]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/logs"
-[logs]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/logs"
-
-[panel-inspector]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/panel-inspector"
-[panel-inspector]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/panel-inspector"
-
-[query-transform-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
-[query-transform-data]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
-{{% /docs/reference %}}
