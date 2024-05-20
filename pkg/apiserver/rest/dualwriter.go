@@ -2,7 +2,10 @@ package rest
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/grafana/grafana/pkg/infra/kvstore"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -116,4 +119,55 @@ func (u *updateWrapper) Preconditions() *metav1.Preconditions {
 // The only time an empty oldObj should be passed in is if a "create on update" is occurring (there is no oldObj).
 func (u *updateWrapper) UpdatedObject(ctx context.Context, oldObj runtime.Object) (newObj runtime.Object, err error) {
 	return u.updated, nil
+}
+
+/*
+TODOS
+- fix kvstore get request to include orgID and namespace. potentially switch to namespacedkvstore instead.
+- review how to define modes in code. kvstore returns string mode but currently modes are defined as iota.
+- figure out where setDualWritingMode should live
+- what should the key name for the kvstore entry? what about value? decide between iota versus integer
+- Figure out if we want pods to acquire a lock to go from mode 1 to mode 2
+- Add error handling
+- context.Background() --> use something else?
+*/
+
+func SetDualWritingMode(
+	kvs kvstore.KVStore,
+	features featuremgmt.FeatureToggles,
+	entity string,
+	stackID string,
+	legacy LegacyStorage,
+	storage Storage,
+) DualWriter {
+	toMode := map[string]DualWriterMode{
+		"1": Mode1,
+		"2": Mode2,
+		"3": Mode3,
+		"4": Mode4,
+	}
+
+	key := entity + "_" + stackID
+	m, ok, err := kvs.Get(context.Background(), 0, "", key)
+	if err != nil {
+		fmt.Println(err)
+	}
+	if !ok {
+		// default to mode 1
+		m = "1"
+		err := kvs.Set(context.Background(), 0, "", key, m)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+
+	mode := toMode[m]
+
+	if features.IsEnabledGlobally(featuremgmt.FlagDualWritePlaylistsMode2) {
+		// This is where we go through the different gates to allow the instance to migrate from mode 1 to mode 2.
+		// There are none between mode 1 and mode 2
+		mode = Mode2
+	}
+
+	return NewDualWriter(mode, legacy, storage)
 }

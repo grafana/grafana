@@ -1,7 +1,6 @@
 package playlist
 
 import (
-	"context"
 	"fmt"
 	"time"
 
@@ -130,61 +129,11 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 			return nil, err
 		}
 
-		storage[resource.StoragePath()] = setDualWritingMode(b.kvStore, b.features, b.cfg.StackID, legacyStore, store)
+		storage[resource.StoragePath()] = grafanarest.SetDualWritingMode(b.kvStore, b.features, "playlist", b.cfg.StackID, legacyStore, store)
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[playlist.VERSION] = storage
 	return &apiGroupInfo, nil
-}
-
-/*
-TODOS
-- fix kvstore get request to include orgID and namespace. potentially switch to namespacedkvstore instead.
-- review how to define modes in code. kvstore returns string mode but currently modes are defined as iota.
-- figure out where setDualWritingMode should live
-- what should the key name for the kvstore entry? what about value? decide between iota versus integer
-- Figure out if we want pods to acquire a lock to go from mode 1 to mode 2
-- Add error handling
-- context.Background() --> use something else?
-*/
-
-func setDualWritingMode(
-	kvs kvstore.KVStore,
-	features featuremgmt.FeatureToggles,
-	stackID string,
-	legacy grafanarest.LegacyStorage,
-	storage grafanarest.Storage,
-) grafanarest.DualWriter {
-	toMode := map[string]grafanarest.DualWriterMode{
-		"1": grafanarest.Mode1,
-		"2": grafanarest.Mode2,
-		"3": grafanarest.Mode3,
-		"4": grafanarest.Mode4,
-	}
-
-	key := "playlist_" + stackID
-	m, ok, err := kvs.Get(context.Background(), 0, "", key)
-	if err != nil {
-		fmt.Println(err)
-	}
-	if !ok {
-		// default to mode 1
-		m = "1"
-		err := kvs.Set(context.Background(), 0, "", key, m)
-		if err != nil {
-			fmt.Println(err)
-		}
-	}
-
-	mode := toMode[m]
-
-	if features.IsEnabledGlobally(featuremgmt.FlagDualWritePlaylistsMode2) {
-		// This is where we go through the different gates to allow the instance to migrate from mode 1 to mode 2.
-		// There are none between mode 1 and mode 2
-		mode = grafanarest.Mode2
-	}
-
-	return grafanarest.NewDualWriter(mode, legacy, storage)
 }
 
 func (b *PlaylistAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
