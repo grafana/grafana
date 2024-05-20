@@ -18,34 +18,34 @@ weight: 600
 refs:
   explore:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/explore/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/explore/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
   configure-authentication:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-security/configure-authentication/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-security/configure-authentication/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/
   data-source-management:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/administration/data-source-management/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/administration/data-source-management/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
   provisioning-data-sources:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/administration/provisioning/#data-sources
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/administration/provisioning/#data-sources
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
   build-dashboards:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
   internal-grafana-metrics:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/setup-grafana/set-up-grafana-monitoring/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/set-up-grafana-monitoring/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/setup-grafana/set-up-grafana-monitoring/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/set-up-grafana-monitoring/
 ---
 
 # Graphite data source

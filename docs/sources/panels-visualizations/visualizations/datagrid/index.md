@@ -22,7 +22,7 @@ weight: 100
 refs:
   special-data-sources:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/datasources/#special-data-sources
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/#special-data-sources
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/#special-data-sources
 ---

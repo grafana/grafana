@@ -37,14 +37,14 @@ weight: 100
 refs:
   provisioning-docs-page:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/administration/provisioning/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/administration/provisioning/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/
   data-format-supported-by-the-node-graph-visualization:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/node-graph/#data-api
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/node-graph/#data-api
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/node-graph/#data-api
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/node-graph/#data-api
 ---
 
 # Geomap
