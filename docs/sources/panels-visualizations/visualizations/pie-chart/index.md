@@ -13,6 +13,12 @@ labels:
 description: Configure options for Grafana's pie chart visualization
 title: Pie chart
 weight: 100
+refs:
+  calculation-types:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/calculation-types/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types/
 ---
 
 # Pie chart
@@ -22,10 +28,6 @@ weight: 100
 Pie charts display reduced series, or values in a series, from one or more queries, as they relate to each other, in the form of slices of a pie. The arc length, area and central angle of a slice are all proportional to the slices value, as it relates to the sum of all values. This type of chart is best used when you want a quick comparison of a small set of values in an aesthetically pleasing form.
 
 {{< docs/play title="Grafana Bar Charts and Pie Charts" url="https://play.grafana.org/d/ktMs4D6Mk/" >}}
-
-## Panel options
-
-{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Value options
 
@@ -40,7 +42,7 @@ Choose how much information to show.
 
 ### Calculation
 
-Select a calculation to reduce each series when Calculate has been selected. For information about available calculations, refer to [Calculation types][].
+Select a calculation to reduce each series when Calculate has been selected. For information about available calculations, refer to [Calculation types](ref:calculation-types).
 
 ### Limit
 
@@ -84,10 +86,6 @@ The following example shows a pie chart with **Name** and **Percent** labels dis
 
 ![Pie chart labels](/static/img/docs/pie-chart-panel/pie-chart-labels-7-5.png)
 
-## Standard options
-
-{{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
 ## Tooltip options
 
 {{< docs/shared lookup="visualizations/tooltip-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
@@ -96,29 +94,25 @@ The following example shows a pie chart with **Name** and **Percent** labels dis
 
 Use these settings to define how the legend appears in your visualization. For more information about the legend, refer to [Configure a legend]({{< relref "../../configure-legend" >}}).
 
-### Visibility
+### Legend visibility
 
-Toggle the switch to turn the legend on or off.
+Use the **Visibility** switch to show or hide the legend.
 
-### Mode
+### Legend mode
 
-Use these settings to define how the legend appears in your visualization.
+Set the display mode of the legend:
 
 - **List -** Displays the legend as a list. This is a default display mode of the legend.
 - **Table -** Displays the legend as a table.
 
-### Placement
+### Legend placement
 
 Choose where to display the legend.
 
 - **Bottom -** Below the graph.
 - **Right -** To the right of the graph.
 
-#### Width
-
-Control how wide the legend is when placed on the right side of the visualization. This option is only displayed if you set the legend placement to **Right**.
-
-### Values
+### Legend values
 
 Select values to display in the legend. You can select more than one.
 
@@ -129,11 +123,3 @@ Select values to display in the legend. You can select more than one.
 
 {{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Field overrides
-
-{{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-{{% docs/reference %}}
-[Calculation types]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/calculation-types"
-[Calculation types]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types"
-{{% /docs/reference %}}

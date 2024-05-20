@@ -24,7 +24,7 @@ For more detail about all the changes in this release, refer to the [changelog](
 <!-- Template below
 
 ## Feature
-[Generally available | Available in experimental/beta] in Grafana [Open Source, Enterprise, Cloud Free, Cloud Pro, Cloud Advanced]
+[Generally available | Available in experimental/beta][] in Grafana[Open Source, Enterprise, Cloud Free, Cloud Pro, Cloud Advanced][]
 
 Description. Include an overview of the feature and problem it solves, and where to learn more (like a link to the docs).
 
@@ -85,7 +85,7 @@ Here's what you can do with the metric encyclopedia:
 - Filter metrics by Prometheus types (gauge, counter, histogram, summary)
 - Display metrics in a paginated list, sort the results, and choose a number of results per page, so that you don't wait a long time for search results
 - View metric details, like type and description
-- [Expert feature] Search metric names by regex using the backend only
+-[Expert feature][] Search metric names by regex using the backend only
 
 ### Prometheus browser cache
 

@@ -101,7 +101,7 @@ These instructions assume you have already added Graphite as a data source in Gr
    disable_total_stats = false
    ```
 
-1. Enable [metrics.graphite] options:
+1. Enable[metrics.graphite][] options:
 
    ```
    # Send internal metrics to Graphite

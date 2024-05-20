@@ -12,6 +12,12 @@ labels:
     - oss
 title: Alertmanager
 weight: 111
+refs:
+  configure-alertmanager:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-alertmanager/
 ---
 
 # Alertmanager
@@ -34,13 +40,9 @@ In Grafana, you can use the Cloud Alertmanager, Grafana Alertmanager, or an exte
 
 - **External Alertmanager** can receive all your Grafana, Loki, Mimir, and Prometheus alerts. External Alertmanagers can be configured and administered from within Grafana itself.
 
-Here are two examples of when you may want to [add your own external alertmanager][configure-alertmanager] and send your alerts there instead of the Grafana Alertmanager:
+Here are two examples of when you may want to [add your own external alertmanager](ref:configure-alertmanager) and send your alerts there instead of the Grafana Alertmanager:
 
 1. You may already have Alertmanagers on-premises in your own Cloud infrastructure that you have set up and still want to use, because you have other alert generators, such as Prometheus.
 
 2. You want to use both Prometheus on-premises and hosted Grafana to send alerts to the same Alertmanager that runs in your Cloud infrastructure.
 
-{{% docs/reference %}}
-[configure-alertmanager]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager"
-[configure-alertmanager]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-alertmanager"
-{{% /docs/reference %}}
