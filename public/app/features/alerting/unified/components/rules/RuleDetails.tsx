@@ -120,7 +120,7 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   leftSide: css({
-    flex: '1',
+    flex: 1,
   }),
   rightSide: css({
     [theme.breakpoints.up('md')]: {

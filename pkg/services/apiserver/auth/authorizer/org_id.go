@@ -37,9 +37,13 @@ func (auth orgIDAuthorizer) Authorize(ctx context.Context, a authorizer.Attribut
 		return authorizer.DecisionDeny, fmt.Sprintf("error reading namespace: %v", err), nil
 	}
 
-	// No opinion when the namespace is arbitrary
-	if info.OrgID == -1 {
+	// No opinion when the namespace is empty
+	if info.Value == "" {
 		return authorizer.DecisionNoOpinion, "", nil
+	}
+
+	if info.OrgID == -1 {
+		return authorizer.DecisionDeny, "org id is required", nil
 	}
 
 	if info.StackID != "" {

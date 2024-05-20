@@ -49,12 +49,12 @@ export function NeedHelpInfo({ contentText, externalLink, linkText, title = 'Nee
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  mutedText: css`
-    color: ${theme.colors.text.secondary};
-    font-size: ${theme.typography.size.sm};
-  `,
-  helpInfo: css`
-    cursor: pointer;
-    text-decoration: underline;
-  `,
+  mutedText: css({
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.size.sm,
+  }),
+  helpInfo: css({
+    cursor: 'pointer',
+    textDecoration: 'underline',
+  }),
 });

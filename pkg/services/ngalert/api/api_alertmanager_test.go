@@ -631,7 +631,7 @@ func createSut(t *testing.T) AlertmanagerSrv {
 	}
 	mam := createMultiOrgAlertmanager(t, configs)
 	log := log.NewNopLogger()
-	ac := acimpl.ProvideAccessControl(setting.NewCfg())
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	ruleStore := ngfakes.NewRuleStore(t)
 	return AlertmanagerSrv{
 		mam:        mam,

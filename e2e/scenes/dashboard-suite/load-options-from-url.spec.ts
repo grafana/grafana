@@ -23,12 +23,14 @@ describe('Variables - Load options from Url', () => {
       .first()
       .click();
 
-    e2e.components.Select.option().parent().should('have.length', 8);
+    e2e.components.Select.option().parent().should('have.length', 9);
 
     e2e.components.Select.option()
       .first()
       .should('have.text', 'All')
       .parent()
+      .next()
+      .should('have.text', 'A')
       .next()
       .should('have.text', 'B')
       .next()
@@ -45,11 +47,13 @@ describe('Variables - Load options from Url', () => {
       .first()
       .click();
 
-    e2e.components.Select.option().parent().should('have.length', 8);
+    e2e.components.Select.option().parent().should('have.length', 9);
     e2e.components.Select.option()
       .first()
       .should('have.text', 'All')
       .parent()
+      .next()
+      .should('have.text', 'AA')
       .next()
       .should('have.text', 'AB')
       .next()
@@ -66,12 +70,14 @@ describe('Variables - Load options from Url', () => {
       .first()
       .click();
 
-    e2e.components.Select.option().parent().should('have.length', 8);
+    e2e.components.Select.option().parent().should('have.length', 9);
 
     e2e.components.Select.option()
       .first()
-      .should('have.text', 'AAA')
+      .should('have.text', 'All')
       .parent()
+      .next()
+      .should('have.text', 'AAA')
       .next()
       .should('have.text', 'AAB')
       .next()
@@ -96,7 +102,7 @@ describe('Variables - Load options from Url', () => {
       .first()
       .click();
 
-    e2e.components.Select.option().parent().should('have.length', 8);
+    e2e.components.Select.option().parent().should('have.length', 9);
 
     e2e.components.Select.option()
       .first()
@@ -104,6 +110,8 @@ describe('Variables - Load options from Url', () => {
       .parent()
       .next()
       .should('have.text', 'A')
+      .next()
+      .should('have.text', 'B')
       .next()
       .should('have.text', 'C')
       .next()
@@ -118,7 +126,7 @@ describe('Variables - Load options from Url', () => {
       .first()
       .click();
 
-    e2e.components.Select.option().parent().should('have.length', 8);
+    e2e.components.Select.option().parent().should('have.length', 9);
 
     e2e.components.Select.option()
       .first()
@@ -126,6 +134,8 @@ describe('Variables - Load options from Url', () => {
       .parent()
       .next()
       .should('have.text', 'BA')
+      .next()
+      .should('have.text', 'BB')
       .next()
       .should('have.text', 'BC')
       .next()
@@ -140,7 +150,7 @@ describe('Variables - Load options from Url', () => {
       .first()
       .click();
 
-    e2e.components.Select.option().parent().should('have.length', 8);
+    e2e.components.Select.option().parent().should('have.length', 9);
 
     e2e.components.Select.option()
       .first()
@@ -148,6 +158,8 @@ describe('Variables - Load options from Url', () => {
       .parent()
       .next()
       .should('have.text', 'BBA')
+      .next()
+      .should('have.text', 'BBB')
       .next()
       .should('have.text', 'BBC')
       .next()

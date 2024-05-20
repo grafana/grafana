@@ -64,6 +64,7 @@ func (p *provisioningRuleAccessControl) CanReadAllRules(ctx context.Context, use
 	return p.HasAccess(ctx, user, ac.EvalAny(
 		ac.EvalPermission(ac.ActionAlertingProvisioningRead),
 		ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets),
+		ac.EvalPermission(ac.ActionAlertingRulesProvisioningRead),
 	))
 }
 
@@ -72,5 +73,8 @@ func (p *provisioningRuleAccessControl) CanReadAllRules(ctx context.Context, use
 // It returns true if the user has permission, false otherwise.
 // It returns an error if there is a problem checking the permission.
 func (p *provisioningRuleAccessControl) CanWriteAllRules(ctx context.Context, user identity.Requester) (bool, error) {
-	return p.HasAccess(ctx, user, ac.EvalPermission(ac.ActionAlertingProvisioningWrite))
+	return p.HasAccess(ctx, user, ac.EvalAny(
+		ac.EvalPermission(ac.ActionAlertingProvisioningWrite),
+		ac.EvalPermission(ac.ActionAlertingRulesProvisioningWrite),
+	))
 }

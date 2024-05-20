@@ -119,6 +119,9 @@ type JSONData struct {
 
 	// App Service Auth Registration
 	IAM *pfs.IAM `json:"iam,omitempty"`
+
+	// API Version: Temporary field while plugins don't expose a OpenAPI schema
+	APIVersion string `json:"apiVersion,omitempty"`
 }
 
 func ReadPluginJSON(reader io.Reader) (JSONData, error) {
@@ -202,6 +205,10 @@ type Route struct {
 	TokenAuth    *JWTTokenAuth   `json:"tokenAuth"`
 	JwtTokenAuth *JWTTokenAuth   `json:"jwtTokenAuth"`
 	Body         json.RawMessage `json:"body"`
+}
+
+func (r *Route) RequiresRBACAction() bool {
+	return r.ReqAction != ""
 }
 
 // Header describes an HTTP header that is forwarded with

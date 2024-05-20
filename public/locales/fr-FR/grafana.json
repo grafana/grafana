@@ -618,6 +618,9 @@
     "select": {
       "no-options-label": "Aucune option trouvée",
       "placeholder": "Choisir"
+    },
+    "spinner": {
+      "aria-label": ""
     }
   },
   "graph": {
@@ -887,7 +890,8 @@
       "title": "Alertes"
     },
     "alerting-admin": {
-      "title": "Paramètres"
+      "subtitle": "",
+      "title": ""
     },
     "alerting-am-routes": {
       "subtitle": "Déterminer comment les alertes sont acheminées vers les points de contact",

@@ -24,11 +24,13 @@ describe('Variables - Set options from ui', () => {
         cy.get('input').click();
       });
 
-    e2e.components.Select.option().parent().should('have.length', 8);
+    e2e.components.Select.option().parent().should('have.length', 9);
     e2e.components.Select.option()
       .first()
-      .should('have.text', 'BA')
+      .should('have.text', 'All')
       .parent()
+      .next()
+      .should('have.text', 'BA')
       .next()
       .should('have.text', 'BB')
       .next()
@@ -47,8 +49,10 @@ describe('Variables - Set options from ui', () => {
 
     e2e.components.Select.option()
       .first()
-      .should('have.text', 'BAA')
+      .should('have.text', 'All')
       .parent()
+      .next()
+      .should('have.text', 'BAA')
       .next()
       .should('have.text', 'BAB')
       .next()
@@ -96,6 +100,8 @@ describe('Variables - Set options from ui', () => {
       .should('have.text', 'All')
       .parent()
       .next()
+      .should('have.text', 'AA')
+      .next()
       .should('have.text', 'AB')
       .next()
       .should('have.text', 'AC')
@@ -110,12 +116,14 @@ describe('Variables - Set options from ui', () => {
         cy.get('input').click();
       });
 
-    e2e.components.Select.option().should('have.length', 8);
+    e2e.components.Select.option().should('have.length', 9);
 
     e2e.components.Select.option()
       .first()
       .should('have.text', 'All')
       .parent()
+      .next()
+      .should('have.text', 'AAA')
       .next()
       .should('have.text', 'AAB')
       .next()
@@ -158,7 +166,7 @@ describe('Variables - Set options from ui', () => {
         cy.get('input').click();
       });
 
-    e2e.components.Select.option().should('have.length', 8);
+    e2e.components.Select.option().should('have.length', 9);
 
     e2e.components.Select.option()
       .first()
@@ -166,6 +174,8 @@ describe('Variables - Set options from ui', () => {
       .parent()
       .next()
       .should('have.text', 'BA')
+      .next()
+      .should('have.text', 'BB')
       .next()
       .should('have.text', 'BC');
 
@@ -176,7 +186,7 @@ describe('Variables - Set options from ui', () => {
       .within(() => {
         cy.get('input').click();
       });
-    e2e.components.Select.option().should('have.length', 8);
+    e2e.components.Select.option().should('have.length', 9);
 
     e2e.components.Select.option()
       .first()
@@ -184,6 +194,8 @@ describe('Variables - Set options from ui', () => {
       .parent()
       .next()
       .should('have.text', 'BBA')
+      .next()
+      .should('have.text', 'BBB')
       .next()
       .should('have.text', 'BBC');
   });
