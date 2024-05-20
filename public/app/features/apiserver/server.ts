@@ -27,6 +27,9 @@ export class ScopedResourceServer<T = object, K = string> implements ResourceSer
   }
 
   public async create(obj: ResourceForCreate<T, K>): Promise<void> {
+    if(!obj.metadata.name && !obj.metadata.generateName) {
+      obj.metadata.generateName = 'g'; // Triggers the server to create a unique value
+    }
     return getBackendSrv().post(this.url, obj);
   }
 
