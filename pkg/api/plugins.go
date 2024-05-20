@@ -145,7 +145,7 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 			APIVersion:      pluginDef.APIVersion,
 		}
 
-		if hs.pluginsManage.IsManagedPlugin(pluginDef.ID) {
+		if hs.managedPluginsService.Managed(pluginDef.ID) {
 			listItem.Managed = true
 		}
 

@@ -38,8 +38,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -99,7 +99,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 					ID: pluginID,
 				},
 			})
-			hs.pluginsManage = pluginconfig.NewManagedPluginChecker()
+			hs.managedPluginsService = managedplugins.NewNoop()
 
 			expectedIdentity := &authn.Identity{
 				OrgID:       tc.permissionOrg,
@@ -640,7 +640,7 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 				hs.PluginSettings = &pluginSettings
 				hs.pluginStore = pluginstore.New(pluginRegistry, &fakes.FakeLoader{})
 				hs.pluginFileStore = filestore.ProvideService(pluginRegistry)
-				hs.pluginsManage = pluginconfig.NewManagedPluginChecker()
+				hs.managedPluginsService = managedplugins.NewNoop()
 				var err error
 				hs.pluginsUpdateChecker, err = updatechecker.ProvidePluginsService(hs.Cfg, nil, tracing.InitializeTracerForTest())
 				require.NoError(t, err)

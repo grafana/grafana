@@ -77,7 +77,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -195,7 +195,7 @@ type HTTPServer struct {
 	apiKeyService                apikey.Service
 	kvStore                      kvstore.KVStore
 	pluginsCDNService            *pluginscdn.Service
-	pluginsManage                pluginconfig.ManagedPluginService
+	managedPluginsService        managedplugins.Manager
 
 	userService          user.Service
 	tempUserService      tempUser.Service
@@ -255,7 +255,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
-	starService star.Service, csrfService csrf.Service, pluginsManage pluginconfig.ManagedPluginService,
+	starService star.Service, csrfService csrf.Service, managedPlugins managedplugins.Manager,
 	playlistService playlist.Service, apiKeyService apikey.Service, kvStore kvstore.KVStore,
 	secretsMigrator secrets.Migrator, secretsPluginManager plugins.SecretsPluginManager, secretsService secrets.Service,
 	secretsPluginMigrator spm.SecretMigrationProvider, secretsStore secretsKV.SecretsKVStore,
@@ -360,7 +360,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		statsService:                 statsService,
 		authnService:                 authnService,
 		pluginsCDNService:            pluginsCDNService,
-		pluginsManage:                pluginsManage,
+		managedPluginsService:        managedPlugins,
 		starApi:                      starApi,
 		promRegister:                 promRegister,
 		promGatherer:                 promGatherer,

@@ -41,6 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keystore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/licensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/loader"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
@@ -133,8 +134,8 @@ var WireExtensionSet = wire.NewSet(
 	wire.Bind(new(finder.Finder), new(*finder.Local)),
 	ProvideClientDecorator,
 	wire.Bind(new(plugins.Client), new(*client.Decorator)),
-	pluginconfig.NewManagedPluginChecker,
-	wire.Bind(new(pluginconfig.ManagedPluginService), new(*pluginconfig.ManagedPluginChecker)),
+	managedplugins.NewNoop,
+	wire.Bind(new(managedplugins.Manager), new(*managedplugins.Noop)),
 )
 
 func ProvideClientDecorator(
