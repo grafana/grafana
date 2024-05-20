@@ -84,8 +84,7 @@ Here's what you can do with the metric encyclopedia:
 - Fuzzy search for metrics by name, type, and description
 - Filter metrics by Prometheus types (gauge, counter, histogram, summary)
 - Display metrics in a paginated list, sort the results, and choose a number of results per page, so that you don't wait a long time for search results
-- View metric details, like type and description
--[Expert feature][] Search metric names by regex using the backend only
+- View metric details, like type and description -[Expert feature][] Search metric names by regex using the backend only
 
 ### Prometheus browser cache
 
