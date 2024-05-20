@@ -59,7 +59,7 @@ func TestIntegrationScopes(t *testing.T) {
 			  {
 				"name": "find_scope_dashboard",
 				"kind": "FindScopedDashboardsResults",
-				"singularName": "results",
+				"singularName": "FindScopedDashboardsResult",
 				"namespaced": true,
 				"verbs": [
 					"get"

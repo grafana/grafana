@@ -37,7 +37,7 @@ func (f *findScopedDashboardsREST) NamespaceScoped() bool {
 }
 
 func (f *findScopedDashboardsREST) GetSingularName() string {
-	return "results" // not sure if this is actually used, but it is required to exist
+	return "FindScopedDashboardsResult" // not sure if this is actually used, but it is required to exist
 }
 
 func (f *findScopedDashboardsREST) ProducesMIMETypes(verb string) []string {
