@@ -35,6 +35,7 @@ type PlaylistAPIBuilder struct {
 	gv         schema.GroupVersion
 	features   featuremgmt.FeatureToggles
 	kvStore    kvstore.KVStore
+	cfg        *setting.Cfg
 }
 
 func RegisterAPIService(p playlistsvc.Service,
@@ -49,6 +50,7 @@ func RegisterAPIService(p playlistsvc.Service,
 		gv:         playlist.PlaylistResourceInfo.GroupVersion(),
 		features:   features,
 		kvStore:    kvStore,
+		cfg:        cfg,
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -128,7 +130,7 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 			return nil, err
 		}
 
-		storage[resource.StoragePath()] = setDualWritingMode(b.kvStore, b.features, legacyStore, store)
+		storage[resource.StoragePath()] = setDualWritingMode(b.kvStore, b.features, b.cfg.StackID, legacyStore, store)
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[playlist.VERSION] = storage
@@ -137,7 +139,6 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 
 /*
 TODOS
-- pass cfg.StackID into GetAPIGRoupInfo so that we can include it in the key for the kvstore entry
 - fix kvstore get request to include orgID and namespace. potentially switch to namespacedkvstore instead.
 - review how to define modes in code. kvstore returns string mode but currently modes are defined as iota.
 - figure out where setDualWritingMode should live
@@ -147,7 +148,13 @@ TODOS
 - context.Background() --> use something else?
 */
 
-func setDualWritingMode(kv kvstore.KVStore, features featuremgmt.FeatureToggles, legacy grafanarest.LegacyStorage, storage grafanarest.Storage) grafanarest.DualWriter {
+func setDualWritingMode(
+	kvs kvstore.KVStore,
+	features featuremgmt.FeatureToggles,
+	stackID string,
+	legacy grafanarest.LegacyStorage,
+	storage grafanarest.Storage,
+) grafanarest.DualWriter {
 	toMode := map[string]grafanarest.DualWriterMode{
 		"1": grafanarest.Mode1,
 		"2": grafanarest.Mode2,
@@ -155,15 +162,15 @@ func setDualWritingMode(kv kvstore.KVStore, features featuremgmt.FeatureToggles,
 		"4": grafanarest.Mode4,
 	}
 
-	key := "playlist-" // + stackID
-	m, ok, err := kv.Get(context.Background(), 0, "", key)
+	key := "playlist_" + stackID
+	m, ok, err := kvs.Get(context.Background(), 0, "", key)
 	if err != nil {
 		fmt.Println(err)
 	}
 	if !ok {
 		// default to mode 1
 		m = "1"
-		err := kv.Set(context.Background(), 0, "", key, m)
+		err := kvs.Set(context.Background(), 0, "", key, m)
 		if err != nil {
 			fmt.Println(err)
 		}
