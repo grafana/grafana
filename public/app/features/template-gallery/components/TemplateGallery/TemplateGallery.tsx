@@ -194,21 +194,35 @@ export interface GalleryResponse {
 
 interface TemplateGalleryProps {
   items: DashboardDataDTO[];
+  onClickItem: (item: DashboardDataDTO) => void;
 }
 
-export function TemplateGallery({ items }: TemplateGalleryProps) {
+export function TemplateGallery({ items, onClickItem }: TemplateGalleryProps) {
   return items.map((dashboard: DashboardDataDTO) => {
-    return <DashboardItem key={dashboard.uid} dashboard={dashboard} />;
+    return (
+      <DashboardItem
+        key={dashboard.uid}
+        dashboard={dashboard}
+        onClick={() => {
+          onClickItem(dashboard);
+        }}
+      />
+    );
   });
 }
 
-function DashboardItem({ dashboard }: { dashboard: DashboardDataDTO }) {
+function DashboardItem({
+  dashboard,
+  onClick,
+}: {
+  dashboard: DashboardDataDTO & { rows?: any[] };
+  onClick: () => void;
+}) {
+  const panelsCount =
+    dashboard.panels?.length || dashboard.rows?.reduce((count, r) => (count += r?.panels?.length || 0), 0);
   return (
-    <Card>
+    <Card onClick={onClick}>
       <Card.Heading>{dashboard.title}</Card.Heading>
-      <Card.Meta>
-        <>Template</>
-      </Card.Meta>
       <Card.Description>{dashboard.description}</Card.Description>
       <Card.Tags>
         <TagList tags={dashboard.tags ?? []} />

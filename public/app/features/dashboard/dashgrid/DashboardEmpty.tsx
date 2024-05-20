@@ -88,11 +88,11 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
                 </Text>
                 <Box marginBottom={2}>
                   <Text element="p" textAlignment="center" color="secondary">
-                    Reuse a template from the template gallery or exising dashboard from your organization
+                    Find inspiration from our template gallery or exising dashboards in your organization
                   </Text>
                 </Box>
                 <Button
-                  icon="plus"
+                  icon="rocket"
                   fill="outline"
                   data-testid={selectors.pages.AddDashboard.itemButton('Use template')}
                   onClick={() => {
@@ -135,9 +135,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
                 </Text>
                 <Box marginBottom={2}>
                   <Text element="p" textAlignment="center" color="secondary">
-                    <Trans i18nKey="dashboard.empty.import-a-dashboard-body">
-                      Import dashboards from files or a dashboard JSON.
-                    </Trans>
+                    Import dashboards from a dashboard JSON.
                   </Text>
                 </Box>
                 <Button

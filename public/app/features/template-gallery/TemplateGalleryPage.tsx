@@ -2,12 +2,15 @@ import { throttle } from 'lodash';
 import React, { useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { NavModelItem } from '@grafana/data';
+import { NavModelItem, PageLayoutType } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { Alert, Input, LoadingPlaceholder } from '@grafana/ui';
+import { Alert, Box, Icon, Input, LoadingPlaceholder } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { DashboardDataDTO } from 'app/types';
 
+import { EmbeddedDashboard } from '../dashboard-scene/embedding/EmbeddedDashboard';
+
+import { DashboardJSON } from './components/DashboardJSON';
 import { TemplateGallery } from './components/TemplateGallery/TemplateGallery';
 
 type TemplatesResponse = Result[];
@@ -26,24 +29,37 @@ const pageNav: NavModelItem = {
 
 export const TemplateGalleryPage = () => {
   const [search, setSearch] = useState('');
+  const [schema, setSchema] = useState<DashboardDataDTO | null>(null);
 
   // Throttle search
   const onSearch = throttle((value: string) => {
     setSearch(value);
-  }, 1000);
+  }, 2000);
 
   const { loading, dashboards, error } = useTemplateDB(search);
 
   return (
-    <Page navId="dashboard/templates" pageNav={pageNav}>
+    <Page navId="dashboard/templates" pageNav={pageNav} layout={PageLayoutType.Canvas}>
       <Page.Contents>
         {error && <Alert title="Error retrieving the templates">{error.toString()}</Alert>}
-        <Input placeholder="Search templates" value={search} onChange={(e) => onSearch(e.currentTarget.value)}></Input>
-        {loading ? (
-          <LoadingPlaceholder text="Finding a good template for your use case" />
-        ) : (
-          <TemplateGallery items={dashboards ?? []}></TemplateGallery>
-        )}
+        <Box marginBottom={1}>
+          <Input
+            prefix={<Icon name="search" />}
+            placeholder="Search templates"
+            value={search}
+            onChange={(e) => onSearch(e.currentTarget.value)}
+            loading={loading}
+          ></Input>
+        </Box>
+        <Box>
+          <TemplateGallery
+            items={dashboards ?? []}
+            onClickItem={(item) => {
+              setSchema(item);
+            }}
+          ></TemplateGallery>
+        </Box>
+        <Box>{schema && <DashboardJSON schema={schema} />}</Box>
       </Page.Contents>
     </Page>
   );
