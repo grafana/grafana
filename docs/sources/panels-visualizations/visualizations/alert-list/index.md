@@ -32,7 +32,7 @@ On each dashboard load, this visualization queries the alert list, always provid
 
 Once you’ve created a [dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/), the following video shows you how to configure an alert list visualization:
 
-<!-- video TBA here -->
+{{< youtube id="o4rK7_AXZ9Y" >}}
 
 ## Panel options
 
