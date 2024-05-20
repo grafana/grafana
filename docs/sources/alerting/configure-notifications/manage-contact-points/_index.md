@@ -42,7 +42,7 @@ Complete the following steps to add a contact point.
 1. From the **Choose Alertmanager** dropdown, select an Alertmanager. By default, **Grafana Alertmanager** is selected.
 1. On the **Contact Points** tab, click **+ Add contact point**.
 1. Enter a descriptive name for the contact point.
-1. From **Integration**, select a type and fill out mandatory fields. For example, if you choose email, enter the email addresses. Or if you choose Slack, enter the Slack channel(s) and users who should be contacted.
+1. From **Integration**, select a type and fill out mandatory fields. For example, if you choose email, enter the email addresses. Or if you choose Slack, enter the Slack channel and users who should be contacted.
 1. Some contact point integrations, like email or webhook, have optional settings. In **Optional settings**, specify additional settings for the selected contact point integration.
 1. In Notification settings, optionally select **Disable resolved message** if you do not want to be notified when an alert resolves.
 1. To add another contact point integration, click **Add contact point integration** and repeat steps 6 through 8.
@@ -64,7 +64,7 @@ Complete the following steps to delete a contact point.
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Contact points** to view a list of existing contact points.
 1. On the **Contact Points** tab, find the contact point you want to delete, and then click **More** -> **Delete**.
-1. In the confirmation dialog, click **Yes, delete**.
+1. In the confirmation dialog box, click **Yes, delete**.
 
 {{% admonition type="note" %}}
 You cannot delete contact points that are in use by a notification policy. Either delete the notification policy or update it to use another contact point.
@@ -77,7 +77,7 @@ Complete the following steps to test a contact point.
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Contact points** to view a list of existing contact points.
 1. On the **Contact Points** tab, find the contact point you want to test, then click **Edit**. You can also create a new contact point if needed.
-1. Click **Test** to open the contact point testing modal.
+1. Click **Test** to open the contact point testing dialog box.
 1. Choose whether to send a predefined test notification or choose custom to add your own custom annotations and labels to include in the notification.
 1. Click **Send test notification** to fire the alert.
 
@@ -102,7 +102,7 @@ On the **Notification templates** tab, you can:
 
 Each contact point integration has its own configuration options and setup process. In most cases, this involves providing an API key or a Webhook URL.
 
-Once configured, you can use integrations as part of your contact points to receive notifications whenever your alert changes its state. In this section, we'll cover the basic steps to configure your integrations, so you can start receiving real-time alerts and stay on top of your monitoring data.
+After you have configured an integration, you can use it as part of your contact points to receive notifications whenever your alert changes its state. The following section covers the basic steps to configure your integrations, so you can start receiving real-time alerts and stay on top of your monitoring data.
 
 ## List of supported integrations
 
