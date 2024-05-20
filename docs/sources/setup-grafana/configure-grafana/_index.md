@@ -164,7 +164,7 @@ It should be kept false or unset when not needed, as it may cause unintended dat
 
 <hr />
 
-## [paths]
+##[paths][]
 
 ### data
 
@@ -201,7 +201,7 @@ Folder that contains [provisioning]({{< relref "../../administration/provisionin
 
 <hr />
 
-## [server]
+##[server][]
 
 ### protocol
 
@@ -319,7 +319,7 @@ Sets the maximum time using a duration format (5s/5m/5ms) before timing out read
 
 <hr />
 
-## [server.custom_response_headers]
+##[server.custom_response_headers][]
 
 This setting enables you to specify additional headers that the server adds to HTTP(S) responses.
 
@@ -330,7 +330,7 @@ exampleHeader2 = exampleValue2
 
 <hr />
 
-## [database]
+##[database][]
 
 Grafana needs a database to store users and dashboards (and other
 things). By default it is configured to use [`sqlite3`](https://www.sqlite.org/index.html) which is an
@@ -440,7 +440,7 @@ Set to `true` to add metrics and tracing for database queries. The default value
 
 <hr />
 
-## [remote_cache]
+##[remote_cache][]
 
 Caches authentication details and session information in the configured database, Redis or Memcached. This setting does not configure [Query Caching in Grafana Enterprise]({{< relref "../../administration/data-source-management#query-and-resource-caching" >}}).
 
@@ -471,7 +471,7 @@ Example connstr: `127.0.0.1:11211`
 
 <hr />
 
-## [dataproxy]
+##[dataproxy][]
 
 ### logging
 
@@ -526,7 +526,7 @@ Sets a custom value for the `User-Agent` header for outgoing data proxy requests
 
 <hr />
 
-## [analytics]
+##[analytics][]
 
 ### enabled
 
@@ -606,7 +606,7 @@ Optionally, use this option to override the default endpoint address for Applica
 
 Set to `false` to remove all feedback links from the UI. Default is `true`.
 
-## [security]
+##[security][]
 
 ### disable_initial_admin_creation
 
@@ -732,7 +732,7 @@ Set to `true` to execute the CSRF check even if the login cookie is not in a req
 Comma-separated list of plugins ids that won't be loaded inside the frontend sandbox. It is recommended to only use this
 option for plugins that are known to have problems running inside the frontend sandbox.
 
-## [snapshots]
+##[snapshots][]
 
 ### enabled
 
@@ -760,7 +760,7 @@ Enable this to automatically remove expired snapshots. Default is `true`.
 
 <hr />
 
-## [dashboards]
+##[dashboards][]
 
 ### versions_to_keep
 
@@ -785,7 +785,7 @@ On Linux, Grafana uses `/usr/share/grafana/public/dashboards/home.json` as the d
 
 <hr />
 
-## [sql_datasources]
+##[sql_datasources][]
 
 ### max_open_conns_default
 
@@ -801,7 +801,7 @@ For SQL data sources (MySql, Postgres, MSSQL) you can override the default maxim
 
 <hr/>
 
-## [users]
+##[users][]
 
 ### allow_sign_up
 
@@ -888,7 +888,7 @@ This is a comma-separated list of usernames. Users specified here are hidden in 
 
 <hr>
 
-## [auth]
+##[auth][]
 
 Grafana provides many ways to authenticate users. Refer to the Grafana [Authentication overview]({{< relref "../configure-security/configure-authentication" >}}) and other authentication documentation for detailed instructions on how to set up and configure authentication.
 
@@ -1032,7 +1032,7 @@ For GitLab, GitHub, Okta, Generic OAuth providers, Grafana synchronizes organiza
 
 #### Example skip_org_role_sync
 
-[auth.google]
+[auth.google][]
 | `oauth_skip_org_role_update_sync` | `skip_org_role_sync` | **Resulting Org Role** | **Example Scenario** |
 |-----------------------------------|----------------------|-----------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | false | false | Synchronized with Google Auth organization roles | A user logs in to Grafana using their Google account and their organization role is automatically set based on their role in Google. |
@@ -1058,77 +1058,77 @@ Set to `true` to enable verbose request signature logging when AWS Signature Ver
 
 <hr />
 
-## [auth.anonymous]
+##[auth.anonymous][]
 
 Refer to [Anonymous authentication]({{< relref "../configure-security/configure-authentication/grafana#anonymous-authentication" >}}) for detailed instructions.
 
 <hr />
 
-## [auth.github]
+##[auth.github][]
 
 Refer to [GitHub OAuth2 authentication]({{< relref "../configure-security/configure-authentication/github" >}}) for detailed instructions.
 
 <hr />
 
-## [auth.gitlab]
+##[auth.gitlab][]
 
 Refer to [Gitlab OAuth2 authentication]({{< relref "../configure-security/configure-authentication/gitlab" >}}) for detailed instructions.
 
 <hr />
 
-## [auth.google]
+##[auth.google][]
 
 Refer to [Google OAuth2 authentication]({{< relref "../configure-security/configure-authentication/google" >}}) for detailed instructions.
 
 <hr />
 
-## [auth.grafananet]
+##[auth.grafananet][]
 
 Legacy key names, still in the config file so they work in env variables.
 
 <hr />
 
-## [auth.grafana_com]
+##[auth.grafana_com][]
 
 Legacy key names, still in the config file so they work in env variables.
 
 <hr />
 
-## [auth.azuread]
+##[auth.azuread][]
 
 Refer to [Azure AD OAuth2 authentication]({{< relref "../configure-security/configure-authentication/azuread" >}}) for detailed instructions.
 
 <hr />
 
-## [auth.okta]
+##[auth.okta][]
 
 Refer to [Okta OAuth2 authentication]({{< relref "../configure-security/configure-authentication/okta" >}}) for detailed instructions.
 
 <hr />
 
-## [auth.generic_oauth]
+##[auth.generic_oauth][]
 
 Refer to [Generic OAuth authentication]({{< relref "../configure-security/configure-authentication/generic-oauth" >}}) for detailed instructions.
 
 <hr />
 
-## [auth.basic]
+##[auth.basic][]
 
 Refer to [Basic authentication]({{< relref "../configure-security/configure-authentication#basic-authentication" >}}) for detailed instructions.
 
 <hr />
 
-## [auth.proxy]
+##[auth.proxy][]
 
 Refer to [Auth proxy authentication]({{< relref "../configure-security/configure-authentication/auth-proxy" >}}) for detailed instructions.
 
 <hr />
 
-## [auth.ldap]
+##[auth.ldap][]
 
 Refer to [LDAP authentication]({{< relref "../configure-security/configure-authentication/ldap" >}}) for detailed instructions.
 
-## [aws]
+##[aws][]
 
 You can configure core and external AWS plugins.
 
@@ -1150,7 +1150,7 @@ Use the [List Metrics API](https://docs.aws.amazon.com/AmazonCloudWatch/latest/A
 
 <hr />
 
-## [azure]
+##[azure][]
 
 Grafana supports additional integration with Azure services when hosted in the Azure Cloud.
 
@@ -1231,13 +1231,13 @@ Set plugins that will receive Azure settings via plugin context.
 
 By default, this will include all Grafana Labs owned Azure plugins or those that use Azure settings (Azure Monitor, Azure Data Explorer, Prometheus, MSSQL).
 
-## [auth.jwt]
+##[auth.jwt][]
 
 Refer to [JWT authentication]({{< relref "../configure-security/configure-authentication/jwt" >}}) for more information.
 
 <hr />
 
-## [smtp]
+##[smtp][]
 
 Email server settings.
 
@@ -1291,14 +1291,14 @@ Enable trace propagation in e-mail headers, using the `traceparent`, `tracestate
 
 <hr>
 
-## [smtp.static_headers]
+##[smtp.static_headers][]
 
 Enter key-value pairs on their own lines to be included as headers on outgoing emails. All keys must be in canonical mail header format.
 Examples: `Foo=bar`, `Foo-Header=bar`.
 
 <hr>
 
-## [emails]
+##[emails][]
 
 ### welcome_email_on_sign_up
 
@@ -1314,7 +1314,7 @@ Enter a comma-separated list of content types that should be included in the ema
 
 <hr>
 
-## [log]
+##[log][]
 
 Grafana logging options.
 
@@ -1337,7 +1337,7 @@ Use this configuration option to set the default error message shown to users. T
 
 <hr>
 
-## [log.console]
+##[log.console][]
 
 Only applicable when "console" is used in `[log]` mode.
 
@@ -1351,7 +1351,7 @@ Log line format, valid options are text, console and json. Default is `console`.
 
 <hr>
 
-## [log.file]
+##[log.file][]
 
 Only applicable when "file" used in `[log]` mode.
 
@@ -1386,7 +1386,7 @@ Maximum number of days to keep log files. Default is `7`.
 
 <hr>
 
-## [log.syslog]
+##[log.syslog][]
 
 Only applicable when "syslog" used in `[log]` mode.
 
@@ -1412,7 +1412,7 @@ Syslog tag. By default, the process's `argv[0]` is used.
 
 <hr>
 
-## [log.frontend]
+##[log.frontend][]
 
 **Note:** This feature is available in Grafana 7.4+.
 
@@ -1450,7 +1450,7 @@ If `custom_endpoint` required authentication, you can set the api key here. Only
 
 <hr>
 
-## [quota]
+##[quota][]
 
 Set quotas to `-1` to make unlimited.
 
@@ -1512,7 +1512,7 @@ Sets a global limit on number of correlations that can be created. Default is -1
 
 <hr>
 
-## [unified_alerting]
+##[unified_alerting][]
 
 For more information about the Grafana alerts, refer to [About Grafana Alerting]({{< relref "../../alerting" >}}).
 
@@ -1628,7 +1628,7 @@ The interval string is a possibly signed sequence of decimal numbers, followed b
 
 <hr>
 
-## [unified_alerting.screenshots]
+##[unified_alerting.screenshots][]
 
 For more information about screenshots, refer to [Images in notifications]({{< relref "../../alerting/manage-notifications/images-in-notifications" >}}).
 
@@ -1646,7 +1646,7 @@ Uploads screenshots to the local Grafana server or remote storage such as Azure,
 
 <hr>
 
-## [unified_alerting.reserved_labels]
+##[unified_alerting.reserved_labels][]
 
 For more information about Grafana Reserved Labels, refer to [Labels in Grafana Alerting](/docs/grafana/next/alerting/fundamentals/annotation-label/how-to-use-labels/)
 
@@ -1658,7 +1658,7 @@ For example: `disabled_labels=grafana_folder`
 
 <hr>
 
-## [unified_alerting.upgrade]
+##[unified_alerting.upgrade][]
 
 For more information about upgrading to Grafana Alerting, refer to [Upgrade Alerting](/docs/grafana/next/alerting/set-up/migrating-alerts/).
 
@@ -1674,7 +1674,7 @@ It should be kept false when not needed, as it may cause unintended data loss if
 
 <hr>
 
-## [alerting]
+##[alerting][]
 
 For more information about the legacy dashboard alerting feature in Grafana, refer to [the legacy Grafana alerts](/docs/grafana/v8.5/alerting/old-alerting/).
 
@@ -1728,7 +1728,7 @@ Configures max number of alert annotations that Grafana stores. Default value is
 
 <hr>
 
-## [annotations]
+##[annotations][]
 
 ### cleanupjob_batchsize
 
@@ -1738,7 +1738,7 @@ Configures the batch size for the annotation clean-up job. This setting is used 
 
 Enforces the maximum allowed length of the tags for any newly introduced annotations. It can be between 500 and 4096 (inclusive). Default value is 500. Setting it to a higher value would impact performance therefore is not recommended.
 
-## [annotations.dashboard]
+##[annotations.dashboard][]
 
 Dashboard annotations means that annotations are associated with the dashboard they are created on.
 
@@ -1751,7 +1751,7 @@ This setting should be expressed as a duration. Examples: 6h (hours), 10d (days)
 
 Configures max number of dashboard annotations that Grafana stores. Default value is 0, which keeps all dashboard annotations.
 
-## [annotations.api]
+##[annotations.api][]
 
 API annotations means that the annotations have been created using the API without any association with a dashboard.
 
@@ -1766,7 +1766,7 @@ Configures max number of API annotations that Grafana keeps. Default value is 0,
 
 <hr>
 
-## [explore]
+##[explore][]
 
 For more information about this feature, refer to [Explore]({{< relref "../../explore" >}}).
 
@@ -1774,7 +1774,7 @@ For more information about this feature, refer to [Explore]({{< relref "../../ex
 
 Enable or disable the Explore section. Default is `enabled`.
 
-## [help]
+##[help][]
 
 Configures the help section.
 
@@ -1782,7 +1782,7 @@ Configures the help section.
 
 Enable or disable the Help section. Default is `enabled`.
 
-## [profile]
+##[profile][]
 
 Configures the Profile section.
 
@@ -1790,7 +1790,7 @@ Configures the Profile section.
 
 Enable or disable the Profile section. Default is `enabled`.
 
-## [news]
+##[news][]
 
 ### news_feed_enabled
 
@@ -1798,13 +1798,13 @@ Enables the news feed section. Default is `true`
 
 <hr>
 
-## [query]
+##[query][]
 
 ### concurrent_query_limit
 
 Set the number of queries that can be executed concurrently in a mixed data source panel. Default is the number of CPUs.
 
-## [query_history]
+##[query_history][]
 
 Configures Query history in Explore.
 
@@ -1814,7 +1814,7 @@ Enable or disable the Query history. Default is `enabled`.
 
 <hr>
 
-## [metrics]
+##[metrics][]
 
 For detailed instructions, refer to [Internal Grafana metrics]({{< relref "../set-up-grafana-monitoring" >}}).
 
@@ -1840,7 +1840,7 @@ If both are set, then basic authentication is required to access the metrics end
 
 <hr>
 
-## [metrics.environment_info]
+##[metrics.environment_info][]
 
 Adds dimensions to the `grafana_environment_info` metric, which can expose more information about the Grafana instance.
 
@@ -1849,7 +1849,7 @@ Adds dimensions to the `grafana_environment_info` metric, which can expose more 
 ; exampleLabel2 = exampleValue2
 ```
 
-## [metrics.graphite]
+##[metrics.graphite][]
 
 Use these options if you want to send internal Grafana metrics to Graphite.
 
@@ -1863,7 +1863,7 @@ Graphite metric prefix. Defaults to `prod.grafana.%(instance_name)s.`
 
 <hr>
 
-## [grafana_net]
+##[grafana_net][]
 
 ### url
 
@@ -1871,7 +1871,7 @@ Default is https://grafana.com.
 
 <hr>
 
-## [grafana_com]
+##[grafana_com][]
 
 ### url
 
@@ -1879,9 +1879,9 @@ Default is https://grafana.com.
 
 <hr>
 
-## [tracing.jaeger]
+##[tracing.jaeger][]
 
-[Deprecated - use tracing.opentelemetry.jaeger or tracing.opentelemetry.otlp instead]
+[Deprecated - use tracing.opentelemetry.jaeger or tracing.opentelemetry.otlp instead][]
 
 Configure Grafana's Jaeger client for distributed tracing.
 
@@ -1952,7 +1952,7 @@ Setting this to `true` turns off shared RPC spans. Leaving this available is the
 
 <hr>
 
-## [tracing.opentelemetry]
+##[tracing.opentelemetry][]
 
 Configure general parameters shared between OpenTelemetry providers.
 
@@ -1989,7 +1989,7 @@ Use a sampling server that supports the Jaeger remote sampling API, such as jaeg
 
 <hr>
 
-## [tracing.opentelemetry.jaeger]
+##[tracing.opentelemetry.jaeger][]
 
 Configure Grafana's Jaeger client for distributed tracing.
 
@@ -2003,7 +2003,7 @@ The propagation specifies the text map propagation format. The values `jaeger` a
 
 <hr>
 
-## [tracing.opentelemetry.otlp]
+##[tracing.opentelemetry.otlp][]
 
 Configure Grafana's otlp client for distributed tracing.
 
@@ -2017,7 +2017,7 @@ The propagation specifies the text map propagation format. The values `jaeger` a
 
 <hr>
 
-## [external_image_storage]
+##[external_image_storage][]
 
 These options control how images should be made public so they can be shared on services like Slack or email message.
 
@@ -2027,7 +2027,7 @@ Options are s3, webdav, gcs, azure_blob, local). If left empty, then Grafana ign
 
 <hr>
 
-## [external_image_storage.s3]
+##[external_image_storage.s3][]
 
 ### endpoint
 
@@ -2075,7 +2075,7 @@ Secret key, e.g. AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA.
 
 <hr>
 
-## [external_image_storage.webdav]
+##[external_image_storage.webdav][]
 
 ### url
 
@@ -2095,7 +2095,7 @@ Optional URL to send to users in notifications. If the string contains the seque
 
 <hr>
 
-## [external_image_storage.gcs]
+##[external_image_storage.gcs][]
 
 ### key_file
 
@@ -2121,7 +2121,7 @@ the image uploaded to Google Cloud Storage.
 
 Sets the signed URL expiration, which defaults to seven days.
 
-## [external_image_storage.azure_blob]
+##[external_image_storage.azure_blob][]
 
 ### account_name
 
@@ -2141,13 +2141,13 @@ Number of days for SAS token validity. If specified SAS token will be attached t
 
 <hr>
 
-## [external_image_storage.local]
+##[external_image_storage.local][]
 
 This option does not require any configuration.
 
 <hr>
 
-## [rendering]
+##[rendering][]
 
 Options to configure a remote HTTP image rendering service, e.g. using https://github.com/grafana/grafana-image-renderer.
 
@@ -2172,7 +2172,7 @@ If the remote HTTP image renderer service runs on a different server than the Gr
 Concurrent render request limit affects when the /render HTTP endpoint is used. Rendering many images at the same time can overload the server,
 which this setting can help protect against by only allowing a certain number of concurrent requests. Default is `30`.
 
-## [panels]
+##[panels][]
 
 ### enable_alpha
 
@@ -2186,7 +2186,7 @@ This configuration is not available in Grafana Cloud instances.
 
 If set to true Grafana will allow script tags in text panels. Not recommended as it enables XSS vulnerabilities. Default is false.
 
-## [plugins]
+##[plugins][]
 
 ### enable_alpha
 
@@ -2230,7 +2230,7 @@ Enter a comma-separated list of plugin identifiers to avoid loading (including c
 
 <hr>
 
-## [live]
+##[live][]
 
 ### max_connections
 
@@ -2293,7 +2293,7 @@ ha_engine_address = 127.0.0.1:6379
 
 <hr>
 
-## [plugin.plugin_id]
+##[plugin.plugin_id][]
 
 This section can be used to configure plugin-specific settings. Replace the `plugin_id` attribute with the plugin ID present in `plugin.json`.
 
@@ -2315,7 +2315,7 @@ Experimental. Requires the feature toggle `externalCorePlugins` to be enabled.
 
 <hr>
 
-## [plugin.grafana-image-renderer]
+##[plugin.grafana-image-renderer][]
 
 For more information, refer to [Image rendering]({{< relref "../image-rendering" >}}).
 
@@ -2417,13 +2417,13 @@ Change the listening port of the gRPC server. Default port is `0` and will autom
 
 <hr>
 
-## [enterprise]
+##[enterprise][]
 
 For more information about Grafana Enterprise, refer to [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}).
 
 <hr>
 
-## [feature_toggles]
+##[feature_toggles][]
 
 ### enable
 
@@ -2435,7 +2435,7 @@ Some feature toggles for stable features are on by default. Use this setting to 
 
 <hr>
 
-## [feature_management]
+##[feature_management][]
 
 The options in this section configure the experimental Feature Toggle Admin Page feature, which is enabled using the `featureToggleAdminPage` feature toggle. Grafana Labs offers support on a best-effort basis, and breaking changes might occur prior to the feature being made generally available.
 
@@ -2463,7 +2463,7 @@ Use to disable updates for additional specific feature toggles in the feature ma
 
 <hr>
 
-## [date_formats]
+##[date_formats][]
 
 {{% admonition type="note" %}}
 The date format options below are only available in Grafana v7.2+.
@@ -2505,7 +2505,7 @@ Used as the default time zone for user preferences. Can be either `browser` for 
 
 Set the default start of the week, valid values are: `saturday`, `sunday`, `monday` or `browser` to use the browser locale to define the first day of the week. Default is `browser`.
 
-## [expressions]
+##[expressions][]
 
 {{% admonition type="note" %}}
 This feature is available in Grafana v7.4 and later versions.
@@ -2515,7 +2515,7 @@ This feature is available in Grafana v7.4 and later versions.
 
 Set this to `false` to disable expressions and hide them in the Grafana UI. Default is `true`.
 
-## [geomap]
+##[geomap][]
 
 This section controls the defaults settings for Geomap Plugin.
 
@@ -2538,20 +2538,20 @@ default_baselayer_config = `{
 
 Set this to `false` to disable loading other custom base maps and hide them in the Grafana UI. Default is `true`.
 
-## [rbac]
+##[rbac][]
 
 Refer to [Role-based access control]({{< relref "../../administration/roles-and-permissions/access-control" >}}) for more information.
 
-## [navigation.app_sections]
+##[navigation.app_sections][]
 
 Move an app plugin (referenced by its id), including all its pages, to a specific navigation section. Format: `<pluginId> = <sectionId> <sortWeight>`
 
-## [navigation.app_standalone_pages]
+##[navigation.app_standalone_pages][]
 
 Move an individual app plugin page (referenced by its `path` field) to a specific navigation section.
 Format: `<pageUrl> = <sectionId> <sortWeight>`
 
-## [public_dashboards]
+##[public_dashboards][]
 
 This section configures the [public dashboards]({{< relref "../../dashboards/dashboard-public" >}}) feature.
 
