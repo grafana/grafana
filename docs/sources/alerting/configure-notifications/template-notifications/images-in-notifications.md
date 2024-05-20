@@ -67,7 +67,7 @@ Having installed either the image rendering plugin, or set up Grafana to use a r
 If screenshots should be uploaded to cloud storage then `upload_external_image_storage` should also be set to `true`:
 
     # Uploads screenshots to the local Grafana server or remote storage such as Azure, S3 and GCS. Please
-    # see[external_image_storage][] for further configuration options. If this option is false, screenshots
+    # see [external_image_storage] for further configuration options. If this option is false, screenshots
     # will be persisted to disk for up to temp_data_lifetime.
     upload_external_image_storage = false
 
