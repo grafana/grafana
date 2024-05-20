@@ -1,16 +1,12 @@
 package pluginconfig
 
-import "github.com/grafana/grafana/pkg/setting"
-
 type ManagedPluginService interface {
 	IsManagedPlugin(pluginID string) bool
 }
 
 var _ ManagedPluginService = (*ManagedPluginChecker)(nil)
 
-type ManagedPluginChecker struct {
-	cfg *setting.Cfg
-}
+type ManagedPluginChecker struct{}
 
 func NewManagedPluginChecker() *ManagedPluginChecker {
 	return &ManagedPluginChecker{}

@@ -252,9 +252,7 @@ describe('InstallControlsButton', () => {
           <InstallControlsButton plugin={{ ...plugin, isManaged: true }} pluginStatus={PluginStatus.UPDATE} />
         </TestProvider>
       );
-
-      const button = screen.getByText('Update')
-      expect(button).not.toBeVisible();
+      expect(screen.getByText('Update')).not.toBeVisible();
     });
   });
 });

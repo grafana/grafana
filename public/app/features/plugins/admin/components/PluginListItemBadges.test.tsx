@@ -79,7 +79,9 @@ describe('PluginListItemBadges', () => {
   });
 
   it('does not render an upgrade badge (when plugin has an available update and is managed)', () => {
-    render(<PluginListItemBadges plugin={{ ...plugin, hasUpdate: true, installedVersion: '0.0.9', isManaged: true }} />);
+    render(
+      <PluginListItemBadges plugin={{ ...plugin, hasUpdate: true, installedVersion: '0.0.9', isManaged: true }} />
+    );
     expect(screen.queryByText(/update available/i)).toBeNull();
   });
 
