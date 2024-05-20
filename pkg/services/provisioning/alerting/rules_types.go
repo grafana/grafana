@@ -75,7 +75,7 @@ type AlertRuleV1 struct {
 	Labels               values.StringMapValue   `json:"labels" yaml:"labels"`
 	IsPaused             values.BoolValue        `json:"isPaused" yaml:"isPaused"`
 	NotificationSettings *NotificationSettingsV1 `json:"notification_settings" yaml:"notification_settings"`
-	RecordV1             *RecordV1               `json:"record" yaml:"record"`
+	Record               *RecordV1               `json:"record" yaml:"record"`
 }
 
 func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {
@@ -139,6 +139,13 @@ func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {
 			return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse: %w", alertRule.Title, err)
 		}
 		alertRule.NotificationSettings = append(alertRule.NotificationSettings, ns)
+	}
+	if rule.Record != nil {
+		record, err := rule.Record.mapToModel()
+		if err != nil {
+			return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse: %w", alertRule.Title, err)
+		}
+		alertRule.Record = &record
 	}
 	return alertRule, nil
 }
