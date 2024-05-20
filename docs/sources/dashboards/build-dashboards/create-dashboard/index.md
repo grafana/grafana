@@ -17,69 +17,69 @@ weight: 1
 refs:
   built-in-special-data-sources:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/datasources/#special-data-sources
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/#special-data-sources
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/datasources/#special-data-sources
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/#special-data-sources
   add-a-data-source:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/administration/data-source-management/#add-a-data-source
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#add-a-data-source
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/administration/data-source-management/#add-a-data-source
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#add-a-data-source
   configure-thresholds:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-thresholds/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-thresholds/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-thresholds/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-thresholds/
   visualization-specific-options:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/
   generative-ai-features:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards
   override-field-values:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-overrides/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-overrides/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-overrides/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-overrides/
   configure-standard-options:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/
   configure-value-mappings:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-value-mappings/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-value-mappings/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-value-mappings/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-value-mappings/
   about-users-and-permissions:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/
   visualizations-options:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/
   dashboard:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/datasources/#special-data-sources
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/#special-data-sources
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/#special-data-sources
   data-sources:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/datasources/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/datasources/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
   configure-repeating-panels:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-panel-options/#configure-repeating-panels
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-panel-options/#configure-repeating-panels
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-panel-options/#configure-repeating-panels
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-panel-options/#configure-repeating-panels
 ---
 
 ## Create a dashboard

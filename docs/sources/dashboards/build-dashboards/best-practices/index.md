@@ -18,54 +18,54 @@ weight: 800
 refs:
   data-sources:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/datasources/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/datasources/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
   variable-examples:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/variables/#examples-of-templates-and-variables
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/#examples-of-templates-and-variables
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/variables/#examples-of-templates-and-variables
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/#examples-of-templates-and-variables
   manage-dashboard-links:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/manage-dashboard-links/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/manage-dashboard-links/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/manage-dashboard-links/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/manage-dashboard-links/
   text-panel-visualization:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/text/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/text/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/text/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/text/
   dashboard-list-panel:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/dashboard-list/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/dashboard-list/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/dashboard-list/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/dashboard-list/
   usage-insights:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/assess-dashboard-usage/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/assess-dashboard-usage/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/assess-dashboard-usage/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/assess-dashboard-usage/
   templates-and-variables:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/variables/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/variables/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
   thresholds:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-thresholds/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-thresholds/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-thresholds/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-thresholds/
   url-parameters:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-data-links/#data-link-variables
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-data-links/#data-link-variables
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-data-links/#data-link-variables
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-data-links/#data-link-variables
   text-panel:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/text/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/text/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/text/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/text/
 ---
 
 # Grafana dashboard best practices
