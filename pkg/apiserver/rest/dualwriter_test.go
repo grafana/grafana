@@ -44,17 +44,16 @@ func TestSetDualWritingMode(t *testing.T) {
 		us := storageMock{m, s}
 
 		f := featuremgmt.WithFeatures(tt.features...)
-		kvs := kvstore.NewFakeKVStore()
+		kvStore := kvstore.WithNamespace(kvstore.NewFakeKVStore(), 0, "storage.dualwriting."+tt.stackID)
 
-		entity := "playlist"
-		key := entity + "_" + tt.stackID
+		key := "playlist"
 
-		dw, err := SetDualWritingMode(kvs, f, entity, tt.stackID, ls, us)
+		dw, err := SetDualWritingMode(kvStore, f, key, ls, us)
 		assert.NoError(t, err)
 		assert.Equal(t, tt.expectedMode, dw.Mode())
 
 		// check kv store
-		val, ok, err := kvs.Get(context.Background(), 0, "", key)
+		val, ok, err := kvStore.Get(context.Background(), key)
 		assert.True(t, ok)
 		assert.NoError(t, err)
 		assert.Equal(t, val, fmt.Sprint(tt.expectedMode))

@@ -123,16 +123,10 @@ func (u *updateWrapper) UpdatedObject(ctx context.Context, oldObj runtime.Object
 	return u.updated, nil
 }
 
-/*
-TODOS
-- fix kvstore get request to include orgID and namespace. potentially switch to namespacedkvstore instead.
-*/
-
 func SetDualWritingMode(
-	kvs kvstore.KVStore,
+	kvs *kvstore.NamespacedKVStore,
 	features featuremgmt.FeatureToggles,
 	entity string,
-	stackID string,
 	legacy LegacyStorage,
 	storage Storage,
 ) (DualWriter, error) {
@@ -144,15 +138,15 @@ func SetDualWritingMode(
 	}
 	errDualWriterSetCurrentMode := errors.New("failed to set current dual writing mode")
 
-	key := entity + "_" + stackID
-	m, ok, err := kvs.Get(context.Background(), 0, "", key)
+	// Use entity name as key
+	m, ok, err := kvs.Get(context.Background(), entity)
 	if err != nil {
 		return nil, errors.New("failed to fetch current dual writing mode")
 	}
 	if !ok {
 		// Default to mode 1
 		m = fmt.Sprint(Mode1)
-		err := kvs.Set(context.Background(), 0, "", key, m)
+		err := kvs.Set(context.Background(), entity, m)
 		if err != nil {
 			return nil, errDualWriterSetCurrentMode
 		}
@@ -166,7 +160,7 @@ func SetDualWritingMode(
 		// There are none between mode 1 and mode 2
 		currentMode = Mode2
 
-		err := kvs.Set(context.Background(), 0, "", key, fmt.Sprint(currentMode))
+		err := kvs.Set(context.Background(), entity, fmt.Sprint(currentMode))
 		if err != nil {
 			return nil, errDualWriterSetCurrentMode
 		}

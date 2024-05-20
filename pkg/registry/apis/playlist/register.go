@@ -33,8 +33,7 @@ type PlaylistAPIBuilder struct {
 	namespacer request.NamespaceMapper
 	gv         schema.GroupVersion
 	features   featuremgmt.FeatureToggles
-	kvStore    kvstore.KVStore
-	cfg        *setting.Cfg
+	kvStore    *kvstore.NamespacedKVStore
 }
 
 func RegisterAPIService(p playlistsvc.Service,
@@ -48,8 +47,7 @@ func RegisterAPIService(p playlistsvc.Service,
 		namespacer: request.GetNamespaceMapper(cfg),
 		gv:         playlist.PlaylistResourceInfo.GroupVersion(),
 		features:   features,
-		kvStore:    kvStore,
-		cfg:        cfg,
+		kvStore:    kvstore.WithNamespace(kvStore, 0, "storage.dualwriting."+cfg.StackID),
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -129,7 +127,7 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 			return nil, err
 		}
 
-		dualWriter, err := grafanarest.SetDualWritingMode(b.kvStore, b.features, "playlist", b.cfg.StackID, legacyStore, store)
+		dualWriter, err := grafanarest.SetDualWritingMode(b.kvStore, b.features, "playlist", legacyStore, store)
 		if err != nil {
 			return nil, err
 		}
