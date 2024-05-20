@@ -212,13 +212,13 @@ func (b *ScopeAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI
 				},
 			},
 		}
-		findDashboardPath.Get.Description = "Navigate the scopes tree"
+		findDashboardPath.Get.Description = "find scope dashboard bindings that match any of the given scopes."
 		findDashboardPath.Get.Parameters = []*spec3.Parameter{
 			{
 				ParameterProps: spec3.ParameterProps{
-					Name:        "parent",
+					Name:        "scope",
 					In:          "query",
-					Description: "The parent scope node",
+					Description: "A scope name (id) to match against, this parameter may be repeated",
 				},
 			},
 		}
