@@ -371,7 +371,7 @@ func TestProcessTicks(t *testing.T) {
 	})
 
 	t.Run("scheduled rules should be sorted", func(t *testing.T) {
-		rules := gen.With(gen.WithOrgID(mainOrgID), gen.WithInterval(cfg.BaseInterval)).GenerateManyRef(10, 20)
+		rules := models.GenerateAlertRules(rand.Intn(10)+10, models.AlertRuleGen(models.WithOrgID(mainOrgID), models.WithInterval(cfg.BaseInterval)))
 		ruleStore.rules = map[string]*models.AlertRule{}
 		ruleStore.PutRule(context.Background(), rules...)
 
