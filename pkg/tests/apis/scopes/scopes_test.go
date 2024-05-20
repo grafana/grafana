@@ -57,6 +57,15 @@ func TestIntegrationScopes(t *testing.T) {
 				]
 			  },
 			  {
+				"name": "find_scope_dashboard",
+				"kind": "FindScopedDashboardsResults",
+				"singularName": "results",
+				"namespaced": true,
+				"verbs": [
+					"get"
+			    ]
+			  },
+			  {
 				"name": "scopedashboardbindings",
 				"singularName": "scopedashboardbinding",
 				"namespaced": true,
