@@ -9,6 +9,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 const (
@@ -78,10 +79,6 @@ var (
 	}
 )
 
-type Silence interface {
-	GetRuleUID() *string
-}
-
 type RuleUIDToNamespaceStore interface {
 	GetNamespacesByRuleUID(ctx context.Context, orgID int64, uids ...string) (map[string]string, error)
 }
@@ -104,7 +101,7 @@ func NewSilenceService(ac ac.AccessControl, store RuleUIDToNamespaceStore) *Sile
 // Global silence (one that is not attached to a particular rule) is considered available to all users.
 // For silences that are not attached to a rule, are checked against authorization.
 // This method is more preferred when many silences need to be checked.
-func (s SilenceService) FilterByAccess(ctx context.Context, user identity.Requester, silences ...Silence) ([]Silence, error) {
+func (s SilenceService) FilterByAccess(ctx context.Context, user identity.Requester, silences ...*models.Silence) ([]*models.Silence, error) {
 	canAll, err := s.HasAccess(ctx, user, readAllSilencesEvaluator)
 	if err != nil || canAll { // return early if user can either read all silences or there is an error
 		return silences, err
@@ -113,8 +110,8 @@ func (s SilenceService) FilterByAccess(ctx context.Context, user identity.Reques
 	if err != nil || !canSome {
 		return nil, err
 	}
-	result := make([]Silence, 0, len(silences))
-	silencesByRuleUID := make(map[string][]Silence, len(silences))
+	result := make([]*models.Silence, 0, len(silences))
+	silencesByRuleUID := make(map[string][]*models.Silence, len(silences))
 	for _, silence := range silences {
 		ruleUID := silence.GetRuleUID()
 		if ruleUID == nil { // if this is a general silence
@@ -154,7 +151,7 @@ func (s SilenceService) FilterByAccess(ctx context.Context, user identity.Reques
 }
 
 // AuthorizeReadSilence checks if user has access to read a silence
-func (s SilenceService) AuthorizeReadSilence(ctx context.Context, user identity.Requester, silence Silence) error {
+func (s SilenceService) AuthorizeReadSilence(ctx context.Context, user identity.Requester, silence *models.Silence) error {
 	canAll, err := s.HasAccess(ctx, user, readAllSilencesEvaluator)
 	if canAll || err != nil { // return early if user can either read all silences or there is error
 		return err
@@ -186,7 +183,7 @@ func (s SilenceService) AuthorizeReadSilence(ctx context.Context, user identity.
 }
 
 // AuthorizeCreateSilence checks if user has access to create a silence. Returns ErrAuthorizationBase if user is not authorized
-func (s SilenceService) AuthorizeCreateSilence(ctx context.Context, user identity.Requester, silence Silence) error {
+func (s SilenceService) AuthorizeCreateSilence(ctx context.Context, user identity.Requester, silence *models.Silence) error {
 	canAny, err := s.HasAccess(ctx, user, createAnySilenceEvaluator)
 	if err != nil || canAny {
 		// return early if user can either create any silence or there is an error
@@ -215,7 +212,7 @@ func (s SilenceService) AuthorizeCreateSilence(ctx context.Context, user identit
 }
 
 // AuthorizeUpdateSilence checks if user has access to update\expire a silence. Returns ErrAuthorizationBase if user is not authorized
-func (s SilenceService) AuthorizeUpdateSilence(ctx context.Context, user identity.Requester, silence Silence) error {
+func (s SilenceService) AuthorizeUpdateSilence(ctx context.Context, user identity.Requester, silence *models.Silence) error {
 	canAny, err := s.HasAccess(ctx, user, updateAnySilenceEvaluator)
 	if err != nil || canAny {
 		// return early if user can either update any silence or there is an error

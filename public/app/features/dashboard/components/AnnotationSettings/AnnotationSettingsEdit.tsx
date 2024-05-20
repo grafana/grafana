@@ -265,9 +265,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       maxWidth: theme.spacing(60),
       marginBottom: theme.spacing(2),
     }),
-    select: css`
-      margin-top: 8px;
-    `,
+    select: css({
+      marginTop: '8px',
+    }),
   };
 };
 

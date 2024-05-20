@@ -28,6 +28,12 @@ Dashboard lists allow you to display dynamic links to other dashboards. The list
 
 On each dashboard load, this panel queries the dashboard list, always providing the most up-to-date results.
 
+{{< docs/play title="Dashboard List Visualization" url="https://play.grafana.org/d/fdlojrg7daebka/" >}}
+
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ## Options
 
 Use these options to refine your visualization.
@@ -51,6 +57,6 @@ These options only apply if the **Search** option is selected.
 > **Note:** When multiple tags and strings appear, the dashboard list displays those matching _all_ conditions.
 
 {{% docs/reference %}}
-[Dashboard URL variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/create-dashboard-url-variables"
-[Dashboard URL variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/create-dashboard-url-variables"
+[Dashboard URL variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard-url-variables"
+[Dashboard URL variables]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/build-dashboards/create-dashboard-url-variables"
 {{% /docs/reference %}}

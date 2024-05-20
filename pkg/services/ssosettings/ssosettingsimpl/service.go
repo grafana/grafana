@@ -324,7 +324,7 @@ func (s *Service) getFallbackStrategyFor(provider string) (ssosettings.FallbackS
 func (s *Service) encryptSecrets(ctx context.Context, settings map[string]any) (map[string]any, error) {
 	result := make(map[string]any)
 	for k, v := range settings {
-		if isSecret(k) && v != "" {
+		if IsSecretField(k) && v != "" {
 			strValue, ok := v.(string)
 			if !ok {
 				return result, fmt.Errorf("failed to encrypt %s setting because it is not a string: %v", k, v)
@@ -414,7 +414,7 @@ func (s *Service) mergeSSOSettings(dbSettings, systemSettings *models.SSOSetting
 
 func (s *Service) decryptSecrets(ctx context.Context, settings map[string]any) (map[string]any, error) {
 	for k, v := range settings {
-		if isSecret(k) && v != "" {
+		if IsSecretField(k) && v != "" {
 			strValue, ok := v.(string)
 			if !ok {
 				s.logger.Error("Failed to parse secret value, it is not a string", "key", k)
@@ -449,7 +449,7 @@ func (s *Service) isProviderConfigurable(provider string) bool {
 func removeSecrets(settings map[string]any) map[string]any {
 	result := make(map[string]any)
 	for k, v := range settings {
-		if isSecret(k) {
+		if IsSecretField(k) {
 			result[k] = setting.RedactedPassword
 			continue
 		}
@@ -470,7 +470,9 @@ func mergeSettings(storedSettings, systemSettings map[string]any) map[string]any
 
 	for k, v := range systemSettings {
 		if _, ok := settings[k]; !ok {
-			settings[k] = v
+			if isMergingAllowed(k) {
+				settings[k] = v
+			}
 		} else if isURL(k) && isEmptyString(settings[k]) {
 			// Overwrite all URL settings from the DB containing an empty string with their value
 			// from the system settings. This fixes an issue with empty auth_url, api_url and token_url
@@ -483,11 +485,25 @@ func mergeSettings(storedSettings, systemSettings map[string]any) map[string]any
 	return settings
 }
 
+// isMergingAllowed returns true if the field provided can be merged from the system settings.
+// It won't allow SAML fields that are part of a group of settings to be merged from system settings
+// because the DB settings already contain one valid setting from each group.
+func isMergingAllowed(fieldName string) bool {
+	forbiddenMergePatterns := []string{"certificate", "private_key", "idp_metadata"}
+
+	for _, v := range forbiddenMergePatterns {
+		if strings.Contains(strings.ToLower(fieldName), strings.ToLower(v)) {
+			return false
+		}
+	}
+	return true
+}
+
 // mergeSecrets returns a new map with the current value for secrets that have not been updated
 func mergeSecrets(settings map[string]any, storedSettings map[string]any) (map[string]any, error) {
 	settingsWithSecrets := map[string]any{}
 	for k, v := range settings {
-		if isSecret(k) {
+		if IsSecretField(k) {
 			strValue, ok := v.(string)
 			if !ok {
 				return nil, fmt.Errorf("secret value is not a string")
@@ -515,7 +531,8 @@ func overrideMaps(maps ...map[string]any) map[string]any {
 	return result
 }
 
-func isSecret(fieldName string) bool {
+// IsSecretField returns true if the SSO settings field provided is a secret
+func IsSecretField(fieldName string) bool {
 	secretFieldPatterns := []string{"secret", "private", "certificate"}
 
 	for _, v := range secretFieldPatterns {

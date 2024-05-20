@@ -20,17 +20,17 @@ weight: 104
 
 # Queries and conditions
 
-In Grafana, queries play a vital role in fetching and transforming data from supported data sources, which include databases like MySQL and PostgreSQL, time series databases like Prometheus, InfluxDB and Graphite, and services like Elasticsearch, AWS CloudWatch, Azure Monitor and Google Cloud Monitoring.
+In Grafana, queries play a vital role in fetching and transforming data from supported data sources, which include databases like MySQL and PostgreSQL, time series databases like Prometheus, InfluxDB and Graphite, and services like Elasticsearch, Amazon CloudWatch, Azure Monitor, and Google Cloud Monitoring.
 
-For more information on supported data sources, see [Data sources][data-source-alerting].
+For more information on supported data sources, refer to [Data sources][data-source-alerting].
 
-The process of executing a query involves defining the data source, specifying the desired data to retrieve, and applying relevant filters or transformations. Query languages or syntaxes specific to the chosen data source are utilized for constructing these queries.
+The process of executing a query involves defining the data source, specifying the desired data to retrieve, and applying relevant filters or transformations. Query languages or syntax specific to the chosen data source are utilized for constructing these queries.
 
 In Alerting, you define a query to get the data you want to measure and a condition that needs to be met before an alert rule fires.
 
 An alert rule consists of one or more queries and expressions that select the data you want to measure.
 
-For more information on queries and expressions, see [Query and transform data][query-transform-data].
+For more information on queries and expressions, refer to [Query and transform data][query-transform-data].
 
 ## Data source queries
 
@@ -50,9 +50,9 @@ Some common types of query components include:
 
 **Grouping**: Group the data by specific dimensions or tags to create aggregated views or breakdowns.
 
-**Note**:
-
-Grafana does not support alert queries with template variables. More information is available [here](https://community.grafana.com/t/template-variables-are-not-supported-in-alert-queries-while-setting-up-alert/2514).
+{{% admonition type="note" %}}
+Grafana doesn't support alert queries with template variables. More details [here.](https://community.grafana.com/t/template-variables-are-not-supported-in-alert-queries-while-setting-up-alert/2514)
+{{% /admonition %}}
 
 ## Expression queries
 
@@ -60,21 +60,20 @@ In Grafana, an expression is used to perform calculations, transformations, or a
 
 By leveraging expression queries, users can perform tasks such as calculating the percentage change between two values, applying functions like logarithmic or trigonometric functions, aggregating data over specific time ranges or dimensions, and implementing conditional logic to handle different scenarios.
 
-In Alerting, you can only use expressions for Grafana-managed alert rules. For each expression, you can choose from the math, reduce, and resample expressions. These are called multi-dimensional rules, because they generate a separate alert for each series.
-
-You can also use classic condition, which creates an alert rule that triggers a single alert when its condition is met. As a result, Grafana sends only a single alert even when alert conditions are met for multiple series.
-
-**Note:**
-
-Classic conditions exist mainly for compatibility reasons and should be avoided if possible.
+In Alerting, you can only use expressions for Grafana-managed alert rules. For each expression, you can choose from the math, reduce, and resample expressions. These are called multi-dimensional rules, because they generate an alert instance for each series.
 
 **Reduce**
 
-Aggregates time series values in the selected time range into a single value.
+Aggregates time series values in the selected time range into a single value. It's not necessary for [rules using numeric data.](#alert-on-numeric-data)
 
 **Math**
 
-Performs free-form math functions/operations on time series and number data. Can be used to preprocess time series data or to define an alert condition for number data.
+Performs free-form math functions/operations on time series and number data. Can be used to preprocess time series data or to define an alert condition for number data. For example:
+
+- `$B > 70` should fire if the value of B (query or expression) is more than 70.
+- `$B < $C * 100` should fire if the value of B is less than the value of C multiplied by 100.
+
+If queries being compared have multiple series in their results, series from different queries are matched if they have the same labels or one is a subset of the other.
 
 **Resample**
 
@@ -91,14 +90,11 @@ The threshold expression allows you to compare two single values. It returns `0`
 - Is within range (x > y1 AND x < y2)
 - Is outside range (x < y1 AND x > y2)
 
-**Classic condition**
+**Classic condition (legacy)**
 
-Checks if any time series data matches the alert condition.
-
-**Note**:
-
-Classic condition expression queries always produce one alert instance only, no matter how many time series meet the condition.
 Classic conditions exist mainly for compatibility reasons and should be avoided if possible.
+
+Classic condition checks if any time series data matches the alert condition. It always produce one alert instance only, no matter how many time series meet the condition.
 
 ## Aggregations
 
@@ -123,7 +119,7 @@ These functions are available for **Reduce** and **Classic condition** expressio
 
 ## Alert condition
 
-An alert condition is the query or expression that determines whether the alert will fire or not depending on the value it yields. There can be only one condition which will determine the triggering of the alert.
+An alert condition is the query or expression that determines whether the alert fires or not depending on the value it yields. There can be only one condition which determines the triggering of the alert.
 
 After you have defined your queries and/or expressions, choose one of them as the alert rule condition.
 
@@ -145,11 +141,11 @@ Grafana-managed alert rules are evaluated for a specific interval of time. Durin
 
 It can be tricky to create an alert rule for a noisy metric. That is, when the value of a metric continually goes above and below a threshold. This is called flapping and results in a series of firing - resolved - firing notifications and a noisy alert state history.
 
-For example, if you have an alert for latency with a threshold of 1000ms and the number fluctuates around 1000 (say 980 ->1010 -> 990 -> 1020, and so on) then each of those will trigger a notification.
+For example, if you have an alert for latency with a threshold of 1000ms and the number fluctuates around 1000 (say 980 ->1010 -> 990 -> 1020, and so on) then each of those triggers a notification.
 
 To solve this problem, you can set a (custom) recovery threshold, which basically means having two thresholds instead of one. An alert is triggered when the first threshold is crossed and is resolved only when the second threshold is crossed.
 
-For example, you could set a threshold of 1000ms and a recovery threshold of 900ms. This way, an alert rule will only stop firing when it goes under 900ms and flapping is reduced.
+For example, you could set a threshold of 1000ms and a recovery threshold of 900ms. This way, an alert rule only stops firing when it goes under 900ms and flapping is reduced.
 
 ## Alert on numeric data
 
@@ -179,7 +175,6 @@ For a MySQL table called "DiskSpace":
 | 2021-June-7 | web1 | /etc | 3           |
 | 2021-June-7 | web2 | /var | 4           |
 | 2021-June-7 | web3 | /var | 8           |
-| ...         | ...  | ...  | ...         |
 
 You can query the data filtering on time, but without returning the time series to Grafana. For example, an alert that would trigger per Host, Disk when there is less than 5% free space:
 
@@ -204,7 +199,7 @@ This query returns the following Table response to Grafana:
 | web2 | /var | 4           |
 | web3 | /var | 0           |
 
-When this query is used as the **condition** in an alert rule, then the non-zero will be alerting. As a result, three alert instances are produced:
+When this query is used as the **condition** in an alert rule, then the non-zero is alerting. As a result, three alert instances are produced:
 
 | Labels                | Status   |
 | --------------------- | -------- |

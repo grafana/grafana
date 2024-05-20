@@ -50,21 +50,17 @@ The following video guides you through the creation steps and common customizati
 
 {{< docs/play title="Time Series Visualizations in Grafana" url="https://play.grafana.org/d/000000016/" >}}
 
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ## Tooltip options
 
-Tooltip options control the information overlay that appears when you hover over data points in the graph.
-
-{{< docs/shared lookup="visualizations/tooltip-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
-
-### Hover proximity
-
-This option controls how close your cursor must be to a data point before the tooltip appears. Values are in pixels.
+{{< docs/shared lookup="visualizations/tooltip-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Legend options
 
-Legend options control the series names and statistics that appear under or to the right of the graph.
-
-{{< docs/shared lookup="visualizations/legend-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
+{{< docs/shared lookup="visualizations/legend-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Graph styles
 
@@ -147,9 +143,9 @@ Set the style of the line. To change the color, use the standard [color scheme][
 
 ![Line styles examples](/static/img/docs/time-series-panel/line-styles-examples-v9.png)
 
-{{< docs/shared lookup="visualizations/connect-null-values.md" source="grafana" version="<GRAFANA VERSION>" >}}
+{{< docs/shared lookup="visualizations/connect-null-values.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-{{< docs/shared lookup="visualizations/disconnect-values.md" source="grafana" version="<GRAFANA VERSION>" >}}
+{{< docs/shared lookup="visualizations/disconnect-values.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ### Stack series
 
@@ -266,7 +262,7 @@ Use this option to transform the series values without affecting the values show
 The transform option is only available as an override.
 {{% /admonition %}}
 
-{{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA VERSION>" leveloffset="+2" >}}
+{{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+2" >}}
 
 ## Color options
 
@@ -309,19 +305,39 @@ The following image shows a bar chart with the **Green-Yellow-Red (by value)** c
 
 {{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_bars.png" max-width="1200px" caption="Color scheme: Green-Yellow-Red" >}}
 
+## Standard options
+
+{{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Data links
+
+{{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Value mappings
+
+{{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Thresholds
+
+{{< docs/shared lookup="visualizations/thresholds-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Field overrides
+
+{{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 {{% docs/reference %}}
-[Color scheme]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#color-scheme"
-[Color scheme]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#color-scheme"
+[Color scheme]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options#color-scheme"
+[Color scheme]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options#color-scheme"
 
-[Add a field override]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-overrides#add-a-field-override"
-[Add a field override]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-overrides#add-a-field-override"
+[Add a field override]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-overrides#add-a-field-override"
+[Add a field override]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-overrides#add-a-field-override"
 
-[Configure standard options]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#max"
-[Configure standard options]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#max"
+[Configure standard options]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options#max"
+[Configure standard options]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options#max"
 
-[color scheme]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#color-scheme"
-[color scheme]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#color-scheme"
+[color scheme]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options#color-scheme"
+[color scheme]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options#color-scheme"
 
-[Configure field overrides]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-overrides"
-[Configure field overrides]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-overrides"
+[Configure field overrides]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-overrides"
+[Configure field overrides]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-overrides"
 {{% /docs/reference %}}

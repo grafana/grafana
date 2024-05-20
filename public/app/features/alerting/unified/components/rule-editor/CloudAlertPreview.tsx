@@ -56,53 +56,51 @@ export function CloudAlertPreview({ preview }: CloudAlertPreviewProps) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  table: css`
-    width: 100%;
-    margin: ${theme.spacing(2, 0)};
+  table: css({
+    width: '100%',
+    margin: theme.spacing(2, 0),
 
-    caption {
-      caption-side: top;
-      color: ${theme.colors.text.primary};
+    caption: {
+      captionSide: 'top',
+      color: theme.colors.text.primary,
 
-      & > span {
-        font-size: ${theme.typography.bodySmall.fontSize};
-        color: ${theme.colors.text.secondary};
-      }
-    }
+      '& > span': {
+        fontSize: theme.typography.bodySmall.fontSize,
+        color: theme.colors.text.secondary,
+      },
+    },
 
-    td,
-    th {
-      padding: ${theme.spacing(1, 1)};
-    }
+    'td, th': {
+      padding: theme.spacing(1, 1),
+    },
 
-    td + td,
-    th + th {
-      padding-left: ${theme.spacing(3)};
-    }
+    'td + td, th + th': {
+      paddingLeft: theme.spacing(3),
+    },
 
-    thead th {
-      &:nth-child(1) {
-        width: 80px;
-      }
+    'thead th': {
+      '&:nth-child(1)': {
+        width: '80px',
+      },
 
-      &:nth-child(2) {
-        width: auto;
-      }
+      '&:nth-child(2)': {
+        width: 'auto',
+      },
 
-      &:nth-child(3) {
-        width: 40px;
-      }
-    }
+      '&:nth-child(3)': {
+        width: '40px',
+      },
+    },
 
-    td:nth-child(3) {
-      text-align: center;
-    }
+    'td:nth-child(3)': {
+      textAlign: 'center',
+    },
 
-    tbody tr:nth-child(2n + 1) {
-      background-color: ${theme.colors.background.secondary};
-    }
-  `,
-  tagList: css`
-    justify-content: flex-start;
-  `,
+    'tbody tr:nth-child(2n + 1)': {
+      backgroundColor: theme.colors.background.secondary,
+    },
+  }),
+  tagList: css({
+    justifyContent: 'flex-start',
+  }),
 });

@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
@@ -17,14 +18,14 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func NewStore(sql db.DB, features featuremgmt.FeatureToggles, actionsetService *ActionSetService) *store {
-	return &store{sql, features, *actionsetService}
+func NewStore(sql db.DB, features featuremgmt.FeatureToggles) *store {
+	store := &store{sql: sql, features: features}
+	return store
 }
 
 type store struct {
-	sql              db.DB
-	features         featuremgmt.FeatureToggles
-	actionSetService ActionSetService
+	sql      db.DB
+	features featuremgmt.FeatureToggles
 }
 
 type flatResourcePermission struct {
@@ -659,26 +660,34 @@ func (s *store) getPermissions(sess *db.Session, resource, resourceID, resourceA
 	return result, nil
 }
 
-func (s *store) createPermissions(sess *db.Session, roleID int64, resource, resourceID, resourceAttribute string, actions map[string]struct{}, permission string) error {
-	if len(actions) == 0 {
-		return nil
-	}
-	permissions := make([]accesscontrol.Permission, 0, len(actions))
-
-	for action := range actions {
-		p := managedPermission(action, resource, resourceID, resourceAttribute)
+func (s *store) createPermissions(sess *db.Session, roleID int64, resource, resourceID, resourceAttribute string, missingActions map[string]struct{}, permission string) error {
+	permissions := make([]accesscontrol.Permission, 0, len(missingActions))
+	/*
+		Add ACTION SET of managed permissions to in-memory store
+	*/
+	if s.features.IsEnabled(context.TODO(), featuremgmt.FlagAccessActionSets) && permission != "" {
+		actionSetName := GetActionSetName(resource, permission)
+		p := managedPermission(actionSetName, resource, resourceID, resourceAttribute)
 		p.RoleID = roleID
 		p.Created = time.Now()
 		p.Updated = time.Now()
 		p.Kind, p.Attribute, p.Identifier = p.SplitScope()
 		permissions = append(permissions, p)
 	}
-	/*
-		Add ACTION SET of managed permissions to in-memory store
-	*/
-	if s.features.IsEnabled(context.TODO(), featuremgmt.FlagAccessActionSets) {
-		actionSetName := s.actionSetService.GetActionSetName(resource, permission)
-		p := managedPermission(actionSetName, resource, resourceID, resourceAttribute)
+
+	// If there are no missing actions for the resource (in case of access level downgrade or resource removal), we don't need to insert any prior actions
+	// we still want to add the action set in case of access level downgrade, but not in case of resource removal (when permission == "")
+	if len(missingActions) == 0 {
+		if s.features.IsEnabled(context.TODO(), featuremgmt.FlagAccessActionSets) && permission != "" {
+			if _, err := sess.InsertMulti(&permissions); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	for action := range missingActions {
+		p := managedPermission(action, resource, resourceID, resourceAttribute)
 		p.RoleID = roleID
 		p.Created = time.Now()
 		p.Updated = time.Now()
@@ -727,8 +736,10 @@ Stores actionsets IN MEMORY
 // An example of an action set is "folders:edit" which represents the set of RBAC actions that are granted by edit access to a folder.
 
 type ActionSetService interface {
+	accesscontrol.ActionResolver
+
 	GetActionSet(actionName string) []string
-	GetActionSetName(resource, permission string) string
+	//GetActionSetName(resource, permission string) string
 	StoreActionSet(resource, permission string, actions []string)
 }
 
@@ -739,21 +750,47 @@ type ActionSet struct {
 
 // InMemoryActionSets is an in-memory implementation of the ActionSetService.
 type InMemoryActionSets struct {
-	log        log.Logger
-	actionSets map[string][]string
+	log                log.Logger
+	actionSetToActions map[string][]string
+	actionToActionSets map[string][]string
 }
 
 // NewActionSetService returns a new instance of InMemoryActionSetService.
-func NewActionSetService() ActionSetService {
-	return &InMemoryActionSets{
-		actionSets: make(map[string][]string),
-		log:        log.New("resourcepermissions.actionsets"),
+func NewActionSetService(a *acimpl.AccessControl) ActionSetService {
+	actionSets := &InMemoryActionSets{
+		log:                log.New("resourcepermissions.actionsets"),
+		actionSetToActions: make(map[string][]string),
+		actionToActionSets: make(map[string][]string),
 	}
+	a.RegisterActionResolver(actionSets)
+	return actionSets
+}
+
+func (s *InMemoryActionSets) Resolve(action string) []string {
+	actionSets := s.actionToActionSets[action]
+	sets := make([]string, 0, len(actionSets))
+
+	for _, actionSet := range actionSets {
+		setParts := strings.Split(actionSet, ":")
+		if len(setParts) != 2 {
+			s.log.Debug("skipping resolution for action set with invalid name", "action set", actionSet)
+			continue
+		}
+		prefix := setParts[0]
+		// Only use action sets for folders and dashboards for now
+		// We need to verify that action sets for other resources do not share names with actions (eg, `datasources:query`)
+		if prefix != "folders" && prefix != "dashboards" {
+			continue
+		}
+		sets = append(sets, actionSet)
+	}
+
+	return sets
 }
 
 // GetActionSet returns the action set for the given action.
 func (s *InMemoryActionSets) GetActionSet(actionName string) []string {
-	actionSet, ok := s.actionSets[actionName]
+	actionSet, ok := s.actionSetToActions[actionName]
 	if !ok {
 		return nil
 	}
@@ -761,18 +798,24 @@ func (s *InMemoryActionSets) GetActionSet(actionName string) []string {
 }
 
 func (s *InMemoryActionSets) StoreActionSet(resource, permission string, actions []string) {
-	s.log.Debug("storing action set\n")
-	name := s.GetActionSetName(resource, permission)
+	name := GetActionSetName(resource, permission)
 	actionSet := &ActionSet{
 		Action:  name,
 		Actions: actions,
 	}
-	s.actionSets[actionSet.Action] = actions
-	s.log.Debug("stored action set actionname \n", actionSet.Action)
+	s.actionSetToActions[actionSet.Action] = actions
+
+	for _, action := range actions {
+		if _, ok := s.actionToActionSets[action]; !ok {
+			s.actionToActionSets[action] = []string{}
+		}
+		s.actionToActionSets[action] = append(s.actionToActionSets[action], actionSet.Action)
+	}
+	s.log.Debug("stored action set", "action set name", actionSet.Action)
 }
 
 // GetActionSetName function creates an action set from a list of actions and stores it inmemory.
-func (s *InMemoryActionSets) GetActionSetName(resource, permission string) string {
+func GetActionSetName(resource, permission string) string {
 	// lower cased
 	resource = strings.ToLower(resource)
 	permission = strings.ToLower(permission)

@@ -491,15 +491,11 @@
       "delete-query-tooltip": "Delete query",
       "delete-starred-query-confirmation-text": "Are you sure you want to permanently delete your starred query?",
       "edit-comment-tooltip": "Edit comment",
-      "left-pane": "Left pane",
       "optional-description": "An optional description of what the query does.",
       "query-comment-label": "Query comment",
       "query-text-label": "Query text",
-      "right-pane": "Right pane",
-      "run-query-button": "Run query",
       "save-comment": "Save comment",
       "star-query-tooltip": "Star query",
-      "switch-datasource-button": "Switch data source and run query",
       "unstar-query-tooltip": "Unstar query",
       "update-comment-form": "Update comment form"
     },
@@ -568,6 +564,12 @@
       "saving-failed": "Saving rich history failed",
       "update-failed": "Rich History update failed"
     },
+    "run-query": {
+      "left-pane": "Left pane",
+      "right-pane": "Right pane",
+      "run-query-button": "Run query",
+      "switch-datasource-button": "Switch data source and run query"
+    },
     "secondary-actions": {
       "query-add-button": "Add query",
       "query-add-button-aria-label": "Add query",
@@ -584,11 +586,11 @@
     "toolbar": {
       "aria-label": "Explore toolbar",
       "copy-link": "Copy URL",
-      "copy-link-abs-time": "Copy Absolute Shortened URL",
+      "copy-link-abs-time": "Copy absolute URL",
       "copy-links-absolute-category": "Time-sync URL links (share with time range intact)",
       "copy-links-normal-category": "Normal URL links",
       "copy-shortened-link": "Copy shortened URL",
-      "copy-shortened-link-abs-time": "Copy Absolute Shortened URL",
+      "copy-shortened-link-abs-time": "Copy absolute shortened URL",
       "copy-shortened-link-menu": "Open copy link options",
       "refresh-picker-cancel": "Cancel",
       "refresh-picker-run": "Run query",
@@ -618,6 +620,9 @@
     "select": {
       "no-options-label": "No options found",
       "placeholder": "Choose"
+    },
+    "spinner": {
+      "aria-label": "Loading"
     }
   },
   "graph": {
@@ -727,10 +732,12 @@
     "forgot-password": "Forgot your password?",
     "form": {
       "password-label": "Password",
+      "password-placeholder": "password",
       "password-required": "Password is required",
       "submit-label": "Log in",
       "submit-loading-label": "Logging in...",
       "username-label": "Email or username",
+      "username-placeholder": "email or username",
       "username-required": "Email or username is required"
     },
     "services": {
@@ -885,7 +892,8 @@
       "title": "Alerting"
     },
     "alerting-admin": {
-      "title": "Admin"
+      "subtitle": "Manage Alertmanager configurations and configure where alert instances generated from Grafana managed alert rules are sent",
+      "title": "Settings"
     },
     "alerting-am-routes": {
       "subtitle": "Determine how alerts are routed to contact points",

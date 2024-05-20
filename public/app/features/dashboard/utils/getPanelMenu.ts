@@ -25,7 +25,6 @@ import { DashboardInteractions } from 'app/features/dashboard-scene/utils/intera
 import { InspectTab } from 'app/features/inspector/types';
 import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
 import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
-import { addDataTrailPanelAction } from 'app/features/trails/Integrations/dashboardIntegration';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { dispatch, store } from 'app/store/store';
 
@@ -162,10 +161,6 @@ export function getPanelMenu(
       onClick: onNavigateToExplore,
       shortcut: 'p x',
     });
-  }
-
-  if (config.featureToggles.exploreMetrics) {
-    addDataTrailPanelAction(dashboard, panel, menu);
   }
 
   const inspectMenu: PanelMenuItem[] = [];

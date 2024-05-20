@@ -27,17 +27,14 @@ Notification templates are not tied to specific contact point integrations, such
 
 You can use notification templates to:
 
-- Customize the subject of an email or the title of a message.
-- Add, change or remove text in notifications. For example, to select or omit certain labels, annotations and links.
-- Format text in bold and italic, and add or remove line breaks.
+- Customize content: Personalize the subject of an email or the title of a message. Modify text within notifications, like selecting or omitting certain labels, annotations, and links. Format text with bold and italic styles, and add or remove line breaks.
 
-You cannot use notification templates to:
+However, there are limitations. You cannot:
 
-- Add HTML and CSS to email notifications to change their visual appearance.
-- Change the design of notifications in instant messaging services such as Slack and Microsoft Teams. For example, to add or remove custom blocks with Slack Block Kit or adaptive cards with Microsoft Teams.
-- Choose the number and size of images, or where in the notification images are shown.
-- Customize the data in webhooks, including the fields or structure of the JSON data or send the data in other formats such as XML.
-- Add or remove HTTP headers in webhooks other than those in the contact point configuration.
+- Modify Visual Appearance: Add HTML and CSS to email notifications for visual changes. Alter the design of notifications in messaging services like Slack and Microsoft Teams, such as adding custom blocks or adaptive cards.
+- Manage Media and Data: Adjust the number and size of images or their placement in notifications. Customize webhook data structure or format, including JSON fields or sending data in XML. Modify HTTP headers in webhooks beyond those in the contact point configuration.
+
+## Learn more
 
 [Using Go's templating language][using-go-templating-language]
 

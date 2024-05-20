@@ -14,6 +14,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	amalert "github.com/prometheus/alertmanager/api/v2/client/alert"
 	amalertgroup "github.com/prometheus/alertmanager/api/v2/client/alertgroup"
+	amgeneral "github.com/prometheus/alertmanager/api/v2/client/general"
 	amreceiver "github.com/prometheus/alertmanager/api/v2/client/receiver"
 	amsilence "github.com/prometheus/alertmanager/api/v2/client/silence"
 
@@ -27,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	remoteClient "github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
+	"gopkg.in/yaml.v3"
 )
 
 type stateStore interface {
@@ -59,6 +61,11 @@ type AlertmanagerConfig struct {
 	URL               string
 	TenantID          string
 	BasicAuthPassword string
+
+	DefaultConfig string
+	// PromoteConfig is a flag that determines whether the configuration should be used in the remote Alertmanager.
+	// The same flag is used for promoting state.
+	PromoteConfig bool
 }
 
 func (cfg *AlertmanagerConfig) Validate() error {
@@ -76,7 +83,7 @@ func (cfg *AlertmanagerConfig) Validate() error {
 	return nil
 }
 
-func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn DecryptFn, defaultConfig string, metrics *metrics.RemoteAlertmanager) (*Alertmanager, error) {
+func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn DecryptFn, metrics *metrics.RemoteAlertmanager) (*Alertmanager, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
@@ -88,10 +95,11 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn Decrypt
 	logger := log.New("ngalert.remote.alertmanager")
 
 	mcCfg := &remoteClient.Config{
-		URL:      u,
-		TenantID: cfg.TenantID,
-		Password: cfg.BasicAuthPassword,
-		Logger:   logger,
+		Logger:        logger,
+		Password:      cfg.BasicAuthPassword,
+		TenantID:      cfg.TenantID,
+		URL:           u,
+		PromoteConfig: cfg.PromoteConfig,
 	}
 	mc, err := remoteClient.New(mcCfg, metrics)
 	if err != nil {
@@ -122,7 +130,7 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn Decrypt
 	}
 
 	// Parse the default configuration into a postable config.
-	pCfg, err := notifier.Load([]byte(defaultConfig))
+	pCfg, err := notifier.Load([]byte(cfg.DefaultConfig))
 	if err != nil {
 		return nil, err
 	}
@@ -421,8 +429,26 @@ func (am *Alertmanager) PutAlerts(ctx context.Context, alerts apimodels.Postable
 	return nil
 }
 
-func (am *Alertmanager) GetStatus() apimodels.GettableStatus {
-	return apimodels.GettableStatus{}
+// GetStatus retrieves the remote Alertmanager configuration.
+func (am *Alertmanager) GetStatus(ctx context.Context) (apimodels.GettableStatus, error) {
+	defer func() {
+		if r := recover(); r != nil {
+			am.log.Error("Panic while getting status", "err", r)
+		}
+	}()
+
+	params := amgeneral.NewGetStatusParamsWithContext(ctx)
+	res, err := am.amClient.General.GetStatus(params)
+	if err != nil {
+		return apimodels.GettableStatus{}, err
+	}
+
+	var cfg apimodels.PostableApiAlertingConfig
+	if err := yaml.Unmarshal([]byte(*res.Payload.Config.Original), &cfg); err != nil {
+		return apimodels.GettableStatus{}, err
+	}
+
+	return *apimodels.NewGettableStatus(&cfg), nil
 }
 
 func (am *Alertmanager) GetReceivers(ctx context.Context) ([]apimodels.Receiver, error) {
@@ -506,6 +532,10 @@ func (am *Alertmanager) shouldSendConfig(ctx context.Context, config *apimodels.
 	if err != nil {
 		// Log the error and return true so we try to upload our config anyway.
 		am.log.Error("Unable to get the remote Alertmanager configuration for comparison", "err", err)
+		return true
+	}
+
+	if rc.Promoted != am.mimirClient.ShouldPromoteConfig() {
 		return true
 	}
 

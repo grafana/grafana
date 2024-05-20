@@ -491,15 +491,11 @@
       "delete-query-tooltip": "Đęľęŧę qūęřy",
       "delete-starred-query-confirmation-text": "Åřę yőū şūřę yőū ŵäŉŧ ŧő pęřmäŉęŉŧľy đęľęŧę yőūř şŧäřřęđ qūęřy?",
       "edit-comment-tooltip": "Ēđįŧ čőmmęŉŧ",
-      "left-pane": "Ŀęƒŧ päŉę",
       "optional-description": "Åŉ őpŧįőŉäľ đęşčřįpŧįőŉ őƒ ŵĥäŧ ŧĥę qūęřy đőęş.",
       "query-comment-label": "Qūęřy čőmmęŉŧ",
       "query-text-label": "Qūęřy ŧęχŧ",
-      "right-pane": "Ŗįģĥŧ päŉę",
-      "run-query-button": "Ŗūŉ qūęřy",
       "save-comment": "Ŝävę čőmmęŉŧ",
       "star-query-tooltip": "Ŝŧäř qūęřy",
-      "switch-datasource-button": "Ŝŵįŧčĥ đäŧä şőūřčę äŉđ řūŉ qūęřy",
       "unstar-query-tooltip": "Ůŉşŧäř qūęřy",
       "update-comment-form": "Ůpđäŧę čőmmęŉŧ ƒőřm"
     },
@@ -568,6 +564,12 @@
       "saving-failed": "Ŝävįŉģ řįčĥ ĥįşŧőřy ƒäįľęđ",
       "update-failed": "Ŗįčĥ Ħįşŧőřy ūpđäŧę ƒäįľęđ"
     },
+    "run-query": {
+      "left-pane": "Ŀęƒŧ päŉę",
+      "right-pane": "Ŗįģĥŧ päŉę",
+      "run-query-button": "Ŗūŉ qūęřy",
+      "switch-datasource-button": "Ŝŵįŧčĥ đäŧä şőūřčę äŉđ řūŉ qūęřy"
+    },
     "secondary-actions": {
       "query-add-button": "Åđđ qūęřy",
       "query-add-button-aria-label": "Åđđ qūęřy",
@@ -584,11 +586,11 @@
     "toolbar": {
       "aria-label": "Ēχpľőřę ŧőőľþäř",
       "copy-link": "Cőpy ŮŖĿ",
-      "copy-link-abs-time": "Cőpy Åþşőľūŧę Ŝĥőřŧęŉęđ ŮŖĿ",
+      "copy-link-abs-time": "Cőpy äþşőľūŧę ŮŖĿ",
       "copy-links-absolute-category": "Ŧįmę-şyŉč ŮŖĿ ľįŉĸş (şĥäřę ŵįŧĥ ŧįmę řäŉģę įŉŧäčŧ)",
       "copy-links-normal-category": "Ńőřmäľ ŮŖĿ ľįŉĸş",
       "copy-shortened-link": "Cőpy şĥőřŧęŉęđ ŮŖĿ",
-      "copy-shortened-link-abs-time": "Cőpy Åþşőľūŧę Ŝĥőřŧęŉęđ ŮŖĿ",
+      "copy-shortened-link-abs-time": "Cőpy äþşőľūŧę şĥőřŧęŉęđ ŮŖĿ",
       "copy-shortened-link-menu": "Øpęŉ čőpy ľįŉĸ őpŧįőŉş",
       "refresh-picker-cancel": "Cäŉčęľ",
       "refresh-picker-run": "Ŗūŉ qūęřy",
@@ -618,6 +620,9 @@
     "select": {
       "no-options-label": "Ńő őpŧįőŉş ƒőūŉđ",
       "placeholder": "Cĥőőşę"
+    },
+    "spinner": {
+      "aria-label": "Ŀőäđįŉģ"
     }
   },
   "graph": {
@@ -727,10 +732,12 @@
     "forgot-password": "Főřģőŧ yőūř päşşŵőřđ?",
     "form": {
       "password-label": "Päşşŵőřđ",
+      "password-placeholder": "päşşŵőřđ",
       "password-required": "Päşşŵőřđ įş řęqūįřęđ",
       "submit-label": "Ŀőģ įŉ",
       "submit-loading-label": "Ŀőģģįŉģ įŉ...",
       "username-label": "Ēmäįľ őř ūşęřŉämę",
+      "username-placeholder": "ęmäįľ őř ūşęřŉämę",
       "username-required": "Ēmäįľ őř ūşęřŉämę įş řęqūįřęđ"
     },
     "services": {
@@ -885,7 +892,8 @@
       "title": "Åľęřŧįŉģ"
     },
     "alerting-admin": {
-      "title": "Åđmįŉ"
+      "subtitle": "Mäŉäģę Åľęřŧmäŉäģęř čőŉƒįģūřäŧįőŉş äŉđ čőŉƒįģūřę ŵĥęřę äľęřŧ įŉşŧäŉčęş ģęŉęřäŧęđ ƒřőm Ğřäƒäŉä mäŉäģęđ äľęřŧ řūľęş äřę şęŉŧ",
+      "title": "Ŝęŧŧįŉģş"
     },
     "alerting-am-routes": {
       "subtitle": "Đęŧęřmįŉę ĥőŵ äľęřŧş äřę řőūŧęđ ŧő čőŉŧäčŧ pőįŉŧş",

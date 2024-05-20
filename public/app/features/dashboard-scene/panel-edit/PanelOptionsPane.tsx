@@ -44,7 +44,7 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     const { isVizPickerOpen, searchQuery, listMode } = model.useState();
     const vizManager = sceneGraph.getAncestor(model, PanelEditor).state.vizManager;
     const { pluginId } = vizManager.state.panel.useState();
-    const { data } = sceneGraph.getData(vizManager).useState();
+    const { data } = sceneGraph.getData(vizManager.state.panel).useState();
     const styles = useStyles2(getStyles);
 
     return (

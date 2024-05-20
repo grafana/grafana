@@ -224,6 +224,7 @@ GraphFieldConfig: {
 	gradientMode?:    GraphGradientMode
 	thresholdsStyle?: GraphThresholdsStyleConfig
 	transform?:       GraphTransform
+	insertNulls?:     bool | number
 } @cuetsy(kind="interface")
 
 // TODO docs

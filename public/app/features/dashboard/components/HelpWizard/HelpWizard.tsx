@@ -212,24 +212,22 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  code: css`
-    flex-grow: 1;
-    height: 100%;
-    overflow: scroll;
-  `,
-  field: css`
-    width: 100%;
-  `,
-  opts: css`
-    display: flex;
-    display: flex;
-    width: 100%;
-    flex-grow: 0;
-    align-items: center;
-    justify-content: flex-end;
-
-    button {
-      margin-left: 8px;
-    }
-  `,
+  code: css({
+    flexGrow: 1,
+    height: '100%',
+    overflow: 'scroll',
+  }),
+  field: css({
+    width: '100%',
+  }),
+  opts: css({
+    display: 'flex',
+    width: '100%',
+    flexGrow: 0,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    button: {
+      marginLeft: '8px',
+    },
+  }),
 });

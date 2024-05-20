@@ -116,23 +116,27 @@ You should now see a list of matching traces in the table visualization. While s
 
 {{< figure src="/static/img/docs/panels/traces/screenshot-traces-trace-link-follow.png" caption="Follow the trace link populates the trace ID and displays the traces view" >}}
 
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 {{% docs/reference %}}
-[Tracing in Explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore/trace-integration"
-[Tracing in Explore]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore/trace-integration"
+[Tracing in Explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/explore/trace-integration"
+[Tracing in Explore]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/explore/trace-integration"
 
-[Tempo data source]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/tempo"
-[Tempo data source]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/tempo"
+[Tempo data source]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/datasources/tempo"
+[Tempo data source]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources/tempo"
 
-[Panel editor documentation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/panel-editor-overview"
-[Panel editor documentation]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/panel-editor-overview"
+[Panel editor documentation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/panel-editor-overview"
+[Panel editor documentation]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/panel-editor-overview"
 
-[Variables documentation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
-[Variables documentation]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+[Variables documentation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/dashboards/variables"
+[Variables documentation]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/variables"
 
-[Configure panel options documentation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-panel-options"
-[Configure panel options documentation]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-panel-options"
+[Configure panel options documentation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-panel-options"
+[Configure panel options documentation]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-panel-options"
 
-[Tempo data source]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/tempo"
+[Tempo data source]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/datasources/tempo"
 [Tempo data source]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources/tempo"
 
 [generative AI features]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/dashboards/manage-dashboards#set-up-generative-ai-features-for-dashboards"

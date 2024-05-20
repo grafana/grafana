@@ -3,6 +3,7 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps } from '@grafana/scenes';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -22,7 +23,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   const pageNav = model.getPageNav(location, navIndex);
   const bodyToRender = model.getBodyToRender();
   const navModel = getNavModel(navIndex, 'dashboards/browse');
-  const isHomePage = !meta.url && !meta.slug && !meta.isNew;
+  const isHomePage = !meta.url && !meta.slug && !meta.isNew && !meta.isSnapshot;
 
   if (editview) {
     return (
@@ -62,7 +63,11 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
               <controls.Component model={controls} />
             </div>
           )}
-          <CustomScrollbar autoHeightMin={'100%'} className={styles.scrollbarContainer}>
+          <CustomScrollbar
+            autoHeightMin={'100%'}
+            className={styles.scrollbarContainer}
+            testId={selectors.pages.Dashboard.DashNav.scrollContainer}
+          >
             <div className={cx(styles.canvasContent, isHomePage && styles.homePagePadding)}>
               <>{isEmpty && emptyState}</>
               {withPanels}
