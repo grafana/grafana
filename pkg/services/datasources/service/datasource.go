@@ -294,22 +294,23 @@ func (s *Service) prepareAdd(ctx context.Context, cmd *datasources.AddDataSource
 
 	rsp, err := s.pluginClient.MutateInstanceSettings(ctx, &backend.InstanceSettingsAdmissionRequest{
 		PluginContext: backend.PluginContext{
-			OrgID:    cmd.OrgID,
-			PluginID: cmd.Type,
-			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				UID:                     cmd.UID,
-				Name:                    cmd.Name,
-				URL:                     cmd.URL,
-				Database:                cmd.Database,
-				Updated:                 time.Now(),
-				JSONData:                jd,
-				DecryptedSecureJSONData: cmd.SecureJsonData,
-				Type:                    cmd.Type,
-				User:                    cmd.User,
-				BasicAuthEnabled:        cmd.BasicAuth,
-				BasicAuthUser:           cmd.BasicAuthUser,
-				APIVersion:              cmd.APIVersion,
-			},
+			OrgID:         cmd.OrgID,
+			PluginID:      cmd.Type,
+			PluginVersion: p.Info.Version,
+		},
+		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+			UID:                     cmd.UID,
+			Name:                    cmd.Name,
+			URL:                     cmd.URL,
+			Database:                cmd.Database,
+			Updated:                 time.Now(),
+			JSONData:                jd,
+			DecryptedSecureJSONData: cmd.SecureJsonData,
+			Type:                    cmd.Type,
+			User:                    cmd.User,
+			BasicAuthEnabled:        cmd.BasicAuth,
+			BasicAuthUser:           cmd.BasicAuthUser,
+			APIVersion:              cmd.APIVersion,
 		},
 		Operation: operation,
 	})
@@ -383,22 +384,22 @@ func (s *Service) prepareUpdate(ctx context.Context, cmd *datasources.UpdateData
 		PluginContext: backend.PluginContext{
 			OrgID:    cmd.OrgID,
 			PluginID: cmd.Type,
-			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				UID:                     cmd.UID,
-				Name:                    cmd.Name,
-				URL:                     cmd.URL,
-				Database:                cmd.Database,
-				Updated:                 time.Now(),
-				JSONData:                jd,
-				DecryptedSecureJSONData: cmd.SecureJsonData,
-				Type:                    cmd.Type,
-				User:                    cmd.User,
-				BasicAuthEnabled:        cmd.BasicAuth,
-				BasicAuthUser:           cmd.BasicAuthUser,
-				APIVersion:              cmd.APIVersion,
-			},
 		},
 		Operation: operation,
+		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+			UID:                     cmd.UID,
+			Name:                    cmd.Name,
+			URL:                     cmd.URL,
+			Database:                cmd.Database,
+			Updated:                 time.Now(),
+			JSONData:                jd,
+			DecryptedSecureJSONData: cmd.SecureJsonData,
+			Type:                    cmd.Type,
+			User:                    cmd.User,
+			BasicAuthEnabled:        cmd.BasicAuth,
+			BasicAuthUser:           cmd.BasicAuthUser,
+			APIVersion:              cmd.APIVersion,
+		},
 	})
 	if err != nil {
 		if errors.Is(err, plugins.ErrMethodNotImplemented) {
@@ -466,11 +467,6 @@ func (s *Service) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteD
 func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error) {
 	var dataSource *datasources.DataSource
 
-	// Validate the command
-	if err := s.prepareUpdate(ctx, cmd); err != nil {
-		return nil, err
-	}
-
 	return dataSource, s.db.InTransaction(ctx, func(ctx context.Context) error {
 		var err error
 
@@ -480,6 +476,11 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 		}
 		dataSource, err = s.SQLStore.GetDataSource(ctx, query)
 		if err != nil {
+			return err
+		}
+
+		// Validate the command: TODO (with context!)
+		if err := s.prepareUpdate(ctx, cmd); err != nil {
 			return err
 		}
 
