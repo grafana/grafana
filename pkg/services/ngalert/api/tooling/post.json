@@ -218,6 +218,9 @@
      "format": "int64",
      "type": "integer"
     },
+    "record": {
+     "$ref": "#/definitions/AlertRuleRecordExport"
+    },
     "title": {
      "type": "string"
     },
@@ -365,6 +368,18 @@
     }
    },
    "title": "AlertRuleNotificationSettingsExport is the provisioned export of models.NotificationSettings.",
+   "type": "object"
+  },
+  "AlertRuleRecordExport": {
+   "properties": {
+    "from": {
+     "type": "string"
+    },
+    "metric": {
+     "type": "string"
+    }
+   },
+   "title": "Record is the provisioned export of models.Record.",
    "type": "object"
   },
   "AlertingFileExport": {
@@ -1573,6 +1588,9 @@
     "provenance": {
      "$ref": "#/definitions/Provenance"
     },
+    "record": {
+     "$ref": "#/definitions/Record"
+    },
     "rule_group": {
      "type": "string"
     },
@@ -2730,6 +2748,9 @@
     "notification_settings": {
      "$ref": "#/definitions/AlertRuleNotificationSettings"
     },
+    "record": {
+     "$ref": "#/definitions/Record"
+    },
     "title": {
      "type": "string"
     },
@@ -2915,6 +2936,9 @@
     },
     "provenance": {
      "$ref": "#/definitions/Provenance"
+    },
+    "record": {
+     "$ref": "#/definitions/Record"
     },
     "ruleGroup": {
      "example": "eval_group_1",
@@ -3245,6 +3269,25 @@
     }
    },
    "title": "ReceiverExport is the provisioned file export of alerting.ReceiverV1.",
+   "type": "object"
+  },
+  "Record": {
+   "properties": {
+    "from": {
+     "description": "Which expression node should be used as the input for the recorded metric.",
+     "example": "A",
+     "type": "string"
+    },
+    "metric": {
+     "description": "Name of the recorded metric.",
+     "example": "grafana_alerts_ratio",
+     "type": "string"
+    }
+   },
+   "required": [
+    "metric",
+    "from"
+   ],
    "type": "object"
   },
   "RelativeTimeRange": {

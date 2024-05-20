@@ -11938,6 +11938,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "record": {
+          "$ref": "#/definitions/AlertRuleRecordExport"
+        },
         "title": {
           "type": "string"
         },
@@ -12081,6 +12084,18 @@
           "type": "string"
         },
         "repeat_interval": {
+          "type": "string"
+        }
+      }
+    },
+    "AlertRuleRecordExport": {
+      "type": "object",
+      "title": "Record is the provisioned export of models.Record.",
+      "properties": {
+        "from": {
+          "type": "string"
+        },
+        "metric": {
           "type": "string"
         }
       }
@@ -15212,6 +15227,9 @@
         "provenance": {
           "$ref": "#/definitions/Provenance"
         },
+        "record": {
+          "$ref": "#/definitions/Record"
+        },
         "rule_group": {
           "type": "string"
         },
@@ -17420,6 +17438,9 @@
         "notification_settings": {
           "$ref": "#/definitions/AlertRuleNotificationSettings"
         },
+        "record": {
+          "$ref": "#/definitions/Record"
+        },
         "title": {
           "type": "string"
         },
@@ -17662,6 +17683,9 @@
         },
         "provenance": {
           "$ref": "#/definitions/Provenance"
+        },
+        "record": {
+          "$ref": "#/definitions/Record"
         },
         "ruleGroup": {
           "type": "string",
@@ -18225,6 +18249,25 @@
         },
         "uid": {
           "type": "string"
+        }
+      }
+    },
+    "Record": {
+      "type": "object",
+      "required": [
+        "metric",
+        "from"
+      ],
+      "properties": {
+        "from": {
+          "description": "Which expression node should be used as the input for the recorded metric.",
+          "type": "string",
+          "example": "A"
+        },
+        "metric": {
+          "description": "Name of the recorded metric.",
+          "type": "string",
+          "example": "grafana_alerts_ratio"
         }
       }
     },
