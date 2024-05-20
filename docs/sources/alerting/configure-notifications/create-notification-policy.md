@@ -41,13 +41,13 @@ For more information on notification policies, refer to [fundamentals of Notific
 1. Click **Notification policies**.
 1. From the **Choose Alertmanager** dropdown, select an external Alertmanager. By default, the **Grafana Alertmanager** is selected.
 1. In the Default policy section, click **...** -> **Edit**.
-2. In **Default contact point**, update the contact point for where to send notifications when alert rules do not match any specific policy.
-3. In **Group by**, choose labels to group alerts by. If multiple alerts are matched for this policy, then they are grouped by these labels. A notification is sent per group. If the field is empty (default), then all notifications are sent in a single group. Use a special label `...` to group alerts by all labels (which effectively disables grouping).
-4. In **Timing options**, select from the following options:
+1. In **Default contact point**, update the contact point for where to send notifications when alert rules do not match any specific policy.
+1. In **Group by**, choose labels to group alerts by. If multiple alerts are matched for this policy, then they are grouped by these labels. A notification is sent per group. If the field is empty (default), then all notifications are sent in a single group. Use a special label `...` to group alerts by all labels (which effectively disables grouping).
+1. In **Timing options**, select from the following options:
    - **Group wait** Time to wait to buffer alerts of the same group before sending an initial notification. Default is 30 seconds.
    - **Group interval** Minimum time interval between two notifications for a group. Default is 5 minutes.
    - **Repeat interval** Minimum time interval for re-sending a notification if no new alerts were added to the group. Default is 4 hours.
-5. Click **Save** to save your changes.
+1. Click **Save** to save your changes.
 
 ## Add new nested policy
 
