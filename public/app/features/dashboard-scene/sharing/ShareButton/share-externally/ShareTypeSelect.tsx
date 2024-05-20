@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Label, Select, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Label, Select, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { publicDashboardApi, useUpdatePublicDashboardMutation } from 'app/features/dashboard/api/publicDashboardApi';
 import { PublicDashboardShareType } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
@@ -28,7 +28,7 @@ export default function ShareTypeSelect({
   const { data: publicDashboard } = publicDashboardApi.endpoints?.getPublicDashboard.useQueryState(
     dashboard.state.uid!
   );
-  const [updateShareType] = useUpdatePublicDashboardMutation();
+  const [updateShareType, { isLoading }] = useUpdatePublicDashboardMutation();
 
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
 
@@ -54,7 +54,10 @@ export default function ShareTypeSelect({
 
   return (
     <div>
-      <Label description="Only people with access can open with the link">Link access</Label>
+      <Stack justifyContent="space-between">
+        <Label description="Only people with access can open with the link">Link access</Label>
+        {isLoading && <Spinner />}
+      </Stack>
       <Stack direction="row" gap={1} alignItems="center">
         <Select
           data-testid={selectors.shareTypeSelect}
@@ -75,7 +78,7 @@ export default function ShareTypeSelect({
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = () => {
   return {
     select: css({
       flex: 1,

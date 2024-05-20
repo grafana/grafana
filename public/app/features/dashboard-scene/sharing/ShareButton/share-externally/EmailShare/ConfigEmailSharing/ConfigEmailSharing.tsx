@@ -2,7 +2,7 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Button, Field, FieldSet, Stack } from '@grafana/ui';
+import { Button, Field, FieldSet, Icon, Stack, Tooltip } from '@grafana/ui';
 import { Input } from '@grafana/ui/src/components/Input/Input';
 import { Trans, t } from '@grafana/ui/src/utils/i18n';
 import { contextSrv } from 'app/core/core';
@@ -47,7 +47,22 @@ export const ConfigEmailSharing = ({ dashboard }: { dashboard: DashboardScene })
     <div>
       <form onSubmit={handleSubmit(onSubmit)}>
         <FieldSet disabled={!hasWritePermissions || !publicDashboard?.isEnabled || isError}>
-          <Field label="Invite someone by email" error={errors.email?.message} invalid={!!errors.email?.message}>
+          <Field
+            label={
+              <Stack gap={1} alignItems="center">
+                <span>Invite</span>
+                <Tooltip
+                  placement="right"
+                  content="This dashboard contains sensitive data. By using this feature you will be sharing with external people."
+                >
+                  <Icon name="info-circle" size="sm" />
+                </Tooltip>
+              </Stack>
+            }
+            description="Invite someone by email"
+            error={errors.email?.message}
+            invalid={!!errors.email?.message}
+          >
             <Stack direction="row">
               <Input
                 placeholder="Type in the recipient email address and press Enter"

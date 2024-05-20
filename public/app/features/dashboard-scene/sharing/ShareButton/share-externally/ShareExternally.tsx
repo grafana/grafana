@@ -48,77 +48,6 @@ export class ShareExternally extends SceneObjectBase<ShareExternallyDrawerState>
   }
 }
 
-function Actions({ dashboard, publicDashboard }: { dashboard: DashboardScene; publicDashboard: PublicDashboard }) {
-  const [update, { isLoading: isUpdateLoading }] = useUpdatePublicDashboardMutation();
-  const [deletePublicDashboard, { isLoading: isDeleteLoading }] = useDeletePublicDashboardMutation();
-
-  const isLoading = isUpdateLoading || isDeleteLoading;
-  const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
-
-  function onCopyURL() {
-    DashboardInteractions.publicDashboardUrlCopied();
-  }
-
-  const onPauseOrResumeClick = async () => {
-    update({
-      dashboard: dashboard,
-      payload: {
-        ...publicDashboard!,
-        isEnabled: !publicDashboard.isEnabled,
-      },
-    });
-  };
-
-  const onDeleteClick = () => {
-    DashboardInteractions.revokePublicDashboardClicked();
-    deletePublicDashboard({
-      dashboard,
-      uid: publicDashboard!.uid,
-      dashboardUid: dashboard.state.uid!,
-    });
-  };
-
-  return (
-    <Stack alignItems="center">
-      <Stack gap={1} flex={1}>
-        <ClipboardButton
-          data-testid={selectors.copyUrlButton}
-          variant="primary"
-          fill="outline"
-          icon="link"
-          disabled={!publicDashboard.isEnabled}
-          getText={() => generatePublicDashboardUrl(publicDashboard!.accessToken!)}
-          onClipboardCopy={onCopyURL}
-        >
-          Copy link
-        </ClipboardButton>
-        <Button
-          icon="trash-alt"
-          variant="destructive"
-          fill="outline"
-          disabled={isLoading || !hasWritePermissions}
-          onClick={onDeleteClick}
-        >
-          Remove access
-        </Button>
-        <Button
-          icon={publicDashboard.isEnabled ? 'pause' : 'play'}
-          variant="secondary"
-          fill="outline"
-          tooltip={
-            publicDashboard.isEnabled ? 'Pausing will temporarily disable access to this dashboard for all users' : ''
-          }
-          onClick={onPauseOrResumeClick}
-          disabled={isLoading || !hasWritePermissions}
-        >
-          {publicDashboard.isEnabled ? 'Pause access' : 'Resume'}
-        </Button>
-      </Stack>
-      {isLoading && <Spinner />}
-    </Stack>
-  );
-}
-
 function ShareExternallyDrawerRenderer({ model }: SceneComponentProps<ShareExternally>) {
   const [shareType, setShareType] = React.useState<SelectableValue<PublicDashboardShareType>>(options[0]);
   const dashboard = model.state.dashboardRef.resolve();
@@ -126,8 +55,8 @@ function ShareExternallyDrawerRenderer({ model }: SceneComponentProps<ShareExter
 
   useEffect(() => {
     if (publicDashboard) {
-      const opt = options.find((opt) => opt.value === publicDashboard?.share);
-      setShareType(opt!);
+      const opt = options.find((opt) => opt.value === publicDashboard?.share)!;
+      setShareType(opt);
     }
   }, [publicDashboard]);
 
@@ -163,6 +92,80 @@ function ShareExternallyDrawerRenderer({ model }: SceneComponentProps<ShareExter
           <Actions dashboard={dashboard} publicDashboard={publicDashboard} />
         </>
       )}
+    </Stack>
+  );
+}
+
+function Actions({ dashboard, publicDashboard }: { dashboard: DashboardScene; publicDashboard: PublicDashboard }) {
+  const [update, { isLoading: isUpdateLoading }] = useUpdatePublicDashboardMutation();
+  const [deletePublicDashboard, { isLoading: isDeleteLoading }] = useDeletePublicDashboardMutation();
+
+  const isLoading = isUpdateLoading || isDeleteLoading;
+  const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
+
+  function onCopyURL() {
+    DashboardInteractions.publicDashboardUrlCopied();
+  }
+
+  const onPauseOrResumeClick = async () => {
+    DashboardInteractions.publicDashboardPauseSharingClicked({
+      paused: !publicDashboard.isEnabled,
+    });
+    update({
+      dashboard: dashboard,
+      payload: {
+        ...publicDashboard!,
+        isEnabled: !publicDashboard.isEnabled,
+      },
+    });
+  };
+
+  const onDeleteClick = () => {
+    DashboardInteractions.revokePublicDashboardClicked();
+    deletePublicDashboard({
+      dashboard,
+      uid: publicDashboard!.uid,
+      dashboardUid: dashboard.state.uid!,
+    });
+  };
+
+  return (
+    <Stack alignItems="center" direction={{ xs: 'column', sm: 'row' }}>
+      <Stack gap={1} flex={1} direction={{ xs: 'column', sm: 'row' }}>
+        <ClipboardButton
+          data-testid={selectors.copyUrlButton}
+          variant="primary"
+          fill="outline"
+          icon="link"
+          disabled={!publicDashboard.isEnabled}
+          getText={() => generatePublicDashboardUrl(publicDashboard!.accessToken!)}
+          onClipboardCopy={onCopyURL}
+        >
+          {publicDashboard.share === PublicDashboardShareType.PUBLIC ? 'Copy public link' : 'Copy link'}
+        </ClipboardButton>
+        <Button
+          icon="trash-alt"
+          variant="destructive"
+          fill="outline"
+          disabled={isLoading || !hasWritePermissions}
+          onClick={onDeleteClick}
+        >
+          {publicDashboard.share === PublicDashboardShareType.PUBLIC ? 'Revoke public URL' : 'Remove access'}
+        </Button>
+        <Button
+          icon={publicDashboard.isEnabled ? 'pause' : 'play'}
+          variant="secondary"
+          fill="outline"
+          tooltip={
+            publicDashboard.isEnabled ? 'Pausing will temporarily disable access to this dashboard for all users' : ''
+          }
+          onClick={onPauseOrResumeClick}
+          disabled={isLoading || !hasWritePermissions}
+        >
+          {publicDashboard.isEnabled ? 'Pause access' : 'Resume'}
+        </Button>
+      </Stack>
+      {isLoading && <Spinner />}
     </Stack>
   );
 }
