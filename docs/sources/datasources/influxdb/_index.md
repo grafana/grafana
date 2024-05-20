@@ -18,6 +18,20 @@ labels:
 menuTitle: InfluxDB
 title: InfluxDB data source
 weight: 700
+refs:
+  data-source-management:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA VERSION>/administration/data-source-management/
+  build-dashboards:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/
+  explore:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA VERSION>/explore/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA VERSION>/explore/
 ---
 
 # InfluxDB data source
@@ -29,14 +43,14 @@ This topic explains options, variables, querying, and other features specific to
 its [feature-rich code editor for queries and visual query builder]({{< relref "./query-editor" >}}).
 
 For instructions on how to add a data source to Grafana, refer to
-the [administration documentation][data-source-management].
+the [administration documentation](ref:data-source-management).
 Only users with the organization administrator role can add data sources.
 Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning
 system.
 
 Once you've added the InfluxDB data source, you can [configure it](#configure-the-data-source) so that your Grafana
 instance's users can create queries in its [query editor]({{< relref "./query-editor" >}}) when
-they [build dashboards][build-dashboards] and use [Explore][explore].
+they [build dashboards](ref:build-dashboards) and use [Explore](ref:explore).
 
 ## Configure the data source
 
@@ -243,19 +257,3 @@ Grafana refers to such variables as template variables.
 
 For details, see the [template variables documentation]({{< relref "./template-variables" >}}).
 
-{{% docs/reference %}}
-[build-dashboards]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards"
-[build-dashboards]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards"
-
-[data-source-management]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
-[data-source-management]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>
-/administration/data-source-management"
-
-[explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore"
-[explore]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore"
-
-[provisioning-data-sources]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>
-/administration/provisioning#data-sources"
-[provisioning-data-sources]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>
-/administration/provisioning#data-sources"
-{{% /docs/reference %}}
