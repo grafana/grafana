@@ -221,7 +221,7 @@ You can configure the alert instance state when its evaluation returns no data:
 | Ok                    | Sets alert instance state to `Normal`.                                                                                                                                                                                                    |
 | Keep Last State       | Maintains the alert instance in its last state. Useful for mitigating temporary issues, refer to [Keep last state][keep-last-state].                                                                                                      |
 
-You can also configure the alert instance state when its evaluation returns an error or timeout:
+You can also configure the alert instance state when its evaluation returns an error or timeout.
 
 | Error configuration | Description                                                                                                                                                                                                                            |
 | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
