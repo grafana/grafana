@@ -8,8 +8,8 @@ import { getGrafanaDatasource } from 'app/plugins/datasource/grafana/datasource'
 import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { dispatch } from 'app/store/store';
 
-import { ScopedResourceServer } from '../apiserver/server';
-import { Resource, ResourceForCreate, ResourceServer } from '../apiserver/types';
+import { ScopedResourceClient } from '../apiserver/client';
+import { Resource, ResourceForCreate, ResourceClient } from '../apiserver/types';
 import { DashboardQueryResult, getGrafanaSearcher, SearchQuery } from '../search/service';
 
 import { Playlist, PlaylistItem, PlaylistAPI } from './types';
@@ -47,10 +47,10 @@ interface PlaylistSpec {
 type K8sPlaylist = Resource<PlaylistSpec>;
 
 class K8sAPI implements PlaylistAPI {
-  readonly server: ResourceServer<PlaylistSpec>;
+  readonly server: ResourceClient<PlaylistSpec>;
 
   constructor() {
-    this.server = new ScopedResourceServer<PlaylistSpec>({
+    this.server = new ScopedResourceClient<PlaylistSpec>({
       group: 'playlist.grafana.app',
       version: 'v0alpha1',
       resource: 'playlists',

@@ -7,7 +7,7 @@ import { getAppEvents, getBackendSrv } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { CustomScrollbar, Icon, Input, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { ScopedResourceServer } from 'app/features/apiserver/server';
+import { ScopedResourceClient } from 'app/features/apiserver/client';
 
 export interface ScopeDashboard {
   uid: string;
@@ -25,7 +25,7 @@ export interface ScopesDashboardsSceneState extends SceneObjectState {
 export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsSceneState> {
   static Component = ScopesDashboardsSceneRenderer;
 
-  private server = new ScopedResourceServer<ScopeDashboardBindingSpec, 'ScopeDashboardBinding'>({
+  private server = new ScopedResourceClient<ScopeDashboardBindingSpec, 'ScopeDashboardBinding'>({
     group: 'scope.grafana.app',
     version: 'v0alpha1',
     resource: 'scopedashboardbindings',
