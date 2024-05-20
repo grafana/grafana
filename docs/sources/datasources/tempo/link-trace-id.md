@@ -76,4 +76,3 @@ To configure this feature, see the [Derived fields]({{< relref "../loki#configur
 You can link to Tempo traces from metrics in Prometheus data sources by configuring an exemplar.
 
 To configure this feature, see the [introduction to exemplars](ref:exemplars) documentation.
-
