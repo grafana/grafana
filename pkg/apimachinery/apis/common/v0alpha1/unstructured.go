@@ -116,11 +116,3 @@ func (u *Unstructured) GetNestedInt64(fields ...string) int64 {
 	}
 	return val
 }
-
-func (u *Unstructured) GetNestedFloat64(fields ...string) float64 {
-	val, found, err := unstructured.NestedFloat64(u.Object, fields...)
-	if !found || err != nil {
-		return 0
-	}
-	return val
-}

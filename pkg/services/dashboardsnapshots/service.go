@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -27,7 +26,7 @@ type Service interface {
 	DeleteExpiredSnapshots(context.Context, *DeleteExpiredSnapshotsCommand) error
 	GetDashboardSnapshot(context.Context, *GetDashboardSnapshotQuery) (*DashboardSnapshot, error)
 	SearchDashboardSnapshots(context.Context, *GetDashboardSnapshotsQuery) (DashboardSnapshotsList, error)
-	FindDashboard(context.Context, int64, int64) (*dashboards.Dashboard, error)
+	FindDashboard(context.Context, int64, string) (bool, error)
 }
 
 var client = &http.Client{
@@ -41,11 +40,11 @@ func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg dashboardsnapshot.S
 		return
 	}
 
-	id := cmd.DashboardCreateCommand.Dashboard.GetNestedFloat64("id")
+	uid := cmd.DashboardCreateCommand.Dashboard.GetNestedString("uid")
 
-	_, err := svc.FindDashboard(c.Req.Context(), c.SignedInUser.GetOrgID(), int64(id))
-	if err != nil {
-		c.JsonApiErr(http.StatusInternalServerError, "Failed to find dashboard", err)
+	dashboardExists, err := svc.FindDashboard(c.Req.Context(), c.SignedInUser.GetOrgID(), uid)
+	if !dashboardExists || err != nil {
+		c.JsonApiErr(http.StatusBadRequest, "Failed to find dashboard", err)
 		return
 	}
 
