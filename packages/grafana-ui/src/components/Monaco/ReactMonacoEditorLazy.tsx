@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes';
 import { useAsyncDependency } from '../../utils/useAsyncDependency';
@@ -22,7 +23,13 @@ export const ReactMonacoEditorLazy = (props: ReactMonacoEditorProps) => {
   );
 
   if (loading) {
-    return <LoadingPlaceholder text={''} className={styles.container} />;
+    return (
+      <LoadingPlaceholder
+        text={''}
+        className={styles.container}
+        data-testid={selectors.components.ReactMonacoEditor.editorLoading}
+      />
+    );
   }
 
   if (error) {
@@ -36,7 +43,13 @@ export const ReactMonacoEditorLazy = (props: ReactMonacoEditorProps) => {
   }
 
   const ReactMonacoEditor = dependency.ReactMonacoEditor;
-  return <ReactMonacoEditor {...props} loading={props.loading ?? null} />;
+  return (
+    <ReactMonacoEditor
+      {...props}
+      loading={props.loading ?? null}
+      data-testid={selectors.components.ReactMonacoEditor.editor}
+    />
+  );
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
