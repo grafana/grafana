@@ -311,14 +311,14 @@ TODO docs
 
 ### Options
 
-| Property        | Type                                              | Required | Default                                      | Description                                                        |
-| --------------- | ------------------------------------------------- | -------- | -------------------------------------------- | ------------------------------------------------------------------ |
-| `frameIndex`    | number                                            | **Yes**  | `0`                                          | Represents the index of the selected frame                         |
-| `showHeader`    | boolean                                           | **Yes**  | `true`                                       | Controls whether the panel should show the header                  |
-| `cellHeight`    | string                                            | No       |                                              | Controls the height of the rows                                    |
+| Property        | Type                                              | Required | Default                                       | Description                                                        |
+| --------------- | ------------------------------------------------- | -------- | --------------------------------------------- | ------------------------------------------------------------------ |
+| `frameIndex`    | number                                            | **Yes**  | `0`                                           | Represents the index of the selected frame                         |
+| `showHeader`    | boolean                                           | **Yes**  | `true`                                        | Controls whether the panel should show the header                  |
+| `cellHeight`    | string                                            | No       |                                               | Controls the height of the rows                                    |
 | `footer`        | [object](#footer)                                 | No       | `ma[countRows:false reducer:[][] show:false]` | Controls footer options                                            |
-| `showTypeIcons` | boolean                                           | No       | `false`                                      | Controls whether the header should show icons for the column types |
-| `sortBy`        | [TableSortByFieldState](#tablesortbyfieldstate)[] | No       |                                              | Used to control row sorting                                        |
+| `showTypeIcons` | boolean                                           | No       | `false`                                       | Controls whether the header should show icons for the column types |
+| `sortBy`        | [TableSortByFieldState](#tablesortbyfieldstate)[] | No       |                                               | Used to control row sorting                                        |
 
 ### TableSortByFieldState
 
