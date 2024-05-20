@@ -14,7 +14,7 @@ weight: 100
 
 This page describes Grafana Enterprise-specific configuration options that you can specify in a `.ini` configuration file or using environment variables. Refer to [Configuration]({{< relref "../../configure-grafana" >}}) for more information about available configuration options.
 
-## [enterprise]
+##[enterprise][]
 
 ### license_path
 
@@ -51,7 +51,7 @@ Available in Grafana Enterprise version 8.3 and later.
 
 When set to `aws`, Grafana will validate its license status with Amazon Web Services (AWS) instead of with Grafana Labs. Only use this setting if you purchased an Enterprise license from AWS Marketplace. Defaults to empty, which means that by default Grafana Enterprise will validate using a license issued by Grafana Labs. For details about licenses issued by AWS, refer to [Activate a Grafana Enterprise license purchased through AWS Marketplace]({{< relref "../../../administration/enterprise-licensing/activate-aws-marketplace-license" >}}).
 
-## [white_labeling]
+##[white_labeling][]
 
 ### app_title
 
@@ -90,7 +90,7 @@ Set to `true` to remove the Grafana edition from appearing in the footer.
 
 List the link IDs to use here. Grafana will look for matching link configurations, the link IDs should be space-separated and contain no whitespace.
 
-## [usage_insights.export]
+##[usage_insights.export][]
 
 By [exporting usage logs]({{< relref "../../configure-security/export-logs" >}}), you can directly query them and create dashboards of the information that matters to you most, such as dashboard errors, most active organizations, or your top-10 most-used queries.
 
@@ -102,7 +102,7 @@ Enable the usage insights export feature.
 
 Specify a storage type. Defaults to `loki`.
 
-## [usage_insights.export.storage.loki]
+##[usage_insights.export.storage.loki][]
 
 ### type
 
@@ -120,7 +120,7 @@ Decide whether or not to enable the TLS (Transport Layer Security) protocol when
 
 Set the tenant ID for Loki communication, which is disabled by default. The tenant ID is required to interact with Loki running in [multi-tenant mode](/docs/loki/latest/operations/multi-tenancy/).
 
-## [analytics.summaries]
+##[analytics.summaries][]
 
 ### buffer_write_interval
 
@@ -138,13 +138,13 @@ Interval for trying to roll up per dashboard usage summary. Only rolled up at mo
 
 Timeout for trying to rollup per dashboard usage summary.
 
-## [analytics.views]
+##[analytics.views][]
 
 ### recent_users_age
 
 Age for recent active users.
 
-## [reporting]
+##[reporting][]
 
 ### rendering_timeout
 
@@ -182,7 +182,7 @@ Name of the TrueType font file with italic style.
 
 Maximum number of panel rendering request retries before returning an error. To disable the retry feature, enter `0`. This is available in public preview and requires the `reportingRetries` feature toggle.
 
-## [auditing]
+##[auditing][]
 
 [Auditing]({{< relref "../../configure-security/audit-grafana" >}}) allows you to track important changes to your Grafana instance. By default, audit logs are logged to file but the auditing feature also supports sending logs directly to Loki.
 
@@ -210,7 +210,7 @@ Set to false to only log requests with 2xx, 3xx, 401, 403, 500 responses.
 
 Maximum response body (in bytes) to be recorded. May help reducing the memory footprint caused by auditing.
 
-## [auditing.logs.file]
+##[auditing.logs.file][]
 
 ### path
 
@@ -224,7 +224,7 @@ Maximum log files to keep.
 
 Max size in megabytes per log file.
 
-## [auditing.logs.loki]
+##[auditing.logs.loki][]
 
 ### url
 
@@ -238,7 +238,7 @@ If true, it establishes a secure connection to Loki. Defaults to true.
 
 Set the tenant ID for Loki communication, which is disabled by default. The tenant ID is required to interact with Loki running in [multi-tenant mode](/docs/loki/latest/operations/multi-tenancy/).
 
-## [auth.saml]
+##[auth.saml][]
 
 ### enabled
 
@@ -332,7 +332,7 @@ List of comma- or space-separated roles that will be mapped to the Admin role.
 
 List of comma- or space-separated roles that will be mapped to the Grafana Admin (Super Admin) role.
 
-## [keystore.vault]
+##[keystore.vault][]
 
 ### url
 
@@ -362,7 +362,7 @@ Time until expiration for tokens which are renewed. Should have a value higher t
 
 New duration for renewed tokens. Vault may be configured to ignore this value and impose a stricter limit.
 
-## [security.egress]
+##[security.egress][]
 
 {{% admonition type="note" %}}
 Available in Grafana Enterprise version 7.4 and later.
@@ -386,13 +386,13 @@ A list of headers that are stripped from the outgoing data source and alerting r
 
 A list of cookies that are stripped from the outgoing data source and alerting requests.
 
-## [security.encryption]
+##[security.encryption][]
 
 ### algorithm
 
 Encryption algorithm used to encrypt secrets stored in the database and cookies. Possible values are `aes-cfb` (default) and `aes-gcm`. AES-CFB stands for _Advanced Encryption Standard_ in _cipher feedback_ mode, and AES-GCM stands for _Advanced Encryption Standard_ in _Galois/Counter Mode_.
 
-## [caching]
+##[caching][]
 
 {{% admonition type="note" %}}
 Available in Grafana Enterprise version 7.5 and later.
@@ -462,7 +462,7 @@ The default is `0s` (disabled).
 Disabling this timeout is not recommended in production environments.
 {{% /admonition %}}
 
-## [caching.encryption]
+##[caching.encryption][]
 
 ### enabled
 
@@ -476,7 +476,7 @@ A string used to generate a key for encrypting the cache. For the encrypted cach
 
 The default is `""`.
 
-## [caching.memory]
+##[caching.memory][]
 
 ### gc_interval
 
@@ -496,7 +496,7 @@ The default is `25`.
 Disabling the maximum is not recommended in production environments.
 {{% /admonition %}}
 
-## [caching.redis]
+##[caching.redis][]
 
 ### url
 
@@ -523,7 +523,7 @@ A string that prefixes all Redis keys. This value must be set if using a shared 
 
 The default is `"grafana"`.
 
-## [caching.memcached]
+##[caching.memcached][]
 
 ### servers
 
@@ -559,7 +559,7 @@ Override the expected name on the server certificate.
 
 Timeout for the memcached client to connect to memcached. Defaults to `0`, which uses the memcached client default timeout per connection scheme.
 
-## [recorded_queries]
+##[recorded_queries][]
 
 ### enabled
 
