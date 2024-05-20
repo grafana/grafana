@@ -12,7 +12,6 @@ import {
   DataQueryResponseData,
   DataSourceGetTagValuesOptions,
   DataSourceInstanceSettings,
-  dateTime,
   FieldType,
   LoadingState,
   rangeUtil,
@@ -437,7 +436,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   isTraceQlMetricsQuery(query: string): boolean {
     // Check whether this is a metrics query by checking if it contains a metrics function
     const metricsFnRegex =
-      /\|\s*(rate|count_over_time|avg_over_time|max_over_time|min_over_time|quantile_over_time)\s*\(/;
+      /\|\s*(rate|count_over_time|avg_over_time|max_over_time|min_over_time|quantile_over_time|histogram_over_time)\s*\(/;
     return !!query.trim().match(metricsFnRegex);
   }
 
@@ -666,18 +665,18 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       targets,
     };
 
-    if (this.traceQuery?.timeShiftEnabled) {
-      request.range = options.range && {
-        ...options.range,
-        from: options.range.from.subtract(
-          rangeUtil.intervalToMs(this.traceQuery?.spanStartTimeShift || '30m'),
-          'milliseconds'
-        ),
-        to: options.range.to.add(rangeUtil.intervalToMs(this.traceQuery?.spanEndTimeShift || '30m'), 'milliseconds'),
-      };
-    } else {
-      request.range = { from: dateTime(0), to: dateTime(0), raw: { from: dateTime(0), to: dateTime(0) } };
-    }
+    request.range = options.range && {
+      ...options.range,
+      from: this.traceQuery?.timeShiftEnabled
+        ? options.range.from.subtract(
+            rangeUtil.intervalToMs(this.traceQuery?.spanStartTimeShift || '30m'),
+            'milliseconds'
+          )
+        : options.range.from,
+      to: this.traceQuery?.timeShiftEnabled
+        ? options.range.to.add(rangeUtil.intervalToMs(this.traceQuery?.spanEndTimeShift || '30m'), 'milliseconds')
+        : options.range.to,
+    };
 
     return request;
   }
@@ -955,8 +954,10 @@ function makePromLink(title: string, expr: string, datasourceUid: string, instan
   };
 }
 
+// TODO: this is basically the same as prometheus/datasource.ts#prometheusSpecialRegexEscape which is used to escape
+//  template variable values. It would be best to move it to some common place.
 export function getEscapedSpanNames(values: string[]) {
-  return values.map((value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\\\$&'));
+  return values.map((value: string) => value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&'));
 }
 
 export function getFieldConfig(

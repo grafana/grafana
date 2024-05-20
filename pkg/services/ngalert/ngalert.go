@@ -228,11 +228,11 @@ func (ng *AlertNG) init() error {
 
 					// Create remote Alertmanager.
 					cfg := remote.AlertmanagerConfig{
-						OrgID:             orgID,
-						URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
-						TenantID:          ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
 						BasicAuthPassword: ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Password,
 						DefaultConfig:     ng.Cfg.UnifiedAlerting.DefaultConfiguration,
+						OrgID:             orgID,
+						TenantID:          ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
+						URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
 					}
 					remoteAM, err := createRemoteAlertmanager(cfg, ng.KVStore, ng.SecretsService.Decrypt, m)
 					if err != nil {
@@ -515,7 +515,8 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 	}
 	if backend == historian.BackendTypeAnnotations {
 		store := historian.NewAnnotationStore(ar, ds, met)
-		return historian.NewAnnotationBackend(store, rs, met), nil
+		annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
+		return historian.NewAnnotationBackend(annotationBackendLogger, store, rs, met), nil
 	}
 	if backend == historian.BackendTypeLoki {
 		lcfg, err := historian.NewLokiConfig(cfg)

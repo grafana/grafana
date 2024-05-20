@@ -22,6 +22,10 @@ type UserGrafanaConfig struct {
 	Promoted                  bool                          `json:"promoted"`
 }
 
+func (mc *Mimir) ShouldPromoteConfig() bool {
+	return mc.promoteConfig
+}
+
 func (mc *Mimir) GetGrafanaAlertmanagerConfig(ctx context.Context) (*UserGrafanaConfig, error) {
 	gc := &UserGrafanaConfig{}
 	response := successResponse{
@@ -39,10 +43,6 @@ func (mc *Mimir) GetGrafanaAlertmanagerConfig(ctx context.Context) (*UserGrafana
 	}
 
 	return gc, nil
-}
-
-func (mc *Mimir) ShouldPromoteConfig() bool {
-	return mc.promoteConfig
 }
 
 func (mc *Mimir) CreateGrafanaAlertmanagerConfig(ctx context.Context, cfg *apimodels.PostableUserConfig, hash string, createdAt int64, isDefault bool) error {

@@ -95,10 +95,10 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn Decrypt
 	logger := log.New("ngalert.remote.alertmanager")
 
 	mcCfg := &remoteClient.Config{
-		URL:           u,
-		TenantID:      cfg.TenantID,
-		Password:      cfg.BasicAuthPassword,
 		Logger:        logger,
+		Password:      cfg.BasicAuthPassword,
+		TenantID:      cfg.TenantID,
+		URL:           u,
 		PromoteConfig: cfg.PromoteConfig,
 	}
 	mc, err := remoteClient.New(mcCfg, metrics)
@@ -538,7 +538,6 @@ func (am *Alertmanager) shouldSendConfig(ctx context.Context, config *apimodels.
 		return true
 	}
 
-	// Note: We can spare this comparison if we don't compare before sending in ApplyConfig.
 	if rc.Promoted != am.mimirClient.ShouldPromoteConfig() {
 		return true
 	}

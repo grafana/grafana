@@ -39,12 +39,12 @@ type Mimir struct {
 }
 
 type Config struct {
-	URL           *url.URL
-	TenantID      string
-	Password      string
-	PromoteConfig bool
+	URL      *url.URL
+	TenantID string
+	Password string
 
-	Logger log.Logger
+	Logger        log.Logger
+	PromoteConfig bool
 }
 
 // successResponse represents a successful response from the Mimir API.

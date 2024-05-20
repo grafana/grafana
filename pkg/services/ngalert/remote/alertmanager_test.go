@@ -122,16 +122,11 @@ func TestApplyConfig(t *testing.T) {
 		w.WriteHeader(http.StatusInternalServerError)
 	})
 
-	var configSent string
+	var configSent client.UserGrafanaConfig
 	okHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost && strings.Contains(r.URL.Path, "/config") {
-			var c client.UserGrafanaConfig
-			require.NoError(t, json.NewDecoder(r.Body).Decode(&c))
-			amCfg, err := json.Marshal(c.GrafanaAlertmanagerConfig)
-			require.NoError(t, err)
-			configSent = string(amCfg)
+			require.NoError(t, json.NewDecoder(r.Body).Decode(&configSent))
 		}
-
 		w.WriteHeader(http.StatusOK)
 	})
 
@@ -157,6 +152,7 @@ func TestApplyConfig(t *testing.T) {
 		TenantID:      "test",
 		URL:           server.URL,
 		DefaultConfig: defaultGrafanaConfig,
+		PromoteConfig: true,
 	}
 
 	ctx := context.Background()
@@ -181,8 +177,11 @@ func TestApplyConfig(t *testing.T) {
 	require.NoError(t, am.ApplyConfig(ctx, config))
 	require.True(t, am.Ready())
 
-	// Secrets in the sent configuration should be unencrypted.
-	require.JSONEq(t, testGrafanaConfigWithSecret, configSent)
+	// The sent configuration should be unencrypted and promoted.
+	amCfg, err := json.Marshal(configSent.GrafanaAlertmanagerConfig)
+	require.NoError(t, err)
+	require.JSONEq(t, testGrafanaConfigWithSecret, string(amCfg))
+	require.True(t, configSent.Promoted)
 
 	// If we already got a 200 status code response, we shouldn't make the HTTP request again.
 	server.Config.Handler = errorHandler
