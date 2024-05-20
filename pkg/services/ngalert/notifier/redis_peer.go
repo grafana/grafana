@@ -448,12 +448,12 @@ func (p *redisPeer) AddState(key string, state alertingCluster.State, _ promethe
 	p.states[key] = state
 	// As we also want to get the state from other nodes, we subscribe to the key.
 	sub := p.redis.Subscribe(context.Background(), p.withPrefix(key))
-	go p.receiveLoop(key, sub)
+	go p.receiveLoop(sub)
 	p.subs[key] = sub
 	return newRedisChannel(p, key, p.withPrefix(key), update)
 }
 
-func (p *redisPeer) receiveLoop(name string, channel *redis.PubSub) {
+func (p *redisPeer) receiveLoop(channel *redis.PubSub) {
 	for {
 		select {
 		case <-p.shutdownc:
