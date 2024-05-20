@@ -2,6 +2,7 @@ package rest
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -77,7 +78,7 @@ type DualWriter interface {
 type DualWriterMode int
 
 const (
-	Mode1 DualWriterMode = iota
+	Mode1 DualWriterMode = iota + 1
 	Mode2
 	Mode3
 	Mode4
@@ -124,12 +125,6 @@ func (u *updateWrapper) UpdatedObject(ctx context.Context, oldObj runtime.Object
 /*
 TODOS
 - fix kvstore get request to include orgID and namespace. potentially switch to namespacedkvstore instead.
-- review how to define modes in code. kvstore returns string mode but currently modes are defined as iota.
-- figure out where setDualWritingMode should live
-- what should the key name for the kvstore entry? what about value? decide between iota versus integer
-- Figure out if we want pods to acquire a lock to go from mode 1 to mode 2
-- Add error handling
-- context.Background() --> use something else?
 */
 
 func SetDualWritingMode(
@@ -139,25 +134,26 @@ func SetDualWritingMode(
 	stackID string,
 	legacy LegacyStorage,
 	storage Storage,
-) DualWriter {
+) (DualWriter, error) {
 	toMode := map[string]DualWriterMode{
 		"1": Mode1,
 		"2": Mode2,
 		"3": Mode3,
 		"4": Mode4,
 	}
+	errDualWriterSetCurrentMode := errors.New("failed to set current dual writing mode")
 
 	key := entity + "_" + stackID
 	m, ok, err := kvs.Get(context.Background(), 0, "", key)
 	if err != nil {
-		fmt.Println(err)
+		return nil, errors.New("failed to fetch current dual writing mode")
 	}
 	if !ok {
 		// default to mode 1
-		m = "1"
+		m = fmt.Sprint(Mode1)
 		err := kvs.Set(context.Background(), 0, "", key, m)
 		if err != nil {
-			fmt.Println(err)
+			return nil, errDualWriterSetCurrentMode
 		}
 	}
 
@@ -167,7 +163,12 @@ func SetDualWritingMode(
 		// This is where we go through the different gates to allow the instance to migrate from mode 1 to mode 2.
 		// There are none between mode 1 and mode 2
 		mode = Mode2
+
+		err := kvs.Set(context.Background(), 0, "", key, fmt.Sprint(mode))
+		if err != nil {
+			return nil, errDualWriterSetCurrentMode
+		}
 	}
 
-	return NewDualWriter(mode, legacy, storage)
+	return NewDualWriter(mode, legacy, storage), nil
 }

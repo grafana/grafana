@@ -129,7 +129,11 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 			return nil, err
 		}
 
-		storage[resource.StoragePath()] = grafanarest.SetDualWritingMode(b.kvStore, b.features, "playlist", b.cfg.StackID, legacyStore, store)
+		dualWriter, err := grafanarest.SetDualWritingMode(b.kvStore, b.features, "playlist", b.cfg.StackID, legacyStore, store)
+		if err != nil {
+			return nil, err
+		}
+		storage[resource.StoragePath()] = dualWriter
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[playlist.VERSION] = storage
