@@ -210,7 +210,7 @@ To generate a separate alert for each series, create a multi-dimensional rule. U
 
 In **Configure no data and error handling**, you can define the alerting behavior when the evaluation returns no data or an error.
 
-For details about alert states, refer to the [lifecycle of alert instances.][alert-instance-state]
+For details about alert states, refer to [lifecycle of alert instances.][alert-instance-state]
 
 You can configure the alert instance state when its evaluation returns no data:
 
