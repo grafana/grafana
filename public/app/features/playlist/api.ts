@@ -8,7 +8,7 @@ import { getGrafanaDatasource } from 'app/plugins/datasource/grafana/datasource'
 import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { dispatch } from 'app/store/store';
 
-import { ScopedResourceClient } from '../apiserver/server';
+import { ScopedResourceClient } from '../apiserver/client';
 import { Resource, ResourceForCreate, ResourceClient } from '../apiserver/types';
 import { DashboardQueryResult, getGrafanaSearcher, SearchQuery } from '../search/service';
 

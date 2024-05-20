@@ -11,7 +11,7 @@ import {
   SceneObjectUrlValues,
 } from '@grafana/scenes';
 import { Checkbox, Icon, Input, Toggletip, useStyles2 } from '@grafana/ui';
-import { ScopedResourceClient } from 'app/features/apiserver/server';
+import { ScopedResourceClient } from 'app/features/apiserver/client';
 
 export interface Node {
   item: ScopeTreeItemSpec;

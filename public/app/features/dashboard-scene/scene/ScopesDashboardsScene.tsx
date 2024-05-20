@@ -7,7 +7,7 @@ import { getAppEvents, getBackendSrv } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { CustomScrollbar, Icon, Input, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { ScopedResourceClient } from 'app/features/apiserver/server';
+import { ScopedResourceClient } from 'app/features/apiserver/client';
 
 export interface ScopeDashboard {
   uid: string;
