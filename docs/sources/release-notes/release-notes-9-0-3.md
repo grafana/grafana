@@ -67,4 +67,4 @@ title: Release notes for Grafana 9.0.3
 - **Table:** Fix scrollbar being hidden by pagination. [#51501](https://github.com/grafana/grafana/pull/51501), [@zoltanbedi](https://github.com/zoltanbedi)
 - **Templating:** Changing between variables with the same name now correctly triggers a dashboard refresh. [#51490](https://github.com/grafana/grafana/pull/51490), [@ashharrison90](https://github.com/ashharrison90)
 - **Time series panel:** Fix an issue with stacks being not complete due to the incorrect data frame length. [#51910](https://github.com/grafana/grafana/pull/51910), [@dprokop](https://github.com/dprokop)
-- *[v9.0.x][] Snapshots:** Fix deleting external snapshots when using RBAC (#51897). [#51904](https://github.com/grafana/grafana/pull/51904), [@idafurjes](https://github.com/idafurjes)
+- \*[v9.0.x][] Snapshots:\*\* Fix deleting external snapshots when using RBAC (#51897). [#51904](https://github.com/grafana/grafana/pull/51904), [@idafurjes](https://github.com/idafurjes)
