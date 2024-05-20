@@ -99,4 +99,3 @@ Building a Grafana dashboard is a process that starts with determining your dash
 And with the data source identified and the plugin installed, you can write your query, transform the data, and format the visualization to meet your needs.
 
 This component architecture is part of what makes Grafana so powerful and general. Given the data source plugin and data frame abstraction, any data source you can access can work with the same general approach.
-
