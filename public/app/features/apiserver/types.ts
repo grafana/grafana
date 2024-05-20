@@ -141,7 +141,7 @@ export interface MetaStatus {
   details?: object;
 }
 
-export interface ResourceServer<T = object, K = string> {
+export interface ResourceClient<T = object, K = string> {
   create(obj: ResourceForCreate<T, K>): Promise<void>;
   get(name: string): Promise<Resource<T, K>>;
   list(opts?: ListOptions): Promise<ResourceList<T, K>>;

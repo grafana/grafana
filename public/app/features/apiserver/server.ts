@@ -8,7 +8,7 @@ import {
   Resource,
   ResourceForCreate,
   ResourceList,
-  ResourceServer,
+  ResourceClient,
 } from './types';
 
 export interface GroupVersionResource {
@@ -17,7 +17,7 @@ export interface GroupVersionResource {
   resource: string;
 }
 
-export class ScopedResourceServer<T = object, K = string> implements ResourceServer<T, K> {
+export class ScopedResourceClient<T = object, K = string> implements ResourceClient<T, K> {
   readonly url: string;
 
   constructor(gvr: GroupVersionResource, namespaced = true) {
