@@ -7,16 +7,19 @@ import { baseQuery } from './query';
 
 export const queryLibraryApi = createApi({
   baseQuery,
+  tagTypes: ['QueryTemplatesList'],
   endpoints: (builder) => ({
     allQueryTemplates: builder.query<QueryTemplate[], void>({
       query: () => ({}),
       transformResponse: convertDataQueryResponseToQueryTemplates,
+      providesTags: ['QueryTemplatesList'],
     }),
     addQueryTemplate: builder.mutation<QueryTemplate, AddQueryTemplateCommand>({
       query: (addQueryTemplateCommand) => ({
         method: 'POST',
         data: convertAddQueryTemplateCommandToDataQuerySpec(addQueryTemplateCommand),
       }),
+      invalidatesTags: ['QueryTemplatesList'],
     }),
   }),
   reducerPath: 'queryLibrary',
