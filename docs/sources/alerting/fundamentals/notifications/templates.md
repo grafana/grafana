@@ -94,7 +94,7 @@ Here are some commonly used built-in [variables](ref:variables-label-annotation)
 
   The outcome of this template would print:
 
-        CPU usage for instance1 has exceeded 80% for the last 5 minutes:[ var='A' labels={instance=instance1} value=81.234 ][]
+        CPU usage for instance1 has exceeded 80% for the last 5 minutes: [ var='A' labels={instance=instance1} value=81.234 ]
 
 - The `$values` variable is a table containing the labels and floating point values of all instant queries and expressions, indexed by their Ref IDs (i.e. the id that identifies the query or expression. By default the Red ID of the query is “A”).
 
@@ -153,7 +153,7 @@ This is the message you would receive in your contact point:
             1 resolved alert(s)
             - The web server web1 has been responding to 5% of HTTP requests with 5xx errors for the last 5 minutes
 
-Once the template is created, you need to make reference to it in your **Contact point** (in the Optional[contact point][] settings) .
+Once the template is created, you need to make reference to it in your **Contact point** (in the Optional `[contact point]` settings) .
 
 {{<admonition type="note">}}
 It's not recommended to include individual alert information within notification templates. Instead, it's more effective to incorporate such details within the rule using labels and annotations.
