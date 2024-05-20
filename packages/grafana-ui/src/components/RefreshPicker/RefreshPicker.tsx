@@ -63,10 +63,6 @@ export class RefreshPicker extends PureComponent<Props> {
       return 'primary';
     }
 
-    if (this.props.isLoading) {
-      return 'destructive';
-    }
-
     if (this.props.primary) {
       return 'primary';
     }

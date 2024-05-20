@@ -561,7 +561,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   // Used to correlate multiple related requests
   queryGroupId?: string;
 
-  scope?: Scope | undefined;
+  scopes?: Scope[] | undefined;
 }
 
 export interface DataQueryTimings {
@@ -587,7 +587,7 @@ export interface QueryFixAction {
    */
   options?: KeyValue<string>;
   /**
-   * An optional single row data frame containing the row that triggered the the QueryFixAction.
+   * An optional single row data frame containing the row that triggered the QueryFixAction.
    */
   frame?: DataFrame;
 }

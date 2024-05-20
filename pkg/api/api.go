@@ -151,10 +151,6 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/dashboards/*", reqSignedIn, hs.Index)
 	r.Get("/goto/:uid", reqSignedIn, hs.redirectFromShortURL, hs.Index)
 
-	if hs.Features.IsEnabledGlobally(featuremgmt.FlagDashboardEmbed) {
-		r.Get("/d-embed", reqSignedIn, middleware.AddAllowEmbeddingHeader(), hs.Index)
-	}
-
 	if hs.Features.IsEnabledGlobally(featuremgmt.FlagPublicDashboards) && hs.Cfg.PublicDashboardsEnabled {
 		// list public dashboards
 		r.Get("/public-dashboards/list", reqSignedIn, hs.Index)
@@ -460,11 +456,23 @@ func (hs *HTTPServer) registerRoutes() {
 		// Dashboard
 		apiRoute.Group("/dashboards", func(dashboardRoute routing.RouteRegister) {
 			dashboardRoute.Get("/uid/:uid", authorize(ac.EvalPermission(dashboards.ActionDashboardsRead)), routing.Wrap(hs.GetDashboard))
-			dashboardRoute.Delete("/uid/:uid", authorize(ac.EvalPermission(dashboards.ActionDashboardsDelete)), routing.Wrap(hs.DeleteDashboardByUID))
+
+			if hs.Features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
+				dashboardRoute.Delete("/uid/:uid", authorize(ac.EvalPermission(dashboards.ActionDashboardsDelete)), routing.Wrap(hs.SoftDeleteDashboard))
+			} else {
+				dashboardRoute.Delete("/uid/:uid", authorize(ac.EvalPermission(dashboards.ActionDashboardsDelete)), routing.Wrap(hs.DeleteDashboardByUID))
+			}
+
 			dashboardRoute.Group("/uid/:uid", func(dashUidRoute routing.RouteRegister) {
 				dashUidRoute.Get("/versions", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.GetDashboardVersions))
 				dashUidRoute.Post("/restore", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.RestoreDashboardVersion))
 				dashUidRoute.Get("/versions/:id", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.GetDashboardVersion))
+
+				if hs.Features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
+					dashUidRoute.Patch("/trash", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.RestoreDeletedDashboard))
+					dashUidRoute.Delete("/trash", authorize(ac.EvalPermission(dashboards.ActionDashboardsDelete)), routing.Wrap(hs.HardDeleteDashboardByUID))
+				}
+
 				dashUidRoute.Group("/permissions", func(dashboardPermissionRoute routing.RouteRegister) {
 					dashboardPermissionRoute.Get("/", authorize(ac.EvalPermission(dashboards.ActionDashboardsPermissionsRead)), routing.Wrap(hs.GetDashboardPermissionList))
 					dashboardPermissionRoute.Post("/", authorize(ac.EvalPermission(dashboards.ActionDashboardsPermissionsWrite)), routing.Wrap(hs.UpdateDashboardPermissions))
@@ -587,7 +595,7 @@ func (hs *HTTPServer) registerRoutes() {
 	}, reqSignedIn)
 
 	// rendering
-	r.Get("/render/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), reqSignedIn, hs.RenderToPng)
+	r.Get("/render/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), reqSignedIn, hs.RenderHandler)
 
 	// grafana.net proxy
 	r.Any("/api/gnet/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), reqSignedIn, hs.ProxyGnetRequest)

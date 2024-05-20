@@ -147,7 +147,7 @@ describe('DashboardPageProxy', () => {
         act(() => {
           setup({
             route: { routeName: DashboardRoutes.Home, component: () => null, path: '/' },
-            match: { params: {}, isExact: true, path: '/', url: '/' },
+            match: { params: { uid: '' }, isExact: true, path: '/', url: '/' },
           });
         });
 
@@ -176,7 +176,14 @@ describe('DashboardPageProxy', () => {
         act(() => {
           setup({
             route: { routeName: DashboardRoutes.Home, component: () => null, path: '/' },
-            match: { params: {}, isExact: true, path: '/', url: '/' },
+            match: {
+              params: {
+                uid: '',
+              },
+              isExact: true,
+              path: '/',
+              url: '/',
+            },
           });
         });
 

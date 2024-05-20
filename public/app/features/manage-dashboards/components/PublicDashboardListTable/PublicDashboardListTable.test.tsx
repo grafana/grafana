@@ -1,4 +1,3 @@
-import 'whatwg-fetch';
 import { render, screen, waitForElementToBeRemoved, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
@@ -100,13 +99,13 @@ const renderPublicDashboardTable = async (waitForListRendering?: boolean) => {
     </TestProvider>
   );
 
-  waitForListRendering && (await waitForElementToBeRemoved(screen.getAllByTestId('Spinner')[1], { timeout: 3000 }));
+  waitForListRendering && (await waitForElementToBeRemoved(screen.getAllByTestId('Spinner')[0], { timeout: 3000 }));
 };
 
 describe('Show table', () => {
   it('renders loader spinner while loading', async () => {
     await renderPublicDashboardTable();
-    const spinner = screen.getAllByTestId('Spinner')[1];
+    const spinner = screen.getAllByTestId('Spinner')[0];
     expect(spinner).toBeInTheDocument();
 
     await waitForElementToBeRemoved(spinner);

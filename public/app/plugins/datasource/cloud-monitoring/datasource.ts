@@ -6,6 +6,7 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
+  QueryVariableModel,
   ScopedVars,
   SelectableValue,
   TimeRange,
@@ -84,7 +85,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
         ),
       },
       sloQuery: sloQuery && this.interpolateProps(sloQuery, scopedVars),
-      promQLQuery: promQLQuery && this.interpolateProps(promQLQuery, scopedVars),
+      promQLQuery: promQLQuery && this.interpolateProps(promQLQuery, scopedVars, { expr: this.interpolatePromQLQuery }),
     };
   }
 
@@ -108,7 +109,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
               crossSeriesReducer: aggregation?.crossSeriesReducer ?? 'REDUCE_NONE',
               view: 'HEADERS',
             },
-            metricType
+            this.templateSrv.replace(metricType)
           ),
         },
       ],
@@ -240,6 +241,11 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       !query.hasOwnProperty('timeSeriesQuery') &&
       !query.hasOwnProperty('timeSeriesList')
     ) {
+      let filters = rest.filters || [];
+      if (rest.metricType) {
+        filters = this.migrateMetricTypeFilter(rest.metricType, filters);
+      }
+
       return {
         datasource,
         key,
@@ -249,13 +255,15 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
         queryType: type === 'annotationQuery' ? QueryType.ANNOTATION : QueryType.TIME_SERIES_LIST,
         timeSeriesList: {
           ...rest,
+          projectName: get(query, 'projectName') || this.getDefaultProject(),
+          filters,
           view: rest.view || 'FULL',
         },
       };
     }
 
     if (has(query, 'metricQuery') && ['metrics', QueryType.ANNOTATION].includes(query.queryType ?? '')) {
-      const metricQuery: MetricQuery = get(query, 'metricQuery')!;
+      const metricQuery = get(query, 'metricQuery') as MetricQuery;
       if (metricQuery.editorMode === 'mql') {
         query.timeSeriesQuery = {
           projectName: metricQuery.projectName,
@@ -265,7 +273,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
         query.queryType = QueryType.TIME_SERIES_QUERY;
       } else {
         query.timeSeriesList = {
-          projectName: metricQuery.projectName,
+          projectName: metricQuery.projectName || this.getDefaultProject(),
           crossSeriesReducer: metricQuery.crossSeriesReducer,
           alignmentPeriod: metricQuery.alignmentPeriod,
           perSeriesAligner: metricQuery.perSeriesAligner,
@@ -287,18 +295,41 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     }
 
     if (query.queryType === QueryType.SLO && has(query, 'sloQuery.aliasBy')) {
-      query.aliasBy = get(query, 'sloQuery.aliasBy');
+      const sloQuery = get(query, 'sloQuery.aliasBy');
+      if (typeof sloQuery === 'string') {
+        query.aliasBy = sloQuery;
+      }
       query = omit(query, 'sloQuery.aliasBy');
     }
 
     return query;
   }
 
-  interpolateProps<T extends Record<string, any>>(object: T, scopedVars: ScopedVars = {}): T {
+  interpolatePromQLQuery(value: string | string[], _variable: QueryVariableModel) {
+    if (isArray(value)) {
+      return value.join('|');
+    }
+    return value;
+  }
+
+  interpolateProps<T extends Record<string, any>>(
+    object: T,
+    scopedVars: ScopedVars = {},
+    formattingFunctions?: { [key: string]: Function | undefined }
+  ): T {
     return Object.entries(object).reduce((acc, [key, value]) => {
+      let interpolatedValue = value;
+      if (value && isString(value)) {
+        // Pass a function to the template service for formatting
+        interpolatedValue = this.templateSrv.replace(
+          value,
+          scopedVars,
+          formattingFunctions && formattingFunctions[key]
+        );
+      }
       return {
         ...acc,
-        [key]: value && isString(value) ? this.templateSrv.replace(value, scopedVars) : value,
+        [key]: interpolatedValue,
       };
     }, {} as T);
   }

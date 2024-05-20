@@ -28,6 +28,16 @@ func (s *Store) PluginErrors(ctx context.Context) []*plugins.Error {
 	return errs
 }
 
+func (s *Store) PluginError(ctx context.Context, pluginID string) *plugins.Error {
+	err := s.errs.Error(ctx, pluginID)
+	if err == nil {
+		return nil
+	}
+
+	err.ErrorCode = err.AsErrorCode()
+	return err
+}
+
 type ErrorRegistry struct {
 	errs map[string]*plugins.Error
 	log  log.Logger
@@ -37,6 +47,7 @@ type ErrorTracker interface {
 	Record(ctx context.Context, err *plugins.Error)
 	Clear(ctx context.Context, pluginID string)
 	Errors(ctx context.Context) []*plugins.Error
+	Error(ctx context.Context, pluginID string) *plugins.Error
 }
 
 func ProvideErrorTracker() *ErrorRegistry {
@@ -64,4 +75,8 @@ func (r *ErrorRegistry) Errors(_ context.Context) []*plugins.Error {
 		errs = append(errs, err)
 	}
 	return errs
+}
+
+func (r *ErrorRegistry) Error(_ context.Context, pluginID string) *plugins.Error {
+	return r.errs[pluginID]
 }

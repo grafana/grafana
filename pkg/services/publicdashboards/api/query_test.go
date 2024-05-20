@@ -40,7 +40,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -258,7 +257,7 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	db := db.InitTestDB(t)
+	db, cfg := db.InitTestDBWithCfg(t)
 
 	cacheService := datasourcesService.ProvideCacheService(localcache.ProvideService(), db, guardian.ProvideGuardian())
 	qds := buildQueryDataService(t, cacheService, nil, db)
@@ -300,7 +299,7 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	}
 
 	// create dashboard
-	dashboardStoreService, err := dashboardStore.ProvideDashboardStore(db, db.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(db), quotatest.New(false, nil))
+	dashboardStoreService, err := dashboardStore.ProvideDashboardStore(db, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(db), quotatest.New(false, nil))
 	require.NoError(t, err)
 	dashboard, err := dashboardStoreService.SaveDashboard(context.Background(), saveDashboardCmd)
 	require.NoError(t, err)
@@ -318,8 +317,7 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	annotationsService := annotationstest.NewFakeAnnotationsRepo()
 
 	// create public dashboard
-	store := publicdashboardsStore.ProvideStore(db, db.Cfg, featuremgmt.WithFeatures())
-	cfg := setting.NewCfg()
+	store := publicdashboardsStore.ProvideStore(db, cfg, featuremgmt.WithFeatures())
 	cfg.PublicDashboardsEnabled = true
 	ac := acmock.New()
 	ws := publicdashboardsService.ProvideServiceWrapper(store)

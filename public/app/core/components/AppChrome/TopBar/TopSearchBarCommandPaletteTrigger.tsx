@@ -3,7 +3,7 @@ import { useKBar, VisualState } from 'kbar';
 import React, { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { getInputStyles, Icon, ToolbarButton, useStyles2, useTheme2 } from '@grafana/ui';
+import { getInputStyles, Icon, Text, ToolbarButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { focusCss } from '@grafana/ui/src/themes/mixins';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import { t } from 'app/core/internationalization';
@@ -70,7 +70,7 @@ function PretendTextInput({ onClick }: PretendTextInputProps) {
 
         <div className={styles.suffix}>
           <Icon name="keyboard" />
-          <span className={styles.shortcut}>{modKey}+k</span>
+          <Text variant="bodySmall">{modKey}+k</Text>
         </div>
       </div>
     </div>
@@ -91,9 +91,6 @@ const getStyles = (theme: GrafanaTheme2) => {
         gap: theme.spacing(0.5),
       },
     ]),
-    shortcut: css({
-      fontSize: theme.typography.bodySmall.fontSize,
-    }),
     fakeInput: css([
       baseStyles.input,
       {

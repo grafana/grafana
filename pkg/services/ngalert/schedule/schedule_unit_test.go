@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net/url"
+	"slices"
 	"testing"
 	"time"
 
@@ -101,9 +102,9 @@ func TestProcessTicks(t *testing.T) {
 	}
 
 	tick := time.Time{}
-
+	gen := models.RuleGen
 	// create alert rule under main org with one second interval
-	alertRule1 := models.AlertRuleGen(models.WithOrgID(mainOrgID), models.WithInterval(cfg.BaseInterval), models.WithTitle("rule-1"))()
+	alertRule1 := gen.With(gen.WithOrgID(mainOrgID), gen.WithInterval(cfg.BaseInterval), gen.WithTitle("rule-1")).GenerateRef()
 	ruleStore.PutRule(ctx, alertRule1)
 
 	t.Run("on 1st tick alert rule should be evaluated", func(t *testing.T) {
@@ -132,7 +133,7 @@ func TestProcessTicks(t *testing.T) {
 	})
 
 	// add alert rule under main org with three base intervals
-	alertRule2 := models.AlertRuleGen(models.WithOrgID(mainOrgID), models.WithInterval(3*cfg.BaseInterval), models.WithTitle("rule-2"))()
+	alertRule2 := gen.With(gen.WithOrgID(mainOrgID), gen.WithInterval(3*cfg.BaseInterval), gen.WithTitle("rule-2")).GenerateRef()
 	ruleStore.PutRule(ctx, alertRule2)
 
 	t.Run("on 2nd tick first alert rule should be evaluated", func(t *testing.T) {
@@ -317,7 +318,7 @@ func TestProcessTicks(t *testing.T) {
 	})
 
 	// create alert rule with one base interval
-	alertRule3 := models.AlertRuleGen(models.WithOrgID(mainOrgID), models.WithInterval(cfg.BaseInterval), models.WithTitle("rule-3"))()
+	alertRule3 := gen.With(gen.WithOrgID(mainOrgID), gen.WithInterval(cfg.BaseInterval), gen.WithTitle("rule-3")).GenerateRef()
 	ruleStore.PutRule(ctx, alertRule3)
 
 	t.Run("on 10th tick a new alert rule should be evaluated", func(t *testing.T) {
@@ -354,6 +355,47 @@ func TestProcessTicks(t *testing.T) {
 		require.Len(t, updated, 1)
 		require.Equal(t, expectedUpdated, updated[0])
 	})
+	t.Run("on 12th tick all rules should be stopped", func(t *testing.T) {
+		expectedToBeStopped, err := ruleStore.GetAlertRulesKeysForScheduling(ctx)
+		require.NoError(t, err)
+
+		ruleStore.rules = map[string]*models.AlertRule{}
+		tick = tick.Add(cfg.BaseInterval)
+		scheduled, stopped, updated := sched.processTick(ctx, dispatcherGroup, tick)
+
+		require.Emptyf(t, scheduled, "None rules should be scheduled")
+
+		require.Len(t, stopped, len(expectedToBeStopped))
+
+		require.Emptyf(t, updated, "No rules should be updated")
+	})
+
+	t.Run("scheduled rules should be sorted", func(t *testing.T) {
+		rules := gen.With(gen.WithOrgID(mainOrgID), gen.WithInterval(cfg.BaseInterval)).GenerateManyRef(10, 20)
+		ruleStore.rules = map[string]*models.AlertRule{}
+		ruleStore.PutRule(context.Background(), rules...)
+
+		expectedUids := make([]string, 0, len(rules))
+		for _, rule := range rules {
+			expectedUids = append(expectedUids, rule.UID)
+		}
+		slices.Sort(expectedUids)
+
+		tick = tick.Add(cfg.BaseInterval)
+
+		scheduled, stopped, updated := sched.processTick(ctx, dispatcherGroup, tick)
+		require.Emptyf(t, stopped, "None rules are expected to be stopped")
+		require.Emptyf(t, updated, "None rules are expected to be updated")
+
+		actualUids := make([]string, 0, len(scheduled))
+		for _, rule := range scheduled {
+			actualUids = append(actualUids, rule.rule.UID)
+		}
+
+		require.Len(t, scheduled, len(rules))
+		assert.Truef(t, slices.IsSorted(actualUids), "The scheduler rules should be sorted by UID but they aren't")
+		require.Equal(t, expectedUids, actualUids)
+	})
 }
 
 func TestSchedule_deleteAlertRule(t *testing.T) {
@@ -361,7 +403,7 @@ func TestSchedule_deleteAlertRule(t *testing.T) {
 		t.Run("it should stop evaluation loop and remove the controller from registry", func(t *testing.T) {
 			sch := setupScheduler(t, nil, nil, nil, nil, nil)
 			ruleFactory := ruleFactoryFromScheduler(sch)
-			rule := models.AlertRuleGen()()
+			rule := models.RuleGen.GenerateRef()
 			key := rule.GetKey()
 			info, _ := sch.registry.getOrCreate(context.Background(), key, ruleFactory)
 			sch.deleteAlertRule(key)

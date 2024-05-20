@@ -7,6 +7,7 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { configureStore } from 'app/store/configureStore';
 
 import { DashboardRoutes } from '../../../types';
@@ -50,6 +51,11 @@ function setup(props: Partial<PublicDashboardPageProxyProps>) {
 describe('PublicDashboardPageProxy', () => {
   beforeEach(() => {
     config.featureToggles.publicDashboardsScene = false;
+
+    // Mock the dashboard UID response so we don't get any refused connection errors
+    // from this test (as the fetch polyfill means this logic would actually try and call the API)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    jest.spyOn(backendSrv, 'getPublicDashboardByUid').mockResolvedValue({ dashboard: {}, meta: {} } as any);
   });
 
   describe('when scene feature enabled', () => {

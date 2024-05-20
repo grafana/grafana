@@ -16,7 +16,7 @@ title: Configure email for Alerting
 weight: 300
 ---
 
-## Configure email for Alerting
+# Configure email for Alerting
 
 Use the Grafana Alerting - email integration to send email notifications when your alerts are firing. An email is sent when an alert fires and when an alert gets resolved.
 
@@ -26,7 +26,7 @@ Use the Grafana Alerting - email integration to send email notifications when yo
 This section is for Grafana OSS only. For Grafana Cloud, SMTP configuration is not required.
 {{</admonition>}}
 
-For Grafana OSS, you enable email notifications by first configuring [SMTP settings][smtp-settings] in the Grafana configuration settings.
+For Grafana OSS, you enable email notifications by first configuring [SMTP settings](https://grafana.com/docs/grafana/next/setup-grafana/configure-grafana/#smtp) in the Grafana configuration settings.
 
 ### SMTP configuration
 
@@ -40,7 +40,7 @@ For Grafana OSS, you enable email notifications by first configuring [SMTP setti
 
 1. Locate SMTP settings section.
 
-   Search for the [SMTP settings section][smtp-settings] in the configuration file. It starts with `[smtp]`.
+   Search for the [SMTP settings section](https://grafana.com/docs/grafana/next/setup-grafana/configure-grafana/#smtp) in the configuration file. It starts with `[smtp]`.
 
 1. Configure SMTP settings.
 
@@ -90,11 +90,3 @@ To add the contact point and integration you created to your default notificatio
 {{% admonition type="note" %}}
 If you have more than one contact point, add a new child notification policy rather than edit the default one, so you can route specific alerts to one or multiple email addresses.
 {{% /admonition %}}
-
-{{% docs/reference %}}
-
-[smtp-settings]: "/docs/grafana/ -> /docs/grafana/latest/setup-grafana/configure-grafana/#smtp"
-
-[smtp-settings]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/"
-
-{{% /docs/reference %}}

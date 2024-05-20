@@ -63,6 +63,7 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 				URL:               testsrv.URL,
 				TenantID:          tenantID,
 				BasicAuthPassword: password,
+				DefaultConfig:     setting.GetAlertmanagerDefaultConfiguration(),
 			}
 			m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
 			remoteAM, err := remote.NewAlertmanager(externalAMCfg, notifier.NewFileStore(orgID, kvStore), secretsService.Decrypt, m)
@@ -268,7 +269,6 @@ var validConfig = `{
 				"uid": "",
 				"name": "email receiver",
 				"type": "email",
-				"isDefault": true,
 				"settings": {
 					"addresses": "<example@email.com>"
 				}

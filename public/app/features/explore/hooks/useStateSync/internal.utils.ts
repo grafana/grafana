@@ -40,7 +40,7 @@ export const urlDiff = (
 /**
  * Returns the datasource that an explore pane should be using.
  * If the URL specifies a datasource and that datasource exists, it will be used unless said datasource is mixed.
- * Otherwise the datasource will be extracted from the the first query specifying a valid datasource.
+ * Otherwise the datasource will be extracted from the first query specifying a valid datasource.
  *
  * If there's no datasource in the queries, the last used datasource will be used.
  * if there's no last used datasource, the default datasource will be used.
@@ -122,7 +122,7 @@ export function getQueryFilter(datasource?: DataSourceApi) {
       }
       // Due to legacy URLs, `datasource` in queries may be a string. This logic should probably be in the migration
       if (typeof q.datasource === 'string') {
-        return q.datasource === datasource?.uid;
+        return q.datasource === datasource?.uid || q.datasource === datasource?.name;
       }
 
       return q.datasource.uid === datasource?.uid;

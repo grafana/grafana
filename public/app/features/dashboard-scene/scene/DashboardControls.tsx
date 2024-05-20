@@ -10,6 +10,7 @@ import {
   SceneTimePicker,
   SceneRefreshPicker,
   SceneDebugger,
+  VariableDependencyConfig,
 } from '@grafana/scenes';
 import { Box, Stack, useStyles2 } from '@grafana/ui';
 
@@ -27,6 +28,10 @@ interface DashboardControlsState extends SceneObjectState {
 export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
   static Component = DashboardControlsRenderer;
 
+  protected _variableDependency = new VariableDependencyConfig(this, {
+    onAnyVariableChanged: this._onAnyVariableChanged.bind(this),
+  });
+
   public constructor(state: Partial<DashboardControlsState>) {
     super({
       variableControls: [],
@@ -34,6 +39,16 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
       refreshPicker: state.refreshPicker ?? new SceneRefreshPicker({}),
       ...state,
     });
+  }
+
+  /**
+   * Links can include all variables so we need to re-render when any change
+   */
+  private _onAnyVariableChanged(): void {
+    const dashboard = getDashboardSceneFor(this);
+    if (dashboard.state.links?.length > 0) {
+      this.forceRender();
+    }
   }
 }
 

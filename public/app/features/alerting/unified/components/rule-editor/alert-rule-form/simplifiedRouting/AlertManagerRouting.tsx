@@ -62,7 +62,7 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
       <Stack direction="row" alignItems="center">
         <div className={styles.firstAlertManagerLine}></div>
         <div className={styles.alertManagerName}>
-          Alert manager:
+          Alertmanager:
           <img src={alertManager.imgUrl} alt="Alert manager logo" className={styles.img} />
           {alertManagerName}
         </div>

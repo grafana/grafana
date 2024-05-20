@@ -6,14 +6,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 )
 
-// CloudMigrationsServiceImpl Define the Service Implementation.
+// NoopServiceImpl Define the Service Implementation.
 type NoopServiceImpl struct{}
 
 var _ cloudmigration.Service = (*NoopServiceImpl)(nil)
-
-func (s *NoopServiceImpl) MigrateDatasources(ctx context.Context, request *cloudmigration.MigrateDatasourcesRequest) (*cloudmigration.MigrateDatasourcesResponse, error) {
-	return nil, cloudmigration.ErrFeatureDisabledError
-}
 
 func (s *NoopServiceImpl) CreateToken(ctx context.Context) (cloudmigration.CreateAccessTokenResponse, error) {
 	return cloudmigration.CreateAccessTokenResponse{}, cloudmigration.ErrFeatureDisabledError
@@ -22,7 +18,7 @@ func (s *NoopServiceImpl) ValidateToken(ctx context.Context, cm cloudmigration.C
 	return cloudmigration.ErrFeatureDisabledError
 }
 
-func (s *NoopServiceImpl) GetMigration(ctx context.Context, id int64) (*cloudmigration.CloudMigration, error) {
+func (s *NoopServiceImpl) GetMigration(ctx context.Context, uid string) (*cloudmigration.CloudMigration, error) {
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
@@ -34,30 +30,26 @@ func (s *NoopServiceImpl) CreateMigration(ctx context.Context, cm cloudmigration
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
-func (s *NoopServiceImpl) UpdateMigration(ctx context.Context, id int64, cm cloudmigration.CloudMigrationRequest) (*cloudmigration.CloudMigrationResponse, error) {
+func (s *NoopServiceImpl) UpdateMigration(ctx context.Context, uid string, cm cloudmigration.CloudMigrationRequest) (*cloudmigration.CloudMigrationResponse, error) {
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
-func (s *NoopServiceImpl) GetMigrationStatus(ctx context.Context, id string, runID string) (*cloudmigration.CloudMigrationRun, error) {
+func (s *NoopServiceImpl) GetMigrationStatus(ctx context.Context, runUID string) (*cloudmigration.CloudMigrationRun, error) {
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
-func (s *NoopServiceImpl) GetMigrationStatusList(ctx context.Context, id string) ([]*cloudmigration.CloudMigrationRun, error) {
+func (s *NoopServiceImpl) GetMigrationRunList(ctx context.Context, uid string) (*cloudmigration.CloudMigrationRunList, error) {
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
-func (s *NoopServiceImpl) DeleteMigration(ctx context.Context, id int64) (*cloudmigration.CloudMigration, error) {
+func (s *NoopServiceImpl) DeleteMigration(ctx context.Context, uid string) (*cloudmigration.CloudMigration, error) {
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
-func (s *NoopServiceImpl) SaveMigrationRun(ctx context.Context, cmr *cloudmigration.CloudMigrationRun) (int64, error) {
-	return -1, cloudmigration.ErrInternalNotImplementedError
+func (s *NoopServiceImpl) CreateMigrationRun(context.Context, cloudmigration.CloudMigrationRun) (string, error) {
+	return "", cloudmigration.ErrInternalNotImplementedError
 }
 
-func (s *NoopServiceImpl) GetMigrationDataJSON(ctx context.Context, id int64) ([]byte, error) {
+func (s *NoopServiceImpl) RunMigration(context.Context, string) (*cloudmigration.MigrateDataResponseDTO, error) {
 	return nil, cloudmigration.ErrFeatureDisabledError
-}
-
-func (s *NoopServiceImpl) ParseCloudMigrationConfig() (string, error) {
-	return "", cloudmigration.ErrFeatureDisabledError
 }

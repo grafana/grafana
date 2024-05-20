@@ -269,6 +269,12 @@ external group.
 
 \* `resources` may also contain a third item with `"type":` set to `"user"` or `"team"`.
 
+#### Data source query
+
+| Action           | Distinguishing fields                                        |
+| ---------------- | ------------------------------------------------------------ |
+| Query datasource | `{"action": "query", "resources": [{"type": "datasource"}]}` |
+
 #### Reporting
 
 | Action                    | Distinguishing fields                                                            |
@@ -329,7 +335,7 @@ Furthermore, you can also record `GET` requests. See below how to configure it.
 
 | Action         | Distinguishing fields          |
 | -------------- | ------------------------------ |
-| POST request   | `{"action": "action"}`         |
+| POST request   | `{"action": "post-action"}`    |
 | PATCH request  | `{"action": "partial-update"}` |
 | PUT request    | `{"action": "update"}`         |
 | DELETE request | `{"action": "delete"}`         |

@@ -12,10 +12,17 @@ export const loadTranslations: BackendModule = {
     if (!localeDef) {
       localeDef = LANGUAGES.find((v) => getLanguagePartFromCode(v.code) === getLanguagePartFromCode(language));
     }
+
     if (!localeDef) {
-      return callback(new Error('No message loader available for ' + language), null);
+      return callback(new Error(`No message loader available for ${language}`), null);
     }
-    const messages = await localeDef.loader();
+
+    const namespaceLoader = localeDef.loader[namespace];
+    if (!namespaceLoader) {
+      return callback(new Error(`No message loader available for ${language} with namespace ${namespace}`), null);
+    }
+
+    const messages = await namespaceLoader();
     callback(null, messages);
   },
 };

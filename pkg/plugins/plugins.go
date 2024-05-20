@@ -119,6 +119,9 @@ type JSONData struct {
 
 	// App Service Auth Registration
 	IAM *pfs.IAM `json:"iam,omitempty"`
+
+	// API Version: Temporary field while plugins don't expose a OpenAPI schema
+	APIVersion string `json:"apiVersion,omitempty"`
 }
 
 func ReadPluginJSON(reader io.Reader) (JSONData, error) {

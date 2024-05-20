@@ -26,11 +26,15 @@ weight: 105
 
 Labels and annotations contain information about an alert. Labels are used to differentiate an alert from all other alerts, while annotations are used to add additional information to an existing alert.
 
+When creating alert rules, you can also template labels and annotations to optimize and customize your alerts.
+
 ## Labels
 
-Labels contain information that identifies an alert. An example of a label might be `server=server1` or `team=backend`. Each alert can have more than one label, and the complete set of labels for an alert is called its label set. It is this label set that identifies the alert.
+**Labels** are unique identifiers of an alert. You can use them for searching, silencing, and routing notifications.
 
-For example, an alert might have the label set `{alertname="High CPU usage",server="server1"}` while another alert might have the label set `{alertname="High CPU usage",server="server2"}`. These are two separate alerts because although their `alertname` labels are the same, their `server` labels are different.
+Examples of labels are `server=server1` or `team=backend`. Each alert rule can have more than one label and the complete set of labels for an alert rule is called its label set. It is this label set that identifies the alert.
+
+For example, an alert rule might have the label set `{alertname="High CPU usage",server="server1"}` while another alert rule might have the label set `{alertname="High CPU usage",server="server2"}`. These are two separate alert rules because although their `alertname` labels are the same, their `server` labels are different.
 
 Labels are a fundamental component of alerting:
 
@@ -94,15 +98,16 @@ Here is an example that shows how to exclude the label `Team`. You can choose be
 
 An alert's label set can contain three types of labels:
 
-- Labels from the datasource,
-- Custom labels specified in the alert rule,
-- A series of reserved labels, such as `alertname` or `grafana_folder`.
+- Data source query labels. For example, if you are monitoring temperature readings and each time series for these readings has a sensor_id, and a location label. These labels are used to provide additional context or dimensions to the metric data, helping to differentiate between different time series.
 
-### Custom Labels
+- Labels that are automatically added by Grafana (i.e. alertname and grafana_folder). These are Grafana reserved labels.
 
-Custom labels are additional labels configured manually in the alert rule.
+- Labels that you define yourself to help filter data in your alert rules.
+  You can also template labels. For example in your alert rule, you could add a label that uses templating to create more dynamic and customizable alerting. E.g. `environment` `=` `{{ your text/template }}`.
 
-Ensure the label set for an alert does not have two or more labels with the same name. If a custom label has the same name as a label from the datasource then it will replace that label. However, should a custom label have the same name as a reserved label then the custom label will be omitted from the alert.
+{{<admonition type="note">}}
+Ensure the label set for an alert does not have two or more labels with the same name. If a label has the same name as a label from the data source then it will replace that label. However, should a label have the same name as a reserved label then the label will be omitted from the alert.
+{{</admonition>}}
 
 {{< collapse title="Key format" >}}
 
@@ -122,7 +127,7 @@ If multiple label keys are sanitized to the same value, the duplicates will have
 
 ### Reserved labels
 
-Reserved labels can be used in the same way as manually configured custom labels. The current list of available reserved labels are:
+Reserved labels can be used in the same way as manually configured labels. The current list of available reserved labels are:
 
 | Label          | Description                               |
 | -------------- | ----------------------------------------- |
@@ -135,7 +140,7 @@ Labels prefixed with `grafana_` are reserved by Grafana for special use. To stop
 
 Both labels and annotations have the same structure: a set of named values; however their intended uses are different. The purpose of annotations is to add additional information to existing alerts.
 
-There are a number of suggested annotations in Grafana such as `description`, `summary`, `runbook_url`, `dashboardUId` and `panelId`. Like custom labels, annotations must have a name, and their value can contain a combination of text and template code that is evaluated when an alert is fired.
+There are a number of suggested annotations in Grafana such as `description`, `summary`, `runbook_url`, `dashboardUId` and `panelId`. Like labels, annotations must have a name, and their value can contain a combination of text and template code that is evaluated when an alert is fired.
 
 {{% docs/reference %}}
 [variables-label-annotation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templating-labels-annotations"

@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Button, HorizontalGroup } from '@grafana/ui';
+import { Button, Stack } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
 import { useWizardContext } from '../components/Wizard/wizardContext';
@@ -26,7 +26,7 @@ export const CorrelationFormNavigation = () => {
   );
 
   return (
-    <HorizontalGroup justify="flex-start">
+    <Stack justifyContent="flex-start">
       {currentPage > 0 ? (
         <Button variant="secondary" onClick={prevPage}>
           <Trans i18nKey="correlations.navigation-form.back-button">Back</Trans>
@@ -34,6 +34,6 @@ export const CorrelationFormNavigation = () => {
       ) : undefined}
 
       {isLastPage ? LastPageNext : NextPage}
-    </HorizontalGroup>
+    </Stack>
   );
 };

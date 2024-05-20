@@ -24,11 +24,7 @@ export const SubMenuItems = ({ variables, readOnly }: Props) => {
   return (
     <>
       {visibleVariables.map((variable) => (
-        <div
-          key={variable.id}
-          className="submenu-item gf-form-inline"
-          data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
-        >
+        <div key={variable.id} className="submenu-item" data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}>
           <PickerRenderer variable={variable} readOnly={readOnly} />
         </div>
       ))}

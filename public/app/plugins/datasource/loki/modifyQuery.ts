@@ -21,6 +21,7 @@ import {
   JsonExpressionParser,
   LogfmtExpressionParser,
   Expr,
+  LabelFormatExpr,
 } from '@grafana/lezer-logql';
 
 import { unescapeLabelValue } from './languageUtils';
@@ -162,6 +163,8 @@ export function addLabelToQuery(
   const parserPositions = getParserPositions(query);
   const labelFilterPositions = getLabelFilterPositions(query);
   const hasStreamSelectorMatchers = getMatcherInStreamPositions(query);
+  // For non-indexed labels we want to add them after label_format to, for example, allow ad-hoc filters to use formatted labels
+  const labelFormatPositions = getNodePositionsFromQuery(query, [LabelFormatExpr]);
   const everyStreamSelectorHasMatcher = streamSelectorPositions.every((streamSelectorPosition) =>
     hasStreamSelectorMatchers.some(
       (matcherPosition) =>
@@ -175,6 +178,7 @@ export function addLabelToQuery(
       ...streamSelectorPositions,
       ...labelFilterPositions,
       ...parserPositions,
+      ...labelFormatPositions,
     ]);
 
     return addFilterAsLabelFilter(query, lastPositionsPerExpression, filter);
@@ -191,6 +195,7 @@ export function addLabelToQuery(
       const lastPositionsPerExpression = getLastPositionPerExpression(query, [
         ...parserPositions,
         ...labelFilterPositions,
+        ...labelFormatPositions,
       ]);
 
       return addFilterAsLabelFilter(query, lastPositionsPerExpression, filter);

@@ -16,6 +16,7 @@ import {
 import { ParserAndLabelKeysResult, LokiQuery, LokiQueryType, LabelType } from './types';
 
 const NS_IN_MS = 1000000;
+const EMPTY_SELECTOR = '{}';
 
 export default class LokiLanguageProvider extends LanguageProvider {
   labelKeys: string[];
@@ -119,6 +120,28 @@ export default class LokiLanguageProvider extends LanguageProvider {
   }
 
   /**
+   * Fetch label keys using the best applicable endpoint.
+   *
+   * This asynchronous function returns all available label keys from the data source.
+   * It returns a promise that resolves to an array of strings containing the label keys.
+   *
+   * @param options - (Optional) An object containing additional options.
+   * @param options.streamSelector - (Optional) The stream selector to filter label keys. If not provided, all label keys are fetched.
+   * @param options.timeRange - (Optional) The time range for which you want to retrieve label keys. If not provided, the default time range is used.
+   * @returns A promise containing an array of label keys.
+   * @throws An error if the fetch operation fails.
+   */
+  async fetchLabels(options?: { streamSelector?: string; timeRange?: TimeRange }): Promise<string[]> {
+    // If there is no stream selector - use /labels endpoint (https://github.com/grafana/loki/pull/11982)
+    if (!options || !options.streamSelector) {
+      return this.fetchLabelsByLabelsEndpoint(options);
+    } else {
+      const data = await this.fetchSeriesLabels(options.streamSelector, { timeRange: options.timeRange });
+      return Object.keys(data ?? {});
+    }
+  }
+
+  /**
    * Fetch all label keys
    * This asynchronous function returns all available label keys from the data source.
    * It returns a promise that resolves to an array of strings containing the label keys.
@@ -128,7 +151,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
    * @returns A promise containing an array of label keys.
    * @throws An error if the fetch operation fails.
    */
-  async fetchLabels(options?: { timeRange?: TimeRange }): Promise<string[]> {
+  private async fetchLabelsByLabelsEndpoint(options?: { timeRange?: TimeRange }): Promise<string[]> {
     const url = 'labels';
     const range = options?.timeRange ?? this.getDefaultTimeRange();
     const timeRange = this.datasource.getTimeRangeParams(range);
@@ -229,9 +252,11 @@ export default class LokiLanguageProvider extends LanguageProvider {
     options?: { streamSelector?: string; timeRange?: TimeRange }
   ): Promise<string[]> {
     const label = encodeURIComponent(this.datasource.interpolateString(labelName));
-    const streamParam = options?.streamSelector
-      ? encodeURIComponent(this.datasource.interpolateString(options.streamSelector))
-      : undefined;
+    // Loki doesn't allow empty streamSelector {}, so we should not send it.
+    const streamParam =
+      options?.streamSelector && options.streamSelector !== EMPTY_SELECTOR
+        ? this.datasource.interpolateString(options.streamSelector)
+        : undefined;
 
     const url = `label/${label}/values`;
     const range = options?.timeRange ?? this.getDefaultTimeRange();

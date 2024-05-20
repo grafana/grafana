@@ -7,7 +7,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
@@ -17,7 +19,8 @@ import (
 )
 
 func NewStore(sql db.DB, features featuremgmt.FeatureToggles) *store {
-	return &store{sql, features}
+	store := &store{sql: sql, features: features}
+	return store
 }
 
 type store struct {
@@ -266,7 +269,7 @@ func (s *store) setResourcePermission(
 		return nil, err
 	}
 
-	if err := s.createPermissions(sess, role.ID, cmd.Resource, cmd.ResourceID, cmd.ResourceAttribute, missing); err != nil {
+	if err := s.createPermissions(sess, role.ID, cmd.Resource, cmd.ResourceID, cmd.ResourceAttribute, missing, cmd.Permission); err != nil {
 		return nil, err
 	}
 
@@ -657,12 +660,33 @@ func (s *store) getPermissions(sess *db.Session, resource, resourceID, resourceA
 	return result, nil
 }
 
-func (s *store) createPermissions(sess *db.Session, roleID int64, resource, resourceID, resourceAttribute string, actions map[string]struct{}) error {
-	if len(actions) == 0 {
+func (s *store) createPermissions(sess *db.Session, roleID int64, resource, resourceID, resourceAttribute string, missingActions map[string]struct{}, permission string) error {
+	permissions := make([]accesscontrol.Permission, 0, len(missingActions))
+	/*
+		Add ACTION SET of managed permissions to in-memory store
+	*/
+	if s.features.IsEnabled(context.TODO(), featuremgmt.FlagAccessActionSets) && permission != "" {
+		actionSetName := GetActionSetName(resource, permission)
+		p := managedPermission(actionSetName, resource, resourceID, resourceAttribute)
+		p.RoleID = roleID
+		p.Created = time.Now()
+		p.Updated = time.Now()
+		p.Kind, p.Attribute, p.Identifier = p.SplitScope()
+		permissions = append(permissions, p)
+	}
+
+	// If there are no missing actions for the resource (in case of access level downgrade or resource removal), we don't need to insert any prior actions
+	// we still want to add the action set in case of access level downgrade, but not in case of resource removal (when permission == "")
+	if len(missingActions) == 0 {
+		if s.features.IsEnabled(context.TODO(), featuremgmt.FlagAccessActionSets) && permission != "" {
+			if _, err := sess.InsertMulti(&permissions); err != nil {
+				return err
+			}
+		}
 		return nil
 	}
-	permissions := make([]accesscontrol.Permission, 0, len(actions))
-	for action := range actions {
+
+	for action := range missingActions {
 		p := managedPermission(action, resource, resourceID, resourceAttribute)
 		p.RoleID = roleID
 		p.Created = time.Now()
@@ -702,4 +726,98 @@ func managedPermission(action, resource string, resourceID, resourceAttribute st
 		Action: action,
 		Scope:  accesscontrol.Scope(resource, resourceAttribute, resourceID),
 	}
+}
+
+/*
+ACTION SETS
+Stores actionsets IN MEMORY
+*/
+// ActionSet is a struct that represents a set of actions that can be performed on a resource.
+// An example of an action set is "folders:edit" which represents the set of RBAC actions that are granted by edit access to a folder.
+
+type ActionSetService interface {
+	accesscontrol.ActionResolver
+
+	GetActionSet(actionName string) []string
+	//GetActionSetName(resource, permission string) string
+	StoreActionSet(resource, permission string, actions []string)
+}
+
+type ActionSet struct {
+	Action  string   `json:"action"`
+	Actions []string `json:"actions"`
+}
+
+// InMemoryActionSets is an in-memory implementation of the ActionSetService.
+type InMemoryActionSets struct {
+	log                log.Logger
+	actionSetToActions map[string][]string
+	actionToActionSets map[string][]string
+}
+
+// NewActionSetService returns a new instance of InMemoryActionSetService.
+func NewActionSetService(a *acimpl.AccessControl) ActionSetService {
+	actionSets := &InMemoryActionSets{
+		log:                log.New("resourcepermissions.actionsets"),
+		actionSetToActions: make(map[string][]string),
+		actionToActionSets: make(map[string][]string),
+	}
+	a.RegisterActionResolver(actionSets)
+	return actionSets
+}
+
+func (s *InMemoryActionSets) Resolve(action string) []string {
+	actionSets := s.actionToActionSets[action]
+	sets := make([]string, 0, len(actionSets))
+
+	for _, actionSet := range actionSets {
+		setParts := strings.Split(actionSet, ":")
+		if len(setParts) != 2 {
+			s.log.Debug("skipping resolution for action set with invalid name", "action set", actionSet)
+			continue
+		}
+		prefix := setParts[0]
+		// Only use action sets for folders and dashboards for now
+		// We need to verify that action sets for other resources do not share names with actions (eg, `datasources:query`)
+		if prefix != "folders" && prefix != "dashboards" {
+			continue
+		}
+		sets = append(sets, actionSet)
+	}
+
+	return sets
+}
+
+// GetActionSet returns the action set for the given action.
+func (s *InMemoryActionSets) GetActionSet(actionName string) []string {
+	actionSet, ok := s.actionSetToActions[actionName]
+	if !ok {
+		return nil
+	}
+	return actionSet
+}
+
+func (s *InMemoryActionSets) StoreActionSet(resource, permission string, actions []string) {
+	name := GetActionSetName(resource, permission)
+	actionSet := &ActionSet{
+		Action:  name,
+		Actions: actions,
+	}
+	s.actionSetToActions[actionSet.Action] = actions
+
+	for _, action := range actions {
+		if _, ok := s.actionToActionSets[action]; !ok {
+			s.actionToActionSets[action] = []string{}
+		}
+		s.actionToActionSets[action] = append(s.actionToActionSets[action], actionSet.Action)
+	}
+	s.log.Debug("stored action set", "action set name", actionSet.Action)
+}
+
+// GetActionSetName function creates an action set from a list of actions and stores it inmemory.
+func GetActionSetName(resource, permission string) string {
+	// lower cased
+	resource = strings.ToLower(resource)
+	permission = strings.ToLower(permission)
+	return fmt.Sprintf("%s:%s", resource, permission)
 }
