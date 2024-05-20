@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Button, ToolbarButton, useStyles2 } from '@grafana/ui';
 
@@ -30,7 +31,7 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
     });
 
   return (
-    <>
+    <div data-testid={selectors.components.PanelEditor.General.content}>
       <NavToolbarActions dashboard={dashboard} />
       <div {...containerProps}>
         <div {...primaryProps} className={cx(primaryProps.className, styles.body)}>
@@ -53,7 +54,7 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
           {!splitterState.collapsed && <optionsPane.Component model={optionsPane} />}
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
