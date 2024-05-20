@@ -16,6 +16,7 @@ import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
 import { buildNewDashboardSaveModel } from '../serialization/buildNewDashboardSaveModel';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import { getPreservedSceneURLStateKey } from '../utils/utils';
 
 import { updateNavModel } from './utils';
 
@@ -170,7 +171,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   }
 
   public restoreDashboardStateFromLocalStorage(dashboard: DashboardScene) {
-    const preservedUrlState = store.get(`grafana.dashboard.preservedUrlFiltersState[${window.name}]`);
+    const preservedUrlState = store.get(getPreservedSceneURLStateKey());
     if (preservedUrlState) {
       const preservedUrlStateJSON = preservedUrlState ? JSON.parse(preservedUrlState) : {};
 

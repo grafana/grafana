@@ -77,6 +77,7 @@ import { initAlerting } from './features/alerting/unified/initAlerting';
 import { initAuthConfig } from './features/auth-config';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { EmbeddedDashboardLazy } from './features/dashboard-scene/embedding/EmbeddedDashboardLazy';
+import { getPreservedSceneURLStateKey } from './features/dashboard-scene/utils/utils';
 import { initGrafanaLive } from './features/live';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
@@ -265,7 +266,8 @@ export class GrafanaApp {
 
         // Clear the preserved filters and group by dimensions when navigating away from Grafana
         window.addEventListener('beforeunload', () => {
-          store.delete(`grafana.dashboard.preservedUrlFiltersState[${window.name}]`);
+          store.delete(getPreservedSceneURLStateKey());
+          window.name = '';
         });
       }
 

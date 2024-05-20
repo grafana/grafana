@@ -49,12 +49,12 @@ import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { RowActions } from '../scene/row-actions/RowActions';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
-import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { DashboardInteractions } from '../utils/interactions';
 import {
   getCurrentValueForOldIntervalModel,
   getDashboardSceneFor,
   getIntervalsFromQueryString,
+  getPreservedSceneURLStateKey,
   getVizPanelKeyForPanelId,
 } from '../utils/utils';
 
@@ -617,7 +617,7 @@ function preserveDashboardSceneStateInLocalStorage(scene: DashboardScene) {
 
     // If there's anything to preserve, save it to local storage
     if (Object.keys(nonEmptyUrlStates).length > 0) {
-      store.set(`grafana.dashboard.preservedUrlFiltersState[${window.name}]`, JSON.stringify(nonEmptyUrlStates));
+      store.set(getPreservedSceneURLStateKey(), JSON.stringify(nonEmptyUrlStates));
     }
   };
 }
