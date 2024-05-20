@@ -150,7 +150,7 @@ func SetDualWritingMode(
 		return nil, errors.New("failed to fetch current dual writing mode")
 	}
 	if !ok {
-		// default to mode 1
+		// Default to mode 1
 		m = fmt.Sprint(Mode1)
 		err := kvs.Set(context.Background(), 0, "", key, m)
 		if err != nil {
@@ -160,7 +160,7 @@ func SetDualWritingMode(
 
 	currentMode := toMode[m]
 
-	// desired mode is 2 and current mode is 1
+	// Desired mode is 2 and current mode is 1
 	if features.IsEnabledGlobally(featuremgmt.FlagDualWritePlaylistsMode2) && (currentMode == Mode1) {
 		// This is where we go through the different gates to allow the instance to migrate from mode 1 to mode 2.
 		// There are none between mode 1 and mode 2
