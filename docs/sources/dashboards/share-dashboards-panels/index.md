@@ -36,14 +36,14 @@ weight: 85
 refs:
   grafana-enterprise:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/introduction/grafana-enterprise/
+      destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/introduction/grafana-enterprise/
+      destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
   image-rendering:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/setup-grafana/image-rendering/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/setup-grafana/image-rendering/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/
 ---
 
 # Share dashboards and panels

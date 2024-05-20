@@ -15,9 +15,9 @@ weight: 200
 refs:
   log-details:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/explore/logs-integration/#labels-and-detected-fields
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/logs-integration/#labels-and-detected-fields
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/explore/logs-integration/#labels-and-detected-fields
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/logs-integration/#labels-and-detected-fields
 ---
 
 # Loki data source

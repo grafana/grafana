@@ -18,31 +18,31 @@ weight: 100
 refs:
   configure-panel-options-documentation:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-panel-options/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-panel-options/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-panel-options/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-panel-options/
   tracing-in-explore:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/explore/trace-integration/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/trace-integration/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/explore/trace-integration/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/trace-integration/
   variables-documentation:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/variables/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/variables/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
   panel-editor-documentation:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/panel-editor-overview/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/panel-editor-overview/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/panel-editor-overview/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/panel-editor-overview/
   tempo-data-source:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/datasources/tempo/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/tempo/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/datasources/tempo/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/tempo/
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/datasources/tempo/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/tempo/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/tempo/
 ---

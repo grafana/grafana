@@ -20,12 +20,12 @@ weight: 150
 refs:
   data-sources:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/administration/provisioning/#datasources
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#datasources
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/administration/provisioning/#datasources
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#datasources
   alerting:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/alerting/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/
 ---
