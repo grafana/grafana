@@ -262,4 +262,3 @@ from events
 WHERE $timeFilter
 ORDER BY time ASC
 ```
-

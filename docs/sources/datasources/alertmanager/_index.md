@@ -90,4 +90,3 @@ datasources:
     secureJsonData:
       basicAuthPassword: test_password
 ```
-

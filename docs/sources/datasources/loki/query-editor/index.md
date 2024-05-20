@@ -268,4 +268,3 @@ You can add annotation queries in the Dashboard menu's Annotations view.
 You can use any non-metric Loki query as a source for annotations.
 Grafana automatically uses log content as annotation text and your log stream labels as tags.
 You don't need to create any additional mapping.
-

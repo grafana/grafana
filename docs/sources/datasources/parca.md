@@ -109,4 +109,3 @@ datasources:
     type: parca
     url: http://localhost:3100
 ```
-
