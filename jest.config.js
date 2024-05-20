@@ -18,7 +18,6 @@ const esModules = [
   '@kusto/monaco-kusto',
   'monaco-editor',
   'lodash-es',
-  '@msagl',
   'vscode-languageserver-types',
 ].join('|');
 
