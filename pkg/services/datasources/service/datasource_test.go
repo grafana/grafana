@@ -77,7 +77,7 @@ func TestService_AddDataSource(t *testing.T) {
 				},
 			}},
 		}, &pluginfakes.FakePluginClient{
-			ProcessInstanceSettingsFunc: dsplugin.ProcessInstanceSettings, // The actual callback
+			MutateInstanceSettingsFunc: dsplugin.MutateInstanceSettings, // The actual callback
 		})
 		require.NoError(t, err)
 

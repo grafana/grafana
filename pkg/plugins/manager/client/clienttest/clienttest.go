@@ -168,30 +168,30 @@ func (m *TestMiddleware) CollectMetrics(ctx context.Context, req *backend.Collec
 }
 
 func (m *TestMiddleware) MutateInstanceSettings(ctx context.Context, req *backend.InstanceSettingsAdmissionRequest) (*backend.InstanceSettingsResponse, error) {
-	m.sCtx.CollectMetricsCallChain = append(m.sCtx.InstanceSettingsCallChain, fmt.Sprintf("before %s", m.Name))
+	m.sCtx.MutateAdmissionCallChain = append(m.sCtx.MutateAdmissionCallChain, fmt.Sprintf("before %s", m.Name))
 	res, err := m.next.MutateInstanceSettings(ctx, req)
-	m.sCtx.CollectMetricsCallChain = append(m.sCtx.InstanceSettingsCallChain, fmt.Sprintf("after %s", m.Name))
+	m.sCtx.MutateAdmissionCallChain = append(m.sCtx.MutateAdmissionCallChain, fmt.Sprintf("after %s", m.Name))
 	return res, err
 }
 
 func (m *TestMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
-	m.sCtx.CollectMetricsCallChain = append(m.sCtx.InstanceSettingsCallChain, fmt.Sprintf("before %s", m.Name))
+	m.sCtx.ValidateAdmissionCallChain = append(m.sCtx.ValidateAdmissionCallChain, fmt.Sprintf("before %s", m.Name))
 	res, err := m.next.ValidateAdmission(ctx, req)
-	m.sCtx.CollectMetricsCallChain = append(m.sCtx.InstanceSettingsCallChain, fmt.Sprintf("after %s", m.Name))
+	m.sCtx.ValidateAdmissionCallChain = append(m.sCtx.ValidateAdmissionCallChain, fmt.Sprintf("after %s", m.Name))
 	return res, err
 }
 
 func (m *TestMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
-	m.sCtx.CollectMetricsCallChain = append(m.sCtx.InstanceSettingsCallChain, fmt.Sprintf("before %s", m.Name))
+	m.sCtx.MutateAdmissionCallChain = append(m.sCtx.MutateAdmissionCallChain, fmt.Sprintf("before %s", m.Name))
 	res, err := m.next.MutateAdmission(ctx, req)
-	m.sCtx.CollectMetricsCallChain = append(m.sCtx.InstanceSettingsCallChain, fmt.Sprintf("after %s", m.Name))
+	m.sCtx.MutateAdmissionCallChain = append(m.sCtx.MutateAdmissionCallChain, fmt.Sprintf("after %s", m.Name))
 	return res, err
 }
 
 func (m *TestMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.StorageResponse, error) {
-	m.sCtx.CollectMetricsCallChain = append(m.sCtx.InstanceSettingsCallChain, fmt.Sprintf("before %s", m.Name))
+	m.sCtx.ConvertObjectCallChain = append(m.sCtx.ConvertObjectCallChain, fmt.Sprintf("before %s", m.Name))
 	res, err := m.next.ConvertObject(ctx, req)
-	m.sCtx.CollectMetricsCallChain = append(m.sCtx.InstanceSettingsCallChain, fmt.Sprintf("after %s", m.Name))
+	m.sCtx.ConvertObjectCallChain = append(m.sCtx.ConvertObjectCallChain, fmt.Sprintf("after %s", m.Name))
 	return res, err
 }
 

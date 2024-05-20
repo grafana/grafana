@@ -8,8 +8,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/grafana/grafana/pkg/plugins"
 )
 
 // MutateInstanceSettings implements backend.StorageHandler.
@@ -49,17 +47,17 @@ func (s *Service) MutateInstanceSettings(ctx context.Context, req *backend.Insta
 
 // ValidateAdmission implements backend.StorageHandler.
 func (s *Service) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
-	return nil, plugins.ErrMethodNotImplemented
+	return nil, fmt.Errorf("not implemented")
 }
 
 // MutateAdmission implements backend.StorageHandler.
 func (s *Service) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
-	return nil, plugins.ErrMethodNotImplemented
+	return nil, fmt.Errorf("not implemented")
 }
 
 // ConvertObject implements backend.StorageHandler.
 func (s *Service) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.StorageResponse, error) {
-	return nil, plugins.ErrMethodNotImplemented
+	return nil, fmt.Errorf("not implemented")
 }
 
 func getBadRequest(msg string) *backend.InstanceSettingsResponse {
