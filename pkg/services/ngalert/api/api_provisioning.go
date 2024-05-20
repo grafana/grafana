@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/hcl"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	alerting_models "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -28,6 +29,9 @@ type ProvisioningSrv struct {
 	templates           TemplateService
 	muteTimings         MuteTimingService
 	alertRules          AlertRuleService
+
+	// XXX: Used to flag recording rules, remove when FT is removed
+	featureManager featuremgmt.FeatureToggles
 }
 
 type ContactPointService interface {
@@ -333,6 +337,15 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *contextmodel.ReqContext, ar de
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
+
+	if upstreamModel.IsRecordingRule() && !srv.featureManager.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRules) {
+		return ErrResp(
+			http.StatusBadRequest,
+			fmt.Errorf("%w: recording rules cannot be created on this instance", alerting_models.ErrAlertRuleFailedValidation),
+			"",
+		)
+	}
+
 	provenance := determineProvenance(c)
 	createdAlertRule, err := srv.alertRules.CreateAlertRule(c.Req.Context(), c.SignedInUser, upstreamModel, alerting_models.Provenance(provenance))
 	if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {
@@ -360,6 +373,15 @@ func (srv *ProvisioningSrv) RoutePutAlertRule(c *contextmodel.ReqContext, ar def
 	if err != nil {
 		ErrResp(http.StatusBadRequest, err, "")
 	}
+
+	if updated.IsRecordingRule() && !srv.featureManager.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRules) {
+		return ErrResp(
+			http.StatusBadRequest,
+			fmt.Errorf("%w: recording rules cannot be created on this instance", alerting_models.ErrAlertRuleFailedValidation),
+			"",
+		)
+	}
+
 	updated.OrgID = c.SignedInUser.GetOrgID()
 	updated.UID = UID
 	provenance := determineProvenance(c)

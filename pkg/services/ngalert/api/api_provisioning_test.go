@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
@@ -375,6 +376,82 @@ func TestProvisioningApi(t *testing.T) {
 			response := sut.RoutePostAlertRule(&rc, rule)
 
 			require.Equal(t, 403, response.Status())
+		})
+	})
+
+	t.Run("recording rules", func(t *testing.T) {
+		t.Run("are allowed", func(t *testing.T) {
+			env := createTestEnv(t, testConfig)
+			env.features = featuremgmt.WithFeatures(featuremgmt.FlagGrafanaManagedRecordingRules)
+
+			t.Run("POST returns 201", func(t *testing.T) {
+				sut := createProvisioningSrvSutFromEnv(t, &env)
+				rc := createTestRequestCtx()
+				rule := createTestRecordingRule("rule", 1)
+
+				response := sut.RoutePostAlertRule(&rc, rule)
+
+				require.Equal(t, 201, response.Status())
+			})
+
+			t.Run("PUT returns 200", func(t *testing.T) {
+				sut := createProvisioningSrvSutFromEnv(t, &env)
+				uid := util.GenerateShortUID()
+				rule := createTestAlertRule("rule", 3)
+				rule.UID = uid
+				insertRuleInOrg(t, sut, rule, 3)
+
+				// make rule a recording rule
+				rule.Record = &definitions.Record{
+					Metric: "test_metric",
+					From:   "A",
+				}
+
+				rc := createTestRequestCtx()
+				rc.SignedInUser.OrgID = 3
+
+				response := sut.RoutePutAlertRule(&rc, rule, rule.UID)
+
+				require.Equal(t, 200, response.Status())
+			})
+		})
+
+		t.Run("are not allowed", func(t *testing.T) {
+
+			t.Run("POST returns 400", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				rule := createTestRecordingRule("rule", 1)
+
+				response := sut.RoutePostAlertRule(&rc, rule)
+
+				require.Equal(t, 400, response.Status())
+				require.NotEmpty(t, response.Body())
+				require.Contains(t, string(response.Body()), "recording rules cannot be created on this instance")
+			})
+
+			t.Run("PUT returns 400", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				uid := util.GenerateShortUID()
+				rule := createTestAlertRule("rule", 3)
+				rule.UID = uid
+				insertRuleInOrg(t, sut, rule, 3)
+
+				// make rule a recording rule
+				rule.Record = &definitions.Record{
+					Metric: "test_metric",
+					From:   "A",
+				}
+
+				rc := createTestRequestCtx()
+				rc.SignedInUser.OrgID = 3
+
+				response := sut.RoutePutAlertRule(&rc, rule, rule.UID)
+
+				require.Equal(t, 400, response.Status())
+				require.NotEmpty(t, response.Body())
+				require.Contains(t, string(response.Body()), "recording rules cannot be created on this instance")
+			})
 		})
 	})
 
@@ -1615,6 +1692,7 @@ type testEnvironment struct {
 	prov             provisioning.ProvisioningStore
 	ac               *recordingAccessControlFake
 	rulesAuthz       *fakes.FakeRuleService
+	features         featuremgmt.FeatureToggles
 }
 
 func createTestEnv(t *testing.T, testConfig string) testEnvironment {
@@ -1678,6 +1756,8 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 
 	ruleAuthz := &fakes.FakeRuleService{}
 
+	features := featuremgmt.WithFeatures()
+
 	return testEnvironment{
 		secrets:          secretsService,
 		log:              log,
@@ -1690,6 +1770,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		quotas:           quotas,
 		ac:               ac,
 		rulesAuthz:       ruleAuthz,
+		features:         features,
 	}
 }
 
@@ -1711,6 +1792,7 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 		templates:           provisioning.NewTemplateService(env.configs, env.prov, env.xact, env.log),
 		muteTimings:         provisioning.NewMuteTimingService(env.configs, env.prov, env.xact, env.log),
 		alertRules:          provisioning.NewAlertRuleService(env.store, env.prov, env.folderService, env.dashboardService, env.quotas, env.xact, 60, 10, 100, env.log, &provisioning.NotificationSettingsValidatorProviderFake{}, env.rulesAuthz),
+		featureManager:      env.features,
 	}
 }
 
@@ -1904,6 +1986,32 @@ func createTestAlertRule(title string, orgID int64) definitions.ProvisionedAlert
 			GroupInterval:     util.Pointer(model.Duration(5 * time.Second)),
 			RepeatInterval:    util.Pointer(model.Duration(5 * time.Minute)),
 			MuteTimeIntervals: []string{"test-mute"},
+		},
+	}
+}
+
+func createTestRecordingRule(title string, orgID int64) definitions.ProvisionedAlertRule {
+	return definitions.ProvisionedAlertRule{
+		UID:       title,
+		OrgID:     orgID,
+		Title:     title,
+		Condition: "A",
+		Data: []definitions.AlertQuery{
+			{
+				RefID: "A",
+				Model: json.RawMessage(testModel),
+				RelativeTimeRange: definitions.RelativeTimeRange{
+					From: definitions.Duration(60),
+					To:   definitions.Duration(0),
+				},
+			},
+		},
+		RuleGroup: "my-cool-group",
+		FolderUID: "folder-uid",
+		For:       model.Duration(60),
+		Record: &definitions.Record{
+			Metric: "test_record",
+			From:   "A",
 		},
 	}
 }
