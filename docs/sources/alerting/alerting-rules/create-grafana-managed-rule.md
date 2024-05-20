@@ -208,7 +208,7 @@ To generate a separate alert for each series, create a multi-dimensional rule. U
 
 ### Configure no data and error handling
 
-In the **Configure no data and error handling** option, you can define the alerting behavior when the evaluation returns no data or an error.
+In **Configure no data and error handling**, you can define the alerting behavior when the evaluation returns no data or an error.
 
 For details about alert states, refer to the [lifecycle of alert instances.][alert-instance-state]
 
