@@ -73,6 +73,7 @@ type LegacyStorage interface {
 type DualWriter interface {
 	Storage
 	LegacyStorage
+	Mode() DualWriterMode
 }
 
 type DualWriterMode int
@@ -157,18 +158,20 @@ func SetDualWritingMode(
 		}
 	}
 
-	mode := toMode[m]
+	currentMode := toMode[m]
 
-	if features.IsEnabledGlobally(featuremgmt.FlagDualWritePlaylistsMode2) {
+	// desired mode is 2 and current mode is 1
+	if features.IsEnabledGlobally(featuremgmt.FlagDualWritePlaylistsMode2) && (currentMode == Mode1) {
 		// This is where we go through the different gates to allow the instance to migrate from mode 1 to mode 2.
 		// There are none between mode 1 and mode 2
-		mode = Mode2
+		currentMode = Mode2
 
-		err := kvs.Set(context.Background(), 0, "", key, fmt.Sprint(mode))
+		err := kvs.Set(context.Background(), 0, "", key, fmt.Sprint(currentMode))
 		if err != nil {
 			return nil, errDualWriterSetCurrentMode
 		}
 	}
+	// 	#TODO add support for other combinations of desired and current modes
 
-	return NewDualWriter(mode, legacy, storage), nil
+	return NewDualWriter(currentMode, legacy, storage), nil
 }
