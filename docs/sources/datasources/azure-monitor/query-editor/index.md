@@ -353,4 +353,3 @@ You can also augment queries by using [template variables]({{< relref "./templat
 
 If a request exceeds the [maximum allowed value of records](https://docs.microsoft.com/en-us/azure/governance/resource-graph/concepts/work-with-data#paging-results), the result is paginated and only the first page of results are returned.
 You can use filters to reduce the amount of records returned under that value.
-

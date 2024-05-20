@@ -135,4 +135,3 @@ Automatically show y-axis scrollbar when there's a large amount of data.
 {{% admonition type="note" %}}
 This option only applies when bar size is set to manual.
 {{% /admonition %}}
-

@@ -126,4 +126,3 @@ You can use generative AI to help you with the following tasks:
 To access these features, enable the `dashgpt` feature toggle. Then install and configure Grafana’s Large Language Model (LLM) app plugin. For more information, refer to the [Grafana LLM plugin documentation](ref:grafana-llm-plugin-documentation).
 
 When enabled, the **✨ Auto generate** option displays next to the **Title** and **Description** fields in your panels and dashboards, or when you press the **Save** button.
-

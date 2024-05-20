@@ -1,8 +1,8 @@
 ---
 labels:
   products:
-  - enterprise
-  - oss
+    - enterprise
+    - oss
 title: Core kinds
 weight: 200
 ---

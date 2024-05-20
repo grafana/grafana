@@ -47,4 +47,3 @@ An interval specifies how frequently an alert rule is evaluated. Duration, when 
 - [Alert instances](ref:alert-instances)
 - [Organising alert rules](ref:organising-alerts)
 - [Annotation and labels](ref:annotation-label)
-

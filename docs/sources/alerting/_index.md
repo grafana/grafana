@@ -101,4 +101,3 @@ Here are some tips on how to create an effective alert management set up for you
 ## Useful links
 
 - [Introduction to Alerting](ref:fundamentals)
-

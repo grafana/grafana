@@ -198,4 +198,3 @@ Sample Trust Relationship for an IAM role:
     ]
 }
 ```
-

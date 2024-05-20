@@ -67,4 +67,3 @@ The Google Cloud Monitoring data source plugin provides the following **Query Ty
 
 Use Grafana's variable syntax to include variables in queries.
 For details, refer to the [variable syntax documentation](ref:variable-syntax).
-

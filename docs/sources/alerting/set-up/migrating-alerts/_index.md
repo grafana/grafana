@@ -229,4 +229,3 @@ When updating your as-code provisioning setup for Grafana Alerting, newly genera
 **Limitations**
 
 1. Since `Hipchat` and `Sensu` notification channels are no longer supported, legacy alerts associated with these channels are not automatically upgraded to Grafana Alerting. Assign the legacy alerts to a supported notification channel so that you continue to receive notifications for those alerts.
-

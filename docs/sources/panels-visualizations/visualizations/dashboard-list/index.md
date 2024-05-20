@@ -57,4 +57,3 @@ These options only apply if the **Search** option is selected.
 - **Tags -** Here is where you enter your tags you want to search by. Note that existing tags will not appear as you type, and they _are_ case sensitive.
 
 > **Note:** When multiple tags and strings appear, the dashboard list displays those matching _all_ conditions.
-

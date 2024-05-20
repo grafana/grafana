@@ -334,4 +334,3 @@ The following image shows a line chart with the **Green-Yellow-Red (by value)** 
 The following image shows a bar chart with the **Green-Yellow-Red (by value)** color scheme option selected.
 
 {{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_bars.png" max-width="1200px" caption="Color scheme: Green-Yellow-Red" >}}
-

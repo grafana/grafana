@@ -114,4 +114,3 @@ When you enable the **Multi-value** or **Include all value** options, Grafana co
 ### Templated dashboard example
 
 To view an example templated dashboard, refer to [InfluxDB Templated Dashboard](https://play.grafana.org/dashboard/db/influxdb-templated).
-
