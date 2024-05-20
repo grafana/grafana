@@ -48,7 +48,7 @@ Alert instances will be routed for [notifications][notifications] when they are 
 
 The "Keep Last State" option helps mitigate temporary data source issues, preventing alerts from unintentionally firing, resolving, and re-firing.
 
-In [Configure no data and error handling,][no-data-and-error-handling] you can select to keep the last state of the alert instance when a `NoData` and/or `Error` state is encountered. Just like normal evaluation, the alert instance transitions from `Pending` to `Alerting` after the pending period has elapsed.
+In [Configure no data and error handling,][no-data-and-error-handling] you can decide to keep the last state of the alert instance when a `NoData` and/or `Error` state is encountered. Just like normal evaluation, the alert instance transitions from `Pending` to `Alerting` after the pending period has elapsed.
 
 {{< figure src="/media/docs/alerting/alert-rule-configure-no-data-and-error.png" max-width="500px" >}}
 
