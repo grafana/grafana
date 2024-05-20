@@ -75,4 +75,3 @@ All notifications templates are written in [Go's templating language](https://pk
 ## Silences
 
 You can use [silences](https://grafana.com/docs/grafana/latest/alerting/manage-notifications/create-silence/) to mute notifications from one or more firing rules. Silences do not stop alerts from firing or being resolved, or hide firing alerts in the user interface. A silence lasts as long as its duration, which can be configured in minutes, hours, days, months, or years.
-

@@ -47,8 +47,8 @@ An alert instance can be in either of the following states:
 | State        | Description                                                                                                                                                                                                                               |
 | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Normal**   | The state of an alert when the condition (threshold) is not met.                                                                                                                                                                          |
-| **Pending**  | The state of an alert that has breached the threshold but for less than the [pending period.](ref:pending-period)                                                                                                                             |
-| **Alerting** | The state of an alert that has breached the threshold for longer than the [pending period.](ref:pending-period)                                                                                                                               |
+| **Pending**  | The state of an alert that has breached the threshold but for less than the [pending period.](ref:pending-period)                                                                                                                         |
+| **Alerting** | The state of an alert that has breached the threshold for longer than the [pending period.](ref:pending-period)                                                                                                                           |
 | **NoData**   | The state of an alert whose query returns no data or all values are null. You can [change the default behavior.](/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling)          |
 | **Error**    | The state of an alert when an error or timeout occurred evaluating the alert rule. You can [change the default behavior.](/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling) |
 
@@ -107,4 +107,3 @@ An alert rule can have one of the following health statuses:
 | **Error**              | An error occurred when evaluating an alerting rule.                                                      |
 | **NoData**             | The absence of data in at least one time series returned during a rule evaluation.                       |
 | **{status}, KeepLast** | The rule would have received another status but was configured to keep the last state of the alert rule. |
-

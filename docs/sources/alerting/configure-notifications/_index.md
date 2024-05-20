@@ -40,4 +40,3 @@ As a first step, define your [contact points](ref:contact-points) where to send 
 Next, create a [notification policy](ref:notification-policies) which is a set of rules for where, when and how your alerts are routed to contact points. In a notification policy, you define where to send your alert notifications by choosing one of the contact points you created.
 
 Optionally, you can add [notification templates](ref:templates-page) to contact points for reuse and consistent messaging in your notifications.
-
