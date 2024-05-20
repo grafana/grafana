@@ -1669,7 +1669,13 @@
     "signatureType": "",
     "signatureOrg": "",
     "angularDetected": false,
-    "apiVersion": "v0alpha1"
+    "apiserver": {
+      "group": "testdata.datasource.grafana.app",
+      "versions": [
+        "v0alpha1"
+      ],
+      "preferredVersion": "v0alpha1"
+    }
   },
   {
     "name": "Text",
