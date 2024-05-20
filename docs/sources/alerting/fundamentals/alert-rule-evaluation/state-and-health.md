@@ -44,6 +44,12 @@ Alert instances will be routed for [notifications][notifications] when they are 
 
 {{< figure src="/media/docs/alerting/alert-rule-evaluation-overview-statediagram-v2.png" max-width="750px" >}}
 
+### Lifecycle of stale alert instances
+
+An alert instance is considered stale if its dimension or series has disappeared from the query results entirely for two evaluation intervals.
+
+Stale alert instances that are in the **Alerting**, **NoData**, or **Error** states transition to the **Normal** state as **Resolved**, and include the `grafana_state_reason` annotation with the value **MissingSeries**. They are routed for notifications like other resolved alert instances.
+
 ### Keep last state
 
 The "Keep Last State" option helps mitigate temporary data source issues, preventing alerts from unintentionally firing, resolving, and re-firing.
