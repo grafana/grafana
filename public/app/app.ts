@@ -258,13 +258,13 @@ export class GrafanaApp {
 
       setReturnToPreviousHook(useReturnToPreviousInternal);
 
-      if (config.featureToggles.newDashboardWithFiltersAndGroupBy) {
+      if (config.featureToggles.preserveDashboardStateWhenNavigating) {
         // Generate unique tab id to identify tab specific preserved variables
         if (!window.name) {
           window.name = 'grafanaTab-' + Math.random().toString(36).substr(2, 9);
         }
 
-        // Clear the preserved filters and group by dimensions when navigating away from Grafana
+        // Clear the preserved variables and time range when navigating away from Grafana
         window.addEventListener('beforeunload', () => {
           store.delete(getPreservedSceneURLStateKey());
           window.name = '';

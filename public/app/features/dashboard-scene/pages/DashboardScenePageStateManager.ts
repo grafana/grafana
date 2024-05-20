@@ -214,7 +214,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
         return;
       }
 
-      if (config.featureToggles.newDashboardWithFiltersAndGroupBy && Boolean(options.uid)) {
+      if (config.featureToggles.preserveDashboardStateWhenNavigating && Boolean(options.uid)) {
         this.restoreDashboardStateFromLocalStorage(dashboard);
       }
 

@@ -582,7 +582,7 @@ function trackIfEmpty(grid: SceneGridLayout) {
  * Behavior that will capture currently selected variables and time range and save them to local storage, so that they can be applied when the next dashboard is loaded.
  */
 function preserveDashboardSceneStateInLocalStorage(scene: DashboardScene) {
-  if (!config.featureToggles.newDashboardWithFiltersAndGroupBy) {
+  if (!config.featureToggles.preserveDashboardStateWhenNavigating) {
     return;
   }
 
