@@ -19,14 +19,14 @@ weight: 300
 refs:
   build-dashboards:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
   prometheus:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/datasources/prometheus/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/datasources/prometheus/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/
 ---
 
 # What is Prometheus?

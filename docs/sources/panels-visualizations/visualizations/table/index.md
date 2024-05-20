@@ -26,12 +26,12 @@ weight: 100
 refs:
   configuration-file:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana/#configuration-file-location
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#configuration-file-location
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana/#configuration-file-location
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#configuration-file-location
   calculations:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/calculation-types/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/calculation-types/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types/
   time-series-panel:
@@ -41,9 +41,9 @@ refs:
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/time-series/
   time-series-to-table-transformation:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/transform-data/#time-series-to-table-transform
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#time-series-to-table-transform
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/transform-data/#time-series-to-table-transform
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#time-series-to-table-transform
   color-scheme:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#color-scheme

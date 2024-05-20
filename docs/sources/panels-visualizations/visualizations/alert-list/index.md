@@ -21,9 +21,9 @@ weight: 100
 refs:
   grafana-alerting-overview:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/alerting/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/alerting/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
 ---
 
 # Alert list

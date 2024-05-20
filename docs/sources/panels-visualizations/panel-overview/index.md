@@ -89,7 +89,7 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
   data-sources:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/datasources/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/
   visualization:

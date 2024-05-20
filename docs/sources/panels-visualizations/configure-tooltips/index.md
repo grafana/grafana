@@ -16,62 +16,62 @@ weight: 75
 refs:
   time-series:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/time-series/
   field-override:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-overrides/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-overrides/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-overrides/
   geomaps:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/geomap/#tooltip
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/geomap/#tooltip
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/geomap/#tooltip
   pie-chart:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/pie-chart/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/pie-chart/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/pie-chart/
   state-timeline:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/state-timeline/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/state-timeline/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/state-timeline/
   xy-chart:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/xy-chart/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/xy-chart/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/xy-chart/
   status-history:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/status-history/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/status-history/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/status-history/
   trend:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/trend/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/trend/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/trend/
   flame-graph:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/flame-graph/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/flame-graph/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/flame-graph/
   heatmap:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/heatmap/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/heatmap/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/heatmap/
   bar-chart:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/bar-chart/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/bar-chart/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/bar-chart/
   candlestick:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/candlestick/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/candlestick/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/candlestick/
 ---

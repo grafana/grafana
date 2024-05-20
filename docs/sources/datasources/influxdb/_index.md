@@ -21,22 +21,22 @@ weight: 700
 refs:
   explore:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/explore/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/explore/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
   data-source-management:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/administration/data-source-management/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
   build-dashboards:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
 ---
 
 # InfluxDB data source
 
-{{< docs/shared lookup="influxdb/intro.md" source="grafana" version="<GRAFANA VERSION>" >}}
+{{< docs/shared lookup="influxdb/intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 Grafana includes built-in support for InfluxDB.
 This topic explains options, variables, querying, and other features specific to the InfluxDB data source, which include

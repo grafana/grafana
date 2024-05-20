@@ -18,19 +18,19 @@ weight: 200
 refs:
   configure-data-links-value-variables:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-data-links/#value-variables
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-data-links/#value-variables
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-data-links/#value-variables
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-data-links/#value-variables
   intro-to-prometheus:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/fundamentals/intro-to-prometheus/
+      destination: /docs/grafana/<GRAFANA_VERSION>/fundamentals/intro-to-prometheus/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/fundamentals/intro-to-prometheus/
+      destination: /docs/grafana/<GRAFANA_VERSION>/fundamentals/intro-to-prometheus/
   exemplars:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/fundamentals/exemplars/
+      destination: /docs/grafana/<GRAFANA_VERSION>/fundamentals/exemplars/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/fundamentals/exemplars/
+      destination: /docs/grafana/<GRAFANA_VERSION>/fundamentals/exemplars/
 ---
 
 # Configure Prometheus
