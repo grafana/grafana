@@ -347,4 +347,3 @@ To configure this feature, see the [Derived fields]({{< relref "../loki#configur
 You can link to Zipkin traces from metrics in Prometheus data sources by configuring an exemplar.
 
 To configure this feature, see the [introduction to exemplars]({{< relref "docs/grafana/latest/fundamentals/exemplars" >}}) documentation.
-

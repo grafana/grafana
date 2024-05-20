@@ -147,4 +147,3 @@ You can also augment queries by using [template variables]({{< relref "./templat
 
 Queries of `terms` have a 500-result limit by default.
 To set a custom limit, set the `size` property in your query.
-

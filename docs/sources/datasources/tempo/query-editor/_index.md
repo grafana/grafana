@@ -109,4 +109,3 @@ To query a particular trace:
 1. Enter the trace's ID into the query field.
 
 {{< figure src="/static/img/docs/tempo/query-editor-traceid.png" class="docs-image--no-shadow" max-width="750px" caption="Screenshot of the Tempo TraceID query type" >}}
-
