@@ -187,25 +187,27 @@ Annotations add metadata to provide more information on the alert in your alert 
 
 ### Configure no data and error handling
 
-Configure alerting behavior when your alert rule evaluation returns no data or an error.
+In **Configure no data and error handling**, you can define the alerting behavior when the evaluation returns no data or an error.
 
-**Note:** Alert rules that are configured to fire when an evaluation returns no data or error only fire when the entire duration of the evaluation period has finished. This means that rather than immediately firing when the alert rule condition is breached, the alert rule waits until the time set as the **For** field has finished and then fires, reducing alert noise and allowing for temporary data availability issues.
+For details about alert states, refer to [lifecycle of alert instances.][alert-instance-state]
 
-If your alert rule evaluation returns no data, you can set the state on your alert rule to appear as follows:
+You can configure the alert instance state when its evaluation returns no data:
 
-| No Data  | Description                                                                                                                                |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| No Data  | Creates a new alert `DatasourceNoData` with the name and UID of the alert rule, and UID of the datasource that returned no data as labels. |
-| Alerting | Sets alert rule state to `Alerting`. The alert rule waits until the time set in the **For** field has finished before firing.              |
-| Ok       | Sets alert rule state to `Normal`.                                                                                                         |
+| No Data configuration | Description                                                                                                                                                                                                                               |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| No Data               | The default option. Sets alert instance state to `No data`. <br/> The alert rule also creates a new alert instance `DatasourceNoData` with the name and UID of the alert rule, and UID of the datasource that returned no data as labels. |
+| Alerting              | Sets alert instance state to `Alerting`. It waits until the [pending period][pending-period] has finished.                                                                                                                                |
+| Ok                    | Sets alert instance state to `Normal`.                                                                                                                                                                                                    |
+| Keep Last State       | Maintains the alert instance in its last state. Useful for mitigating temporary issues, refer to [Keep last state][keep-last-state].                                                                                                      |
 
-If your evaluation returns an error, you can set the state on your alert rule to appear as follows:
+You can also configure the alert instance state when its evaluation returns an error or timeout.
 
-| Error    | Description                                                                                                                                     |
-| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| Error    | Creates an alert instance `DatasourceError` with the name and UID of the alert rule, and UID of the datasource that returned no data as labels. |
-| Alerting | Sets alert rule state to `Alerting`. The alert rule waits until the time set in the **For** field has finished before firing.                   |
-| Ok       | Sets alert rule state to `Normal`.                                                                                                              |
+| Error configuration | Description                                                                                                                                                                                                                            |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Error               | The default option. Sets alert instance state to `Error`. <br/> The alert rule also creates a new alert instance `DatasourceError` with the name and UID of the alert rule, and UID of the datasource that returned no data as labels. |
+| Alerting            | Sets alert instance state to `Alerting`. It waits until the [pending period][pending-period] has finished.                                                                                                                             |
+| Ok                  | Sets alert instance state to `Normal`.                                                                                                                                                                                                 |
+| Keep Last State     | Maintains the alert instance in its last state. Useful for mitigating temporary issues, refer to [Keep last state][keep-last-state].                                                                                                   |
 
 ### Create alerts from panels
 
@@ -235,4 +237,14 @@ This will open the alert rule form, allowing you to configure and create your al
 
 [time-units-and-relative-ranges]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards#time-units-and-relative-ranges"
 [time-units-and-relative-ranges]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/use-dashboards#time-units-and-relative-ranges"
+
+[pending-period]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation#pending-period"
+[pending-period]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation#pending-period"
+
+[keep-last-state]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health#keep-last-state"
+[keep-last-state]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/state-and-health#keep-last-state"
+
+[alert-instance-state]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health#alert-instance-state"
+[alert-instance-state]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/state-and-health#alert-instance-state"
+
 {{% /docs/reference %}}
