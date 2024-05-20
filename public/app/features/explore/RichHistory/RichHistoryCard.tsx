@@ -22,6 +22,8 @@ import { RichHistoryQuery } from 'app/types/explore';
 
 import { isSplit, selectExploreDSMaps, selectPanesEntries } from '../state/selectors';
 
+import { RichHistoryAddToLibrary } from './RichHistoryAddToLibrary';
+
 const mapDispatchToProps = {
   changeDatasource,
   deleteHistoryItem,
@@ -435,6 +437,7 @@ export function RichHistoryCard(props: Props) {
           )}
           {activeUpdateComment && updateComment}
         </div>
+        {!activeUpdateComment && <RichHistoryAddToLibrary query={queryHistoryItem?.queries[0]} />}
         {!activeUpdateComment && <div className={styles.runButton}>{runButton()}</div>}
       </div>
     </div>
