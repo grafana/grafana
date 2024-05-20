@@ -1,3 +1,5 @@
+import { selectors } from '@grafana/e2e-selectors';
+
 import { e2e } from '../utils';
 
 const PAGE_UNDER_TEST = '-Y-tnEDWk/templating-nested-template-variables';
@@ -85,7 +87,7 @@ describe('Variables - Set options from ui', () => {
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A,B').scrollIntoView().should('be.visible');
 
-    e2e.components.LoadingIndicator.icon().should('have.length', 0);
+    cy.get(`[aria-label="${selectors.components.LoadingIndicator.icon}"]`).should('not.exist');
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('AA')
       .should('be.visible')
@@ -137,6 +139,7 @@ describe('Variables - Set options from ui', () => {
     cy.intercept({ pathname: '/api/ds/query' }).as('query');
 
     cy.wait('@query');
+    cy.get(`[aria-label="${selectors.components.LoadingIndicator.icon}"]`).should('not.exist');
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A,B')
       .should('be.visible')
@@ -146,8 +149,8 @@ describe('Variables - Set options from ui', () => {
 
     cy.get('body').click();
 
-    cy.wait(300);
     cy.wait('@query');
+    cy.get(`[aria-label="${selectors.components.LoadingIndicator.icon}"]`).should('not.exist');
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('B')
       .scrollIntoView()
@@ -158,7 +161,7 @@ describe('Variables - Set options from ui', () => {
 
     cy.get('body').click();
 
-    e2e.components.LoadingIndicator.icon().should('have.length', 0);
+    cy.get(`[aria-label="${selectors.components.LoadingIndicator.icon}"]`).should('not.exist');
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('BB')
       .should('be.visible')
