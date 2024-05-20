@@ -109,15 +109,17 @@
     {
       "metadata": {
         "name": "ssoSettingsSAML",
-        "resourceVersion": "1713545444177",
-        "creationTimestamp": "2024-04-19T16:50:44Z"
+        "resourceVersion": "1715255671680",
+        "creationTimestamp": "2024-04-19T16:50:44Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-05-09 11:54:31.680389 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Use the new SSO Settings API to configure the SAML connector",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/identity-access-team",
-        "hideFromAdminPage": true,
-        "hideFromDocs": true
+        "allowSelfServe": true
       }
     },
     {
@@ -135,12 +137,15 @@
     {
       "metadata": {
         "name": "awsDatasourcesNewFormStyling",
-        "resourceVersion": "1713545444177",
-        "creationTimestamp": "2024-04-19T16:50:44Z"
+        "resourceVersion": "1715590364201",
+        "creationTimestamp": "2024-04-19T16:50:44Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-05-13 08:52:44.201182 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Applies new form styling for configuration and query editors in AWS plugins",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/aws-datasources",
         "frontend": true
       }
@@ -2202,6 +2207,20 @@
         "description": "Enables dual writing of playlists to both legacy and k8s storage in mode 3",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboardRestore",
+        "resourceVersion": "1708455041047",
+        "creationTimestamp": "2024-02-20T18:50:41Z"
+      },
+      "spec": {
+        "description": "Enables deleted dashboard restore feature",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
       }
     }
   ]

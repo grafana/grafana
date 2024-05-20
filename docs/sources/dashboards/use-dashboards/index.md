@@ -27,6 +27,8 @@ weight: 1
 
 This topic provides an overview of dashboard features and shortcuts, and describes how to use dashboard search.
 
+{{< youtube id="vTiIkdDwT-0" >}}
+
 ## Dashboard feature overview
 
 The dashboard user interface provides a number of features that you can use to customize the presentation of your data.

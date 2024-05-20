@@ -29,7 +29,7 @@ type Dialect interface {
 	//	SELECT *
 	//		FROM mytab
 	//		WHERE id = ?
-	//		{{ .SelectFor Update NoWait }}; -- will be uppercased
+	//		{{ .SelectFor "Update NoWait" }}; -- will be uppercased
 	SelectFor(...string) (string, error)
 }
 
@@ -85,7 +85,7 @@ func (rlc rowLockingClauseAll) SelectFor(s ...string) (string, error) {
 		return "", nil
 	}
 
-	return string(o), nil
+	return "FOR " + string(o), nil
 }
 
 // standardIdent provides standard SQL escaping of identifiers.

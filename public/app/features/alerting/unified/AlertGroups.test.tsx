@@ -189,6 +189,8 @@ describe('AlertGroups', () => {
     renderAmNotifications();
     await waitForElementToBeRemoved(ui.loadingIndicator.query());
 
+    // reset the input of the MultiSelect component
+    await user.type(ui.groupByInput.get(), '{backspace}');
     await user.type(ui.groupByInput.get(), 'appName{enter}');
 
     const groups = await ui.group.findAll();
