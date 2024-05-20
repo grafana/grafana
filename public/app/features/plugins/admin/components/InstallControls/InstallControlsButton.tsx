@@ -152,7 +152,7 @@ export function InstallControlsButton({
 
     return (
       <HorizontalGroup align="flex-start" width="auto" height="auto">
-        <Button disabled={disableUpdate} onClick={onUpdate}>
+        <Button disabled={disableUpdate} onClick={onUpdate} hidden={plugin.isManaged}>
           {isInstalling ? 'Updating' : 'Update'}
         </Button>
         <Button variant="destructive" disabled={isUninstalling} onClick={onUninstall}>

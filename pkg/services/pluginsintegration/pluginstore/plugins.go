@@ -33,6 +33,8 @@ type Plugin struct {
 
 	Angular plugins.AngularMeta
 
+	Managed bool
+
 	ExternalService *auth.ExternalService
 }
 
@@ -74,7 +76,7 @@ func ToGrafanaDTO(p *plugins.Plugin) Plugin {
 		Module:            p.Module,
 		BaseURL:           p.BaseURL,
 		ExternalService:   p.ExternalService,
-
-		Angular: p.Angular,
+		Angular:           p.Angular,
+		Managed:           false,
 	}
 }

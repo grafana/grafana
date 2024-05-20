@@ -129,10 +129,12 @@ var WireExtensionSet = wire.NewSet(
 	wire.Bind(new(plugins.BackendFactoryProvider), new(*provider.Service)),
 	signature.ProvideOSSAuthorizer,
 	wire.Bind(new(plugins.PluginLoaderAuthorizer), new(*signature.UnsignedPluginAuthorizer)),
-	wire.Bind(new(finder.Finder), new(*finder.Local)),
 	finder.ProvideLocalFinder,
+	wire.Bind(new(finder.Finder), new(*finder.Local)),
 	ProvideClientDecorator,
 	wire.Bind(new(plugins.Client), new(*client.Decorator)),
+	pluginconfig.NewManagedPluginChecker,
+	wire.Bind(new(pluginconfig.ManagedPluginService), new(*pluginconfig.ManagedPluginChecker)),
 )
 
 func ProvideClientDecorator(

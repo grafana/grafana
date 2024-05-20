@@ -26,7 +26,7 @@ export function PluginListItemBadges({ plugin }: PluginBadgeType) {
       <HorizontalGroup height="auto" wrap>
         <PluginEnterpriseBadge plugin={plugin} />
         {plugin.isDisabled && <PluginDisabledBadge error={plugin.error} />}
-        {hasUpdate && <PluginUpdateAvailableBadge plugin={plugin} />}
+        {hasUpdate && !plugin.isManaged && <PluginUpdateAvailableBadge plugin={plugin} />}
         {plugin.angularDetected && <PluginAngularBadge />}
       </HorizontalGroup>
     );
@@ -38,7 +38,7 @@ export function PluginListItemBadges({ plugin }: PluginBadgeType) {
       {plugin.isDisabled && <PluginDisabledBadge error={plugin.error} />}
       {plugin.isDeprecated && <PluginDeprecatedBadge />}
       {plugin.isInstalled && <PluginInstalledBadge />}
-      {hasUpdate && <PluginUpdateAvailableBadge plugin={plugin} />}
+      {hasUpdate && !plugin.isManaged && <PluginUpdateAvailableBadge plugin={plugin} />}
       {plugin.angularDetected && <PluginAngularBadge />}
     </HorizontalGroup>
   );

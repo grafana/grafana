@@ -145,6 +145,10 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 			APIVersion:      pluginDef.APIVersion,
 		}
 
+		if hs.pluginsManage.IsManagedPlugin(pluginDef.ID) {
+			listItem.Managed = true
+		}
+
 		if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagExternalServiceAccounts) {
 			listItem.IAM = pluginDef.IAM
 		}
