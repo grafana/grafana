@@ -162,4 +162,3 @@ Here are some tips on how to create an effective alert management set up for you
 - Continually tune your alert rules to review effectiveness. Remove alert rules to avoid duplication or ineffective alerts.
 - Think carefully about priority and severity levels.
 - Continually review your thresholds and evaluation rules.
-

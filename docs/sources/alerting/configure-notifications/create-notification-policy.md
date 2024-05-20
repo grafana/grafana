@@ -112,4 +112,3 @@ An example of an alert configuration.
 - Create specific route for alerts coming from the development cluster with an appropriate contact point.
 - Create a specific route for alerts with "critical" severity with a more invasive contact point integration, like pager duty notification.
 - Create specific routes for particular teams that handle their own on-call rotations.
-
