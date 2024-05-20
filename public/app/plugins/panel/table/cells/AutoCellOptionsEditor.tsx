@@ -1,11 +1,11 @@
 import React from 'react';
 
-import { TableAutoCellOptions } from '@grafana/schema';
+import { TableAutoCellOptions, TableColorTextCellOptions } from '@grafana/schema';
 import { Field, Switch } from '@grafana/ui';
 
 import { TableCellEditorProps } from '../TableCellOptionEditor';
 
-export const AutoCellOptionsEditor = ({ cellOptions, onChange }: TableCellEditorProps<TableAutoCellOptions>) => {
+export const AutoCellOptionsEditor = ({ cellOptions, onChange }: TableCellEditorProps<TableAutoCellOptions | TableColorTextCellOptions>) => {
   // Handle row coloring changes
   const onWrapTextChange = () => {
     cellOptions.wrapText = !cellOptions.wrapText;

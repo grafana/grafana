@@ -243,8 +243,11 @@ export const RowsList = (props: RowsListProps) => {
 
     if (
       cellOptionsExist &&
-      (fieldOptions.cellOptions.type === TableCellDisplayMode.Auto ||
-        fieldOptions.cellOptions.type === TableCellDisplayMode.ColorBackground) &&
+      (
+        fieldOptions.cellOptions.type === TableCellDisplayMode.Auto ||
+        fieldOptions.cellOptions.type === TableCellDisplayMode.ColorBackground ||
+        fieldOptions.cellOptions.type === TableCellDisplayMode.ColorText
+      ) &&
       fieldOptions.cellOptions.wrapText
     ) {
       textWrapField = field;
@@ -416,8 +419,8 @@ function getTextBoundingBox(
   defaultRowHeight: number
 ) {
   const width = Number(headerGroup.width ?? 300);
-  const LINE_SCALE_FACTOR = 1.12;
-  const LOW_LINE_PAD = 32;
+  const LINE_SCALE_FACTOR = 1.15;
+  const LOW_LINE_PAD = 42;
 
   if (osContext !== null && typeof text === 'string') {
     const words = text.split(/\s/);

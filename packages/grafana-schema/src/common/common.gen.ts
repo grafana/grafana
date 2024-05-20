@@ -748,6 +748,7 @@ export interface TableAutoCellOptions {
  */
 export interface TableColorTextCellOptions {
   type: TableCellDisplayMode.ColorText;
+  wrapText?: boolean;
 }
 
 /**

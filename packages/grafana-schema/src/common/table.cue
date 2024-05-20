@@ -37,6 +37,7 @@ TableAutoCellOptions: {
 // Colored text cell options
 TableColorTextCellOptions: {
 	type: TableCellDisplayMode & "color-text"
+	wrapText?: bool
 } @cuetsy(kind="interface")
 
 // Json view cell options
