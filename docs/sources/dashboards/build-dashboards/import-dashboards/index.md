@@ -19,12 +19,12 @@ weight: 5
 refs:
   http-api:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/developers/http_api/
+      destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/developer-resources/api-reference/http-api/
   share-dashboards-and-panels:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/share-dashboards-panels/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/dashboards/share-dashboards-panels/
 ---
