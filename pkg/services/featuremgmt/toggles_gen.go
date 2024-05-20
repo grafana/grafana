@@ -690,4 +690,8 @@ const (
 	// FlagDashboardRestore
 	// Enables deleted dashboard restore feature
 	FlagDashboardRestore = "dashboardRestore"
+
+	// FlagPreserveDashboardStateWhenNavigating
+	// Enables possibility to preserve dashboard variables and time range when navigating between dashboards
+	FlagPreserveDashboardStateWhenNavigating = "preserveDashboardStateWhenNavigating"
 )

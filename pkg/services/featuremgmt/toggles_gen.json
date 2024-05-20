@@ -2220,6 +2220,20 @@
         "hideFromAdminPage": true,
         "hideFromDocs": true
       }
+    },
+    {
+      "metadata": {
+        "name": "preserveDashboardStateWhenNavigating",
+        "resourceVersion": "1716207856587",
+        "creationTimestamp": "2024-05-20T12:24:16Z"
+      },
+      "spec": {
+        "description": "Enables possibility to preserve dashboard variables and time range when navigating between dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
     }
   ]
 }
