@@ -117,20 +117,20 @@ Add [annotations](ref:annotation-label). to provide more context on the alert in
 
 Annotations add metadata to provide more information on the alert in your alert notifications. For example, add a **Summary** annotation to tell you which value caused the alert to fire or which server it happened on.
 
-1.[Optional][] Add a summary.
+1. Optional: Add a summary.
 
    Short summary of what happened and why.
 
-1.[Optional][] Add a description.
+1. Optional: Add a description.
 
    Description of what the alert rule does.
 
-1.[Optional][] Add a Runbook URL.
+1. Optional: Add a Runbook URL.
 
    Webpage where you keep your runbook for the alert
 
-1.[Optional][] Add a custom annotation
-1.[Optional][] Add a dashboard and panel link.
+1. Optional: Add a custom annotation
+1. Optional: Add a dashboard and panel link.
 
    Links alerts to panels in a dashboard.
 
