@@ -51,4 +51,3 @@ For example, you could represent engine power and torque versus speed where spee
 ## Value mappings
 
 {{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-

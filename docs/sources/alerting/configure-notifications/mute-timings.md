@@ -91,4 +91,3 @@ If you want to specify an exact duration, specify all the options. For example, 
 - Days of the week: `monday`
 - Months: `3, 6, 9, 12`
 - Days of the month: `1:7`
-

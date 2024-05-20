@@ -197,4 +197,3 @@ Use private data source connect (PDC) to connect to and query data within a secu
 - **Private data source connect** - Click in the box to set the default PDC connection from the dropdown menu or create a new connection.
 
 Once you have configured your Elasticsearch data source options, click **Save & test** at the bottom to test out your data source connection. You can also remove a connection by clicking **Delete**.
-

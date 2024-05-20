@@ -384,7 +384,6 @@ You can link to Jaeger traces from metrics in Prometheus data sources by configu
 
 To configure this feature, see the [introduction to exemplars](ref:exemplars) documentation.
 
-
 ## Visualizing the dependency graph
 
 If service dependency information is available in Jaeger, it can be visualized in Grafana.

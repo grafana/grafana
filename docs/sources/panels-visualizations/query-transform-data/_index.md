@@ -238,4 +238,3 @@ Panel data source query options include:
 
 - **Cache timeout:** _(Visible only if available in the data source)_ Overrides the default cache timeout if your time series store has a query cache.
   Specify this value as a numeric value in seconds.
-

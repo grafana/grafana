@@ -143,12 +143,12 @@ If there's only one data link in the visualization, clicking anywhere on the vis
 
 You can configure data links for the following visualizations:
 
-|                            |                                  |                                  |
-| -------------------------- | -------------------------------- | -------------------------------- |
-| [Bar chart][bar chart]     | [Heatmap](ref:heatmap)               | [Status history][status history] |
-| [Bar gauge][bar gauge]     | [Histogram](ref:histogram)           | [Table](ref:table)                   |
+|                                |                                  |                                  |
+| ------------------------------ | -------------------------------- | -------------------------------- |
+| [Bar chart][bar chart]         | [Heatmap](ref:heatmap)           | [Status history][status history] |
+| [Bar gauge][bar gauge]         | [Histogram](ref:histogram)       | [Table](ref:table)               |
 | [Candlestick](ref:candlestick) | [Pie chart][pie chart]           | [Time series][time series]       |
-| [Canvas](ref:canvas)           | [Stat](ref:stat)                     | [Trend](ref:trend)                   |
+| [Canvas](ref:canvas)           | [Stat](ref:stat)                 | [Trend](ref:trend)               |
 | [Gauge](ref:gauge)             | [State timeline][state timeline] | [XY chart][xy chart]             |
 | [Geomap](ref:geomap)           |                                  |                                  |
 
@@ -170,11 +170,11 @@ You can also use template variables in your data links URLs. For more informatio
 
 These variables allow you to include the current time range in the data link URL:
 
-| Variable           | Description                                                         |
-| ------------------ | ------------------------------------------------------------------- |
-| `__url_time_range` | Current dashboard's time range (for example, `?from=now-6h&to=now`) |
-| `__from`           | For more information, refer to [Global variables](ref:global-variables).                |
-| `__to`             | For more information, refer to [Global variables](ref:global-variables).                |
+| Variable           | Description                                                              |
+| ------------------ | ------------------------------------------------------------------------ |
+| `__url_time_range` | Current dashboard's time range (for example, `?from=now-6h&to=now`)      |
+| `__from`           | For more information, refer to [Global variables](ref:global-variables). |
+| `__to`             | For more information, refer to [Global variables](ref:global-variables). |
 
 When you create data links using time range variables like `__url_time_range` in the URL, you have to form the query parameter syntax yourself; that is, you must format the URL by appending query parameters using the question mark (`?`) and ampersand (`&`) syntax. These characters aren't automatically generated.
 
@@ -252,4 +252,3 @@ If you want to add all of the current dashboard's variables to the URL, then use
 1. Click **Save** to save changes and close the dialog box.
 1. Click **Apply** to see your changes in the dashboard.
 1. Click the **Save dashboard** icon to save your changes to the dashboard.
-

@@ -174,4 +174,3 @@ For more documentation on a specific data source plugin's features, including it
 ### Create a data source plugin
 
 To build your own data source plugin, refer to the [Build a data source plugin](/developers/plugin-tools/tutorials/build-a-data-source-plugin) tutorial and [Plugin tools](/developers/plugin-tools).
-

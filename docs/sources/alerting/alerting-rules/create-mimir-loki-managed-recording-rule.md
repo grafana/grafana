@@ -76,4 +76,3 @@ To create recording rules, follow these steps.
 1. Add labels.
    - Add custom labels selecting existing key-value pairs from the drop down, or add new labels by entering the new key or value .
 1. Click **Save rule** to save the rule or **Save rule and exit** to save the rule and go back to the Alerting page.
-

@@ -192,4 +192,3 @@ To configure panels, refer to the following subtopics:
 - [Configure value mappings](ref:configure-value-mappings)
 - [Configure thresholds](ref:configure-thresholds)
 - [Configure field overrides](ref:configure-field-overrides)
-

@@ -254,4 +254,3 @@ To show value distribution over, time use a [heatmap](ref:heatmap).
 A state timeline shows discrete state changes over time. When used with time series, the thresholds are used to turn the numerical values into discrete state regions.
 
 {{< figure src="/static/img/docs/v8/state_timeline_strings.png" max-width="700px" caption="State timeline with string states" >}}
-

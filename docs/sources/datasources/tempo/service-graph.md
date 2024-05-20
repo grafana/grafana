@@ -121,4 +121,3 @@ These metrics must exist in your Prometheus data source.
 To open a query in Prometheus with the span name of that row automatically set in the query, click a row in the **rate**, **error rate**, or **duration** columns.
 
 To open a query in Tempo with the span name of that row automatically set in the query, click a row in the **links** column.
-

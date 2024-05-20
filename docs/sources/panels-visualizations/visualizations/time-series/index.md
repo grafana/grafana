@@ -332,4 +332,3 @@ The following image shows a bar chart with the **Green-Yellow-Red (by value)** c
 ## Value mappings
 
 {{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-

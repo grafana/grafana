@@ -160,4 +160,3 @@ The Graphite data source supports two variable syntaxes for use in the **Query**
 ### Templated dashboard example
 
 To view an example templated dashboard, refer to [Graphite Templated Nested dashboard](https://play.grafana.org/d/cvDFGseGz/graphite-templated-nested).
-

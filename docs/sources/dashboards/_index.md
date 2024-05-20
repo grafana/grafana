@@ -70,4 +70,3 @@ With 150+ data source plugins, you can unify all your data sources into a single
 ## Explore
 
 {{< card-grid key="cards" type="simple" >}}
-
