@@ -419,7 +419,7 @@ function getTextBoundingBox(
   const LINE_SCALE_FACTOR = 1.12;
   const LOW_LINE_PAD = 32;
 
-  if (osContext !== null) {
+  if (osContext !== null && typeof text === 'string') {
     const words = text.split(/\s/);
     const lines = [];
     let currentLine = '';
