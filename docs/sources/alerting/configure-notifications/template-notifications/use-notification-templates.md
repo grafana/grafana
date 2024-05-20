@@ -16,6 +16,17 @@ labels:
     - oss
 title: Use notification templates
 weight: 300
+refs:
+  create-notification-templates:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/create-notification-templates/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/create-notification-templates/
+  using-go-templating-language:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/using-go-templating-language/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/using-go-templating-language/
 ---
 
 # Use notification templates
@@ -32,14 +43,7 @@ In the Contact points tab, you can see a list of your contact points.
 
    {{< figure max-width="940px" src="/static/img/docs/alerting/unified/use-notification-template-9-4.png" caption="Use notification template" >}}
 
-   For more information on how to write and execute templates, refer to [Using Go's templating language][using-go-templating-language] and [Create notification templates][create-notification-templates].
+   For more information on how to write and execute templates, refer to [Using Go's templating language](ref:using-go-templating-language) and [Create notification templates](ref:create-notification-templates).
 
 1. Click **Save contact point**.
 
-{{% docs/reference %}}
-[create-notification-templates]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/create-notification-templates"
-[create-notification-templates]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/create-notification-templates"
-
-[using-go-templating-language]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/using-go-templating-language"
-[using-go-templating-language]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/using-go-templating-language"
-{{% /docs/reference %}}
