@@ -102,4 +102,3 @@ Before you begin, ensure that you have configured a data source. See also:
 - [Import](ref:import)
 - [Export and share](ref:export-and-share)
 - [JSON model](ref:json-model)
-
