@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import { t } from 'i18next';
+import React from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
@@ -7,31 +8,32 @@ import { Button } from '@grafana/ui';
 
 import { Trans } from '../../../core/internationalization';
 import { isQueryLibraryEnabled, useAddQueryTemplateMutation } from '../../query-library';
+import { AddQueryTemplateCommand } from '../../query-library/types';
 
 type Props = {
   query: DataQuery;
 };
 
 export const RichHistoryAddToLibrary = ({ query }: Props) => {
-  const [isAdded, setIsAdded] = React.useState(false);
+  const [addQueryTemplate, { isSuccess }] = useAddQueryTemplateMutation();
 
-  const [addQueryTemplate, result] = useAddQueryTemplateMutation();
+  const handleAddQueryTemplate = async (addQueryTemplateCommand: AddQueryTemplateCommand) => {
+    const result = await addQueryTemplate(addQueryTemplateCommand);
+    if (!result.error) {
+      getAppEvents().publish({
+        type: AppEvents.alertSuccess.name,
+        payload: [
+          t('explore.rich-history-card.query-template-added', 'Query template successfully added to the library'),
+        ],
+      });
+    }
+  };
 
-  useEffect(() => {
-    console.log(result);
-  }, [result]);
-
-  return isQueryLibraryEnabled() && !isAdded ? (
+  return isQueryLibraryEnabled() && !isSuccess ? (
     <Button
       variant="secondary"
       onClick={() => {
-        addQueryTemplate({ title: 'Test', targets: [query] });
-
-        getAppEvents().publish({
-          type: AppEvents.alertSuccess.name,
-          payload: ['Adding: ' + JSON.stringify(query)],
-        });
-        setIsAdded(true);
+        handleAddQueryTemplate({ title: 'Test', targets: [query] });
       }}
     >
       <Trans i18nKey="explore.rich-history-card.add-to-library">Add to library</Trans>
