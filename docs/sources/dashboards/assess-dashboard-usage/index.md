@@ -21,29 +21,29 @@ weight: 200
 refs:
   grafana-enterprise:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/introduction/grafana-enterprise/
+      destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/introduction/grafana-enterprise/
+      destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
   configuration:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/
   export-logs-of-usage-insights:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-security/export-logs/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/export-logs/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-security/export-logs/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/export-logs/
   enabled:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana/#public_dashboards
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#public_dashboards
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana/#public_dashboards
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#public_dashboards
   export-logs-of-usage-insights:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-security/export-logs/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/export-logs/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-security/export-logs/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/export-logs/
 ---
 
 # Assess dashboard usage
