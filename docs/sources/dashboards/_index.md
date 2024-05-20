@@ -46,7 +46,7 @@ cards:
 refs:
   panels:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/panel-overview/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/panel-overview/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/panel-overview/
 ---
