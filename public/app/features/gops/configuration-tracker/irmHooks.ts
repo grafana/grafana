@@ -13,6 +13,7 @@ import { isContactPointReady } from './alerting/utils';
 import { ConfigurationStepsEnum, DataSourceConfigurationData, IrmCardConfiguration } from './components/ConfigureIRM';
 import { useGetIncidentPluginConfig } from './incidents/hooks';
 import { useOnCallChatOpsConnections, useOnCallOptions } from './onCall/hooks';
+import { useSloChecks } from './slo/hooks';
 
 interface UrlLink {
   url: string;
@@ -68,13 +69,17 @@ function useGetConfigurationForApps() {
     is_integration_chatops_connected,
     isLoading: isOnCallConfigLoading,
   } = useOnCallChatOpsConnections();
+  // configuration checks for slo
+  const { hasSlo, hasSloWithAlert, isLoading: isSloLoading } = useSloChecks();
+
   // check if any of the configurations are loading
   const isLoading =
     isLoadingContactPoints ||
     isLoadingDefaultContactPoint ||
     isLoadingAlertCreatedDone ||
     isIncidentsConfigLoading ||
-    isOnCallConfigLoading;
+    isOnCallConfigLoading ||
+    isSloLoading;
 
   return {
     alerting: {
@@ -91,6 +96,10 @@ function useGetConfigurationForApps() {
       is_chatops_connected,
       is_integration_chatops_connected,
     },
+    slo: {
+      hasSlo,
+      hasSloWithAlert,
+    },
     isLoading,
   };
 }
@@ -100,6 +109,7 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
     alerting: { contactPoints, defaultContactpoint, isCreateAlertRuleDone },
     incidents: { isChatOpsInstalled, isIncidentsInstalled },
     onCall: { onCallOptions, is_chatops_connected, is_integration_chatops_connected },
+    slo: { hasSlo, hasSloWithAlert },
     isLoading,
   } = useGetConfigurationForApps();
 
@@ -164,6 +174,40 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
               labelOnDone: 'View',
             },
             done: isCreateAlertRuleDone,
+          },
+          {
+            title: 'Create your first SLO',
+            description: 'Create SLOs to monitor your service.',
+            button: {
+              type: 'openLink',
+              urlLink: {
+                url: '/a/grafana-slo-app/wizard/new',
+              },
+              label: 'Create',
+              urlLinkOnDone: {
+                url: '/a/grafana-slo-app/manage-slos',
+              },
+              labelOnDone: 'View',
+            },
+            done: hasSlo,
+          },
+          {
+            title: 'Enable SLO alerting',
+            description: 'Configure SLO alerting to receive notifications when your SLOs are breached.',
+            button: {
+              type: 'openLink',
+              urlLink: {
+                queryParams: { alertsEnabled: 'disabled' },
+                url: '/a/grafana-slo-app/manage-slos',
+              },
+              label: 'Enable',
+              urlLinkOnDone: {
+                queryParams: { alertsEnabled: 'enabled' },
+                url: '/a/grafana-slo-app/manage-slos',
+              },
+              labelOnDone: 'View',
+            },
+            done: hasSloWithAlert,
           },
         ],
       },
