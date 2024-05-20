@@ -21,14 +21,14 @@ weight: 500
 refs:
   time-series-databases:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/fundamentals/timeseries/#time-series-databases
+      destination: /docs/grafana/<GRAFANA_VERSION>/fundamentals/timeseries/#time-series-databases
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/fundamentals/timeseries/#time-series-databases
+      destination: /docs/grafana/<GRAFANA_VERSION>/fundamentals/timeseries/#time-series-databases
   create-grafana-managed-rule:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules/create-grafana-managed-rule/#single-and-multi-dimensional-rule
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/#single-and-multi-dimensional-rule
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules/create-grafana-managed-rule/#single-and-multi-dimensional-rule
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/#single-and-multi-dimensional-rule
 ---
 
 # Time series dimensions

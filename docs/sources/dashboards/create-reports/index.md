@@ -20,74 +20,74 @@ weight: 85
 refs:
   configuration:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/
   image-rendering:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/setup-grafana/image-rendering/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/setup-grafana/image-rendering/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/
   send-report:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/
+      destination: /docs/grafana/<GRAFANA_VERSION>/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/
+      destination: /docs/grafana/<GRAFANA_VERSION>/
   role-based-access-control:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions/access-control/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions/access-control/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/
   rbac:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions/access-control/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions/access-control/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/
   smtp:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana/#smtp
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#smtp
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana/#smtp
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#smtp
   configuration:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana/#filters
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#filters
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana/#filters
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#filters
   templates-and-variables:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/variables/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/variables/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
   repeat-panels-or-rows:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-panel-options/#configure-repeating-rows-or-panels
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-panel-options/#configure-repeating-rows-or-panels
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-panel-options/#configure-repeating-rows-or-panels
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-panel-options/#configure-repeating-rows-or-panels
   temp-data-lifetime:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana/#temp-data-lifetime
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#temp-data-lifetime
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana/#temp-data-lifetime
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#temp-data-lifetime
   image-rendering:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/setup-grafana/image-rendering/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/setup-grafana/image-rendering/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering/
   grafana-enterprise:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/introduction/grafana-enterprise/
+      destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/introduction/grafana-enterprise/
+      destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
   http-apis:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/developers/http_api/
+      destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/developers/http_api/
+      destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/
   time-range-controls:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/manage-dashboards/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/manage-dashboards/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/manage-dashboards/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/manage-dashboards/
 ---
 
 # Create and manage reports

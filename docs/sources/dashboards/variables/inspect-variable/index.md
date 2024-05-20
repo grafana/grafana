@@ -19,14 +19,14 @@ weight: 200
 refs:
   add:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/
   manage-variables:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables/#manage-variables
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#manage-variables
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables/#manage-variables
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#manage-variables
 ---
 
 # Inspect variables

@@ -31,19 +31,19 @@ weight: 8
 refs:
   http-api:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/developers/http_api/
+      destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/developer-resources/api-reference/http-api/
   panels:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/
   dashboard-permissions:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions/#dashboard-permissions
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#dashboard-permissions
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions/#dashboard-permissions
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#dashboard-permissions
   grafana-llm-plugin-documentation:
     - pattern: /docs/grafana/
       destination: /docs/grafana-cloud/alerting-and-irm/machine-learning/configure/llm-plugin/

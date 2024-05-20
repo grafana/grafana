@@ -18,9 +18,9 @@ weight: 200
 refs:
   inspect:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/panel-inspector/#inspect-query-request-and-response-data
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/panel-inspector/#inspect-query-request-and-response-data
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/panel-inspector/#inspect-query-request-and-response-data
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/panel-inspector/#inspect-query-request-and-response-data
 ---
 
 # Troubleshoot queries
