@@ -618,6 +618,8 @@ function preserveDashboardSceneStateInLocalStorage(scene: DashboardScene) {
     // If there's anything to preserve, save it to local storage
     if (Object.keys(nonEmptyUrlStates).length > 0) {
       store.set(getPreservedSceneURLStateKey(), JSON.stringify(nonEmptyUrlStates));
+    } else {
+      store.delete(getPreservedSceneURLStateKey());
     }
   };
 }
