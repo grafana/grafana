@@ -567,4 +567,3 @@ DECLARE
 
 EXEC dbo.sp_test_datetime @from, @to
 ```
-

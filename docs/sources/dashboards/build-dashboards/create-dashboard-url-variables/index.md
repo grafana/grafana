@@ -98,4 +98,3 @@ When sharing URLs with ad hoc filters, remember to encode the URL. In the above 
 ## Controlling time range using the URL
 
 To set a dashboard's time range, use the `from`, `to`, `time`, and `time.window` query parameters. Because these are not variables, they do not require the `var-` prefix. For more information, see the [Linking overview](ref:linking-overview).
-

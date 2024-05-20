@@ -70,4 +70,3 @@ to the embedded text.
 ## Variables
 
 [Variables](ref:variables) in the content will be expanded for display.
-

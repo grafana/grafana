@@ -224,4 +224,3 @@ The **Tags** field's value can be a comma-separated string.
 ```sql
 SELECT title, description from events WHERE $timeFilter ORDER BY time ASC
 ```
-

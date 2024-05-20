@@ -185,4 +185,3 @@ Content-Type: application/json
 ## Pause all alerts
 
 See [Admin API](ref:admin-api).
-

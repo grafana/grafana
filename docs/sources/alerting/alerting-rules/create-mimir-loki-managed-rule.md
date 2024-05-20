@@ -135,4 +135,3 @@ All alert rules and instances, irrespective of their labels, match the default n
    Add custom labels by selecting existing key-value pairs from the drop down, or add new labels by entering the new key or value.
 
 1. Click **Save rule**.
-

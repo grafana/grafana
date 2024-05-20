@@ -244,4 +244,3 @@ Create alerts from any panel type. This means you can reuse the queries in the p
 3. From the dropdown menu, select **More...** and then choose **New alert rule**.
 
 This will open the alert rule form, allowing you to configure and create your alert based on the current panel's query.
-

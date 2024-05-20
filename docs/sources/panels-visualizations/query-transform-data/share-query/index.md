@@ -43,4 +43,3 @@ This strategy can drastically reduce the number of queries being made when you f
 All queries defined in the source panel are now available to the new panel. Queries defined in the source panel can be shared with multiple panels.
 
 You can click on any of the queries to go to the panel where they are defined.
-

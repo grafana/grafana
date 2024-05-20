@@ -225,4 +225,3 @@ To create a library panel from the **Share Panel** dialog:
 1. In **Save in folder**, select the folder in which to save the library panel. By default, the root level is selected.
 1. Click **Create library panel** to save your changes.
 1. Save the dashboard.
-

@@ -115,4 +115,3 @@ This feature is only supported in these panels: Bar chart, Histogram, Time serie
 {{% /admonition %}}
 
 ![Sort legend series](/static/img/docs/legend/legend-series-sort-8-3.png).
-

@@ -189,4 +189,3 @@ When adding or editing an annotation, you can define a repeating time region by 
 The above configuration will produce the following result in the Time series panel:
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-0-timeseries-time-regions.png" max-width="600px" caption="Time series time regions business hours" >}}
-

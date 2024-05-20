@@ -50,4 +50,3 @@ You can control which alerts you see and in what order they appear several ways.
 Click **View in Explore** or click the `expr` link to open the `expr` in [Explore](ref:explore).
 
 > **Note:** Only users with Admin or Editor roles in an organization can use the Explore feature unless the viewers can edit.
-

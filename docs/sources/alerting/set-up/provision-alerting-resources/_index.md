@@ -58,4 +58,3 @@ Choose from the options below to import your Grafana Alerting resources.
 [Grafana provisioning](ref:provisioning)
 
 [Grafana Alerting provisioning API](ref:alerting_provisioning)
-

@@ -127,4 +127,3 @@ To delete or clear multiple rows, take the following steps:
 The same rules apply to columns by clicking the column headers.
 
 To delete all rows, use the "select all" checkbox at the top left corner of the datagrid. This selects all rows and allows you to delete them using the context menu.
-

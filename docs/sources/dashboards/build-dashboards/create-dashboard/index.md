@@ -224,4 +224,3 @@ You can size a dashboard panel to suits your needs.
 1. Click **Dashboards** in the left-side menu.
 1. Navigate to the dashboard you want to work on.
 1. To adjust the size of the panel, click and drag the lower-right corner of the panel.
-

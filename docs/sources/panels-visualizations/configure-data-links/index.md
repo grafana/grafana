@@ -167,4 +167,3 @@ When creating or updating a data link, press Cmd+Space or Ctrl+Space on your key
 1. Scroll down to the Data links section, expand it, and find the link that you want to delete.
 1. Click the **X** icon next to the link you want to delete.
 1. Click **Save** in the upper right to save your changes to the dashboard.
-

@@ -215,4 +215,3 @@ In this graph, we set graph to show bars instead of lines and set the **No value
 ### More examples
 
 You can find more examples in `public/dashboards/` directory of your Grafana installation.
-

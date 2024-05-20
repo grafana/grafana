@@ -42,4 +42,3 @@ It is important to make sure that gossiping is configured and tested. You can fi
 ## Useful links
 
 [Configure alerting high availability](ref:configure-high-availability)
-

@@ -75,4 +75,3 @@ Administrators can also [configure the data source via YAML](#provision-the-data
 Once you've added the data source, you can [configure it]({{< relref "./configure-tempo-data-source/" >}}) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor/" >}}) when they [build dashboards](ref:build-dashboards) and use [Explore](ref:explore).
 
 {{< section withDescriptions="true">}}
-

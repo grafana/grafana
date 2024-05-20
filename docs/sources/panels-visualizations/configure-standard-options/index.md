@@ -156,4 +156,3 @@ Select one of the following palettes:
 ### No value
 
 Enter what Grafana should display if the field value is empty or null. The default value is a hyphen (-).
-

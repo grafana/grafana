@@ -65,4 +65,3 @@ Use these settings to refine your visualization:
 - **Enable log details -** Toggle option to see the log details view for each log row. The default setting is true.
 - **Deduplication -** Hides log messages that are duplicates of others shown according to criteria such as exact match, or those that only differ by numbers such as IPs or latencies.
 - **Order -** Display results in descending or ascending time order. The default is **Descending**, showing the newest logs first. Set to **Ascending** to show the oldest log lines first.
-

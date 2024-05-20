@@ -70,4 +70,3 @@ Choose which alert states to display in this visualization.
 - No Data
 - Normal
 - Error
-

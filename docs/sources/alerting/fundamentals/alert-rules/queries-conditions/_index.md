@@ -117,4 +117,3 @@ After you have defined your queries and/or expressions, choose one of them as th
 When the queried data satisfies the defined condition, Grafana triggers the associated alert, which can be configured to send notifications through various channels like email, Slack, or PagerDuty. The notifications inform you about the condition being met, allowing you to take appropriate actions or investigate the underlying issue.
 
 By default, the last expression added is used as the alert condition.
-

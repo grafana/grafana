@@ -118,4 +118,3 @@ datasources:
     jsonData:
       minStep: '15s'
 ```
-

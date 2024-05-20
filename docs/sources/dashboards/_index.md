@@ -95,4 +95,3 @@ Before you begin, ensure that you have configured a data source. See also:
 - [Version history](ref:version-history)
 - [Export and import](ref:export-and-import)
 - [JSON model](ref:json-model)
-

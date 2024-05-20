@@ -114,4 +114,3 @@ Grafana automatically creates a quoted, comma-separated string for multi-value v
 `${servers:csv}`
 
 Read more about variable formatting options in the [Variables](ref:variable-syntax-advanced-variable-format-options) documentation.
-

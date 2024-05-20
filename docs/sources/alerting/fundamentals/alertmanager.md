@@ -58,4 +58,3 @@ If you are provisioning your data source, set the flag `handleGrafanaManagedAler
 [Prometheus Alertmanager documentation](https://prometheus.io/docs/alerting/latest/alertmanager/)
 
 [Add an external Alertmanager](ref:configure-alertmanager)
-

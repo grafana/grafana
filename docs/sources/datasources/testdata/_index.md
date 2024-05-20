@@ -118,7 +118,6 @@ If you don't, upgrading Grafana can overwrite the customized dashboard with the 
 If you report an issue on GitHub involving the use or rendering of time series data, we strongly recommend that you use this data source to replicate the issue.
 That makes it much easier for the developers to replicate and solve your issue.
 
-
 ## Use a custom version of TestData
 
 {{% admonition type="note" %}}

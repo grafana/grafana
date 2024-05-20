@@ -1322,5 +1322,4 @@ There are two different models:
 
 > **Note:** This transformation is an experimental feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the `regressionTransformation` feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
 
-
 [Data frames]: https://grafana.com/developers/plugin-tools/introduction/data-frames/

@@ -148,4 +148,3 @@ For detailed instructions, refer to [Internal Grafana metrics](ref:set-up-grafan
 Graphite queries get converted to Loki queries when the data source selection changes in Explore. Loki label names and values are extracted from the Graphite queries according to mappings information provided in Graphite data source configuration. Queries using tags with `seriesByTags()` are also transformed without any additional setup.
 
 Refer to the Graphite data source settings for more details.
-

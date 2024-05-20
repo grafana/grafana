@@ -9,17 +9,17 @@ labels:
     - oss
 title: XYChartPanelCfg kind
 ---
+
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
 
 ## XYChartPanelCfg
 
 #### Maturity: [experimental](../../../maturity/#experimental)
+
 #### Version: 0.0
 
-
-
 | Property              | Type                           | Required | Default | Description                                             |
-|-----------------------|--------------------------------|----------|---------|---------------------------------------------------------|
+| --------------------- | ------------------------------ | -------- | ------- | ------------------------------------------------------- |
 | `FieldConfig`         | [object](#fieldconfig)         | **Yes**  |         |                                                         |
 | `Options`             | [object](#options)             | **Yes**  |         |                                                         |
 | `ScatterSeriesConfig` | [object](#scatterseriesconfig) | **Yes**  |         |                                                         |
@@ -32,17 +32,17 @@ title: XYChartPanelCfg kind
 It extends [HideableFieldConfig](#hideablefieldconfig) and [AxisConfig](#axisconfig).
 
 | Property            | Type                                                | Required | Default | Description                                                                                                                             |
-|---------------------|-----------------------------------------------------|----------|---------|-----------------------------------------------------------------------------------------------------------------------------------------|
-| `axisBorderShow`    | boolean                                             | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
-| `axisCenteredZero`  | boolean                                             | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
-| `axisColorMode`     | string                                              | No       |         | *(Inherited from [AxisConfig](#axisconfig))*<br/>TODO docs<br/>Possible values are: `text`, `series`.                                   |
-| `axisGridShow`      | boolean                                             | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
-| `axisLabel`         | string                                              | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
-| `axisPlacement`     | string                                              | No       |         | *(Inherited from [AxisConfig](#axisconfig))*<br/>TODO docs<br/>Possible values are: `auto`, `top`, `right`, `bottom`, `left`, `hidden`. |
-| `axisSoftMax`       | number                                              | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
-| `axisSoftMin`       | number                                              | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
-| `axisWidth`         | number                                              | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
-| `hideFrom`          | [HideSeriesConfig](#hideseriesconfig)               | No       |         | *(Inherited from [HideableFieldConfig](#hideablefieldconfig))*<br/>TODO docs                                                            |
+| ------------------- | --------------------------------------------------- | -------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `axisBorderShow`    | boolean                                             | No       |         | _(Inherited from [AxisConfig](#axisconfig))_                                                                                            |
+| `axisCenteredZero`  | boolean                                             | No       |         | _(Inherited from [AxisConfig](#axisconfig))_                                                                                            |
+| `axisColorMode`     | string                                              | No       |         | _(Inherited from [AxisConfig](#axisconfig))_<br/>TODO docs<br/>Possible values are: `text`, `series`.                                   |
+| `axisGridShow`      | boolean                                             | No       |         | _(Inherited from [AxisConfig](#axisconfig))_                                                                                            |
+| `axisLabel`         | string                                              | No       |         | _(Inherited from [AxisConfig](#axisconfig))_                                                                                            |
+| `axisPlacement`     | string                                              | No       |         | _(Inherited from [AxisConfig](#axisconfig))_<br/>TODO docs<br/>Possible values are: `auto`, `top`, `right`, `bottom`, `left`, `hidden`. |
+| `axisSoftMax`       | number                                              | No       |         | _(Inherited from [AxisConfig](#axisconfig))_                                                                                            |
+| `axisSoftMin`       | number                                              | No       |         | _(Inherited from [AxisConfig](#axisconfig))_                                                                                            |
+| `axisWidth`         | number                                              | No       |         | _(Inherited from [AxisConfig](#axisconfig))_                                                                                            |
+| `hideFrom`          | [HideSeriesConfig](#hideseriesconfig)               | No       |         | _(Inherited from [HideableFieldConfig](#hideablefieldconfig))_<br/>TODO docs                                                            |
 | `labelValue`        | [TextDimensionConfig](#textdimensionconfig)         | No       |         |                                                                                                                                         |
 | `label`             | string                                              | No       |         | TODO docs<br/>Possible values are: `auto`, `never`, `always`.                                                                           |
 | `lineColor`         | [ColorDimensionConfig](#colordimensionconfig)       | No       |         |                                                                                                                                         |
@@ -50,7 +50,7 @@ It extends [HideableFieldConfig](#hideablefieldconfig) and [AxisConfig](#axiscon
 | `lineWidth`         | integer                                             | No       |         | Constraint: `>=0 & <=2147483647`.                                                                                                       |
 | `pointColor`        | [ColorDimensionConfig](#colordimensionconfig)       | No       |         |                                                                                                                                         |
 | `pointSize`         | [ScaleDimensionConfig](#scaledimensionconfig)       | No       |         |                                                                                                                                         |
-| `scaleDistribution` | [ScaleDistributionConfig](#scaledistributionconfig) | No       |         | *(Inherited from [AxisConfig](#axisconfig))*<br/>TODO docs                                                                              |
+| `scaleDistribution` | [ScaleDistributionConfig](#scaledistributionconfig) | No       |         | _(Inherited from [AxisConfig](#axisconfig))_<br/>TODO docs                                                                              |
 | `show`              | string                                              | No       |         | Possible values are: `points`, `lines`, `points+lines`.                                                                                 |
 
 ### AxisConfig
@@ -58,7 +58,7 @@ It extends [HideableFieldConfig](#hideablefieldconfig) and [AxisConfig](#axiscon
 TODO docs
 
 | Property            | Type                                                | Required | Default | Description                                                                            |
-|---------------------|-----------------------------------------------------|----------|---------|----------------------------------------------------------------------------------------|
+| ------------------- | --------------------------------------------------- | -------- | ------- | -------------------------------------------------------------------------------------- |
 | `axisBorderShow`    | boolean                                             | No       |         |                                                                                        |
 | `axisCenteredZero`  | boolean                                             | No       |         |                                                                                        |
 | `axisColorMode`     | string                                              | No       |         | TODO docs<br/>Possible values are: `text`, `series`.                                   |
@@ -75,7 +75,7 @@ TODO docs
 TODO docs
 
 | Property          | Type   | Required | Default | Description                                                              |
-|-------------------|--------|----------|---------|--------------------------------------------------------------------------|
+| ----------------- | ------ | -------- | ------- | ------------------------------------------------------------------------ |
 | `type`            | string | **Yes**  |         | TODO docs<br/>Possible values are: `linear`, `log`, `ordinal`, `symlog`. |
 | `linearThreshold` | number | No       |         |                                                                          |
 | `log`             | number | No       |         |                                                                          |
@@ -85,14 +85,14 @@ TODO docs
 It extends [BaseDimensionConfig](#basedimensionconfig).
 
 | Property | Type   | Required | Default | Description                                                                                                  |
-|----------|--------|----------|---------|--------------------------------------------------------------------------------------------------------------|
-| `field`  | string | No       |         | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))*<br/>fixed: T -- will be added by each element |
+| -------- | ------ | -------- | ------- | ------------------------------------------------------------------------------------------------------------ |
+| `field`  | string | No       |         | _(Inherited from [BaseDimensionConfig](#basedimensionconfig))_<br/>fixed: T -- will be added by each element |
 | `fixed`  | string | No       |         |                                                                                                              |
 
 ### BaseDimensionConfig
 
 | Property | Type   | Required | Default | Description                               |
-|----------|--------|----------|---------|-------------------------------------------|
+| -------- | ------ | -------- | ------- | ----------------------------------------- |
 | `field`  | string | No       |         | fixed: T -- will be added by each element |
 
 ### HideSeriesConfig
@@ -100,7 +100,7 @@ It extends [BaseDimensionConfig](#basedimensionconfig).
 TODO docs
 
 | Property  | Type    | Required | Default | Description |
-|-----------|---------|----------|---------|-------------|
+| --------- | ------- | -------- | ------- | ----------- |
 | `legend`  | boolean | **Yes**  |         |             |
 | `tooltip` | boolean | **Yes**  |         |             |
 | `viz`     | boolean | **Yes**  |         |             |
@@ -110,7 +110,7 @@ TODO docs
 TODO docs
 
 | Property   | Type                                  | Required | Default | Description |
-|------------|---------------------------------------|----------|---------|-------------|
+| ---------- | ------------------------------------- | -------- | ------- | ----------- |
 | `hideFrom` | [HideSeriesConfig](#hideseriesconfig) | No       |         | TODO docs   |
 
 ### LineStyle
@@ -118,7 +118,7 @@ TODO docs
 TODO docs
 
 | Property | Type     | Required | Default | Description                                            |
-|----------|----------|----------|---------|--------------------------------------------------------|
+| -------- | -------- | -------- | ------- | ------------------------------------------------------ |
 | `dash`   | number[] | No       |         |                                                        |
 | `fill`   | string   | No       |         | Possible values are: `solid`, `dash`, `dot`, `square`. |
 
@@ -127,10 +127,10 @@ TODO docs
 It extends [BaseDimensionConfig](#basedimensionconfig).
 
 | Property | Type   | Required | Default | Description                                                                                                  |
-|----------|--------|----------|---------|--------------------------------------------------------------------------------------------------------------|
+| -------- | ------ | -------- | ------- | ------------------------------------------------------------------------------------------------------------ |
 | `max`    | number | **Yes**  |         |                                                                                                              |
 | `min`    | number | **Yes**  |         |                                                                                                              |
-| `field`  | string | No       |         | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))*<br/>fixed: T -- will be added by each element |
+| `field`  | string | No       |         | _(Inherited from [BaseDimensionConfig](#basedimensionconfig))_<br/>fixed: T -- will be added by each element |
 | `fixed`  | number | No       |         |                                                                                                              |
 | `mode`   | string | No       |         | Possible values are: `linear`, `quad`.                                                                       |
 
@@ -139,9 +139,9 @@ It extends [BaseDimensionConfig](#basedimensionconfig).
 It extends [BaseDimensionConfig](#basedimensionconfig).
 
 | Property | Type   | Required | Default | Description                                                                                                  |
-|----------|--------|----------|---------|--------------------------------------------------------------------------------------------------------------|
+| -------- | ------ | -------- | ------- | ------------------------------------------------------------------------------------------------------------ |
 | `mode`   | string | **Yes**  |         | Possible values are: `fixed`, `field`, `template`.                                                           |
-| `field`  | string | No       |         | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))*<br/>fixed: T -- will be added by each element |
+| `field`  | string | No       |         | _(Inherited from [BaseDimensionConfig](#basedimensionconfig))_<br/>fixed: T -- will be added by each element |
 | `fixed`  | string | No       |         |                                                                                                              |
 
 ### Options
@@ -149,11 +149,11 @@ It extends [BaseDimensionConfig](#basedimensionconfig).
 It extends [OptionsWithLegend](#optionswithlegend) and [OptionsWithTooltip](#optionswithtooltip).
 
 | Property        | Type                                          | Required | Default | Description                                                                |
-|-----------------|-----------------------------------------------|----------|---------|----------------------------------------------------------------------------|
+| --------------- | --------------------------------------------- | -------- | ------- | -------------------------------------------------------------------------- |
 | `dims`          | [XYDimensionConfig](#xydimensionconfig)       | **Yes**  |         |                                                                            |
-| `legend`        | [VizLegendOptions](#vizlegendoptions)         | **Yes**  |         | *(Inherited from [OptionsWithLegend](#optionswithlegend))*<br/>TODO docs   |
+| `legend`        | [VizLegendOptions](#vizlegendoptions)         | **Yes**  |         | _(Inherited from [OptionsWithLegend](#optionswithlegend))_<br/>TODO docs   |
 | `series`        | [ScatterSeriesConfig](#scatterseriesconfig)[] | **Yes**  |         |                                                                            |
-| `tooltip`       | [VizTooltipOptions](#viztooltipoptions)       | **Yes**  |         | *(Inherited from [OptionsWithTooltip](#optionswithtooltip))*<br/>TODO docs |
+| `tooltip`       | [VizTooltipOptions](#viztooltipoptions)       | **Yes**  |         | _(Inherited from [OptionsWithTooltip](#optionswithtooltip))_<br/>TODO docs |
 | `seriesMapping` | string                                        | No       |         | Possible values are: `auto`, `manual`.                                     |
 
 ### OptionsWithLegend
@@ -161,7 +161,7 @@ It extends [OptionsWithLegend](#optionswithlegend) and [OptionsWithTooltip](#opt
 TODO docs
 
 | Property | Type                                  | Required | Default | Description |
-|----------|---------------------------------------|----------|---------|-------------|
+| -------- | ------------------------------------- | -------- | ------- | ----------- |
 | `legend` | [VizLegendOptions](#vizlegendoptions) | **Yes**  |         | TODO docs   |
 
 ### VizLegendOptions
@@ -169,7 +169,7 @@ TODO docs
 TODO docs
 
 | Property      | Type     | Required | Default | Description                                                                                                                             |
-|---------------|----------|----------|---------|-----------------------------------------------------------------------------------------------------------------------------------------|
+| ------------- | -------- | -------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------- |
 | `calcs`       | string[] | **Yes**  |         |                                                                                                                                         |
 | `displayMode` | string   | **Yes**  |         | TODO docs<br/>Note: "hidden" needs to remain as an option for plugins compatibility<br/>Possible values are: `list`, `table`, `hidden`. |
 | `placement`   | string   | **Yes**  |         | TODO docs<br/>Possible values are: `bottom`, `right`.                                                                                   |
@@ -185,7 +185,7 @@ TODO docs
 TODO docs
 
 | Property  | Type                                    | Required | Default | Description |
-|-----------|-----------------------------------------|----------|---------|-------------|
+| --------- | --------------------------------------- | -------- | ------- | ----------- |
 | `tooltip` | [VizTooltipOptions](#viztooltipoptions) | **Yes**  |         | TODO docs   |
 
 ### VizTooltipOptions
@@ -193,7 +193,7 @@ TODO docs
 TODO docs
 
 | Property | Type   | Required | Default | Description                                                   |
-|----------|--------|----------|---------|---------------------------------------------------------------|
+| -------- | ------ | -------- | ------- | ------------------------------------------------------------- |
 | `mode`   | string | **Yes**  |         | TODO docs<br/>Possible values are: `single`, `multi`, `none`. |
 | `sort`   | string | **Yes**  |         | TODO docs<br/>Possible values are: `asc`, `desc`, `none`.     |
 
@@ -202,36 +202,34 @@ TODO docs
 It extends [FieldConfig](#fieldconfig).
 
 | Property            | Type                                                | Required | Default | Description                                                                                                                               |
-|---------------------|-----------------------------------------------------|----------|---------|-------------------------------------------------------------------------------------------------------------------------------------------|
-| `axisBorderShow`    | boolean                                             | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*                                                                                            |
-| `axisCenteredZero`  | boolean                                             | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*                                                                                            |
-| `axisColorMode`     | string                                              | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*<br/>TODO docs<br/>Possible values are: `text`, `series`.                                   |
-| `axisGridShow`      | boolean                                             | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*                                                                                            |
-| `axisLabel`         | string                                              | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*                                                                                            |
-| `axisPlacement`     | string                                              | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*<br/>TODO docs<br/>Possible values are: `auto`, `top`, `right`, `bottom`, `left`, `hidden`. |
-| `axisSoftMax`       | number                                              | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*                                                                                            |
-| `axisSoftMin`       | number                                              | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*                                                                                            |
-| `axisWidth`         | number                                              | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*                                                                                            |
-| `hideFrom`          | [HideSeriesConfig](#hideseriesconfig)               | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*<br/>TODO docs                                                                              |
-| `labelValue`        | [TextDimensionConfig](#textdimensionconfig)         | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*                                                                                            |
-| `label`             | string                                              | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*<br/>TODO docs<br/>Possible values are: `auto`, `never`, `always`.                          |
-| `lineColor`         | [ColorDimensionConfig](#colordimensionconfig)       | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*                                                                                            |
-| `lineStyle`         | [LineStyle](#linestyle)                             | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*<br/>TODO docs                                                                              |
-| `lineWidth`         | integer                                             | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*<br/>Constraint: `>=0 & <=2147483647`.                                                      |
+| ------------------- | --------------------------------------------------- | -------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `axisBorderShow`    | boolean                                             | No       |         | _(Inherited from [FieldConfig](#fieldconfig))_                                                                                            |
+| `axisCenteredZero`  | boolean                                             | No       |         | _(Inherited from [FieldConfig](#fieldconfig))_                                                                                            |
+| `axisColorMode`     | string                                              | No       |         | _(Inherited from [FieldConfig](#fieldconfig))_<br/>TODO docs<br/>Possible values are: `text`, `series`.                                   |
+| `axisGridShow`      | boolean                                             | No       |         | _(Inherited from [FieldConfig](#fieldconfig))_                                                                                            |
+| `axisLabel`         | string                                              | No       |         | _(Inherited from [FieldConfig](#fieldconfig))_                                                                                            |
+| `axisPlacement`     | string                                              | No       |         | _(Inherited from [FieldConfig](#fieldconfig))_<br/>TODO docs<br/>Possible values are: `auto`, `top`, `right`, `bottom`, `left`, `hidden`. |
+| `axisSoftMax`       | number                                              | No       |         | _(Inherited from [FieldConfig](#fieldconfig))_                                                                                            |
+| `axisSoftMin`       | number                                              | No       |         | _(Inherited from [FieldConfig](#fieldconfig))_                                                                                            |
+| `axisWidth`         | number                                              | No       |         | _(Inherited from [FieldConfig](#fieldconfig))_                                                                                            |
+| `hideFrom`          | [HideSeriesConfig](#hideseriesconfig)               | No       |         | _(Inherited from [FieldConfig](#fieldconfig))_<br/>TODO docs                                                                              |
+| `labelValue`        | [TextDimensionConfig](#textdimensionconfig)         | No       |         | _(Inherited from [FieldConfig](#fieldconfig))_                                                                                            |
+| `label`             | string                                              | No       |         | _(Inherited from [FieldConfig](#fieldconfig))_<br/>TODO docs<br/>Possible values are: `auto`, `never`, `always`.                          |
+| `lineColor`         | [ColorDimensionConfig](#colordimensionconfig)       | No       |         | _(Inherited from [FieldConfig](#fieldconfig))_                                                                                            |
+| `lineStyle`         | [LineStyle](#linestyle)                             | No       |         | _(Inherited from [FieldConfig](#fieldconfig))_<br/>TODO docs                                                                              |
+| `lineWidth`         | integer                                             | No       |         | _(Inherited from [FieldConfig](#fieldconfig))_<br/>Constraint: `>=0 & <=2147483647`.                                                      |
 | `name`              | string                                              | No       |         |                                                                                                                                           |
-| `pointColor`        | [ColorDimensionConfig](#colordimensionconfig)       | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*                                                                                            |
-| `pointSize`         | [ScaleDimensionConfig](#scaledimensionconfig)       | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*                                                                                            |
-| `scaleDistribution` | [ScaleDistributionConfig](#scaledistributionconfig) | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*<br/>TODO docs                                                                              |
-| `show`              | string                                              | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*<br/>Possible values are: `points`, `lines`, `points+lines`.                                |
+| `pointColor`        | [ColorDimensionConfig](#colordimensionconfig)       | No       |         | _(Inherited from [FieldConfig](#fieldconfig))_                                                                                            |
+| `pointSize`         | [ScaleDimensionConfig](#scaledimensionconfig)       | No       |         | _(Inherited from [FieldConfig](#fieldconfig))_                                                                                            |
+| `scaleDistribution` | [ScaleDistributionConfig](#scaledistributionconfig) | No       |         | _(Inherited from [FieldConfig](#fieldconfig))_<br/>TODO docs                                                                              |
+| `show`              | string                                              | No       |         | _(Inherited from [FieldConfig](#fieldconfig))_<br/>Possible values are: `points`, `lines`, `points+lines`.                                |
 | `x`                 | string                                              | No       |         |                                                                                                                                           |
 | `y`                 | string                                              | No       |         |                                                                                                                                           |
 
 ### XYDimensionConfig
 
 | Property  | Type     | Required | Default | Description                       |
-|-----------|----------|----------|---------|-----------------------------------|
+| --------- | -------- | -------- | ------- | --------------------------------- |
 | `frame`   | integer  | **Yes**  |         | Constraint: `>=0 & <=2147483647`. |
 | `exclude` | string[] | No       |         |                                   |
 | `x`       | string   | No       |         |                                   |
-
-
