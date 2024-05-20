@@ -818,4 +818,3 @@ This eliminates the need for a persistent database to use Grafana Alerting in Ku
 **Useful Links:**
 
 [Grafana provisioning](ref:provisioning)
-

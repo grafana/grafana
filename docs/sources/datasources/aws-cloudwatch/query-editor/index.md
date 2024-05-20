@@ -275,4 +275,3 @@ To view your query in the CloudWatch Logs Insights console, click the `CloudWatc
 If you're not logged in to the CloudWatch console, the link forwards you to the login page.
 
 The provided link is valid for any account, but displays the expected metrics only if you're logged in to the account that corresponds to the selected data source in Grafana.
-

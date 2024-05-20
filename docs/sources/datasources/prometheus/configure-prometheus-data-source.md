@@ -148,4 +148,3 @@ Support for exemplars is available only for the Prometheus data source. If this 
 - **Label name** - The name of the field in the `labels` object used to obtain the traceID property.
 
 - **Remove exemplar link** - Click to remove existing links.
-

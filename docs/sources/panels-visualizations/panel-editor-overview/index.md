@@ -139,4 +139,3 @@ The panel inspector consists of the following options:
 1. **Query tab -** Shows you the requests to the server sent when Grafana queries the data source.
 
 1. **Error tab -** Shows the error. Only visible when query returns error.
-

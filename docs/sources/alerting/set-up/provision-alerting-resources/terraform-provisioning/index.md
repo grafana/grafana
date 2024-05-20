@@ -398,4 +398,3 @@ resource "grafana_mute_timing" "mute_all" {
 **Useful Links:**
 
 [Grafana Terraform Provider documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs)
-

@@ -64,4 +64,3 @@ Grafana reserved labels can be used in the same way as manually configured label
 | Label          | Description                               |
 | -------------- | ----------------------------------------- |
 | grafana_folder | Title of the folder containing the alert. |
-

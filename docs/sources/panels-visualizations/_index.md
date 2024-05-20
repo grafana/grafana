@@ -52,4 +52,3 @@ Before you add a panel, ensure that you have configured a data source.
 This section includes the following sub topics:
 
 {{< section >}}
-

@@ -105,12 +105,12 @@ Value mappings bypass unit formatting set in the **Standard options** section of
 
 You can configure value mappings for the following visualizations:
 
-|                            |                                  |                                  |
-| -------------------------- | -------------------------------- | -------------------------------- |
-| [Bar chart][bar chart]     | [Geomap](ref:geomap)                 | [Status history][status history] |
-| [Bar gauge][bar gauge]     | [Histogram](ref:histogram)           | [Table](ref:table)                   |
+|                                |                                  |                                  |
+| ------------------------------ | -------------------------------- | -------------------------------- |
+| [Bar chart][bar chart]         | [Geomap](ref:geomap)             | [Status history][status history] |
+| [Bar gauge][bar gauge]         | [Histogram](ref:histogram)       | [Table](ref:table)               |
 | [Candlestick](ref:candlestick) | [Pie chart][pie chart]           | [Time series][time series]       |
-| [Canvas](ref:canvas)           | [Stat](ref:stat)                     | [Trend](ref:trend)                   |
+| [Canvas](ref:canvas)           | [Stat](ref:stat)                 | [Trend](ref:trend)               |
 | [Gauge](ref:gauge)             | [State timeline][state timeline] |                                  |
 
 ## Types of value mappings
@@ -185,4 +185,3 @@ The following image shows a table visualization with value mappings. If you want
 1. Click **Update** to save the value mapping.
 
 After you've added a mapping, the **Edit value mappings** button replaces the **Add value mappings** button. Click the edit button to add or update mappings.
-

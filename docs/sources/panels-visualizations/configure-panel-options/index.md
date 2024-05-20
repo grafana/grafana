@@ -142,4 +142,3 @@ To see an example of repeating panels, refer to [this dashboard with repeating p
    - Choose `vertical` to arrange panels in a column. The width of repeated panels is the same as the original, repeated panel.
 
 1. To propagate changes to all panels, reload the dashboard.
-

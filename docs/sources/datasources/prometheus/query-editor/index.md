@@ -253,4 +253,3 @@ The values section has only one search field, and its filtering applies to all l
 For example, among your labels `app`, `job`, `job_name` only one might have the value you are looking for.
 
 Once you are satisfied with your query, click **Run query**.
-

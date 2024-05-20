@@ -54,4 +54,3 @@ Once you have set up your alert rules, contact points, and notification policies
 [View the state and health of alert rules](ref:view-state-health)
 
 [View and filter alert rules](ref:view-alert-rules)
-

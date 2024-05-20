@@ -156,4 +156,3 @@ If you've enabled the _Multi-value_ or _Include all value_ options, Grafana conv
 
 Prometheus supports the special [ad hoc filters](ref:add-template-variables-add-ad-hoc-filters) variable type, which you can use to specify any number of label/value filters on the fly.
 These filters are automatically applied to all your Prometheus queries.
-

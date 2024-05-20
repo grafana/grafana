@@ -92,4 +92,3 @@ It is possible to select multiple values for **Resource Groups** and **Resource 
 - Are of the same type (namespace).
 
 Also, note that if a template variable pointing to multiple resource groups or names is used in another template variable as a parameter (e.g. to retrieve metric names), only the first value will be used. This means that the combination of the first resource group and name selected should be valid.
-

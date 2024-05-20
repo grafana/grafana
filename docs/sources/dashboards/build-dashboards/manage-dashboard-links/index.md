@@ -181,4 +181,3 @@ Click the icon next to the panel title to see available panel links.
 1. Find the link that you want to delete.
 1. Click the **X** icon next to the link you want to delete.
 1. Click **Save** in the upper right to save your changes to the dashboard.
-

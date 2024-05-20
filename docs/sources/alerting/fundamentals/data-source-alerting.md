@@ -113,7 +113,7 @@ These are the data sources that are compatible with and supported by Grafana Ale
 - [Graphite](ref:graphite)
 - [InfluxDB](ref:influxdb)
 - [Loki](ref:loki)
-- [Microsoft SQL Server (MSSQL)](ref:microsoft-sql-server-(mssql))
+- [Microsoft SQL Server (MSSQL)](<ref:microsoft-sql-server-(mssql)>)
 - [MySQL](ref:mysql)
 - [Open TSDB](ref:open-tsdb)
 - [PostgreSQL](ref:postgresql)
@@ -126,4 +126,3 @@ These are the data sources that are compatible with and supported by Grafana Ale
 ## Useful links
 
 - [Grafana data sources](ref:grafana-data-sources)
-

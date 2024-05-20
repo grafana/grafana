@@ -61,4 +61,3 @@ Refer to our [upgrade instructions](ref:migrating-alerts).
 
 - [Upgrade Alerting](ref:migrating-alerts)
 - [Angular support deprecation](ref:angular_deprecation)
-

@@ -326,4 +326,3 @@ Example result: `monitoring.googleapis.com/uptime_check/http_status has this val
 | `{{metric.service}}`     | Returns the service part.         | `{{metric.service}}`             | `compute`                                         |
 | `{{metric.label.xxx}}`   | Returns the metric label value.   | `{{metric.label.instance_name}}` | `grafana-1-prod`                                  |
 | `{{resource.label.xxx}}` | Returns the resource label value. | `{{resource.label.zone}}`        | `us-east1-b`                                      |
-

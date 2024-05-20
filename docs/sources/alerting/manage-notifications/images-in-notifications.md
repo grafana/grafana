@@ -148,4 +148,3 @@ For example, if a screenshot could not be taken within the expected time (10 sec
 - `grafana_screenshot_successes_total`
 - `grafana_screenshot_upload_failures_total`
 - `grafana_screenshot_upload_successes_total`
-

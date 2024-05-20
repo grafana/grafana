@@ -61,4 +61,3 @@ You can also add to this library by exporting one of your own dashboards. For mo
 ## More examples
 
 Your Grafana Cloud stack comes with several default dashboards in the **Grafana Cloud** folder in **Dashboards**. If you're running your own installation of Grafana, you can find more example dashboards in the `public/dashboards/` directory.
-

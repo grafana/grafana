@@ -134,4 +134,3 @@ Select **Show example log message** to display a text area where you can enter a
 The new field with the link shown in log details:
 
 {{< figure src="/static/img/docs/explore/data-link-9-4.png" max-width="800px" caption="Data link in Explore" >}}
-

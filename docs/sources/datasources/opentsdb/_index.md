@@ -143,4 +143,3 @@ Some examples are mentioned below to make nested template queries work successfu
 | `tag_values(cpu, hostname, env=$env, region=$region)` | Return tag values for cpu metric, selected env tag value, selected region tag value and tag key hostname |
 
 For details on OpenTSDB metric queries, check out the official [OpenTSDB documentation](http://opentsdb.net/docs/build/html/index.html)
-
