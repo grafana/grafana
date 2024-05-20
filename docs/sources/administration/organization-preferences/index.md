@@ -185,7 +185,7 @@ Some tasks require certain permissions. For more information about roles, refer 
 
 Users with the Grafana Server Admin flag on their account or access to the configuration file can define a JSON file to use as the home dashboard for all users on the server.
 
-####[Optional][] Convert an existing dashboard into a JSON file
+#### Optional: Convert an existing dashboard into a JSON file
 
 1. Navigate to the page of the dashboard you want to use as the home dashboard.
 1. Click the **Share** button at the top right of the screen.
