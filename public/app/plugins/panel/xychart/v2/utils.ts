@@ -107,8 +107,12 @@ export function prepSeries(
       if (x != null) {
         // match y fields and create series
         onlyNumFields.forEach((field) => {
-          // don't reuse already-mapped fields
-          if (field === x || field === color || field === size) {
+          if (field === x) {
+            return;
+          }
+
+          // in auto mode don't reuse already-mapped fields
+          if (mapping === SeriesMapping.Auto && (field === color || field === size)) {
             return;
           }
 
