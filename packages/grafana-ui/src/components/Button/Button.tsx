@@ -45,7 +45,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       className,
       type = 'button',
       tooltip,
+      disabled,
       tooltipPlacement,
+      onClick,
       ...otherProps
     },
     ref
@@ -60,10 +62,30 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       iconOnly: !children,
     });
 
+    const buttonStyles = cx(
+      styles.button,
+      {
+        [styles.disabled]: disabled,
+      },
+      className
+    );
+
+    const hasTooltip = Boolean(tooltip);
+
     // In order to standardise Button please always consider using IconButton when you need a button with an icon only
     // When using tooltip, ref is forwarded to Tooltip component instead for https://github.com/grafana/grafana/issues/65632
     const button = (
-      <button className={cx(styles.button, className)} type={type} {...otherProps} ref={tooltip ? undefined : ref}>
+      <button
+        className={buttonStyles}
+        type={type}
+        onClick={disabled ? undefined : onClick}
+        {...otherProps}
+        // In order for the tooltip to be accessible when disabled,
+        // we need to set aria-disabled instead of the native disabled attribute
+        aria-disabled={hasTooltip && disabled}
+        disabled={!hasTooltip && disabled}
+        ref={tooltip ? undefined : ref}
+      >
         <IconRenderer icon={icon} size={size} className={styles.icon} />
         {children && <span className={styles.content}>{children}</span>}
       </button>
@@ -217,7 +239,9 @@ export const getButtonStyles = (props: StyleProps) => {
       ':disabled': disabledStyles,
       '&[disabled]': disabledStyles,
     }),
-    disabled: css(disabledStyles),
+    disabled: css(disabledStyles, {
+      '&:hover': css(disabledStyles),
+    }),
     img: css({
       width: '16px',
       height: '16px',
