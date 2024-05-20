@@ -15,6 +15,12 @@ labels:
 description: Configure options for Grafana's trend visualization
 title: Trend
 weight: 100
+refs:
+  time-series-visualization:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series/
 ---
 
 # Trend
@@ -38,7 +44,3 @@ For example, you could represent engine power and torque versus speed where spee
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-0-trend-panel-new-colors.png" max-width="750px" caption="Trend engine power and torque curves" >}}
 
-{{% docs/reference %}}
-[Time series visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series"
-[Time series visualization]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series"
-{{% /docs/reference %}}

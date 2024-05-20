@@ -42,7 +42,7 @@ Alerting is only available in Grafana v4.0 and above.
 - **Type -** Select the channel type. Refer to the [List of supported notifiers](#list-of-supported-notifiers) for details.
 - **Default (send on all alerts) -** When selected, this option sends a notification on this channel for all alert rules.
 - **Include Image -** See [Enable images in notifications](#enable-images-in-notifications-external-image-store) for details.
-- **Disable Resolve Message -** When selected, this option disables the resolve message [OK] that is sent when the alerting state returns to false.
+- **Disable Resolve Message -** When selected, this option disables the resolve message[OK][] that is sent when the alerting state returns to false.
 - **Send reminders -** When this option is checked additional notifications (reminders) will be sent for triggered alerts. You can specify how often reminders should be sent using number of seconds (s), minutes (m) or hours (h), for example `30s`, `3m`, `5m` or `1h`.
 
 **Important:** Alert reminders are sent after rules are evaluated. Therefore a reminder can never be sent more frequently than a configured alert rule evaluation interval.

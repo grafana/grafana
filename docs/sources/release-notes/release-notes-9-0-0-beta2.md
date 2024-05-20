@@ -48,7 +48,7 @@ title: Release notes for Grafana 9.0.0-beta2
 
 ### Breaking changes
 
-Drop support for deprecated setting ldap_sync_ttl under [auth.proxy]
+Drop support for deprecated setting ldap_sync_ttl under[auth.proxy][]
 Only sync_ttl will work from now on Issue [#49902](https://github.com/grafana/grafana/issues/49902)
 
 Removes support for deprecated `heading` and `description` props. Moving forward, the `Card.Heading` and `Card.Description` components should be used. Issue [#49885](https://github.com/grafana/grafana/issues/49885)

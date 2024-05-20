@@ -9,6 +9,17 @@ labels:
     - oss
 title: Upgrade Alerting
 weight: 150
+refs:
+  alerting_config_error_handling:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling
+  special_alert:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/state-and-health/#special-alerts-for-nodata-and-error
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/state-and-health/#special-alerts-for-nodata-and-error
 ---
 
 # Upgrade Alerting
@@ -204,8 +215,8 @@ When updating your as-code provisioning setup for Grafana Alerting, newly genera
 
 1. `NoData` and `Error` settings are upgraded as is to the corresponding settings in Grafana Alerting, except in two situations:
 
-   - As there is no `Keep Last State` option in Grafana Alerting, this option becomes either [`NoData` or `Error`][alerting_config_error_handling]. If using the `Simple Upgrade Method` Grafana automatically creates a 1 year silence for each alert rule with this configuration. If the alert evaluation returns no data or fails (error or timeout), then it creates a [special alert][special_alert], which will be silenced by the silence created during the upgrade.
-   - Due to lack of validation, legacy alert rules imported via JSON or provisioned along with dashboards can contain arbitrary values for [`NoData` or `Error`][alerting_config_error_handling]. In this situation, Grafana will use the default setting: `NoData` for No data, and `Error` for Error.
+   - As there is no `Keep Last State` option in Grafana Alerting, this option becomes either [`NoData` or `Error`](ref:alerting_config_error_handling). If using the `Simple Upgrade Method` Grafana automatically creates a 1 year silence for each alert rule with this configuration. If the alert evaluation returns no data or fails (error or timeout), then it creates a [special alert](ref:special_alert), which will be silenced by the silence created during the upgrade.
+   - Due to lack of validation, legacy alert rules imported via JSON or provisioned along with dashboards can contain arbitrary values for [`NoData` or `Error`](ref:alerting_config_error_handling). In this situation, Grafana will use the default setting: `NoData` for No data, and `Error` for Error.
 
 1. Notification channels are upgraded to an Alertmanager configuration with the appropriate routes and receivers.
 
@@ -219,10 +230,3 @@ When updating your as-code provisioning setup for Grafana Alerting, newly genera
 
 1. Since `Hipchat` and `Sensu` notification channels are no longer supported, legacy alerts associated with these channels are not automatically upgraded to Grafana Alerting. Assign the legacy alerts to a supported notification channel so that you continue to receive notifications for those alerts.
 
-{{% docs/reference %}}
-[alerting_config_error_handling]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule#configure-no-data-and-error-handling"
-[alerting_config_error_handling]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule#configure-no-data-and-error-handling"
-
-[special_alert]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/state-and-health#special-alerts-for-nodata-and-error"
-[special_alert]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/state-and-health#special-alerts-for-nodata-and-error"
-{{% /docs/reference %}}
