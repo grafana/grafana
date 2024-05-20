@@ -65,17 +65,17 @@ To set up Alerting, you need to:
 
    - Check the default contact point and update the email address
 
-   -[Optional][] Add new contact points and integrations
+   - Optional: Add new contact points and integrations
 
 1. Configure notification policies
 
    - Check the default notification policy
 
-   -[Optional][] Add additional nested policies
+   - Optional: Add additional nested policies
 
-   -[Optional][] Add labels and label matchers to control alert routing
+   - Optional: Add labels and label matchers to control alert routing
 
-1.[Optional][] Integrate with [Grafana OnCall](/docs/oncall/latest/integrations/grafana-alerting)
+1. Optional: Integrate with [Grafana OnCall](/docs/oncall/latest/integrations/grafana-alerting)
 
 ## Advanced set up options
 
