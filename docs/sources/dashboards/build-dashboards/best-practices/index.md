@@ -268,4 +268,3 @@ What is your dashboard maturity level? Analyze your current dashboard setup and 
   - Create dashboard links, panel, or data links. Links can go to other dashboards or to external systems. For more information, refer to [Manage dashboard links](ref:manage-dashboard-links).
   - Add a [Dashboard list panel](ref:dashboard-list-panel). You can then customize what you see by doing tag or folder searches.
   - Add a [Text panel](ref:text-panel) and use markdown to customize the display.
-

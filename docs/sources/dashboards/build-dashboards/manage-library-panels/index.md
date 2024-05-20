@@ -101,4 +101,3 @@ Delete a library panel when you no longer need it.
 1. Click **Dashboards** in the left-side menu.
 1. Click **Library panels**.
 1. Click the delete icon next to the library panel name.
-
