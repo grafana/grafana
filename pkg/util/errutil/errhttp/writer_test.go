@@ -27,9 +27,8 @@ func TestWrite(t *testing.T) {
 		"status": "Failure",
 		"reason": "Timeout",
 		"metadata": {},
-		"messageId": "test.thisIsExpected",
 		"message": "Timeout",
-		"details": { "group": "TestGroup" },
+		"details": { "uid": "test.thisIsExpected" },
 		"code": 504
 	  }`, recorder.Body.String())
 }

@@ -1,6 +1,10 @@
 package errutil
 
-import "net/http"
+import (
+	"net/http"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
 
 const (
 	// StatusUnknown implies an error that should be updated to contain
@@ -11,15 +15,15 @@ const (
 	// client's authentication, either because it has not been provided
 	// or is invalid for the operation.
 	// HTTP status code 401.
-	StatusUnauthorized CoreStatus = "Unauthorized"
+	StatusUnauthorized CoreStatus = CoreStatus(metav1.StatusReasonUnauthorized)
 	// StatusForbidden means that the server refuses to perform the
 	// requested action for the authenticated uer.
 	// HTTP status code 403.
-	StatusForbidden CoreStatus = "Forbidden"
+	StatusForbidden CoreStatus = CoreStatus(metav1.StatusReasonForbidden)
 	// StatusNotFound means that the server does not have any
 	// corresponding document to return to the request.
 	// HTTP status code 404.
-	StatusNotFound CoreStatus = "Not found"
+	StatusNotFound CoreStatus = CoreStatus(metav1.StatusReasonNotFound)
 	// StatusUnprocessableEntity means that the server understands the request,
 	// the content type and the syntax but it was unable to process the
 	// contained instructions.
@@ -28,15 +32,15 @@ const (
 	// StatusConflict means that the server cannot fulfill the request
 	// there is a conflict in the current state of a resource
 	// HTTP status code 409.
-	StatusConflict CoreStatus = "Conflict"
+	StatusConflict CoreStatus = CoreStatus(metav1.StatusReasonConflict)
 	// StatusTooManyRequests means that the client is rate limited
 	// by the server and should back-off before trying again.
 	// HTTP status code 429.
-	StatusTooManyRequests CoreStatus = "Too many requests"
+	StatusTooManyRequests CoreStatus = CoreStatus(metav1.StatusReasonTooManyRequests)
 	// StatusBadRequest means that the server was unable to parse the
 	// parameters or payload for the request.
 	// HTTP status code 400.
-	StatusBadRequest CoreStatus = "Bad request"
+	StatusBadRequest CoreStatus = CoreStatus(metav1.StatusReasonBadRequest)
 	// StatusClientClosedRequest means that a client closes the connection
 	// while the server is processing the request.
 	//
@@ -52,11 +56,11 @@ const (
 	// StatusInternal means that the server acknowledges that there's
 	// an error, but that there is nothing the client can do to fix it.
 	// HTTP status code 500.
-	StatusInternal CoreStatus = "Internal server error"
+	StatusInternal CoreStatus = CoreStatus(metav1.StatusReasonInternalError)
 	// StatusTimeout means that the server did not complete the request
 	// within the required time and aborted the action.
 	// HTTP status code 504.
-	StatusTimeout CoreStatus = "Timeout"
+	StatusTimeout CoreStatus = CoreStatus(metav1.StatusReasonTimeout)
 	// StatusNotImplemented means that the server does not support the
 	// requested action. Typically used during development of new
 	// features.
@@ -83,7 +87,7 @@ type StatusReason interface {
 	Status() CoreStatus
 }
 
-type CoreStatus string
+type CoreStatus metav1.StatusReason
 
 // Status implements the StatusReason interface.
 func (s CoreStatus) Status() CoreStatus {

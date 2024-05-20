@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"reflect"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -21,14 +20,6 @@ var defaultLogger = log.New("requestErrors")
 type ErrorOptions struct {
 	fallback *errutil.Error
 	logger   log.Logger
-}
-
-type k8sError struct {
-	metav1.Status `json:",inline"`
-
-	// Internal values that do not have a clean home in the standard Status object
-	MessageID string         `json:"messageId"`
-	Extra     map[string]any `json:"extra,omitempty"`
 }
 
 // Write writes an error to the provided [http.ResponseWriter] with the
@@ -63,37 +54,9 @@ func Write(ctx context.Context, err error, w http.ResponseWriter, opts ...func(E
 	// When running in k8s, this will return a v1 status
 	// Typically, k8s handlers should directly support error negotiation, however
 	// when implementing handlers directly this will maintain compatibility with client-go
-	info, ok := request.RequestInfoFrom(ctx)
+	_, ok := request.RequestInfoFrom(ctx)
 	if ok {
-		status := &k8sError{
-			Status: metav1.Status{
-				Status:  metav1.StatusFailure,
-				Code:    int32(pub.StatusCode),
-				Message: pub.Message,
-				Details: &metav1.StatusDetails{
-					Name:  info.Name,
-					Group: info.APIGroup,
-				},
-			},
-			// Add the internal values into
-			MessageID: pub.MessageID,
-			Extra:     pub.Extra,
-		}
-		switch pub.StatusCode {
-		case 400:
-			status.Reason = metav1.StatusReasonBadRequest
-		case 401:
-			status.Reason = metav1.StatusReasonUnauthorized
-		case 403:
-			status.Reason = metav1.StatusReasonForbidden
-		case 404:
-			status.Reason = metav1.StatusReasonNotFound
-		case 500: // many reasons things could map here
-			status.Reason = metav1.StatusReasonInternalError
-		case 504:
-			status.Reason = metav1.StatusReasonTimeout
-		}
-		rsp = status
+		rsp = gErr.Status()
 	}
 
 	err = json.NewEncoder(w).Encode(rsp)

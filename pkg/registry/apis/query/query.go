@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -105,14 +104,14 @@ func (r *queryREST) Connect(ctx context.Context, name string, opts runtime.Objec
 					Message: "datasource not found",
 				}}
 			}
-			responder.Error(convertToK8sError(err))
+			responder.Error(err)
 			return
 		}
 
 		// Actually run the query
 		rsp, err := b.execute(ctx, req)
 		if err != nil {
-			responder.Error(convertToK8sError(err))
+			responder.Error(err)
 			return
 		}
 
@@ -120,20 +119,6 @@ func (r *queryREST) Connect(ctx context.Context, name string, opts runtime.Objec
 			QueryDataResponse: *rsp, // wrap the backend response as a QueryDataResponse
 		})
 	}), nil
-}
-
-// Would be really nice if errutil was directly k8s compatible :(
-func convertToK8sError(err error) error {
-	var gErr errutil.Error
-	if errors.As(err, &gErr) {
-		return &errorsK8s.StatusError{ErrStatus: metav1.Status{
-			Status:  metav1.StatusFailure,
-			Code:    int32(gErr.Reason.Status().HTTPStatus()),
-			Reason:  metav1.StatusReason(gErr.Reason.Status()), // almost true
-			Message: gErr.PublicMessage,
-		}}
-	}
-	return err
 }
 
 func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo) (qdr *backend.QueryDataResponse, err error) {

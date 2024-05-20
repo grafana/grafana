@@ -1,8 +1,13 @@
 package errutil
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+
+	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 // Base represents the static information about a specific error.
@@ -294,6 +299,9 @@ func (b Base) Is(err error) bool {
 	}
 }
 
+// Allow errorutil errors to be returned as informative k8s errors
+var _ = errorsK8s.APIStatus(&Error{})
+
 // Error is the error type for errors within Grafana, extending
 // the Go error type with Grafana specific metadata to reduce
 // boilerplate error handling for status codes and internationalization
@@ -363,6 +371,34 @@ func (e Error) MarshalJSON() ([]byte, error) {
 // Error implements the error interface.
 func (e Error) Error() string {
 	return fmt.Sprintf("[%s] %s", e.MessageID, e.LogMessage)
+}
+
+// When the error is rendered by an apiserver, this format is used
+func (e Error) Status() metav1.Status {
+	public := e.Public()
+	s := metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    int32(public.StatusCode),
+		Reason:  metav1.StatusReason(e.Reason.Status()), // almost true
+		Message: public.Message,
+	}
+
+	// Shove the extra data into details
+	if public.Extra != nil || public.MessageID != "" {
+		s.Details = &metav1.StatusDetails{
+			UID: types.UID(public.MessageID),
+		}
+		for k, v := range public.Extra {
+			v, err := json.Marshal(v)
+			if err != nil {
+				s.Details.Causes = append(s.Details.Causes, metav1.StatusCause{
+					Field:   k,
+					Message: string(v),
+				})
+			}
+		}
+	}
+	return s
 }
 
 // Unwrap is used by errors.As to iterate over the sequence of
