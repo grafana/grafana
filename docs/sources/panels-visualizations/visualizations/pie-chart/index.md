@@ -122,4 +122,3 @@ Select values to display in the legend. You can select more than one.
 ## Value mappings
 
 {{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-

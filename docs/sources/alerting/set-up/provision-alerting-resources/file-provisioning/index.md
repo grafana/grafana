@@ -796,4 +796,3 @@ For more examples on the concept of this guide:
 - Try provisioning alerting resources in Grafana OSS with YAML files through a demo project using [Docker Compose](https://github.com/grafana/provisioning-alerting-examples/tree/main/config-files) or [Kubernetes deployments](https://github.com/grafana/provisioning-alerting-examples/tree/main/kubernetes).
 - Review the distinct options about how Grafana provisions resources in the [Provision Grafana documentation](ref:provisioning).
 - For Helm support, review the examples provisioning alerting resources in the [Grafana Helm Chart documentation](https://github.com/grafana/helm-charts/blob/main/charts/grafana/README.md).
-

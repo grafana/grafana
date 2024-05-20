@@ -85,4 +85,3 @@ supports doing histogram bucketing on the raw data.
 If you remove or lower the group by time (or raise maxDataPoints) in your query to return more data points, your heatmap will be
 more accurate, but this can also be very CPU and memory taxing for your browser, possibly causing hangs or crashes if the number of
 data points becomes unreasonably large.
-

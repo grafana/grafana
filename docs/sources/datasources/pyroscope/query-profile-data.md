@@ -87,4 +87,3 @@ Metrics results represent the aggregated sum value over time of the selected pro
 ![Metrics graph](/media/docs/pyroscope/query-editor/metric-graph.png 'Metrics graph')
 
 This allows you to quickly see any spikes in the value of the scraped profiles and zoom in to a particular time range.
-

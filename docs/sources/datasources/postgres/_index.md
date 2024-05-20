@@ -523,4 +523,3 @@ WHERE
 
 Time series queries should work in alerting conditions. Table formatted queries are not yet supported in alert rule
 conditions.
-

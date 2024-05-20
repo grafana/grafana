@@ -198,4 +198,3 @@ Adjust the sizes of the gauge text.
 ## Value mappings
 
 {{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-

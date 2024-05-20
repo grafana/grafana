@@ -127,8 +127,8 @@ For Grafana Cloud, refer to the [instructions to manage a Grafana Cloud stack wi
 
 [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs) enables you to manage the following alerting resources.
 
-| Alerting resource                               | Terraform resource                                                                                                               |
-| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Alerting resource                                   | Terraform resource                                                                                                               |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
 | [Alert rules](ref:alerting-rules)                   | [grafana_rule_group](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/rule_group)                   |
 | [Contact points](ref:contact-points)                | [grafana_contact_point](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/contact_point)             |
 | [Notification templates](ref:notification-template) | [grafana_message_template](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/message_template)       |
@@ -438,4 +438,3 @@ For more examples on the concept of this guide:
 - Try the demo [provisioning alerting resources in Grafana OSS using Terraform and Docker Compose](https://github.com/grafana/provisioning-alerting-examples/tree/main/terraform).
 - Review all the available options and examples of the Terraform Alerting schemas in the [Grafana Terraform Provider documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
 - Review the [tutorial to manage a Grafana Cloud stack using Terraform](ref:provision-cloud-with-terraform).
-

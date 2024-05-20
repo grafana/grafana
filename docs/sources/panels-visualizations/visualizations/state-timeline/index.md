@@ -154,4 +154,3 @@ When the legend option is enabled it can show either the value mappings or the t
 ## Value mappings
 
 {{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-

@@ -45,4 +45,3 @@ Here are two examples of when you may want to [add your own external alertmanage
 1. You may already have Alertmanagers on-premises in your own Cloud infrastructure that you have set up and still want to use, because you have other alert generators, such as Prometheus.
 
 2. You want to use both Prometheus on-premises and hosted Grafana to send alerts to the same Alertmanager that runs in your Cloud infrastructure.
-

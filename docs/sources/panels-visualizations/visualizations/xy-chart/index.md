@@ -290,4 +290,3 @@ Learn about [data links](ref:data-links) that you can set for a visualization.
 ### Field overrides
 
 Learn about [field overrides][Configure field overrides] that you can set for a visualization.
-

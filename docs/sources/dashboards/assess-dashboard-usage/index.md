@@ -155,4 +155,3 @@ If you set up your installation to [export logs of usage insights](ref:export-lo
 1. [Data source details](/grafana/dashboards/13786) dashboard provides a view of data source activity and health.
 
 You can click the previous links to download the respective dashboard JSON, then import into your Grafana installation.
-

@@ -78,7 +78,7 @@ To configure basic settings for the data source, complete the following steps:
    | **Name**                | Sets the name you use to refer to the data source in panels and queries.                                                |
    | **Default**             | Sets whether the data source is pre-selected for new panels. You can set only one default data source per organization. |
    | **URL**                 | Sets the HTTP protocol, IP, and port of your graphite-web or graphite-api installation.                                 |
-   | **Auth**                | For details, refer to [Configure Authentication](ref:configure-authentication).                                             |
+   | **Auth**                | For details, refer to [Configure Authentication](ref:configure-authentication).                                         |
    | **Basic Auth**          | Enables basic authentication to the data source.                                                                        |
    | **User**                | Sets the user name for basic authentication.                                                                            |
    | **Password**            | Sets the password for basic authentication.                                                                             |
@@ -138,4 +138,3 @@ For details, see the [template variables documentation]({{< relref "./template-v
 
 Grafana exposes metrics for Graphite on the `/metrics` endpoint.
 For detailed instructions, refer to [Internal Grafana metrics](ref:internal-grafana-metrics).
-

@@ -139,4 +139,3 @@ This option only applies when bar size is set to manual.
 ## Value mappings
 
 {{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-

@@ -80,4 +80,3 @@ To set up the Grafana OnCall integration using the Grafana Alerting application,
 1. To view your integration in the Grafana OnCall application and set up routes and escalation chains, click the Link next to the integration on the Contact points list view page in the **Type** column.
 
    This redirects you to the Grafana OnCall integration page in the Grafana OnCall application. From there, you can add [routes and escalation chains](ref:escalation-chain).
-

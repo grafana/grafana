@@ -87,8 +87,8 @@ You can configure tooltips for the following visualizations:
 |                                  |                                  |
 | -------------------------------- | -------------------------------- |
 | [Bar chart][bar chart]           | [Status history][status history] |
-| [Candlestick](ref:candlestick)       | [Time series][time series]       |
-| [Heatmap](ref:heatmap)               | [Trend](ref:trend)                   |
+| [Candlestick](ref:candlestick)   | [Time series][time series]       |
+| [Heatmap](ref:heatmap)           | [Trend](ref:trend)               |
 | [Pie chart][pie chart]           | [XY chart][xy chart]             |
 | [State timeline][state timeline] |                                  |
 
@@ -141,4 +141,3 @@ For the heatmap visualization only, when you set the **Tooltip mode** to **Singl
 For the heatmap visualization only, when you set the **Tooltip mode** to **Single**, the **Show color scale** option is displayed. This option controls whether or not the tooltip includes the color scale that's also represented in the legend. When the color scale is included in the tooltip, it shows the hovered value on the scale:
 
 ![Heatmap with a tooltip displayed showing the hovered value reflected in the color scale](/media/docs/grafana/panels-visualizations/screenshot-heatmap-tooltip-color-scale-v11.0.png)
-

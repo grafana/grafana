@@ -99,4 +99,3 @@ By effectively extracting and indexing labels, Loki enables users to perform com
 Utilizing Loki's indexed labels in combination with Grafana's template variables provides a powerful way to interactively explore and visualize log data. Template variables allow users to create dynamic queries, selecting and filtering logs based on various labels, such as job names, instance IDs, severity levels, or any other contextual information attached to the log entries.
 
 In conclusion, Loki's label extraction and indexing mechanisms are key components that contribute to its ability to handle vast amounts of log data efficiently. By making use of labels and template variables, users can easily gain valuable insights from their log data and troubleshoot issues effectively.
-

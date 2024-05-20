@@ -141,4 +141,3 @@ Choose a [standard calculations](ref:standard-calculations) to show in the legen
 ## Value mappings
 
 {{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-

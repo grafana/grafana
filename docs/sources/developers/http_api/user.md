@@ -689,4 +689,3 @@ Content-Type: application/json
   "message": "User auth token revoked"
 }
 ```
-
