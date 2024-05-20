@@ -16,6 +16,17 @@ labels:
 menuTitle: Use configuration files to provision
 title: Use configuration files to provision alerting resources
 weight: 100
+refs:
+  alerting_export:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources/
+  provisioning:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/
 ---
 
 # Use configuration files to provision alerting resources
@@ -26,7 +37,7 @@ Arrange your files in a directory in a way that best suits your use case. For ex
 
 Details on how to set up the files and which fields are required for each object are listed below depending on which resource you are provisioning.
 
-For a complete guide about how Grafana provisions resources, refer to the [Provision Grafana][provisioning] documentation.
+For a complete guide about how Grafana provisions resources, refer to the [Provision Grafana](ref:provisioning) documentation.
 
 {{< admonition type="note" >}}
 
@@ -42,7 +53,7 @@ For a complete guide about how Grafana provisions resources, refer to the [Provi
 Create or delete alert rules in your Grafana instance(s).
 
 1. Create alert rules in Grafana.
-1. [Export][alerting_export] and download a provisioning file for your alert rules.
+1. [Export](ref:alerting_export) and download a provisioning file for your alert rules.
 1. Copy the contents into a YAML or JSON configuration file in the `provisioning/alerting` directory.
 
    Example configuration files can be found below.
@@ -140,7 +151,7 @@ deleteRules:
 Create or delete contact points in your Grafana instance(s).
 
 1. Create a contact point in Grafana.
-1. [Export][alerting_export] and download a provisioning file for your contact point.
+1. [Export](ref:alerting_export) and download a provisioning file for your contact point.
 1. Copy the contents into a YAML or JSON configuration file in the `provisioning/alerting` directory.
 
    Example configuration files can be found below.
@@ -579,7 +590,7 @@ Since the policy tree is a single resource, provisioning it will overwrite a pol
 {{< /admonition >}}
 
 1. Create a notification policy in Grafana.
-1. [Export][alerting_export] and download a provisioning file for your notification policy.
+1. [Export](ref:alerting_export) and download a provisioning file for your notification policy.
 1. Copy the contents into a YAML or JSON configuration file in the `provisioning/alerting` directory.
 
    Example configuration files can be found below.
@@ -806,11 +817,5 @@ This eliminates the need for a persistent database to use Grafana Alerting in Ku
 
 **Useful Links:**
 
-[Grafana provisioning][provisioning]
+[Grafana provisioning](ref:provisioning)
 
-{{% docs/reference %}}
-[alerting_export]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources"
-[alerting_export]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources"
-[provisioning]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/administration/provisioning"
-[provisioning]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/administration/provisioning"
-{{% /docs/reference %}}

@@ -17,6 +17,12 @@ labels:
     - oss
 title: Alerting high availability
 weight: 170
+refs:
+  configure-high-availability:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-high-availability/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-high-availability/
 ---
 
 # Alerting high availability
@@ -31,13 +37,9 @@ While the alert generator evaluates all alert rules on all instances, the alert 
 
 The Alertmanager uses a gossip protocol to share information about notifications between Grafana instances. It also gossips silences, which means a silence created on one Grafana instance is replicated to all other Grafana instances. Both notifications and silences are persisted to the database periodically, and during graceful shut down.
 
-It is important to make sure that gossiping is configured and tested. You can find the documentation on how to do that [here][configure-high-availability].
+It is important to make sure that gossiping is configured and tested. You can find the documentation on how to do that [here](ref:configure-high-availability).
 
 ## Useful links
 
-[Configure alerting high availability][configure-high-availability]
+[Configure alerting high availability](ref:configure-high-availability)
 
-{{% docs/reference %}}
-[configure-high-availability]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-high-availability"
-[configure-high-availability]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-high-availability"
-{{% /docs/reference %}}

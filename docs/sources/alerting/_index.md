@@ -12,6 +12,17 @@ labels:
     - oss
 title: Alerting
 weight: 114
+refs:
+  alerting-rules:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/
+  fundamentals:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/
 ---
 
 # Alerting
@@ -28,7 +39,7 @@ Grafana Alerting is available for Grafana OSS, Grafana Enterprise, or Grafana Cl
 
 Watch this video to learn more about Grafana Alerting: {{< vimeo 720001629 >}}
 
-_Refer to [Manage your alert rules][alerting-rules] for current instructions._
+_Refer to [Manage your alert rules](ref:alerting-rules) for current instructions._
 
 ## Key features and benefits
 
@@ -89,12 +100,5 @@ Here are some tips on how to create an effective alert management set up for you
 
 ## Useful links
 
-- [Introduction to Alerting][fundamentals]
+- [Introduction to Alerting](ref:fundamentals)
 
-{{% docs/reference %}}
-[alerting-rules]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules"
-[alerting-rules]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules"
-
-[fundamentals]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals"
-[fundamentals]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals"
-{{% /docs/reference %}}

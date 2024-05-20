@@ -12,6 +12,17 @@ labels:
     - oss
 title: Legacy alerting deprecation
 weight: 109
+refs:
+  migrating-alerts:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/migrating-alerts/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/migrating-alerts/
+  angular_deprecation:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/developers/angular_deprecation/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/developers/angular_deprecation/
 ---
 
 # Legacy alerting deprecation
@@ -26,7 +37,7 @@ Users who are still using legacy alerting are encouraged to migrate their alerts
 
 However, we will still patch CVEs until legacy alerting is completely removed in Grafana 11; honoring our commitment to building and distributing secure software.
 
-We have provided [instructions][migrating-alerts] on how to migrate to the new alerting system, making the process as easy as possible for users.
+We have provided [instructions](ref:migrating-alerts) on how to migrate to the new alerting system, making the process as easy as possible for users.
 
 ## Why are we deprecating legacy alerting?
 
@@ -36,25 +47,18 @@ The new system is based on Prometheus Alertmanager, which offers a more comprehe
 
 Overall, the new alerting system in Grafana is a major improvement over the legacy alerting feature, providing users with a more powerful and flexible alerting experience.
 
-Additionally, legacy alerting still requires Angular to function and we are [planning to remove support for it][angular_deprecation] in Grafana 11.
+Additionally, legacy alerting still requires Angular to function and we are [planning to remove support for it](ref:angular_deprecation) in Grafana 11.
 
 ## When will we remove legacy alerting completely?
 
-Legacy alerting will be removed from the code-base in Grafana 11, following the same timeline as the [Angular deprecation][angular_deprecation].
+Legacy alerting will be removed from the code-base in Grafana 11, following the same timeline as the [Angular deprecation](ref:angular_deprecation).
 
 ## How do I migrate to the new Grafana alerting?
 
-Refer to our [upgrade instructions][migrating-alerts].
+Refer to our [upgrade instructions](ref:migrating-alerts).
 
 ### Useful links
 
-- [Upgrade Alerting][migrating-alerts]
-- [Angular support deprecation][angular_deprecation]
+- [Upgrade Alerting](ref:migrating-alerts)
+- [Angular support deprecation](ref:angular_deprecation)
 
-{{% docs/reference %}}
-[angular_deprecation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/developers/angular_deprecation"
-[angular_deprecation]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/developers/angular_deprecation"
-
-[migrating-alerts]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/migrating-alerts"
-[migrating-alerts]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/migrating-alerts"
-{{% /docs/reference %}}
