@@ -26,10 +26,13 @@ func NewResourceInfo(group, version, resourceName, singularName, kind string,
 	return ResourceInfo{group, version, resourceName, singularName, shortName, kind, newObj, newList}
 }
 
-func (info *ResourceInfo) WithGroupAndShortName(group string, shortName string) ResourceInfo {
+func (info *ResourceInfo) WithGroupAndShortName(group, version, shortName string) ResourceInfo {
+	if version == "" {
+		version = info.version
+	}
 	return ResourceInfo{
 		group:        group,
-		version:      info.version,
+		version:      version,
 		resourceName: info.resourceName,
 		singularName: info.singularName,
 		kind:         info.kind,
@@ -56,6 +59,10 @@ func (info *ResourceInfo) TypeMeta() metav1.TypeMeta {
 		Kind:       info.kind,
 		APIVersion: info.group + "/" + info.version,
 	}
+}
+
+func (info *ResourceInfo) APIVersion() string {
+	return info.version
 }
 
 func (info *ResourceInfo) GroupVersion() schema.GroupVersion {
