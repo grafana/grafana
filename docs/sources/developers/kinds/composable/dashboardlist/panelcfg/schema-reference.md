@@ -9,23 +9,23 @@ labels:
     - oss
 title: DashboardListPanelCfg kind
 ---
+
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
 
 ## DashboardListPanelCfg
 
 #### Maturity: [experimental](../../../maturity/#experimental)
+
 #### Version: 0.0
 
-
-
 | Property  | Type               | Required | Default | Description |
-|-----------|--------------------|----------|---------|-------------|
+| --------- | ------------------ | -------- | ------- | ----------- |
 | `Options` | [object](#options) | **Yes**  |         |             |
 
 ### Options
 
 | Property             | Type     | Required | Default | Description                                                     |
-|----------------------|----------|----------|---------|-----------------------------------------------------------------|
+| -------------------- | -------- | -------- | ------- | --------------------------------------------------------------- |
 | `includeVars`        | boolean  | **Yes**  | `false` |                                                                 |
 | `keepTime`           | boolean  | **Yes**  | `false` |                                                                 |
 | `maxItems`           | integer  | **Yes**  | `10`    |                                                                 |
@@ -37,5 +37,3 @@ title: DashboardListPanelCfg kind
 | `tags`               | string[] | **Yes**  |         |                                                                 |
 | `folderId`           | integer  | No       |         | folderId is deprecated, and migrated to folderUid on panel init |
 | `folderUID`          | string   | No       |         |                                                                 |
-
-
