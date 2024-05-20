@@ -185,27 +185,6 @@ Annotations add metadata to provide more information on the alert in your alert 
 
 1. Click **Save rule**.
 
-### Single and multi-dimensional rule
-
-For Grafana managed alerts, you can create a rule with a classic condition or you can create a multi-dimensional rule.
-
-**Rule with classic condition**
-
-Use the classic condition expression to create a rule that triggers a single alert when its condition is met. For a query that returns multiple series, Grafana does not track the alert state of each series. As a result, Grafana sends only a single alert even when alert conditions are met for multiple series.
-
-For more information, see [expressions documentation][expression-queries].
-
-**Multi-dimensional rule**
-
-To generate a separate alert for each series, create a multi-dimensional rule. Use `Math`, `Reduce`, or `Resample` expressions to create a multi-dimensional rule. For example:
-
-- Add a `Reduce` expression for each query to aggregate values in the selected time range into a single value. (Not needed for [rules using numeric data][alerting-on-numeric-data]).
-- Add a `Math` expression with the condition for the rule. Not needed in case a query or a reduce expression already returns 0 if rule should not fire, or a positive number if it should fire. Some examples: `$B > 70` if it should fire in case value of B query/expression is more than 70. `$B < $C * 100` in case it should fire if value of B is less than value of C multiplied by 100. If queries being compared have multiple series in their results, series from different queries are matched if they have the same labels or one is a subset of the other.
-
-![Query section multi dimensional](/static/img/docs/alerting/unified/rule-edit-multi-8-0.png 'Query section multi dimensional screenshot')
-
-> **Note:** Grafana does not support alert queries with template variables. More information is available at <https://community.grafana.com/t/template-variables-are-not-supported-in-alert-queries-while-setting-up-alert/2514>.
-
 ### Configure no data and error handling
 
 Configure alerting behavior when your alert rule evaluation returns no data or an error.
