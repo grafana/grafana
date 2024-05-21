@@ -16,20 +16,14 @@ import type { ReactMonacoEditorProps } from './types';
  * @internal
  * Experimental export
  **/
-export const ReactMonacoEditorLazy = (props: ReactMonacoEditorProps) => {
+export const ReactMonacoEditorLazyComponent = (props: ReactMonacoEditorProps) => {
   const styles = useStyles2(getStyles);
   const { loading, error, dependency } = useAsyncDependency(
     import(/* webpackChunkName: "react-monaco-editor" */ './ReactMonacoEditor')
   );
 
   if (loading) {
-    return (
-      <LoadingPlaceholder
-        text={''}
-        className={styles.container}
-        data-testid={selectors.components.ReactMonacoEditor.editorLoading}
-      />
-    );
+    return <LoadingPlaceholder text={''} className={styles.container} />;
   }
 
   if (error) {
@@ -43,13 +37,7 @@ export const ReactMonacoEditorLazy = (props: ReactMonacoEditorProps) => {
   }
 
   const ReactMonacoEditor = dependency.ReactMonacoEditor;
-  return (
-    <ReactMonacoEditor
-      {...props}
-      loading={props.loading ?? null}
-      data-testid={selectors.components.ReactMonacoEditor.editor}
-    />
-  );
+  return <ReactMonacoEditor {...props} loading={props.loading ?? null} />;
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -60,3 +48,17 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
+
+const withContainer = <P extends object>(Component: React.ComponentType<P>): React.ComponentType<P> => {
+  const WithContainer = (props: P) => (
+    <div data-testid={selectors.components.ReactMonacoEditor.container}>
+      <Component {...props} />
+    </div>
+  );
+
+  WithContainer.displayName = Component.displayName;
+
+  return WithContainer;
+};
+
+export const ReactMonacoEditorLazy = withContainer(ReactMonacoEditorLazyComponent);
