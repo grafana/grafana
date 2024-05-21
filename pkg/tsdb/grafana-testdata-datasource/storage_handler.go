@@ -12,12 +12,13 @@ import (
 
 // MutateInstanceSettings implements backend.StorageHandler.
 func (s *Service) MutateInstanceSettings(ctx context.Context, req *backend.InstanceSettingsAdmissionRequest) (*backend.InstanceSettingsResponse, error) {
-	settings := req.PluginContext.DataSourceInstanceSettings
+	if req.PluginContext.AppInstanceSettings != nil {
+		return getBadRequest("unexpected app instance settings"), nil
+	}
+
+	settings := req.DataSourceInstanceSettings
 	if settings == nil {
 		return getBadRequest("missing datasource settings"), nil
-	}
-	if req.PluginContext.AppInstanceSettings != nil {
-		return getBadRequest("not expecting app instance settings"), nil
 	}
 
 	switch settings.APIVersion {
@@ -37,6 +38,12 @@ func (s *Service) MutateInstanceSettings(ctx context.Context, req *backend.Insta
 
 	if len(settings.DecryptedSecureJSONData) > 0 {
 		return getBadRequest("found unsupported secure json fields"), nil
+	}
+	if settings.URL != "" {
+		return getBadRequest("unsupported URL value"), nil
+	}
+	if settings.User != "" {
+		return getBadRequest("unsupported User value"), nil
 	}
 
 	return &backend.InstanceSettingsResponse{

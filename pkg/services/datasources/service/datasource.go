@@ -303,7 +303,6 @@ func (s *Service) prepareAdd(ctx context.Context, cmd *datasources.AddDataSource
 			Name:                    cmd.Name,
 			URL:                     cmd.URL,
 			Database:                cmd.Database,
-			Updated:                 time.Now(),
 			JSONData:                jd,
 			DecryptedSecureJSONData: cmd.SecureJsonData,
 			Type:                    cmd.Type,
