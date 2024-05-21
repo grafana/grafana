@@ -1,5 +1,6 @@
 import { configureStore as reduxConfigureStore, createListenerMiddleware } from '@reduxjs/toolkit';
 import { setupListeners } from '@reduxjs/toolkit/query';
+import { Middleware } from 'redux';
 
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
@@ -21,6 +22,11 @@ export function addRootReducer(reducers: any) {
 }
 
 const listenerMiddleware = createListenerMiddleware();
+const extraMiddleware: Middleware[] = [];
+
+export function addExtraMiddleware(middleware: Middleware) {
+  extraMiddleware.push(middleware);
+}
 
 export function configureStore(initialState?: Partial<StoreState>) {
   const store = reduxConfigureStore({
@@ -32,7 +38,8 @@ export function configureStore(initialState?: Partial<StoreState>) {
         publicDashboardApi.middleware,
         browseDashboardsAPI.middleware,
         cloudMigrationAPI.middleware,
-        queryLibraryApi.middleware
+        queryLibraryApi.middleware,
+        ...extraMiddleware
       ),
     devTools: process.env.NODE_ENV !== 'production',
     preloadedState: {

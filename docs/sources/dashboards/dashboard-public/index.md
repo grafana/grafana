@@ -9,15 +9,38 @@ labels:
     - oss
 title: Public dashboards
 description: Make your Grafana dashboards public and share them with anyone
+refs:
+  caching:
+    - pattern: /docs/grafana/
+      destination: https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#query-and-resource-caching/
+    - pattern: /docs/grafana-cloud/
+      destination: https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#query-and-resource-caching/
+  dashboard-sharing:
+    - pattern: /docs/grafana/
+      destination: https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/
+    - pattern: /docs/grafana-cloud/
+      destination: https://grafana.com/docs/grafana-cloud/visualizations/dashboards/share-dashboards-panels/
+  dashboards-insights-documentation:
+    - pattern: /docs/grafana/
+      destination: https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/assess-dashboard-usage#dashboard-insights/
+    - pattern: /docs/grafana-cloud/
+      destination: https://grafana.com/docs/grafana-cloud/visualizations/dashboards/assess-dashboard-usage/
+  custom-branding:
+    - pattern: /docs/grafana/
+      destination: https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/configure-custom-branding/
+    - pattern: /docs/grafana-cloud/
+      destination: https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/configure-custom-branding/
 weight: 8
 ---
 
 # Public dashboards
 
-> **Warning:** Making your dashboard public could result in a large number of queries to the data sources used by your dashboard.
-> This can be mitigated by utilizing the enterprise [caching][] and/or rate limiting features.
+{{< admonition type="warning" >}}
+Making your dashboard public could result in a large number of queries to the data sources used by your dashboard.
+This can be mitigated by utilizing the enterprise [caching](ref:caching) and/or rate limiting features.
+{{< /admonition >}}
 
-Public dashboards allow you to share your Grafana dashboard with anyone. This is useful when you want to make your dashboard available to the world without requiring access to your Grafana organization. This differs from [dashboard sharing][], which either requires recipients to be users in the same Grafana organization or provides limited information, as with a snapshot.
+Public dashboards allow you to share your Grafana dashboard with anyone. This is useful when you want to make your dashboard available to the world without requiring access to your Grafana organization. This differs from [dashboard sharing](ref:dashboard-sharing), which either requires recipients to be users in the same Grafana organization or provides limited information, as with a snapshot.
 
 You can see a list of all your public dashboards in one place by navigating to **Dashboards > Public dashboards**. For each dashboard in the list, the page displays the status, a link to view the dashboard, a link to the public dashboard configuration, and the option to revoke the public URL.
 
@@ -57,14 +80,12 @@ The link no longer works. You must create a new public URL, as in [Make a dashbo
 ## Email sharing
 
 {{% admonition type="note" %}}
-
-Available in [private preview](/docs/release-life-cycle/) in [Grafana Cloud](/docs/grafana-cloud). This feature will have a cost by active users after being promoted into general availability.
+Available in [private preview](https://grafana.com/docs/release-life-cycle/) in [Grafana Cloud](https://grafana.com/docs/grafana-cloud/). This feature will have a cost by active users after being promoted into general availability.
 
 Please contact support to have the feature enabled.
-
 {{% /admonition %}}
 
-Email sharing allows you to share your public dashboard with only specific people by email, instead of having it accessible to anyone with the URL. When you use email sharing, recipients receive a one-time use link that's valid for **one hour**. Once the link is used, the viewer has access to the public dashboard for **30 days**.
+Email sharing allows you to share your public dashboard with only specific people by email, instead of having it accessible to anyone with the URL. When you use email sharing, recipients receive a one-time use link that's valid for _one hour_. Once the link is used, the viewer has access to the public dashboard for _30 days_.
 
 ### Invite a viewer
 
@@ -113,19 +134,21 @@ From here, you can see the earliest time a user has been active in a dashboard, 
 
 One-time use links use browser cookies, so when a viewer is granted access through one of these links, they will only have access on the browser they used to claim the link.
 
-A single viewer cannot generate multiple valid one-time use links. When a new one-time use link is issued for a viewer, all previous ones are invalidated.
+Multiple valid one-time use links can't be generated for a single viewer. When a new one-time use link is issued for a viewer, all previous ones are invalidated.
 
 If a Grafana user has read access to the parent dashboard, they can view the public dashboard without needing to have access granted.
 
 ## Assess public dashboard usage
 
-> **Note:** Available in [Grafana Enterprise][] and [Grafana Cloud](/docs/grafana-cloud).
+{{< admonition type="note" >}}
+Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](https://grafana.com/docs/grafana-cloud/).
+{{< /admonition >}}
 
 You can check usage analytics about your public dashboard by clicking the insights icon in the dashboard header:
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-insights.png" max-width="400px" class="docs-image--no-shadow" alt="Dashboard insights icon" >}}
 
-Learn more about the kind of information provided in the [dashboard insights documentation][].
+Learn more about the kind of information provided in the [dashboard insights documentation](ref:dashboards-insights-documentation).
 
 ## Supported data sources
 
@@ -247,21 +270,4 @@ guaranteed because plugin developers can override this functionality. The follow
 
 ## Custom branding
 
-If you're a Grafana Enterprise customer, you can use custom branding to change the appearance of a public dashboard footer. For more information, refer to [Custom branding][].
-
-{{% docs/reference %}}
-[caching]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management#query-and-resource-caching"
-[caching]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management#query-and-resource-caching"
-
-[Grafana Enterprise]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/introduction/grafana-enterprise"
-[Grafana Enterprise]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/introduction/grafana-enterprise"
-
-[dashboard insights documentation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/assess-dashboard-usage#dashboard-insights"
-[dashboard insights documentation]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/assess-dashboard-usage#dashboard-insights"
-
-[dashboard sharing]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/share-dashboards-panels"
-[dashboard sharing]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/share-dashboards-panels"
-
-[Custom branding]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana/configure-custom-branding"
-[Custom branding]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana/configure-custom-branding"
-{{% /docs/reference %}}
+If you're a Grafana Enterprise customer, you can use custom branding to change the appearance of a public dashboard footer. For more information, refer to [Configure custom branding](ref:custom-branding).

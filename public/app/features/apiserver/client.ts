@@ -8,7 +8,7 @@ import {
   Resource,
   ResourceForCreate,
   ResourceList,
-  ResourceServer,
+  ResourceClient,
 } from './types';
 
 export interface GroupVersionResource {
@@ -17,7 +17,7 @@ export interface GroupVersionResource {
   resource: string;
 }
 
-export class ScopedResourceServer<T = object, K = string> implements ResourceServer<T, K> {
+export class ScopedResourceClient<T = object, K = string> implements ResourceClient<T, K> {
   readonly url: string;
 
   constructor(gvr: GroupVersionResource, namespaced = true) {
@@ -27,6 +27,9 @@ export class ScopedResourceServer<T = object, K = string> implements ResourceSer
   }
 
   public async create(obj: ResourceForCreate<T, K>): Promise<void> {
+    if (!obj.metadata.name && !obj.metadata.generateName) {
+      obj.metadata.generateName = 'g'; // Triggers the server to create a unique value
+    }
     return getBackendSrv().post(this.url, obj);
   }
 
