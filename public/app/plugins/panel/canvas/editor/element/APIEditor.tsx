@@ -24,9 +24,13 @@ export interface APIEditorConfig {
   headerParams?: Array<[string, string]>;
 }
 
-const dummyStringSettings = {
+const dummyStringSettings: StandardEditorsRegistryItem<string, StringFieldConfigSettings> = {
+  id: '',
+  name: '',
+  description: '',
+  editor: StringValueEditor,
   settings: {},
-} as StandardEditorsRegistryItem<string, StringFieldConfigSettings>;
+};
 
 type Props = StandardEditorProps<APIEditorConfig>;
 

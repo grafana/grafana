@@ -12,6 +12,7 @@ import {
   DataQueryResponseData,
   DataSourceGetTagValuesOptions,
   DataSourceInstanceSettings,
+  dateTime,
   FieldType,
   LoadingState,
   rangeUtil,
@@ -665,18 +666,18 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       targets,
     };
 
-    request.range = options.range && {
-      ...options.range,
-      from: this.traceQuery?.timeShiftEnabled
-        ? options.range.from.subtract(
-            rangeUtil.intervalToMs(this.traceQuery?.spanStartTimeShift || '30m'),
-            'milliseconds'
-          )
-        : options.range.from,
-      to: this.traceQuery?.timeShiftEnabled
-        ? options.range.to.add(rangeUtil.intervalToMs(this.traceQuery?.spanEndTimeShift || '30m'), 'milliseconds')
-        : options.range.to,
-    };
+    if (this.traceQuery?.timeShiftEnabled) {
+      request.range = options.range && {
+        ...options.range,
+        from: options.range.from.subtract(
+          rangeUtil.intervalToMs(this.traceQuery?.spanStartTimeShift || '30m'),
+          'milliseconds'
+        ),
+        to: options.range.to.add(rangeUtil.intervalToMs(this.traceQuery?.spanEndTimeShift || '30m'), 'milliseconds'),
+      };
+    } else {
+      request.range = { from: dateTime(0), to: dateTime(0), raw: { from: dateTime(0), to: dateTime(0) } };
+    }
 
     return request;
   }
