@@ -908,8 +908,9 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						Annotations: map[string]string{"annotation1": "val1"},
 					},
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-						Title: "AlwaysFiring",
-						Data:  []apimodels.AlertQuery{},
+						Title:     "AlwaysFiring",
+						Condition: "A",
+						Data:      []apimodels.AlertQuery{},
 					},
 				},
 				expectedMessage: "invalid rule specification at index [0]: invalid alert rule: no queries or expressions are found",

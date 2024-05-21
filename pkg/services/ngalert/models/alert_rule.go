@@ -337,6 +337,12 @@ func (alertRule *AlertRule) GetLabels(opts ...LabelOption) map[string]string {
 }
 
 func (alertRule *AlertRule) GetEvalCondition() Condition {
+	if alertRule.IsRecordingRule() {
+		return Condition{
+			Condition: alertRule.Record.From,
+			Data:      alertRule.Data,
+		}
+	}
 	return Condition{
 		Condition: alertRule.Condition,
 		Data:      alertRule.Data,
