@@ -37,7 +37,7 @@ export const MatcherFilter = ({ onFilterChange, defaultQueryString }: Props) => 
       error={inputInvalid ? 'Query must use valid matcher syntax. See the examples in the help tooltip.' : null}
       label={
         <Label>
-          <Stack gap={0.5}>
+          <Stack gap={0.5} alignItems="center">
             <span>Search by label</span>
             <Tooltip
               content={

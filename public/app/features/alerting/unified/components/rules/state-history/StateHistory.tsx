@@ -82,7 +82,7 @@ const StateHistory = ({ alertId }: Props) => {
         <Field
           label={
             <Label>
-              <Stack gap={0.5}>
+              <Stack gap={0.5} alignItems="center">
                 <span>Filter group</span>
                 <Tooltip
                   content={
