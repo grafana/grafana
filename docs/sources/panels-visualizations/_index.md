@@ -17,6 +17,13 @@ menuTitle: Panels and visualizations
 title: Panels and visualizations
 description: Learn about and configure panels and visualizations
 weight: 80
+refs:
+  data-sources:
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
+  data-source-management:
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
 ---
 
 # Panels and visualizations
@@ -30,9 +37,9 @@ Panels can be dragged, dropped, and resized to rearrange them on the dashboard.
 
 Before you add a panel, ensure that you have configured a data source.
 
-- For details about using data sources, refer to [Data sources][].
+- For details about using data sources, refer to [Data sources](ref:data-sources).
 
-- For more information about managing data sources as an administrator, refer to [Data source management][].
+- For more information about managing data sources as an administrator, refer to [Data source management](ref:data-source-management).
 
   {{% admonition type="note" %}}
   [Data source management](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/) is only available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](https://grafana.com/docs/grafana-cloud/).
@@ -41,11 +48,3 @@ Before you add a panel, ensure that you have configured a data source.
 This section includes the following sub topics:
 
 {{< section >}}
-
-{{% docs/reference %}}
-[Data source management]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
-[Data source management]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
-
-[Data sources]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources"
-[Data sources]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources"
-{{% /docs/reference %}}
