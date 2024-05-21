@@ -111,6 +111,7 @@ describe('useCreatableSelectPersistedBehaviour', () => {
     await userEvent.click(input);
 
     // we expect 2 elemnts having "Option 2": the input itself and the option.
-    expect(screen.getAllByText('Option 2')).toHaveLength(2);
+    expect(screen.getByText('Option 2')).toBeInTheDocument();
+    expect(screen.getByRole('combobox')).toHaveValue('Option 2');
   });
 });
