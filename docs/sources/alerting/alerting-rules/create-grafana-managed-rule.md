@@ -243,7 +243,7 @@ You can configure the alert instance state when its evaluation returns no data:
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | No Data               | The default option. Sets alert instance state to `No data`. <br/> The alert rule also creates a new alert instance `DatasourceNoData` with the name and UID of the alert rule, and UID of the datasource that returned no data as labels. |
 | Alerting              | Sets alert instance state to `Alerting`. It waits until the [pending period](ref:pending-period) has finished.                                                                                                                            |
-| Ok                    | Sets alert instance state to `Normal`.                                                                                                                                                                                                    |
+| Normal                | Sets alert instance state to `Normal`.                                                                                                                                                                                                    |
 | Keep Last State       | Maintains the alert instance in its last state. Useful for mitigating temporary issues, refer to [Keep last state](ref:keep-last-state).                                                                                                  |
 
 You can also configure the alert instance state when its evaluation returns an error or timeout.
@@ -252,7 +252,7 @@ You can also configure the alert instance state when its evaluation returns an e
 | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Error               | The default option. Sets alert instance state to `Error`. <br/> The alert rule also creates a new alert instance `DatasourceError` with the name and UID of the alert rule, and UID of the datasource that returned no data as labels. |
 | Alerting            | Sets alert instance state to `Alerting`. It waits until the [pending period](ref:pending-period) has finished.                                                                                                                         |
-| Ok                  | Sets alert instance state to `Normal`.                                                                                                                                                                                                 |
+| Normal              | Sets alert instance state to `Normal`.                                                                                                                                                                                                 |
 | Keep Last State     | Maintains the alert instance in its last state. Useful for mitigating temporary issues, refer to [Keep last state](ref:keep-last-state).                                                                                               |
 
 ## Create alerts from panels
