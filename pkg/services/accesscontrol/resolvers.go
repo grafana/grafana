@@ -18,7 +18,7 @@ type ScopeAttributeResolver interface {
 type ActionResolver interface {
 	ResolveAction(action string) []string
 	ResolveActionSet(actionSet string) []string
-	ExpandActions(permissions []Permission) []Permission
+	ExpandActionSets(permissions []Permission) []Permission
 }
 
 // ScopeAttributeResolverFunc is an adapter to allow functions to implement ScopeAttributeResolver interface

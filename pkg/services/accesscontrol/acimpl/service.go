@@ -141,7 +141,7 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 		return nil, err
 	}
 	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
-		dbPermissions = s.actionResolver.ExpandActions(dbPermissions)
+		dbPermissions = s.actionResolver.ExpandActionSets(dbPermissions)
 	}
 
 	return append(permissions, dbPermissions...), nil
@@ -163,7 +163,7 @@ func (s *Service) getBasicRolePermissions(ctx context.Context, role string, orgI
 		RolePrefixes: OSSRolesPrefixes,
 	})
 	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
-		dbPermissions = s.actionResolver.ExpandActions(dbPermissions)
+		dbPermissions = s.actionResolver.ExpandActionSets(dbPermissions)
 	}
 
 	return append(permissions, dbPermissions...), err
@@ -181,7 +181,7 @@ func (s *Service) getTeamsPermissions(ctx context.Context, teamIDs []int64, orgI
 
 	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
 		for teamID, permissions := range teamPermissions {
-			teamPermissions[teamID] = s.actionResolver.ExpandActions(permissions)
+			teamPermissions[teamID] = s.actionResolver.ExpandActionSets(permissions)
 		}
 	}
 
@@ -215,7 +215,7 @@ func (s *Service) getUserDirectPermissions(ctx context.Context, user identity.Re
 	}
 
 	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
-		permissions = s.actionResolver.ExpandActions(permissions)
+		permissions = s.actionResolver.ExpandActionSets(permissions)
 	}
 	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
 		permissions = append(permissions, SharedWithMeFolderPermission)

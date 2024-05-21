@@ -172,6 +172,6 @@ func (f *FakeActionResolver) ResolveActionSet(actionSet string) []string {
 	return f.ExpectedActions
 }
 
-func (f *FakeActionResolver) ExpandActions(permissions []accesscontrol.Permission) []accesscontrol.Permission {
+func (f *FakeActionResolver) ExpandActionSets(permissions []accesscontrol.Permission) []accesscontrol.Permission {
 	return f.ExpectedPermissions
 }

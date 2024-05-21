@@ -796,7 +796,7 @@ func isFolderOrDashboardAction(action string) bool {
 	return strings.HasPrefix(action, dashboards.ScopeDashboardsRoot) || strings.HasPrefix(action, dashboards.ScopeFoldersRoot)
 }
 
-func (s *InMemoryActionSets) ExpandActions(permissions []accesscontrol.Permission) []accesscontrol.Permission {
+func (s *InMemoryActionSets) ExpandActionSets(permissions []accesscontrol.Permission) []accesscontrol.Permission {
 	var expandedPermissions []accesscontrol.Permission
 	for _, permission := range permissions {
 		resolvedActions := s.ResolveActionSet(permission.Action)

@@ -929,7 +929,7 @@ func TestStore_ExpandActions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			permissions := actionSetService.ExpandActions(tt.permissions)
+			permissions := actionSetService.ExpandActionSets(tt.permissions)
 			require.ElementsMatch(t, tt.expectedPermissions, permissions)
 		})
 	}
