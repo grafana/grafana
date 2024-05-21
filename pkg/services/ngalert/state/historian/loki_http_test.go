@@ -338,6 +338,49 @@ func TestStream(t *testing.T) {
 	})
 }
 
+func TestClampRange(t *testing.T) {
+	tc := []struct {
+		name     string
+		oldRange []int64
+		max      int64
+		newRange []int64
+	}{
+		{
+			name:     "clamps start value if max is smaller than range",
+			oldRange: []int64{5, 10},
+			max:      1,
+			newRange: []int64{9, 10},
+		},
+		{
+			name:     "returns same values if max is greater than range",
+			oldRange: []int64{5, 10},
+			max:      20,
+			newRange: []int64{5, 10},
+		},
+		{
+			name:     "returns same values if max is equal to range",
+			oldRange: []int64{5, 10},
+			max:      5,
+			newRange: []int64{5, 10},
+		},
+		{
+			name:     "returns same values if max is zero",
+			oldRange: []int64{5, 10},
+			max:      0,
+			newRange: []int64{5, 10},
+		},
+	}
+
+	for _, c := range tc {
+		t.Run(c.name, func(t *testing.T) {
+			start, end := ClampRange(c.oldRange[0], c.oldRange[1], c.max)
+
+			require.Equal(t, c.newRange[0], start)
+			require.Equal(t, c.newRange[1], end)
+		})
+	}
+}
+
 func createTestLokiClient(req client.Requester) *HttpLokiClient {
 	url, _ := url.Parse("http://some.url")
 	cfg := LokiConfig{
