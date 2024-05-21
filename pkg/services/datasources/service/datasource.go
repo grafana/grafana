@@ -292,12 +292,6 @@ func (s *Service) prepareAdd(ctx context.Context, cmd *datasources.AddDataSource
 		return fmt.Errorf("invalid jsonData (%v)", operation)
 	}
 
-	pluginContext := backend.PluginContext{
-		OrgID:         cmd.OrgID,
-		PluginID:      cmd.Type,
-		PluginVersion: p.Info.Version,
-	}
-
 	settings := &backend.DataSourceInstanceSettings{
 		UID:                     cmd.UID,
 		Name:                    cmd.Name,
@@ -311,9 +305,16 @@ func (s *Service) prepareAdd(ctx context.Context, cmd *datasources.AddDataSource
 		BasicAuthUser:           cmd.BasicAuthUser,
 		APIVersion:              cmd.APIVersion,
 	}
-	adm := settings.ToAdmissionRequest(pluginContext.DataSourceInstanceSettings)
-	adm.Operation = operation
-	rsp, err := s.pluginClient.MutateAdmission(ctx, adm)
+	rsp, err := s.pluginClient.MutateAdmission(ctx, &backend.AdmissionRequest{
+		Operation: operation,
+		PluginContext: backend.PluginContext{
+			OrgID:         cmd.OrgID,
+			PluginID:      cmd.Type,
+			PluginVersion: p.Info.Version,
+		},
+		Kind:        settings.GVK(),
+		ObjectBytes: settings.ProtoBytes(),
+	})
 	if err != nil {
 		if errors.Is(err, plugins.ErrMethodNotImplemented) {
 			return fmt.Errorf("plugin (%s) with apiVersion=%s must implement ProcessInstanceSettings", p.ID, p.APIVersion)
@@ -388,12 +389,6 @@ func (s *Service) prepareUpdate(ctx context.Context, cmd *datasources.UpdateData
 		return fmt.Errorf("invalid jsonData (%v)", operation)
 	}
 
-	pluginContext := backend.PluginContext{
-		OrgID:         cmd.OrgID,
-		PluginID:      cmd.Type,
-		PluginVersion: p.Info.Version,
-	}
-
 	settings := &backend.DataSourceInstanceSettings{
 		UID:                     cmd.UID,
 		Name:                    cmd.Name,
@@ -407,9 +402,16 @@ func (s *Service) prepareUpdate(ctx context.Context, cmd *datasources.UpdateData
 		BasicAuthUser:           cmd.BasicAuthUser,
 		APIVersion:              cmd.APIVersion,
 	}
-	adm := settings.ToAdmissionRequest(pluginContext.DataSourceInstanceSettings)
-	adm.Operation = operation
-	rsp, err := s.pluginClient.MutateAdmission(ctx, adm)
+	rsp, err := s.pluginClient.MutateAdmission(ctx, &backend.AdmissionRequest{
+		Operation: operation,
+		PluginContext: backend.PluginContext{
+			OrgID:         cmd.OrgID,
+			PluginID:      cmd.Type,
+			PluginVersion: p.Info.Version,
+		},
+		Kind:        settings.GVK(),
+		ObjectBytes: settings.ProtoBytes(),
+	})
 	if err != nil {
 		if errors.Is(err, plugins.ErrMethodNotImplemented) {
 			return fmt.Errorf("plugin (%s) with apiVersion=%s must implement ProcessInstanceSettings", p.ID, p.APIVersion)
