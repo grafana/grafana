@@ -1,7 +1,7 @@
 import { BaseQueryFn } from '@reduxjs/toolkit/query/react';
 import { lastValueFrom } from 'rxjs';
 
-import { getBackendSrv, isFetchError } from '@grafana/runtime/src/services/backendSrv';
+import { BackendSrvRequest, getBackendSrv, isFetchError } from '@grafana/runtime/src/services/backendSrv';
 
 import { DataQuerySpecResponse } from './types';
 
@@ -25,18 +25,9 @@ export enum QueryTemplateKinds {
 export const BASE_URL = `/apis/${API_VERSION}/namespaces/default/querytemplates/`;
 
 /**
- *
- * @alpha
- */
-export type QueryTemplateRequestOptions = {
-  method?: 'POST';
-  data?: any;
-};
-
-/**
  * TODO: similar code is duplicated in many places. To be unified in #86960
  */
-export const baseQuery: BaseQueryFn<QueryTemplateRequestOptions, DataQuerySpecResponse, Error> = async (
+export const baseQuery: BaseQueryFn<Pick<BackendSrvRequest, 'data' | 'method'>, DataQuerySpecResponse, Error> = async (
   requestOptions
 ) => {
   try {
