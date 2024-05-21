@@ -669,11 +669,14 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     if (this.traceQuery?.timeShiftEnabled) {
       request.range = options.range && {
         ...options.range,
-        from: options.range.from.subtract(
+        from: dateTime(options.range.from).subtract(
           rangeUtil.intervalToMs(this.traceQuery?.spanStartTimeShift || '30m'),
           'milliseconds'
         ),
-        to: options.range.to.add(rangeUtil.intervalToMs(this.traceQuery?.spanEndTimeShift || '30m'), 'milliseconds'),
+        to: dateTime(options.range.to).add(
+          rangeUtil.intervalToMs(this.traceQuery?.spanEndTimeShift || '30m'),
+          'milliseconds'
+        ),
       };
     } else {
       request.range = { from: dateTime(0), to: dateTime(0), raw: { from: dateTime(0), to: dateTime(0) } };
