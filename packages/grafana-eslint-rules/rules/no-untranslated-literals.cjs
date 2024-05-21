@@ -14,7 +14,7 @@ const noUntranslatedLiterals = createRule({
           if (children.length > 0) {
             children.forEach((child) => {
               // @ts-expect-error
-              if((child.type === AST_NODE_TYPES.Literal || child.type === AST_NODE_TYPES.JSXText) && !isUsingTrans(node) && !isEmpty(child)) {
+              if((child.type === AST_NODE_TYPES.Literal || child.type === AST_NODE_TYPES.JSXText) && !isUsingTrans(node) && !isBareString(node) && !isEmpty(child)) {
                 context.report({
                   node: child,
                   messageId: 'noUntranslatedStrings',
@@ -67,6 +67,17 @@ const isUsingTrans = (node) => {
   }
   return isTranslated;
 };
+
+// @ts-expect-error
+const isBareString = (node) => {
+  let isBare = false;
+  const grandparent = node.parent;
+  if (node.type === AST_NODE_TYPES.Literal && typeof node.value === 'string' && grandparent.type === AST_NODE_TYPES.ExpressionStatement) {
+    isBare = true;
+  }
+  return isBare;
+
+}
 
 // https://astexplorer.net/#/gist/f121a2a9edea666731e75aae1d013c9d/01756ad7f809e63644c8d1acd2224f767267c05e
 //
