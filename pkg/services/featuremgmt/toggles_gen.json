@@ -2222,6 +2222,19 @@
         "hideFromAdminPage": true,
         "hideFromDocs": true
       }
+    },
+    {
+      "metadata": {
+        "name": "datasourceProxyDisableRBAC",
+        "resourceVersion": "1715889033198",
+        "creationTimestamp": "2024-05-16T19:50:33Z"
+      },
+      "spec": {
+        "description": "Disables applying a plugin route's ReqAction field to authorization",
+        "stage": "GA",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true
+      }
     }
   ]
 }
