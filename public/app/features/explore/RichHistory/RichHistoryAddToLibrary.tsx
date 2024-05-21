@@ -5,7 +5,6 @@ import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Button } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 import { isQueryLibraryEnabled, useAddQueryTemplateMutation } from 'app/features/query-library';
 import { AddQueryTemplateCommand } from 'app/features/query-library/types';
 
@@ -28,14 +27,17 @@ export const RichHistoryAddToLibrary = ({ query }: Props) => {
     }
   };
 
+  const buttonLabel = t('explore.rich-history-card.add-to-library', 'Add to library');
+
   return isQueryLibraryEnabled() && !isSuccess ? (
     <Button
       variant="secondary"
+      aria-label={buttonLabel}
       onClick={() => {
         handleAddQueryTemplate({ title: 'Test', targets: [query] });
       }}
     >
-      <Trans i18nKey="explore.rich-history-card.add-to-library">Add to library</Trans>
+      {buttonLabel}
     </Button>
   ) : undefined;
 };
