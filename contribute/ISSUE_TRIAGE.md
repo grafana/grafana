@@ -145,7 +145,7 @@ When you feel you have all the information needed, then you're ready to [categor
 
 If you receive a notification with additional information provided, but you aren't on issue triage anymore and you feel you don't have time to handle it, you should delegate it to the current person on issue triage.
 
-### 3. Categorizing an issue
+### 3. Categorize an issue
 
 An issue can have multiple labels. Typically, a properly categorized issue should at least have these labels:
 
