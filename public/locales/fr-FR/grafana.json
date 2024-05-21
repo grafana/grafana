@@ -491,15 +491,11 @@
       "delete-query-tooltip": "Supprimer la requête",
       "delete-starred-query-confirmation-text": "Souhaitez-vous vraiment supprimer définitivement votre requête favorite ?",
       "edit-comment-tooltip": "Modifier le commentaire",
-      "left-pane": "",
       "optional-description": "Une description facultative de l'action de la requête.",
       "query-comment-label": "Commentaire sur la requête",
       "query-text-label": "Texte de la requête",
-      "right-pane": "",
-      "run-query-button": "Exécuter la requête",
       "save-comment": "Enregistrer le commentaire",
       "star-query-tooltip": "Mettre la requête en favori",
-      "switch-datasource-button": "Changer de source de données et exécuter la requête",
       "unstar-query-tooltip": "Retirer la requête des favoris",
       "update-comment-form": "Modifier le formulaire de commentaire"
     },
@@ -567,6 +563,12 @@
     "rich-history-utils-notification": {
       "saving-failed": "L'enregistrement de l'historique riche a échoué",
       "update-failed": "La mise à jour de l'historique riche a échoué"
+    },
+    "run-query": {
+      "left-pane": "",
+      "right-pane": "",
+      "run-query-button": "",
+      "switch-datasource-button": ""
     },
     "secondary-actions": {
       "query-add-button": "Ajouter une requête",

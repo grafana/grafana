@@ -491,15 +491,11 @@
       "delete-query-tooltip": "Abfrage löschen",
       "delete-starred-query-confirmation-text": "Sind Sie sicher, dass Sie die markierte Abfrage dauerhaft löschen möchten?",
       "edit-comment-tooltip": "Kommentar bearbeiten",
-      "left-pane": "",
       "optional-description": "Eine optionale Beschreibung dessen, was die Abfrage tut.",
       "query-comment-label": "Abfrage-Kommentar",
       "query-text-label": "Abfragetext",
-      "right-pane": "",
-      "run-query-button": "Abfrage ausführen",
       "save-comment": "Kommentar speichern",
       "star-query-tooltip": "Abfrage anwählen",
-      "switch-datasource-button": "Datenquelle wechseln und Abfrage ausführen",
       "unstar-query-tooltip": "Abfrage abwählen",
       "update-comment-form": "Kommentarformular aktualisieren"
     },
@@ -567,6 +563,12 @@
     "rich-history-utils-notification": {
       "saving-failed": "Speichern des umfangreichen Verlaufs fehlgeschlagen",
       "update-failed": "Aktualisierung des umfangreichen Verlaufs fehlgeschlagen"
+    },
+    "run-query": {
+      "left-pane": "",
+      "right-pane": "",
+      "run-query-button": "",
+      "switch-datasource-button": ""
     },
     "secondary-actions": {
       "query-add-button": "Abfrage hinzufügen",
