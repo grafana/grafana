@@ -93,14 +93,17 @@ const EmailList = ({
   );
 };
 
-export const EmailListTab = ({ dashboard }: { dashboard: DashboardScene }) => {
+export const EmailListConfiguration = ({ dashboard }: { dashboard: DashboardScene }) => {
   const styles = useStyles2(getStyles);
   const { data: publicDashboard } = publicDashboardApi.endpoints?.getPublicDashboard.useQueryState(
     dashboard.state.uid!
   );
-
   return (
-    <Field label="People with access" className={styles.listField}>
+    <Field
+      label="People with access"
+      description="Only people you've directly invited can access this dashboard"
+      className={styles.listField}
+    >
       {!!publicDashboard?.recipients?.length ? (
         <div className={styles.listContainer}>
           <EmailList

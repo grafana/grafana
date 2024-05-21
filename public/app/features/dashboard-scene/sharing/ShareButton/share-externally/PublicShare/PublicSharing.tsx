@@ -4,7 +4,8 @@ import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardAp
 import { publicDashboardPersisted } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
-import ConfigPublicSharing from './ConfigPublicSharing';
+import ShareConfiguration from '../ShareConfiguration';
+
 import CreatePublicSharing from './CreatePublicSharing';
 
 export const PublicSharing = ({ dashboard, onCancel }: { dashboard: DashboardScene; onCancel: () => void }) => {
@@ -17,7 +18,7 @@ export const PublicSharing = ({ dashboard, onCancel }: { dashboard: DashboardSce
       {!publicDashboardPersisted(publicDashboard) ? (
         <CreatePublicSharing dashboard={dashboard} onCancel={onCancel} hasError={isError} />
       ) : (
-        <ConfigPublicSharing dashboard={dashboard} />
+        <ShareConfiguration dashboard={dashboard} />
       )}
     </>
   );

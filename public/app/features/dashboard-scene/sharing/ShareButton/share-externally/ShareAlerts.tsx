@@ -15,7 +15,7 @@ export default function ShareAlerts({ dashboard }: { dashboard: DashboardScene }
 
   return (
     <>
-      {hasWritePermissions && hasTemplateVariables && <UnsupportedTemplateVariablesAlert />}
+      {hasWritePermissions && hasTemplateVariables && <UnsupportedTemplateVariablesAlert showDescription={false} />}
       {hasWritePermissions && !!unsupportedDataSources?.length && (
         <UnsupportedDataSourcesAlert unsupportedDataSources={unsupportedDataSources.join(', ')} />
       )}

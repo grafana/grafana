@@ -5,7 +5,7 @@ import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScen
 
 import ShareConfiguration from '../../ShareConfiguration';
 
-import { EmailListTab } from './EmailListTab';
+import { EmailListConfiguration } from './EmailListConfiguration';
 
 const tabs: TabProps[] = [
   {
@@ -45,7 +45,7 @@ export const EmailShareTabs = ({ dashboard }: { dashboard: DashboardScene }) => 
         })}
       </TabsBar>
       <TabContent>
-        {state[0].active && <EmailListTab dashboard={dashboard} />}
+        {state[0].active && <EmailListConfiguration dashboard={dashboard} />}
         {state[1].active && <ShareConfiguration dashboard={dashboard} />}
       </TabContent>
     </Stack>

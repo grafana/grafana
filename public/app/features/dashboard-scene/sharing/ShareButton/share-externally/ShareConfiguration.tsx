@@ -3,7 +3,7 @@ import { Controller, useForm } from 'react-hook-form';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { sceneGraph } from '@grafana/scenes';
-import { FieldSet, Label, Spinner, Stack, TimeRangeInput } from '@grafana/ui';
+import { FieldSet, Icon, Label, Spinner, Stack, Text, TimeRangeInput, Tooltip } from '@grafana/ui';
 import { Switch } from '@grafana/ui/src/components/Switch/Switch';
 import { Trans } from 'app/core/internationalization';
 import { publicDashboardApi, useUpdatePublicDashboardMutation } from 'app/features/dashboard/api/publicDashboardApi';
@@ -56,70 +56,74 @@ export default function ShareConfiguration({ dashboard }: { dashboard: Dashboard
   };
 
   return (
-    <Stack justifyContent="space-between">
-      <form onSubmit={handleSubmit(onUpdate)}>
-        <FieldSet disabled={disableForm}>
-          <Stack direction="column" gap={2}>
-            <Stack justifyContent="space-between" alignItems="center">
-              <Label description="It uses the default time range settings of the dashboard">
-                <Trans i18nKey="public-dashboard.settings-configuration.default-time-range-label">
-                  Default time range
-                </Trans>
-              </Label>
-              <TimeRangeInput value={timeRange.value} disabled onChange={() => {}} />
+    <Stack direction="column" gap={2}>
+      <Text element="p">Settings</Text>
+      <Stack justifyContent="space-between">
+        <form onSubmit={handleSubmit(onUpdate)}>
+          <FieldSet disabled={disableForm}>
+            <Stack direction="column" gap={2}>
+              <Stack gap={1}>
+                <Controller
+                  render={({ field: { ref, ...field } }) => (
+                    <Switch
+                      {...field}
+                      data-testid={selectors.EnableTimeRangeSwitch}
+                      onChange={(e) => {
+                        DashboardInteractions.publicDashboardTimeSelectionChanged({
+                          enabled: e.currentTarget.checked,
+                        });
+                        onChange('isTimeSelectionEnabled', e.currentTarget.checked);
+                      }}
+                      label="Enable time range"
+                    />
+                  )}
+                  control={control}
+                  name="isTimeSelectionEnabled"
+                />
+                <Label description="Allow people to change time range">
+                  <Trans i18nKey="public-dashboard.settings-configuration.time-range-picker-label">
+                    Enable time range
+                  </Trans>
+                </Label>
+              </Stack>
+              <Stack gap={1}>
+                <Controller
+                  render={({ field: { ref, ...field } }) => (
+                    <Switch
+                      {...field}
+                      data-testid={selectors.EnableAnnotationsSwitch}
+                      onChange={(e) => {
+                        DashboardInteractions.publicDashboardAnnotationsSelectionChanged({
+                          enabled: e.currentTarget.checked,
+                        });
+                        onChange('isAnnotationsEnabled', e.currentTarget.checked);
+                      }}
+                      label="Display annotations"
+                    />
+                  )}
+                  control={control}
+                  name="isAnnotationsEnabled"
+                />
+                <Label style={{ flex: 1 }} description="Present annotations on this Dashboard">
+                  <Trans i18nKey="public-dashboard.settings-configuration.time-range-picker-label">
+                    Display annotations
+                  </Trans>
+                </Label>
+              </Stack>
+              <Stack gap={1} alignItems="center">
+                <TimeRangeInput value={timeRange.value} showIcon disabled onChange={() => {}} />
+                <Tooltip
+                  placement="right"
+                  content="The public dashboard uses the default time range settings of the dashboard"
+                >
+                  <Icon name="info-circle" size="sm" />
+                </Tooltip>
+              </Stack>
             </Stack>
-            <Stack gap={1}>
-              <Controller
-                render={({ field: { ref, ...field } }) => (
-                  <Switch
-                    {...field}
-                    data-testid={selectors.EnableTimeRangeSwitch}
-                    onChange={(e) => {
-                      DashboardInteractions.publicDashboardTimeSelectionChanged({
-                        enabled: e.currentTarget.checked,
-                      });
-                      onChange('isTimeSelectionEnabled', e.currentTarget.checked);
-                    }}
-                    label="Enable time range"
-                  />
-                )}
-                control={control}
-                name="isTimeSelectionEnabled"
-              />
-              <Label description="Allow people to change time range">
-                <Trans i18nKey="public-dashboard.settings-configuration.time-range-picker-label">
-                  Enable time range
-                </Trans>
-              </Label>
-            </Stack>
-            <Stack gap={1}>
-              <Controller
-                render={({ field: { ref, ...field } }) => (
-                  <Switch
-                    {...field}
-                    data-testid={selectors.EnableAnnotationsSwitch}
-                    onChange={(e) => {
-                      DashboardInteractions.publicDashboardAnnotationsSelectionChanged({
-                        enabled: e.currentTarget.checked,
-                      });
-                      onChange('isAnnotationsEnabled', e.currentTarget.checked);
-                    }}
-                    label="Display annotations"
-                  />
-                )}
-                control={control}
-                name="isAnnotationsEnabled"
-              />
-              <Label style={{ flex: 1 }} description="Present annotations on this Dashboard">
-                <Trans i18nKey="public-dashboard.settings-configuration.time-range-picker-label">
-                  Display annotations
-                </Trans>
-              </Label>
-            </Stack>
-          </Stack>
-        </FieldSet>
-      </form>
-      {isLoading && <Spinner />}
+          </FieldSet>
+        </form>
+        {isLoading && <Spinner />}
+      </Stack>
     </Stack>
   );
 }

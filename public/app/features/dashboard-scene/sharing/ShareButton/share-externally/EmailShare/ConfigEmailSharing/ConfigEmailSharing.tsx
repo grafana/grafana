@@ -2,7 +2,7 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Button, Field, FieldSet, Icon, Stack, Tooltip } from '@grafana/ui';
+import { Button, Divider, Field, FieldSet, Icon, Stack, Tooltip } from '@grafana/ui';
 import { Input } from '@grafana/ui/src/components/Input/Input';
 import { Trans, t } from '@grafana/ui/src/utils/i18n';
 import { contextSrv } from 'app/core/core';
@@ -12,7 +12,9 @@ import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScen
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { AccessControlAction } from 'app/types';
 
-import { EmailShareTabs } from './EmailShareTabs';
+import ShareConfiguration from '../../ShareConfiguration';
+
+import { EmailListConfiguration } from './EmailListConfiguration';
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard.EmailSharingConfiguration;
 
@@ -89,7 +91,9 @@ export const ConfigEmailSharing = ({ dashboard }: { dashboard: DashboardScene })
           </Field>
         </FieldSet>
       </form>
-      <EmailShareTabs dashboard={dashboard} />
+      <EmailListConfiguration dashboard={dashboard} />
+      <Divider />
+      <ShareConfiguration dashboard={dashboard} />
     </div>
   );
 };
