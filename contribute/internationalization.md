@@ -173,7 +173,7 @@ import { Trans } from "app/core/internationalization"
 
 ### Plurals
 
-Plurals require special handling to make sure they can be translated according to the rules of each locale (which may be more complex than you think!). Use either the `<Trans />` component or the `t` function, with the `count` prop to provide a singular form. For example:
+Plurals require special handling to make sure they can be translated according to the rules of each locale (which may be more complex than you think). Use either the `<Trans />` component or the `t` function, with the `count` prop to provide a singular form. For example:
 
 ```js
 import { Trans } from 'app/core/internationalization';
