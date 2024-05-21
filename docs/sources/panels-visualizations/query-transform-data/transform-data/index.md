@@ -44,28 +44,28 @@ weight: 100
 refs:
   feature-toggle:
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana/#feature_toggles
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles
   configuration-file:
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana/#configuration-file-location
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#configuration-file-location
   calculation-types:
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types/
   dashboard-variable:
     - pattern: /docs/grafana-cloud/
-      destination: docs/grafana/<GRAFANA VERSION>/dashboards/variables/
+      destination: docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
   time-series-panel:
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/
   sparkline-cell-type:
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table/#sparkline
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/table/#sparkline
   heatmap-panel:
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/heatmap/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/heatmap/
   table-panel:
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/table/
 ---
 
 # Transform data

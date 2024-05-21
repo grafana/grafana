@@ -25,7 +25,7 @@ weight: 80
 refs:
   gauge:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/gauge/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/gauge/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/gauge/
   pie-chart:
@@ -33,7 +33,7 @@ refs:
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/pie-chart/
   stat:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/stat/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/stat/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/stat/
   templates-and-variables:
@@ -47,7 +47,7 @@ refs:
       destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/google-cloud-monitoring/query-editor/#deep-link-from-grafana-panels-to-the-google-cloud-console-metrics-explorer
   candlestick:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/candlestick/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/candlestick/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/candlestick/
   status-history:
@@ -55,7 +55,7 @@ refs:
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/status-history/
   geomap:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/geomap/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/geomap/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/geomap/
   xy-chart:
@@ -75,7 +75,7 @@ refs:
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/bar-chart/
   canvas:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/canvas/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/canvas/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/canvas/
   global-variables:
@@ -83,22 +83,22 @@ refs:
       destination: /docs/grafana-cloud/visualizations/dashboards/variables/add-template-variables/#**from-and-**to
   trend:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/trend/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/trend/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/trend/
   heatmap:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/heatmap/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/heatmap/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/heatmap/
   histogram:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/histogram/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/histogram/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/histogram/
   table:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/table/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/table/
 ---

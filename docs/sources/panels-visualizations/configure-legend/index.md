@@ -16,7 +16,7 @@ refs:
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/pie-chart/
   candlestick:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/candlestick/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/candlestick/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/candlestick/
   time-series:
@@ -24,7 +24,7 @@ refs:
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/time-series/
   heatmaps:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/heatmap/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/heatmap/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/heatmap/
   bar-chart:
@@ -41,22 +41,22 @@ refs:
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/xy-chart/
   trend:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/trend/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/trend/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/trend/
   calculations:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/calculation-types/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/calculation-types/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types/
   geomaps:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/geomap/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/geomap/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/geomap/
   histogram:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/histogram/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/histogram/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/histogram/
 ---

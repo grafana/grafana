@@ -19,17 +19,17 @@ weight: 100
 refs:
   stat:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/stat/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/stat/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/stat/
   gauge:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/gauge/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/gauge/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/gauge/
   candlestick:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/candlestick/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/candlestick/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/candlestick/
   time-series:
@@ -49,27 +49,27 @@ refs:
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/status-history/
   geomap:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/geomap/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/geomap/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/geomap/
   table:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/table/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/table/
   histogram:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/histogram/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/histogram/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/histogram/
   trend:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/trend/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/trend/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/trend/
   canvas:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/canvas/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/canvas/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/canvas/
 ---

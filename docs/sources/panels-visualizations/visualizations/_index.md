@@ -23,7 +23,7 @@ refs:
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/heatmap/
   canvas:
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/canvas/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/canvas/
   datagrid:
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/datagrid/
@@ -50,7 +50,7 @@ refs:
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/xy-chart/
   geomap:
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/geomap/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/geomap/
   status-history:
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/status-history/
