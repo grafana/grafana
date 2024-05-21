@@ -4,10 +4,7 @@ import { API_VERSION, QueryTemplateKinds } from './query';
 import { DataQuerySpec, DataQuerySpecResponse, DataQueryTarget } from './types';
 
 export const convertDataQueryResponseToQueryTemplates = (result: DataQuerySpecResponse): QueryTemplate[] => {
-  if (!result.items) {
-    return [];
-  }
-  return result.items.map((spec) => {
+  return (result.items || []).map((spec) => {
     return {
       uid: spec.metadata.name || '',
       title: spec.spec.title,

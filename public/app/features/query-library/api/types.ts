@@ -23,4 +23,4 @@ export type DataQuerySpec = {
 export type DataQuerySpecResponse = {
   apiVersion: string;
   items: DataQuerySpec[];
-} & { error: Error };
+};

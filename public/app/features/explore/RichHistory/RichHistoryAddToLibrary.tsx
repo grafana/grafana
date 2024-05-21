@@ -5,10 +5,9 @@ import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Button } from '@grafana/ui';
-
-import { Trans } from '../../../core/internationalization';
-import { isQueryLibraryEnabled, useAddQueryTemplateMutation } from '../../query-library';
-import { AddQueryTemplateCommand } from '../../query-library/types';
+import { Trans } from 'app/core/internationalization';
+import { isQueryLibraryEnabled, useAddQueryTemplateMutation } from 'app/features/query-library';
+import { AddQueryTemplateCommand } from 'app/features/query-library/types';
 
 type Props = {
   query: DataQuery;
