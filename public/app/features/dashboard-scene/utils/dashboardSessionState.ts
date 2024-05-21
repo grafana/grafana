@@ -10,43 +10,43 @@ export function getPreservedSceneURLStateKey() {
 
 export function restoreDashboardStateFromLocalStorage(dashboard: DashboardScene) {
   const preservedUrlState = store.get(getPreservedSceneURLStateKey());
+
   if (preservedUrlState) {
-    const preservedUrlStateJSON = preservedUrlState ? JSON.parse(preservedUrlState) : {};
+    const preservedQueryParams = new URLSearchParams(preservedUrlState);
+    const currentQueryParams = locationService.getSearch();
 
-    let preservedQueryParams: UrlQueryMap = {};
+    // iterate over current query params and append them to preserved query params
+    currentQueryParams.forEach((value, key) => {
+      preservedQueryParams.append(key, value);
+    });
 
-    for (const [key, value] of Object.entries(preservedUrlStateJSON)) {
-      // restore non-variable query params
+    // remove duplicate query params
+    const deduplicatedQueryParams = deduplicateQueryParams(preservedQueryParams);
+
+    // iterate over deduplicatedQueryParams.keys() and log them
+    for (const key of Array.from(deduplicatedQueryParams.keys())) {
+      // preserve non-variable query params, i.e. time range
       if (!key.startsWith('var-')) {
-        preservedQueryParams[key] = value as any;
         continue;
       }
-      // restore variable query params if a variable exists in the target dashboard
-      if (dashboard.state.$variables?.getByName(key.replace('var-', ''))) {
-        preservedQueryParams[key] = value as any;
+
+      // remove params for variables that are not present on the target dashboard
+      if (!dashboard.state.$variables?.getByName(key.replace('var-', ''))) {
+        deduplicatedQueryParams.delete(key);
       }
     }
 
-    const currentQueryParams = locationService.getLocation().search;
-    let nextQueryParams = currentQueryParams;
-    if (currentQueryParams) {
-      nextQueryParams += '&' + urlUtil.renderUrl('', preservedQueryParams).slice(1);
-    } else {
-      nextQueryParams = urlUtil.renderUrl('', preservedQueryParams);
-    }
-
-    const deduplicatedQueryParams = deduplicateQueryParams(nextQueryParams);
-
-    if (deduplicatedQueryParams) {
+    const finalParams = deduplicatedQueryParams.toString();
+    if (finalParams) {
       locationService.replace({
-        search: deduplicatedQueryParams,
+        search: finalParams,
       });
     }
   }
 }
 
 /**
- * Behavior that will capture currently selected variables and time range and save them to local storage, so that they can be applied when the next dashboard is loaded.
+ * Scenes behavior that will capture currently selected variables and time range and save them to local storage, so that they can be applied when the next dashboard is loaded.
  */
 export function preserveDashboardSceneStateInLocalStorage(scene: DashboardScene) {
   if (!config.featureToggles.preserveDashboardStateWhenNavigating) {
@@ -84,16 +84,15 @@ export function preserveDashboardSceneStateInLocalStorage(scene: DashboardScene)
 
     // If there's anything to preserve, save it to local storage
     if (Object.keys(nonEmptyUrlStates).length > 0) {
-      store.set(getPreservedSceneURLStateKey(), JSON.stringify(nonEmptyUrlStates));
+      store.set(getPreservedSceneURLStateKey(), urlUtil.renderUrl('', nonEmptyUrlStates));
     } else {
       store.delete(getPreservedSceneURLStateKey());
     }
   };
 }
 
-function deduplicateQueryParams(queryParams: string): string {
+function deduplicateQueryParams(params: URLSearchParams): URLSearchParams {
   const seen: { [key: string]: Set<string> } = {};
-  const params = new URLSearchParams(queryParams);
   // Iterate over the query params and store unique values
   params.forEach((value, key) => {
     if (!seen[key]) {
@@ -110,5 +109,5 @@ function deduplicateQueryParams(queryParams: string): string {
     });
   }
 
-  return deduplicatedParams.toString();
+  return deduplicatedParams;
 }
