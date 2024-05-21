@@ -3,7 +3,6 @@ package rest
 import (
 	"context"
 	"errors"
-	"strconv"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -21,7 +20,9 @@ type DualWriterMode1 struct {
 	*dualWriterMetrics
 }
 
-var mode = strconv.Itoa(int(Mode1))
+const (
+	mode1Str = "1"
+)
 
 // NewDualWriterMode1 returns a new DualWriter in mode 1.
 // Mode 1 represents writing to and reading from LegacyStorage.
@@ -37,14 +38,14 @@ func (d *DualWriterMode1) Create(ctx context.Context, obj runtime.Object, create
 	ctx = klog.NewContext(ctx, log)
 	var method = "create"
 
-	startLegacy := time.Now().UTC()
+	startLegacy := time.Now()
 	res, errLegacy := d.Legacy.Create(ctx, obj, createValidation, options)
 	if errLegacy != nil {
 		log.Error(errLegacy, "unable to create object in legacy storage")
-		d.recordLegacyDuration(true, mode, options.Kind, method, startLegacy)
+		d.recordLegacyDuration(true, mode1Str, options.Kind, method, startLegacy)
 		return res, errLegacy
 	}
-	d.recordLegacyDuration(false, mode, options.Kind, method, startLegacy)
+	d.recordLegacyDuration(false, mode1Str, options.Kind, method, startLegacy)
 
 	accessorCreated, err := meta.Accessor(res)
 	if err != nil {
@@ -59,10 +60,11 @@ func (d *DualWriterMode1) Create(ctx context.Context, obj runtime.Object, create
 	enrichObject(accessorOld, accessorCreated)
 
 	go func() {
-		startStorage := time.Now().UTC()
-		ctx, _ := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage create timeout"))
+		startStorage := time.Now()
+		ctx, cancel := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage create timeout"))
+		defer cancel()
 		_, err := d.Storage.Create(ctx, obj, createValidation, options)
-		d.recordStorageDuration(err != nil, mode, options.Kind, method, startStorage)
+		d.recordStorageDuration(err != nil, mode1Str, options.Kind, method, startStorage)
 	}()
 
 	return res, errLegacy
@@ -74,19 +76,20 @@ func (d *DualWriterMode1) Get(ctx context.Context, name string, options *metav1.
 	ctx = klog.NewContext(ctx, log)
 	var method = "get"
 
-	startLegacy := time.Now().UTC()
+	startLegacy := time.Now()
 	res, errLegacy := d.Legacy.Get(ctx, name, options)
 	if errLegacy != nil {
 		log.Error(errLegacy, "unable to get object in legacy storage")
-		d.recordLegacyDuration(errLegacy != nil, mode, name, method, startLegacy)
+		d.recordLegacyDuration(errLegacy != nil, mode1Str, name, method, startLegacy)
 	}
-	d.recordLegacyDuration(errLegacy != nil, mode, name, method, startLegacy)
+	d.recordLegacyDuration(errLegacy != nil, mode1Str, name, method, startLegacy)
 
 	go func() {
-		startStorage := time.Now().UTC()
-		ctx, _ := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage get timeout"))
+		startStorage := time.Now()
+		ctx, cancel := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage get timeout"))
+		defer cancel()
 		_, err := d.Storage.Get(ctx, name, options)
-		d.recordStorageDuration(err != nil, mode, name, method, startStorage)
+		d.recordStorageDuration(err != nil, mode1Str, name, method, startStorage)
 	}()
 
 	return res, errLegacy
@@ -98,19 +101,20 @@ func (d *DualWriterMode1) List(ctx context.Context, options *metainternalversion
 	ctx = klog.NewContext(ctx, log)
 	var method = "list"
 
-	startLegacy := time.Now().UTC()
+	startLegacy := time.Now()
 	res, errLegacy := d.Legacy.List(ctx, options)
 	if errLegacy != nil {
 		log.Error(errLegacy, "unable to list object in legacy storage")
-		d.recordLegacyDuration(errLegacy != nil, mode, options.Kind, method, startLegacy)
+		d.recordLegacyDuration(errLegacy != nil, mode1Str, options.Kind, method, startLegacy)
 	}
-	d.recordLegacyDuration(errLegacy != nil, mode, options.Kind, method, startLegacy)
+	d.recordLegacyDuration(errLegacy != nil, mode1Str, options.Kind, method, startLegacy)
 
 	go func() {
-		startStorage := time.Now().UTC()
-		ctx, _ := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage list timeout"))
+		startStorage := time.Now()
+		ctx, cancel := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage list timeout"))
+		defer cancel()
 		_, err := d.Storage.List(ctx, options)
-		d.recordStorageDuration(err != nil, mode, options.Kind, method, startStorage)
+		d.recordStorageDuration(err != nil, mode1Str, options.Kind, method, startStorage)
 	}()
 
 	return res, errLegacy
@@ -121,20 +125,21 @@ func (d *DualWriterMode1) Delete(ctx context.Context, name string, deleteValidat
 	ctx = klog.NewContext(ctx, d.Log)
 	var method = "delete"
 
-	startLegacy := time.Now().UTC()
+	startLegacy := time.Now()
 	res, async, err := d.Legacy.Delete(ctx, name, deleteValidation, options)
 	if err != nil {
 		log.Error(err, "unable to delete object in legacy storage")
-		d.recordLegacyDuration(true, mode, name, method, startLegacy)
+		d.recordLegacyDuration(true, mode1Str, name, method, startLegacy)
 		return res, async, err
 	}
-	d.recordLegacyDuration(false, mode, name, method, startLegacy)
+	d.recordLegacyDuration(false, mode1Str, name, method, startLegacy)
 
 	go func() {
-		startStorage := time.Now().UTC()
-		ctx, _ := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage delete timeout"))
+		startStorage := time.Now()
+		ctx, cancel := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage delete timeout"))
+		defer cancel()
 		_, _, err := d.Storage.Delete(ctx, name, deleteValidation, options)
-		d.recordStorageDuration(err != nil, mode, name, method, startStorage)
+		d.recordStorageDuration(err != nil, mode1Str, name, method, startStorage)
 	}()
 
 	return res, async, err
@@ -146,19 +151,20 @@ func (d *DualWriterMode1) DeleteCollection(ctx context.Context, deleteValidation
 	ctx = klog.NewContext(ctx, log)
 	var method = "delete-collection"
 
-	startLegacy := time.Now().UTC()
+	startLegacy := time.Now()
 	res, errLegacy := d.Legacy.DeleteCollection(ctx, deleteValidation, options, listOptions)
 	if errLegacy != nil {
 		log.Error(errLegacy, "unable to delete collection in legacy storage")
-		d.recordLegacyDuration(true, mode, options.Kind, method, startLegacy)
+		d.recordLegacyDuration(true, mode1Str, options.Kind, method, startLegacy)
 	}
-	d.recordLegacyDuration(false, mode, options.Kind, method, startLegacy)
+	d.recordLegacyDuration(false, mode1Str, options.Kind, method, startLegacy)
 
 	go func() {
-		startStorage := time.Now().UTC()
-		ctx, _ := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage deletecollection timeout"))
+		startStorage := time.Now()
+		ctx, cancel := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage deletecollection timeout"))
+		defer cancel()
 		_, err := d.Storage.DeleteCollection(ctx, deleteValidation, options, listOptions)
-		d.recordStorageDuration(err != nil, mode, options.Kind, method, startStorage)
+		d.recordStorageDuration(err != nil, mode1Str, options.Kind, method, startStorage)
 	}()
 
 	return res, errLegacy
@@ -169,13 +175,13 @@ func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.
 	ctx = klog.NewContext(ctx, log)
 	var method = "update"
 
-	startLegacy := time.Now().UTC()
+	startLegacy := time.Now()
 	res, async, errLegacy := d.Legacy.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 	if errLegacy != nil {
 		log.Error(errLegacy, "unable to update in legacy storage")
-		d.recordLegacyDuration(true, mode, name, method, startLegacy)
+		d.recordLegacyDuration(true, mode1Str, name, method, startLegacy)
 	}
-	d.recordLegacyDuration(false, mode, name, method, startLegacy)
+	d.recordLegacyDuration(false, mode1Str, name, method, startLegacy)
 
 	updated, err := objInfo.UpdatedObject(ctx, res)
 	if err != nil {
@@ -211,10 +217,11 @@ func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.
 	}
 
 	go func() {
-		startStorage := time.Now().UTC()
-		ctx, _ := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage update timeout"))
+		startStorage := time.Now()
+		ctx, cancel := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage update timeout"))
+		defer cancel()
 		_, _, err := d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
-		d.recordStorageDuration(err != nil, mode, name, method, startStorage)
+		d.recordStorageDuration(err != nil, mode1Str, name, method, startStorage)
 	}()
 
 	return res, async, errLegacy
