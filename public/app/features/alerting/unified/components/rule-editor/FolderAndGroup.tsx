@@ -379,7 +379,7 @@ function EvaluationGroupCreationModal({
   };
 
   const formAPI = useForm({
-    defaultValues: { group: '', evaluateEvery: '' },
+    defaultValues: { group: '', evaluateEvery: '1m' },
     mode: 'onChange',
     shouldFocusError: true,
   });

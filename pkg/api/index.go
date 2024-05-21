@@ -160,7 +160,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 
 	hs.HooksService.RunIndexDataHooks(&data, c)
 
-	data.NavTree.ApplyAdminIA()
+	// data.NavTree.ApplyAdminIA() // LOGZIO GRAFANA CHANGE ::
 	data.NavTree.Sort()
 
 	return &data, nil
