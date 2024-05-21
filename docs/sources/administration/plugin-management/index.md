@@ -64,7 +64,6 @@ By default, the Viewer, Editor and Admin roles have access to all app plugins th
 To prevent users from seeing an app plugin, refer to [these permissions scenarios]({{< relref "../roles-and-permissions/access-control/plan-rbac-rollout-strategy#prevent-viewers-from-accessing-an-app-plugin" >}}).
 {{% /admonition %}}
 
-
 ## Plugin catalog
 
 The Grafana plugin catalog allows you to browse and manage plugins from within Grafana. Only Grafana server administrators and Organization administrators can access and use the plugin catalog. For more information about Grafana roles and permissions, refer to [Roles and permissions]({{< relref "../administration/roles-and-permissions" >}}).
