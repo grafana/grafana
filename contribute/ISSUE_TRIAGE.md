@@ -131,7 +131,7 @@ To make it easier for everyone to understand and find issues a good rule of thum
 - Make sure that issue descriptions don't include irrelevant information, information from a template that hasn't been filled out, or sensitive information.
 - Do your best effort to change the title and description or request suggested changes by adding a comment.
 
-> **Note:** The above rules apply to both new and existing issues of the Grafana project.
+> **Note:** The preceding rules apply to both new and existing issues of the Grafana project.
 
 #### Do you have all the information needed to categorize an issue?
 
