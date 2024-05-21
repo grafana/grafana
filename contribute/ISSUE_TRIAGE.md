@@ -141,7 +141,7 @@ If the author provides the standard information, but you are still unable to tri
 
 If the author does not respond to the requested information within a week, close the issue with a kind note stating that the author can request for the issue to be reopened when the necessary information is provided.
 
-When you feel you have all the information needed, then you're ready to [categorize the issue](#3-categorizing-an-issue).
+When you feel you have all the information needed, then you're ready to [categorize the issue](#3-categorize-an-issue).
 
 If you receive a notification with additional information provided, but you aren't on issue triage anymore and you feel you don't have time to handle it, you should delegate it to the current person on issue triage.
 
