@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { debounce, isEqual } from 'lodash';
-import React from 'react';
+import React, { useReducer } from 'react';
 
 import { GrafanaTheme2, RawTimeRange } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
@@ -20,7 +20,7 @@ import {
   SceneVariableSet,
   VariableDependencyConfig,
 } from '@grafana/scenes';
-import { Input, InlineSwitch, Field, Alert, Icon, useStyles2 } from '@grafana/ui';
+import { Input, InlineSwitch, Field, Alert, Icon, useStyles2, Tooltip } from '@grafana/ui';
 
 import { DataTrailHistory } from '../DataTrailsHistory';
 import { MetricScene } from '../MetricScene';
@@ -66,7 +66,7 @@ export interface MetricSelectSceneState extends SceneObjectState {
 const ROW_PREVIEW_HEIGHT = '175px';
 const ROW_CARD_HEIGHT = '64px';
 
-const MAX_METRIC_NAMES = 20000;
+const MAX_METRIC_NAMES = 20;
 
 export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
   private previewCache: Record<string, MetricPanel> = {};
@@ -178,10 +178,9 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
         : response.data;
 
       const metricNamesWarning = response.limitReached
-        ? `There are too many different metric names in this data source. ` +
-          `Only the first ${MAX_METRIC_NAMES} metrics will be considered ` +
-          `(i.e., from "${metricNames[0]}" to "${metricNames.at(-1)}"). ` +
-          `Try entering some search terms or label filters to narrow down the number of metric names returned.`
+        ? `This feature will only return up to ${MAX_METRIC_NAMES} metric names for performance reasons. ` +
+          `This limit is being exceeded for the current data source. ` +
+          `Add search terms or label filters to narrow down the number of metric names returned.`
         : undefined;
 
       this.setState({ metricNames, metricNamesLoading: false, metricNamesWarning, metricNamesError: response.error });
@@ -353,6 +352,8 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     const { children } = body.useState();
     const styles = useStyles2(getStyles);
 
+    const [warningDismissed, dismissWarning] = useReducer(() => true, false);
+
     const tooStrict = children.length === 0 && searchQuery;
     const noMetrics = !metricNamesLoading && metricNames && metricNames.length === 0;
 
@@ -364,6 +365,19 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
         (tooStrict && 'There are no results found. Try adjusting your search or filters.') ||
         undefined;
 
+    const metricNamesWarningIcon = metricNamesWarning ? (
+      <Tooltip
+        content={
+          <>
+            <h4>Unable to retrieve metric names</h4>
+            <p>{metricNamesWarning}</p>
+          </>
+        }
+      >
+        <Icon className={styles.warningIcon} name="exclamation-triangle" />
+      </Tooltip>
+    ) : undefined;
+
     return (
       <div className={styles.container}>
         <div className={styles.header}>
@@ -373,6 +387,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
               prefix={<Icon name={'search'} />}
               value={searchQuery || ''}
               onChange={model.onSearchQueryChange}
+              suffix={metricNamesWarningIcon}
             />
           </Field>
           <InlineSwitch showLabel={true} label="Show previews" value={showPreviews} onChange={model.onTogglePreviews} />
@@ -383,8 +398,13 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
             <div>({metricNamesError})</div>
           </Alert>
         )}
-        {metricNamesWarning && (
-          <Alert title="Unable to retrieve all metric names" severity="warning">
+        {metricNamesWarning && !warningDismissed && (
+          <Alert
+            title="Unable to retrieve all metric names"
+            severity="warning"
+            onSubmit={dismissWarning}
+            onRemove={dismissWarning}
+          >
             <div>{metricNamesWarning}</div>
           </Alert>
         )}
@@ -425,6 +445,9 @@ function getStyles(theme: GrafanaTheme2) {
     searchField: css({
       flexGrow: 1,
       marginBottom: 0,
+    }),
+    warningIcon: css({
+      color: theme.colors.warning.main,
     }),
   };
 }
