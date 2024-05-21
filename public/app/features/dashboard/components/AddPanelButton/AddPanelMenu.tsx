@@ -35,7 +35,7 @@ const AddPanelMenu = ({ dashboard }: Props) => {
         onClick={() => {
           const id = onCreateNewPanel(dashboard, initialDatasource);
           DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
-          locationService.partial({ editPanel: id, isNewPanel: true });
+          locationService.partial({ editPanel: id });
           dispatch(setInitialDatasource(undefined));
         }}
       />

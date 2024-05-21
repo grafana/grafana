@@ -41,29 +41,6 @@ describe('DashboardSceneUrlSync', () => {
       (scene.state.body as SceneGridLayout).setState({ UNSAFE_fitPanels: true });
       expect(scene.urlSync?.getUrlState().autofitpanels).toBe('true');
     });
-
-    it('Should set the right state in the editor when url has isNewPanel', () => {
-      const scene = buildTestScene();
-      scene.onEnterEditMode();
-
-      const editingPanel = ((scene.state.body as SceneGridLayout).state.children[0] as DashboardGridItem).state
-        .body as VizPanel;
-      scene.urlSync?.updateFromUrl({ isNewPanel: '', editPanel: editingPanel.state.key });
-
-      expect(scene.state.editPanel?.state.isNewPanel).toBe(true);
-    });
-
-    it('Should get the autofitpanels from the scene state', () => {
-      const scene = buildTestScene();
-
-      const editingPanel = ((scene.state.body as SceneGridLayout).state.children[0] as DashboardGridItem).state
-        .body as VizPanel;
-      scene.urlSync?.updateFromUrl({ editPanel: editingPanel.state.key });
-
-      expect(scene.urlSync?.getUrlState().isNewPanel).toBeUndefined();
-      (scene.state.editPanel as PanelEditor).setState({ isNewPanel: true });
-      expect(scene.urlSync?.getUrlState().isNewPanel).toBe('true');
-    });
   });
 
   describe('entering edit mode', () => {

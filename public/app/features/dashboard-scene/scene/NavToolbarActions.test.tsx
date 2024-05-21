@@ -9,6 +9,8 @@ import { config, locationService } from '@grafana/runtime';
 import { SceneGridLayout, SceneQueryRunner, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
+import { buildPanelEditScene } from '../panel-edit/PanelEditor';
+
 import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardScene } from './DashboardScene';
 import { ToolbarActions } from './NavToolbarActions';
@@ -124,7 +126,7 @@ describe('NavToolbarActions', () => {
       await act(() => {
         const editingPanel = ((dashboard.state.body as SceneGridLayout).state.children[0] as DashboardGridItem).state
           .body as VizPanel;
-        dashboard.urlSync?.updateFromUrl({ isNewPanel: '', editPanel: editingPanel.state.key });
+        dashboard.setState({ editPanel: buildPanelEditScene(editingPanel, true) });
       });
 
       expect(await screen.findByText('Save dashboard')).toBeInTheDocument();
@@ -137,7 +139,7 @@ describe('NavToolbarActions', () => {
       await act(() => {
         const editingPanel = ((dashboard.state.body as SceneGridLayout).state.children[0] as DashboardGridItem).state
           .body as VizPanel;
-        dashboard.urlSync?.updateFromUrl({ editPanel: editingPanel.state.key });
+        dashboard.setState({ editPanel: buildPanelEditScene(editingPanel, true) });
       });
       expect(await screen.findByText('Save dashboard')).toBeInTheDocument();
       expect(await screen.findByText('Discard panel changes')).toBeInTheDocument();

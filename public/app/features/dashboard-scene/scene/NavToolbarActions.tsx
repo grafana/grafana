@@ -22,7 +22,7 @@ import { Trans, t } from 'app/core/internationalization';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
-import { PanelEditor } from '../panel-edit/PanelEditor';
+import { PanelEditor, buildPanelEditScene } from '../panel-edit/PanelEditor';
 import ShareButton from '../sharing/ShareButton/ShareButton';
 import { ShareModal } from '../sharing/ShareModal';
 import { DashboardInteractions } from '../utils/interactions';
@@ -170,9 +170,9 @@ export function ToolbarActions({ dashboard }: Props) {
               testId={selectors.pages.AddDashboard.itemButton('Add new visualization menu item')}
               label={t('dashboard.add-menu.visualization', 'Visualization')}
               onClick={() => {
-                const id = dashboard.onCreateNewPanel();
+                const vizPanel = dashboard.onCreateNewPanel();
                 DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
-                locationService.partial({ editPanel: id, isNewPanel: true });
+                dashboard.setState({ editPanel: buildPanelEditScene(vizPanel, true) });
               }}
             />
             <Menu.Item

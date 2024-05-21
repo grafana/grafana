@@ -28,7 +28,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   constructor(private _scene: DashboardScene) {}
 
   getKeys(): string[] {
-    return ['inspect', 'viewPanel', 'editPanel', 'editview', 'autofitpanels', 'isNewPanel'];
+    return ['inspect', 'viewPanel', 'editPanel', 'editview', 'autofitpanels'];
   }
 
   getUrlState(): SceneObjectUrlValues {
@@ -39,7 +39,6 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       viewPanel: state.viewPanelScene?.getUrlKey(),
       editview: state.editview?.getUrlKey(),
       editPanel: state.editPanel?.getUrlKey() || undefined,
-      isNewPanel: state.editPanel?.state.isNewPanel ? 'true' : undefined,
     };
   }
 
@@ -125,7 +124,6 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     // Handle edit panel state
     if (typeof values.editPanel === 'string') {
       const panel = findVizPanelByKey(this._scene, values.editPanel);
-      const isNewPanel = values.isNewPanel !== undefined && values.isNewPanel !== null;
 
       if (!panel) {
         console.warn(`Panel ${values.editPanel} not found`);
@@ -148,7 +146,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         return;
       }
 
-      update.editPanel = buildPanelEditScene(panel, isNewPanel);
+      update.editPanel = buildPanelEditScene(panel);
     } else if (editPanel && values.editPanel === null) {
       update.editPanel = undefined;
     }
