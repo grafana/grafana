@@ -22,20 +22,16 @@ func TestSettingsHandler(t *testing.T) {
 
 	// Empty is OK
 	s, _ = svc.MutateInstanceSettings(context.Background(), &backend.InstanceSettingsAdmissionRequest{
-		PluginContext: backend.PluginContext{
-			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				APIVersion: "v0alpha1",
-			},
+		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+			APIVersion: "v0alpha1",
 		},
 	})
 	require.True(t, s.Allowed)
 
 	// Any values should be an error
 	s, err = svc.MutateInstanceSettings(context.Background(), &backend.InstanceSettingsAdmissionRequest{
-		PluginContext: backend.PluginContext{
-			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				JSONData: json.RawMessage(`{"hello": "world"}`), // Settings must be empty
-			},
+		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+			JSONData: json.RawMessage(`{"hello": "world"}`), // Settings must be empty
 		},
 	})
 	require.NoError(t, err)
@@ -44,11 +40,9 @@ func TestSettingsHandler(t *testing.T) {
 
 	// Any values should be an error
 	s, err = svc.MutateInstanceSettings(context.Background(), &backend.InstanceSettingsAdmissionRequest{
-		PluginContext: backend.PluginContext{
-			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				DecryptedSecureJSONData: map[string]string{
-					"A": "Value",
-				},
+		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+			DecryptedSecureJSONData: map[string]string{
+				"A": "Value",
 			},
 		},
 	})
@@ -58,10 +52,8 @@ func TestSettingsHandler(t *testing.T) {
 
 	// Invalid API Version
 	s, err = svc.MutateInstanceSettings(context.Background(), &backend.InstanceSettingsAdmissionRequest{
-		PluginContext: backend.PluginContext{
-			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				APIVersion: "v1234",
-			},
+		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+			APIVersion: "v1234",
 		},
 	})
 	require.NoError(t, err)
