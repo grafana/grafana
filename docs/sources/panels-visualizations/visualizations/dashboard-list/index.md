@@ -18,6 +18,10 @@ labels:
 description: Configure options for Grafana's dashboard list visualization
 title: Dashboard list
 weight: 100
+refs:
+  dashboard-url-variables:
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/create-dashboard-url-variables/
 ---
 
 # Dashboard list
@@ -39,7 +43,7 @@ On each dashboard load, this panel queries the dashboard list, always providing 
 Use these options to refine your visualization.
 
 - **Include current time range -** Select this option to propagate the time range of the current dashboard to the dashboard links. When the user clicks a link, the linked dashboard opens with the indicated time range already set.
-- **Include current template variable values -** Select this option to include template variables currently used as query parameters in a link. When the user clicks the link, any matching templates in the linked dashboard are set to the values from the link. Learn more about [Dashboard URL variables][].
+- **Include current template variable values -** Select this option to include template variables currently used as query parameters in a link. When the user clicks the link, any matching templates in the linked dashboard are set to the values from the link. Learn more about [Dashboard URL variables](ref:dashboard-url-variables).
 - **Starred -** Display starred dashboards in alphabetical order.
 - **Recently viewed -** Display recently viewed dashboards in alphabetical order.
 - **Search -** Display dashboards by search query or tags. You must enter at least one value in **Query** or **Tags**. For the **Query** and **Tags** fields. Variable interpolation is supported, for example,`$my_var` or `${my_var}`.
@@ -55,8 +59,3 @@ These options only apply if the **Search** option is selected.
 - **Tags -** Here is where you enter your tags you want to search by. Note that existing tags will not appear as you type, and they _are_ case sensitive.
 
 > **Note:** When multiple tags and strings appear, the dashboard list displays those matching _all_ conditions.
-
-{{% docs/reference %}}
-[Dashboard URL variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard-url-variables"
-[Dashboard URL variables]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/build-dashboards/create-dashboard-url-variables"
-{{% /docs/reference %}}

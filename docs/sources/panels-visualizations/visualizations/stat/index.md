@@ -17,6 +17,10 @@ labels:
     - oss
 title: Stat
 weight: 100
+refs:
+  calculation-types:
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types/
 ---
 
 # Stat
@@ -52,7 +56,7 @@ Alternatively, refer to this blog post on [how to easily retrieve values from a 
 The stat visualization supports a variety of formats for displaying data. Supported formats include:
 
 - **Single values** - The most common format and can be numerical, strings, or boolean values.
-- **Time-series data** - [Calculation types][] can be applied to your time-series data to display single values over a specified time range.
+- **Time-series data** - [Calculation types](ref:calculation-types) can be applied to your time-series data to display single values over a specified time range.
 
 ### Examples
 
@@ -112,7 +116,7 @@ Display a single value per column or series, or show values for each row.
 
 Display a calculated value based on all rows.
 
-- **Calculation -** Select a reducer function that Grafana will use to reduce many fields to a single value. For a list of available calculations, refer to [Calculation types][].
+- **Calculation -** Select a reducer function that Grafana will use to reduce many fields to a single value. For a list of available calculations, refer to [Calculation types](ref:calculation-types).
 - **Fields -** Select the fields display in the visualization.
 
 #### All values
@@ -212,8 +216,3 @@ Adjust the sizes of the gauge text.
 ## Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-{{% docs/reference %}}
-[Calculation types]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/calculation-types"
-[Calculation types]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types"
-{{% /docs/reference %}}
