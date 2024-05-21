@@ -49,6 +49,7 @@ import { prepareAnnotation } from './migrations';
 import { buildRawQuery, removeRegexWrapper } from './queryUtils';
 import ResponseParser from './response_parser';
 import { DEFAULT_POLICY, InfluxOptions, InfluxQuery, InfluxQueryTag, InfluxVersion } from './types';
+import { InfluxVariableSupport } from './variables';
 
 export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery, InfluxOptions> {
   type: string;
@@ -89,6 +90,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     this.responseParser = new ResponseParser();
     this.version = settingsData.version ?? InfluxVersion.InfluxQL;
     this.isProxyAccess = instanceSettings.access === 'proxy';
+    this.variables = new InfluxVariableSupport(this, this.templateSrv);
 
     if (this.version === InfluxVersion.Flux) {
       // When flux, use an annotation processor rather than the `annotationQuery` lifecycle
