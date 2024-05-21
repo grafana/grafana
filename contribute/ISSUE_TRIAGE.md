@@ -91,7 +91,7 @@ Before triaging an issue very far, make sure that the issue's author provided th
 
 #### Standard issue information that must be included
 
-Various [issue templates](https://github.com/grafana/grafana/issues/new/choose) are used by the issue author to collect information from the issue reporter. The following list describes the standard issue information that must be included.
+Grafana uses various [issue templates](https://github.com/grafana/grafana/issues/new/choose) to collect information from the issue reporter. The following list describes the standard information that is included.
 
 ##### Bug reports
 
