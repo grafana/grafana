@@ -113,7 +113,7 @@ Delete a team when you no longer need it. This action permanently deletes the te
 
 <!-- ## Create isolated or collaborative teams
 
-Grafana Teams can either be `isolated` or `collaborative`. Isolated teams can only see their own resources. They cannot see other team’s dashboards, data, alerts, etc. Collaborative teams have access to other team’s resources. Grafana Cloud users must contact Support.
+Grafana Teams can either be `isolated` or `collaborative`. Isolated teams can only see their own resources. They cannot see other team’s dashboards, data, or alerts. Collaborative teams have access to other team’s resources. Grafana Cloud users must contact Support.
 
 To create an isolated team add the following to the Grafana configuration file:
 
