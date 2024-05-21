@@ -290,7 +290,7 @@ In case there is an uncertainty around the prioritization of an issue, please as
 
 ### 5. Request help from the community
 
-It's generally a good idea to consider signalling to the community that help from community is appreciated and needed in case an issue isn't prioritized to be worked on by maintainers. Use your best judgement. In general, requesting help from the community means that a contribution has a good chance of getting accepted and merged.
+It's generally a good idea to consider signaling to the community that help is appreciated and needed in case an issue isn't prioritized to be worked on by maintainers. Use your best judgement. In general, requesting help from the community means that a contribution has a good chance of getting accepted and merged.
 
 In many cases the issue author or community as a whole is more suitable to contribute changes since they're experts in their domain. It's also quite common that someone has tried to get something to work using the documentation without success, made an effort to get it to work, reached out to the [community site](https://community.grafana.com/) to get the missing information, or some combination of these things.
 
