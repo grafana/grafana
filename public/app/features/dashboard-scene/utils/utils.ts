@@ -261,7 +261,3 @@ export function getLibraryPanel(vizPanel: VizPanel): LibraryVizPanel | undefined
   }
   return;
 }
-
-export function getPreservedSceneURLStateKey() {
-  return `grafana.dashboard.preservedUrlFiltersState[${window.name}]`;
-}

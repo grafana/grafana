@@ -1,7 +1,7 @@
-import { UrlQueryMap, locationUtil, urlUtil } from '@grafana/data';
+import { locationUtil } from '@grafana/data';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
-import store, { default as localStorageStore } from 'app/core/store';
+import { default as localStorageStore } from 'app/core/store';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -16,7 +16,7 @@ import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
 import { buildNewDashboardSaveModel } from '../serialization/buildNewDashboardSaveModel';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
-import { getPreservedSceneURLStateKey } from '../utils/utils';
+import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
 
 import { updateNavModel } from './utils';
 
@@ -170,42 +170,6 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     throw new Error('Snapshot not found');
   }
 
-  public restoreDashboardStateFromLocalStorage(dashboard: DashboardScene) {
-    const preservedUrlState = store.get(getPreservedSceneURLStateKey());
-    if (preservedUrlState) {
-      const preservedUrlStateJSON = preservedUrlState ? JSON.parse(preservedUrlState) : {};
-
-      let preservedQueryParams: UrlQueryMap = {};
-
-      for (const [key, value] of Object.entries(preservedUrlStateJSON)) {
-        // restore non-variable query params
-        if (!key.startsWith('var-')) {
-          preservedQueryParams[key] = value as any;
-          continue;
-        }
-        // restore variable query params if a variable exists in the target dashboard
-        if (dashboard.state.$variables?.getByName(key.replace('var-', ''))) {
-          preservedQueryParams[key] = value as any;
-        }
-      }
-
-      const currentQueryParams = locationService.getLocation().search;
-      let nextQueryParams = currentQueryParams;
-      if (currentQueryParams) {
-        nextQueryParams += '&' + urlUtil.renderUrl('', preservedQueryParams).slice(1);
-      } else {
-        nextQueryParams = urlUtil.renderUrl('', preservedQueryParams);
-      }
-
-      const deduplicatedQueryParams = deduplicateQueryParams(nextQueryParams);
-
-      if (deduplicatedQueryParams) {
-        locationService.replace({
-          search: deduplicatedQueryParams,
-        });
-      }
-    }
-  }
   public async loadDashboard(options: LoadDashboardOptions) {
     try {
       startMeasure(LOAD_SCENE_MEASUREMENT);
@@ -215,7 +179,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
       }
 
       if (config.featureToggles.preserveDashboardStateWhenNavigating && Boolean(options.uid)) {
-        this.restoreDashboardStateFromLocalStorage(dashboard);
+        restoreDashboardStateFromLocalStorage(dashboard);
       }
 
       if (!(config.publicDashboardAccessToken && dashboard.state.controls?.state.hideTimeControls)) {
@@ -311,26 +275,4 @@ export function getDashboardScenePageStateManager(): DashboardScenePageStateMana
   }
 
   return stateManager;
-}
-
-function deduplicateQueryParams(queryParams: string): string {
-  const seen: { [key: string]: Set<string> } = {};
-  const params = new URLSearchParams(queryParams);
-  // Iterate over the query params and store unique values
-  params.forEach((value, key) => {
-    if (!seen[key]) {
-      seen[key] = new Set();
-    }
-    seen[key].add(value);
-  });
-
-  // Construct a new URLSearchParams object with deduplicated parameters
-  const deduplicatedParams = new URLSearchParams();
-  for (const key in seen) {
-    seen[key].forEach((value) => {
-      deduplicatedParams.append(key, value);
-    });
-  }
-
-  return deduplicatedParams.toString();
 }

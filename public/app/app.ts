@@ -77,7 +77,7 @@ import { initAlerting } from './features/alerting/unified/initAlerting';
 import { initAuthConfig } from './features/auth-config';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { EmbeddedDashboardLazy } from './features/dashboard-scene/embedding/EmbeddedDashboardLazy';
-import { getPreservedSceneURLStateKey } from './features/dashboard-scene/utils/utils';
+import { getPreservedSceneURLStateKey } from './features/dashboard-scene/utils/dashboardSessionState';
 import { initGrafanaLive } from './features/live';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
