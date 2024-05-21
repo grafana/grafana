@@ -135,4 +135,3 @@ Gradient color is generated based on the hue of the line color.
 ### Legend calculations
 
 Choose a [standard calculations](ref:standard-calculations) to show in the legend. You can select more than one.
-

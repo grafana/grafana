@@ -102,8 +102,8 @@ After you've set them, your overrides appear in both the **All** and **Overrides
 
 You can configure field overrides for the following visualizations:
 
-|                            |                        |                                  |
-| -------------------------- | ---------------------- | -------------------------------- |
+|                                |                            |                                      |
+| ------------------------------ | -------------------------- | ------------------------------------ |
 | [Bar chart](ref:bar-chart)     | [Geomap](ref:geomap)       | [State timeline](ref:state-timeline) |
 | [Bar gauge](ref:bar-gauge)     | [Heatmap](ref:heatmap)     | [Status history](ref:status-history) |
 | [Candlestick](ref:candlestick) | [Histogram](ref:histogram) | [Table](ref:table)                   |
@@ -243,4 +243,3 @@ To edit a field override, follow these steps:
    - Delete an override entirely by clicking the trash icon at the top-right corner.
 
 The changes you make take effect immediately.
-

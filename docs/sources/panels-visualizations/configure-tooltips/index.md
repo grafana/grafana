@@ -67,8 +67,8 @@ When you hover your cursor over a visualization, Grafana can display tooltips th
 
 You can configure tooltips for the following visualizations:
 
-|                            |                                  |
-| -------------------------- | -------------------------------- |
+|                                |                                      |
+| ------------------------------ | ------------------------------------ |
 | [Bar chart](ref:bar-chart)     | [State timeline](ref:state-timeline) |
 | [Candlestick](ref:candlestick) | [Status history](ref:status-history) |
 | [Heatmap](ref:heatmap)         | [Time series](ref:time-series)       |
@@ -121,4 +121,3 @@ For the heatmap visualization only, when you set the **Tooltip mode** to **Singl
 For the heatmap visualization only, when you set the **Tooltip mode** to **Single**, the **Show color scale** option is displayed. This option controls whether or not the tooltip includes the color scale that's also represented in the legend. When the color scale is included in the tooltip, it shows the hovered value on the scale:
 
 ![Heatmap with a tooltip displayed showing the hovered value reflected in the color scale](/media/docs/grafana/panels-visualizations/screenshot-heatmap-tooltip-color-scale-v11.0.png)
-

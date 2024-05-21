@@ -107,13 +107,13 @@ For more granular control over the display of fields, refer to [Configure overri
 
 You can configure standard options for the following visualizations:
 
-|                            |                                  |                                  |
-| -------------------------- | -------------------------------- | -------------------------------- |
+|                                |                                      |                                      |
+| ------------------------------ | ------------------------------------ | ------------------------------------ |
 | [Bar chart](ref:bar-chart)     | [Geomap](ref:geomap)                 | [Status history](ref:status-history) |
 | [Bar gauge](ref:bar-gauge)     | [Histogram](ref:histogram)           | [Table](ref:table)                   |
 | [Candlestick](ref:candlestick) | [Pie chart](ref:pie-chart)           | [Time series](ref:time-series)       |
 | [Canvas](ref:canvas)           | [Stat](ref:stat)                     | [Trend](ref:trend)                   |
-| [Gauge](ref:gauge)             | [State timeline](ref:state-timeline) | <!-- xychart -->                 |
+| [Gauge](ref:gauge)             | [State timeline](ref:state-timeline) | <!-- xychart -->                     |
 
 ## Standard options
 
@@ -212,7 +212,7 @@ Select one of the following schemes:
 | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Single color                          | Specifies a single color.                                                                                                                                                                                                                                                                                                                                                                                   |
 | Shades of a color                     | Grafana selects shades of a single color.                                                                                                                                                                                                                                                                                                                                                                   |
-| From thresholds (by value)            | The color is taken from the matching [threshold](ref:threshold). For some visualizations, you also need to choose if the color is set by the **Last**, **Min**, or **Max** value of the field or series.                                                                                                                                                                                                                 |
+| From thresholds (by value)            | The color is taken from the matching [threshold](ref:threshold). For some visualizations, you also need to choose if the color is set by the **Last**, **Min**, or **Max** value of the field or series.                                                                                                                                                                                                    |
 | Classic palette                       | Grafana automatically assigns a color for each field or series based on its order. If the order of a field changes in your query, the color also changes. Useful for graphs, pie charts, and other categorical data visualizations.                                                                                                                                                                         |
 | Classic palette (by series name)      | Grafana automatically assigns colors based on the name of the series. Useful when the series names to be visualized can change based on the available data.                                                                                                                                                                                                                                                 |
 | Multiple continuous colors (by value) | Grafana automatically assigns colors based on the percentage of a value relative to the min and the max of the field or series. For some visualizations, you also need to choose if the color is set by the **Last**, **Min**, or **Max** value of the field or series. Select from: **Green-Yellow-Red**, **Red-Yellow-Green**, **Blue-Yellow-Red**, **Yellow-Red**, **Blue-Purple**, and **Yellow-Blue**. |
@@ -221,4 +221,3 @@ Select one of the following schemes:
 ### No value
 
 Enter what Grafana should display if the field value is empty or null. The default value is a hyphen (-).
-

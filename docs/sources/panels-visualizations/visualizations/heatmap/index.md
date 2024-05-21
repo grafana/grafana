@@ -167,4 +167,3 @@ Choose whether you want to display the heatmap legend on the visualization.
 ### Exemplars
 
 Set the color used to show exemplar data.
-

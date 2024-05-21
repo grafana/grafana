@@ -122,4 +122,3 @@ To assign colors to boolean or string values, use the [Value mappings](ref:value
 When the legend option is enabled it can show either the value mappings or the threshold brackets. To show the value mappings in the legend, it's important that the `Color scheme` as referenced in [Color scheme](ref:color-scheme) is set to `Single color` or `Classic palette`. To see the threshold brackets in the legend set the `Color scheme` to `From thresholds`.
 
 {{< docs/shared lookup="visualizations/legend-mode.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
