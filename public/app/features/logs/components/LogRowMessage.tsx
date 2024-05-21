@@ -58,13 +58,17 @@ const LogMessage = ({ hasAnsi, entry, highlights, styles }: LogMessageProps) => 
   return <>{entry}</>;
 };
 
-const restructureLog = (line: string, prettifyLogMessage: boolean): string => {
+const restructureLog = (line: string, prettifyLogMessage: boolean, wrapLogMessage: boolean): string => {
   if (prettifyLogMessage) {
     try {
       return JSON.stringify(JSON.parse(line), undefined, 2);
     } catch (error) {
       return line;
     }
+  }
+  // With wrapping disabled, we also want to turn it into a single-line log entry
+  if (!wrapLogMessage) {
+    line = line.replace(/(\r\n|\n|\r)/g, '');
   }
   return line;
 };
@@ -86,7 +90,7 @@ export const LogRowMessage = React.memo((props: Props) => {
     getRowContextQuery,
   } = props;
   const { hasAnsi, raw } = row;
-  const restructuredEntry = useMemo(() => restructureLog(raw, prettifyLogMessage), [raw, prettifyLogMessage]);
+  const restructuredEntry = useMemo(() => restructureLog(raw, prettifyLogMessage, wrapLogMessage), [raw, prettifyLogMessage, wrapLogMessage]);
   const shouldShowMenu = useMemo(() => mouseIsOver || pinned, [mouseIsOver, pinned]);
   return (
     <>
