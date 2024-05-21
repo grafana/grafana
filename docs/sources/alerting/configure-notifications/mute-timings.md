@@ -70,7 +70,7 @@ Supported time interval options are:
 
 All fields are lists; to match the field, at least one list element must be satisfied. Fields also support ranges using `:` (e.g., `monday:thursday`).
 
-If a field is left blank, any moment of time will match the field. For an instant of time to match a complete time interval, all fields must match. A mute timing can contain multiple time intervals.
+If a field is left blank, any moment of time matches the field. For an instant of time to match a complete time interval, all fields must match. A mute timing can contain multiple time intervals.
 
 If you want to specify an exact duration, specify all the options. For example, if you wanted to create a time interval for the first Monday of the month, for March, June, September, and December, between the hours of 12:00 and 24:00 UTC your time interval specification would be:
 
