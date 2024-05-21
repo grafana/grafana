@@ -491,15 +491,11 @@
       "delete-query-tooltip": "Eliminar consulta",
       "delete-starred-query-confirmation-text": "¿Seguro que desea eliminar permanentemente su consulta destacada?",
       "edit-comment-tooltip": "Editar comentario",
-      "left-pane": "",
       "optional-description": "Una descripción opcional de lo que hace la consulta.",
       "query-comment-label": "Comentario de la consulta",
       "query-text-label": "Texto de la consulta",
-      "right-pane": "",
-      "run-query-button": "Ejecutar consulta",
       "save-comment": "Guardar comentario",
       "star-query-tooltip": "Consulta destacada",
-      "switch-datasource-button": "Cambiar la fuente de datos y ejecutar la consulta",
       "unstar-query-tooltip": "Desmarcar consulta",
       "update-comment-form": "Actualizar el formulario de comentarios"
     },
@@ -567,6 +563,12 @@
     "rich-history-utils-notification": {
       "saving-failed": "Error al guardar el historial enriquecido",
       "update-failed": "Error al actualizar el extenso historial"
+    },
+    "run-query": {
+      "left-pane": "",
+      "right-pane": "",
+      "run-query-button": "",
+      "switch-datasource-button": ""
     },
     "secondary-actions": {
       "query-add-button": "Añadir consulta",
