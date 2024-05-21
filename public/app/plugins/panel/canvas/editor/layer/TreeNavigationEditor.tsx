@@ -5,7 +5,7 @@ import React, { Key, useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, StandardEditorProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Button, HorizontalGroup, Icon, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, Icon, Stack, useStyles2, useTheme2 } from '@grafana/ui';
 import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
 import { ElementState } from 'app/features/canvas/runtime/element';
 
@@ -147,7 +147,7 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<unknown, Tree
         multiple={true}
       />
 
-      <HorizontalGroup justify="space-between">
+      <Stack justifyContent="space-between" direction="row">
         <div className={styles.addLayerButton}>
           <AddLayerButton onChange={(sel) => onAddItem(sel, layer)} options={typeOptions} label={'Add item'} />
         </div>
@@ -161,7 +161,7 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<unknown, Tree
             Frame selection
           </Button>
         )}
-      </HorizontalGroup>
+      </Stack>
     </>
   );
 };

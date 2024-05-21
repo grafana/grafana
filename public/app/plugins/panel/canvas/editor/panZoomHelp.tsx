@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { StandardEditorProps, GrafanaTheme2 } from '@grafana/data';
-import { Alert, HorizontalGroup, Icon, VerticalGroup, useStyles2 } from '@grafana/ui';
+import { Alert, Icon, Stack, useStyles2 } from '@grafana/ui';
 
 const helpUrl = 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/canvas/';
 
@@ -11,7 +11,7 @@ export const PanZoomHelp = ({}: StandardEditorProps<string, unknown, unknown, un
 
   return (
     <>
-      <HorizontalGroup className={styles.hGroup}>
+      <Stack direction="row">
         <Alert
           title="Pan and zoom controls"
           severity="info"
@@ -24,7 +24,7 @@ export const PanZoomHelp = ({}: StandardEditorProps<string, unknown, unknown, un
             }
           }}
         >
-          <VerticalGroup>
+          <Stack direction="column">
             <ul>
               <li>
                 Pan:
@@ -36,9 +36,9 @@ export const PanZoomHelp = ({}: StandardEditorProps<string, unknown, unknown, un
               <li>Zoom: Scroll wheel</li>
               <li>Reset: Double click</li>
             </ul>
-          </VerticalGroup>
+          </Stack>
         </Alert>
-      </HorizontalGroup>
+      </Stack>
     </>
   );
 };
@@ -50,8 +50,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginTop: '5px',
     padding: '2px',
     'ul > li': { marginLeft: '10px' },
-  }),
-  hGroup: css({
-    '& div': { width: '100%' },
   }),
 });
