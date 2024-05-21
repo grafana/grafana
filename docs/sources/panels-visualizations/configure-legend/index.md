@@ -166,4 +166,3 @@ When you format a legend as a table and add values to it, you can sort series in
 {{% admonition type="note" %}}
 This feature is only supported for the following visualizations: bar chart, histogram, time series.
 {{% /admonition %}}
-

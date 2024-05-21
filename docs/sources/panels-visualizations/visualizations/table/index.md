@@ -279,4 +279,3 @@ If you want to show the number of rows in the dataset instead of the number of v
 ## Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-

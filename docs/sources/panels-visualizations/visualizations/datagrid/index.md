@@ -129,4 +129,3 @@ To delete all rows, use the "select all" checkbox at the top left corner of the 
 ## Panel options
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
