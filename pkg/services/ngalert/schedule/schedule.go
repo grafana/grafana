@@ -253,9 +253,10 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		sch.stopAppliedFunc,
 	)
 	for _, item := range alertRules {
+		ruleRoutine, newRoutine := sch.registry.getOrCreate(ctx, item, ruleFactory)
 		key := item.GetKey()
-		ruleRoutine, newRoutine := sch.registry.getOrCreate(ctx, key, ruleFactory)
 		logger := sch.log.FromContext(ctx).New(key.LogContext()...)
+
 		// enforce minimum evaluation interval
 		if item.IntervalSeconds < int64(sch.minRuleInterval.Seconds()) {
 			logger.Debug("Interval adjusted", "originalInterval", item.IntervalSeconds, "adjustedInterval", sch.minRuleInterval.Seconds())
