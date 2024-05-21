@@ -286,7 +286,7 @@ In case there is an uncertainty around the prioritization of an issue, please as
 **Not critical, but unsure?**
 
 1. Label the issue `priority/unscheduled`.
-2. Consider requesting [help from the community](#5-requesting-help-from-the-community).
+2. Consider requesting [help from the community](#5-request-help-from-the-community).
 
 ### 5. Request help from the community
 
