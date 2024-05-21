@@ -29,9 +29,9 @@ Identify which metrics are critical to your monitoring system (i.e. Grafana) and
 
 You can use meta-monitoring metrics to understand the health of your alerting system in the following ways:
 
-1. [Optional] Create a dashboard in Grafana that uses this metric in a panel (just like you would for any other kind of metric).
-2. [Optional] Create an alert rule in Grafana that checks this metric regularly (just like you would do for any other kind of alert rule).
-3. [Optional] Use the Explore module in Grafana.
+1. Optional: Create a dashboard in Grafana that uses this metric in a panel (just like you would for any other kind of metric).
+2. Optional: Create an alert rule in Grafana that checks this metric regularly (just like you would do for any other kind of alert rule).
+3. Optional: Use the Explore module in Grafana.
 
 ## Metrics for Grafana-managed alerts
 

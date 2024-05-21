@@ -20,6 +20,12 @@ labels:
     - oss
 title: Labels and annotations
 weight: 105
+refs:
+  variables-label-annotation:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templating-labels-annotations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templating-labels-annotations/
 ---
 
 # Labels and annotations
@@ -141,8 +147,3 @@ Labels prefixed with `grafana_` are reserved by Grafana for special use. To stop
 Both labels and annotations have the same structure: a set of named values; however their intended uses are different. The purpose of annotations is to add additional information to existing alerts.
 
 There are a number of suggested annotations in Grafana such as `description`, `summary`, `runbook_url`, `dashboardUId` and `panelId`. Like labels, annotations must have a name, and their value can contain a combination of text and template code that is evaluated when an alert is fired.
-
-{{% docs/reference %}}
-[variables-label-annotation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templating-labels-annotations"
-[variables-label-annotation]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templating-labels-annotations"
-{{% /docs/reference %}}

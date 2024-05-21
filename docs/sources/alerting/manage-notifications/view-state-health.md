@@ -17,15 +17,36 @@ labels:
     - oss
 title: View alert state and history
 weight: 420
+refs:
+  alert-rule-state:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health/#alert-rule-state
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/state-and-health/#alert-rule-state
+  alert-rule-evaluation:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/
+  alert-instance-state:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health/#alert-instance-state
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/state-and-health/#alert-instance-state
+  alert-rule-health:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health/#alert-rule-health
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/state-and-health/#alert-rule-health
 ---
 
 # View alert state and history
 
-An alert rule and its corresponding alert instances can transition through distinct states during their [evaluation][alert-rule-evaluation]. There are three key components that helps us understand the behavior of our alerts:
+An alert rule and its corresponding alert instances can transition through distinct states during their [evaluation](ref:alert-rule-evaluation). There are three key components that helps us understand the behavior of our alerts:
 
-- [Alert Instance State][alert-instance-state]: Refers to the state of the individual alert instances.
-- [Alert Rule State][alert-rule-state]: Determined by the "worst state" among its alert instances.
-- [Alert Rule Health][alert-rule-health]: Indicates the status in cases of `Error` or `NoData` events.
+- [Alert Instance State](ref:alert-instance-state): Refers to the state of the individual alert instances.
+- [Alert Rule State](ref:alert-rule-state): Determined by the "worst state" among its alert instances.
+- [Alert Rule Health](ref:alert-rule-health): Indicates the status in cases of `Error` or `NoData` events.
 
 To view the state and health of your alert rules:
 
@@ -64,19 +85,3 @@ To access the State history view, complete the following steps.
 1. Click the labels to filter and narrow down the results.
 
    {{< figure src="/media/docs/alerting/state-history.png" max-width="750px" >}}
-
-{{% docs/reference %}}
-
-[alert-rule-evaluation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation"
-[alert-rule-evaluation]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation"
-
-[alert-rule-state]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health#alert-rule-state"
-[alert-rule-state]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/state-and-health#alert-rule-state"
-
-[alert-instance-state]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health#alert-instance-state"
-[alert-instance-state]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/state-and-health#alert-instance-state"
-
-[alert-rule-health]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health#alert-rule-health"
-[alert-rule-health]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/state-and-health#alert-rule-health"
-
-{{% /docs/reference %}}
