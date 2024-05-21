@@ -196,3 +196,21 @@ func TestWith(t *testing.T) {
 	assert.Equal(t, "B", tables[1])
 	assert.Equal(t, "BEE", tables[2])
 }
+
+func TestWithQuote(t *testing.T) {
+	t.Skip()
+	sql := "select *,'junk' from foo"
+	tables, err := TablesList((sql))
+	assert.Nil(t, err)
+
+	assert.Equal(t, "foo", tables[0])
+}
+
+func TestWithQuote2(t *testing.T) {
+	t.Skip()
+	sql := "SELECT json_serialize_sql('SELECT 1')"
+	tables, err := TablesList((sql))
+	assert.Nil(t, err)
+
+	assert.Equal(t, 0, len(tables))
+}

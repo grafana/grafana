@@ -2,10 +2,9 @@ import { http, HttpResponse, RequestHandler } from 'msw';
 import { setupServer } from 'msw/node';
 
 import { GrafanaAlertingConfigurationStatusResponse } from 'app/features/alerting/unified/api/alertmanagerApi';
+import { grafanaAlertingConfigurationStatusHandler } from 'app/features/alerting/unified/mocks/server/handlers/alertmanagers';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
-
-import { grafanaAlertingConfigurationStatusHandler } from '../../../mocks/alertmanagerApi';
 
 const grafanaAlertingConfigurationMockedResponse: GrafanaAlertingConfigurationStatusResponse = {
   alertmanagersChoice: AlertmanagerChoice.Internal,

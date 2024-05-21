@@ -177,62 +177,39 @@ Annotations add metadata to provide more information on the alert in your alert 
    Webpage where you keep your runbook for the alert
 
 1. [Optional] Add a custom annotation
-1. [Optional] Add a dashboard and panel link.
+1. [Optional] Add a **dashboard and panel link**.
 
    Links alerts to panels in a dashboard.
 
+   {{< docs/play title="visualizations with linked alerts in Grafana" url="https://play.grafana.org/d/000000074/" >}}
+
 1. Click **Save rule**.
 
-### Single and multi-dimensional rule
+## Configure no data and error handling
 
-For Grafana managed alerts, you can create a rule with a classic condition or you can create a multi-dimensional rule.
+In **Configure no data and error handling**, you can define the alerting behavior when the evaluation returns no data or an error.
 
-**Rule with classic condition**
+For details about alert states, refer to [lifecycle of alert instances.][alert-instance-state]
 
-Use the classic condition expression to create a rule that triggers a single alert when its condition is met. For a query that returns multiple series, Grafana does not track the alert state of each series. As a result, Grafana sends only a single alert even when alert conditions are met for multiple series.
+You can configure the alert instance state when its evaluation returns no data:
 
-For more information, see [expressions documentation][expression-queries].
+| No Data configuration | Description                                                                                                                                                                                                                               |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| No Data               | The default option. Sets alert instance state to `No data`. <br/> The alert rule also creates a new alert instance `DatasourceNoData` with the name and UID of the alert rule, and UID of the datasource that returned no data as labels. |
+| Alerting              | Sets alert instance state to `Alerting`. It waits until the [pending period][pending-period] has finished.                                                                                                                                |
+| Ok                    | Sets alert instance state to `Normal`.                                                                                                                                                                                                    |
+| Keep Last State       | Maintains the alert instance in its last state. Useful for mitigating temporary issues, refer to [Keep last state][keep-last-state].                                                                                                      |
 
-**Multi-dimensional rule**
+You can also configure the alert instance state when its evaluation returns an error or timeout.
 
-To generate a separate alert for each series, create a multi-dimensional rule. Use `Math`, `Reduce`, or `Resample` expressions to create a multi-dimensional rule. For example:
+| Error configuration | Description                                                                                                                                                                                                                            |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Error               | The default option. Sets alert instance state to `Error`. <br/> The alert rule also creates a new alert instance `DatasourceError` with the name and UID of the alert rule, and UID of the datasource that returned no data as labels. |
+| Alerting            | Sets alert instance state to `Alerting`. It waits until the [pending period][pending-period] has finished.                                                                                                                             |
+| Ok                  | Sets alert instance state to `Normal`.                                                                                                                                                                                                 |
+| Keep Last State     | Maintains the alert instance in its last state. Useful for mitigating temporary issues, refer to [Keep last state][keep-last-state].                                                                                                   |
 
-- Add a `Reduce` expression for each query to aggregate values in the selected time range into a single value. (Not needed for [rules using numeric data][alerting-on-numeric-data]).
-- Add a `Math` expression with the condition for the rule. Not needed in case a query or a reduce expression already returns 0 if rule should not fire, or a positive number if it should fire. Some examples: `$B > 70` if it should fire in case value of B query/expression is more than 70. `$B < $C * 100` in case it should fire if value of B is less than value of C multiplied by 100. If queries being compared have multiple series in their results, series from different queries are matched if they have the same labels or one is a subset of the other.
-
-![Query section multi dimensional](/static/img/docs/alerting/unified/rule-edit-multi-8-0.png 'Query section multi dimensional screenshot')
-
-> **Note:** Grafana does not support alert queries with template variables. More information is available at <https://community.grafana.com/t/template-variables-are-not-supported-in-alert-queries-while-setting-up-alert/2514>.
-
-### Configure no data and error handling
-
-Configure alerting behavior when your alert rule evaluation returns no data or an error.
-
-**Note:** Alert rules that are configured to fire when an evaluation returns no data or error only fire when the entire duration of the evaluation period has finished. This means that rather than immediately firing when the alert rule condition is breached, the alert rule waits until the time set as the **For** field has finished and then fires, reducing alert noise and allowing for temporary data availability issues.
-
-If your alert rule evaluation returns no data, you can set the state on your alert rule to appear as follows:
-
-| No Data  | Description                                                                                                                                |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| No Data  | Creates a new alert `DatasourceNoData` with the name and UID of the alert rule, and UID of the datasource that returned no data as labels. |
-| Alerting | Sets alert rule state to `Alerting`. The alert rule waits until the time set in the **For** field has finished before firing.              |
-| Ok       | Sets alert rule state to `Normal`.                                                                                                         |
-
-If your evaluation returns an error, you can set the state on your alert rule to appear as follows:
-
-| Error    | Description                                                                                                                                     |
-| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| Error    | Creates an alert instance `DatasourceError` with the name and UID of the alert rule, and UID of the datasource that returned no data as labels. |
-| Alerting | Sets alert rule state to `Alerting`. The alert rule waits until the time set in the **For** field has finished before firing.                   |
-| Ok       | Sets alert rule state to `Normal`.                                                                                                              |
-
-### Resolve stale alert instances
-
-An alert instance is considered stale if its dimension or series has disappeared from the query results entirely for two evaluation intervals.
-
-Stale alert instances that are in the **Alerting**/**NoData**/**Error** states are automatically marked as **Resolved** and the grafana_state_reason annotation is added to the alert instance with the reason **MissingSeries**.
-
-### Create alerts from panels
+## Create alerts from panels
 
 Create alerts from any panel type. This means you can reuse the queries in the panel and create alerts based on them.
 
@@ -260,4 +237,14 @@ This will open the alert rule form, allowing you to configure and create your al
 
 [time-units-and-relative-ranges]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards#time-units-and-relative-ranges"
 [time-units-and-relative-ranges]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/use-dashboards#time-units-and-relative-ranges"
+
+[pending-period]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation#pending-period"
+[pending-period]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation#pending-period"
+
+[keep-last-state]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health#keep-last-state"
+[keep-last-state]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/state-and-health#keep-last-state"
+
+[alert-instance-state]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health#alert-instance-state"
+[alert-instance-state]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/state-and-health#alert-instance-state"
+
 {{% /docs/reference %}}
