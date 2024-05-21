@@ -1178,7 +1178,7 @@
                   "type": "string"
                 },
                 "settings": {
-                  "additionalProperties": {},
+                  "additionalProperties": false,
                   "type": "object"
                 },
                 "source": {
@@ -1458,7 +1458,7 @@
                     "type": "string"
                   },
                   "settings": {
-                    "additionalProperties": {},
+                    "additionalProperties": false,
                     "type": "object"
                   },
                   "source": {
@@ -2481,7 +2481,7 @@
             "type": "string"
           },
           "model": {
-            "additionalProperties": {},
+            "additionalProperties": false,
             "type": "object"
           },
           "queryType": {
@@ -3771,15 +3771,15 @@
       "CookiePreferences": {
         "properties": {
           "analytics": {
-            "additionalProperties": {},
+            "additionalProperties": false,
             "type": "object"
           },
           "functional": {
-            "additionalProperties": {},
+            "additionalProperties": false,
             "type": "object"
           },
           "performance": {
-            "additionalProperties": {},
+            "additionalProperties": false,
             "type": "object"
           }
         },
@@ -3841,7 +3841,7 @@
             "type": "string"
           },
           "target": {
-            "additionalProperties": {},
+            "additionalProperties": false,
             "description": "Target data query",
             "example": {
               "prop1": "value1",
@@ -3874,7 +3874,7 @@
             "type": "string"
           },
           "target": {
-            "additionalProperties": {},
+            "additionalProperties": false,
             "description": "Target data query",
             "example": {
               "prop1": "value1",
@@ -5174,12 +5174,12 @@
       "FieldConfig": {
         "properties": {
           "color": {
-            "additionalProperties": {},
+            "additionalProperties": false,
             "description": "Map values to a display color\nNOTE: this interface is under development in the frontend... so simple map for now",
             "type": "object"
           },
           "custom": {
-            "additionalProperties": {},
+            "additionalProperties": false,
             "description": "Panel Specific Values",
             "type": "object"
           },
@@ -8488,7 +8488,7 @@
         "description": "PublicError is derived from Error and only contains information\navailable to the end user.",
         "properties": {
           "extra": {
-            "additionalProperties": {},
+            "additionalProperties": false,
             "type": "object"
           },
           "message": {
@@ -8669,12 +8669,12 @@
         "description": "The embedded FieldConfig's display name must be set.\nIt corresponds to the QueryResultMetaStat on the frontend (https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/types/data.ts#L53).",
         "properties": {
           "color": {
-            "additionalProperties": {},
+            "additionalProperties": false,
             "description": "Map values to a display color\nNOTE: this interface is under development in the frontend... so simple map for now",
             "type": "object"
           },
           "custom": {
-            "additionalProperties": {},
+            "additionalProperties": false,
             "description": "Panel Specific Values",
             "type": "object"
           },
@@ -8931,7 +8931,7 @@
           },
           "queries": {
             "items": {
-              "additionalProperties": {},
+              "additionalProperties": false,
               "type": "object"
             },
             "type": "array"
@@ -11080,7 +11080,7 @@
         "description": "Unstructured allows objects that do not have Golang structs registered to be manipulated\ngenerically.",
         "properties": {
           "Object": {
-            "additionalProperties": {},
+            "additionalProperties": false,
             "description": "Object is a JSON compatible map with string, float, int, bool, []interface{},\nor map[string]interface{} children.",
             "type": "object"
           }
@@ -11874,7 +11874,6 @@
         "type": "object"
       },
       "alertGroups": {
-        "description": "AlertGroups alert groups",
         "items": {
           "$ref": "#/components/schemas/alertGroup"
         },
@@ -12007,7 +12006,6 @@
         "type": "object"
       },
       "gettableAlert": {
-        "description": "GettableAlert gettable alert",
         "properties": {
           "annotations": {
             "$ref": "#/components/schemas/labelSet"
@@ -12063,12 +12061,14 @@
         "type": "object"
       },
       "gettableAlerts": {
+        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
         "type": "array"
       },
       "gettableSilence": {
+        "description": "GettableSilence gettable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -12117,6 +12117,7 @@
         "type": "object"
       },
       "gettableSilences": {
+        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
@@ -12267,7 +12268,6 @@
         "type": "array"
       },
       "postableSilence": {
-        "description": "PostableSilence postable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -12308,7 +12308,7 @@
         "description": "PublicError is derived from Error and only contains information\navailable to the end user.",
         "properties": {
           "extra": {
-            "additionalProperties": {},
+            "additionalProperties": false,
             "description": "Extra Additional information about the error",
             "type": "object"
           },
@@ -25158,7 +25158,7 @@
                     "type": "string"
                   },
                   "settings": {
-                    "additionalProperties": {},
+                    "additionalProperties": false,
                     "type": "object"
                   }
                 },

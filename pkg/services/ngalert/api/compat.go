@@ -56,7 +56,7 @@ func ProvisionedAlertRuleFromAlertRule(rule models.AlertRule, provenance models.
 		Provenance:           definitions.Provenance(provenance), // TODO validate enum conversion?
 		IsPaused:             rule.IsPaused,
 		NotificationSettings: AlertRuleNotificationSettingsFromNotificationSettings(rule.NotificationSettings),
-		Record:               RecordFromAlertRuleRecord(rule.Record),
+		Record:               ApiRecordFromAlertRuleRecord(rule.Record),
 	}
 }
 
@@ -466,7 +466,7 @@ func AlertRuleRecordFromRecord(r *definitions.Record) *models.Record {
 	}
 }
 
-func RecordFromAlertRuleRecord(r *models.Record) *definitions.Record {
+func ApiRecordFromAlertRuleRecord(r *models.Record) *definitions.Record {
 	if r == nil {
 		return nil
 	}
@@ -481,6 +481,16 @@ func AlertRuleRecordExportFromRecord(r *models.Record) *definitions.AlertRuleRec
 		return nil
 	}
 	return &definitions.AlertRuleRecordExport{
+		Metric: r.Metric,
+		From:   r.From,
+	}
+}
+
+func ModelRecordFromApiRecord(r *definitions.Record) *models.Record {
+	if r == nil {
+		return nil
+	}
+	return &models.Record{
 		Metric: r.Metric,
 		From:   r.From,
 	}

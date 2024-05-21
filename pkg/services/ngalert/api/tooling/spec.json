@@ -4495,7 +4495,7 @@
       }
     },
     "EvalQueriesResponse": {
-      "$ref": "#/definitions/EvalQueriesResponse"
+      "type": "object"
     },
     "ExplorePanelsState": {
       "description": "This is an object constructed with the keys as the values of the enum VisType and the value being a bag of properties"
@@ -7976,6 +7976,7 @@
       }
     },
     "alertGroup": {
+      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -7996,16 +7997,15 @@
         "receiver": {
           "$ref": "#/definitions/receiver"
         }
-      },
-      "$ref": "#/definitions/alertGroup"
+      }
     },
     "alertGroups": {
       "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
+        "type": "object",
         "$ref": "#/definitions/alertGroup"
-      },
-      "$ref": "#/definitions/alertGroups"
+      }
     },
     "alertStatus": {
       "description": "AlertStatus alert status",
@@ -8106,7 +8106,6 @@
       }
     },
     "gettableAlert": {
-      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -8117,59 +8116,17 @@
         "startsAt",
         "status",
         "updatedAt"
-      ],
-      "properties": {
-        "annotations": {
-          "$ref": "#/definitions/labelSet"
-        },
-        "endsAt": {
-          "description": "ends at",
-          "type": "string",
-          "format": "date-time"
-        },
-        "fingerprint": {
-          "description": "fingerprint",
-          "type": "string"
-        },
-        "generatorURL": {
-          "description": "generator URL\nFormat: uri",
-          "type": "string",
-          "format": "uri"
-        },
-        "labels": {
-          "$ref": "#/definitions/labelSet"
-        },
-        "receivers": {
-          "description": "receivers",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/receiver"
-          }
-        },
-        "startsAt": {
-          "description": "starts at",
-          "type": "string",
-          "format": "date-time"
-        },
-        "status": {
-          "$ref": "#/definitions/alertStatus"
-        },
-        "updatedAt": {
-          "description": "updated at",
-          "type": "string",
-          "format": "date-time"
-        }
-      },
-      "$ref": "#/definitions/gettableAlert"
+      ]
     },
     "gettableAlerts": {
       "type": "array",
       "items": {
+        "type": "object",
         "$ref": "#/definitions/gettableAlert"
-      },
-      "$ref": "#/definitions/gettableAlerts"
+      }
     },
     "gettableSilence": {
+      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -8215,17 +8172,17 @@
           "type": "string",
           "format": "date-time"
         }
-      },
-      "$ref": "#/definitions/gettableSilence"
+      }
     },
     "gettableSilences": {
       "type": "array",
       "items": {
+        "type": "object",
         "$ref": "#/definitions/gettableSilence"
-      },
-      "$ref": "#/definitions/gettableSilences"
+      }
     },
     "integration": {
+      "description": "Integration integration",
       "type": "object",
       "required": [
         "name",
@@ -8253,8 +8210,7 @@
           "description": "send resolved",
           "type": "boolean"
         }
-      },
-      "$ref": "#/definitions/integration"
+      }
     },
     "labelSet": {
       "description": "LabelSet label set",
@@ -8370,6 +8326,7 @@
       }
     },
     "postableSilence": {
+      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
@@ -8404,8 +8361,7 @@
           "type": "string",
           "format": "date-time"
         }
-      },
-      "$ref": "#/definitions/postableSilence"
+      }
     },
     "receiver": {
       "type": "object",
@@ -8413,25 +8369,7 @@
         "active",
         "integrations",
         "name"
-      ],
-      "properties": {
-        "active": {
-          "description": "active",
-          "type": "boolean"
-        },
-        "integrations": {
-          "description": "integrations",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/integration"
-          }
-        },
-        "name": {
-          "description": "name",
-          "type": "string"
-        }
-      },
-      "$ref": "#/definitions/receiver"
+      ]
     },
     "silence": {
       "description": "Silence silence",
