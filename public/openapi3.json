@@ -2692,7 +2692,6 @@
         "type": "object"
       },
       "AlertRuleNotificationSettingsExport": {
-        "description": "Field name mismatches with Terraform provider schema are noted where applicable.",
         "properties": {
           "group_by": {
             "items": {
@@ -2707,14 +2706,12 @@
             "type": "string"
           },
           "mute_time_intervals": {
-            "description": "TF -\u003e `mute_timings`",
             "items": {
               "type": "string"
             },
             "type": "array"
           },
           "receiver": {
-            "description": "TF -\u003e `contact_point`",
             "type": "string"
           },
           "repeat_interval": {
@@ -11829,6 +11826,7 @@
         "type": "object"
       },
       "alertGroup": {
+        "description": "AlertGroup alert group",
         "properties": {
           "alerts": {
             "description": "alerts",
@@ -11985,7 +11983,6 @@
         "type": "object"
       },
       "gettableAlert": {
-        "description": "GettableAlert gettable alert",
         "properties": {
           "annotations": {
             "$ref": "#/components/schemas/labelSet"
@@ -12096,6 +12093,7 @@
         "type": "object"
       },
       "gettableSilences": {
+        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
@@ -12245,7 +12243,6 @@
         "type": "array"
       },
       "postableSilence": {
-        "description": "PostableSilence postable silence",
         "properties": {
           "comment": {
             "description": "comment",

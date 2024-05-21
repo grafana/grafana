@@ -12171,7 +12171,6 @@
       }
     },
     "AlertRuleNotificationSettingsExport": {
-      "description": "Field name mismatches with Terraform provider schema are noted where applicable.",
       "type": "object",
       "title": "AlertRuleNotificationSettingsExport is the provisioned export of models.NotificationSettings.",
       "properties": {
@@ -12188,14 +12187,12 @@
           "type": "string"
         },
         "mute_time_intervals": {
-          "description": "TF -\u003e `mute_timings`",
           "type": "array",
           "items": {
             "type": "string"
           }
         },
         "receiver": {
-          "description": "TF -\u003e `contact_point`",
           "type": "string"
         },
         "repeat_interval": {
@@ -21309,6 +21306,7 @@
       }
     },
     "alertGroup": {
+      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -21465,7 +21463,6 @@
       }
     },
     "gettableAlert": {
-      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -21576,6 +21573,7 @@
       }
     },
     "gettableSilences": {
+      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
@@ -21725,7 +21723,6 @@
       }
     },
     "postableSilence": {
-      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
