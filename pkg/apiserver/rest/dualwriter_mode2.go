@@ -304,6 +304,7 @@ func enrichReturnedObject(originalObj, returnedObj runtime.Object, created bool)
 	accessorReturned.SetAnnotations(ac)
 
 	// if the object is created, we need to reset the resource version and UID
+	// create method expects an empty resource version
 	if created {
 		accessorReturned.SetResourceVersion("")
 		accessorReturned.SetUID("")
