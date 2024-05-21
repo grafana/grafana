@@ -21,7 +21,7 @@ weight: 100
 refs:
   supported-log-levels-and-mappings-of-log-level-abbreviation-and-expressions:
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/explore/logs-integration/#log-level
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/logs-integration/#log-level
 ---
 
 # Logs

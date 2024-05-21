@@ -24,19 +24,19 @@ weight: 40
 refs:
   use-expressions-to-manipulate-data:
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/expression-queries/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/expression-queries/
   global-variables:
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables/#global-variables
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#global-variables
   built-in-core-data-sources:
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/datasources/#data-source-plugins
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/#data-source-plugins
   data-sources:
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/datasources/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
   plugin-management:
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/administration/plugin-management/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/plugin-management/
 ---
 
 # Query and transform data
