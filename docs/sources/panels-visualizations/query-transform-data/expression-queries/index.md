@@ -16,18 +16,18 @@ weight: 40
 refs:
   grafana-alerting:
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/alerting/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
   no-data-and-error-handling:
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling
   multiple-dimensional-data:
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/fundamentals/timeseries-dimensions/
+      destination: /docs/grafana/<GRAFANA_VERSION>/fundamentals/timeseries-dimensions/
   labels:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA VERSION>/fundamentals/timeseries-dimensions/#labels
+      destination: /docs/grafana/<GRAFANA_VERSION>/fundamentals/timeseries-dimensions/#labels
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/fundamentals/timeseries-dimensions/#labels
+      destination: /docs/grafana/<GRAFANA_VERSION>/fundamentals/timeseries-dimensions/#labels
 ---
 
 # Write expression queries

@@ -35,7 +35,7 @@ refs:
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/candlestick/
   canvas:
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/canvas/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/canvas/
   logs:
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/logs/
@@ -92,7 +92,7 @@ refs:
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/node-graph/
   geomap:
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/geomap/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/geomap/
 ---
 
 # Visualizations
