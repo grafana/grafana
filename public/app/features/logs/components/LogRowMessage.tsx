@@ -62,9 +62,7 @@ const restructureLog = (line: string, prettifyLogMessage: boolean, wrapLogMessag
   if (prettifyLogMessage) {
     try {
       return JSON.stringify(JSON.parse(line), undefined, 2);
-    } catch (error) {
-      return line;
-    }
+    } catch (error) {}
   }
   // With wrapping disabled, we also want to turn it into a single-line log entry
   if (!wrapLogMessage) {
