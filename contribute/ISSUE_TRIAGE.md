@@ -362,5 +362,5 @@ This gives you a structure of labels in the sidebar similar to the following:
   - Grafana
 ```
 
-- All notifications you’ll need to take action on should show up as unread in GitHub (mine) and its sub-labels.
-- All notifications you don’t need to take action on show up as unread in GitHub (other) and its sub-labels.
+- All notifications you’ll need to take action on should show up as unread in **GitHub (mine)** and its sub-labels.
+- All notifications you don’t need to take action on show up as unread in **GitHub (other)** and its sub-labels.
