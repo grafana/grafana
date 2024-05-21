@@ -39,11 +39,11 @@ func (d *DualWriterMode1) Create(ctx context.Context, obj runtime.Object, create
 	var method = "create"
 
 	startLegacy := time.Now()
-	res, errLegacy := d.Legacy.Create(ctx, obj, createValidation, options)
-	if errLegacy != nil {
-		log.Error(errLegacy, "unable to create object in legacy storage")
+	res, err := d.Legacy.Create(ctx, obj, createValidation, options)
+	if err != nil {
+		log.Error(err, "unable to create object in legacy storage")
 		d.recordLegacyDuration(true, mode1Str, options.Kind, method, startLegacy)
-		return res, errLegacy
+		return res, err
 	}
 	d.recordLegacyDuration(false, mode1Str, options.Kind, method, startLegacy)
 
@@ -67,7 +67,7 @@ func (d *DualWriterMode1) Create(ctx context.Context, obj runtime.Object, create
 		d.recordStorageDuration(err != nil, mode1Str, options.Kind, method, startStorage)
 	}()
 
-	return res, errLegacy
+	return res, nil
 }
 
 // Get overrides the behavior of the generic DualWriter and reads only from LegacyStorage.
@@ -127,8 +127,10 @@ func (d *DualWriterMode1) Delete(ctx context.Context, name string, deleteValidat
 	res, async, err := d.Legacy.Delete(ctx, name, deleteValidation, options)
 	if err != nil {
 		log.Error(err, "unable to delete object in legacy storage")
+		d.recordLegacyDuration(true, mode1Str, options.Kind, method, startLegacy)
+		return res, async, err
 	}
-	d.recordLegacyDuration(err != nil, mode1Str, options.Kind, method, startLegacy)
+	d.recordLegacyDuration(false, mode1Str, options.Kind, method, startLegacy)
 
 	go func() {
 		startStorage := time.Now()
@@ -138,7 +140,7 @@ func (d *DualWriterMode1) Delete(ctx context.Context, name string, deleteValidat
 		d.recordStorageDuration(err != nil, mode1Str, options.Kind, method, startStorage)
 	}()
 
-	return res, async, err
+	return res, async, nil
 }
 
 // DeleteCollection overrides the behavior of the generic DualWriter and deletes only from LegacyStorage.
@@ -148,11 +150,13 @@ func (d *DualWriterMode1) DeleteCollection(ctx context.Context, deleteValidation
 	var method = "delete-collection"
 
 	startLegacy := time.Now()
-	res, errLegacy := d.Legacy.DeleteCollection(ctx, deleteValidation, options, listOptions)
-	if errLegacy != nil {
-		log.Error(errLegacy, "unable to delete collection in legacy storage")
+	res, err := d.Legacy.DeleteCollection(ctx, deleteValidation, options, listOptions)
+	if err != nil {
+		log.Error(err, "unable to delete collection in legacy storage")
+		d.recordLegacyDuration(true, mode1Str, options.Kind, method, startLegacy)
+		return res, err
 	}
-	d.recordLegacyDuration(errLegacy != nil, mode1Str, options.Kind, method, startLegacy)
+	d.recordLegacyDuration(false, mode1Str, options.Kind, method, startLegacy)
 
 	go func() {
 		startStorage := time.Now()
@@ -162,7 +166,7 @@ func (d *DualWriterMode1) DeleteCollection(ctx context.Context, deleteValidation
 		d.recordStorageDuration(err != nil, mode1Str, options.Kind, method, startStorage)
 	}()
 
-	return res, errLegacy
+	return res, nil
 }
 
 func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
@@ -171,11 +175,13 @@ func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.
 	var method = "update"
 
 	startLegacy := time.Now()
-	res, async, errLegacy := d.Legacy.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
-	if errLegacy != nil {
-		log.Error(errLegacy, "unable to update in legacy storage")
+	res, async, err := d.Legacy.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+	if err != nil {
+		log.Error(err, "unable to update in legacy storage")
+		d.recordLegacyDuration(true, mode1Str, options.Kind, method, startLegacy)
+		return res, async, err
 	}
-	d.recordLegacyDuration(errLegacy != nil, mode1Str, options.Kind, method, startLegacy)
+	d.recordLegacyDuration(false, mode1Str, options.Kind, method, startLegacy)
 
 	updated, err := objInfo.UpdatedObject(ctx, res)
 	if err != nil {
@@ -218,7 +224,7 @@ func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.
 		d.recordStorageDuration(err != nil, mode1Str, options.Kind, method, startStorage)
 	}()
 
-	return res, async, errLegacy
+	return res, async, nil
 }
 
 func (d *DualWriterMode1) Destroy() {
