@@ -104,7 +104,6 @@ func TestValidateDashboardExists(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("returns false when dashboard does not exist", func(t *testing.T) {
-
 		err := s.ValidateDashboardExists(ctx, 1, "test")
 		require.Error(t, err)
 		require.Equal(t, dashboards.ErrDashboardNotFound, err)
@@ -112,7 +111,6 @@ func TestValidateDashboardExists(t *testing.T) {
 	})
 
 	t.Run("returns true when dashboard exists", func(t *testing.T) {
-
 		err := createDashboard(sqlStore)
 		require.NoError(t, err)
 
@@ -124,7 +122,6 @@ func TestValidateDashboardExists(t *testing.T) {
 
 func createDashboard(store db.DB) error {
 	return store.WithDbSession(context.Background(), func(sess *db.Session) error {
-
 		dashboard := &dashboards.Dashboard{
 			ID:      1,
 			UID:     "test",
