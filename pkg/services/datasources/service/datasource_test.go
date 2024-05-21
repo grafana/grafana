@@ -77,7 +77,7 @@ func TestService_AddDataSource(t *testing.T) {
 				},
 			}},
 		}, &pluginfakes.FakePluginClient{
-			MutateInstanceSettingsFunc: dsplugin.MutateInstanceSettings, // The actual callback
+			MutateAdmissionFunc: dsplugin.MutateAdmission, // The actual callback
 		})
 		require.NoError(t, err)
 

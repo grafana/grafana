@@ -218,7 +218,7 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 }
 
 // ConvertObject implements plugins.Client.
-func (s *Service) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.StorageResponse, error) {
+func (s *Service) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.AdmissionResponse, error) {
 	if req == nil {
 		return nil, errNilRequest
 	}
@@ -232,7 +232,7 @@ func (s *Service) ConvertObject(ctx context.Context, req *backend.ConversionRequ
 }
 
 // MutateAdmission implements plugins.Client.
-func (s *Service) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
+func (s *Service) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
 	if req == nil {
 		return nil, errNilRequest
 	}
@@ -245,22 +245,8 @@ func (s *Service) MutateAdmission(ctx context.Context, req *backend.AdmissionReq
 	return plugin.MutateAdmission(ctx, req)
 }
 
-// MutateInstanceSettings implements plugins.Client.
-func (s *Service) MutateInstanceSettings(ctx context.Context, req *backend.InstanceSettingsAdmissionRequest) (*backend.InstanceSettingsResponse, error) {
-	if req == nil {
-		return nil, errNilRequest
-	}
-
-	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID, req.PluginContext.PluginVersion)
-	if !exists {
-		return nil, plugins.ErrPluginNotRegistered
-	}
-
-	return plugin.MutateInstanceSettings(ctx, req)
-}
-
 // ValidateAdmission implements plugins.Client.
-func (s *Service) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
+func (s *Service) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
 	if req == nil {
 		return nil, errNilRequest
 	}

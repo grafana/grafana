@@ -20,17 +20,16 @@ import (
 
 type TestClient struct {
 	plugins.Client
-	QueryDataFunc              backend.QueryDataHandlerFunc
-	CallResourceFunc           backend.CallResourceHandlerFunc
-	CheckHealthFunc            backend.CheckHealthHandlerFunc
-	CollectMetricsFunc         backend.CollectMetricsHandlerFunc
-	SubscribeStreamFunc        func(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error)
-	PublishStreamFunc          func(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error)
-	RunStreamFunc              func(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error
-	MutateInstanceSettingsFunc backend.MutateInstanceSettingsFunc
-	ValidateAdmissionFunc      backend.ValidateAdmissionFunc
-	MutateAdmissionFunc        backend.MutateAdmissionFunc
-	ConvertObjectFunc          backend.ConvertObjectFunc
+	QueryDataFunc         backend.QueryDataHandlerFunc
+	CallResourceFunc      backend.CallResourceHandlerFunc
+	CheckHealthFunc       backend.CheckHealthHandlerFunc
+	CollectMetricsFunc    backend.CollectMetricsHandlerFunc
+	SubscribeStreamFunc   func(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error)
+	PublishStreamFunc     func(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error)
+	RunStreamFunc         func(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error
+	ValidateAdmissionFunc backend.ValidateAdmissionFunc
+	MutateAdmissionFunc   backend.MutateAdmissionFunc
+	ConvertObjectFunc     backend.ConvertObjectFunc
 }
 
 func (c *TestClient) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -88,28 +87,21 @@ func (c *TestClient) RunStream(ctx context.Context, req *backend.RunStreamReques
 	return nil
 }
 
-func (c *TestClient) MutateInstanceSettings(ctx context.Context, req *backend.InstanceSettingsAdmissionRequest) (*backend.InstanceSettingsResponse, error) {
-	if c.MutateInstanceSettingsFunc != nil {
-		return c.MutateInstanceSettingsFunc(ctx, req)
-	}
-	return nil, nil
-}
-
-func (c *TestClient) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
+func (c *TestClient) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
 	if c.ValidateAdmissionFunc != nil {
 		return c.ValidateAdmissionFunc(ctx, req)
 	}
 	return nil, nil
 }
 
-func (c *TestClient) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
+func (c *TestClient) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
 	if c.MutateAdmissionFunc != nil {
 		return c.MutateAdmissionFunc(ctx, req)
 	}
 	return nil, nil
 }
 
-func (c *TestClient) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.StorageResponse, error) {
+func (c *TestClient) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.AdmissionResponse, error) {
 	if c.ConvertObjectFunc != nil {
 		return c.ConvertObjectFunc(ctx, req)
 	}
@@ -167,28 +159,21 @@ func (m *TestMiddleware) CollectMetrics(ctx context.Context, req *backend.Collec
 	return res, err
 }
 
-func (m *TestMiddleware) MutateInstanceSettings(ctx context.Context, req *backend.InstanceSettingsAdmissionRequest) (*backend.InstanceSettingsResponse, error) {
-	m.sCtx.MutateAdmissionCallChain = append(m.sCtx.MutateAdmissionCallChain, fmt.Sprintf("before %s", m.Name))
-	res, err := m.next.MutateInstanceSettings(ctx, req)
-	m.sCtx.MutateAdmissionCallChain = append(m.sCtx.MutateAdmissionCallChain, fmt.Sprintf("after %s", m.Name))
-	return res, err
-}
-
-func (m *TestMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
+func (m *TestMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
 	m.sCtx.ValidateAdmissionCallChain = append(m.sCtx.ValidateAdmissionCallChain, fmt.Sprintf("before %s", m.Name))
 	res, err := m.next.ValidateAdmission(ctx, req)
 	m.sCtx.ValidateAdmissionCallChain = append(m.sCtx.ValidateAdmissionCallChain, fmt.Sprintf("after %s", m.Name))
 	return res, err
 }
 
-func (m *TestMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
+func (m *TestMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
 	m.sCtx.MutateAdmissionCallChain = append(m.sCtx.MutateAdmissionCallChain, fmt.Sprintf("before %s", m.Name))
 	res, err := m.next.MutateAdmission(ctx, req)
 	m.sCtx.MutateAdmissionCallChain = append(m.sCtx.MutateAdmissionCallChain, fmt.Sprintf("after %s", m.Name))
 	return res, err
 }
 
-func (m *TestMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.StorageResponse, error) {
+func (m *TestMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.AdmissionResponse, error) {
 	m.sCtx.ConvertObjectCallChain = append(m.sCtx.ConvertObjectCallChain, fmt.Sprintf("before %s", m.Name))
 	res, err := m.next.ConvertObject(ctx, req)
 	m.sCtx.ConvertObjectCallChain = append(m.sCtx.ConvertObjectCallChain, fmt.Sprintf("after %s", m.Name))

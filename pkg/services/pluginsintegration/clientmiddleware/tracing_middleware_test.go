@@ -387,23 +387,18 @@ func (m *alwaysErrorFuncMiddleware) RunStream(ctx context.Context, req *backend.
 	return m.f()
 }
 
-// MutateInstanceSettings implements backend.StorageHandler.
-func (m *alwaysErrorFuncMiddleware) MutateInstanceSettings(ctx context.Context, req *backend.InstanceSettingsAdmissionRequest) (*backend.InstanceSettingsResponse, error) {
+// ValidateAdmission implements backend.AdmissionHandler.
+func (m *alwaysErrorFuncMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
 	return nil, m.f()
 }
 
-// ValidateAdmission implements backend.StorageHandler.
-func (m *alwaysErrorFuncMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
+// MutateAdmission implements backend.AdmissionHandler.
+func (m *alwaysErrorFuncMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
 	return nil, m.f()
 }
 
-// MutateAdmission implements backend.StorageHandler.
-func (m *alwaysErrorFuncMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
-	return nil, m.f()
-}
-
-// ConvertObject implements backend.StorageHandler.
-func (m *alwaysErrorFuncMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.StorageResponse, error) {
+// ConvertObject implements backend.AdmissionHandler.
+func (m *alwaysErrorFuncMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.AdmissionResponse, error) {
 	return nil, m.f()
 }
 

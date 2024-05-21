@@ -50,7 +50,7 @@ func ProvideService() *Service {
 var (
 	_ backend.QueryDataHandler      = (*Service)(nil)
 	_ backend.CallResourceHandler   = (*Service)(nil)
-	_ backend.StorageHandler        = (*Service)(nil)
+	_ backend.AdmissionHandler      = (*Service)(nil)
 	_ backend.CollectMetricsHandler = (*Service)(nil)
 )
 

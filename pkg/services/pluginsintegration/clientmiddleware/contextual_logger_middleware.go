@@ -71,26 +71,20 @@ func (m *ContextualLoggerMiddleware) RunStream(ctx context.Context, req *backend
 	return m.next.RunStream(ctx, req, sender)
 }
 
-// MutateInstanceSettings implements backend.StorageHandler.
-func (m *ContextualLoggerMiddleware) MutateInstanceSettings(ctx context.Context, req *backend.InstanceSettingsAdmissionRequest) (*backend.InstanceSettingsResponse, error) {
-	ctx = instrumentContext(ctx, endpointRunStream, req.PluginContext)
-	return m.next.MutateInstanceSettings(ctx, req)
-}
-
-// ValidateAdmission implements backend.StorageHandler.
-func (m *ContextualLoggerMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
+// ValidateAdmission implements backend.AdmissionHandler.
+func (m *ContextualLoggerMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
 	ctx = instrumentContext(ctx, endpointRunStream, req.PluginContext)
 	return m.next.ValidateAdmission(ctx, req)
 }
 
-// MutateAdmission implements backend.StorageHandler.
-func (m *ContextualLoggerMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
+// MutateAdmission implements backend.AdmissionHandler.
+func (m *ContextualLoggerMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
 	ctx = instrumentContext(ctx, endpointRunStream, req.PluginContext)
 	return m.next.MutateAdmission(ctx, req)
 }
 
-// ConvertObject implements backend.StorageHandler.
-func (m *ContextualLoggerMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.StorageResponse, error) {
+// ConvertObject implements backend.AdmissionHandler.
+func (m *ContextualLoggerMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.AdmissionResponse, error) {
 	ctx = instrumentContext(ctx, endpointRunStream, req.PluginContext)
 	return m.next.ConvertObject(ctx, req)
 }

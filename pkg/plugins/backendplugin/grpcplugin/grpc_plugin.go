@@ -19,7 +19,7 @@ type pluginClient interface {
 	backend.CheckHealthHandler
 	backend.QueryDataHandler
 	backend.CallResourceHandler
-	backend.StorageHandler
+	backend.AdmissionHandler
 	backend.StreamHandler
 }
 
@@ -201,15 +201,7 @@ func (p *grpcPlugin) RunStream(ctx context.Context, req *backend.RunStreamReques
 	return pluginClient.RunStream(ctx, req, sender)
 }
 
-func (p *grpcPlugin) MutateInstanceSettings(ctx context.Context, request *backend.InstanceSettingsAdmissionRequest) (*backend.InstanceSettingsResponse, error) {
-	pluginClient, ok := p.getPluginClient()
-	if !ok {
-		return nil, plugins.ErrPluginUnavailable
-	}
-	return pluginClient.MutateInstanceSettings(ctx, request)
-}
-
-func (p *grpcPlugin) ValidateAdmission(ctx context.Context, request *backend.AdmissionRequest) (*backend.StorageResponse, error) {
+func (p *grpcPlugin) ValidateAdmission(ctx context.Context, request *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
 	pluginClient, ok := p.getPluginClient()
 	if !ok {
 		return nil, plugins.ErrPluginUnavailable
@@ -217,7 +209,7 @@ func (p *grpcPlugin) ValidateAdmission(ctx context.Context, request *backend.Adm
 	return pluginClient.ValidateAdmission(ctx, request)
 }
 
-func (p *grpcPlugin) MutateAdmission(ctx context.Context, request *backend.AdmissionRequest) (*backend.StorageResponse, error) {
+func (p *grpcPlugin) MutateAdmission(ctx context.Context, request *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
 	pluginClient, ok := p.getPluginClient()
 	if !ok {
 		return nil, plugins.ErrPluginUnavailable
@@ -225,7 +217,7 @@ func (p *grpcPlugin) MutateAdmission(ctx context.Context, request *backend.Admis
 	return pluginClient.MutateAdmission(ctx, request)
 }
 
-func (p *grpcPlugin) ConvertObject(ctx context.Context, request *backend.ConversionRequest) (*backend.StorageResponse, error) {
+func (p *grpcPlugin) ConvertObject(ctx context.Context, request *backend.ConversionRequest) (*backend.AdmissionResponse, error) {
 	pluginClient, ok := p.getPluginClient()
 	if !ok {
 		return nil, plugins.ErrPluginUnavailable

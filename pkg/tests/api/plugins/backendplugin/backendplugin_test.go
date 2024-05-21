@@ -846,7 +846,7 @@ type testPlugin struct {
 	backend.CallResourceHandler
 	backend.QueryDataHandler
 	backend.StreamHandler
-	backend.StorageHandler
+	backend.AdmissionHandler
 }
 
 func (tp *testPlugin) PluginID() string {
@@ -934,37 +934,28 @@ func (tp *testPlugin) RunStream(ctx context.Context, req *backend.RunStreamReque
 	return plugins.ErrMethodNotImplemented
 }
 
-// ValidateAdmission implements backend.StorageHandler.
-func (tp *testPlugin) MutateInstanceSettings(ctx context.Context, req *backend.InstanceSettingsAdmissionRequest) (*backend.InstanceSettingsResponse, error) {
-	if tp.StorageHandler != nil {
-		return tp.StorageHandler.MutateInstanceSettings(ctx, req)
+// ValidateAdmission implements backend.AdmissionHandler.
+func (tp *testPlugin) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+	if tp.AdmissionHandler != nil {
+		return tp.AdmissionHandler.ValidateAdmission(ctx, req)
 	}
 
 	return nil, plugins.ErrMethodNotImplemented
 }
 
-// ValidateAdmission implements backend.StorageHandler.
-func (tp *testPlugin) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
-	if tp.StorageHandler != nil {
-		return tp.StorageHandler.ValidateAdmission(ctx, req)
+// MutateAdmission implements backend.AdmissionHandler.
+func (tp *testPlugin) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+	if tp.AdmissionHandler != nil {
+		return tp.AdmissionHandler.MutateAdmission(ctx, req)
 	}
 
 	return nil, plugins.ErrMethodNotImplemented
 }
 
-// MutateAdmission implements backend.StorageHandler.
-func (tp *testPlugin) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
-	if tp.StorageHandler != nil {
-		return tp.StorageHandler.MutateAdmission(ctx, req)
-	}
-
-	return nil, plugins.ErrMethodNotImplemented
-}
-
-// ConvertObject implements backend.StorageHandler.
-func (tp *testPlugin) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.StorageResponse, error) {
-	if tp.StorageHandler != nil {
-		return tp.StorageHandler.ConvertObject(ctx, req)
+// ConvertObject implements backend.AdmissionHandler.
+func (tp *testPlugin) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.AdmissionResponse, error) {
+	if tp.AdmissionHandler != nil {
+		return tp.AdmissionHandler.ConvertObject(ctx, req)
 	}
 
 	return nil, plugins.ErrMethodNotImplemented

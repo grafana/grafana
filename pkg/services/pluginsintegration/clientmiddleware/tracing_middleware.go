@@ -136,17 +136,8 @@ func (m *TracingMiddleware) RunStream(ctx context.Context, req *backend.RunStrea
 	return err
 }
 
-// MutateInstanceSettings implements backend.StorageHandler.
-func (m *TracingMiddleware) MutateInstanceSettings(ctx context.Context, req *backend.InstanceSettingsAdmissionRequest) (*backend.InstanceSettingsResponse, error) {
-	var err error
-	ctx, end := m.traceWrap(ctx, req.PluginContext, "MutateInstanceSettings")
-	defer func() { end(err) }()
-	resp, err := m.next.MutateInstanceSettings(ctx, req)
-	return resp, err
-}
-
-// ValidateAdmission implements backend.StorageHandler.
-func (m *TracingMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
+// ValidateAdmission implements backend.AdmissionHandler.
+func (m *TracingMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
 	var err error
 	ctx, end := m.traceWrap(ctx, req.PluginContext, "ValidateAdmission")
 	defer func() { end(err) }()
@@ -154,8 +145,8 @@ func (m *TracingMiddleware) ValidateAdmission(ctx context.Context, req *backend.
 	return resp, err
 }
 
-// MutateAdmission implements backend.StorageHandler.
-func (m *TracingMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
+// MutateAdmission implements backend.AdmissionHandler.
+func (m *TracingMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
 	var err error
 	ctx, end := m.traceWrap(ctx, req.PluginContext, "MutateAdmission")
 	defer func() { end(err) }()
@@ -163,8 +154,8 @@ func (m *TracingMiddleware) MutateAdmission(ctx context.Context, req *backend.Ad
 	return resp, err
 }
 
-// ConvertObject implements backend.StorageHandler.
-func (m *TracingMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.StorageResponse, error) {
+// ConvertObject implements backend.AdmissionHandler.
+func (m *TracingMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.AdmissionResponse, error) {
 	var err error
 	ctx, end := m.traceWrap(ctx, req.PluginContext, "ConvertObject")
 	defer func() { end(err) }()

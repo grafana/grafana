@@ -68,26 +68,20 @@ func (m *PluginRequestMetaMiddleware) RunStream(ctx context.Context, req *backen
 	return m.next.RunStream(ctx, req, sender)
 }
 
-// MutateInstanceSettings implements backend.StorageHandler.
-func (m *PluginRequestMetaMiddleware) MutateInstanceSettings(ctx context.Context, req *backend.InstanceSettingsAdmissionRequest) (*backend.InstanceSettingsResponse, error) {
-	ctx = m.withDefaultPluginRequestMeta(ctx)
-	return m.next.MutateInstanceSettings(ctx, req)
-}
-
-// ValidateAdmission implements backend.StorageHandler.
-func (m *PluginRequestMetaMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
+// ValidateAdmission implements backend.AdmissionHandler.
+func (m *PluginRequestMetaMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
 	ctx = m.withDefaultPluginRequestMeta(ctx)
 	return m.next.ValidateAdmission(ctx, req)
 }
 
-// MutateAdmission implements backend.StorageHandler.
-func (m *PluginRequestMetaMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
+// MutateAdmission implements backend.AdmissionHandler.
+func (m *PluginRequestMetaMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
 	ctx = m.withDefaultPluginRequestMeta(ctx)
 	return m.next.MutateAdmission(ctx, req)
 }
 
-// ConvertObject implements backend.StorageHandler.
-func (m *PluginRequestMetaMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.StorageResponse, error) {
+// ConvertObject implements backend.AdmissionHandler.
+func (m *PluginRequestMetaMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.AdmissionResponse, error) {
 	ctx = m.withDefaultPluginRequestMeta(ctx)
 	return m.next.ConvertObject(ctx, req)
 }

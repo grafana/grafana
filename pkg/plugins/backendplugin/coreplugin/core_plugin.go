@@ -18,7 +18,7 @@ type corePlugin struct {
 	backend.CallResourceHandler
 	backend.QueryDataHandler
 	backend.StreamHandler
-	backend.StorageHandler
+	backend.AdmissionHandler
 }
 
 // New returns a new backendplugin.PluginFactoryFunc for creating a core (built-in) backendplugin.Plugin.
@@ -30,7 +30,7 @@ func New(opts backend.ServeOpts) backendplugin.PluginFactoryFunc {
 			CheckHealthHandler:  opts.CheckHealthHandler,
 			CallResourceHandler: opts.CallResourceHandler,
 			QueryDataHandler:    opts.QueryDataHandler,
-			StorageHandler:      opts.StorageHandler,
+			AdmissionHandler:    opts.AdmissionHandler,
 			StreamHandler:       opts.StreamHandler,
 		}, nil
 	}
@@ -127,34 +127,26 @@ func (cp *corePlugin) RunStream(ctx context.Context, req *backend.RunStreamReque
 	return plugins.ErrMethodNotImplemented
 }
 
-func (cp *corePlugin) MutateInstanceSettings(ctx context.Context, req *backend.InstanceSettingsAdmissionRequest) (*backend.InstanceSettingsResponse, error) {
-	if cp.StorageHandler != nil {
+func (cp *corePlugin) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+	if cp.AdmissionHandler != nil {
 		ctx = backend.WithGrafanaConfig(ctx, req.PluginContext.GrafanaConfig)
-		return cp.StorageHandler.MutateInstanceSettings(ctx, req)
+		return cp.AdmissionHandler.MutateAdmission(ctx, req)
 	}
 	return nil, plugins.ErrMethodNotImplemented
 }
 
-func (cp *corePlugin) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
-	if cp.StorageHandler != nil {
+func (cp *corePlugin) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+	if cp.AdmissionHandler != nil {
 		ctx = backend.WithGrafanaConfig(ctx, req.PluginContext.GrafanaConfig)
-		return cp.StorageHandler.MutateAdmission(ctx, req)
+		return cp.AdmissionHandler.ValidateAdmission(ctx, req)
 	}
 	return nil, plugins.ErrMethodNotImplemented
 }
 
-func (cp *corePlugin) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
-	if cp.StorageHandler != nil {
+func (cp *corePlugin) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.AdmissionResponse, error) {
+	if cp.AdmissionHandler != nil {
 		ctx = backend.WithGrafanaConfig(ctx, req.PluginContext.GrafanaConfig)
-		return cp.StorageHandler.ValidateAdmission(ctx, req)
-	}
-	return nil, plugins.ErrMethodNotImplemented
-}
-
-func (cp *corePlugin) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.StorageResponse, error) {
-	if cp.StorageHandler != nil {
-		ctx = backend.WithGrafanaConfig(ctx, req.PluginContext.GrafanaConfig)
-		return cp.StorageHandler.ConvertObject(ctx, req)
+		return cp.AdmissionHandler.ConvertObject(ctx, req)
 	}
 	return nil, plugins.ErrMethodNotImplemented
 }

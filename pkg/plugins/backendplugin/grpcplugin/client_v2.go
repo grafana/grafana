@@ -24,7 +24,7 @@ type ClientV2 struct {
 	grpcplugin.ResourceClient
 	grpcplugin.DataClient
 	grpcplugin.StreamClient
-	grpcplugin.StorageClient
+	grpcplugin.AdmissionClient
 	pluginextensionv2.RendererPlugin
 	secretsmanagerplugin.SecretsManagerPlugin
 }
@@ -45,7 +45,7 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 		return nil, err
 	}
 
-	rawStorage, err := rpcClient.Dispense("storage")
+	rawAdmission, err := rpcClient.Dispense("admission")
 	if err != nil {
 		return nil, err
 	}
@@ -84,9 +84,9 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 		}
 	}
 
-	if rawStorage != nil {
-		if storageClient, ok := rawStorage.(grpcplugin.StorageClient); ok {
-			c.StorageClient = storageClient
+	if rawAdmission != nil {
+		if admissionClient, ok := rawAdmission.(grpcplugin.AdmissionClient); ok {
+			c.AdmissionClient = admissionClient
 		}
 	}
 
@@ -270,32 +270,13 @@ func (c *ClientV2) RunStream(ctx context.Context, req *backend.RunStreamRequest,
 	}
 }
 
-func (c *ClientV2) MutateInstanceSettings(ctx context.Context, req *backend.InstanceSettingsAdmissionRequest) (*backend.InstanceSettingsResponse, error) {
-	if c.StorageClient == nil {
-		return nil, plugins.ErrMethodNotImplemented
-	}
-
-	protoReq := backend.ToProto().InstanceSettingsAdmissionRequest(req)
-	protoResp, err := c.StorageClient.MutateInstanceSettings(ctx, protoReq)
-
-	if err != nil {
-		if status.Code(err) == codes.Unimplemented {
-			return nil, plugins.ErrMethodNotImplemented
-		}
-
-		return nil, fmt.Errorf("%v: %w", "Failed to MutateInstanceSettings", err)
-	}
-
-	return backend.FromProto().InstanceSettingsResponse(protoResp), nil
-}
-
-func (c *ClientV2) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
-	if c.StorageClient == nil {
+func (c *ClientV2) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+	if c.AdmissionClient == nil {
 		return nil, plugins.ErrMethodNotImplemented
 	}
 
 	protoReq := backend.ToProto().AdmissionRequest(req)
-	protoResp, err := c.StorageClient.ValidateAdmission(ctx, protoReq)
+	protoResp, err := c.AdmissionClient.ValidateAdmission(ctx, protoReq)
 
 	if err != nil {
 		if status.Code(err) == codes.Unimplemented {
@@ -305,16 +286,16 @@ func (c *ClientV2) ValidateAdmission(ctx context.Context, req *backend.Admission
 		return nil, fmt.Errorf("%v: %w", "Failed to ValidateAdmission", err)
 	}
 
-	return backend.FromProto().StorageResponse(protoResp), nil
+	return backend.FromProto().AdmissionResponse(protoResp), nil
 }
 
-func (c *ClientV2) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.StorageResponse, error) {
-	if c.StorageClient == nil {
+func (c *ClientV2) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+	if c.AdmissionClient == nil {
 		return nil, plugins.ErrMethodNotImplemented
 	}
 
 	protoReq := backend.ToProto().AdmissionRequest(req)
-	protoResp, err := c.StorageClient.MutateAdmission(ctx, protoReq)
+	protoResp, err := c.AdmissionClient.MutateAdmission(ctx, protoReq)
 
 	if err != nil {
 		if status.Code(err) == codes.Unimplemented {
@@ -324,16 +305,16 @@ func (c *ClientV2) MutateAdmission(ctx context.Context, req *backend.AdmissionRe
 		return nil, fmt.Errorf("%v: %w", "Failed to MutateAdmission", err)
 	}
 
-	return backend.FromProto().StorageResponse(protoResp), nil
+	return backend.FromProto().AdmissionResponse(protoResp), nil
 }
 
-func (c *ClientV2) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.StorageResponse, error) {
-	if c.StorageClient == nil {
+func (c *ClientV2) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.AdmissionResponse, error) {
+	if c.AdmissionClient == nil {
 		return nil, plugins.ErrMethodNotImplemented
 	}
 
 	protoReq := backend.ToProto().ConversionRequest(req)
-	protoResp, err := c.StorageClient.ConvertObject(ctx, protoReq)
+	protoResp, err := c.AdmissionClient.ConvertObject(ctx, protoReq)
 
 	if err != nil {
 		if status.Code(err) == codes.Unimplemented {
@@ -343,5 +324,5 @@ func (c *ClientV2) ConvertObject(ctx context.Context, req *backend.ConversionReq
 		return nil, fmt.Errorf("%v: %w", "Failed to ConvertObject", err)
 	}
 
-	return backend.FromProto().StorageResponse(protoResp), nil
+	return backend.FromProto().AdmissionResponse(protoResp), nil
 }
