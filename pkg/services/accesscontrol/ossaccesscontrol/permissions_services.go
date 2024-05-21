@@ -206,7 +206,6 @@ func ProvideDashboardPermissions(
 		ReaderRoleName: "Dashboard permission reader",
 		WriterRoleName: "Dashboard permission writer",
 		RoleGroup:      "Dashboards",
-		OnlyActionSets: true,
 	}
 
 	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, actionSetService)
