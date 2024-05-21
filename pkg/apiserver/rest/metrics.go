@@ -19,7 +19,7 @@ var DualWriterStorageDuration = prometheus.NewHistogramVec(prometheus.HistogramO
 	Help:                        "Histogram for the runtime of dual writer storage duration per mode",
 	Namespace:                   "grafana",
 	NativeHistogramBucketFactor: 1.1,
-}, []string{"is_error", "mode", "name", "method"})
+}, []string{"is_error", "mode", "kind", "method"})
 
 // DualWriterLegacyDuration is a metric summary for dual writer legacy duration per mode
 var DualWriterLegacyDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
@@ -27,7 +27,7 @@ var DualWriterLegacyDuration = prometheus.NewHistogramVec(prometheus.HistogramOp
 	Help:                        "Histogram for the runtime of dual writer legacy duration per mode",
 	Namespace:                   "grafana",
 	NativeHistogramBucketFactor: 1.1,
-}, []string{"is_error", "mode", "name", "method"})
+}, []string{"is_error", "mode", "kind", "method"})
 
 // DualWriterOutcome is a metric summary for dual writer outcome comparison between the 2 stores per mode
 var DualWriterOutcome = prometheus.NewHistogramVec(prometheus.HistogramOpts{
