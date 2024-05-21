@@ -101,6 +101,7 @@ For more information about feature release stages, refer to [Release life cycle 
 | `regressionTransformation`             | Enables regression analysis transformation                                                                                                                                                   |
 | `groupToNestedTableTransformation`     | Enables the group to nested table transformation                                                                                                                                             |
 | `newPDFRendering`                      | New implementation for the dashboard-to-PDF rendering                                                                                                                                        |
+| `ssoSettingsSAML`                      | Use the new SSO Settings API to configure the SAML connector                                                                                                                                 |
 
 ## Experimental feature toggles
 

@@ -260,7 +260,7 @@ type AlertRuleExport struct {
 	Title        string              `json:"title" yaml:"title" hcl:"name"`
 	Condition    string              `json:"condition" yaml:"condition" hcl:"condition"`
 	Data         []AlertQueryExport  `json:"data" yaml:"data" hcl:"data,block"`
-	DashboardUID *string             `json:"dasboardUid,omitempty" yaml:"dashboardUid,omitempty"`
+	DashboardUID *string             `json:"dashboardUid,omitempty" yaml:"dashboardUid,omitempty"`
 	PanelID      *int64              `json:"panelId,omitempty" yaml:"panelId,omitempty"`
 	NoDataState  NoDataState         `json:"noDataState" yaml:"noDataState" hcl:"no_data_state"`
 	ExecErrState ExecutionErrorState `json:"execErrState" yaml:"execErrState" hcl:"exec_err_state"`

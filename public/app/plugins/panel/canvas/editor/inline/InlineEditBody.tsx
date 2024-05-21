@@ -131,7 +131,7 @@ interface EditorProps<T> {
   data?: DataFrame[];
 }
 
-function getOptionsPaneCategoryDescriptor<T = any>(
+function getOptionsPaneCategoryDescriptor<T extends object>(
   props: EditorProps<T>,
   supplier: PanelOptionsSupplier<T>
 ): OptionsPaneCategoryDescriptor {
@@ -157,7 +157,7 @@ function getOptionsPaneCategoryDescriptor<T = any>(
   const access: NestedValueAccess = {
     getValue: (path) => lodashGet(props.options, path),
     onChange: (path, value) => {
-      props.onChange(setOptionImmutably(props.options as any, path, value));
+      props.onChange(setOptionImmutably<T>(props.options, path, value));
     },
   };
 

@@ -109,15 +109,17 @@
     {
       "metadata": {
         "name": "ssoSettingsSAML",
-        "resourceVersion": "1713545444177",
-        "creationTimestamp": "2024-04-19T16:50:44Z"
+        "resourceVersion": "1715255671680",
+        "creationTimestamp": "2024-04-19T16:50:44Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-05-09 11:54:31.680389 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Use the new SSO Settings API to configure the SAML connector",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/identity-access-team",
-        "hideFromAdminPage": true,
-        "hideFromDocs": true
+        "allowSelfServe": true
       }
     },
     {
@@ -2209,9 +2211,23 @@
     },
     {
       "metadata": {
+        "name": "dashboardRestore",
+        "resourceVersion": "1708455041047",
+        "creationTimestamp": "2024-02-20T18:50:41Z"
+      },
+      "spec": {
+        "description": "Enables deleted dashboard restore feature",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingListViewV2",
-        "resourceVersion": "1715776961482",
-        "creationTimestamp": "2024-05-15T12:42:41Z"
+        "resourceVersion": "1716288482301",
+        "creationTimestamp": "2024-05-21T10:48:02Z"
       },
       "spec": {
         "description": "Enables the new alert list view design",

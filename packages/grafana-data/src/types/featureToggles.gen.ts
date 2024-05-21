@@ -189,4 +189,5 @@ export interface FeatureToggles {
   newDashboardSharingComponent?: boolean;
   alertingListViewV2?: boolean;
   notificationBanner?: boolean;
+  dashboardRestore?: boolean;
 }
