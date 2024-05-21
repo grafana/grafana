@@ -232,7 +232,9 @@ func BuildPermissionsMap(permissions []Permission) map[string]bool {
 
 // GroupScopesByAction will group scopes on action
 func GroupScopesByAction(permissions []Permission) map[string][]string {
-	// Use a map to deduplicate scopes
+	// Use a map to deduplicate scopes.
+	// User can have the same permission from multiple sources (e.g. team, basic role, directly assigned etc).
+	// User will also have duplicate permissions if action sets are used, as we will be double writing permissions for a while.
 	m := make(map[string]map[string]struct{})
 	for i := range permissions {
 		if _, ok := m[permissions[i].Action]; !ok {
