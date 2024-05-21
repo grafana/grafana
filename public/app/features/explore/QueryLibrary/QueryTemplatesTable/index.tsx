@@ -4,7 +4,7 @@ import { SortByFn } from 'react-table';
 
 import { Column, InteractiveTable } from '@grafana/ui';
 
-import { ActionsCell } from './ActionsCell';
+import ActionsCell from './ActionsCell';
 import { AddedByCell } from './AddedByCell';
 import { DatasourceTypeCell } from './DatasourceTypeCell';
 import { DateAddedCell } from './DateAddedCell';
@@ -22,7 +22,13 @@ const columns: Array<Column<QueryTemplateRow>> = [
   { id: 'addedBy', header: 'Added by', cell: AddedByCell },
   { id: 'datasourceType', header: 'Datasource type', cell: DatasourceTypeCell, sortType: 'string' },
   { id: 'createdAtTimestamp', header: 'Date added', cell: DateAddedCell, sortType: timestampSort },
-  { id: 'actions', header: '', cell: ActionsCell },
+  {
+    id: 'actions',
+    header: '',
+    cell: ({ row: { original } }) => (
+      <ActionsCell query={original.query} rootDatasourceUid={original.datasourceRef?.uid} />
+    ),
+  },
 ];
 
 const styles = {
