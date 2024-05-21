@@ -18,7 +18,6 @@ import (
 
 	"github.com/grafana/alerting/receivers"
 	alertingLine "github.com/grafana/alerting/receivers/line"
-	alertingPagerduty "github.com/grafana/alerting/receivers/pagerduty"
 	alertingPushover "github.com/grafana/alerting/receivers/pushover"
 	alertingSlack "github.com/grafana/alerting/receivers/slack"
 	alertingTelegram "github.com/grafana/alerting/receivers/telegram"
@@ -913,19 +912,17 @@ func TestIntegrationNotificationChannels(t *testing.T) {
 	mockChannel.responses["slack_recvX"] = `{"ok": true}`
 
 	// Overriding some URLs to send to the mock channel.
-	os, opa, ot, opu, ogb, ol, oth := alertingSlack.APIURL, alertingPagerduty.APIURL,
+	os, ot, opu, ogb, ol, oth := alertingSlack.APIURL,
 		alertingTelegram.APIURL, alertingPushover.APIURL, receivers.GetBoundary,
 		alertingLine.APIURL, alertingThreema.APIURL
 	originalTemplate := alertingTemplates.DefaultTemplateString
 	t.Cleanup(func() {
-		alertingSlack.APIURL, alertingPagerduty.APIURL,
-			alertingTelegram.APIURL, alertingPushover.APIURL, receivers.GetBoundary,
-			alertingLine.APIURL, alertingThreema.APIURL = os, opa, ot, opu, ogb, ol, oth
+		alertingSlack.APIURL, alertingTelegram.APIURL, alertingPushover.APIURL, receivers.GetBoundary,
+			alertingLine.APIURL, alertingThreema.APIURL = os, ot, opu, ogb, ol, oth
 		alertingTemplates.DefaultTemplateString = originalTemplate
 	})
 	alertingTemplates.DefaultTemplateString = alertingTemplates.TemplateForTestsString
 	alertingSlack.APIURL = fmt.Sprintf("http://%s/slack_recvX/slack_testX", mockChannel.server.Addr)
-	alertingPagerduty.APIURL = fmt.Sprintf("http://%s/pagerduty_recvX/pagerduty_testX", mockChannel.server.Addr)
 	alertingTelegram.APIURL = fmt.Sprintf("http://%s/telegram_recv/bot%%s/%%s", mockChannel.server.Addr)
 	alertingPushover.APIURL = fmt.Sprintf("http://%s/pushover_recv/pushover_test", mockChannel.server.Addr)
 	alertingLine.APIURL = fmt.Sprintf("http://%s/line_recv/line_test", mockChannel.server.Addr)
@@ -1902,7 +1899,8 @@ const alertmanagerConfig = `
               "class": "testclass",
               "component": "Integration Test",
               "group": "testgroup",
-              "summary": "Integration Test {{ template \"pagerduty.default.description\" . }}"
+              "summary": "Integration Test {{ template \"pagerduty.default.description\" . }}",
+			  "url": "http://CHANNEL_ADDR/pagerduty_recvX/pagerduty_testX"
             },
             "secureSettings": {
               "integrationKey": "pagerduty_recv/pagerduty_test"
@@ -2467,7 +2465,8 @@ var expAlertmanagerConfigFromAPI = `
               "component": "Integration Test",
               "group": "testgroup",
               "severity": "warning",
-              "summary": "Integration Test {{ template \"pagerduty.default.description\" . }}"
+              "summary": "Integration Test {{ template \"pagerduty.default.description\" . }}",
+              "url": "http://CHANNEL_ADDR/pagerduty_recvX/pagerduty_testX"
             },
             "secureFields": {
               "integrationKey": true
