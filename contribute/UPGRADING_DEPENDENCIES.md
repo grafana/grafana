@@ -42,7 +42,7 @@ To understand what the actual dependencies of `grafana-server` are, you can run 
 
 ### Upgrading dependencies
 
-If you need to upgrade a direct or indirect dependency, you can do it like so, `$MODULE` being the dependency in question: `go get -u $MODULE`. The corresponding entry in `go.mod` should then have the version you specified. If it's an indirect dependency, the entry should have the `// indirect` comment. 
+If you need to upgrade a direct or indirect dependency, you can do it like so, where _`MODULE`_ is the dependency in question: `go get -u <MODULE>`. The corresponding entry in `go.mod` should then have the version you specified. If it's an indirect dependency, the entry should have the `// indirect` comment. 
 
 To do so, execute `go mod tidy` to ensure that `go.mod` and `go.sum` are updated. If the indirect dependency turns out to not be used (transitively) by any of our packages, `go mod tidy` actually strips it from `go.mod`. In that case, you can just ignore it because ultimately it isn't used.
 
