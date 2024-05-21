@@ -437,7 +437,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   isTraceQlMetricsQuery(query: string): boolean {
     // Check whether this is a metrics query by checking if it contains a metrics function
     const metricsFnRegex =
-      /\|\s*(rate|count_over_time|avg_over_time|max_over_time|min_over_time|quantile_over_time)\s*\(/;
+      /\|\s*(rate|count_over_time|avg_over_time|max_over_time|min_over_time|quantile_over_time|histogram_over_time)\s*\(/;
     return !!query.trim().match(metricsFnRegex);
   }
 
@@ -955,8 +955,10 @@ function makePromLink(title: string, expr: string, datasourceUid: string, instan
   };
 }
 
+// TODO: this is basically the same as prometheus/datasource.ts#prometheusSpecialRegexEscape which is used to escape
+//  template variable values. It would be best to move it to some common place.
 export function getEscapedSpanNames(values: string[]) {
-  return values.map((value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\\\$&'));
+  return values.map((value: string) => value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&'));
 }
 
 export function getFieldConfig(
@@ -1154,7 +1156,12 @@ function getServiceGraphView(
   if (errorRate.length > 0 && errorRate[0].fields?.length > 2) {
     const errorRateNames = errorRate[0].fields[1]?.values ?? [];
     const errorRateValues = errorRate[0].fields[2]?.values ?? [];
-    let errorRateObj: any = {};
+    let errorRateObj: Record<
+      string,
+      {
+        value: string;
+      }
+    > = {};
     errorRateNames.map((name: string, index: number) => {
       errorRateObj[name] = { value: errorRateValues[index] };
     });
@@ -1199,7 +1206,12 @@ function getServiceGraphView(
   }
 
   if (duration.length > 0) {
-    let durationObj: any = {};
+    let durationObj: Record<
+      string,
+      {
+        value: string;
+      }
+    > = {};
     duration.forEach((d) => {
       if (d.fields.length > 1) {
         const delimiter = d.refId?.includes('span_name=~"') ? 'span_name=~"' : 'span_name="';

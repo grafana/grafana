@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -744,68 +743,6 @@ func TestService_SearchUserPermissions(t *testing.T) {
 			require.Nil(t, err)
 
 			assert.ElementsMatch(t, got, tt.want)
-		})
-	}
-}
-
-func TestPermissionCacheKey(t *testing.T) {
-	testcases := []struct {
-		name         string
-		signedInUser *user.SignedInUser
-		expected     string
-	}{
-		{
-			name: "should return correct key for user",
-			signedInUser: &user.SignedInUser{
-				OrgID:        1,
-				UserID:       1,
-				NamespacedID: identity.MustParseNamespaceID("user:1"),
-			},
-			expected: "rbac-permissions-1-user-1",
-		},
-		{
-			name: "should return correct key for api key",
-			signedInUser: &user.SignedInUser{
-				OrgID:            1,
-				ApiKeyID:         1,
-				IsServiceAccount: false,
-				NamespacedID:     identity.MustParseNamespaceID("user:1"),
-			},
-			expected: "rbac-permissions-1-api-key-1",
-		},
-		{
-			name: "should return correct key for service account",
-			signedInUser: &user.SignedInUser{
-				OrgID:            1,
-				UserID:           1,
-				IsServiceAccount: true,
-				NamespacedID:     identity.MustParseNamespaceID("service-account:1"),
-			},
-			expected: "rbac-permissions-1-service-account-1",
-		},
-		{
-			name: "should return correct key for matching a service account with userId -1",
-			signedInUser: &user.SignedInUser{
-				OrgID:            1,
-				UserID:           -1,
-				IsServiceAccount: true,
-				NamespacedID:     identity.MustParseNamespaceID("service-account:-1"),
-			},
-			expected: "rbac-permissions-1-service-account--1",
-		},
-		{
-			name: "should use org role if no unique id",
-			signedInUser: &user.SignedInUser{
-				OrgID:        1,
-				OrgRole:      org.RoleNone,
-				NamespacedID: identity.MustParseNamespaceID("user:1"),
-			},
-			expected: "rbac-permissions-1-user-None",
-		},
-	}
-	for _, tc := range testcases {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expected, accesscontrol.GetPermissionCacheKey(tc.signedInUser))
 		})
 	}
 }

@@ -553,7 +553,7 @@ func (s *Service) searchUserPermissions(ctx context.Context, orgID int64, search
 	}
 	permissions = append(permissions, dbPermissions[userID]...)
 
-	key := accesscontrol.GetPermissionCacheKey(&user.SignedInUser{UserID: userID, OrgID: orgID})
+	key := accesscontrol.GetSearchPermissionCacheKey(&user.SignedInUser{UserID: userID, OrgID: orgID}, searchOptions)
 	s.cache.Set(key, permissions, cacheTTL)
 
 	return permissions, nil
@@ -571,24 +571,17 @@ func (s *Service) searchUserPermissionsFromCache(orgID int64, searchOptions acce
 		OrgID:  orgID,
 	}
 
-	key := accesscontrol.GetPermissionCacheKey(tempUser)
+	key := accesscontrol.GetSearchPermissionCacheKey(tempUser, searchOptions)
 	permissions, ok := s.cache.Get((key))
 	if !ok {
 		metrics.MAccessSearchUserPermissionsCacheUsage.WithLabelValues(accesscontrol.CacheMiss).Inc()
 		return nil, false
 	}
 
+	s.log.Debug("Using cached permissions", "key", key)
 	metrics.MAccessSearchUserPermissionsCacheUsage.WithLabelValues(accesscontrol.CacheHit).Inc()
 
-	s.log.Debug("Using cached permissions", "key", key)
-	filteredPermissions := make([]accesscontrol.Permission, 0)
-	for _, permission := range permissions.([]accesscontrol.Permission) {
-		if PermissionMatchesSearchOptions(permission, &searchOptions) {
-			filteredPermissions = append(filteredPermissions, permission)
-		}
-	}
-
-	return filteredPermissions, true
+	return permissions.([]accesscontrol.Permission), true
 }
 
 func PermissionMatchesSearchOptions(permission accesscontrol.Permission, searchOptions *accesscontrol.SearchOptions) bool {

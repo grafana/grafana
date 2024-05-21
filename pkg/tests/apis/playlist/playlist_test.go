@@ -85,6 +85,7 @@ func TestIntegrationPlaylist(t *testing.T) {
 		}))
 	})
 
+	// #TODO add equivalent tests for the other modes
 	t.Run("with dual write (file)", func(t *testing.T) {
 		doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    true,
@@ -92,6 +93,7 @@ func TestIntegrationPlaylist(t *testing.T) {
 			APIServerStorageType: "file", // write the files to disk
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
+				featuremgmt.FlagDualWritePlaylistsMode2,
 			},
 		}))
 	})
@@ -104,6 +106,7 @@ func TestIntegrationPlaylist(t *testing.T) {
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagUnifiedStorage,
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
+				featuremgmt.FlagDualWritePlaylistsMode2,
 			},
 		}))
 	})
@@ -118,6 +121,7 @@ func TestIntegrationPlaylist(t *testing.T) {
 			APIServerStorageType: "etcd", // requires etcd running on localhost:2379
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
+				featuremgmt.FlagDualWritePlaylistsMode2,
 			},
 		})
 

@@ -2,7 +2,7 @@
 import jsonMap from 'json-source-map';
 
 import type { AdHocVariableModel, TypedVariableModel } from '@grafana/data';
-import { Dashboard, VariableOption } from '@grafana/schema';
+import { Dashboard, Panel, VariableOption } from '@grafana/schema';
 
 import { jsonDiff } from '../settings/version-history/utils';
 
@@ -104,4 +104,17 @@ export function applyVariableChanges(saveModel: Dashboard, originalSaveModel: Da
   }
 
   return hasVariableValueChanges;
+}
+
+export function getPanelChanges(saveModel: Panel, originalSaveModel: Panel) {
+  const diff = jsonDiff(originalSaveModel, saveModel);
+  const diffCount = Object.values(diff).reduce((acc, cur) => acc + cur.length, 0);
+
+  return {
+    changedSaveModel: saveModel,
+    initialSaveModel: originalSaveModel,
+    diffs: diff,
+    diffCount,
+    hasChanges: diffCount > 0,
+  };
 }

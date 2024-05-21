@@ -11,6 +11,23 @@ func GetPermissionCacheKey(user identity.Requester) string {
 	return fmt.Sprintf("rbac-permissions-%s", user.GetCacheKey())
 }
 
+func GetSearchPermissionCacheKey(user identity.Requester, searchOptions SearchOptions) string {
+	key := fmt.Sprintf("rbac-permissions-%s", user.GetCacheKey())
+	if searchOptions.Action != "" {
+		key += fmt.Sprintf("-%s", searchOptions.Action)
+	}
+	if searchOptions.Scope != "" {
+		key += fmt.Sprintf("-%s", searchOptions.Scope)
+	}
+	if len(searchOptions.RolePrefixes) > 0 {
+		key += "-" + strings.Join(searchOptions.RolePrefixes, "-")
+	}
+	if searchOptions.ActionPrefix != "" {
+		key += fmt.Sprintf("-%s", searchOptions.ActionPrefix)
+	}
+	return key
+}
+
 func GetUserDirectPermissionCacheKey(user identity.Requester) string {
 	return fmt.Sprintf("rbac-permissions-direct-%s", user.GetCacheKey())
 }

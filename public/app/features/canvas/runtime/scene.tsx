@@ -6,7 +6,7 @@ import { BehaviorSubject, ReplaySubject, Subject, Subscription } from 'rxjs';
 import { first } from 'rxjs/operators';
 import Selecto from 'selecto';
 
-import { AppEvents, GrafanaTheme2, PanelData } from '@grafana/data';
+import { AppEvents, PanelData } from '@grafana/data';
 import { locationService } from '@grafana/runtime/src';
 import {
   ColorDimensionConfig,
@@ -15,7 +15,7 @@ import {
   ScaleDimensionConfig,
   TextDimensionConfig,
 } from '@grafana/schema';
-import { Portal, stylesFactory } from '@grafana/ui';
+import { Portal } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { CanvasFrameOptions, DEFAULT_CANVAS_ELEMENT_CONFIG } from 'app/features/canvas';
 import { DimensionContext } from 'app/features/dimensions';
@@ -53,7 +53,7 @@ export interface SelectionParams {
 }
 
 export class Scene {
-  styles = getStyles(config.theme2);
+  styles = getStyles();
   readonly selection = new ReplaySubject<ElementState[]>(1);
   readonly moved = new Subject<number>(); // called after resize/drag for editor updates
   readonly byName = new Map<string, ElementState>();
@@ -229,11 +229,14 @@ export class Scene {
 
       currentSelectedElements.forEach((element: ElementState) => {
         const elementContainer = element.div?.getBoundingClientRect();
+
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         element.setPlacementFromConstraint(elementContainer, framePlacement as DOMRect);
         currentLayer.doAction(LayerActionID.Delete, element);
         newLayer.doAction(LayerActionID.Duplicate, element, false, false);
       });
 
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       newLayer.setPlacementFromConstraint(framePlacement as DOMRect, currentLayer.div?.getBoundingClientRect());
 
       currentLayer.elements.push(newLayer);
@@ -451,7 +454,6 @@ export class Scene {
         settingsViewable: allowChanges,
       },
       origin: false,
-      className: this.styles.selected,
     })
       .on('rotateStart', () => {
         this.disableCustomables();
@@ -838,12 +840,9 @@ export class Scene {
   }
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
-  wrap: css`
-    overflow: hidden;
-    position: relative;
-  `,
-  selected: css`
-    z-index: 999 !important;
-  `,
-}));
+const getStyles = () => ({
+  wrap: css({
+    overflow: 'hidden',
+    position: 'relative',
+  }),
+});

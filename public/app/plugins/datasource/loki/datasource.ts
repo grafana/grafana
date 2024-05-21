@@ -40,6 +40,8 @@ import {
   DataSourceWithQueryModificationSupport,
   LogsVolumeOption,
   LogsSampleOptions,
+  QueryVariableModel,
+  CustomVariableModel,
 } from '@grafana/data';
 import { Duration } from '@grafana/lezer-logql';
 import { BackendSrvRequest, config, DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
@@ -759,7 +761,7 @@ export class LokiDatasource
    * Handles escaping of special characters based on variable type and value.
    * @returns The interpolated value with appropriate character escaping.
    */
-  interpolateQueryExpr(value: any, variable: any) {
+  interpolateQueryExpr(value: any, variable: QueryVariableModel | CustomVariableModel) {
     // if no multi or include all do not regexEscape
     if (!variable.multi && !variable.includeAll) {
       return lokiRegularEscape(value);
