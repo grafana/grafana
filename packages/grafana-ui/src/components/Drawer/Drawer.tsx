@@ -15,6 +15,8 @@ import { getDragStyles } from '../DragHandle/DragHandle';
 import { IconButton } from '../IconButton/IconButton';
 import { Text } from '../Text/Text';
 
+import 'rc-drawer/assets/index.css';
+
 export interface Props {
   children: ReactNode;
   /** Title shown at the top of the drawer */
