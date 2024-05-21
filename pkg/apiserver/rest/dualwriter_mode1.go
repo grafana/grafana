@@ -80,7 +80,6 @@ func (d *DualWriterMode1) Get(ctx context.Context, name string, options *metav1.
 	res, errLegacy := d.Legacy.Get(ctx, name, options)
 	if errLegacy != nil {
 		log.Error(errLegacy, "unable to get object in legacy storage")
-		d.recordLegacyDuration(errLegacy != nil, mode1Str, name, method, startLegacy)
 	}
 	d.recordLegacyDuration(errLegacy != nil, mode1Str, options.Kind, method, startLegacy)
 
@@ -105,7 +104,6 @@ func (d *DualWriterMode1) List(ctx context.Context, options *metainternalversion
 	res, errLegacy := d.Legacy.List(ctx, options)
 	if errLegacy != nil {
 		log.Error(errLegacy, "unable to list object in legacy storage")
-		d.recordLegacyDuration(errLegacy != nil, mode1Str, options.Kind, method, startLegacy)
 	}
 	d.recordLegacyDuration(errLegacy != nil, mode1Str, options.Kind, method, startLegacy)
 
@@ -129,10 +127,8 @@ func (d *DualWriterMode1) Delete(ctx context.Context, name string, deleteValidat
 	res, async, err := d.Legacy.Delete(ctx, name, deleteValidation, options)
 	if err != nil {
 		log.Error(err, "unable to delete object in legacy storage")
-		d.recordLegacyDuration(true, mode1Str, options.Kind, method, startLegacy)
-		return res, async, err
 	}
-	d.recordLegacyDuration(false, mode1Str, options.Kind, method, startLegacy)
+	d.recordLegacyDuration(err != nil, mode1Str, options.Kind, method, startLegacy)
 
 	go func() {
 		startStorage := time.Now()
@@ -155,9 +151,8 @@ func (d *DualWriterMode1) DeleteCollection(ctx context.Context, deleteValidation
 	res, errLegacy := d.Legacy.DeleteCollection(ctx, deleteValidation, options, listOptions)
 	if errLegacy != nil {
 		log.Error(errLegacy, "unable to delete collection in legacy storage")
-		d.recordLegacyDuration(true, mode1Str, options.Kind, method, startLegacy)
 	}
-	d.recordLegacyDuration(false, mode1Str, options.Kind, method, startLegacy)
+	d.recordLegacyDuration(errLegacy != nil, mode1Str, options.Kind, method, startLegacy)
 
 	go func() {
 		startStorage := time.Now()
@@ -179,9 +174,8 @@ func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.
 	res, async, errLegacy := d.Legacy.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 	if errLegacy != nil {
 		log.Error(errLegacy, "unable to update in legacy storage")
-		d.recordLegacyDuration(true, mode1Str, options.Kind, method, startLegacy)
 	}
-	d.recordLegacyDuration(false, mode1Str, options.Kind, method, startLegacy)
+	d.recordLegacyDuration(errLegacy != nil, mode1Str, options.Kind, method, startLegacy)
 
 	updated, err := objInfo.UpdatedObject(ctx, res)
 	if err != nil {
