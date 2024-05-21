@@ -2225,9 +2225,22 @@
     },
     {
       "metadata": {
+        "name": "datasourceProxyDisableRBAC",
+        "resourceVersion": "1715889033198",
+        "creationTimestamp": "2024-05-16T19:50:33Z"
+      },
+      "spec": {
+        "description": "Disables applying a plugin route's ReqAction field to authorization",
+        "stage": "GA",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingListViewV2",
-        "resourceVersion": "1716288482301",
-        "creationTimestamp": "2024-05-21T10:48:02Z"
+        "resourceVersion": "1716302277185",
+        "creationTimestamp": "2024-05-21T14:37:57Z"
       },
       "spec": {
         "description": "Enables the new alert list view design",

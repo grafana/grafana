@@ -190,4 +190,5 @@ export interface FeatureToggles {
   alertingListViewV2?: boolean;
   notificationBanner?: boolean;
   dashboardRestore?: boolean;
+  datasourceProxyDisableRBAC?: boolean;
 }
