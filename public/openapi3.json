@@ -2528,7 +2528,7 @@
           "condition": {
             "type": "string"
           },
-          "dasboardUid": {
+          "dashboardUid": {
             "type": "string"
           },
           "data": {
@@ -7427,7 +7427,6 @@
         "type": "object"
       },
       "PagerdutyImage": {
-        "description": "PagerdutyImage is an image",
         "properties": {
           "alt": {
             "type": "string"
@@ -7439,10 +7438,10 @@
             "type": "string"
           }
         },
+        "title": "PagerdutyImage is an image.",
         "type": "object"
       },
       "PagerdutyLink": {
-        "description": "PagerdutyLink is a link",
         "properties": {
           "href": {
             "type": "string"
@@ -7451,6 +7450,7 @@
             "type": "string"
           }
         },
+        "title": "PagerdutyLink is a link.",
         "type": "object"
       },
       "Password": {
@@ -11808,7 +11808,6 @@
         "type": "object"
       },
       "alertGroup": {
-        "description": "AlertGroup alert group",
         "properties": {
           "alerts": {
             "description": "alerts",
@@ -11965,6 +11964,7 @@
         "type": "object"
       },
       "gettableAlert": {
+        "description": "GettableAlert gettable alert",
         "properties": {
           "annotations": {
             "$ref": "#/components/schemas/labelSet"
@@ -12026,7 +12026,6 @@
         "type": "array"
       },
       "gettableSilence": {
-        "description": "GettableSilence gettable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -12075,7 +12074,6 @@
         "type": "object"
       },
       "gettableSilences": {
-        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
@@ -12226,6 +12224,7 @@
         "type": "array"
       },
       "postableSilence": {
+        "description": "PostableSilence postable silence",
         "properties": {
           "comment": {
             "description": "comment",
