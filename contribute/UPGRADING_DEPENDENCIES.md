@@ -64,8 +64,8 @@ Our CI builds run on Drone.
 
 #### Dependencies
 
-- nodejs
-- golang
+- Node.js
+- Go
 - `grafana/build-container` (our custom Docker build container)
 
 ### grafana/build-container
