@@ -8,27 +8,22 @@ const createRule = ESLintUtils.RuleCreator(
 const noUntranslatedLiterals = createRule({
   create(context) {
     return {
-      Literal: (node) => {
-        if (isEmpty(node)
-        || isInterfaceOrType(node)
-        || isVariable(node)
-        || isReturnStatement(node)
-        || isImportStatement(node)
-        || isBinaryExpression(node)
-        || isUsingTrans(node)
-        || isAttributeOrProp(node)
-        || isReturnStatement(node)
+      JSXElement(node) {
+        if (node.hasOwnProperty('children')) {
+          const children = node.children;
+          if (children.length > 0) {
+            children.forEach((child) => {
+              // @ts-expect-error
+              if((child.type === AST_NODE_TYPES.Literal || child.type === AST_NODE_TYPES.JSXText) && !isUsingTrans(node) && !isEmpty(child)) {
+                context.report({
+                  node: child,
+                  messageId: 'noUntranslatedStrings',
+                });
+              }
+            });
+          }
 
-        )
-        {
-          return;
         }
-
-
-        context.report({
-          node,
-          messageId: 'noUntranslatedStrings',
-        });
       },
     };
   },
@@ -58,84 +53,15 @@ const isEmpty = (node) => {
 };
 
 // @ts-expect-error
-const isImportStatement = (node) => { 
-  const parent = node.parent;
-  if (parent && parent.type === AST_NODE_TYPES.ImportDeclaration) {
-    return true;
-  } else {
-    return false;
-  }
-}
-
-// @ts-expect-error
-const isAttributeOrProp = (node) => {
-  const parent = node.parent;
-  const grandparent = parent.parent;
-  if (parent.type === AST_NODE_TYPES.JSXAttribute || grandparent.type === AST_NODE_TYPES.JSXAttribute ||
-    parent.type === AST_NODE_TYPES.Property || grandparent.type === AST_NODE_TYPES.Property
-  ) {
-    return true;
-  } else {
-    return false;
-  }
-}
-
-// @ts-expect-error
-const isBinaryExpression = (node) => {
-  const parent = node.parent;
-  if (parent && parent.type === AST_NODE_TYPES.BinaryExpression) {
-    return true;
-  } else {
-    return false;
-  }
-}
-
-// @ts-expect-error
-const isInterfaceOrType = (node) => {
-  const parent = node.parent;
-  if (parent && parent.type === AST_NODE_TYPES.TSInterfaceDeclaration || parent.type === AST_NODE_TYPES.TSTypeAliasDeclaration) {
-    return true;
-  } else {
-    return false;
-  }
-}
-
-// @ts-expect-error
-const isVariable = (node) => {
-  const parent = node.parent;
-  const grandparent = parent.parent;
-
-  if (parent && parent.type === AST_NODE_TYPES.VariableDeclaration || grandparent && grandparent.type === AST_NODE_TYPES.VariableDeclaration
-    || parent && parent.type === AST_NODE_TYPES.VariableDeclarator || grandparent && grandparent.type === AST_NODE_TYPES.VariableDeclarator 
-    || parent && parent.type === AST_NODE_TYPES.AssignmentExpression || grandparent && grandparent.type === AST_NODE_TYPES.AssignmentExpression
-  ) {
-    return true;
-  } else {
-    return false;
-  }
-}
-
-// @ts-expect-error
-const isReturnStatement = (node) => {
-  const parent = node.parent;
-  if (parent && parent.type === AST_NODE_TYPES.ReturnStatement) {
-    return true;
-  } else {
-    return false;
-  }
-}
-
-// @ts-expect-error
 const isUsingTrans = (node) => {
-  const parent = node.parent;
-  const grandparent = parent.parent;
+  const grandparent = node.parent;
   let isTranslated = false;
   if (
-    parent.type === AST_NODE_TYPES.JSXAttribute &&
-    parent.name.type === AST_NODE_TYPES.JSXIdentifier &&
-    parent.name.name === 'i18nKey' &&
-    grandparent.name.type === AST_NODE_TYPES.JSXOpeningElement &&
-    grandparent.name.name === 'Trans'
+    grandparent.type === AST_NODE_TYPES.JSXElement &&
+    node.type === AST_NODE_TYPES.JSXElement &&
+    node.openingElement.type === AST_NODE_TYPES.JSXOpeningElement &&
+    node.openingElement.name.type === AST_NODE_TYPES.JSXIdentifier &&
+    node.openingElement.name.name === "Trans"
   ) {
     isTranslated = true;
   }
