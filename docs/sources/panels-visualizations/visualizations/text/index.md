@@ -48,7 +48,11 @@ Use a text visualization when you need to:
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Mode
+## Text options
+
+Use the following options to refine your text visualization.
+
+### Mode
 
 **Mode** determines how embedded content appears.
 
