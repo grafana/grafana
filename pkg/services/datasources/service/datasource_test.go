@@ -216,11 +216,31 @@ func TestService_UpdateDataSource(t *testing.T) {
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
 		mockPermission := acmock.NewMockedPermissionsService()
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), actest.FakeAccessControl{}, mockPermission, quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{})
+		mockPermission.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), actest.FakeAccessControl{}, mockPermission, quotaService,
+			&pluginstore.FakePluginStore{
+				PluginList: []pluginstore.Plugin{
+					{
+						JSONData: plugins.JSONData{
+							ID: "test",
+						},
+					},
+				},
+			}, &pluginfakes.FakePluginClient{})
+		require.NoError(t, err)
+
+		// First add the datasource
+		ds, err := dsService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			OrgID:  1,
+			Name:   "test",
+			Type:   "test",
+			UserID: 0,
+		})
 		require.NoError(t, err)
 
 		cmd := &datasources.UpdateDataSourceCommand{
-			ID:    1,
+			ID:    ds.ID,
+			UID:   ds.UID,
 			OrgID: 1,
 			Name:  string(make([]byte, 256)),
 		}
@@ -229,7 +249,8 @@ func TestService_UpdateDataSource(t *testing.T) {
 		require.EqualError(t, err, "[datasource.nameInvalid] max length is 190")
 
 		cmd = &datasources.UpdateDataSourceCommand{
-			ID:    1,
+			ID:    ds.ID,
+			UID:   ds.UID,
 			OrgID: 1,
 			URL:   string(make([]byte, 256)),
 		}

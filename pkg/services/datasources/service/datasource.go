@@ -307,7 +307,7 @@ func (s *Service) mutate(ctx context.Context, pluginContext backend.PluginContex
 	}
 
 	if settings.Type == "" {
-		return nil, nil // This happens in tests
+		return settings, nil // NOOP for tests
 	}
 
 	// Make sure it is a known plugin type
@@ -386,6 +386,36 @@ func (s *Service) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteD
 	})
 }
 
+func (s *Service) getPluginContext(ctx context.Context, orgID int64, pluginID string, ds *datasources.DataSource) *backend.PluginContext {
+	if ds == nil {
+		return &backend.PluginContext{
+			OrgID:    orgID,
+			PluginID: pluginID,
+		}
+	}
+	pctx := &backend.PluginContext{
+		OrgID:    orgID,
+		PluginID: pluginID,
+		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+			UID:              ds.UID,
+			Type:             pluginID,
+			Name:             ds.Name,
+			URL:              ds.URL,
+			Database:         ds.Database,
+			BasicAuthEnabled: ds.BasicAuth,
+			BasicAuthUser:    ds.BasicAuthUser,
+			Updated:          ds.Updated,
+			APIVersion:       ds.APIVersion,
+			User:             ds.User,
+		},
+	}
+	pctx.DataSourceInstanceSettings.JSONData, _ = ds.JsonData.ToDB()
+	if len(ds.SecureJsonData) > 0 {
+		pctx.DataSourceInstanceSettings.DecryptedSecureJSONData, _ = s.DecryptedValues(ctx, ds)
+	}
+	return pctx
+}
+
 func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error) {
 	var dataSource *datasources.DataSource
 
@@ -407,26 +437,21 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 			return fmt.Errorf("invalid jsonData")
 		}
 
-		settings, err := s.mutate(ctx, backend.PluginContext{
-			OrgID:    cmd.OrgID,
-			PluginID: cmd.Type,
-			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				UID: dataSource.UID,
-				// TODO settings from datasource
-			},
-		}, &backend.DataSourceInstanceSettings{
-			UID:                     cmd.UID,
-			Name:                    cmd.Name,
-			URL:                     cmd.URL,
-			Database:                cmd.Database,
-			JSONData:                jd,
-			DecryptedSecureJSONData: cmd.SecureJsonData,
-			Type:                    cmd.Type,
-			User:                    cmd.User,
-			BasicAuthEnabled:        cmd.BasicAuth,
-			BasicAuthUser:           cmd.BasicAuthUser,
-			APIVersion:              cmd.APIVersion,
-		})
+		settings, err := s.mutate(ctx, *s.getPluginContext(ctx, cmd.OrgID, cmd.Type, dataSource),
+			&backend.DataSourceInstanceSettings{
+				UID:                     cmd.UID,
+				Name:                    cmd.Name,
+				URL:                     cmd.URL,
+				Database:                cmd.Database,
+				JSONData:                jd,
+				DecryptedSecureJSONData: cmd.SecureJsonData,
+				Type:                    cmd.Type,
+				User:                    cmd.User,
+				BasicAuthEnabled:        cmd.BasicAuth,
+				BasicAuthUser:           cmd.BasicAuthUser,
+				APIVersion:              cmd.APIVersion,
+				Updated:                 time.Now(),
+			})
 		if err != nil {
 			return err
 		}
