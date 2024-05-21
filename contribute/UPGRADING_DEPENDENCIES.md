@@ -77,8 +77,8 @@ Link: [`grafana/build-container`](https://github.com/grafana/grafana/tree/main/s
 #### Dependencies
 
 - fpm
-- nodejs
-- golang
+- Node.js
+- Go
 - cross-compiling (several compilers)
 
 ### Appveyor
