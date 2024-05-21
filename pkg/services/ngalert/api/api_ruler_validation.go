@@ -75,13 +75,12 @@ func validateRuleNode(
 	}
 
 	if isRecordingRule {
-		if err := validateRecordingRule(ruleNode, &newAlertRule, limits, canPatch); err != nil {
-			return nil, err
-		}
+		newAlertRule, err = validateRecordingRuleFields(ruleNode, newAlertRule, limits, canPatch)
 	} else {
-		if err := validateAlertingRule(ruleNode, &newAlertRule, canPatch); err != nil {
-			return nil, err
-		}
+		newAlertRule, err = validateAlertingRuleFields(ruleNode, newAlertRule, canPatch)
+	}
+	if err != nil {
+		return nil, err
 	}
 
 	if ruleNode.ApiRuleNode != nil {
@@ -101,12 +100,12 @@ func validateRuleNode(
 }
 
 // validateAlertingRuleFields validates only the fields on a rule that are specific to Alerting rules.
-// it will load fields that pass validation onto newRule.
-func validateAlertingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule *ngmodels.AlertRule, canPatch bool) error {
+// it will load fields that pass validation onto newRule and return the result.
+func validateAlertingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule ngmodels.AlertRule, canPatch bool) (ngmodels.AlertRule, error) {
 	var err error
 
 	if in.GrafanaManagedAlert.Record != nil {
-		return fmt.Errorf("%w: rule cannot be simultaneously an alerting and recording rule", ngmodels.ErrAlertRuleFailedValidation)
+		return ngmodels.AlertRule{}, fmt.Errorf("%w: rule cannot be simultaneously an alerting and recording rule", ngmodels.ErrAlertRuleFailedValidation)
 	}
 
 	noDataState := ngmodels.NoData
@@ -116,7 +115,7 @@ func validateAlertingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule 
 	if in.GrafanaManagedAlert.NoDataState != "" {
 		noDataState, err = ngmodels.NoDataStateFromString(string(in.GrafanaManagedAlert.NoDataState))
 		if err != nil {
-			return err
+			return ngmodels.AlertRule{}, err
 		}
 	}
 	newRule.NoDataState = noDataState
@@ -128,49 +127,49 @@ func validateAlertingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule 
 	if in.GrafanaManagedAlert.ExecErrState != "" {
 		errorState, err = ngmodels.ErrStateFromString(string(in.GrafanaManagedAlert.ExecErrState))
 		if err != nil {
-			return err
+			return ngmodels.AlertRule{}, err
 		}
 	}
 	newRule.ExecErrState = errorState
 
 	err = validateCondition(in.GrafanaManagedAlert.Condition, in.GrafanaManagedAlert.Data, canPatch)
 	if err != nil {
-		return err
+		return ngmodels.AlertRule{}, err
 	}
 
 	if in.GrafanaManagedAlert.NotificationSettings != nil {
 		newRule.NotificationSettings, err = validateNotificationSettings(in.GrafanaManagedAlert.NotificationSettings)
 		if err != nil {
-			return err
+			return ngmodels.AlertRule{}, err
 		}
 	}
 
 	newRule.For, err = validateForInterval(in)
 	if err != nil {
-		return err
+		return ngmodels.AlertRule{}, err
 	}
 
-	return nil
+	return newRule, nil
 }
 
 // validateRecordingRuleFields validates only the fields on a rule that are specific to Recording rules.
-// it will load fields that pass validation onto newRule.
-func validateRecordingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule *ngmodels.AlertRule, limits RuleLimits, canPatch bool) error {
+// it will load fields that pass validation onto newRule and return the result.
+func validateRecordingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule ngmodels.AlertRule, limits RuleLimits, canPatch bool) (ngmodels.AlertRule, error) {
 	if !limits.RecordingRulesAllowed {
-		return fmt.Errorf("%w: recording rules cannot be created on this instance", ngmodels.ErrAlertRuleFailedValidation)
+		return ngmodels.AlertRule{}, fmt.Errorf("%w: recording rules cannot be created on this instance", ngmodels.ErrAlertRuleFailedValidation)
 	}
 
 	err := validateCondition(in.GrafanaManagedAlert.Record.From, in.GrafanaManagedAlert.Data, canPatch)
 	if err != nil {
-		return fmt.Errorf("%w: %s", ngmodels.ErrAlertRuleFailedValidation, err.Error())
+		return ngmodels.AlertRule{}, fmt.Errorf("%w: %s", ngmodels.ErrAlertRuleFailedValidation, err.Error())
 	}
 
 	metricName := prommodels.LabelValue(in.GrafanaManagedAlert.Record.Metric)
 	if !metricName.IsValid() {
-		return fmt.Errorf("%w: %s", ngmodels.ErrAlertRuleFailedValidation, "metric name for recording rule must be a valid utf8 string")
+		return ngmodels.AlertRule{}, fmt.Errorf("%w: %s", ngmodels.ErrAlertRuleFailedValidation, "metric name for recording rule must be a valid utf8 string")
 	}
 	if !prommodels.IsValidMetricName(metricName) {
-		return fmt.Errorf("%w: %s", ngmodels.ErrAlertRuleFailedValidation, "metric name for recording rule must be a valid Prometheus metric name")
+		return ngmodels.AlertRule{}, fmt.Errorf("%w: %s", ngmodels.ErrAlertRuleFailedValidation, "metric name for recording rule must be a valid Prometheus metric name")
 	}
 	newRule.Record = ModelRecordFromApiRecord(in.GrafanaManagedAlert.Record)
 
@@ -180,7 +179,7 @@ func validateRecordingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule
 	newRule.For = 0
 	newRule.NotificationSettings = nil
 
-	return nil
+	return newRule, nil
 }
 
 func validateLabels(l map[string]string) error {
