@@ -27,15 +27,6 @@ import { Logs } from './Logs';
 import { visualisationTypeKey } from './utils/logs';
 import { getMockElasticFrame, getMockLokiFrame } from './utils/testMocks.test';
 
-jest.mock('app/core/store', () => {
-  return {
-    getBool: jest.fn(),
-    getObject: jest.fn((_a, b) => b),
-    get: jest.fn(),
-    set: jest.fn(),
-  };
-});
-
 const reportInteraction = jest.fn();
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -61,6 +52,7 @@ describe('Logs', () => {
   let originalHref = window.location.href;
 
   beforeEach(() => {
+    localStorage.clear();
     jest.clearAllMocks();
   });
 

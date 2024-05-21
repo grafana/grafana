@@ -641,9 +641,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
   return (
     <>
-      <h1>
-        {visualisationType} {hasData}
-      </h1>
       {getRowContext && contextRow && (
         <LogRowContextModal
           open={contextOpen}
