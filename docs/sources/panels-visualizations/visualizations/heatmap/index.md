@@ -15,6 +15,10 @@ labels:
     - oss
 title: Heatmap
 weight: 100
+refs:
+  introduction-to-histograms-and-heatmaps:
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA VERSION>/fundamentals/intro-histograms/
 ---
 
 # Heatmap
@@ -164,7 +168,3 @@ Choose whether you want to display the heatmap legend on the visualization.
 
 Set the color used to show exemplar data.
 
-{{% docs/reference %}}
-[Introduction to histograms and heatmaps]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/intro-histograms"
-[Introduction to histograms and heatmaps]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/intro-histograms"
-{{% /docs/reference %}}

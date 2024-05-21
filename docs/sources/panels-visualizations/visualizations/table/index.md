@@ -23,6 +23,18 @@ labels:
     - oss
 title: Table
 weight: 100
+refs:
+  calculations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/calculation-types/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types/
+  configuration-file:
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana/#configuration-file-location
+  time-series-to-table:
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/transform-data/#time-series-to-table-transform
 ---
 
 # Table
@@ -158,7 +170,7 @@ If you have a field value that is an image URL or a base64 encoded image you can
 
 ### Sparkline
 
-Shows value rendered as a sparkline. Requires [time series to table][] data transform.
+Shows value rendered as a sparkline. Requires [time series to table](ref:time-series-to-table) data transform.
 
 {{< figure src="/static/img/docs/tables/sparkline2.png" max-width="500px" caption="Sparkline" class="docs-image--no-shadow" >}}
 
@@ -219,7 +231,7 @@ To remove the filter, click the blue funnel icon and then click **Clear filter**
 
 ## Table footer
 
-You can use the table footer to show [calculations][] on fields.
+You can use the table footer to show [calculations](ref:calculations) on fields.
 
 After you enable the table footer:
 
@@ -232,13 +244,3 @@ The system applies the calculation to all numeric fields if you do not select a 
 
 If you want to show the number of rows in the dataset instead of the number of values in the selected fields, select the **Count** calculation and enable **Count rows**.
 
-{{% docs/reference %}}
-[calculations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/calculation-types"
-[calculations]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types"
-
-[time series to table]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/transform-data#time-series-to-table-transform"
-[time series to table]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/transform-data#time-series-to-table-transform"
-
-[configuration file]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#configuration-file-location"
-[configuration file]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#configuration-file-location"
-{{% /docs/reference %}}
