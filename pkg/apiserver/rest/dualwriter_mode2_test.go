@@ -658,7 +658,7 @@ func TestEnrichReturnedObject(t *testing.T) {
 
 	for _, tt := range testCase {
 		t.Run(tt.name, func(t *testing.T) {
-			returned, err := enrichReturnedObject(tt.inputOriginal, tt.inputReturned, tt.isCreated)
+			returned, err := enrichLegacyObject(tt.inputOriginal, tt.inputReturned, tt.isCreated)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return

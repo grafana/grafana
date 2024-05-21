@@ -38,40 +38,34 @@ func (d *DualWriterMode1) Mode() DualWriterMode {
 }
 
 // Create overrides the behavior of the generic DualWriter and writes only to LegacyStorage.
-func (d *DualWriterMode1) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+func (d *DualWriterMode1) Create(ctx context.Context, original runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	log := d.Log.WithValues("kind", options.Kind)
 	ctx = klog.NewContext(ctx, log)
 	var method = "create"
 
 	startLegacy := time.Now()
-	res, err := d.Legacy.Create(ctx, obj, createValidation, options)
+	created, err := d.Legacy.Create(ctx, original, createValidation, options)
 	if err != nil {
 		log.Error(err, "unable to create object in legacy storage")
 		d.recordLegacyDuration(true, mode1Str, options.Kind, method, startLegacy)
-		return res, err
+		return created, err
 	}
 	d.recordLegacyDuration(false, mode1Str, options.Kind, method, startLegacy)
 
 	go func() {
-		accessorCreated, err := meta.Accessor(res)
-		if err != nil {
-			log.Error(err, "unable to get accessor for created object")
-		}
-
-		accessorOld, err := meta.Accessor(obj)
-		if err != nil {
-			log.Error(err, "unable to get accessor for old object")
-		}
-
-		enrichObject(accessorOld, accessorCreated)
-		startStorage := time.Now()
 		ctx, cancel := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage create timeout"))
+		createdLegacy, err := enrichLegacyObject(original, created, true)
+		if err != nil {
+			cancel()
+		}
+
+		startStorage := time.Now()
 		defer cancel()
-		_, errObjectSt := d.Storage.Create(ctx, obj, createValidation, options)
+		_, errObjectSt := d.Storage.Create(ctx, createdLegacy, createValidation, options)
 		d.recordStorageDuration(errObjectSt != nil, mode1Str, options.Kind, method, startStorage)
 	}()
 
-	return res, nil
+	return created, nil
 }
 
 // Get overrides the behavior of the generic DualWriter and reads only from LegacyStorage.
