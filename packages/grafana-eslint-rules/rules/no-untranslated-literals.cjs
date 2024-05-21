@@ -1,117 +1,146 @@
 // @ts-check
-//https://github.com/jsx-eslint/eslint-plugin-react/blob/d97e3ed96afe77a56fdc6fc7bdec11c28bc256e2/lib/rules/jsx-no-literals.js
-const { ESLintUtils } = require('@typescript-eslint/utils')
+const { ESLintUtils, AST_NODE_TYPES } = require('@typescript-eslint/utils');
 
-const createRule = ESLintUtils.RuleCreator((name) => `https://github.com/grafana/grafana/blob/main/packages/grafana-eslint-rules/README.md#${name}`);
+const createRule = ESLintUtils.RuleCreator(
+  (name) => `https://github.com/grafana/grafana/blob/main/packages/grafana-eslint-rules/README.md#${name}`
+);
 
-
-const messages = {
-    invalidPropValue: 'Invalid prop value: "{{text}}"',
-    noStringsInAttributes: 'Strings not allowed in attributes: "{{text}}"',
-    noStringsInJSX: 'Strings not allowed in JSX files: "{{text}}"',
-    literalNotInJSXExpression: 'Missing JSX expression container around literal string: "{{text}}"',
-  };
-const trimIfString = (value) => {
-    if (typeof value === 'string') {
-        return value.trim();
-    }
-    return value;
-
-  }
-
-const rule = createRule({
+const noUntranslatedLiterals = createRule({
   create(context) {
-    const defaults = {
-        noStrings: false,
-        ignoreProps: false,
-        noAttributeStrings: false,
-      };
-    
-    const config = Object.assign({}, defaults, context.options[0] || {});
+    return {
+      Literal: (node) => {
+        if (isEmpty(node)
+        || isInterfaceOrType(node)
+        || isVariable(node)
+        || isReturnStatement(node)
+        || isImportStatement(node)
+        || isBinaryExpression(node)
+        || isUsingTrans(node)
+        || isAttributeOrProp(node)
+        || isReturnStatement(node)
 
-    
-    const defaultMessageId = () => {
-        const ancestorIsJSXElement = arguments.length > 0 && arguments[0];
-        if(config.noAttributeStrings && !ancestorIsJSXElement) {
-            return 'noStringsInAttributes';
-        }
-        if(config.noStrings) {
-            return 'noStringsInJSX';
-        }
-        return 'literalNotInJSExpression';
-    }
-    const getParentIgnoringBinaryExpressions = (node) => {
-        let parent = node.parent;
-        while (parent.type === 'BinaryExpression') {
-            parent = parent.parent;
-        }
-        return parent;
-    }
-    const getValidation = (node) => {
-        const values = [
-            trimIfString(node.raw),
-            trimIfString(node.value)
-        ];
-
-        const parent = getParentIgnoringBinaryExpressions(node);
-        const isParentNodeStandard = () => {
-            if( typeof node.value === "string" && parent.type.includes('JSX')) {
-                if(config.noAttributeStrings) {
-                    return parent.type === 'JSXAttribute' || parent.type === 'JSXElement';
-                }
-                if(!config.noAttributeStrings) {
-                    return parent.type !== 'JSXAttribute';
-                }
-                // TRANS check here?
-            }
+        )
+        {
+          return;
         }
 
-        const standard = isParentNodeStandard();
-        
 
-    }
-
-    creatreturn {
-      JSXAttribute(node) {
-
-
-
+        context.report({
+          node,
+          messageId: 'noUntranslatedStrings',
+        });
+      },
     };
   },
-
-  name: 'no-untranslated-literals',
+  name: 'no-utranslated-strings',
   meta: {
-    docs: {
-      description: 'String literals should be translated using the i18n service',
-    },
-    messages,
     type: 'suggestion',
-    schema: [{
-        type: 'object',
-      properties: {
-        noStrings: {
-          type: 'boolean',
-        },
-        allowedStrings: {
-          type: 'array',
-          uniqueItems: true,
-          items: {
-            type: 'string',
-          },
-        },
-        ignoreProps: {
-          type: 'boolean',
-        },
-        noAttributeStrings: {
-          type: 'boolean',
-        },
-      },
-      additionalProperties: false,
-    }],
+    docs: {
+      description: 'Check untranslated strings',
+    },
+    messages: {
+      noUntranslatedStrings: 'Please, mark strings for translation.',
+    },
+    schema: [],
   },
   defaultOptions: [],
 });
 
-module.exports = rule;
+module.exports = noUntranslatedLiterals;
 
+// @ts-expect-error
+const isEmpty = (node) => {
+  let emptyString = false;
+  if (typeof node.value === 'string' && (node.value.includes('\n') || node.value.length === 0)) {
+    emptyString = true;
+  }
+  return emptyString;
+};
 
+// @ts-expect-error
+const isImportStatement = (node) => { 
+  const parent = node.parent;
+  if (parent && parent.type === AST_NODE_TYPES.ImportDeclaration) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+// @ts-expect-error
+const isAttributeOrProp = (node) => {
+  const parent = node.parent;
+  const grandparent = parent.parent;
+  if (parent.type === AST_NODE_TYPES.JSXAttribute || grandparent.type === AST_NODE_TYPES.JSXAttribute ||
+    parent.type === AST_NODE_TYPES.Property || grandparent.type === AST_NODE_TYPES.Property
+  ) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+// @ts-expect-error
+const isBinaryExpression = (node) => {
+  const parent = node.parent;
+  if (parent && parent.type === AST_NODE_TYPES.BinaryExpression) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+// @ts-expect-error
+const isInterfaceOrType = (node) => {
+  const parent = node.parent;
+  if (parent && parent.type === AST_NODE_TYPES.TSInterfaceDeclaration || parent.type === AST_NODE_TYPES.TSTypeAliasDeclaration) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+// @ts-expect-error
+const isVariable = (node) => {
+  const parent = node.parent;
+  const grandparent = parent.parent;
+
+  if (parent && parent.type === AST_NODE_TYPES.VariableDeclaration || grandparent && grandparent.type === AST_NODE_TYPES.VariableDeclaration
+    || parent && parent.type === AST_NODE_TYPES.VariableDeclarator || grandparent && grandparent.type === AST_NODE_TYPES.VariableDeclarator 
+    || parent && parent.type === AST_NODE_TYPES.AssignmentExpression || grandparent && grandparent.type === AST_NODE_TYPES.AssignmentExpression
+  ) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+// @ts-expect-error
+const isReturnStatement = (node) => {
+  const parent = node.parent;
+  if (parent && parent.type === AST_NODE_TYPES.ReturnStatement) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+// @ts-expect-error
+const isUsingTrans = (node) => {
+  const parent = node.parent;
+  const grandparent = parent.parent;
+  let isTranslated = false;
+  if (
+    parent.type === AST_NODE_TYPES.JSXAttribute &&
+    parent.name.type === AST_NODE_TYPES.JSXIdentifier &&
+    parent.name.name === 'i18nKey' &&
+    grandparent.name.type === AST_NODE_TYPES.JSXOpeningElement &&
+    grandparent.name.name === 'Trans'
+  ) {
+    isTranslated = true;
+  }
+  return isTranslated;
+};
+
+// https://astexplorer.net/#/gist/f121a2a9edea666731e75aae1d013c9d/01756ad7f809e63644c8d1acd2224f767267c05e
+//
