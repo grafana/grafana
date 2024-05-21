@@ -68,7 +68,7 @@ Display dashboards by search query or tags. You must enter at least one value in
 
 ### Show headings
 
-The selected list section (**Starred**, **Recently viewed**, **Search**) is shown as a  heading.
+The selected list section (**Starred**, **Recently viewed**, **Search**) is shown as a heading.
 
 ### Max items
 
