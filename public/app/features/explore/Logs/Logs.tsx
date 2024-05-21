@@ -261,7 +261,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [logsVolumeData?.data]);
+  }, [logsVolumeData?.data, hiddenLogLevels]);
 
   useEffect(() => {
     return () => {
