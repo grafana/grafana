@@ -2,7 +2,6 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { ComponentProps } from 'react';
 import { Provider } from 'react-redux';
-import configureMockStore from 'redux-mock-store';
 
 import {
   DataFrame,
@@ -14,13 +13,13 @@ import {
   standardTransformersRegistry,
   toUtc,
   createDataFrame,
+  ExploreLogsPanelState,
 } from '@grafana/data';
 import { organizeFieldsTransformer } from '@grafana/data/src/transformations/transformers/organize';
 import { config } from '@grafana/runtime';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 import { configureStore } from 'app/store/configureStore';
 
-import * as explorePaneState from '../state/explorePane';
 import { initialExploreState } from '../state/main';
 import { makeExplorePaneState } from '../state/utils';
 
@@ -48,6 +47,14 @@ const createAndCopyShortLink = jest.fn();
 jest.mock('app/core/utils/shortLinks', () => ({
   ...jest.requireActual('app/core/utils/shortLinks'),
   createAndCopyShortLink: (url: string) => createAndCopyShortLink(url),
+}));
+
+const fakeChangePanelState = jest.fn().mockReturnValue({ type: 'fakeAction' });
+jest.mock('../state/explorePane', () => ({
+  ...jest.requireActual('../state/explorePane'),
+  changePanelState: (exploreId: string, panel: 'logs', panelState: {} | ExploreLogsPanelState) => {
+    return fakeChangePanelState(exploreId, panel, panelState);
+  },
 }));
 
 describe('Logs', () => {
@@ -140,18 +147,9 @@ describe('Logs', () => {
       />
     );
   };
-  /* const store = configureStore({
-    explore: {
-      ...initialExploreState,
-      panes: {
-        left: makeExplorePaneState(),
-      },
-    },
-  });*/
 
   const setup = (partialProps?: Partial<ComponentProps<typeof Logs>>, dataFrame?: DataFrame, logs?: LogRowModel[]) => {
-    const mockStore = configureMockStore();
-    const fakeStore = mockStore({
+    const fakeStore = configureStore({
       explore: {
         ...initialExploreState,
         panes: {
@@ -159,6 +157,7 @@ describe('Logs', () => {
         },
       },
     });
+
     const { rerender } = render(
       <Provider store={fakeStore}>
         {getComponent(partialProps, dataFrame ? dataFrame : getMockLokiFrame(), logs)}
@@ -179,7 +178,7 @@ describe('Logs', () => {
       window.innerHeight = originalInnerHeight;
     });
 
-    it.skip('should call `scrollElement.scroll`', () => {
+    it('should call `scrollElement.scroll`', () => {
       const logs = [];
       for (let i = 0; i < 50; i++) {
         logs.push(makeLog({ uid: `uid${i}`, rowId: `id${i}`, timeEpochMs: i }));
@@ -200,7 +199,7 @@ describe('Logs', () => {
     });
   });
 
-  it.skip('should render logs', () => {
+  it('should render logs', () => {
     setup();
     const logsSection = screen.getByTestId('logRows');
     let logRows = logsSection.querySelectorAll('tr');
@@ -209,7 +208,7 @@ describe('Logs', () => {
     expect(logRows[2].textContent).toContain('log message 1');
   });
 
-  it.skip('should render no logs found', () => {
+  it('should render no logs found', () => {
     setup({}, undefined, []);
 
     expect(screen.getByText(/no logs found\./i)).toBeInTheDocument();
@@ -220,7 +219,7 @@ describe('Logs', () => {
     ).toBeInTheDocument();
   });
 
-  it.skip('should render a load more button', () => {
+  it('should render a load more button', () => {
     const scanningStarted = jest.fn();
     const store = configureStore({
       explore: {
@@ -271,7 +270,7 @@ describe('Logs', () => {
     expect(scanningStarted).toHaveBeenCalled();
   });
 
-  it.skip('should render a stop scanning button', () => {
+  it('should render a stop scanning button', () => {
     const store = configureStore({
       explore: {
         ...initialExploreState,
@@ -322,7 +321,7 @@ describe('Logs', () => {
     ).toBeInTheDocument();
   });
 
-  it.skip('should render a stop scanning button', () => {
+  it('should render a stop scanning button', () => {
     const scanningStopped = jest.fn();
     const store = configureStore({
       explore: {
@@ -375,7 +374,7 @@ describe('Logs', () => {
     expect(scanningStopped).toHaveBeenCalled();
   });
 
-  it.skip('should flip the order', async () => {
+  it('should flip the order', async () => {
     setup();
     const oldestFirstSelection = screen.getByLabelText('Oldest first');
     await userEvent.click(oldestFirstSelection);
@@ -388,17 +387,16 @@ describe('Logs', () => {
 
   describe('for permalinking', () => {
     it('should dispatch a `changePanelState` event without the id', () => {
-      const changePanelSpy = jest.spyOn(explorePaneState, 'changePanelState');
       const panelState = { logs: { id: '1' } };
       const { rerender, store } = setup({ loading: false, panelState });
 
       rerender(<Provider store={store}>{getComponent({ loading: true, exploreId: 'right', panelState })}</Provider>);
       rerender(<Provider store={store}>{getComponent({ loading: false, exploreId: 'right', panelState })}</Provider>);
 
-      expect(changePanelSpy).toHaveBeenCalledWith('right', 'logs', { logs: {} });
+      expect(fakeChangePanelState).toHaveBeenCalledWith('right', 'logs', { logs: {} });
     });
 
-    it.skip('should scroll the scrollElement into view if rows contain id', () => {
+    it('should scroll the scrollElement into view if rows contain id', () => {
       const panelState = { logs: { id: '3' } };
       const scrollElementMock = { scroll: jest.fn() };
       setup({ loading: false, scrollElement: scrollElementMock as unknown as HTMLDivElement, panelState });
@@ -406,7 +404,7 @@ describe('Logs', () => {
       expect(scrollElementMock.scroll).toHaveBeenCalled();
     });
 
-    it.skip('should not scroll the scrollElement into view if rows does not contain id', () => {
+    it('should not scroll the scrollElement into view if rows does not contain id', () => {
       const panelState = { logs: { id: 'not-included' } };
       const scrollElementMock = { scroll: jest.fn() };
       setup({ loading: false, scrollElement: scrollElementMock as unknown as HTMLDivElement, panelState });
@@ -414,7 +412,7 @@ describe('Logs', () => {
       expect(scrollElementMock.scroll).not.toHaveBeenCalled();
     });
 
-    it.skip('should call reportInteraction on permalinkClick', async () => {
+    it('should call reportInteraction on permalinkClick', async () => {
       const panelState = { logs: { id: 'not-included' } };
       const rows = [
         makeLog({ uid: '1', rowId: 'id1', timeEpochMs: 4 }),
@@ -437,7 +435,7 @@ describe('Logs', () => {
       });
     });
 
-    it.skip('should call createAndCopyShortLink on permalinkClick - logs', async () => {
+    it('should call createAndCopyShortLink on permalinkClick - logs', async () => {
       const panelState: Partial<ExplorePanelsState> = { logs: { id: 'not-included', visualisationType: 'logs' } };
       const rows = [
         makeLog({ uid: '1', rowId: 'id1', timeEpochMs: 1 }),
@@ -461,7 +459,7 @@ describe('Logs', () => {
       expect(createAndCopyShortLink).toHaveBeenCalledWith(expect.stringMatching('visualisationType%22:%22logs'));
     });
 
-    it.skip('should call createAndCopyShortLink on permalinkClick - with infinite scrolling', async () => {
+    it('should call createAndCopyShortLink on permalinkClick - with infinite scrolling', async () => {
       const featureToggleValue = config.featureToggles.logsInfiniteScrolling;
       config.featureToggles.logsInfiniteScrolling = true;
       const rows = [
@@ -502,13 +500,13 @@ describe('Logs', () => {
       config.featureToggles.logsExploreTableVisualisation = originalVisualisationTypeValue;
     });
 
-    it.skip('should show visualisation type radio group', () => {
+    it('should show visualisation type radio group', () => {
       setup();
       const logsSection = screen.getByRole('radio', { name: 'Show results in table visualisation' });
       expect(logsSection).toBeInTheDocument();
     });
 
-    it.skip('should change visualisation to table on toggle (loki)', async () => {
+    it('should change visualisation to table on toggle (loki)', async () => {
       setup({});
       const logsSection = screen.getByRole('radio', { name: 'Show results in table visualisation' });
       await userEvent.click(logsSection);
@@ -517,21 +515,21 @@ describe('Logs', () => {
       expect(table).toBeInTheDocument();
     });
 
-    it.skip('should use default state from localstorage - table', async () => {
-      //localStorage.setItem(visualisationTypeKey, 'table');
+    it('should use default state from localstorage - table', async () => {
+      localStorage.setItem(visualisationTypeKey, 'table');
       setup({});
       const table = await screen.findByTestId('logRowsTable');
       expect(table).toBeInTheDocument();
     });
 
-    it.skip('should use default state from localstorage - logs', async () => {
+    it('should use default state from localstorage - logs', async () => {
       localStorage.setItem(visualisationTypeKey, 'logs');
       setup({});
       const table = await screen.findByTestId('logRows');
       expect(table).toBeInTheDocument();
     });
 
-    it.skip('should change visualisation to table on toggle (elastic)', async () => {
+    it('should change visualisation to table on toggle (elastic)', async () => {
       setup({}, getMockElasticFrame());
       const logsSection = screen.getByRole('radio', { name: 'Show results in table visualisation' });
       await userEvent.click(logsSection);

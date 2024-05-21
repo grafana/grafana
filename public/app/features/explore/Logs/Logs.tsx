@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import { capitalize, groupBy } from 'lodash';
 import memoizeOne from 'memoize-one';
 import React, { useCallback, useEffect, useState } from 'react';
+import { usePrevious } from 'react-use';
 
 import {
   SplitOpen,
@@ -191,6 +192,8 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   );
   const [logsContainer, setLogsContainer] = useState<HTMLDivElement | undefined>(undefined);
   const dispatch = useDispatch();
+  const previousLoading = usePrevious(loading);
+
   const logsVolumeEventBus = eventBus.newScopedBus('logsvolume', { onlyLocal: false });
   const { outlineItems, register, unregisterAllChildren } = useContentOutlineContext() ?? {};
   let flipOrderTimer: number | undefined = undefined;
@@ -287,7 +290,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   }, []);
 
   useEffect(() => {
-    if (loading && panelState?.logs?.id) {
+    if (loading && !previousLoading && panelState?.logs?.id) {
       // loading stopped, so we need to remove any permalinked log lines
       delete panelState.logs.id;
 
@@ -298,7 +301,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch, exploreId, panelState?.logs?.id, loading]);
+  }, [dispatch, exploreId, loading]);
 
   useEffect(() => {
     const visualisationType = panelState?.logs?.visualisationType ?? getDefaultVisualisationType();
@@ -308,7 +311,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   }, [panelState?.logs?.visualisationType]);
 
   useEffect(() => {
-    console.log('wat', hiddenLogLevels, JSON.stringify(logsVolumeData?.data));
     registerLogLevelsWithContentOutline();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [logsVolumeData?.data, hiddenLogLevels]);
@@ -639,6 +641,9 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
   return (
     <>
+      <h1>
+        {visualisationType} {hasData}
+      </h1>
       {getRowContext && contextRow && (
         <LogRowContextModal
           open={contextOpen}
