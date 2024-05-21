@@ -87,7 +87,7 @@ Instructions for setting up filters in Gmail can be found [here](#setting-up-gma
 
 ### 2. Ensure the issue contains basic information
 
-Before triaging an issue very far, make sure that the issue's author provided the standard  information. This will help you make an educated recommendation on how to categorize the issue. The Grafana project uses [GitHub issue templates](https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/configuring-issue-templates-for-your-repository) to guide contributors to provide standard information that must be included for each type of template or type of issue.
+Before triaging an issue very far, make sure that the issue's author provided the standard  information. This helps you make an educated recommendation on how to categorize the issue. The Grafana project uses [GitHub issue templates](https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/configuring-issue-templates-for-your-repository) to guide contributors to provide standard information that must be included for each type of template or type of issue.
 
 #### Standard issue information that must be included
 
