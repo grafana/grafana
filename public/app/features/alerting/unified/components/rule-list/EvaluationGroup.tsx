@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { PropsWithChildren, ReactNode } from 'react';
+import React, { PropsWithChildren } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Badge, Button, Dropdown, Menu, Stack, Text, Icon } from '@grafana/ui';
@@ -9,91 +9,60 @@ import { Spacer } from '../Spacer';
 
 interface EvaluationGroupProps extends PropsWithChildren {
   name: string;
-  description?: ReactNode;
   interval?: string;
   provenance?: string;
   isOpen?: boolean;
   onToggle: () => void;
 }
 
-const EvaluationGroup = ({
-  name,
-  description,
-  provenance,
-  interval,
-  onToggle,
-  isOpen = false,
-  children,
-}: EvaluationGroupProps) => {
-  const styles = useStyles2(getStyles);
-
-  return (
-    <div className={styles.groupWrapper} role="treeitem" aria-expanded={isOpen} aria-selected="false">
-      <EvaluationGroupHeader
-        onToggle={onToggle}
-        provenance={provenance}
-        isOpen={isOpen}
-        description={description}
-        name={name}
-        interval={interval}
-      />
-      {isOpen && <div role="group">{children}</div>}
-    </div>
-  );
-};
-
-const EvaluationGroupHeader = (props: EvaluationGroupProps) => {
-  const { name, description, provenance, interval, isOpen = false, onToggle } = props;
-
+const EvaluationGroup = ({ name, provenance, interval, onToggle, isOpen = false, children }: EvaluationGroupProps) => {
   const styles = useStyles2(getStyles);
   const isProvisioned = Boolean(provenance);
 
   return (
-    <div className={styles.headerWrapper}>
-      <Stack direction="row" alignItems="center" gap={1}>
-        <button className={cx(styles.hiddenButton, styles.largerClickTarget)} type="button" onClick={onToggle}>
-          <Stack alignItems="center" gap={0.5}>
-            <Icon name={isOpen ? 'angle-down' : 'angle-right'} />
-            <Text truncate variant="body">
-              {name}
-            </Text>
-          </Stack>
-        </button>
-        {isProvisioned && <Badge color="purple" text="Provisioned" />}
-        {description && <MetaText>{description}</MetaText>}
-        <Spacer />
-        {interval && <MetaText icon="history">{interval}</MetaText>}
-        <Dropdown
-          overlay={
-            <Menu>
-              <Menu.Item
-                label="Edit"
-                icon="pen"
-                disabled={isProvisioned}
-                aria-label="edit-group-action"
-                data-testid="edit-group-action"
-              />
-              <Menu.Item label="Re-order rules" icon="flip" disabled={isProvisioned} />
-              <Menu.Divider />
-              <Menu.Item label="Export" icon="download-alt" />
-              <Menu.Item label="Delete" icon="trash-alt" destructive disabled={isProvisioned} />
-            </Menu>
-          }
-        >
-          <Button size="sm" variant="secondary">
-            Actions <Icon name="angle-down" />
-          </Button>
-        </Dropdown>
-      </Stack>
-    </div>
+    <Stack direction="column" role="treeitem" aria-expanded={isOpen} aria-selected="false">
+      <div className={styles.headerWrapper}>
+        <Stack direction="row" alignItems="center" gap={1}>
+          <button className={cx(styles.hiddenButton, styles.largerClickTarget)} type="button" onClick={onToggle}>
+            <Stack alignItems="center" gap={0.5}>
+              <Icon name={isOpen ? 'angle-down' : 'angle-right'} />
+              <Text truncate variant="body">
+                {name}
+              </Text>
+            </Stack>
+          </button>
+          {isProvisioned && <Badge color="purple" text="Provisioned" />}
+          <Spacer />
+          {interval && <MetaText icon="history">{interval}</MetaText>}
+          <Dropdown
+            overlay={
+              <Menu>
+                <Menu.Item
+                  label="Edit"
+                  icon="pen"
+                  disabled={isProvisioned}
+                  aria-label="edit-group-action"
+                  data-testid="edit-group-action"
+                />
+                <Menu.Item label="Re-order rules" icon="flip" disabled={isProvisioned} />
+                <Menu.Divider />
+                <Menu.Item label="Export" icon="download-alt" />
+                <Menu.Item label="Delete" icon="trash-alt" destructive disabled={isProvisioned} />
+              </Menu>
+            }
+          >
+            <Button size="sm" variant="secondary">
+              Actions <Icon name="angle-down" />
+            </Button>
+          </Dropdown>
+        </Stack>
+      </div>
+      {isOpen && <div role="group">{children}</div>}
+    </Stack>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  groupWrapper: css({
-    display: 'flex',
-    flexDirection: 'column',
-  }),
   headerWrapper: css({
     padding: `${theme.spacing(0.5)} ${theme.spacing(1)}`,
 

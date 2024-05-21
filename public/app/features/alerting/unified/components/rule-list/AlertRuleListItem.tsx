@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { isEmpty } from 'lodash';
 import pluralize from 'pluralize';
 import React from 'react';
+import { RequireAtLeastOne } from 'type-fest';
 
 import { GrafanaTheme2, IconName } from '@grafana/data';
 import { useStyles2, Stack, Text, Icon, TextLink, Dropdown, Button, Menu, Tooltip } from '@grafana/ui';
@@ -325,7 +326,12 @@ interface RuleListIconProps {
 /**
  * Make sure that the order of importance here matches the one we use in the StateBadge component for the detail view
  */
-export function RuleListIcon({ state, health, recording = false, isPaused = false }: RuleListIconProps) {
+export function RuleListIcon({
+  state,
+  health,
+  recording = false,
+  isPaused = false,
+}: RequireAtLeastOne<RuleListIconProps>) {
   const icons: Record<PromAlertingRuleState, IconName> = {
     [PromAlertingRuleState.Inactive]: 'check-circle',
     [PromAlertingRuleState.Pending]: 'circle',

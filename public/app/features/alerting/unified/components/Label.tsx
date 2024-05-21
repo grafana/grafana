@@ -58,14 +58,14 @@ const getStyles = (theme: GrafanaTheme2, color?: string, size?: string) => {
     ? tinycolor2.mostReadable(backgroundColor, ['#000', '#fff']).toString()
     : theme.colors.text.primary;
 
-  let padding: CSSProperties['padding'] = `${theme.spacing(0.33)} ${theme.spacing(1)}`;
+  let padding: CSSProperties['padding'] = theme.spacing(0.33, 1);
 
   switch (size) {
     case 'sm':
-      padding = `${theme.spacing(0.2)} ${theme.spacing(0.6)}`;
+      padding = theme.spacing(0.2, 0.6);
       break;
     case 'xs':
-      padding = `${theme.spacing(0)} ${theme.spacing(0.5)}`;
+      padding = theme.spacing(0, 0.5);
       break;
     default:
       break;

@@ -36,16 +36,16 @@ export const featureDiscoveryApi = alertingApi.injectEndpoints({
           }
         );
 
-        const buildInfo = await discoverFeaturesWithLogging(dsSettings.name);
+        const dsFeatures = await discoverFeaturesWithLogging(dsSettings.name);
 
-        const rulerConfig: RulerDataSourceConfig | undefined = buildInfo.features.rulerApiEnabled
+        const rulerConfig: RulerDataSourceConfig | undefined = dsFeatures.features.rulerApiEnabled
           ? {
               dataSourceName: dsSettings.name,
-              apiVersion: buildInfo.application === PromApplication.Cortex ? 'legacy' : 'config',
+              apiVersion: dsFeatures.application === PromApplication.Cortex ? 'legacy' : 'config',
             }
           : undefined;
 
-        return { data: { rulerConfig, buildInfo } };
+        return { data: { rulerConfig } };
       },
     }),
   }),

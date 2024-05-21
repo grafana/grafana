@@ -7,7 +7,7 @@ import { GrafanaTheme2, urlUtil } from '@grafana/data';
 import { Button, LinkButton, LoadingBar, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 
-import { CombinedRuleGroup, CombinedRuleNamespace, RulesSource } from '../../../../../types/unified-alerting';
+import { CombinedRuleNamespace } from '../../../../../types/unified-alerting';
 import { LogMessages, logInfo, trackRuleListNavigation } from '../../Analytics';
 import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
 import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces';
@@ -154,11 +154,6 @@ const RuleList = withErrorBoundary(
   },
   { style: 'page' }
 );
-
-export interface EvaluationGroupWithRulesProps {
-  group: CombinedRuleGroup;
-  rulesSource: RulesSource;
-}
 
 const LoadingIndicator = ({ visible = false }) => {
   const [measureRef, { width }] = useMeasure<HTMLDivElement>();

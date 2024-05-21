@@ -2,13 +2,19 @@ import { size } from 'lodash';
 import React from 'react';
 import { useToggle } from 'react-use';
 
+import { CombinedRuleGroup, RulesSource } from 'app/types/unified-alerting';
+
 import { createViewLink } from '../../utils/misc';
 import { hashRulerRule } from '../../utils/rule-id';
 import { isAlertingRule, isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from '../../utils/rules';
 
 import { AlertRuleListItem, RecordingRuleListItem } from './AlertRuleListItem';
 import EvaluationGroup from './EvaluationGroup';
-import { EvaluationGroupWithRulesProps } from './RuleList.v2';
+
+export interface EvaluationGroupWithRulesProps {
+  group: CombinedRuleGroup;
+  rulesSource: RulesSource;
+}
 
 export const EvaluationGroupWithRules = ({ group, rulesSource }: EvaluationGroupWithRulesProps) => {
   const [open, toggleOpen] = useToggle(false);
