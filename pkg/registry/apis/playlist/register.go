@@ -47,7 +47,7 @@ func RegisterAPIService(p playlistsvc.Service,
 		namespacer: request.GetNamespaceMapper(cfg),
 		gv:         playlist.PlaylistResourceInfo.GroupVersion(),
 		features:   features,
-		kvStore:    kvstore.WithNamespace(kvStore, 0, "storage.dualwriting."+cfg.StackID),
+		kvStore:    kvstore.WithNamespace(kvStore, 0, "storage.dualwriting"),
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
