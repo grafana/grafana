@@ -145,7 +145,7 @@ func (b *QueryAPIBuilder) GetAPIGroupInfo(
 	}
 
 	// The query endpoint -- NOTE, this uses a rewrite hack to allow requests without a name parameter
-	storage["query"] = &queryREST{builder: b}
+	storage["query"] = newQueryREST(b)
 
 	apiGroupInfo.VersionedResourcesStorageMap[gv.Version] = storage
 	return &apiGroupInfo, nil
