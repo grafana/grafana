@@ -202,7 +202,7 @@ Once extracted with `make i18n-extract` you need to manually edit the [English `
 
 ## Feedback
 
-**Please note:** This is only for proofreaders with permissions to the Grafana OSS project on Crowdin.
+**Note:** This is only for proofreaders with permissions to the Grafana OSS project on Crowdin.
 
 To provide feedback on translations, sign into Crowdin and follow these steps:
 
