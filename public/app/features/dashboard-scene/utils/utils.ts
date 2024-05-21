@@ -64,7 +64,20 @@ function findVizPanelInternal(scene: SceneObject, key: string | undefined): VizP
     return null;
   }
 
-  const panel = sceneGraph.findObject(scene, (obj) => obj.state.key === key);
+  const panel = sceneGraph.findObject(scene, (obj) => {
+    const objKey = obj.state.key!;
+
+    if (objKey === key) {
+      return true;
+    }
+
+    if (!(obj instanceof VizPanel)) {
+      return false;
+    }
+
+    return false;
+  });
+
   if (panel) {
     if (panel instanceof VizPanel) {
       return panel;
@@ -216,6 +229,7 @@ export function getDefaultVizPanel(dashboard: DashboardScene): VizPanel {
     key: getVizPanelKeyForPanelId(panelId),
     pluginId: 'timeseries',
     titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
+    hoverHeaderOffset: 0,
     menu: new VizPanelMenu({
       $behaviors: [panelMenuBehavior],
     }),

@@ -5,14 +5,13 @@ package sqltemplate
 // Modes see:
 //
 //	https://dev.mysql.com/doc/refman/8.4/en/sql-mode.html#sqlmode_ansi_quotes
-var MySQL mysql
+var MySQL = mysql{
+	rowLockingClauseAll: true,
+}
 
 var _ Dialect = MySQL
 
 type mysql struct {
 	standardIdent
-}
-
-func (mysql) SelectFor(s ...string) (string, error) {
-	return rowLockingClauseAll(true).SelectFor(s...)
+	rowLockingClauseAll
 }

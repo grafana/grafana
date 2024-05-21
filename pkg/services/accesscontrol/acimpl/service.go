@@ -578,17 +578,10 @@ func (s *Service) searchUserPermissionsFromCache(orgID int64, searchOptions acce
 		return nil, false
 	}
 
+	s.log.Debug("Using cached permissions", "key", key)
 	metrics.MAccessSearchUserPermissionsCacheUsage.WithLabelValues(accesscontrol.CacheHit).Inc()
 
-	s.log.Debug("Using cached permissions", "key", key)
-	filteredPermissions := make([]accesscontrol.Permission, 0)
-	for _, permission := range permissions.([]accesscontrol.Permission) {
-		if PermissionMatchesSearchOptions(permission, &searchOptions) {
-			filteredPermissions = append(filteredPermissions, permission)
-		}
-	}
-
-	return filteredPermissions, true
+	return permissions.([]accesscontrol.Permission), true
 }
 
 func PermissionMatchesSearchOptions(permission accesscontrol.Permission, searchOptions *accesscontrol.SearchOptions) bool {

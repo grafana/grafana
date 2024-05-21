@@ -50,6 +50,8 @@ The following video provides beginner steps for creating geomap visualizations. 
 
 {{< youtube id="HwM8AFQ7EUs" >}}
 
+{{< docs/play title="Geomap Examples" url="https://play.grafana.org/d/panel-geomap/" >}}
+
 ## Panel options
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
