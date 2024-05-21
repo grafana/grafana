@@ -193,6 +193,8 @@ func initEntityTables(mg *migrator.Migrator) string {
 			{Name: "group", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "resource", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "resource_version", Type: migrator.DB_BigInt, Nullable: false},
+			{Name: "created_at", Type: migrator.DB_BigInt, Nullable: false},
+			{Name: "updated_at", Type: migrator.DB_BigInt, Nullable: false},
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"group", "resource"}, Type: migrator.UniqueIndex},
