@@ -35,7 +35,11 @@ Use a text visualization when you need to:
 - Provide instructions or guidance on how to interpret different panels, configure settings, or take specific actions based on the displayed data.
 - Announce any scheduled maintenance or downtime that might impact your dashboards.
 
-## Mode
+## Text options
+
+Use the following options to refine your text visualization.
+
+### Mode
 
 **Mode** determines how embedded content appears.
 
