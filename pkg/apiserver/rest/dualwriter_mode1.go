@@ -129,17 +129,17 @@ func (d *DualWriterMode1) Delete(ctx context.Context, name string, deleteValidat
 	res, async, err := d.Legacy.Delete(ctx, name, deleteValidation, options)
 	if err != nil {
 		log.Error(err, "unable to delete object in legacy storage")
-		d.recordLegacyDuration(true, mode1Str, name, method, startLegacy)
+		d.recordLegacyDuration(true, mode1Str, options.Kind, method, startLegacy)
 		return res, async, err
 	}
-	d.recordLegacyDuration(false, mode1Str, name, method, startLegacy)
+	d.recordLegacyDuration(false, mode1Str, options.Kind, method, startLegacy)
 
 	go func() {
 		startStorage := time.Now()
 		ctx, cancel := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage delete timeout"))
 		defer cancel()
 		_, _, err := d.Storage.Delete(ctx, name, deleteValidation, options)
-		d.recordStorageDuration(err != nil, mode1Str, name, method, startStorage)
+		d.recordStorageDuration(err != nil, mode1Str, options.Kind, method, startStorage)
 	}()
 
 	return res, async, err
