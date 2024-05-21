@@ -338,7 +338,6 @@
    "type": "object"
   },
   "AlertRuleNotificationSettingsExport": {
-   "description": "Field name mismatches with Terraform provider schema are noted where applicable.",
    "properties": {
     "group_by": {
      "items": {
@@ -353,14 +352,12 @@
      "type": "string"
     },
     "mute_time_intervals": {
-     "description": "TF -\u003e `mute_timings`",
      "items": {
       "type": "string"
      },
      "type": "array"
     },
     "receiver": {
-     "description": "TF -\u003e `contact_point`",
      "type": "string"
     },
     "repeat_interval": {
@@ -4438,6 +4435,7 @@
    "type": "object"
   },
   "alertGroup": {
+   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -4566,11 +4564,6 @@
    "type": "object"
   },
   "gettableAlert": {
-<<<<<<< HEAD
-<<<<<<< HEAD
-   "description": "GettableAlert gettable alert",
-=======
->>>>>>> fa144e1652b (Re-generate swagger docs with backdated v0.30.2 version)
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -4613,11 +4606,6 @@
      "type": "string"
     }
    },
-<<<<<<< HEAD
-=======
->>>>>>> 961cef7f7de (Regenerate swagger docs)
-=======
->>>>>>> fa144e1652b (Re-generate swagger docs with backdated v0.30.2 version)
    "required": [
     "labels",
     "annotations",
@@ -4836,11 +4824,6 @@
    "type": "array"
   },
   "postableSilence": {
-<<<<<<< HEAD
-<<<<<<< HEAD
-   "description": "PostableSilence postable silence",
-=======
->>>>>>> fa144e1652b (Re-generate swagger docs with backdated v0.30.2 version)
    "properties": {
     "comment": {
      "description": "comment",
@@ -4868,11 +4851,6 @@
      "type": "string"
     }
    },
-<<<<<<< HEAD
-=======
->>>>>>> 961cef7f7de (Regenerate swagger docs)
-=======
->>>>>>> fa144e1652b (Re-generate swagger docs with backdated v0.30.2 version)
    "required": [
     "comment",
     "createdBy",
