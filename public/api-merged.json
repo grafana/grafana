@@ -12009,7 +12009,7 @@
         "condition": {
           "type": "string"
         },
-        "dasboardUid": {
+        "dashboardUid": {
           "type": "string"
         },
         "data": {
@@ -16906,8 +16906,8 @@
       }
     },
     "PagerdutyImage": {
-      "description": "PagerdutyImage is an image",
       "type": "object",
+      "title": "PagerdutyImage is an image.",
       "properties": {
         "alt": {
           "type": "string"
@@ -16921,8 +16921,8 @@
       }
     },
     "PagerdutyLink": {
-      "description": "PagerdutyLink is a link",
       "type": "object",
+      "title": "PagerdutyLink is a link.",
       "properties": {
         "href": {
           "type": "string"
@@ -21288,7 +21288,6 @@
       }
     },
     "alertGroup": {
-      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -21445,6 +21444,7 @@
       }
     },
     "gettableAlert": {
+      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -21506,7 +21506,6 @@
       }
     },
     "gettableSilence": {
-      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -21555,7 +21554,6 @@
       }
     },
     "gettableSilences": {
-      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
@@ -21706,6 +21704,7 @@
       }
     },
     "postableSilence": {
+      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",

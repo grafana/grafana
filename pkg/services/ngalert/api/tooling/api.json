@@ -174,7 +174,7 @@
     "condition": {
      "type": "string"
     },
-    "dasboardUid": {
+    "dashboardUid": {
      "type": "string"
     },
     "data": {
@@ -2435,7 +2435,6 @@
    "type": "object"
   },
   "PagerdutyImage": {
-   "description": "PagerdutyImage is an image",
    "properties": {
     "alt": {
      "type": "string"
@@ -2447,10 +2446,10 @@
      "type": "string"
     }
    },
+   "title": "PagerdutyImage is an image.",
    "type": "object"
   },
   "PagerdutyLink": {
-   "description": "PagerdutyLink is a link",
    "properties": {
     "href": {
      "type": "string"
@@ -2459,6 +2458,7 @@
      "type": "string"
     }
    },
+   "title": "PagerdutyLink is a link.",
    "type": "object"
   },
   "PermissionDenied": {
@@ -4241,7 +4241,7 @@
    "type": "object"
   },
   "Userinfo": {
-   "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
+   "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a [URL]. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
    "type": "object"
   },
   "ValidationError": {
@@ -4417,7 +4417,6 @@
    "type": "object"
   },
   "alertGroup": {
-   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -4546,6 +4545,7 @@
    "type": "object"
   },
   "gettableAlert": {
+   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -4607,7 +4607,6 @@
    "type": "array"
   },
   "gettableSilence": {
-   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4656,7 +4655,6 @@
    "type": "object"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
@@ -4807,6 +4805,7 @@
    "type": "array"
   },
   "postableSilence": {
+   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
