@@ -125,7 +125,7 @@ const RuleList = withErrorBoundary(
         {hasAlertRulesCreated && (
           <>
             <LoadingIndicator visible={loading} />
-            <ul className={styles.rulesTree} role="tree">
+            <ul className={styles.rulesTree} role="tree" aria-label="List of alert rules">
               {sortedNamespaces.map((namespace) => {
                 const { rulesSource } = namespace;
 

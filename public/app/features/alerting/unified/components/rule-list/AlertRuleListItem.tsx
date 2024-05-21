@@ -2,11 +2,9 @@ import { css } from '@emotion/css';
 import { isEmpty } from 'lodash';
 import pluralize from 'pluralize';
 import React from 'react';
-import { RequireAtLeastOne } from 'type-fest';
 
-import { GrafanaTheme2, IconName } from '@grafana/data';
-import { useStyles2, Stack, Text, Icon, TextLink, Dropdown, Button, Menu, Tooltip } from '@grafana/ui';
-import { TextProps } from '@grafana/ui/src/components/Text/Text';
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2, Stack, Text, TextLink, Dropdown, Button, Menu } from '@grafana/ui';
 import { Time } from 'app/features/explore/Time';
 import { RuleHealth } from 'app/types/unified-alerting';
 import { Labels, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
@@ -16,8 +14,8 @@ import { AlertLabels } from '../AlertLabels';
 import { MetaText } from '../MetaText';
 import MoreButton from '../MoreButton';
 import { Spacer } from '../Spacer';
-import { isErrorHealth } from '../rule-viewer/RuleViewer';
 
+import { RuleListIcon } from './RuleListIcon';
 import { calculateNextEvaluationEstimate, getRelativeEvaluationInterval } from './util';
 
 interface AlertRuleListItemProps {
@@ -106,15 +104,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
         </Stack>
 
         <Stack direction="row" alignItems="center" gap={1} wrap="nowrap">
-          <Button
-            variant="secondary"
-            size="sm"
-            icon="pen"
-            type="button"
-            disabled={isProvisioned}
-            aria-label="edit-rule-action"
-            data-testid="edit-rule-action"
-          >
+          <Button variant="secondary" size="sm" icon="pen" type="button" disabled={isProvisioned}>
             Edit
           </Button>
           <Dropdown
@@ -315,76 +305,3 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: `${theme.spacing(1)} ${theme.spacing(1.5)}`,
   }),
 });
-
-interface RuleListIconProps {
-  recording?: boolean;
-  state?: PromAlertingRuleState;
-  health?: RuleHealth;
-  isPaused?: boolean;
-}
-
-/**
- * Make sure that the order of importance here matches the one we use in the StateBadge component for the detail view
- */
-export function RuleListIcon({
-  state,
-  health,
-  recording = false,
-  isPaused = false,
-}: RequireAtLeastOne<RuleListIconProps>) {
-  const icons: Record<PromAlertingRuleState, IconName> = {
-    [PromAlertingRuleState.Inactive]: 'check-circle',
-    [PromAlertingRuleState.Pending]: 'circle',
-    [PromAlertingRuleState.Firing]: 'exclamation-circle',
-  };
-
-  const color: Record<PromAlertingRuleState, 'success' | 'error' | 'warning'> = {
-    [PromAlertingRuleState.Inactive]: 'success',
-    [PromAlertingRuleState.Pending]: 'warning',
-    [PromAlertingRuleState.Firing]: 'error',
-  };
-
-  const stateNames: Record<PromAlertingRuleState, string> = {
-    [PromAlertingRuleState.Inactive]: 'Normal',
-    [PromAlertingRuleState.Pending]: 'Pending',
-    [PromAlertingRuleState.Firing]: 'Firing',
-  };
-
-  let iconName: IconName = state ? icons[state] : 'circle';
-  let iconColor: TextProps['color'] = state ? color[state] : 'secondary';
-  let stateName: string = state ? stateNames[state] : 'unknown';
-
-  if (recording) {
-    iconName = 'record-audio';
-    iconColor = 'success';
-    stateName = 'Recording';
-  }
-
-  if (health === 'nodata') {
-    iconName = 'exclamation-triangle';
-    iconColor = 'warning';
-    stateName = 'Insufficient data';
-  }
-
-  if (isErrorHealth(health)) {
-    iconName = 'times-circle';
-    iconColor = 'error';
-    stateName = 'Failed to evaluate rule';
-  }
-
-  if (isPaused) {
-    iconName = 'pause-circle';
-    iconColor = 'warning';
-    stateName = 'Paused';
-  }
-
-  return (
-    <Tooltip content={stateName} placement="right">
-      <div>
-        <Text color={iconColor}>
-          <Icon name={iconName} size="lg" />
-        </Text>
-      </div>
-    </Tooltip>
-  );
-}
