@@ -100,7 +100,9 @@ func validateRuleNode(
 	return &newAlertRule, nil
 }
 
-func validateAlertingRule(in *apimodels.PostableExtendedRuleNode, newRule *ngmodels.AlertRule, canPatch bool) error {
+// validateAlertingRuleFields validates only the fields on a rule that are specific to Alerting rules.
+// it will load fields that pass validation onto newRule.
+func validateAlertingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule *ngmodels.AlertRule, canPatch bool) error {
 	var err error
 
 	if in.GrafanaManagedAlert.Record != nil {
@@ -151,7 +153,9 @@ func validateAlertingRule(in *apimodels.PostableExtendedRuleNode, newRule *ngmod
 	return nil
 }
 
-func validateRecordingRule(in *apimodels.PostableExtendedRuleNode, newRule *ngmodels.AlertRule, limits RuleLimits, canPatch bool) error {
+// validateRecordingRuleFields validates only the fields on a rule that are specific to Recording rules.
+// it will load fields that pass validation onto newRule.
+func validateRecordingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule *ngmodels.AlertRule, limits RuleLimits, canPatch bool) error {
 	if !limits.RecordingRulesAllowed {
 		return fmt.Errorf("%w: recording rules cannot be created on this instance", ngmodels.ErrAlertRuleFailedValidation)
 	}
