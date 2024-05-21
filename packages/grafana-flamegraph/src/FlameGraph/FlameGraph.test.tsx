@@ -49,6 +49,8 @@ describe('FlameGraph', () => {
         colorScheme={ColorScheme.ValueBased}
         selectedView={SelectedView.FlameGraph}
         search={''}
+        collapsedMap={container.getCollapsedMap()}
+        setCollapsedMap={() => {}}
         {...props}
       />
     );

@@ -1,4 +1,4 @@
-package database
+package database_test
 
 import (
 	"context"
@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	rs "github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
@@ -20,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
@@ -91,9 +93,9 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			store, permissionStore, usrSvc, teamSvc, _ := setupTestEnv(t)
+			store, permissionStore, usrSvc, teamSvc, _, sql := setupTestEnv(t)
 
-			user, team := createUserAndTeam(t, store.sql, usrSvc, teamSvc, tt.orgID)
+			user, team := createUserAndTeam(t, sql, usrSvc, teamSvc, tt.orgID)
 
 			for _, id := range tt.userPermissions {
 				_, err := permissionStore.SetUserResourcePermission(context.Background(), tt.orgID, accesscontrol.User{ID: user.ID}, rs.SetResourcePermissionCommand{
@@ -148,7 +150,7 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 			require.NoError(t, err)
 			assert.Len(t, permissions, tt.expected)
 
-			policies, err := GetAccessPolicies(context.Background(), user.OrgID, store.sql.GetSqlxSession(),
+			policies, err := database.GetAccessPolicies(context.Background(), user.OrgID, sql.GetSqlxSession(),
 				func(ctx context.Context, orgID int64, scope string) ([]string, error) {
 					return strings.Split(scope, ":"), nil
 				})
@@ -195,7 +197,7 @@ func TestAccessControlStore_GetTeamsPermissions(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			store, permissionStore, _, teamSvc, _ := setupTestEnv(t)
+			store, permissionStore, _, teamSvc, _, _ := setupTestEnv(t)
 
 			teams := make([]team.Team, 0)
 			for i := 0; i < len(tt.teamsPermissions); i++ {
@@ -240,8 +242,8 @@ func TestAccessControlStore_GetTeamsPermissions(t *testing.T) {
 
 func TestAccessControlStore_DeleteUserPermissions(t *testing.T) {
 	t.Run("expect permissions in all orgs to be deleted", func(t *testing.T) {
-		store, permissionsStore, usrSvc, teamSvc, _ := setupTestEnv(t)
-		user, _ := createUserAndTeam(t, store.sql, usrSvc, teamSvc, 1)
+		store, permissionsStore, usrSvc, teamSvc, _, sql := setupTestEnv(t)
+		user, _ := createUserAndTeam(t, sql, usrSvc, teamSvc, 1)
 
 		// generate permissions in org 1
 		_, err := permissionsStore.SetUserResourcePermission(context.Background(), 1, accesscontrol.User{ID: user.ID}, rs.SetResourcePermissionCommand{
@@ -280,8 +282,8 @@ func TestAccessControlStore_DeleteUserPermissions(t *testing.T) {
 	})
 
 	t.Run("expect permissions in org 1 to be deleted", func(t *testing.T) {
-		store, permissionsStore, usrSvc, teamSvc, _ := setupTestEnv(t)
-		user, _ := createUserAndTeam(t, store.sql, usrSvc, teamSvc, 1)
+		store, permissionsStore, usrSvc, teamSvc, _, sql := setupTestEnv(t)
+		user, _ := createUserAndTeam(t, sql, usrSvc, teamSvc, 1)
 
 		// generate permissions in org 1
 		_, err := permissionsStore.SetUserResourcePermission(context.Background(), 1, accesscontrol.User{ID: user.ID}, rs.SetResourcePermissionCommand{
@@ -322,8 +324,8 @@ func TestAccessControlStore_DeleteUserPermissions(t *testing.T) {
 
 func TestAccessControlStore_DeleteTeamPermissions(t *testing.T) {
 	t.Run("expect permissions related to team to be deleted", func(t *testing.T) {
-		store, permissionsStore, usrSvc, teamSvc, _ := setupTestEnv(t)
-		user, team := createUserAndTeam(t, store.sql, usrSvc, teamSvc, 1)
+		store, permissionsStore, usrSvc, teamSvc, _, sql := setupTestEnv(t)
+		user, team := createUserAndTeam(t, sql, usrSvc, teamSvc, 1)
 
 		// grant permission to the team
 		_, err := permissionsStore.SetTeamResourcePermission(context.Background(), 1, team.ID, rs.SetResourcePermissionCommand{
@@ -356,8 +358,8 @@ func TestAccessControlStore_DeleteTeamPermissions(t *testing.T) {
 		assert.Len(t, permissions, 0)
 	})
 	t.Run("expect permissions not related to team to be kept", func(t *testing.T) {
-		store, permissionsStore, usrSvc, teamSvc, _ := setupTestEnv(t)
-		user, team := createUserAndTeam(t, store.sql, usrSvc, teamSvc, 1)
+		store, permissionsStore, usrSvc, teamSvc, _, sql := setupTestEnv(t)
+		user, team := createUserAndTeam(t, sql, usrSvc, teamSvc, 1)
 
 		// grant permission to the team
 		_, err := permissionsStore.SetTeamResourcePermission(context.Background(), 1, team.ID, rs.SetResourcePermissionCommand{
@@ -468,14 +470,13 @@ func createUsersAndTeams(t *testing.T, store db.DB, svcs helperServices, orgID i
 	return res
 }
 
-func setupTestEnv(t testing.TB) (*AccessControlStore, rs.Store, user.Service, team.Service, org.Service) {
+func setupTestEnv(t testing.TB) (*database.AccessControlStore, rs.Store, user.Service, team.Service, org.Service, *sqlstore.SQLStore) {
 	sql, cfg := db.InitTestDBWithCfg(t)
 	cfg.AutoAssignOrg = true
 	cfg.AutoAssignOrgRole = "Viewer"
 	cfg.AutoAssignOrgId = 1
-	acstore := ProvideService(sql)
-	asService := rs.NewActionSetService()
-	permissionStore := rs.NewStore(sql, featuremgmt.WithFeatures(), &asService)
+	acstore := database.ProvideService(sql)
+	permissionStore := rs.NewStore(sql, featuremgmt.WithFeatures())
 	teamService, err := teamimpl.ProvideService(sql, cfg, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 	orgService, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
@@ -490,7 +491,7 @@ func setupTestEnv(t testing.TB) (*AccessControlStore, rs.Store, user.Service, te
 		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
 	)
 	require.NoError(t, err)
-	return acstore, permissionStore, userService, teamService, orgService
+	return acstore, permissionStore, userService, teamService, orgService, sql
 }
 
 func TestIntegrationAccessControlStore_SearchUsersPermissions(t *testing.T) {
@@ -735,8 +736,8 @@ func TestIntegrationAccessControlStore_SearchUsersPermissions(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			acStore, permissionsStore, userSvc, teamSvc, orgSvc := setupTestEnv(t)
-			dbUsers := createUsersAndTeams(t, acStore.sql, helperServices{userSvc, teamSvc, orgSvc}, 1, tt.users)
+			acStore, permissionsStore, userSvc, teamSvc, orgSvc, sql := setupTestEnv(t)
+			dbUsers := createUsersAndTeams(t, sql, helperServices{userSvc, teamSvc, orgSvc}, 1, tt.users)
 
 			// Switch userID and TeamID by the real stored ones
 			for i := range tt.permCmds {
@@ -815,8 +816,8 @@ func TestAccessControlStore_GetUsersBasicRoles(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			acStore, _, userSvc, teamSvc, orgSvc := setupTestEnv(t)
-			dbUsers := createUsersAndTeams(t, acStore.sql, helperServices{userSvc, teamSvc, orgSvc}, 1, tt.users)
+			acStore, _, userSvc, teamSvc, orgSvc, sql := setupTestEnv(t)
+			dbUsers := createUsersAndTeams(t, sql, helperServices{userSvc, teamSvc, orgSvc}, 1, tt.users)
 
 			// Test
 			dbRoles, err := acStore.GetUsersBasicRoles(ctx, tt.userFilter, 1)

@@ -123,7 +123,6 @@ steps:
   image: alpine:3.19.1
   name: identify-runner
 - commands:
-  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable || yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -225,7 +224,6 @@ steps:
   image: alpine:3.19.1
   name: identify-runner
 - commands:
-  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable || yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -241,7 +239,6 @@ steps:
   image: node:20.9.0-alpine
   name: lint-frontend
 - commands:
-  - apk add --update git
   - |-
     make i18n-extract || (echo "
     Extraction failed. Make sure that you have no dynamic translation phrases, such as 't(\`preferences.theme.\$${themeID}\`, themeName)' and that no translation key is used twice. Search the output for '[warning]' to find the offending file." && false)
@@ -252,8 +249,7 @@ steps:
     \           "
   depends_on:
   - yarn-install
-  failure: ignore
-  image: node:20.9.0-alpine
+  image: node:20-bookworm
   name: verify-i18n
 trigger:
   event:
@@ -541,7 +537,6 @@ steps:
   image: golang:1.22.3-alpine
   name: wire-install
 - commands:
-  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable || yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1115,7 +1110,6 @@ steps:
   image: alpine:3.19.1
   name: identify-runner
 - commands:
-  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable || yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1473,7 +1467,6 @@ steps:
   image: alpine:3.19.1
   name: identify-runner
 - commands:
-  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable || yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1550,7 +1543,6 @@ steps:
   image: alpine:3.19.1
   name: identify-runner
 - commands:
-  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable || yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1609,7 +1601,6 @@ steps:
   image: alpine:3.19.1
   name: identify-runner
 - commands:
-  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable || yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1625,7 +1616,6 @@ steps:
   image: node:20.9.0-alpine
   name: lint-frontend
 - commands:
-  - apk add --update git
   - |-
     make i18n-extract || (echo "
     Extraction failed. Make sure that you have no dynamic translation phrases, such as 't(\`preferences.theme.\$${themeID}\`, themeName)' and that no translation key is used twice. Search the output for '[warning]' to find the offending file." && false)
@@ -1636,8 +1626,7 @@ steps:
     \           "
   depends_on:
   - yarn-install
-  failure: ignore
-  image: node:20.9.0-alpine
+  image: node:20-bookworm
   name: verify-i18n
 trigger:
   branch: main
@@ -1873,7 +1862,6 @@ steps:
   image: golang:1.22.3-alpine
   name: wire-install
 - commands:
-  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable || yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -2853,7 +2841,6 @@ steps:
   image: golang:1.22.3-alpine
   name: compile-build-cmd
 - commands:
-  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable || yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -3127,7 +3114,6 @@ steps:
   image: alpine:3.19.1
   name: identify-runner
 - commands:
-  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable || yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -3552,7 +3538,6 @@ steps:
   image: alpine:3.19.1
   name: identify-runner
 - commands:
-  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable || yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -3938,6 +3923,7 @@ steps:
 - commands:
   - 'dagger run --silent /src/grafana-build artifacts -a $${ARTIFACTS} --grafana-ref=$${GRAFANA_REF}
     --enterprise-ref=$${ENTERPRISE_REF} --grafana-repo=$${GRAFANA_REPO} --version=$${VERSION} '
+  - --go-version=1.22.3
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
@@ -4923,3 +4909,8 @@ get:
   path: secret/data/common/gcr
 kind: secret
 name: gcr_credentials
+---
+kind: signature
+hmac: dcf93e3d0b79e729704bfbcc269fe53f9a11117dd7b597a707622a0303197d78
+
+...

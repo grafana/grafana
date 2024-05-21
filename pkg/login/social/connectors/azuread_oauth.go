@@ -204,8 +204,7 @@ func (s *SocialAzureAD) Validate(ctx context.Context, settings ssoModels.SSOSett
 
 	return validation.Validate(info, requester,
 		validateAllowedGroups,
-		// FIXME: uncomment this after the Terraform provider is updated
-		//validation.MustBeEmptyValidator(info.ApiUrl, "API URL"),
+		validation.MustBeEmptyValidator(info.ApiUrl, "API URL"),
 		validation.RequiredUrlValidator(info.AuthUrl, "Auth URL"),
 		validation.RequiredUrlValidator(info.TokenUrl, "Token URL"))
 }
@@ -410,7 +409,7 @@ func (s *SocialAzureAD) groupsGraphAPIURL(claims *azureClaims, token *oauth2.Tok
 
 	// If no endpoint was specified or if the endpoints provided in _claim_source is pointing to the deprecated
 	// "graph.windows.net" api, use an handcrafted url to graph.microsoft.com
-	// See https://docs.microsoft.com/en-us/graph/migrate-azure-ad-graph-overview
+	// See https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#groups-overage-claim
 	if endpoint == "" || strings.Contains(endpoint, "graph.windows.net") {
 		tenantID := claims.TenantID
 		// If tenantID wasn't found in the id_token, parse access token

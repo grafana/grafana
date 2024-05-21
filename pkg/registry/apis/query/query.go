@@ -2,67 +2,155 @@ package query
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"golang.org/x/sync/errgroup"
+	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/registry/rest"
 
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/util/errutil"
-	"github.com/grafana/grafana/pkg/util/errutil/errhttp"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-// The query method (not really a create)
-func (b *QueryAPIBuilder) doQuery(w http.ResponseWriter, r *http.Request) {
-	ctx, span := b.tracer.Start(r.Context(), "QueryService.Query")
-	defer span.End()
+type queryREST struct {
+	logger  log.Logger
+	builder *QueryAPIBuilder
+}
 
-	raw := &query.QueryDataRequest{}
-	err := web.Bind(r, raw)
-	if err != nil {
-		errhttp.Write(ctx, errutil.BadRequest(
-			"query.bind",
-			errutil.WithPublicMessage("Error reading query")).
-			Errorf("error reading: %w", err), w)
-		return
+var (
+	_ rest.Storage              = (*queryREST)(nil)
+	_ rest.SingularNameProvider = (*queryREST)(nil)
+	_ rest.Connecter            = (*queryREST)(nil)
+	_ rest.Scoper               = (*queryREST)(nil)
+	_ rest.StorageMetadata      = (*queryREST)(nil)
+)
+
+func newQueryREST(builder *QueryAPIBuilder) *queryREST {
+	return &queryREST{
+		logger:  log.New("query"),
+		builder: builder,
 	}
+}
 
-	// Parses the request and splits it into multiple sub queries (if necessary)
-	req, err := b.parser.parseRequest(ctx, raw)
-	if err != nil {
-		if errors.Is(err, datasources.ErrDataSourceNotFound) {
-			errhttp.Write(ctx, errutil.BadRequest(
-				"query.datasource.notfound",
-				errutil.WithPublicMessage(err.Error())), w)
+func (r *queryREST) New() runtime.Object {
+	// This is added as the "ResponseType" regarless what ProducesObject() says :)
+	return &query.QueryDataResponse{}
+}
+
+func (r *queryREST) Destroy() {}
+
+func (r *queryREST) NamespaceScoped() bool {
+	return true
+}
+
+func (r *queryREST) GetSingularName() string {
+	return "QueryResults" // Used for the
+}
+
+func (r *queryREST) ProducesMIMETypes(verb string) []string {
+	return []string{"application/json"} // and parquet!
+}
+
+func (r *queryREST) ProducesObject(verb string) interface{} {
+	return &query.QueryDataResponse{}
+}
+
+func (r *queryREST) ConnectMethods() []string {
+	return []string{"POST"}
+}
+
+func (r *queryREST) NewConnectOptions() (runtime.Object, bool, string) {
+	return nil, false, "" // true means you can use the trailing path as a variable
+}
+
+func (r *queryREST) Connect(ctx context.Context, name string, opts runtime.Object, incomingResponder rest.Responder) (http.Handler, error) {
+	// See: /pkg/apiserver/builder/helper.go#L34
+	// The name is set with a rewriter hack
+	if name != "name" {
+		return nil, errorsK8s.NewNotFound(schema.GroupResource{}, name)
+	}
+	b := r.builder
+
+	return http.HandlerFunc(func(w http.ResponseWriter, httpreq *http.Request) {
+		start := time.Now()
+		ctx, span := b.tracer.Start(httpreq.Context(), "QueryService.Query")
+		defer span.End()
+
+		logger := r.logger.FromContext(ctx)
+
+		responder := newResponderWrapper(incomingResponder,
+			func(statusCode int, obj runtime.Object) {
+				if statusCode >= 400 {
+					span.SetStatus(codes.Error, fmt.Sprintf("error with HTTP status code %s", strconv.Itoa(statusCode)))
+				}
+
+				logRequest(logger, start, statusCode)
+			},
+			func(err error) {
+				span.SetStatus(codes.Error, "request failed")
+				if err == nil {
+					return
+				}
+
+				span.RecordError(err)
+				logRequestError(logger, start, err)
+			})
+
+		raw := &query.QueryDataRequest{}
+		err := web.Bind(httpreq, raw)
+		if err != nil {
+			err = errorsK8s.NewBadRequest("error reading query")
+			// TODO: can we wrap the error so details are not lost?!
+			// errutil.BadRequest(
+			// 	"query.bind",
+			// 	errutil.WithPublicMessage("Error reading query")).
+			// 	Errorf("error reading: %w", err)
+			responder.Error(err)
 			return
 		}
-		errhttp.Write(ctx, err, w)
-		return
-	}
 
-	// Actually run the query
-	rsp, err := b.execute(ctx, req)
-	if err != nil {
-		errhttp.Write(ctx, errutil.Internal(
-			"query.execution",
-			errutil.WithPublicMessage("Error executing query")).
-			Errorf("execution error: %w", err), w)
-		return
-	}
+		// Parses the request and splits it into multiple sub queries (if necessary)
+		req, err := b.parser.parseRequest(ctx, raw)
+		if err != nil {
+			if errors.Is(err, datasources.ErrDataSourceNotFound) {
+				// TODO, can we wrap the error somehow?
+				err = &errorsK8s.StatusError{ErrStatus: metav1.Status{
+					Status:  metav1.StatusFailure,
+					Code:    http.StatusBadRequest, // the URL is found, but includes bad requests
+					Reason:  metav1.StatusReasonNotFound,
+					Message: "datasource not found",
+				}}
+			}
+			responder.Error(err)
+			return
+		}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(query.GetResponseCode(rsp))
-	_ = json.NewEncoder(w).Encode(rsp)
+		// Actually run the query
+		rsp, err := b.execute(ctx, req)
+		if err != nil {
+			responder.Error(err)
+			return
+		}
+
+		responder.Object(query.GetResponseCode(rsp), &query.QueryDataResponse{
+			QueryDataResponse: *rsp, // wrap the backend response as a QueryDataResponse
+		})
+	}), nil
 }
 
 func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo) (qdr *backend.QueryDataResponse, err error) {
@@ -280,4 +368,52 @@ func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedReque
 		}
 	}
 	return qdr, nil
+}
+
+// logRequest short-term hack until k8s have added support for traceIDs in request logs.
+func logRequest(logger log.Logger, startTime time.Time, statusCode int) {
+	duration := time.Since(startTime)
+	logger.Debug("Query request completed", "status", statusCode, "duration", duration.String())
+}
+
+func logRequestError(logger log.Logger, startTime time.Time, err error) {
+	var args []any
+	var gfErr errutil.Error
+	if !errors.As(err, &gfErr) {
+		args = []any{"error", err.Error()}
+	} else {
+		args = []any{
+			"errorReason", gfErr.Reason,
+			"errorMessageID", gfErr.MessageID,
+			"error", gfErr.LogMessage,
+		}
+	}
+
+	duration := time.Since(startTime)
+	args = append(args, "duration", duration.String())
+	logger.Error("Query request completed", args...)
+}
+
+type responderWrapper struct {
+	wrapped    rest.Responder
+	onObjectFn func(statusCode int, obj runtime.Object)
+	onErrorFn  func(err error)
+}
+
+func newResponderWrapper(responder rest.Responder, onObjectFn func(statusCode int, obj runtime.Object), onErrorFn func(err error)) *responderWrapper {
+	return &responderWrapper{
+		wrapped:    responder,
+		onObjectFn: onObjectFn,
+		onErrorFn:  onErrorFn,
+	}
+}
+
+func (r responderWrapper) Object(statusCode int, obj runtime.Object) {
+	r.onObjectFn(statusCode, obj)
+	r.wrapped.Object(statusCode, obj)
+}
+
+func (r responderWrapper) Error(err error) {
+	r.onErrorFn(err)
+	r.wrapped.Error(err)
 }

@@ -27,6 +27,8 @@ For example, if you want to display important links to your dashboard, you can u
 
 {{< figure src="/static/img/docs/text-panel/text-panel.png" max-width="1025px" alt="A text panel showing important links" >}}
 
+{{< docs/play title="Text Panel" url="https://play.grafana.org/d/adl33bxy1ih34b/" >}}
+
 Use a text visualization when you need to:
 
 - Add important links or useful annotations.

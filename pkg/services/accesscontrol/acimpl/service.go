@@ -46,8 +46,8 @@ var SharedWithMeFolderPermission = accesscontrol.Permission{
 var OSSRolesPrefixes = []string{accesscontrol.ManagedRolePrefix, accesscontrol.ExternalServiceRolePrefix}
 
 func ProvideService(cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
-	accessControl accesscontrol.AccessControl, features featuremgmt.FeatureToggles, tracer tracing.Tracer) (*Service, error) {
-	service := ProvideOSSService(cfg, database.ProvideService(db), cache, features, tracer)
+	accessControl accesscontrol.AccessControl, actionResolver accesscontrol.ActionResolver, features featuremgmt.FeatureToggles, tracer tracing.Tracer) (*Service, error) {
+	service := ProvideOSSService(cfg, database.ProvideService(db), actionResolver, cache, features, tracer)
 
 	api.NewAccessControlAPI(routeRegister, accessControl, service, features).RegisterAPIEndpoints()
 	if err := accesscontrol.DeclareFixedRoles(service, cfg); err != nil {
@@ -65,15 +65,16 @@ func ProvideService(cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegis
 	return service, nil
 }
 
-func ProvideOSSService(cfg *setting.Cfg, store accesscontrol.Store, cache *localcache.CacheService, features featuremgmt.FeatureToggles, tracer tracing.Tracer) *Service {
+func ProvideOSSService(cfg *setting.Cfg, store accesscontrol.Store, actionResolver accesscontrol.ActionResolver, cache *localcache.CacheService, features featuremgmt.FeatureToggles, tracer tracing.Tracer) *Service {
 	s := &Service{
-		cache:    cache,
-		cfg:      cfg,
-		features: features,
-		log:      log.New("accesscontrol.service"),
-		roles:    accesscontrol.BuildBasicRoleDefinitions(),
-		store:    store,
-		tracer:   tracer,
+		actionResolver: actionResolver,
+		cache:          cache,
+		cfg:            cfg,
+		features:       features,
+		log:            log.New("accesscontrol.service"),
+		roles:          accesscontrol.BuildBasicRoleDefinitions(),
+		store:          store,
+		tracer:         tracer,
 	}
 
 	return s
@@ -81,14 +82,15 @@ func ProvideOSSService(cfg *setting.Cfg, store accesscontrol.Store, cache *local
 
 // Service is the service implementing role based access control.
 type Service struct {
-	cache         *localcache.CacheService
-	cfg           *setting.Cfg
-	features      featuremgmt.FeatureToggles
-	log           log.Logger
-	registrations accesscontrol.RegistrationList
-	roles         map[string]*accesscontrol.RoleDTO
-	store         accesscontrol.Store
-	tracer        tracing.Tracer
+	actionResolver accesscontrol.ActionResolver
+	cache          *localcache.CacheService
+	cfg            *setting.Cfg
+	features       featuremgmt.FeatureToggles
+	log            log.Logger
+	registrations  accesscontrol.RegistrationList
+	roles          map[string]*accesscontrol.RoleDTO
+	store          accesscontrol.Store
+	tracer         tracing.Tracer
 }
 
 func (s *Service) GetUsageStats(_ context.Context) map[string]any {
@@ -138,6 +140,9 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 	if err != nil {
 		return nil, err
 	}
+	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
+		dbPermissions = s.actionResolver.ExpandActionSets(dbPermissions)
+	}
 
 	return append(permissions, dbPermissions...), nil
 }
@@ -157,8 +162,11 @@ func (s *Service) getBasicRolePermissions(ctx context.Context, role string, orgI
 		OrgID:        orgID,
 		RolePrefixes: OSSRolesPrefixes,
 	})
-	permissions = append(permissions, dbPermissions...)
-	return permissions, err
+	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
+		dbPermissions = s.actionResolver.ExpandActionSets(dbPermissions)
+	}
+
+	return append(permissions, dbPermissions...), err
 }
 
 func (s *Service) getTeamsPermissions(ctx context.Context, teamIDs []int64, orgID int64) (map[int64][]accesscontrol.Permission, error) {
@@ -170,6 +178,13 @@ func (s *Service) getTeamsPermissions(ctx context.Context, teamIDs []int64, orgI
 		OrgID:        orgID,
 		RolePrefixes: OSSRolesPrefixes,
 	})
+
+	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
+		for teamID, permissions := range teamPermissions {
+			teamPermissions[teamID] = s.actionResolver.ExpandActionSets(permissions)
+		}
+	}
+
 	return teamPermissions, err
 }
 
@@ -199,6 +214,9 @@ func (s *Service) getUserDirectPermissions(ctx context.Context, user identity.Re
 		return nil, err
 	}
 
+	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
+		permissions = s.actionResolver.ExpandActionSets(permissions)
+	}
 	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
 		permissions = append(permissions, SharedWithMeFolderPermission)
 	}
@@ -246,7 +264,7 @@ func (s *Service) getCachedBasicRolesPermissions(ctx context.Context, user ident
 }
 
 func (s *Service) getCachedBasicRolePermissions(ctx context.Context, role string, orgID int64, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
-	key := basicRoleCacheKey(role, orgID)
+	key := accesscontrol.GetBasicRolePermissionCacheKey(role, orgID)
 	getPermissionsFn := func() ([]accesscontrol.Permission, error) {
 		return s.getBasicRolePermissions(ctx, role, orgID)
 	}
@@ -257,7 +275,7 @@ func (s *Service) getCachedUserDirectPermissions(ctx context.Context, user ident
 	ctx, span := s.tracer.Start(ctx, "authz.getCachedUserDirectPermissions")
 	defer span.End()
 
-	key := permissionCacheKey(user)
+	key := accesscontrol.GetUserDirectPermissionCacheKey(user)
 	getUserPermissionsFn := func() ([]accesscontrol.Permission, error) {
 		return s.getUserDirectPermissions(ctx, user)
 	}
@@ -302,7 +320,7 @@ func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.R
 	if !options.ReloadCache {
 		miss = make([]int64, 0)
 		for _, teamID := range teams {
-			key := teamCacheKey(teamID, orgID)
+			key := accesscontrol.GetTeamPermissionCacheKey(teamID, orgID)
 			teamPermissions, ok := s.cache.Get(key)
 			if ok {
 				metrics.MAccessPermissionsCacheUsage.WithLabelValues(accesscontrol.CacheHit).Inc()
@@ -322,7 +340,7 @@ func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.R
 		}
 
 		for teamID, teamPermissions := range teamsPermissions {
-			key := teamCacheKey(teamID, orgID)
+			key := accesscontrol.GetTeamPermissionCacheKey(teamID, orgID)
 			s.cache.Set(key, teamPermissions, cacheTTL)
 			permissions = append(permissions, teamPermissions...)
 		}
@@ -332,7 +350,8 @@ func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.R
 }
 
 func (s *Service) ClearUserPermissionCache(user identity.Requester) {
-	s.cache.Delete(permissionCacheKey(user))
+	s.cache.Delete(accesscontrol.GetPermissionCacheKey(user))
+	s.cache.Delete(accesscontrol.GetUserDirectPermissionCacheKey(user))
 }
 
 func (s *Service) DeleteUserPermissions(ctx context.Context, orgID int64, userID int64) error {
@@ -403,6 +422,7 @@ func (s *Service) DeclarePluginRoles(ctx context.Context, ID, name string, regs 
 	return nil
 }
 
+// TODO potential changes needed here?
 // SearchUsersPermissions returns all users' permissions filtered by action prefixes
 func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Requester,
 	options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
@@ -417,6 +437,7 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 
 		// Reroute to the user specific implementation of search permissions
 		// because it leverages the user permission cache.
+		// TODO
 		userPerms, err := s.SearchUserPermissions(ctx, usr.GetOrgID(), options)
 		if err != nil {
 			return nil, err
@@ -552,6 +573,9 @@ func (s *Service) searchUserPermissions(ctx context.Context, orgID int64, search
 	}
 	permissions = append(permissions, dbPermissions[userID]...)
 
+	key := accesscontrol.GetSearchPermissionCacheKey(&user.SignedInUser{UserID: userID, OrgID: orgID}, searchOptions)
+	s.cache.Set(key, permissions, cacheTTL)
+
 	return permissions, nil
 }
 
@@ -567,24 +591,17 @@ func (s *Service) searchUserPermissionsFromCache(orgID int64, searchOptions acce
 		OrgID:  orgID,
 	}
 
-	key := permissionCacheKey(tempUser)
+	key := accesscontrol.GetSearchPermissionCacheKey(tempUser, searchOptions)
 	permissions, ok := s.cache.Get((key))
 	if !ok {
 		metrics.MAccessSearchUserPermissionsCacheUsage.WithLabelValues(accesscontrol.CacheMiss).Inc()
 		return nil, false
 	}
 
+	s.log.Debug("Using cached permissions", "key", key)
 	metrics.MAccessSearchUserPermissionsCacheUsage.WithLabelValues(accesscontrol.CacheHit).Inc()
 
-	s.log.Debug("Using cached permissions", "key", key)
-	filteredPermissions := make([]accesscontrol.Permission, 0)
-	for _, permission := range permissions.([]accesscontrol.Permission) {
-		if PermissionMatchesSearchOptions(permission, &searchOptions) {
-			filteredPermissions = append(filteredPermissions, permission)
-		}
-	}
-
-	return filteredPermissions, true
+	return permissions.([]accesscontrol.Permission), true
 }
 
 func PermissionMatchesSearchOptions(permission accesscontrol.Permission, searchOptions *accesscontrol.SearchOptions) bool {
@@ -650,18 +667,4 @@ func (s *Service) GetRoleByName(ctx context.Context, orgID int64, roleName strin
 		return true
 	})
 	return role, err
-}
-
-func permissionCacheKey(user identity.Requester) string {
-	return fmt.Sprintf("rbac-permissions-%s", user.GetCacheKey())
-}
-
-func basicRoleCacheKey(role string, orgID int64) string {
-	roleKey := strings.Replace(role, " ", "_", -1)
-	roleKey = strings.ToLower(roleKey)
-	return fmt.Sprintf("rbac-permissions-basic-role-%d-%s", orgID, roleKey)
-}
-
-func teamCacheKey(teamID int64, orgID int64) string {
-	return fmt.Sprintf("rbac-permissions-team-%d-%d", orgID, teamID)
 }
