@@ -28,13 +28,13 @@ func ProvideService(store dashboardsnapshots.Store, secretsService secrets.Servi
 	return s
 }
 
-func (s *ServiceImpl) ValidateDashboardExists(ctx context.Context, orgId int64, dashboardUid string) (bool, error) {
+func (s *ServiceImpl) ValidateDashboardExists(ctx context.Context, orgId int64, dashboardUid string) error {
 	_, err := s.dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{UID: dashboardUid, OrgID: orgId})
 	if err != nil {
-		return false, err
+		return err
 	}
 
-	return true, nil
+	return nil
 }
 
 func (s *ServiceImpl) CreateDashboardSnapshot(ctx context.Context, cmd *dashboardsnapshots.CreateDashboardSnapshotCommand) (*dashboardsnapshots.DashboardSnapshot, error) {

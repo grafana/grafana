@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"gotest.tools/assert"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	dashboardsnapshot "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1"
@@ -106,10 +105,8 @@ func TestValidateDashboardExists(t *testing.T) {
 
 	t.Run("returns false when dashboard does not exist", func(t *testing.T) {
 
-		returnBool, err := s.ValidateDashboardExists(ctx, 1, "test")
+		err := s.ValidateDashboardExists(ctx, 1, "test")
 		require.Error(t, err)
-		assert.Equal(t, false, returnBool)
-
 	})
 
 	t.Run("returns true when dashboard exists", func(t *testing.T) {
@@ -117,9 +114,8 @@ func TestValidateDashboardExists(t *testing.T) {
 		err := createDashboard(sqlStore)
 		require.NoError(t, err)
 
-		returnBool, err := s.ValidateDashboardExists(ctx, 1, "test")
+		err = s.ValidateDashboardExists(ctx, 1, "test")
 		require.NoError(t, err)
-		assert.Equal(t, true, returnBool)
 	})
 
 }
