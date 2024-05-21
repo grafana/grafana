@@ -100,8 +100,8 @@ You can also use thresholds to:
 
 You can set thresholds in the following visualizations:
 
-|                            |                                  |                                  |
-| -------------------------- | -------------------------------- | -------------------------------- |
+|                                |                                      |                                      |
+| ------------------------------ | ------------------------------------ | ------------------------------------ |
 | [Bar chart](ref:bar-chart)     | [Geomap](ref:geomap)                 | [Status history](ref:status-history) |
 | [Bar gauge](ref:bar-gauge)     | [Histogram](ref:histogram)           | [Table](ref:table)                   |
 | [Candlestick](ref:candlestick) | [Stat](ref:stat)                     | [Time series](ref:time-series)       |
@@ -191,4 +191,3 @@ In the Graph panel visualization, thresholds enable you to add lines or sections
    - **Line -** Toggle the display of the threshold line.
    - **Y-Axis -** Choose to display the y-axis on either the **left** or **right** of the panel.
 1. Click **Save** to save the changes in the dashboard.
-

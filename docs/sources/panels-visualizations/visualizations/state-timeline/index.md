@@ -164,4 +164,3 @@ The visualization can be used with time series data as well. In this case, the t
 ## Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-

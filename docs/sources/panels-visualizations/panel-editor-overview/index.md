@@ -76,4 +76,3 @@ The data section contains tabs where you enter queries, transform your data, and
 ## Panel display options
 
 The display options section contains tabs where you configure almost every aspect of your data visualization.
-
