@@ -18,6 +18,10 @@ labels:
 description: Configure options for Grafana's dashboard list visualization
 title: Dashboard list
 weight: 100
+refs:
+  dashboard-url-variables:
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/create-dashboard-url-variables/
 ---
 
 # Dashboard list
@@ -52,7 +56,7 @@ Select this option to propagate the time range of the current dashboard to the d
 
 ### Include current template variable values
 
-Select this option to include template variables currently used as query parameters in a link. When you click the link, any matching templates in the linked dashboard are set to the values from the link. Learn more in [Dashboard URL variables][].
+Select this option to include template variables currently used as query parameters in a link. When you click the link, any matching templates in the linked dashboard are set to the values from the link. Learn more in [Dashboard URL variables](ref:dashboard-url-variables).
 
 ### Starred
 
@@ -91,8 +95,3 @@ Select the dashboard folders that you want to display.
 Enter tags by which you want to search. Note that existing tags don't appear as you type, and they _are_ case sensitive.
 
 > **Note:** When multiple tags and strings appear, the dashboard list displays those matching _all_ conditions.
-
-{{% docs/reference %}}
-[Dashboard URL variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard-url-variables"
-[Dashboard URL variables]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/build-dashboards/create-dashboard-url-variables"
-{{% /docs/reference %}}
