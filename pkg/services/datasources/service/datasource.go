@@ -210,8 +210,45 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 	}
 
 	// Validate the command
-	if err := s.prepareAdd(ctx, cmd); err != nil {
+	jd, err := cmd.JsonData.ToDB()
+	if err != nil {
+		return nil, fmt.Errorf("invalid jsonData")
+	}
+
+	settings, err := s.mutate(ctx, backend.PluginContext{
+		OrgID:    cmd.OrgID,
+		PluginID: cmd.Type,
+	}, &backend.DataSourceInstanceSettings{
+		UID:                     cmd.UID,
+		Name:                    cmd.Name,
+		URL:                     cmd.URL,
+		Database:                cmd.Database,
+		JSONData:                jd,
+		DecryptedSecureJSONData: cmd.SecureJsonData,
+		Type:                    cmd.Type,
+		User:                    cmd.User,
+		BasicAuthEnabled:        cmd.BasicAuth,
+		BasicAuthUser:           cmd.BasicAuthUser,
+		APIVersion:              cmd.APIVersion,
+	})
+	if err != nil {
 		return nil, err
+	}
+
+	// The mutable properties
+	cmd.URL = settings.URL
+	cmd.User = settings.User
+	cmd.BasicAuth = settings.BasicAuthEnabled
+	cmd.BasicAuthUser = settings.BasicAuthUser
+	cmd.Database = settings.Database
+	cmd.SecureJsonData = settings.DecryptedSecureJSONData
+	cmd.JsonData = nil
+	if settings.JSONData != nil {
+		cmd.JsonData = simplejson.New()
+		err := cmd.JsonData.FromDB(settings.JSONData)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	var dataSource *datasources.DataSource
@@ -258,197 +295,63 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 }
 
 // This will valid validate the instance settings and mutate the cmd with the processed values
-func (s *Service) prepareAdd(ctx context.Context, cmd *datasources.AddDataSourceCommand) error {
+func (s *Service) mutate(ctx context.Context, pluginContext backend.PluginContext, settings *backend.DataSourceInstanceSettings) (*backend.DataSourceInstanceSettings, error) {
 	operation := backend.AdmissionRequestCREATE
 
-	if len(cmd.Name) > maxDatasourceNameLen {
-		return datasources.ErrDataSourceNameInvalid.Errorf("max length is %d", maxDatasourceNameLen)
+	if len(settings.Name) > maxDatasourceNameLen {
+		return nil, datasources.ErrDataSourceNameInvalid.Errorf("max length is %d", maxDatasourceNameLen)
 	}
 
-	if len(cmd.URL) > maxDatasourceUrlLen {
-		return datasources.ErrDataSourceURLInvalid.Errorf("max length is %d", maxDatasourceUrlLen)
+	if len(settings.URL) > maxDatasourceUrlLen {
+		return nil, datasources.ErrDataSourceURLInvalid.Errorf("max length is %d", maxDatasourceUrlLen)
 	}
 
-	if cmd.Type == "" {
-		return nil // This happens in tests
+	if settings.Type == "" {
+		return nil, nil // This happens in tests
 	}
 
 	// Make sure it is a known plugin type
-	p, found := s.pluginStore.Plugin(ctx, cmd.Type)
+	p, found := s.pluginStore.Plugin(ctx, settings.Type)
 	if !found {
-		return fmt.Errorf("plugin '%s' not found", cmd.Type)
+		return nil, fmt.Errorf("plugin '%s' not found", settings.Type)
 	}
 
 	// When the APIVersion is set, the client must also implement ProcessInstanceSettings
 	if p.APIVersion == "" {
-		if cmd.APIVersion != "" {
-			return fmt.Errorf("invalid request apiVersion (datasource does not have one configured)")
+		if settings.APIVersion != "" {
+			return nil, fmt.Errorf("invalid request apiVersion (datasource does not have one configured)")
 		}
-		return nil
+		return settings, nil // NOOP
 	}
 
-	jd, err := cmd.JsonData.ToDB()
-	if err != nil {
-		return fmt.Errorf("invalid jsonData (%v)", operation)
+	req := &backend.AdmissionRequest{
+		Operation:     backend.AdmissionRequestCREATE,
+		PluginContext: pluginContext,
+		Kind:          settings.GVK(),
+		ObjectBytes:   settings.ProtoBytes(),
 	}
 
-	settings := &backend.DataSourceInstanceSettings{
-		UID:                     cmd.UID,
-		Name:                    cmd.Name,
-		URL:                     cmd.URL,
-		Database:                cmd.Database,
-		JSONData:                jd,
-		DecryptedSecureJSONData: cmd.SecureJsonData,
-		Type:                    cmd.Type,
-		User:                    cmd.User,
-		BasicAuthEnabled:        cmd.BasicAuth,
-		BasicAuthUser:           cmd.BasicAuthUser,
-		APIVersion:              cmd.APIVersion,
+	// Set the old bytes and change the operation
+	if pluginContext.DataSourceInstanceSettings != nil {
+		req.Operation = backend.AdmissionRequestUPDATE
+		req.OldObjectBytes = pluginContext.DataSourceInstanceSettings.ProtoBytes()
 	}
-	rsp, err := s.pluginClient.MutateAdmission(ctx, &backend.AdmissionRequest{
-		Operation: operation,
-		PluginContext: backend.PluginContext{
-			OrgID:         cmd.OrgID,
-			PluginID:      cmd.Type,
-			PluginVersion: p.Info.Version,
-		},
-		Kind:        settings.GVK(),
-		ObjectBytes: settings.ProtoBytes(),
-	})
+
+	rsp, err := s.pluginClient.MutateAdmission(ctx, req)
 	if err != nil {
 		if errors.Is(err, plugins.ErrMethodNotImplemented) {
-			return fmt.Errorf("plugin (%s) with apiVersion=%s must implement ProcessInstanceSettings", p.ID, p.APIVersion)
+			return nil, fmt.Errorf("plugin (%s) with apiVersion=%s must implement ProcessInstanceSettings", p.ID, p.APIVersion)
 		}
-		return err
+		return nil, err
 	}
 	if rsp == nil {
-		return fmt.Errorf("expected response (%v)", operation)
+		return nil, fmt.Errorf("expected response (%v)", operation)
 	}
 	if !rsp.Allowed {
-		return fmt.Errorf("not allowed (%+v)", rsp.Result)
+		// TODO: make a good error from the results
+		return nil, fmt.Errorf("not allowed (%+v)", rsp.Result)
 	}
-
-	settings, err = backend.DataSourceInstanceSettingsFromProto(rsp.ObjectBytes, cmd.Type)
-	if err != nil {
-		return err
-	}
-	if settings == nil {
-		return fmt.Errorf("error creating settings")
-	}
-
-	// Use the mutated values
-	cmd.APIVersion = settings.APIVersion
-	cmd.BasicAuth = settings.BasicAuthEnabled
-	cmd.BasicAuthUser = settings.BasicAuthUser
-	cmd.URL = settings.URL
-	cmd.Database = settings.Database
-	cmd.SecureJsonData = settings.DecryptedSecureJSONData
-	cmd.JsonData = nil
-	if settings.JSONData != nil {
-		cmd.JsonData = simplejson.New()
-		err := cmd.JsonData.FromDB(settings.JSONData)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// identical to prepareAdd -- but the types do not overlap :(
-func (s *Service) prepareUpdate(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) error {
-	operation := backend.AdmissionRequestUPDATE
-
-	if len(cmd.Name) > maxDatasourceNameLen {
-		return datasources.ErrDataSourceNameInvalid.Errorf("max length is %d", maxDatasourceNameLen)
-	}
-
-	if len(cmd.URL) > maxDatasourceUrlLen {
-		return datasources.ErrDataSourceURLInvalid.Errorf("max length is %d", maxDatasourceUrlLen)
-	}
-
-	if cmd.Type == "" {
-		return nil // This happens in tests
-	}
-
-	// Make sure it is a known plugin type
-	p, found := s.pluginStore.Plugin(ctx, cmd.Type)
-	if !found {
-		return fmt.Errorf("plugin '%s' not found", cmd.Type)
-	}
-
-	// When the APIVersion is set, the client must also implement ProcessInstanceSettings
-	if p.APIVersion == "" {
-		if cmd.APIVersion != "" {
-			return fmt.Errorf("invalid request apiVersion (datasource does not have one configured)")
-		}
-		return nil
-	}
-
-	jd, err := cmd.JsonData.ToDB()
-	if err != nil {
-		return fmt.Errorf("invalid jsonData (%v)", operation)
-	}
-
-	settings := &backend.DataSourceInstanceSettings{
-		UID:                     cmd.UID,
-		Name:                    cmd.Name,
-		URL:                     cmd.URL,
-		Database:                cmd.Database,
-		JSONData:                jd,
-		DecryptedSecureJSONData: cmd.SecureJsonData,
-		Type:                    cmd.Type,
-		User:                    cmd.User,
-		BasicAuthEnabled:        cmd.BasicAuth,
-		BasicAuthUser:           cmd.BasicAuthUser,
-		APIVersion:              cmd.APIVersion,
-	}
-	rsp, err := s.pluginClient.MutateAdmission(ctx, &backend.AdmissionRequest{
-		Operation: operation,
-		PluginContext: backend.PluginContext{
-			OrgID:         cmd.OrgID,
-			PluginID:      cmd.Type,
-			PluginVersion: p.Info.Version,
-		},
-		Kind:        settings.GVK(),
-		ObjectBytes: settings.ProtoBytes(),
-	})
-	if err != nil {
-		if errors.Is(err, plugins.ErrMethodNotImplemented) {
-			return fmt.Errorf("plugin (%s) with apiVersion=%s must implement ProcessInstanceSettings", p.ID, p.APIVersion)
-		}
-		return err
-	}
-	if rsp == nil {
-		return fmt.Errorf("expected response (%v)", operation)
-	}
-	if !rsp.Allowed {
-		return fmt.Errorf("not allowed (%+v)", rsp.Result)
-	}
-
-	settings, err = backend.DataSourceInstanceSettingsFromProto(rsp.ObjectBytes, cmd.Type)
-	if err != nil {
-		return err
-	}
-	if settings == nil {
-		return fmt.Errorf("error creating settings")
-	}
-
-	// Use the mutated values
-	cmd.APIVersion = settings.APIVersion
-	cmd.BasicAuth = settings.BasicAuthEnabled
-	cmd.BasicAuthUser = settings.BasicAuthUser
-	cmd.URL = settings.URL
-	cmd.Database = settings.Database
-	cmd.SecureJsonData = settings.DecryptedSecureJSONData
-	cmd.JsonData = nil
-	if settings.JSONData != nil {
-		cmd.JsonData = simplejson.New()
-		err := cmd.JsonData.FromDB(settings.JSONData)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	return backend.DataSourceInstanceSettingsFromProto(rsp.ObjectBytes, pluginContext.PluginID)
 }
 
 // getAvailableName finds the first available name for a datasource of the given type.
@@ -498,9 +401,50 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 			return err
 		}
 
-		// Validate the command: TODO (with context!)
-		if err := s.prepareUpdate(ctx, cmd); err != nil {
+		// Validate the command
+		jd, err := cmd.JsonData.ToDB()
+		if err != nil {
+			return fmt.Errorf("invalid jsonData")
+		}
+
+		settings, err := s.mutate(ctx, backend.PluginContext{
+			OrgID:    cmd.OrgID,
+			PluginID: cmd.Type,
+			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+				UID: dataSource.UID,
+				// TODO settings from datasource
+			},
+		}, &backend.DataSourceInstanceSettings{
+			UID:                     cmd.UID,
+			Name:                    cmd.Name,
+			URL:                     cmd.URL,
+			Database:                cmd.Database,
+			JSONData:                jd,
+			DecryptedSecureJSONData: cmd.SecureJsonData,
+			Type:                    cmd.Type,
+			User:                    cmd.User,
+			BasicAuthEnabled:        cmd.BasicAuth,
+			BasicAuthUser:           cmd.BasicAuthUser,
+			APIVersion:              cmd.APIVersion,
+		})
+		if err != nil {
 			return err
+		}
+
+		// The mutable properties
+		cmd.URL = settings.URL
+		cmd.User = settings.User
+		cmd.BasicAuth = settings.BasicAuthEnabled
+		cmd.BasicAuthUser = settings.BasicAuthUser
+		cmd.Database = settings.Database
+		cmd.SecureJsonData = settings.DecryptedSecureJSONData
+		cmd.JsonData = nil
+		if settings.JSONData != nil {
+			cmd.JsonData = simplejson.New()
+			err := cmd.JsonData.FromDB(settings.JSONData)
+			if err != nil {
+				return err
+			}
 		}
 
 		if cmd.Name != "" && cmd.Name != dataSource.Name {
