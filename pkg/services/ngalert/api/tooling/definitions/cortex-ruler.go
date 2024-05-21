@@ -487,6 +487,7 @@ type PostableGrafanaRule struct {
 	ExecErrState         ExecutionErrorState            `json:"exec_err_state" yaml:"exec_err_state"`
 	IsPaused             *bool                          `json:"is_paused" yaml:"is_paused"`
 	NotificationSettings *AlertRuleNotificationSettings `json:"notification_settings" yaml:"notification_settings"`
+	Record               *Record                        `json:"record" yaml:"record"`
 }
 
 // swagger:model
@@ -507,6 +508,7 @@ type GettableGrafanaRule struct {
 	Provenance           Provenance                     `json:"provenance,omitempty" yaml:"provenance,omitempty"`
 	IsPaused             bool                           `json:"is_paused" yaml:"is_paused"`
 	NotificationSettings *AlertRuleNotificationSettings `json:"notification_settings,omitempty" yaml:"notification_settings,omitempty"`
+	Record               *Record                        `json:"record,omitempty" yaml:"record,omitempty"`
 }
 
 // AlertQuery represents a single query associated with an alert definition.
@@ -574,6 +576,12 @@ func (d *Duration) UnmarshalYAML(unmarshal func(any) error) error {
 	default:
 		return fmt.Errorf("invalid duration %v", v)
 	}
+}
+
+// Record defines how data produced by a recording rule is written.
+type Record struct {
+	Metric string `json:"metric" yaml:"metric"`
+	From   string `json:"from" yaml:"from"`
 }
 
 // swagger:model
