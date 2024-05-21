@@ -1276,6 +1276,13 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
+			Name:         "datasourceProxyDisableRBAC",
+			Description:  "Disables applying a plugin route's ReqAction field to authorization",
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+		},
+		{
 			Name:              "preserveDashboardStateWhenNavigating",
 			Description:       "Enables possibility to preserve dashboard variables and time range when navigating between dashboards",
 			Stage:             FeatureStageExperimental,

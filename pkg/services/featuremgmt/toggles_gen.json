@@ -2226,14 +2226,27 @@
     {
       "metadata": {
         "name": "preserveDashboardStateWhenNavigating",
-        "resourceVersion": "1716207856587",
-        "creationTimestamp": "2024-05-20T12:24:16Z"
+        "resourceVersion": "1716303823534",
+        "creationTimestamp": "2024-05-21T15:03:43Z"
       },
       "spec": {
         "description": "Enables possibility to preserve dashboard variables and time range when navigating between dashboards",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
         "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasourceProxyDisableRBAC",
+        "resourceVersion": "1716303823534",
+        "creationTimestamp": "2024-05-21T15:03:43Z"
+      },
+      "spec": {
+        "description": "Disables applying a plugin route's ReqAction field to authorization",
+        "stage": "GA",
+        "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true
       }
     }

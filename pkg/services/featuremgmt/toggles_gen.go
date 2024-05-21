@@ -691,6 +691,10 @@ const (
 	// Enables deleted dashboard restore feature
 	FlagDashboardRestore = "dashboardRestore"
 
+	// FlagDatasourceProxyDisableRBAC
+	// Disables applying a plugin route&#39;s ReqAction field to authorization
+	FlagDatasourceProxyDisableRBAC = "datasourceProxyDisableRBAC"
+
 	// FlagPreserveDashboardStateWhenNavigating
 	// Enables possibility to preserve dashboard variables and time range when navigating between dashboards
 	FlagPreserveDashboardStateWhenNavigating = "preserveDashboardStateWhenNavigating"
