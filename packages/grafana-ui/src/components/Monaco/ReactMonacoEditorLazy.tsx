@@ -16,7 +16,7 @@ import type { ReactMonacoEditorProps } from './types';
  * @internal
  * Experimental export
  **/
-export const ReactMonacoEditorLazyComponent = (props: ReactMonacoEditorProps) => {
+const MonacoEditorLazy = (props: ReactMonacoEditorProps) => {
   const styles = useStyles2(getStyles);
   const { loading, error, dependency } = useAsyncDependency(
     import(/* webpackChunkName: "react-monaco-editor" */ './ReactMonacoEditor')
@@ -51,6 +51,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 const withContainer = <P extends object>(Component: React.ComponentType<P>): React.ComponentType<P> => {
   const WithContainer = (props: P) => (
+    // allow tests to easily determine if the code editor has rendered in any of its three forms
     <div data-testid={selectors.components.ReactMonacoEditor.container}>
       <Component {...props} />
     </div>
@@ -61,4 +62,4 @@ const withContainer = <P extends object>(Component: React.ComponentType<P>): Rea
   return WithContainer;
 };
 
-export const ReactMonacoEditorLazy = withContainer(ReactMonacoEditorLazyComponent);
+export const ReactMonacoEditorLazy = withContainer(MonacoEditorLazy);
