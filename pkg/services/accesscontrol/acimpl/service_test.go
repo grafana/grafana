@@ -64,6 +64,7 @@ func TestUsageMetrics(t *testing.T) {
 			s := ProvideOSSService(
 				cfg,
 				database.ProvideService(db.InitTestDB(t)),
+				&actest.FakeActionResolver{},
 				localcache.ProvideService(),
 				featuremgmt.WithFeatures(),
 				tracing.InitializeTracerForTest(),
