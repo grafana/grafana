@@ -288,7 +288,7 @@ In case there is an uncertainty around the prioritization of an issue, please as
 1. Label the issue `priority/unscheduled`.
 2. Consider requesting [help from the community](#5-requesting-help-from-the-community).
 
-### 5. Requesting help from the community
+### 5. Request help from the community
 
 It's generally a good idea to consider signalling to the community that help from community is appreciated and needed in case an issue isn't prioritized to be worked on by maintainers. Use your best judgement. In general, requesting help from the community means that a contribution has a good chance of getting accepted and merged.
 
