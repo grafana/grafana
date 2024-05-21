@@ -30,8 +30,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   singleLine: css({
     display: '-webkit-box',
-    '-webkit-box-orient': 'vertical',
-    '-webkit-line-clamp': '1',
+    WebkitBoxOrient: 'vertical',
+    WebkitLineClamp: 1,
     overflow: 'hidden',
   }),
 });
