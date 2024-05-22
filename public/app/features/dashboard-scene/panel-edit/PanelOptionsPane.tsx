@@ -50,7 +50,7 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     return (
       <>
         {!isVizPickerOpen && (
-          <div data-testid={selectors.components.PanelEditor.OptionsPane.content}>
+          <>
             <div className={styles.top}>
               <VisualizationButton pluginId={pluginId} onOpen={model.onToggleVizPicker} />
               <FilterInput
@@ -63,7 +63,7 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
             <div className={styles.listOfOptions}>
               <PanelOptions vizManager={vizManager} searchQuery={searchQuery} listMode={listMode} data={data} />
             </div>
-          </div>
+          </>
         )}
         {isVizPickerOpen && (
           <PanelVizTypePicker vizManager={vizManager} onChange={model.onToggleVizPicker} data={data} />

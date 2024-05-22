@@ -97,7 +97,7 @@ describe('Panel edit tests', () => {
     // Field & Overrides tabs (need to switch to React based vis, i.e. Table)
     e2e.components.PanelEditor.toggleTableView().click({ force: true }).click({ force: true });
 
-    e2e.components.PanelEditor.OptionsPane.fieldLabel('Table Show table header').scrollIntoView().should('be.visible');
-    e2e.components.PanelEditor.OptionsPane.fieldLabel('Table Column width').scrollIntoView().should('be.visible');
+    e2e.components.PanelEditor.OptionsPane.fieldLabel('Table Show table header').should('be.visible');
+    e2e.components.PanelEditor.OptionsPane.fieldLabel('Table Column width').should('be.visible');
   });
 });

@@ -86,7 +86,7 @@ describe('Variables - Set options from ui', () => {
         cy.get('input').click();
       });
 
-    e2e.components.Select.option().should('have.length', 12);
+    e2e.components.Select.option().should('have.length', 11);
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('AA').should('be.visible');

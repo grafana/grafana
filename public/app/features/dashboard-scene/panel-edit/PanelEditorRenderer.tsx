@@ -31,9 +31,9 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
     });
 
   return (
-    <div data-testid={selectors.components.PanelEditor.General.content}>
+    <>
       <NavToolbarActions dashboard={dashboard} />
-      <div {...containerProps}>
+      <div {...containerProps} data-testid={selectors.components.PanelEditor.General.content}>
         <div {...primaryProps} className={cx(primaryProps.className, styles.body)}>
           <VizAndDataPane model={model} />
         </div>
@@ -54,7 +54,7 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
           {!splitterState.collapsed && <optionsPane.Component model={optionsPane} />}
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
