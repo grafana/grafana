@@ -4,6 +4,10 @@ import (
 	"fmt"
 
 	"github.com/dlmiddlecote/sqlstats"
+	"github.com/jmoiron/sqlx"
+	"github.com/prometheus/client_golang/prometheus"
+	"xorm.io/xorm"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -12,9 +16,6 @@ import (
 	entitydb "github.com/grafana/grafana/pkg/services/store/entity/db"
 	"github.com/grafana/grafana/pkg/services/store/entity/db/migrations"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/jmoiron/sqlx"
-	"github.com/prometheus/client_golang/prometheus"
-	"xorm.io/xorm"
 )
 
 var _ entitydb.EntityDBInterface = (*EntityDB)(nil)
@@ -127,4 +128,15 @@ func (db *EntityDB) GetSession() (*session.SessionDB, error) {
 
 func (db *EntityDB) GetCfg() *setting.Cfg {
 	return db.cfg
+}
+
+func (db *EntityDB) GetDB() (entitydb.DB, error) {
+	engine, err := db.GetEngine()
+	if err != nil {
+		return nil, err
+	}
+
+	ret := NewDB(engine.DB().DB, engine.Dialect().DriverName())
+
+	return ret, nil
 }
