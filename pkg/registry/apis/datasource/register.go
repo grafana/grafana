@@ -2,13 +2,13 @@ package datasource
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/schemabuilder"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -28,16 +28,13 @@ import (
 	"github.com/grafana/grafana/pkg/apiserver/builder"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/promlib/models"
-	"github.com/grafana/grafana/pkg/registry/apis/query/types"
+	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/kinds"
 )
-
-const QueryRequestSchemaKey = "QueryRequestSchema"
-const QueryPayloadSchemaKey = "QueryPayloadSchema"
 
 var _ builder.APIGroupBuilder = (*DataSourceAPIBuilder)(nil)
 
@@ -114,6 +111,12 @@ func NewDataSourceAPIBuilder(
 		return nil, err
 	}
 
+	// Register hardcoded query schemas
+	queryTypes, err := getHardcodedQueryTypes(ri.GroupResource().Group)
+	if err != nil {
+		return nil, err
+	}
+
 	return &DataSourceAPIBuilder{
 		connectionResourceInfo: ri,
 		pluginJSON:             plugin,
@@ -121,7 +124,29 @@ func NewDataSourceAPIBuilder(
 		datasources:            datasources,
 		contextProvider:        contextProvider,
 		accessControl:          accessControl,
+		queryTypes:             queryTypes,
 	}, nil
+}
+
+// TODO -- somehow get the list from the plugin -- not hardcoded
+func getHardcodedQueryTypes(group string) (*query.QueryTypeDefinitionList, error) {
+	var err error
+	var raw json.RawMessage
+	switch group {
+	case "testdata.datasource.grafana.app":
+		raw, err = kinds.QueryTypeDefinitionListJSON()
+	case "prometheus.datasource.grafana.app":
+		raw, err = models.QueryTypeDefinitionListJSON()
+	}
+	if err != nil {
+		return nil, err
+	}
+	if raw != nil {
+		types := &query.QueryTypeDefinitionList{}
+		err = json.Unmarshal(raw, types)
+		return types, err
+	}
+	return nil, err
 }
 
 func (b *DataSourceAPIBuilder) GetGroupVersion() schema.GroupVersion {
@@ -217,25 +242,15 @@ func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
 	}
 
 	// Register hardcoded query schemas
-	switch b.GetGroupVersion().Group {
-	case "testdata.datasource.grafana.app":
-		raw, err := kinds.QueryTypeDefinitionListJSON()
-		if err == nil {
-			types.RegisterQueryTypes(raw, storage)
-		}
-	case "prometheus.datasource.grafana.app":
-		raw, err := models.QueryTypeDefinitionListJSON()
-		if err == nil {
-			types.RegisterQueryTypes(raw, storage)
-		}
-	}
+	err := queryschema.RegisterQueryTypes(b.queryTypes, storage)
 
+	// Create the group info
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(
 		conn.GroupResource().Group, scheme,
 		metav1.ParameterCodec, codecs)
 
 	apiGroupInfo.VersionedResourcesStorageMap[conn.GroupVersion().Version] = storage
-	return &apiGroupInfo, nil
+	return &apiGroupInfo, err
 }
 
 func (b *DataSourceAPIBuilder) getPluginContext(ctx context.Context, uid string) (backend.PluginContext, error) {
@@ -266,35 +281,8 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	// Hide the ability to list all connections across tenants
 	delete(oas.Paths.Paths, root+b.connectionResourceInfo.GroupResource().Resource)
 
-	var err error
-	opts := schemabuilder.QuerySchemaOptions{
-		PluginID:   []string{b.pluginJSON.ID},
-		QueryTypes: []data.QueryTypeDefinition{},
-		Mode:       schemabuilder.SchemaTypeQueryPayload,
-	}
-	if b.pluginJSON.AliasIDs != nil {
-		opts.PluginID = append(opts.PluginID, b.pluginJSON.AliasIDs...)
-	}
-	if b.queryTypes != nil {
-		for _, qt := range b.queryTypes.Items {
-			// The SDK type and api type are not the same so we recreate it here
-			opts.QueryTypes = append(opts.QueryTypes, data.QueryTypeDefinition{
-				ObjectMeta: data.ObjectMeta{
-					Name: qt.Name,
-				},
-				Spec: qt.Spec,
-			})
-		}
-	}
-	oas.Components.Schemas[QueryPayloadSchemaKey], err = schemabuilder.GetQuerySchema(opts)
-	if err != nil {
-		return oas, err
-	}
-	opts.Mode = schemabuilder.SchemaTypeQueryRequest
-	oas.Components.Schemas[QueryRequestSchemaKey], err = schemabuilder.GetQuerySchema(opts)
-	if err != nil {
-		return oas, err
-	}
+	// Add queries to the request properties
+	err := queryschema.AddQueriesToOpenAPI(b.queryTypes, oas, &b.pluginJSON)
 
 	// Update the request object
 	sub := oas.Paths.Paths[root+"namespaces/{namespace}/connections/{name}/query"]
@@ -306,7 +294,7 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 				Content: map[string]*spec3.MediaType{
 					"application/json": {
 						MediaTypeProps: spec3.MediaTypeProps{
-							Schema:   spec.RefSchema("#/components/schemas/" + QueryRequestSchemaKey),
+							Schema:   spec.RefSchema("#/components/schemas/" + queryschema.QueryRequestSchemaKey),
 							Examples: getExamples(b.queryTypes),
 						},
 					},

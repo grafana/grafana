@@ -1,8 +1,8 @@
 package query
 
 import (
-	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/schemabuilder"
+	"encoding/json"
+
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -16,15 +16,14 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	example "github.com/grafana/grafana/pkg/apis/example/v0alpha1"
-	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/builder"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry/apis/query/client"
-	"github.com/grafana/grafana/pkg/registry/apis/query/types"
+	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/service"
@@ -42,22 +41,35 @@ type QueryAPIBuilder struct {
 	returnMultiStatus      bool // from feature toggle
 	features               featuremgmt.FeatureToggles
 
-	tracer    tracing.Tracer
-	metrics   *metrics
-	parser    *queryParser
-	client    DataSourceClientSupplier
-	registry  v0alpha1.DataSourceApiServerRegistry
-	converter *expr.ResultConverter
+	tracer     tracing.Tracer
+	metrics    *metrics
+	parser     *queryParser
+	client     DataSourceClientSupplier
+	registry   query.DataSourceApiServerRegistry
+	converter  *expr.ResultConverter
+	queryTypes *query.QueryTypeDefinitionList
 }
 
 func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
 	client DataSourceClientSupplier,
-	registry v0alpha1.DataSourceApiServerRegistry,
+	registry query.DataSourceApiServerRegistry,
 	legacy service.LegacyDataSourceLookup,
 	registerer prometheus.Registerer,
 	tracer tracing.Tracer,
 ) (*QueryAPIBuilder, error) {
 	reader := expr.NewExpressionQueryReader(features)
+
+	// Read the expression query definitions
+	raw, err := expr.QueryTypeDefinitionListJSON()
+	if err != nil {
+		return nil, err
+	}
+	queryTypes := &query.QueryTypeDefinitionList{}
+	err = json.Unmarshal(raw, queryTypes)
+	if err != nil {
+		return nil, err
+	}
+
 	return &QueryAPIBuilder{
 		concurrentQueryLimit: 4,
 		log:                  log.New("query_apiserver"),
@@ -68,6 +80,7 @@ func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
 		metrics:              newMetrics(registerer),
 		tracer:               tracer,
 		features:             features,
+		queryTypes:           queryTypes,
 		converter: &expr.ResultConverter{
 			Features: features,
 			Tracer:   tracer,
@@ -104,25 +117,24 @@ func RegisterAPIService(features featuremgmt.FeatureToggles,
 }
 
 func (b *QueryAPIBuilder) GetGroupVersion() schema.GroupVersion {
-	return v0alpha1.SchemeGroupVersion
+	return query.SchemeGroupVersion
 }
 
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
-		&v0alpha1.DataSourceApiServer{},
-		&v0alpha1.DataSourceApiServerList{},
-		&v0alpha1.QueryDataRequest{},
-		&v0alpha1.QueryDataResponse{},
-		&v0alpha1.QueryTypeDefinition{},
-		&v0alpha1.QueryTypeDefinitionList{},
-		&example.DummySubresource{},
+		&query.DataSourceApiServer{},
+		&query.DataSourceApiServerList{},
+		&query.QueryDataRequest{},
+		&query.QueryDataResponse{},
+		&query.QueryTypeDefinition{},
+		&query.QueryTypeDefinitionList{},
 	)
 }
 
 func (b *QueryAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	addKnownTypes(scheme, v0alpha1.SchemeGroupVersion)
-	metav1.AddToGroupVersion(scheme, v0alpha1.SchemeGroupVersion)
-	return scheme.SetVersionPriority(v0alpha1.SchemeGroupVersion)
+	addKnownTypes(scheme, query.SchemeGroupVersion)
+	metav1.AddToGroupVersion(scheme, query.SchemeGroupVersion)
+	return scheme.SetVersionPriority(query.SchemeGroupVersion)
 }
 
 func (b *QueryAPIBuilder) GetAPIGroupInfo(
@@ -131,7 +143,7 @@ func (b *QueryAPIBuilder) GetAPIGroupInfo(
 	optsGetter generic.RESTOptionsGetter,
 	_ bool,
 ) (*genericapiserver.APIGroupInfo, error) {
-	gv := v0alpha1.SchemeGroupVersion
+	gv := query.SchemeGroupVersion
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(gv.Group, scheme, metav1.ParameterCodec, codecs)
 
 	storage := map[string]rest.Storage{}
@@ -149,17 +161,14 @@ func (b *QueryAPIBuilder) GetAPIGroupInfo(
 	storage["query"] = newQueryREST(b)
 
 	// Register the expressions query schemas
-	raw, err := expr.QueryTypeDefinitionListJSON()
-	if err == nil {
-		types.RegisterQueryTypes(raw, storage)
-	}
+	err := queryschema.RegisterQueryTypes(b.queryTypes, storage)
 
 	apiGroupInfo.VersionedResourcesStorageMap[gv.Version] = storage
-	return &apiGroupInfo, nil
+	return &apiGroupInfo, err
 }
 
 func (b *QueryAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return v0alpha1.GetOpenAPIDefinitions
+	return query.GetOpenAPIDefinitions
 }
 
 // Register additional routes with the server
@@ -171,9 +180,6 @@ func (b *QueryAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return nil // default is OK
 }
 
-const QueryRequestSchemaKey = "QueryRequestSchema"
-const QueryPayloadSchemaKey = "QueryPayloadSchema"
-
 func (b *QueryAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
 	// The plugin description
 	oas.Info.Description = "Query service"
@@ -181,20 +187,12 @@ func (b *QueryAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI
 	// The root api URL
 	root := "/apis/" + b.GetGroupVersion().String() + "/"
 
-	var err error
-	opts := schemabuilder.QuerySchemaOptions{
-		PluginID:   []string{""},
-		QueryTypes: []data.QueryTypeDefinition{},
-		Mode:       schemabuilder.SchemaTypeQueryPayload,
-	}
-	oas.Components.Schemas[QueryPayloadSchemaKey], err = schemabuilder.GetQuerySchema(opts)
+	// Add queries to the request properties
+	err := queryschema.AddQueriesToOpenAPI(b.queryTypes, oas, &plugins.JSONData{
+		ID: expr.DatasourceType, // Not really a plugin, but identified the same way
+	})
 	if err != nil {
-		return oas, err
-	}
-	opts.Mode = schemabuilder.SchemaTypeQueryRequest
-	oas.Components.Schemas[QueryRequestSchemaKey], err = schemabuilder.GetQuerySchema(opts)
-	if err != nil {
-		return oas, err
+		return oas, nil
 	}
 
 	// Rewrite the query path
@@ -209,6 +207,7 @@ func (b *QueryAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI
 					Description: "object name and auth scope, such as for teams and projects",
 					Example:     "default",
 					Required:    true,
+					Schema:      spec.StringProperty().UniqueValues(),
 				},
 			},
 		}
@@ -219,7 +218,7 @@ func (b *QueryAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI
 				Content: map[string]*spec3.MediaType{
 					"application/json": {
 						MediaTypeProps: spec3.MediaTypeProps{
-							Schema: spec.RefSchema("#/components/schemas/" + QueryRequestSchemaKey),
+							Schema: spec.RefSchema("#/components/schemas/" + queryschema.QueryRequestSchemaKey),
 							Examples: map[string]*spec3.Example{
 								"A": {
 									ExampleProps: spec3.ExampleProps{

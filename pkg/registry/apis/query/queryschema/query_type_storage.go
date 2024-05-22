@@ -1,8 +1,7 @@
-package types
+package queryschema
 
 import (
 	"context"
-	"encoding/json"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,24 +25,19 @@ type queryTypeStorage struct {
 	registry       query.QueryTypeDefinitionList
 }
 
-func RegisterQueryTypes(raw json.RawMessage, storage map[string]rest.Storage) error {
-	if len(raw) < 1 {
+func RegisterQueryTypes(queryTypes *query.QueryTypeDefinitionList, storage map[string]rest.Storage) error {
+	if queryTypes == nil {
 		return nil // NO error
 	}
-
 	var resourceInfo = query.QueryTypeDefinitionResourceInfo
 	store := &queryTypeStorage{
 		resourceInfo:   &resourceInfo,
 		tableConverter: rest.NewDefaultTableConvertor(resourceInfo.GroupResource()),
-	}
-
-	err := json.Unmarshal(raw, &store.registry)
-	if err != nil {
-		return err
+		registry:       *queryTypes,
 	}
 	storage[resourceInfo.StoragePath()] = store
-
-	return err // nil
+	// TODO, add validation helpers
+	return nil
 }
 
 func (s *queryTypeStorage) New() runtime.Object {
