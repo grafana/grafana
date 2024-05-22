@@ -24,6 +24,23 @@ exports[`getTemplateOptions function should return the last template when there 
     },
   },
   {
+    "label": "nested",
+    "value": {
+      "content": "{{ define "nested" }}
+      Main Template Content
+      {{ template "sub1" }}
+      {{ template "sub2" }}
+      {{ end }}
+{{ define "sub1" }}
+      Sub Template 1 Content
+      {{ end }}
+{{ define "sub2" }}
+      Sub Template 2 Content
+      {{ end }}",
+      "name": "nested",
+    },
+  },
+  {
     "label": "default.title",
     "value": {
       "content": "{{ define "default.title" }}{{ template "__subject" . }}{{ end }}",

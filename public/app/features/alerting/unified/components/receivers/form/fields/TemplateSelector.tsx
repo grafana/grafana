@@ -83,28 +83,23 @@ type TemplateFieldOption = 'Existing' | 'Custom';
  */
 
 function parseTemplates(templatesString: string): Template[] {
-  const result: Template[] = [];
+  const templates: Record<string, Template> = {};
   const stack: Array<{ type: string; startIndex: number; name?: string }> = [];
-  const regex = /{{(-?\s*)(define|end|if|range|else|with)(\s*.*?)?(-?\s*)}}/gs;
+  const regex = /{{(-?\s*)(define|end|if|range|else|with|template)(\s*.*?)?(-?\s*)}}/gs;
 
   let match;
   let currentIndex = 0;
 
   while ((match = regex.exec(templatesString)) !== null) {
-    // for each match in the template string (each match as define, end, if, range, else or with)
     const [, , keyword, middleContent] = match;
     currentIndex = match.index;
 
     if (keyword === 'define') {
-      // if the keyword is define, we need to extract the name
-      const nameMatch = middleContent?.match(/"([^"]+)"/); // extract the name from the middle content
+      const nameMatch = middleContent?.match(/"([^"]+)"/);
       if (nameMatch) {
-        // name is required
-        // push the define block to the stack
-        stack.push({ type: 'define', startIndex: currentIndex, name: nameMatch[1] }); // save the start index and the name of the define block
+        stack.push({ type: 'define', startIndex: currentIndex, name: nameMatch[1] });
       }
     } else if (keyword === 'end') {
-      // if the keyword is end, we need to pop the stack until we find the corresponding define block
       let top = stack.pop();
       while (top && top.type !== 'define' && top.type !== 'if' && top.type !== 'range' && top.type !== 'with') {
         top = stack.pop();
@@ -112,20 +107,28 @@ function parseTemplates(templatesString: string): Template[] {
       if (top) {
         const endIndex = regex.lastIndex;
         if (top.type === 'define' && !top.name?.startsWith('__')) {
-          // if the top of the stack is a define block, we need to save the content. We exclude the internal templates starting with __
-          result.push({
+          templates[top.name!] = {
             name: top.name!,
             content: templatesString.slice(top.startIndex, endIndex),
-          });
+          };
         }
       }
     } else if (keyword === 'if' || keyword === 'range' || keyword === 'else' || keyword === 'with') {
-      // if the keyword is if, range, else or with, we need to push it to the stack
       stack.push({ type: keyword, startIndex: currentIndex });
     }
   }
+  // Append sub-template content to the end of the main template and remove sub-templates from the list
+  for (const template of Object.values(templates)) {
+    template.content.replace(/{{ template "([^"]+)" }}/g, (_, name) => {
+      if (templates[name]?.content) {
+        template.content += '\n' + templates[name]?.content;
+        delete templates[name]; // Remove the sub-template from the list
+      }
+      return '';
+    });
+  }
 
-  return result;
+  return Object.values(templates);
 }
 // We need to use this constat until we have an API to get the default templates
 export const DEFAULT_TEMPLATES = `{{ define "__subject" }}[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ if gt (.Alerts.Resolved | len) 0 }}, RESOLVED:{{ .Alerts.Resolved | len }}{{ end }}{{ end }}] {{ .GroupLabels.SortedPairs.Values | join " " }} {{ if gt (len .CommonLabels) (len .GroupLabels) }}({{ with .CommonLabels.Remove .GroupLabels.Names }}{{ .Values | join " " }}{{ end }}){{ end }}{{ end }}
