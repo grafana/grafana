@@ -10,6 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/klog/v2"
 )
 
 var (
@@ -144,16 +145,23 @@ func SetDualWritingMode(
 	if err != nil {
 		return nil, errors.New("failed to fetch current dual writing mode")
 	}
-	if !ok {
+
+	currentMode, valid := toMode[m]
+
+	if !valid && ok {
+		// Only log if "ok" because initially all instances will have mode unset for playlists.
+		klog.Info("invalid dual writing mode for playlists mode:", m)
+	}
+
+	if !valid || !ok {
 		// Default to mode 1
-		m = fmt.Sprint(Mode1)
-		err := kvs.Set(ctx, entity, m)
+		currentMode = Mode1
+
+		err := kvs.Set(ctx, entity, fmt.Sprint(currentMode))
 		if err != nil {
 			return nil, errDualWriterSetCurrentMode
 		}
 	}
-
-	currentMode := toMode[m]
 
 	// Desired mode is 2 and current mode is 1
 	if features.IsEnabledGlobally(featuremgmt.FlagDualWritePlaylistsMode2) && (currentMode == Mode1) {
