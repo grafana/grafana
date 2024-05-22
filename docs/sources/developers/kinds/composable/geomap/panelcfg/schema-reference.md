@@ -9,17 +9,17 @@ labels:
     - oss
 title: GeomapPanelCfg kind
 ---
-
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
 
 ## GeomapPanelCfg
 
 #### Maturity: [experimental](../../../maturity/#experimental)
-
 #### Version: 0.0
 
+
+
 | Property          | Type                       | Required | Default | Description                                   |
-| ----------------- | -------------------------- | -------- | ------- | --------------------------------------------- |
+|-------------------|----------------------------|----------|---------|-----------------------------------------------|
 | `ControlsOptions` | [object](#controlsoptions) | **Yes**  |         |                                               |
 | `MapCenterID`     | string                     | **Yes**  |         | Possible values are: `zero`, `coords`, `fit`. |
 | `MapViewConfig`   | [object](#mapviewconfig)   | **Yes**  |         |                                               |
@@ -30,7 +30,7 @@ title: GeomapPanelCfg kind
 ### ControlsOptions
 
 | Property          | Type    | Required | Default | Description              |
-| ----------------- | ------- | -------- | ------- | ------------------------ |
+|-------------------|---------|----------|---------|--------------------------|
 | `mouseWheelZoom`  | boolean | No       |         | let the mouse wheel zoom |
 | `showAttribution` | boolean | No       |         | Lower right              |
 | `showDebug`       | boolean | No       |         | Show debug               |
@@ -41,7 +41,7 @@ title: GeomapPanelCfg kind
 ### MapViewConfig
 
 | Property    | Type    | Required | Default | Description |
-| ----------- | ------- | -------- | ------- | ----------- |
+|-------------|---------|----------|---------|-------------|
 | `id`        | string  | **Yes**  | `zero`  |             |
 | `allLayers` | boolean | No       | `true`  |             |
 | `lastOnly`  | boolean | No       |         |             |
@@ -57,7 +57,7 @@ title: GeomapPanelCfg kind
 ### Options
 
 | Property   | Type                                  | Required | Default | Description |
-| ---------- | ------------------------------------- | -------- | ------- | ----------- |
+|------------|---------------------------------------|----------|---------|-------------|
 | `basemap`  | [MapLayerOptions](#maplayeroptions)   | **Yes**  |         |             |
 | `controls` | [ControlsOptions](#controlsoptions)   | **Yes**  |         |             |
 | `layers`   | [MapLayerOptions](#maplayeroptions)[] | **Yes**  |         |             |
@@ -67,7 +67,7 @@ title: GeomapPanelCfg kind
 ### MapLayerOptions
 
 | Property     | Type                                        | Required | Default | Description                                                                                                                |
-| ------------ | ------------------------------------------- | -------- | ------- | -------------------------------------------------------------------------------------------------------------------------- |
+|--------------|---------------------------------------------|----------|---------|----------------------------------------------------------------------------------------------------------------------------|
 | `name`       | string                                      | **Yes**  |         | configured unique display name                                                                                             |
 | `type`       | string                                      | **Yes**  |         |                                                                                                                            |
 | `config`     |                                             | No       |         | Custom options depending on the type                                                                                       |
@@ -79,7 +79,7 @@ title: GeomapPanelCfg kind
 ### FrameGeometrySource
 
 | Property    | Type   | Required | Default | Description                                                 |
-| ----------- | ------ | -------- | ------- | ----------------------------------------------------------- |
+|-------------|--------|----------|---------|-------------------------------------------------------------|
 | `mode`      | string | **Yes**  |         | Possible values are: `auto`, `geohash`, `coords`, `lookup`. |
 | `gazetteer` | string | No       |         | Path to Gazetteer                                           |
 | `geohash`   | string | No       |         | Field mappings                                              |
@@ -91,5 +91,7 @@ title: GeomapPanelCfg kind
 ### TooltipOptions
 
 | Property | Type   | Required | Default | Description                             |
-| -------- | ------ | -------- | ------- | --------------------------------------- |
+|----------|--------|----------|---------|-----------------------------------------|
 | `mode`   | string | **Yes**  |         | Possible values are: `none`, `details`. |
+
+

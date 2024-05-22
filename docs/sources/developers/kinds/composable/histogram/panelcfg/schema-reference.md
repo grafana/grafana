@@ -9,17 +9,17 @@ labels:
     - oss
 title: HistogramPanelCfg kind
 ---
-
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
 
 ## HistogramPanelCfg
 
 #### Maturity: [experimental](../../../maturity/#experimental)
-
 #### Version: 0.0
 
+
+
 | Property      | Type                   | Required | Default | Description |
-| ------------- | ---------------------- | -------- | ------- | ----------- |
+|---------------|------------------------|----------|---------|-------------|
 | `FieldConfig` | [object](#fieldconfig) | **Yes**  |         |             |
 | `Options`     | [object](#options)     | **Yes**  |         |             |
 
@@ -28,28 +28,28 @@ title: HistogramPanelCfg kind
 It extends [AxisConfig](#axisconfig) and [HideableFieldConfig](#hideablefieldconfig).
 
 | Property            | Type                                                | Required | Default | Description                                                                                                                                                                                                      |
-| ------------------- | --------------------------------------------------- | -------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `axisBorderShow`    | boolean                                             | No       |         | _(Inherited from [AxisConfig](#axisconfig))_                                                                                                                                                                     |
-| `axisCenteredZero`  | boolean                                             | No       |         | _(Inherited from [AxisConfig](#axisconfig))_                                                                                                                                                                     |
-| `axisColorMode`     | string                                              | No       |         | _(Inherited from [AxisConfig](#axisconfig))_<br/>TODO docs<br/>Possible values are: `text`, `series`.                                                                                                            |
-| `axisGridShow`      | boolean                                             | No       |         | _(Inherited from [AxisConfig](#axisconfig))_                                                                                                                                                                     |
-| `axisLabel`         | string                                              | No       |         | _(Inherited from [AxisConfig](#axisconfig))_                                                                                                                                                                     |
-| `axisPlacement`     | string                                              | No       |         | _(Inherited from [AxisConfig](#axisconfig))_<br/>TODO docs<br/>Possible values are: `auto`, `top`, `right`, `bottom`, `left`, `hidden`.                                                                          |
-| `axisSoftMax`       | number                                              | No       |         | _(Inherited from [AxisConfig](#axisconfig))_                                                                                                                                                                     |
-| `axisSoftMin`       | number                                              | No       |         | _(Inherited from [AxisConfig](#axisconfig))_                                                                                                                                                                     |
-| `axisWidth`         | number                                              | No       |         | _(Inherited from [AxisConfig](#axisconfig))_                                                                                                                                                                     |
+|---------------------|-----------------------------------------------------|----------|---------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `axisBorderShow`    | boolean                                             | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                                                                                                     |
+| `axisCenteredZero`  | boolean                                             | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                                                                                                     |
+| `axisColorMode`     | string                                              | No       |         | *(Inherited from [AxisConfig](#axisconfig))*<br/>TODO docs<br/>Possible values are: `text`, `series`.                                                                                                            |
+| `axisGridShow`      | boolean                                             | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                                                                                                     |
+| `axisLabel`         | string                                              | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                                                                                                     |
+| `axisPlacement`     | string                                              | No       |         | *(Inherited from [AxisConfig](#axisconfig))*<br/>TODO docs<br/>Possible values are: `auto`, `top`, `right`, `bottom`, `left`, `hidden`.                                                                          |
+| `axisSoftMax`       | number                                              | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                                                                                                     |
+| `axisSoftMin`       | number                                              | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                                                                                                     |
+| `axisWidth`         | number                                              | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                                                                                                     |
 | `fillOpacity`       | integer                                             | No       | `80`    | Controls the fill opacity of the bars.<br/>Constraint: `>=0 & <=100`.                                                                                                                                            |
 | `gradientMode`      | string                                              | No       |         | Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard color scheme field option.<br/>Gradient appearance is influenced by the Fill opacity setting. |
-| `hideFrom`          | [HideSeriesConfig](#hideseriesconfig)               | No       |         | _(Inherited from [HideableFieldConfig](#hideablefieldconfig))_<br/>TODO docs                                                                                                                                     |
+| `hideFrom`          | [HideSeriesConfig](#hideseriesconfig)               | No       |         | *(Inherited from [HideableFieldConfig](#hideablefieldconfig))*<br/>TODO docs                                                                                                                                     |
 | `lineWidth`         | integer                                             | No       | `1`     | Controls line width of the bars.<br/>Constraint: `>=0 & <=10`.                                                                                                                                                   |
-| `scaleDistribution` | [ScaleDistributionConfig](#scaledistributionconfig) | No       |         | _(Inherited from [AxisConfig](#axisconfig))_<br/>TODO docs                                                                                                                                                       |
+| `scaleDistribution` | [ScaleDistributionConfig](#scaledistributionconfig) | No       |         | *(Inherited from [AxisConfig](#axisconfig))*<br/>TODO docs                                                                                                                                                       |
 
 ### AxisConfig
 
 TODO docs
 
 | Property            | Type                                                | Required | Default | Description                                                                            |
-| ------------------- | --------------------------------------------------- | -------- | ------- | -------------------------------------------------------------------------------------- |
+|---------------------|-----------------------------------------------------|----------|---------|----------------------------------------------------------------------------------------|
 | `axisBorderShow`    | boolean                                             | No       |         |                                                                                        |
 | `axisCenteredZero`  | boolean                                             | No       |         |                                                                                        |
 | `axisColorMode`     | string                                              | No       |         | TODO docs<br/>Possible values are: `text`, `series`.                                   |
@@ -66,7 +66,7 @@ TODO docs
 TODO docs
 
 | Property          | Type   | Required | Default | Description                                                              |
-| ----------------- | ------ | -------- | ------- | ------------------------------------------------------------------------ |
+|-------------------|--------|----------|---------|--------------------------------------------------------------------------|
 | `type`            | string | **Yes**  |         | TODO docs<br/>Possible values are: `linear`, `log`, `ordinal`, `symlog`. |
 | `linearThreshold` | number | No       |         |                                                                          |
 | `log`             | number | No       |         |                                                                          |
@@ -76,7 +76,7 @@ TODO docs
 TODO docs
 
 | Property  | Type    | Required | Default | Description |
-| --------- | ------- | -------- | ------- | ----------- |
+|-----------|---------|----------|---------|-------------|
 | `legend`  | boolean | **Yes**  |         |             |
 | `tooltip` | boolean | **Yes**  |         |             |
 | `viz`     | boolean | **Yes**  |         |             |
@@ -86,7 +86,7 @@ TODO docs
 TODO docs
 
 | Property   | Type                                  | Required | Default | Description |
-| ---------- | ------------------------------------- | -------- | ------- | ----------- |
+|------------|---------------------------------------|----------|---------|-------------|
 | `hideFrom` | [HideSeriesConfig](#hideseriesconfig) | No       |         | TODO docs   |
 
 ### Options
@@ -94,9 +94,9 @@ TODO docs
 It extends [OptionsWithLegend](#optionswithlegend) and [OptionsWithTooltip](#optionswithtooltip).
 
 | Property       | Type                                    | Required | Default | Description                                                                                                                             |
-| -------------- | --------------------------------------- | -------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `legend`       | [VizLegendOptions](#vizlegendoptions)   | **Yes**  |         | _(Inherited from [OptionsWithLegend](#optionswithlegend))_<br/>TODO docs                                                                |
-| `tooltip`      | [VizTooltipOptions](#viztooltipoptions) | **Yes**  |         | _(Inherited from [OptionsWithTooltip](#optionswithtooltip))_<br/>TODO docs                                                              |
+|----------------|-----------------------------------------|----------|---------|-----------------------------------------------------------------------------------------------------------------------------------------|
+| `legend`       | [VizLegendOptions](#vizlegendoptions)   | **Yes**  |         | *(Inherited from [OptionsWithLegend](#optionswithlegend))*<br/>TODO docs                                                                |
+| `tooltip`      | [VizTooltipOptions](#viztooltipoptions) | **Yes**  |         | *(Inherited from [OptionsWithTooltip](#optionswithtooltip))*<br/>TODO docs                                                              |
 | `bucketCount`  | integer                                 | No       | `30`    | Bucket count (approx)<br/>Constraint: `>0 & <=2147483647`.                                                                              |
 | `bucketOffset` | number                                  | No       | `0`     | Offset buckets by this amount<br/>Constraint: `>=-340282346638528859811704183484516925440 & <=340282346638528859811704183484516925440`. |
 | `bucketSize`   | integer                                 | No       |         | Size of each bucket                                                                                                                     |
@@ -107,7 +107,7 @@ It extends [OptionsWithLegend](#optionswithlegend) and [OptionsWithTooltip](#opt
 TODO docs
 
 | Property | Type                                  | Required | Default | Description |
-| -------- | ------------------------------------- | -------- | ------- | ----------- |
+|----------|---------------------------------------|----------|---------|-------------|
 | `legend` | [VizLegendOptions](#vizlegendoptions) | **Yes**  |         | TODO docs   |
 
 ### VizLegendOptions
@@ -115,7 +115,7 @@ TODO docs
 TODO docs
 
 | Property      | Type     | Required | Default | Description                                                                                                                             |
-| ------------- | -------- | -------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+|---------------|----------|----------|---------|-----------------------------------------------------------------------------------------------------------------------------------------|
 | `calcs`       | string[] | **Yes**  |         |                                                                                                                                         |
 | `displayMode` | string   | **Yes**  |         | TODO docs<br/>Note: "hidden" needs to remain as an option for plugins compatibility<br/>Possible values are: `list`, `table`, `hidden`. |
 | `placement`   | string   | **Yes**  |         | TODO docs<br/>Possible values are: `bottom`, `right`.                                                                                   |
@@ -131,7 +131,7 @@ TODO docs
 TODO docs
 
 | Property  | Type                                    | Required | Default | Description |
-| --------- | --------------------------------------- | -------- | ------- | ----------- |
+|-----------|-----------------------------------------|----------|---------|-------------|
 | `tooltip` | [VizTooltipOptions](#viztooltipoptions) | **Yes**  |         | TODO docs   |
 
 ### VizTooltipOptions
@@ -139,8 +139,10 @@ TODO docs
 TODO docs
 
 | Property    | Type   | Required | Default | Description                                                   |
-| ----------- | ------ | -------- | ------- | ------------------------------------------------------------- |
+|-------------|--------|----------|---------|---------------------------------------------------------------|
 | `mode`      | string | **Yes**  |         | TODO docs<br/>Possible values are: `single`, `multi`, `none`. |
 | `sort`      | string | **Yes**  |         | TODO docs<br/>Possible values are: `asc`, `desc`, `none`.     |
 | `maxHeight` | number | No       |         |                                                               |
 | `maxWidth`  | number | No       |         |                                                               |
+
+

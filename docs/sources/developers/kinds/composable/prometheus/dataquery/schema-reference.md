@@ -9,17 +9,17 @@ labels:
     - oss
 title: PrometheusDataQuery kind
 ---
-
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
 
 ## PrometheusDataQuery
 
 #### Maturity: [experimental](../../../maturity/#experimental)
-
 #### Version: 0.0
 
+
+
 | Property         | Type             | Required | Default | Description                                                                                                                                                                                                                                             |
-| ---------------- | ---------------- | -------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|------------------|------------------|----------|---------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `expr`           | string           | **Yes**  |         | The actual expression/query that will be evaluated by Prometheus                                                                                                                                                                                        |
 | `refId`          | string           | **Yes**  |         | A unique identifier for the query within the list of targets.<br/>In server side expressions, the refId is used as a variable name to identify results.<br/>By default, the UI will assign A->Z; however setting meaningful names may be useful.        |
 | `datasource`     |                  | No       |         | For mixed data sources the selected datasource is on the query level.<br/>For non mixed scenarios this is undefined.<br/>TODO find a better way to do this ^ that's friendly to schema<br/>TODO this shouldn't be unknown but DataSourceRef &#124; null |
@@ -37,5 +37,7 @@ title: PrometheusDataQuery kind
 ### Scope
 
 | Property   | Type   | Required | Default | Description |
-| ---------- | ------ | -------- | ------- | ----------- |
+|------------|--------|----------|---------|-------------|
 | `matchers` | string | **Yes**  |         |             |
+
+

@@ -3,8 +3,8 @@ _build:
   list: false
 labels:
   products:
-    - enterprise
-    - oss
+  - enterprise
+  - oss
 title: Grafana schema
 weight: 200
 ---

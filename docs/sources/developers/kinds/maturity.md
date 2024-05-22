@@ -1,12 +1,12 @@
 ---
 keywords:
-  - grafana
-  - schema
-  - maturity
+- grafana
+- schema
+- maturity
 labels:
   products:
-    - enterprise
-    - oss
+  - enterprise
+  - oss
 title: Grafana Kinds - From Zero to Maturity
 weight: 300
 ---

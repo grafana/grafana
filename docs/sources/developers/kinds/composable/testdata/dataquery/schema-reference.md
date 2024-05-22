@@ -9,17 +9,17 @@ labels:
     - oss
 title: TestDataDataQuery kind
 ---
-
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
 
 ## TestDataDataQuery
 
 #### Maturity: [experimental](../../../maturity/#experimental)
-
 #### Version: 0.0
 
+
+
 | Property          | Type                                | Required | Default | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| ----------------- | ----------------------------------- | -------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|-------------------|-------------------------------------|----------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `refId`           | string                              | **Yes**  |         | A unique identifier for the query within the list of targets.<br/>In server side expressions, the refId is used as a variable name to identify results.<br/>By default, the UI will assign A->Z; however setting meaningful names may be useful.                                                                                                                                                                                                                                                                                       |
 | `alias`           | string                              | No       |         |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `channel`         | string                              | No       |         |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
@@ -50,7 +50,7 @@ title: TestDataDataQuery kind
 ### CSVWave
 
 | Property    | Type    | Required | Default | Description |
-| ----------- | ------- | -------- | ------- | ----------- |
+|-------------|---------|----------|---------|-------------|
 | `labels`    | string  | No       |         |             |
 | `name`      | string  | No       |         |             |
 | `timeStep`  | integer | No       |         |             |
@@ -59,7 +59,7 @@ title: TestDataDataQuery kind
 ### NodesQuery
 
 | Property | Type    | Required | Default | Description                                                                         |
-| -------- | ------- | -------- | ------- | ----------------------------------------------------------------------------------- |
+|----------|---------|----------|---------|-------------------------------------------------------------------------------------|
 | `count`  | integer | No       |         |                                                                                     |
 | `seed`   | integer | No       |         |                                                                                     |
 | `type`   | string  | No       |         | Possible values are: `random`, `response_small`, `response_medium`, `random edges`. |
@@ -67,7 +67,7 @@ title: TestDataDataQuery kind
 ### PulseWaveQuery
 
 | Property   | Type    | Required | Default | Description |
-| ---------- | ------- | -------- | ------- | ----------- |
+|------------|---------|----------|---------|-------------|
 | `offCount` | integer | No       |         |             |
 | `offValue` | number  | No       |         |             |
 | `onCount`  | integer | No       |         |             |
@@ -77,7 +77,7 @@ title: TestDataDataQuery kind
 ### SimulationQuery
 
 | Property | Type              | Required | Default | Description |
-| -------- | ----------------- | -------- | ------- | ----------- |
+|----------|-------------------|----------|---------|-------------|
 | `key`    | [object](#key)    | **Yes**  |         |             |
 | `config` | [object](#config) | No       |         |             |
 | `last`   | boolean           | No       |         |             |
@@ -86,12 +86,12 @@ title: TestDataDataQuery kind
 ### Config
 
 | Property | Type | Required | Default | Description |
-| -------- | ---- | -------- | ------- | ----------- |
+|----------|------|----------|---------|-------------|
 
 ### Key
 
 | Property | Type   | Required | Default | Description |
-| -------- | ------ | -------- | ------- | ----------- |
+|----------|--------|----------|---------|-------------|
 | `tick`   | number | **Yes**  |         |             |
 | `type`   | string | **Yes**  |         |             |
 | `uid`    | string | No       |         |             |
@@ -99,7 +99,7 @@ title: TestDataDataQuery kind
 ### StreamingQuery
 
 | Property | Type    | Required | Default | Description                                               |
-| -------- | ------- | -------- | ------- | --------------------------------------------------------- |
+|----------|---------|----------|---------|-----------------------------------------------------------|
 | `noise`  | integer | **Yes**  |         |                                                           |
 | `speed`  | integer | **Yes**  |         |                                                           |
 | `spread` | integer | **Yes**  |         |                                                           |
@@ -110,8 +110,10 @@ title: TestDataDataQuery kind
 ### USAQuery
 
 | Property | Type     | Required | Default | Description |
-| -------- | -------- | -------- | ------- | ----------- |
+|----------|----------|----------|---------|-------------|
 | `fields` | string[] | No       |         |             |
 | `mode`   | string   | No       |         |             |
 | `period` | string   | No       |         |             |
 | `states` | string[] | No       |         |             |
+
+
