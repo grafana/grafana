@@ -3,6 +3,7 @@ import { RefObject, useEffect, useState } from 'react';
 import { TimeOption } from '@grafana/data';
 
 const modulo = (a: number, n: number) => ((a % n) + n) % n;
+const CAUGHT_KEYS = ['ArrowUp', 'ArrowDown', 'Home', 'End', 'Enter', 'Tab'];
 
 /** @internal */
 export interface UseListFocusProps {
@@ -18,48 +19,44 @@ export const useListFocus = ({ localRef, options }: UseListFocusProps): UseListF
   const [focusedItem, setFocusedItem] = useState(0);
 
   useEffect(() => {
-    // Reset focused item when options have changed
-    setFocusedItem(0);
-    const items = localRef.current?.querySelectorAll<HTMLInputElement>('[data-role="item"]');
-    items?.forEach((item, i) => {
-      item.tabIndex = i === 0 ? 0 : -1;
+    const items = localRef.current?.querySelectorAll<HTMLInputElement>('[data-role="item"]') || [];
+    const checkedIndex = Array.from(items).findIndex((item) => item.checked);
+    const newFocusedIndex = checkedIndex >= 0 ? checkedIndex : 0;
+    items.forEach((item, i) => {
+      item.tabIndex = i === newFocusedIndex ? 0 : -1;
     });
+    // Reset focused item when options have changed
+    setFocusedItem(newFocusedIndex);
   }, [localRef, options]);
 
   const handleKeys = (event: React.KeyboardEvent) => {
     const items = localRef?.current?.querySelectorAll<HTMLInputElement>('[data-role="item"]');
     const itemsCount = items?.length ?? 0;
 
+    if (CAUGHT_KEYS.indexOf(event.key) > -1) {
+      event.preventDefault();
+      if (event.key !== 'Tab') {
+        event.stopPropagation();
+      }
+    }
+
     let newFocusedIndex = null;
 
     switch (event.key) {
       case 'ArrowUp':
-        event.preventDefault();
-        event.stopPropagation();
         newFocusedIndex = modulo(focusedItem - 1, itemsCount);
         break;
       case 'ArrowDown':
-        event.preventDefault();
-        event.stopPropagation();
         newFocusedIndex = modulo(focusedItem + 1, itemsCount);
         break;
       case 'Home':
-        event.preventDefault();
-        event.stopPropagation();
         newFocusedIndex = 0;
         break;
       case 'End':
-        event.preventDefault();
-        event.stopPropagation();
         newFocusedIndex = itemsCount - 1;
         break;
       case 'Enter':
-        event.preventDefault();
-        event.stopPropagation();
         items?.[focusedItem]?.click();
-        break;
-      case 'Tab':
-        event.preventDefault();
         break;
       default:
         break;
