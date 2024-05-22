@@ -19,6 +19,8 @@ title: Text
 weight: 100
 refs:
   variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/
   disable_sanitize_html:
