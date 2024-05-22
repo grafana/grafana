@@ -207,10 +207,6 @@ type Route struct {
 	Body         json.RawMessage `json:"body"`
 }
 
-func (r *Route) RequiresRBACAction() bool {
-	return r.ReqAction != ""
-}
-
 // Header describes an HTTP header that is forwarded with
 // the proxied request for a plugin route
 type Header struct {

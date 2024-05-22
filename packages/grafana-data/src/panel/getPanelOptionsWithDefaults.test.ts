@@ -317,7 +317,7 @@ describe('getPanelOptionsWithDefaults', () => {
       `);
     });
 
-    it('should remove custom overrides that no longer exist', () => {
+    it('should remove custom override properties that no longer exist', () => {
       const result = runScenario({
         defaults: {},
         overrides: [
@@ -342,8 +342,8 @@ describe('getPanelOptionsWithDefaults', () => {
         ],
       });
 
-      expect(result.fieldConfig.overrides.length).toBe(1);
-      expect(result.fieldConfig.overrides[0].properties[0].id).toBe('custom.customProp');
+      expect(result.fieldConfig.overrides.length).toBe(2);
+      expect(result.fieldConfig.overrides[0].properties.length).toBe(0);
     });
   });
 });

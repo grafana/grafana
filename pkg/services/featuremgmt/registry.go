@@ -1177,12 +1177,11 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:              "ssoSettingsSAML",
-			Description:       "Use the new SSO Settings API to configure the SAML connector",
-			Stage:             FeatureStageExperimental,
-			Owner:             identityAccessTeam,
-			HideFromDocs:      true,
-			HideFromAdminPage: true,
+			Name:           "ssoSettingsSAML",
+			Description:    "Use the new SSO Settings API to configure the SAML connector",
+			Stage:          FeatureStagePublicPreview,
+			Owner:          identityAccessTeam,
+			AllowSelfServe: true,
 		},
 		{
 			Name:              "oauthRequireSubClaim",
@@ -1275,6 +1274,13 @@ var (
 			Owner:             grafanaFrontendPlatformSquad,
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
+		},
+		{
+			Name:         "datasourceProxyDisableRBAC",
+			Description:  "Disables applying a plugin route's ReqAction field to authorization",
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
 		},
 	}
 )
