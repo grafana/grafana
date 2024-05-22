@@ -78,10 +78,16 @@ export const VirtualizedSelectMenu = ({
   }
 
   // same principle here, we need to flatten the children to account for any categories
-  // TODO fix duplicate dom children under categories
-  const flattenedChildren = children.flatMap((child) =>
-    isReactSelectGroup(child) ? [child, ...child.props.children] : [child]
-  );
+  const flattenedChildren = children.flatMap((child) => {
+    if (isReactSelectGroup(child)) {
+      // need to remove the children here else they end up in the DOM twice
+      const categoryHeader = React.cloneElement(child, {
+        children: null,
+      });
+      return [categoryHeader, ...child.props.children];
+    }
+    return [child];
+  });
 
   const longestOption = max(flattenedOptions.map((option) => option.label?.length)) ?? 0;
   const widthEstimate =
