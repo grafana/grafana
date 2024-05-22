@@ -12,12 +12,12 @@ export type DataQuerySpec = {
     generateName: string;
     name?: string;
     creationTimestamp?: string;
-    user: User;
   };
   spec: {
     title: string;
     vars: object[]; // TODO: Detect variables in #86838
     targets: DataQueryTarget[];
+    user: User;
   };
 };
 

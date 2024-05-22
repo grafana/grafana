@@ -115,8 +115,8 @@ type Position struct {
 }
 
 type User struct {
-	uid		string `json:"uid"` 
-	orgId	int64  `json:"orgId"` 
+	Uid		string `json:"uid"` 
+	OrgId	int64  `json:"orgId"` 
 	// login is used as a human readable backup identifier in case the UID no longer exists
-	login	string `json:"login"` 
+	Login	string `json:"login"` 
 }

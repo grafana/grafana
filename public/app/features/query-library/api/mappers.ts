@@ -23,17 +23,11 @@ export const convertAddQueryTemplateCommandToDataQuerySpec = (
   addQueryTemplateCommand: AddQueryTemplateCommand
 ): DataQuerySpec => {
   const { title, targets } = addQueryTemplateCommand;
-  console.log(contextSrv.user);
   return {
     apiVersion: API_VERSION,
     kind: QueryTemplateKinds.QueryTemplate,
     metadata: {
       generateName: 'A' + title,
-      user: {
-        uid: contextSrv.user.uid,
-        login: contextSrv.user.login,
-        orgId: contextSrv.user.orgId,
-      },
     },
     spec: {
       title: title,
@@ -42,6 +36,11 @@ export const convertAddQueryTemplateCommandToDataQuerySpec = (
         variables: {},
         properties: dataQuery,
       })),
+      user: {
+        uid: contextSrv.user.uid,
+        login: contextSrv.user.login,
+        orgId: contextSrv.user.orgId,
+      },
     },
   };
 };
