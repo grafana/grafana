@@ -7,7 +7,7 @@
       "dependsOn": [
         "themes-generate",
         {
-          "projects": ["@grafana-plugins/**"],
+          "projects": ["tag:type:plugin"],
           "target": "build"
         }
       ]
@@ -16,7 +16,7 @@
       "dependsOn": [
         "themes-generate",
         {
-          "projects": ["@grafana-plugins/**"],
+          "projects": ["tag:type:plugin"],
           "target": "build"
         }
       ],
