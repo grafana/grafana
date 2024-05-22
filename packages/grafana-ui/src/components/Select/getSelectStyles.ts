@@ -141,6 +141,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
     groupHeader: css({
       padding: theme.spacing(1, 1, 1, 0.75),
       borderLeft: '2px solid transparent',
+      borderTop: `1px solid ${theme.colors.border.weak}`,
     }),
   };
 });
