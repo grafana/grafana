@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	alertingOpsgenie "github.com/grafana/alerting/receivers/opsgenie"
+	alertingPagerduty "github.com/grafana/alerting/receivers/pagerduty"
 	alertingTemplates "github.com/grafana/alerting/templates"
 )
 
@@ -362,6 +363,14 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Element:      ElementTypeKeyValueMap,
 					InputType:    InputTypeText,
 					PropertyName: "details",
+				},
+				{ //New in 11.1
+					Label:        "URL",
+					Description:  "The URL to send API requests to",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  alertingPagerduty.DefaultURL,
+					PropertyName: "url",
 				},
 			},
 		},

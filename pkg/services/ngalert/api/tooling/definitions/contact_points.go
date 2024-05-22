@@ -135,6 +135,7 @@ type PagerdutyIntegration struct {
 	Client    *string            `json:"client,omitempty" yaml:"client,omitempty" hcl:"client"`
 	ClientURL *string            `json:"client_url,omitempty" yaml:"client_url,omitempty" hcl:"client_url"`
 	Details   *map[string]string `json:"details,omitempty" yaml:"details,omitempty" hcl:"details"`
+	URL       *string            `json:"url,omitempty" yaml:"url,omitempty" hcl:"url"`
 }
 
 type PushoverIntegration struct {
