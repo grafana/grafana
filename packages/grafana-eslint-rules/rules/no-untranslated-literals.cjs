@@ -8,21 +8,24 @@ const createRule = ESLintUtils.RuleCreator(
 const noUntranslatedLiterals = createRule({
   create(context) {
     return {
-      JSXElement(node) {
-        if (node.hasOwnProperty('children')) {
-          const children = node.children;
-          if (children.length > 0) {
-            children.forEach((child) => {
-              // @ts-expect-error
-              if((child.type === AST_NODE_TYPES.Literal || child.type === AST_NODE_TYPES.JSXText) && !isUsingTrans(node) && !isBareString(node) && !isEmpty(child)) {
-                context.report({
-                  node: child,
-                  messageId: 'noUntranslatedStrings',
-                });
-              }
-            });
-          }
-
+      Literal(node) {
+        if (node.value && isEmpty(node.value)) {
+          return;
+        }
+        const ancestors = context.getAncestors();
+        const hasTransAncestor = ancestors.some((ancestor) => {
+          return (
+            ancestor.type === AST_NODE_TYPES.JSXElement &&
+            ancestor.openingElement.type === AST_NODE_TYPES.JSXOpeningElement &&
+            ancestor.openingElement.name.type === AST_NODE_TYPES.JSXIdentifier &&
+            ancestor.openingElement.name.name === 'Trans'
+          );
+        });
+        if (getValidation(node) && hasJSXElementParentOrGrandParent(node) && !hasTransAncestor) {
+          context.report({
+            node,
+            messageId: 'noUntranslatedStrings',
+          });
         }
       },
     };
@@ -44,40 +47,60 @@ const noUntranslatedLiterals = createRule({
 module.exports = noUntranslatedLiterals;
 
 // @ts-expect-error
-const isEmpty = (node) => {
-  let emptyString = false;
-  if (typeof node.value === 'string' && (node.value.includes('\n') || node.value.length === 0)) {
-    emptyString = true;
+const getValidation = (node) => {
+  const parent = getParentIgnoringBinaryExpressions(node);
+
+  function isParentNodeStandard() {
+    if (!/^[\s]+$/.test(node.value) && typeof node.value === 'string' && parent.type.includes('JSX')) {
+      return parent.type !== AST_NODE_TYPES.JSXAttribute;
+    }
+
+    return false;
   }
-  return emptyString;
+
+  const standard = isParentNodeStandard();
+
+  return standard && parent.type !== AST_NODE_TYPES.JSXExpressionContainer;
+};
+// @ts-expect-error
+const getParentAndGrandParentType = (node) => {
+  const parent = getParentIgnoringBinaryExpressions(node);
+  const parentType = parent.type;
+  const grandParentType = parent.parent.type;
+
+  return {
+    parent,
+    parentType,
+    grandParentType,
+    grandParent: parent.parent,
+  };
 };
 
 // @ts-expect-error
-const isUsingTrans = (node) => {
-  const grandparent = node.parent;
-  let isTranslated = false;
-  if (
-    grandparent.type === AST_NODE_TYPES.JSXElement &&
-    node.type === AST_NODE_TYPES.JSXElement &&
-    node.openingElement.type === AST_NODE_TYPES.JSXOpeningElement &&
-    node.openingElement.name.type === AST_NODE_TYPES.JSXIdentifier &&
-    node.openingElement.name.name === "Trans"
-  ) {
-    isTranslated = true;
+const hasJSXElementParentOrGrandParent = (node) => {
+  const parents = getParentAndGrandParentType(node);
+  const parentType = parents.parentType;
+  const grandParentType = parents.grandParentType;
+
+  return parentType === AST_NODE_TYPES.JSXFragment || parentType === AST_NODE_TYPES.JSXElement || grandParentType === AST_NODE_TYPES.JSXElement;
+};
+
+
+// @ts-expect-error
+const getParentIgnoringBinaryExpressions = (node) => {
+  let current = node;
+  while (current.parent.type === AST_NODE_TYPES.BinaryExpression) {
+    current = current.parent;
   }
-  return isTranslated;
+  return current.parent;
 };
 
 // @ts-expect-error
-const isBareString = (node) => {
-  let isBare = false;
-  const grandparent = node.parent;
-  if (node.type === AST_NODE_TYPES.Literal && typeof node.value === 'string' && grandparent.type === AST_NODE_TYPES.ExpressionStatement) {
-    isBare = true;
+const isEmpty = (val) => {
+  let result = false;
+  if (typeof val === 'string') {
+    const cleaned = val.replaceAll(/\s/g, '').replaceAll(/[\n]/g, '');
+    result = cleaned.length === 0;
   }
-  return isBare;
-
-}
-
-// https://astexplorer.net/#/gist/f121a2a9edea666731e75aae1d013c9d/01756ad7f809e63644c8d1acd2224f767267c05e
-//
+  return result;
+};
