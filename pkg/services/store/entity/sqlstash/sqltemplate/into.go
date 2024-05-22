@@ -20,3 +20,8 @@ func (i *ScanDest) Into(v reflect.Value, colName string) (string, error) {
 func (i *ScanDest) GetScanDest() ScanDest {
 	return *i
 }
+
+type ScanDestIface interface {
+	Into(v reflect.Value, colName string) (string, error)
+	GetScanDest() ScanDest
+}

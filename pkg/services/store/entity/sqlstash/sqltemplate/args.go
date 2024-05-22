@@ -1,5 +1,16 @@
 package sqltemplate
 
+import (
+	"errors"
+	"reflect"
+	"strings"
+)
+
+// Args errors.
+var (
+	ErrInvalidArgList = errors.New("invalid arglist")
+)
+
 // Args keeps the data that needs to be passed to the engine for execution in
 // the right order. Add it to your data types passed to SQLTemplate, either by
 // embedding or with a named struct field if its Arg method would clash with
@@ -13,6 +24,47 @@ func (a *Args) Arg(x any) string {
 	return "?"
 }
 
+// ArgList returns a comma separated list of `?` placeholders for each element
+// in the provided slice argument, calling Arg for each of them.
+// Example struct:
+//
+//	type sqlMyRequest struct {
+//		*sqltemplate.SQLTemplate
+//		IDs []int64
+//	}
+//
+// Example usage in a SQL template:
+//
+//	DELETE FROM {{ .Ident "mytab" }}
+//		WHERE id IN ( {{ argList . .IDs }} )
+//	;
+func (a *Args) ArgList(slice reflect.Value) (string, error) {
+	if !slice.IsValid() || slice.Kind() != reflect.Slice {
+		return "", ErrInvalidArgList
+	}
+	sliceLen := slice.Len()
+	if sliceLen == 0 {
+		return "", nil
+	}
+
+	var b strings.Builder
+	b.Grow(3*sliceLen - 2) // the list will be ?, ?, ?
+	for i, l := 0, slice.Len(); i < l; i++ {
+		if i > 0 {
+			b.WriteString(", ")
+		}
+		b.WriteString(a.Arg(slice.Index(i).Interface()))
+	}
+
+	return b.String(), nil
+}
+
 func (a *Args) GetArgs() Args {
 	return *a
+}
+
+type ArgsIface interface {
+	Arg(x any) string
+	ArgList(slice reflect.Value) (string, error)
+	GetArgs() Args
 }
