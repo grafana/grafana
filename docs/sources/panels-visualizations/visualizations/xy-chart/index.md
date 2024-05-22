@@ -292,4 +292,3 @@ To learn more, refer to [Configure standard options](ref:configure-standard-opti
 ## Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-

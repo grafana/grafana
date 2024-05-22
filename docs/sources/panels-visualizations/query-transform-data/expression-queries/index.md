@@ -260,4 +260,3 @@ When any queried data source returns no series or numbers, the expression engine
 For more information about how [Grafana Alerting](ref:grafana-alerting) processes `NoData` results, refer to [No data and error handling](ref:no-data-and-error-handling).
 
 In the case of using an expression on multiple queries, the expression engine requires that all of the queries return an identical timestamp. For example, if using math to combine the results of multiple SQL queries which each use `SELECT NOW() AS "time"`, the expression will only work if all queries evaluate `NOW()` to an identical timestamp; which does not always happen. To resolve this, you can replace `NOW()` with an arbitrary time, such as `SELECT 1 AS "time"`, or any other valid UNIX timestamp.
-

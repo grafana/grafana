@@ -134,4 +134,3 @@ Adjust the sizes of the gauge text.
 ## Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
