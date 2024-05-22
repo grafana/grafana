@@ -2494,6 +2494,30 @@
       }
     },
     "/cloudmigration/token": {
+      "get": {
+        "tags": [
+          "migrations"
+        ],
+        "summary": "Fetch the cloud migration token if it exists.",
+        "operationId": "getCloudMigrationGetToken",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/cloudMigrationGetTokenResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
       "post": {
         "tags": [
           "migrations"
@@ -15006,6 +15030,29 @@
         }
       }
     },
+    "GetAccessTokenResponseDTO": {
+      "type": "object",
+      "properties": {
+        "createdAt": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "expiresAt": {
+          "type": "string"
+        },
+        "firstUsedAt": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "lastUsedAt": {
+          "type": "string"
+        }
+      }
+    },
     "GetAnnotationTagsResponse": {
       "type": "object",
       "title": "GetAnnotationTagsResponse is a response struct for FindTagsResult.",
@@ -22073,6 +22120,12 @@
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/CreateAccessTokenResponseDTO"
+      }
+    },
+    "cloudMigrationGetTokenResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/GetAccessTokenResponseDTO"
       }
     },
     "cloudMigrationListResponse": {

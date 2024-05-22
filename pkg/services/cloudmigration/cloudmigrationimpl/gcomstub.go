@@ -49,6 +49,10 @@ func (client *gcomStub) ListAccessPolicies(ctx context.Context, params gcom.List
 	return items, nil
 }
 
+func (client *gcomStub) ListTokens(ctx context.Context, params gcom.ListTokenParams) ([]gcom.TokenView, error) {
+	panic("unimplemented")
+}
+
 func (client *gcomStub) CreateToken(ctx context.Context, params gcom.CreateTokenParams, payload gcom.CreateTokenPayload) (gcom.Token, error) {
 	token := gcom.Token{
 		ID:             fmt.Sprintf("random-token-%s", util.GenerateShortUID()),
