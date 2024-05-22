@@ -60,7 +60,7 @@ func TestGrafanaRuleConfig(t *testing.T) {
 
 	dsCmd := &datasources.AddDataSourceCommand{
 		UserID: userId,
-		BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+		BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
 			Name:   "TestDatasource",
 			Type:   "testdata",
 			Access: datasources.DS_ACCESS_PROXY,

@@ -36,7 +36,7 @@ func TestIntegrationSimpleQuery(t *testing.T) {
 
 	// Create a single datasource
 	ds := helper.CreateDS(&datasources.AddDataSourceCommand{
-		BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+		BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
 			Name:  "test",
 			Type:  datasources.DS_TESTDATA,
 			UID:   "test",

@@ -53,7 +53,7 @@ func TestMigrate(t *testing.T) {
 		dataSourceName := "Test"
 		dataSourceOrg := int64(1)
 		_, err := ds.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-			BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+			BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
 				OrgID:  dataSourceOrg,
 				Name:   dataSourceName,
 				Type:   datasources.DS_MYSQL,
@@ -121,7 +121,7 @@ func TestMigrate(t *testing.T) {
 
 		// Add test data source
 		_, err := ds.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-			BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+			BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
 				OrgID:  dataSourceOrg,
 				Name:   dataSourceName,
 				Type:   datasources.DS_MYSQL,
@@ -191,7 +191,7 @@ func TestMigrate(t *testing.T) {
 
 		// Add test data source
 		_, err := ds.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-			BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+			BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
 				OrgID:  dataSourceOrg,
 				Name:   dataSourceName,
 				Type:   datasources.DS_MYSQL,
@@ -284,7 +284,7 @@ func TestMigrate(t *testing.T) {
 
 		// Add test data source
 		_, err := ds.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-			BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+			BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
 				OrgID:  dataSourceOrg,
 				Name:   dataSourceName,
 				Type:   datasources.DS_MYSQL,

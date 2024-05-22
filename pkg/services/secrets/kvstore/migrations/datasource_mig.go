@@ -70,7 +70,7 @@ func (s *DataSourceSecretMigrationService) Migrate(ctx context.Context) error {
 			// Secrets are deleted by the update data source function if the disableSecretsCompatibility flag is enabled
 			_, err = s.dataSourcesService.UpdateDataSource(ctx, &datasources.UpdateDataSourceCommand{
 				ID: ds.ID,
-				BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+				BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
 					OrgID:          ds.OrgID,
 					UID:            ds.UID,
 					Name:           ds.Name,

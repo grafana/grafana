@@ -85,7 +85,7 @@ func GenerateDatasourcePermissions(b *testing.B, db db.DB, cfg *setting.Cfg, ac 
 	dataSources := make([]int64, 0)
 	for i := 0; i < dsNum; i++ {
 		addDSCommand := &datasources.AddDataSourceCommand{
-			BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+			BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
 				OrgID:  0,
 				Name:   fmt.Sprintf("ds_%d", i),
 				Type:   datasources.DS_GRAPHITE,

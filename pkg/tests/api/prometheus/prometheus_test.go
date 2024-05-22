@@ -60,7 +60,7 @@ func TestIntegrationPrometheus(t *testing.T) {
 
 	uid := "prometheus"
 	_, err := testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx, &datasources.AddDataSourceCommand{
-		BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+		BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
 			OrgID:          u.OrgID,
 			Access:         datasources.DS_ACCESS_PROXY,
 			Name:           "Prometheus",

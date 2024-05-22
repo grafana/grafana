@@ -59,7 +59,7 @@ func TestBacktesting(t *testing.T) {
 		t.Logf("Creating a new test data source with UID %s", query.DatasourceUID)
 		dsCmd := &datasources.AddDataSourceCommand{
 			UserID: userId,
-			BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+			BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
 				Name:   "Backtesting-TestDatasource",
 				Type:   "testdata",
 				Access: datasources.DS_ACCESS_PROXY,

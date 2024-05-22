@@ -68,7 +68,7 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 	})
 
 	createDsCommand := &datasources.AddDataSourceCommand{
-		BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+		BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
 			Name:  "with-correlations",
 			Type:  "loki",
 			OrgID: 1,
@@ -90,7 +90,7 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 	})
 
 	createDsCommand = &datasources.AddDataSourceCommand{
-		BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+		BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
 			Name:  "without-correlations",
 			Type:  "loki",
 			OrgID: 1,
@@ -99,7 +99,7 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 	dsWithoutCorrelations := ctx.createDs(createDsCommand)
 
 	createDsCommand = &datasources.AddDataSourceCommand{
-		BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+		BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
 			Name:  "with-correlations",
 			UID:   dsWithCorrelations.UID, // reuse UID
 			Type:  "loki",

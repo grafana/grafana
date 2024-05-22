@@ -263,7 +263,7 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	qds := buildQueryDataService(t, cacheService, nil, db)
 	dsStore := datasourcesService.CreateStore(db, log.New("publicdashboards.test"))
 	_, _ = dsStore.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-		BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+		BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
 			UID:      "ds1",
 			OrgID:    1,
 			Name:     "laban",

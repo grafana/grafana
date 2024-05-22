@@ -35,7 +35,7 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 	})
 
 	createDsCommand := &datasources.AddDataSourceCommand{
-		BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+		BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
 			Name:     "read-only",
 			Type:     "loki",
 			ReadOnly: true,
@@ -46,7 +46,7 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 	readOnlyDS := dataSource.UID
 
 	createDsCommand = &datasources.AddDataSourceCommand{
-		BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+		BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
 			Name:  "writable",
 			Type:  "loki",
 			OrgID: adminUser.User.OrgID,

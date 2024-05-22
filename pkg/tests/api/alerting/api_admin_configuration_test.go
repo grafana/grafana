@@ -131,7 +131,7 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 	// Add an alertmanager datasource
 	{
 		cmd := datasources.AddDataSourceCommand{
-			BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+			BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
 				OrgID:  1,
 				Name:   "AM1",
 				Type:   datasources.DS_ALERTMANAGER,
@@ -160,7 +160,7 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 	// Add another alertmanager datasource
 	{
 		cmd := datasources.AddDataSourceCommand{
-			BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+			BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
 				OrgID:  1,
 				Name:   "AM2",
 				Type:   datasources.DS_ALERTMANAGER,
@@ -291,7 +291,7 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 	// Add an alertmanager datasource fot the other organisation
 	{
 		cmd := datasources.AddDataSourceCommand{
-			BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+			BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
 				OrgID:  2,
 				Name:   "AM3",
 				Type:   datasources.DS_ALERTMANAGER,

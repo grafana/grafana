@@ -208,7 +208,7 @@ func createInsertCommand(ds *upsertDataSourceFromConfig) *datasources.AddDataSou
 	}
 
 	cmd := &datasources.AddDataSourceCommand{
-		BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+		BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
 			OrgID:           ds.OrgID,
 			Name:            ds.Name,
 			Type:            ds.Type,
@@ -253,7 +253,7 @@ func createUpdateCommand(ds *upsertDataSourceFromConfig, id int64) *datasources.
 		ID:                      id,
 		Version:                 ds.Version,
 		IgnoreOldSecureJsonData: true,
-		BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+		BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
 			UID:             ds.UID,
 			OrgID:           ds.OrgID,
 			Name:            ds.Name,

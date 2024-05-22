@@ -27,7 +27,7 @@ func TestIntegrationCreateOrUpdateCorrelation(t *testing.T) {
 	})
 
 	createDsCommand := &datasources.AddDataSourceCommand{
-		BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+		BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
 			Name:  "loki",
 			Type:  "loki",
 			OrgID: adminUser.User.OrgID,

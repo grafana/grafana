@@ -419,7 +419,7 @@ func (s *Service) getDataSources(ctx context.Context) ([]datasources.AddDataSour
 			return nil, err
 		}
 		dataSourceCmd := datasources.AddDataSourceCommand{
-			BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+			BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
 				OrgID:           dataSource.OrgID,
 				Name:            dataSource.Name,
 				Type:            dataSource.Type,

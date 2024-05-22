@@ -152,7 +152,7 @@ func (e ErrDatasourceSecretsPluginUserFriendly) Error() string {
 
 // The input values shared with both Add+Update commands (also part of the DTO)
 // This part of the command can share validation between add and update actions
-type BaseDataSourceCommand struct {
+type BaseWriteDataSourceCommand struct {
 	Name            string            `json:"name"`
 	Type            string            `json:"type" binding:"Required"`
 	Access          DsAccess          `json:"access" binding:"Required"`
@@ -180,7 +180,7 @@ type BaseDataSourceCommand struct {
 
 // Also acts as api DTO
 type AddDataSourceCommand struct {
-	BaseDataSourceCommand
+	BaseWriteDataSourceCommand `json:",inline"`
 
 	// When UserID is non zero, this user gets admin permissions
 	UserID int64 `json:"-"`
@@ -188,7 +188,7 @@ type AddDataSourceCommand struct {
 
 // Also acts as api DTO
 type UpdateDataSourceCommand struct {
-	BaseDataSourceCommand
+	BaseWriteDataSourceCommand `json:",inline"`
 
 	// The internal ID for the previous value
 	ID int64 `json:"-"`

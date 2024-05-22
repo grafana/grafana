@@ -508,7 +508,7 @@ func newTestScenario(t *testing.T, name string, opts []testScenarioOption, callb
 
 	tsCtx.uid = "test-plugin"
 	cmd := &datasources.AddDataSourceCommand{
-		BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+		BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
 			OrgID:          u.OrgID,
 			Access:         datasources.DS_ACCESS_PROXY,
 			Name:           "TestPlugin",

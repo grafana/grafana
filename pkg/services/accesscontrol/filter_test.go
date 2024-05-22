@@ -178,7 +178,7 @@ func TestFilter_Datasources(t *testing.T) {
 				for i := 1; i <= 10; i++ {
 					dsStore := dsService.CreateStore(store, log.New("accesscontrol.test"))
 					_, err := dsStore.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-						BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+						BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
 							Name: fmt.Sprintf("ds:%d", i),
 							UID:  fmt.Sprintf("uid%d", i),
 						},

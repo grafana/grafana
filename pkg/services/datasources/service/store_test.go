@@ -22,7 +22,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	defaultAddDatasourceCommand := datasources.AddDataSourceCommand{
-		BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+		BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
 			OrgID:  10,
 			Name:   "nisse",
 			Type:   datasources.DS_GRAPHITE,
@@ -32,7 +32,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 	}
 
 	defaultUpdateDatasourceCommand := datasources.UpdateDataSourceCommand{
-		BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+		BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
 			OrgID:  10,
 			Name:   "nisse_updated",
 			Type:   datasources.DS_GRAPHITE,
@@ -60,7 +60,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			db := db.InitTestDB(t)
 			ss := SqlStore{db: db}
 			_, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-				BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+				BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
 					OrgID:      10,
 					Name:       "laban",
 					Type:       datasources.DS_GRAPHITE,
@@ -186,7 +186,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			cmd := datasources.UpdateDataSourceCommand{
 				ID:      ds.ID,
 				Version: ds.Version,
-				BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+				BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
 					OrgID:  10,
 					Name:   "nisse",
 					Type:   datasources.DS_GRAPHITE,
@@ -211,7 +211,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 
 			cmd := &datasources.UpdateDataSourceCommand{
 				ID: ds.ID,
-				BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+				BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
 					OrgID:  10,
 					Name:   "nisse",
 					Type:   datasources.DS_GRAPHITE,
@@ -232,7 +232,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			cmd := &datasources.UpdateDataSourceCommand{
 				ID:      ds.ID,
 				Version: 90000,
-				BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+				BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
 					OrgID:  10,
 					Name:   "nisse",
 					Type:   datasources.DS_GRAPHITE,
@@ -409,7 +409,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			datasourceLimit := 6
 			for i := 0; i < datasourceLimit+1; i++ {
 				_, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-					BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+					BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
 						OrgID:    10,
 						Name:     "laban" + strconv.Itoa(i),
 						Type:     datasources.DS_GRAPHITE,
@@ -435,7 +435,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			numberOfDatasource := 5100
 			for i := 0; i < numberOfDatasource; i++ {
 				_, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-					BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+					BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
 						OrgID:    10,
 						Name:     "laban" + strconv.Itoa(i),
 						Type:     datasources.DS_GRAPHITE,
@@ -461,7 +461,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			numberOfDatasource := 5100
 			for i := 0; i < numberOfDatasource; i++ {
 				_, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-					BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+					BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
 						OrgID:    10,
 						Name:     "laban" + strconv.Itoa(i),
 						Type:     datasources.DS_GRAPHITE,
@@ -488,7 +488,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			ss := SqlStore{db: db}
 
 			_, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-				BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+				BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
 					OrgID:    10,
 					Name:     "Elasticsearch",
 					Type:     datasources.DS_ES,
@@ -501,7 +501,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			require.NoError(t, err)
 
 			_, err = ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-				BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+				BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
 					OrgID:    10,
 					Name:     "Graphite",
 					Type:     datasources.DS_GRAPHITE,
@@ -537,7 +537,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			ss := SqlStore{db: db}
 
 			_, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-				BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+				BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
 					OrgID:    10,
 					Name:     "Elasticsearch",
 					Type:     "other",
@@ -562,7 +562,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			ss := SqlStore{db: db}
 
 			_, errPrunable := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-				BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+				BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
 					OrgID:      10,
 					Name:       "ElasticsearchPrunable",
 					Type:       "other",
@@ -576,7 +576,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			require.NoError(t, errPrunable)
 
 			_, errNotPrunable := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-				BaseDataSourceCommand: datasources.BaseDataSourceCommand{
+				BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
 					OrgID:    10,
 					Name:     "ElasticsearchNotPrunable",
 					Type:     "other",
