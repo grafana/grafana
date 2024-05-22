@@ -35,16 +35,6 @@ export class KeybindingSrv {
     private panelAttentionService: PanelAttentionSrv
   ) {}
 
-  private panelWithAttention: HTMLDivElement | null = null;
-
-  setPanelWithAttention(panel: HTMLDivElement | null) {
-    this.panelWithAttention = panel;
-  }
-
-  getPanelWithAttention() {
-    return this.panelWithAttention;
-  }
-
   clearAndInitGlobalBindings(route: RouteDescriptor) {
     Mousetrap.reset();
 
