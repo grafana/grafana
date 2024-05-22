@@ -36,10 +36,10 @@ type Rule interface {
 	Update(lastVersion RuleVersionAndPauseStatus) bool
 }
 
-type ruleFactoryFunc func(context.Context) Rule
+type ruleFactoryFunc func(context.Context, *ngmodels.AlertRule) Rule
 
-func (f ruleFactoryFunc) new(ctx context.Context) Rule {
-	return f(ctx)
+func (f ruleFactoryFunc) new(ctx context.Context, rule *ngmodels.AlertRule) Rule {
+	return f(ctx, rule)
 }
 
 func newRuleFactory(
@@ -57,7 +57,10 @@ func newRuleFactory(
 	evalAppliedHook evalAppliedFunc,
 	stopAppliedHook stopAppliedFunc,
 ) ruleFactoryFunc {
-	return func(ctx context.Context) Rule {
+	return func(ctx context.Context, rule *ngmodels.AlertRule) Rule {
+		if rule.IsRecordingRule() {
+			return newRecordingRule(ctx, logger)
+		}
 		return newAlertRule(
 			ctx,
 			appURL,
