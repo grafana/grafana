@@ -1177,6 +1177,9 @@
       "subtitle": "Optimize performance with k6 and Synthetic Monitoring insights",
       "title": "Testing & synthetics"
     },
+    "trash": {
+      "title": "Trash"
+    },
     "upgrading": {
       "title": "Stats and license"
     },

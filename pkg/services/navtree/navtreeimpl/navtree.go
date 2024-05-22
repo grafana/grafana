@@ -333,7 +333,6 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 				SubTitle: "Interactive, publically available, point-in-time representations of dashboards",
 				Id:       "dashboards/snapshots",
 				Url:      s.cfg.AppSubURL + "/dashboard/snapshots",
-				Icon:     "camera",
 			})
 		}
 
@@ -342,7 +341,6 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 			SubTitle: "Reusable panels that can be added to multiple dashboards",
 			Id:       "dashboards/library-panels",
 			Url:      s.cfg.AppSubURL + "/library-panels",
-			Icon:     "library-panel",
 		})
 
 		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPublicDashboards) && s.cfg.PublicDashboardsEnabled {
@@ -350,7 +348,17 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 				Text: "Public dashboards",
 				Id:   "dashboards/public",
 				Url:  s.cfg.AppSubURL + "/dashboard/public",
-				Icon: "library-panel",
+			})
+		}
+
+		// TODO: condition is not right yet, this section should only be visible when feat toggle is enabled and if user has the right permission (admin?)
+		// TODO: Check why there used to be icons for level of nav items
+		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPublicDashboards) && s.cfg.PublicDashboardsEnabled {
+			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
+				Text:     "Trash",
+				SubTitle: "Any items remaining in the Trash for more than 30 days will be automatically deleted",
+				Id:       "dashboards/trash",
+				Url:      s.cfg.AppSubURL + "/dashboard/trash",
 			})
 		}
 	}

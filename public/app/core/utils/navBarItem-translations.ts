@@ -40,6 +40,8 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.reporting.title', 'Reporting');
     case 'dashboards/public':
       return t('nav.public.title', 'Public dashboards');
+    case 'dashboards/trash':
+      return t('nav.trash.title', 'Trash');
     case 'dashboards/new':
       return t('nav.new-dashboard.title', 'New dashboard');
     case 'dashboards/folder/new':
