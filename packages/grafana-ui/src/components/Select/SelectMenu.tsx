@@ -1,6 +1,6 @@
 import { cx } from '@emotion/css';
 import { max } from 'lodash';
-import React, { RefCallback, useEffect, useRef } from 'react';
+import React, { RefCallback, useEffect, useMemo, useRef } from 'react';
 import { MenuListProps } from 'react-select';
 import { FixedSizeList as List } from 'react-window';
 
@@ -57,8 +57,18 @@ export const VirtualizedSelectMenu = ({
   const styles = getSelectStyles(theme);
   const listRef = useRef<List>(null);
 
-  const focusedIndex = options.findIndex((option: SelectableValue<unknown>) => option.value === focusedOption?.value);
+  // we need to check for option groups (categories)
+  // these are top level options with child options
+  // if they exist, flatten the list of options
+  const flattenedOptions = useMemo(
+    () => options.flatMap((option) => (option.options ? [option, ...option.options] : [option])),
+    [options]
+  );
 
+  // scroll the focused option into view when navigating with keyboard
+  const focusedIndex = flattenedOptions.findIndex(
+    (option: SelectableValue<unknown>) => option.value === focusedOption?.value
+  );
   useEffect(() => {
     listRef.current?.scrollToItem(focusedIndex);
   }, [focusedIndex]);
@@ -67,10 +77,16 @@ export const VirtualizedSelectMenu = ({
     return null;
   }
 
-  const longestOption = max(options.map((option) => option.label?.length)) ?? 0;
+  // same principle here, we need to flatten the children to account for any categories
+  // TODO fix duplicate dom children under categories
+  const flattenedChildren = children.flatMap((child) =>
+    isReactSelectGroup(child) ? [child, ...child.props.children] : [child]
+  );
+
+  const longestOption = max(flattenedOptions.map((option) => option.label?.length)) ?? 0;
   const widthEstimate =
     longestOption * VIRTUAL_LIST_WIDTH_ESTIMATE_MULTIPLIER + VIRTUAL_LIST_PADDING * 2 + VIRTUAL_LIST_WIDTH_EXTRA;
-  const heightEstimate = Math.min(options.length * VIRTUAL_LIST_ITEM_HEIGHT, maxHeight);
+  const heightEstimate = Math.min(flattenedChildren.length * VIRTUAL_LIST_ITEM_HEIGHT, maxHeight);
 
   return (
     <List
@@ -79,12 +95,18 @@ export const VirtualizedSelectMenu = ({
       height={heightEstimate}
       width={widthEstimate}
       aria-label="Select options menu"
-      itemCount={children.length}
+      itemCount={flattenedChildren.length}
       itemSize={VIRTUAL_LIST_ITEM_HEIGHT}
     >
-      {({ index, style }) => <div style={{ ...style, overflow: 'hidden' }}>{children[index]}</div>}
+      {({ index, style }) => <div style={{ ...style, overflow: 'hidden' }}>{flattenedChildren[index]}</div>}
     </List>
   );
+};
+
+// crude check to see if a child is a react-select group
+// we need to flatten these so the correct count and elements are passed to the virtualized list
+const isReactSelectGroup = (child: React.ReactNode) => {
+  return React.isValidElement(child) && Array.isArray(child.props.children);
 };
 
 VirtualizedSelectMenu.displayName = 'VirtualizedSelectMenu';

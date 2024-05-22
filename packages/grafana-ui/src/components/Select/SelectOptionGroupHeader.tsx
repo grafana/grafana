@@ -12,7 +12,7 @@ export const SelectOptionGroupHeader = (props: GroupHeadingProps) => {
   return (
     <div className={styles.groupHeader}>
       <Text weight="bold" variant="bodySmall" color="secondary">
-        {props.children ?? ''}
+        {props.children!}
       </Text>
     </div>
   );

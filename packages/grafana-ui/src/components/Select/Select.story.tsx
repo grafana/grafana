@@ -231,6 +231,7 @@ export const MultiSelectWithOptionGroups: StoryFn = (args) => {
           },
         ]}
         value={value}
+        virtualized
         onChange={(v) => {
           setValue(v.map((v) => v.value!));
           action('onChange')(v);
