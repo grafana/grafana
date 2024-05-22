@@ -27,10 +27,13 @@ import (
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/builder"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/promlib/models"
+	"github.com/grafana/grafana/pkg/registry/apis/query/types"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/kinds"
 )
 
 const QueryRequestSchemaKey = "QueryRequestSchema"
@@ -134,6 +137,8 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 		// Query handler
 		&query.QueryDataRequest{},
 		&query.QueryDataResponse{},
+		&query.QueryTypeDefinition{},
+		&query.QueryTypeDefinitionList{},
 		&metav1.Status{},
 	)
 }
@@ -209,6 +214,20 @@ func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
 	// Frontend proxy
 	if len(b.pluginJSON.Routes) > 0 {
 		storage[conn.StoragePath("proxy")] = &subProxyREST{pluginJSON: b.pluginJSON}
+	}
+
+	// Register hardcoded query schemas
+	switch b.GetGroupVersion().Group {
+	case "testdata.datasource.grafana.app":
+		raw, err := kinds.QueryTypeDefinitionListJSON()
+		if err == nil {
+			types.RegisterQueryTypes(raw, storage)
+		}
+	case "prometheus.datasource.grafana.app":
+		raw, err := models.QueryTypeDefinitionListJSON()
+		if err == nil {
+			types.RegisterQueryTypes(raw, storage)
+		}
 	}
 
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(

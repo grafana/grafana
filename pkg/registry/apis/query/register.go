@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry/apis/query/client"
+	"github.com/grafana/grafana/pkg/registry/apis/query/types"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/service"
@@ -146,6 +147,12 @@ func (b *QueryAPIBuilder) GetAPIGroupInfo(
 
 	// The query endpoint -- NOTE, this uses a rewrite hack to allow requests without a name parameter
 	storage["query"] = newQueryREST(b)
+
+	// Register the expressions query schemas
+	raw, err := expr.QueryTypeDefinitionListJSON()
+	if err == nil {
+		types.RegisterQueryTypes(raw, storage)
+	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[gv.Version] = storage
 	return &apiGroupInfo, nil
