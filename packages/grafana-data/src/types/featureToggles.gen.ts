@@ -189,4 +189,5 @@ export interface FeatureToggles {
   newDashboardSharingComponent?: boolean;
   notificationBanner?: boolean;
   dashboardRestore?: boolean;
+  datasourceProxyDisableRBAC?: boolean;
 }
