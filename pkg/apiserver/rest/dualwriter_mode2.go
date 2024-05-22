@@ -77,14 +77,14 @@ func (d *DualWriterMode2) Get(ctx context.Context, name string, options *metav1.
 	res, err := d.Legacy.Get(ctx, name, options)
 	if err != nil {
 		log.Error(err, "unable to get object in legacy storage")
-		d.recordLegacyDuration(true, mode2Str, name, method, startLegacy)
+		d.recordLegacyDuration(true, mode2Str, options.Kind, method, startLegacy)
 		return res, err
 	}
-	d.recordLegacyDuration(false, mode2Str, name, method, startLegacy)
+	d.recordLegacyDuration(false, mode2Str, options.Kind, method, startLegacy)
 
 	startStorage := time.Now()
 	res, err = d.Storage.Get(ctx, name, options)
-	d.recordStorageDuration(err != nil, mode2Str, name, method, startStorage)
+	d.recordStorageDuration(err != nil, mode2Str, options.Kind, method, startStorage)
 
 	return res, err
 }
