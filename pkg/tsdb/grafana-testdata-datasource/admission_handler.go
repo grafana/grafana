@@ -54,8 +54,10 @@ func (s *Service) ValidateAdmission(ctx context.Context, req *backend.AdmissionR
 // MutateAdmission implements backend.AdmissionHandler.
 func (s *Service) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
 	rsp, err := s.ValidateAdmission(ctx, req)
-	if err != nil && rsp.Allowed {
-		rsp.ObjectBytes = req.ObjectBytes // For this case they are the same!
+	if err == nil && rsp.Allowed {
+		// In this case they are the same!
+		// We validated that the object is empty so we can just use it directly
+		rsp.ObjectBytes = req.ObjectBytes
 	}
 	return rsp, err
 }

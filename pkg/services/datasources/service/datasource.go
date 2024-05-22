@@ -364,6 +364,9 @@ func (s *Service) mutate(ctx context.Context, pluginContext backend.PluginContex
 		}
 		return nil, fmt.Errorf("not allowed")
 	}
+	if rsp.ObjectBytes == nil {
+		return nil, fmt.Errorf("mutation response is missing value")
+	}
 	return backend.DataSourceInstanceSettingsFromProto(rsp.ObjectBytes, pluginContext.PluginID)
 }
 
@@ -414,14 +417,14 @@ func (s *Service) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteD
 	})
 }
 
-func (s *Service) getPluginContext(ctx context.Context, orgID int64, pluginID string, ds *datasources.DataSource) *backend.PluginContext {
+func (s *Service) getPluginContext(ctx context.Context, orgID int64, pluginID string, ds *datasources.DataSource) backend.PluginContext {
 	if ds == nil {
-		return &backend.PluginContext{
+		return backend.PluginContext{
 			OrgID:    orgID,
 			PluginID: pluginID,
 		}
 	}
-	pctx := &backend.PluginContext{
+	pctx := backend.PluginContext{
 		OrgID:    orgID,
 		PluginID: pluginID,
 		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
@@ -465,7 +468,7 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 			return fmt.Errorf("invalid jsonData")
 		}
 
-		settings, err := s.mutate(ctx, *s.getPluginContext(ctx, cmd.OrgID, cmd.Type, dataSource),
+		settings, err := s.mutate(ctx, s.getPluginContext(ctx, cmd.OrgID, cmd.Type, dataSource),
 			&backend.DataSourceInstanceSettings{
 				UID:                     cmd.UID,
 				Name:                    cmd.Name,
@@ -482,6 +485,9 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 			})
 		if err != nil {
 			return err
+		}
+		if settings == nil {
+			return fmt.Errorf("settings or an error is required")
 		}
 
 		// The mutable properties
