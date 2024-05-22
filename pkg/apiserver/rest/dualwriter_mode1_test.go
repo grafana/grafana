@@ -22,10 +22,10 @@ var anotherList = &example.PodList{Items: []example.Pod{*anotherObj}}
 
 func TestMode1_Create(t *testing.T) {
 	type testCase struct {
-		name           string
 		input          runtime.Object
 		setupLegacyFn  func(m *mock.Mock, input runtime.Object)
 		setupStorageFn func(m *mock.Mock, input runtime.Object)
+		name           string
 		wantErr        bool
 	}
 	tests :=
@@ -85,10 +85,10 @@ func TestMode1_Create(t *testing.T) {
 
 func TestMode1_Get(t *testing.T) {
 	type testCase struct {
-		name           string
-		input          string
 		setupLegacyFn  func(m *mock.Mock, name string)
 		setupStorageFn func(m *mock.Mock, name string)
+		name           string
+		input          string
 		wantErr        bool
 	}
 	tests :=
@@ -148,9 +148,9 @@ func TestMode1_Get(t *testing.T) {
 
 func TestMode1_List(t *testing.T) {
 	type testCase struct {
-		name           string
 		setupLegacyFn  func(m *mock.Mock)
 		setupStorageFn func(m *mock.Mock)
+		name           string
 		wantErr        bool
 	}
 	tests :=
@@ -194,10 +194,10 @@ func TestMode1_List(t *testing.T) {
 
 func TestMode1_Delete(t *testing.T) {
 	type testCase struct {
-		name           string
-		input          string
 		setupLegacyFn  func(m *mock.Mock, name string)
 		setupStorageFn func(m *mock.Mock, name string)
+		name           string
+		input          string
 		wantErr        bool
 	}
 	tests :=
@@ -253,10 +253,10 @@ func TestMode1_Delete(t *testing.T) {
 
 func TestMode1_DeleteCollection(t *testing.T) {
 	type testCase struct {
-		name           string
 		input          *metav1.DeleteOptions
 		setupLegacyFn  func(m *mock.Mock, input *metav1.DeleteOptions)
 		setupStorageFn func(m *mock.Mock, input *metav1.DeleteOptions)
+		name           string
 		wantErr        bool
 	}
 	tests :=
@@ -312,11 +312,11 @@ func TestMode1_DeleteCollection(t *testing.T) {
 
 func TestMode1_Update(t *testing.T) {
 	type testCase struct {
-		name           string
-		input          string
 		setupLegacyFn  func(m *mock.Mock, input string)
 		setupStorageFn func(m *mock.Mock, input string)
 		setupGetFn     func(m *mock.Mock, input string)
+		name           string
+		input          string
 		wantErr        bool
 	}
 	tests :=

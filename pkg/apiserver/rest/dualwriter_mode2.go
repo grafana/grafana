@@ -18,8 +18,8 @@ import (
 type DualWriterMode2 struct {
 	Storage Storage
 	Legacy  LegacyStorage
-	Log     klog.Logger
 	*dualWriterMetrics
+	Log klog.Logger
 }
 
 // NewDualWriterMode2 returns a new DualWriter in mode 2.

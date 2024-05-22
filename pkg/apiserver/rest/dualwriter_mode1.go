@@ -5,7 +5,6 @@ import (
 	"errors"
 	"time"
 
-	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -16,8 +15,8 @@ import (
 type DualWriterMode1 struct {
 	Legacy  LegacyStorage
 	Storage Storage
-	Log     klog.Logger
 	*dualWriterMetrics
+	Log klog.Logger
 }
 
 const (
