@@ -405,7 +405,7 @@ func TestSchedule_deleteAlertRule(t *testing.T) {
 			ruleFactory := ruleFactoryFromScheduler(sch)
 			rule := models.RuleGen.GenerateRef()
 			key := rule.GetKey()
-			info, _ := sch.registry.getOrCreate(context.Background(), key, ruleFactory)
+			info, _ := sch.registry.getOrCreate(context.Background(), rule, ruleFactory)
 			sch.deleteAlertRule(key)
 			require.ErrorIs(t, info.(*alertRule).ctx.Err(), errRuleDeleted)
 			require.False(t, sch.registry.exists(key))

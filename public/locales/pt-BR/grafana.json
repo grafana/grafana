@@ -491,15 +491,11 @@
       "delete-query-tooltip": "Excluir consulta",
       "delete-starred-query-confirmation-text": "Tem certeza de que deseja excluir permanentemente sua consulta favorita?",
       "edit-comment-tooltip": "Editar comentário",
-      "left-pane": "",
       "optional-description": "Uma descrição opcional do que a consulta faz.",
       "query-comment-label": "Comentário de consulta",
       "query-text-label": "Texto da consulta",
-      "right-pane": "",
-      "run-query-button": "Executar consulta",
       "save-comment": "Salvar comentário",
       "star-query-tooltip": "Favoritar consulta",
-      "switch-datasource-button": "Alternar fonte de dados e executar consulta",
       "unstar-query-tooltip": "Remover consulta dos favoritos",
       "update-comment-form": "Atualizar formulário de comentários"
     },
@@ -567,6 +563,12 @@
     "rich-history-utils-notification": {
       "saving-failed": "Falha ao salvar histórico rico",
       "update-failed": "A atualização do histórico rico falhou"
+    },
+    "run-query": {
+      "left-pane": "",
+      "right-pane": "",
+      "run-query-button": "",
+      "switch-datasource-button": ""
     },
     "secondary-actions": {
       "query-add-button": "Adicionar consulta",
