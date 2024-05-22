@@ -28,7 +28,7 @@ Before you begin creating and working with Grafana Teams:
   Refer to [Organization roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#organization-roles) and [RBAC permissions, actions, and scopes](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/#rbac-permissions-actions-and-scopes) for a list of Grafana roles and role-based access control actions.
 - Decide which users belong to which teams and what permissions team members receive.
 - Configure the default basic role for users to join Grafana. This role applies to users where no role is set by the identity provider (IDP).
-  - No basic role - by default cannot view any resources.
+  - No basic role - by default can't view any resources.
     Recommended for `isolated` teams.
   - Viewer role - by default can view all resources. Recommended for `collaborative` teams.
 - Ensure team sync is turned on if you plan to manage team members through team sync.
@@ -116,7 +116,7 @@ Delete a team when you no longer need it. This action permanently deletes the te
 
 <!-- ## Create isolated or collaborative teams
 
-Grafana Teams can either be `isolated` or `collaborative`. Isolated teams can only see their own resources. They cannot see other team’s dashboards, data, or alerts. Collaborative teams have access to other team’s resources. Grafana Cloud users must contact Support.
+Grafana Teams can either be `isolated` or `collaborative`. Isolated teams can only see their own resources. They can't see other team’s dashboards, data, or alerts. Collaborative teams have access to other team’s resources. Grafana Cloud users must contact Support.
 
 To create an isolated team add the following to the Grafana configuration file:
 

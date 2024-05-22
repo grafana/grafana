@@ -41,11 +41,11 @@ A Team grants permissions to a wide variety of resources including:
 - playlists
 
 {{< admonition type="note" >}}
-All members of a Grafana Team have the same exact permissions. A single Team cannot have members with different access levels to resources shared within that Team.
+All members of a Grafana Team have the same exact permissions. A single Team can't have members with different access levels to resources shared within that Team.
 {{< /admonition >}}
 
-A user can be a `Member` or an `Administrator` for a given Team. `Members` of a Team inherit permissions from the team, but they do not have team administrator privileges, and cannot edit the team itself. Team `Administrators` can add members to a team and update its settings, such as the team name, team member’s team roles, UI preferences, and home dashboard.
+A user can be a `Member` or an `Administrator` for a given Team. `Members` of a Team inherit permissions from the team, but they don't have team administrator privileges, and can't edit the team itself. Team `Administrators` can add members to a team and update its settings, such as the team name, team member’s team roles, UI preferences, and home dashboard.
 
-There are two types of Teams, `isolated` or `collaborative`. Isolated teams can only see their own resources. They cannot see other team’s resources like dashboards, data, or alerts. Collaborative teams have access to other team’s resources.
+There are two types of Teams, `isolated` or `collaborative`. Isolated teams can only see their own resources. They can't see other team’s resources like dashboards, data, or alerts. Collaborative teams have access to other team’s resources.
 
 For information about how to optimize Teams, refer to [How to best organize your teams and resources in Grafana](https://grafana.com/blog/2022/03/14/how-to-best-organize-your-teams-and-resources-in-grafana/).
