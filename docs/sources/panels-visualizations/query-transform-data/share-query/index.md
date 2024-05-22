@@ -12,6 +12,8 @@ description: Reduce the number of queries to your data source by sharing query r
 weight: 60
 refs:
   create-a-dashboard:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/
   query:
