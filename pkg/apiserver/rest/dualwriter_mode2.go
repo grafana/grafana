@@ -2,7 +2,6 @@ package rest
 
 import (
 	"context"
-	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
@@ -24,7 +23,7 @@ type DualWriterMode2 struct {
 	Log klog.Logger
 }
 
-var mode2 = strconv.Itoa(int(Mode2))
+const mode2Str = "2"
 
 // NewDualWriterMode2 returns a new DualWriter in mode 2.
 // Mode 2 represents writing to LegacyStorage and Storage and reading from LegacyStorage.
@@ -49,20 +48,22 @@ func (d *DualWriterMode2) Create(ctx context.Context, original runtime.Object, c
 	created, err := d.Legacy.Create(ctx, obj, createValidation, options)
 	if err != nil {
 		log.Error(err, "unable to create object in legacy storage")
-		d.recordLegacyDuration(true, mode2, options.Kind, method, startLegacy)
+		d.recordLegacyDuration(true, mode2Str, options.Kind, method, startLegacy)
 		return created, err
 	}
-	d.recordLegacyDuration(false, mode2, options.Kind, method, startLegacy)
+	d.recordLegacyDuration(false, mode2Str, options.Kind, method, startLegacy)
 
 	createdLegacy, err := enrichLegacyObject(original, created, true)
 	if err != nil {
 		return createdLegacy, err
 	}
 
+	startStorage := time.Now()
 	rsp, err := d.Storage.Create(ctx, created, createValidation, options)
 	if err != nil {
 		log.WithValues("name").Error(err, "unable to create object in storage")
 	}
+	d.recordStorageDuration(err != nil, mode2Str, options.Kind, method, startStorage)
 	return rsp, err
 }
 
@@ -72,18 +73,18 @@ func (d *DualWriterMode2) Get(ctx context.Context, name string, options *metav1.
 	ctx = klog.NewContext(ctx, log)
 	var method = "get"
 
-	startLegacy := time.Now().UTC()
+	startLegacy := time.Now()
 	res, err := d.Legacy.Get(ctx, name, options)
 	if err != nil {
 		log.Error(err, "unable to get object in legacy storage")
-		d.recordLegacyDuration(true, mode2, name, method, startLegacy)
+		d.recordLegacyDuration(true, mode2Str, name, method, startLegacy)
 		return res, err
 	}
-	d.recordLegacyDuration(false, mode2, name, method, startLegacy)
+	d.recordLegacyDuration(false, mode2Str, name, method, startLegacy)
 
-	startStorage := time.Now().UTC()
+	startStorage := time.Now()
 	res, err = d.Storage.Get(ctx, name, options)
-	d.recordStorageDuration(err != nil, mode2, name, method, startStorage)
+	d.recordStorageDuration(err != nil, mode2Str, name, method, startStorage)
 
 	return res, err
 }
@@ -95,14 +96,14 @@ func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion
 	ctx = klog.NewContext(ctx, log)
 	var method = "list"
 
-	startLegacy := time.Now().UTC()
+	startLegacy := time.Now()
 	ll, err := d.Legacy.List(ctx, options)
 	if err != nil {
 		log.Error(err, "unable to list objects from legacy storage")
-		d.recordLegacyDuration(true, mode2, options.Kind, method, startLegacy)
+		d.recordLegacyDuration(true, mode2Str, options.Kind, method, startLegacy)
 		return ll, err
 	}
-	d.recordLegacyDuration(false, mode2, options.Kind, method, startLegacy)
+	d.recordLegacyDuration(false, mode2Str, options.Kind, method, startLegacy)
 
 	legacyList, err := meta.ExtractList(ll)
 	if err != nil {
@@ -122,14 +123,14 @@ func (d *DualWriterMode2) List(ctx context.Context, options *metainternalversion
 		return ll, nil
 	}
 
-	startStorage := time.Now().UTC()
+	startStorage := time.Now()
 	sl, err := d.Storage.List(ctx, &optionsStorage)
 	if err != nil {
 		log.Error(err, "unable to list objects from storage")
-		d.recordStorageDuration(true, mode2, options.Kind, method, startStorage)
+		d.recordStorageDuration(true, mode2Str, options.Kind, method, startStorage)
 		return sl, err
 	}
-	d.recordStorageDuration(false, mode2, options.Kind, method, startStorage)
+	d.recordStorageDuration(false, mode2Str, options.Kind, method, startStorage)
 
 	storageList, err := meta.ExtractList(sl)
 	if err != nil {
@@ -159,12 +160,12 @@ func (d *DualWriterMode2) DeleteCollection(ctx context.Context, deleteValidation
 	ctx = klog.NewContext(ctx, log)
 	var method = "delete-collection"
 
-	startLegacy := time.Now().UTC()
+	startLegacy := time.Now()
 	deleted, err := d.Legacy.DeleteCollection(ctx, deleteValidation, options, listOptions)
 	if err != nil {
 		log.WithValues("deleted", deleted).Error(err, "failed to delete collection successfully from legacy storage")
 	}
-	d.recordLegacyDuration(err != nil, mode2, options.Kind, method, startLegacy)
+	d.recordLegacyDuration(err != nil, mode2Str, options.Kind, method, startLegacy)
 
 	legacyList, err := meta.ExtractList(deleted)
 	if err != nil {
@@ -181,10 +182,12 @@ func (d *DualWriterMode2) DeleteCollection(ctx context.Context, deleteValidation
 		return deleted, nil
 	}
 
+	startStorage := time.Now()
 	res, err := d.Storage.DeleteCollection(ctx, deleteValidation, options, &optionsStorage)
 	if err != nil {
 		log.WithValues("deleted", res).Error(err, "failed to delete collection successfully from Storage")
 	}
+	d.recordStorageDuration(err != nil, mode2Str, options.Kind, method, startStorage)
 
 	return res, err
 }
@@ -192,21 +195,27 @@ func (d *DualWriterMode2) DeleteCollection(ctx context.Context, deleteValidation
 func (d *DualWriterMode2) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	log := d.Log.WithValues("name", name, "kind", options.Kind)
 	ctx = klog.NewContext(ctx, log)
+	var method = "delete"
 
+	startLegacy := time.Now()
 	deletedLS, async, err := d.Legacy.Delete(ctx, name, deleteValidation, options)
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
 			log.WithValues("objectList", deletedLS).Error(err, "could not delete from legacy store")
+			d.recordLegacyDuration(true, mode2Str, options.Kind, method, startLegacy)
 			return deletedLS, async, err
 		}
 	}
+	d.recordLegacyDuration(false, mode2Str, options.Kind, method, startLegacy)
 
-	deletedS, _, errUS := d.Storage.Delete(ctx, name, deleteValidation, options)
-	if errUS != nil {
-		if !apierrors.IsNotFound(errUS) {
-			log.WithValues("objectList", deletedS).Error(errUS, "could not delete from duplicate storage")
+	startStorage := time.Now()
+	deletedS, _, err := d.Storage.Delete(ctx, name, deleteValidation, options)
+	if err != nil {
+		if !apierrors.IsNotFound(err) {
+			log.WithValues("objectList", deletedS).Error(err, "could not delete from duplicate storage")
 		}
 	}
+	d.recordStorageDuration(err != nil, mode2Str, options.Kind, method, startStorage)
 
 	return deletedLS, async, err
 }
@@ -233,11 +242,14 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 		return nil, false, err
 	}
 
+	startLegacy := time.Now()
 	obj, created, err := d.Legacy.Update(ctx, name, &updateWrapper{upstream: objInfo, updated: updated}, createValidation, updateValidation, forceAllowCreate, options)
 	if err != nil {
 		log.WithValues("object", obj).Error(err, "could not update in legacy storage")
+		d.recordLegacyDuration(true, mode2Str, options.Kind, "update", startLegacy)
 		return obj, created, err
 	}
+	d.recordLegacyDuration(false, mode2Str, options.Kind, "update", startLegacy)
 
 	// if the object is found, create a new updateWrapper with the object found
 	if foundObj != nil {
@@ -252,7 +264,13 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 		}
 	}
 
-	return d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+	startStorage := time.Now()
+	res, created, err := d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+	if err != nil {
+		log.WithValues("object", res).Error(err, "could not update in storage")
+	}
+	d.recordStorageDuration(err != nil, mode2Str, options.Kind, "update", startStorage)
+	return res, created, err
 }
 
 func (d *DualWriterMode2) Destroy() {
