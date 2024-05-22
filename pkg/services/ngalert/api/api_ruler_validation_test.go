@@ -414,7 +414,6 @@ func TestValidateRuleNode_NoUID(t *testing.T) {
 			limits: allowRecording(limits),
 			rule: func() *apimodels.PostableExtendedRuleNode {
 				r := validRule()
-				ConvertToRecordingRule(r)
 				r.GrafanaManagedAlert.Record = &apimodels.Record{Metric: "some_metric", From: "A"}
 				r.GrafanaManagedAlert.Condition = ""
 				r.GrafanaManagedAlert.NoDataState = ""
