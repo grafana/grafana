@@ -118,7 +118,7 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceU
 				return err
 			}
 			if totalGroups > 0 && len(deletionCandidates) == 0 {
-				return authz.NewAuthorizationErrorGeneric("delete any existing rules in the namespace")
+				return authz.NewAuthorizationErrorGeneric("delete any existing rules in the namespace due to missing data source query permissions")
 			}
 		}
 		rulesToDelete := make([]string, 0)
@@ -130,6 +130,7 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceU
 				provisioned = true
 				continue
 			}
+			// XXX: Currently delete requires data source query access to all rules in the group.
 			if err := srv.authz.AuthorizeDatasourceAccessForRuleGroup(ctx, c.SignedInUser, rules); err != nil {
 				if errors.Is(err, authz.ErrAuthorizationBase) {
 					logger.Debug("User is not authorized to delete rules in the group", "group", groupKey.RuleGroup)
