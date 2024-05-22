@@ -26,6 +26,37 @@ menuTitle: Panel editor overview
 title: Panel editor overview
 description: Learn about the features of the panel editor
 weight: 20
+refs:
+  transform-data:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/
+  add-a-query:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#add-a-query
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#add-a-query
+  share-the-same-query-results-across-panels:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/share-query/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/share-query/
+  table:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/table/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/table/
+  create-a-grafana-managed-alert:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/#create-alerts-from-panels
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule/#create-alerts-from-panels
+  the-overview-of-grafana-alerting:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
 ---
 
 # Panel editor overview
@@ -52,7 +83,7 @@ To access the panel editor, hover over the top-right corner of any panel. Click 
   - **Panel JSON**: Open the **Inspect** drawer in the **JSON** tab.
 - **Extensions**: Access other actions provided by installed applications, such as declaring an incident. Note that this option doesn't appear unless you have app plugins installed which contribute an [extension](https://grafana.com/developers/plugin-tools/ui-extensions/) to the panel menu.
 - **More**: Access other panel actions.
-  - **Duplicate**: Make a copy of the panel. Duplicated panels query data separately from the original panel. You can use the special `Dashboard` data source to [share the same query results across panels][] instead.
+  - **Duplicate**: Make a copy of the panel. Duplicated panels query data separately from the original panel. You can use the special `Dashboard` data source to [share the same query results across panels](ref:share-the-same-query-results-across-panels) instead.
   - **Copy**: Copy the panel to the clipboard.
   - **Create library panel**: Create a panel that can be imported into other dashboards.
   - **Create alert**: Open the alert rule configuration page in **Alerting**, where you can [create a Grafana-managed alert] based on the panel queries.
@@ -72,16 +103,16 @@ This section describes the areas of the Grafana panel editor.
 
 1. Visualization preview: The visualization preview section contains the following options:
 
-   - **Table view:** Convert any visualization to a table so you can see the data. Table views are helpful for troubleshooting. This view only contains the raw data. It doesn't include transformations you might have applied to the data or the formatting options available in the [Table][] visualization.
+   - **Table view:** Convert any visualization to a table so you can see the data. Table views are helpful for troubleshooting. This view only contains the raw data. It doesn't include transformations you might have applied to the data or the formatting options available in the [Table](ref:table) visualization.
    - **Fill:** The visualization preview fills the available space. If you change the width of the side pane or height of the bottom pane the visualization changes to fill the available space.
    - **Actual:** The visualization preview has the exact size as the size on the dashboard. If not enough space is available, the visualization scales down preserving the aspect ratio.
    - **Time range controls:** **Default** is either the browser local timezone or the timezone selected at a higher level.
 
 1. Data section: The data section contains tabs where you enter queries, transform your data, and create alert rules (if applicable).
 
-   - **Query tab:** Select your data source and enter queries here. For more information, refer to [Add a query][]. When you create a new dashboard, you'll be prompted to select a data source before you get to the panel editor. You set or update the data source in existing dashboards using the drop-down in the **Query** tab.
-   - **Transform tab:** Apply data transformations. For more information, refer to [Transform data][].
-   - **Alert tab:** Write alert rules. For more information, refer to [the overview of Grafana Alerting][].
+   - **Query tab:** Select your data source and enter queries here. For more information, refer to [Add a query](ref:add-a-query). When you create a new dashboard, you'll be prompted to select a data source before you get to the panel editor. You set or update the data source in existing dashboards using the drop-down in the **Query** tab.
+   - **Transform tab:** Apply data transformations. For more information, refer to [Transform data](ref:transform-data).
+   - **Alert tab:** Write alert rules. For more information, refer to [the overview of Grafana Alerting](ref:the-overview-of-grafana-alerting).
 
 1. Panel display options: The display options section contains tabs where you configure almost every aspect of your data visualization.
 
@@ -108,23 +139,3 @@ The panel inspector consists of the following options:
 1. **Query tab -** Shows you the requests to the server sent when Grafana queries the data source.
 
 1. **Error tab -** Shows the error. Only visible when query returns error.
-
-{{% docs/reference %}}
-[Table]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
-[Table]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
-
-[Transform data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/transform-data"
-[Transform data]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/transform-data"
-
-[Add a query]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data#add-a-query"
-[Add a query]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data#add-a-query"
-
-[the overview of Grafana Alerting]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting"
-[the overview of Grafana Alerting]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting"
-
-[share the same query results across panels]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/share-query"
-[share the same query results across panels]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/share-query"
-
-[create a Grafana-managed alert]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules/create-grafana-managed-rule#create-alerts-from-panels"
-[create a Grafana-managed alert]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule#create-alerts-from-panels"
-{{% /docs/reference %}}
