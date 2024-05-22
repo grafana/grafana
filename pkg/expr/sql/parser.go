@@ -40,6 +40,7 @@ func TablesList(rawSQL string) ([]string, error) {
 	return tablesFromAST(ast)
 }
 
+// tablesFromAST returns a list of tables from the ast
 func tablesFromAST(ast []map[string]any) ([]string, error) {
 	flat, err := flatten.Flatten(ast[0], "", flatten.DotStyle)
 	if err != nil {
