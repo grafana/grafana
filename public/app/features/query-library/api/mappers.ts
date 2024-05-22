@@ -1,3 +1,5 @@
+import { contextSrv } from 'app/core/core';
+
 import { AddQueryTemplateCommand, QueryTemplate } from '../types';
 
 import { API_VERSION, QueryTemplateKinds } from './query';
@@ -21,11 +23,17 @@ export const convertAddQueryTemplateCommandToDataQuerySpec = (
   addQueryTemplateCommand: AddQueryTemplateCommand
 ): DataQuerySpec => {
   const { title, targets } = addQueryTemplateCommand;
+  console.log(contextSrv.user);
   return {
     apiVersion: API_VERSION,
     kind: QueryTemplateKinds.QueryTemplate,
     metadata: {
       generateName: 'A' + title,
+      user: {
+        uid: contextSrv.user.uid,
+        login: contextSrv.user.login,
+        orgId: contextSrv.user.orgId,
+      },
     },
     spec: {
       title: title,

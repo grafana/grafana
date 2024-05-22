@@ -12,6 +12,7 @@ export type DataQuerySpec = {
     generateName: string;
     name?: string;
     creationTimestamp?: string;
+    user: User;
   };
   spec: {
     title: string;
@@ -23,4 +24,10 @@ export type DataQuerySpec = {
 export type DataQuerySpecResponse = {
   apiVersion: string;
   items: DataQuerySpec[];
+};
+
+export type User = {
+  uid: string;
+  orgId: number;
+  login: string;
 };
