@@ -107,7 +107,6 @@ func TestValidateDashboardExists(t *testing.T) {
 		err := s.ValidateDashboardExists(ctx, 1, "test")
 		require.Error(t, err)
 		require.Equal(t, dashboards.ErrDashboardNotFound, err)
-
 	})
 
 	t.Run("returns true when dashboard exists", func(t *testing.T) {
@@ -117,7 +116,6 @@ func TestValidateDashboardExists(t *testing.T) {
 		err = s.ValidateDashboardExists(ctx, 1, "test")
 		require.NoError(t, err)
 	})
-
 }
 
 func createDashboard(store db.DB) error {
