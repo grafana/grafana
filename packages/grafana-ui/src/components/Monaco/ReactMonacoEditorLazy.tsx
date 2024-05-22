@@ -23,7 +23,7 @@ const MonacoEditorLazy = (props: ReactMonacoEditorProps) => {
   );
 
   if (loading) {
-    return <LoadingPlaceholder text={''} className={styles.container} />;
+    return <LoadingPlaceholder text={'Loading editor'} className={styles.container} />;
   }
 
   if (error) {
