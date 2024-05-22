@@ -17,6 +17,12 @@ labels:
     - oss
 title: Notification policies
 weight: 113
+refs:
+  labels-and-label-matchers:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#how-label-matching-works
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/#how-label-matching-works
 ---
 
 # Notification policies
@@ -31,7 +37,7 @@ Notification policies are _not_ a list, but rather are structured according to a
 
 Each policy consists of a set of label matchers (0 or more) that specify which labels they are or aren't interested in handling.
 
-For more information on label matching, refer to [how label matching works][labels-and-label-matchers].
+For more information on label matching, refer to [how label matching works](ref:labels-and-label-matchers).
 
 {{% admonition type="note" %}}
 If you haven't configured any label matchers for your notification policy, your notification policy matches _all_ alert instances. This may prevent child policies from being evaluated unless you have enabled **Continue matching siblings** on the notification policy.
@@ -129,8 +135,3 @@ Once the first notification has been sent for a new group of alerts, the Group i
 Repeat interval decides how often notifications are repeated if the group has not changed since the last notification. You can think of these as reminders that some alerts are still firing. Repeat interval is closely related to Group interval, which means your Repeat interval must not only be greater than or equal to Group interval, but also must be a multiple of Group interval. If Repeat interval is not a multiple of Group interval it is coerced into one. For example, if your Group interval is 5 minutes, and your Repeat interval is 9 minutes, the Repeat interval is rounded up to the nearest multiple of 5 which is 10 minutes.
 
 **Default** 4 hours
-
-{{% docs/reference %}}
-[labels-and-label-matchers]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label#how-label-matching-works"
-[labels-and-label-matchers]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label#how-label-matching-works"
-{{% /docs/reference %}}
