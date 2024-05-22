@@ -71,7 +71,7 @@ export function getHasTimeChanged(saveModel: Dashboard, originalSaveModel: Dashb
   return saveModel.time?.from !== originalSaveModel.time?.from || saveModel.time?.to !== originalSaveModel.time?.to;
 }
 
-function adHocVariableFiltersEqual(a: AdHocVariableModel, b: AdHocVariableModel) {
+export function adHocVariableFiltersEqual(a: AdHocVariableModel, b: AdHocVariableModel) {
   if (a.filters.length !== b.filters.length) {
     return false;
   }
