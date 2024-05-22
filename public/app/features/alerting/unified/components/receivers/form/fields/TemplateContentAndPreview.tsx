@@ -32,8 +32,8 @@ export function TemplateContentAndPreview({
   const { selectedAlertmanager } = useAlertmanager();
   const isGrafanaAlertManager = selectedAlertmanager === GRAFANA_RULES_SOURCE_NAME;
 
-  const { data } = usePreviewTemplate(templateContent, templateName, payload, setPayloadFormatError);
-  const previewToRender = getPreviewResults(undefined, payloadFormatError, data);
+  const { data, error } = usePreviewTemplate(templateContent, templateName, payload, setPayloadFormatError);
+  const previewToRender = getPreviewResults(error, payloadFormatError, data);
 
   return (
     <div className={cx(styles.container, className)}>
