@@ -1,7 +1,7 @@
 ---
 aliases:
   -
-description: This document introduces Grafana Teams and concepts.
+description: This document introduces Grafana Teams and Teams concepts.
 labels:
   products:
     - enterprise
