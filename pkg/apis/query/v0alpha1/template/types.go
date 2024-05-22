@@ -22,6 +22,9 @@ type QueryTemplate struct {
 	// Output variables
 	// +listType=set
 	Targets []Target `json:"targets"`
+
+	// The user saving the template
+	User User  `json:"user"`
 }
 
 type Target struct {
@@ -109,4 +112,11 @@ type Position struct {
 
 	// End is the byte offset of the end of the variable.
 	End int64 `json:"end"`
+}
+
+type User struct {
+	uid		string `json:"uid"` 
+	orgId	int64  `json:"orgId"` 
+	// login is used as a human readable backup identifier in case the UID no longer exists
+	login	string `json:"login"` 
 }
