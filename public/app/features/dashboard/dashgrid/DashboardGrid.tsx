@@ -6,7 +6,6 @@ import { Subscription } from 'rxjs';
 import { config, getPanelAttentionSrv } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
-import { useGrafana } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/services/context_srv';
 import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardPanelsChangedEvent } from 'app/types/events';
@@ -32,7 +31,6 @@ export interface Props {
 interface State {
   panelFilter?: RegExp;
   width: number;
-  attention?: number;
 }
 
 export class DashboardGrid extends PureComponent<Props, State> {

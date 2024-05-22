@@ -1,12 +1,12 @@
 export type PanelWithAttention = number | null;
 
-export interface PanelAttentionSrv {
+export interface PanelAttentionSrv<T = any> {
   /**
    *
    * @param panelElement - the element close to where the panelId lives.
    */
   setPanelWithAttention(panelElement: HTMLElement | null): void;
-  getPanelWithAttention(): PanelWithAttention;
+  getPanelWithAttention(): PanelWithAttention | T;
 }
 
 let singletonInstance: PanelAttentionSrv;

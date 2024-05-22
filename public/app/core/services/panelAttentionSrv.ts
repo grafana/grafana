@@ -1,29 +1,38 @@
 import { PanelAttentionSrv, PanelWithAttention } from '@grafana/runtime';
+import { VizPanel } from '@grafana/scenes';
 
-export class PanelAttentionService implements PanelAttentionSrv {
-  getPanelWithAttention(): PanelWithAttention {
-    return this.getPanelId();
-  }
-  private elementWithAttention: HTMLElement | null = null;
-  setPanelWithAttention(panelElement: HTMLElement | null): void {
-    this.elementWithAttention = panelElement;
-  }
+export class PanelAttentionService implements PanelAttentionSrv<VizPanel> {
+  private panelId: PanelWithAttention = null;
+  private vizPanelWithAttention: VizPanel | null = null;
 
-  getElementWithAttention(): HTMLElement | null {
-    return this.elementWithAttention;
+  getPanelWithAttention(): PanelWithAttention | VizPanel {
+    return this.panelId || this.vizPanelWithAttention;
   }
 
-  private getPanelId(): number | null {
-    if (!this.elementWithAttention) {
-      return null;
+  setPanelWithAttention(panelElement: PanelWithAttention | VizPanel): void {
+    if (!panelElement) {
+      return;
+    }
+    if (panelElement instanceof HTMLElement) {
+      this.setPanelId(panelElement);
+      return;
     }
 
-    const panelWithAttention = this.elementWithAttention.closest('[data-panelid]');
+    this.vizPanelWithAttention = panelElement;
+  }
+
+  private setPanelId(panelElement: HTMLElement): void {
+    if (!panelElement) {
+      return;
+    }
+
+    const panelWithAttention = panelElement.closest('[data-panelid]');
 
     if (panelWithAttention instanceof HTMLElement && panelWithAttention.dataset?.panelid) {
-      return parseInt(panelWithAttention.dataset.panelid, 10);
+      this.panelId = parseInt(panelWithAttention.dataset.panelid, 10);
+      return;
     }
-    return null;
+    this.panelId = null;
   }
 }
 
