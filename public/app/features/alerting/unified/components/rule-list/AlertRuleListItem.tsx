@@ -276,6 +276,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background: theme.colors.background.primary,
 
     borderBottom: `solid 1px ${theme.colors.border.weak}`,
-    padding: `${theme.spacing(1)} ${theme.spacing(1.5)}`,
+    padding: theme.spacing(1, 1, 1, 1.5),
   }),
 });

@@ -21,7 +21,7 @@ const EvaluationGroup = ({ name, provenance, interval, onToggle, isOpen = false,
   const isProvisioned = Boolean(provenance);
 
   return (
-    <Stack direction="column" role="treeitem" aria-expanded={isOpen} aria-selected="false">
+    <Stack direction="column" role="treeitem" aria-expanded={isOpen} aria-selected="false" gap={0}>
       <div className={styles.headerWrapper}>
         <Stack direction="row" alignItems="center" gap={1}>
           <button className={cx(styles.hiddenButton, styles.largerClickTarget)} type="button" onClick={onToggle}>
