@@ -29,6 +29,7 @@ func PackFrontendPackages(ctx context.Context, tag, grafanaDir, artifactsDir str
 	}
 
 	nxJSONPath := filepath.Join(grafanaDir, "nx.json")
+	// nolint:gosec
 	nxJson, err := os.ReadFile(nxJSONPath)
 	if err != nil {
 		return fmt.Errorf("failed to read nx.json: %w", err)
