@@ -590,12 +590,6 @@ func (d *Duration) UnmarshalYAML(unmarshal func(any) error) error {
 	}
 }
 
-// Record defines how data produced by a recording rule is written.
-type Record struct {
-	Metric string `json:"metric" yaml:"metric"`
-	From   string `json:"from" yaml:"from"`
-}
-
 // swagger:model
 type UpdateRuleGroupResponse struct {
 	Message string   `json:"message"`

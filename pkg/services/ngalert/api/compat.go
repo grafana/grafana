@@ -32,7 +32,7 @@ func AlertRuleFromProvisionedAlertRule(a definitions.ProvisionedAlertRule) (mode
 		Labels:               a.Labels,
 		IsPaused:             a.IsPaused,
 		NotificationSettings: NotificationSettingsFromAlertRuleNotificationSettings(a.NotificationSettings),
-		Record:               AlertRuleRecordFromRecord(a.Record),
+		Record:               ModelRecordFromApiRecord(a.Record),
 	}, nil
 }
 
@@ -56,7 +56,7 @@ func ProvisionedAlertRuleFromAlertRule(rule models.AlertRule, provenance models.
 		Provenance:           definitions.Provenance(provenance), // TODO validate enum conversion?
 		IsPaused:             rule.IsPaused,
 		NotificationSettings: AlertRuleNotificationSettingsFromNotificationSettings(rule.NotificationSettings),
-		Record:               ApiRecordFromAlertRuleRecord(rule.Record),
+		Record:               ApiRecordFromModelRecord(rule.Record),
 	}
 }
 
@@ -456,26 +456,6 @@ func NotificationSettingsFromAlertRuleNotificationSettings(ns *definitions.Alert
 	}
 }
 
-func AlertRuleRecordFromRecord(r *definitions.Record) *models.Record {
-	if r == nil {
-		return nil
-	}
-	return &models.Record{
-		Metric: r.Metric,
-		From:   r.From,
-	}
-}
-
-func ApiRecordFromAlertRuleRecord(r *models.Record) *definitions.Record {
-	if r == nil {
-		return nil
-	}
-	return &definitions.Record{
-		Metric: r.Metric,
-		From:   r.From,
-	}
-}
-
 func AlertRuleRecordExportFromRecord(r *models.Record) *definitions.AlertRuleRecordExport {
 	if r == nil {
 		return nil
@@ -491,6 +471,16 @@ func ModelRecordFromApiRecord(r *definitions.Record) *models.Record {
 		return nil
 	}
 	return &models.Record{
+		Metric: r.Metric,
+		From:   r.From,
+	}
+}
+
+func ApiRecordFromModelRecord(r *models.Record) *definitions.Record {
+	if r == nil {
+		return nil
+	}
+	return &definitions.Record{
 		Metric: r.Metric,
 		From:   r.From,
 	}
