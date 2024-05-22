@@ -27,7 +27,7 @@ const MetaText = ({ children, icon, color = 'secondary', direction = 'row', ...r
     >
       <Text variant="bodySmall" color={color}>
         <Stack direction={direction} alignItems={alignItems} gap={gap} wrap={'wrap'}>
-          {icon && <Icon size="sm" name={icon} />}
+          {icon && <Icon size="xs" name={icon} />}
           {children}
         </Stack>
       </Text>
