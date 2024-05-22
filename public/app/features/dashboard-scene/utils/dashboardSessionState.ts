@@ -1,29 +1,25 @@
 import { UrlQueryMap, urlUtil } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { UrlSyncManager } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
 
-export function getPreservedSceneURLStateKey() {
-  return `grafana.dashboard.preservedUrlFiltersState`;
-}
+export const PRESERVED_SCENE_STATE_KEY = `grafana.dashboard.preservedUrlFiltersState`;
 
 export function restoreDashboardStateFromLocalStorage(dashboard: DashboardScene) {
-  const preservedUrlState = window.sessionStorage.getItem(getPreservedSceneURLStateKey());
+  const preservedUrlState = window.sessionStorage.getItem(PRESERVED_SCENE_STATE_KEY);
 
   if (preservedUrlState) {
     const preservedQueryParams = new URLSearchParams(preservedUrlState);
     const currentQueryParams = locationService.getSearch();
 
-    // iterate over current query params and append them to preserved query params
-    currentQueryParams.forEach((value, key) => {
-      preservedQueryParams.append(key, value);
+    // iterate over preserved query params and append them to current query params
+    preservedQueryParams.forEach((value, key) => {
+      currentQueryParams.append(key, value);
     });
 
     // remove duplicate query params
-    const deduplicatedQueryParams = deduplicateQueryParams(preservedQueryParams);
+    const deduplicatedQueryParams = deduplicateQueryParams(currentQueryParams);
 
-    // iterate over deduplicatedQueryParams.keys() and log them
     for (const key of Array.from(deduplicatedQueryParams.keys())) {
       // preserve non-variable query params, i.e. time range
       if (!key.startsWith('var-')) {
@@ -61,7 +57,6 @@ export function preserveDashboardSceneStateInLocalStorage(scene: DashboardScene)
     const variables = scene.state.$variables?.state.variables;
     const timeRange = scene.state.$timeRange;
 
-    console.log(new UrlSyncManager().getUrlState(scene));
     let urlStates: UrlQueryMap = variables
       ? variables.reduce((acc, v) => {
           const urlState = v.urlSync?.getUrlState();
@@ -85,9 +80,9 @@ export function preserveDashboardSceneStateInLocalStorage(scene: DashboardScene)
 
     // If there's anything to preserve, save it to local storage
     if (Object.keys(nonEmptyUrlStates).length > 0) {
-      window.sessionStorage.setItem(getPreservedSceneURLStateKey(), urlUtil.renderUrl('', nonEmptyUrlStates));
+      window.sessionStorage.setItem(PRESERVED_SCENE_STATE_KEY, urlUtil.renderUrl('', nonEmptyUrlStates));
     } else {
-      window.sessionStorage.removeItem(getPreservedSceneURLStateKey());
+      window.sessionStorage.removeItem(PRESERVED_SCENE_STATE_KEY);
     }
   };
 }
@@ -95,19 +90,25 @@ export function preserveDashboardSceneStateInLocalStorage(scene: DashboardScene)
 function deduplicateQueryParams(params: URLSearchParams): URLSearchParams {
   const seen: { [key: string]: Set<string> } = {};
   // Iterate over the query params and store unique values
-  params.forEach((value, key) => {
+  for (const [key, value] of params.entries()) {
     if (!seen[key]) {
       seen[key] = new Set();
     }
+    // if time range params were already captured, ignore next
+    if (['from', 'to', 'timezone'].includes(key) && seen[key].size > 0) {
+      continue;
+    }
+
     seen[key].add(value);
-  });
+  }
 
   // Construct a new URLSearchParams object with deduplicated parameters
   const deduplicatedParams = new URLSearchParams();
+
   for (const key in seen) {
-    seen[key].forEach((value) => {
+    for (const value of seen[key]) {
       deduplicatedParams.append(key, value);
-    });
+    }
   }
 
   return deduplicatedParams;
