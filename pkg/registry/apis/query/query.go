@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -87,28 +86,22 @@ func (r *queryREST) Connect(ctx context.Context, name string, opts runtime.Objec
 	b := r.builder
 
 	return http.HandlerFunc(func(w http.ResponseWriter, httpreq *http.Request) {
-		start := time.Now()
 		ctx, span := b.tracer.Start(httpreq.Context(), "QueryService.Query")
 		defer span.End()
-
-		logger := r.logger.FromContext(ctx)
 
 		responder := newResponderWrapper(incomingResponder,
 			func(statusCode int, obj runtime.Object) {
 				if statusCode >= 400 {
 					span.SetStatus(codes.Error, fmt.Sprintf("error with HTTP status code %s", strconv.Itoa(statusCode)))
 				}
-
-				logRequest(logger, start, statusCode)
 			},
 			func(err error) {
-				span.SetStatus(codes.Error, "request failed")
+				span.SetStatus(codes.Error, "query error")
 				if err == nil {
 					return
 				}
 
 				span.RecordError(err)
-				logRequestError(logger, start, err)
 			})
 
 		raw := &query.QueryDataRequest{}
@@ -309,7 +302,7 @@ func (b *QueryAPIBuilder) executeConcurrentQueries(ctx context.Context, requests
 // Unlike the implementation in expr/node.go, all datasource queries have been processed first
 func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedRequestInfo, data *backend.QueryDataResponse) (qdr *backend.QueryDataResponse, err error) {
 	start := time.Now()
-	ctx, span := b.tracer.Start(ctx, "SSE.handleExpressions")
+	ctx, span := b.tracer.Start(ctx, "Query.handleExpressions")
 	defer func() {
 		var respStatus string
 		switch {
@@ -370,30 +363,6 @@ func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedReque
 	return qdr, nil
 }
 
-// logRequest short-term hack until k8s have added support for traceIDs in request logs.
-func logRequest(logger log.Logger, startTime time.Time, statusCode int) {
-	duration := time.Since(startTime)
-	logger.Debug("Query request completed", "status", statusCode, "duration", duration.String())
-}
-
-func logRequestError(logger log.Logger, startTime time.Time, err error) {
-	var args []any
-	var gfErr errutil.Error
-	if !errors.As(err, &gfErr) {
-		args = []any{"error", err.Error()}
-	} else {
-		args = []any{
-			"errorReason", gfErr.Reason,
-			"errorMessageID", gfErr.MessageID,
-			"error", gfErr.LogMessage,
-		}
-	}
-
-	duration := time.Since(startTime)
-	args = append(args, "duration", duration.String())
-	logger.Error("Query request completed", args...)
-}
-
 type responderWrapper struct {
 	wrapped    rest.Responder
 	onObjectFn func(statusCode int, obj runtime.Object)
@@ -409,11 +378,17 @@ func newResponderWrapper(responder rest.Responder, onObjectFn func(statusCode in
 }
 
 func (r responderWrapper) Object(statusCode int, obj runtime.Object) {
-	r.onObjectFn(statusCode, obj)
+	if r.onObjectFn != nil {
+		r.onObjectFn(statusCode, obj)
+	}
+
 	r.wrapped.Object(statusCode, obj)
 }
 
 func (r responderWrapper) Error(err error) {
-	r.onErrorFn(err)
+	if r.onErrorFn != nil {
+		r.onErrorFn(err)
+	}
+
 	r.wrapped.Error(err)
 }
