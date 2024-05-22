@@ -441,8 +441,8 @@ func (s *Service) isProviderConfigurable(provider string) bool {
 func removeSecrets(settings map[string]any) map[string]any {
 	result := make(map[string]any)
 	for k, v := range settings {
-		_, ok := v.(string)
-		if ok && IsSecretField(k) {
+		val, ok := v.(string)
+		if ok && val != "" && IsSecretField(k) {
 			result[k] = setting.RedactedPassword
 			continue
 		}
