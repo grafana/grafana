@@ -17,30 +17,6 @@ describe('getTemplateOptions function', () => {
 
     const result = getTemplateOptions(templateFiles);
 
-    expect(result).toEqual([
-      {
-        label: 'template1',
-        value: {
-          name: 'template1',
-          content:
-            '{{ define "template1" }}{{ len .Alerts.Firing }} firing alert(s), {{ len .Alerts.Resolved }} resolved alert(s) this is the last one{{ end }}',
-        },
-      },
-      {
-        label: 'email.subject',
-        value: {
-          name: 'email.subject',
-          content:
-            '{{ define "email.subject" }}{{ len .Alerts.Firing }} firing alert(s), {{ len .Alerts.Resolved }} resolved alert(s){{ end }}',
-        },
-      },
-      {
-        label: 'template_with_minus',
-        value: {
-          name: 'template_with_minus',
-          content: '{{ define "template_with_minus" -}}{{ .Annotations.summary }}{{- end }}',
-        },
-      },
-    ]);
+    expect(result).toMatchSnapshot();
   });
 });

@@ -81,28 +81,106 @@ type TemplateFieldOption = 'Existing' | 'Custom';
  * @param templatesString is a string containing the template content. Each template is defined within
  * "{{ define "templateName" }}" and "{{ end }}" delimiters.
  */
+
 function parseTemplates(templatesString: string): Template[] {
   const result: Template[] = [];
-  const regex = /({{-?\s*define "(.*?)"\s*-?}}(.*?){{-?\s*end\s*-?}})/gs;
+  const stack: Array<{ type: string; startIndex: number; name?: string }> = [];
+  const regex = /{{(-?\s*)(define|end|if|range|else|with)(\s*.*?)?(-?\s*)}}/gs;
 
   let match;
+  let currentIndex = 0;
+
   while ((match = regex.exec(templatesString)) !== null) {
-    result.push({
-      name: match[2],
-      content: match[1],
-    });
+    // for each match in the template string (each match as define, end, if, range, else or with)
+    const [, , keyword, middleContent] = match;
+    currentIndex = match.index;
+
+    if (keyword === 'define') {
+      // if the keyword is define, we need to extract the name
+      const nameMatch = middleContent?.match(/"([^"]+)"/); // extract the name from the middle content
+      if (nameMatch) {
+        // name is required
+        // push the define block to the stack
+        stack.push({ type: 'define', startIndex: currentIndex, name: nameMatch[1] }); // save the start index and the name of the define block
+      }
+    } else if (keyword === 'end') {
+      // if the keyword is end, we need to pop the stack until we find the corresponding define block
+      let top = stack.pop();
+      while (top && top.type !== 'define' && top.type !== 'if' && top.type !== 'range' && top.type !== 'with') {
+        top = stack.pop();
+      }
+      if (top) {
+        const endIndex = regex.lastIndex;
+        if (top.type === 'define' && !top.name?.startsWith('__')) {
+          // if the top of the stack is a define block, we need to save the content. We exclude the internal templates starting with __
+          result.push({
+            name: top.name!,
+            content: templatesString.slice(top.startIndex, endIndex),
+          });
+        }
+      }
+    } else if (keyword === 'if' || keyword === 'range' || keyword === 'else' || keyword === 'with') {
+      // if the keyword is if, range, else or with, we need to push it to the stack
+      stack.push({ type: keyword, startIndex: currentIndex });
+    }
   }
 
   return result;
 }
+// We need to use this constat until we have an API to get the default templates
+export const DEFAULT_TEMPLATES = `{{ define "__subject" }}[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ if gt (.Alerts.Resolved | len) 0 }}, RESOLVED:{{ .Alerts.Resolved | len }}{{ end }}{{ end }}] {{ .GroupLabels.SortedPairs.Values | join " " }} {{ if gt (len .CommonLabels) (len .GroupLabels) }}({{ with .CommonLabels.Remove .GroupLabels.Names }}{{ .Values | join " " }}{{ end }}){{ end }}{{ end }}
 
-/* *
- * This function parses the content of the template files and returns an array of SelectableValue<Template> objects.
- * If the content contains multiple definitions with the same name, only the last definition is kept.
- * This is because in the case of duplicate template names, the last one overrides the previous ones.
- *
- */
+{{ define "__text_values_list" }}{{ if len .Values }}{{ $first := true }}{{ range $refID, $value := .Values -}}
+{{ if $first }}{{ $first = false }}{{ else }}, {{ end }}{{ $refID }}={{ $value }}{{ end -}}
+{{ else }}[no value]{{ end }}{{ end }}
+
+{{ define "__text_alert_list" }}{{ range . }}
+Value: {{ template "__text_values_list" . }}
+Labels:
+{{ range .Labels.SortedPairs }} - {{ .Name }} = {{ .Value }}
+{{ end }}Annotations:
+{{ range .Annotations.SortedPairs }} - {{ .Name }} = {{ .Value }}
+{{ end }}{{ if gt (len .GeneratorURL) 0 }}Source: {{ .GeneratorURL }}
+{{ end }}{{ if gt (len .SilenceURL) 0 }}Silence: {{ .SilenceURL }}
+{{ end }}{{ if gt (len .DashboardURL) 0 }}Dashboard: {{ .DashboardURL }}
+{{ end }}{{ if gt (len .PanelURL) 0 }}Panel: {{ .PanelURL }}
+{{ end }}{{ end }}{{ end }}
+
+{{ define "default.title" }}{{ template "__subject" . }}{{ end }}
+
+{{ define "default.message" }}{{ if gt (len .Alerts.Firing) 0 }}**Firing**
+{{ template "__text_alert_list" .Alerts.Firing }}{{ if gt (len .Alerts.Resolved) 0 }}
+
+{{ end }}{{ end }}{{ if gt (len .Alerts.Resolved) 0 }}**Resolved**
+{{ template "__text_alert_list" .Alerts.Resolved }}{{ end }}{{ end }}
+
+{{ define "__teams_text_alert_list" }}{{ range . }}
+Value: {{ template "__text_values_list" . }}
+Labels:
+{{ range .Labels.SortedPairs }} - {{ .Name }} = {{ .Value }}
+{{ end }}
+Annotations:
+{{ range .Annotations.SortedPairs }} - {{ .Name }} = {{ .Value }}
+{{ end }}
+{{ if gt (len .GeneratorURL) 0 }}Source: [{{ .GeneratorURL }}]({{ .GeneratorURL }})
+
+{{ end }}{{ if gt (len .SilenceURL) 0 }}Silence: [{{ .SilenceURL }}]({{ .SilenceURL }})
+
+{{ end }}{{ if gt (len .DashboardURL) 0 }}Dashboard: [{{ .DashboardURL }}]({{ .DashboardURL }})
+
+{{ end }}{{ if gt (len .PanelURL) 0 }}Panel: [{{ .PanelURL }}]({{ .PanelURL }})
+
+{{ end }}
+{{ end }}{{ end }}
+
+{{ define "teams.default.message" }}{{ if gt (len .Alerts.Firing) 0 }}**Firing**
+{{ template "__teams_text_alert_list" .Alerts.Firing }}{{ if gt (len .Alerts.Resolved) 0 }}
+
+{{ end }}{{ end }}{{ if gt (len .Alerts.Resolved) 0 }}**Resolved**
+{{ template "__teams_text_alert_list" .Alerts.Resolved }}{{ end }}{{ end }}`;
+
 export function getTemplateOptions(templateFiles: Record<string, string>): Array<SelectableValue<Template>> {
+  // Add default templates
   const templateMap = new Map();
   Object.entries(templateFiles).forEach(([_, content]) => {
     const templates: Template[] = parseTemplates(content);
@@ -116,6 +194,18 @@ export function getTemplateOptions(templateFiles: Record<string, string>): Array
       });
     });
   });
+  // Add default templates to the map
+  const defaultTemplates = parseTemplates(DEFAULT_TEMPLATES);
+  defaultTemplates.forEach((template) => {
+    templateMap.set(template.name, {
+      label: template.name,
+      value: {
+        name: template.name,
+        content: template.content,
+      },
+    });
+  });
+  // return the sum of default and custom templates
   return Array.from(templateMap.values());
 }
 
