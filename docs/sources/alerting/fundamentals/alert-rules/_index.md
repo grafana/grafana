@@ -2,8 +2,11 @@
 aliases:
   - ../fundamentals/data-source-alerting/ # /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/data-source-alerting/
   - ../fundamentals/alert-rules/alert-instances/ # /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/alert-instances/
+  - ../fundamentals/alert-rules/organising-alerts/ # /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/organising-alerts/
   - ../fundamentals/alert-rules/recording-rules/ # /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/recording-rules/
   - ../fundamentals/alert-rules/alert-rule-types/ # /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/alert-rule-types/
+  - ../unified-alerting/alerting-rules/edit-cortex-loki-namespace-group/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/alerting-rules/edit-cortex-loki-namespace-group/
+  - ../unified-alerting/alerting-rules/edit-mimir-loki-namespace-group/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/alerting-rules/edit-mimir-loki-namespace-group/
 canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/
 description: Learn about alert rules
 keywords:
@@ -116,5 +119,7 @@ When choosing which alert rule type to use, consider the following comparison be
 | Includes support for recording rules                                           | No                                                                                                                           | Yes                                                                                                                                                     |
 | Add expressions to transform<wbr /> your data and set alert conditions         | Yes                                                                                                                          | No                                                                                                                                                      |
 | Use images in alert notifications                                              | Yes                                                                                                                          | No                                                                                                                                                      |
+| Organization                                                                   | Organize and manage access with folders                                                                                      | Use namespaces                                                                                                                                          |
+| Evaluation of alert rules in the same evaluation group                         | Concurrent evaluation                                                                                                        | Sequential evaluation                                                                                                                                   |
 | Scaling                                                                        | More resource intensive, depend on the database, and are likely to suffer from transient errors. They only scale vertically. | Store alert rules within the data source itself and allow for “infinite” scaling. Generate and send alert notifications from the location of your data. |
 | Alert rule evaluation and delivery                                             | Alert rule evaluation and delivery is done from within Grafana, using an external Alertmanager; or both.                     | Alert rule evaluation and alert delivery is distributed, meaning there is no single point of failure.                                                   |

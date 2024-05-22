@@ -24,11 +24,11 @@ While Grafana offers a variety of authentication providers, you can only configu
 
 This guide explains how to set up multiple providers of the same type with Keycloak as an authentication provider in Grafana.
 
-The idea is to setup multiple OIDC providers in Keycloak with different tenants and configure Grafana to use the same Keycloak instance as the authentication provider.
+The idea is to set up multiple OIDC providers in Keycloak with different tenants and configure Grafana to use the same Keycloak instance as the authentication provider.
 
 ## Azure AD configuration
 
-For Azure AD, the following steps should be repeated for each of the tenants we want to setup in Keycloak.
+For Azure AD, repeat the following steps for each tenant you want to set up in Keycloak.
 
 ### Overview
 
@@ -50,7 +50,7 @@ Registering an application in Azure AD is a one-time process. You can follow the
 
 Assigning the correct access to users ensures only intended users or groups have access to the application.
 
-1. Search for **Enterprise Applications** and look for the application we just created in the previous step.
+1. Search for **Enterprise Applications** and look for the application you just created in the previous step.
 1. Under the **Manage** section, click on **Users and groups**.
 1. Click on **Add user/group** and add the users or groups that should have access to the application.
 
@@ -58,7 +58,7 @@ Assigning the correct access to users ensures only intended users or groups have
 
 To authenticate with Azure AD, the Keycloak application needs a client ID and client secret.
 
-1. Search for **App Registrations** and look for the application we just created.
+1. Search for **App Registrations** and look for the application ypu just created.
 1. Click on **Certificates & Secrets**.
 1. Click on **New client secret** and fill in the details. Make sure to copy the secret value as it will not be shown again.
 
@@ -74,22 +74,22 @@ To authenticate with Azure AD, the Keycloak application needs a client ID and cl
    1. Add a **new platform** and select **Web**.
    1. Paste the **Redirect URI** from Keycloak.
    1. Save the changes.
-   1. Head over to the Azure Application overview and look for the **Endpoints** tab.
+   1. Navigate to the Azure Application overview and look for the **Endpoints** tab.
    1. Copy the **OpenID Connect metadata document** URL.
    1. Head back to Keycloak and paste the URL in the **Discovery endpoint** field.
-   1. Head over to the Azure application overview and look for the **Application (client) ID**.
+   1. Navigate to the Azure application overview and look for the **Application (client) ID**.
    1. Copy the **Application ID** and paste it in the **Client ID** field in Keycloak.
-   1. Paste the client secret we created in the previous step in the **Client secret** field.
+   1. Paste the client secret you created in the previous step in the **Client secret** field.
    1. Click Add.
 
 {{% admonition type="note" %}}
-Up to this point, we have created an App Registration in Azure AD, assigned users to the application, created credentials for the application, and configured the application in Keycloak. In the Keycloak Client's section, the client with ID `account` Home URL can be used to test the configuration. This will open a new tab where we can login into the correct Keycloak realm with the Azure AD tenant we just configured.
+Up to this point, you have created an App Registration in Azure AD, assigned users to the application, created credentials for the application, and configured the application in Keycloak. In the Keycloak Client's section, the client with ID `account` Home URL can be used to test the configuration. This will open a new tab where you can login into the correct Keycloak realm with the Azure AD tenant you just configured.
 {{% /admonition %}}
 
 Repeat this steps, for every Azure AD tenant you want to configure in Keycloak.
 
 #### Configure Grafana to use Keycloak
 
-Now that the Azure AD tenants are configured in Keycloak, we can configure Grafana to use Keycloak as the authentication provider.
+Now that the Azure AD tenants are configured in Keycloak, you can configure Grafana to use Keycloak as the authentication provider.
 
 Refer to the [Keycloak documentation](https://grafana.com/docs/grafana/latest/auth/keycloak/) to configure Grafana to use Keycloak as the authentication provider.

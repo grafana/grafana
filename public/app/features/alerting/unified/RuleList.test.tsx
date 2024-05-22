@@ -462,7 +462,7 @@ describe('RuleList', () => {
 
     expect(ruleDetails).toHaveTextContent('Expressiontopk ( 5 , foo ) [ 5m ]');
     expect(ruleDetails).toHaveTextContent('messagegreat alert');
-    expect(ruleDetails).toHaveTextContent('Matching instances');
+    expect(ruleDetails).toHaveTextContent('Instances');
 
     // finally, check instances table
     const instancesTable = byTestId('dynamic-table').get(ruleDetails);

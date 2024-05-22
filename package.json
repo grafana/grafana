@@ -56,9 +56,9 @@
     "betterer:stats": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/reportBettererStats.ts",
     "betterer:issues": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/generateBettererIssues.ts",
     "generate-icons-bundle-cache-file": "node ./scripts/generate-icon-bundle.js",
-    "plugin:build": "nx run-many -t build --projects='@grafana-plugins/*' --exclude \"@grafana-plugins/input-datasource\"",
-    "plugin:build:commit": "nx run-many -t build:commit --projects='@grafana-plugins/*' --exclude \"@grafana-plugins/input-datasource\"",
-    "plugin:build:dev": "nx run-many -t dev --projects='@grafana-plugins/*' --exclude \"@grafana-plugins/input-datasource\"",
+    "plugin:build": "nx run-many -t build --projects='@grafana-plugins/*'",
+    "plugin:build:commit": "nx run-many -t build:commit --projects='@grafana-plugins/*'",
+    "plugin:build:dev": "nx run-many -t dev --projects='@grafana-plugins/*' --maxParallel=100",
     "generate-icons": "yarn workspace @grafana/saga-icons generate",
     "generate-apis": "rtk-query-codegen-openapi ./scripts/generate-rtk-apis.ts"
   },

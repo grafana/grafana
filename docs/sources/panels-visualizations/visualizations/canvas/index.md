@@ -15,6 +15,17 @@ labels:
     - oss
 title: Canvas
 weight: 100
+refs:
+  data-links:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-data-links/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-data-links/
+  add-field-from-calculation-transform:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation
 ---
 
 # Canvas
@@ -153,7 +164,7 @@ The inline editing toggle lets you lock or unlock the canvas. When turned off th
 
 ### Data links
 
-Canvases support [data links][] for all elements except drone and button elements. You can add a data link by following these steps:
+Canvases support [data links](ref:data-links) for all elements except drone and button elements. You can add a data link by following these steps:
 
 1. Set an element to be tied to a field value.
 1. Turn off the inline editing toggle.
@@ -164,7 +175,7 @@ Canvases support [data links][] for all elements except drone and button element
 1. Hover over the element to display the data link tooltip.
 1. Click on the element to be able to open the data link.
 
-If multiple elements use the same field name, and you want to control which elements display the data link, you can create a unique field name using the [add field from calculation transform][]. The alias you create in the transformation will appear as a field you can use with an element.
+If multiple elements use the same field name, and you want to control which elements display the data link, you can create a unique field name using the [add field from calculation transform](ref:add-field-from-calculation-transform). The alias you create in the transformation will appear as a field you can use with an element.
 
 1. In the panel editor for the canvas, click the **Transform** tab.
 1. Select **Add field from calculation** from the list of transformations, or click **+ Add transformation** to display the list first.
@@ -194,11 +205,3 @@ If multiple elements use the same field name, and you want to control which elem
 ## Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-{{% docs/reference %}}
-[data links]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-data-links"
-[data links]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-data-links"
-
-[add field from calculation transform]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data#add-field-from-calculation"
-[add field from calculation transform]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data#add-field-from-calculation"
-{{% /docs/reference %}}
