@@ -1,15 +1,15 @@
 import { UrlQueryMap, urlUtil } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import store from 'app/core/store';
+import { UrlSyncManager } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
 
 export function getPreservedSceneURLStateKey() {
-  return `grafana.dashboard.preservedUrlFiltersState[${window.name}]`;
+  return `grafana.dashboard.preservedUrlFiltersState`;
 }
 
 export function restoreDashboardStateFromLocalStorage(dashboard: DashboardScene) {
-  const preservedUrlState = store.get(getPreservedSceneURLStateKey());
+  const preservedUrlState = window.sessionStorage.getItem(getPreservedSceneURLStateKey());
 
   if (preservedUrlState) {
     const preservedQueryParams = new URLSearchParams(preservedUrlState);
@@ -61,6 +61,7 @@ export function preserveDashboardSceneStateInLocalStorage(scene: DashboardScene)
     const variables = scene.state.$variables?.state.variables;
     const timeRange = scene.state.$timeRange;
 
+    console.log(new UrlSyncManager().getUrlState(scene));
     let urlStates: UrlQueryMap = variables
       ? variables.reduce((acc, v) => {
           const urlState = v.urlSync?.getUrlState();
@@ -84,9 +85,9 @@ export function preserveDashboardSceneStateInLocalStorage(scene: DashboardScene)
 
     // If there's anything to preserve, save it to local storage
     if (Object.keys(nonEmptyUrlStates).length > 0) {
-      store.set(getPreservedSceneURLStateKey(), urlUtil.renderUrl('', nonEmptyUrlStates));
+      window.sessionStorage.setItem(getPreservedSceneURLStateKey(), urlUtil.renderUrl('', nonEmptyUrlStates));
     } else {
-      store.delete(getPreservedSceneURLStateKey());
+      window.sessionStorage.removeItem(getPreservedSceneURLStateKey());
     }
   };
 }

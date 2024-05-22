@@ -70,14 +70,12 @@ import { GAEchoBackend } from './core/services/echo/backends/analytics/GABackend
 import { RudderstackBackend } from './core/services/echo/backends/analytics/RudderstackBackend';
 import { GrafanaJavascriptAgentBackend } from './core/services/echo/backends/grafana-javascript-agent/GrafanaJavascriptAgentBackend';
 import { KeybindingSrv } from './core/services/keybindingSrv';
-import store from './core/store';
 import { startMeasure, stopMeasure } from './core/utils/metrics';
 import { initDevFeatures } from './dev';
 import { initAlerting } from './features/alerting/unified/initAlerting';
 import { initAuthConfig } from './features/auth-config';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { EmbeddedDashboardLazy } from './features/dashboard-scene/embedding/EmbeddedDashboardLazy';
-import { getPreservedSceneURLStateKey } from './features/dashboard-scene/utils/dashboardSessionState';
 import { initGrafanaLive } from './features/live';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
@@ -257,19 +255,6 @@ export class GrafanaApp {
       };
 
       setReturnToPreviousHook(useReturnToPreviousInternal);
-
-      if (config.featureToggles.preserveDashboardStateWhenNavigating) {
-        // Generate unique tab id to identify tab specific preserved variables
-        if (!window.name) {
-          window.name = 'grafanaTab-' + Math.random().toString(36).substr(2, 9);
-        }
-
-        // Clear the preserved variables and time range when navigating away from Grafana
-        window.addEventListener('beforeunload', () => {
-          store.delete(getPreservedSceneURLStateKey());
-          window.name = '';
-        });
-      }
 
       const root = createRoot(document.getElementById('reactRoot')!);
       root.render(
