@@ -85,7 +85,7 @@ describe('getLogLevelFromKey()', () => {
     it('returns unknown log level when level is an unexpected integer', () => {
       expect(getLogLevelFromKey('8')).toBe(LogLevel.unknown);
     });
-  })
+  });
 });
 
 describe('calculateLogsLabelStats()', () => {

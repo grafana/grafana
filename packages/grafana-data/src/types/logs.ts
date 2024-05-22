@@ -46,7 +46,7 @@ export const NumericLogLevel: Record<string, LogLevel> = {
   '5': LogLevel.info,
   '6': LogLevel.info,
   '7': LogLevel.debug,
-}
+};
 
 // Used for meta information such as common labels or returned log rows in logs view in Explore
 export enum LogsMetaKind {
