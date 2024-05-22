@@ -43,8 +43,8 @@ describe('LokiQueryCodeEditor', () => {
     const props = createDefaultProps();
     props.datasource.metadataRequest = jest.fn().mockResolvedValue([]);
     render(<LokiQueryCodeEditor {...props} query={defaultQuery} />);
-    const monacoEditorLoading = await screen.findByTestId(selectors.components.ReactMonacoEditor.container);
-    expect(monacoEditorLoading).toBeInTheDocument();
+    const monacoEditor = await screen.findByTestId(selectors.components.ReactMonacoEditor.container);
+    expect(monacoEditor).toBeInTheDocument();
     expect(screen.queryByText(EXPLAIN_LABEL_FILTER_CONTENT)).not.toBeInTheDocument();
   });
 });
