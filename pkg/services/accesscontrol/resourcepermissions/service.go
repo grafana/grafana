@@ -375,7 +375,9 @@ type ActionSetService interface {
 	// We use an ActionResolver interface to avoid circular dependencies
 	accesscontrol.ActionResolver
 
+	// ResolveAction returns all the action sets that the action belongs to.
 	ResolveAction(action string) []string
+	// ResolveActionSet resolves an action set to a list of corresponding actions.
 	ResolveActionSet(actionSet string) []string
 
 	StoreActionSet(resource, permission string, actions []string)
