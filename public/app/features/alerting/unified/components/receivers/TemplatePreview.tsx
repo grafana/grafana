@@ -110,11 +110,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     container: css({
       display: 'flex',
       flexDirection: 'column',
+      height: 'inherit',
     }),
     box: css({
       display: 'flex',
       flexDirection: 'column',
       borderBottom: `1px solid ${theme.colors.border.medium}`,
+      height: 'inherit',
     }),
     header: css({
       fontSize: theme.typography.bodySmall.fontSize,

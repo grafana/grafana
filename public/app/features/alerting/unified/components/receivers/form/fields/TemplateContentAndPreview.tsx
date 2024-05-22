@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 import React from 'react';
+import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Box, useStyles2 } from '@grafana/ui';
@@ -7,6 +8,7 @@ import { useAlertmanager } from 'app/features/alerting/unified/state/Alertmanage
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 
 import { EditorColumnHeader } from '../../../contact-points/templates/EditorColumnHeader';
+import { TemplateEditor } from '../../TemplateEditor';
 import { getPreviewResults } from '../../TemplatePreview';
 import { usePreviewTemplate } from '../../usePreviewTemplate';
 
@@ -38,7 +40,17 @@ export function TemplateContentAndPreview({
       <EditorColumnHeader label="Template content" />
       <Box flex={1}>
         <div className={styles.viewerContainer({ height: 400 })}>
-          <div className={styles.templateContent}>{templateContent}</div>
+          <AutoSizer>
+            {({ width, height }) => (
+              <TemplateEditor
+                value={templateContent}
+                containerStyles={styles.editorContainer}
+                width={width}
+                height={height}
+                readOnly
+              />
+            )}
+          </AutoSizer>
         </div>
       </Box>
 
@@ -46,7 +58,7 @@ export function TemplateContentAndPreview({
         <>
           <EditorColumnHeader label="Preview with the default payload" />
           <Box flex={1}>
-            <div className={styles.viewerContainer({ height: 500 })}>{previewToRender}</div>
+            <div className={styles.viewerContainer({ height: 300 })}>{previewToRender}</div>
           </Box>
         </>
       )}
@@ -97,4 +109,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
       padding: theme.spacing(2),
     }),
   },
+  editorContainer: css({
+    width: 'fit-content',
+    border: 'none',
+  }),
+  editorWrapper: css({
+    height: '100%',
+  }),
 });
