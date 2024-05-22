@@ -2240,8 +2240,8 @@
     {
       "metadata": {
         "name": "datasourceProxyDisableRBAC",
-        "resourceVersion": "1716303823534",
-        "creationTimestamp": "2024-05-21T15:03:43Z"
+        "resourceVersion": "1715889033198",
+        "creationTimestamp": "2024-05-16T19:50:33Z"
       },
       "spec": {
         "description": "Disables applying a plugin route's ReqAction field to authorization",
