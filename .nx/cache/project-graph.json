@@ -8,9 +8,7 @@
         "targets": {
           "build": {
             "executor": "nx:run-script",
-            "outputs": [
-              "{projectRoot}/dist"
-            ],
+            "outputs": ["{projectRoot}/dist"],
             "options": {
               "script": "build"
             },
@@ -46,9 +44,7 @@
         "targets": {
           "build": {
             "executor": "nx:run-script",
-            "outputs": [
-              "{projectRoot}/dist"
-            ],
+            "outputs": ["{projectRoot}/dist"],
             "options": {
               "script": "build"
             },
@@ -84,9 +80,7 @@
         "targets": {
           "build": {
             "executor": "nx:run-script",
-            "outputs": [
-              "{projectRoot}/dist"
-            ],
+            "outputs": ["{projectRoot}/dist"],
             "options": {
               "script": "build"
             },
@@ -122,9 +116,7 @@
         "targets": {
           "build": {
             "executor": "nx:run-script",
-            "outputs": [
-              "{projectRoot}/dist"
-            ],
+            "outputs": ["{projectRoot}/dist"],
             "options": {
               "script": "build"
             },
@@ -160,9 +152,7 @@
         "targets": {
           "build": {
             "executor": "nx:run-script",
-            "outputs": [
-              "{projectRoot}/dist"
-            ],
+            "outputs": ["{projectRoot}/dist"],
             "options": {
               "script": "build"
             },
@@ -198,9 +188,7 @@
         "targets": {
           "build": {
             "executor": "nx:run-script",
-            "outputs": [
-              "{projectRoot}/dist"
-            ],
+            "outputs": ["{projectRoot}/dist"],
             "options": {
               "script": "build"
             },
@@ -236,9 +224,7 @@
         "targets": {
           "build": {
             "executor": "nx:run-script",
-            "outputs": [
-              "{projectRoot}/dist"
-            ],
+            "outputs": ["{projectRoot}/dist"],
             "options": {
               "script": "build"
             },
@@ -274,9 +260,7 @@
         "targets": {
           "build": {
             "executor": "nx:run-script",
-            "outputs": [
-              "{projectRoot}/dist"
-            ],
+            "outputs": ["{projectRoot}/dist"],
             "options": {
               "script": "build"
             },
@@ -346,9 +330,7 @@
         "targets": {
           "build": {
             "executor": "nx:run-script",
-            "outputs": [
-              "{projectRoot}/dist"
-            ],
+            "outputs": ["{projectRoot}/dist"],
             "options": {
               "script": "build"
             },
@@ -390,9 +372,7 @@
             "configurations": {}
           },
           "nx-release-publish": {
-            "dependsOn": [
-              "^nx-release-publish"
-            ],
+            "dependsOn": ["^nx-release-publish"],
             "executor": "@nx/js:release-publish",
             "options": {},
             "configurations": {}
@@ -426,9 +406,7 @@
         "targets": {
           "build": {
             "executor": "nx:run-script",
-            "outputs": [
-              "{projectRoot}/dist"
-            ],
+            "outputs": ["{projectRoot}/dist"],
             "options": {
               "script": "build"
             },
@@ -470,9 +448,7 @@
             "configurations": {}
           },
           "nx-release-publish": {
-            "dependsOn": [
-              "^nx-release-publish"
-            ],
+            "dependsOn": ["^nx-release-publish"],
             "executor": "@nx/js:release-publish",
             "options": {},
             "configurations": {}
@@ -493,9 +469,7 @@
         "targets": {
           "build": {
             "executor": "nx:run-script",
-            "outputs": [
-              "{projectRoot}/dist"
-            ],
+            "outputs": ["{projectRoot}/dist"],
             "options": {
               "script": "build"
             },
@@ -537,9 +511,7 @@
             "configurations": {}
           },
           "nx-release-publish": {
-            "dependsOn": [
-              "^nx-release-publish"
-            ],
+            "dependsOn": ["^nx-release-publish"],
             "executor": "@nx/js:release-publish",
             "options": {},
             "configurations": {}
@@ -560,9 +532,7 @@
         "targets": {
           "build": {
             "executor": "nx:run-script",
-            "outputs": [
-              "{projectRoot}/dist"
-            ],
+            "outputs": ["{projectRoot}/dist"],
             "options": {
               "script": "build"
             },
@@ -604,9 +574,7 @@
             "configurations": {}
           },
           "nx-release-publish": {
-            "dependsOn": [
-              "^nx-release-publish"
-            ],
+            "dependsOn": ["^nx-release-publish"],
             "executor": "@nx/js:release-publish",
             "options": {},
             "configurations": {}
@@ -627,9 +595,7 @@
         "targets": {
           "build": {
             "executor": "nx:run-script",
-            "outputs": [
-              "{projectRoot}/dist"
-            ],
+            "outputs": ["{projectRoot}/dist"],
             "options": {
               "script": "build"
             },
@@ -671,9 +637,7 @@
             "configurations": {}
           },
           "nx-release-publish": {
-            "dependsOn": [
-              "^nx-release-publish"
-            ],
+            "dependsOn": ["^nx-release-publish"],
             "executor": "@nx/js:release-publish",
             "options": {},
             "configurations": {}
@@ -694,9 +658,7 @@
         "targets": {
           "build": {
             "executor": "nx:run-script",
-            "outputs": [
-              "{projectRoot}/dist"
-            ],
+            "outputs": ["{projectRoot}/dist"],
             "options": {
               "script": "build"
             },
@@ -731,9 +693,7 @@
             "configurations": {}
           },
           "nx-release-publish": {
-            "dependsOn": [
-              "^nx-release-publish"
-            ],
+            "dependsOn": ["^nx-release-publish"],
             "executor": "@nx/js:release-publish",
             "options": {},
             "configurations": {}
@@ -754,9 +714,7 @@
         "targets": {
           "build": {
             "executor": "nx:run-script",
-            "outputs": [
-              "{projectRoot}/dist"
-            ],
+            "outputs": ["{projectRoot}/dist"],
             "options": {
               "script": "build"
             },
@@ -826,9 +784,7 @@
             "configurations": {}
           },
           "nx-release-publish": {
-            "dependsOn": [
-              "^nx-release-publish"
-            ],
+            "dependsOn": ["^nx-release-publish"],
             "executor": "@nx/js:release-publish",
             "options": {},
             "configurations": {}
@@ -870,9 +826,7 @@
         "targets": {
           "build": {
             "executor": "nx:run-script",
-            "outputs": [
-              "{projectRoot}/dist"
-            ],
+            "outputs": ["{projectRoot}/dist"],
             "options": {
               "script": "build"
             },
@@ -935,9 +889,7 @@
             "configurations": {}
           },
           "nx-release-publish": {
-            "dependsOn": [
-              "^nx-release-publish"
-            ],
+            "dependsOn": ["^nx-release-publish"],
             "executor": "@nx/js:release-publish",
             "options": {},
             "configurations": {}
@@ -959,15 +911,11 @@
         "targets": {
           "build": {
             "executor": "nx:run-script",
-            "outputs": [
-              "{workspaceRoot}/public/build"
-            ],
+            "outputs": ["{workspaceRoot}/public/build"],
             "dependsOn": [
               "themes-generate",
               {
-                "projects": [
-                  "@grafana-plugins/**"
-                ],
+                "projects": ["@grafana-plugins/**"],
                 "target": "build"
               }
             ],
@@ -1185,9 +1133,7 @@
             "dependsOn": [
               "themes-generate",
               {
-                "projects": [
-                  "@grafana-plugins/**"
-                ],
+                "projects": ["@grafana-plugins/**"],
                 "target": "build"
               }
             ],

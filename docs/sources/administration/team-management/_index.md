@@ -1,6 +1,6 @@
 ---
 aliases:
-  - 
+  -
 description: This document introduces Grafana Teams and concepts.
 labels:
   products:
@@ -46,6 +46,3 @@ A user can be a `Member` or an `Administrator` for a given Team. `Members` of a 
 There are two types of Teams, `isolated` or `collaborative`. Isolated teams can only see their own resources. They cannot see other team’s resources like dashboards, data, or alerts. Collaborative teams have access to other team’s resources.
 
 For information about how to optimize Teams, refer to [How to best organize your teams and resources in Grafana](https://grafana.com/blog/2022/03/14/how-to-best-organize-your-teams-and-resources-in-grafana/).
-
-
-

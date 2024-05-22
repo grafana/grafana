@@ -347,9 +347,7 @@
     "yargs": "^17.5.1"
   },
   "pathMappings": {
-    "@grafana/schema/dist/esm/*": [
-      "../packages/grafana-schema/src/*"
-    ]
+    "@grafana/schema/dist/esm/*": ["../packages/grafana-schema/src/*"]
   },
   "nxJsonPlugins": [],
   "fileMap": {
@@ -56460,12 +56458,7 @@
         {
           "file": "packages/grafana-eslint-rules/package.json",
           "hash": "14373807434507484354",
-          "deps": [
-            "npm:@typescript-eslint/utils",
-            "npm:@typescript-eslint/types",
-            "npm:eslint",
-            "npm:tslib"
-          ]
+          "deps": ["npm:@typescript-eslint/utils", "npm:@typescript-eslint/types", "npm:eslint", "npm:tslib"]
         },
         {
           "file": "packages/grafana-eslint-rules/rules/no-aria-label-e2e-selectors.cjs",

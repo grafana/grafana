@@ -29,10 +29,10 @@ Before you begin creating and working with Grafana Teams:
 - Decide which users belong to which teams and what permissions team members receive.
 - Configure the default basic role for users to join Grafana. This role applies to users where no role is set by the identity provider (IDP).
   - No basic role - by default cannot view any resources.
-      Recommended for `isolated` teams.
+    Recommended for `isolated` teams.
   - Viewer role - by default can view all resources. Recommended for `collaborative` teams.
 - Ensure team sync is turned on if you plan to manage team members through team sync.
-  Refer to [Configure Team Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-team-sync/)  for  a list of providers and instructions on how to turn on team sync for each provider.
+Refer to [Configure Team Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-team-sync/) for a list of providers and instructions on how to turn on team sync for each provider.
 <!-- - Turn on nested folders.  __This is a new feature, add when it goes live.__ -->
 
 {{< admonition type="note" >}}
@@ -59,7 +59,7 @@ Grafana Teams includes common access to the following:
 To create a Team, complete the following steps:
 
 1. Sign in to Grafana as an `org administrator` or `team administrator`.
-1. Click the arrow next to **Administration** in the left-side menu, click **Users and access**, and select **Teams**. 
+1. Click the arrow next to **Administration** in the left-side menu, click **Users and access**, and select **Teams**.
 1. Click **New Team**.
 1. Fill in each field and click **Create**.
 1. Click **Save**. You can now add a Team member.
@@ -71,7 +71,7 @@ Add a member to a new Team or add a team member to an existing Team when you wan
 To add a team member, complete the following steps:
 
 1. Sign in to Grafana as an `org administrator` or `team administrator`.
-1. Click the arrow next to **Administration** in the left-side menu, click **Users and access**, and select **Teams**. 
+1. Click the arrow next to **Administration** in the left-side menu, click **Users and access**, and select **Teams**.
 1. Click the name of the Team to which you want to add members, and click **+ Add member**.
 1. Search for and select a user.
 1. Choose whether to add the user as a Team **Member** or **Admin**.
@@ -84,30 +84,30 @@ Complete this task when you want to add or modify team member permissions.
 To grant team member permissions:
 
 1. Sign in to Grafana as an `org administrator` or `team administrator`.
-1. Click the arrow next to **Administration** in the left-side menu, click **Users and access**, and select **Teams**. 
+1. Click the arrow next to **Administration** in the left-side menu, click **Users and access**, and select **Teams**.
 1. Click the pencil next to the name of the Team for which you want to add or modify team member permissions.
 1. In the team member list, locate the user that you want to change. You can use the search field to filter the list if necessary.
-1. Under the **Permission** column, select the new permission level. 
+1. Under the **Permission** column, select the new permission level.
 
 ## Add roles to a Grafana Team
 
-You can add or delete roles from a specified team.  
+You can add or delete roles from a specified team.
 
 To add a role, complete the following steps:
 
 1. Sign in to Grafana as an `org administrator` or `team administrator`.
-1. Click the arrow next to **Administration** in the left-side menu, click **Users and access**, and select **Teams**. 
+1. Click the arrow next to **Administration** in the left-side menu, click **Users and access**, and select **Teams**.
 1. Select the Team and click under the **Role** column. Select from a list of current fixed or plugin roles or clear all roles and start over. As you hover over each role a list of permissions appears to the right. You can uncheck any permission for additional fine-grained control.
-1. Click **Update** to add the new role or roles. 
+1. Click **Update** to add the new role or roles.
 
-To delete a role, remove the check next to the role name and click **Update**. 
+To delete a role, remove the check next to the role name and click **Update**.
 
 ## Delete a team
 
 Delete a team when you no longer need it. This action permanently deletes the team and removes all team permissions from dashboards and folders. This task requires that you have `organization administrator` permissions.
 
 1. Sign in to Grafana as an `org administrator` or `team administrator`.
-1. Click the arrow next to **Administration** in the left-side menu, click **Users and access**, and select **Teams**. 
+1. Click the arrow next to **Administration** in the left-side menu, click **Users and access**, and select **Teams**.
 1. Click the **red X** on the right side of the name of the team.
 1. Click **Delete**.
 
@@ -131,18 +131,18 @@ role_attribute_path = contains(groups[*], 'admin') && 'Admin' || 'None'
 You can also use a terraform script as shown in the following example:
 
 ```hcl
-terraform {  
-  required_providers {  
-    grafana = {  
-      source = "grafana/grafana"  
-    }  
-  }  
-}  
-  
-provider "grafana" {  
-  url  = "http://localhost:3000/"  
-  auth = "admin:admin"  
-}  
+terraform {
+  required_providers {
+    grafana = {
+      source = "grafana/grafana"
+    }
+  }
+}
+
+provider "grafana" {
+  url  = "http://localhost:3000/"
+  auth = "admin:admin"
+}
 
 resource "grafana_folder" "awesome_folder" {
   title = "Awesome Team Folder"
@@ -180,7 +180,7 @@ resource "grafana_role" "team_role" {
     scope = "users:id:*"
   }
 
-}  
+}
 
 resource "grafana_role_assignment" "assign_role" {
   role_uid         = grafana_role.team_role.uid
