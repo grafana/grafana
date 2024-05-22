@@ -8,12 +8,13 @@ import (
 
 type FakeSocialService struct {
 	ExpectedAuthInfoProvider *social.OAuthInfo
+	ExpectedOAuthProviders   map[string]bool
 	ExpectedConnector        social.SocialConnector
 	ExpectedHttpClient       *http.Client
 }
 
 func (fss *FakeSocialService) GetOAuthProviders() map[string]bool {
-	panic("not implemented")
+	return fss.ExpectedOAuthProviders
 }
 
 func (fss *FakeSocialService) GetOAuthHttpClient(string) (*http.Client, error) {

@@ -1,0 +1,105 @@
+{ 
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "scope.grafana.app/v0alpha1",
+      "kind": "Scope",
+      "metadata": {
+        "name": "slothClusterNorth"
+      },
+      "spec": {
+        "category": "clusters",
+        "description": "slothClusterNorth",
+        "filters": [
+          {
+            "key": "cluster",
+            "operator": "equals",
+            "value": "slothClusterNorth"
+          }
+        ],
+        "title": "slothClusterNorth",
+        "type": "cluster"
+      }
+    },
+    {
+      "apiVersion": "scope.grafana.app/v0alpha1",
+      "kind": "Scope",
+      "metadata": {
+        "name": "slothClusterSouth"
+      },
+      "spec": {
+        "category": "clusters",
+        "description": "slothClusterSouth",
+        "filters": [
+          {
+            "key": "cluster",
+            "operator": "equals",
+            "value": "slothClusterSouth"
+          }
+        ],
+        "title": "slothClusterSouth",
+        "type": "cluster"
+      }
+    },
+    {
+      "apiVersion": "scope.grafana.app/v0alpha1",
+      "kind": "Scope",
+      "metadata": {
+        "name": "slothPictureFactory"
+      },
+      "spec": {
+        "category": "apps",
+        "description": "slothPictureFactory",
+        "filters": [
+          {
+            "key": "app",
+            "operator": "equals",
+            "value": "slothPictureFactory"
+          }
+        ],
+        "title": "slothPictureFactory",
+        "type": "app"
+      }
+    },
+    {
+      "apiVersion": "scope.grafana.app/v0alpha1",
+      "kind": "Scope",
+      "metadata": {
+        "name": "slothVoteTracker"
+      },
+      "spec": {
+        "category": "apps",
+        "description": "slothVoteTracker",
+        "filters": [
+          {
+            "key": "app",
+            "operator": "equals",
+            "value": "slothVoteTracker"
+          }
+        ],
+        "title": "slothVoteTracker",
+        "type": "app"
+      }
+    },
+    {
+      "apiVersion": "scope.grafana.app/v0alpha1",
+      "kind": "Scope",
+      "metadata": {
+        "name": "indexHelperCluster"
+      },
+      "spec": {
+        "category": "indexHelpers",
+        "description": "redundant label filter but makes queries faster",
+        "filters": [
+          {
+            "key": "indexHelper",
+            "operator": "equals",
+            "value": "cluster"
+          }
+        ],
+        "title": "Cluster Index Helper",
+        "type": "indexHelper"
+      }
+    }
+  ]
+}

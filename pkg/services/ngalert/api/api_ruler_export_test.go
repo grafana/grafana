@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"embed"
 	"encoding/json"
@@ -42,8 +43,12 @@ func TestExportFromPayload(t *testing.T) {
 	requestFile := "post-rulegroup-101.json"
 	rawBody, err := testData.ReadFile(path.Join("test-data", requestFile))
 	require.NoError(t, err)
+	// compact the json to remove any extra whitespace
+	var buf bytes.Buffer
+	require.NoError(t, json.Compact(&buf, rawBody))
+	// unmarshal the compacted json
 	var body apimodels.PostableRuleGroupConfig
-	require.NoError(t, json.Unmarshal(rawBody, &body))
+	require.NoError(t, json.Unmarshal(buf.Bytes(), &body))
 
 	createRequest := func() *contextmodel.ReqContext {
 		return createRequestContextWithPerms(orgID, map[int64]map[string][]string{}, nil)
@@ -212,6 +217,13 @@ func TestExportRules(t *testing.T) {
 	gen := ngmodels.RuleGen
 	accessQuery := gen.GenerateQuery()
 	noAccessQuery := gen.GenerateQuery()
+	mdl := map[string]any{
+		"foo": "bar",
+		"baz": "a <=> b", // explicitly check greater/less than characters
+	}
+	model, err := json.Marshal(mdl)
+	require.NoError(t, err)
+	accessQuery.Model = model
 
 	hasAccess1 := gen.With(gen.WithGroupKey(hasAccessKey1), gen.WithQuery(accessQuery), gen.WithUniqueGroupIndex()).GenerateManyRef(5)
 	ruleStore.PutRule(context.Background(), hasAccess1...)

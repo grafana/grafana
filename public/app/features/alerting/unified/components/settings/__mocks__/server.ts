@@ -23,7 +23,7 @@ export { vanillaAlertmanagerConfig as VanillaAlertmanagerConfiguration };
 export { history as alertmanagerConfigurationHistory };
 
 export const EXTERNAL_VANILLA_ALERTMANAGER_UID = 'vanilla-alertmanager';
-export const PROVISIONED_VANILLA_ALERTMANAGER_UID = 'provisioned-alertmanager';
+export const PROVISIONED_MIMIR_ALERTMANAGER_UID = 'provisioned-alertmanager';
 
 jest.spyOn(config, 'getAllDataSources');
 
@@ -40,9 +40,9 @@ const mockDataSources = {
       implementation: AlertManagerImplementation.prometheus,
     },
   }),
-  [PROVISIONED_VANILLA_ALERTMANAGER_UID]: mockDataSource<AlertManagerDataSourceJsonData>({
-    uid: PROVISIONED_VANILLA_ALERTMANAGER_UID,
-    name: PROVISIONED_VANILLA_ALERTMANAGER_UID,
+  [PROVISIONED_MIMIR_ALERTMANAGER_UID]: mockDataSource<AlertManagerDataSourceJsonData>({
+    uid: PROVISIONED_MIMIR_ALERTMANAGER_UID,
+    name: PROVISIONED_MIMIR_ALERTMANAGER_UID,
     type: DataSourceType.Alertmanager,
     jsonData: {
       // this is a mutable data source type but we're making it readOnly
@@ -70,7 +70,7 @@ export function setupVanillaAlertmanagerServer(server: SetupServerApi) {
 
   server.use(
     createVanillaAlertmanagerConfigurationHandler(EXTERNAL_VANILLA_ALERTMANAGER_UID),
-    ...createAlertmanagerConfigurationHandlers(PROVISIONED_VANILLA_ALERTMANAGER_UID)
+    ...createAlertmanagerConfigurationHandlers(PROVISIONED_MIMIR_ALERTMANAGER_UID)
   );
 
   return server;

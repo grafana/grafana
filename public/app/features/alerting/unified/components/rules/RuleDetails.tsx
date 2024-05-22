@@ -53,7 +53,7 @@ export const RuleDetails = ({ rule }: Props) => {
           <RuleDetailsDataSources rulesSource={rulesSource} rule={rule} />
         </div>
       </div>
-      <DetailsField label="Matching instances" horizontal={true}>
+      <DetailsField label="Instances" horizontal={true}>
         <RuleDetailsMatchingInstances rule={rule} itemsDisplayLimit={INSTANCES_DISPLAY_LIMIT} />
       </DetailsField>
     </div>
@@ -120,7 +120,7 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   leftSide: css({
-    flex: '1',
+    flex: 1,
   }),
   rightSide: css({
     [theme.breakpoints.up('md')]: {

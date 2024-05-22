@@ -146,16 +146,6 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
 export function withFocusedPanel(scene: DashboardScene, fn: (vizPanel: VizPanel) => void) {
   return () => {
     const elements = document.querySelectorAll(':hover');
-    const focusedGridElement = document.activeElement?.closest('[data-viz-panel-key]');
-
-    if (focusedGridElement instanceof HTMLElement && focusedGridElement.dataset?.vizPanelKey) {
-      const panelKey = focusedGridElement.dataset?.vizPanelKey;
-      const vizPanel = sceneGraph.findObject(scene, (o) => o.state.key === panelKey);
-      if (vizPanel && vizPanel instanceof VizPanel) {
-        fn(vizPanel);
-        return;
-      }
-    }
 
     for (let i = elements.length - 1; i > 0; i--) {
       const element = elements[i];

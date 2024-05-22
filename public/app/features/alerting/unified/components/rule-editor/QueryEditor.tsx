@@ -47,8 +47,8 @@ export const QueryEditor = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    background-color: ${theme.colors.background.primary};
-    height: 100%;
-  `,
+  container: css({
+    backgroundColor: theme.colors.background.primary,
+    height: '100%',
+  }),
 });

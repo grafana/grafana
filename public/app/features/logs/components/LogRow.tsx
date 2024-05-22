@@ -253,18 +253,23 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               {processedRow.duplicates && processedRow.duplicates > 0 ? `${processedRow.duplicates + 1}x` : null}
             </td>
           )}
-          <td className={hasError ? '' : `${levelStyles.logsRowLevelColor} ${styles.logsRowLevel}`}>
+          <td
+            className={hasError ? styles.logsRowWithError : `${levelStyles.logsRowLevelColor} ${styles.logsRowLevel}`}
+          >
             {hasError && (
               <Tooltip content={`Error: ${errorMessage}`} placement="right" theme="error">
                 <Icon className={styles.logIconError} name="exclamation-triangle" size="xs" />
               </Tooltip>
             )}
           </td>
-          {enableLogDetails && (
-            <td title={showDetails ? 'Hide log details' : 'See log details'} className={styles.logsRowToggleDetails}>
+          <td
+            title={enableLogDetails ? (showDetails ? 'Hide log details' : 'See log details') : ''}
+            className={enableLogDetails ? styles.logsRowToggleDetails : ''}
+          >
+            {enableLogDetails && (
               <Icon className={styles.topVerticalAlign} name={showDetails ? 'angle-down' : 'angle-right'} />
-            </td>
-          )}
+            )}
+          </td>
           {showTime && <td className={styles.logsRowLocalTime}>{this.renderTimeStamp(row.timeEpochMs)}</td>}
           {showLabels && processedRow.uniqueLabels && (
             <td className={styles.logsRowLabels}>

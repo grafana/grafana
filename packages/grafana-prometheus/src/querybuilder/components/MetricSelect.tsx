@@ -366,53 +366,53 @@ export function MetricSelect({
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  select: css`
-    min-width: 125px;
-  `,
-  highlight: css`
-    label: select__match-highlight;
-    background: inherit;
-    padding: inherit;
-    color: ${theme.colors.warning.contrastText};
-    background-color: ${theme.colors.warning.main};
-  `,
-  customOption: css`
-    padding: 8px;
-    display: flex;
-    justify-content: space-between;
-    cursor: pointer;
-    :hover {
-      background-color: ${theme.colors.emphasize(theme.colors.background.primary, 0.1)};
-    }
-  `,
-  customOptionlabel: css`
-    color: ${theme.colors.text.primary};
-  `,
-  customOptionDesc: css`
-    color: ${theme.colors.text.secondary};
-    font-size: ${theme.typography.size.xs};
-    opacity: 50%;
-  `,
-  focus: css`
-    background-color: ${theme.colors.emphasize(theme.colors.background.primary, 0.1)};
-  `,
-  customOptionWidth: css`
-    min-width: 400px;
-  `,
-  customMenuFooter: css`
-    flex: 0;
-    display: flex;
-    justify-content: space-between;
-    padding: ${theme.spacing(1.5)};
-    border-top: 1px solid ${theme.colors.border.weak};
-    color: ${theme.colors.text.secondary};
-  `,
-  customMenuContainer: css`
-    display: flex;
-    flex-direction: column;
-    background: ${theme.colors.background.primary};
-    box-shadow: ${theme.shadows.z3};
-  `,
+  select: css({
+    minWidth: '125px',
+  }),
+  highlight: css({
+    label: 'select__match-highlight',
+    background: 'inherit',
+    padding: 'inherit',
+    color: theme.colors.warning.contrastText,
+    backgroundColor: theme.colors.warning.main,
+  }),
+  customOption: css({
+    padding: '8px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    cursor: 'pointer',
+    ':hover': {
+      backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.1),
+    },
+  }),
+  customOptionlabel: css({
+    color: theme.colors.text.primary,
+  }),
+  customOptionDesc: css({
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.size.xs,
+    opacity: '50%',
+  }),
+  focus: css({
+    backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.1),
+  }),
+  customOptionWidth: css({
+    minWidth: '400px',
+  }),
+  customMenuFooter: css({
+    flex: 0,
+    display: 'flex',
+    justifyContent: 'space-between',
+    padding: theme.spacing(1.5),
+    borderTop: `1px solid ${theme.colors.border.weak}`,
+    color: theme.colors.text.secondary,
+  }),
+  customMenuContainer: css({
+    display: 'flex',
+    flexDirection: 'column',
+    background: theme.colors.background.primary,
+    boxShadow: theme.shadows.z3,
+  }),
 });
 
 export const formatPrometheusLabelFiltersToString = (

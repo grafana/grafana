@@ -17,6 +17,13 @@ labels:
     - oss
 title: Histogram
 weight: 100
+refs:
+  color-scheme:
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options/#color-scheme
+  standard-calculations:
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types/
 ---
 
 # Histogram
@@ -38,6 +45,8 @@ You can use a histogram visualization if you need to:
 Once you’ve created a [dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/), the following video shows you how to configure a histogram visualization:
 
 {{< youtube id="QfJ480j9-KM" >}}
+
+{{< docs/play title="Histogram Examples" url="https://play.grafana.org/d/histogram_tests/" >}}
 
 ## Supported data formats
 
@@ -109,7 +118,7 @@ Controls the fill opacity bars.
 
 ### Gradient mode
 
-Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard [color scheme][] field option.
+Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard [color scheme](ref:color-scheme) field option.
 
 Gradient display is influenced by the **Fill opacity** setting.
 
@@ -148,11 +157,3 @@ Gradient color is generated based on the hue of the line color.
 ## Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-{{% docs/reference %}}
-[color scheme]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options#color-scheme"
-[color scheme]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options#color-scheme"
-
-[standard calculations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/calculation-types"
-[standard calculations]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types"
-{{% /docs/reference %}}

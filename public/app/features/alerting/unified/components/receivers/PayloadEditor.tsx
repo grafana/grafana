@@ -153,14 +153,14 @@ const AlertTemplateDataTable = () => {
   return <TemplateDataTable dataItems={AlertTemplatePreviewData} />;
 };
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-  `,
-  tooltip: css`
-    padding-left: ${theme.spacing(1)};
-  `,
+  wrapper: css({
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100%',
+  }),
+  tooltip: css({
+    paddingLeft: theme.spacing(1),
+  }),
   label: css({
     margin: 0,
   }),
@@ -171,12 +171,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: 'fit-content',
     border: 'none',
   }),
-  templateDataDocsHeader: css`
-    color: ${theme.colors.text.primary};
+  templateDataDocsHeader: css({
+    color: theme.colors.text.primary,
 
-    span {
-      color: ${theme.colors.text.secondary};
-      font-size: ${theme.typography.bodySmall.fontSize};
-    }
-  `,
+    span: {
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.bodySmall.fontSize,
+    },
+  }),
 });
