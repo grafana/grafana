@@ -569,7 +569,6 @@ func TestUserInfoSearchesForLogin(t *testing.T) {
 		featuremgmt.WithFeatures())
 
 	for _, tc := range testCases {
-
 		provider.loginAttributePath = tc.LoginAttributePath
 
 		t.Run(tc.Name, func(t *testing.T) {
@@ -599,7 +598,6 @@ func TestUserInfoSearchesForLogin(t *testing.T) {
 }
 
 func TestUserInfoSearchesForName(t *testing.T) {
-
 	testCases := []struct {
 		Name              string
 		ResponseBody      any

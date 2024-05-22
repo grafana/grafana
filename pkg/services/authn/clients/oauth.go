@@ -174,7 +174,6 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 		userInfo.OrgRoles, userInfo.IsGrafanaAdmin, _ = getRoles(c.cfg, func() (org.RoleType, *bool, error) {
 			return userInfo.Role, userInfo.IsGrafanaAdmin, nil
 		})
-
 	}
 
 	lookupParams := login.UserLookupParams{}
