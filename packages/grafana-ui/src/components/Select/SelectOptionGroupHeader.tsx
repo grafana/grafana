@@ -1,5 +1,5 @@
 import React from 'react';
-import { GroupHeadingProps, GroupProps } from 'react-select';
+import { GroupHeadingProps } from 'react-select';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Text } from '../Text/Text';
@@ -15,33 +15,5 @@ export const SelectOptionGroupHeader = (props: GroupHeadingProps) => {
         {props.children ?? ''}
       </Text>
     </div>
-  );
-};
-
-export const SelectOptionGroup = ({
-  children,
-  Heading,
-  headingProps,
-  label,
-  selectProps,
-  theme,
-  getStyles,
-  getClassNames,
-  cx,
-}: GroupProps) => {
-  return (
-    <>
-      <Heading
-        {...headingProps}
-        selectProps={selectProps}
-        theme={theme}
-        getStyles={getStyles}
-        getClassNames={getClassNames}
-        cx={cx}
-      >
-        {label}
-      </Heading>
-      {children}
-    </>
   );
 };
