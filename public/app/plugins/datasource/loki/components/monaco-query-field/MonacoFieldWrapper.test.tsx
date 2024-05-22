@@ -27,8 +27,8 @@ describe('MonacoFieldWrapper', () => {
     renderComponent();
 
     await waitFor(async () => {
-      const monacoEditorLoading = await screen.findByTestId(selectors.components.ReactMonacoEditor.container);
-      expect(monacoEditorLoading).toBeInTheDocument();
+      const monacoEditor = await screen.findByTestId(selectors.components.ReactMonacoEditor.container);
+      expect(monacoEditor).toBeInTheDocument();
     });
   });
 });
