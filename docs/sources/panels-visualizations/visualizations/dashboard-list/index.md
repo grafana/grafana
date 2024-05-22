@@ -18,10 +18,6 @@ labels:
 description: Configure options for Grafana's dashboard list visualization
 title: Dashboard list
 weight: 100
-refs:
-  dashboard-url-variables:
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard-url-variables/
 ---
 
 # Dashboard list
@@ -91,3 +87,8 @@ Select the dashboard folders that you want to display.
 Enter tags by which you want to search. Note that existing tags don't appear as you type, and they _are_ case sensitive.
 
 > **Note:** When multiple tags and strings appear, the dashboard list displays those matching _all_ conditions.
+
+{{% docs/reference %}}
+[Dashboard URL variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/create-dashboard-url-variables"
+[Dashboard URL variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/create-dashboard-url-variables"
+{{% /docs/reference %}}

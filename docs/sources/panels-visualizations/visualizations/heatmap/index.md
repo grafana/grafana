@@ -15,10 +15,6 @@ labels:
     - oss
 title: Heatmap
 weight: 100
-refs:
-  introduction-to-histograms-and-heatmaps:
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/fundamentals/intro-histograms/
 ---
 
 # Heatmap
@@ -123,7 +119,7 @@ This setting configures the axis value.
 
 When selected, the axis appears in reverse order.
 
-{{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+2" >}}
+{{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA VERSION>" leveloffset="+2" >}}
 
 ## Colors
 
@@ -167,3 +163,8 @@ Choose whether you want to display the heatmap legend on the visualization.
 ### Exemplars
 
 Set the color used to show exemplar data.
+
+{{% docs/reference %}}
+[Introduction to histograms and heatmaps]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/intro-histograms"
+[Introduction to histograms and heatmaps]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/intro-histograms"
+{{% /docs/reference %}}
