@@ -24,10 +24,10 @@ See the complete list of teams in your Grafana organization.
 
 To view a list of teams:
 
-- Sign in to Grafana as an organization administrator or a team administrator.
-
+1. Sign in to Grafana as an organization administrator or a team administrator.
 1. Click the arrow next to **Administration** in the left-side menu, click **Users and access**, and select **Teams**. 
-1. The role you use to sign in to Grafana determines how you see Teams lists. 
+
+The role you use to sign in to Grafana determines how you see Teams lists. 
 
 ### Organization administrator view
 
@@ -50,5 +50,5 @@ Grafana recommends that you use Instances or Stacks to separate Teams if you wan
 
 ## Secure Grafana Teams
 
-The most important thing to consider for securing Teams is to only grant team admin rights to the users you trust to administer the Team.
+The most important thing to consider for securing Teams is to only grant team administrator rights to the users you trust to administer the Team.
 

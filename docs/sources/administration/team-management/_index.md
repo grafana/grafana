@@ -20,11 +20,11 @@ weight: 100
 
 Grafana Teams makes it easy to organize and administer groups of users in your enterprise. Teams allows you to grant permissions to a group of users instead of granting permissions to individual users one at a time.
 
-Teams are useful in a wide variety of scenarios, such as when onboarding new colleagues or needing access to report on secure financial data. When you add a user to a team, they get access to all resources assigned to that team.
+Teams are useful in a wide variety of scenarios, such as when onboarding new colleagues or needing access to reports on secure financial data. When you add a user to a team, they get access to all resources assigned to that team.
 
 ## Teams concepts
 
-A Grafana Team is a group of users within an organization that have common permissions, including dashboard and data source, and those permissions apply to **all members** of that team. For example, instead of assigning six users access to the same dashboard, you can create a team that consists of those users and assign dashboard permissions to the team. A user can belong to multiple teams.
+A Grafana Team is a group of users within an organization that have common permissions, including access to dashboards and data sources, and those permissions apply to **all members** of that team. For example, instead of assigning six users access to the same dashboard, you can create a team that consists of those users and assign dashboard permissions to the team. A user can belong to multiple teams.
 
 A Team grants permissions to a wide variety of resources including:
 
