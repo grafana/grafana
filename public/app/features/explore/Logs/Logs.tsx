@@ -260,9 +260,17 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         }
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [logsVolumeData?.data, hiddenLogLevels]);
+  }, [
+    logsVolumeData?.data,
+    outlineItems,
+    unregisterAllChildren,
+    logsVolumeEnabled,
+    hiddenLogLevels,
+    register,
+    toggleLegendRef,
+  ]);
 
+  // clear timers and reset state on unmount
   useEffect(() => {
     return () => {
       if (flipOrderTimer) {
@@ -300,8 +308,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         })
       );
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch, exploreId, loading]);
+  }, [dispatch, exploreId, loading, panelState, previousLoading]);
 
   useEffect(() => {
     const visualisationType = panelState?.logs?.visualisationType ?? getDefaultVisualisationType();
@@ -312,42 +319,47 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
   useEffect(() => {
     registerLogLevelsWithContentOutline();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [logsVolumeData?.data, hiddenLogLevels]);
+  }, [logsVolumeData?.data, hiddenLogLevels, registerLogLevelsWithContentOutline]);
 
-  const updatePanelState = (logsPanelState: Partial<ExploreLogsPanelState>) => {
-    const state: ExploreItemState | undefined = getState().explore.panes[exploreId];
-    if (state?.panelsState) {
-      dispatch(
-        changePanelState(exploreId, 'logs', {
-          ...state.panelsState.logs,
-          columns: logsPanelState.columns ?? panelState?.logs?.columns,
-          visualisationType: logsPanelState.visualisationType ?? visualisationType,
-          labelFieldName: logsPanelState.labelFieldName,
-          refId: logsPanelState.refId ?? panelState?.logs?.refId,
-        })
-      );
-    }
-  };
+  const updatePanelState = useCallback(
+    (logsPanelState: Partial<ExploreLogsPanelState>) => {
+      const state: ExploreItemState | undefined = getState().explore.panes[exploreId];
+      if (state?.panelsState) {
+        dispatch(
+          changePanelState(exploreId, 'logs', {
+            ...state.panelsState.logs,
+            columns: logsPanelState.columns ?? panelState?.logs?.columns,
+            visualisationType: logsPanelState.visualisationType ?? visualisationType,
+            labelFieldName: logsPanelState.labelFieldName,
+            refId: logsPanelState.refId ?? panelState?.logs?.refId,
+          })
+        );
+      }
+    },
+    [dispatch, exploreId, panelState?.logs?.columns, panelState?.logs?.refId, visualisationType]
+  );
 
   // actions
-  const onLogRowHover = (row?: LogRowModel) => {
-    if (!row) {
-      props.eventBus.publish(new DataHoverClearEvent());
-    } else {
-      props.eventBus.publish(
-        new DataHoverEvent({
-          point: {
-            time: row.timeEpochMs,
-          },
-        })
-      );
-    }
-  };
+  const onLogRowHover = useCallback(
+    (row?: LogRowModel) => {
+      if (!row) {
+        props.eventBus.publish(new DataHoverClearEvent());
+      } else {
+        props.eventBus.publish(
+          new DataHoverEvent({
+            point: {
+              time: row.timeEpochMs,
+            },
+          })
+        );
+      }
+    },
+    [props.eventBus]
+  );
 
-  const onLogsContainerRef = (node: HTMLDivElement) => {
+  const onLogsContainerRef = useCallback((node: HTMLDivElement) => {
     setLogsContainer(node);
-  };
+  }, []);
 
   const onChangeLogsSortOrder = () => {
     setIsFlipping(true);
@@ -361,32 +373,38 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     cancelFlippingTimer = window.setTimeout(() => setIsFlipping(false), 1000);
   };
 
-  const onEscapeNewlines = () => {
+  const onEscapeNewlines = useCallback(() => {
     setForceEscape(!forceEscape);
-  };
+  }, [forceEscape]);
 
-  const onChangeVisualisation = (visualisation: LogsVisualisationType) => {
-    setVisualisationType(visualisation);
-    const payload = {
-      ...panelState?.logs,
-      visualisationType: visualisation,
-    };
-    updatePanelState(payload);
+  const onChangeVisualisation = useCallback(
+    (visualisation: LogsVisualisationType) => {
+      setVisualisationType(visualisation);
+      const payload = {
+        ...panelState?.logs,
+        visualisationType: visualisation,
+      };
+      updatePanelState(payload);
 
-    reportInteraction('grafana_explore_logs_visualisation_changed', {
-      newVisualizationType: visualisation,
-      datasourceType: props.datasourceType ?? 'unknown',
-      defaultVisualisationType: config.featureToggles.logsExploreTableDefaultVisualization ? 'table' : 'logs',
-    });
-  };
+      reportInteraction('grafana_explore_logs_visualisation_changed', {
+        newVisualizationType: visualisation,
+        datasourceType: props.datasourceType ?? 'unknown',
+        defaultVisualisationType: config.featureToggles.logsExploreTableDefaultVisualization ? 'table' : 'logs',
+      });
+    },
+    [panelState?.logs, props.datasourceType, updatePanelState]
+  );
 
-  const onChangeDedup = (dedupStrategy: LogsDedupStrategy) => {
-    reportInteraction('grafana_explore_logs_deduplication_clicked', {
-      deduplicationType: dedupStrategy,
-      datasourceType: props.datasourceType,
-    });
-    setDedupStrategy(dedupStrategy);
-  };
+  const onChangeDedup = useCallback(
+    (dedupStrategy: LogsDedupStrategy) => {
+      reportInteraction('grafana_explore_logs_deduplication_clicked', {
+        deduplicationType: dedupStrategy,
+        datasourceType: props.datasourceType,
+      });
+      setDedupStrategy(dedupStrategy);
+    },
+    [props.datasourceType]
+  );
 
   const onChangeLabels = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { target } = event;
@@ -428,60 +446,75 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     }
   };
 
-  const onToggleLogLevel = (hiddenRawLevels: string[]) => {
+  const onToggleLogLevel = useCallback((hiddenRawLevels: string[]) => {
     const hiddenLogLevels = hiddenRawLevels.map((level) => getLogLevelFromKey(level));
     setHiddenLogLevels(hiddenLogLevels);
-  };
+  }, []);
 
-  const onToggleLogsVolumeCollapse = (collapsed: boolean) => {
-    props.onSetLogsVolumeEnabled(!collapsed);
-    reportInteraction('grafana_explore_logs_histogram_toggle_clicked', {
-      datasourceType: props.datasourceType,
-      type: !collapsed ? 'open' : 'close',
-    });
-  };
-
-  const onClickScan = (event: React.SyntheticEvent) => {
-    event.preventDefault();
-    if (props.onStartScanning) {
-      props.onStartScanning();
-      reportInteraction('grafana_explore_logs_scanning_button_clicked', {
-        type: 'start',
+  const onToggleLogsVolumeCollapse = useCallback(
+    (collapsed: boolean) => {
+      props.onSetLogsVolumeEnabled(!collapsed);
+      reportInteraction('grafana_explore_logs_histogram_toggle_clicked', {
         datasourceType: props.datasourceType,
+        type: !collapsed ? 'open' : 'close',
       });
-    }
-  };
+    },
+    [props]
+  );
 
-  const onClickStopScan = (event: React.SyntheticEvent) => {
-    event.preventDefault();
-    if (props.onStopScanning) {
-      props.onStopScanning();
-    }
-  };
+  const onClickScan = useCallback(
+    (event: React.SyntheticEvent) => {
+      event.preventDefault();
+      if (props.onStartScanning) {
+        props.onStartScanning();
+        reportInteraction('grafana_explore_logs_scanning_button_clicked', {
+          type: 'start',
+          datasourceType: props.datasourceType,
+        });
+      }
+    },
+    [props]
+  );
 
-  const showField = (key: string) => {
-    const index = displayedFields.indexOf(key);
+  const onClickStopScan = useCallback(
+    (event: React.SyntheticEvent) => {
+      event.preventDefault();
+      if (props.onStopScanning) {
+        props.onStopScanning();
+      }
+    },
+    [props]
+  );
 
-    if (index === -1) {
-      setDisplayedFields(displayedFields.concat(key));
-    }
-  };
+  const showField = useCallback(
+    (key: string) => {
+      const index = displayedFields.indexOf(key);
 
-  const hideField = (key: string) => {
-    const index = displayedFields.indexOf(key);
-    if (index > -1) {
-      setDisplayedFields(displayedFields.filter((k) => key !== k));
-    }
-  };
+      if (index === -1) {
+        setDisplayedFields(displayedFields.concat(key));
+      }
+    },
+    [displayedFields]
+  );
 
-  const clearDetectedFields = () => {
+  const hideField = useCallback(
+    (key: string) => {
+      const index = displayedFields.indexOf(key);
+      if (index > -1) {
+        setDisplayedFields(displayedFields.filter((k) => key !== k));
+      }
+    },
+    [displayedFields]
+  );
+
+  const clearDetectedFields = useCallback(() => {
     setDisplayedFields([]);
-  };
+  }, []);
 
-  let onCloseContext = () => {
+  let onCloseContext = useCallback(() => {
     setContextOpen(false);
     setContextRow(undefined);
-  };
+  }, []);
 
   const onOpenContext = (row: LogRowModel, onClose: () => void) => {
     // we are setting the `contextOpen` open state and passing it down to the `LogRow` in order to highlight the row when a LogContext is open
@@ -502,7 +535,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     };
   };
 
-  const getPreviousLog = (row: LogRowModel, allLogs: LogRowModel[]) => {
+  const getPreviousLog = useCallback((row: LogRowModel, allLogs: LogRowModel[]) => {
     for (let i = allLogs.indexOf(row) - 1; i >= 0; i--) {
       if (allLogs[i].timeEpochMs > row.timeEpochMs) {
         return allLogs[i];
@@ -510,37 +543,40 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     }
 
     return null;
-  };
+  }, []);
 
-  const getPermalinkRange = (row: LogRowModel) => {
-    const range = {
-      from: new Date(absoluteRange.from).toISOString(),
-      to: new Date(absoluteRange.to).toISOString(),
-    };
-    if (!config.featureToggles.logsInfiniteScrolling) {
-      return range;
-    }
+  const getPermalinkRange = useCallback(
+    (row: LogRowModel) => {
+      const range = {
+        from: new Date(absoluteRange.from).toISOString(),
+        to: new Date(absoluteRange.to).toISOString(),
+      };
+      if (!config.featureToggles.logsInfiniteScrolling) {
+        return range;
+      }
 
-    // With infinite scrolling, the time range of the log line can be after the absolute range or beyond the request line limit, so we need to adjust
-    // Look for the previous sibling log, and use its timestamp
-    const allLogs = logRows.filter((logRow) => logRow.dataFrame.refId === row.dataFrame.refId);
-    const prevLog = getPreviousLog(row, allLogs);
+      // With infinite scrolling, the time range of the log line can be after the absolute range or beyond the request line limit, so we need to adjust
+      // Look for the previous sibling log, and use its timestamp
+      const allLogs = logRows.filter((logRow) => logRow.dataFrame.refId === row.dataFrame.refId);
+      const prevLog = getPreviousLog(row, allLogs);
 
-    if (row.timeEpochMs > absoluteRange.to && !prevLog) {
-      // Because there's no sibling and the current `to` is oldest than the log, we have no reference we can use for the interval
-      // This only happens when you scroll into the future and you want to share the first log of the list
+      if (row.timeEpochMs > absoluteRange.to && !prevLog) {
+        // Because there's no sibling and the current `to` is oldest than the log, we have no reference we can use for the interval
+        // This only happens when you scroll into the future and you want to share the first log of the list
+        return {
+          from: new Date(absoluteRange.from).toISOString(),
+          // Slide 1ms otherwise it's very likely to be omitted in the results
+          to: new Date(row.timeEpochMs + 1).toISOString(),
+        };
+      }
+
       return {
         from: new Date(absoluteRange.from).toISOString(),
-        // Slide 1ms otherwise it's very likely to be omitted in the results
-        to: new Date(row.timeEpochMs + 1).toISOString(),
+        to: new Date(prevLog ? prevLog.timeEpochMs : absoluteRange.to).toISOString(),
       };
-    }
-
-    return {
-      from: new Date(absoluteRange.from).toISOString(),
-      to: new Date(prevLog ? prevLog.timeEpochMs : absoluteRange.to).toISOString(),
-    };
-  };
+    },
+    [absoluteRange.from, absoluteRange.to, getPreviousLog, logRows]
+  );
 
   const onPermalinkClick = async (row: LogRowModel) => {
     // this is an extra check, to be sure that we are not
@@ -622,7 +658,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     return { from: firstTimeStamp, to: lastTimeStamp };
   });
 
-  const scrollToTopLogs = () => {
+  const scrollToTopLogs = useCallback(() => {
     if (config.featureToggles.logsInfiniteScrolling) {
       if (logsContainer) {
         logsContainer.scroll({
@@ -632,7 +668,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       }
     }
     topLogsRef.current?.scrollIntoView();
-  };
+  }, [logsContainer, topLogsRef]);
 
   const hasUnescapedContent = checkUnescapedContent(logRows);
   const filteredLogs = filterRows(logRows, hiddenLogLevels);
