@@ -671,7 +671,7 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, cmd SetResourc
 	/*
 		Add ACTION SET of managed permissions to in-memory store
 	*/
-	if s.features.IsEnabled(context.TODO(), featuremgmt.FlagAccessActionSets) && permission != "" {
+	if s.shouldStoreActionSet(permission) {
 		actionSetName := GetActionSetName(resource, permission)
 		p := managedPermission(actionSetName, resource, resourceID, resourceAttribute)
 		p.RoleID = roleID
@@ -682,17 +682,14 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, cmd SetResourc
 	}
 
 	// If there are no missing actions for the resource (in case of access level downgrade or resource removal), we don't need to insert any actions
-	// we still want to add the action set in case of access level downgrade, but not in case of resource removal (when permission == "")
-	if len(missingActions) == 0 && permission != "" && s.features.IsEnabled(context.TODO(), featuremgmt.FlagAccessActionSets) {
-		if _, err := sess.InsertMulti(&permissions); err != nil {
-			return err
-		}
+	// we still want to add the action set (when permission != "")
+	if len(missingActions) == 0 && !s.shouldStoreActionSet(permission) {
 		return nil
 	}
 
-	// if we have actionsets enabled, we only want to add the action sets to the permissions table
-	// skip adding the actions to the permissions table, if we are only working with action sets
-	if !s.features.IsEnabled(context.TODO(), featuremgmt.FlagAccessActionSets) && !s.cfg.OnlyAccessActionSets {
+	// if we have actionset feature enabled and are only working with action sets
+	// skip adding the missingactions to the permissions table
+	if !(s.shouldStoreActionSet(permission) && s.cfg.OnlyStoreAccessActionSets) {
 		for action := range missingActions {
 			p := managedPermission(action, resource, resourceID, resourceAttribute)
 			p.RoleID = roleID
@@ -707,6 +704,10 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, cmd SetResourc
 		return err
 	}
 	return nil
+}
+
+func (s *store) shouldStoreActionSet(permission string) bool {
+	return (s.features.IsEnabled(context.TODO(), featuremgmt.FlagAccessActionSets) && permission != "")
 }
 
 func deletePermissions(sess *db.Session, ids []int64) error {
