@@ -50,11 +50,35 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 	}
 	gen := models.RuleGen
 	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval))
+	recordingRuleGen := gen.With(gen.WithAllRecordingRules())
 
 	t.Run("should increase version", func(t *testing.T) {
 		rule := createRule(t, store, gen)
 		newRule := models.CopyRule(rule)
 		newRule.Title = util.GenerateShortUID()
+		err := store.UpdateAlertRules(context.Background(), []models.UpdateRule{{
+			Existing: rule,
+			New:      *newRule,
+		},
+		})
+		require.NoError(t, err)
+
+		dbrule := &models.AlertRule{}
+		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+			exist, err := sess.Table(models.AlertRule{}).ID(rule.ID).Get(dbrule)
+			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", rule.ID))
+			return err
+		})
+
+		require.NoError(t, err)
+		require.Equal(t, rule.Version+1, dbrule.Version)
+	})
+
+	t.Run("updating record field should increase version", func(t *testing.T) {
+		rule := createRule(t, store, recordingRuleGen)
+		newRule := models.CopyRule(rule)
+		newRule.Record.Metric = "new-metric"
+
 		err := store.UpdateAlertRules(context.Background(), []models.UpdateRule{{
 			Existing: rule,
 			New:      *newRule,
@@ -474,7 +498,18 @@ func TestIntegration_CountAlertRules(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	store := &DBstore{SQLStore: sqlStore, FolderService: setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())}
-	rule := createRule(t, store, nil)
+
+	gen := models.RuleGen
+	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval), gen.WithRandomRecordingRules())
+
+	rule := createRule(t, store, gen)
+
+	count := int64(5)
+	many := make([]*models.AlertRule, 0, count)
+	manyGen := gen.With(gen.WithNamespaceUID("many rules"), gen.WithOrgID(123))
+	for i := int64(0); i < count; i++ {
+		many = append(many, createRule(t, store, manyGen))
+	}
 
 	tests := map[string]struct {
 		query     *models.CountAlertRulesQuery
@@ -487,6 +522,14 @@ func TestIntegration_CountAlertRules(t *testing.T) {
 				OrgID:        rule.OrgID,
 			},
 			1,
+			false,
+		},
+		"multiple success": {
+			&models.CountAlertRulesQuery{
+				NamespaceUID: "many rules",
+				OrgID:        123,
+			},
+			count,
 			false,
 		},
 		"successfully returning no results": {

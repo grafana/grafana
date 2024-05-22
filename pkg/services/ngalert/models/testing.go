@@ -639,6 +639,13 @@ func CopyRule(r *AlertRule, mutators ...AlertRuleMutator) *AlertRule {
 		}
 	}
 
+	if r.Record != nil {
+		result.Record = &Record{
+			From:   r.Record.From,
+			Metric: r.Record.Metric,
+		}
+	}
+
 	for _, s := range r.NotificationSettings {
 		result.NotificationSettings = append(result.NotificationSettings, CopyNotificationSettings(s))
 	}
