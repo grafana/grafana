@@ -1,6 +1,7 @@
 package playlist
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -127,7 +128,7 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 			return nil, err
 		}
 
-		dualWriter, err := grafanarest.SetDualWritingMode(b.kvStore, b.features, "playlist", legacyStore, store)
+		dualWriter, err := grafanarest.SetDualWritingMode(context.Background(), b.kvStore, b.features, "playlist", legacyStore, store)
 		if err != nil {
 			return nil, err
 		}

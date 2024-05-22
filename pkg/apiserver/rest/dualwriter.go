@@ -124,6 +124,7 @@ func (u *updateWrapper) UpdatedObject(ctx context.Context, oldObj runtime.Object
 }
 
 func SetDualWritingMode(
+	ctx context.Context,
 	kvs *kvstore.NamespacedKVStore,
 	features featuremgmt.FeatureToggles,
 	entity string,
@@ -139,14 +140,14 @@ func SetDualWritingMode(
 	errDualWriterSetCurrentMode := errors.New("failed to set current dual writing mode")
 
 	// Use entity name as key
-	m, ok, err := kvs.Get(context.Background(), entity)
+	m, ok, err := kvs.Get(ctx, entity)
 	if err != nil {
 		return nil, errors.New("failed to fetch current dual writing mode")
 	}
 	if !ok {
 		// Default to mode 1
 		m = fmt.Sprint(Mode1)
-		err := kvs.Set(context.Background(), entity, m)
+		err := kvs.Set(ctx, entity, m)
 		if err != nil {
 			return nil, errDualWriterSetCurrentMode
 		}
@@ -160,11 +161,23 @@ func SetDualWritingMode(
 		// There are none between mode 1 and mode 2
 		currentMode = Mode2
 
-		err := kvs.Set(context.Background(), entity, fmt.Sprint(currentMode))
+		err := kvs.Set(ctx, entity, fmt.Sprint(currentMode))
 		if err != nil {
 			return nil, errDualWriterSetCurrentMode
 		}
 	}
+	// #TODO enable this check when we have a flag/config for setting mode 1 as the desired mode
+	// if features.IsEnabledGlobally(featuremgmt.FlagDualWritePlaylistsMode1) && (currentMode == Mode2) {
+	// 	// This is where we go through the different gates to allow the instance to migrate from mode 2 to mode 1.
+	// 	// There are none between mode 1 and mode 2
+	// 	currentMode = Mode1
+
+	// 	err := kvs.Set(ctx, entity, fmt.Sprint(currentMode))
+	// 	if err != nil {
+	// 		return nil, errDualWriterSetCurrentMode
+	// 	}
+	// }
+
 	// 	#TODO add support for other combinations of desired and current modes
 
 	return NewDualWriter(currentMode, legacy, storage), nil

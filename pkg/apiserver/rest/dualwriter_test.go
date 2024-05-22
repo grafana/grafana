@@ -48,7 +48,7 @@ func TestSetDualWritingMode(t *testing.T) {
 
 		key := "playlist"
 
-		dw, err := SetDualWritingMode(kvStore, f, key, ls, us)
+		dw, err := SetDualWritingMode(context.Background(), kvStore, f, key, ls, us)
 		assert.NoError(t, err)
 		assert.Equal(t, tt.expectedMode, dw.Mode())
 
