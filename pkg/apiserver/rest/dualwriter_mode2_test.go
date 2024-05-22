@@ -424,8 +424,8 @@ func TestMode2_Update(t *testing.T) {
 				wantErr: true,
 			},
 			{
-				name:  "error updating storage",
-				input: "object-fail",
+				name:  "error updating storage with not found object",
+				input: "not-found",
 				setupLegacyFn: func(m *mock.Mock, input string) {
 					m.On("Update", mock.Anything, input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
 				},
@@ -433,7 +433,7 @@ func TestMode2_Update(t *testing.T) {
 					m.On("Update", mock.Anything, input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, false, errors.New("error"))
 				},
 				setupGetFn: func(m *mock.Mock, input string) {
-					m.On("Get", mock.Anything, input, mock.Anything).Return(exampleObj, nil)
+					m.On("Get", mock.Anything, input, mock.Anything).Return(nil, errors.New(""))
 				},
 				wantErr: true,
 			},
