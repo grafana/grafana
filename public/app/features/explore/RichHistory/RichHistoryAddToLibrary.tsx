@@ -1,7 +1,7 @@
 import { t } from 'i18next';
 import React from 'react';
 
-import { AppEvents } from '@grafana/data';
+import { AppEvents, dateTime } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Button } from '@grafana/ui';
@@ -34,7 +34,9 @@ export const RichHistoryAddToLibrary = ({ query }: Props) => {
       variant="secondary"
       aria-label={buttonLabel}
       onClick={() => {
-        handleAddQueryTemplate({ title: 'Test', targets: [query] });
+        const timestamp = dateTime().toISOString();
+        const temporaryDefaultTitle = `Imported from Explore - ${timestamp}`;
+        handleAddQueryTemplate({ title: temporaryDefaultTitle, targets: [query] });
       }}
     >
       {buttonLabel}
