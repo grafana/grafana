@@ -70,4 +70,3 @@ Panels offer a wide variety of formatting and styling options from applying colo
 ## Explore
 
 {{< card-grid key="cards" type="simple" >}}
-

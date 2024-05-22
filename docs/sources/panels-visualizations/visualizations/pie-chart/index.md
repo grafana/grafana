@@ -138,4 +138,3 @@ Select values to display in the legend. You can select more than one.
 ## Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-

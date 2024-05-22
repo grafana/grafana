@@ -46,4 +46,3 @@ How many data points is your query returning? A query that returns lots of data 
 - In **Query options**, limit the **Max data points** returned.
 - In **Query options**, increase the **Min interval** time.
 - In your query, use a `group by` function.
-

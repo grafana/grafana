@@ -154,4 +154,3 @@ You should now see a list of matching traces in the table visualization. While s
 ## Panel options
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-

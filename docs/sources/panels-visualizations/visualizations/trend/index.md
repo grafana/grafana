@@ -75,4 +75,3 @@ For example, you could represent engine power and torque versus speed where spee
 ## Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-

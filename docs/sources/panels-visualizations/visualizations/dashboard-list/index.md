@@ -97,4 +97,3 @@ Select the dashboard folders that you want to display.
 Enter tags by which you want to search. Note that existing tags don't appear as you type, and they _are_ case sensitive.
 
 > **Note:** When multiple tags and strings appear, the dashboard list displays those matching _all_ conditions.
-
