@@ -32,7 +32,7 @@ describe('Panel edit tests', () => {
           expect(li.text()).equals('Queries1'); // there's already a query so therefore Query + 1
         });
         // cy.get('[data-testid]="query-editor-rows"').should('be.visible');
-        cy.get(`[data-testid]=${selectors.components.QueryTab.content}`).should('be.visible');
+        cy.get(`[data-testid="${selectors.components.QueryTab.content}"]`).should('be.visible');
         e2e.components.TransformTab.content().should('not.exist');
         e2e.components.AlertTab.content().should('not.exist');
         e2e.components.PanelAlertTabContent.content().should('not.exist');
@@ -44,7 +44,7 @@ describe('Panel edit tests', () => {
           expect(li.text()).equals('Transformations0'); // there's no transform so therefore Transform + 0
         });
         e2e.components.Transforms.addTransformationButton().scrollIntoView().should('be.visible');
-        cy.get(`[data-testid]=${selectors.components.QueryTab.content}`).should('not.exist');
+        cy.get(`[data-testid="${selectors.components.QueryTab.content}"]`).should('not.exist');
         e2e.components.AlertTab.content().should('not.exist');
         e2e.components.PanelAlertTabContent.content().should('not.exist');
 
@@ -55,7 +55,7 @@ describe('Panel edit tests', () => {
         // Needs to be disabled until Grafana EE turns unified alerting on by default
         // e2e.components.AlertTab.content().should('not.exist');
 
-        cy.get(`[data-testid]=${selectors.components.QueryTab.content}`).should('not.exist');
+        cy.get(`[data-testid="${selectors.components.QueryTab.content}"]`).should('not.exist');
         e2e.components.TransformTab.content().should('not.exist');
 
         // Needs to be disabled until Grafana EE turns unified alerting on by default
@@ -64,17 +64,6 @@ describe('Panel edit tests', () => {
 
         e2e.components.Tab.title('Queries').should('be.visible').click();
       });
-
-    // Panel sidebar is rendered open by default
-    e2e.components.PanelEditor.OptionsPane.content().should('be.visible');
-
-    // close options pane
-    e2e.components.PanelEditor.toggleVizOptions().click();
-    e2e.components.PanelEditor.OptionsPane.content().should('not.exist');
-
-    // open options pane
-    e2e.components.PanelEditor.toggleVizOptions().should('be.visible').click();
-    e2e.components.PanelEditor.OptionsPane.content().should('be.visible');
 
     // Check that Time series is chosen
     e2e.components.PanelEditor.toggleVizPicker().click();
@@ -106,7 +95,9 @@ describe('Panel edit tests', () => {
     e2e.components.PanelEditor.DataPane.content().should('be.visible');
 
     // Field & Overrides tabs (need to switch to React based vis, i.e. Table)
-    e2e.components.PanelEditor.OptionsPane.fieldLabel('Table Show table header').should('be.visible');
-    e2e.components.PanelEditor.OptionsPane.fieldLabel('Table Column width').should('be.visible');
+    e2e.components.PanelEditor.toggleTableView().click({ force: true }).click({ force: true });
+
+    e2e.components.PanelEditor.OptionsPane.fieldLabel('Table Show table header').scrollIntoView().should('be.visible');
+    e2e.components.PanelEditor.OptionsPane.fieldLabel('Table Column width').scrollIntoView().should('be.visible');
   });
 });

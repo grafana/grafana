@@ -14,7 +14,7 @@ describe('Panel edit tests - queries', () => {
     e2e.components.PanelEditor.General.content().should('be.visible');
 
     // Queries tab is rendered and open by default
-    e2e.components.PanelEditor.DataPane.content().should('be.visible');
+    e2e.components.PanelEditor.DataPane.content().scrollIntoView().should('be.visible');
 
     // We expect row with refId A to exist and be visible
     e2e.components.QueryEditorRows.rows().within((rows) => {
@@ -43,6 +43,7 @@ describe('Panel edit tests - queries', () => {
     // Change to CSV Metric Values scenario for A
     e2e.components.DataSource.TestData.QueryTab.scenarioSelectContainer()
       .first()
+      .scrollIntoView()
       .should('be.visible')
       .within(() => {
         cy.get('input[id*="test-data-scenario-select-"]').eq(0).should('be.visible').click();
@@ -87,7 +88,7 @@ describe('Panel edit tests - queries', () => {
 });
 
 const expectInspectorResultAndClose = (expectCallBack: (keys: JQuery<HTMLElement>) => void) => {
-  e2e.components.QueryTab.queryInspectorButton().should('be.visible').click();
+  e2e.components.QueryTab.queryInspectorButton().scrollIntoView().should('be.visible').click();
 
   e2e.components.PanelInspector.Query.refreshButton().should('be.visible').click();
 
