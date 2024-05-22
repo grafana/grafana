@@ -91,10 +91,12 @@ func TestAddDataSource_InvalidURL(t *testing.T) {
 
 	sc.m.Post(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
-			Name:   "Test",
-			URL:    "invalid:url",
-			Access: "direct",
-			Type:   "test",
+			BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
+				Name:   "Test",
+				URL:    "invalid:url",
+				Access: "direct",
+				Type:   "test",
+			},
 		})
 		c.SignedInUser = authedUserWithPermissions(1, 1, []ac.Permission{})
 		return hs.AddDataSource(c)
@@ -123,10 +125,12 @@ func TestAddDataSource_URLWithoutProtocol(t *testing.T) {
 
 	sc.m.Post(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
-			Name:   name,
-			URL:    url,
-			Access: "direct",
-			Type:   "test",
+			BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
+				Name:   name,
+				URL:    url,
+				Access: "direct",
+				Type:   "test",
+			},
 		})
 		c.SignedInUser = authedUserWithPermissions(1, 1, []ac.Permission{})
 		return hs.AddDataSource(c)
@@ -154,11 +158,13 @@ func TestAddDataSource_InvalidJSONData(t *testing.T) {
 
 	sc.m.Post(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
-			Name:     "Test",
-			URL:      "localhost:5432",
-			Access:   "direct",
-			Type:     "test",
-			JsonData: jsonData,
+			BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
+				Name:     "Test",
+				URL:      "localhost:5432",
+				Access:   "direct",
+				Type:     "test",
+				JsonData: jsonData,
+			},
 		})
 		c.SignedInUser = authedUserWithPermissions(1, 1, []ac.Permission{})
 		return hs.AddDataSource(c)
@@ -179,10 +185,12 @@ func TestUpdateDataSource_InvalidURL(t *testing.T) {
 
 	sc.m.Put(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
-			Name:   "Test",
-			URL:    "invalid:url",
-			Access: "direct",
-			Type:   "test",
+			BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
+				Name:   "Test",
+				URL:    "invalid:url",
+				Access: "direct",
+				Type:   "test",
+			},
 		})
 		c.SignedInUser = authedUserWithPermissions(1, 1, []ac.Permission{})
 		return hs.AddDataSource(c)
@@ -208,11 +216,13 @@ func TestUpdateDataSource_InvalidJSONData(t *testing.T) {
 
 	sc.m.Put(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
-			Name:     "Test",
-			URL:      "localhost:5432",
-			Access:   "direct",
-			Type:     "test",
-			JsonData: jsonData,
+			BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
+				Name:     "Test",
+				URL:      "localhost:5432",
+				Access:   "direct",
+				Type:     "test",
+				JsonData: jsonData,
+			},
 		})
 		c.SignedInUser = authedUserWithPermissions(1, 1, []ac.Permission{})
 		return hs.AddDataSource(c)
@@ -303,11 +313,13 @@ func TestUpdateDataSourceTeamHTTPHeaders_InvalidJSONData(t *testing.T) {
 			jsonData.Set("teamHttpHeaders", tc.data)
 			sc.m.Put(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 				c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
-					Name:     "Test",
-					URL:      "localhost:5432",
-					Access:   "direct",
-					Type:     "test",
-					JsonData: jsonData,
+					BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
+						Name:     "Test",
+						URL:      "localhost:5432",
+						Access:   "direct",
+						Type:     "test",
+						JsonData: jsonData,
+					},
 				})
 				c.SignedInUser = authedUserWithPermissions(1, 1, []ac.Permission{
 					{Action: datasources.ActionPermissionsWrite, Scope: datasources.ScopeAll},
@@ -340,10 +352,12 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 
 	sc.m.Put(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
-			Name:   name,
-			URL:    url,
-			Access: "direct",
-			Type:   "test",
+			BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
+				Name:   name,
+				URL:    url,
+				Access: "direct",
+				Type:   "test",
+			},
 		})
 		c.SignedInUser = authedUserWithPermissions(1, 1, []ac.Permission{})
 
@@ -375,9 +389,11 @@ func TestUpdateDataSourceByID_DataSourceNameExists(t *testing.T) {
 	sc.m.Put(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.Req = web.SetURLParams(c.Req, map[string]string{":id": "1"})
 		c.Req.Body = mockRequestBody(datasources.UpdateDataSourceCommand{
-			Access: "direct",
-			Type:   "test",
-			Name:   "test",
+			BaseWriteDataSourceCommand: datasources.BaseWriteDataSourceCommand{
+				Access: "direct",
+				Type:   "test",
+				Name:   "test",
+			},
 		})
 		return hs.UpdateDataSourceByID(c)
 	}))
