@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"slices"
+	"strings"
 	"time"
 
 	"github.com/benbjohnson/clock"
@@ -251,9 +253,10 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		sch.stopAppliedFunc,
 	)
 	for _, item := range alertRules {
+		ruleRoutine, newRoutine := sch.registry.getOrCreate(ctx, item, ruleFactory)
 		key := item.GetKey()
-		ruleRoutine, newRoutine := sch.registry.getOrCreate(ctx, key, ruleFactory)
 		logger := sch.log.FromContext(ctx).New(key.LogContext()...)
+
 		// enforce minimum evaluation interval
 		if item.IntervalSeconds < int64(sch.minRuleInterval.Seconds()) {
 			logger.Debug("Interval adjusted", "originalInterval", item.IntervalSeconds, "adjustedInterval", sch.minRuleInterval.Seconds())
@@ -325,6 +328,9 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		step = sch.baseInterval.Nanoseconds() / int64(len(readyToRun))
 	}
 
+	slices.SortFunc(readyToRun, func(a, b readyToRunItem) int {
+		return strings.Compare(a.rule.UID, b.rule.UID)
+	})
 	for i := range readyToRun {
 		item := readyToRun[i]
 

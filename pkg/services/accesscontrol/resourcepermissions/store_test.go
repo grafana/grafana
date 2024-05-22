@@ -796,10 +796,6 @@ func TestStore_StoreActionSet(t *testing.T) {
 }
 
 func TestStore_ResolveActionSet(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
 	actionSetService := NewActionSetService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures()))
 	actionSetService.StoreActionSet("folders", "edit", []string{"folders:read", "folders:write", "dashboards:read", "dashboards:write"})
 	actionSetService.StoreActionSet("folders", "view", []string{"folders:read", "dashboards:read"})
@@ -836,8 +832,105 @@ func TestStore_ResolveActionSet(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			actionSets := actionSetService.Resolve(tt.action)
+			actionSets := actionSetService.ResolveAction(tt.action)
 			require.ElementsMatch(t, tt.expectedActionSets, actionSets)
+		})
+	}
+}
+
+func TestStore_ExpandActions(t *testing.T) {
+	actionSetService := NewActionSetService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures()))
+	actionSetService.StoreActionSet("folders", "edit", []string{"folders:read", "folders:write", "dashboards:read", "dashboards:write"})
+	actionSetService.StoreActionSet("folders", "view", []string{"folders:read", "dashboards:read"})
+	actionSetService.StoreActionSet("dashboards", "view", []string{"dashboards:read"})
+
+	type actionSetTest struct {
+		desc                string
+		permissions         []accesscontrol.Permission
+		expectedPermissions []accesscontrol.Permission
+	}
+
+	tests := []actionSetTest{
+		{
+			desc:                "should return empty list if no permissions are passed in",
+			permissions:         []accesscontrol.Permission{},
+			expectedPermissions: []accesscontrol.Permission{},
+		},
+		{
+			desc: "should return unchanged permissions if none of actions are part of any action sets",
+			permissions: []accesscontrol.Permission{
+				{
+					Action: "datasources:create",
+				},
+				{
+					Action: "users:read",
+					Scope:  "users:*",
+				},
+			},
+			expectedPermissions: []accesscontrol.Permission{
+				{
+					Action: "datasources:create",
+				},
+				{
+					Action: "users:read",
+					Scope:  "users:*",
+				},
+			},
+		},
+		{
+			desc: "should return unchanged permissions if none of actions are part of any action sets",
+			permissions: []accesscontrol.Permission{
+				{
+					Action: "datasources:create",
+				},
+				{
+					Action: "users:read",
+					Scope:  "users:*",
+				},
+			},
+			expectedPermissions: []accesscontrol.Permission{
+				{
+					Action: "datasources:create",
+				},
+				{
+					Action: "users:read",
+					Scope:  "users:*",
+				},
+			},
+		},
+		{
+			desc: "should be able to expand one permission and leave others unchanged",
+			permissions: []accesscontrol.Permission{
+				{
+					Action: "folders:view",
+					Scope:  "folders:uid:1",
+				},
+				{
+					Action: "users:read",
+					Scope:  "users:*",
+				},
+			},
+			expectedPermissions: []accesscontrol.Permission{
+				{
+					Action: "folders:read",
+					Scope:  "folders:uid:1",
+				},
+				{
+					Action: "dashboards:read",
+					Scope:  "folders:uid:1",
+				},
+				{
+					Action: "users:read",
+					Scope:  "users:*",
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			permissions := actionSetService.ExpandActionSets(tt.permissions)
+			require.ElementsMatch(t, tt.expectedPermissions, permissions)
 		})
 	}
 }
