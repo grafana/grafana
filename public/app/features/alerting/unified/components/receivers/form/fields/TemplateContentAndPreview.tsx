@@ -83,32 +83,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   templateContent: css({
     padding: theme.spacing(2),
   }),
-  viewer: {
-    container: css({
-      display: 'flex',
-      flexDirection: 'column',
-    }),
-    box: css({
-      display: 'flex',
-      flexDirection: 'column',
-      borderBottom: `1px solid ${theme.colors.border.medium}`,
-    }),
-    header: css({
-      fontSize: theme.typography.bodySmall.fontSize,
-      padding: theme.spacing(1, 2),
-      borderBottom: `1px solid ${theme.colors.border.medium}`,
-      backgroundColor: theme.colors.background.secondary,
-    }),
-    errorText: css({
-      color: theme.colors.error.text,
-    }),
-    pre: css({
-      backgroundColor: 'transparent',
-      margin: 0,
-      border: 'none',
-      padding: theme.spacing(2),
-    }),
-  },
   editorContainer: css({
     width: 'fit-content',
     border: 'none',

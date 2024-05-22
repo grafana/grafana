@@ -13,6 +13,7 @@ describe('getTemplateOptions function', () => {
       // define with a minus sign
       file4: '{{ define "template_with_minus" -}}{{ .Annotations.summary }}{{- end }}',
       file5: '',
+      //nested templates
       file6: `{{ define "nested" }}
       Main Template Content
       {{ template "sub1" }}
