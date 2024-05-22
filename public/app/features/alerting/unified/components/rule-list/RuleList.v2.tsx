@@ -16,6 +16,7 @@ import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelect
 import { fetchAllPromAndRulerRulesAction } from '../../state/actions';
 import { RULE_LIST_POLL_INTERVAL_MS } from '../../utils/constants';
 import { getAllRulesSourceNames, getRulesSourceUniqueKey, getApplicationFromRulesSource } from '../../utils/datasource';
+import { makeFolderAlertsLink } from '../../utils/misc';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { NoRulesSplash } from '../rules/NoRulesCTA';
 import { INSTANCES_DISPLAY_LIMIT } from '../rules/RuleDetails';
@@ -127,14 +128,15 @@ const RuleList = withErrorBoundary(
             <LoadingIndicator visible={loading} />
             <ul className={styles.rulesTree} role="tree" aria-label="List of alert rules">
               {sortedNamespaces.map((namespace) => {
-                const { rulesSource } = namespace;
+                const { rulesSource, uid } = namespace;
 
-                // @TODO use buildinfo here to get the correct icon
                 const application = getApplicationFromRulesSource(rulesSource);
+                const href = application === 'grafana' && uid ? makeFolderAlertsLink(uid, namespace.name) : undefined;
 
                 return (
                   <Namespace
                     key={getRulesSourceUniqueKey(rulesSource) + namespace.name}
+                    href={href}
                     name={namespace.name}
                     application={application}
                   >

@@ -2,10 +2,10 @@ import { css } from '@emotion/css';
 import React, { PropsWithChildren } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, Button, Stack, TextLink, Icon } from '@grafana/ui';
+import { useStyles2, Stack, TextLink, Icon } from '@grafana/ui';
 import { PromApplication, RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
-import { Spacer } from '../Spacer';
+import { WithReturnButton } from '../WithReturnButton';
 
 interface NamespaceProps extends PropsWithChildren {
   name: string;
@@ -19,16 +19,19 @@ const Namespace = ({ children, name, href, application }: NamespaceProps) => {
   return (
     <li className={styles.namespaceWrapper} role="treeitem" aria-selected="false">
       <div className={styles.namespaceTitle}>
-        <Stack alignItems={'center'}>
-          <Stack alignItems={'center'} gap={1}>
-            <NamespaceIcon application={application} />
-            {href ? <TextLink href={href}>{name}</TextLink> : name}
-          </Stack>
-          <Spacer />
-          {application === 'grafana' && (
-            <Button variant="secondary" size="sm" icon="shield" type="button" aria-label="edit permissions">
-              Permissions
-            </Button>
+        <Stack alignItems={'center'} gap={1}>
+          <NamespaceIcon application={application} />
+          {href ? (
+            <WithReturnButton
+              title="Alert rules"
+              component={
+                <TextLink href={href} inline={false}>
+                  {name}
+                </TextLink>
+              }
+            />
+          ) : (
+            name
           )}
         </Stack>
       </div>

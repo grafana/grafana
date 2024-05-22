@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Badge, Button, Dropdown, Menu, Stack, Text, Icon } from '@grafana/ui';
 
 import { MetaText } from '../MetaText';
+import MoreButton from '../MoreButton';
 import { Spacer } from '../Spacer';
 
 interface EvaluationGroupProps extends PropsWithChildren {
@@ -34,16 +35,12 @@ const EvaluationGroup = ({ name, provenance, interval, onToggle, isOpen = false,
           {isProvisioned && <Badge color="purple" text="Provisioned" />}
           <Spacer />
           {interval && <MetaText icon="history">{interval}</MetaText>}
+          <Button size="sm" icon="pen" variant="secondary" disabled={isProvisioned} data-testid="edit-group-action">
+            Edit
+          </Button>
           <Dropdown
             overlay={
               <Menu>
-                <Menu.Item
-                  label="Edit"
-                  icon="pen"
-                  disabled={isProvisioned}
-                  aria-label="edit-group-action"
-                  data-testid="edit-group-action"
-                />
                 <Menu.Item label="Re-order rules" icon="flip" disabled={isProvisioned} />
                 <Menu.Divider />
                 <Menu.Item label="Export" icon="download-alt" />
@@ -51,9 +48,7 @@ const EvaluationGroup = ({ name, provenance, interval, onToggle, isOpen = false,
               </Menu>
             }
           >
-            <Button size="sm" variant="secondary">
-              Actions <Icon name="angle-down" />
-            </Button>
+            <MoreButton size="sm" />
           </Dropdown>
         </Stack>
       </div>
@@ -64,7 +59,7 @@ const EvaluationGroup = ({ name, provenance, interval, onToggle, isOpen = false,
 
 const getStyles = (theme: GrafanaTheme2) => ({
   headerWrapper: css({
-    padding: `${theme.spacing(0.5)} ${theme.spacing(1)}`,
+    padding: `${theme.spacing(1)} ${theme.spacing(1)}`,
 
     background: theme.colors.background.secondary,
 

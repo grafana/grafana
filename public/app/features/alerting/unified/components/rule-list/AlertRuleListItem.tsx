@@ -5,18 +5,16 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Stack, Text, TextLink, Dropdown, Button, Menu } from '@grafana/ui';
-import { Time } from 'app/features/explore/Time';
 import { RuleHealth } from 'app/types/unified-alerting';
 import { Labels, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { labelsSize } from '../../utils/labels';
-import { AlertLabels } from '../AlertLabels';
 import { MetaText } from '../MetaText';
 import MoreButton from '../MoreButton';
 import { Spacer } from '../Spacer';
 
 import { RuleListIcon } from './RuleListIcon';
-import { calculateNextEvaluationEstimate, getRelativeEvaluationInterval } from './util';
+import { calculateNextEvaluationEstimate } from './util';
 
 interface AlertRuleListItemProps {
   name: string;
@@ -44,7 +42,6 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     href,
     isProvisioned,
     lastEvaluation,
-    evaluationDuration,
     evaluationInterval,
     isPaused = false,
     instancesCount = 0,
@@ -63,7 +60,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
                 <TextLink href={href} inline={false}>
                   {name}
                 </TextLink>
-                {labels && <AlertLabels labels={labels} size="xs" />}
+                {/* {labels && <AlertLabels labels={labels} size="xs" />} */}
               </Stack>
               <Summary content={summary} error={error} />
             </Stack>
@@ -76,9 +73,9 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
               ) : (
                 <EvaluationMetadata
                   lastEvaluation={lastEvaluation}
-                  evaluationDuration={evaluationDuration}
                   evaluationInterval={evaluationInterval}
                   health={health}
+                  state={state}
                   error={error}
                 />
               )}
@@ -154,6 +151,7 @@ interface RecordingRuleListItemProps {
   href: string;
   error?: string;
   health?: RuleHealth;
+  state?: PromAlertingRuleState;
   labels?: Labels;
   isProvisioned?: boolean;
   lastEvaluation?: string;
@@ -164,14 +162,13 @@ interface RecordingRuleListItemProps {
 export const RecordingRuleListItem = ({
   name,
   error,
+  state,
   health,
   isProvisioned,
   href,
   labels,
   lastEvaluation,
   evaluationInterval,
-  // evaluation duration is always in seconds
-  evaluationDuration,
 }: RecordingRuleListItemProps) => {
   const styles = useStyles2(getStyles);
 
@@ -186,7 +183,7 @@ export const RecordingRuleListItem = ({
                 <TextLink href={href} variant="body" weight="bold" inline={false}>
                   {name}
                 </TextLink>
-                {labels && <AlertLabels labels={labels} size="xs" />}
+                {/* {labels && <AlertLabels labels={labels} size="xs" />} */}
               </Stack>
               <Summary error={error} />
             </Stack>
@@ -194,9 +191,9 @@ export const RecordingRuleListItem = ({
               <Stack direction="row" gap={1}>
                 <EvaluationMetadata
                   lastEvaluation={lastEvaluation}
-                  evaluationDuration={evaluationDuration}
                   evaluationInterval={evaluationInterval}
                   health={health}
+                  state={state}
                   error={error}
                 />
                 {!isEmpty(labels) && (
@@ -239,55 +236,32 @@ export const RecordingRuleListItem = ({
 
 interface EvaluationMetadataProps {
   lastEvaluation?: string;
-  evaluationDuration?: number; // in seconds
   evaluationInterval?: string;
   state?: PromAlertingRuleState;
   health?: RuleHealth;
   error?: string; // if health is "error" this should have error details for us
 }
 
-function EvaluationMetadata({
-  lastEvaluation,
-  evaluationDuration,
-  evaluationInterval,
-  state,
-}: EvaluationMetadataProps) {
-  const relativeEvaluationTime = getRelativeEvaluationInterval(lastEvaluation);
-
-  // @TODO this component doesn't support millis so it just shows "0s" – might want to make it support millis
-  const evaluationDurationString = evaluationDuration ? Time({ timeInMs: evaluationDuration, humanize: true }) : null;
-
+function EvaluationMetadata({ lastEvaluation, evaluationInterval, state }: EvaluationMetadataProps) {
   const nextEvaluation = calculateNextEvaluationEstimate(lastEvaluation, evaluationInterval);
 
-  if (state === PromAlertingRuleState.Firing && evaluationDurationString) {
-    // @TODO support firing for calculation
+  // @TODO support firing for calculation
+  if (state === PromAlertingRuleState.Firing && nextEvaluation) {
     const firingFor = '2m 34s';
 
     return (
       <MetaText icon="clock-nine">
-        Firing for <Text weight="bold">{firingFor}</Text>⋅ took <Text weight="bold">{evaluationDurationString}</Text>
-        {nextEvaluation && (
-          <>
-            {' '}
-            ⋅ next evaluation in <Text weight="bold">{nextEvaluation.humanized}</Text>
-          </>
-        )}
+        Firing for <Text weight="bold">{firingFor}</Text>
+        {nextEvaluation && <>· next evaluation in {nextEvaluation.humanized}</>}
       </MetaText>
     );
   }
 
   // for recording rules and normal or pending state alert rules we just show when we evaluated last and how long that took
-  if (relativeEvaluationTime && evaluationDurationString) {
+  if (nextEvaluation) {
     return (
       <MetaText icon="clock-nine">
-        Last evaluation <Text weight="bold">{relativeEvaluationTime}</Text>ago ⋅ took{' '}
-        <Text weight="bold">{evaluationDurationString}</Text>
-        {nextEvaluation && (
-          <>
-            {' '}
-            ⋅ next evaluation <Text weight="bold">{nextEvaluation.humanized}</Text>
-          </>
-        )}
+        Next evaluation <Text weight="bold">{nextEvaluation.humanized}</Text>
       </MetaText>
     );
   }
