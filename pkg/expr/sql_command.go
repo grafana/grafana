@@ -104,6 +104,7 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 		rsp.Error = err
 		return rsp, nil
 	}
+	logger.Debug("Done Executing query", "query", gr.query, "rows", frame.Rows())
 
 	frame.RefID = gr.refID
 
