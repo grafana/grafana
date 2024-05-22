@@ -3,7 +3,7 @@ import React, { PureComponent, CSSProperties, Ref } from 'react';
 import ReactGridLayout, { ItemCallback } from 'react-grid-layout';
 import { Subscription } from 'rxjs';
 
-import { config } from '@grafana/runtime';
+import { config, getPanelAttentionSrv } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -370,7 +370,7 @@ interface GrafanaGridItemProps extends React.HTMLAttributes<HTMLDivElement> {
  * A hacky way to intercept the react-layout-grid item dimensions and pass them to DashboardPanel
  */
 const GrafanaGridItem = React.forwardRef<HTMLDivElement, GrafanaGridItemProps>((props, ref) => {
-  const { keybindings } = useGrafana();
+  const panelAttentionService = getPanelAttentionSrv();
 
   const theme = config.theme2;
   let width = 100;
@@ -404,15 +404,13 @@ const GrafanaGridItem = React.forwardRef<HTMLDivElement, GrafanaGridItemProps>((
     }
   }
 
-  const hasAttention = keybindings.getPanelWithAttention() === getRefCurrent(ref);
-
   // props.children[0] is our main children. RGL adds the drag handle at props.children[1]
   return (
     <div
       {...divProps}
       style={{ ...divProps.style }}
-      onFocus={() => !hasAttention && keybindings.setPanelWithAttention(getRefCurrent(ref))}
-      onMouseMove={() => !hasAttention && keybindings.setPanelWithAttention(getRefCurrent(ref))}
+      onFocus={() => panelAttentionService.setPanelWithAttention(getRefCurrent(ref))}
+      onMouseMove={() => panelAttentionService.setPanelWithAttention(getRefCurrent(ref))}
       ref={ref}
     >
       {/* Pass width and height to children as render props */}

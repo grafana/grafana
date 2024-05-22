@@ -2,8 +2,8 @@ import Mousetrap from 'mousetrap';
 
 import 'mousetrap-global-bind';
 import 'mousetrap/plugins/global-bind/mousetrap-global-bind';
-import { LegacyGraphHoverClearEvent, locationUtil } from '@grafana/data';
-import { LocationService } from '@grafana/runtime';
+import { EventBus, LegacyGraphHoverClearEvent, locationUtil } from '@grafana/data';
+import { LocationService, PanelAttentionSrv } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
@@ -31,7 +31,8 @@ import { toggleTheme } from './theme';
 export class KeybindingSrv {
   constructor(
     private locationService: LocationService,
-    private chromeService: AppChromeService
+    private chromeService: AppChromeService,
+    private panelAttentionService: PanelAttentionSrv
   ) {}
 
   private panelWithAttention: HTMLDivElement | null = null;
@@ -196,10 +197,9 @@ export class KeybindingSrv {
 
   withFocusedPanel(fn: (panelId: number) => void) {
     return () => {
-      const focusedElement = this.panelWithAttention?.closest('[data-panelid]');
-
-      if (focusedElement instanceof HTMLElement && focusedElement.dataset?.panelid) {
-        fn(parseInt(focusedElement.dataset?.panelid, 10));
+      const panelWithAttention = this.panelAttentionService.getPanelWithAttention();
+      if (panelWithAttention) {
+        fn(panelWithAttention);
         return;
       }
     };
