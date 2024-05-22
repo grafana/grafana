@@ -1,3 +1,9 @@
+import {
+  Template,
+  parseTemplates,
+} from 'app/features/alerting/unified/components/receivers/form/fields/TemplateSelector';
+import { DEFAULT_TEMPLATES } from 'app/features/alerting/unified/utils/template-constants';
+
 import { alertingApi } from './alertingApi';
 
 export const previewTemplateUrl = `/api/alertmanager/grafana/config/api/v1/templates/test`;
@@ -33,6 +39,12 @@ export const templatesApi = alertingApi.injectEndpoints({
         data: { template: template, alerts: alerts, name: name },
         method: 'POST',
       }),
+    }),
+    getDefaultTemplates: build.query<Template[], void>({
+      queryFn: async () => {
+        const data = parseTemplates(DEFAULT_TEMPLATES);
+        return { data };
+      },
     }),
   }),
 });
