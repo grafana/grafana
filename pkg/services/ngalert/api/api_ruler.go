@@ -296,7 +296,7 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *contextmodel.ReqContext, ruleGro
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 
-	rules, err := ValidateRuleGroup(&ruleGroupConfig, c.SignedInUser.GetOrgID(), namespace.UID, RuleLimitsFromConfig(srv.cfg))
+	rules, err := ValidateRuleGroup(&ruleGroupConfig, c.SignedInUser.GetOrgID(), namespace.UID, RuleLimitsFromConfig(srv.cfg, srv.featureManager))
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
@@ -530,6 +530,7 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule, provenanceRecords map[stri
 			Provenance:           apimodels.Provenance(provenance),
 			IsPaused:             r.IsPaused,
 			NotificationSettings: AlertRuleNotificationSettingsFromNotificationSettings(r.NotificationSettings),
+			Record:               ApiRecordFromModelRecord(r.Record),
 		},
 	}
 	forDuration := model.Duration(r.For)

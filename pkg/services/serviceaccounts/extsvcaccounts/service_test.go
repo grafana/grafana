@@ -43,7 +43,7 @@ func setupTestEnv(t *testing.T) *TestEnv {
 	}
 	logger := log.New("extsvcaccounts.test")
 	env.S = &ExtSvcAccountsService{
-		acSvc:    acimpl.ProvideOSSService(cfg, env.AcStore, localcache.New(0, 0), fmgt, tracing.InitializeTracerForTest()),
+		acSvc:    acimpl.ProvideOSSService(cfg, env.AcStore, &actest.FakeActionResolver{}, localcache.New(0, 0), fmgt, tracing.InitializeTracerForTest()),
 		features: fmgt,
 		logger:   logger,
 		metrics:  newMetrics(nil, env.SaSvc, logger),

@@ -6,12 +6,12 @@ import { dateTime } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService, setDataSourceSrv } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { waitForServerRequest } from 'app/features/alerting/unified/mocks/server/events';
 import {
   MOCK_DATASOURCE_UID_BROKEN_ALERTMANAGER,
   MOCK_DATASOURCE_NAME_BROKEN_ALERTMANAGER,
-} from 'app/features/alerting/unified/mocks/datasources';
-import { waitForServerRequest } from 'app/features/alerting/unified/mocks/server/events';
-import { silenceCreateHandler } from 'app/features/alerting/unified/mocks/silences';
+} from 'app/features/alerting/unified/mocks/server/handlers/datasources';
+import { silenceCreateHandler } from 'app/features/alerting/unified/mocks/server/handlers/silences';
 import { MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 
@@ -68,7 +68,7 @@ const ui = {
     matchersField: byTestId('matcher'),
     matcherName: byPlaceholderText('label'),
     matcherValue: byPlaceholderText('value'),
-    comment: byPlaceholderText('Details about the silence'),
+    comment: byLabelText(/Comment/i),
     matcherOperatorSelect: byLabelText('operator'),
     matcherOperator: (operator: MatcherOperator) => byText(operator, { exact: true }),
     addMatcherButton: byRole('button', { name: 'Add matcher' }),

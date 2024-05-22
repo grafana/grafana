@@ -5,12 +5,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"xorm.io/xorm"
 )
 
-func getEngineMySQL(cfgSection *setting.DynamicSection) (*xorm.Engine, error) {
+func getEngineMySQL(cfgSection *setting.DynamicSection, tracer tracing.Tracer) (*xorm.Engine, error) {
 	dbHost := cfgSection.Key("db_host").MustString("")
 	dbName := cfgSection.Key("db_name").MustString("")
 	dbUser := cfgSection.Key("db_user").MustString("")
@@ -24,7 +26,8 @@ func getEngineMySQL(cfgSection *setting.DynamicSection) (*xorm.Engine, error) {
 
 	connectionString := connectionStringMySQL(dbUser, dbPass, protocol, dbHost, dbName)
 
-	engine, err := xorm.NewEngine("mysql", connectionString)
+	driverName := sqlstore.WrapDatabaseDriverWithHooks("mysql", tracer)
+	engine, err := xorm.NewEngine(driverName, connectionString)
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +39,7 @@ func getEngineMySQL(cfgSection *setting.DynamicSection) (*xorm.Engine, error) {
 	return engine, nil
 }
 
-func getEnginePostgres(cfgSection *setting.DynamicSection) (*xorm.Engine, error) {
+func getEnginePostgres(cfgSection *setting.DynamicSection, tracer tracing.Tracer) (*xorm.Engine, error) {
 	dbHost := cfgSection.Key("db_host").MustString("")
 	dbName := cfgSection.Key("db_name").MustString("")
 	dbUser := cfgSection.Key("db_user").MustString("")
@@ -52,7 +55,8 @@ func getEnginePostgres(cfgSection *setting.DynamicSection) (*xorm.Engine, error)
 
 	connectionString := connectionStringPostgres(dbUser, dbPass, addr.Host, addr.Port, dbName, dbSslMode)
 
-	engine, err := xorm.NewEngine("postgres", connectionString)
+	driverName := sqlstore.WrapDatabaseDriverWithHooks("postgres", tracer)
+	engine, err := xorm.NewEngine(driverName, connectionString)
 	if err != nil {
 		return nil, err
 	}

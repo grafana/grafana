@@ -53,7 +53,7 @@ export const RuleDetails = ({ rule }: Props) => {
           <RuleDetailsDataSources rulesSource={rulesSource} rule={rule} />
         </div>
       </div>
-      <DetailsField label="Matching instances" horizontal={true}>
+      <DetailsField label="Instances" horizontal={true}>
         <RuleDetailsMatchingInstances rule={rule} itemsDisplayLimit={INSTANCES_DISPLAY_LIMIT} />
       </DetailsField>
     </div>

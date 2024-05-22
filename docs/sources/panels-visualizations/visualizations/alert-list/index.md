@@ -18,6 +18,10 @@ labels:
 title: Alert list
 description: Configure options for Grafana's alert list visualization
 weight: 100
+refs:
+  grafana-alerting-overview:
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/
 ---
 
 # Alert list
@@ -100,8 +104,3 @@ Choose which alert states to display in this visualization.
 - No Data
 - Normal
 - Error
-
-{{% docs/reference %}}
-[Grafana Alerting overview]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting"
-[Grafana Alerting overview]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting"
-{{% /docs/reference %}}
