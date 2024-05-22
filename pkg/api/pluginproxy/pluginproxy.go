@@ -122,7 +122,7 @@ func (proxy *PluginProxy) HandleRequest() {
 }
 
 func (proxy *PluginProxy) hasAccessToRoute(route *plugins.Route) bool {
-	useRBAC := proxy.features.IsEnabled(proxy.ctx.Req.Context(), featuremgmt.FlagAccessControlOnCall) && route.RequiresRBACAction()
+	useRBAC := proxy.features.IsEnabled(proxy.ctx.Req.Context(), featuremgmt.FlagAccessControlOnCall) && route.ReqAction != ""
 	if useRBAC {
 		hasAccess := ac.HasAccess(proxy.accessControl, proxy.ctx)(ac.EvalPermission(route.ReqAction))
 		if !hasAccess {

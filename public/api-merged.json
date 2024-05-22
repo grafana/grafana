@@ -12033,7 +12033,7 @@
         "condition": {
           "type": "string"
         },
-        "dasboardUid": {
+        "dashboardUid": {
           "type": "string"
         },
         "data": {
@@ -15366,6 +15366,9 @@
         "provenance": {
           "$ref": "#/definitions/Provenance"
         },
+        "record": {
+          "$ref": "#/definitions/Record"
+        },
         "rule_group": {
           "type": "string"
         },
@@ -16953,8 +16956,8 @@
       }
     },
     "PagerdutyImage": {
-      "description": "PagerdutyImage is an image",
       "type": "object",
+      "title": "PagerdutyImage is an image.",
       "properties": {
         "alt": {
           "type": "string"
@@ -16968,8 +16971,8 @@
       }
     },
     "PagerdutyLink": {
-      "description": "PagerdutyLink is a link",
       "type": "object",
+      "title": "PagerdutyLink is a link.",
       "properties": {
         "href": {
           "type": "string"
@@ -17575,6 +17578,9 @@
         },
         "notification_settings": {
           "$ref": "#/definitions/AlertRuleNotificationSettings"
+        },
+        "record": {
+          "$ref": "#/definitions/Record"
         },
         "title": {
           "type": "string"
@@ -18380,6 +18386,18 @@
           "type": "string"
         },
         "uid": {
+          "type": "string"
+        }
+      }
+    },
+    "Record": {
+      "type": "object",
+      "title": "Record defines how data produced by a recording rule is written.",
+      "properties": {
+        "from": {
+          "type": "string"
+        },
+        "metric": {
           "type": "string"
         }
       }
@@ -21547,13 +21565,13 @@
       }
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
       }
     },
     "gettableSilence": {
-      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -21609,7 +21627,6 @@
       }
     },
     "integration": {
-      "description": "Integration integration",
       "type": "object",
       "required": [
         "name",
@@ -21818,6 +21835,7 @@
       }
     },
     "receiver": {
+      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "active",
