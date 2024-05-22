@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -35,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 func TestMain(m *testing.M) {
@@ -105,7 +107,11 @@ func TestService_AddDataSource(t *testing.T) {
 		}
 
 		_, err = dsService.AddDataSource(context.Background(), cmd)
-		require.EqualError(t, err, "not allowed (&{Status:Failure Message:expected apiVersion: v0alpha1, got: v123 Reason:BadRequest Code:400})")
+
+		var gErr errutil.Error
+		require.True(t, errors.As(err, &gErr))
+		require.Equal(t, "expected apiVersion: v0alpha1, found: v123", gErr.PublicMessage)
+		require.Equal(t, 400, gErr.Public().StatusCode)
 	})
 }
 

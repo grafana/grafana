@@ -30,7 +30,7 @@ func (s *Service) ValidateAdmission(ctx context.Context, req *backend.AdmissionR
 	case "", "v0alpha1":
 		// OK!
 	default:
-		return getBadRequest(fmt.Sprintf("expected apiVersion: v0alpha1, got: %s", settings.APIVersion)), nil
+		return getBadRequest(fmt.Sprintf("expected apiVersion: v0alpha1, found: %s", settings.APIVersion)), nil
 	}
 	if settings.JSONData != nil {
 		anything := map[string]any{}

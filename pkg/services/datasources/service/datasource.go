@@ -350,7 +350,8 @@ func (s *Service) mutate(ctx context.Context, pluginContext backend.PluginContex
 	rsp, err := s.pluginClient.MutateAdmission(ctx, req)
 	if err != nil {
 		if errors.Is(err, plugins.ErrMethodNotImplemented) {
-			return nil, fmt.Errorf("plugin (%s) with apiVersion=%s must implement MutateAdmission", p.ID, p.APIVersion)
+			return nil, errutil.Internal("plugin.unimplemented").
+				Errorf("plugin (%s) with apiVersion=%s must implement MutateAdmission", p.ID, p.APIVersion)
 		}
 		return nil, err
 	}
@@ -372,10 +373,13 @@ func toError(status *backend.StatusResult) error {
 	}
 	// hymm -- no way to pass the raw http status along!!
 	// Looks like it must be based on the reason string
-	return errutil.NewBase(errutil.CoreStatus(status.Reason), "datasource.config.mutate",
-		errutil.WithPublicMessage(status.Message),
-		errutil.WithDownstream(), // this happened in a plugin
-	)
+	return errutil.Error{
+		Reason:        errutil.CoreStatus(status.Reason),
+		MessageID:     "datasource.config.mutate",
+		LogMessage:    status.Message,
+		PublicMessage: status.Message,
+		Source:        errutil.SourceDownstream,
+	}
 }
 
 // getAvailableName finds the first available name for a datasource of the given type.
