@@ -91,7 +91,9 @@ func SetupConfig(
 			panic(fmt.Sprintf("could not build handler chain func: %s", err.Error()))
 		}
 
-		handler := genericapiserver.DefaultBuildHandlerChain(requestHandler, c)
+		// Needs to run last in request chain to function as expected, hence we register it first.
+		handler := filters.WithTracingHTTPLoggingAttributes(requestHandler)
+		handler = genericapiserver.DefaultBuildHandlerChain(handler, c)
 		handler = filters.WithAcceptHeader(handler)
 		handler = filters.WithPathRewriters(handler, pathRewriters)
 		handler = k8stracing.WithTracing(handler, serverConfig.TracerProvider, "KubernetesAPI")
