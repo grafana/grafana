@@ -165,7 +165,7 @@ describe('LogRowMessage', () => {
     const entry = `Line1
 line2
 line3`;
-    const singleLineEntry = entry.replace(/(\r\n|\n|\r)/g, '')
+    const singleLineEntry = entry.replace(/(\r\n|\n|\r)/g, '');
     it('Displays the original log line when wrapping is enabled', () => {
       setup({
         row: createLogRow({ entry, logLevel: LogLevel.error, timeEpochMs: 1546297200000 }),
