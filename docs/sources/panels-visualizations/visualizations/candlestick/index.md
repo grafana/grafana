@@ -118,10 +118,6 @@ The candlestick visualization is based on the time series visualization. It can 
 
 {{< docs/shared lookup="visualizations/legend-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Tooltip options
-
-{{< docs/shared lookup="visualizations/tooltip-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
 ## Value mappings
 
 {{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
