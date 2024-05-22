@@ -30,6 +30,11 @@ func NewDualWriterMode2(legacy LegacyStorage, storage Storage) *DualWriterMode2 
 	return &DualWriterMode2{Legacy: legacy, Storage: storage, Log: klog.NewKlogr().WithName("DualWriterMode2"), dualWriterMetrics: metrics}
 }
 
+// Mode returns the mode of the dual writer.
+func (d *DualWriterMode2) Mode() DualWriterMode {
+	return Mode2
+}
+
 // Create overrides the behavior of the generic DualWriter and writes to LegacyStorage and Storage.
 func (d *DualWriterMode2) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	log := d.Log.WithValues("kind", options.Kind)

@@ -77,6 +77,7 @@ allow = [
   "github.com/grafana/grafana/pkg/apiserver",
   "github.com/grafana/grafana/pkg/services/apiserver/utils",
   "github.com/grafana/grafana/pkg/services/featuremgmt",
+  "github.com/grafana/grafana/pkg/infra/kvstore",
 ]
 deny = [
   { pkg = "github.com/grafana/grafana/pkg", desc = "apiserver is not allowed to import grafana core" }

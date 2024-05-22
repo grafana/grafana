@@ -25,6 +25,11 @@ func NewDualWriterMode4(legacy LegacyStorage, storage Storage) *DualWriterMode4 
 	return &DualWriterMode4{Legacy: legacy, Storage: storage, Log: klog.NewKlogr().WithName("DualWriterMode4"), dualWriterMetrics: metrics}
 }
 
+// Mode returns the mode of the dual writer.
+func (d *DualWriterMode4) Mode() DualWriterMode {
+	return Mode4
+}
+
 // #TODO remove all DualWriterMode4 methods once we remove the generic DualWriter implementation
 
 // Create overrides the behavior of the generic DualWriter and writes only to Storage.
