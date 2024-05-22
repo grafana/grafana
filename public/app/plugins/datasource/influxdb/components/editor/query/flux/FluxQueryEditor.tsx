@@ -9,7 +9,9 @@ import {
   CodeEditorSuggestionItemKind,
   InlineFormLabel,
   LinkButton,
+  Monaco,
   MonacoEditor,
+  monacoTypes,
   Segment,
   Themeable2,
   withTheme2,
@@ -100,6 +102,10 @@ class UnthemedFluxQueryEditor extends PureComponent<Props> {
     this.props.onChange({ ...this.props.query, query });
     this.props.onRunQuery();
   };
+  
+  onEditorChange = (value: string) => {
+    this.props.onChange({ ...this.props.query, query: value });
+  };
 
   onSampleChange = (val: SelectableValue<string>) => {
     this.props.onChange({
@@ -165,6 +171,18 @@ class UnthemedFluxQueryEditor extends PureComponent<Props> {
     setTimeout(() => editor.layout(), 100);
   };
 
+  // HotKey support: Run the query when user presses 'Shift+Enter'
+  // See: https://github.com/grafana/grafana/issues/83575
+  setupActions(editor: monacoTypes.editor.IStandaloneCodeEditor, monaco: Monaco, onRunQuery: () => void) {
+    editor.addAction({
+      id: 'run-query',
+      label: 'Run Query',
+      keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
+      run: function () {
+        onRunQuery();
+      },
+    });
+  };
   render() {
     const { query, theme } = this.props;
     const styles = getStyles(theme);
@@ -185,10 +203,14 @@ class UnthemedFluxQueryEditor extends PureComponent<Props> {
           value={query.query || ''}
           onBlur={this.onFluxQueryChange}
           onSave={this.onFluxQueryChange}
+          onChange={this.onEditorChange}
           showMiniMap={false}
           showLineNumbers={true}
           getSuggestions={this.getSuggestions}
-          onEditorDidMount={this.editorDidMountCallbackHack}
+          onEditorDidMount={(editor,monaco) => {
+            this.editorDidMountCallbackHack(editor)
+            this.setupActions(editor,monaco,()=>this.props.onRunQuery())
+          }}
         />
         <div className={cx('gf-form-inline', styles.editorActions)}>
           <LinkButton
