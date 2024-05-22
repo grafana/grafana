@@ -8,7 +8,9 @@ import { useStyles2, Stack, Text, TextLink, Dropdown, Button, Menu } from '@graf
 import { RuleHealth } from 'app/types/unified-alerting';
 import { Labels, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { labelsSize } from '../../utils/labels';
+import { createContactPointLink } from '../../utils/misc';
 import { MetaText } from '../MetaText';
 import MoreButton from '../MoreButton';
 import { Spacer } from '../Spacer';
@@ -30,6 +32,8 @@ interface AlertRuleListItemProps {
   evaluationDuration?: number;
   labels?: Labels;
   instancesCount?: number;
+  // used for alert rules that use simplified routing
+  contactPoint?: string;
 }
 
 export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
@@ -45,6 +49,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     evaluationInterval,
     isPaused = false,
     instancesCount = 0,
+    contactPoint,
     labels,
   } = props;
   const styles = useStyles2(getStyles);
@@ -60,6 +65,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
                 <TextLink href={href} inline={false}>
                   {name}
                 </TextLink>
+                {/* let's not show labels for now, but maybe users would be interested later? Or maybe show them only in the list view? */}
                 {/* {labels && <AlertLabels labels={labels} size="xs" />} */}
               </Stack>
               <Summary content={summary} error={error} />
@@ -67,34 +73,46 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
           </div>
           <div>
             <Stack direction="row" gap={1}>
-              {/* if the rule is paused we don't care about the evaluation metadata */}
-              {isPaused ? (
-                <></>
-              ) : (
-                <EvaluationMetadata
-                  lastEvaluation={lastEvaluation}
-                  evaluationInterval={evaluationInterval}
-                  health={health}
-                  state={state}
-                  error={error}
-                />
-              )}
+              {/* show evaluation-related metadata if the rule isn't paused – paused rules don't have instances and shouldn't show evaluation timestamps */}
               {!isPaused && (
                 <>
-                  <MetaText icon="layer-group">
-                    <TextLink variant="bodySmall" color="secondary" href={href + '?tab=instances'} inline={false}>
+                  <EvaluationMetadata
+                    lastEvaluation={lastEvaluation}
+                    evaluationInterval={evaluationInterval}
+                    health={health}
+                    state={state}
+                    error={error}
+                  />
+                  <MetaText icon="layers-alt">
+                    <TextLink href={href + '?tab=instances'} variant="bodySmall" color="primary" inline={false}>
                       {pluralize('instance', instancesCount, true)}
                     </TextLink>
                   </MetaText>
-
-                  {!isEmpty(labels) && (
-                    <MetaText icon="tag-alt">
-                      <TextLink variant="bodySmall" color="secondary" href={href} inline={false}>
-                        {pluralize('label', labelsSize(labels), true)}
-                      </TextLink>
-                    </MetaText>
-                  )}
                 </>
+              )}
+
+              {/* show label count */}
+              {!isEmpty(labels) && (
+                <MetaText icon="tag-alt">
+                  <TextLink href={href} variant="bodySmall" color="secondary" inline={false}>
+                    {pluralize('label', labelsSize(labels), true)}
+                  </TextLink>
+                </MetaText>
+              )}
+
+              {/* show if the alert rule is using direct contact point or notification policy routing, not for paused rules or recording rules */}
+              {contactPoint && !isPaused && (
+                <MetaText icon="at">
+                  Delivered to{' '}
+                  <TextLink
+                    href={createContactPointLink(contactPoint, GRAFANA_RULES_SOURCE_NAME)}
+                    variant="bodySmall"
+                    color="primary"
+                    inline={false}
+                  >
+                    {contactPoint}
+                  </TextLink>
+                </MetaText>
               )}
             </Stack>
           </div>
@@ -151,6 +169,7 @@ interface RecordingRuleListItemProps {
   href: string;
   error?: string;
   health?: RuleHealth;
+  recording?: boolean;
   state?: PromAlertingRuleState;
   labels?: Labels;
   isProvisioned?: boolean;
@@ -176,7 +195,7 @@ export const RecordingRuleListItem = ({
     <li className={styles.alertListItemContainer} role="treeitem" aria-selected="false">
       <Stack direction="row" alignItems="center" gap={1}>
         <Stack direction="row" alignItems="start" gap={1} flex="1">
-          <RuleListIcon health={health} recording={true} />
+          <RuleListIcon health={health} recording />
           <Stack direction="column" gap={0.5}>
             <Stack direction="column" gap={0}>
               <Stack direction="row" alignItems="start">
@@ -251,7 +270,7 @@ function EvaluationMetadata({ lastEvaluation, evaluationInterval, state }: Evalu
 
     return (
       <MetaText icon="clock-nine">
-        Firing for <Text weight="bold">{firingFor}</Text>
+        Firing for <Text color="primary">{firingFor}</Text>
         {nextEvaluation && <>· next evaluation in {nextEvaluation.humanized}</>}
       </MetaText>
     );
@@ -259,11 +278,7 @@ function EvaluationMetadata({ lastEvaluation, evaluationInterval, state }: Evalu
 
   // for recording rules and normal or pending state alert rules we just show when we evaluated last and how long that took
   if (nextEvaluation) {
-    return (
-      <MetaText icon="clock-nine">
-        Next evaluation <Text weight="bold">{nextEvaluation.humanized}</Text>
-      </MetaText>
-    );
+    return <MetaText icon="clock-nine">Next evaluation {nextEvaluation.humanized}</MetaText>;
   }
 
   return null;

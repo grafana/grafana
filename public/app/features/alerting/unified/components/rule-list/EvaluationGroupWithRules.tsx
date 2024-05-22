@@ -64,14 +64,16 @@ export const EvaluationGroupWithRules = ({ group, rulesSource }: EvaluationGroup
         }
 
         if (isGrafanaRulerRule(rulerRule)) {
+          const contactPoint = rulerRule.grafana_alert.notification_settings?.receiver;
+
           return (
             <AlertRuleListItem
               key={rulerRule.grafana_alert.uid}
               name={rulerRule.grafana_alert.title}
               state={isAlertingPromRule ? promRule?.state : undefined}
-              labels={rulerRule.labels}
               health={promRule?.health}
               error={promRule?.lastError}
+              labels={rulerRule.labels}
               isPaused={rulerRule.grafana_alert.is_paused}
               lastEvaluation={promRule?.lastEvaluation}
               evaluationDuration={promRule?.evaluationTime}
@@ -80,6 +82,7 @@ export const EvaluationGroupWithRules = ({ group, rulesSource }: EvaluationGroup
               href={createViewLink(rulesSource, rule)}
               summary={rule.annotations?.['summary']}
               isProvisioned={Boolean(rulerRule.grafana_alert.provenance)}
+              contactPoint={contactPoint}
             />
           );
         }
