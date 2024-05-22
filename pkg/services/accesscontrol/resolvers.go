@@ -16,8 +16,6 @@ type ScopeAttributeResolver interface {
 }
 
 type ActionResolver interface {
-	ResolveAction(action string) []string
-	ResolveActionSet(actionSet string) []string
 	ExpandActionSets(permissions []Permission) []Permission
 }
 

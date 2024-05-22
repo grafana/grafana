@@ -371,9 +371,12 @@ func (s *Service) declareFixedRoles() error {
 }
 
 type ActionSetService interface {
+	// ActionResolver defines method for expanding permissions from permissions with action sets to fine-grained permissions.
+	// We use an ActionResolver interface to avoid circular dependencies
+	accesscontrol.ActionResolver
+
 	ResolveAction(action string) []string
 	ResolveActionSet(actionSet string) []string
-	ExpandActionSets(permissions []accesscontrol.Permission) []accesscontrol.Permission
 
 	StoreActionSet(resource, permission string, actions []string)
 }
