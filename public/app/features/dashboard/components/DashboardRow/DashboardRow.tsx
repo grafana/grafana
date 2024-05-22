@@ -22,8 +22,25 @@ export interface DashboardRowProps {
 export class DashboardRow extends React.Component<DashboardRowProps> {
   sub?: Unsubscribable;
 
+  rowId = () => {
+    return 'panel-' + this.props.panel.id.toString();
+  };
+
+  rowAnchor = () => {
+    return '#' + this.rowId();
+  };
+
   componentDidMount() {
     this.sub = this.props.dashboard.events.subscribe(RefreshEvent, this.onVariableUpdated);
+
+    const selectedAnchor = window.location.href.split('#')[1];
+    if (selectedAnchor === this.rowId()) {
+      if (this.props.panel.collapsed) {
+        this.onToggle();
+      }
+
+      document.getElementById(this.rowId())?.click();
+    }
   }
 
   componentWillUnmount() {
@@ -119,6 +136,9 @@ export class DashboardRow extends React.Component<DashboardRowProps> {
         </button>
         {canEdit && (
           <div className="dashboard-row__actions">
+            <button type="button" className="pinter" aria-label="Link to row">
+              <a id={this.rowId()} href={this.rowAnchor()}><Icon name="link" /></a>
+            </button>
             <RowOptionsButton
               title={this.props.panel.title}
               repeat={this.props.panel.repeat}
