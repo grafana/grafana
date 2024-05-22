@@ -182,6 +182,7 @@ func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.
 	d.recordLegacyDuration(false, mode1Str, options.Kind, method, startLegacy)
 
 	go func() {
+		ctx, cancel := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage update timeout"))
 		updated, err := objInfo.UpdatedObject(ctx, res)
 		if err != nil {
 			log.WithValues("object", updated).Error(err, "could not update or create object")
@@ -195,27 +196,17 @@ func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.
 
 		// if the object is found, create a new updateWrapper with the object found
 		if foundObj != nil {
-			accessorOld, err := meta.Accessor(foundObj)
+			res, err := enrichLegacyObject(foundObj, res, false)
 			if err != nil {
-				log.Error(err, "unable to get accessor for original updated object")
+				log.Error(err, "could not enrich object")
+				cancel()
 			}
-
-			accessor, err := meta.Accessor(res)
-			if err != nil {
-				log.Error(err, "unable to get accessor for updated object")
-			}
-
-			accessor.SetResourceVersion(accessorOld.GetResourceVersion())
-			accessor.SetUID(accessorOld.GetUID())
-
-			enrichObject(accessorOld, accessor)
 			objInfo = &updateWrapper{
 				upstream: objInfo,
 				updated:  res,
 			}
 		}
 		startStorage := time.Now()
-		ctx, cancel := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage update timeout"))
 		defer cancel()
 		_, _, errObjectSt := d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 		d.recordStorageDuration(errObjectSt != nil, mode1Str, options.Kind, method, startStorage)
