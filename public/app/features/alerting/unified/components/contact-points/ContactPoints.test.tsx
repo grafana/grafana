@@ -239,7 +239,7 @@ describe('contact points', () => {
         wrapper,
       });
 
-      expect(screen.getByRole('link', { name: 'is used by 1 notification policy' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /1 notification policy/ })).toBeInTheDocument();
 
       const moreActions = screen.getByRole('button', { name: 'more-actions' });
       await userEvent.click(moreActions);
