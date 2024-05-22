@@ -208,8 +208,27 @@ export const MultiSelectWithOptionGroups: StoryFn = (args) => {
     <>
       <MultiSelect
         options={[
-          { label: '1', value: '1' },
-          { label: '2', value: '2', options: [{ label: '5', value: '5' }] },
+          { label: 'Foo', value: '1' },
+          {
+            label: 'Colours',
+            value: '2',
+            options: [
+              { label: 'Blue', value: '5' },
+              { label: 'Red', value: '6' },
+              { label: 'Black', value: '7' },
+              { label: 'Yellow', value: '8' },
+            ],
+          },
+          {
+            label: 'Animals',
+            value: '9',
+            options: [
+              { label: 'Cat', value: '10' },
+              { label: 'Cow', value: '11' },
+              { label: 'Dog', value: '12' },
+              { label: 'Eagle', value: '13' },
+            ],
+          },
         ]}
         value={value}
         onChange={(v) => {

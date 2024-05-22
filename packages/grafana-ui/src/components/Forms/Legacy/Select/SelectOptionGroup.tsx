@@ -4,9 +4,9 @@ import { GroupProps } from 'react-select';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { stylesFactory, withTheme2 } from '../../themes';
-import { Themeable2 } from '../../types';
-import { Icon } from '../Icon/Icon';
+import { stylesFactory, withTheme2 } from '../../../../themes';
+import { Themeable2 } from '../../../../types';
+import { Icon } from '../../../Icon/Icon';
 
 interface ExtendedGroupProps extends Omit<GroupProps<any, any>, 'theme'>, Themeable2 {
   data: {
