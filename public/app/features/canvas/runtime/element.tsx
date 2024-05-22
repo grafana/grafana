@@ -36,6 +36,7 @@ export class ElementState implements LayerElement {
   div?: HTMLDivElement;
 
   // Calculated
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data?: any; // depends on the type
 
   constructor(
@@ -192,7 +193,7 @@ export class ElementState implements LayerElement {
 
     if (this.div) {
       for (const key in this.sizeStyle) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
         this.div.style[key as any] = (this.sizeStyle as any)[key];
       }
 
@@ -201,7 +202,7 @@ export class ElementState implements LayerElement {
       if (!SVGElements.has(elementType)) {
         // apply styles to div if it's not an SVG element
         for (const key in this.dataStyle) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
           this.div.style[key as any] = (this.dataStyle as any)[key];
         }
       } else {
@@ -211,7 +212,7 @@ export class ElementState implements LayerElement {
         // wrapper div element (this.div) doesn't re-render (has static `key` property),
         // so we have to clean styles manually;
         for (const key in this.dataStyle) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
           this.div.style[key as any] = '';
         }
       }

@@ -17,6 +17,7 @@ import { BackgroundConfig, Constraint, LineConfig, Placement, StandardEditorConf
  *
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface CanvasElementOptions<TConfig = any> {
   name: string; // configured unique display name
   type: string;
@@ -66,7 +67,7 @@ export interface CanvasConnection {
   // See https://github.com/anseki/leader-line#options for more examples of more properties
 }
 
-export interface CanvasElementProps<TConfig = any, TData = any> {
+export interface CanvasElementProps<TConfig = unknown, TData = unknown> {
   // Saved config
   config: TConfig;
 
@@ -82,6 +83,7 @@ export interface CanvasElementProps<TConfig = any, TData = any> {
  *
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface CanvasElementItem<TConfig = any, TData = any> extends RegistryItem {
   /** The default width/height to use when adding  */
   defaultSize?: Placement;

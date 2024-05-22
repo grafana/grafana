@@ -218,12 +218,12 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  checkbox: css`
-    height: auto; // native checkbox has fixed height which does not take into account description
-  `,
-  legend: css`
-    font-size: ${theme.typography.h6.fontSize};
-  `,
+  checkbox: css({
+    height: 'auto', // native checkbox has fixed height which does not take into account description
+  }),
+  legend: css({
+    fontSize: theme.typography.h6.fontSize,
+  }),
 });
 
 const validateOption = (value: string, validationRule: string, required: boolean) => {

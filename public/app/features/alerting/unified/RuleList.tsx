@@ -137,25 +137,25 @@ const RuleList = withErrorBoundary(
 );
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  break: css`
-    width: 100%;
-    height: 0;
-    margin-bottom: ${theme.spacing(2)};
-    border-bottom: solid 1px ${theme.colors.border.medium};
-  `,
-  buttonsContainer: css`
-    margin-bottom: ${theme.spacing(2)};
-    display: flex;
-    justify-content: space-between;
-  `,
-  statsContainer: css`
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-  `,
-  expandAllButton: css`
-    margin-right: ${theme.spacing(1)};
-  `,
+  break: css({
+    width: '100%',
+    height: 0,
+    marginBottom: theme.spacing(2),
+    borderBottom: `solid 1px ${theme.colors.border.medium}`,
+  }),
+  buttonsContainer: css({
+    marginBottom: theme.spacing(2),
+    display: 'flex',
+    justifyContent: 'space-between',
+  }),
+  statsContainer: css({
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+  }),
+  expandAllButton: css({
+    marginRight: theme.spacing(1),
+  }),
 });
 
 export default RuleList;

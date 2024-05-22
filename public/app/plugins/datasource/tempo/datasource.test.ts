@@ -386,6 +386,12 @@ describe('Tempo data source', () => {
       jsonData: { traceQuery: { timeShiftEnabled: true, spanStartTimeShift: '2m', spanEndTimeShift: '4m' } },
     });
 
+    const range = {
+      from: dateTime(new Date(2022, 8, 13, 16, 0, 0, 0)),
+      to: dateTime(new Date(2022, 8, 13, 16, 15, 0, 0)),
+      raw: { from: '15m', to: 'now' },
+    };
+
     const request = ds.traceIdQueryRequest(
       {
         requestId: 'test',
@@ -396,17 +402,17 @@ describe('Tempo data source', () => {
         timezone: '',
         app: '',
         startTime: 0,
-        range: {
-          from: dateTime(new Date(2022, 8, 13, 16, 0, 0, 0)),
-          to: dateTime(new Date(2022, 8, 13, 16, 15, 0, 0)),
-          raw: { from: '15m', to: 'now' },
-        },
+        range,
       },
       [{ refId: 'refid1', queryType: 'traceql', query: '' } as TempoQuery]
     );
 
-    expect(request.range.from.unix()).toBe(dateTime(new Date(2022, 8, 13, 15, 58, 0, 0)).unix());
-    expect(request.range.to.unix()).toBe(dateTime(new Date(2022, 8, 13, 16, 19, 0, 0)).unix());
+    expect(request.range.from.valueOf()).toBe(new Date(2022, 8, 13, 15, 58, 0, 0).valueOf());
+    expect(request.range.to.valueOf()).toBe(new Date(2022, 8, 13, 16, 19, 0, 0).valueOf());
+
+    // Making sure we don't modify the original range
+    expect(range.from.valueOf()).toBe(new Date(2022, 8, 13, 16, 0, 0, 0).valueOf());
+    expect(range.to.valueOf()).toBe(new Date(2022, 8, 13, 16, 15, 0, 0).valueOf());
   });
 
   it('should not include time shift when querying for traceID and time shift config is off', () => {
@@ -724,12 +730,14 @@ describe('Tempo service graph view', () => {
       '/actuator/health/**',
       '$type + [test]|HTTP POST - post',
       'server.cluster.local:9090^/sample.test(.*)?',
+      'test\\path',
     ];
     let escaped = getEscapedSpanNames(spanNames);
     expect(escaped).toEqual([
       '/actuator/health/\\\\*\\\\*',
       '\\\\$type \\\\+ \\\\[test\\\\]\\\\|HTTP POST - post',
       'server\\\\.cluster\\\\.local:9090\\\\^/sample\\\\.test\\\\(\\\\.\\\\*\\\\)\\\\?',
+      'test\\\\\\\\path',
     ]);
   });
 

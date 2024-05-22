@@ -89,28 +89,28 @@ export const RulesTable = ({
 };
 
 export const getStyles = (theme: GrafanaTheme2) => ({
-  wrapperMargin: css`
-    ${theme.breakpoints.up('md')} {
-      margin-left: 36px;
-    }
-  `,
-  emptyMessage: css`
-    padding: ${theme.spacing(1)};
-  `,
-  wrapper: css`
-    width: auto;
-    border-radius: ${theme.shape.radius.default};
-  `,
-  pagination: css`
-    display: flex;
-    margin: 0;
-    padding-top: ${theme.spacing(1)};
-    padding-bottom: ${theme.spacing(0.25)};
-    justify-content: center;
-    border-left: 1px solid ${theme.colors.border.medium};
-    border-right: 1px solid ${theme.colors.border.medium};
-    border-bottom: 1px solid ${theme.colors.border.medium};
-  `,
+  wrapperMargin: css({
+    [theme.breakpoints.up('md')]: {
+      marginLeft: '36px',
+    },
+  }),
+  emptyMessage: css({
+    padding: theme.spacing(1),
+  }),
+  wrapper: css({
+    width: 'auto',
+    borderRadius: theme.shape.radius.default,
+  }),
+  pagination: css({
+    display: 'flex',
+    margin: 0,
+    paddingTop: theme.spacing(1),
+    paddingBottom: theme.spacing(0.25),
+    justifyContent: 'center',
+    borderLeft: `1px solid ${theme.colors.border.medium}`,
+    borderRight: `1px solid ${theme.colors.border.medium}`,
+    borderBottom: `1px solid ${theme.colors.border.medium}`,
+  }),
 });
 
 function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean, showNextEvaluationColumn: boolean) {

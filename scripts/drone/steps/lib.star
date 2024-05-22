@@ -35,8 +35,6 @@ def yarn_install_step():
         "name": "yarn-install",
         "image": images["node"],
         "commands": [
-            # Python is needed to build `esfx`, which is needed by `msagl`
-            "apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python",
             "yarn install --immutable || yarn install --immutable",
         ],
         "depends_on": [],
@@ -644,13 +642,11 @@ def verify_i18n_step():
     uncommited_error_message = "\nTranslation extraction has not been committed. Please run 'make i18n-extract', commit the changes and push again."
     return {
         "name": "verify-i18n",
-        "image": images["node"],
+        "image": images["node_deb"],
         "depends_on": [
             "yarn-install",
         ],
-        "failure": "ignore",
         "commands": [
-            "apk add --update git",
             "make i18n-extract || (echo \"{}\" && false)".format(extract_error_message),
             # Verify that translation extraction has been committed
             '''
