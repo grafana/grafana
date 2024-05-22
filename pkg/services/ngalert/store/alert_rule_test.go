@@ -614,24 +614,13 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		models.RuleGen.WithOrgID(orgID),
 		models.RuleGen.WithIntervalMatching(store.Cfg.BaseInterval),
 	)
+	recordingRulesGen := gen.With(
+		models.RuleGen.WithAllRecordingRules(),
+		models.RuleGen.WithRecordFrom("A"),
+		models.RuleGen.WithMetric("my_metric"),
+	)
 
-	generateRecordingRules := func(n int) []models.AlertRule {
-		rrs := gen.GenerateMany(n)
-		for i := range rrs {
-			rrs[i].Condition = ""
-			rrs[i].NoDataState = ""
-			rrs[i].ExecErrState = ""
-			rrs[i].For = 0
-			rrs[i].NotificationSettings = nil
-			rrs[i].Record = &models.Record{
-				Metric: "my_metric",
-				From:   "A",
-			}
-		}
-		return rrs
-	}
-
-	rules := append(gen.GenerateMany(5), generateRecordingRules(5)...)
+	rules := append(gen.GenerateMany(5), recordingRulesGen.GenerateMany(5)...)
 
 	ids, err := store.InsertAlertRules(context.Background(), rules)
 	require.NoError(t, err)
