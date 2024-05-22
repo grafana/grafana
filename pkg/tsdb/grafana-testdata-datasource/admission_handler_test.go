@@ -61,7 +61,8 @@ func TestSettingsHandler(t *testing.T) {
 func asAdmissionRequest(settings *backend.DataSourceInstanceSettings) *backend.AdmissionRequest {
 	req := &backend.AdmissionRequest{}
 	if settings != nil {
-		req.ObjectBytes = settings.ProtoBytes()
+		req.Kind = settings.GVK()
+		req.ObjectBytes, _ = backend.DataSourceInstanceSettingsToProtoBytes(settings)
 	}
 	return req
 }

@@ -12,15 +12,12 @@ import (
 
 // ValidateAdmission implements backend.AdmissionHandler.
 func (s *Service) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
-	return nil, fmt.Errorf("not implemented")
-}
-
-// MutateAdmission implements backend.AdmissionHandler.
-func (s *Service) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
-	if req.PluginContext.AppInstanceSettings != nil {
-		return getBadRequest("unexpected app instance settings"), nil
+	expected := (&backend.DataSourceInstanceSettings{}).GVK()
+	if req.Kind.Kind != expected.Kind && req.Kind.Group != expected.Group {
+		return getBadRequest("expected DataSourceInstanceSettings protobuf payload"), nil
 	}
 
+	// Convert the payload from protobuf to an SDK struct
 	settings, err := backend.DataSourceInstanceSettingsFromProto(req.ObjectBytes, "")
 	if err != nil {
 		return nil, err
@@ -35,7 +32,6 @@ func (s *Service) MutateAdmission(ctx context.Context, req *backend.AdmissionReq
 	default:
 		return getBadRequest(fmt.Sprintf("expected apiVersion: v0alpha1, got: %s", settings.APIVersion)), nil
 	}
-
 	if settings.JSONData != nil {
 		anything := map[string]any{}
 		err := json.Unmarshal(settings.JSONData, &anything)
@@ -43,7 +39,6 @@ func (s *Service) MutateAdmission(ctx context.Context, req *backend.AdmissionReq
 			return getBadRequest("Expected empty jsonData settings"), nil
 		}
 	}
-
 	if len(settings.DecryptedSecureJSONData) > 0 {
 		return getBadRequest("found unsupported secure json fields"), nil
 	}
@@ -53,10 +48,16 @@ func (s *Service) MutateAdmission(ctx context.Context, req *backend.AdmissionReq
 	if settings.User != "" {
 		return getBadRequest("unsupported User value"), nil
 	}
-	return &backend.AdmissionResponse{
-		Allowed:     true,
-		ObjectBytes: settings.ProtoBytes(),
-	}, nil
+	return &backend.AdmissionResponse{Allowed: true}, nil
+}
+
+// MutateAdmission implements backend.AdmissionHandler.
+func (s *Service) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+	rsp, err := s.ValidateAdmission(ctx, req)
+	if err != nil && rsp.Allowed {
+		rsp.ObjectBytes = req.ObjectBytes // For this case they are the same!
+	}
+	return rsp, err
 }
 
 // ConvertObject implements backend.AdmissionHandler.

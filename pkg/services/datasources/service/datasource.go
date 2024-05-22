@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const (
@@ -296,7 +297,7 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 
 // This will valid validate the instance settings and mutate the cmd with the processed values
 func (s *Service) mutate(ctx context.Context, pluginContext backend.PluginContext, settings *backend.DataSourceInstanceSettings) (*backend.DataSourceInstanceSettings, error) {
-	operation := backend.AdmissionRequestCREATE
+	operation := backend.AdmissionRequestCreate
 
 	if len(settings.Name) > maxDatasourceNameLen {
 		return nil, datasources.ErrDataSourceNameInvalid.Errorf("max length is %d", maxDatasourceNameLen)
@@ -307,13 +308,14 @@ func (s *Service) mutate(ctx context.Context, pluginContext backend.PluginContex
 	}
 
 	if settings.Type == "" {
-		return settings, nil // NOOP for tests
+		return settings, nil // NOOP used in tests
 	}
 
 	// Make sure it is a known plugin type
 	p, found := s.pluginStore.Plugin(ctx, settings.Type)
 	if !found {
-		return nil, fmt.Errorf("plugin '%s' not found", settings.Type)
+		return nil, errutil.BadRequest("datasource.unknownPlugin",
+			errutil.WithPublicMessage(fmt.Sprintf("plugin '%s' not found", settings.Type)))
 	}
 
 	// When the APIVersion is set, the client must also implement ProcessInstanceSettings
@@ -324,23 +326,31 @@ func (s *Service) mutate(ctx context.Context, pluginContext backend.PluginContex
 		return settings, nil // NOOP
 	}
 
+	pb, err := backend.DataSourceInstanceSettingsToProtoBytes(settings)
+	if err != nil {
+		return nil, err
+	}
+
 	req := &backend.AdmissionRequest{
-		Operation:     backend.AdmissionRequestCREATE,
+		Operation:     backend.AdmissionRequestCreate,
 		PluginContext: pluginContext,
 		Kind:          settings.GVK(),
-		ObjectBytes:   settings.ProtoBytes(),
+		ObjectBytes:   pb,
 	}
 
 	// Set the old bytes and change the operation
 	if pluginContext.DataSourceInstanceSettings != nil {
-		req.Operation = backend.AdmissionRequestUPDATE
-		req.OldObjectBytes = pluginContext.DataSourceInstanceSettings.ProtoBytes()
+		req.Operation = backend.AdmissionRequestUpdate
+		req.OldObjectBytes, err = backend.DataSourceInstanceSettingsToProtoBytes(settings)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	rsp, err := s.pluginClient.MutateAdmission(ctx, req)
 	if err != nil {
 		if errors.Is(err, plugins.ErrMethodNotImplemented) {
-			return nil, fmt.Errorf("plugin (%s) with apiVersion=%s must implement ProcessInstanceSettings", p.ID, p.APIVersion)
+			return nil, fmt.Errorf("plugin (%s) with apiVersion=%s must implement MutateAdmission", p.ID, p.APIVersion)
 		}
 		return nil, err
 	}
@@ -348,10 +358,24 @@ func (s *Service) mutate(ctx context.Context, pluginContext backend.PluginContex
 		return nil, fmt.Errorf("expected response (%v)", operation)
 	}
 	if !rsp.Allowed {
-		// TODO: make a good error from the results
-		return nil, fmt.Errorf("not allowed (%+v)", rsp.Result)
+		if rsp.Result != nil {
+			return nil, toError(rsp.Result)
+		}
+		return nil, fmt.Errorf("not allowed")
 	}
 	return backend.DataSourceInstanceSettingsFromProto(rsp.ObjectBytes, pluginContext.PluginID)
+}
+
+func toError(status *backend.StatusResult) error {
+	if status == nil {
+		return fmt.Errorf("error converting status")
+	}
+	// hymm -- no way to pass the raw http status along!!
+	// Looks like it must be based on the reason string
+	return errutil.NewBase(errutil.CoreStatus(status.Reason), "datasource.config.mutate",
+		errutil.WithPublicMessage(status.Message),
+		errutil.WithDownstream(), // this happened in a plugin
+	)
 }
 
 // getAvailableName finds the first available name for a datasource of the given type.
