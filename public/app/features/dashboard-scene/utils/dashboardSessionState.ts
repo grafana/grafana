@@ -12,15 +12,18 @@ export function restoreDashboardStateFromLocalStorage(dashboard: DashboardScene)
     const preservedQueryParams = new URLSearchParams(preservedUrlState);
     const currentQueryParams = locationService.getSearch();
 
-    // iterate over preserved query params and append them to current query params
+    // iterate over preserved query params and append them to current query params if they don't already exist
     preservedQueryParams.forEach((value, key) => {
-      currentQueryParams.append(key, value);
+      if (!currentQueryParams.has(key)) {
+        currentQueryParams.append(key, value);
+      } else {
+        if (!currentQueryParams.getAll(key).includes(value)) {
+          currentQueryParams.append(key, value);
+        }
+      }
     });
 
-    // remove duplicate query params
-    const deduplicatedQueryParams = deduplicateQueryParams(currentQueryParams);
-
-    for (const key of Array.from(deduplicatedQueryParams.keys())) {
+    for (const key of Array.from(currentQueryParams.keys())) {
       // preserve non-variable query params, i.e. time range
       if (!key.startsWith('var-')) {
         continue;
@@ -28,11 +31,11 @@ export function restoreDashboardStateFromLocalStorage(dashboard: DashboardScene)
 
       // remove params for variables that are not present on the target dashboard
       if (!dashboard.state.$variables?.getByName(key.replace('var-', ''))) {
-        deduplicatedQueryParams.delete(key);
+        currentQueryParams.delete(key);
       }
     }
 
-    const finalParams = deduplicatedQueryParams.toString();
+    const finalParams = currentQueryParams.toString();
     if (finalParams) {
       locationService.replace({
         search: finalParams,
@@ -85,31 +88,4 @@ export function preserveDashboardSceneStateInLocalStorage(scene: DashboardScene)
       window.sessionStorage.removeItem(PRESERVED_SCENE_STATE_KEY);
     }
   };
-}
-
-function deduplicateQueryParams(params: URLSearchParams): URLSearchParams {
-  const seen: { [key: string]: Set<string> } = {};
-  // Iterate over the query params and store unique values
-  for (const [key, value] of params.entries()) {
-    if (!seen[key]) {
-      seen[key] = new Set();
-    }
-    // if time range params were already captured, ignore next
-    if (['from', 'to', 'timezone'].includes(key) && seen[key].size > 0) {
-      continue;
-    }
-
-    seen[key].add(value);
-  }
-
-  // Construct a new URLSearchParams object with deduplicated parameters
-  const deduplicatedParams = new URLSearchParams();
-
-  for (const key in seen) {
-    for (const value of seen[key]) {
-      deduplicatedParams.append(key, value);
-    }
-  }
-
-  return deduplicatedParams;
 }
