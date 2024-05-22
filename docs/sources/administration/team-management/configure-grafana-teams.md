@@ -97,7 +97,10 @@ To add a role, complete the following steps:
 
 1. Sign in to Grafana as an `org administrator` or `team administrator`.
 1. Click the arrow next to **Administration** in the left-side menu, click **Users and access**, and select **Teams**.
-1. Select the Team and click under the **Role** column. Select from a list of current fixed or plugin roles or clear all roles and start over. As you hover over each role a list of permissions appears to the right. You can uncheck any permission for additional fine-grained control.
+1. Select the Team and click under the **Role** column.
+   Select from a list of current fixed or plugin roles or clear all roles and start over.
+   As you hover over each role a list of permissions appears to the right.
+   You can clear any permission for additional fine-grained control.
 1. Click **Update** to add the new role or roles.
 
 To delete a role, remove the check next to the role name and click **Update**.
