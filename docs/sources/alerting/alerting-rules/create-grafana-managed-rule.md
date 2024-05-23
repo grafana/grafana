@@ -235,7 +235,7 @@ Annotations add metadata to provide more information on the alert in your alert 
 
 In **Configure no data and error handling**, you can define the alerting behavior when the evaluation returns no data or an error.
 
-For details about alert states, refer to [lifecycle of alert instances.](ref:alert-instance-state)
+For details about alert states, refer to [lifecycle of alert instances](ref:alert-instance-state).
 
 You can configure the alert instance state when its evaluation returns no data:
 
