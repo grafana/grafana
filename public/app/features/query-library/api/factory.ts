@@ -1,16 +1,25 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 
-import { QueryTemplate } from '../types';
+import { AddQueryTemplateCommand, QueryTemplate } from '../types';
 
-import { convertDataQueryResponseToQueryTemplates } from './mappers';
+import { convertAddQueryTemplateCommandToDataQuerySpec, convertDataQueryResponseToQueryTemplates } from './mappers';
 import { baseQuery } from './query';
 
 export const queryLibraryApi = createApi({
   baseQuery,
+  tagTypes: ['QueryTemplatesList'],
   endpoints: (builder) => ({
     allQueryTemplates: builder.query<QueryTemplate[], void>({
-      query: () => undefined,
+      query: () => ({}),
       transformResponse: convertDataQueryResponseToQueryTemplates,
+      providesTags: ['QueryTemplatesList'],
+    }),
+    addQueryTemplate: builder.mutation<QueryTemplate, AddQueryTemplateCommand>({
+      query: (addQueryTemplateCommand) => ({
+        method: 'POST',
+        data: convertAddQueryTemplateCommandToDataQuerySpec(addQueryTemplateCommand),
+      }),
+      invalidatesTags: ['QueryTemplatesList'],
     }),
   }),
   reducerPath: 'queryLibrary',
