@@ -1177,7 +1177,7 @@ Azure cloud environment where Grafana is hosted:
 
 ### clouds_config
 
-The json config used to define a list of Azure clouds, and their associated properties, when hosted in custom Azure environments.
+The JSON config defines a list of Azure clouds and their associated properties when hosted in custom Azure environments.
 
 For example: 
 
