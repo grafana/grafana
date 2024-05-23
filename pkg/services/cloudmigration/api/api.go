@@ -168,7 +168,7 @@ type GetCloudMigrationRequest struct {
 	UID string `json:"uid"`
 }
 
-// swagger:route POST /cloudmigration/migration migrations createMigration
+// swagger:route POST /cloudmigration/migration migrations createMigrationRequest
 //
 // Create a migration.
 //
@@ -345,6 +345,13 @@ type CloudMigrationRunResponse struct {
 type CloudMigrationListResponse struct {
 	// in: body
 	Body cloudmigration.CloudMigrationListResponse
+}
+
+// swagger:parameters createMigrationRequest
+type CreateMigrationRequest struct {
+	// in:body
+	// required:true
+	Body cloudmigration.CloudMigrationRequest
 }
 
 // swagger:response cloudMigrationResponse

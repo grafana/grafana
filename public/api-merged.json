@@ -2321,7 +2321,17 @@
           "migrations"
         ],
         "summary": "Create a migration.",
-        "operationId": "createMigration",
+        "operationId": "createMigrationRequest",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CloudMigrationRequest"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "$ref": "#/responses/cloudMigrationResponse"
@@ -13156,6 +13166,14 @@
           "items": {
             "$ref": "#/definitions/CloudMigrationResponse"
           }
+        }
+      }
+    },
+    "CloudMigrationRequest": {
+      "type": "object",
+      "properties": {
+        "authToken": {
+          "type": "string"
         }
       }
     },
