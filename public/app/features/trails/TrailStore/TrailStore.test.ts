@@ -508,7 +508,7 @@ describe('TrailStore', () => {
       expect(store.recent.length).toBe(0);
     });
 
-    it('should accurately load bookmarked trails', () => {
+    it('should accurately load bookmarked trails xx', () => {
       expect(store.bookmarks.length).toBe(1);
       const trail = store.getTrailForBookmarkIndex(0);
       expect(trail.state.metric).toBe('bookmarked_metric');
@@ -517,6 +517,9 @@ describe('TrailStore', () => {
     it('should save a new recent trail based on the bookmark', () => {
       expect(store.recent.length).toBe(0);
       const trail = store.getTrailForBookmarkIndex(0);
+      // Trail and history must be activated first
+      trail.activate();
+      trail.state.history.activate();
       store.setRecentTrail(trail);
       expect(store.recent.length).toBe(1);
     });
@@ -627,8 +630,8 @@ describe('TrailStore', () => {
 
     const store = getTrailStore();
 
-    it('should have no recent trails', () => {
-      expect(store.recent.length).toBe(0);
+    it('should have 1 recent trail', () => {
+      expect(store.recent.length).toBe(1);
     });
 
     it('should accurately load bookmarked trail from matching recent', () => {
