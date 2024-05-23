@@ -15,6 +15,7 @@ export const convertDataQueryResponseToQueryTemplates = (result: DataQuerySpecRe
       title: spec.spec.title,
       targets: spec.spec.targets.map((target: DataQueryTarget) => target.properties),
       createdAtTimestamp: new Date(spec.metadata.creationTimestamp || '').getTime(),
+      user: spec.spec.user,
     };
   });
 };
