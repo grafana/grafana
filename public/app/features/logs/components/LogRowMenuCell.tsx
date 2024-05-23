@@ -4,6 +4,7 @@ import { LogRowContextOptions, LogRowModel, getDefaultTimeRange, locationUtil, u
 import { DataQuery } from '@grafana/schema';
 import { ClipboardButton, IconButton } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
+import { useContentOutlineContext } from 'app/features/explore/ContentOutline/ContentOutlineContext';
 
 import { LogRowStyles } from './getLogRowStyles';
 
@@ -24,6 +25,10 @@ interface Props {
   styles: LogRowStyles;
   mouseIsOver: boolean;
   onBlur: () => void;
+  /**
+   * Used to pin a row to the content outline in Explore
+   */
+  onPinToContentOutlineClick?: (row: LogRowModel, onOpenContext: (row: LogRowModel) => void) => void;
 }
 
 export const LogRowMenuCell = React.memo(
@@ -40,6 +45,7 @@ export const LogRowMenuCell = React.memo(
     mouseIsOver,
     onBlur,
     getRowContextQuery,
+    onPinToContentOutlineClick,
   }: Props) => {
     const shouldShowContextToggle = showContextToggle ? showContextToggle(row) : false;
     const onLogRowClick = useCallback((e: SyntheticEvent) => {
@@ -159,6 +165,17 @@ export const LogRowMenuCell = React.memo(
                 size="md"
                 name="share-alt"
                 onClick={() => onPermalinkClick(row)}
+                tabIndex={0}
+              />
+            )}
+            {onPinToContentOutlineClick && row.rowId !== undefined && row.uid && (
+              <IconButton
+                tooltip="Pin to content outline"
+                aria-label="Pin to content outline"
+                tooltipPlacement="top"
+                size="md"
+                name="gf-pin"
+                onClick={() => onPinToContentOutlineClick(row, onOpenContext)}
                 tabIndex={0}
               />
             )}

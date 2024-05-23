@@ -652,6 +652,18 @@ class UnthemedLogs extends PureComponent<Props, State> {
     this.topLogsRef.current?.scrollIntoView();
   };
 
+  onPinToContentOutlineClick = (row: LogRowModel, onOpenContext: (row: LogRowModel) => void) => {
+    this.context?.register({
+      icon: 'gf-logs',
+      title: 'Pinned log',
+      panelId: 'Logs',
+      level: 'child',
+      ref: null,
+      color: LogLevelColor[row.logLevel],
+      onClick: () => onOpenContext(row),
+    });
+  };
+
   render() {
     const {
       width,
@@ -945,6 +957,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                     containerRendered={!!this.state.logsContainer}
                     onClickFilterValue={this.props.onClickFilterValue}
                     onClickFilterOutValue={this.props.onClickFilterOutValue}
+                    onPinToContentOutlineClick={this.onPinToContentOutlineClick}
                   />
                 </InfiniteScroll>
               </div>

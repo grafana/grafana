@@ -63,6 +63,10 @@ interface Props extends Themeable2 {
   pinned?: boolean;
   containerRendered?: boolean;
   handleTextSelection?: (e: MouseEvent<HTMLTableRowElement>, row: LogRowModel) => boolean;
+  /**
+   * Used to pin a row to the content outline in Explore
+   */
+  onPinToContentOutlineClick?: (row: LogRowModel, onOpenContext: (row: LogRowModel) => void) => void;
 }
 
 interface State {
@@ -308,6 +312,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               pinned={this.props.pinned}
               mouseIsOver={this.state.mouseIsOver}
               onBlur={this.onMouseLeave}
+              onPinToContentOutlineClick={this.props.onPinToContentOutlineClick}
             />
           )}
         </tr>
