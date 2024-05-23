@@ -108,7 +108,7 @@ Two alert rules cannot produce alert instances with the same labels. If two aler
 
 Ensure the label set for an alert does not have two or more labels with the same name.
 
-- If a configured label has the same name as a data source query label, it will replace the data source label.
+- If a configured label has the same name as a data source query label, it replaces the data source label.
 - If a configured label has the same name as a reserved label, it will be omitted.
   {{</admonition>}}
 
