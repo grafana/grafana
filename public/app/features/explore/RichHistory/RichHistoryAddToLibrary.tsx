@@ -8,15 +8,15 @@ import { Button, Modal } from '@grafana/ui';
 import { isQueryLibraryEnabled, useAddQueryTemplateMutation } from 'app/features/query-library';
 import { AddQueryTemplateCommand } from 'app/features/query-library/types';
 
-import { RichHistoryAddToLibraryModal } from './RichHistoryAddToLibraryModal';
+import { QueryDetails, RichHistoryAddToLibraryForm } from './RichHistoryAddToLibraryForm';
 
 type Props = {
   query: DataQuery;
 };
 
 export const RichHistoryAddToLibrary = ({ query }: Props) => {
+  const [isOpen, setIsOpen] = useState(false);
   const [addQueryTemplate, { isSuccess }] = useAddQueryTemplateMutation();
-  const [showModal, setShowModal] = useState(false);
 
   const handleAddQueryTemplate = async (addQueryTemplateCommand: AddQueryTemplateCommand) => {
     const result = await addQueryTemplate(addQueryTemplateCommand);
@@ -32,28 +32,31 @@ export const RichHistoryAddToLibrary = ({ query }: Props) => {
 
   const buttonLabel = t('explore.rich-history-card.add-to-library', 'Add to library');
 
-  const submit = () => {
+  const submit = (data: QueryDetails) => {
     const timestamp = dateTime().toISOString();
-    const temporaryDefaultTitle = `Imported from Explore - ${timestamp}`;
+    const temporaryDefaultTitle = data.description || `Imported from Explore - ${timestamp}`;
     handleAddQueryTemplate({ title: temporaryDefaultTitle, targets: [query] });
   };
 
   return isQueryLibraryEnabled() && !isSuccess ? (
-    <Button variant="secondary" aria-label={buttonLabel} onClick={() => setShowModal(true)}>
-      {buttonLabel}
+    <>
+      <Button variant="secondary" aria-label={buttonLabel} onClick={() => setIsOpen(true)}>
+        {buttonLabel}
+      </Button>
       <Modal
         title={t('explore.add-to-library-modal.title', 'Add query to Query Library')}
-        isOpen={showModal}
-        onDismiss={() => setShowModal(false)}
+        isOpen={isOpen}
+        onDismiss={() => setIsOpen(false)}
       >
-        <RichHistoryAddToLibraryModal
-          onCancel={() => setShowModal(false)}
-          onSave={() => {
-            submit();
-            setShowModal(false);
+        <RichHistoryAddToLibraryForm
+          onCancel={() => setIsOpen(() => false)}
+          query={query}
+          onSave={(data) => {
+            submit(data);
+            setIsOpen(false);
           }}
         />
       </Modal>
-    </Button>
+    </>
   ) : undefined;
 };
