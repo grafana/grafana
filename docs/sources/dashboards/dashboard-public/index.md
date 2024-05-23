@@ -296,9 +296,4 @@ guaranteed because plugin developers can override this functionality. The follow
 
 ## Custom branding
 
-<<<<<<< HEAD
-If you're a Grafana Enterprise customer, you can use custom branding to change the appearance of a public dashboard footer. For more information, refer to [Custom branding](ref:custom-branding).
-=======
 If you're a Grafana Enterprise customer, you can use custom branding to change the appearance of a public dashboard footer. For more information, refer to [Configure custom branding](ref:custom-branding).
-
-> > > > > > > 80e2af5d256 (Docs: public dashboards fixes (#87870))
