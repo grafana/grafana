@@ -185,12 +185,12 @@ func TestAlertRule(t *testing.T) {
 			require.False(t, success)
 			require.Nilf(t, dropped, "expected no dropped evaluations but got one")
 		})
-		t.Run("stop should do nothing", func(t *testing.T) {
+		t.Run("calling stop multiple times should not panic", func(t *testing.T) {
 			r := blankRuleForTests(context.Background())
 			r.Stop(nil)
 			r.Stop(nil)
 		})
-		t.Run("stop should do nothing if parent context stopped", func(t *testing.T) {
+		t.Run("stop should not panic if parent context stopped", func(t *testing.T) {
 			ctx, cancelFn := context.WithCancel(context.Background())
 			r := blankRuleForTests(ctx)
 			cancelFn()
