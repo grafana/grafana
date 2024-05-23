@@ -81,9 +81,7 @@ The following video guides you through the creation steps and common customizati
 
 ## Legend options
 
-Legend options control the series names and statistics that appear under or to the right of the visualization.
-
-{{< docs/shared lookup="visualizations/legend-mode.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+{{< docs/shared lookup="visualizations/legend-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Graph styles
 

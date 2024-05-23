@@ -180,7 +180,7 @@ When you set the **Tooltip mode** to **Single**, this option is displayed. This 
 
 ### Legend
 
-Choose whether you want to display the heatmap legend on the visualization.
+Choose whether you want to display the heatmap legend on the visualization by toggling the **Show legend** switch.
 
 ### Exemplars
 
