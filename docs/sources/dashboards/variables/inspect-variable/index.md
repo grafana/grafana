@@ -34,11 +34,9 @@ The variables page lets you [add](ref:add) variables and [manage](#manage-variab
 
 You can take the following actions on the variables page:
 
-
 - **Move:** You can move a variable up or down the list using drag and drop.
 - **Clone:** To clone a variable, click the clone icon from the set of icons on the right. This creates a copy of the variable with the name of the original variable prefixed with `copy_of_`.
 - **Delete:** To delete a variable, click the trash icon from the set of icons on the right.
-
 
 ## Inspect variables
 
