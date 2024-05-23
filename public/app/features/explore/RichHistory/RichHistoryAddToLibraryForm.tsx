@@ -26,6 +26,11 @@ const VisibilityOptions = [
   { value: 'Private', label: 'Private' },
 ];
 
+const info = t(
+  'explore.add-to-library-modal.info',
+  `You're about to save this query. Once saved, you can easily access it in the Query Library tab for future use and reference.`
+);
+
 export const RichHistoryAddToLibraryForm = ({ onCancel, onSave, query }: Props) => {
   const { register, handleSubmit } = useForm<QueryDetails>();
 
@@ -41,10 +46,7 @@ export const RichHistoryAddToLibraryForm = ({ onCancel, onSave, query }: Props) 
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
-      <p>
-        You are about to save this query. Once saved, you can easily access it in the Query Library under the Saved
-        Queries tab for future use and reference.
-      </p>
+      <p>{info}</p>
       <Field label={t('explore.add-to-library-modal.query', 'Query')}>
         <TextArea readOnly={true} value={displayText}></TextArea>
       </Field>
@@ -55,7 +57,7 @@ export const RichHistoryAddToLibraryForm = ({ onCancel, onSave, query }: Props) 
         <Input disabled={true} value={datasource?.meta.name}></Input>
       </Field>
       <Field label={t('explore.add-to-library-modal.description', 'Description')}>
-        <Input id="query-template-description" {...register('description')}></Input>
+        <Input id="query-template-description" autoFocus={true} {...register('description')}></Input>
       </Field>
       <Field label={t('explore.add-to-library-modal.visibility', 'Visibility')}>
         <RadioButtonGroup options={VisibilityOptions} value={'Public'} disabled={true} />

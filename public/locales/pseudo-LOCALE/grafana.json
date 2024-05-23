@@ -465,6 +465,16 @@
   },
   "explore": {
     "add-to-dashboard": "Åđđ ŧő đäşĥþőäřđ",
+    "add-to-library-modal": {
+      "auto-star": "Åūŧő-şŧäř ŧĥįş qūęřy ŧő äđđ įŧ ŧő yőūř şŧäřřęđ ľįşŧ įŉ ŧĥę Qūęřy Ŀįþřäřy.",
+      "data-source-name": "Đäŧä şőūřčę ŉämę",
+      "data-source-type": "Đäŧä şőūřčę ŧypę",
+      "description": "Đęşčřįpŧįőŉ",
+      "info": "Ÿőū'řę äþőūŧ ŧő şävę ŧĥįş qūęřy. Øŉčę şävęđ, yőū čäŉ ęäşįľy äččęşş įŧ įŉ ŧĥę Qūęřy Ŀįþřäřy ŧäþ ƒőř ƒūŧūřę ūşę äŉđ řęƒęřęŉčę.",
+      "query": "Qūęřy",
+      "title": "Åđđ qūęřy ŧő Qūęřy Ŀįþřäřy",
+      "visibility": "Vįşįþįľįŧy"
+    },
     "rich-history": {
       "close-tooltip": "Cľőşę qūęřy ĥįşŧőřy",
       "datasource-a-z": "Đäŧä şőūřčę Å-Ż",
