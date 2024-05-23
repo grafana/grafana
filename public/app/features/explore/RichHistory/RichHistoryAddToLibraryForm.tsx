@@ -55,7 +55,7 @@ export const RichHistoryAddToLibraryForm = ({ onCancel, onSave, query }: Props) 
         <Input disabled={true} value={datasource?.meta.name}></Input>
       </Field>
       <Field label={t('explore.add-to-library-modal.description', 'Description')}>
-        <Input {...register('description')}></Input>
+        <Input id="query-template-description" {...register('description')}></Input>
       </Field>
       <Field label={t('explore.add-to-library-modal.visibility', 'Visibility')}>
         <RadioButtonGroup options={VisibilityOptions} value={'Public'} disabled={true} />
