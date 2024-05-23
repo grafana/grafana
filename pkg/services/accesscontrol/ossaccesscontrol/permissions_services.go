@@ -288,9 +288,9 @@ var DatasourceQueryActions = []string{
 	datasources.ActionQuery,
 }
 
-func ProvideDatasourcePermissionsService(features featuremgmt.FeatureToggles, db db.DB, actionSetService resourcepermissions.ActionSetService) *DatasourcePermissionsService {
+func ProvideDatasourcePermissionsService(features featuremgmt.FeatureToggles, db db.DB) *DatasourcePermissionsService {
 	return &DatasourcePermissionsService{
-		store: resourcepermissions.NewStore(db, features, &actionSetService),
+		store: resourcepermissions.NewStore(db, features),
 	}
 }
 
@@ -322,8 +322,8 @@ func (e DatasourcePermissionsService) SetBuiltInRolePermission(ctx context.Conte
 func (e DatasourcePermissionsService) SetPermissions(ctx context.Context, orgID int64, resourceID string, commands ...accesscontrol.SetResourcePermissionCommand) ([]accesscontrol.ResourcePermission, error) {
 	var dbCommands []resourcepermissions.SetResourcePermissionsCommand
 	for _, cmd := range commands {
-		// Only set query permissions for built-in roles
-		if cmd.Permission != "Query" || cmd.BuiltinRole == "" {
+		// Only set query permissions for built-in roles; do not set permissions for data sources with * as UID, as this would grant wildcard permissions
+		if cmd.Permission != "Query" || cmd.BuiltinRole == "" || resourceID == "*" {
 			continue
 		}
 		actions := DatasourceQueryActions

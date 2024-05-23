@@ -270,6 +270,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 
 		Azure: dtos.FrontendSettingsAzureDTO{
 			Cloud:                                  hs.Cfg.Azure.Cloud,
+			Clouds:                                 hs.Cfg.Azure.CustomClouds(),
 			ManagedIdentityEnabled:                 hs.Cfg.Azure.ManagedIdentityEnabled,
 			WorkloadIdentityEnabled:                hs.Cfg.Azure.WorkloadIdentityEnabled,
 			UserIdentityEnabled:                    hs.Cfg.Azure.UserIdentityEnabled,

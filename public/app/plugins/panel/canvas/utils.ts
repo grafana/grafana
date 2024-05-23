@@ -119,7 +119,9 @@ const addDataLinkForField = (
 ): void => {
   if (field?.getLinks) {
     const disp = field.display ? field.display(data) : { text: `${data}`, numeric: +data! };
-    field.getLinks({ calculatedValue: disp }).forEach((link) => {
+    // TODO add more control over which row index each element uses
+    const valueRowIndex = field.values.length - 1;
+    field.getLinks({ calculatedValue: disp, valueRowIndex }).forEach((link) => {
       const key = `${link.title}/${link.href}`;
       if (!linkLookup.has(key)) {
         links.push(link);
@@ -320,6 +322,9 @@ export function updateConnectionsForSource(element: ElementState, scene: Scene) 
     const connections = sourceConnections.filter((con) => con.targetName !== element.getName());
     connection.source.onChange({ ...connection.source.options, connections });
   });
+
+  // Update scene connection state to clear out old connections
+  scene.connections.updateState();
 }
 
 export const calculateCoordinates = (

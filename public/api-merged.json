@@ -2322,16 +2322,6 @@
         ],
         "summary": "Create a migration.",
         "operationId": "createMigration",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/CloudMigrationRequest"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "$ref": "#/responses/cloudMigrationResponse"
@@ -3310,6 +3300,84 @@
         "responses": {
           "200": {
             "$ref": "#/responses/postDashboardResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/dashboards/uid/{uid}/trash": {
+      "delete": {
+        "description": "Will delete the dashboard given the specified unique identifier (uid).",
+        "tags": [
+          "dashboards"
+        ],
+        "summary": "Hard delete dashboard by uid.",
+        "operationId": "hardDeleteDashboardByUID",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/deleteDashboardResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "dashboards"
+        ],
+        "summary": "Restore a dashboard to a given dashboard version using UID.",
+        "operationId": "restoreDeletedDashboardByUID",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RestoreDeletedDashboardCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/postDashboardResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -8099,6 +8167,12 @@
             "description": "Sort method; for listing all the possible sort methods use the search sorting endpoint.",
             "name": "sort",
             "in": "query"
+          },
+          {
+            "type": "boolean",
+            "description": "Flag indicating if only soft deleted Dashboards should be returned",
+            "name": "deleted",
+            "in": "query"
           }
         ],
         "responses": {
@@ -9032,6 +9106,47 @@
         "responses": {
           "200": {
             "$ref": "#/responses/getTeamMembersResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "put": {
+        "description": "Takes user emails, and updates team members and admins to the provided lists of users.\nAny current team members and admins not in the provided lists will be removed.",
+        "tags": [
+          "teams"
+        ],
+        "summary": "Set team memberships.",
+        "operationId": "setTeamMemberships",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SetTeamMembershipsCommand"
+            }
+          },
+          {
+            "type": "string",
+            "name": "team_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -11894,7 +12009,7 @@
         "condition": {
           "type": "string"
         },
-        "dasboardUid": {
+        "dashboardUid": {
           "type": "string"
         },
         "data": {
@@ -13017,14 +13132,6 @@
           "items": {
             "$ref": "#/definitions/CloudMigrationResponse"
           }
-        }
-      }
-    },
-    "CloudMigrationRequest": {
-      "type": "object",
-      "properties": {
-        "authToken": {
-          "type": "string"
         }
       }
     },
@@ -15212,6 +15319,9 @@
         "provenance": {
           "$ref": "#/definitions/Provenance"
         },
+        "record": {
+          "$ref": "#/definitions/Record"
+        },
         "rule_group": {
           "type": "string"
         },
@@ -15498,7 +15608,6 @@
       "type": "object",
       "properties": {
         "folderId": {
-          "description": "Deprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -15517,6 +15626,9 @@
         },
         "isStarred": {
           "type": "boolean"
+        },
+        "remainingTrashAtAge": {
+          "type": "string"
         },
         "slug": {
           "type": "string"
@@ -16797,8 +16909,8 @@
       }
     },
     "PagerdutyImage": {
-      "description": "PagerdutyImage is an image",
       "type": "object",
+      "title": "PagerdutyImage is an image.",
       "properties": {
         "alt": {
           "type": "string"
@@ -16812,8 +16924,8 @@
       }
     },
     "PagerdutyLink": {
-      "description": "PagerdutyLink is a link",
       "type": "object",
+      "title": "PagerdutyLink is a link.",
       "properties": {
         "href": {
           "type": "string"
@@ -17419,6 +17531,9 @@
         },
         "notification_settings": {
           "$ref": "#/definitions/AlertRuleNotificationSettings"
+        },
+        "record": {
+          "$ref": "#/definitions/Record"
         },
         "title": {
           "type": "string"
@@ -18228,6 +18343,18 @@
         }
       }
     },
+    "Record": {
+      "type": "object",
+      "title": "Record defines how data produced by a recording rule is written.",
+      "properties": {
+        "from": {
+          "type": "string"
+        },
+        "metric": {
+          "type": "string"
+        }
+      }
+    },
     "RecordingRuleJSON": {
       "description": "RecordingRuleJSON is the external representation of a recording rule",
       "type": "object",
@@ -18536,6 +18663,14 @@
         "version": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "RestoreDeletedDashboardCommand": {
+      "type": "object",
+      "properties": {
+        "folderUid": {
+          "type": "string"
         }
       }
     },
@@ -19338,6 +19473,23 @@
           "items": {
             "type": "integer",
             "format": "int64"
+          }
+        }
+      }
+    },
+    "SetTeamMembershipsCommand": {
+      "type": "object",
+      "properties": {
+        "admins": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "type": "string"
           }
         }
       }
@@ -21311,7 +21463,6 @@
       }
     },
     "gettableAlert": {
-      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -21367,6 +21518,7 @@
       }
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
@@ -21428,7 +21580,6 @@
       }
     },
     "integration": {
-      "description": "Integration integration",
       "type": "object",
       "required": [
         "name",
@@ -21572,7 +21723,6 @@
       }
     },
     "postableSilence": {
-      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
@@ -21638,6 +21788,7 @@
       }
     },
     "receiver": {
+      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "active",
@@ -22163,17 +22314,11 @@
       "schema": {
         "type": "object",
         "required": [
-          "id",
+          "uid",
           "title",
           "message"
         ],
         "properties": {
-          "id": {
-            "description": "ID Identifier of the deleted dashboard.",
-            "type": "integer",
-            "format": "int64",
-            "example": 65
-          },
           "message": {
             "description": "Message Message of the deleted dashboard.",
             "type": "string",
@@ -22183,6 +22328,11 @@
             "description": "Title Title of the deleted dashboard.",
             "type": "string",
             "example": "My Dashboard"
+          },
+          "uid": {
+            "description": "UID Identifier of the deleted dashboard.",
+            "type": "string",
+            "example": "65"
           }
         }
       }

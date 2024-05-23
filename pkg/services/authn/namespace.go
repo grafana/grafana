@@ -13,15 +13,15 @@ const (
 	NamespaceAccessPolicy   = identity.NamespaceAccessPolicy
 )
 
-var AnonymousNamespaceID = MustNewNamespaceID(NamespaceAnonymous, 0)
+var AnonymousNamespaceID = NewNamespaceID(NamespaceAnonymous, 0)
 
+type Namespace = identity.Namespace
 type NamespaceID = identity.NamespaceID
 
 var (
-	ParseNamespaceID        = identity.ParseNamespaceID
-	MustParseNamespaceID    = identity.MustParseNamespaceID
-	NewNamespaceID          = identity.NewNamespaceID
-	MustNewNamespaceID      = identity.MustNewNamespaceID
-	NewNamespaceIDUnchecked = identity.NewNamespaceIDUnchecked
-	ErrInvalidNamespaceID   = identity.ErrInvalidNamespaceID
+	ParseNamespaceID      = identity.ParseNamespaceID
+	MustParseNamespaceID  = identity.MustParseNamespaceID
+	NewNamespaceID        = identity.NewNamespaceID
+	NewNamespaceIDString  = identity.NewNamespaceIDString
+	ErrInvalidNamespaceID = identity.ErrInvalidNamespaceID
 )

@@ -5,15 +5,18 @@ import (
 	"math/rand"
 	"testing"
 
+	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	alertingModels "github.com/grafana/alerting/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var orgID = rand.Int63()
@@ -474,7 +477,16 @@ func TestAuthorizeUpdateSilence(t *testing.T) {
 }
 
 func testSilence(id string, ruleUID *string) *models.Silence {
-	return &models.Silence{ID: &id, RuleUID: ruleUID}
+	s := &models.Silence{ID: &id}
+	if ruleUID != nil {
+		s.Matchers = amv2.Matchers{{
+			IsEqual: util.Pointer(true),
+			IsRegex: util.Pointer(false),
+			Name:    util.Pointer(alertingModels.RuleUIDLabel),
+			Value:   ruleUID,
+		}}
+	}
+	return s
 }
 
 type fakeRuleUIDToNamespaceStore struct {

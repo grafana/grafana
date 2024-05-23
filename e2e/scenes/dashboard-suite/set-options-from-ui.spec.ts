@@ -1,3 +1,5 @@
+import { selectors } from '@grafana/e2e-selectors';
+
 import { e2e } from '../utils';
 
 const PAGE_UNDER_TEST = '-Y-tnEDWk/templating-nested-template-variables';
@@ -24,11 +26,13 @@ describe('Variables - Set options from ui', () => {
         cy.get('input').click();
       });
 
-    e2e.components.Select.option().parent().should('have.length', 8);
+    e2e.components.Select.option().parent().should('have.length', 9);
     e2e.components.Select.option()
       .first()
-      .should('have.text', 'BA')
+      .should('have.text', 'All')
       .parent()
+      .next()
+      .should('have.text', 'BA')
       .next()
       .should('have.text', 'BB')
       .next()
@@ -47,8 +51,10 @@ describe('Variables - Set options from ui', () => {
 
     e2e.components.Select.option()
       .first()
-      .should('have.text', 'BAA')
+      .should('have.text', 'All')
       .parent()
+      .next()
+      .should('have.text', 'BAA')
       .next()
       .should('have.text', 'BAB')
       .next()
@@ -81,7 +87,7 @@ describe('Variables - Set options from ui', () => {
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A,B').scrollIntoView().should('be.visible');
 
-    e2e.components.LoadingIndicator.icon().should('have.length', 0);
+    cy.get(`[aria-label="${selectors.components.LoadingIndicator.icon}"]`).should('not.exist');
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('AA')
       .should('be.visible')
@@ -95,6 +101,8 @@ describe('Variables - Set options from ui', () => {
       .first()
       .should('have.text', 'All')
       .parent()
+      .next()
+      .should('have.text', 'AA')
       .next()
       .should('have.text', 'AB')
       .next()
@@ -110,12 +118,14 @@ describe('Variables - Set options from ui', () => {
         cy.get('input').click();
       });
 
-    e2e.components.Select.option().should('have.length', 8);
+    e2e.components.Select.option().should('have.length', 9);
 
     e2e.components.Select.option()
       .first()
       .should('have.text', 'All')
       .parent()
+      .next()
+      .should('have.text', 'AAA')
       .next()
       .should('have.text', 'AAB')
       .next()
@@ -129,6 +139,7 @@ describe('Variables - Set options from ui', () => {
     cy.intercept({ pathname: '/api/ds/query' }).as('query');
 
     cy.wait('@query');
+    cy.get(`[aria-label="${selectors.components.LoadingIndicator.icon}"]`).should('not.exist');
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A,B')
       .should('be.visible')
@@ -138,8 +149,8 @@ describe('Variables - Set options from ui', () => {
 
     cy.get('body').click();
 
-    cy.wait(300);
     cy.wait('@query');
+    cy.get(`[aria-label="${selectors.components.LoadingIndicator.icon}"]`).should('not.exist');
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('B')
       .scrollIntoView()
@@ -150,7 +161,7 @@ describe('Variables - Set options from ui', () => {
 
     cy.get('body').click();
 
-    e2e.components.LoadingIndicator.icon().should('have.length', 0);
+    cy.get(`[aria-label="${selectors.components.LoadingIndicator.icon}"]`).should('not.exist');
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('BB')
       .should('be.visible')
@@ -158,7 +169,7 @@ describe('Variables - Set options from ui', () => {
         cy.get('input').click();
       });
 
-    e2e.components.Select.option().should('have.length', 8);
+    e2e.components.Select.option().should('have.length', 9);
 
     e2e.components.Select.option()
       .first()
@@ -166,6 +177,8 @@ describe('Variables - Set options from ui', () => {
       .parent()
       .next()
       .should('have.text', 'BA')
+      .next()
+      .should('have.text', 'BB')
       .next()
       .should('have.text', 'BC');
 
@@ -176,7 +189,7 @@ describe('Variables - Set options from ui', () => {
       .within(() => {
         cy.get('input').click();
       });
-    e2e.components.Select.option().should('have.length', 8);
+    e2e.components.Select.option().should('have.length', 9);
 
     e2e.components.Select.option()
       .first()
@@ -184,6 +197,8 @@ describe('Variables - Set options from ui', () => {
       .parent()
       .next()
       .should('have.text', 'BBA')
+      .next()
+      .should('have.text', 'BBB')
       .next()
       .should('have.text', 'BBC');
   });

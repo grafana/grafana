@@ -1,4 +1,4 @@
-import { Story, Meta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 import React, { useState } from 'react';
 
 import { KeyValue } from '@grafana/data';
@@ -63,7 +63,7 @@ const meta: Meta = {
   },
 };
 
-export const Simple: Story = (args) => {
+export const Simple: StoryFn = (args) => {
   const addonAfter = <Button variant="secondary">Load</Button>;
   const addonBefore = <div style={{ display: 'flex', alignItems: 'center', padding: '5px' }}>Input</div>;
   const prefix = parseAccessory(args.prefixVisible);
@@ -91,7 +91,7 @@ Simple.args = {
   placeholder: 'Enter your name here...',
 };
 
-export const WithFieldValidation: Story = (args) => {
+export const WithFieldValidation: StoryFn = (args) => {
   const [value, setValue] = useState('');
 
   return (

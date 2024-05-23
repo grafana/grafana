@@ -8,6 +8,7 @@ import {
   getDefaultTimeRange,
   LoadingState,
   PanelData,
+  QueryVariableModel,
   VariableSupportType,
 } from '@grafana/data';
 
@@ -18,7 +19,6 @@ import {
   hasLegacyVariableSupport,
   hasStandardVariableSupport,
 } from '../guard';
-import { QueryVariableModel } from '../types';
 import { getLegacyQueryOptions } from '../utils';
 
 export interface RunnerArgs {

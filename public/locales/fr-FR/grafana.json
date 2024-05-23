@@ -491,15 +491,11 @@
       "delete-query-tooltip": "Supprimer la requête",
       "delete-starred-query-confirmation-text": "Souhaitez-vous vraiment supprimer définitivement votre requête favorite ?",
       "edit-comment-tooltip": "Modifier le commentaire",
-      "left-pane": "",
       "optional-description": "Une description facultative de l'action de la requête.",
       "query-comment-label": "Commentaire sur la requête",
       "query-text-label": "Texte de la requête",
-      "right-pane": "",
-      "run-query-button": "Exécuter la requête",
       "save-comment": "Enregistrer le commentaire",
       "star-query-tooltip": "Mettre la requête en favori",
-      "switch-datasource-button": "Changer de source de données et exécuter la requête",
       "unstar-query-tooltip": "Retirer la requête des favoris",
       "update-comment-form": "Modifier le formulaire de commentaire"
     },
@@ -568,6 +564,12 @@
       "saving-failed": "L'enregistrement de l'historique riche a échoué",
       "update-failed": "La mise à jour de l'historique riche a échoué"
     },
+    "run-query": {
+      "left-pane": "",
+      "right-pane": "",
+      "run-query-button": "",
+      "switch-datasource-button": ""
+    },
     "secondary-actions": {
       "query-add-button": "Ajouter une requête",
       "query-add-button-aria-label": "Ajouter une requête",
@@ -618,6 +620,9 @@
     "select": {
       "no-options-label": "Aucune option trouvée",
       "placeholder": "Choisir"
+    },
+    "spinner": {
+      "aria-label": ""
     }
   },
   "graph": {
@@ -727,10 +732,12 @@
     "forgot-password": "Vous avez oublié votre mot de passe ?",
     "form": {
       "password-label": "Mot de passe",
+      "password-placeholder": "",
       "password-required": "Vous devez renseigner le mot de passe",
       "submit-label": "Connexion",
       "submit-loading-label": "Connexion…",
       "username-label": "E-mail ou nom d'utilisateur",
+      "username-placeholder": "",
       "username-required": "Vous devez renseigner l'e-mail ou le nom d'utilisateur"
     },
     "services": {
@@ -885,7 +892,8 @@
       "title": "Alertes"
     },
     "alerting-admin": {
-      "title": "Administrateur"
+      "subtitle": "",
+      "title": ""
     },
     "alerting-am-routes": {
       "subtitle": "Déterminer comment les alertes sont acheminées vers les points de contact",

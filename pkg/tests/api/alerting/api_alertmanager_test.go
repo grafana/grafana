@@ -908,8 +908,9 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						Annotations: map[string]string{"annotation1": "val1"},
 					},
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-						Title: "AlwaysFiring",
-						Data:  []apimodels.AlertQuery{},
+						Title:     "AlwaysFiring",
+						Condition: "A",
+						Data:      []apimodels.AlertQuery{},
 					},
 				},
 				expectedMessage: "invalid rule specification at index [0]: invalid alert rule: no queries or expressions are found",
@@ -1996,13 +1997,18 @@ func TestIntegrationAlertmanagerCreateSilence(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			silenceID, err := client.PostSilence(t, tc.silence)
+			silenceOkBody, status, body := client.PostSilence(t, tc.silence)
+			t.Log(body)
 			if tc.expErr != "" {
-				require.EqualError(t, err, tc.expErr)
-				require.Empty(t, silenceID)
+				assert.NotEqual(t, http.StatusAccepted, status)
+
+				var validationError errutil.PublicError
+				assert.NoError(t, json.Unmarshal([]byte(body), &validationError))
+				assert.Contains(t, validationError.Message, tc.expErr)
+				assert.Empty(t, silenceOkBody.SilenceID)
 			} else {
-				require.NoError(t, err)
-				require.NotEmpty(t, silenceID)
+				assert.Equal(t, http.StatusAccepted, status)
+				assert.NotEmpty(t, silenceOkBody.SilenceID)
 			}
 		})
 	}

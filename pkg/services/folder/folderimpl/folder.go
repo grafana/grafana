@@ -31,7 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -54,7 +53,6 @@ type Service struct {
 func ProvideService(
 	ac accesscontrol.AccessControl,
 	bus bus.Bus,
-	_ *setting.Cfg,
 	dashboardStore dashboards.Store,
 	folderStore folder.FolderStore,
 	db db.DB, // DB for the (new) nested folder store
@@ -854,10 +852,16 @@ func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, folde
 }
 
 func (s *Service) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderCommand, folderUIDs []string) error {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
+		if err := s.dashboardStore.SoftDeleteDashboardsInFolders(ctx, cmd.OrgID, folderUIDs); err != nil {
+			return toFolderError(err)
+		}
+	}
 	// TODO use bulk delete
 	for _, folderUID := range folderUIDs {
-		deleteCmd := dashboards.DeleteDashboardCommand{OrgID: cmd.OrgID, UID: folderUID, ForceDeleteFolderRules: cmd.ForceDeleteRules}
-
+		// only hard delete the folder representation in the dashboard store
+		// nolint:staticcheck
+		deleteCmd := dashboards.DeleteDashboardCommand{OrgID: cmd.OrgID, UID: folderUID, ForceDeleteFolderRules: cmd.ForceDeleteRules, SkipSoftDeletedDashboards: true}
 		if err := s.dashboardStore.DeleteDashboard(ctx, &deleteCmd); err != nil {
 			return toFolderError(err)
 		}
