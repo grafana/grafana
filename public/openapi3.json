@@ -15038,7 +15038,7 @@
         ]
       },
       "post": {
-        "operationId": "createMigrationRequest",
+        "operationId": "createMigration",
         "requestBody": {
           "content": {
             "application/json": {

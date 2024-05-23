@@ -2321,7 +2321,7 @@
           "migrations"
         ],
         "summary": "Create a migration.",
-        "operationId": "createMigrationRequest",
+        "operationId": "createMigration",
         "parameters": [
           {
             "name": "Body",

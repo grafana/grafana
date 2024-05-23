@@ -4,6 +4,9 @@ const injectedRtkApi = api.injectEndpoints({
     getMigrationList: build.query<GetMigrationListApiResponse, GetMigrationListApiArg>({
       query: () => ({ url: `/cloudmigration/migration` }),
     }),
+    createMigration: build.mutation<CreateMigrationApiResponse, CreateMigrationApiArg>({
+      query: (queryArg) => ({ url: `/cloudmigration/migration`, method: 'POST', body: queryArg.cloudMigrationRequest }),
+    }),
     getCloudMigrationRun: build.query<GetCloudMigrationRunApiResponse, GetCloudMigrationRunApiArg>({
       query: (queryArg) => ({ url: `/cloudmigration/migration/run/${queryArg.runUid}` }),
     }),
@@ -31,6 +34,10 @@ const injectedRtkApi = api.injectEndpoints({
 export { injectedRtkApi as generatedAPI };
 export type GetMigrationListApiResponse = /** status 200 (empty) */ CloudMigrationListResponse;
 export type GetMigrationListApiArg = void;
+export type CreateMigrationApiResponse = /** status 200 (empty) */ CloudMigrationResponse;
+export type CreateMigrationApiArg = {
+  cloudMigrationRequest: CloudMigrationRequest;
+};
 export type GetCloudMigrationRunApiResponse = /** status 200 (empty) */ MigrateDataResponseDto;
 export type GetCloudMigrationRunApiArg = {
   /** RunUID of a migration run */
@@ -80,6 +87,9 @@ export type ErrorResponseBody = {
     
     For example, a 412 Precondition Failed error may include additional information of why that error happened. */
   status?: string;
+};
+export type CloudMigrationRequest = {
+  authToken?: string;
 };
 export type MigrateDataResponseItemDto = {
   error?: string;
@@ -146,6 +156,7 @@ export type DashboardFullWithMeta = {
 };
 export const {
   useGetMigrationListQuery,
+  useCreateMigrationMutation,
   useGetCloudMigrationRunQuery,
   useDeleteCloudMigrationMutation,
   useGetCloudMigrationQuery,
