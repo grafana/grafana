@@ -10,10 +10,14 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes';
 import { t } from '../../utils/i18n';
+import { ConfirmContent } from '../ConfirmModal/ConfirmContent';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { getDragStyles } from '../DragHandle/DragHandle';
 import { IconButton } from '../IconButton/IconButton';
+import { Stack } from '../Layout/Stack/Stack';
 import { Text } from '../Text/Text';
+
+import { DrawerProvider, useDrawerContext } from './DrawerContext';
 
 import 'rc-drawer/assets/index.css';
 
@@ -53,7 +57,15 @@ export interface Props {
   onClose: () => void;
 }
 
-export function Drawer({
+export function Drawer(props: Props) {
+  return (
+    <DrawerProvider>
+      <DrawerContent {...props}>{props.children}</DrawerContent>
+    </DrawerProvider>
+  );
+}
+
+function DrawerContent({
   children,
   onClose,
   closeOnMaskClick = true,
@@ -64,6 +76,7 @@ export function Drawer({
   size = 'md',
   tabs,
 }: Props) {
+  const { confirmContent, setConfirmContent } = useDrawerContext();
   const [drawerWidth, onMouseDown, onTouchStart] = useResizebleDrawer();
 
   const styles = useStyles2(getStyles);
@@ -125,32 +138,75 @@ export function Drawer({
             onMouseDown={onMouseDown}
             onTouchStart={onTouchStart}
           />
-          {typeof title === 'string' && (
-            <div className={cx(styles.header, Boolean(tabs) && styles.headerWithTabs)}>
-              <div className={styles.actions}>
-                <IconButton
-                  name="times"
-                  variant="secondary"
-                  onClick={onClose}
-                  data-testid={selectors.components.Drawer.General.close}
-                  tooltip={t(`grafana-ui.drawer.close`, 'Close')}
-                />
-              </div>
-              <div className={styles.titleWrapper}>
-                <Text element="h3" {...titleProps}>
-                  {title}
-                </Text>
-                {subtitle && (
-                  <div className={styles.subtitle} data-testid={selectors.components.Drawer.General.subtitle}>
-                    {subtitle}
+          {confirmContent ? (
+            <>
+              <div className={styles.header}>
+                <div className={styles.actions}>
+                  <IconButton
+                    name="times"
+                    variant="secondary"
+                    onClick={onClose}
+                    data-testid={selectors.components.Drawer.General.close}
+                    tooltip={t(`grafana-ui.drawer.close`, 'Close')}
+                  />
+                </div>
+                <Stack gap={1.5} alignItems="center">
+                  <IconButton
+                    name="angle-left"
+                    variant="secondary"
+                    size="xl"
+                    onClick={() => setConfirmContent!(undefined)}
+                    tooltip={'Cancel'}
+                  />
+                  <div className={styles.titleWrapper}>
+                    <Text element="h3" {...titleProps}>
+                      {confirmContent.title}
+                    </Text>
                   </div>
-                )}
-                {tabs && <div className={styles.tabsWrapper}>{tabs}</div>}
+                </Stack>
               </div>
-            </div>
+              {!scrollableContent ? (
+                <div className={styles.content}>
+                  <ConfirmContent {...confirmContent} />
+                </div>
+              ) : (
+                <CustomScrollbar>
+                  <div className={styles.content}>
+                    <ConfirmContent {...confirmContent} />
+                  </div>
+                </CustomScrollbar>
+              )}
+            </>
+          ) : (
+            <>
+              {typeof title === 'string' && (
+                <div className={cx(styles.header, Boolean(tabs) && styles.headerWithTabs)}>
+                  <div className={styles.actions}>
+                    <IconButton
+                      name="times"
+                      variant="secondary"
+                      onClick={onClose}
+                      data-testid={selectors.components.Drawer.General.close}
+                      tooltip={t(`grafana-ui.drawer.close`, 'Close')}
+                    />
+                  </div>
+                  <div className={styles.titleWrapper}>
+                    <Text element="h3" {...titleProps}>
+                      {title}
+                    </Text>
+                    {subtitle && (
+                      <div className={styles.subtitle} data-testid={selectors.components.Drawer.General.subtitle}>
+                        {subtitle}
+                      </div>
+                    )}
+                    {tabs && <div className={styles.tabsWrapper}>{tabs}</div>}
+                  </div>
+                </div>
+              )}
+              {typeof title !== 'string' && title}
+              {!scrollableContent ? content : <CustomScrollbar>{content}</CustomScrollbar>}
+            </>
           )}
-          {typeof title !== 'string' && title}
-          {!scrollableContent ? content : <CustomScrollbar>{content}</CustomScrollbar>}
         </div>
       </FocusScope>
     </RcDrawer>
