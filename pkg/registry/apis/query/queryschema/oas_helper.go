@@ -2,6 +2,7 @@ package queryschema
 
 import (
 	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/schemabuilder"
 
@@ -46,11 +47,13 @@ func AddQueriesToOpenAPI(queryTypes *query.QueryTypeDefinitionList, oas *spec3.O
 	if err != nil {
 		return err
 	}
-	s.Extensions = nil // remove the $schema
+	removeSchemaRefs(s)
+	s.SchemaProps.Schema = "" // remove the "$schema" link
 	s.Description = "Schema for a set of queries sent to the query method"
 	oas.Components.Schemas[QueryRequestSchemaKey] = s
 
-	// // Query Payload (is this useful?)
+	// // Query Payload (is this useful?)rica
+
 	// opts.Mode = schemabuilder.SchemaTypeQueryPayload
 	// s, err = schemabuilder.GetQuerySchema(opts)
 	// if err != nil {
@@ -70,4 +73,29 @@ func AddQueriesToOpenAPI(queryTypes *query.QueryTypeDefinitionList, oas *spec3.O
 	// s.Description = "Valid save model for a single query target"
 	// oas.Components.Schemas[QuerySaveModelSchemaKey] = s
 	return nil
+}
+
+func removeSchemaRefs(s *spec.Schema) {
+	if s == nil {
+		return
+	}
+	s.Schema = ""
+
+	removeSchemaRefs(s.Not)
+	for idx := range s.AllOf {
+		removeSchemaRefs(&s.AllOf[idx])
+	}
+	for idx := range s.AnyOf {
+		removeSchemaRefs(&s.AnyOf[idx])
+	}
+	for k := range s.Properties {
+		v := s.Properties[k]
+		removeSchemaRefs(&v)
+		s.Properties[k] = v
+	}
+	if s.Items != nil {
+		for idx := range s.Items.Schemas {
+			removeSchemaRefs(&s.Items.Schemas[idx])
+		}
+	}
 }

@@ -1,12 +1,13 @@
 {
+  "$schema": "https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/schemas/v3.0/schema.json",
   "openapi": "3.0.0",
   "info": {
-    "description": "Query service",
-    "title": "query.grafana.app/v0alpha1",
+    "description": "Generates test data in different forms",
+    "title": "testdata.datasource.grafana.app/v0alpha1",
     "version": "11.1.0-pre"
   },
   "paths": {
-    "/apis/query.grafana.app/v0alpha1/": {
+    "/apis/testdata.datasource.grafana.app/v0alpha1/": {
       "get": {
         "tags": ["API Discovery"],
         "description": "get available resources",
@@ -35,38 +36,38 @@
         }
       }
     },
-    "/apis/query.grafana.app/v0alpha1/datasourceapiservers": {
+    "/apis/testdata.datasource.grafana.app/v0alpha1/namespaces/{namespace}/connections": {
       "get": {
-        "tags": ["DataSourceApiServer"],
-        "description": "list objects of kind DataSourceApiServer",
-        "operationId": "listDataSourceApiServer",
+        "tags": ["DataSourceConnection"],
+        "description": "list objects of kind DataSourceConnection",
+        "operationId": "listNamespacedDataSourceConnection",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.query.v0alpha1.DataSourceApiServerList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSourceConnectionList"
                 }
               },
               "application/json;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.query.v0alpha1.DataSourceApiServerList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSourceConnectionList"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.query.v0alpha1.DataSourceApiServerList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSourceConnectionList"
                 }
               },
               "application/vnd.kubernetes.protobuf;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.query.v0alpha1.DataSourceApiServerList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSourceConnectionList"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.query.v0alpha1.DataSourceApiServerList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSourceConnectionList"
                 }
               }
             }
@@ -74,9 +75,9 @@
         },
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
-          "group": "query.grafana.app",
+          "group": "testdata.datasource.grafana.app",
           "version": "v0alpha1",
-          "kind": "DataSourceApiServer"
+          "kind": "DataSourceConnection"
         }
       },
       "parameters": [
@@ -109,6 +110,13 @@
           "in": "query",
           "description": "limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.\n\nThe server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned.",
           "schema": { "type": "integer", "uniqueItems": true }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": { "type": "string", "uniqueItems": true }
         },
         {
           "name": "pretty",
@@ -148,29 +156,157 @@
         }
       ]
     },
-    "/apis/query.grafana.app/v0alpha1/namespaces/{namespace}/query": {
+    "/apis/testdata.datasource.grafana.app/v0alpha1/namespaces/{namespace}/connections/{name}": {
+      "get": {
+        "tags": ["DataSourceConnection"],
+        "description": "read the specified DataSourceConnection",
+        "operationId": "readNamespacedDataSourceConnection",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSourceConnection"
+                }
+              },
+              "application/vnd.kubernetes.protobuf": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSourceConnection"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSourceConnection"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "get",
+        "x-kubernetes-group-version-kind": {
+          "group": "testdata.datasource.grafana.app",
+          "version": "v0alpha1",
+          "kind": "DataSourceConnection"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the DataSourceConnection",
+          "required": true,
+          "schema": { "type": "string", "uniqueItems": true }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": { "type": "string", "uniqueItems": true }
+        },
+        {
+          "name": "pretty",
+          "in": "query",
+          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
+          "schema": { "type": "string", "uniqueItems": true }
+        }
+      ]
+    },
+    "/apis/testdata.datasource.grafana.app/v0alpha1/namespaces/{namespace}/connections/{name}/health": {
+      "get": {
+        "tags": ["DataSourceConnection"],
+        "description": "connect GET requests to health of DataSourceConnection",
+        "operationId": "connectGetNamespacedDataSourceConnectionHealth",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.HealthCheckResult"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "testdata.datasource.grafana.app",
+          "version": "v0alpha1",
+          "kind": "HealthCheckResult"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the HealthCheckResult",
+          "required": true,
+          "schema": { "type": "string", "uniqueItems": true }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": { "type": "string", "uniqueItems": true }
+        }
+      ]
+    },
+    "/apis/testdata.datasource.grafana.app/v0alpha1/namespaces/{namespace}/connections/{name}/query": {
       "post": {
-        "tags": ["Query"],
-        "description": "Query datasources (with expressions)",
-        "operationId": "connectPostNamespacedQueryDataResponse",
+        "tags": ["DataSourceConnection"],
+        "description": "Execute queries",
+        "operationId": "connectPostNamespacedDataSourceConnectionQuery",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": { "$ref": "#/components/schemas/QueryRequestSchema" },
               "examples": {
-                "A": {
-                  "summary": "Random walk (testdata)",
-                  "description": "Use testdata to execute a random walk query",
-                  "value": "{\n\t\t\t\t\t\t\t\t\t\t\t\"queries\": [\n\t\t\t\t\t\t\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\t\t\t\t\t\t\"refId\": \"A\",\n\t\t\t\t\t\t\t\t\t\t\t\t\t\"scenarioId\": \"random_walk_table\",\n\t\t\t\t\t\t\t\t\t\t\t\t\t\"seriesCount\": 1,\n\t\t\t\t\t\t\t\t\t\t\t\t\t\"datasource\": {\n\t\t\t\t\t\t\t\t\t\t\t\t\t\"type\": \"grafana-testdata-datasource\",\n\t\t\t\t\t\t\t\t\t\t\t\t\t\"uid\": \"PD8C576611E62080A\"\n\t\t\t\t\t\t\t\t\t\t\t\t\t},\n\t\t\t\t\t\t\t\t\t\t\t\t\t\"intervalMs\": 60000,\n\t\t\t\t\t\t\t\t\t\t\t\t\t\"maxDataPoints\": 20\n\t\t\t\t\t\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\t\t\t\t\t],\n\t\t\t\t\t\t\t\t\t\t\t\"from\": \"now-6h\",\n\t\t\t\t\t\t\t\t\t\t\t\"to\": \"now\"\n\t\t\t\t\t\t\t\t\t\t}"
+                "pulse wave example-1": {
+                  "summary": "pulse wave example",
+                  "value": {
+                    "from": "now-1h",
+                    "to": "now",
+                    "queries": [
+                      {
+                        "refId": "A",
+                        "maxDataPoints": 1000,
+                        "intervalMs": 5000,
+                        "pulseWave": {
+                          "offCount": 20,
+                          "offValue": 1.23,
+                          "onCount": 10,
+                          "onValue": 4.56,
+                          "timeStep": 1000
+                        },
+                        "scenarioId": "predictable_pulse"
+                      }
+                    ],
+                    "debug": false
+                  }
                 },
-                "B": {
-                  "summary": "With deprecated datasource name",
-                  "description": "Includes an old style string for datasource reference",
-                  "value": "{\n\t\t\t\t\t\t\t\t\t\t\t\"queries\": [\n\t\t\t\t\t\t\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\t\t\t\t\t\t\"refId\": \"A\",\n\t\t\t\t\t\t\t\t\t\t\t\t\t\"datasource\": {\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\"type\": \"grafana-googlesheets-datasource\",\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\"uid\": \"b1808c48-9fc9-4045-82d7-081781f8a553\"\n\t\t\t\t\t\t\t\t\t\t\t\t\t},\n\t\t\t\t\t\t\t\t\t\t\t\t\t\"cacheDurationSeconds\": 300,\n\t\t\t\t\t\t\t\t\t\t\t\t\t\"spreadsheet\": \"spreadsheetID\",\n\t\t\t\t\t\t\t\t\t\t\t\t\t\"datasourceId\": 4,\n\t\t\t\t\t\t\t\t\t\t\t\t\t\"intervalMs\": 30000,\n\t\t\t\t\t\t\t\t\t\t\t\t\t\"maxDataPoints\": 794\n\t\t\t\t\t\t\t\t\t\t\t\t},\n\t\t\t\t\t\t\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\t\t\t\t\t\t\"refId\": \"Z\",\n\t\t\t\t\t\t\t\t\t\t\t\t\t\"datasource\": \"old\",\n\t\t\t\t\t\t\t\t\t\t\t\t\t\"maxDataPoints\": 10,\n\t\t\t\t\t\t\t\t\t\t\t\t\t\"timeRange\": {\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\"from\": \"100\",\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\"to\": \"200\"\n\t\t\t\t\t\t\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\t\t\t\t\t],\n\t\t\t\t\t\t\t\t\t\t\t\"from\": \"now-6h\",\n\t\t\t\t\t\t\t\t\t\t\t\"to\": \"now\"\n\t\t\t\t\t\t\t\t\t\t}"
+                "simple random walk-0": {
+                  "summary": "simple random walk",
+                  "value": {
+                    "from": "now-1h",
+                    "to": "now",
+                    "queries": [
+                      {
+                        "refId": "A",
+                        "maxDataPoints": 1000,
+                        "intervalMs": 5000,
+                        "scenarioId": "random_walk"
+                      }
+                    ],
+                    "debug": false
+                  }
                 }
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -182,27 +318,324 @@
                 }
               }
             }
+          },
+          "207": {
+            "description": "Query executed, but errors may exist in the datasource.  See the payload for more details.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.query.v0alpha1.QueryDataResponse"
+                }
+              }
+            }
           }
         },
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
-          "group": "query.grafana.app",
+          "group": "testdata.datasource.grafana.app",
           "version": "v0alpha1",
           "kind": "QueryDataResponse"
         }
       },
       "parameters": [
         {
+          "name": "name",
+          "in": "path",
+          "description": "name of the QueryDataResponse",
+          "required": true,
+          "schema": { "type": "string", "uniqueItems": true }
+        },
+        {
           "name": "namespace",
           "in": "path",
           "description": "object name and auth scope, such as for teams and projects",
           "required": true,
-          "schema": { "type": "string", "uniqueItems": true },
-          "example": "default"
+          "schema": { "type": "string", "uniqueItems": true }
         }
       ]
     },
-    "/apis/query.grafana.app/v0alpha1/querytypes": {
+    "/apis/testdata.datasource.grafana.app/v0alpha1/namespaces/{namespace}/connections/{name}/resource": {
+      "get": {
+        "tags": ["DataSourceConnection"],
+        "description": "connect GET requests to resource of DataSourceConnection",
+        "operationId": "connectGetNamespacedDataSourceConnectionResource",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "string" } } }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "testdata.datasource.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Status"
+        }
+      },
+      "put": {
+        "tags": ["DataSourceConnection"],
+        "description": "connect PUT requests to resource of DataSourceConnection",
+        "operationId": "connectPutNamespacedDataSourceConnectionResource",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "string" } } }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "testdata.datasource.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Status"
+        }
+      },
+      "post": {
+        "tags": ["DataSourceConnection"],
+        "description": "connect POST requests to resource of DataSourceConnection",
+        "operationId": "connectPostNamespacedDataSourceConnectionResource",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "string" } } }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "testdata.datasource.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Status"
+        }
+      },
+      "delete": {
+        "tags": ["DataSourceConnection"],
+        "description": "connect DELETE requests to resource of DataSourceConnection",
+        "operationId": "connectDeleteNamespacedDataSourceConnectionResource",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "string" } } }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "testdata.datasource.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Status"
+        }
+      },
+      "options": {
+        "tags": ["DataSourceConnection"],
+        "description": "connect OPTIONS requests to resource of DataSourceConnection",
+        "operationId": "connectOptionsNamespacedDataSourceConnectionResource",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "string" } } }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "testdata.datasource.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Status"
+        }
+      },
+      "head": {
+        "tags": ["DataSourceConnection"],
+        "description": "connect HEAD requests to resource of DataSourceConnection",
+        "operationId": "connectHeadNamespacedDataSourceConnectionResource",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "string" } } }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "testdata.datasource.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Status"
+        }
+      },
+      "patch": {
+        "tags": ["DataSourceConnection"],
+        "description": "connect PATCH requests to resource of DataSourceConnection",
+        "operationId": "connectPatchNamespacedDataSourceConnectionResource",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "string" } } }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "testdata.datasource.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Status"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the Status",
+          "required": true,
+          "schema": { "type": "string", "uniqueItems": true }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": { "type": "string", "uniqueItems": true }
+        }
+      ]
+    },
+    "/apis/testdata.datasource.grafana.app/v0alpha1/namespaces/{namespace}/connections/{name}/resource/{path}": {
+      "get": {
+        "tags": ["DataSourceConnection"],
+        "description": "connect GET requests to resource of DataSourceConnection",
+        "operationId": "connectGetNamespacedDataSourceConnectionResourceWithPath",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "string" } } }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "testdata.datasource.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Status"
+        }
+      },
+      "put": {
+        "tags": ["DataSourceConnection"],
+        "description": "connect PUT requests to resource of DataSourceConnection",
+        "operationId": "connectPutNamespacedDataSourceConnectionResourceWithPath",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "string" } } }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "testdata.datasource.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Status"
+        }
+      },
+      "post": {
+        "tags": ["DataSourceConnection"],
+        "description": "connect POST requests to resource of DataSourceConnection",
+        "operationId": "connectPostNamespacedDataSourceConnectionResourceWithPath",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "string" } } }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "testdata.datasource.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Status"
+        }
+      },
+      "delete": {
+        "tags": ["DataSourceConnection"],
+        "description": "connect DELETE requests to resource of DataSourceConnection",
+        "operationId": "connectDeleteNamespacedDataSourceConnectionResourceWithPath",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "string" } } }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "testdata.datasource.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Status"
+        }
+      },
+      "options": {
+        "tags": ["DataSourceConnection"],
+        "description": "connect OPTIONS requests to resource of DataSourceConnection",
+        "operationId": "connectOptionsNamespacedDataSourceConnectionResourceWithPath",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "string" } } }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "testdata.datasource.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Status"
+        }
+      },
+      "head": {
+        "tags": ["DataSourceConnection"],
+        "description": "connect HEAD requests to resource of DataSourceConnection",
+        "operationId": "connectHeadNamespacedDataSourceConnectionResourceWithPath",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "string" } } }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "testdata.datasource.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Status"
+        }
+      },
+      "patch": {
+        "tags": ["DataSourceConnection"],
+        "description": "connect PATCH requests to resource of DataSourceConnection",
+        "operationId": "connectPatchNamespacedDataSourceConnectionResourceWithPath",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "*/*": { "schema": { "type": "string" } } }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "testdata.datasource.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Status"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the Status",
+          "required": true,
+          "schema": { "type": "string", "uniqueItems": true }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": { "type": "string", "uniqueItems": true }
+        },
+        {
+          "name": "path",
+          "in": "path",
+          "description": "path to the resource",
+          "required": true,
+          "schema": { "type": "string", "uniqueItems": true }
+        }
+      ]
+    },
+    "/apis/testdata.datasource.grafana.app/v0alpha1/querytypes": {
       "get": {
         "tags": ["QueryTypeDefinition"],
         "description": "list objects of kind QueryTypeDefinition",
@@ -241,7 +674,7 @@
         },
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
-          "group": "query.grafana.app",
+          "group": "testdata.datasource.grafana.app",
           "version": "v0alpha1",
           "kind": "QueryTypeDefinition"
         }
@@ -323,6 +756,7 @@
         "type": "object",
         "required": ["queries"],
         "properties": {
+          "$schema": { "description": "helper", "type": "string" },
           "debug": { "type": "boolean" },
           "from": {
             "description": "From Start time in epoch timestamps in milliseconds or relative using Grafana time units.",
@@ -331,7 +765,274 @@
           "queries": {
             "type": "array",
             "items": {
-              "type": "object"
+              "description": "TestDataQuery defines model for TestDataQuery.",
+              "type": "object",
+              "properties": {
+                "alias": { "type": "string" },
+                "channel": {
+                  "description": "Used for live query",
+                  "type": "string"
+                },
+                "csvContent": { "type": "string" },
+                "csvFileName": { "type": "string" },
+                "csvWave": {
+                  "type": "array",
+                  "items": {
+                    "description": "CSVWave defines model for CSVWave.",
+                    "type": "object",
+                    "properties": {
+                      "labels": { "type": "string" },
+                      "name": { "type": "string" },
+                      "timeStep": { "type": "integer" },
+                      "valuesCSV": { "type": "string" }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "datasource": {
+                  "description": "The datasource",
+                  "type": "object",
+                  "required": ["type"],
+                  "properties": {
+                    "type": {
+                      "description": "The datasource plugin type",
+                      "type": "string",
+                      "pattern": "^grafana-testdata-datasource$|^testdata$"
+                    },
+                    "uid": { "description": "Datasource UID", "type": "string" }
+                  },
+                  "additionalProperties": false
+                },
+                "dropPercent": {
+                  "description": "Drop percentage (the chance we will lose a point 0-100)",
+                  "type": "number"
+                },
+                "errorType": {
+                  "description": "Possible enum values:\n - `\"frontend_exception\"` \n - `\"frontend_observable\"` \n - `\"server_panic\"` ",
+                  "type": "string",
+                  "enum": [
+                    "frontend_exception",
+                    "frontend_observable",
+                    "server_panic"
+                  ],
+                  "x-enum-description": {}
+                },
+                "flamegraphDiff": { "type": "boolean" },
+                "hide": {
+                  "description": "true if query is disabled (ie should not be returned to the dashboard)\nNOTE: this does not always imply that the query should not be executed since\nthe results from a hidden query may be used as the input to other queries (SSE etc)",
+                  "type": "boolean"
+                },
+                "intervalMs": {
+                  "description": "Interval is the suggested duration between time points in a time series query.\nNOTE: the values for intervalMs is not saved in the query model.  It is typically calculated\nfrom the interval required to fill a pixels in the visualization",
+                  "type": "number"
+                },
+                "labels": { "type": "string" },
+                "levelColumn": { "type": "boolean" },
+                "lines": { "type": "integer" },
+                "max": { "type": "number" },
+                "maxDataPoints": {
+                  "description": "MaxDataPoints is the maximum number of data points that should be returned from a time series query.\nNOTE: the values for maxDataPoints is not saved in the query model.  It is typically calculated\nfrom the number of pixels visible in a visualization",
+                  "type": "integer"
+                },
+                "min": { "type": "number" },
+                "nodes": {
+                  "type": "object",
+                  "properties": {
+                    "count": { "type": "integer" },
+                    "seed": { "type": "integer" },
+                    "type": {
+                      "description": "Possible enum values:\n - `\"random\"` \n - `\"random edges\"` \n - `\"response_medium\"` \n - `\"response_small\"` \n - `\"feature_showcase\"` ",
+                      "type": "string",
+                      "enum": [
+                        "random",
+                        "random edges",
+                        "response_medium",
+                        "response_small",
+                        "feature_showcase"
+                      ],
+                      "x-enum-description": {}
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "noise": { "type": "number" },
+                "points": { "type": "array", "items": { "type": "array" } },
+                "pulseWave": {
+                  "type": "object",
+                  "properties": {
+                    "offCount": { "type": "integer" },
+                    "offValue": { "type": "number" },
+                    "onCount": { "type": "integer" },
+                    "onValue": { "type": "number" },
+                    "timeStep": { "type": "integer" }
+                  },
+                  "additionalProperties": false
+                },
+                "queryType": {
+                  "description": "QueryType is an optional identifier for the type of query.\nIt can be used to distinguish different types of queries.",
+                  "type": "string"
+                },
+                "rawFrameContent": { "type": "string" },
+                "refId": {
+                  "description": "RefID is the unique identifier of the query, set by the frontend call.",
+                  "type": "string"
+                },
+                "resultAssertions": {
+                  "description": "Optionally define expected query result behavior",
+                  "type": "object",
+                  "required": ["typeVersion"],
+                  "properties": {
+                    "maxFrames": {
+                      "description": "Maximum frame count",
+                      "type": "integer"
+                    },
+                    "type": {
+                      "description": "Type asserts that the frame matches a known type structure.\n\n\nPossible enum values:\n - `\"\"` \n - `\"timeseries-wide\"` \n - `\"timeseries-long\"` \n - `\"timeseries-many\"` \n - `\"timeseries-multi\"` \n - `\"directory-listing\"` \n - `\"table\"` \n - `\"numeric-wide\"` \n - `\"numeric-multi\"` \n - `\"numeric-long\"` \n - `\"log-lines\"` ",
+                      "type": "string",
+                      "enum": [
+                        "",
+                        "timeseries-wide",
+                        "timeseries-long",
+                        "timeseries-many",
+                        "timeseries-multi",
+                        "directory-listing",
+                        "table",
+                        "numeric-wide",
+                        "numeric-multi",
+                        "numeric-long",
+                        "log-lines"
+                      ],
+                      "x-enum-description": {}
+                    },
+                    "typeVersion": {
+                      "description": "TypeVersion is the version of the Type property. Versions greater than 0.0 correspond to the dataplane\ncontract documentation https://grafana.github.io/dataplane/contract/.",
+                      "type": "array",
+                      "maxItems": 2,
+                      "minItems": 2,
+                      "items": { "type": "integer" }
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "scenarioId": {
+                  "description": "Possible enum values:\n - `\"annotations\"` \n - `\"arrow\"` \n - `\"csv_content\"` \n - `\"csv_file\"` \n - `\"csv_metric_values\"` \n - `\"datapoints_outside_range\"` \n - `\"exponential_heatmap_bucket_data\"` \n - `\"flame_graph\"` \n - `\"grafana_api\"` \n - `\"linear_heatmap_bucket_data\"` \n - `\"live\"` \n - `\"logs\"` \n - `\"manual_entry\"` \n - `\"no_data_points\"` \n - `\"node_graph\"` \n - `\"predictable_csv_wave\"` \n - `\"predictable_pulse\"` \n - `\"random_walk\"` \n - `\"random_walk_table\"` \n - `\"random_walk_with_error\"` \n - `\"raw_frame\"` \n - `\"server_error_500\"` \n - `\"simulation\"` \n - `\"slow_query\"` \n - `\"streaming_client\"` \n - `\"table_static\"` \n - `\"trace\"` \n - `\"usa\"` \n - `\"variables-query\"` ",
+                  "type": "string",
+                  "enum": [
+                    "annotations",
+                    "arrow",
+                    "csv_content",
+                    "csv_file",
+                    "csv_metric_values",
+                    "datapoints_outside_range",
+                    "exponential_heatmap_bucket_data",
+                    "flame_graph",
+                    "grafana_api",
+                    "linear_heatmap_bucket_data",
+                    "live",
+                    "logs",
+                    "manual_entry",
+                    "no_data_points",
+                    "node_graph",
+                    "predictable_csv_wave",
+                    "predictable_pulse",
+                    "random_walk",
+                    "random_walk_table",
+                    "random_walk_with_error",
+                    "raw_frame",
+                    "server_error_500",
+                    "simulation",
+                    "slow_query",
+                    "streaming_client",
+                    "table_static",
+                    "trace",
+                    "usa",
+                    "variables-query"
+                  ],
+                  "x-enum-description": {}
+                },
+                "seriesCount": { "type": "integer" },
+                "sim": {
+                  "type": "object",
+                  "required": ["key"],
+                  "properties": {
+                    "config": { "type": "object" },
+                    "key": {
+                      "type": "object",
+                      "required": ["tick", "type"],
+                      "properties": {
+                        "tick": { "type": "number" },
+                        "type": { "type": "string" },
+                        "uid": { "type": "string" }
+                      },
+                      "additionalProperties": false
+                    },
+                    "last": { "type": "boolean" },
+                    "stream": { "type": "boolean" }
+                  },
+                  "additionalProperties": false
+                },
+                "spanCount": { "type": "integer" },
+                "spread": { "type": "number" },
+                "startValue": { "type": "number" },
+                "stream": {
+                  "type": "object",
+                  "required": ["noise", "speed", "spread", "type"],
+                  "properties": {
+                    "bands": { "type": "integer" },
+                    "noise": { "type": "number" },
+                    "speed": { "type": "number" },
+                    "spread": { "type": "number" },
+                    "type": {
+                      "description": "Possible enum values:\n - `\"fetch\"` \n - `\"logs\"` \n - `\"signal\"` \n - `\"traces\"` ",
+                      "type": "string",
+                      "enum": ["fetch", "logs", "signal", "traces"],
+                      "x-enum-description": {}
+                    },
+                    "url": { "type": "string" }
+                  },
+                  "additionalProperties": false
+                },
+                "stringInput": {
+                  "description": "common parameter used by many query types",
+                  "type": "string"
+                },
+                "timeRange": {
+                  "description": "TimeRange represents the query range\nNOTE: unlike generic /ds/query, we can now send explicit time values in each query\nNOTE: the values for timeRange are not saved in a dashboard, they are constructed on the fly",
+                  "type": "object",
+                  "required": ["from", "to"],
+                  "properties": {
+                    "from": {
+                      "description": "From is the start time of the query.",
+                      "type": "string",
+                      "default": "now-6h",
+                      "examples": ["now-1h"]
+                    },
+                    "to": {
+                      "description": "To is the end time of the query.",
+                      "type": "string",
+                      "default": "now",
+                      "examples": ["now"]
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "usa": {
+                  "type": "object",
+                  "properties": {
+                    "fields": {
+                      "type": "array",
+                      "items": { "type": "string" }
+                    },
+                    "mode": { "type": "string" },
+                    "period": { "type": "string" },
+                    "states": { "type": "array", "items": { "type": "string" } }
+                  },
+                  "additionalProperties": false
+                },
+                "withNil": { "type": "boolean" }
+              },
+              "additionalProperties": false,
+              "$schema": "https://json-schema.org/draft-04/schema#"
             }
           },
           "to": {
@@ -403,33 +1104,29 @@
           },
           "schema": {
             "description": "The query schema represents the properties that can be sent to the API\nIn many cases, this may be the same properties that are saved in a dashboard\nIn the case where the save model is different, we must also specify a save model",
-            "type": "object"
+            "type": "object",
+            "allOf": [{ "$ref": "https://json-schema.org/draft-04/schema" }]
           }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "$schema": "https://json-schema.org/draft-04/schema"
       },
-      "com.github.grafana.grafana.pkg.apis.query.v0alpha1.DataSourceApiServer": {
-        "description": "The data source resource is a reflection of the individual datasource instances that are exposed in the groups: {datasource}.datasource.grafana.app The status is updated periodically. The name is the plugin id",
+      "com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured": {
         "type": "object",
-        "required": ["title", "groupVersion"],
+        "additionalProperties": true,
+        "x-kubernetes-preserve-unknown-fields": true
+      },
+      "com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSourceConnection": {
+        "type": "object",
+        "required": ["title"],
         "properties": {
-          "aliasIDs": {
-            "description": "Possible alternative plugin IDs",
-            "type": "array",
-            "items": { "type": "string", "default": "" }
-          },
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
             "type": "string"
           },
           "description": {
-            "description": "Describe the plugin",
+            "description": "Optional description for the data source (does not exist yet)",
             "type": "string"
-          },
-          "groupVersion": {
-            "description": "The group + preferred version",
-            "type": "string",
-            "default": ""
           },
           "kind": {
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
@@ -451,14 +1148,38 @@
         },
         "x-kubernetes-group-version-kind": [
           {
-            "group": "query.grafana.app",
-            "kind": "DataSourceApiServer",
+            "group": "graphite.datasource.grafana.app",
+            "kind": "DataSourceConnection",
+            "version": "__internal"
+          },
+          {
+            "group": "graphite.datasource.grafana.app",
+            "kind": "DataSourceConnection",
+            "version": "v0alpha1"
+          },
+          {
+            "group": "prometheus.datasource.grafana.app",
+            "kind": "DataSourceConnection",
+            "version": "__internal"
+          },
+          {
+            "group": "prometheus.datasource.grafana.app",
+            "kind": "DataSourceConnection",
+            "version": "v0alpha1"
+          },
+          {
+            "group": "testdata.datasource.grafana.app",
+            "kind": "DataSourceConnection",
+            "version": "__internal"
+          },
+          {
+            "group": "testdata.datasource.grafana.app",
+            "kind": "DataSourceConnection",
             "version": "v0alpha1"
           }
         ]
       },
-      "com.github.grafana.grafana.pkg.apis.query.v0alpha1.DataSourceApiServerList": {
-        "description": "List of datasource plugins",
+      "com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSourceConnectionList": {
         "type": "object",
         "properties": {
           "apiVersion": {
@@ -471,7 +1192,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.query.v0alpha1.DataSourceApiServer"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSourceConnection"
                 }
               ]
             }
@@ -491,8 +1212,99 @@
         },
         "x-kubernetes-group-version-kind": [
           {
-            "group": "query.grafana.app",
-            "kind": "DataSourceApiServerList",
+            "group": "graphite.datasource.grafana.app",
+            "kind": "DataSourceConnectionList",
+            "version": "__internal"
+          },
+          {
+            "group": "graphite.datasource.grafana.app",
+            "kind": "DataSourceConnectionList",
+            "version": "v0alpha1"
+          },
+          {
+            "group": "prometheus.datasource.grafana.app",
+            "kind": "DataSourceConnectionList",
+            "version": "__internal"
+          },
+          {
+            "group": "prometheus.datasource.grafana.app",
+            "kind": "DataSourceConnectionList",
+            "version": "v0alpha1"
+          },
+          {
+            "group": "testdata.datasource.grafana.app",
+            "kind": "DataSourceConnectionList",
+            "version": "__internal"
+          },
+          {
+            "group": "testdata.datasource.grafana.app",
+            "kind": "DataSourceConnectionList",
+            "version": "v0alpha1"
+          }
+        ]
+      },
+      "com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.HealthCheckResult": {
+        "type": "object",
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "code": {
+            "description": "Explicit status code",
+            "type": "integer",
+            "format": "int32"
+          },
+          "details": {
+            "description": "Spec depends on the plugin",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
+              }
+            ]
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "message": {
+            "description": "Optional description for the data source",
+            "type": "string"
+          },
+          "status": {
+            "description": "The string description",
+            "type": "string"
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "graphite.datasource.grafana.app",
+            "kind": "HealthCheckResult",
+            "version": "__internal"
+          },
+          {
+            "group": "graphite.datasource.grafana.app",
+            "kind": "HealthCheckResult",
+            "version": "v0alpha1"
+          },
+          {
+            "group": "prometheus.datasource.grafana.app",
+            "kind": "HealthCheckResult",
+            "version": "__internal"
+          },
+          {
+            "group": "prometheus.datasource.grafana.app",
+            "kind": "HealthCheckResult",
+            "version": "v0alpha1"
+          },
+          {
+            "group": "testdata.datasource.grafana.app",
+            "kind": "HealthCheckResult",
+            "version": "__internal"
+          },
+          {
+            "group": "testdata.datasource.grafana.app",
+            "kind": "HealthCheckResult",
             "version": "v0alpha1"
           }
         ]
