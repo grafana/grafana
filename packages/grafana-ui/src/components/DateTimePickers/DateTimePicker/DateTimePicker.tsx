@@ -263,13 +263,8 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
           placeholder="Select date/time"
           ref={ref}
           suffix={
-            clearable && (
-              <Icon
-                name="times"
-                className={cx(styles.clearIcon, { [styles.disabled]: !internalDate.value })}
-                onClick={clearInternalDate}
-              />
-            )
+            clearable &&
+            internalDate.value && <Icon name="times" className={styles.clearIcon} onClick={clearInternalDate} />
           }
         />
       </InlineField>
@@ -407,9 +402,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   field: css({
     marginBottom: 0,
-  }),
-  disabled: css({
-    opacity: 0.5,
-    cursor: 'not-allowed',
+    width: '100%',
   }),
 });
