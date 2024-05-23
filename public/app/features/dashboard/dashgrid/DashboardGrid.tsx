@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import React, { PureComponent, CSSProperties } from 'react';
+import React, { PureComponent, CSSProperties, useMemo } from 'react';
 import ReactGridLayout, { ItemCallback } from 'react-grid-layout';
 import { Subscription } from 'rxjs';
 
@@ -369,7 +369,8 @@ interface GrafanaGridItemProps extends React.HTMLAttributes<HTMLDivElement> {
  * A hacky way to intercept the react-layout-grid item dimensions and pass them to DashboardPanel
  */
 const GrafanaGridItem = React.forwardRef<HTMLDivElement, GrafanaGridItemProps>((props, ref) => {
-  const panelAttentionService = getPanelAttentionSrv();
+  const panelId = props['data-panelid'];
+  const panelAttentionService = useMemo(() => getPanelAttentionSrv(), []);
 
   const theme = config.theme2;
   let width = 100;
@@ -408,8 +409,8 @@ const GrafanaGridItem = React.forwardRef<HTMLDivElement, GrafanaGridItemProps>((
     <div
       {...divProps}
       style={{ ...divProps.style }}
-      onFocus={() => panelAttentionService?.setPanelWithAttention(divProps['data-panelid'])}
-      onMouseMove={() => panelAttentionService?.setPanelWithAttention(divProps['data-panelid'])}
+      onFocus={() => panelAttentionService?.setPanelWithAttention(panelId)}
+      onMouseMove={() => panelAttentionService?.setPanelWithAttention(panelId)}
       ref={ref}
     >
       {/* Pass width and height to children as render props */}
