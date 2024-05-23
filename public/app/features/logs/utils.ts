@@ -45,16 +45,20 @@ export function getLogLevel(line: string): LogLevel {
   return level;
 }
 
-export function getLogLevelFromKey(key: string): LogLevel {
+export function getLogLevelFromKey(key: string | number): LogLevel {
   const level = LogLevel[key.toString().toLowerCase() as keyof typeof LogLevel];
   if (level) {
     return level;
   }
-  // The level did not match any entry of LogLevel. It might be unknown or a numeric level.
-  const numericLevel = parseInt(key, 10);
-  // Safety check to confirm that we're parsing a number and not a number with a string.
-  // For example `parseInt('1abcd', 10)` outputs 1
-  if (key.length === numericLevel.toString().length) {
+  if (typeof key === 'string') {
+    // The level did not match any entry of LogLevel. It might be unknown or a numeric level.
+    const numericLevel = parseInt(key, 10);
+    // Safety check to confirm that we're parsing a number and not a number with a string.
+    // For example `parseInt('1abcd', 10)` outputs 1
+    if (key.length === numericLevel.toString().length) {
+      return NumericLogLevel[key] || LogLevel.unknown;
+    }
+  } else if (typeof key === 'number') {
     return NumericLogLevel[key] || LogLevel.unknown;
   }
 

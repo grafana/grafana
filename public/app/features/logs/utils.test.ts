@@ -65,6 +65,7 @@ describe('getLogLevelFromKey()', () => {
   });
   describe('Numeric log levels', () => {
     it('returns critical', () => {
+      expect(getLogLevelFromKey(0)).toBe(LogLevel.critical);
       expect(getLogLevelFromKey('0')).toBe(LogLevel.critical);
       expect(getLogLevelFromKey('1')).toBe(LogLevel.critical);
       expect(getLogLevelFromKey('2')).toBe(LogLevel.critical);
@@ -84,6 +85,7 @@ describe('getLogLevelFromKey()', () => {
     });
     it('returns unknown log level when level is an unexpected integer', () => {
       expect(getLogLevelFromKey('8')).toBe(LogLevel.unknown);
+      expect(getLogLevelFromKey(8)).toBe(LogLevel.unknown);
     });
   });
 });
