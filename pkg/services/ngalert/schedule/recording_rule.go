@@ -148,6 +148,7 @@ func (r *recordingRule) tryEvaluate(ctx context.Context, ev *Evaluation, logger 
 	evalAttemptTotal.Inc()
 
 	// TODO: In some cases, err can be nil but the dataframe itself contains embedded error frames. Parse these out like we do when evaluating alert rules.
+	// TODO: (Maybe, refactor something in eval package so we can use shared code for this)
 	if err != nil {
 		evalAttemptFailures.Inc()
 		// TODO: Only errors embedded in the frame can be considered retryable.
