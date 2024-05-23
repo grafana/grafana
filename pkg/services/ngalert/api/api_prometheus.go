@@ -235,7 +235,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 	return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
 }
 
-func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager, store ListAlertRulesStore, opts RuleGroupStatusesOptions) apimodels.RuleResponse {
+func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager, store RuleStore, opts RuleGroupStatusesOptions) apimodels.RuleResponse {
 	ruleResponse := apimodels.RuleResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
 			Status: "success",
@@ -292,16 +292,41 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 		return ruleResponse
 	}
 
-	namespaceUIDs := make([]string, len(opts.Namespaces))
-	for k := range opts.Namespaces {
-		namespaceUIDs = append(namespaceUIDs, k)
+	namespaceUIDs := make([]string, 0, len(opts.Namespaces))
+
+	folderUID := opts.Query.Get("folder_uid")
+	_, exists := opts.Namespaces[folderUID]
+	if folderUID != "" && exists {
+		namespaceUIDs = append(namespaceUIDs, folderUID)
+	} else {
+		for k := range opts.Namespaces {
+			namespaceUIDs = append(namespaceUIDs, k)
+		}
 	}
 
+	ruleUID := opts.Query.Get("rule_uid")
+	if ruleUID != "" {
+		query := ngmodels.GetAlertRulesGroupByRuleUIDQuery{
+			UID:   ruleUID,
+			OrgID: opts.OrgID,
+		}
+
+		rules, err := store.GetAlertRulesGroupByRuleUID(opts.Ctx, &query)
+		if err != nil {
+			ruleResponse.DiscoveryBase.Status = "error"
+			ruleResponse.DiscoveryBase.Error = fmt.Sprintf("failure getting rules: %s", err.Error())
+			ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrServer
+			return ruleResponse
+		}
+	}
+
+	ruleGroup := opts.Query.Get("rule_group")
 	alertRuleQuery := ngmodels.ListAlertRulesQuery{
 		OrgID:         opts.OrgID,
 		NamespaceUIDs: namespaceUIDs,
 		DashboardUID:  dashboardUID,
 		PanelID:       panelID,
+		RuleGroup:     ruleGroup,
 	}
 	ruleList, err := store.ListAlertRules(opts.Ctx, &alertRuleQuery)
 	if err != nil {
@@ -343,6 +368,7 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 		if !ok {
 			continue
 		}
+
 		ruleGroup, totals := toRuleGroup(log, manager, groupKey, folder, rules, limitAlertsPerRule, withStatesFast, matchers, labelOptions)
 		ruleGroup.Totals = totals
 		for k, v := range totals {
