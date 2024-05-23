@@ -188,4 +188,7 @@ export interface FeatureToggles {
   logsExploreTableDefaultVisualization?: boolean;
   newDashboardSharingComponent?: boolean;
   notificationBanner?: boolean;
+  dashboardRestore?: boolean;
+  datasourceProxyDisableRBAC?: boolean;
+  alertingDisableSendAlertsExternal?: boolean;
 }
