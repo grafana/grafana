@@ -22,15 +22,13 @@ export function ExistingRuleEditor({ identifier, id }: ExistingRuleEditorProps) 
     error,
   } = useRuleWithLocation({ ruleIdentifier: identifier });
 
-  const {
-    isEditable,
-    loading: loadingEditable,
-    uninitialized: editableUnitialized,
-  } = useIsRuleEditable(ruleId.ruleIdentifierToRuleSourceName(identifier), ruleWithLocation?.rule);
+  const ruleSourceName = ruleId.ruleIdentifierToRuleSourceName(identifier);
 
-  const loading = loadingAlertRule || loadingEditable || editableUnitialized;
+  const { isEditable, loading: loadingEditable } = useIsRuleEditable(ruleSourceName, ruleWithLocation?.rule);
 
-  if (loading || isEditable === undefined) {
+  const loading = loadingAlertRule || loadingEditable;
+
+  if (loading) {
     return <LoadingPlaceholder text="Loading rule..." />;
   }
 

@@ -13,16 +13,11 @@ interface ResultBag {
   isEditable?: boolean;
   isRemovable?: boolean;
   loading: boolean;
-  uninitialized: boolean;
 }
 
 export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO): ResultBag {
   const dataSources = useUnifiedAlertingSelector((state) => state.dataSources);
-  const {
-    currentData: dsFeatures,
-    isLoading,
-    isUninitialized,
-  } = featureDiscoveryApi.endpoints.discoverDsFeatures.useQuery({
+  const { currentData: dsFeatures, isLoading } = featureDiscoveryApi.endpoints.discoverDsFeatures.useQuery({
     rulesSourceName,
   });
 
@@ -32,7 +27,7 @@ export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO):
   const { folder, loading } = useFolder(folderUID);
 
   if (!rule) {
-    return { isEditable: false, isRemovable: false, loading: false, uninitialized: isUninitialized };
+    return { isEditable: false, isRemovable: false, loading: false };
   }
 
   // Grafana rules can be edited if user can edit the folder they're in
@@ -52,7 +47,6 @@ export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO):
         isEditable: false,
         isRemovable: false,
         loading,
-        uninitialized: false,
       };
     }
 
@@ -64,7 +58,6 @@ export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO):
       isEditable: canEditGrafanaRules,
       isRemovable: canRemoveGrafanaRules,
       loading: loading || isLoading,
-      uninitialized: isUninitialized,
     };
   }
 
@@ -79,6 +72,5 @@ export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO):
     isEditable: canEditCloudRules && isRulerAvailable,
     isRemovable: canRemoveCloudRules && isRulerAvailable,
     loading: isLoading || dataSources[rulesSourceName]?.loading,
-    uninitialized: isUninitialized,
   };
 }
