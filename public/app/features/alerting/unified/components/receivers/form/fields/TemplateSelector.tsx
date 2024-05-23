@@ -133,8 +133,16 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
   }, [valueInForm, setTemplate, setTemplateOption]);
 
   const templateOptions: Array<SelectableValue<TemplateFieldOption>> = [
-    { label: 'Selecting existing template', value: 'Existing' },
-    { label: `Enter custom ${option.label}`, value: 'Custom' },
+    {
+      label: 'Selecting existing template',
+      value: 'Existing',
+      description: `Select a single template and preview it, or copy it to paste it in the custom tab. ${templateOption === 'Existing' ? 'If you click save from here , you are saving this single selected template.' : ''}`,
+    },
+    {
+      label: `Enter custom ${option.label}`,
+      value: 'Custom',
+      description: `Enter custom ${option.label}. ${templateOption === 'Custom' ? 'If you click save from here, you are saving this custom value.' : ''}`,
+    },
   ];
 
   useEffect(() => {
