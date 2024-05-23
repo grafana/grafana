@@ -232,7 +232,7 @@ func (s *Service) ConvertObject(ctx context.Context, req *backend.ConversionRequ
 }
 
 // MutateAdmission implements plugins.Client.
-func (s *Service) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutatingResponse, error) {
+func (s *Service) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
 	if req == nil {
 		return nil, errNilRequest
 	}

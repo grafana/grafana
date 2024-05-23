@@ -393,7 +393,7 @@ func (m *alwaysErrorFuncMiddleware) ValidateAdmission(ctx context.Context, req *
 }
 
 // MutateAdmission implements backend.AdmissionHandler.
-func (m *alwaysErrorFuncMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutatingResponse, error) {
+func (m *alwaysErrorFuncMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
 	return nil, m.f()
 }
 

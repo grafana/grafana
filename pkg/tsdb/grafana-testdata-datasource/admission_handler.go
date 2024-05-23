@@ -20,7 +20,7 @@ func (s *Service) ValidateAdmission(ctx context.Context, req *backend.AdmissionR
 }
 
 // MutateAdmission implements backend.AdmissionHandler.
-func (s *Service) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutatingResponse, error) {
+func (s *Service) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
 	expected := (&backend.DataSourceInstanceSettings{}).GVK()
 	if req.Kind.Kind != expected.Kind && req.Kind.Group != expected.Group {
 		return getBadRequest("expected DataSourceInstanceSettings protobuf payload"), nil
@@ -59,7 +59,7 @@ func (s *Service) MutateAdmission(ctx context.Context, req *backend.AdmissionReq
 	}
 
 	pb, err := backend.DataSourceInstanceSettingsToProtoBytes(settings)
-	return &backend.MutatingResponse{
+	return &backend.MutationResponse{
 		Allowed:     true,
 		ObjectBytes: pb,
 	}, err
@@ -70,8 +70,8 @@ func (s *Service) ConvertObject(ctx context.Context, req *backend.ConversionRequ
 	return nil, fmt.Errorf("not implemented")
 }
 
-func getBadRequest(msg string) *backend.MutatingResponse {
-	return &backend.MutatingResponse{
+func getBadRequest(msg string) *backend.MutationResponse {
+	return &backend.MutationResponse{
 		Allowed: false,
 		Result: &backend.StatusResult{
 			Status:  "Failure",

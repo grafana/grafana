@@ -75,7 +75,7 @@ func (m *PluginRequestMetaMiddleware) ValidateAdmission(ctx context.Context, req
 }
 
 // MutateAdmission implements backend.AdmissionHandler.
-func (m *PluginRequestMetaMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutatingResponse, error) {
+func (m *PluginRequestMetaMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
 	ctx = m.withDefaultPluginRequestMeta(ctx)
 	return m.next.MutateAdmission(ctx, req)
 }

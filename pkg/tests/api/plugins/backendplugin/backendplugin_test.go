@@ -944,7 +944,7 @@ func (tp *testPlugin) ValidateAdmission(ctx context.Context, req *backend.Admiss
 }
 
 // MutateAdmission implements backend.AdmissionHandler.
-func (tp *testPlugin) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutatingResponse, error) {
+func (tp *testPlugin) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
 	if tp.AdmissionHandler != nil {
 		return tp.AdmissionHandler.MutateAdmission(ctx, req)
 	}

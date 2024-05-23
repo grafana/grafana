@@ -94,7 +94,7 @@ func (c *TestClient) ValidateAdmission(ctx context.Context, req *backend.Admissi
 	return nil, nil
 }
 
-func (c *TestClient) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutatingResponse, error) {
+func (c *TestClient) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
 	if c.MutateAdmissionFunc != nil {
 		return c.MutateAdmissionFunc(ctx, req)
 	}
@@ -166,7 +166,7 @@ func (m *TestMiddleware) ValidateAdmission(ctx context.Context, req *backend.Adm
 	return res, err
 }
 
-func (m *TestMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutatingResponse, error) {
+func (m *TestMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
 	m.sCtx.MutateAdmissionCallChain = append(m.sCtx.MutateAdmissionCallChain, fmt.Sprintf("before %s", m.Name))
 	res, err := m.next.MutateAdmission(ctx, req)
 	m.sCtx.MutateAdmissionCallChain = append(m.sCtx.MutateAdmissionCallChain, fmt.Sprintf("after %s", m.Name))

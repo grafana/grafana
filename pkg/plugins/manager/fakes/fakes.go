@@ -177,7 +177,7 @@ func (pc *FakePluginClient) ValidateAdmission(ctx context.Context, req *backend.
 	return nil, plugins.ErrMethodNotImplemented
 }
 
-func (pc *FakePluginClient) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutatingResponse, error) {
+func (pc *FakePluginClient) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
 	if pc.MutateAdmissionFunc != nil {
 		return pc.MutateAdmissionFunc(ctx, req)
 	}

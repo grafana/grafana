@@ -379,7 +379,7 @@ func (p *Plugin) ValidateAdmission(ctx context.Context, req *backend.AdmissionRe
 }
 
 // MutateAdmission implements backend.AdmissionHandler.
-func (p *Plugin) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutatingResponse, error) {
+func (p *Plugin) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
 	pluginClient, ok := p.Client()
 	if !ok {
 		return nil, ErrPluginUnavailable

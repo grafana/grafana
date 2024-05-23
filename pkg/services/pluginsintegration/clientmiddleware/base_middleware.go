@@ -50,7 +50,7 @@ func (m *baseMiddleware) ValidateAdmission(ctx context.Context, req *backend.Adm
 }
 
 // MutateAdmission implements backend.AdmissionHandler.
-func (m *baseMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutatingResponse, error) {
+func (m *baseMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
 	return m.next.MutateAdmission(ctx, req)
 }
 

@@ -146,7 +146,7 @@ func (m *TracingMiddleware) ValidateAdmission(ctx context.Context, req *backend.
 }
 
 // MutateAdmission implements backend.AdmissionHandler.
-func (m *TracingMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutatingResponse, error) {
+func (m *TracingMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
 	var err error
 	ctx, end := m.traceWrap(ctx, req.PluginContext, "MutateAdmission")
 	defer func() { end(err) }()

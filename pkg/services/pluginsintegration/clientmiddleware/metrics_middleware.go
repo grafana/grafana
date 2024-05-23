@@ -186,8 +186,8 @@ func (m *MetricsMiddleware) CollectMetrics(ctx context.Context, req *backend.Col
 	return result, err
 }
 
-func (m *MetricsMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutatingResponse, error) {
-	var result *backend.MutatingResponse
+func (m *MetricsMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
+	var result *backend.MutationResponse
 	err := m.instrumentPluginRequest(ctx, req.PluginContext, endpointMutateAdmission, func(ctx context.Context) (status requestStatus, innerErr error) {
 		result, innerErr = m.next.MutateAdmission(ctx, req)
 		return requestStatusFromError(innerErr), innerErr

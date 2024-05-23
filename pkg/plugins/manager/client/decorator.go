@@ -112,7 +112,7 @@ func (d *Decorator) ValidateAdmission(ctx context.Context, req *backend.Admissio
 	return client.ValidateAdmission(ctx, req)
 }
 
-func (d *Decorator) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutatingResponse, error) {
+func (d *Decorator) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
 	if req == nil {
 		return nil, errNilRequest
 	}

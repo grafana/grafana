@@ -209,7 +209,7 @@ func (p *grpcPlugin) ValidateAdmission(ctx context.Context, request *backend.Adm
 	return pluginClient.ValidateAdmission(ctx, request)
 }
 
-func (p *grpcPlugin) MutateAdmission(ctx context.Context, request *backend.AdmissionRequest) (*backend.MutatingResponse, error) {
+func (p *grpcPlugin) MutateAdmission(ctx context.Context, request *backend.AdmissionRequest) (*backend.MutationResponse, error) {
 	pluginClient, ok := p.getPluginClient()
 	if !ok {
 		return nil, plugins.ErrPluginUnavailable
