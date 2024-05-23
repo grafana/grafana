@@ -171,3 +171,4 @@ newDashboardSharingComponent,experimental,@grafana/sharing-squad,false,false,tru
 notificationBanner,experimental,@grafana/grafana-frontend-platform,false,false,false
 dashboardRestore,experimental,@grafana/grafana-frontend-platform,false,false,false
 datasourceProxyDisableRBAC,GA,@grafana/identity-access-team,false,false,false
+alertingDisableSendAlertsExternal,experimental,@grafana/alerting-squad,false,false,false
