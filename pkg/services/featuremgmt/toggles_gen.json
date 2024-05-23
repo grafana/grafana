@@ -2224,6 +2224,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/observability-metrics"
       }
+    },
+    {
+      "metadata": {
+        "name": "datasourceQueryTypes",
+        "resourceVersion": "1716473268430",
+        "creationTimestamp": "2024-05-23T14:07:48Z"
+      },
+      "spec": {
+        "description": "Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
+      }
     }
   ]
 }
