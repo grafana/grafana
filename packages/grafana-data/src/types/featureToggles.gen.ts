@@ -122,6 +122,7 @@ export interface FeatureToggles {
   transformationsVariableSupport?: boolean;
   kubernetesPlaylists?: boolean;
   kubernetesSnapshots?: boolean;
+  datasourceQueryTypes?: boolean;
   queryService?: boolean;
   queryServiceRewrite?: boolean;
   queryServiceFromUI?: boolean;
@@ -190,4 +191,5 @@ export interface FeatureToggles {
   notificationBanner?: boolean;
   dashboardRestore?: boolean;
   datasourceProxyDisableRBAC?: boolean;
+  alertingDisableSendAlertsExternal?: boolean;
 }
