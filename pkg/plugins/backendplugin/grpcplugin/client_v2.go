@@ -270,7 +270,7 @@ func (c *ClientV2) RunStream(ctx context.Context, req *backend.RunStreamRequest,
 	}
 }
 
-func (c *ClientV2) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+func (c *ClientV2) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
 	if c.AdmissionClient == nil {
 		return nil, plugins.ErrMethodNotImplemented
 	}
@@ -286,10 +286,10 @@ func (c *ClientV2) ValidateAdmission(ctx context.Context, req *backend.Admission
 		return nil, fmt.Errorf("%v: %w", "Failed to ValidateAdmission", err)
 	}
 
-	return backend.FromProto().AdmissionResponse(protoResp), nil
+	return backend.FromProto().ValidationResponse(protoResp), nil
 }
 
-func (c *ClientV2) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+func (c *ClientV2) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutatingResponse, error) {
 	if c.AdmissionClient == nil {
 		return nil, plugins.ErrMethodNotImplemented
 	}
@@ -305,10 +305,10 @@ func (c *ClientV2) MutateAdmission(ctx context.Context, req *backend.AdmissionRe
 		return nil, fmt.Errorf("%v: %w", "Failed to MutateAdmission", err)
 	}
 
-	return backend.FromProto().AdmissionResponse(protoResp), nil
+	return backend.FromProto().MutatingResponse(protoResp), nil
 }
 
-func (c *ClientV2) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.AdmissionResponse, error) {
+func (c *ClientV2) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
 	if c.AdmissionClient == nil {
 		return nil, plugins.ErrMethodNotImplemented
 	}
@@ -324,5 +324,5 @@ func (c *ClientV2) ConvertObject(ctx context.Context, req *backend.ConversionReq
 		return nil, fmt.Errorf("%v: %w", "Failed to ConvertObject", err)
 	}
 
-	return backend.FromProto().AdmissionResponse(protoResp), nil
+	return backend.FromProto().ConversionResponse(protoResp), nil
 }

@@ -11,7 +11,16 @@ import (
 )
 
 // ValidateAdmission implements backend.AdmissionHandler.
-func (s *Service) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+func (s *Service) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
+	rsp, err := s.MutateAdmission(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return &backend.ValidationResponse{Allowed: rsp.Allowed}, nil
+}
+
+// MutateAdmission implements backend.AdmissionHandler.
+func (s *Service) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutatingResponse, error) {
 	expected := (&backend.DataSourceInstanceSettings{}).GVK()
 	if req.Kind.Kind != expected.Kind && req.Kind.Group != expected.Group {
 		return getBadRequest("expected DataSourceInstanceSettings protobuf payload"), nil
@@ -48,27 +57,21 @@ func (s *Service) ValidateAdmission(ctx context.Context, req *backend.AdmissionR
 	if settings.User != "" {
 		return getBadRequest("unsupported User value"), nil
 	}
-	return &backend.AdmissionResponse{Allowed: true}, nil
-}
 
-// MutateAdmission implements backend.AdmissionHandler.
-func (s *Service) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
-	rsp, err := s.ValidateAdmission(ctx, req)
-	if err == nil && rsp.Allowed {
-		// In this case they are the same!
-		// We validated that the object is empty so we can just use it directly
-		rsp.ObjectBytes = req.ObjectBytes
-	}
-	return rsp, err
+	pb, err := backend.DataSourceInstanceSettingsToProtoBytes(settings)
+	return &backend.MutatingResponse{
+		Allowed:     true,
+		ObjectBytes: pb,
+	}, err
 }
 
 // ConvertObject implements backend.AdmissionHandler.
-func (s *Service) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.AdmissionResponse, error) {
+func (s *Service) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
-func getBadRequest(msg string) *backend.AdmissionResponse {
-	return &backend.AdmissionResponse{
+func getBadRequest(msg string) *backend.MutatingResponse {
+	return &backend.MutatingResponse{
 		Allowed: false,
 		Result: &backend.StatusResult{
 			Status:  "Failure",

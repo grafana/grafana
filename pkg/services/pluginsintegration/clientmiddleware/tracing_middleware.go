@@ -137,7 +137,7 @@ func (m *TracingMiddleware) RunStream(ctx context.Context, req *backend.RunStrea
 }
 
 // ValidateAdmission implements backend.AdmissionHandler.
-func (m *TracingMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+func (m *TracingMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
 	var err error
 	ctx, end := m.traceWrap(ctx, req.PluginContext, "ValidateAdmission")
 	defer func() { end(err) }()
@@ -146,7 +146,7 @@ func (m *TracingMiddleware) ValidateAdmission(ctx context.Context, req *backend.
 }
 
 // MutateAdmission implements backend.AdmissionHandler.
-func (m *TracingMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+func (m *TracingMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutatingResponse, error) {
 	var err error
 	ctx, end := m.traceWrap(ctx, req.PluginContext, "MutateAdmission")
 	defer func() { end(err) }()
@@ -155,7 +155,7 @@ func (m *TracingMiddleware) MutateAdmission(ctx context.Context, req *backend.Ad
 }
 
 // ConvertObject implements backend.AdmissionHandler.
-func (m *TracingMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.AdmissionResponse, error) {
+func (m *TracingMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
 	var err error
 	ctx, end := m.traceWrap(ctx, req.PluginContext, "ConvertObject")
 	defer func() { end(err) }()

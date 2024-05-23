@@ -103,7 +103,7 @@ func (d *Decorator) RunStream(ctx context.Context, req *backend.RunStreamRequest
 	return client.RunStream(ctx, req, sender)
 }
 
-func (d *Decorator) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+func (d *Decorator) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
 	if req == nil {
 		return nil, errNilRequest
 	}
@@ -112,7 +112,7 @@ func (d *Decorator) ValidateAdmission(ctx context.Context, req *backend.Admissio
 	return client.ValidateAdmission(ctx, req)
 }
 
-func (d *Decorator) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+func (d *Decorator) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutatingResponse, error) {
 	if req == nil {
 		return nil, errNilRequest
 	}
@@ -121,7 +121,7 @@ func (d *Decorator) MutateAdmission(ctx context.Context, req *backend.AdmissionR
 	return client.MutateAdmission(ctx, req)
 }
 
-func (d *Decorator) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.AdmissionResponse, error) {
+func (d *Decorator) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
 	if req == nil {
 		return nil, errNilRequest
 	}

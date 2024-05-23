@@ -388,17 +388,17 @@ func (m *alwaysErrorFuncMiddleware) RunStream(ctx context.Context, req *backend.
 }
 
 // ValidateAdmission implements backend.AdmissionHandler.
-func (m *alwaysErrorFuncMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+func (m *alwaysErrorFuncMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
 	return nil, m.f()
 }
 
 // MutateAdmission implements backend.AdmissionHandler.
-func (m *alwaysErrorFuncMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+func (m *alwaysErrorFuncMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutatingResponse, error) {
 	return nil, m.f()
 }
 
 // ConvertObject implements backend.AdmissionHandler.
-func (m *alwaysErrorFuncMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.AdmissionResponse, error) {
+func (m *alwaysErrorFuncMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
 	return nil, m.f()
 }
 

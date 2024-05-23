@@ -169,7 +169,7 @@ func (pc *FakePluginClient) RunStream(_ context.Context, _ *backend.RunStreamReq
 	return plugins.ErrMethodNotImplemented
 }
 
-func (pc *FakePluginClient) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+func (pc *FakePluginClient) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
 	if pc.ValidateAdmissionFunc != nil {
 		return pc.ValidateAdmissionFunc(ctx, req)
 	}
@@ -177,7 +177,7 @@ func (pc *FakePluginClient) ValidateAdmission(ctx context.Context, req *backend.
 	return nil, plugins.ErrMethodNotImplemented
 }
 
-func (pc *FakePluginClient) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+func (pc *FakePluginClient) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutatingResponse, error) {
 	if pc.MutateAdmissionFunc != nil {
 		return pc.MutateAdmissionFunc(ctx, req)
 	}
@@ -185,7 +185,7 @@ func (pc *FakePluginClient) MutateAdmission(ctx context.Context, req *backend.Ad
 	return nil, plugins.ErrMethodNotImplemented
 }
 
-func (pc *FakePluginClient) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.AdmissionResponse, error) {
+func (pc *FakePluginClient) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
 	if pc.ConvertObjectFunc != nil {
 		return pc.ConvertObjectFunc(ctx, req)
 	}

@@ -127,7 +127,7 @@ func (cp *corePlugin) RunStream(ctx context.Context, req *backend.RunStreamReque
 	return plugins.ErrMethodNotImplemented
 }
 
-func (cp *corePlugin) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+func (cp *corePlugin) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutatingResponse, error) {
 	if cp.AdmissionHandler != nil {
 		ctx = backend.WithGrafanaConfig(ctx, req.PluginContext.GrafanaConfig)
 		return cp.AdmissionHandler.MutateAdmission(ctx, req)
@@ -135,7 +135,7 @@ func (cp *corePlugin) MutateAdmission(ctx context.Context, req *backend.Admissio
 	return nil, plugins.ErrMethodNotImplemented
 }
 
-func (cp *corePlugin) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+func (cp *corePlugin) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
 	if cp.AdmissionHandler != nil {
 		ctx = backend.WithGrafanaConfig(ctx, req.PluginContext.GrafanaConfig)
 		return cp.AdmissionHandler.ValidateAdmission(ctx, req)
@@ -143,7 +143,7 @@ func (cp *corePlugin) ValidateAdmission(ctx context.Context, req *backend.Admiss
 	return nil, plugins.ErrMethodNotImplemented
 }
 
-func (cp *corePlugin) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.AdmissionResponse, error) {
+func (cp *corePlugin) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
 	if cp.AdmissionHandler != nil {
 		ctx = backend.WithGrafanaConfig(ctx, req.PluginContext.GrafanaConfig)
 		return cp.AdmissionHandler.ConvertObject(ctx, req)

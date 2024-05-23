@@ -935,7 +935,7 @@ func (tp *testPlugin) RunStream(ctx context.Context, req *backend.RunStreamReque
 }
 
 // ValidateAdmission implements backend.AdmissionHandler.
-func (tp *testPlugin) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+func (tp *testPlugin) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
 	if tp.AdmissionHandler != nil {
 		return tp.AdmissionHandler.ValidateAdmission(ctx, req)
 	}
@@ -944,7 +944,7 @@ func (tp *testPlugin) ValidateAdmission(ctx context.Context, req *backend.Admiss
 }
 
 // MutateAdmission implements backend.AdmissionHandler.
-func (tp *testPlugin) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+func (tp *testPlugin) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutatingResponse, error) {
 	if tp.AdmissionHandler != nil {
 		return tp.AdmissionHandler.MutateAdmission(ctx, req)
 	}
@@ -953,7 +953,7 @@ func (tp *testPlugin) MutateAdmission(ctx context.Context, req *backend.Admissio
 }
 
 // ConvertObject implements backend.AdmissionHandler.
-func (tp *testPlugin) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.AdmissionResponse, error) {
+func (tp *testPlugin) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
 	if tp.AdmissionHandler != nil {
 		return tp.AdmissionHandler.ConvertObject(ctx, req)
 	}

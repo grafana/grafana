@@ -370,7 +370,7 @@ func (p *Plugin) RunStream(ctx context.Context, req *backend.RunStreamRequest, s
 }
 
 // ValidateAdmission implements backend.AdmissionHandler.
-func (p *Plugin) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+func (p *Plugin) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
 	pluginClient, ok := p.Client()
 	if !ok {
 		return nil, ErrPluginUnavailable
@@ -379,7 +379,7 @@ func (p *Plugin) ValidateAdmission(ctx context.Context, req *backend.AdmissionRe
 }
 
 // MutateAdmission implements backend.AdmissionHandler.
-func (p *Plugin) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+func (p *Plugin) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutatingResponse, error) {
 	pluginClient, ok := p.Client()
 	if !ok {
 		return nil, ErrPluginUnavailable
@@ -388,7 +388,7 @@ func (p *Plugin) MutateAdmission(ctx context.Context, req *backend.AdmissionRequ
 }
 
 // ConvertObject implements backend.AdmissionHandler.
-func (p *Plugin) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.AdmissionResponse, error) {
+func (p *Plugin) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
 	pluginClient, ok := p.Client()
 	if !ok {
 		return nil, ErrPluginUnavailable

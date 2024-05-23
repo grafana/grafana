@@ -201,7 +201,7 @@ func (p *grpcPlugin) RunStream(ctx context.Context, req *backend.RunStreamReques
 	return pluginClient.RunStream(ctx, req, sender)
 }
 
-func (p *grpcPlugin) ValidateAdmission(ctx context.Context, request *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+func (p *grpcPlugin) ValidateAdmission(ctx context.Context, request *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
 	pluginClient, ok := p.getPluginClient()
 	if !ok {
 		return nil, plugins.ErrPluginUnavailable
@@ -209,7 +209,7 @@ func (p *grpcPlugin) ValidateAdmission(ctx context.Context, request *backend.Adm
 	return pluginClient.ValidateAdmission(ctx, request)
 }
 
-func (p *grpcPlugin) MutateAdmission(ctx context.Context, request *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+func (p *grpcPlugin) MutateAdmission(ctx context.Context, request *backend.AdmissionRequest) (*backend.MutatingResponse, error) {
 	pluginClient, ok := p.getPluginClient()
 	if !ok {
 		return nil, plugins.ErrPluginUnavailable
@@ -217,7 +217,7 @@ func (p *grpcPlugin) MutateAdmission(ctx context.Context, request *backend.Admis
 	return pluginClient.MutateAdmission(ctx, request)
 }
 
-func (p *grpcPlugin) ConvertObject(ctx context.Context, request *backend.ConversionRequest) (*backend.AdmissionResponse, error) {
+func (p *grpcPlugin) ConvertObject(ctx context.Context, request *backend.ConversionRequest) (*backend.ConversionResponse, error) {
 	pluginClient, ok := p.getPluginClient()
 	if !ok {
 		return nil, plugins.ErrPluginUnavailable

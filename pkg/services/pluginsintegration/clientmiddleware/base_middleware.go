@@ -45,16 +45,16 @@ func (m *baseMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRe
 }
 
 // ValidateAdmission implements backend.AdmissionHandler.
-func (m *baseMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+func (m *baseMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
 	return m.next.ValidateAdmission(ctx, req)
 }
 
 // MutateAdmission implements backend.AdmissionHandler.
-func (m *baseMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+func (m *baseMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutatingResponse, error) {
 	return m.next.MutateAdmission(ctx, req)
 }
 
 // ConvertObject implements backend.AdmissionHandler.
-func (m *baseMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.AdmissionResponse, error) {
+func (m *baseMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
 	return m.next.ConvertObject(ctx, req)
 }

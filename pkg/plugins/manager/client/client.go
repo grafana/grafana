@@ -218,7 +218,7 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 }
 
 // ConvertObject implements plugins.Client.
-func (s *Service) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.AdmissionResponse, error) {
+func (s *Service) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
 	if req == nil {
 		return nil, errNilRequest
 	}
@@ -232,7 +232,7 @@ func (s *Service) ConvertObject(ctx context.Context, req *backend.ConversionRequ
 }
 
 // MutateAdmission implements plugins.Client.
-func (s *Service) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+func (s *Service) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutatingResponse, error) {
 	if req == nil {
 		return nil, errNilRequest
 	}
@@ -246,7 +246,7 @@ func (s *Service) MutateAdmission(ctx context.Context, req *backend.AdmissionReq
 }
 
 // ValidateAdmission implements plugins.Client.
-func (s *Service) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+func (s *Service) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
 	if req == nil {
 		return nil, errNilRequest
 	}

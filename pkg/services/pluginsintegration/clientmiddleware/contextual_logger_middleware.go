@@ -72,19 +72,19 @@ func (m *ContextualLoggerMiddleware) RunStream(ctx context.Context, req *backend
 }
 
 // ValidateAdmission implements backend.AdmissionHandler.
-func (m *ContextualLoggerMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+func (m *ContextualLoggerMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
 	ctx = instrumentContext(ctx, endpointValidateAdmission, req.PluginContext)
 	return m.next.ValidateAdmission(ctx, req)
 }
 
 // MutateAdmission implements backend.AdmissionHandler.
-func (m *ContextualLoggerMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.AdmissionResponse, error) {
+func (m *ContextualLoggerMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutatingResponse, error) {
 	ctx = instrumentContext(ctx, endpointMutateAdmission, req.PluginContext)
 	return m.next.MutateAdmission(ctx, req)
 }
 
 // ConvertObject implements backend.AdmissionHandler.
-func (m *ContextualLoggerMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.AdmissionResponse, error) {
+func (m *ContextualLoggerMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
 	ctx = instrumentContext(ctx, endpointConvertObject, req.PluginContext)
 	return m.next.ConvertObject(ctx, req)
 }
