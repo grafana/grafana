@@ -355,7 +355,7 @@ func (esa *ExtSvcAccountsService) getExtSvcAccountToken(ctx context.Context, org
 
 	// Generate token
 	ctxLogger.Info("Generate new service account token", "service", extSvcSlug, "orgID", orgID)
-	newKeyInfo, err := satokengen.New(extSvcSlug)
+	newKeyInfo, err := genTokenWithRetries(ctxLogger, extSvcSlug)
 	if err != nil {
 		return "", err
 	}
@@ -378,6 +378,31 @@ func (esa *ExtSvcAccountsService) getExtSvcAccountToken(ctx context.Context, org
 	}
 
 	return newKeyInfo.ClientSecret, nil
+}
+
+func genTokenWithRetries(ctxLogger log.Logger, extSvcSlug string) (satokengen.KeyGenResult, error) {
+	var newKeyInfo satokengen.KeyGenResult
+	var ok bool
+	maxRetry := maxTokenGenRetries
+	for !ok && maxRetry > 0 {
+		newKeyInfo, err := satokengen.New(extSvcSlug)
+		if err != nil {
+			return satokengen.KeyGenResult{}, err
+		}
+
+		if strings.Contains(newKeyInfo.ClientSecret, "\x00") {
+			maxRetry--
+			ctxLogger.Warn("Generated token contains null bytes, retrying")
+			continue
+		}
+
+		ok = true
+	}
+
+	if !ok {
+		return satokengen.KeyGenResult{}, ErrCredentialsGenFailed.Errorf("Failed to generate a token for %s", extSvcSlug)
+	}
+	return newKeyInfo, nil
 }
 
 // GetExtSvcCredentials get the credentials of an External Service from an encrypted storage
