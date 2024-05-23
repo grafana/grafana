@@ -123,6 +123,15 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
   const [templateOption, setTemplateOption] = React.useState<TemplateFieldOption>('Existing');
   const [_, copyToClipboard] = useCopyToClipboard();
 
+  // if we are using only one template, we should settemplate to that template
+  useEffect(() => {
+    if (matchesOnlyOneTemplate(valueInForm)) {
+      setTemplate({ name: getTemplateName(valueInForm), content: valueInForm });
+    } else {
+      setTemplateOption('Custom');
+    }
+  }, [valueInForm, setTemplate, setTemplateOption]);
+
   const templateOptions: Array<SelectableValue<TemplateFieldOption>> = [
     { label: 'Selecting existing template', value: 'Existing' },
     { label: `Enter custom ${option.label}`, value: 'Custom' },
@@ -177,6 +186,7 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
                 }}
                 options={options}
                 width={50}
+                value={template ? { label: template.name, value: template } : undefined}
               />
               <IconButton
                 tooltip="Copy selected template to clipboard. You can use it in the custom tab."
@@ -265,9 +275,9 @@ function getUseTemplateText(templateName: string) {
   return `{{ template "${templateName}" . }}`;
 }
 
-function getTemplateName(useTemplateText: string): string | null {
+function getTemplateName(useTemplateText: string) {
   const match = useTemplateText.match(/\{\{\s*template\s*"(.*)"\s*\.\s*\}\}/);
-  return match ? match[1] : null;
+  return match ? match[1] : '';
 }
 function matchesOnlyOneTemplate(templateContent: string) {
   const pattern = /\{\{\s*template\s*".*?"\s*\.\s*\}\}/g;
