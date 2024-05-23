@@ -15237,7 +15237,7 @@
     },
     "/cloudmigration/token": {
       "get": {
-        "operationId": "getCloudMigrationGetToken",
+        "operationId": "getCloudMigrationToken",
         "responses": {
           "200": {
             "$ref": "#/components/responses/cloudMigrationGetTokenResponse"

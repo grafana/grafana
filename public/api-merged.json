@@ -2509,7 +2509,7 @@
           "migrations"
         ],
         "summary": "Fetch the cloud migration token if it exists.",
-        "operationId": "getCloudMigrationGetToken",
+        "operationId": "getCloudMigrationToken",
         "responses": {
           "200": {
             "$ref": "#/responses/cloudMigrationGetTokenResponse"

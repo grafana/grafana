@@ -53,7 +53,7 @@ func (cma *CloudMigrationAPI) registerEndpoints() {
 	}, middleware.ReqOrgAdmin)
 }
 
-// swagger:route GET /cloudmigration/token migrations getCloudMigrationGetToken
+// swagger:route GET /cloudmigration/token migrations getCloudMigrationToken
 //
 // Fetch the cloud migration token if it exists.
 //
@@ -364,6 +364,10 @@ type CloudMigrationResponse struct {
 type CloudMigrationRunListResponse struct {
 	// in: body
 	Body cloudmigration.CloudMigrationRunList
+}
+
+// swagger:parameters getCloudMigrationToken
+type GetCloudMigrationToken struct {
 }
 
 // swagger:response cloudMigrationGetTokenResponse
