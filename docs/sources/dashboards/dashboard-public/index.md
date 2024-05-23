@@ -9,27 +9,6 @@ labels:
     - oss
 title: Public dashboards
 description: Make your Grafana dashboards public and share them with anyone
-refs:
-  caching:
-    - pattern: /docs/grafana/
-      destination: https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#query-and-resource-caching/
-    - pattern: /docs/grafana-cloud/
-      destination: https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#query-and-resource-caching/
-  dashboard-sharing:
-    - pattern: /docs/grafana/
-      destination: https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/
-    - pattern: /docs/grafana-cloud/
-      destination: https://grafana.com/docs/grafana-cloud/visualizations/dashboards/share-dashboards-panels/
-  dashboards-insights-documentation:
-    - pattern: /docs/grafana/
-      destination: https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/assess-dashboard-usage#dashboard-insights/
-    - pattern: /docs/grafana-cloud/
-      destination: https://grafana.com/docs/grafana-cloud/visualizations/dashboards/assess-dashboard-usage/
-  custom-branding:
-    - pattern: /docs/grafana/
-      destination: https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/configure-custom-branding/
-    - pattern: /docs/grafana-cloud/
-      destination: https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/configure-custom-branding/
 weight: 8
 refs:
   dashboard-insights-documentation:
