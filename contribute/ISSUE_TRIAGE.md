@@ -328,8 +328,7 @@ To learn more about bot actions, refer to our [bot documentation](https://github
 Part of issue triage should also be triaging of external PRs. The main goal should be to make sure PRs from external contributors have an owner and aren't forgotten.
 
 1. Check new external PRs which don't have a reviewer. You can easily search for pull requests made by external contributors by using the label: `pr/external` in your [query search](https://github.com/grafana/grafana/pulls?q=is%3Aopen+is%3Apr+label%3Apr%2Fexternal) Note: external PRs are automatically labeled with `pr/external` upon creation.
-1. Check if there is a link to an existing issue. The link to a existing issue should be in the description section, underneath “Which issue(s) does this PR fix?:”.
-1. If not, and you know which issue it is solving, add the link yourself. Otherwise, ask the author to link the issue or create one.
+1. Check if there is a link to an existing issue. The link to a existing issue should be in the description section, underneath “Which issue(s) does this PR fix?:”. If not, and you know which issue it is solving, add the link yourself. Otherwise, ask the author to link the issue or create one.
 1. Assign a reviewer based on who was handling the linked issue or what code or feature the PR touches (if all else fails, look at who was the last to make changes).
 
 ### Appendix
