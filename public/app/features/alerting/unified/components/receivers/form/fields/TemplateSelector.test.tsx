@@ -1,6 +1,7 @@
 import { DEFAULT_TEMPLATES } from 'app/features/alerting/unified/utils/template-constants';
 
-import { getTemplateOptions, parseTemplates } from './TemplateSelector';
+import { getTemplateOptions } from './TemplateSelector';
+import { parseTemplates } from './utils';
 
 describe('getTemplateOptions function', () => {
   it('should return the last template when there are duplicates', () => {

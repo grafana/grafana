@@ -1,8 +1,7 @@
-import {
-  Template,
-  parseTemplates,
-} from 'app/features/alerting/unified/components/receivers/form/fields/TemplateSelector';
+import { Template } from 'app/features/alerting/unified/components/receivers/form/fields/TemplateSelector';
 import { DEFAULT_TEMPLATES } from 'app/features/alerting/unified/utils/template-constants';
+
+import { parseTemplates } from '../components/receivers/form/fields/utils';
 
 import { alertingApi } from './alertingApi';
 
