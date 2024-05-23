@@ -505,10 +505,9 @@ func TestIntegration_CountAlertRules(t *testing.T) {
 	rule := createRule(t, store, gen)
 
 	count := int64(5)
-	many := make([]*models.AlertRule, 0, count)
 	manyGen := gen.With(gen.WithNamespaceUID("many rules"), gen.WithOrgID(123))
 	for i := int64(0); i < count; i++ {
-		many = append(many, createRule(t, store, manyGen))
+		_ = createRule(t, store, manyGen)
 	}
 
 	tests := map[string]struct {
