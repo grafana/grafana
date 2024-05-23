@@ -163,7 +163,8 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase(ctx context.Context) error
 
 		// No sender and have Alertmanager(s) to send to - start a new one.
 		d.logger.Info("Creating new sender for the external alertmanagers", "org", cfg.OrgID, "alertmanagers", redactedAMs)
-		s := NewExternalAlertmanagerSender()
+		senderLogger := log.New("ngalert.sender.external-alertmanager")
+		s := NewExternalAlertmanagerSender(senderLogger)
 		d.externalAlertmanagers[cfg.OrgID] = s
 		s.Run()
 
