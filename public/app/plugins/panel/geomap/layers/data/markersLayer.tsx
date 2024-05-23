@@ -1,7 +1,7 @@
 import { isNumber } from 'lodash';
 import { FeatureLike } from 'ol/Feature';
 import Map from 'ol/Map';
-import VectorLayer from 'ol/layer/Vector';
+import VectorImage from 'ol/layer/VectorImage';
 import React, { ReactNode } from 'react';
 import { ReplaySubject } from 'rxjs';
 
@@ -74,8 +74,13 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     const style = await getStyleConfigState(config.style);
     const location = await getLocationMatchers(options.location);
     const source = new FrameVectorSource(location);
-    const vectorLayer = new VectorLayer({
+    // const vectorLayer = new VectorLayer({
+    //   source,
+    //   declutter: false
+    // });
+    const vectorLayer = new VectorImage({
       source,
+      declutter: false
     });
 
     const legendProps = new ReplaySubject<MarkersLegendProps>(1);
