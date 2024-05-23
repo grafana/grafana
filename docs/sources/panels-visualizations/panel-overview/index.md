@@ -127,7 +127,6 @@ To configure panels, refer to the following subtopics:
 [panel links]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/manage-dashboard-links#panel-links"
 [panel links]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/build-dashboards/manage-dashboard-links#panel-links"
 
-
 [legend]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-legend"
 [legend]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-legend"
 
