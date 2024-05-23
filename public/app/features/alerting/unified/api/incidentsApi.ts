@@ -14,7 +14,8 @@ export const incidentsApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
     getIncidentsPluginConfig: build.query<IncidentsPluginConfigDto, void>({
       query: (integration) => ({
-        url: getProxyApiUrl('/api/internal/v1/organization/config-checks/'),
+        url: getProxyApiUrl('/api/ConfigurationTrackerService.GetConfigurationTracker'),
+        data: integration,
         method: 'POST',
         showErrorAlert: false,
       }),
