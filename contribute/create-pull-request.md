@@ -136,6 +136,6 @@ We use the pull request title when we generate change logs for releases. As such
 
 If your pull request includes configuration changes, all the following files must be changed correspondingly:
 
-- conf/defaults.ini
-- conf/sample.ini
-- docs/sources/administration/configuration.md
+- `conf/defaults.ini`
+- `conf/sample.ini`
+- `docs/sources/administration/configuration.md`

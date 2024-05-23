@@ -60,9 +60,9 @@ Exactly what changes should be added to the changelog is hard to answer but here
 
 - Include any bug fix in general.
 - Include any change that you think would be interesting for the community as a whole.
-- Skip larger features divided into multiple pull requests since they might go into the release blog post (What's New article).
+- Skip larger features divided into multiple pull requests since they might go into the release's What's New article.
 - Use your best judgement and, if you aren't sure, then ask other maintainers for advice.
-- It's better to include a change in error rather than skip one that should have been there. Err on the side of inclusion.
+- It's better to err on the side of inclusion. Introducing an unnecessary or duplicate change in the changelog is better than leaving out a change.
 - Always keep the guidelines in [Format the pull request title](#format-the-pull-request-title) in mind.
 
 An active decision to include a change in the changelog needs to be taken for every pull request. There's a pull request check named **Changelog Check** that enforces this rule. By adding or removing labels on the pull request or updating the pull request title, description, or both, the check is re-evaluated.
