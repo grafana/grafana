@@ -14,6 +14,12 @@ labels:
     - oss
 title: Alert rule evaluation
 weight: 108
+refs:
+  alerts-state-health:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/state-and-health/
 ---
 
 # Alert rule evaluation
@@ -87,11 +93,4 @@ An alert instance is resolved when it transitions from the `Firing` to the `Norm
 | 03:00 (sixth evaluation)   | Not met   | Normal <sup>Resolved \*</sup> | 120s            |
 | 03:30 (seventh evaluation) | Not met   | Normal                        | 150s            |
 
-To learn more about the state changes of alert rules and alert instances, refer to [State and health of alert rules][alerts-state-health].
-
-{{% docs/reference %}}
-
-[alerts-state-health]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health"
-[alerts-state-health]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/state-and-health"
-
-{{% /docs/reference %}}
+To learn more about the state changes of alert rules and alert instances, refer to [State and health of alert rules](ref:alerts-state-health).
