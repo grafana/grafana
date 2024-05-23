@@ -2,7 +2,7 @@
 import jsonMap from 'json-source-map';
 
 import type { AdHocVariableModel, TypedVariableModel } from '@grafana/data';
-import { Dashboard, Panel, VariableOption } from '@grafana/schema';
+import { Dashboard, Panel, VariableModel, VariableOption } from '@grafana/schema';
 
 import { jsonDiff } from '../settings/version-history/utils';
 
@@ -72,6 +72,10 @@ export function getHasTimeChanged(saveModel: Dashboard, originalSaveModel: Dashb
 }
 
 export function adHocVariableFiltersEqual(a: AdHocVariableModel, b: AdHocVariableModel) {
+  if (a.filters === undefined || b.filters === undefined) {
+    throw new Error('AdHoc variable missing filter property');
+  }
+
   if (a.filters.length !== b.filters.length) {
     return false;
   }
