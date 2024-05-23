@@ -153,7 +153,7 @@ func (r *recordingRule) tryEvaluate(ctx context.Context, ev *Evaluation, logger 
 		// TODO: Only errors embedded in the frame can be considered retryable.
 		// TODO: Since we are not handling these yet per the above TODO, we can blindly consider all errors to be non-retryable for now, and just exit.
 		evalTotalFailures.Inc()
-		return fmt.Errorf("server side expressions pipeline returned an error: %w")
+		return fmt.Errorf("server side expressions pipeline returned an error: %w", err)
 	}
 
 	logger.Debug("Alert rule evaluated", "results", result, "duration", dur)
