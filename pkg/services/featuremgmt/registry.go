@@ -776,6 +776,13 @@ var (
 			RequiresRestart: true, // changes the API routing
 		},
 		{
+			Name:            "datasourceQueryTypes",
+			Description:     "Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true, // changes the API routing
+		},
+		{
 			Name:            "queryService",
 			Description:     "Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query",
 			Stage:           FeatureStageExperimental,
@@ -1177,12 +1184,11 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:              "ssoSettingsSAML",
-			Description:       "Use the new SSO Settings API to configure the SAML connector",
-			Stage:             FeatureStageExperimental,
-			Owner:             identityAccessTeam,
-			HideFromDocs:      true,
-			HideFromAdminPage: true,
+			Name:           "ssoSettingsSAML",
+			Description:    "Use the new SSO Settings API to configure the SAML connector",
+			Stage:          FeatureStagePublicPreview,
+			Owner:          identityAccessTeam,
+			AllowSelfServe: true,
 		},
 		{
 			Name:              "oauthRequireSubClaim",
@@ -1273,6 +1279,22 @@ var (
 			Description:       "Enables deleted dashboard restore feature",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaFrontendPlatformSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:         "datasourceProxyDisableRBAC",
+			Description:  "Disables applying a plugin route's ReqAction field to authorization",
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+		},
+		{
+			Name:              "alertingDisableSendAlertsExternal",
+			Description:       "Disables the ability to send alerts to an external Alertmanager datasource.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			AllowSelfServe:    false,
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
 		},

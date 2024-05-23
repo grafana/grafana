@@ -423,6 +423,10 @@ const (
 	// Routes snapshot requests from /api to the /apis endpoint
 	FlagKubernetesSnapshots = "kubernetesSnapshots"
 
+	// FlagDatasourceQueryTypes
+	// Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
+	FlagDatasourceQueryTypes = "datasourceQueryTypes"
+
 	// FlagQueryService
 	// Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query
 	FlagQueryService = "queryService"
@@ -690,4 +694,12 @@ const (
 	// FlagDashboardRestore
 	// Enables deleted dashboard restore feature
 	FlagDashboardRestore = "dashboardRestore"
+
+	// FlagDatasourceProxyDisableRBAC
+	// Disables applying a plugin route&#39;s ReqAction field to authorization
+	FlagDatasourceProxyDisableRBAC = "datasourceProxyDisableRBAC"
+
+	// FlagAlertingDisableSendAlertsExternal
+	// Disables the ability to send alerts to an external Alertmanager datasource.
+	FlagAlertingDisableSendAlertsExternal = "alertingDisableSendAlertsExternal"
 )

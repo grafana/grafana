@@ -46,9 +46,9 @@ type OktaClaims struct {
 	Name              string `json:"name"`
 }
 
-func NewOktaProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialOkta {
+func NewOktaProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialOkta {
 	provider := &SocialOkta{
-		SocialBase: newSocialBase(social.OktaProviderName, info, features, cfg),
+		SocialBase: newSocialBase(social.OktaProviderName, orgRoleMapper, info, features, cfg),
 	}
 
 	if info.UseRefreshToken {
@@ -88,7 +88,7 @@ func (s *SocialOkta) Reload(ctx context.Context, settings ssoModels.SSOSettings)
 	s.reloadMutex.Lock()
 	defer s.reloadMutex.Unlock()
 
-	s.updateInfo(social.OktaProviderName, newInfo)
+	s.updateInfo(ctx, social.OktaProviderName, newInfo)
 	if newInfo.UseRefreshToken {
 		appendUniqueScope(s.Config, social.OfflineAccessScope)
 	}
