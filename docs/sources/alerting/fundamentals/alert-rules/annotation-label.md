@@ -58,7 +58,7 @@ refs:
 Labels and annotations add additional information about an alert using key/value pairs:
 
 - [Labels](#labels) are used to differentiate an alert from all other alerts.
-- [Annotations](#annotations) are used to provide extra details to an existing alert.
+- [Annotations](#annotations) are used to provide extra detail on an existing alert.
 
 ## Labels
 
