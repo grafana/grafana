@@ -193,16 +193,16 @@ const DraggableFieldName = ({
 DraggableFieldName.displayName = 'DraggableFieldName';
 
 const getFieldNameStyles = (theme: GrafanaTheme2) => ({
-  toggle: css`
-    margin: 0 8px;
-    color: ${theme.colors.text.secondary};
-  `,
-  draggable: css`
-    opacity: 0.4;
-    &:hover {
-      color: ${theme.colors.text.maxContrast};
-    }
-  `,
+  toggle: css({
+    margin: theme.spacing(0, 1),
+    color: theme.colors.text.secondary,
+  }),
+  draggable: css({
+    opacity: 0.4,
+    '&:hover': {
+      color: theme.colors.text.maxContrast,
+    },
+  }),
 });
 
 const reorderToIndex = (fieldNames: string[], startIndex: number, endIndex: number) => {
