@@ -16,7 +16,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   // View panel
   keybindings.addBinding({
     key: 'v',
-    onTrigger: withFocusedPanel((vizPanel: VizPanel) => {
+    onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
       if (!scene.state.viewPanelScene) {
         locationService.push(getViewPanelUrl(vizPanel));
       }
@@ -26,7 +26,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   // Panel edit
   keybindings.addBinding({
     key: 'e',
-    onTrigger: withFocusedPanel(async (vizPanel: VizPanel) => {
+    onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
       const sceneRoot = vizPanel.getRoot();
       if (sceneRoot instanceof DashboardScene) {
         const panelId = getPanelIdForVizPanel(vizPanel);
@@ -40,7 +40,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   // Panel share
   keybindings.addBinding({
     key: 'p s',
-    onTrigger: withFocusedPanel(async (vizPanel: VizPanel) => {
+    onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
       scene.showModal(new ShareModal({ panelRef: vizPanel.getRef(), dashboardRef: scene.getRef() }));
     }),
   });
@@ -48,7 +48,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   // Panel inspect
   keybindings.addBinding({
     key: 'i',
-    onTrigger: withFocusedPanel(async (vizPanel: VizPanel) => {
+    onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
       locationService.push(getInspectUrl(vizPanel));
     }),
   });
@@ -56,7 +56,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   // Got to Explore for panel
   keybindings.addBinding({
     key: 'p x',
-    onTrigger: withFocusedPanel(async (vizPanel: VizPanel) => {
+    onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
       const url = await tryGetExploreUrlForPanel(vizPanel);
       if (url) {
         locationService.push(url);
@@ -119,7 +119,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   // delete panel
   keybindings.addBinding({
     key: 'p r',
-    onTrigger: withFocusedPanel((vizPanel: VizPanel) => {
+    onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
       if (scene.state.isEditing) {
         onRemovePanel(scene, vizPanel);
       }
@@ -129,7 +129,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   // duplicate panel
   keybindings.addBinding({
     key: 'p d',
-    onTrigger: withFocusedPanel((vizPanel: VizPanel) => {
+    onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
       if (scene.state.isEditing) {
         scene.duplicatePanel(vizPanel);
       }
@@ -143,13 +143,14 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   return () => keybindings.removeAll;
 }
 
-function withFocusedPanel(fn: (vizPanel: VizPanel) => void) {
+function withFocusedPanel(scene: DashboardScene, fn: (vizPanel: VizPanel) => void) {
   const panelAttentionService = getPanelAttentionSrv();
 
   return () => {
-    const vizPanelWithAttention = panelAttentionService.getPanelWithAttention();
-    if (vizPanelWithAttention && vizPanelWithAttention instanceof VizPanel) {
-      fn(vizPanelWithAttention);
+    const vizPanelKey = panelAttentionService.getPanelWithAttention();
+    const vizPanel = sceneGraph.findObject(scene, (o) => o.state.key === vizPanelKey);
+    if (vizPanel && vizPanel instanceof VizPanel) {
+      fn(vizPanel);
       return;
     }
   };

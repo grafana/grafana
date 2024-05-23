@@ -1,27 +1,28 @@
 import { PanelAttentionSrv, PanelWithAttention } from '@grafana/runtime';
-import { VizPanel } from '@grafana/scenes';
 
-export class PanelAttentionService implements PanelAttentionSrv<VizPanel> {
+export class PanelAttentionService implements PanelAttentionSrv {
   private panelId: PanelWithAttention = null;
-  private vizPanelWithAttention: VizPanel | null = null;
 
-  getPanelWithAttention(): PanelWithAttention | VizPanel {
-    return this.panelId || this.vizPanelWithAttention;
+  getPanelWithAttention(): PanelWithAttention {
+    return this.panelId;
   }
 
-  setPanelWithAttention(panelElement: PanelWithAttention | VizPanel): void {
+  setPanelWithAttention(panelElement: HTMLElement | string | null): void {
     if (!panelElement) {
       return;
     }
     if (panelElement instanceof HTMLElement) {
-      this.setPanelId(panelElement);
+      this.setPanelIdFromElement(panelElement);
       return;
     }
 
-    this.vizPanelWithAttention = panelElement;
+    if (typeof panelElement === 'string') {
+      this.panelId = panelElement;
+      return;
+    }
   }
 
-  private setPanelId(panelElement: HTMLElement): void {
+  private setPanelIdFromElement(panelElement: HTMLElement): void {
     if (!panelElement) {
       return;
     }
