@@ -14,3 +14,8 @@ export type AddQueryTemplateCommand = {
   title: string;
   targets: DataQuery[];
 };
+
+export type AddQueryTemplateCommand = {
+  title: string;
+  targets: DataQuery[];
+};
