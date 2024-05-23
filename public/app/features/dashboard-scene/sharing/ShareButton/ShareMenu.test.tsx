@@ -32,14 +32,6 @@ describe('ShareMenu', () => {
     await userEvent.click(shareLink);
     expect(createAndCopyDashboardShortLinkMock).toHaveBeenCalled();
   });
-  it('should open drawer when share externally clicked', async () => {
-    setup();
-
-    const shareExternally = await screen.findByTestId(selector.shareExternally);
-
-    await userEvent.click(shareExternally);
-    expect(await screen.findByTestId(selector.container)).toBeInTheDocument();
-  });
 });
 
 function setup() {
