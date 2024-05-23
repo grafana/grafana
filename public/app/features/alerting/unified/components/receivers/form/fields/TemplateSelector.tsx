@@ -29,7 +29,7 @@ import { NotificationChannelOption } from 'app/types';
 import { defaultPayloadString } from '../../TemplateForm';
 
 import { TemplateContentAndPreview } from './TemplateContentAndPreview';
-import { parseTemplates } from './utils';
+import { getTemplateName, getUseTemplateText, matchesOnlyOneTemplate, parseTemplates } from './utils';
 
 interface TemplatesPickerProps {
   onSelect: (temnplate: string) => void;
@@ -99,6 +99,9 @@ export function getTemplateOptions(templateFiles: Record<string, string>, defaul
   // return the sum of default and custom templates
   return Array.from(templateMap.values());
 }
+function getContentFromData(name: string, templateFiles: Record<string, string>) {
+  return templateFiles[name];
+}
 
 export interface Template {
   name: string;
@@ -122,15 +125,6 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
   const { data: defaultTemplates } = useGetDefaultTemplatesQuery();
   const [templateOption, setTemplateOption] = React.useState<TemplateFieldOption>('Existing');
   const [_, copyToClipboard] = useCopyToClipboard();
-
-  // if we are using only one template, we should settemplate to that template
-  useEffect(() => {
-    if (matchesOnlyOneTemplate(valueInForm)) {
-      setTemplate({ name: getTemplateName(valueInForm), content: valueInForm });
-    } else {
-      setTemplateOption('Custom');
-    }
-  }, [valueInForm, setTemplate, setTemplateOption]);
 
   const templateOptions: Array<SelectableValue<TemplateFieldOption>> = [
     {
@@ -165,6 +159,22 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
     }
     return getTemplateOptions(data?.template_files ?? {}, defaultTemplates);
   }, [data, defaultTemplates]);
+
+  // if we are using only one template, we should settemplate to that template
+  useEffect(() => {
+    if (matchesOnlyOneTemplate(valueInForm)) {
+      const name = getTemplateName(valueInForm);
+      setTemplate({
+        name,
+        content: getContentFromData(name, data?.template_files ?? {}),
+      });
+    } else {
+      if (Boolean(valueInForm)) {
+        // if it's empty we default to select existing template
+        setTemplateOption('Custom');
+      }
+    }
+  }, [valueInForm, setTemplate, setTemplateOption, data]);
 
   if (error) {
     return <div>Error loading templates</div>;
@@ -277,20 +287,6 @@ function OptionCustomfield({
     default:
       return null;
   }
-}
-
-function getUseTemplateText(templateName: string) {
-  return `{{ template "${templateName}" . }}`;
-}
-
-function getTemplateName(useTemplateText: string) {
-  const match = useTemplateText.match(/\{\{\s*template\s*"(.*)"\s*\.\s*\}\}/);
-  return match ? match[1] : '';
-}
-function matchesOnlyOneTemplate(templateContent: string) {
-  const pattern = /\{\{\s*template\s*".*?"\s*\.\s*\}\}/g;
-  const matches = templateContent.match(pattern);
-  return matches?.length === 1;
 }
 
 interface WrapWithTemplateSelectionProps extends PropsWithChildren {

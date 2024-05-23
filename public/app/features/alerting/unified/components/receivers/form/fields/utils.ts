@@ -67,3 +67,40 @@ export function parseTemplates(templatesString: string): Template[] {
 
   return Object.values(templates);
 }
+
+export function getUseTemplateText(templateName: string) {
+  return `{{ template "${templateName}" . }}`;
+}
+
+export function getTemplateName(useTemplateText: string) {
+  const match = useTemplateText.match(/\{\{\s*template\s*"(.*)"\s*\.\s*\}\}/);
+  return match ? match[1] : '';
+}
+
+/* This function checks if the a field value contains only one template usage
+    for example: 
+    "{{ template "templateName" . }}"" returns true
+    but "{{ template "templateName" . }} some text {{ template "templateName" . }}"" returns false
+    and "{{ template "templateName" . }} some text" some text returns false
+**/
+
+export function matchesOnlyOneTemplate(fieldValue: string) {
+  const pattern = /\{\{\s*template\s*".*?"\s*\.\s*\}\}/g;
+  const matches = fieldValue.match(pattern);
+
+  if (matches?.length !== 1) {
+    return false;
+  }
+
+  // Split the content by the template pattern
+  const parts = fieldValue.split(pattern);
+
+  // Check if there is any non-whitespace text outside the template pattern
+  for (const part of parts) {
+    if (part.trim() !== '') {
+      return false;
+    }
+  }
+
+  return true;
+}
