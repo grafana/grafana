@@ -50,6 +50,8 @@ export interface Props {
   disabledMinutes?: () => number[];
   /** Set the seconds that can't be selected */
   disabledSeconds?: () => number[];
+  /** Can input be cleared/have empty values */
+  clearable?: boolean;
 }
 
 export const DateTimePicker = ({
@@ -62,6 +64,7 @@ export const DateTimePicker = ({
   disabledMinutes,
   disabledSeconds,
   showSeconds = true,
+  clearable = false,
 }: Props) => {
   const [isOpen, setOpen] = useState(false);
 
@@ -131,6 +134,7 @@ export const DateTimePicker = ({
         label={label}
         ref={refs.setReference}
         showSeconds={showSeconds}
+        clearable={clearable}
       />
       {isOpen ? (
         isFullscreen ? (
@@ -203,6 +207,7 @@ interface InputProps {
   onChange: (date: DateTime) => void;
   onOpen: (event: FormEvent<HTMLElement>) => void;
   showSeconds?: boolean;
+  clearable?: boolean;
 }
 
 type InputState = {
@@ -211,10 +216,11 @@ type InputState = {
 };
 
 const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ date, label, onChange, onOpen, showSeconds = true }, ref) => {
+  ({ date, label, onChange, onOpen, showSeconds = true, clearable = false }, ref) => {
+    const styles = useStyles2(getStyles);
     const format = showSeconds ? 'YYYY-MM-DD HH:mm:ss' : 'YYYY-MM-DD HH:mm';
     const [internalDate, setInternalDate] = useState<InputState>(() => {
-      return { value: date ? dateTimeFormat(date) : dateTimeFormat(dateTime()), invalid: false };
+      return { value: date ? dateTimeFormat(date) : !clearable ? dateTimeFormat(dateTime()) : '', invalid: false };
     });
 
     useEffect(() => {
@@ -235,7 +241,7 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
     }, []);
 
     const onBlur = useCallback(() => {
-      if (!internalDate.invalid) {
+      if (!internalDate.invalid && internalDate.value) {
         const date = dateTimeForTimeZone(getTimeZone(), internalDate.value);
         onChange(date);
       }
@@ -243,13 +249,7 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
 
     const icon = <Button aria-label="Time picker" icon="calendar-alt" variant="secondary" onClick={onOpen} />;
     return (
-      <InlineField
-        label={label}
-        invalid={!!(internalDate.value && internalDate.invalid)}
-        className={css({
-          marginBottom: 0,
-        })}
-      >
+      <InlineField label={label} invalid={!!(internalDate.value && internalDate.invalid)} className={styles.field}>
         <Input
           onChange={onChangeDate}
           addonAfter={icon}
@@ -258,6 +258,15 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
           data-testid={Components.DateTimePicker.input}
           placeholder="Select date/time"
           ref={ref}
+          suffix={
+            clearable && (
+              <Icon
+                name="times"
+                className={cx(styles.clearIcon, { [styles.disabled]: !internalDate.value })}
+                onClick={() => setInternalDate({ value: '', invalid: false })}
+              />
+            )
+          }
         />
       </InlineField>
     );
@@ -388,5 +397,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
     transform: 'translate(-50%, -50%)',
     zIndex: theme.zIndex.modal,
     maxWidth: '280px',
+  }),
+  clearIcon: css({
+    cursor: 'pointer',
+    marginLeft: -theme.spacing(1),
+  }),
+  field: css({
+    marginBottom: 0,
+  }),
+  disabled: css({
+    opacity: 0.5,
+    cursor: 'not-allowed',
   }),
 });
