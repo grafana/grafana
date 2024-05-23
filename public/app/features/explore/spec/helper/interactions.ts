@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -35,6 +35,23 @@ export const openQueryHistory = async () => {
 export const openQueryLibrary = async () => {
   const explore = withinExplore('left');
   const button = explore.getByRole('button', { name: 'Query library' });
+  await userEvent.click(button);
+  await waitFor(async () => {
+    screen.getByRole('tab', {
+      name: /tab query library/i,
+    });
+  });
+};
+
+export const switchToQueryHistory = async () => {
+  const tab = screen.getByRole('tab', {
+    name: /tab query history/i,
+  });
+  await userEvent.click(tab);
+};
+
+export const addQueryHistoryToQueryLibrary = async () => {
+  const button = withinQueryHistory().getByRole('button', { name: /add to library/i });
   await userEvent.click(button);
 };
 

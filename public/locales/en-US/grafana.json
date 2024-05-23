@@ -479,6 +479,7 @@
     "rich-history-card": {
       "add-comment-form": "Add comment form",
       "add-comment-tooltip": "Add comment",
+      "add-to-library": "Add to library",
       "cancel": "Cancel",
       "confirm-delete": "Delete",
       "copy-query-tooltip": "Copy query to clipboard",
@@ -493,6 +494,7 @@
       "edit-comment-tooltip": "Edit comment",
       "optional-description": "An optional description of what the query does.",
       "query-comment-label": "Query comment",
+      "query-template-added": "Query template successfully added to the library",
       "query-text-label": "Query text",
       "save-comment": "Save comment",
       "star-query-tooltip": "Star query",

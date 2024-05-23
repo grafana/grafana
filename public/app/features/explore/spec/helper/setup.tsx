@@ -53,6 +53,7 @@ type SetupOptions = {
   queryHistory?: { queryHistory: Array<Partial<RichHistoryRemoteStorageDTO>>; totalCount: number };
   urlParams?: ExploreQueryParams;
   prevUsedDatasource?: { orgId: number; datasource: string };
+  failAddToLibrary?: boolean;
 };
 
 type TearDownOptions = {
