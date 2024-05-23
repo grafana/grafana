@@ -14,25 +14,35 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Inspect variables
+title: Manage and inspect variables
+menuTitle: Inspect variables
 description: Review and manage your dashboard variables
-weight: 200
 refs:
-  manage-variables:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#manage-variables
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#manage-variables
   add:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/
+      destination: https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/
+      destination: https://grafana.com/docs/grafana-cloud/visualizations/dashboards/variables/add-template-variables/
+weight: 200
 ---
 
-# Inspect variables
+# Manage and inspect variables
 
-The variables page lets you easily identify whether a variable is being referenced (or used) in other variables or dashboard. In addition, you can also [add](ref:add) and [manage variables](ref:manage-variables) on this page.
+The variables page lets you [add](ref:add) variables and [manage](#manage-variables) existing variables. It also allows you to [inspect](#inspect-variables) variables and identify whether a variable is being referenced (or used) in other variables or dashboard.
+
+## Manage variables
+
+You can take the following actions on the variables page:
+
+**Move:** You can move a variable up or down the list using drag and drop.
+
+**Clone:** To clone a variable, click the clone icon from the set of icons on the right. This creates a copy of the variable with the name of the original variable prefixed with `copy_of_`.
+
+**Delete:** To delete a variable, click the trash icon from the set of icons on the right.
+
+## Inspect variables
+
+The variables page lets you easily identify whether a variable is being referenced (or used) in other variables or dashboard. In addition, you can also [add](ref:add) and [manage variables](#manage-variables) on this page.
 
 {{% admonition type="note" %}}
 This feature is available in Grafana 7.4 and later versions.
