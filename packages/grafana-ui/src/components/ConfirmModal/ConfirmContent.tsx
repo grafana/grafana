@@ -87,31 +87,24 @@ export const ConfirmContent = ({
           </div>
         ) : null}
       </div>
-      <Modal.ButtonRow
-        leftItems={
-          <>
-            <Button variant={dismissVariant} onClick={onDismiss} fill="outline">
-              {dismissText}
-            </Button>
-            <Button
-              type="submit"
-              variant={confirmButtonVariant}
-              disabled={disabled}
-              ref={buttonRef}
-              data-testid={selectors.pages.ConfirmModal.delete}
-            >
-              {confirmText}
-            </Button>
-            {onAlternative ? (
-              <Button variant="primary" onClick={onAlternative}>
-                {alternativeText}
-              </Button>
-            ) : null}
-          </>
-        }
-      >
-        {' '}
-        <></>{' '}
+      <Modal.ButtonRow>
+        <Button variant={dismissVariant} onClick={onDismiss} fill="outline">
+          {dismissText}
+        </Button>
+        <Button
+          type="submit"
+          variant={confirmButtonVariant}
+          disabled={disabled}
+          ref={buttonRef}
+          data-testid={selectors.pages.ConfirmModal.delete}
+        >
+          {confirmText}
+        </Button>
+        {onAlternative ? (
+          <Button variant="primary" onClick={onAlternative}>
+            {alternativeText}
+          </Button>
+        ) : null}
       </Modal.ButtonRow>
     </form>
   );
