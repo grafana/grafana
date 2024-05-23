@@ -15,12 +15,13 @@ type Call struct {
 }
 
 type FakeRuleService struct {
-	HasAccessFunc                        func(context.Context, identity.Requester, accesscontrol.Evaluator) (bool, error)
-	HasAccessOrErrorFunc                 func(context.Context, identity.Requester, accesscontrol.Evaluator, func() string) error
-	AuthorizeDatasourceAccessForRuleFunc func(context.Context, identity.Requester, *models.AlertRule) error
-	HasAccessToRuleGroupFunc             func(context.Context, identity.Requester, models.RulesGroup) (bool, error)
-	AuthorizeAccessToRuleGroupFunc       func(context.Context, identity.Requester, models.RulesGroup) error
-	AuthorizeRuleChangesFunc             func(context.Context, identity.Requester, *store.GroupDelta) error
+	HasAccessFunc                             func(context.Context, identity.Requester, accesscontrol.Evaluator) (bool, error)
+	HasAccessOrErrorFunc                      func(context.Context, identity.Requester, accesscontrol.Evaluator, func() string) error
+	AuthorizeDatasourceAccessForRuleFunc      func(context.Context, identity.Requester, *models.AlertRule) error
+	AuthorizeDatasourceAccessForRuleGroupFunc func(context.Context, identity.Requester, models.RulesGroup) error
+	HasAccessToRuleGroupFunc                  func(context.Context, identity.Requester, models.RulesGroup) (bool, error)
+	AuthorizeAccessToRuleGroupFunc            func(context.Context, identity.Requester, models.RulesGroup) error
+	AuthorizeRuleChangesFunc                  func(context.Context, identity.Requester, *store.GroupDelta) error
 
 	Calls []Call
 }
@@ -45,6 +46,14 @@ func (s *FakeRuleService) AuthorizeDatasourceAccessForRule(ctx context.Context, 
 	s.Calls = append(s.Calls, Call{"AuthorizeDatasourceAccessForRule", []interface{}{ctx, user, rule}})
 	if s.AuthorizeDatasourceAccessForRuleFunc != nil {
 		return s.AuthorizeDatasourceAccessForRuleFunc(ctx, user, rule)
+	}
+	return nil
+}
+
+func (s *FakeRuleService) AuthorizeDatasourceAccessForRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) error {
+	s.Calls = append(s.Calls, Call{"AuthorizeDatasourceAccessForRuleGroup", []interface{}{ctx, user, rules}})
+	if s.AuthorizeDatasourceAccessForRuleGroupFunc != nil {
+		return s.AuthorizeDatasourceAccessForRuleGroupFunc(ctx, user, rules)
 	}
 	return nil
 }

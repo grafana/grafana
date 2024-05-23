@@ -7,7 +7,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
+
+	authz "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
@@ -148,7 +149,7 @@ func (srv RulerSrv) getRulesWithFolderTitleInFolders(c *contextmodel.ReqContext,
 			}
 		}
 		if len(query.NamespaceUIDs) == 0 {
-			return nil, accesscontrol.NewAuthorizationErrorGeneric("access rules in the specified folders")
+			return nil, authz.NewAuthorizationErrorGeneric("access rules in the specified folders")
 		}
 	} else {
 		for _, folder := range folders {
@@ -156,7 +157,10 @@ func (srv RulerSrv) getRulesWithFolderTitleInFolders(c *contextmodel.ReqContext,
 		}
 	}
 
-	rulesByGroup, _, err := srv.searchAuthorizedAlertRules(c.Req.Context(), c, folderUIDs, "", 0)
+	rulesByGroup, _, err := srv.searchAuthorizedAlertRules(c.Req.Context(), authorizedRuleGroupQuery{
+		User:          c.SignedInUser,
+		NamespaceUIDs: folderUIDs,
+	})
 	if err != nil {
 		return nil, err
 	}
