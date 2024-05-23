@@ -1,4 +1,6 @@
-import { getTemplateOptions } from './TemplateSelector';
+import { DEFAULT_TEMPLATES } from 'app/features/alerting/unified/utils/template-constants';
+
+import { getTemplateOptions, parseTemplates } from './TemplateSelector';
 
 describe('getTemplateOptions function', () => {
   it('should return the last template when there are duplicates', () => {
@@ -28,8 +30,15 @@ describe('getTemplateOptions function', () => {
       Sub Template 2 Content
       {{ end }}`,
     };
+    const defaultTemplates = parseTemplates(DEFAULT_TEMPLATES);
+    const result = getTemplateOptions(templateFiles, defaultTemplates);
 
-    const result = getTemplateOptions(templateFiles);
+    const template1Matches = result.filter((option) => option.label === 'template1');
+    expect(template1Matches).toHaveLength(1);
+    expect(template1Matches[0].value?.content).toMatch(/this is the last one/i);
+
+    const file5Matches = result.filter((option) => option.label === 'file5');
+    expect(file5Matches).toHaveLength(0);
 
     expect(result).toMatchSnapshot();
   });

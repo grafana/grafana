@@ -21,6 +21,7 @@ import {
   trackUseCustomInputInTemplate,
   trackUseSingleTemplateInInput,
 } from 'app/features/alerting/unified/Analytics';
+import { templatesApi } from 'app/features/alerting/unified/api/templateApi';
 import { useAlertmanagerConfig } from 'app/features/alerting/unified/hooks/useAlertmanagerConfig';
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { NotificationChannelOption } from 'app/types';
@@ -28,58 +29,6 @@ import { NotificationChannelOption } from 'app/types';
 import { defaultPayloadString } from '../../TemplateForm';
 
 import { TemplateContentAndPreview } from './TemplateContentAndPreview';
-
-// We need to use this constat until we have an API to get the default templates
-export const DEFAULT_TEMPLATES = `{{ define "__subject" }}[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ if gt (.Alerts.Resolved | len) 0 }}, RESOLVED:{{ .Alerts.Resolved | len }}{{ end }}{{ end }}] {{ .GroupLabels.SortedPairs.Values | join " " }} {{ if gt (len .CommonLabels) (len .GroupLabels) }}({{ with .CommonLabels.Remove .GroupLabels.Names }}{{ .Values | join " " }}{{ end }}){{ end }}{{ end }}
-
-{{ define "__text_values_list" }}{{ if len .Values }}{{ $first := true }}{{ range $refID, $value := .Values -}}
-{{ if $first }}{{ $first = false }}{{ else }}, {{ end }}{{ $refID }}={{ $value }}{{ end -}}
-{{ else }}[no value]{{ end }}{{ end }}
-
-{{ define "__text_alert_list" }}{{ range . }}
-Value: {{ template "__text_values_list" . }}
-Labels:
-{{ range .Labels.SortedPairs }} - {{ .Name }} = {{ .Value }}
-{{ end }}Annotations:
-{{ range .Annotations.SortedPairs }} - {{ .Name }} = {{ .Value }}
-{{ end }}{{ if gt (len .GeneratorURL) 0 }}Source: {{ .GeneratorURL }}
-{{ end }}{{ if gt (len .SilenceURL) 0 }}Silence: {{ .SilenceURL }}
-{{ end }}{{ if gt (len .DashboardURL) 0 }}Dashboard: {{ .DashboardURL }}
-{{ end }}{{ if gt (len .PanelURL) 0 }}Panel: {{ .PanelURL }}
-{{ end }}{{ end }}{{ end }}
-
-{{ define "default.title" }}{{ template "__subject" . }}{{ end }}
-
-{{ define "default.message" }}{{ if gt (len .Alerts.Firing) 0 }}**Firing**
-{{ template "__text_alert_list" .Alerts.Firing }}{{ if gt (len .Alerts.Resolved) 0 }}
-
-{{ end }}{{ end }}{{ if gt (len .Alerts.Resolved) 0 }}**Resolved**
-{{ template "__text_alert_list" .Alerts.Resolved }}{{ end }}{{ end }}
-
-{{ define "__teams_text_alert_list" }}{{ range . }}
-Value: {{ template "__text_values_list" . }}
-Labels:
-{{ range .Labels.SortedPairs }} - {{ .Name }} = {{ .Value }}
-{{ end }}
-Annotations:
-{{ range .Annotations.SortedPairs }} - {{ .Name }} = {{ .Value }}
-{{ end }}
-{{ if gt (len .GeneratorURL) 0 }}Source: [{{ .GeneratorURL }}]({{ .GeneratorURL }})
-
-{{ end }}{{ if gt (len .SilenceURL) 0 }}Silence: [{{ .SilenceURL }}]({{ .SilenceURL }})
-
-{{ end }}{{ if gt (len .DashboardURL) 0 }}Dashboard: [{{ .DashboardURL }}]({{ .DashboardURL }})
-
-{{ end }}{{ if gt (len .PanelURL) 0 }}Panel: [{{ .PanelURL }}]({{ .PanelURL }})
-
-{{ end }}
-{{ end }}{{ end }}
-
-{{ define "teams.default.message" }}{{ if gt (len .Alerts.Firing) 0 }}**Firing**
-{{ template "__teams_text_alert_list" .Alerts.Firing }}{{ if gt (len .Alerts.Resolved) 0 }}
-
-{{ end }}{{ end }}{{ if gt (len .Alerts.Resolved) 0 }}**Resolved**
-{{ template "__teams_text_alert_list" .Alerts.Resolved }}{{ end }}{{ end }}`;
 
 interface TemplatesPickerProps {
   onSelect: (temnplate: string) => void;
@@ -138,7 +87,7 @@ type TemplateFieldOption = 'Existing' | 'Custom';
  * "{{ define "templateName" }}" and "{{ end }}" delimiters.But it may also contain nested templates.
  */
 
-function parseTemplates(templatesString: string): Template[] {
+export function parseTemplates(templatesString: string): Template[] {
   const templates: Record<string, Template> = {};
   const stack: Array<{ type: string; startIndex: number; name?: string }> = [];
   const regex = /{{(-?\s*)(define|end|if|range|else|with|template)(\s*.*?)?(-?\s*)}}/gs;
@@ -187,9 +136,9 @@ function parseTemplates(templatesString: string): Template[] {
   return Object.values(templates);
 }
 
-export function getTemplateOptions(templateFiles: Record<string, string>): Array<SelectableValue<Template>> {
+export function getTemplateOptions(templateFiles: Record<string, string>, defaultTemplates: Template[] = []) {
   // Add default templates
-  const templateMap = new Map();
+  const templateMap = new Map<string, SelectableValue<Template>>();
   Object.entries(templateFiles).forEach(([_, content]) => {
     const templates: Template[] = parseTemplates(content);
     templates.forEach((template) => {
@@ -203,7 +152,6 @@ export function getTemplateOptions(templateFiles: Record<string, string>): Array
     });
   });
   // Add default templates to the map
-  const defaultTemplates = parseTemplates(DEFAULT_TEMPLATES);
   defaultTemplates.forEach((template) => {
     templateMap.set(template.name, {
       label: template.name,
@@ -229,12 +177,14 @@ interface TemplateSelectorProps {
 }
 function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSelectorProps) {
   const styles = useStyles2(getStyles);
+  const useGetDefaultTemplatesQuery = templatesApi.endpoints.getDefaultTemplates.useQuery;
   const [template, setTemplate] = React.useState<Template | undefined>(undefined);
   const [inputToUpdate, setInputToUpdate] = React.useState<string>('');
   const [inputToUpdateCustom, setInputToUpdateCustom] = React.useState<string>(valueInForm);
 
   const { selectedAlertmanager } = useAlertmanager();
   const { data, error } = useAlertmanagerConfig(selectedAlertmanager);
+  const { data: defaultTemplates } = useGetDefaultTemplatesQuery();
   const [templateOption, setTemplateOption] = React.useState<TemplateFieldOption>('Existing');
   const [_, copyToClipboard] = useCopyToClipboard();
 
@@ -257,7 +207,12 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
     setTemplateOption(option);
   };
 
-  const options = useMemo(() => getTemplateOptions(data?.template_files ?? {}), [data]);
+  const options = useMemo(() => {
+    if (!defaultTemplates) {
+      return [];
+    }
+    return getTemplateOptions(data?.template_files ?? {}, defaultTemplates);
+  }, [data, defaultTemplates]);
 
   if (error) {
     return <div>Error loading templates</div>;
