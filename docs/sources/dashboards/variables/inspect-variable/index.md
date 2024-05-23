@@ -34,7 +34,7 @@ You can take the following actions on the variables page:
 
 ## Inspect variables
 
-The variables page lets you easily identify whether a variable is being referenced (or used) in other variables or dashboard. In addition, you can also [add](ref:add) and [manage variables](#manage-variables) on this page.
+The variables page lets you easily identify whether a variable is being referenced (or used) in other variables or dashboard. In addition, you can also [add][] and [manage variables](#manage-variables) on this page.
 
 {{% admonition type="note" %}}
 This feature is available in Grafana 7.4 and later versions.
