@@ -1,6 +1,6 @@
 # Guide to upgrading dependencies
 
-Upgrading Go or Node.js requires making changes in many different files. Refer to the list below for more information.
+Upgrading Go or Node.js requires making changes in many different files. Refer to the following list for more information.
 
 ## Go
 
