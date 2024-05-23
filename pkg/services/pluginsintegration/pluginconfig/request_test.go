@@ -340,7 +340,8 @@ func TestRequestConfigProvider_PluginRequestConfig_azure(t *testing.T) {
 		cfg.Azure = azSettings
 
 		customCloudJson := `[{"name":"CustomCloud1","displayName":"Custom Cloud 1","aadAuthority":"https://login.contoso.com/","properties":null}]`
-		azSettings.SetCustomClouds(customCloudJson)
+		err := azSettings.SetCustomClouds(customCloudJson)
+		require.NoError(t, err)
 
 		// Sanity check to make sure SetCustomClouds call above also desirializes the JSON
 		require.Equal(t, len(azSettings.CustomCloudList), 1)
