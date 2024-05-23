@@ -79,12 +79,12 @@ export const VirtualizedSelectMenu = ({
 
   // same principle here, we need to flatten the children to account for any categories
   const flattenedChildren = children.flatMap((child) => {
-    if (isReactSelectGroup(child)) {
+    if (hasArrayChildren(child)) {
       // need to remove the children here else they end up in the DOM twice
-      const categoryHeader = React.cloneElement(child, {
+      const childWithoutChildren = React.cloneElement(child, {
         children: null,
       });
-      return [categoryHeader, ...child.props.children];
+      return [childWithoutChildren, ...child.props.children];
     }
     return [child];
   });
@@ -109,9 +109,10 @@ export const VirtualizedSelectMenu = ({
   );
 };
 
-// crude check to see if a child is a react-select group
+// crude check to see if a child has array children
+// if so, is a react-select group
 // we need to flatten these so the correct count and elements are passed to the virtualized list
-const isReactSelectGroup = (child: React.ReactNode) => {
+const hasArrayChildren = (child: React.ReactNode) => {
   return React.isValidElement(child) && Array.isArray(child.props.children);
 };
 
