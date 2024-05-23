@@ -137,7 +137,7 @@ Backport labels need to be followed by either:
 
 ## Doing the actual merge
 
-The best time to actually merge the pull request varies from case to case. All commits in a pull request are squashed (hence, we use the GitHub `Squash and merge` button to initialize the merge).
+The best time to actually merge the pull request varies from case to case. All commits in a pull request are squashed.
 
 The merging process presents you with options for optionally change the commit message before merging. Please remember that developers might use the commit information when reviewing changes of files, doing Git blame, resolving merge conflicts, and so on. 
 
