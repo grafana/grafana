@@ -290,7 +290,7 @@ func TestService_RegisterActionSets(t *testing.T) {
 				features = featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets)
 			}
 			ac := acimpl.ProvideAccessControl(features)
-			actionSets := NewActionSetService(ac)
+			actionSets := NewActionSetService()
 			_, err := New(
 				setting.NewCfg(), tt.options, features, routing.NewRouteRegister(), licensingtest.NewFakeLicensing(),
 				ac, &actest.FakeService{}, db.InitTestDB(t), nil, nil, actionSets,
@@ -299,14 +299,14 @@ func TestService_RegisterActionSets(t *testing.T) {
 
 			if len(tt.expectedActionSets) > 0 {
 				for _, expectedActionSet := range tt.expectedActionSets {
-					actionSet := actionSets.GetActionSet(expectedActionSet.Action)
+					actionSet := actionSets.ResolveActionSet(expectedActionSet.Action)
 					assert.ElementsMatch(t, expectedActionSet.Actions, actionSet)
 				}
 			} else {
 				// Check that action sets have not been registered
 				for permission := range tt.options.PermissionsToActions {
 					actionSetName := GetActionSetName(tt.options.Resource, permission)
-					assert.Nil(t, actionSets.GetActionSet(actionSetName))
+					assert.Nil(t, actionSets.ResolveActionSet(actionSetName))
 				}
 			}
 		})
@@ -334,11 +334,11 @@ func setupTestEnvironment(t *testing.T, ops Options) (*Service, user.Service, te
 
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
-	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	acService := &actest.FakeService{}
+	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	service, err := New(
 		cfg, ops, featuremgmt.WithFeatures(), routing.NewRouteRegister(), license,
-		ac, acService, sql, teamSvc, userSvc, NewActionSetService(ac),
+		ac, acService, sql, teamSvc, userSvc, NewActionSetService(),
 	)
 	require.NoError(t, err)
 
