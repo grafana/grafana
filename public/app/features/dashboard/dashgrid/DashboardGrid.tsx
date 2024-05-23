@@ -361,6 +361,7 @@ interface GrafanaGridItemProps extends React.HTMLAttributes<HTMLDivElement> {
   isViewing: boolean;
   windowHeight: number;
   windowWidth: number;
+  'data-panelid': number;
   children: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
@@ -407,8 +408,8 @@ const GrafanaGridItem = React.forwardRef<HTMLDivElement, GrafanaGridItemProps>((
     <div
       {...divProps}
       style={{ ...divProps.style }}
-      onFocus={() => panelAttentionService.setPanelWithAttention(getRefCurrent(ref))}
-      onMouseMove={() => panelAttentionService.setPanelWithAttention(getRefCurrent(ref))}
+      onFocus={() => panelAttentionService.setPanelWithAttention(divProps['data-panelid'])}
+      onMouseMove={() => panelAttentionService.setPanelWithAttention(divProps['data-panelid'])}
       ref={ref}
     >
       {/* Pass width and height to children as render props */}
@@ -416,11 +417,6 @@ const GrafanaGridItem = React.forwardRef<HTMLDivElement, GrafanaGridItemProps>((
     </div>
   );
 });
-
-/** Need bcasue ref provided by forwardRef may be a function, hence causes weird typing */
-function getRefCurrent(ref: Ref<HTMLDivElement> | null): HTMLDivElement | null {
-  return ref && typeof ref !== 'function' ? ref.current : null;
-}
 
 /**
  * This translates grid height dimensions to real pixels

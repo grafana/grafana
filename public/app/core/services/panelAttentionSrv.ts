@@ -7,34 +7,8 @@ export class PanelAttentionService implements PanelAttentionSrv {
     return this.panelId;
   }
 
-  setPanelWithAttention(panelElement: HTMLElement | string | null): void {
-    if (!panelElement) {
-      return;
-    }
-    if (panelElement instanceof HTMLElement) {
-      this.setPanelIdFromElement(panelElement);
-      return;
-    }
-
-    // For Scenes, the string containing the vizPanelKey
-    if (typeof panelElement === 'string') {
-      this.panelId = panelElement;
-      return;
-    }
-  }
-
-  private setPanelIdFromElement(panelElement: HTMLElement): void {
-    if (!panelElement) {
-      return;
-    }
-
-    const panelWithAttention = panelElement.closest('[data-panelid]');
-
-    if (panelWithAttention instanceof HTMLElement && panelWithAttention.dataset?.panelid) {
-      this.panelId = parseInt(panelWithAttention.dataset.panelid, 10);
-      return;
-    }
-    this.panelId = null;
+  setPanelWithAttention(panelId: PanelWithAttention): void {
+    this.panelId = panelId;
   }
 }
 

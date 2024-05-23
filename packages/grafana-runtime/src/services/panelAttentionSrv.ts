@@ -3,9 +3,9 @@ export type PanelWithAttention = number | string | null;
 export interface PanelAttentionSrv {
   /**
    *
-   * @param panelElement - the element close to where the panelId lives, or the viz-panel-key string for scenes.
+   * @param panelId - the element close to where the panelId lives, or the viz-panel-key string for scenes.
    */
-  setPanelWithAttention(panelElement: HTMLElement | string | null): void;
+  setPanelWithAttention(panelId: PanelWithAttention): void;
   getPanelWithAttention(): PanelWithAttention;
 }
 
