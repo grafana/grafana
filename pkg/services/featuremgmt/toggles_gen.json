@@ -2235,6 +2235,22 @@
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true
       }
+    },
+    {
+      "metadata": {
+        "name": "datasourceQueryTypes",
+        "resourceVersion": "1716456218197",
+        "creationTimestamp": "2024-05-23T09:08:57Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-05-23 09:23:38.197057 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
+      }
     }
   ]
 }
