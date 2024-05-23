@@ -73,7 +73,7 @@ If you don't want to include your change in changelog, you need to add a label n
 
 #### Include in changelog
 
-To include a pull request in the changelog (release notes) you need to add a label named `add to changelog` to the pull request. Then the following additional validation rules are checked:
+To include a pull request in the changelog, add a label named `add to changelog` to the pull request. Then the following additional validation rules are checked:
 
 - Title must be formatted according to [Format the pull request title](#format-the-pull-request-title)
 - Description must include a breaking change notice if the change is labeled to be a breaking change. Refer to [Breaking changes](#breaking-changes) below for more information.
