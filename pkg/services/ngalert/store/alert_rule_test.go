@@ -50,11 +50,35 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 	}
 	gen := models.RuleGen
 	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval))
+	recordingRuleGen := gen.With(gen.WithAllRecordingRules())
 
 	t.Run("should increase version", func(t *testing.T) {
 		rule := createRule(t, store, gen)
 		newRule := models.CopyRule(rule)
 		newRule.Title = util.GenerateShortUID()
+		err := store.UpdateAlertRules(context.Background(), []models.UpdateRule{{
+			Existing: rule,
+			New:      *newRule,
+		},
+		})
+		require.NoError(t, err)
+
+		dbrule := &models.AlertRule{}
+		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+			exist, err := sess.Table(models.AlertRule{}).ID(rule.ID).Get(dbrule)
+			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", rule.ID))
+			return err
+		})
+
+		require.NoError(t, err)
+		require.Equal(t, rule.Version+1, dbrule.Version)
+	})
+
+	t.Run("updating record field should increase version", func(t *testing.T) {
+		rule := createRule(t, store, recordingRuleGen)
+		newRule := models.CopyRule(rule)
+		newRule.Record.Metric = "new-metric"
+
 		err := store.UpdateAlertRules(context.Background(), []models.UpdateRule{{
 			Existing: rule,
 			New:      *newRule,
@@ -363,17 +387,21 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 
 	gen := models.RuleGen
 	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval), gen.WithUniqueOrgID())
+	recordingGen := gen.With(gen.WithAllRecordingRules())
 
 	rule1 := createRule(t, store, gen)
 	rule2 := createRule(t, store, gen)
+	rule3 := createRule(t, store, recordingGen)
 
 	parentFolderUid := uuid.NewString()
 	parentFolderTitle := "Very Parent Folder"
 	createFolder(t, store, parentFolderUid, parentFolderTitle, rule1.OrgID, "")
 	rule1FolderTitle := "folder-" + rule1.Title
 	rule2FolderTitle := "folder-" + rule2.Title
+	rule3FolderTitle := "folder-" + rule3.Title
 	createFolder(t, store, rule1.NamespaceUID, rule1FolderTitle, rule1.OrgID, parentFolderUid)
 	createFolder(t, store, rule2.NamespaceUID, rule2FolderTitle, rule2.OrgID, "")
+	createFolder(t, store, rule3.NamespaceUID, rule3FolderTitle, rule3.OrgID, "")
 
 	createFolder(t, store, rule2.NamespaceUID, "same UID folder", gen.GenerateRef().OrgID, "") // create a folder with the same UID but in the different org
 
@@ -387,7 +415,7 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 	}{
 		{
 			name:  "without a rule group filter, it returns all created rules",
-			rules: []string{rule1.Title, rule2.Title},
+			rules: []string{rule1.Title, rule2.Title, rule3.Title},
 		},
 		{
 			name:       "with a rule group filter, it only returns the rules that match on rule group",
@@ -397,17 +425,17 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 		{
 			name:         "with a filter on orgs, it returns rules that do not belong to that org",
 			rules:        []string{rule1.Title},
-			disabledOrgs: []int64{rule2.OrgID},
+			disabledOrgs: []int64{rule2.OrgID, rule3.OrgID},
 		},
 		{
 			name:    "with populate folders enabled, it returns them",
-			rules:   []string{rule1.Title, rule2.Title},
-			folders: map[models.FolderKey]string{rule1.GetFolderKey(): rule1FolderTitle, rule2.GetFolderKey(): rule2FolderTitle},
+			rules:   []string{rule1.Title, rule2.Title, rule3.Title},
+			folders: map[models.FolderKey]string{rule1.GetFolderKey(): rule1FolderTitle, rule2.GetFolderKey(): rule2FolderTitle, rule3.GetFolderKey(): rule3FolderTitle},
 		},
 		{
 			name:         "with populate folders enabled and a filter on orgs, it only returns selected information",
 			rules:        []string{rule1.Title},
-			disabledOrgs: []int64{rule2.OrgID},
+			disabledOrgs: []int64{rule2.OrgID, rule3.OrgID},
 			folders:      map[models.FolderKey]string{rule1.GetFolderKey(): rule1FolderTitle},
 		},
 	}
@@ -456,6 +484,7 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 		expected := map[models.FolderKey]string{
 			rule1.GetFolderKey(): parentFolderTitle + "/" + rule1FolderTitle,
 			rule2.GetFolderKey(): rule2FolderTitle,
+			rule3.GetFolderKey(): rule3FolderTitle,
 		}
 		require.Equal(t, expected, query.ResultFoldersTitles)
 	})
@@ -469,7 +498,17 @@ func TestIntegration_CountAlertRules(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	store := &DBstore{SQLStore: sqlStore, FolderService: setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())}
-	rule := createRule(t, store, nil)
+
+	gen := models.RuleGen
+	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval), gen.WithRandomRecordingRules())
+
+	rule := createRule(t, store, gen)
+
+	count := int64(5)
+	manyGen := gen.With(gen.WithNamespaceUID("many rules"), gen.WithOrgID(123))
+	for i := int64(0); i < count; i++ {
+		_ = createRule(t, store, manyGen)
+	}
 
 	tests := map[string]struct {
 		query     *models.CountAlertRulesQuery
@@ -482,6 +521,14 @@ func TestIntegration_CountAlertRules(t *testing.T) {
 				OrgID:        rule.OrgID,
 			},
 			1,
+			false,
+		},
+		"multiple success": {
+			&models.CountAlertRulesQuery{
+				NamespaceUID: "many rules",
+				OrgID:        123,
+			},
+			count,
 			false,
 		},
 		"successfully returning no results": {
@@ -614,24 +661,13 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		models.RuleGen.WithOrgID(orgID),
 		models.RuleGen.WithIntervalMatching(store.Cfg.BaseInterval),
 	)
+	recordingRulesGen := gen.With(
+		models.RuleGen.WithAllRecordingRules(),
+		models.RuleGen.WithRecordFrom("A"),
+		models.RuleGen.WithMetric("my_metric"),
+	)
 
-	generateRecordingRules := func(n int) []models.AlertRule {
-		rrs := gen.GenerateMany(n)
-		for i := range rrs {
-			rrs[i].Condition = ""
-			rrs[i].NoDataState = ""
-			rrs[i].ExecErrState = ""
-			rrs[i].For = 0
-			rrs[i].NotificationSettings = nil
-			rrs[i].Record = &models.Record{
-				Metric: "my_metric",
-				From:   "A",
-			}
-		}
-		return rrs
-	}
-
-	rules := append(gen.GenerateMany(5), generateRecordingRules(5)...)
+	rules := append(gen.GenerateMany(5), recordingRulesGen.GenerateMany(5)...)
 
 	ids, err := store.InsertAlertRules(context.Background(), rules)
 	require.NoError(t, err)
@@ -866,7 +902,7 @@ func TestIntegrationGetNamespacesByRuleUID(t *testing.T) {
 		Cfg:           cfg.UnifiedAlerting,
 	}
 
-	rules := models.RuleGen.With(models.RuleMuts.WithOrgID(1)).GenerateMany(5)
+	rules := models.RuleGen.With(models.RuleMuts.WithOrgID(1), models.RuleMuts.WithRandomRecordingRules()).GenerateMany(5)
 	_, err := store.InsertAlertRules(context.Background(), rules)
 	require.NoError(t, err)
 
