@@ -131,8 +131,6 @@ To make it easier for everyone to understand and find issues a good rule of thum
 - Make sure that issue descriptions don't include irrelevant information, information from a template that hasn't been filled out, or sensitive information.
 - Do your best effort to change the title and description or request suggested changes by adding a comment.
 
-> **Note:** The preceding rules apply to both new and existing issues of the Grafana project.
-
 #### Do you have all the information needed to categorize an issue?
 
 Depending on the issue, you might not feel all this information is needed. Use your best judgement. If you cannot triage an issue using what its author provided, explain kindly to the author that they must provide the previously mentioned information to clarify the problem. Label issue with `needs more info` and add any related `area/*` or `datasource/*` labels. Alternatively, use `bot/needs more info` label and the Grafana bot will request it for you.
