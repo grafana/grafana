@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
 	"github.com/grafana/grafana/pkg/infra/usagestats/validator"
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/login/social/connectors"
 	"github.com/grafana/grafana/pkg/login/social/socialimpl"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
@@ -381,6 +382,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(auth.IDService), new(*idimpl.Service)),
 	cloudmigrationimpl.ProvideService,
 	userimpl.ProvideVerifier,
+	connectors.ProvideOrgRoleMapper,
 	wire.Bind(new(user.Verifier), new(*userimpl.Verifier)),
 	// Kubernetes API server
 	grafanaapiserver.WireSet,
