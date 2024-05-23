@@ -382,17 +382,18 @@ func (esa *ExtSvcAccountsService) getExtSvcAccountToken(ctx context.Context, org
 
 func genTokenWithRetries(ctxLogger log.Logger, extSvcSlug string) (satokengen.KeyGenResult, error) {
 	var newKeyInfo satokengen.KeyGenResult
+	var err error
 	var ok bool
 	maxRetry := maxTokenGenRetries
 	for !ok && maxRetry > 0 {
-		newKeyInfo, err := satokengen.New(extSvcSlug)
+		newKeyInfo, err = satokengen.New(extSvcSlug)
 		if err != nil {
 			return satokengen.KeyGenResult{}, err
 		}
 
 		if strings.Contains(newKeyInfo.ClientSecret, "\x00") {
 			maxRetry--
-			ctxLogger.Warn("Generated token contains null bytes, retrying")
+			ctxLogger.Warn("Generated token contains a null byte, retrying")
 			continue
 		}
 

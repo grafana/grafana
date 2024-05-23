@@ -23,8 +23,8 @@ var (
 	ErrCannotCreateToken    = errutil.BadRequest("extsvcaccounts.ErrCannotCreateToken", errutil.WithPublicMessage("cannot add external service account token"))
 	ErrCannotDeleteToken    = errutil.BadRequest("extsvcaccounts.ErrCannotDeleteToken", errutil.WithPublicMessage("cannot delete external service account token"))
 	ErrCannotListTokens     = errutil.BadRequest("extsvcaccounts.ErrCannotListTokens", errutil.WithPublicMessage("cannot list external service account tokens"))
-	ErrCredentialsNotFound  = errutil.NotFound("extsvcaccounts.credentials-not-found")
 	ErrCredentialsGenFailed = errutil.NotFound("extsvcaccounts.credentials-gen-failed")
+	ErrCredentialsNotFound  = errutil.NotFound("extsvcaccounts.credentials-not-found")
 	ErrInvalidName          = errutil.BadRequest("extsvcaccounts.ErrInvalidName", errutil.WithPublicMessage("only external service account names can be prefixed with 'extsvc-'"))
 
 	extsvcuser = &user.SignedInUser{
