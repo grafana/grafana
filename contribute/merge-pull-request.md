@@ -75,8 +75,8 @@ If you don't want to include your change in changelog, you need to add a label n
 
 To include a pull request in the changelog, add a label named `add to changelog` to the pull request. Then the following additional validation rules are checked:
 
-- Title must be formatted according to [Format the pull request title](#format-the-pull-request-title)
-- Description must include a breaking change notice if the change is labeled to be a breaking change. Refer to [Breaking changes](#breaking-changes) below for more information.
+- The title must be formatted according to [Format the pull request title](#format-the-pull-request-title)
+- The description must include a breaking change notice if the change is labeled to be a breaking change. Refer to [Breaking changes](#breaking-changes) below for more information.
 
 Not complying with above rules can make the **Changelog Check** fail with validation errors.
 
@@ -124,7 +124,7 @@ If your pull request fixes a critical bug and needs to be backported, add it to 
 
 #### Required labels
 
-We aim to ensure that we don't backport pull requests unnecessarily (for example, when we implement new features). The only scenarios for backporting are typically pull requests that address bugs, have a product approval, or refer to documentation changes.
+We aim to ensure that we don't backport pull requests unnecessarily. The only scenarios for backporting are typically pull requests that address bugs, have a product approval, or refer to documentation changes.
 
 Backport labels need to be followed by either:
 
@@ -137,11 +137,11 @@ Backport labels need to be followed by either:
 
 ## Doing the actual merge
 
-The best time to actually merge the pull request varies from case to case. All commits in a pull request are squashed (hence, we use the GitHub `Squash and merge` button to initialize the merge).
+The best time to actually merge the pull request varies from case to case. All commits in a pull request are squashed.
 
-The merging process presents you with options for optionally change the commit message before merging. Please remember that developers might use the commit information when reviewing changes of files, doing Git blame, resolving merge conflicts, and so on. 
+You can change the commit message before merging. Please remember that developers might use the commit information for tasks like reviewing changes of files, doing Git blame, and resolving merge conflicts. 
 
-Arguably, there's not really any best practices around this process, but consider the following items:
+While there aren't formal best practices around this process, you can consider the following guidance:
 
 **Do:**
 

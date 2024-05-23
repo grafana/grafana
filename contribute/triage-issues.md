@@ -29,4 +29,4 @@ Read more about [how we prioritize issues](/ISSUE_TRIAGE.md#4-prioritization-of-
 
 ## Report duplicates
 
-If you find two issues that describe the same thing, add a comment in one of the issues. In the comment, include a reference (`#<issue number>`) to the other. Explain why you think the issue is duplicated.
+If you find two issues that describe the same thing, add a comment in one of the issues. In the comment, include a reference (`#<issue number>`) to the duplicate. Explain why you think the issue is duplicated.
