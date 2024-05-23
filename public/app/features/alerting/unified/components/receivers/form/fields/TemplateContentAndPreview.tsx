@@ -36,37 +36,44 @@ export function TemplateContentAndPreview({
   const previewToRender = getPreviewResults(error, payloadFormatError, data);
 
   return (
-    <div className={cx(styles.container, className)}>
-      <EditorColumnHeader label="Template content" />
-      <Box flex={1}>
-        <div className={styles.viewerContainer({ height: 400 })}>
-          <AutoSizer>
-            {({ width, height }) => (
-              <TemplateEditor
-                value={templateContent}
-                containerStyles={styles.editorContainer}
-                width={width}
-                height={height}
-                readOnly
-              />
-            )}
-          </AutoSizer>
-        </div>
-      </Box>
+    <div className={cx(className, styles.mainContainer)}>
+      <div className={styles.container}>
+        <EditorColumnHeader label="Template content" />
+        <Box flex={1}>
+          <div className={styles.viewerContainer({ height: 400 })}>
+            <AutoSizer>
+              {({ width, height }) => (
+                <TemplateEditor
+                  value={templateContent}
+                  containerStyles={styles.editorContainer}
+                  width={width}
+                  height={height}
+                  readOnly
+                />
+              )}
+            </AutoSizer>
+          </div>
+        </Box>
+      </div>
 
       {isGrafanaAlertManager && (
-        <>
+        <div className={styles.container}>
           <EditorColumnHeader label="Preview with the default payload" />
           <Box flex={1}>
             <div className={styles.viewerContainer({ height: 300 })}>{previewToRender}</div>
           </Box>
-        </>
+        </div>
       )}
     </div>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  mainContainer: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(2),
+  }),
   container: css({
     label: 'template-preview-container',
     display: 'flex',
@@ -80,14 +87,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
       overflow: 'auto',
       backgroundColor: theme.colors.background.primary,
     }),
-  templateContent: css({
-    padding: theme.spacing(2),
-  }),
   editorContainer: css({
     width: 'fit-content',
     border: 'none',
-  }),
-  editorWrapper: css({
-    height: '100%',
   }),
 });

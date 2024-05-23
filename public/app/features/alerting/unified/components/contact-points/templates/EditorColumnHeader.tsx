@@ -26,7 +26,6 @@ export const editorColumnStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(1, 2),
     backgroundColor: theme.colors.background.secondary,
     borderBottom: `1px solid ${theme.colors.border.medium}`,
-    borderTop: `1px solid ${theme.colors.border.medium}`,
   }),
   label: css({
     margin: 0,
