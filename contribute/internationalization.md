@@ -17,7 +17,7 @@ Grafana uses the [i18next](https://www.i18next.com/) framework for managing tran
 
 ### JSX
 
-1. For JSX children, use the `<Trans />` component from `app/core/internationalization` with the `i18nKey`, ensuring it conforms to the guidelines below, with the default English translation. For example:
+1. For JSX children, use the `<Trans />` component from `app/core/internationalization` with the `i18nKey`, ensuring it conforms to the following guidelines, with the default English translation. For example:
 
 ```jsx
 import { Trans } from 'app/core/internationalization';
