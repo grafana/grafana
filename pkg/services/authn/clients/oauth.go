@@ -166,9 +166,15 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 		return nil, errOAuthEmailNotAllowed.Errorf("provided email is not allowed")
 	}
 
-	orgRoles, isGrafanaAdmin, _ := getRoles(c.cfg, func() (org.RoleType, *bool, error) {
-		return userInfo.Role, userInfo.IsGrafanaAdmin, nil
-	})
+	// This is required to implement OrgRole mapping for OAuth providers step by step
+	switch c.providerName {
+	case social.GenericOAuthProviderName:
+		// Do nothing, GenericOAuthProvider already supports OrgRole mapping
+	default:
+		userInfo.OrgRoles, userInfo.IsGrafanaAdmin, _ = getRoles(c.cfg, func() (org.RoleType, *bool, error) {
+			return userInfo.Role, userInfo.IsGrafanaAdmin, nil
+		})
+	}
 
 	lookupParams := login.UserLookupParams{}
 	allowInsecureEmailLookup := c.settingsProviderSvc.KeyValue("auth", "oauth_allow_insecure_email_lookup").MustBool(false)
@@ -180,12 +186,12 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 		Login:           userInfo.Login,
 		Name:            userInfo.Name,
 		Email:           userInfo.Email,
-		IsGrafanaAdmin:  isGrafanaAdmin,
+		IsGrafanaAdmin:  userInfo.IsGrafanaAdmin,
 		AuthenticatedBy: c.moduleName,
 		AuthID:          userInfo.Id,
 		Groups:          userInfo.Groups,
 		OAuthToken:      token,
-		OrgRoles:        orgRoles,
+		OrgRoles:        userInfo.OrgRoles,
 		ClientParams: authn.ClientParams{
 			SyncUser:        true,
 			SyncTeams:       true,
@@ -193,7 +199,7 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 			SyncPermissions: true,
 			AllowSignUp:     connector.IsSignupAllowed(),
 			// skip org role flag is checked and handled in the connector. For now we can skip the hook if no roles are passed
-			SyncOrgRoles: len(orgRoles) > 0,
+			SyncOrgRoles: len(userInfo.OrgRoles) > 0,
 			LookUpParams: lookupParams,
 		},
 	}, nil

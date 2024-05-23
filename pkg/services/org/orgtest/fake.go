@@ -59,6 +59,11 @@ func (f *FakeOrgService) GetByID(ctx context.Context, query *org.GetOrgByIDQuery
 }
 
 func (f *FakeOrgService) GetByName(ctx context.Context, query *org.GetOrgByNameQuery) (*org.Org, error) {
+	for _, expectedOrg := range f.ExpectedOrgs {
+		if expectedOrg != nil && expectedOrg.Name == query.Name {
+			return &org.Org{ID: expectedOrg.ID, Name: expectedOrg.Name}, nil
+		}
+	}
 	return f.ExpectedOrg, f.ExpectedError
 }
 

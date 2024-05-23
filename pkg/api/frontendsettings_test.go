@@ -78,7 +78,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 			PluginSettings:        cfg.PluginSettings,
 		}),
 		namespacer:    request.GetNamespaceMapper(cfg),
-		SocialService: socialimpl.ProvideService(cfg, features, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeCacheStorage(), &ssosettingstests.MockService{}),
+		SocialService: socialimpl.ProvideService(cfg, features, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeCacheStorage(), nil, &ssosettingstests.MockService{}),
 	}
 
 	m := web.New()

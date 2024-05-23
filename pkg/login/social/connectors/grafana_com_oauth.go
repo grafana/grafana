@@ -37,14 +37,14 @@ type OrgRecord struct {
 	Login string `json:"login"`
 }
 
-func NewGrafanaComProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGrafanaCom {
+func NewGrafanaComProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGrafanaCom {
 	// Override necessary settings
 	info.AuthUrl = cfg.GrafanaComURL + "/oauth2/authorize"
 	info.TokenUrl = cfg.GrafanaComURL + "/api/oauth2/token"
 	info.AuthStyle = "inheader"
 
 	provider := &SocialGrafanaCom{
-		SocialBase:           newSocialBase(social.GrafanaComProviderName, info, features, cfg),
+		SocialBase:           newSocialBase(social.GrafanaComProviderName, orgRoleMapper, info, features, cfg),
 		url:                  cfg.GrafanaComURL,
 		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
 	}
@@ -87,7 +87,7 @@ func (s *SocialGrafanaCom) Reload(ctx context.Context, settings ssoModels.SSOSet
 	s.reloadMutex.Lock()
 	defer s.reloadMutex.Unlock()
 
-	s.updateInfo(social.GrafanaComProviderName, newInfo)
+	s.updateInfo(ctx, social.GrafanaComProviderName, newInfo)
 
 	s.url = s.cfg.GrafanaComURL
 	s.allowedOrganizations = util.SplitString(newInfo.Extra[allowedOrganizationsKey])

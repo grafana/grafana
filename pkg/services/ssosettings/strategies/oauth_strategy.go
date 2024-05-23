@@ -102,6 +102,8 @@ func (s *OAuthStrategy) loadSettingsForProvider(provider string) map[string]any 
 		"auto_login":                 section.Key("auto_login").MustBool(false),
 		"allowed_groups":             section.Key("allowed_groups").Value(),
 		"signout_redirect_url":       section.Key("signout_redirect_url").Value(),
+		"org_mapping":                section.Key("org_mapping").Value(),
+		"org_attribute_path":         section.Key("org_attribute_path").Value(),
 	}
 
 	extraKeys := extraKeysByProvider[provider]
