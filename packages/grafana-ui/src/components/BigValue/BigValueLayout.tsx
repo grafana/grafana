@@ -103,6 +103,7 @@ export abstract class BigValueLayout {
     return styles;
   }
 
+  // TODO update this to incorporate percent change color mode
   getPercentChangeStyles(percentChange: number): PercentChangeStyles {
     const VALUE_TO_PERCENT_CHANGE_RATIO = 2.5;
     const valueContainerStyles = this.getValueAndTitleContainerStyles();
