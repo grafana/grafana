@@ -74,13 +74,9 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     const style = await getStyleConfigState(config.style);
     const location = await getLocationMatchers(options.location);
     const source = new FrameVectorSource(location);
-    // const vectorLayer = new VectorLayer({
-    //   source,
-    //   declutter: false
-    // });
     const vectorLayer = new VectorImage({
       source,
-      declutter: false
+      declutter: false // TODO consider making this an option or explore grouping strategies
     });
 
     const legendProps = new ReplaySubject<MarkersLegendProps>(1);
