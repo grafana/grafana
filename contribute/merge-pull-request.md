@@ -139,7 +139,7 @@ Backport labels need to be followed by either:
 
 The best time to actually merge the pull request varies from case to case. All commits in a pull request are squashed.
 
-The merging process presents you with options for optionally change the commit message before merging. Please remember that developers might use the commit information when reviewing changes of files, doing Git blame, resolving merge conflicts, and so on. 
+You can change the commit message before merging. Please remember that developers might use the commit information for tasks like reviewing changes of files, doing Git blame, and resolving merge conflicts. 
 
 Arguably, there's not really any best practices around this process, but consider the following items:
 
