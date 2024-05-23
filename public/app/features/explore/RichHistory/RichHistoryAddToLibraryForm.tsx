@@ -64,6 +64,7 @@ export const RichHistoryAddToLibraryForm = ({ onCancel, onSave, query }: Props) 
       </Field>
       <InlineSwitch
         showLabel={true}
+        disabled={true}
         label={t(
           'explore.add-to-library-modal.auto-star',
           'Auto-star this query to add it to your starred list in the Query Library.'
