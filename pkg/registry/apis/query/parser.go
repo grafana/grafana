@@ -186,7 +186,6 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 			}
 		}
 	}
-
 	return rsp, nil
 }
 

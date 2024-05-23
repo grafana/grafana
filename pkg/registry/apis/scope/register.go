@@ -13,6 +13,7 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	scope "github.com/grafana/grafana/pkg/apis/scope/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/builder"
@@ -177,6 +178,7 @@ func (b *ScopeAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI
 					Description: "object name and auth scope, such as for teams and projects",
 					Example:     "default",
 					Required:    true,
+					Schema:      spec.StringProperty().UniqueValues(),
 				},
 			},
 		}

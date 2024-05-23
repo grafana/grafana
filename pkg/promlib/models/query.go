@@ -434,6 +434,6 @@ func AlignTimeRange(t time.Time, step time.Duration, offset int64) time.Time {
 var f embed.FS
 
 // QueryTypeDefinitionsJSON returns the query type definitions
-func QueryTypeDefinitionsJSON() (json.RawMessage, error) {
+func QueryTypeDefinitionListJSON() (json.RawMessage, error) {
 	return f.ReadFile("query.types.json")
 }
