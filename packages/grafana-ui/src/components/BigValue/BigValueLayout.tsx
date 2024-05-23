@@ -2,7 +2,7 @@ import React, { CSSProperties } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { formattedValueToString, DisplayValue, FieldConfig, FieldType } from '@grafana/data';
-import { GraphDrawStyle, GraphFieldConfig } from '@grafana/schema';
+import { GraphDrawStyle, GraphFieldConfig, PercentChangeColorMode } from '@grafana/schema';
 
 import { getTextColorForAlphaBackground } from '../../utils';
 import { calculateFontSize } from '../../utils/measureText';
@@ -104,16 +104,22 @@ export abstract class BigValueLayout {
   }
 
   // TODO update this to incorporate percent change color mode
-  getPercentChangeStyles(percentChange: number): PercentChangeStyles {
+  getPercentChangeStyles(
+    percentChange: number,
+    percentChangeColorMode: PercentChangeColorMode | undefined,
+    valueStyles: React.CSSProperties
+  ): PercentChangeStyles {
     const VALUE_TO_PERCENT_CHANGE_RATIO = 2.5;
     const valueContainerStyles = this.getValueAndTitleContainerStyles();
     const percentFontSize = Math.max(this.valueFontSize / VALUE_TO_PERCENT_CHANGE_RATIO, 12);
     let iconSize = Math.max(this.valueFontSize / 3, 10);
 
     const color =
-      percentChange > 0
-        ? this.props.theme.visualization.getColorByName('green')
-        : this.props.theme.visualization.getColorByName('red');
+      percentChangeColorMode === PercentChangeColorMode.SameAsValue
+        ? valueStyles.color
+        : percentChange * (percentChangeColorMode === PercentChangeColorMode.Inverted ? -1 : 1) > 0
+          ? this.props.theme.visualization.getColorByName('green')
+          : this.props.theme.visualization.getColorByName('red');
 
     const containerStyles: CSSProperties = {
       fontSize: percentFontSize,
