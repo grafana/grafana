@@ -4,13 +4,12 @@ import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, Checkbox, FieldSet, Spinner, Stack, useStyles2 } from '@grafana/ui';
-
-import { contextSrv } from '../../../../../../core/services/context_srv';
-import { AccessControlAction } from '../../../../../../types';
-import { useCreatePublicDashboardMutation } from '../../../../../dashboard/api/publicDashboardApi';
-import { PublicDashboardShareType } from '../../../../../dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
-import { DashboardScene } from '../../../../scene/DashboardScene';
-import { DashboardInteractions } from '../../../../utils/interactions';
+import { contextSrv } from 'app/core/core';
+import { useCreatePublicDashboardMutation } from 'app/features/dashboard/api/publicDashboardApi';
+import { PublicDashboardShareType } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
+import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
+import { AccessControlAction } from 'app/types';
 
 const PUBLIC_DASHBOARD_URL = 'https://grafana.com/docs/grafana/latest/dashboards/dashboard-public/';
 export default function CreatePublicSharing({
