@@ -72,6 +72,7 @@ Users can now view anonymous usage statistics, including the count of devices an
 The number of anonymous devices is not limited by default. The configuration option `device_limit` allows you to enforce a limit on the number of anonymous devices. This enables you to have greater control over the usage within your Grafana instance and keep the usage within the limits of your environment. Once the limit is reached, any new devices that try to access Grafana will be denied access.
 
 To display anonymous users and devices for versions 10.2, 10.3, 10.4, this is not needed for v11
+
 ```bash
 [feature_toggles]
 enable = displayAnonymousStats
@@ -82,8 +83,6 @@ enable = displayAnonymousStats
 {{< admonition type="note" >}}
 Anonymous users are charged as active users in Grafana Enterprise
 {{< /admonition >}}
-
-
 
 #### Configuration
 
