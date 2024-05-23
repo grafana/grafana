@@ -49,9 +49,6 @@ func (a *AccessControl) Evaluate(ctx context.Context, user identity.Requester, e
 		return false, nil
 	}
 
-	if a.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
-		evaluator = evaluator.AppendActionSets(ctx, a.resolvers.GetActionSetResolver())
-	}
 	fmt.Printf("Evaluating permissions: %v\n", permissions)
 
 	a.debug(ctx, user, "Evaluating permissions", evaluator)
@@ -74,10 +71,6 @@ func (a *AccessControl) Evaluate(ctx context.Context, user identity.Requester, e
 
 func (a *AccessControl) RegisterScopeAttributeResolver(prefix string, resolver accesscontrol.ScopeAttributeResolver) {
 	a.resolvers.AddScopeAttributeResolver(prefix, resolver)
-}
-
-func (a *AccessControl) RegisterActionResolver(resolver accesscontrol.ActionResolver) {
-	a.resolvers.SetActionResolver(resolver)
 }
 
 func (a *AccessControl) debug(ctx context.Context, ident identity.Requester, msg string, eval accesscontrol.Evaluator) {
