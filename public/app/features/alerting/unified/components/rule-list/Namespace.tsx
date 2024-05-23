@@ -13,6 +13,7 @@ interface NamespaceProps extends PropsWithChildren {
   application?: RulesSourceApplication;
 }
 
+// @TODO add export rules for namespace back in
 const Namespace = ({ children, name, href, application }: NamespaceProps) => {
   const styles = useStyles2(getStyles);
 

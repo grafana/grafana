@@ -1,4 +1,4 @@
-import { addMilliseconds, formatDistanceToNow, formatDistanceToNowStrict, isBefore } from 'date-fns';
+import { addMilliseconds, formatDistanceToNowStrict, isBefore } from 'date-fns';
 
 import { dateTime, dateTimeFormat, isValidDate } from '@grafana/data';
 
@@ -47,8 +47,8 @@ export function calculateNextEvaluationEstimate(
   const isPastDate = isBefore(nextEvaluationDate, new Date());
   if (isPastDate) {
     return {
-      humanized: `within ${formatDistanceToNow(nextEvaluationDate)}`,
-      fullDate: `within ${formatDistanceToNow(nextEvaluationDate)}`,
+      humanized: `within ${evaluationInterval}`,
+      fullDate: `within ${evaluationInterval}`,
     };
   }
 

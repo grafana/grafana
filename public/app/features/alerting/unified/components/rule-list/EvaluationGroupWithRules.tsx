@@ -8,7 +8,7 @@ import { createViewLink } from '../../utils/misc';
 import { hashRulerRule } from '../../utils/rule-id';
 import { isAlertingRule, isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from '../../utils/rules';
 
-import { AlertRuleListItem, RecordingRuleListItem } from './AlertRuleListItem';
+import { AlertRuleListItem, RecordingRuleListItem, UnknownRuleListItem } from './AlertRuleListItem';
 import EvaluationGroup from './EvaluationGroup';
 
 export interface EvaluationGroupWithRulesProps {
@@ -21,8 +21,13 @@ export const EvaluationGroupWithRules = ({ group, rulesSource }: EvaluationGroup
 
   return (
     <EvaluationGroup name={group.name} interval={group.interval} isOpen={open} onToggle={toggleOpen}>
-      {group.rules.map((rule) => {
+      {group.rules.map((rule, index) => {
         const { rulerRule, promRule, annotations } = rule;
+
+        // don't render anything if we don't have the rule definition yet
+        if (!rulerRule) {
+          return null;
+        }
 
         // keep in mind that we may not have a promRule for the ruler rule – this happens when the target
         // rule source is eventually consistent - it may know about the rule definition but not its state
@@ -87,7 +92,8 @@ export const EvaluationGroupWithRules = ({ group, rulesSource }: EvaluationGroup
           );
         }
 
-        return null;
+        // if we get here it means we don't really know how to render this rule
+        return <UnknownRuleListItem key={hashRulerRule(rulerRule)} rule={rule} />;
       })}
     </EvaluationGroup>
   );

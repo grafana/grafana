@@ -4,10 +4,11 @@ import pluralize from 'pluralize';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, Stack, Text, TextLink, Dropdown, Button, Menu } from '@grafana/ui';
-import { RuleHealth } from 'app/types/unified-alerting';
+import { useStyles2, Stack, Text, TextLink, Dropdown, Button, Menu, Alert } from '@grafana/ui';
+import { CombinedRule, RuleHealth } from 'app/types/unified-alerting';
 import { Labels, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
+import { logError } from '../../Analytics';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { labelsSize } from '../../utils/labels';
 import { createContactPointLink } from '../../utils/misc';
@@ -94,7 +95,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
               {/* show label count */}
               {!isEmpty(labels) && (
                 <MetaText icon="tag-alt">
-                  <TextLink href={href} variant="bodySmall" color="secondary" inline={false}>
+                  <TextLink href={href} variant="bodySmall" color="primary" inline={false}>
                     {pluralize('label', labelsSize(labels), true)}
                   </TextLink>
                 </MetaText>
@@ -164,6 +165,7 @@ function Summary({ content, error }: SummaryProps) {
   return null;
 }
 
+// @TODO use Pick<> or Omit<> here
 interface RecordingRuleListItemProps {
   name: string;
   href: string;
@@ -178,6 +180,7 @@ interface RecordingRuleListItemProps {
   evaluationDuration?: number;
 }
 
+// @TODO split in to smaller re-usable bits
 export const RecordingRuleListItem = ({
   name,
   error,
@@ -217,7 +220,7 @@ export const RecordingRuleListItem = ({
                 />
                 {!isEmpty(labels) && (
                   <MetaText icon="tag-alt">
-                    <TextLink variant="bodySmall" color="secondary" href={href} inline={false}>
+                    <TextLink variant="bodySmall" color="primary" href={href} inline={false}>
                       {pluralize('label', labelsSize(labels), true)}
                     </TextLink>
                   </MetaText>
@@ -232,7 +235,6 @@ export const RecordingRuleListItem = ({
             icon="pen"
             type="button"
             disabled={isProvisioned}
-            aria-label="edit-rule-action"
             data-testid="edit-rule-action"
           >
             Edit
@@ -284,6 +286,28 @@ function EvaluationMetadata({ lastEvaluation, evaluationInterval, state }: Evalu
   return null;
 }
 
+interface UnknownRuleListItemProps {
+  rule: CombinedRule;
+}
+
+export const UnknownRuleListItem = ({ rule }: UnknownRuleListItemProps) => {
+  const styles = useStyles2(getStyles);
+
+  const ruleContext = { namespace: rule.namespace.name, group: rule.group.name, name: rule.name };
+  logError(new Error('unknown rule type'), ruleContext);
+
+  return (
+    <Alert title={'Unknown rule type'} className={styles.resetMargin}>
+      <details>
+        <summary>Rule definition</summary>
+        <pre>
+          <code>{JSON.stringify(rule.rulerRule, null, 2)}</code>
+        </pre>
+      </details>
+    </Alert>
+  );
+};
+
 const getStyles = (theme: GrafanaTheme2) => ({
   alertListItemContainer: css({
     position: 'relative',
@@ -292,5 +316,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
     borderBottom: `solid 1px ${theme.colors.border.weak}`,
     padding: theme.spacing(1, 1, 1, 1.5),
+  }),
+  resetMargin: css({
+    margin: 0,
   }),
 });

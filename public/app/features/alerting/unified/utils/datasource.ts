@@ -284,6 +284,7 @@ export function getApplicationFromRulesSource(rulesSource: RulesSource): RulesSo
     return 'grafana';
   }
 
+  // @TODO use buildinfo
   if ('prometheusType' in rulesSource.jsonData) {
     return rulesSource.jsonData?.prometheusType ?? PromApplication.Prometheus;
   }
