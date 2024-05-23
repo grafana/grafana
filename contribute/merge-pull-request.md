@@ -38,19 +38,17 @@ All commits in a pull request are squashed when merged and the pull request titl
 
 See [formatting guidelines](create-pull-request.md#formatting-guidelines) for more information.
 
-### Assign a milestone
+### Assign a milestone (automated)
 
-The Grafana release process requires at least some pull requests to be in a milestone. For example, [generating changelog (release note)](#include-in-changelog-and-release-notes) must be in a milestone.
-
-This makes it easier to track what changes go into a certain release. Without this information, release managers have to go through the tedium of reading through many Git commits. 
+The Grafana release process uses a bot to automatically assign pull requests to a milestone to make it easier for release managers to track changes. For example, [generating changelog (release note)](#include-in-changelog-and-release-notes) must be in a milestone.
 
 That being said, _you don't have to assign a milestone manually_ to a pull request. Instead, when it is merged and closed, a bot will then look for the most appropriate milestone and assign it to the pull request.
 
 The bot-assigned milestone should always reflect the branch into which the pull request is merged. For example:
 
 - For every major and minor release, there is a milestone ending with `.x` (for example, `10.0.x` for the 10.0.x releases).
-- Pull requests targeting `main` should use the `.x` milestone of the next minor (or major) version (you can find that version number inside the `package.json` file).
-- Backport pull requests should use the version of the target branch (for example, `9.4.x` for the `v9.4.x` branch).
+- Pull requests targeting `main` use the `.x` milestone of the next minor (or major) version (you can find that version number inside the `package.json` file).
+- Backport pull requests use the version of the target branch (for example, `9.4.x` for the `v9.4.x` branch).
 
 ### What to include in changelog and release notes
 

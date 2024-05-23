@@ -13,8 +13,8 @@ These are some good resources to explore for developers:
 
 Learn how to create great documentation and apps for Grafana:
 
+- [Developer portal](https://grafana.com/developers/) - Find resources for creating apps and plugins to Grafana.
 - [Contribute to our documentation](../contribute/documentation/README.md) - Learn how to write and style Grafana documentation.
-- [Developer portal] - Find resources for creating apps and plugins to Grafana.
 
 Find style guides for the Grafana software project:
 
