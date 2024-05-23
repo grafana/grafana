@@ -404,7 +404,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   clearIcon: css({
     cursor: 'pointer',
-    marginLeft: -theme.spacing(1),
   }),
   field: css({
     marginBottom: 0,
