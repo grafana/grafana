@@ -153,7 +153,7 @@ You can check usage analytics about your public dashboard by clicking the insigh
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-insights.png" max-width="400px" class="docs-image--no-shadow" alt="Dashboard insights icon" >}}
 
-Learn more about the kind of information provided in the [dashboard insights documentation](ref:dashboards-insights-documentation).
+Learn more about the kind of information provided in the [dashboard insights documentation](ref:dashboard-insights-documentation).
 
 ## Supported data sources
 
