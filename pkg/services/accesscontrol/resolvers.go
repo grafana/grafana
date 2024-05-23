@@ -16,7 +16,9 @@ type ScopeAttributeResolver interface {
 }
 
 type ActionResolver interface {
-	Resolve(action string) []string
+	ResolveAction(action string) []string
+	ResolveActionSet(actionSet string) []string
+	ExpandActionSets(permissions []Permission) []Permission
 }
 
 // ScopeAttributeResolverFunc is an adapter to allow functions to implement ScopeAttributeResolver interface
@@ -94,7 +96,7 @@ func (s *Resolvers) GetActionSetResolver() ActionSetResolver {
 		if s.actionResolver == nil {
 			return []string{action}
 		}
-		actionSetActions := s.actionResolver.Resolve(action)
+		actionSetActions := s.actionResolver.ResolveAction(action)
 		actions := append(actionSetActions, action)
 		s.log.Debug("Resolved action", "action", action, "resolved_actions", actions)
 		return actions

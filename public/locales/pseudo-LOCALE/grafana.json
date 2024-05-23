@@ -491,15 +491,11 @@
       "delete-query-tooltip": "Đęľęŧę qūęřy",
       "delete-starred-query-confirmation-text": "Åřę yőū şūřę yőū ŵäŉŧ ŧő pęřmäŉęŉŧľy đęľęŧę yőūř şŧäřřęđ qūęřy?",
       "edit-comment-tooltip": "Ēđįŧ čőmmęŉŧ",
-      "left-pane": "Ŀęƒŧ päŉę",
       "optional-description": "Åŉ őpŧįőŉäľ đęşčřįpŧįőŉ őƒ ŵĥäŧ ŧĥę qūęřy đőęş.",
       "query-comment-label": "Qūęřy čőmmęŉŧ",
       "query-text-label": "Qūęřy ŧęχŧ",
-      "right-pane": "Ŗįģĥŧ päŉę",
-      "run-query-button": "Ŗūŉ qūęřy",
       "save-comment": "Ŝävę čőmmęŉŧ",
       "star-query-tooltip": "Ŝŧäř qūęřy",
-      "switch-datasource-button": "Ŝŵįŧčĥ đäŧä şőūřčę äŉđ řūŉ qūęřy",
       "unstar-query-tooltip": "Ůŉşŧäř qūęřy",
       "update-comment-form": "Ůpđäŧę čőmmęŉŧ ƒőřm"
     },
@@ -567,6 +563,12 @@
     "rich-history-utils-notification": {
       "saving-failed": "Ŝävįŉģ řįčĥ ĥįşŧőřy ƒäįľęđ",
       "update-failed": "Ŗįčĥ Ħįşŧőřy ūpđäŧę ƒäįľęđ"
+    },
+    "run-query": {
+      "left-pane": "Ŀęƒŧ päŉę",
+      "right-pane": "Ŗįģĥŧ päŉę",
+      "run-query-button": "Ŗūŉ qūęřy",
+      "switch-datasource-button": "Ŝŵįŧčĥ đäŧä şőūřčę äŉđ řūŉ qūęřy"
     },
     "secondary-actions": {
       "query-add-button": "Åđđ qūęřy",
