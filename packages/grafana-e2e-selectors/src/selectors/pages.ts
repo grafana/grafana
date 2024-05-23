@@ -73,6 +73,7 @@ export const Pages = {
         next: 'data-testid playlist next dashboard button',
       },
     },
+    Controls: 'data-testid dashboard controls',
     SubMenu: {
       submenu: 'Dashboard submenu',
       submenuItem: 'data-testid template variable',
@@ -270,6 +271,13 @@ export const Pages = {
     },
     PublicDashboardScene: {
       Tab: 'Tab Public Dashboard',
+    },
+    SnapshotScene: {
+      url: (key: string) => `/dashboard/snapshot/${key}`,
+      Tab: 'Tab Snapshot',
+      PublishSnapshot: 'data-testid publish snapshot button',
+      CopyUrlButton: 'data-testid snapshot copy url button',
+      CopyUrlInput: 'data-testid snapshot copy url input',
     },
   },
   PublicDashboard: {
