@@ -168,8 +168,8 @@ An issue can have multiple labels. Typically, a properly categorized issue shoul
 Make sure it's not a duplicate by searching existing issues using related terms from the issue title and description. If you think you know there is an existing issue, but can't find it, please reach out to one of the maintainers and ask for help. If you identify that the issue is a duplicate of an existing issue:
 
 1. Add a comment `/duplicate of #<issue number>`. GitHub will recognize this and add some additional context to the issue activity.
-2. The Grafana bot will do the rest, adding the correct label and a closing comment.
-3. Add the `type/duplicate` label. Optionally, you may add any related `area/*` or `datasource/*` labels.
+1. The Grafana bot will do the rest, adding the correct label and a closing comment.
+1. Add the `type/duplicate` label. Optionally, you may add any related `area/*` or `datasource/*` labels.
 
 #### Bug reports
 
@@ -178,24 +178,24 @@ If it's not perfectly clear that it's an actual bug, quickly try to reproduce it
 **It can be reproduced:**
 
 1. Add a comment describing detailed steps for how to reproduce it, if applicable.
-2. Label the issue `type/bug` and at least one `area/*` or `datasource/*` label.
-3. If you know that maintainers won't be able to put any resources into it for some time then label the issue with `help wanted` and optionally `beginner friendly` together with pointers on which code to update to fix the bug. This should signal to the community that we would appreciate any help we can get to resolve this.
-4. Move on to [prioritizing the issue](#4-prioritization-of-issues).
+1. Label the issue `type/bug` and at least one `area/*` or `datasource/*` label.
+1. If you know that maintainers won't be able to put any resources into it for some time then label the issue with `help wanted` and optionally `beginner friendly` together with pointers on which code to update to fix the bug. This should signal to the community that we would appreciate any help we can get to resolve this.
+1. Move on to [prioritizing the issue](#4-prioritization-of-issues).
 
 **It can't be reproduced:**
 
 1. Either [ask for more information](#2-ensure-the-issue-contains-basic-information) needed to investigate it more thoroughly.
-2. Either [delegate further investigations](#investigation-of-issues) to someone else.
+1. Either [delegate further investigations](#investigation-of-issues) to someone else.
 
 **It works as intended (that is, by design):**
 
 1. Kindly and politely add a comment explaining briefly why we think it works as intended and close the issue.
-2. Label the issue `type/works-as-intended`.
+1. Label the issue `type/works-as-intended`.
 
 #### Enhancement or feature request?
 
 1. Label the issue `type/feature-request` and add at least one `area/*` or `datasource/*` label.
-2. Make sure the submitter has justified why this feature requests is important.
+1. Make sure the submitter has justified why this feature requests is important.
 
 #### Documentation issue?
 
@@ -212,12 +212,12 @@ Second, label the issue `type/docs` and at least one `area/*` or `datasource/*` 
 There's a minor typo, error, or lack of information that adds a lot of confusion for users and is a big win to fix it:
 
 1. Either update the documentation yourself and open a pull request.
-2. Either delegate the work to someone else by assigning that person to the issue. Note that the milestone is automatically assigned and usually doesn't need to be manually edited.
+1. Either delegate the work to someone else by assigning that person to the issue. Note that the milestone is automatically assigned and usually doesn't need to be manually edited.
 
 **Major error/lack of information:**
 
 1. Label the issue with `help wanted` and `beginner friendly`, if applicable, to signal that we find this important to fix and we would appreciate any help we can get from the community.
-2. Move on to [prioritizing the issue](#4-prioritization-of-issues).
+1. Move on to [prioritizing the issue](#4-prioritization-of-issues).
 
 #### Accessibility issues
 
@@ -226,7 +226,7 @@ There's a minor typo, error, or lack of information that adds a lot of confusion
 #### Support requests
 
 1. Kindly and politely direct the issue author to the [community site](https://community.grafana.com/) and explain that GitHub is mainly used for tracking bugs and feature requests. If possible, it's usually a good idea to add some pointers to the issue author's question.
-2. Label the issue with `bot/question`. The Grafana bot will automatically close the issue, and it will add the type/question label for you.
+1. Label the issue with `bot/question`. The Grafana bot will automatically close the issue, and it will add the type/question label for you.
 
 ### 4. Prioritization of issues
 
@@ -257,34 +257,34 @@ In case there is an uncertainty around the prioritization of an issue, please as
    - Problem that makes a feature unusable
    - Multiple users experience a severe problem affecting their business, user experience, and so on.
 
-2. Label the issue `priority/critical`.
-3. If applicable, label the issue `priority/support-subscription`.
-4. Add the issue to the next upcoming patch release milestone. Create a new milestone if there are none.
-5. Escalate the problem to the maintainers.
-6. Assign or ask a maintainer for help assigning someone to make this issue their top priority right now.
+1. Label the issue `priority/critical`.
+1. If applicable, label the issue `priority/support-subscription`.
+1. Add the issue to the next upcoming patch release milestone. Create a new milestone if there are none.
+1. Escalate the problem to the maintainers.
+1. Assign or ask a maintainer for help assigning someone to make this issue their top priority right now.
 
 **Important short-term**
 
 1. Label the issue `priority/important-soon`.
-2. If applicable, label the issue `priority/support-subscription`.
-3. Add the issue to the next upcoming patch or major/minor stable release milestone. Ask maintainers for help if unsure if it's a patch or not. Create a new milestone if there are none.
-4. Make sure to add the issue to a suitable backlog of a GitHub project and prioritize it or assign someone to work on it now or very soon.
-5. Consider requesting [help from the community](#5-requesting-help-from-the-community), even though it may be problematic given a short amount of time until it should be released.
+1. If applicable, label the issue `priority/support-subscription`.
+1. Add the issue to the next upcoming patch or major/minor stable release milestone. Ask maintainers for help if unsure if it's a patch or not. Create a new milestone if there are none.
+1. Make sure to add the issue to a suitable backlog of a GitHub project and prioritize it or assign someone to work on it now or very soon.
+1. Consider requesting [help from the community](#5-requesting-help-from-the-community), even though it may be problematic given a short amount of time until it should be released.
 
 **Important long-term**
 
 1. Label the issue `priority/important-longterm`.
-2. Consider requesting [help from the community](#5-requesting-help-from-the-community).
+1. Consider requesting [help from the community](#5-requesting-help-from-the-community).
 
 **Nice to have**
 
 1. Label the issue `priority/nice-to-have`.
-2. Consider requesting [help from the community](#5-requesting-help-from-the-community).
+1. Consider requesting [help from the community](#5-requesting-help-from-the-community).
 
 **Not critical, but unsure?**
 
 1. Label the issue `priority/unscheduled`.
-2. Consider requesting [help from the community](#5-request-help-from-the-community).
+1. Consider requesting [help from the community](#5-request-help-from-the-community).
 
 ### 5. Request help from the community
 
@@ -303,9 +303,9 @@ In certain areas there probably exist domain experts who may be able to help:
 1. Kindly and politely add a comment to signal to users subscribed to updates of the issue.
    - Explain that the issue would be nice to get resolved, but it isn't prioritized to work on by maintainers for an unforeseen future.
    - If possible or applicable, try to help contributors getting starting by adding pointers and references to what code needs to be changed. Note any suggests for good ways of solving or implementing the issue. 
-2. Label the issue with `help wanted`.
-3. If applicable, label the issue with `beginner friendly` to denote that the issue is suitable for a beginner to work on.
-4. If possible, try to estimate the amount of work by adding `effort/small`, `effort/medium` or `effort/large`.
+1. Label the issue with `help wanted`.
+1. If applicable, label the issue with `beginner friendly` to denote that the issue is suitable for a beginner to work on.
+1. If possible, try to estimate the amount of work by adding `effort/small`, `effort/medium` or `effort/large`.
 
 ### Investigation of issues
 
@@ -328,9 +328,9 @@ To learn more about bot actions, refer to our [bot documentation](https://github
 Part of issue triage should also be triaging of external PRs. The main goal should be to make sure PRs from external contributors have an owner and aren't forgotten.
 
 1. Check new external PRs which don't have a reviewer. You can easily search for pull requests made by external contributors by using the label: `pr/external` in your [query search](https://github.com/grafana/grafana/pulls?q=is%3Aopen+is%3Apr+label%3Apr%2Fexternal) Note: external PRs are automatically labeled with `pr/external` upon creation.
-2. Check if there is a link to an existing issue. The link to a existing issue should be in the description section, underneath “Which issue(s) does this PR fix?:”.
-3. If not, and you know which issue it is solving, add the link yourself. Otherwise, ask the author to link the issue or create one.
-4. Assign a reviewer based on who was handling the linked issue or what code or feature the PR touches (if all else fails, look at who was the last to make changes).
+1. Check if there is a link to an existing issue. The link to a existing issue should be in the description section, underneath “Which issue(s) does this PR fix?:”.
+1. If not, and you know which issue it is solving, add the link yourself. Otherwise, ask the author to link the issue or create one.
+1. Assign a reviewer based on who was handling the linked issue or what code or feature the PR touches (if all else fails, look at who was the last to make changes).
 
 ### Appendix
 
@@ -341,11 +341,11 @@ If you're using Gmail, a best practice is to set up filters to automatically rem
 This may be set up by personal preference, but here's a working configuration for reference:
 
 1. Follow instructions in [gist](https://gist.github.com/marefr/9167c2e31466f6316c1cba118874e74f)
-2. In Gmail, go to **Settings** -> **Filters and Blocked Addresses**.
-3. On the menu, select **Import filters**, then select and open the XML file.
-4. Review the filters.
-5. Optional: Select **Apply new filters to existing email**.
-6. Create filters.
+1. In Gmail, go to **Settings** -> **Filters and Blocked Addresses**.
+1. On the menu, select **Import filters**, then select and open the XML file.
+1. Review the filters.
+1. Optional: Select **Apply new filters to existing email**.
+1. Create filters.
 
 This gives you a structure of labels in the sidebar similar to the following:
 
