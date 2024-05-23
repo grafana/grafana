@@ -97,6 +97,11 @@ func removeSchemaRefs(s *spec.Schema) {
 		fmt.Printf("FROM: %+v\n", s)
 	}
 
+	// ["schema", "examples"]
+	if len(s.Required) == 2 && s.Required[0] == "schema" && s.Required[1] == "examples" {
+		fmt.Printf("XXXXX: %+v\n", s)
+	}
+
 	removeSchemaRefs(s.Not)
 	for idx := range s.AllOf {
 		removeSchemaRefs(&s.AllOf[idx])
@@ -114,5 +119,11 @@ func removeSchemaRefs(s *spec.Schema) {
 		for idx := range s.Items.Schemas {
 			removeSchemaRefs(&s.Items.Schemas[idx])
 		}
+	}
+	if s.AdditionalProperties != nil {
+		removeSchemaRefs(s.AdditionalProperties.Schema)
+	}
+	if s.AdditionalItems != nil {
+		removeSchemaRefs(s.AdditionalItems.Schema)
 	}
 }
