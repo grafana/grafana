@@ -23,6 +23,22 @@ labels:
 menuTitle: Manage dashboard links
 title: Manage dashboard links
 weight: 500
+refs:
+  data-links:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-data-links/#data-links
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-data-links/#data-links
+  data-link-variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-data-links/#data-link-variables
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-data-links/#data-link-variables
+  dashboard-url-variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard-url-variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard-url-variables/
 ---
 
 # Manage dashboard links
@@ -40,7 +56,7 @@ The next step is to figure out which link type is right for your workflow. Even 
 - If the link relates to most if not all of the panels in the dashboard, use [dashboard links](#dashboard-links).
 - If you want to drill down into specific panels, use [panel links](#panel-links).
 - If you want to link to an external site, you can use either a dashboard link or a panel link.
-- If you want to drill down into a specific series, or even a single measurement, use [data links][].
+- If you want to drill down into a specific series, or even a single measurement, use [data links](ref:data-links).
 
 ## Controlling time range using the URL
 
@@ -52,7 +68,7 @@ To control the time range of a panel or dashboard, you can provide query paramet
 
 ## Dashboard links
 
-When you create a dashboard link, you can include the time range and current template variables to directly jump to the same context in another dashboard. This way, you don’t have to worry whether the person you send the link to is looking at the right data. For other types of links, refer to [Data link variables][].
+When you create a dashboard link, you can include the time range and current template variables to directly jump to the same context in another dashboard. This way, you don’t have to worry whether the person you send the link to is looking at the right data. For other types of links, refer to [Data link variables](ref:data-link-variables).
 
 Dashboard links can also be used as shortcuts to external systems, such as submitting [a GitHub issue with the current dashboard name](https://github.com/grafana/grafana/issues/new?title=Dashboard%3A%20HTTP%20Requests).
 
@@ -74,7 +90,7 @@ Add links to other dashboards at the top of your current dashboard.
    - **With tags** – Enter tags to limit the linked dashboards to only the ones with the tags you enter. Otherwise, Grafana includes links to all other dashboards.
    - **As dropdown** – If you are linking to lots of dashboards, then you probably want to select this option and add an optional title to the dropdown. Otherwise, Grafana displays the dashboard links side by side across the top of your dashboard.
    - **Time range** – Select this option to include the dashboard time range in the link. When the user clicks the link, the linked dashboard opens with the indicated time range already set. **Example:** https://play.grafana.org/d/000000010/annotations?orgId=1&from=now-3h&to=now
-   - **Variable values** – Select this option to include template variables currently used as query parameters in the link. When the user clicks the link, any matching templates in the linked dashboard are set to the values from the link. For more information, see [Dashboard URL variables][].
+   - **Variable values** – Select this option to include template variables currently used as query parameters in the link. When the user clicks the link, any matching templates in the linked dashboard are set to the values from the link. For more information, see [Dashboard URL variables](ref:dashboard-url-variables).
    - **Open in new tab** – Select this option if you want the dashboard link to open in a new tab or window.
 1. Click **Add**.
 
@@ -165,14 +181,3 @@ Click the icon next to the panel title to see available panel links.
 1. Find the link that you want to delete.
 1. Click the **X** icon next to the link you want to delete.
 1. Click **Save** in the upper right to save your changes to the dashboard.
-
-{{% docs/reference %}}
-[data links]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-data-links#data-links"
-[data links]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-data-links#data-links"
-
-[Dashboard URL variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/create-dashboard-url-variables"
-[Dashboard URL variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/create-dashboard-url-variables"
-
-[Data link variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-data-links#data-link-variables"
-[Data link variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-data-links#data-link-variables"
-{{% /docs/reference %}}
