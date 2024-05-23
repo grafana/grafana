@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import React, { PureComponent, CSSProperties, Ref } from 'react';
+import React, { PureComponent, CSSProperties } from 'react';
 import ReactGridLayout, { ItemCallback } from 'react-grid-layout';
 import { Subscription } from 'rxjs';
 
@@ -408,8 +408,8 @@ const GrafanaGridItem = React.forwardRef<HTMLDivElement, GrafanaGridItemProps>((
     <div
       {...divProps}
       style={{ ...divProps.style }}
-      onFocus={() => panelAttentionService.setPanelWithAttention(divProps['data-panelid'])}
-      onMouseMove={() => panelAttentionService.setPanelWithAttention(divProps['data-panelid'])}
+      onFocus={() => panelAttentionService?.setPanelWithAttention(divProps['data-panelid'])}
+      onMouseMove={() => panelAttentionService?.setPanelWithAttention(divProps['data-panelid'])}
       ref={ref}
     >
       {/* Pass width and height to children as render props */}

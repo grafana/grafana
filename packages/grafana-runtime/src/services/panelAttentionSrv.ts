@@ -26,6 +26,6 @@ export function setPanelAttentionSrv(instance: PanelAttentionSrv) {
  *
  * @public
  */
-export function getPanelAttentionSrv(): PanelAttentionSrv {
+export function getPanelAttentionSrv(): PanelAttentionSrv | undefined {
   return singletonInstance;
 }
