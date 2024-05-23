@@ -12,7 +12,7 @@ export interface PanelAttentionSrv {
 let singletonInstance: PanelAttentionSrv;
 
 /**
- * Used during startup by Grafana to set the setAppEvents so it is available
+ * Used during startup by Grafana to set the PanelAttentionService so it is available
  * via the {@link getPanelAttentionSrv} to the rest of the application.
  *
  * @internal

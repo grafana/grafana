@@ -16,6 +16,7 @@ export class PanelAttentionService implements PanelAttentionSrv {
       return;
     }
 
+    // For Scenes, the string containing the vizPanelKey
     if (typeof panelElement === 'string') {
       this.panelId = panelElement;
       return;
