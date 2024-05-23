@@ -59,7 +59,14 @@ func newRuleFactory(
 ) ruleFactoryFunc {
 	return func(ctx context.Context, rule *ngmodels.AlertRule) Rule {
 		if rule.IsRecordingRule() {
-			return newRecordingRule(ctx, logger)
+			return newRecordingRule(
+				ctx,
+				maxAttempts,
+				clock,
+				evalFactory,
+				logger,
+				met,
+			)
 		}
 		return newAlertRule(
 			ctx,

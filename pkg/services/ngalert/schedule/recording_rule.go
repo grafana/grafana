@@ -157,6 +157,7 @@ func (r *recordingRule) tryEvaluate(ctx context.Context, ev *Evaluation, logger 
 	}
 
 	logger.Debug("Alert rule evaluated", "results", result, "duration", dur)
+	return nil
 }
 
 func (r *recordingRule) buildAndExecutePipeline(ctx context.Context, evalCtx eval.EvaluationContext, ev *Evaluation, logger log.Logger) (*backend.QueryDataResponse, error) {
