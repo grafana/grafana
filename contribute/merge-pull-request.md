@@ -75,8 +75,8 @@ If you don't want to include your change in changelog, you need to add a label n
 
 To include a pull request in the changelog, add a label named `add to changelog` to the pull request. Then the following additional validation rules are checked:
 
-- Title must be formatted according to [Format the pull request title](#format-the-pull-request-title)
-- Description must include a breaking change notice if the change is labeled to be a breaking change. Refer to [Breaking changes](#breaking-changes) below for more information.
+- The title must be formatted according to [Format the pull request title](#format-the-pull-request-title)
+- The description must include a breaking change notice if the change is labeled to be a breaking change. Refer to [Breaking changes](#breaking-changes) below for more information.
 
 Not complying with above rules can make the **Changelog Check** fail with validation errors.
 
