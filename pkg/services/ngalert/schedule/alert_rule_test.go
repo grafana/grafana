@@ -20,6 +20,7 @@ import (
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	definitions "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	models "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -240,10 +241,27 @@ func TestAlertRule(t *testing.T) {
 
 		wg.Wait()
 	})
+
+	t.Run("Run should exit if idle when Stop is called", func(t *testing.T) {
+		rule := blankRuleForTests(context.Background())
+		runResult := make(chan error)
+		go func() {
+			runResult <- rule.Run(models.AlertRuleKey{})
+		}()
+
+		rule.Stop(nil)
+
+		select {
+		case err := <-runResult:
+			require.NoError(t, err)
+		case <-time.After(5 * time.Second):
+			t.Fatal("Run() never exited")
+		}
+	})
 }
 
 func blankRuleForTests(ctx context.Context) *alertRule {
-	return newAlertRule(context.Background(), nil, false, 0, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	return newAlertRule(context.Background(), nil, false, 0, nil, nil, nil, nil, nil, nil, log.NewNopLogger(), nil, nil, nil)
 }
 
 func TestRuleRoutine(t *testing.T) {

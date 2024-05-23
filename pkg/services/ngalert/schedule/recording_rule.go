@@ -73,7 +73,6 @@ func (r *recordingRule) Run(key ngmodels.AlertRuleKey) error {
 	logger := r.logger.FromContext(ctx)
 	logger.Debug("Recording rule routine started")
 
-	// nolint:gosimple
 	for {
 		select {
 		case eval, ok := <-r.evalCh:
@@ -81,6 +80,8 @@ func (r *recordingRule) Run(key ngmodels.AlertRuleKey) error {
 				logger.Debug("Evaluation channel has been closed. Exiting")
 				return nil
 			}
+			// TODO: No-op if feature toggle is not on!
+
 			// TODO: evalRunning shed inprogress?
 
 			r.doEvaluate(ctx, eval)

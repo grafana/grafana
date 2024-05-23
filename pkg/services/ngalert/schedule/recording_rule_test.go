@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/require"
@@ -78,7 +79,7 @@ func TestRecordingRule(t *testing.T) {
 		})
 	})
 
-	t.Run("should be thread-safe", func(t *testing.T) {
+	t.Run("eval should be thread-safe", func(t *testing.T) {
 		r := blankRecordingRuleForTests(context.Background())
 		wg := sync.WaitGroup{}
 		go func() {
@@ -119,8 +120,25 @@ func TestRecordingRule(t *testing.T) {
 
 		wg.Wait()
 	})
+
+	t.Run("Run should exit if idle when Stop is called", func(t *testing.T) {
+		rule := blankRecordingRuleForTests(context.Background())
+		runResult := make(chan error)
+		go func() {
+			runResult <- rule.Run(models.AlertRuleKey{})
+		}()
+
+		rule.Stop(nil)
+
+		select {
+		case err := <-runResult:
+			require.NoError(t, err)
+		case <-time.After(5 * time.Second):
+			t.Fatal("Run() never exited")
+		}
+	})
 }
 
 func blankRecordingRuleForTests(ctx context.Context) *recordingRule {
-	return newRecordingRule(context.Background(), 0, nil, nil, nil, nil)
+	return newRecordingRule(context.Background(), 0, nil, nil, log.NewNopLogger(), nil)
 }
