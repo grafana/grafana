@@ -188,7 +188,7 @@ export class KeybindingSrv {
   withFocusedPanel(fn: (panelId: number) => void) {
     return () => {
       const panelWithAttention = this.panelAttentionService.getPanelWithAttention();
-      if (panelWithAttention) {
+      if (panelWithAttention && typeof panelWithAttention === 'number') {
         fn(panelWithAttention);
         return;
       }
