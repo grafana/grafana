@@ -153,7 +153,7 @@ Arguably, there's not really any best practices around this process, but conside
 
 - Keep any references to issues that the pull request fixes, closes, or references. Doing this allows cross-reference between the commit and referenced issue or issues.
 
-Finalize the merge by clicking the `Confirm squash and merge` button.
+To finalize the merge, click the **Confirm squash and merge** button.
 
 ## After the merge
 
