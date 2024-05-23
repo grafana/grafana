@@ -295,6 +295,7 @@ func (s *store) GetResourcePermissions(ctx context.Context, orgID int64, query G
 	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
 		var err error
 		result, err = s.getResourcePermissions(sess, orgID, query)
+		// TODO: expand action sets here
 		return err
 	})
 
@@ -432,6 +433,7 @@ func (s *store) getResourcePermissions(sess *db.Session, orgID int64, query GetR
 	}
 
 	var result []accesscontrol.ResourcePermission
+	fmt.Printf("Query results: %v\n", queryResults)
 	users, teams, builtins := groupPermissionsByAssignment(queryResults)
 	for _, p := range users {
 		result = append(result, flatPermissionsToResourcePermissions(scope, p)...)
@@ -460,6 +462,9 @@ func groupPermissionsByAssignment(permissions []flatResourcePermission) (map[int
 			builtins[p.BuiltInRole] = append(builtins[p.BuiltInRole], p)
 		}
 	}
+	fmt.Printf("users: %v\n", users)
+	fmt.Printf("teams: %v\n", teams)
+	fmt.Printf("builtins: %v\n", builtins)
 
 	return users, teams, builtins
 }
@@ -498,6 +503,7 @@ func flatPermissionsToResourcePermission(scope string, permissions []flatResourc
 	actions := make([]string, 0, len(permissions))
 	for _, p := range permissions {
 		actions = append(actions, p.Action)
+		fmt.Printf("Action: %v\n", p.Action)
 	}
 
 	first := permissions[0]

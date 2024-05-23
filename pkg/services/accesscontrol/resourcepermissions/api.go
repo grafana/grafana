@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -130,6 +131,10 @@ type GetResourcePermissionsParams struct {
 // swagger:response getResourcePermissionsResponse
 type getResourcePermissionsResponse []resourcePermissionDTO
 
+var DashboardViewActions = []string{dashboards.ActionDashboardsRead}
+var DashboardEditActions = append(DashboardViewActions, []string{dashboards.ActionDashboardsWrite, dashboards.ActionDashboardsDelete}...)
+var DashboardAdminActions = append(DashboardEditActions, []string{dashboards.ActionDashboardsPermissionsRead, dashboards.ActionDashboardsPermissionsWrite}...)
+
 // swagger:route GET /access-control/{resource}/{resourceID} access_control getResourcePermissions
 //
 // Get permissions for a resource.
@@ -154,10 +159,16 @@ func (a *api) getPermissions(c *contextmodel.ReqContext) response.Response {
 			BuiltInRole: string(org.RoleAdmin),
 		})
 	}
+	fmt.Printf("Permissions: %v\n", permissions)
 
 	dto := make(getResourcePermissionsResponse, 0, len(permissions))
 	for _, p := range permissions {
 		if permission := a.service.MapActions(p); permission != "" {
+			fmt.Printf("Permission: %v\n", permission)
+			fmt.Printf("p: %v\n", p)
+			if p.BuiltInRole == string(org.RoleViewer) {
+				fmt.Printf("DashboardViewActions: %v\n", DashboardViewActions)
+			}
 			teamAvatarUrl := ""
 			if p.TeamId != 0 {
 				teamAvatarUrl = dtos.GetGravatarUrlWithDefault(a.cfg, p.TeamEmail, p.Team)

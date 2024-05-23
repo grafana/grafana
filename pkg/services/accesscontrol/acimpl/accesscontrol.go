@@ -3,6 +3,7 @@ package acimpl
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -51,6 +52,7 @@ func (a *AccessControl) Evaluate(ctx context.Context, user identity.Requester, e
 	if a.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
 		evaluator = evaluator.AppendActionSets(ctx, a.resolvers.GetActionSetResolver())
 	}
+	fmt.Printf("Evaluating permissions: %v\n", permissions)
 
 	a.debug(ctx, user, "Evaluating permissions", evaluator)
 	// Test evaluation without scope resolver first, this will prevent 403 for wildcard scopes when resource does not exist
