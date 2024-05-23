@@ -141,7 +141,7 @@ The best time to actually merge the pull request varies from case to case. All c
 
 You can change the commit message before merging. Please remember that developers might use the commit information for tasks like reviewing changes of files, doing Git blame, and resolving merge conflicts. 
 
-Arguably, there's not really any best practices around this process, but consider the following items:
+While there aren't formal best practices around this process, you can consider the following guidance:
 
 **Do:**
 
