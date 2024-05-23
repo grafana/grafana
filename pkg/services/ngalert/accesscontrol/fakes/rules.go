@@ -21,6 +21,7 @@ type FakeRuleService struct {
 	AuthorizeDatasourceAccessForRuleGroupFunc func(context.Context, identity.Requester, models.RulesGroup) error
 	HasAccessToRuleGroupFunc                  func(context.Context, identity.Requester, models.RulesGroup) (bool, error)
 	AuthorizeAccessToRuleGroupFunc            func(context.Context, identity.Requester, models.RulesGroup) error
+	AuthorizeAccessToRuleFunc                 func(context.Context, identity.Requester, *models.AlertRule) error
 	AuthorizeRuleChangesFunc                  func(context.Context, identity.Requester, *store.GroupDelta) error
 
 	Calls []Call
@@ -70,6 +71,14 @@ func (s *FakeRuleService) AuthorizeAccessToRuleGroup(ctx context.Context, user i
 	s.Calls = append(s.Calls, Call{"AuthorizeRuleGroupRead", []interface{}{ctx, user, rules}})
 	if s.AuthorizeAccessToRuleGroupFunc != nil {
 		return s.AuthorizeAccessToRuleGroupFunc(ctx, user, rules)
+	}
+	return nil
+}
+
+func (s *FakeRuleService) AuthorizeAccessToRule(ctx context.Context, user identity.Requester, rule *models.AlertRule) error {
+	s.Calls = append(s.Calls, Call{"AuthorizeAccessToRule", []interface{}{ctx, user, rule}})
+	if s.AuthorizeAccessToRuleFunc != nil {
+		return s.AuthorizeAccessToRuleFunc(ctx, user, rule)
 	}
 	return nil
 }

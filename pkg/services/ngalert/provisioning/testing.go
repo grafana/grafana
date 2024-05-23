@@ -160,6 +160,7 @@ type fakeRuleAccessControlService struct {
 	mu                             sync.Mutex
 	Calls                          []call
 	AuthorizeAccessToRuleGroupFunc func(ctx context.Context, user identity.Requester, rules models.RulesGroup) error
+	AuthorizeAccessToRuleFunc      func(ctx context.Context, user identity.Requester, rule *models.AlertRule) error
 	AuthorizeRuleChangesFunc       func(ctx context.Context, user identity.Requester, change *store.GroupDelta) error
 	CanReadAllRulesFunc            func(ctx context.Context, user identity.Requester) (bool, error)
 	CanWriteAllRulesFunc           func(ctx context.Context, user identity.Requester) (bool, error)
@@ -181,6 +182,14 @@ func (s *fakeRuleAccessControlService) AuthorizeRuleGroupRead(ctx context.Contex
 	s.RecordCall("AuthorizeRuleGroupRead", ctx, user, rules)
 	if s.AuthorizeAccessToRuleGroupFunc != nil {
 		return s.AuthorizeAccessToRuleGroupFunc(ctx, user, rules)
+	}
+	return nil
+}
+
+func (s *fakeRuleAccessControlService) AuthorizeRuleRead(ctx context.Context, user identity.Requester, rule *models.AlertRule) error {
+	s.RecordCall("AuthorizeRuleRead", ctx, user, rule)
+	if s.AuthorizeAccessToRuleFunc != nil {
+		return s.AuthorizeAccessToRuleFunc(ctx, user, rule)
 	}
 	return nil
 }

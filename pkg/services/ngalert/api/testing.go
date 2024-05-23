@@ -146,6 +146,10 @@ func (f fakeRuleAccessControlService) AuthorizeAccessToRuleGroup(ctx context.Con
 	return nil
 }
 
+func (f fakeRuleAccessControlService) AuthorizeAccessToRule(ctx context.Context, user identity.Requester, rule *models.AlertRule) error {
+	return nil
+}
+
 func (f fakeRuleAccessControlService) AuthorizeRuleChanges(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
 	return nil
 }

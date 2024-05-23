@@ -96,7 +96,7 @@ func (r *RuleService) AuthorizeDatasourceAccessForRuleGroup(ctx context.Context,
 	})
 }
 
-// AuthorizeAccessToRuleGroup checks that the identity.Requester has permissions to all rules, which means that it has permissions to:
+// HasAccessToRuleGroup checks that the identity.Requester has permissions to all rules, which means that it has permissions to:
 // - ("folders:read") read folders which contain the rules
 // - ("alert.rules:read") read alert rules in the folders
 // Returns false if the requester does not have enough permissions, and error if something went wrong during the permission evaluation.
@@ -108,7 +108,7 @@ func (r *RuleService) HasAccessToRuleGroup(ctx context.Context, user identity.Re
 // AuthorizeAccessToRuleGroup checks that the identity.Requester has permissions to all rules, which means that it has permissions to:
 // - ("folders:read") read folders which contain the rules
 // - ("alert.rules:read") read alert rules in the folders
-// Returns error if at least one permissions is missing or if something went wrong during the permission evaluation
+// Returns error if at least one permission is missing or if something went wrong during the permission evaluation
 func (r *RuleService) AuthorizeAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) error {
 	eval := r.getRulesReadEvaluator(rules...)
 	return r.HasAccessOrError(ctx, user, eval, func() string {
@@ -118,6 +118,26 @@ func (r *RuleService) AuthorizeAccessToRuleGroup(ctx context.Context, user ident
 			folderUID = rules[0].NamespaceUID
 		}
 		return fmt.Sprintf("access rule group '%s' in folder '%s'", groupName, folderUID)
+	})
+}
+
+// HasAccessToRule checks that the identity.Requester has permissions to the given rule, which means that it has permissions to:
+// - ("folders:read") read the folder which contains the rule
+// - ("alert.rules:read") read alert rules in the folder
+// Returns false if the requester does not have enough permissions, and error if something went wrong during the permission evaluation.
+func (r *RuleService) HasAccessToRule(ctx context.Context, user identity.Requester, rule *models.AlertRule) (bool, error) {
+	eval := r.getRulesReadEvaluator(rule)
+	return r.HasAccess(ctx, user, eval)
+}
+
+// AuthorizeAccessToRule checks that the identity.Requester has permissions to the given rule, which means that it has permissions to:
+// - ("folders:read") read the folder which contains the rule
+// - ("alert.rules:read") read alert rules in the folder
+// Returns error if at least one permission is missing or if something went wrong during the permission evaluation
+func (r *RuleService) AuthorizeAccessToRule(ctx context.Context, user identity.Requester, rule *models.AlertRule) error {
+	eval := r.getRulesReadEvaluator(rule)
+	return r.HasAccessOrError(ctx, user, eval, func() string {
+		return fmt.Sprintf("access rule '%s' in folder '%s'", rule.Title, rule.NamespaceUID)
 	})
 }
 
