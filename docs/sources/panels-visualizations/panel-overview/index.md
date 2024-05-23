@@ -100,7 +100,6 @@ To configure panels, refer to the following subtopics:
 - [Configure panel options][]
 - [Configure standard options][]
 - [Configure a legend][legend]
-- [Configure tooltips][tooltips]
 - [Configure data links][]
 - [Configure value mappings][]
 - [Configure thresholds][]
@@ -128,8 +127,6 @@ To configure panels, refer to the following subtopics:
 [panel links]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/manage-dashboard-links#panel-links"
 [panel links]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/build-dashboards/manage-dashboard-links#panel-links"
 
-[tooltips]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-tooltips"
-[tooltips]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-tooltips"
 
 [legend]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-legend"
 [legend]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-legend"
