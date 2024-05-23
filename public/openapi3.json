@@ -1178,7 +1178,7 @@
                   "type": "string"
                 },
                 "settings": {
-                  "additionalProperties": false,
+                  "additionalProperties": {},
                   "type": "object"
                 },
                 "source": {
@@ -1458,7 +1458,7 @@
                     "type": "string"
                   },
                   "settings": {
-                    "additionalProperties": false,
+                    "additionalProperties": {},
                     "type": "object"
                   },
                   "source": {
@@ -2481,7 +2481,7 @@
             "type": "string"
           },
           "model": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "type": "object"
           },
           "queryType": {
@@ -3771,15 +3771,15 @@
       "CookiePreferences": {
         "properties": {
           "analytics": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "type": "object"
           },
           "functional": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "type": "object"
           },
           "performance": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "type": "object"
           }
         },
@@ -3841,7 +3841,7 @@
             "type": "string"
           },
           "target": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "description": "Target data query",
             "example": {
               "prop1": "value1",
@@ -3874,7 +3874,7 @@
             "type": "string"
           },
           "target": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "description": "Target data query",
             "example": {
               "prop1": "value1",
@@ -5174,12 +5174,12 @@
       "FieldConfig": {
         "properties": {
           "color": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "description": "Map values to a display color\nNOTE: this interface is under development in the frontend... so simple map for now",
             "type": "object"
           },
           "custom": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "description": "Panel Specific Values",
             "type": "object"
           },
@@ -8488,7 +8488,7 @@
         "description": "PublicError is derived from Error and only contains information\navailable to the end user.",
         "properties": {
           "extra": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "type": "object"
           },
           "message": {
@@ -8669,12 +8669,12 @@
         "description": "The embedded FieldConfig's display name must be set.\nIt corresponds to the QueryResultMetaStat on the frontend (https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/types/data.ts#L53).",
         "properties": {
           "color": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "description": "Map values to a display color\nNOTE: this interface is under development in the frontend... so simple map for now",
             "type": "object"
           },
           "custom": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "description": "Panel Specific Values",
             "type": "object"
           },
@@ -8931,7 +8931,7 @@
           },
           "queries": {
             "items": {
-              "additionalProperties": false,
+              "additionalProperties": {},
               "type": "object"
             },
             "type": "array"
@@ -11080,7 +11080,7 @@
         "description": "Unstructured allows objects that do not have Golang structs registered to be manipulated\ngenerically.",
         "properties": {
           "Object": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "description": "Object is a JSON compatible map with string, float, int, bool, []interface{},\nor map[string]interface{} children.",
             "type": "object"
           }
@@ -12308,7 +12308,7 @@
         "description": "PublicError is derived from Error and only contains information\navailable to the end user.",
         "properties": {
           "extra": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "description": "Extra Additional information about the error",
             "type": "object"
           },
@@ -25158,7 +25158,7 @@
                     "type": "string"
                   },
                   "settings": {
-                    "additionalProperties": false,
+                    "additionalProperties": {},
                     "type": "object"
                   }
                 },

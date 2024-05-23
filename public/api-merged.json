@@ -11412,7 +11412,7 @@
                 },
                 "settings": {
                   "type": "object",
-                  "additionalProperties": false
+                  "additionalProperties": {}
                 }
               }
             }
@@ -11963,7 +11963,7 @@
         },
         "model": {
           "type": "object",
-          "additionalProperties": false
+          "additionalProperties": {}
         },
         "queryType": {
           "type": "string"
@@ -13253,15 +13253,15 @@
       "properties": {
         "analytics": {
           "type": "object",
-          "additionalProperties": false
+          "additionalProperties": {}
         },
         "functional": {
           "type": "object",
-          "additionalProperties": false
+          "additionalProperties": {}
         },
         "performance": {
           "type": "object",
-          "additionalProperties": false
+          "additionalProperties": {}
         }
       }
     },
@@ -13328,7 +13328,7 @@
         "target": {
           "description": "Target data query",
           "type": "object",
-          "additionalProperties": false,
+          "additionalProperties": {},
           "example": {
             "prop1": "value1",
             "prop2": "value"
@@ -13356,7 +13356,7 @@
         "target": {
           "description": "Target data query",
           "type": "object",
-          "additionalProperties": false,
+          "additionalProperties": {},
           "example": {
             "prop1": "value1",
             "prop2": "value"
@@ -14657,12 +14657,12 @@
         "color": {
           "description": "Map values to a display color\nNOTE: this interface is under development in the frontend... so simple map for now",
           "type": "object",
-          "additionalProperties": false
+          "additionalProperties": {}
         },
         "custom": {
           "description": "Panel Specific Values",
           "type": "object",
-          "additionalProperties": false
+          "additionalProperties": {}
         },
         "decimals": {
           "type": "integer",
@@ -17969,7 +17969,7 @@
       "properties": {
         "extra": {
           "type": "object",
-          "additionalProperties": false
+          "additionalProperties": {}
         },
         "message": {
           "type": "string"
@@ -18152,12 +18152,12 @@
         "color": {
           "description": "Map values to a display color\nNOTE: this interface is under development in the frontend... so simple map for now",
           "type": "object",
-          "additionalProperties": false
+          "additionalProperties": {}
         },
         "custom": {
           "description": "Panel Specific Values",
           "type": "object",
-          "additionalProperties": false
+          "additionalProperties": {}
         },
         "decimals": {
           "type": "integer",
@@ -18413,7 +18413,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "additionalProperties": false
+            "additionalProperties": {}
           }
         },
         "range": {
@@ -20563,7 +20563,7 @@
         "Object": {
           "description": "Object is a JSON compatible map with string, float, int, bool, []interface{},\nor map[string]interface{} children.",
           "type": "object",
-          "additionalProperties": false
+          "additionalProperties": {}
         }
       }
     },
@@ -21795,7 +21795,7 @@
         "extra": {
           "description": "Extra Additional information about the error",
           "type": "object",
-          "additionalProperties": false
+          "additionalProperties": {}
         },
         "message": {
           "description": "Message A human readable message",
@@ -22809,7 +22809,7 @@
           },
           "settings": {
             "type": "object",
-            "additionalProperties": false
+            "additionalProperties": {}
           },
           "source": {
             "type": "string"
@@ -23010,7 +23010,7 @@
             },
             "settings": {
               "type": "object",
-              "additionalProperties": false
+              "additionalProperties": {}
             },
             "source": {
               "type": "string"
