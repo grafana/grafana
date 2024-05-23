@@ -1,6 +1,12 @@
+import { AppEvents } from '@grafana/data';
+import appEvents from 'app/core/app_events';
 import { Silence, SilenceCreatePayload } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertingApi } from './alertingApi';
+
+export type SilenceCreatedResponse = {
+  silenceId: string;
+};
 
 export const alertSilencesApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
@@ -33,9 +39,7 @@ export const alertSilencesApi = alertingApi.injectEndpoints({
     }),
 
     createSilence: build.mutation<
-      {
-        silenceId: string;
-      },
+      SilenceCreatedResponse,
       {
         datasourceUid: string;
         payload: SilenceCreatePayload;
@@ -47,6 +51,14 @@ export const alertSilencesApi = alertingApi.injectEndpoints({
         data: payload,
       }),
       invalidatesTags: ['AlertmanagerSilences', 'AlertmanagerAlerts'],
+      onQueryStarted: async (arg, { queryFulfilled }) => {
+        try {
+          await queryFulfilled;
+          appEvents.emit(AppEvents.alertSuccess, ['Silence created']);
+        } catch (error) {
+          appEvents.emit(AppEvents.alertError, ['Could not create silence']);
+        }
+      },
     }),
 
     expireSilence: build.mutation<

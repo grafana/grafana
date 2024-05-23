@@ -78,9 +78,9 @@ type keySetJWKS struct {
 	jose.JSONWebKeySet
 }
 
-func NewAzureADProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) *SocialAzureAD {
+func NewAzureADProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) *SocialAzureAD {
 	provider := &SocialAzureAD{
-		SocialBase:           newSocialBase(social.AzureADProviderName, info, features, cfg),
+		SocialBase:           newSocialBase(social.AzureADProviderName, orgRoleMapper, info, features, cfg),
 		cache:                cache,
 		allowedOrganizations: util.SplitString(info.Extra[allowedOrganizationsKey]),
 		forceUseGraphAPI:     MustBool(info.Extra[forceUseGraphAPIKey], ExtraAzureADSettingKeys[forceUseGraphAPIKey].DefaultValue.(bool)),
@@ -179,7 +179,7 @@ func (s *SocialAzureAD) Reload(ctx context.Context, settings ssoModels.SSOSettin
 	s.reloadMutex.Lock()
 	defer s.reloadMutex.Unlock()
 
-	s.updateInfo(social.AzureADProviderName, newInfo)
+	s.updateInfo(ctx, social.AzureADProviderName, newInfo)
 
 	if newInfo.UseRefreshToken {
 		appendUniqueScope(s.Config, social.OfflineAccessScope)
@@ -204,8 +204,7 @@ func (s *SocialAzureAD) Validate(ctx context.Context, settings ssoModels.SSOSett
 
 	return validation.Validate(info, requester,
 		validateAllowedGroups,
-		// FIXME: uncomment this after the Terraform provider is updated
-		//validation.MustBeEmptyValidator(info.ApiUrl, "API URL"),
+		validation.MustBeEmptyValidator(info.ApiUrl, "API URL"),
 		validation.RequiredUrlValidator(info.AuthUrl, "Auth URL"),
 		validation.RequiredUrlValidator(info.TokenUrl, "Token URL"))
 }

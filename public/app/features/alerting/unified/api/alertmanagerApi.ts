@@ -94,7 +94,7 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
 
     // this endpoint requires administrator privileges
     getGrafanaAlertingConfiguration: build.query<GrafanaAlertingConfiguration, void>({
-      query: () => ({ url: '/api/v1/ngalert/admin_config' }),
+      query: () => ({ url: '/api/v1/ngalert/admin_config', showErrorAlert: false }),
       providesTags: ['AlertingConfiguration'],
     }),
 

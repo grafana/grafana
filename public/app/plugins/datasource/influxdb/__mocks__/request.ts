@@ -19,6 +19,7 @@ export const mockInfluxQueryRequest = (targets?: QueryType[]): DataQueryRequest<
       from: dateTime(0),
       to: dateTime(10),
     },
+    filters: [{ key: 'adhoc_key', value: 'adhoc_val', operator: '=' }],
     requestId: '',
     scopedVars: {},
     startTime: 0,
