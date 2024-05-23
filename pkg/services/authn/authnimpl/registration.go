@@ -117,7 +117,12 @@ func ProvideRegistration(
 
 		_, exists := pluginRegistry.Plugin(context.Background(), cloudHomePluginId, "")
 		if exists {
-			authnSvc.RegisterPreLogoutHook(gcomsso.ProvideGComSSOService(pluginSettingsService).LogoutHook, 50)
+			ssoSvc, err := gcomsso.ProvideGComSSOService(cfg)
+			if err != nil {
+				logger.Error("Failed to register GCOM SSO logout hook", "err", err)
+			} else {
+				authnSvc.RegisterPreLogoutHook(ssoSvc.LogoutHook, 50)
+			}
 		}
 	}
 
