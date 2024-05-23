@@ -247,6 +247,10 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
       }
     }, [internalDate, onChange]);
 
+    const clearInternalDate = useCallback(() => {
+      setInternalDate({ value: '', invalid: false });
+    }, []);
+
     const icon = <Button aria-label="Time picker" icon="calendar-alt" variant="secondary" onClick={onOpen} />;
     return (
       <InlineField label={label} invalid={!!(internalDate.value && internalDate.invalid)} className={styles.field}>
@@ -263,7 +267,7 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
               <Icon
                 name="times"
                 className={cx(styles.clearIcon, { [styles.disabled]: !internalDate.value })}
-                onClick={() => setInternalDate({ value: '', invalid: false })}
+                onClick={clearInternalDate}
               />
             )
           }
