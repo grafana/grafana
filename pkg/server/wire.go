@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
 	"github.com/grafana/grafana/pkg/infra/usagestats/validator"
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/login/social/connectors"
 	"github.com/grafana/grafana/pkg/login/social/socialimpl"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
@@ -351,6 +352,9 @@ var wireBasicSet = wire.NewSet(
 	secretsMigrations.ProvideMigrateFromPluginService,
 	secretsMigrations.ProvideSecretMigrationProvider,
 	wire.Bind(new(secretsMigrations.SecretMigrationProvider), new(*secretsMigrations.SecretMigrationProviderImpl)),
+	resourcepermissions.NewActionSetService,
+	wire.Bind(new(accesscontrol.ActionResolver), new(*resourcepermissions.InMemoryActionSets)),
+	wire.Bind(new(resourcepermissions.ActionSetService), new(*resourcepermissions.InMemoryActionSets)),
 	acimpl.ProvideAccessControl,
 	navtreeimpl.ProvideService,
 	wire.Bind(new(accesscontrol.AccessControl), new(*acimpl.AccessControl)),
@@ -378,11 +382,11 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(auth.IDService), new(*idimpl.Service)),
 	cloudmigrationimpl.ProvideService,
 	userimpl.ProvideVerifier,
+	connectors.ProvideOrgRoleMapper,
 	wire.Bind(new(user.Verifier), new(*userimpl.Verifier)),
 	// Kubernetes API server
 	grafanaapiserver.WireSet,
 	apiregistry.WireSet,
-	resourcepermissions.NewActionSetService,
 )
 
 var wireSet = wire.NewSet(

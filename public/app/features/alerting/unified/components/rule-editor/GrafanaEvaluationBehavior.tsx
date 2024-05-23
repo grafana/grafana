@@ -208,7 +208,7 @@ function getDescription() {
   const docsLink = 'https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/rule-evaluation/';
 
   return (
-    <Stack direction="row" gap={0.5} alignItems="baseline">
+    <Stack direction="row" gap={0.5} alignItems="center">
       <Text variant="bodySmall" color="secondary">
         Define how the alert rule is evaluated.
       </Text>

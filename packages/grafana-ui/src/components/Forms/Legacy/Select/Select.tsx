@@ -9,7 +9,6 @@ import Creatable from 'react-select/creatable';
 import { SelectableValue, ThemeContext } from '@grafana/data';
 
 import { CustomScrollbar } from '../../../CustomScrollbar/CustomScrollbar';
-import { SelectOptionGroup } from '../../../Select/SelectOptionGroup';
 import { SingleValue } from '../../../Select/SingleValue';
 import resetSelectStyles from '../../../Select/resetSelectStyles';
 import { SelectCommonProps, SelectAsyncProps } from '../../../Select/types';
@@ -18,6 +17,7 @@ import { Tooltip, PopoverContent } from '../../../Tooltip';
 import IndicatorsContainer from './IndicatorsContainer';
 import NoOptionsMessage from './NoOptionsMessage';
 import { SelectOption } from './SelectOption';
+import { SelectOptionGroup } from './SelectOptionGroup';
 
 /**
  * Changes in new selects:
