@@ -123,6 +123,14 @@ const (
 	// SQL-based k8s storage
 	FlagUnifiedStorage = "unifiedStorage"
 
+	// FlagDualWritePlaylistsMode2
+	// Enables dual writing of playlists to both legacy and k8s storage in mode 2
+	FlagDualWritePlaylistsMode2 = "dualWritePlaylistsMode2"
+
+	// FlagDualWritePlaylistsMode3
+	// Enables dual writing of playlists to both legacy and k8s storage in mode 3
+	FlagDualWritePlaylistsMode3 = "dualWritePlaylistsMode3"
+
 	// FlagCloudWatchCrossAccountQuerying
 	// Enables cross-account querying in CloudWatch datasources
 	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"
@@ -259,10 +267,6 @@ const (
 	// Enables the plugins frontend sandbox
 	FlagPluginsFrontendSandbox = "pluginsFrontendSandbox"
 
-	// FlagDashboardEmbed
-	// Allow embedding dashboard for external use in Code editors
-	FlagDashboardEmbed = "dashboardEmbed"
-
 	// FlagFrontendSandboxMonitorOnly
 	// Enables monitor only in the plugin frontend sandbox (if enabled)
 	FlagFrontendSandboxMonitorOnly = "frontendSandboxMonitorOnly"
@@ -320,7 +324,7 @@ const (
 	FlagGrafanaAPIServerEnsureKubectlAccess = "grafanaAPIServerEnsureKubectlAccess"
 
 	// FlagFeatureToggleAdminPage
-	// Enable admin page for managing feature toggles from the Grafana front-end
+	// Enable admin page for managing feature toggles from the Grafana front-end. Grafana Cloud only.
 	FlagFeatureToggleAdminPage = "featureToggleAdminPage"
 
 	// FlagAwsAsyncQueryCaching
@@ -419,9 +423,17 @@ const (
 	// Routes snapshot requests from /api to the /apis endpoint
 	FlagKubernetesSnapshots = "kubernetesSnapshots"
 
-	// FlagKubernetesQueryServiceRewrite
+	// FlagQueryService
+	// Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query
+	FlagQueryService = "queryService"
+
+	// FlagQueryServiceRewrite
 	// Rewrite requests targeting /ds/query to the query service
-	FlagKubernetesQueryServiceRewrite = "kubernetesQueryServiceRewrite"
+	FlagQueryServiceRewrite = "queryServiceRewrite"
+
+	// FlagQueryServiceFromUI
+	// Routes requests to the new query service
+	FlagQueryServiceFromUI = "queryServiceFromUI"
 
 	// FlagCloudWatchBatchQueries
 	// Runs CloudWatch metrics queries as separate batches
@@ -599,6 +611,10 @@ const (
 	// New implementation for the dashboard-to-PDF rendering
 	FlagNewPDFRendering = "newPDFRendering"
 
+	// FlagTlsMemcached
+	// Use TLS-enabled memcached in the enterprise caching feature
+	FlagTlsMemcached = "tlsMemcached"
+
 	// FlagKubernetesAggregator
 	// Enable grafana aggregator
 	FlagKubernetesAggregator = "kubernetesAggregator"
@@ -646,4 +662,40 @@ const (
 	// FlagDisableNumericMetricsSortingInExpressions
 	// In server-side expressions, disable the sorting of numeric-kind metrics by their metric name or labels.
 	FlagDisableNumericMetricsSortingInExpressions = "disableNumericMetricsSortingInExpressions"
+
+	// FlagGrafanaManagedRecordingRules
+	// Enables Grafana-managed recording rules.
+	FlagGrafanaManagedRecordingRules = "grafanaManagedRecordingRules"
+
+	// FlagQueryLibrary
+	// Enables Query Library feature in Explore
+	FlagQueryLibrary = "queryLibrary"
+
+	// FlagAutofixDSUID
+	// Automatically migrates invalid datasource UIDs
+	FlagAutofixDSUID = "autofixDSUID"
+
+	// FlagLogsExploreTableDefaultVisualization
+	// Sets the logs table as default visualisation in logs explore
+	FlagLogsExploreTableDefaultVisualization = "logsExploreTableDefaultVisualization"
+
+	// FlagNewDashboardSharingComponent
+	// Enables the new sharing drawer design
+	FlagNewDashboardSharingComponent = "newDashboardSharingComponent"
+
+	// FlagNotificationBanner
+	// Enables the notification banner UI and API
+	FlagNotificationBanner = "notificationBanner"
+
+	// FlagDashboardRestore
+	// Enables deleted dashboard restore feature
+	FlagDashboardRestore = "dashboardRestore"
+
+	// FlagDatasourceProxyDisableRBAC
+	// Disables applying a plugin route&#39;s ReqAction field to authorization
+	FlagDatasourceProxyDisableRBAC = "datasourceProxyDisableRBAC"
+
+	// FlagAlertingDisableSendAlertsExternal
+	// Disables the ability to send alerts to an external Alertmanager datasource.
+	FlagAlertingDisableSendAlertsExternal = "alertingDisableSendAlertsExternal"
 )

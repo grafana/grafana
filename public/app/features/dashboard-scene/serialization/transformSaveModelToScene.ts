@@ -30,7 +30,6 @@ import {
   AdHocFiltersVariable,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { trackDashboardLoaded } from 'app/features/dashboard/utils/tracking';
 import { DashboardDTO } from 'app/types';
 
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
@@ -46,7 +45,6 @@ import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavio
 import { PanelNotices } from '../scene/PanelNotices';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
-import { hoverHeaderOffsetBehavior } from '../scene/hoverHeaderOffsetBehavior';
 import { RowActions } from '../scene/row-actions/RowActions';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
@@ -177,13 +175,7 @@ function createRowFromPanelModel(row: PanelModel, content: SceneGridItemLike[]):
 
   if (row.repeat) {
     // For repeated rows the children are stored in the behavior
-    children = [];
-    behaviors = [
-      new RowRepeaterBehavior({
-        variableName: row.repeat,
-        sources: content,
-      }),
-    ];
+    behaviors = [new RowRepeaterBehavior({ variableName: row.repeat })];
   }
 
   return new SceneGridRow({
@@ -284,7 +276,6 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       }),
       new behaviors.SceneQueryController(),
       registerDashboardMacro,
-      registerDashboardSceneTracking(oldModel),
       registerPanelInteractionsReporter,
       new behaviors.LiveNowTimer({ enabled: oldModel.liveNow }),
     ],
@@ -321,6 +312,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       filters: variable.filters ?? [],
       baseFilters: variable.baseFilters ?? [],
       defaultKeys: variable.defaultKeys,
+      useQueriesAsFilterForOptions: true,
     });
   }
   if (variable.type === 'custom') {
@@ -392,9 +384,20 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       hide: variable.hide,
     });
   } else if (variable.type === 'textbox') {
+    let val;
+    if (!variable?.current?.value) {
+      val = variable.query;
+    } else {
+      if (typeof variable.current.value === 'string') {
+        val = variable.current.value;
+      } else {
+        val = variable.current.value[0];
+      }
+    }
+
     return new TextBoxVariable({
       ...commonProperties,
-      value: variable?.current?.value?.[0] ?? variable.query,
+      value: val,
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
     });
@@ -468,7 +471,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     displayMode: panel.transparent ? 'transparent' : undefined,
     // To be replaced with it's own option persited option instead derived
     hoverHeader: !panel.title && !panel.timeFrom && !panel.timeShift,
-    hoverHeaderOffset: (panel.gridPos?.y ?? 0) === 0 ? 0 : undefined,
+    hoverHeaderOffset: 0,
     $data: createPanelDataProvider(panel),
     titleItems,
 
@@ -502,20 +505,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     body,
     maxPerRow: panel.maxPerRow,
     ...repeatOptions,
-    $behaviors: [hoverHeaderOffsetBehavior],
   });
-}
-
-function registerDashboardSceneTracking(model: DashboardModel) {
-  return () => {
-    const unsetDashboardInteractionsScenesContext = DashboardInteractions.setScenesContext();
-
-    trackDashboardLoaded(model, model.version);
-
-    return () => {
-      unsetDashboardInteractionsScenesContext();
-    };
-  };
 }
 
 function registerPanelInteractionsReporter(scene: DashboardScene) {

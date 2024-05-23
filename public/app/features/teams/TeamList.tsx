@@ -19,10 +19,9 @@ import {
   TextLink,
   useStyles2,
 } from '@grafana/ui';
-import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
-import { t } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Role, StoreState, Team } from 'app/types';
 
@@ -208,24 +207,31 @@ export const TeamList = ({
     <Page
       navId="teams"
       actions={
-        <LinkButton href={canCreate ? 'org/teams/new' : '#'} disabled={!canCreate}>
-          New Team
-        </LinkButton>
+        !noTeams ? (
+          <LinkButton href={canCreate ? 'org/teams/new' : '#'} disabled={!canCreate}>
+            New Team
+          </LinkButton>
+        ) : undefined
       }
     >
       <Page.Contents>
         {noTeams ? (
-          <EmptyListCTA
-            title="You haven't created any teams yet."
-            buttonIcon="users-alt"
-            buttonLink="org/teams/new"
-            buttonTitle=" New team"
-            buttonDisabled={!contextSrv.hasPermission(AccessControlAction.ActionTeamsCreate)}
-            proTip="Assign folder and dashboard permissions to teams instead of users to ease administration."
-            proTipLink=""
-            proTipLinkTitle=""
-            proTipTarget="_blank"
-          />
+          <EmptyState
+            variant="call-to-action"
+            button={
+              <LinkButton disabled={!canCreate} href="org/teams/new" icon="users-alt" size="lg">
+                <Trans i18nKey="teams.empty-state.button-title">New team</Trans>
+              </LinkButton>
+            }
+            message={t('teams.empty-state.title', "You haven't created any teams yet")}
+          >
+            <Trans i18nKey="teams.empty-state.pro-tip">
+              Assign folder and dashboard permissions to teams instead of users to ease administration.{' '}
+              <TextLink external href="https://grafana.com/docs/grafana/latest/administration/team-management">
+                Learn more
+              </TextLink>
+            </Trans>
+          </EmptyState>
         ) : (
           <>
             <div className="page-action-bar">

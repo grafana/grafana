@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -27,93 +28,20 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestIntegrationUserGet(t *testing.T) {
-	testCases := []struct {
-		name        string
-		wantErr     error
-		searchLogin string
-		searchEmail string
-	}{
-		{
-			name:        "user found non exact",
-			wantErr:     nil,
-			searchLogin: "test",
-			searchEmail: "Test@email.com",
-		},
-		{
-			name:        "user found exact",
-			wantErr:     nil,
-			searchLogin: "test",
-			searchEmail: "test@email.com",
-		},
-		{
-			name:        "user found exact - case insensitive",
-			wantErr:     nil,
-			searchLogin: "Test",
-			searchEmail: "Test@email.com",
-		},
-		{
-			name:        "user not found - case insensitive",
-			wantErr:     user.ErrUserNotFound,
-			searchLogin: "Test_login",
-			searchEmail: "Test*@email.com",
-		},
-	}
-
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
-	ss := db.InitTestDB(t)
-	cfg := ss.Cfg
-	userStore := ProvideStore(ss, cfg)
-
-	_, errUser := userStore.Insert(context.Background(),
-		&user.User{
-			Email:   "test@email.com",
-			Name:    "test",
-			Login:   "test",
-			Created: time.Now(),
-			Updated: time.Now(),
-		},
-	)
-	require.NoError(t, errUser)
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			if db.IsTestDbMySQL() {
-				t.Skip("mysql is always case insensitive")
-			}
-			usr, err := userStore.Get(context.Background(),
-				&user.User{
-					Email: tc.searchEmail,
-					Login: tc.searchLogin,
-				},
-			)
-
-			if tc.wantErr != nil {
-				require.Error(t, err)
-				require.Nil(t, usr)
-			} else {
-				require.NoError(t, err)
-				require.NotNil(t, usr)
-				require.NotEmpty(t, usr.UID)
-			}
-		})
-	}
-}
-
 func TestIntegrationUserDataAccess(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 
-	ss := db.InitTestDB(t)
-	quotaService := quotaimpl.ProvideService(ss, ss.Cfg)
-	orgService, err := orgimpl.ProvideService(ss, ss.Cfg, quotaService)
+	ss, cfg := db.InitTestDBWithCfg(t)
+	quotaService := quotaimpl.ProvideService(ss, cfg)
+	orgService, err := orgimpl.ProvideService(ss, cfg, quotaService)
 	require.NoError(t, err)
 	userStore := ProvideStore(ss, setting.NewCfg())
-	usrSvc, err := ProvideService(ss, orgService, ss.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
+	usrSvc, err := ProvideService(
+		ss, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		quotaService, supportbundlestest.NewFakeBundleService(),
+	)
 	require.NoError(t, err)
 	usr := &user.SignedInUser{
 		OrgID:       1,
@@ -121,12 +49,8 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	}
 
 	t.Run("user not found", func(t *testing.T) {
-		_, err := userStore.Get(context.Background(),
-			&user.User{
-				Email: "test@email.com",
-				Name:  "test1",
-				Login: "test1",
-			},
+		_, err := userStore.GetByEmail(context.Background(),
+			&user.GetUserByEmailQuery{Email: "test@email.com"},
 		)
 		require.Error(t, err, user.ErrUserNotFound)
 	})
@@ -140,6 +64,13 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 				Created: time.Now(),
 				Updated: time.Now(),
 			},
+		)
+		require.NoError(t, err)
+	})
+
+	t.Run("get user", func(t *testing.T) {
+		_, err := userStore.GetByEmail(context.Background(),
+			&user.GetUserByEmailQuery{Email: "test@email.com"},
 		)
 		require.NoError(t, err)
 	})
@@ -170,20 +101,9 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.Equal(t, "abcd", siu.UserUID)
 	})
 
-	t.Run("get user", func(t *testing.T) {
-		_, err := userStore.Get(context.Background(),
-			&user.User{
-				Email: "test@email.com",
-				Name:  "test1",
-				Login: "test1",
-			},
-		)
-		require.NoError(t, err)
-	})
-
 	t.Run("Testing DB - creates and loads user", func(t *testing.T) {
 		ss := db.InitTestDB(t)
-		_, usrSvc := createOrgAndUserSvc(t, ss, ss.Cfg)
+		_, usrSvc := createOrgAndUserSvc(t, ss, cfg)
 
 		cmd := user.CreateUserCommand{
 			Email: "usertest@test.com",
@@ -345,37 +265,6 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			return nil
 		})
 		require.NoError(t, err)
-
-		t.Run("GetByEmail - email conflict", func(t *testing.T) {
-			query := user.GetUserByEmailQuery{Email: "confusertest@test.com"}
-			_, err = userStore.GetByEmail(context.Background(), &query)
-			require.Error(t, err)
-		})
-
-		t.Run("GetByEmail - login conflict", func(t *testing.T) {
-			query := user.GetUserByEmailQuery{Email: "user_test_login_conflict@test.com"}
-			_, err = userStore.GetByEmail(context.Background(), &query)
-			require.Error(t, err)
-		})
-
-		t.Run("GetByLogin - email conflict", func(t *testing.T) {
-			query := user.GetUserByLoginQuery{LoginOrEmail: "user_email_conflict_two"}
-			_, err = userStore.GetByLogin(context.Background(), &query)
-			require.Error(t, err)
-		})
-
-		t.Run("GetByLogin - login conflict", func(t *testing.T) {
-			query := user.GetUserByLoginQuery{LoginOrEmail: "user_test_login_conflict"}
-			_, err = userStore.GetByLogin(context.Background(), &query)
-			require.Error(t, err)
-		})
-
-		t.Run("GetByLogin - login conflict by email", func(t *testing.T) {
-			query := user.GetUserByLoginQuery{LoginOrEmail: "user_test_login_conflict@test.com"}
-			_, err = userStore.GetByLogin(context.Background(), &query)
-			require.Error(t, err)
-		})
-
 		t.Run("GetByLogin - user2 uses user1.email as login", func(t *testing.T) {
 			// create user_1
 			user1 := &user.User{
@@ -460,7 +349,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 	t.Run("get signed in user", func(t *testing.T) {
 		ss := db.InitTestDB(t)
-		orgService, usrSvc := createOrgAndUserSvc(t, ss, ss.Cfg)
+		orgService, usrSvc := createOrgAndUserSvc(t, ss, cfg)
 		users := createFiveTestUsers(t, usrSvc, func(i int) *user.CreateUserCommand {
 			return &user.CreateUserCommand{
 				Email:      fmt.Sprint("user", i, "@test.com"),
@@ -490,18 +379,9 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		}
 	})
 
-	t.Run("update user", func(t *testing.T) {
-		err := userStore.UpdateUser(context.Background(), &user.User{ID: 1, Name: "testtestest", Login: "loginloginlogin"})
-		require.NoError(t, err)
-		result, err := userStore.GetByID(context.Background(), 1)
-		require.NoError(t, err)
-		assert.Equal(t, result.Name, "testtestest")
-		assert.Equal(t, result.Login, "loginloginlogin")
-	})
-
 	t.Run("Testing DB - grafana admin users", func(t *testing.T) {
 		ss := db.InitTestDB(t)
-		_, usrSvc := createOrgAndUserSvc(t, ss, ss.Cfg)
+		_, usrSvc := createOrgAndUserSvc(t, ss, cfg)
 		usr, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{
 			Email:   "admin@test.com",
 			Name:    "admin",
@@ -515,7 +395,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			UserID:         usr.ID,
 			IsGrafanaAdmin: boolPtr(false),
 		})
-		require.ErrorIs(t, user.ErrLastGrafanaAdmin, err)
+		require.ErrorIs(t, err, user.ErrLastGrafanaAdmin)
 
 		usr, err = userStore.GetByID(context.Background(), usr.ID)
 		require.NoError(t, err)
@@ -550,15 +430,34 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("SetHelpFlag", func(t *testing.T) {
-		err := userStore.SetHelpFlag(context.Background(), &user.SetUserHelpFlagCommand{UserID: 1, HelpFlags1: user.HelpFlags1(1)})
+	t.Run("Update HelpFlags", func(t *testing.T) {
+		id, err := userStore.Insert(context.Background(), &user.User{
+			Email:      "help@test.com",
+			Name:       "help",
+			Login:      "help",
+			Updated:    time.Now(),
+			Created:    time.Now(),
+			LastSeenAt: time.Now(),
+		})
 		require.NoError(t, err)
+		original, err := userStore.GetByID(context.Background(), id)
+		require.NoError(t, err)
+
+		helpflags := user.HelpFlags1(1)
+		err = userStore.Update(context.Background(), &user.UpdateUserCommand{UserID: id, HelpFlags1: &helpflags})
+		require.NoError(t, err)
+
+		got, err := userStore.GetByID(context.Background(), id)
+		require.NoError(t, err)
+
+		original.HelpFlags1 = helpflags
+		assertEqualUser(t, original, got)
 	})
 
 	t.Run("Testing DB - return list users based on their is_disabled flag", func(t *testing.T) {
 		ss = db.InitTestDB(t)
-		_, usrSvc := createOrgAndUserSvc(t, ss, ss.Cfg)
-		userStore := ProvideStore(ss, ss.Cfg)
+		_, usrSvc := createOrgAndUserSvc(t, ss, cfg)
+		userStore := ProvideStore(ss, cfg)
 
 		createFiveTestUsers(t, usrSvc, func(i int) *user.CreateUserCommand {
 			return &user.CreateUserCommand{
@@ -591,7 +490,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 		// Re-init DB
 		ss := db.InitTestDB(t)
-		orgService, usrSvc = createOrgAndUserSvc(t, ss, ss.Cfg)
+		orgService, usrSvc = createOrgAndUserSvc(t, ss, cfg)
 
 		users := createFiveTestUsers(t, usrSvc, func(i int) *user.CreateUserCommand {
 			return &user.CreateUserCommand{
@@ -615,7 +514,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		// A user is an org member and has been assigned permissions
 		// Re-init DB
 		ss = db.InitTestDB(t)
-		orgService, usrSvc = createOrgAndUserSvc(t, ss, ss.Cfg)
+		orgService, usrSvc = createOrgAndUserSvc(t, ss, cfg)
 		users = createFiveTestUsers(t, usrSvc, func(i int) *user.CreateUserCommand {
 			return &user.CreateUserCommand{
 				Email:      fmt.Sprint("user", i, "@test.com"),
@@ -657,9 +556,12 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 	t.Run("Testing DB - return list of users that the SignedInUser has permission to read", func(t *testing.T) {
 		ss := db.InitTestDB(t)
-		orgService, err := orgimpl.ProvideService(ss, ss.Cfg, quotaService)
+		orgService, err := orgimpl.ProvideService(ss, cfg, quotaService)
 		require.NoError(t, err)
-		usrSvc, err := ProvideService(ss, orgService, ss.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
+		usrSvc, err := ProvideService(
+			ss, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+			quotaService, supportbundlestest.NewFakeBundleService(),
+		)
 		require.NoError(t, err)
 
 		createFiveTestUsers(t, usrSvc, func(i int) *user.CreateUserCommand {
@@ -934,9 +836,9 @@ func TestIntegrationUserUpdate(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	ss := db.InitTestDB(t)
-	userStore := ProvideStore(ss, setting.NewCfg())
-	_, usrSvc := createOrgAndUserSvc(t, ss, ss.Cfg)
+	ss, cfg := db.InitTestDBWithCfg(t)
+	userStore := ProvideStore(ss, cfg)
+	_, usrSvc := createOrgAndUserSvc(t, ss, cfg)
 
 	users := createFiveTestUsers(t, usrSvc, func(i int) *user.CreateUserCommand {
 		return &user.CreateUserCommand{
@@ -999,13 +901,13 @@ func createFiveTestUsers(t *testing.T, svc user.Service, fn func(i int) *user.Cr
 }
 
 func TestMetricsUsage(t *testing.T) {
-	ss := db.InitTestDB(t)
+	ss, cfg := db.InitTestDBWithCfg(t)
 	userStore := ProvideStore(ss, setting.NewCfg())
-	quotaService := quotaimpl.ProvideService(ss, ss.Cfg)
-	orgService, err := orgimpl.ProvideService(ss, ss.Cfg, quotaService)
+	quotaService := quotaimpl.ProvideService(ss, cfg)
+	orgService, err := orgimpl.ProvideService(ss, cfg, quotaService)
 	require.NoError(t, err)
 
-	_, usrSvc := createOrgAndUserSvc(t, ss, ss.Cfg)
+	_, usrSvc := createOrgAndUserSvc(t, ss, cfg)
 
 	t.Run("Get empty role metrics for an org", func(t *testing.T) {
 		orgId := int64(1)
@@ -1045,13 +947,28 @@ func TestMetricsUsage(t *testing.T) {
 	})
 }
 
+func assertEqualUser(t *testing.T, expected, got *user.User) {
+	// zero out time fields
+	expected.Updated = time.Time{}
+	expected.Created = time.Time{}
+	expected.LastSeenAt = time.Time{}
+	got.Updated = time.Time{}
+	got.Created = time.Time{}
+	got.LastSeenAt = time.Time{}
+
+	assert.Equal(t, expected, got)
+}
+
 func createOrgAndUserSvc(t *testing.T, store db.DB, cfg *setting.Cfg) (org.Service, user.Service) {
 	t.Helper()
 
 	quotaService := quotaimpl.ProvideService(store, cfg)
 	orgService, err := orgimpl.ProvideService(store, cfg, quotaService)
 	require.NoError(t, err)
-	usrSvc, err := ProvideService(store, orgService, cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
+	usrSvc, err := ProvideService(
+		store, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		quotaService, supportbundlestest.NewFakeBundleService(),
+	)
 	require.NoError(t, err)
 
 	return orgService, usrSvc

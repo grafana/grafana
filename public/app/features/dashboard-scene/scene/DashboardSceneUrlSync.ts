@@ -51,9 +51,13 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
 
       // If we are not in editing (for example after full page reload)
       if (!isEditing) {
-        // Not sure what is best to do here.
-        // The reason for the timeout is for this change to happen after the url sync has completed
-        setTimeout(() => this._scene.onEnterEditMode());
+        if (this._scene.state.editable) {
+          // Not sure what is best to do here.
+          // The reason for the timeout is for this change to happen after the url sync has completed
+          setTimeout(() => this._scene.onEnterEditMode());
+        } else {
+          update.editview = undefined;
+        }
       }
     } else if (values.hasOwnProperty('editview')) {
       update.editview = undefined;
@@ -123,6 +127,11 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       if (!panel) {
         console.warn(`Panel ${values.editPanel} not found`);
         return;
+      }
+
+      // We cannot simultaneously be in edit and view panel state.
+      if (this._scene.state.viewPanelScene) {
+        this._scene.setState({ viewPanelScene: undefined });
       }
 
       // If we are not in editing (for example after full page reload)

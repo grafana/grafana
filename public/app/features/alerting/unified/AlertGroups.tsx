@@ -21,14 +21,12 @@ import { getFiltersFromUrlParams } from './utils/misc';
 import { initialAsyncRequestState } from './utils/redux';
 
 const AlertGroups = () => {
-  const { useGetAlertmanagerChoiceStatusQuery } = alertmanagerApi;
-
   const { selectedAlertmanager } = useAlertmanager();
   const dispatch = useDispatch();
   const [queryParams] = useQueryParams();
   const { groupBy = [] } = getFiltersFromUrlParams(queryParams);
 
-  const { currentData: amConfigStatus } = useGetAlertmanagerChoiceStatusQuery();
+  const { currentData: amConfigStatus } = alertmanagerApi.endpoints.getGrafanaAlertingConfigurationStatus.useQuery();
 
   const alertGroups = useUnifiedAlertingSelector((state) => state.amAlertGroups);
   const { loading, error, result: results = [] } = alertGroups[selectedAlertmanager || ''] ?? initialAsyncRequestState;

@@ -465,7 +465,7 @@ func setup(t *testing.T) *testContext {
 	dc := &fakeDataSourceCache{cache: dss}
 	rv := &fakePluginRequestValidator{}
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore, cfg := db.InitTestDBWithCfg(t)
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	ss := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	fakeDatasourceService := &fakeDatasources.FakeDataSourceService{
@@ -473,7 +473,7 @@ func setup(t *testing.T) *testContext {
 		SimulatePluginFailure: false,
 	}
 
-	pCtxProvider := plugincontext.ProvideService(sqlStore.Cfg,
+	pCtxProvider := plugincontext.ProvideService(cfg,
 		localcache.ProvideService(), &pluginstore.FakePluginStore{
 			PluginList: []pluginstore.Plugin{
 				{JSONData: plugins.JSONData{ID: "postgres"}},

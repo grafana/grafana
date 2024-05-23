@@ -47,6 +47,8 @@ export interface FeatureToggles {
   returnToPrevious?: boolean;
   grpcServer?: boolean;
   unifiedStorage?: boolean;
+  dualWritePlaylistsMode2?: boolean;
+  dualWritePlaylistsMode3?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
@@ -81,7 +83,6 @@ export interface FeatureToggles {
   extraThemes?: boolean;
   lokiPredefinedOperations?: boolean;
   pluginsFrontendSandbox?: boolean;
-  dashboardEmbed?: boolean;
   frontendSandboxMonitorOnly?: boolean;
   sqlDatasourceDatabaseSelection?: boolean;
   lokiFormatQuery?: boolean;
@@ -121,7 +122,9 @@ export interface FeatureToggles {
   transformationsVariableSupport?: boolean;
   kubernetesPlaylists?: boolean;
   kubernetesSnapshots?: boolean;
-  kubernetesQueryServiceRewrite?: boolean;
+  queryService?: boolean;
+  queryServiceRewrite?: boolean;
+  queryServiceFromUI?: boolean;
   cloudWatchBatchQueries?: boolean;
   recoveryThreshold?: boolean;
   lokiStructuredMetadata?: boolean;
@@ -166,6 +169,7 @@ export interface FeatureToggles {
   nodeGraphDotLayout?: boolean;
   groupToNestedTableTransformation?: boolean;
   newPDFRendering?: boolean;
+  tlsMemcached?: boolean;
   kubernetesAggregator?: boolean;
   expressionParser?: boolean;
   groupByVariable?: boolean;
@@ -178,4 +182,13 @@ export interface FeatureToggles {
   cloudWatchNewLabelParsing?: boolean;
   accessActionSets?: boolean;
   disableNumericMetricsSortingInExpressions?: boolean;
+  grafanaManagedRecordingRules?: boolean;
+  queryLibrary?: boolean;
+  autofixDSUID?: boolean;
+  logsExploreTableDefaultVisualization?: boolean;
+  newDashboardSharingComponent?: boolean;
+  notificationBanner?: boolean;
+  dashboardRestore?: boolean;
+  datasourceProxyDisableRBAC?: boolean;
+  alertingDisableSendAlertsExternal?: boolean;
 }

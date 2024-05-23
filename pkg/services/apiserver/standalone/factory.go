@@ -35,7 +35,7 @@ type APIServerFactory interface {
 	GetEnabled(runtime []RuntimeConfig) ([]schema.GroupVersion, error)
 
 	// Make an API server for a given group+version
-	MakeAPIServer(tracer tracing.Tracer, gv schema.GroupVersion) (builder.APIGroupBuilder, error)
+	MakeAPIServer(ctx context.Context, tracer tracing.Tracer, gv schema.GroupVersion) (builder.APIGroupBuilder, error)
 }
 
 // Zero dependency provider for testing
@@ -67,7 +67,7 @@ func (p *DummyAPIFactory) ApplyTo(config *genericapiserver.RecommendedConfig) er
 	return nil
 }
 
-func (p *DummyAPIFactory) MakeAPIServer(tracer tracing.Tracer, gv schema.GroupVersion) (builder.APIGroupBuilder, error) {
+func (p *DummyAPIFactory) MakeAPIServer(_ context.Context, tracer tracing.Tracer, gv schema.GroupVersion) (builder.APIGroupBuilder, error) {
 	if gv.Version != "v0alpha1" {
 		return nil, fmt.Errorf("only alpha supported now")
 	}

@@ -33,8 +33,7 @@ func TestIntegrationWillRunInstrumentationServerWhenTargetHasNoHttpServer(t *tes
 		t.Skip("skipping - sqlite not supported for storage server target")
 	}
 
-	testdb := db.InitTestDB(t)
-	cfg := testdb.Cfg
+	_, cfg := db.InitTestDBWithCfg(t)
 	cfg.GRPCServerNetwork = "tcp"
 	cfg.GRPCServerAddress = "localhost:10000"
 	addStorageServerToConfig(t, cfg, dbType)

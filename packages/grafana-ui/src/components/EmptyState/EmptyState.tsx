@@ -1,6 +1,10 @@
-import React, { ReactNode } from 'react';
+import { css } from '@emotion/css';
+import React, { AriaRole, ReactNode } from 'react';
 import SVG from 'react-inlinesvg';
 
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { useStyles2 } from '../../themes';
 import { Box } from '../Layout/Box/Box';
 import { Stack } from '../Layout/Stack/Stack';
 import { Text } from '../Text/Text';
@@ -27,6 +31,10 @@ interface Props {
    * Which variant to use. Affects the default image shown.
    */
   variant: 'call-to-action' | 'not-found' | 'completed';
+  /**
+   * Use to set `alert` when needed. See documentation for the use case
+   */
+  role?: AriaRole;
 }
 
 export const EmptyState = ({
@@ -36,23 +44,27 @@ export const EmptyState = ({
   message,
   hideImage = false,
   variant,
+  role,
 }: React.PropsWithChildren<Props>) => {
+  const styles = useStyles2(getStyles);
   const imageToShow = image ?? getDefaultImageForVariant(variant);
 
   return (
-    <Box paddingY={4} gap={4} display="flex" direction="column" alignItems="center">
-      {!hideImage && imageToShow}
-      <Stack direction="column" alignItems="center">
-        <Text variant="h4" textAlignment="center">
-          {message}
-        </Text>
-        {children && (
-          <Text color="secondary" textAlignment="center">
-            {children}
+    <Box paddingY={4} display="flex" direction="column" alignItems="center" role={role}>
+      <div className={styles.container}>
+        {!hideImage && imageToShow}
+        <Stack direction="column" alignItems="center">
+          <Text variant="h4" textAlignment="center">
+            {message}
           </Text>
-        )}
-      </Stack>
-      {button}
+          {children && (
+            <Text color="secondary" textAlignment="center">
+              {children}
+            </Text>
+          )}
+        </Stack>
+        {button}
+      </div>
     </Box>
   );
 };
@@ -73,3 +85,13 @@ function getDefaultImageForVariant(variant: Props['variant']) {
     }
   }
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  container: css({
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: theme.spacing(4),
+    maxWidth: '600px',
+  }),
+});

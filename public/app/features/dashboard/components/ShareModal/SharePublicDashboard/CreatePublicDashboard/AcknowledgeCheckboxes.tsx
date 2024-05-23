@@ -110,7 +110,7 @@ export const AcknowledgeCheckboxes = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  title: css`
-    font-weight: ${theme.typography.fontWeightBold};
-  `,
+  title: css({
+    fontWeight: theme.typography.fontWeightBold,
+  }),
 });

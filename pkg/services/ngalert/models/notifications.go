@@ -81,11 +81,11 @@ func (s *NotificationSettings) Validate() error {
 	if s.GroupWait != nil && *s.GroupWait < 0 {
 		return errors.New("group wait must be a positive duration")
 	}
-	if s.GroupInterval != nil && *s.GroupInterval < 0 {
-		return errors.New("group interval must be a positive duration")
+	if s.GroupInterval != nil && *s.GroupInterval <= 0 {
+		return errors.New("group interval must be greater than zero")
 	}
-	if s.RepeatInterval != nil && *s.RepeatInterval < 0 {
-		return errors.New("repeat interval must be a positive duration")
+	if s.RepeatInterval != nil && *s.RepeatInterval <= 0 {
+		return errors.New("repeat interval must be greater than zero")
 	}
 	return nil
 }
