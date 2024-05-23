@@ -24,6 +24,8 @@ refs:
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#disable_sanitize_html
   variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/dashboards/variables/variable-syntax/
 ---
@@ -48,7 +50,11 @@ Use a text visualization when you need to:
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Mode
+## Text options
+
+Use the following options to refine your text visualization.
+
+### Mode
 
 **Mode** determines how embedded content appears.
 
