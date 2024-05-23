@@ -63,6 +63,17 @@ func TestFilterByAccess(t *testing.T) {
 			expectedDbAccess: false,
 		},
 		{
+			name: "silence wildcard should get all",
+			user: newUser(ac.Permission{Action: silenceRead, Scope: dashboards.ScopeFoldersProvider.GetResourceAllScope()}),
+			expected: []*models.Silence{
+				global,
+				ruleSilence1,
+				ruleSilence2,
+				notFoundRule,
+			},
+			expectedDbAccess: false,
+		},
+		{
 			name: "silence reader should get global + folder",
 			user: newUser(ac.Permission{Action: silenceRead, Scope: folder1Scope}),
 			expected: []*models.Silence{
@@ -136,6 +147,13 @@ func TestAuthorizeReadSilence(t *testing.T) {
 		{
 			name:             "instance reader can read any silence",
 			user:             newUser(ac.Permission{Action: instancesRead}),
+			silence:          []*models.Silence{global, ruleSilence1, notFoundRule},
+			expectedErr:      nil,
+			expectedDbAccess: false,
+		},
+		{
+			name:             "silence wildcard reader can read any silence",
+			user:             newUser(ac.Permission{Action: silenceRead, Scope: dashboards.ScopeFoldersProvider.GetResourceAllScope()}),
 			silence:          []*models.Silence{global, ruleSilence1, notFoundRule},
 			expectedErr:      nil,
 			expectedDbAccess: false,
@@ -239,6 +257,11 @@ func TestAuthorizeCreateSilence(t *testing.T) {
 			expectedErr: ErrAuthorizationBase,
 		},
 		{
+			name:        "no create access, silence wildcard reader",
+			user:        newUser(ac.Permission{Action: silenceRead, Scope: dashboards.ScopeFoldersProvider.GetResourceAllScope()}),
+			expectedErr: ErrAuthorizationBase,
+		},
+		{
 			name:        "no create access, silence reader",
 			user:        newUser(ac.Permission{Action: silenceRead, Scope: folder1Scope}, ac.Permission{Action: silenceRead, Scope: folder2Scope}),
 			expectedErr: ErrAuthorizationBase,
@@ -256,6 +279,11 @@ func TestAuthorizeCreateSilence(t *testing.T) {
 		{
 			name:        "instance read + create can do everything",
 			user:        newUser(ac.Permission{Action: instancesCreate}, ac.Permission{Action: instancesRead}),
+			expectedErr: nil,
+		},
+		{
+			name:        "silence wildcard read + instance create can do everything",
+			user:        newUser(ac.Permission{Action: instancesCreate}, ac.Permission{Action: silenceRead, Scope: dashboards.ScopeFoldersProvider.GetResourceAllScope()}),
 			expectedErr: nil,
 		},
 		{
@@ -280,6 +308,22 @@ func TestAuthorizeCreateSilence(t *testing.T) {
 			overrides: map[*models.Silence]override{
 				global: {
 					expectedErr:      nil,
+					expectedDbAccess: false,
+				},
+				ruleSilence1: {
+					expectedErr:      nil,
+					expectedDbAccess: true,
+				},
+			},
+			expectedErr:      ErrAuthorizationBase,
+			expectedDbAccess: true,
+		},
+		{
+			name: "silence read + silence wildcard create",
+			user: newUser(ac.Permission{Action: silenceRead, Scope: folder1Scope}, ac.Permission{Action: silenceCreate, Scope: dashboards.ScopeFoldersProvider.GetResourceAllScope()}),
+			overrides: map[*models.Silence]override{
+				global: {
+					expectedErr:      ErrAuthorizationBase,
 					expectedDbAccess: false,
 				},
 				ruleSilence1: {
@@ -384,6 +428,11 @@ func TestAuthorizeUpdateSilence(t *testing.T) {
 			expectedErr: ErrAuthorizationBase,
 		},
 		{
+			name:        "no write access, silence wildcard reader",
+			user:        newUser(ac.Permission{Action: silenceRead, Scope: dashboards.ScopeFoldersProvider.GetResourceAllScope()}),
+			expectedErr: ErrAuthorizationBase,
+		},
+		{
 			name:        "no write access, silence reader",
 			user:        newUser(ac.Permission{Action: silenceRead, Scope: folder1Scope}, ac.Permission{Action: silenceRead, Scope: folder2Scope}),
 			expectedErr: ErrAuthorizationBase,
@@ -401,6 +450,11 @@ func TestAuthorizeUpdateSilence(t *testing.T) {
 		{
 			name:        "instance read + write can do everything",
 			user:        newUser(ac.Permission{Action: instancesWrite}, ac.Permission{Action: instancesRead}),
+			expectedErr: nil,
+		},
+		{
+			name:        "silence wildcard read + instance write can do everything",
+			user:        newUser(ac.Permission{Action: instancesWrite}, ac.Permission{Action: silenceRead, Scope: dashboards.ScopeFoldersProvider.GetResourceAllScope()}),
 			expectedErr: nil,
 		},
 		{
@@ -425,6 +479,22 @@ func TestAuthorizeUpdateSilence(t *testing.T) {
 			overrides: map[*models.Silence]override{
 				global: {
 					expectedErr:      nil,
+					expectedDbAccess: false,
+				},
+				ruleSilence1: {
+					expectedErr:      nil,
+					expectedDbAccess: true,
+				},
+			},
+			expectedErr:      ErrAuthorizationBase,
+			expectedDbAccess: true,
+		},
+		{
+			name: "silence read + silence wildcard write",
+			user: newUser(ac.Permission{Action: silenceRead, Scope: folder1Scope}, ac.Permission{Action: silenceWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceAllScope()}),
+			overrides: map[*models.Silence]override{
+				global: {
+					expectedErr:      ErrAuthorizationBase,
 					expectedDbAccess: false,
 				},
 				ruleSilence1: {

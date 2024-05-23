@@ -23,7 +23,7 @@ const (
 
 var (
 	// asserts full read-only access to silences
-	readAllSilencesEvaluator = ac.EvalPermission(instancesRead)
+	readAllSilencesEvaluator = ac.EvalAny(ac.EvalPermission(instancesRead), ac.EvalPermission(silenceRead, dashboards.ScopeFoldersProvider.GetResourceAllScope()))
 	// shortcut assertion that to check if user can read silences
 	readSomeSilenceEvaluator = ac.EvalAny(ac.EvalPermission(instancesRead), ac.EvalPermission(silenceRead))
 	// asserts whether user has read access to rules in a specific folder
