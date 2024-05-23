@@ -124,7 +124,7 @@ If your pull request fixes a critical bug and needs to be backported, add it to 
 
 #### Required labels
 
-We aim to ensure that we don't backport pull requests unnecessarily (for example, when we implement new features). The only scenarios for backporting are typically pull requests that address bugs, have a product approval, or refer to documentation changes.
+We aim to ensure that we don't backport pull requests unnecessarily. The only scenarios for backporting are typically pull requests that address bugs, have a product approval, or refer to documentation changes.
 
 Backport labels need to be followed by either:
 
