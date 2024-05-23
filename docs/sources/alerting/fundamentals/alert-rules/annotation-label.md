@@ -21,6 +21,11 @@ labels:
 title: Labels and annotations
 weight: 105
 refs:
+  alert-instances:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals#alert-instances
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals#alert-instances
   create-alerts-from-panel:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule#create-alerts-from-panels
@@ -57,7 +62,7 @@ Labels and annotations add additional information about an alert using key/value
 
 ## Labels
 
-**Labels** are unique identifiers of an alert instance. You can use them for searching, silencing, and routing notifications.
+**Labels** are unique identifiers of an [alert instance](ref:alert-instances). You can use them for searching, silencing, and routing notifications.
 
 Examples of labels are `server=server1` or `team=backend`. Each alert rule can have more than one label and the complete set of labels for an alert rule is called its label set. It is this label set that identifies the alert.
 
@@ -123,64 +128,15 @@ If multiple label keys are sanitized to the same value, the duplicates will have
 
 {{< /collapse >}}
 
-{{< collapse title="How label matching works" >}}
-
-Use labels and label matchers to link alert rules to [notification policies](ref:notification-policies) and [silences](ref:silences). This allows for a flexible way to manage your alert instances, specify which policy should handle them, and which alerts to silence.
-
-A label matchers consists of 3 distinct parts, the **label**, the **value** and the **operator**.
-
-- The **Label** field is the name of the label to match. It must exactly match the label name.
-
-- The **Value** field matches against the corresponding value for the specified **Label** name. How it matches depends on the **Operator** value.
-
-- The **Operator** field is the operator to match against the label value. The available operators are:
-
-  | Operator | Description                                        |
-  | -------- | -------------------------------------------------- |
-  | `=`      | Select labels that are exactly equal to the value. |
-  | `!=`     | Select labels that are not equal to the value.     |
-  | `=~`     | Select labels that regex-match the value.          |
-  | `!~`     | Select labels that do not regex-match the value.   |
-
-If you are using multiple label matchers, they are combined using the AND logical operator. This means that all matchers must match in order to link a rule to a policy.
-
-**Label matching example**
-
-If you define the following set of labels for your alert:
-
-`{ foo=bar, baz=qux, id=12 }`
-
-then:
-
-- A label matcher defined as `foo=bar` matches this alert rule.
-- A label matcher defined as `foo!=bar` does _not_ match this alert rule.
-- A label matcher defined as `id=~[0-9]+` matches this alert rule.
-- A label matcher defined as `baz!~[0-9]+` matches this alert rule.
-- Two label matchers defined as `foo=bar` and `id=~[0-9]+` match this alert rule.
-
-**Exclude labels**
-
-You can also write label matchers to exclude labels.
-
-Here is an example that shows how to exclude the label `Team`. You can choose between any of the values below to exclude labels.
-
-| Label  | Operator | Value |
-| ------ | -------- | ----- |
-| `team` | `=`      | `""`  |
-| `team` | `!~`     | `.+`  |
-| `team` | `=~`     | `^$`  |
-
-{{< /collapse >}}
-
 ## Annotations
 
 The purpose of annotations is to add additional information to alert instances, such as extra details for notification messages.
 
-Grafana provides several optional annotations that are used in the default notification messages and Grafana:
+Grafana provides several optional annotations that you can edit for use in notification messages and within Grafana:
 
 - `summary`: A short summary of what the alert has detected and why.
-- `description`: a detailed description of what happened and what the alert does.
-- `runbook_url`: the runbook page to guide operators managing the potential incident.
-- `dashboardUId` and `panelId`: link the alert to a dashboard and panel. Automatically set when [creating an alert from panels](ref:create-alerts-from-panel).
+- `description`: A detailed description of what happened and what the alert does.
+- `runbook_url`: The runbook page to guide operators managing a potential incident.
+- `dashboardUId` and `panelId`: Link the alert to a dashboard and panel. These are automatically set when [creating an alert from panels](ref:create-alerts-from-panel).
 
 Like labels, annotations can use a [template](ref:templates) to customize the label value and generate dynamic values when the rule is evaluated.
