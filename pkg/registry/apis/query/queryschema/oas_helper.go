@@ -1,6 +1,8 @@
 package queryschema
 
 import (
+	"fmt"
+
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
@@ -79,7 +81,20 @@ func removeSchemaRefs(s *spec.Schema) {
 	if s == nil {
 		return
 	}
-	s.Schema = ""
+	if s.Schema != "" {
+		fmt.Printf("remove: %s\n", s.Schema)
+		s.Schema = ""
+	}
+	// Examples is invalid -- only use the first example
+	examples, ok := s.ExtraProps["examples"]
+	if ok {
+		s.Example = examples
+		delete(s.ExtraProps, "examples")
+	}
+
+	if s.Description == "From is the start time of the query." {
+		fmt.Printf("FROM: %+v\n", s)
+	}
 
 	removeSchemaRefs(s.Not)
 	for idx := range s.AllOf {
@@ -94,6 +109,7 @@ func removeSchemaRefs(s *spec.Schema) {
 		s.Properties[k] = v
 	}
 	if s.Items != nil {
+		removeSchemaRefs(s.Items.Schema)
 		for idx := range s.Items.Schemas {
 			removeSchemaRefs(&s.Items.Schemas[idx])
 		}

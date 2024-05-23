@@ -17,19 +17,13 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList"
-                }
+                "schema": { "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList" }
               },
               "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList"
-                }
+                "schema": { "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList" }
               },
               "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList"
-                }
+                "schema": { "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList" }
               }
             }
           }
@@ -293,12 +287,7 @@
                     "from": "now-1h",
                     "to": "now",
                     "queries": [
-                      {
-                        "refId": "A",
-                        "maxDataPoints": 1000,
-                        "intervalMs": 5000,
-                        "scenarioId": "random_walk"
-                      }
+                      { "refId": "A", "maxDataPoints": 1000, "intervalMs": 5000, "scenarioId": "random_walk" }
                     ],
                     "debug": false
                   }
@@ -359,12 +348,7 @@
         "tags": ["DataSourceConnection"],
         "description": "connect GET requests to resource of DataSourceConnection",
         "operationId": "connectGetNamespacedDataSourceConnectionResource",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": { "*/*": { "schema": { "type": "string" } } }
-          }
-        },
+        "responses": { "200": { "description": "OK", "content": { "*/*": { "schema": { "type": "string" } } } } },
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "testdata.datasource.grafana.app",
@@ -376,12 +360,7 @@
         "tags": ["DataSourceConnection"],
         "description": "connect PUT requests to resource of DataSourceConnection",
         "operationId": "connectPutNamespacedDataSourceConnectionResource",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": { "*/*": { "schema": { "type": "string" } } }
-          }
-        },
+        "responses": { "200": { "description": "OK", "content": { "*/*": { "schema": { "type": "string" } } } } },
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "testdata.datasource.grafana.app",
@@ -393,12 +372,7 @@
         "tags": ["DataSourceConnection"],
         "description": "connect POST requests to resource of DataSourceConnection",
         "operationId": "connectPostNamespacedDataSourceConnectionResource",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": { "*/*": { "schema": { "type": "string" } } }
-          }
-        },
+        "responses": { "200": { "description": "OK", "content": { "*/*": { "schema": { "type": "string" } } } } },
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "testdata.datasource.grafana.app",
@@ -410,12 +384,7 @@
         "tags": ["DataSourceConnection"],
         "description": "connect DELETE requests to resource of DataSourceConnection",
         "operationId": "connectDeleteNamespacedDataSourceConnectionResource",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": { "*/*": { "schema": { "type": "string" } } }
-          }
-        },
+        "responses": { "200": { "description": "OK", "content": { "*/*": { "schema": { "type": "string" } } } } },
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "testdata.datasource.grafana.app",
@@ -427,12 +396,7 @@
         "tags": ["DataSourceConnection"],
         "description": "connect OPTIONS requests to resource of DataSourceConnection",
         "operationId": "connectOptionsNamespacedDataSourceConnectionResource",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": { "*/*": { "schema": { "type": "string" } } }
-          }
-        },
+        "responses": { "200": { "description": "OK", "content": { "*/*": { "schema": { "type": "string" } } } } },
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "testdata.datasource.grafana.app",
@@ -444,12 +408,7 @@
         "tags": ["DataSourceConnection"],
         "description": "connect HEAD requests to resource of DataSourceConnection",
         "operationId": "connectHeadNamespacedDataSourceConnectionResource",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": { "*/*": { "schema": { "type": "string" } } }
-          }
-        },
+        "responses": { "200": { "description": "OK", "content": { "*/*": { "schema": { "type": "string" } } } } },
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "testdata.datasource.grafana.app",
@@ -461,12 +420,7 @@
         "tags": ["DataSourceConnection"],
         "description": "connect PATCH requests to resource of DataSourceConnection",
         "operationId": "connectPatchNamespacedDataSourceConnectionResource",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": { "*/*": { "schema": { "type": "string" } } }
-          }
-        },
+        "responses": { "200": { "description": "OK", "content": { "*/*": { "schema": { "type": "string" } } } } },
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "testdata.datasource.grafana.app",
@@ -496,12 +450,7 @@
         "tags": ["DataSourceConnection"],
         "description": "connect GET requests to resource of DataSourceConnection",
         "operationId": "connectGetNamespacedDataSourceConnectionResourceWithPath",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": { "*/*": { "schema": { "type": "string" } } }
-          }
-        },
+        "responses": { "200": { "description": "OK", "content": { "*/*": { "schema": { "type": "string" } } } } },
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "testdata.datasource.grafana.app",
@@ -513,12 +462,7 @@
         "tags": ["DataSourceConnection"],
         "description": "connect PUT requests to resource of DataSourceConnection",
         "operationId": "connectPutNamespacedDataSourceConnectionResourceWithPath",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": { "*/*": { "schema": { "type": "string" } } }
-          }
-        },
+        "responses": { "200": { "description": "OK", "content": { "*/*": { "schema": { "type": "string" } } } } },
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "testdata.datasource.grafana.app",
@@ -530,12 +474,7 @@
         "tags": ["DataSourceConnection"],
         "description": "connect POST requests to resource of DataSourceConnection",
         "operationId": "connectPostNamespacedDataSourceConnectionResourceWithPath",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": { "*/*": { "schema": { "type": "string" } } }
-          }
-        },
+        "responses": { "200": { "description": "OK", "content": { "*/*": { "schema": { "type": "string" } } } } },
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "testdata.datasource.grafana.app",
@@ -547,12 +486,7 @@
         "tags": ["DataSourceConnection"],
         "description": "connect DELETE requests to resource of DataSourceConnection",
         "operationId": "connectDeleteNamespacedDataSourceConnectionResourceWithPath",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": { "*/*": { "schema": { "type": "string" } } }
-          }
-        },
+        "responses": { "200": { "description": "OK", "content": { "*/*": { "schema": { "type": "string" } } } } },
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "testdata.datasource.grafana.app",
@@ -564,12 +498,7 @@
         "tags": ["DataSourceConnection"],
         "description": "connect OPTIONS requests to resource of DataSourceConnection",
         "operationId": "connectOptionsNamespacedDataSourceConnectionResourceWithPath",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": { "*/*": { "schema": { "type": "string" } } }
-          }
-        },
+        "responses": { "200": { "description": "OK", "content": { "*/*": { "schema": { "type": "string" } } } } },
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "testdata.datasource.grafana.app",
@@ -581,12 +510,7 @@
         "tags": ["DataSourceConnection"],
         "description": "connect HEAD requests to resource of DataSourceConnection",
         "operationId": "connectHeadNamespacedDataSourceConnectionResourceWithPath",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": { "*/*": { "schema": { "type": "string" } } }
-          }
-        },
+        "responses": { "200": { "description": "OK", "content": { "*/*": { "schema": { "type": "string" } } } } },
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "testdata.datasource.grafana.app",
@@ -598,12 +522,7 @@
         "tags": ["DataSourceConnection"],
         "description": "connect PATCH requests to resource of DataSourceConnection",
         "operationId": "connectPatchNamespacedDataSourceConnectionResourceWithPath",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": { "*/*": { "schema": { "type": "string" } } }
-          }
-        },
+        "responses": { "200": { "description": "OK", "content": { "*/*": { "schema": { "type": "string" } } } } },
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "testdata.datasource.grafana.app",
@@ -769,10 +688,7 @@
               "type": "object",
               "properties": {
                 "alias": { "type": "string" },
-                "channel": {
-                  "description": "Used for live query",
-                  "type": "string"
-                },
+                "channel": { "description": "Used for live query", "type": "string" },
                 "csvContent": { "type": "string" },
                 "csvFileName": { "type": "string" },
                 "csvWave": {
@@ -810,11 +726,7 @@
                 "errorType": {
                   "description": "Possible enum values:\n - `\"frontend_exception\"` \n - `\"frontend_observable\"` \n - `\"server_panic\"` ",
                   "type": "string",
-                  "enum": [
-                    "frontend_exception",
-                    "frontend_observable",
-                    "server_panic"
-                  ],
+                  "enum": ["frontend_exception", "frontend_observable", "server_panic"],
                   "x-enum-description": {}
                 },
                 "flamegraphDiff": { "type": "boolean" },
@@ -843,13 +755,7 @@
                     "type": {
                       "description": "Possible enum values:\n - `\"random\"` \n - `\"random edges\"` \n - `\"response_medium\"` \n - `\"response_small\"` \n - `\"feature_showcase\"` ",
                       "type": "string",
-                      "enum": [
-                        "random",
-                        "random edges",
-                        "response_medium",
-                        "response_small",
-                        "feature_showcase"
-                      ],
+                      "enum": ["random", "random edges", "response_medium", "response_small", "feature_showcase"],
                       "x-enum-description": {}
                     }
                   },
@@ -882,10 +788,7 @@
                   "type": "object",
                   "required": ["typeVersion"],
                   "properties": {
-                    "maxFrames": {
-                      "description": "Maximum frame count",
-                      "type": "integer"
-                    },
+                    "maxFrames": { "description": "Maximum frame count", "type": "integer" },
                     "type": {
                       "description": "Type asserts that the frame matches a known type structure.\n\n\nPossible enum values:\n - `\"\"` \n - `\"timeseries-wide\"` \n - `\"timeseries-long\"` \n - `\"timeseries-many\"` \n - `\"timeseries-multi\"` \n - `\"directory-listing\"` \n - `\"table\"` \n - `\"numeric-wide\"` \n - `\"numeric-multi\"` \n - `\"numeric-long\"` \n - `\"log-lines\"` ",
                       "type": "string",
@@ -992,10 +895,7 @@
                   },
                   "additionalProperties": false
                 },
-                "stringInput": {
-                  "description": "common parameter used by many query types",
-                  "type": "string"
-                },
+                "stringInput": { "description": "common parameter used by many query types", "type": "string" },
                 "timeRange": {
                   "description": "TimeRange represents the query range\nNOTE: unlike generic /ds/query, we can now send explicit time values in each query\nNOTE: the values for timeRange are not saved in a dashboard, they are constructed on the fly",
                   "type": "object",
@@ -1019,10 +919,7 @@
                 "usa": {
                   "type": "object",
                   "properties": {
-                    "fields": {
-                      "type": "array",
-                      "items": { "type": "string" }
-                    },
+                    "fields": { "type": "array", "items": { "type": "string" } },
                     "mode": { "type": "string" },
                     "period": { "type": "string" },
                     "states": { "type": "array", "items": { "type": "string" } }
@@ -1031,8 +928,7 @@
                 },
                 "withNil": { "type": "boolean" }
               },
-              "additionalProperties": false,
-              "$schema": "https://json-schema.org/draft-04/schema#"
+              "additionalProperties": false
             }
           },
           "to": {
@@ -1056,10 +952,7 @@
             "type": "array",
             "items": { "type": "string" }
           },
-          "description": {
-            "description": "Describe whe the query type is for",
-            "type": "string"
-          },
+          "description": { "description": "Describe whe the query type is for", "type": "string" },
           "discriminators": {
             "description": "Multiple schemas can be defined using discriminators",
             "type": "array",
@@ -1071,10 +964,7 @@
                   "description": "DiscriminatorField is the field used to link behavior to this specific\nquery type.  It is typically \"queryType\", but can be another field if necessary",
                   "type": "string"
                 },
-                "value": {
-                  "description": "The discriminator value",
-                  "type": "string"
-                }
+                "value": { "description": "The discriminator value", "type": "string" }
               },
               "additionalProperties": false
             }
@@ -1085,14 +975,8 @@
             "items": {
               "type": "object",
               "properties": {
-                "description": {
-                  "description": "Optionally explain why the example is interesting",
-                  "type": "string"
-                },
-                "name": {
-                  "description": "Version identifier or empty if only one exists",
-                  "type": "string"
-                },
+                "description": { "description": "Optionally explain why the example is interesting", "type": "string" },
+                "name": { "description": "Version identifier or empty if only one exists", "type": "string" },
                 "saveModel": {
                   "description": "An example value saved that can be saved in a dashboard",
                   "type": "object",
@@ -1134,49 +1018,17 @@
           },
           "metadata": {
             "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
-              }
-            ]
+            "allOf": [{ "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta" }]
           },
-          "title": {
-            "description": "The display name",
-            "type": "string",
-            "default": ""
-          }
+          "title": { "description": "The display name", "type": "string", "default": "" }
         },
         "x-kubernetes-group-version-kind": [
-          {
-            "group": "graphite.datasource.grafana.app",
-            "kind": "DataSourceConnection",
-            "version": "__internal"
-          },
-          {
-            "group": "graphite.datasource.grafana.app",
-            "kind": "DataSourceConnection",
-            "version": "v0alpha1"
-          },
-          {
-            "group": "prometheus.datasource.grafana.app",
-            "kind": "DataSourceConnection",
-            "version": "__internal"
-          },
-          {
-            "group": "prometheus.datasource.grafana.app",
-            "kind": "DataSourceConnection",
-            "version": "v0alpha1"
-          },
-          {
-            "group": "testdata.datasource.grafana.app",
-            "kind": "DataSourceConnection",
-            "version": "__internal"
-          },
-          {
-            "group": "testdata.datasource.grafana.app",
-            "kind": "DataSourceConnection",
-            "version": "v0alpha1"
-          }
+          { "group": "graphite.datasource.grafana.app", "kind": "DataSourceConnection", "version": "__internal" },
+          { "group": "graphite.datasource.grafana.app", "kind": "DataSourceConnection", "version": "v0alpha1" },
+          { "group": "prometheus.datasource.grafana.app", "kind": "DataSourceConnection", "version": "__internal" },
+          { "group": "prometheus.datasource.grafana.app", "kind": "DataSourceConnection", "version": "v0alpha1" },
+          { "group": "testdata.datasource.grafana.app", "kind": "DataSourceConnection", "version": "__internal" },
+          { "group": "testdata.datasource.grafana.app", "kind": "DataSourceConnection", "version": "v0alpha1" }
         ]
       },
       "com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSourceConnectionList": {
@@ -1203,44 +1055,16 @@
           },
           "metadata": {
             "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
-              }
-            ]
+            "allOf": [{ "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta" }]
           }
         },
         "x-kubernetes-group-version-kind": [
-          {
-            "group": "graphite.datasource.grafana.app",
-            "kind": "DataSourceConnectionList",
-            "version": "__internal"
-          },
-          {
-            "group": "graphite.datasource.grafana.app",
-            "kind": "DataSourceConnectionList",
-            "version": "v0alpha1"
-          },
-          {
-            "group": "prometheus.datasource.grafana.app",
-            "kind": "DataSourceConnectionList",
-            "version": "__internal"
-          },
-          {
-            "group": "prometheus.datasource.grafana.app",
-            "kind": "DataSourceConnectionList",
-            "version": "v0alpha1"
-          },
-          {
-            "group": "testdata.datasource.grafana.app",
-            "kind": "DataSourceConnectionList",
-            "version": "__internal"
-          },
-          {
-            "group": "testdata.datasource.grafana.app",
-            "kind": "DataSourceConnectionList",
-            "version": "v0alpha1"
-          }
+          { "group": "graphite.datasource.grafana.app", "kind": "DataSourceConnectionList", "version": "__internal" },
+          { "group": "graphite.datasource.grafana.app", "kind": "DataSourceConnectionList", "version": "v0alpha1" },
+          { "group": "prometheus.datasource.grafana.app", "kind": "DataSourceConnectionList", "version": "__internal" },
+          { "group": "prometheus.datasource.grafana.app", "kind": "DataSourceConnectionList", "version": "v0alpha1" },
+          { "group": "testdata.datasource.grafana.app", "kind": "DataSourceConnectionList", "version": "__internal" },
+          { "group": "testdata.datasource.grafana.app", "kind": "DataSourceConnectionList", "version": "v0alpha1" }
         ]
       },
       "com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.HealthCheckResult": {
@@ -1250,11 +1074,7 @@
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
             "type": "string"
           },
-          "code": {
-            "description": "Explicit status code",
-            "type": "integer",
-            "format": "int32"
-          },
+          "code": { "description": "Explicit status code", "type": "integer", "format": "int32" },
           "details": {
             "description": "Spec depends on the plugin",
             "allOf": [
@@ -1267,46 +1087,16 @@
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
             "type": "string"
           },
-          "message": {
-            "description": "Optional description for the data source",
-            "type": "string"
-          },
-          "status": {
-            "description": "The string description",
-            "type": "string"
-          }
+          "message": { "description": "Optional description for the data source", "type": "string" },
+          "status": { "description": "The string description", "type": "string" }
         },
         "x-kubernetes-group-version-kind": [
-          {
-            "group": "graphite.datasource.grafana.app",
-            "kind": "HealthCheckResult",
-            "version": "__internal"
-          },
-          {
-            "group": "graphite.datasource.grafana.app",
-            "kind": "HealthCheckResult",
-            "version": "v0alpha1"
-          },
-          {
-            "group": "prometheus.datasource.grafana.app",
-            "kind": "HealthCheckResult",
-            "version": "__internal"
-          },
-          {
-            "group": "prometheus.datasource.grafana.app",
-            "kind": "HealthCheckResult",
-            "version": "v0alpha1"
-          },
-          {
-            "group": "testdata.datasource.grafana.app",
-            "kind": "HealthCheckResult",
-            "version": "__internal"
-          },
-          {
-            "group": "testdata.datasource.grafana.app",
-            "kind": "HealthCheckResult",
-            "version": "v0alpha1"
-          }
+          { "group": "graphite.datasource.grafana.app", "kind": "HealthCheckResult", "version": "__internal" },
+          { "group": "graphite.datasource.grafana.app", "kind": "HealthCheckResult", "version": "v0alpha1" },
+          { "group": "prometheus.datasource.grafana.app", "kind": "HealthCheckResult", "version": "__internal" },
+          { "group": "prometheus.datasource.grafana.app", "kind": "HealthCheckResult", "version": "v0alpha1" },
+          { "group": "testdata.datasource.grafana.app", "kind": "HealthCheckResult", "version": "__internal" },
+          { "group": "testdata.datasource.grafana.app", "kind": "HealthCheckResult", "version": "v0alpha1" }
         ]
       },
       "com.github.grafana.grafana.pkg.apis.query.v0alpha1.QueryDataResponse": {
@@ -1328,49 +1118,19 @@
             "additionalProperties": {
               "default": {},
               "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana-plugin-sdk-go.backend.DataResponse"
-                }
+                { "$ref": "#/components/schemas/com.github.grafana.grafana-plugin-sdk-go.backend.DataResponse" }
               ]
             }
           }
         },
         "x-kubernetes-group-version-kind": [
-          {
-            "group": "graphite.datasource.grafana.app",
-            "kind": "QueryDataResponse",
-            "version": "__internal"
-          },
-          {
-            "group": "graphite.datasource.grafana.app",
-            "kind": "QueryDataResponse",
-            "version": "v0alpha1"
-          },
-          {
-            "group": "prometheus.datasource.grafana.app",
-            "kind": "QueryDataResponse",
-            "version": "__internal"
-          },
-          {
-            "group": "prometheus.datasource.grafana.app",
-            "kind": "QueryDataResponse",
-            "version": "v0alpha1"
-          },
-          {
-            "group": "query.grafana.app",
-            "kind": "QueryDataResponse",
-            "version": "v0alpha1"
-          },
-          {
-            "group": "testdata.datasource.grafana.app",
-            "kind": "QueryDataResponse",
-            "version": "__internal"
-          },
-          {
-            "group": "testdata.datasource.grafana.app",
-            "kind": "QueryDataResponse",
-            "version": "v0alpha1"
-          }
+          { "group": "graphite.datasource.grafana.app", "kind": "QueryDataResponse", "version": "__internal" },
+          { "group": "graphite.datasource.grafana.app", "kind": "QueryDataResponse", "version": "v0alpha1" },
+          { "group": "prometheus.datasource.grafana.app", "kind": "QueryDataResponse", "version": "__internal" },
+          { "group": "prometheus.datasource.grafana.app", "kind": "QueryDataResponse", "version": "v0alpha1" },
+          { "group": "query.grafana.app", "kind": "QueryDataResponse", "version": "v0alpha1" },
+          { "group": "testdata.datasource.grafana.app", "kind": "QueryDataResponse", "version": "__internal" },
+          { "group": "testdata.datasource.grafana.app", "kind": "QueryDataResponse", "version": "v0alpha1" }
         ]
       },
       "com.github.grafana.grafana.pkg.apis.query.v0alpha1.QueryTypeDefinition": {
@@ -1387,11 +1147,7 @@
           },
           "metadata": {
             "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
-              }
-            ]
+            "allOf": [{ "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta" }]
           },
           "spec": {
             "default": {},
@@ -1403,41 +1159,13 @@
           }
         },
         "x-kubernetes-group-version-kind": [
-          {
-            "group": "graphite.datasource.grafana.app",
-            "kind": "QueryTypeDefinition",
-            "version": "__internal"
-          },
-          {
-            "group": "graphite.datasource.grafana.app",
-            "kind": "QueryTypeDefinition",
-            "version": "v0alpha1"
-          },
-          {
-            "group": "prometheus.datasource.grafana.app",
-            "kind": "QueryTypeDefinition",
-            "version": "__internal"
-          },
-          {
-            "group": "prometheus.datasource.grafana.app",
-            "kind": "QueryTypeDefinition",
-            "version": "v0alpha1"
-          },
-          {
-            "group": "query.grafana.app",
-            "kind": "QueryTypeDefinition",
-            "version": "v0alpha1"
-          },
-          {
-            "group": "testdata.datasource.grafana.app",
-            "kind": "QueryTypeDefinition",
-            "version": "__internal"
-          },
-          {
-            "group": "testdata.datasource.grafana.app",
-            "kind": "QueryTypeDefinition",
-            "version": "v0alpha1"
-          }
+          { "group": "graphite.datasource.grafana.app", "kind": "QueryTypeDefinition", "version": "__internal" },
+          { "group": "graphite.datasource.grafana.app", "kind": "QueryTypeDefinition", "version": "v0alpha1" },
+          { "group": "prometheus.datasource.grafana.app", "kind": "QueryTypeDefinition", "version": "__internal" },
+          { "group": "prometheus.datasource.grafana.app", "kind": "QueryTypeDefinition", "version": "v0alpha1" },
+          { "group": "query.grafana.app", "kind": "QueryTypeDefinition", "version": "v0alpha1" },
+          { "group": "testdata.datasource.grafana.app", "kind": "QueryTypeDefinition", "version": "__internal" },
+          { "group": "testdata.datasource.grafana.app", "kind": "QueryTypeDefinition", "version": "v0alpha1" }
         ]
       },
       "com.github.grafana.grafana.pkg.apis.query.v0alpha1.QueryTypeDefinitionList": {
@@ -1464,49 +1192,17 @@
           },
           "metadata": {
             "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
-              }
-            ]
+            "allOf": [{ "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta" }]
           }
         },
         "x-kubernetes-group-version-kind": [
-          {
-            "group": "graphite.datasource.grafana.app",
-            "kind": "QueryTypeDefinitionList",
-            "version": "__internal"
-          },
-          {
-            "group": "graphite.datasource.grafana.app",
-            "kind": "QueryTypeDefinitionList",
-            "version": "v0alpha1"
-          },
-          {
-            "group": "prometheus.datasource.grafana.app",
-            "kind": "QueryTypeDefinitionList",
-            "version": "__internal"
-          },
-          {
-            "group": "prometheus.datasource.grafana.app",
-            "kind": "QueryTypeDefinitionList",
-            "version": "v0alpha1"
-          },
-          {
-            "group": "query.grafana.app",
-            "kind": "QueryTypeDefinitionList",
-            "version": "v0alpha1"
-          },
-          {
-            "group": "testdata.datasource.grafana.app",
-            "kind": "QueryTypeDefinitionList",
-            "version": "__internal"
-          },
-          {
-            "group": "testdata.datasource.grafana.app",
-            "kind": "QueryTypeDefinitionList",
-            "version": "v0alpha1"
-          }
+          { "group": "graphite.datasource.grafana.app", "kind": "QueryTypeDefinitionList", "version": "__internal" },
+          { "group": "graphite.datasource.grafana.app", "kind": "QueryTypeDefinitionList", "version": "v0alpha1" },
+          { "group": "prometheus.datasource.grafana.app", "kind": "QueryTypeDefinitionList", "version": "__internal" },
+          { "group": "prometheus.datasource.grafana.app", "kind": "QueryTypeDefinitionList", "version": "v0alpha1" },
+          { "group": "query.grafana.app", "kind": "QueryTypeDefinitionList", "version": "v0alpha1" },
+          { "group": "testdata.datasource.grafana.app", "kind": "QueryTypeDefinitionList", "version": "__internal" },
+          { "group": "testdata.datasource.grafana.app", "kind": "QueryTypeDefinitionList", "version": "v0alpha1" }
         ]
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.APIResource": {
@@ -1528,11 +1224,7 @@
             "type": "string",
             "default": ""
           },
-          "name": {
-            "description": "name is the plural name of the resource.",
-            "type": "string",
-            "default": ""
-          },
+          "name": { "description": "name is the plural name of the resource.", "type": "string", "default": "" },
           "namespaced": {
             "description": "namespaced indicates if a resource is namespaced or not.",
             "type": "boolean",
@@ -1586,17 +1278,11 @@
             "type": "array",
             "items": {
               "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.APIResource"
-                }
-              ]
+              "allOf": [{ "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.APIResource" }]
             }
           }
         },
-        "x-kubernetes-group-version-kind": [
-          { "group": "", "kind": "APIResourceList", "version": "v1" }
-        ]
+        "x-kubernetes-group-version-kind": [{ "group": "", "kind": "APIResourceList", "version": "v1" }]
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.FieldsV1": {
         "description": "FieldsV1 stores a set of fields in a data structure like a Trie, in JSON format.\n\nEach key is either a '.' representing the field itself, and will always map to an empty set, or a string representing a sub-field or item. The string will follow one of these four formats: 'f:\u003cname\u003e', where \u003cname\u003e is the name of a field in a struct, or key in a map 'v:\u003cvalue\u003e', where \u003cvalue\u003e is the exact json formatted value of a list item 'i:\u003cindex\u003e', where \u003cindex\u003e is position of a item in a list 'k:\u003ckeys\u003e', where \u003ckeys\u003e is a map of  a list item's key fields to their unique values If a key maps to an empty Fields value, the field that key represents is part of the set.\n\nThe exact format is defined in sigs.k8s.io/structured-merge-diff",
@@ -1639,11 +1325,7 @@
           },
           "fieldsV1": {
             "description": "FieldsV1 holds the first JSON version format as described in the \"FieldsV1\" type.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.FieldsV1"
-              }
-            ]
+            "allOf": [{ "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.FieldsV1" }]
           },
           "manager": {
             "description": "Manager is an identifier of the workflow managing these fields.",
@@ -1659,11 +1341,7 @@
           },
           "time": {
             "description": "Time is the timestamp of when the ManagedFields entry was added. The timestamp will also be updated if a field is added, the manager changes any of the owned fields value or removes a field. The timestamp does not update when a field is removed from the entry because another manager took it over.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Time"
-              }
-            ]
+            "allOf": [{ "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Time" }]
           }
         }
       },
@@ -1678,11 +1356,7 @@
           },
           "creationTimestamp": {
             "description": "CreationTimestamp is a timestamp representing the server time when this object was created. It is not guaranteed to be set in happens-before order across separate operations. Clients may not set this value. It is represented in RFC3339 form and is in UTC.\n\nPopulated by the system. Read-only. Null for lists. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Time"
-              }
-            ]
+            "allOf": [{ "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Time" }]
           },
           "deletionGracePeriodSeconds": {
             "description": "Number of seconds allowed for this object to gracefully terminate before it will be removed from the system. Only set when deletionTimestamp is also set. May only be shortened. Read-only.",
@@ -1691,11 +1365,7 @@
           },
           "deletionTimestamp": {
             "description": "DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This field is set by the server when a graceful deletion is requested by the user, and is not directly settable by a client. The resource is expected to be deleted (no longer visible from resource lists, and not reachable by name) after the time in this field, once the finalizers list is empty. As long as the finalizers list contains items, deletion is blocked. Once the deletionTimestamp is set, this value may not be unset or be set further into the future, although it may be shortened or the resource may be deleted prior to this time. For example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react by sending a graceful termination signal to the containers in the pod. After that 30 seconds, the Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup, remove the pod from the API. In the presence of network partitions, this object may still exist after this timestamp, until an administrator or automated process can determine the resource is fully terminated. If not set, graceful deletion of the object has not been requested.\n\nPopulated by the system when a graceful deletion is requested. Read-only. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Time"
-              }
-            ]
+            "allOf": [{ "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Time" }]
           },
           "finalizers": {
             "description": "Must be empty before the object is deleted from the registry. Each entry is an identifier for the responsible component that will remove the entry from the list. If the deletionTimestamp of the object is non-nil, entries in this list can only be removed. Finalizers may be processed and removed in any order.  Order is NOT enforced because it introduces significant risk of stuck finalizers. finalizers is a shared field, any actor with permission can reorder it. If the finalizer list is processed in order, then this can lead to a situation in which the component responsible for the first finalizer in the list is waiting for a signal (field value, external system, or other) produced by a component responsible for a finalizer later in the list, resulting in a deadlock. Without enforced ordering finalizers are free to order amongst themselves and are not vulnerable to ordering changes in the list.",
@@ -1722,11 +1392,7 @@
             "type": "array",
             "items": {
               "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ManagedFieldsEntry"
-                }
-              ]
+              "allOf": [{ "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ManagedFieldsEntry" }]
             }
           },
           "name": {
@@ -1742,11 +1408,7 @@
             "type": "array",
             "items": {
               "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.OwnerReference"
-                }
-              ]
+              "allOf": [{ "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.OwnerReference" }]
             },
             "x-kubernetes-patch-merge-key": "uid",
             "x-kubernetes-patch-strategy": "merge"
@@ -1770,11 +1432,7 @@
         "type": "object",
         "required": ["apiVersion", "kind", "name", "uid"],
         "properties": {
-          "apiVersion": {
-            "description": "API version of the referent.",
-            "type": "string",
-            "default": ""
-          },
+          "apiVersion": { "description": "API version of the referent.", "type": "string", "default": "" },
           "blockOwnerDeletion": {
             "description": "If true, AND if the owner has the \"foregroundDeletion\" finalizer, then the owner cannot be deleted from the key-value store until this reference is removed. See https://kubernetes.io/docs/concepts/architecture/garbage-collection/#foreground-deletion for how the garbage collector interacts with this field and enforces the foreground deletion. Defaults to false. To set this field, a user needs \"delete\" permission of the owner, otherwise 422 (Unprocessable Entity) will be returned.",
             "type": "boolean"
