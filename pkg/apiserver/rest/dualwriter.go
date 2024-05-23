@@ -2,10 +2,15 @@ package rest
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
+	"github.com/grafana/grafana/pkg/infra/kvstore"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/klog/v2"
 )
 
 var (
@@ -69,12 +74,13 @@ type LegacyStorage interface {
 type DualWriter interface {
 	Storage
 	LegacyStorage
+	Mode() DualWriterMode
 }
 
 type DualWriterMode int
 
 const (
-	Mode1 DualWriterMode = iota
+	Mode1 DualWriterMode = iota + 1
 	Mode2
 	Mode3
 	Mode4
@@ -116,4 +122,71 @@ func (u *updateWrapper) Preconditions() *metav1.Preconditions {
 // The only time an empty oldObj should be passed in is if a "create on update" is occurring (there is no oldObj).
 func (u *updateWrapper) UpdatedObject(ctx context.Context, oldObj runtime.Object) (newObj runtime.Object, err error) {
 	return u.updated, nil
+}
+
+func SetDualWritingMode(
+	ctx context.Context,
+	kvs *kvstore.NamespacedKVStore,
+	features featuremgmt.FeatureToggles,
+	entity string,
+	legacy LegacyStorage,
+	storage Storage,
+) (DualWriter, error) {
+	toMode := map[string]DualWriterMode{
+		"1": Mode1,
+		"2": Mode2,
+		"3": Mode3,
+		"4": Mode4,
+	}
+	errDualWriterSetCurrentMode := errors.New("failed to set current dual writing mode")
+
+	// Use entity name as key
+	m, ok, err := kvs.Get(ctx, entity)
+	if err != nil {
+		return nil, errors.New("failed to fetch current dual writing mode")
+	}
+
+	currentMode, valid := toMode[m]
+
+	if !valid && ok {
+		// Only log if "ok" because initially all instances will have mode unset for playlists.
+		klog.Info("invalid dual writing mode for playlists mode:", m)
+	}
+
+	if !valid || !ok {
+		// Default to mode 1
+		currentMode = Mode1
+
+		err := kvs.Set(ctx, entity, fmt.Sprint(currentMode))
+		if err != nil {
+			return nil, errDualWriterSetCurrentMode
+		}
+	}
+
+	// Desired mode is 2 and current mode is 1
+	if features.IsEnabledGlobally(featuremgmt.FlagDualWritePlaylistsMode2) && (currentMode == Mode1) {
+		// This is where we go through the different gates to allow the instance to migrate from mode 1 to mode 2.
+		// There are none between mode 1 and mode 2
+		currentMode = Mode2
+
+		err := kvs.Set(ctx, entity, fmt.Sprint(currentMode))
+		if err != nil {
+			return nil, errDualWriterSetCurrentMode
+		}
+	}
+	// #TODO enable this check when we have a flag/config for setting mode 1 as the desired mode
+	// if features.IsEnabledGlobally(featuremgmt.FlagDualWritePlaylistsMode1) && (currentMode == Mode2) {
+	// 	// This is where we go through the different gates to allow the instance to migrate from mode 2 to mode 1.
+	// 	// There are none between mode 1 and mode 2
+	// 	currentMode = Mode1
+
+	// 	err := kvs.Set(ctx, entity, fmt.Sprint(currentMode))
+	// 	if err != nil {
+	// 		return nil, errDualWriterSetCurrentMode
+	// 	}
+	// }
+
+	// 	#TODO add support for other combinations of desired and current modes
+
+	return NewDualWriter(currentMode, legacy, storage), nil
 }

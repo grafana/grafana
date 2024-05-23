@@ -191,4 +191,5 @@ export interface FeatureToggles {
   notificationBanner?: boolean;
   dashboardRestore?: boolean;
   datasourceProxyDisableRBAC?: boolean;
+  alertingDisableSendAlertsExternal?: boolean;
 }
