@@ -10,6 +10,8 @@ import (
 )
 
 type gcomStub struct {
+	// The cloud migration token created by this stub.
+	token    *gcom.TokenView
 	policies map[string]gcom.AccessPolicy
 }
 
@@ -50,7 +52,11 @@ func (client *gcomStub) ListAccessPolicies(ctx context.Context, params gcom.List
 }
 
 func (client *gcomStub) ListTokens(ctx context.Context, params gcom.ListTokenParams) ([]gcom.TokenView, error) {
-	panic("unimplemented")
+	if client.token == nil {
+		return []gcom.TokenView{}, nil
+	}
+
+	return []gcom.TokenView{*client.token}, nil
 }
 
 func (client *gcomStub) CreateToken(ctx context.Context, params gcom.CreateTokenParams, payload gcom.CreateTokenPayload) (gcom.Token, error) {
@@ -59,6 +65,12 @@ func (client *gcomStub) CreateToken(ctx context.Context, params gcom.CreateToken
 		Name:           payload.Name,
 		AccessPolicyID: payload.AccessPolicyID,
 		Token:          fmt.Sprintf("completely_fake_token_%s", util.GenerateShortUID()),
+	}
+	client.token = &gcom.TokenView{
+		ID:             token.ID,
+		Name:           token.Name,
+		AccessPolicyID: token.AccessPolicyID,
+		DisplayName:    token.Name,
 	}
 	return token, nil
 }
