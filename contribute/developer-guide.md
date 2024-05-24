@@ -77,9 +77,23 @@ yarn start
 ```
 
 This command will generate sass theme files, build all external plugins, then build the frontend assets.
-Once `yarn start` has built the assets, it will continue to do so whenever any of the files change. This means you don't have to manually build the assets every time you change the code.
+Once `yarn start` has built the assets, it will continue to do so whenever any of the core Grafana application files change. This means you don't have to manually build the assets every time you change the code.
 
 > Troubleshooting: if your first build works, but after pulling updates you see unexpected errors in the "Type-checking in progress..." stage, these can be caused by the [tsbuildinfo cache supporting incremental builds](https://www.typescriptlang.org/tsconfig#incremental). You can `rm tsconfig.tsbuildinfo` and re-try.
+
+If you are looking to contribute to any of the external plugins found within the `public/app/plugins` directory they require running additional commands to watch and rebuild them.
+
+To build and watch all external plugins you can run the following command. Please be aware this can be quite resource intensive as it will spin up separate build processes for each external plugin.
+
+```
+yarn plugin:build:dev
+```
+
+If, instead, you would like to build and watch a specific external plugin you can run the following command. Make sure to substitute `<name_of_plugin>` with the plugins name field found in its package.json. e.g. `@grafana-plugins/tempo`.
+
+```
+yarn workspace <name_of_plugin> dev
+```
 
 Next, we'll build & run the web server that will serve the frontend assets we just built.
 
