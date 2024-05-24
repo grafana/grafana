@@ -19,4 +19,13 @@ if (window.nonce) {
 window.__grafana_app_bundle_loaded = true;
 
 import app from './app';
+
+if (process.env.frontend_dev_foo) {
+  console.log('foo set to truthy');
+}
+
+if (!process.env.frontend_dev_foo) {
+  console.log('foo set to falsy');
+}
+
 app.init();

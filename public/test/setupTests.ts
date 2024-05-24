@@ -5,9 +5,13 @@ import i18next from 'i18next';
 import failOnConsole from 'jest-fail-on-console';
 import { initReactI18next } from 'react-i18next';
 
+import getEnvConfig from '../../scripts/webpack/env-util';
+
+const config = getEnvConfig() as Record<string, string>;
+
 import { matchers } from './matchers';
 
-if (process.env.CI) {
+if (config.foo || process.env.CI) {
   failOnConsole({
     shouldFailOnLog: true,
     shouldFailOnDebug: true,
