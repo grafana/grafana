@@ -45,4 +45,5 @@ export interface Prometheus extends common.DataQuery {
   range?: boolean;
   scopes?: ScopeSpec[];
   adhocFilters?: ScopeSpecFilter[];
+  groupByKeys?: string[];
 }

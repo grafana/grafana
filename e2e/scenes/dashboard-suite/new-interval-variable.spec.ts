@@ -15,8 +15,7 @@ describe('Variables - Interval', () => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
 
-  // TODO: remove skip once https://github.com/grafana/grafana/issues/84727 is done
-  it.skip('can add a new interval variable', () => {
+  it('can add a new interval variable', () => {
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=variables` });
     cy.contains(DASHBOARD_NAME).should('be.visible');
 
@@ -41,8 +40,8 @@ describe('Variables - Interval', () => {
 
     e2e.components.RefreshPicker.runButtonV2().click();
 
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('10s').click();
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('1h30m').click();
+    e2e.pages.Dashboard.SubMenu.submenuItemLabels('Variable under test').next().should('have.text', `10s`).click();
+    e2e.components.Select.option().contains('1h30m').click();
 
     // Assert it was rendered
     cy.get('.markdown-html').should('include.text', 'VariableUnderTest: 1h30m');

@@ -91,7 +91,19 @@ case "$1" in
       env[SCENES]=true
       cypressConfig[specPattern]=$rootForScenesSuite/*/$testFilesForSingleSuite
       cypressConfig[video]=false
-      # CMD="cypress open"
+        case "$2" in
+            "debug")
+                echo -e "Debug mode"
+                env[SLOWMO]=1
+                PARAMS="--no-exit"
+                enterpriseSuite=$(basename "${args[2]}")
+                ;;
+            "dev")
+                echo "Dev mode"
+                CMD="cypress open"
+                enterpriseSuite=$(basename "${args[2]}")
+                ;;
+        esac
       ;;
 
     *)

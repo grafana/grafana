@@ -58,11 +58,12 @@ export const computeErrorMessage = (errorNode: SyntaxNode) => {
       }
     case IntrinsicField:
     case Aggregate:
+      if (errorNode.parent?.parent?.parent?.type.id === GroupOperation) {
+        return 'Invalid expression for by operator.';
+      } else if (errorNode.parent?.parent?.parent?.parent?.type.id === SelectOperation) {
+        return 'Invalid expression for select operator.';
+      }
       return 'Invalid expression for aggregator operator.';
-    case GroupOperation:
-      return 'Invalid expression for by operator.';
-    case SelectOperation:
-      return 'Invalid expression for select operator.';
     case AttributeField:
       return 'Invalid expression for spanset.';
     case ScalarFilter:
