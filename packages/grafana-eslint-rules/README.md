@@ -111,3 +111,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
 ### `theme-token-usage`
 
 Used to find all instances of `theme` tokens being used in the codebase and emit the counts as metrics. Should **not** be used as an actual lint rule!
+
+### `no-untranslated-literals`
+
+Check if strings are marked for translation.
+
+Right now, we only if a string is wrap up by the `Trans` tag. We currently do not apply this rule to props, attributes or similars.
+
+Check more info about how translations work in Grafana in [Internationalization.md](https://github.com/grafana/grafana/blob/main/contribute/internationalization.md)
