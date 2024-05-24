@@ -1,13 +1,15 @@
+import { TraceSpan } from '../types';
 import { findHeaderTags } from './trace-viewer';
 
 describe('findHeaderTags()', () => {
   it('returns an empty object when no spans are provided', () => {
-    const spans: any[] = [];
+    const spans: TraceSpan[] = [];
     expect(findHeaderTags(spans)).toEqual({});
   });
 
   it('return the header tags when spans follow the OTEL semantic convention', () => {
-    const spans: any[] = [
+    const spans: TraceSpan[] = [
+      // @ts-ignore
       {
         tags: [
           { key: 'http.request.method', value: 'GET' },
@@ -24,7 +26,8 @@ describe('findHeaderTags()', () => {
   });
 
   it('return the header tags when spans follow the alternative convention', () => {
-    const spans: any[] = [
+    const spans: TraceSpan[] = [
+      // @ts-ignore
       {
         tags: [
           { key: 'http.method', value: 'GET' },
@@ -32,6 +35,7 @@ describe('findHeaderTags()', () => {
           { key: 'http.path', value: '/api/users' },
         ],
       },
+      // @ts-ignore
       {
         tags: [
           { key: 'http.method', value: 'POST' },
@@ -48,7 +52,8 @@ describe('findHeaderTags()', () => {
   });
 
   it('return the header tags, prioritizing the spans that follow the OTEL semantinc convention', () => {
-    const spans: any[] = [
+    const spans: TraceSpan[] = [
+      // @ts-ignore
       {
         tags: [
           { key: 'http.method', value: 'GET' },
@@ -56,6 +61,7 @@ describe('findHeaderTags()', () => {
           { key: 'http.path', value: '/api/users' },
         ],
       },
+      // @ts-ignore
       {
         tags: [
           { key: 'http.request.method', value: 'POST' },
