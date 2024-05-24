@@ -131,6 +131,10 @@ const (
 	// Enables dual writing of playlists to both legacy and k8s storage in mode 3
 	FlagDualWritePlaylistsMode3 = "dualWritePlaylistsMode3"
 
+	// FlagDualWriteDashboardsMode2
+	// Enables dual writing of dashboards to both legacy and k8s storage in mode 2
+	FlagDualWriteDashboardsMode2 = "dualWriteDashboardsMode2"
+
 	// FlagCloudWatchCrossAccountQuerying
 	// Enables cross-account querying in CloudWatch datasources
 	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"
