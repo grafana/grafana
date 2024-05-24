@@ -479,6 +479,7 @@
     "rich-history-card": {
       "add-comment-form": "Kommentarformular hinzufügen",
       "add-comment-tooltip": "Kommentar hinzufügen",
+      "add-to-library": "",
       "cancel": "Abbrechen",
       "confirm-delete": "Löschen",
       "copy-query-tooltip": "Abfrage in Zwischenablage kopieren",
@@ -493,6 +494,7 @@
       "edit-comment-tooltip": "Kommentar bearbeiten",
       "optional-description": "Eine optionale Beschreibung dessen, was die Abfrage tut.",
       "query-comment-label": "Abfrage-Kommentar",
+      "query-template-added": "",
       "query-text-label": "Abfragetext",
       "save-comment": "Kommentar speichern",
       "star-query-tooltip": "Abfrage anwählen",
