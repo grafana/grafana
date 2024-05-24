@@ -176,43 +176,6 @@ func (f *RuleStore) GetAlertRulesGroupByRuleUID(_ context.Context, q *models.Get
 	return ruleList, nil
 }
 
-func (f *RuleStore) GetAlertRulesGroupsByRuleUIDs(_ context.Context, q *models.GetAlertRulesGroupsByRuleUIDsQuery) (map[models.AlertRuleGroupKey]models.RulesGroup, error) {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
-	f.RecordedOps = append(f.RecordedOps, *q)
-	if err := f.Hook(*q); err != nil {
-		return nil, err
-	}
-	rules, ok := f.Rules[q.OrgID]
-	if !ok {
-		return nil, nil
-	}
-
-	uids := make(map[string]struct{}, len(q.UIDs))
-	for _, uid := range q.UIDs {
-		uids[uid] = struct{}{}
-	}
-
-	result := make(map[models.AlertRuleGroupKey]models.RulesGroup)
-	for _, rule := range rules {
-		if _, ok := uids[rule.UID]; ok {
-			groupKey := rule.GetGroupKey()
-			result[groupKey] = models.RulesGroup{}
-		}
-	}
-	if len(result) == 0 {
-		return result, nil
-	}
-
-	for _, rule := range rules {
-		groupKey := rule.GetGroupKey()
-		if _, ok := result[groupKey]; ok {
-			result[groupKey] = append(result[groupKey], rule)
-		}
-	}
-	return result, nil
-}
-
 func (f *RuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQuery) (models.RulesGroup, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
@@ -245,6 +208,9 @@ func (f *RuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQu
 			continue
 		}
 		if len(q.RuleGroups) > 0 && !slices.Contains(q.RuleGroups, r.RuleGroup) {
+			continue
+		}
+		if len(q.RuleUIDs) > 0 && !slices.Contains(q.RuleUIDs, r.UID) {
 			continue
 		}
 

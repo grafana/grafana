@@ -611,15 +611,10 @@ type GetAlertRulesGroupByRuleUIDQuery struct {
 	OrgID int64
 }
 
-// GetAlertRulesGroupsByRuleUIDsQuery is the query for retrieving all groups of alerts that contain any of the rule UIDs provided.
-type GetAlertRulesGroupsByRuleUIDsQuery struct {
-	UIDs  []string
-	OrgID int64
-}
-
 // ListAlertRulesQuery is the query for listing alert rules
 type ListAlertRulesQuery struct {
 	OrgID         int64
+	RuleUIDs      []string
 	NamespaceUIDs []string
 	ExcludeOrgs   []int64
 	RuleGroups    []string

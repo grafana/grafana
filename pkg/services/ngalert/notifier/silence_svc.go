@@ -8,8 +8,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
 
 // SilenceService is the authenticated service for managing alertmanager silences.
@@ -23,10 +23,7 @@ type SilenceService struct {
 }
 
 type RuleAccessControlService interface {
-	HasAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) (bool, error)
-	AuthorizeAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) error
-	AuthorizeRuleChanges(ctx context.Context, user identity.Requester, change *store.GroupDelta) error
-	AuthorizeDatasourceAccessForRule(ctx context.Context, user identity.Requester, rule *models.AlertRule) error
+	HasAccessInFolder(ctx context.Context, user identity.Requester, rule accesscontrol.Namespaced) (bool, error)
 }
 
 // SilenceAccessControlService provides access control for silences.
@@ -49,7 +46,7 @@ type SilenceStore interface {
 }
 
 type RuleStore interface {
-	GetAlertRulesGroupsByRuleUIDs(ctx context.Context, query *models.GetAlertRulesGroupsByRuleUIDsQuery) (map[models.AlertRuleGroupKey]models.RulesGroup, error)
+	ListAlertRules(ctx context.Context, query *models.ListAlertRulesQuery) (models.RulesGroup, error)
 }
 
 func NewSilenceService(
@@ -205,36 +202,42 @@ func (s *SilenceService) addRuleMetadata(ctx context.Context, user identity.Requ
 		return silences, nil
 	}
 
-	q := models.GetAlertRulesGroupsByRuleUIDsQuery{
-		UIDs:  maps.Keys(byRuleUID),
-		OrgID: user.GetOrgID(),
+	q := models.ListAlertRulesQuery{
+		RuleUIDs: maps.Keys(byRuleUID),
+		OrgID:    user.GetOrgID(),
 	}
 
-	groups, err := s.ruleStore.GetAlertRulesGroupsByRuleUIDs(ctx, &q)
+	rules, err := s.ruleStore.ListAlertRules(ctx, &q)
 	if err != nil {
 		return nil, err
 	}
 
-	// Check access to the rule groups.
-	for groupKey, rulesGroup := range groups {
-		hasAccess, err := s.ruleAuthz.HasAccessToRuleGroup(ctx, user, rulesGroup)
-		if err != nil {
-			s.log.Error("failed to check access to rule group", append(groupKey.LogContext(), "error", err)...)
-		}
-		if !hasAccess {
+	accessCacheByFolder := make(map[string]bool)
+	for _, rule := range rules {
+		// TODO: Preferably silence service should not need to know about the internal details of rule access control.
+		// This can be improved by adding a method to ruleAuthz that does the filtering itself or a method that exposes
+		// an access fingerprint for a rule that callers can use to do their own caching.
+		fp := rule.NamespaceUID
+		if canAccess, ok := accessCacheByFolder[fp]; ok && !canAccess {
 			continue
 		}
 
-		for _, rule := range rulesGroup {
-			if ruleSilences, ok := byRuleUID[rule.UID]; ok {
-				for _, sil := range ruleSilences {
-					if sil.Metadata == nil {
-						sil.Metadata = &models.SilenceMetadata{}
-					}
-					sil.Metadata.RuleUID = rule.UID
-					sil.Metadata.RuleTitle = rule.Title
-					sil.Metadata.FolderUID = rule.NamespaceUID
+		canAccess, err := s.ruleAuthz.HasAccessInFolder(ctx, user, rule)
+		if err == nil {
+			accessCacheByFolder[fp] = canAccess // Only cache if there is no error.
+		}
+		if err != nil || !canAccess {
+			continue // Assume no access if there is an error.
+		}
+
+		if ruleSilences, ok := byRuleUID[rule.UID]; ok {
+			for _, sil := range ruleSilences {
+				if sil.Metadata == nil {
+					sil.Metadata = &models.SilenceMetadata{}
 				}
+				sil.Metadata.RuleUID = rule.UID
+				sil.Metadata.RuleTitle = rule.Title
+				sil.Metadata.FolderUID = rule.NamespaceUID
 			}
 		}
 	}
