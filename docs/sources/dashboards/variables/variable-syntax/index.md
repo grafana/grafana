@@ -184,6 +184,16 @@ String to interpolate: '${servers:text}'
 Interpolation result: "test1 + test2"
 ```
 
+### Text to uppercase
+
+Formats single- and multi-valued variables into their uppercase text representation. For a single variable it will just return the uppercase text representation. For multi-valued variables it will return the uppercase text representation combined with `+`.
+
+```bash
+servers = ["test1", "test2"]
+String to interpolate: '${servers:textupper}'
+Interpolation result: "TEST1 + TEST2"
+```
+
 ### Query parameters
 
 Formats single- and multi-valued variables into their query parameter representation. Example: `var-foo=value1&var-foo=value2`
