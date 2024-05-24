@@ -370,6 +370,7 @@ func (s *Service) prepareInstanceSettings(ctx context.Context, pluginContext bac
 			}
 			return nil, fmt.Errorf("not allowed")
 		}
+		// payload is OK, but now lets do the mutate version...
 	}
 
 	// Next calling mutation -- this will try to get the input into an acceptable form
