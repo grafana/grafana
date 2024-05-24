@@ -2,7 +2,7 @@ import { TraceSpan } from '../types';
 import { findHeaderTags } from './trace-viewer';
 
 describe('findHeaderTags()', () => {
-  it('returns an empty object when no spans are provided', () => {
+  it('return empty object when no spans are provided', () => {
     const spans: TraceSpan[] = [];
     expect(findHeaderTags(spans)).toEqual({});
   });
