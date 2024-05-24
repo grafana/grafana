@@ -142,7 +142,7 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 			if ok {
 				return []interface{}{
 					dash.Name,
-					dash.Spec.GetNestedString("title"),
+					dash.Spec.Title,
 					dash.CreationTimestamp.UTC().Format(time.RFC3339),
 				}, nil
 			}
