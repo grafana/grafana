@@ -1,6 +1,6 @@
+import { getAzureClouds } from '@grafana/azure-sdk';
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { getAzureClouds } from '@grafana/azure-sdk';
 
 import { AzureCloud, AzureCredentials, ConcealedSecret } from './AzureCredentials';
 
@@ -30,7 +30,7 @@ export function getAzureCloudOptions(): Array<SelectableValue<string>> {
   return cloudInfo.map((cloud) => ({
     value: cloud.name,
     label: cloud.displayName,
-  }));  
+  }));
 }
 
 export function getDefaultCredentials(): AzureCredentials {
