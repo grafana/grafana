@@ -384,26 +384,50 @@ func genTokenWithRetries(ctxLogger log.Logger, extSvcSlug string) (satokengen.Ke
 	var newKeyInfo satokengen.KeyGenResult
 	var err error
 	var ok bool
-	maxRetry := maxTokenGenRetries
-	for !ok && maxRetry > 0 {
+	retry := 0
+	for !ok && retry < maxTokenGenRetries {
 		newKeyInfo, err = satokengen.New(extSvcSlug)
 		if err != nil {
 			return satokengen.KeyGenResult{}, err
 		}
 
-		if strings.Contains(newKeyInfo.ClientSecret, "\x00") {
-			maxRetry--
-			ctxLogger.Warn("Generated token contains a null byte, retrying")
+		if !strings.Contains(newKeyInfo.ClientSecret, "\x00") {
+			ok = true
 			continue
 		}
 
-		ok = true
+		retry++
+
+		ctxLogger.Warn("Generated a token containing NUL, retrying",
+			"service", extSvcSlug,
+			"retry", retry,
+		)
+		// On first retry, log the token parts that contain a nil byte
+		if retry == 1 {
+			logTokenNilChar(ctxLogger, extSvcSlug, newKeyInfo.ClientSecret)
+		}
 	}
 
 	if !ok {
 		return satokengen.KeyGenResult{}, ErrCredentialsGenFailed.Errorf("Failed to generate a token for %s", extSvcSlug)
 	}
 	return newKeyInfo, nil
+}
+
+// logTokenNilChar logs a warning if the external service token contains a nil byte
+// Tokens normally have 3 parts "gl+serviceID_secret_checksum"
+// Log the part of the generated token that contains a nil byte
+func logTokenNilChar(ctxLogger log.Logger, extSvcSlug string, token string) {
+	parts := strings.Split(token, "_")
+	for i := range parts {
+		if strings.Contains(parts[i], "\x00") {
+			ctxLogger.Warn("Token contains NUL",
+				"service", extSvcSlug,
+				"part", i+1,
+				"parts_count", len(parts),
+			)
+		}
+	}
 }
 
 // GetExtSvcCredentials get the credentials of an External Service from an encrypted storage
@@ -416,6 +440,10 @@ func (esa *ExtSvcAccountsService) GetExtSvcCredentials(ctx context.Context, orgI
 	}
 	if !ok {
 		return nil, ErrCredentialsNotFound.Errorf("No credential found for in store %v", extSvcSlug)
+	}
+	if strings.Contains(token, "\x00") {
+		ctxLogger.Warn("Loaded token from store containing NUL", "service", extSvcSlug)
+		logTokenNilChar(ctxLogger, extSvcSlug, token)
 	}
 	return &Credentials{Secret: token}, nil
 }
