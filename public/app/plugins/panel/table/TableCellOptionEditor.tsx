@@ -61,10 +61,9 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
       <Field>
         <Select options={cellDisplayModeOptions} value={currentMode} onChange={onCellTypeChange} />
       </Field>
-      {cellType === TableCellDisplayMode.Auto ||
-        (cellType === TableCellDisplayMode.ColorText && (
-          <AutoCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
-        ))}
+      {(cellType === TableCellDisplayMode.Auto || cellType === TableCellDisplayMode.ColorText) && (
+        <AutoCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
+      )}
       {cellType === TableCellDisplayMode.Gauge && (
         <BarGaugeCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
       )}
