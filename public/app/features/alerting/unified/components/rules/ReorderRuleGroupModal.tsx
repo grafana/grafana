@@ -140,6 +140,7 @@ const ListItem = ({ provided, rule, isClone = false, isDragging = false }: ListI
 
   return (
     <div
+      data-testid="reorder-alert-rule"
       className={cx(styles.listItem, isClone && 'isClone', isDragging && 'isDragging')}
       ref={provided.innerRef}
       {...provided.draggableProps}
