@@ -2,6 +2,7 @@ package tracing
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"net"
@@ -14,6 +15,7 @@ import (
 	"go.opentelemetry.io/contrib/samplers/jaegerremote"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
@@ -27,6 +29,7 @@ import (
 	"github.com/go-kit/log/level"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const (
@@ -107,6 +110,26 @@ func TraceIDFromContext(ctx context.Context, requireSampled bool) string {
 	}
 
 	return spanCtx.TraceID().String()
+}
+
+// RecordStatusError helper function to set the status of the current span to error and
+// record the error as an exception in the span.
+func RecordStatusError(ctx context.Context, err error, statusMessage ...string) error {
+	msg := "failure"
+	if len(statusMessage) > 0 {
+		msg = statusMessage[0]
+	}
+
+	attr := []attribute.KeyValue{}
+	grafanaErr := errutil.Error{}
+	if errors.As(err, &grafanaErr) {
+		attr = append(attr, attribute.String("message_id", grafanaErr.MessageID))
+	}
+
+	span := trace.SpanFromContext(ctx)
+	span.SetStatus(codes.Error, msg)
+	span.RecordError(err, trace.WithAttributes(attr...))
+	return err
 }
 
 type noopTracerProvider struct {
