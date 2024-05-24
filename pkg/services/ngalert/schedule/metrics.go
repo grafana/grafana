@@ -33,15 +33,21 @@ func sortedUIDs(alertRules []*models.AlertRule) []string {
 }
 
 func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
-	rulesPerOrg := make(map[int64]int64)                // orgID -> count
-	orgsPaused := make(map[int64]int64)                 // orgID -> count
-	orgsNfSettings := make(map[int64]int64)             // orgID -> count
-	groupsPerOrg := make(map[int64]map[string]struct{}) // orgID -> set of groups
+	rulesPerOrgFolderGroup := make(map[models.AlertRuleGroupWithFolderTitleKey]int64)       // AlertRuleGroupWithFolderTitle -> count
+	rulesPerOrgFolderGroupPaused := make(map[models.AlertRuleGroupWithFolderTitleKey]int64) // AlertRuleGroupWithFolderTitle -> count
+	orgsNfSettings := make(map[int64]int64)                                                 // orgID -> count
+	groupsPerOrg := make(map[int64]map[string]struct{})                                     // orgID -> set of groups
+
 	for _, rule := range alertRules {
-		rulesPerOrg[rule.OrgID]++
+		key := models.AlertRuleGroupWithFolderTitleKey{
+			AlertRuleGroupKey: rule.GetGroupKey(),
+			FolderTitle:       sch.schedulableAlertRules.folderTitles[rule.GetFolderKey()],
+		}
+
+		rulesPerOrgFolderGroup[key]++
 
 		if rule.IsPaused {
-			orgsPaused[rule.OrgID]++
+			rulesPerOrgFolderGroupPaused[key]++
 		}
 
 		if len(rule.NotificationSettings) > 0 {
@@ -56,12 +62,15 @@ func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 		orgGroups[rule.RuleGroup] = struct{}{}
 	}
 
-	for orgID, numRules := range rulesPerOrg {
-		numRulesPaused := orgsPaused[orgID]
-		numRulesNfSettings := orgsNfSettings[orgID]
-		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(orgID), metrics.AlertRuleActiveLabelValue).Set(float64(numRules - numRulesPaused))
-		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(orgID), metrics.AlertRulePausedLabelValue).Set(float64(numRulesPaused))
-		sch.metrics.SimpleNotificationRules.WithLabelValues(fmt.Sprint(orgID)).Set(float64(numRulesNfSettings))
+	for key, numRules := range rulesPerOrgFolderGroup {
+		numRulesPaused := rulesPerOrgFolderGroupPaused[key]
+		ruleGroupLabelValue := fmt.Sprintf("%s;%s", key.FolderTitle, key.AlertRuleGroupKey.RuleGroup)
+		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(key.OrgID), metrics.AlertRuleActiveLabelValue, ruleGroupLabelValue).Set(float64(numRules - numRulesPaused))
+		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(key.OrgID), metrics.AlertRulePausedLabelValue, ruleGroupLabelValue).Set(float64(numRulesPaused))
+	}
+
+	for orgID, count := range orgsNfSettings {
+		sch.metrics.SimpleNotificationRules.WithLabelValues(fmt.Sprint(orgID)).Set(float64(count))
 	}
 
 	for orgID, groups := range groupsPerOrg {

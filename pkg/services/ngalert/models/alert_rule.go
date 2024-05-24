@@ -467,6 +467,11 @@ type AlertRuleGroupKey struct {
 	RuleGroup    string
 }
 
+type AlertRuleGroupWithFolderTitleKey struct {
+	AlertRuleGroupKey
+	FolderTitle string
+}
+
 func (k AlertRuleGroupKey) String() string {
 	return fmt.Sprintf("{orgID: %d, namespaceUID: %s, groupName: %s}", k.OrgID, k.NamespaceUID, k.RuleGroup)
 }
