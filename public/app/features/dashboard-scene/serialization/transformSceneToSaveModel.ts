@@ -222,7 +222,7 @@ export function vizPanelToPanel(
     title: vizPanel.state.title,
     description: vizPanel.state.description ?? undefined,
     gridPos,
-    fieldConfig: (vizPanel.state.fieldConfig as FieldConfigSource) ?? { defaults: {}, overrides: [] },
+    fieldConfig: vizPanelFieldConfigToPanel(vizPanel),
     transformations: [],
     transparent: vizPanel.state.displayMode === 'transparent',
     pluginVersion: vizPanel.state.pluginVersion,
@@ -276,6 +276,22 @@ export function vizPanelToPanel(
   }
 
   return panel;
+}
+
+function vizPanelFieldConfigToPanel(vizPanel: VizPanel): FieldConfigSource | undefined {
+  if (!vizPanel.state.fieldConfig) {
+    return undefined;
+  }
+  const fieldConfig = vizPanel.state.fieldConfig as FieldConfigSource;
+
+  if (!Object.keys(fieldConfig.defaults).length && !Object.keys(fieldConfig.overrides).length) {
+    return undefined;
+  }
+
+  return {
+    defaults: fieldConfig.defaults ?? undefined,
+    overrides: fieldConfig.overrides ?? undefined,
+  };
 }
 
 function vizPanelDataToPanel(
@@ -374,7 +390,7 @@ export function panelRepeaterToPanels(
           title: panel.state.title,
           gridPos,
           options: panel.state.options,
-          fieldConfig: (panel.state.fieldConfig as FieldConfigSource) ?? { defaults: {}, overrides: [] },
+          fieldConfig: vizPanelFieldConfigToPanel(panel),
           transformations: [],
           transparent: panel.state.displayMode === 'transparent',
           // @ts-expect-error scopedVars are runtime only properties, not part of the persisted Dashboardmodel

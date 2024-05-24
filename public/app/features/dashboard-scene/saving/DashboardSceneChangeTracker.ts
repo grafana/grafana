@@ -12,6 +12,7 @@ import {
   VizPanel,
   behaviors,
 } from '@grafana/scenes';
+import { DashboardModel } from 'app/features/dashboard/state';
 import { createWorker } from 'app/features/dashboard-scene/saving/createDetectChangesWorker';
 
 import { VizPanelManager } from '../panel-edit/VizPanelManager';
@@ -142,6 +143,7 @@ export class DashboardSceneChangeTracker {
     this._changesWorker?.postMessage({
       changed: transformSceneToSaveModel(this._dashboard),
       initial: this._dashboard.getInitialSaveModel(),
+      migrated: new DashboardModel(this._dashboard.getInitialSaveModel()!).getSaveModelClone(),
     });
   }
 

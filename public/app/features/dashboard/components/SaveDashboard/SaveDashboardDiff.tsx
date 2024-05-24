@@ -13,6 +13,8 @@ interface SaveDashboardDiffProps {
 
   // calculated by parent so we can see summary in tabs
   diff?: Diffs;
+  // calculated by parent so we can see summary in tabs
+  migrationDiff?: Diffs;
   hasFolderChanges?: boolean;
   oldFolder?: string;
   newFolder?: string;
@@ -22,6 +24,7 @@ export const SaveDashboardDiff = ({
   diff,
   oldValue,
   newValue,
+  migrationDiff,
   hasFolderChanges,
   oldFolder,
   newFolder,

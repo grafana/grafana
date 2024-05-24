@@ -46,7 +46,8 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
       saveVariables,
       saveRefresh
     );
-    const { changedSaveModel, initialSaveModel, diffs, diffCount, hasFolderChanges } = changeInfo;
+    const { changedSaveModel, migratedSaveModel, diffs, diffCount, hasFolderChanges } = changeInfo;
+    console.log('changeInfo', changeInfo);
     const changesCount = diffCount + (hasFolderChanges ? 1 : 0);
     const dashboard = model.state.dashboardRef.resolve();
     const { meta } = dashboard.useState();
@@ -78,7 +79,7 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
         return (
           <SaveDashboardDiff
             diff={diffs}
-            oldValue={initialSaveModel}
+            oldValue={migratedSaveModel}
             newValue={changedSaveModel}
             hasFolderChanges={hasFolderChanges}
             oldFolder={dashboard.getInitialState()?.meta.folderTitle}

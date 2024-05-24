@@ -3,6 +3,7 @@ import jsonMap from 'json-source-map';
 
 import type { AdHocVariableModel, TypedVariableModel } from '@grafana/data';
 import { Dashboard, Panel, VariableOption } from '@grafana/schema';
+import { DashboardModel } from 'app/features/dashboard/state';
 
 import { jsonDiff } from '../settings/version-history/utils';
 
@@ -33,30 +34,36 @@ export function isEqual(a: VariableOption | undefined, b: VariableOption | undef
 export function getDashboardChanges(
   initial: Dashboard,
   changed: Dashboard,
+  migrated: Dashboard,
   saveTimeRange?: boolean,
   saveVariables?: boolean,
   saveRefresh?: boolean
 ) {
   const initialSaveModel = initial;
   const changedSaveModel = changed;
-  const hasTimeChanged = getHasTimeChanged(changedSaveModel, initialSaveModel);
-  const hasVariableValueChanges = applyVariableChanges(changedSaveModel, initialSaveModel, saveVariables);
-  const hasRefreshChanged = changedSaveModel.refresh !== initialSaveModel.refresh;
+  const migratedSaveModel = migrated;
+
+  const hasTimeChanged = getHasTimeChanged(changedSaveModel, migratedSaveModel);
+  const hasVariableValueChanges = applyVariableChanges(changedSaveModel, migratedSaveModel, saveVariables);
+  const hasRefreshChanged = changedSaveModel.refresh !== migratedSaveModel.refresh;
 
   if (!saveTimeRange) {
-    changedSaveModel.time = initialSaveModel.time;
+    changedSaveModel.time = migratedSaveModel.time;
   }
 
   if (!saveRefresh) {
-    changedSaveModel.refresh = initialSaveModel.refresh;
+    changedSaveModel.refresh = migratedSaveModel.refresh;
   }
 
-  const diff = jsonDiff(initialSaveModel, changedSaveModel);
+  const migrationDiff = jsonDiff(initial, migratedSaveModel);
+  const diff = jsonDiff(migratedSaveModel, changedSaveModel);
   const diffCount = Object.values(diff).reduce((acc, cur) => acc + cur.length, 0);
 
   return {
     changedSaveModel,
+    migratedSaveModel,
     initialSaveModel,
+    migrationDiff,
     diffs: diff,
     diffCount,
     hasChanges: diffCount > 0,

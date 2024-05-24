@@ -1,3 +1,5 @@
+import { DashboardModel } from 'app/features/dashboard/state';
+
 import { DashboardScene } from '../scene/DashboardScene';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 
@@ -21,6 +23,7 @@ export function getDashboardChangesFromScene(
   const changeInfo = getDashboardSaveModelChanges(
     scene.getInitialSaveModel()!,
     transformSceneToSaveModel(scene),
+    new DashboardModel(scene.getInitialSaveModel()!).getSaveModelClone(),
     saveTimeRange,
     saveVariables,
     saveRefresh
