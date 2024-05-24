@@ -113,7 +113,7 @@ export default function ShareConfiguration({ dashboard }: { dashboard: Dashboard
                 <TimeRangeInput value={timeRange.value} showIcon disabled onChange={() => {}} />
                 <Tooltip
                   placement="right"
-                  content="The public dashboard uses the default time range settings of the dashboard"
+                  content="The shared dashboard uses the default time range settings of the dashboard"
                 >
                   <Icon name="info-circle" size="sm" />
                 </Tooltip>
