@@ -659,9 +659,6 @@ github.com/grafana/grafana-plugin-sdk-go v0.227.1-0.20240426134450-5fe9f7b9dfd4/
 github.com/grafana/grafana-plugin-sdk-go v0.227.1-0.20240430073540-ce4d126ae8b8 h1:pyWJN79uW8QHZiQRasHGLCEkXSr3k6HCjdr0J2jZ3rU=
 github.com/grafana/grafana-plugin-sdk-go v0.227.1-0.20240430073540-ce4d126ae8b8/go.mod h1:u4K9vVN6eU86loO68977eTXGypC4brUCnk4sfDzutZU=
 github.com/grafana/grafana-plugin-sdk-go v0.228.0/go.mod h1:u4K9vVN6eU86loO68977eTXGypC4brUCnk4sfDzutZU=
-github.com/grafana/grafana-plugin-sdk-go v0.230.0 h1:Y4IL+eT1jXqTCctlNzdCvxAozpBZ8xEsRGWjGAVRXxo=
-github.com/grafana/grafana-plugin-sdk-go v0.229.0/go.mod h1:6V6ikT4ryva8MrAp7Bdz5fTJx3/ztzKvpMJFfpzr4CI=
-github.com/grafana/grafana-plugin-sdk-go v0.230.0/go.mod h1:6V6ikT4ryva8MrAp7Bdz5fTJx3/ztzKvpMJFfpzr4CI=
 github.com/grafana/grafana/pkg/promlib v0.0.3/go.mod h1:3El4NlsfALz8QQCbEGHGFvJUG+538QLMuALRhZ3pcoo=
 github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7 h1:pdN6V1QBWetyv/0+wjACpqVH+eVULgEjkurDLq3goeM=
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.18.1/go.mod h1:YvJ2f6MplWDhfxiUC3KpyTy76kYUZA4W3pTv/wdKQ9Y=
@@ -750,6 +747,7 @@ github.com/kataras/tunnel v0.0.4/go.mod h1:9FkU4LaeifdMWqZu7o20ojmW4B7hdhv2CMLwf
 github.com/kelseyhightower/envconfig v1.4.0 h1:Im6hONhd3pLkfDFsbRgu68RDNkGF1r3dvMUtDTo2cv8=
 github.com/kisielk/errcheck v1.5.0 h1:e8esj/e4R+SAOwFwN+n3zr0nYeCyeweozKfO23MvHzY=
 github.com/kisielk/gotool v1.0.0 h1:AV2c/EiW3KqPNT9ZKl07ehoAGi4C5/01Cfbblndcapg=
+github.com/kisielk/sqlstruct v0.0.0-20201105191214-5f3e10d3ab46 h1:veS9QfglfvqAw2e+eeNT/SbGySq8ajECXJ9e4fPoLhY=
 github.com/klauspost/compress v1.16.7/go.mod h1:ntbaceVETuRiXiv4DpjP66DpAtAGkEQskQzEyD//IeE=
 github.com/klauspost/cpuid/v2 v2.2.4/go.mod h1:RVVoqg1df56z8g3pUjL/3lE5UfnlrJX8tyFgg4nqhuY=
 github.com/knadh/koanf v1.5.0 h1:q2TSd/3Pyc/5yP9ldIrSdIz26MCcyNQzW0pEAugLPNs=

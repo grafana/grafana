@@ -2172,8 +2172,6 @@ github.com/grafana/gomemcache v0.0.0-20231023152154-6947259a0586 h1:/of8Z8taCPft
 github.com/grafana/gomemcache v0.0.0-20231023152154-6947259a0586/go.mod h1:PGk3RjYHpxMM8HFPhKKo+vve3DdlPUELZLSDEFehPuU=
 github.com/grafana/grafana-aws-sdk v0.25.1 h1:waJERJueqB1GldclAh5+tBcY9Ju9AOO9xYSJEnOAuf4=
 github.com/grafana/grafana-aws-sdk v0.25.1/go.mod h1:3zghFF6edrxn0d6k6X9HpGZXDH+VfA+MwD2Pc/9X0ec=
-github.com/grafana/grafana-azure-sdk-go/v2 v2.0.3 h1:5qW9WVDpAxJx7db3Ir2BsHDetLhAFCwrAFlZjzCqTDE=
-github.com/grafana/grafana-azure-sdk-go/v2 v2.0.3/go.mod h1:s8GLONgVh/svnSsO0Eo+OgXc/RZqozI5/0n+pNm3MEE=
 github.com/grafana/grafana-azure-sdk-go/v2 v2.0.4 h1:z6amQ286IJSBctHf6c+ibJq/v0+TvmEjVkrdMNBd4uY=
 github.com/grafana/grafana-azure-sdk-go/v2 v2.0.4/go.mod h1:aKlFPE36IDa8qccRg3KbgZX3MQ5xymS3RelT4j6kkVU=
 github.com/grafana/grafana-google-sdk-go v0.1.0 h1:LKGY8z2DSxKjYfr2flZsWgTRTZ6HGQbTqewE3JvRaNA=
@@ -2181,10 +2179,6 @@ github.com/grafana/grafana-google-sdk-go v0.1.0/go.mod h1:Vo2TKWfDVmNTELBUM+3lkr
 github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 h1:r+mU5bGMzcXCRVAuOrTn54S80qbfVkvTdUJZfSfTNbs=
 github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79/go.mod h1:wc6Hbh3K2TgCUSfBC/BOzabItujtHMESZeFk5ZhdxhQ=
 github.com/grafana/grafana-plugin-sdk-go v0.114.0/go.mod h1:D7x3ah+1d4phNXpbnOaxa/osSaZlwh9/ZUnGGzegRbk=
-github.com/grafana/grafana-plugin-sdk-go v0.229.0 h1:0IeuzscdAYcDVsXvIatqdObff4oTkebsXWTtGT4X9bA=
-github.com/grafana/grafana-plugin-sdk-go v0.229.0/go.mod h1:6V6ikT4ryva8MrAp7Bdz5fTJx3/ztzKvpMJFfpzr4CI=
-github.com/grafana/grafana-plugin-sdk-go v0.230.0 h1:Y4IL+eT1jXqTCctlNzdCvxAozpBZ8xEsRGWjGAVRXxo=
-github.com/grafana/grafana-plugin-sdk-go v0.230.0/go.mod h1:6V6ikT4ryva8MrAp7Bdz5fTJx3/ztzKvpMJFfpzr4CI=
 github.com/grafana/grafana-plugin-sdk-go v0.231.0 h1:Qt4PBDR8b4MTUxL48EaZw1fHI1rXUNNhvTU/Nf0Ex2g=
 github.com/grafana/grafana-plugin-sdk-go v0.231.0/go.mod h1:8fJk+5J1hMkpqY/7vrXHKgAsqELWNkQvLQ5A5xCVZHk=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240226124929-648abdbd0ea4 h1:hpyusz8c3yRFoJPlA0o34rWnsLbaOOBZleqRhFBi5Lg=
