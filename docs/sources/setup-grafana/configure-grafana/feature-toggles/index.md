@@ -188,7 +188,7 @@ Experimental features might be changed or removed without prior notice.
 | `logsExploreTableDefaultVisualization`      | Sets the logs table as default visualisation in logs explore                                                                                                                                                                                                                      |
 | `newDashboardSharingComponent`              | Enables the new sharing drawer design                                                                                                                                                                                                                                             |
 | `notificationBanner`                        | Enables the notification banner UI and API                                                                                                                                                                                                                                        |
-| `dashboardRestore`                          | Enables the trash folder view in Dashboards section and the related API updates                                                                                                                                                                                                   |
+| `dashboardRestore`                          | Enables deleted dashboard restore feature                                                                                                                                                                                                                                         |
 
 ## Development feature toggles
 
