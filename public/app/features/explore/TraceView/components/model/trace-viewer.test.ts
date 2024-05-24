@@ -1,4 +1,5 @@
 import { TraceSpan } from '../types';
+
 import { findHeaderTags } from './trace-viewer';
 
 describe('findHeaderTags()', () => {
