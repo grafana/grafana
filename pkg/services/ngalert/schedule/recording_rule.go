@@ -93,8 +93,7 @@ func (r *recordingRule) Run(key ngmodels.AlertRuleKey) error {
 }
 
 func (r *recordingRule) doEvaluate(ctx context.Context, ev *Evaluation) {
-	// TODO: Fingerprint or other things in log context
-	logger := r.logger.FromContext(ctx).New("now", ev.scheduledAt)
+	logger := r.logger.FromContext(ctx).New("now", ev.scheduledAt, "fingerprint", ev.Fingerprint())
 	orgID := fmt.Sprint(ev.rule.OrgID)
 	evalDuration := r.metrics.EvalDuration.WithLabelValues(orgID)
 	evalTotal := r.metrics.EvalTotal.WithLabelValues(orgID)
@@ -119,7 +118,7 @@ func (r *recordingRule) doEvaluate(ctx context.Context, ev *Evaluation) {
 			return
 		}
 
-		err := r.tryEvaluate(ctx, ev, logger)
+		err := r.tryEvaluation(ctx, ev, logger)
 		if err == nil {
 			return
 		}
@@ -135,7 +134,7 @@ func (r *recordingRule) doEvaluate(ctx context.Context, ev *Evaluation) {
 	}
 }
 
-func (r *recordingRule) tryEvaluate(ctx context.Context, ev *Evaluation, logger log.Logger) error {
+func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logger log.Logger) error {
 	orgID := fmt.Sprint(ev.rule.OrgID)
 	evalAttemptTotal := r.metrics.EvalAttemptTotal.WithLabelValues(orgID)
 	evalAttemptFailures := r.metrics.EvalAttemptFailures.WithLabelValues(orgID)
