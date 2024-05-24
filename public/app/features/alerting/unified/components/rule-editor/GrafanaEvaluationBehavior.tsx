@@ -204,6 +204,25 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
   );
 }
 
+function NeedHelpInfoForConfigureNoDataError() {
+  const docsLink =
+    'https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling';
+
+  return (
+    <Stack direction="row" gap={0.5} alignItems="center">
+      <Text variant="bodySmall" color="secondary">
+        Define the alert behavior when the evaluation fails or the query returns no data.
+      </Text>
+      <NeedHelpInfo
+        contentText="These settings can help mitigate temporary data source issues, preventing alerts from unintentionally firing due to lack of data, errors, or timeouts."
+        externalLink={docsLink}
+        linkText={`Read more about this option`}
+        title="Configure no data and error handling"
+      />
+    </Stack>
+  );
+}
+
 function getDescription() {
   const docsLink = 'https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/rule-evaluation/';
 
@@ -283,6 +302,7 @@ export function GrafanaEvaluationBehavior({
       />
       {showErrorHandling && (
         <>
+          <NeedHelpInfoForConfigureNoDataError />
           <Field htmlFor="no-data-state-input" label="Alert state if no data or all values are null">
             <Controller
               render={({ field: { onChange, ref, ...field } }) => (
