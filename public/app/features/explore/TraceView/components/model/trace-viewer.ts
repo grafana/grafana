@@ -57,11 +57,12 @@ export const getTraceName = memoize(_getTraceNameImpl, (spans: TraceSpan[]) => {
 });
 
 // Find header tags according to either old standard (e..g, `http.method`) or the
-// standard semantic convention, as per https://opentelemetry.io/docs/specs/semconv/http/http-spans (e.g., `http.request.method`).
+// standard semantic convention, as per https://opentelemetry.io/docs/specs/semconv/http/http-spans 
+// (e.g., `http.request.method`). The standard semantic convention is preferred.
 export function findHeaderTags(spans: TraceSpan[]) {
   for (let i = 0; i < spans.length; i++) {
     const method = spans[i].tags.filter((tag) => {
-      return tag.key === 'http.method' || tag.key === 'http.request.method';
+      return tag.key === 'http.request.method' || tag.key === 'http.method';
     });
 
     const status = spans[i].tags.filter((tag) => {
@@ -69,7 +70,7 @@ export function findHeaderTags(spans: TraceSpan[]) {
     });
 
     const url = spans[i].tags.filter((tag) => {
-      return tag.key === 'http.url' || tag.key === 'http.target' || tag.key === 'http.path' || tag.key === 'http.route';
+      return tag.key === 'http.route' || tag.key === 'http.url' || tag.key === 'http.target' || tag.key === 'http.path';
     });
 
     if (method.length > 0 || status.length > 0 || url.length > 0) {
