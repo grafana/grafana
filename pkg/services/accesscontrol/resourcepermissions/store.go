@@ -7,9 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -727,44 +725,6 @@ func managedPermission(action, resource string, resourceID, resourceAttribute st
 		Action: action,
 		Scope:  accesscontrol.Scope(resource, resourceAttribute, resourceID),
 	}
-}
-
-/*
-ACTION SETS
-Stores actionsets IN MEMORY
-*/
-// ActionSet is a struct that represents a set of actions that can be performed on a resource.
-// An example of an action set is "folders:edit" which represents the set of RBAC actions that are granted by edit access to a folder.
-
-type ActionSetService interface {
-	accesscontrol.ActionResolver
-
-	GetActionSet(actionName string) []string
-	//GetActionSetName(resource, permission string) string
-	StoreActionSet(resource, permission string, actions []string)
-}
-
-type ActionSet struct {
-	Action  string   `json:"action"`
-	Actions []string `json:"actions"`
-}
-
-// InMemoryActionSets is an in-memory implementation of the ActionSetService.
-type InMemoryActionSets struct {
-	log                log.Logger
-	actionSetToActions map[string][]string
-	actionToActionSets map[string][]string
-}
-
-// NewActionSetService returns a new instance of InMemoryActionSetService.
-func NewActionSetService(a *acimpl.AccessControl) *InMemoryActionSets {
-	actionSets := &InMemoryActionSets{
-		log:                log.New("resourcepermissions.actionsets"),
-		actionSetToActions: make(map[string][]string),
-		actionToActionSets: make(map[string][]string),
-	}
-	a.RegisterActionResolver(actionSets)
-	return actionSets
 }
 
 func (s *InMemoryActionSets) ResolveAction(action string) []string {

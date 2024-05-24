@@ -20,6 +20,8 @@ description: Configure options for Grafana's alert list visualization
 weight: 100
 refs:
   grafana-alerting-overview:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/
 ---
