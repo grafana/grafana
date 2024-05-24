@@ -1178,6 +1178,7 @@
       "title": "Testing & synthetics"
     },
     "trash": {
+      "subtitle": "Any items remaining in the Trash for more than 30 days will be automatically deleted",
       "title": "Trash"
     },
     "upgrading": {

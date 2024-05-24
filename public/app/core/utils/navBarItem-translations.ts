@@ -208,6 +208,11 @@ export function getNavSubTitle(navId: string | undefined) {
       );
     case 'dashboards/library-panels':
       return t('nav.library-panels.subtitle', 'Reusable panels that can be added to multiple dashboards');
+    case 'dashboards/trash':
+      return t(
+        'nav.trash.subtitle',
+        'Any items remaining in the Trash for more than 30 days will be automatically deleted'
+      );
     case 'alerting':
       return t('nav.alerting.subtitle', 'Learn about problems in your systems moments after they occur');
     case 'alerting-upgrade':
