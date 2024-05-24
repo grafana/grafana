@@ -183,6 +183,9 @@
         },
         "description": "(empty)"
       },
+      "cloudMigrationDeleteTokenResponse": {
+        "description": "(empty)"
+      },
       "cloudMigrationListResponse": {
         "content": {
           "application/json": {
@@ -3652,6 +3655,14 @@
               "$ref": "#/components/schemas/CloudMigrationResponse"
             },
             "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "CloudMigrationRequest": {
+        "properties": {
+          "authToken": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -14998,6 +15009,16 @@
       },
       "post": {
         "operationId": "createMigration",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloudMigrationRequest"
+              }
+            }
+          },
+          "x-originalParamName": "Body"
+        },
         "responses": {
           "200": {
             "$ref": "#/components/responses/cloudMigrationResponse"
@@ -15201,6 +15222,40 @@
           }
         },
         "summary": "Create gcom access token.",
+        "tags": [
+          "migrations"
+        ]
+      }
+    },
+    "/cloudmigration/token/{uid}": {
+      "delete": {
+        "operationId": "deleteCloudMigrationToken",
+        "parameters": [
+          {
+            "description": "UID of a cloud migration token",
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/components/responses/cloudMigrationDeleteTokenResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Deletes a cloud migration token.",
         "tags": [
           "migrations"
         ]

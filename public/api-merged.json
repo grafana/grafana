@@ -2322,6 +2322,15 @@
         ],
         "summary": "Create a migration.",
         "operationId": "createMigration",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/CloudMigrationRequest"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "$ref": "#/responses/cloudMigrationResponse"
@@ -2503,6 +2512,38 @@
         "responses": {
           "200": {
             "$ref": "#/responses/cloudMigrationCreateTokenResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/cloudmigration/token/{uid}": {
+      "delete": {
+        "tags": [
+          "migrations"
+        ],
+        "summary": "Deletes a cloud migration token.",
+        "operationId": "deleteCloudMigrationToken",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "UID of a cloud migration token",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/responses/cloudMigrationDeleteTokenResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -13135,6 +13176,14 @@
         }
       }
     },
+    "CloudMigrationRequest": {
+      "type": "object",
+      "properties": {
+        "authToken": {
+          "type": "string"
+        }
+      }
+    },
     "CloudMigrationResponse": {
       "type": "object",
       "properties": {
@@ -22092,6 +22141,9 @@
       "schema": {
         "$ref": "#/definitions/CreateAccessTokenResponseDTO"
       }
+    },
+    "cloudMigrationDeleteTokenResponse": {
+      "description": "(empty)"
     },
     "cloudMigrationListResponse": {
       "description": "(empty)",
