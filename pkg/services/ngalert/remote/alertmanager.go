@@ -122,7 +122,8 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn Decrypt
 	doFunc := func(ctx context.Context, _ *http.Client, req *http.Request) (*http.Response, error) {
 		return c.Do(req.WithContext(ctx))
 	}
-	s := sender.NewExternalAlertmanagerSender(sender.WithDoFunc(doFunc))
+	senderLogger := log.New("ngalert.sender.external-alertmanager")
+	s := sender.NewExternalAlertmanagerSender(senderLogger, sender.WithDoFunc(doFunc))
 	s.Run()
 	err = s.ApplyConfig(cfg.OrgID, 0, []sender.ExternalAMcfg{{URL: cfg.URL + "/alertmanager"}})
 	if err != nil {
