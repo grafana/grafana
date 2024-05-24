@@ -122,6 +122,7 @@ func (r *recordingRule) doEvaluate(ctx context.Context, ev *Evaluation) {
 
 	if ev.rule.IsPaused {
 		logger.Debug("Skip recording rule evaluation because it is paused")
+		return
 	}
 
 	ctx, span := r.tracer.Start(ctx, "recording rule execution", trace.WithAttributes(
