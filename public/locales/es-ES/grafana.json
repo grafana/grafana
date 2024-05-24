@@ -479,6 +479,7 @@
     "rich-history-card": {
       "add-comment-form": "Añadir formulario de comentarios",
       "add-comment-tooltip": "Añadir comentario",
+      "add-to-library": "",
       "cancel": "Cancelar",
       "confirm-delete": "Eliminar",
       "copy-query-tooltip": "Copiar consulta al portapapeles",
@@ -493,6 +494,7 @@
       "edit-comment-tooltip": "Editar comentario",
       "optional-description": "Una descripción opcional de lo que hace la consulta.",
       "query-comment-label": "Comentario de la consulta",
+      "query-template-added": "",
       "query-text-label": "Texto de la consulta",
       "save-comment": "Guardar comentario",
       "star-query-tooltip": "Consulta destacada",
