@@ -212,7 +212,7 @@ type sqlEntityHistoryRequest struct {
 
 type sqlEntityHistoryListRequest struct {
 	*sqltemplate.SQLTemplate
-	h //itoryListToken // TODO: coming in another PR
+	//hitoryListToken // TODO: coming in another PR
 	returnsEntitySet
 }
 
