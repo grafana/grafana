@@ -471,4 +471,4 @@ const defaultPayload: TestTemplateAlert[] = [
   },
 ];
 
-const defaultPayloadString = JSON.stringify(defaultPayload, null, 2);
+export const defaultPayloadString = JSON.stringify(defaultPayload, null, 2);
