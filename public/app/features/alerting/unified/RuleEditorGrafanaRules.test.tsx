@@ -24,14 +24,11 @@ import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { getDefaultQueries } from './utils/rule-form';
 
 jest.mock('./components/rule-editor/ExpressionEditor', () => ({
-  // eslint-disable-next-line react/display-name
   ExpressionEditor: ({ value, onChange }: ExpressionEditorProps) => (
     <input value={value} data-testid="expr" onChange={(e) => onChange(e.target.value)} />
   ),
 }));
 
-// jest.mock('./api/buildInfo');
-// jest.mock('./api/ruler');
 jest.mock('../../../../app/features/manage-dashboards/state/actions');
 
 jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
@@ -41,7 +38,6 @@ jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
 // there's no angular scope in test and things go terribly wrong when trying to render the query editor row.
 // lets just skip it
 jest.mock('app/features/query/components/QueryEditorRow', () => ({
-  // eslint-disable-next-line react/display-name
   QueryEditorRow: () => <p>hi</p>,
 }));
 
@@ -54,11 +50,7 @@ const mocks = {
   searchFolders: jest.mocked(searchFolders),
   api: {
     discoverFeatures: jest.mocked(discoverFeatures),
-    // fetchRulerRulesGroup: jest.mocked(fetchRulerRulesGroup),
     setRulerRuleGroup: jest.spyOn(ruler, 'setRulerRuleGroup'),
-    // fetchRulerRulesNamespace: jest.mocked(fetchRulerRulesNamespace),
-    // fetchRulerRules: jest.mocked(fetchRulerRules),
-    // fetchRulerRulesIfNotFetchedYet: jest.mocked(fetchRulerRulesIfNotFetchedYet),
   },
 };
 

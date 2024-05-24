@@ -24,7 +24,6 @@ import { Annotation } from './utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
 jest.mock('./components/rule-editor/ExpressionEditor', () => ({
-  // eslint-disable-next-line react/display-name
   ExpressionEditor: ({ value, onChange }: ExpressionEditorProps) => (
     <input value={value} data-testid="expr" onChange={(e) => onChange(e.target.value)} />
   ),
@@ -39,24 +38,15 @@ jest.mock('../../../../app/features/manage-dashboards/state/actions');
 // there's no angular scope in test and things go terribly wrong when trying to render the query editor row.
 // lets just skip it
 jest.mock('app/features/query/components/QueryEditorRow', () => ({
-  // eslint-disable-next-line react/display-name
   QueryEditorRow: () => <p>hi</p>,
 }));
-
-// jest.spyOn(config, 'getAllDataSources');
 
 jest.setTimeout(60 * 1000);
 
 const mocks = {
-  // getAllDataSources: jest.mocked(config.getAllDataSources),
   searchFolders: jest.mocked(searchFolders),
   api: {
-    // discoverFeatures: jest.mocked(discoverFeatures),
-    // fetchRulerRulesGroup: jest.mocked(fetchRulerRulesGroup),
     setRulerRuleGroup: jest.spyOn(ruler, 'setRulerRuleGroup'),
-    // fetchRulerRulesNamespace: jest.mocked(fetchRulerRulesNamespace),
-    // fetchRulerRules: jest.mocked(fetchRulerRules),
-    // fetchRulerRulesIfNotFetchedYet: jest.mocked(fetchRulerRulesIfNotFetchedYet),
   },
 };
 
@@ -133,14 +123,12 @@ describe('RuleEditor grafana managed rules', () => {
 
     renderRuleEditor(grafanaRulerRule.grafana_alert.uid);
 
-    // await waitForElementToBeRemoved(ui.loadingIndicator.query());
     // check that it's filled in
     const nameInput = await ui.inputs.name.find();
     expect(nameInput).toHaveValue(grafanaRulerRule.grafana_alert.title);
     //check that folder is in the list
     expect(ui.inputs.folder.get()).toHaveTextContent(new RegExp(folder.title));
     expect(ui.inputs.annotationValue(0).get()).toHaveValue(grafanaRulerRule.annotations[Annotation.summary]);
-    // expect(ui.inputs.annotationValue(1).get()).toHaveValue('some description');
 
     //check that slashed folders are not in the list
     expect(ui.inputs.folder.get()).toHaveTextContent(new RegExp(folder.title));

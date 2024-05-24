@@ -35,14 +35,11 @@ import { ContactPointWithMetadata } from '../../../contact-points/utils';
 import { ExpressionEditorProps } from '../../ExpressionEditor';
 
 jest.mock('app/features/alerting/unified/components/rule-editor/ExpressionEditor', () => ({
-  // eslint-disable-next-line react/display-name
   ExpressionEditor: ({ value, onChange }: ExpressionEditorProps) => (
     <input value={value} data-testid="expr" onChange={(e) => onChange(e.target.value)} />
   ),
 }));
 
-// jest.mock('app/features/alerting/unified/api/buildInfo');
-// jest.mock('app/features/alerting/unified/api/ruler');
 jest.mock('app/features/manage-dashboards/state/actions');
 
 jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
@@ -52,24 +49,8 @@ jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
 // there's no angular scope in test and things go terribly wrong when trying to render the query editor row.
 // lets just skip it
 jest.mock('app/features/query/components/QueryEditorRow', () => ({
-  // eslint-disable-next-line react/display-name
   QueryEditorRow: () => <p>hi</p>,
 }));
-
-// simplified routing mocks
-// const grafanaAlertManagerDataSource: AlertManagerDataSource = {
-//   name: GRAFANA_RULES_SOURCE_NAME,
-//   imgUrl: 'public/img/grafana_icon.svg',
-//   hasConfigurationAPI: true,
-// };
-// jest.mock('app/features/alerting/unified/utils/datasource', () => {
-//   return {
-//     ...jest.requireActual('app/features/alerting/unified/utils/datasource'),
-//     getAlertManagerDataSourcesByPermission: jest.fn(),
-//     useGetAlertManagerDataSourcesByPermissionAndConfig: jest.fn(),
-//     getAlertmanagerDataSourceByName: jest.fn(),
-//   };
-// });
 
 const user = userEvent.setup();
 
@@ -84,14 +65,8 @@ const mocks = {
   searchFolders: jest.mocked(searchFolders),
   useContactPointsWithStatus: jest.mocked(useContactPoints.useContactPointsWithStatus),
   useGetAlertManagerDataSourcesByPermissionAndConfig: jest.mocked(useGetAlertManagerDataSourcesByPermissionAndConfig),
-  // getAlertManagerDataSourcesByPermission: jest.mocked(getAlertManagerDataSourcesByPermission),
   api: {
-    // discoverFeatures: jest.mocked(discoverFeatures),
-    // fetchRulerRulesGroup: jest.mocked(fetchRulerRulesGroup),
     setRulerRuleGroup: jest.spyOn(ruler, 'setRulerRuleGroup'),
-    // fetchRulerRulesNamespace: jest.mocked(fetchRulerRulesNamespace),
-    // fetchRulerRules: jest.mocked(fetchRulerRules),
-    // fetchRulerRulesIfNotFetchedYet: jest.mocked(fetchRulerRulesIfNotFetchedYet),
   },
 };
 
@@ -117,17 +92,6 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
       AccessControlAction.AlertingNotificationsRead,
       AccessControlAction.AlertingNotificationsWrite,
     ]);
-    // mocks.getAlertManagerDataSourcesByPermission.mockReturnValue({
-    //   availableInternalDataSources: [grafanaAlertManagerDataSource],
-    //   availableExternalDataSources: [],
-    // });
-
-    // mocks.useGetAlertManagerDataSourcesByPermissionAndConfig.mockReturnValue([grafanaAlertManagerDataSource]);
-
-    // jest.mocked(dsByPermission.useAlertManagersByPermission).mockReturnValue({
-    //   availableInternalDataSources: [grafanaAlertManagerDataSource],
-    //   availableExternalDataSources: [],
-    // });
   });
 
   const dataSources = {
@@ -156,59 +120,6 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
     });
 
     mocks.api.setRulerRuleGroup.mockResolvedValue();
-    // mocks.api.fetchRulerRulesNamespace.mockResolvedValue([]);
-    // mocks.api.fetchRulerRulesGroup.mockResolvedValue({
-    //   name: 'group2',
-    //   rules: [],
-    // });
-    // mocks.api.fetchRulerRules.mockResolvedValue({
-    //   'Folder A': [
-    //     {
-    //       interval: '1m',
-    //       name: 'group1',
-    //       rules: [
-    //         {
-    //           annotations: { description: 'some description', summary: 'some summary' },
-    //           labels: { severity: 'warn', team: 'the a-team' },
-    //           for: '1m',
-    //           grafana_alert: {
-    //             uid: '23',
-    //             namespace_uid: 'abcd',
-    //             rule_group: 'my-group',
-    //             condition: 'B',
-    //             data: getDefaultQueries(),
-    //             exec_err_state: GrafanaAlertStateDecision.Error,
-    //             no_data_state: GrafanaAlertStateDecision.NoData,
-    //             title: 'my great new rule',
-    //           },
-    //         },
-    //       ],
-    //     },
-    //   ],
-    //   namespace2: [
-    //     {
-    //       interval: '1m',
-    //       name: 'group1',
-    //       rules: [
-    //         {
-    //           annotations: { description: 'some description', summary: 'some summary' },
-    //           labels: { severity: 'warn', team: 'the a-team' },
-    //           for: '1m',
-    //           grafana_alert: {
-    //             uid: '23',
-    //             namespace_uid: 'b',
-    //             rule_group: 'my-group',
-    //             condition: 'B',
-    //             data: getDefaultQueries(),
-    //             exec_err_state: GrafanaAlertStateDecision.Error,
-    //             no_data_state: GrafanaAlertStateDecision.NoData,
-    //             title: 'my great new rule',
-    //           },
-    //         },
-    //       ],
-    //     },
-    //   ],
-    // });
     mocks.searchFolders.mockResolvedValue([
       {
         title: 'Folder A',
@@ -228,12 +139,6 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
       },
     ] as DashboardSearchHit[]);
 
-    // mocks.api.discoverFeatures.mockResolvedValue({
-    //   application: PromApplication.Prometheus,
-    //   features: {
-    //     rulerApiEnabled: false,
-    //   },
-    // });
     config.featureToggles.alertingSimplifiedRouting = true;
     renderSimplifiedRuleEditor();
     await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
@@ -281,63 +186,8 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
       error: undefined,
       refetchReceivers: jest.fn(),
     });
-    //
-    // setDataSourceSrv(new MockDataSourceSrv(dataSources));
-    // mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
+
     mocks.api.setRulerRuleGroup.mockResolvedValue();
-    // mocks.api.fetchRulerRulesNamespace.mockResolvedValue([]);
-    // mocks.api.fetchRulerRulesGroup.mockResolvedValue({
-    //   name: 'group2',
-    //   rules: [],
-    // });
-    // mocks.api.fetchRulerRules.mockResolvedValue({
-    //   'Folder A': [
-    //     {
-    //       interval: '1m',
-    //       name: 'group1',
-    //       rules: [
-    //         {
-    //           annotations: { description: 'some description', summary: 'some summary' },
-    //           labels: { severity: 'warn', team: 'the a-team' },
-    //           for: '1m',
-    //           grafana_alert: {
-    //             uid: '23',
-    //             namespace_uid: 'abcd',
-    //             rule_group: 'my-group',
-    //             condition: 'B',
-    //             data: getDefaultQueries(),
-    //             exec_err_state: GrafanaAlertStateDecision.Error,
-    //             no_data_state: GrafanaAlertStateDecision.NoData,
-    //             title: 'my great new rule',
-    //           },
-    //         },
-    //       ],
-    //     },
-    //   ],
-    //   namespace2: [
-    //     {
-    //       interval: '1m',
-    //       name: 'group1',
-    //       rules: [
-    //         {
-    //           annotations: { description: 'some description', summary: 'some summary' },
-    //           labels: { severity: 'warn', team: 'the a-team' },
-    //           for: '1m',
-    //           grafana_alert: {
-    //             uid: '23',
-    //             namespace_uid: 'b',
-    //             rule_group: 'my-group',
-    //             condition: 'B',
-    //             data: getDefaultQueries(),
-    //             exec_err_state: GrafanaAlertStateDecision.Error,
-    //             no_data_state: GrafanaAlertStateDecision.NoData,
-    //             title: 'my great new rule',
-    //           },
-    //         },
-    //       ],
-    //     },
-    //   ],
-    // });
     mocks.searchFolders.mockResolvedValue([
       {
         title: 'Folder A',
@@ -359,12 +209,6 @@ describe('Can create a new grafana managed alert unsing simplified routing', () 
       },
     ] as DashboardSearchHit[]);
 
-    // mocks.api.discoverFeatures.mockResolvedValue({
-    //   application: PromApplication.Prometheus,
-    //   features: {
-    //     rulerApiEnabled: false,
-    //   },
-    // });
     config.featureToggles.alertingSimplifiedRouting = true;
     renderSimplifiedRuleEditor();
     await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));

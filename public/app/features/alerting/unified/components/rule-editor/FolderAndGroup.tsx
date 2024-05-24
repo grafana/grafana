@@ -29,7 +29,7 @@ export const MAX_GROUP_RESULTS = 1000;
 export const useFolderGroupOptions = (folderUid: string, enableProvisionedGroups: boolean) => {
   // fetch the ruler rules from the database so we can figure out what other "groups" are already defined
   // for our folders
-  const { isLoading: isLoadingRulerNamespace, currentData: rulerNamespace = {} } =
+  const { isLoading: isLoadingRulerNamespace, currentData: rulerNamespace } =
     alertRuleApi.endpoints.rulerNamespace.useQuery(
       {
         namespace: folderUid,
@@ -44,6 +44,11 @@ export const useFolderGroupOptions = (folderUid: string, enableProvisionedGroups
   // There should be only one entry in the rulerNamespace object
   // However it uses folder name as key, so to avoid fetching folder name, we use Object.values
   const groupOptions = useMemo(() => {
+    if (!rulerNamespace) {
+      // still waiting for namespace information to be fetched
+      return [];
+    }
+
     const folderGroups = Object.values(rulerNamespace).flat() ?? [];
 
     return folderGroups

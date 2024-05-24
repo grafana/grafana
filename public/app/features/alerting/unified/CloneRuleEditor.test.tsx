@@ -68,7 +68,7 @@ const ui = {
     annotationValue: (idx: number) => byTestId(`annotation-value-${idx}`),
     labelValue: (idx: number) => byTestId(`label-value-${idx}`),
   },
-  loadingIndicator: byText('Loading the rule'),
+  loadingIndicator: byText('Loading the rule...'),
 };
 
 function Wrapper({ children }: React.PropsWithChildren<{}>) {

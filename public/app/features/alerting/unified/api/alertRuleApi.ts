@@ -226,7 +226,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
       // TODO: In future, if supported in other rulers, parametrize ruler source name
       // For now, to make the consumption of this hook clearer, only support Grafana ruler
       query: ({ uid }) => ({ url: `/api/ruler/${GRAFANA_RULES_SOURCE_NAME}/api/v1/rule/${uid}` }),
-      providesTags: (_, __, { uid }) => [{ type: 'GrafanaRulerRule', id: uid }],
+      providesTags: (_result, _error, { uid }) => [{ type: 'GrafanaRulerRule', id: uid }],
     }),
 
     exportRules: build.query<string, ExportRulesParams>({

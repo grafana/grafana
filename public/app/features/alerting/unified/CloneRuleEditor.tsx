@@ -19,7 +19,7 @@ export function CloneRuleEditor({ sourceRuleId }: { sourceRuleId: RuleIdentifier
   const { loading, result: rule, error } = useRuleWithLocation({ ruleIdentifier: sourceRuleId });
 
   if (loading) {
-    return <LoadingPlaceholder text="Loading the rule" />;
+    return <LoadingPlaceholder text="Loading the rule..." />;
   }
 
   if (rule) {
