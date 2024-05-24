@@ -80,8 +80,7 @@ func (cfg *ExternalAMcfg) headerString() string {
 	return result.String()
 }
 
-func NewExternalAlertmanagerSender(opts ...Option) *ExternalAlertmanager {
-	l := log.New("ngalert.sender.external-alertmanager")
+func NewExternalAlertmanagerSender(l log.Logger, opts ...Option) *ExternalAlertmanager {
 	sdCtx, sdCancel := context.WithCancel(context.Background())
 	s := &ExternalAlertmanager{
 		logger:   l,
