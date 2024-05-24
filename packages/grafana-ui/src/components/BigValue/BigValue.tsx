@@ -2,7 +2,7 @@ import { cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
 
 import { DisplayValue, DisplayValueAlignmentFactors, FieldSparkline } from '@grafana/data';
-import { VizTextDisplayOptions } from '@grafana/schema';
+import { PercentChangeColorMode, VizTextDisplayOptions } from '@grafana/schema';
 
 import { Themeable2 } from '../../types';
 import { clearButtonStyles } from '../Button';
@@ -67,6 +67,8 @@ export interface Props extends Themeable2 {
   textMode?: BigValueTextMode;
   /** If true disables the tooltip */
   hasLinks?: boolean;
+  /** Percent change color mode */
+  percentChangeColorMode?: PercentChangeColorMode;
 
   /**
    * If part of a series of stat panes, this is the total number.
@@ -94,6 +96,7 @@ export class BigValue extends PureComponent<Props> {
     const titleStyles = layout.getTitleStyles();
     const textValues = layout.textValues;
     const percentChange = this.props.value.percentChange;
+    const percentChangeColorMode = this.props.percentChangeColorMode;
     const showPercentChange = percentChange != null && !Number.isNaN(percentChange);
 
     // When there is an outer data link this tooltip will override the outer native tooltip
@@ -106,7 +109,10 @@ export class BigValue extends PureComponent<Props> {
             {textValues.title && <div style={titleStyles}>{textValues.title}</div>}
             <FormattedValueDisplay value={textValues} style={valueStyles} />
             {showPercentChange && (
-              <PercentChange percentChange={percentChange} styles={layout.getPercentChangeStyles(percentChange)} />
+              <PercentChange
+                percentChange={percentChange}
+                styles={layout.getPercentChangeStyles(percentChange, percentChangeColorMode, valueStyles)}
+              />
             )}
           </div>
           {layout.renderChart()}
