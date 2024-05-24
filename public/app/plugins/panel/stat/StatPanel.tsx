@@ -48,6 +48,7 @@ export class StatPanel extends PureComponent<PanelProps<Options>> {
         onClick={openMenu}
         className={targetClassName}
         disableWideLayout={!options.wideLayout}
+        percentChangeColorMode={options.percentChangeColorMode}
       />
     );
   };

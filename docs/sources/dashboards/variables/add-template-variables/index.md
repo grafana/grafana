@@ -40,13 +40,49 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Manage variables
-title: Add and manage variables
+menuTitle: Add variables
+title: Add variables
 description: Learn about the types of variables you can add to dashboards and how
 weight: 100
+refs:
+  add:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/
+  inspect:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/inspect-variable/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/inspect-variable/
+  prometheus-query-variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/template-variables/#use-**rate_interval
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/template-variables/#use-**rate_interval
+  raw-variable-format:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#raw
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#raw
+  data-source:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
+  raw-format:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#raw
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#raw
+  add-a-data-source:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#add-a-data-source
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#add-a-data-source
 ---
 
-# Add and manage variables
+# Add variables
 
 The following table lists the types of variables shipped with Grafana.
 
@@ -87,10 +123,10 @@ Query variables are generally only supported for strings. If your query returns 
 
 Query expressions can contain references to other variables and in effect create linked variables. Grafana detects this and automatically refreshes a variable when one of its linked variables change.
 
-> **Note:** Query expressions are different for each data source. For more information, refer to the documentation for your [data source][].
+> **Note:** Query expressions are different for each data source. For more information, refer to the documentation for your [data source](ref:data-source).
 
 1. [Enter general options](#enter-general-options).
-1. In the **Data source** list, select the target data source for the query. For more information about data sources, refer to [Add a data source][].
+1. In the **Data source** list, select the target data source for the query. For more information about data sources, refer to [Add a data source](ref:add-a-data-source).
 1. In the **Refresh** list, select when the variable should update options.
    - **On Dashboard Load:** Queries the data source every time the dashboard loads. This slows down dashboard loading, because the variable query needs to be completed before dashboard can be initialized.
    - **On Time Range Change:** Queries the data source every time the dashboard loads and when the dashboard time range changes. Use this option if your variable options query contains a time range filter or is dependent on the dashboard time range.
@@ -136,7 +172,7 @@ Constant variables are _not_ flexible. Each constant variable only holds one val
 Constant variables are useful when you have complex values that you need to include in queries but don't want to retype in every query. For example, if you had a server path called `i-0b6a61efe2ab843gg`, then you could replace it with a variable called `$path_gg`.
 
 1. [Enter general options](#enter-general-options).
-1. In the **Value** field, enter the variable value. You can enter letters, numbers, and symbols. You can even use wildcards if you use [raw format][].
+1. In the **Value** field, enter the variable value. You can enter letters, numbers, and symbols. You can even use wildcards if you use [raw format](ref:raw-format).
 1. In **Preview of values**, Grafana displays the current variable value. Review it to ensure it matches what you expect.
 1. Click **Add** to add the variable to the dashboard.
 
@@ -147,7 +183,7 @@ _Data source_ variables enable you to quickly change the data source for an enti
 1. [Enter general options](#enter-general-options).
 1. In the **Type** list, select the target data source for the variable.
 
-   You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only). For more information about data sources, refer to [Add a data source][].
+   You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only). For more information about data sources, refer to [Add a data source](ref:add-a-data-source).
 
 1. (Optional) In **Instance name filter**, enter a regex filter for which data source instances to choose from in the variable value drop-down list. Leave this field empty to display all instances.
 1. (Optional) Enter [Selection Options](#configure-variable-selection-options).
@@ -193,7 +229,7 @@ Ad hoc filter variables only work with Prometheus, Loki, InfluxDB, and Elasticse
 1. [Enter general options](#enter-general-options).
 1. In the **Data source** list, select the target data source.
 
-   You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only). For more information about data sources, refer to [Add a data source][].
+   You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only). For more information about data sources, refer to [Add a data source](ref:add-a-data-source).
 
 1. Click **Add** to add the variable to the dashboard.
 
@@ -232,7 +268,7 @@ Automatic escaping and formatting can cause problems and it can be tricky to gra
 If you do not want Grafana to do this automatic regex escaping and formatting, then you must do one of the following:
 
 - Turn off the **Multi-value** or **Include All option** options.
-- Use the [raw variable format][].
+- Use the [raw variable format](ref:raw-variable-format).
 
 ### Include All option
 
@@ -323,7 +359,7 @@ Currently only supported for Prometheus and Loki data sources. This variable rep
 
 ### $\_\_rate_interval
 
-Currently only supported for Prometheus data sources. The `$__rate_interval` variable is meant to be used in the rate function. Refer to [Prometheus query variables][] for details.
+Currently only supported for Prometheus data sources. The `$__rate_interval` variable is meant to be used in the rate function. Refer to [Prometheus query variables](ref:prometheus-query-variables) for details.
 
 ### $\_\_rate_interval_ms
 
@@ -517,16 +553,6 @@ The more layers of dependency you have in variables, the longer it will take to 
 
 For example, if you have a series of four linked variables (country, region, server, metric) and you change a root variable value (country), then Grafana must run queries for all the dependent variables before it updates the visualizations in the dashboard.
 
-## Manage variables
-
-The variables page lets you [add][] variables and manage existing variables. It also allows you to [inspect][] variables and identify whether a variable is being referenced (or used) in other variables or dashboard.
-
-**Move:** You can move a variable up or down the list using drag and drop.
-
-**Clone:** To clone a variable, click the clone icon from the set of icons on the right. This creates a copy of the variable with the name of the original variable prefixed with `copy_of_`.
-
-**Delete:** To delete a variable, click the trash icon from the set of icons on the right.
-
 ## Filter variables with regex
 
 Using the Regex Query option, you filter the list of options returned by the variable query or modify the options returned.
@@ -633,26 +659,3 @@ enp216s0f0np3         0000:d7:00_0_0000:d8:00_3
 ```
 
 **Note:** Only `text` and `value` capture group names are supported.
-
-{{% docs/reference %}}
-[raw format]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/variable-syntax#raw"
-[raw format]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/variable-syntax#raw"
-
-[data source]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources"
-[data source]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources"
-
-[Prometheus query variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/prometheus/template-variables#use-**rate_interval"
-[Prometheus query variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/prometheus/template-variables#use-**rate_interval"
-
-[Add a data source]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management#add-a-data-source"
-[Add a data source]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management#add-a-data-source"
-
-[raw variable format]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/variable-syntax#raw"
-[raw variable format]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/variable-syntax#raw"
-
-[add]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables"
-[add]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables"
-
-[inspect]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/inspect-variable"
-[inspect]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/inspect-variable"
-{{% /docs/reference %}}
