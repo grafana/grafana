@@ -80,7 +80,7 @@ func (cfg *ExternalAMcfg) headerString() string {
 	return result.String()
 }
 
-func NewExternalAlertmanagerSender(l log.Logger, opts ...Option) *ExternalAlertmanager {
+func NewExternalAlertmanagerSender(l log.Logger, reg prometheus.Registerer, opts ...Option) *ExternalAlertmanager {
 	sdCtx, sdCancel := context.WithCancel(context.Background())
 	s := &ExternalAlertmanager{
 		logger:   l,
@@ -90,7 +90,7 @@ func NewExternalAlertmanagerSender(l log.Logger, opts ...Option) *ExternalAlertm
 	s.manager = NewManager(
 		// Injecting a new registry here means these metrics are not exported.
 		// Once we fix the individual Alertmanager metrics we should fix this scenario too.
-		&Options{QueueCapacity: defaultMaxQueueCapacity, Registerer: prometheus.NewRegistry()},
+		&Options{QueueCapacity: defaultMaxQueueCapacity, Registerer: reg},
 		s.logger,
 	)
 
