@@ -4,7 +4,6 @@ import { LogRowContextOptions, LogRowModel, getDefaultTimeRange, locationUtil, u
 import { DataQuery } from '@grafana/schema';
 import { ClipboardButton, IconButton } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
-import { useContentOutlineContext } from 'app/features/explore/ContentOutline/ContentOutlineContext';
 
 import { LogRowStyles } from './getLogRowStyles';
 

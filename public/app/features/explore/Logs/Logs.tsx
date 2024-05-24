@@ -660,7 +660,11 @@ class UnthemedLogs extends PureComponent<Props, State> {
       level: 'child',
       ref: null,
       color: LogLevelColor[row.logLevel],
+      childOnTop: true,
       onClick: () => onOpenContext(row),
+      onRemove: (id: string) => {
+        this.context?.unregister(id);
+      },
     });
   };
 

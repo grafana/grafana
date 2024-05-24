@@ -141,8 +141,11 @@ export function ContentOutlineContextProvider({ children, refreshDependencies }:
           ref = parent.ref;
         }
 
-        const childrenUpdated = [...(parent.children || []), { ...outlineItem, id, ref }];
-        childrenUpdated.sort(sortElementsByDocumentPosition);
+        let childrenUpdated = [{ ...outlineItem, id, ref }, ...(parent.children || [])];
+
+        if (!outlineItem.childOnTop) {
+          childrenUpdated = sortItems(childrenUpdated);
+        }
 
         newItems[parentIndex] = {
           ...parent,
@@ -190,7 +193,8 @@ export function ContentOutlineContextProvider({ children, refreshDependencies }:
     setOutlineItems((prevItems) => {
       const newItems = [...prevItems];
       for (const item of newItems) {
-        item.children?.sort(sortElementsByDocumentPosition);
+        const sortedItems = sortItems(item.children || []);
+        item.children = sortedItems;
       }
       return newItems;
     });
@@ -205,7 +209,7 @@ export function ContentOutlineContextProvider({ children, refreshDependencies }:
   );
 }
 
-export function sortElementsByDocumentPosition(a: ContentOutlineItemContextProps, b: ContentOutlineItemContextProps) {
+function sortElementsByDocumentPosition(a: ContentOutlineItemContextProps, b: ContentOutlineItemContextProps) {
   if (a.ref && b.ref) {
     const diff = a.ref.compareDocumentPosition(b.ref);
     if (diff === Node.DOCUMENT_POSITION_PRECEDING) {
@@ -215,6 +219,22 @@ export function sortElementsByDocumentPosition(a: ContentOutlineItemContextProps
     }
   }
   return 0;
+}
+
+function sortItems(outlineItems: ContentOutlineItemContextProps[]): ContentOutlineItemContextProps[] {
+  const [skipSort, sortable] = outlineItems.reduce<
+    [ContentOutlineItemContextProps[], ContentOutlineItemContextProps[]]
+  >(
+    (acc, item) => {
+      item.childOnTop ? acc[0].push(item) : acc[1].push(item);
+      return acc;
+    },
+    [[], []]
+  );
+
+  sortable.sort(sortElementsByDocumentPosition);
+
+  return [...skipSort, ...sortable];
 }
 
 export function useContentOutlineContext() {

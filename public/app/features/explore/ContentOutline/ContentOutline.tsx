@@ -47,6 +47,8 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
     (item) => item.children && !(item.mergeSingleChild && item.children?.length === 1) && item.children.length > 0
   );
 
+  const outlineItemsHaveDeleteButton = outlineItems.some((item) => item.children?.some((child) => child.onRemove));
+
   const [sectionsExpanded, setSectionsExpanded] = useState(() => {
     return outlineItems.reduce((acc: { [key: string]: boolean }, item) => {
       acc[item.id] = false;
@@ -57,6 +59,10 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
   const scrollIntoView = (ref: HTMLElement | null, itemPanelId: string, customOffsetTop = 0) => {
     let scrollValue = 0;
     let el: HTMLElement | null | undefined = ref;
+
+    if (!el) {
+      return;
+    }
 
     do {
       scrollValue += el?.offsetTop || 0;
@@ -158,7 +164,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                   title={contentOutlineExpanded ? item.title : undefined}
                   contentOutlineExpanded={contentOutlineExpanded}
                   className={cx(styles.buttonStyles, {
-                    [styles.justifyCenter]: !contentOutlineExpanded,
+                    [styles.justifyCenter]: !contentOutlineExpanded && !outlineItemsHaveDeleteButton,
                     [styles.sectionHighlighter]: isChildActive(item, activeSectionChildId) && !contentOutlineExpanded,
                   })}
                   indentStyle={cx({
@@ -196,7 +202,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                           contentOutlineExpanded={contentOutlineExpanded}
                           icon={contentOutlineExpanded ? undefined : item.icon}
                           className={cx(styles.buttonStyles, {
-                            [styles.justifyCenter]: !contentOutlineExpanded,
+                            [styles.justifyCenter]: !contentOutlineExpanded && !outlineItemsHaveDeleteButton,
                             [styles.sectionHighlighter]:
                               isChildActive(item, activeSectionChildId) && !contentOutlineExpanded,
                           })}
@@ -211,6 +217,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
                           isActive={shouldBeActive(child, activeSectionId, activeSectionChildId, sectionsExpanded)}
                           extraHighlight={child.highlight}
                           color={child.color}
+                          onRemove={child.onRemove ? () => child.onRemove?.(child.id) : undefined}
                         />
                       </div>
                     ))}
