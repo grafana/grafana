@@ -404,7 +404,7 @@ func genTokenWithRetries(ctxLogger log.Logger, extSvcSlug string) (satokengen.Ke
 		)
 		// On first retry, log the token parts that contain a nil byte
 		if retry == 1 {
-			logTokenNULPart(ctxLogger, extSvcSlug, newKeyInfo.ClientSecret)
+			logTokenNULParts(ctxLogger, extSvcSlug, newKeyInfo.ClientSecret)
 		}
 	}
 
@@ -414,10 +414,10 @@ func genTokenWithRetries(ctxLogger log.Logger, extSvcSlug string) (satokengen.Ke
 	return newKeyInfo, nil
 }
 
-// logTokenNULPart logs a warning if the external service token contains a nil byte
+// logTokenNULParts logs a warning if the external service token contains a nil byte
 // Tokens normally have 3 parts "gl+serviceID_secret_checksum"
 // Log the part of the generated token that contains a nil byte
-func logTokenNULPart(ctxLogger log.Logger, extSvcSlug string, token string) {
+func logTokenNULParts(ctxLogger log.Logger, extSvcSlug string, token string) {
 	parts := strings.Split(token, "_")
 	for i := range parts {
 		if strings.Contains(parts[i], "\x00") {
@@ -443,7 +443,7 @@ func (esa *ExtSvcAccountsService) GetExtSvcCredentials(ctx context.Context, orgI
 	}
 	if strings.Contains(token, "\x00") {
 		ctxLogger.Warn("Loaded token from store containing NUL", "service", extSvcSlug)
-		logTokenNULPart(ctxLogger, extSvcSlug, token)
+		logTokenNULParts(ctxLogger, extSvcSlug, token)
 	}
 	return &Credentials{Secret: token}, nil
 }
