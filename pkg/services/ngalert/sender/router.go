@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
@@ -48,11 +49,12 @@ type AlertsRouter struct {
 
 	datasourceService datasources.DataSourceService
 	secretService     secrets.Service
+	featureManager    featuremgmt.FeatureToggles
 }
 
 func NewAlertsRouter(multiOrgNotifier *notifier.MultiOrgAlertmanager, store store.AdminConfigurationStore,
 	clk clock.Clock, appURL *url.URL, disabledOrgs map[int64]struct{}, configPollInterval time.Duration,
-	datasourceService datasources.DataSourceService, secretService secrets.Service) *AlertsRouter {
+	datasourceService datasources.DataSourceService, secretService secrets.Service, featureManager featuremgmt.FeatureToggles) *AlertsRouter {
 	d := &AlertsRouter{
 		logger:           log.New("ngalert.sender.router"),
 		clock:            clk,
@@ -71,13 +73,14 @@ func NewAlertsRouter(multiOrgNotifier *notifier.MultiOrgAlertmanager, store stor
 
 		datasourceService: datasourceService,
 		secretService:     secretService,
+		featureManager:    featureManager,
 	}
 	return d
 }
 
 // SyncAndApplyConfigFromDatabase looks for the admin configuration in the database
 // and adjusts the sender(s) and alert handling mechanism accordingly.
-func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
+func (d *AlertsRouter) SyncAndApplyConfigFromDatabase(ctx context.Context) error {
 	cfgs, err := d.adminConfigStore.GetAdminConfigurations()
 	if err != nil {
 		return err
@@ -85,12 +88,19 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 
 	d.logger.Debug("Attempting to sync admin configs", "count", len(cfgs))
 
+	disableExternal := d.featureManager.IsEnabled(ctx, featuremgmt.FlagAlertingDisableSendAlertsExternal)
+
 	orgsFound := make(map[int64]struct{}, len(cfgs))
 	d.adminConfigMtx.Lock()
 	for _, cfg := range cfgs {
 		_, isDisabledOrg := d.disabledOrgs[cfg.OrgID]
 		if isDisabledOrg {
 			continue
+		}
+
+		if disableExternal && cfg.SendAlertsTo != models.InternalAlertmanager {
+			d.logger.Warn("Alertmanager choice in configuration will be ignored due to feature flags", "org", cfg.OrgID, "choice", cfg.SendAlertsTo)
+			cfg.SendAlertsTo = models.InternalAlertmanager
 		}
 
 		// Update the Alertmanagers choice for the organization.
@@ -363,7 +373,7 @@ func (d *AlertsRouter) Run(ctx context.Context) error {
 	for {
 		select {
 		case <-time.After(d.adminConfigPollInterval):
-			if err := d.SyncAndApplyConfigFromDatabase(); err != nil {
+			if err := d.SyncAndApplyConfigFromDatabase(ctx); err != nil {
 				d.logger.Error("Unable to sync admin configuration", "error", err)
 			}
 		case <-ctx.Done():
