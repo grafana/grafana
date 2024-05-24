@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	pluginfakes "github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	dsservice "github.com/grafana/grafana/pkg/services/datasources/service"
@@ -36,7 +37,8 @@ func SetupTestDataSourceSecretMigrationService(t *testing.T, sqlStore db.DB, kvS
 	}
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	quotaService := quotatest.New(false, nil)
-	dsService, err := dsservice.ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{})
+	dsService, err := dsservice.ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New(),
+		acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{})
 	require.NoError(t, err)
 	migService := ProvideDataSourceMigrationService(dsService, kvStore, features)
 	return migService

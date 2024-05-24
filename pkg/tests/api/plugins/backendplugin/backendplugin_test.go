@@ -846,6 +846,7 @@ type testPlugin struct {
 	backend.CallResourceHandler
 	backend.QueryDataHandler
 	backend.StreamHandler
+	backend.AdmissionHandler
 }
 
 func (tp *testPlugin) PluginID() string {
@@ -931,6 +932,33 @@ func (tp *testPlugin) RunStream(ctx context.Context, req *backend.RunStreamReque
 		return tp.StreamHandler.RunStream(ctx, req, sender)
 	}
 	return plugins.ErrMethodNotImplemented
+}
+
+// ValidateAdmission implements backend.AdmissionHandler.
+func (tp *testPlugin) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
+	if tp.AdmissionHandler != nil {
+		return tp.AdmissionHandler.ValidateAdmission(ctx, req)
+	}
+
+	return nil, plugins.ErrMethodNotImplemented
+}
+
+// MutateAdmission implements backend.AdmissionHandler.
+func (tp *testPlugin) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
+	if tp.AdmissionHandler != nil {
+		return tp.AdmissionHandler.MutateAdmission(ctx, req)
+	}
+
+	return nil, plugins.ErrMethodNotImplemented
+}
+
+// ConvertObject implements backend.AdmissionHandler.
+func (tp *testPlugin) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+	if tp.AdmissionHandler != nil {
+		return tp.AdmissionHandler.ConvertObject(ctx, req)
+	}
+
+	return nil, plugins.ErrMethodNotImplemented
 }
 
 func metricRequestWithQueries(t *testing.T, rawQueries ...string) dtos.MetricRequest {

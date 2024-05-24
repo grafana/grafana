@@ -10,6 +10,7 @@ import (
 	sdktracing "github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -144,6 +145,9 @@ func asBackendPlugin(svc any) backendplugin.PluginFactoryFunc {
 	}
 	if healthHandler, ok := svc.(backend.CheckHealthHandler); ok {
 		opts.CheckHealthHandler = healthHandler
+	}
+	if storageHandler, ok := svc.(backend.AdmissionHandler); ok {
+		opts.AdmissionHandler = storageHandler
 	}
 
 	if opts.QueryDataHandler != nil || opts.CallResourceHandler != nil ||

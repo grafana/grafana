@@ -53,13 +53,17 @@
               "type"
             ],
             "properties": {
+              "apiVersion": {
+                "description": "The apiserver version",
+                "type": "string"
+              },
               "type": {
                 "description": "The datasource plugin type",
                 "type": "string",
                 "pattern": "^grafana-testdata-datasource$|^testdata$"
               },
               "uid": {
-                "description": "Datasource UID",
+                "description": "Datasource UID (NOTE: name in k8s)",
                 "type": "string"
               }
             },

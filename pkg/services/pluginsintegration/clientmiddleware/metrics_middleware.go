@@ -185,3 +185,33 @@ func (m *MetricsMiddleware) CollectMetrics(ctx context.Context, req *backend.Col
 	})
 	return result, err
 }
+
+func (m *MetricsMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
+	var result *backend.ValidationResponse
+	err := m.instrumentPluginRequest(ctx, req.PluginContext, endpointMutateAdmission, func(ctx context.Context) (status requestStatus, innerErr error) {
+		result, innerErr = m.next.ValidateAdmission(ctx, req)
+		return requestStatusFromError(innerErr), innerErr
+	})
+
+	return result, err
+}
+
+func (m *MetricsMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
+	var result *backend.MutationResponse
+	err := m.instrumentPluginRequest(ctx, req.PluginContext, endpointMutateAdmission, func(ctx context.Context) (status requestStatus, innerErr error) {
+		result, innerErr = m.next.MutateAdmission(ctx, req)
+		return requestStatusFromError(innerErr), innerErr
+	})
+
+	return result, err
+}
+
+func (m *MetricsMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+	var result *backend.ConversionResponse
+	err := m.instrumentPluginRequest(ctx, req.PluginContext, endpointMutateAdmission, func(ctx context.Context) (status requestStatus, innerErr error) {
+		result, innerErr = m.next.ConvertObject(ctx, req)
+		return requestStatusFromError(innerErr), innerErr
+	})
+
+	return result, err
+}

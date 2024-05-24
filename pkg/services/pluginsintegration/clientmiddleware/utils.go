@@ -25,13 +25,16 @@ func (status requestStatus) String() string {
 }
 
 const (
-	endpointCallResource    = "callResource"
-	endpointCheckHealth     = "checkHealth"
-	endpointCollectMetrics  = "collectMetrics"
-	endpointQueryData       = "queryData"
-	endpointSubscribeStream = "subscribeStream"
-	endpointPublishStream   = "publishStream"
-	endpointRunStream       = "runStream"
+	endpointCallResource      = "callResource"
+	endpointCheckHealth       = "checkHealth"
+	endpointCollectMetrics    = "collectMetrics"
+	endpointQueryData         = "queryData"
+	endpointSubscribeStream   = "subscribeStream"
+	endpointPublishStream     = "publishStream"
+	endpointRunStream         = "runStream"
+	endpointValidateAdmission = "validateAdmission"
+	endpointMutateAdmission   = "mutateAdmission"
+	endpointConvertObject     = "convertObject"
 )
 
 type callResourceResponseSenderFunc func(res *backend.CallResourceResponse) error
