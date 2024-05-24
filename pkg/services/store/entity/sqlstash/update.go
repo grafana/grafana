@@ -140,13 +140,8 @@ func diffLabels(oldLabels, newLabels map[string]string) (keepLabels []string, in
 // entityForUpdate populates a *returnsEntity taking the relevant parts from
 // the requested update and keeping the necessary values from the old one.
 func entityForUpdate(updatedBy string, oldEntity, newEntity *entity.Entity) (*returnsEntity, error) {
-	var newOrigin, oldOrigin entity.EntityOriginInfo
-	if newEntity.Origin != nil {
-		newOrigin = *newEntity.Origin
-	}
-	if oldEntity.Origin != nil {
-		oldOrigin = *oldEntity.Origin
-	}
+	newOrigin := ptrOr(newEntity.Origin)
+	oldOrigin := ptrOr(oldEntity.Origin)
 
 	ret := &returnsEntity{
 		Entity: &entity.Entity{

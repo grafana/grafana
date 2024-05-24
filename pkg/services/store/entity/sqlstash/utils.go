@@ -34,6 +34,18 @@ func getCurrentUser(ctx context.Context) (string, error) {
 	return store.GetUserIDString(user), nil
 }
 
+// ptrOr returns the first non-nil pointer in the least or a new non-nil
+// pointer.
+func ptsOr[P ~*E, E any](ps ...P) P {
+	for _, p := range ps {
+		if p != nil {
+			return p
+		}
+	}
+
+	return P(new(E))
+}
+
 // sliceOr returns the first slice that has at least one element, or a non-nil
 // empty slice.
 func sliceOr[S ~[]E, E comparable](vals ...S) S {
@@ -88,7 +100,7 @@ func query[T any](ctx context.Context, x db.ContextExecer, tmpl *template.Templa
 			Query:     query,
 		}
 	}
-	defer rows.Close()
+	defer rows.Close() //nolint:errcheck
 
 	var ret []T
 	for rows.Next() {
