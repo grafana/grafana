@@ -35,7 +35,7 @@ const noUntranslatedLiterals = createRule({
       description: 'Check untranslated strings',
     },
     messages: {
-      noUntranslatedStrings: 'Please, mark strings for translation.',
+      noUntranslatedStrings: 'No untranslated strings. Wrap text with <Trans />',
     },
     schema: [],
   },
