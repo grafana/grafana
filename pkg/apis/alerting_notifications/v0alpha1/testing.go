@@ -34,7 +34,7 @@ func (t IntervalGenerator) generateDaysOfMonth() string {
 
 func (t IntervalGenerator) generateTimeRange() TimeRange {
 	from := rand.Int63n(1440 / 2)
-	to := rand.Int63n(1440-from) + from + 1
+	to := rand.Int63n(1440-from) + from
 	return TimeRange{
 		StartTime: time.Unix(from*60, 0).UTC().Format("15:04"),
 		EndTime:   time.Unix(to*60, 0).UTC().Format("15:04"),
