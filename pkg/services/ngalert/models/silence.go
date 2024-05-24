@@ -37,18 +37,26 @@ func isEqualMatcher(m amv2.Matcher) bool {
 	return (m.IsEqual == nil || *m.IsEqual) && (m.IsRegex == nil || !*m.IsRegex)
 }
 
+// SilenceWithMetadata is a helper type for managing a silence with associated metadata.
 type SilenceWithMetadata struct {
 	*Silence
-	Metadata *SilenceMetadata
+	Metadata SilenceMetadata
 }
 
+// SilenceMetadata contains metadata about a silence. Fields are pointers to allow for metadata to be optionally loaded.
 type SilenceMetadata struct {
-	RuleUID     string
-	RuleTitle   string
-	FolderUID   string
-	Permissions SilencePermissionSet
+	RuleMetadata *SilenceRuleMetadata
+	Permissions  *SilencePermissionSet
 }
 
+// SilenceRuleMetadata contains metadata about the rule associated with a silence.
+type SilenceRuleMetadata struct {
+	RuleUID   string
+	RuleTitle string
+	FolderUID string
+}
+
+// SilencePermission is a type for representing a silence permission.
 type SilencePermission string
 
 const (
@@ -66,7 +74,7 @@ func SilencePermissions() [3]SilencePermission {
 	}
 }
 
-// SilencePermissionSet is a helper type for managing a set of silence permissions.
+// SilencePermissionSet represents a set of permissions for a silence.
 type SilencePermissionSet map[SilencePermission]bool
 
 // Clone returns a deep copy of the permission set.

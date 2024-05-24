@@ -390,8 +390,14 @@ type GetDeleteSilenceParams struct {
 type GetSilencesParams struct {
 	// in:query
 	Filter []string `json:"filter"`
+	// Return rule metadata with silence.
 	// in:query
-	WithMetadata bool `json:"withMetadata"`
+	// required:false
+	RuleMetadata bool `json:"ruleMetadata"`
+	// Return access control metadata with silence.
+	// in:query
+	// required:false
+	AccessControl bool `json:"accesscontrol"`
 }
 
 // swagger:model
@@ -489,10 +495,11 @@ type GettableGrafanaSilence struct {
 }
 
 type SilenceMetadata struct {
-	RuleUID     string                         `json:"rule_uid,omitempty"`
-	RuleTitle   string                         `json:"rule_title,omitempty"`
-	FolderUID   string                         `json:"folder_uid,omitempty"`
-	Permissions map[SilencePermission]struct{} `json:"permissions,omitempty"`
+	RuleUID   string `json:"rule_uid,omitempty"`
+	RuleTitle string `json:"rule_title,omitempty"`
+	FolderUID string `json:"folder_uid,omitempty"`
+	// example: {"read": true, "write": false, "create": false}
+	Permissions map[SilencePermission]bool `json:"accessControl,omitempty"`
 }
 
 type SilencePermission string

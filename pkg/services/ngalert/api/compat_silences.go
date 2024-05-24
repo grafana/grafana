@@ -13,24 +13,29 @@ func SilenceToGettableGrafanaSilence(s *models.SilenceWithMetadata) definitions.
 	gettable := definitions.GettableGrafanaSilence{
 		GettableSilence: (*definitions.GettableSilence)(s.Silence),
 	}
-	if s.Metadata != nil {
-		gettable.Metadata = &definitions.SilenceMetadata{
-			RuleUID:     s.Metadata.RuleUID,
-			RuleTitle:   s.Metadata.RuleTitle,
-			FolderUID:   s.Metadata.FolderUID,
-			Permissions: make(map[definitions.SilencePermission]struct{}, len(s.Metadata.Permissions)),
-		}
+	if s.Metadata.Permissions == nil && s.Metadata.RuleMetadata == nil {
+		return gettable
+	}
+
+	gettable.Metadata = &definitions.SilenceMetadata{}
+	if s.Metadata.Permissions != nil {
+		gettable.Metadata.Permissions = make(map[definitions.SilencePermission]bool, len(*s.Metadata.Permissions))
 		for _, permission := range models.SilencePermissions() {
-			if s.Metadata.Permissions.Has(permission) {
-				p, err := SilencePermissionToAPI(permission)
-				if err != nil {
-					// Skip unknown permissions in response.
-					continue
-				}
-				gettable.Metadata.Permissions[p] = struct{}{}
+			p, err := SilencePermissionToAPI(permission)
+			if err != nil {
+				// Skip unknown permissions in response.
+				continue
 			}
+			gettable.Metadata.Permissions[p] = s.Metadata.Permissions.Has(permission)
 		}
 	}
+
+	if s.Metadata.RuleMetadata != nil {
+		gettable.Metadata.RuleUID = s.Metadata.RuleMetadata.RuleUID
+		gettable.Metadata.RuleTitle = s.Metadata.RuleMetadata.RuleTitle
+		gettable.Metadata.FolderUID = s.Metadata.RuleMetadata.FolderUID
+	}
+
 	return gettable
 }
 

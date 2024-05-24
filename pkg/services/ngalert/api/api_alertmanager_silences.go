@@ -16,29 +16,58 @@ import (
 
 // SilenceService is the service for managing and authenticating silences access in Grafana AM.
 type SilenceService interface {
-	GetSilence(ctx context.Context, user identity.Requester, silenceID string, withMetadata bool) (*models.SilenceWithMetadata, error)
-	ListSilences(ctx context.Context, user identity.Requester, filter []string, withMetadata bool) ([]*models.SilenceWithMetadata, error)
+	GetSilence(ctx context.Context, user identity.Requester, silenceID string) (*models.Silence, error)
+	ListSilences(ctx context.Context, user identity.Requester, filter []string) ([]*models.Silence, error)
 	CreateSilence(ctx context.Context, user identity.Requester, ps models.Silence) (string, error)
 	UpdateSilence(ctx context.Context, user identity.Requester, ps models.Silence) (string, error)
 	DeleteSilence(ctx context.Context, user identity.Requester, silenceID string) error
+	WithAccessControlMetadata(ctx context.Context, user identity.Requester, silencesWithMetadata ...*models.SilenceWithMetadata) error
+	WithRuleMetadata(ctx context.Context, user identity.Requester, silences ...*models.SilenceWithMetadata) error
 }
 
 // RouteGetSilence is the single silence GET endpoint for Grafana AM.
 func (srv AlertmanagerSrv) RouteGetSilence(c *contextmodel.ReqContext, silenceID string) response.Response {
-	silence, err := srv.silenceSvc.GetSilence(c.Req.Context(), c.SignedInUser, silenceID, c.QueryBoolWithDefault("withMetadata", false))
+	silence, err := srv.silenceSvc.GetSilence(c.Req.Context(), c.SignedInUser, silenceID)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get silence", err)
 	}
-	return response.JSON(http.StatusOK, SilenceToGettableGrafanaSilence(silence))
+
+	silenceWithMetadata := &models.SilenceWithMetadata{
+		Silence: silence,
+	}
+	if c.QueryBool("accesscontrol") {
+		if err := srv.silenceSvc.WithAccessControlMetadata(c.Req.Context(), c.SignedInUser, silenceWithMetadata); err != nil {
+			srv.log.Error("failed to get silence access control metadata", "silenceID", silenceID, "error", err)
+		}
+	}
+	if c.QueryBool("ruleMetadata") {
+		if err := srv.silenceSvc.WithRuleMetadata(c.Req.Context(), c.SignedInUser, silenceWithMetadata); err != nil {
+			srv.log.Error("failed to get silence rule metadata", "silenceID", silenceID, "error", err)
+		}
+	}
+
+	return response.JSON(http.StatusOK, SilenceToGettableGrafanaSilence(silenceWithMetadata))
 }
 
 // RouteGetSilences is the silence list GET endpoint for Grafana AM.
 func (srv AlertmanagerSrv) RouteGetSilences(c *contextmodel.ReqContext) response.Response {
-	silences, err := srv.silenceSvc.ListSilences(c.Req.Context(), c.SignedInUser, c.QueryStrings("filter"), c.QueryBoolWithDefault("withMetadata", false))
+	silences, err := srv.silenceSvc.ListSilences(c.Req.Context(), c.SignedInUser, c.QueryStrings("filter"))
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to list silence", err)
 	}
-	return response.JSON(http.StatusOK, SilencesToGettableGrafanaSilences(silences))
+
+	silencesWithMetadata := withNoMetadata(silences...)
+	if c.QueryBool("accesscontrol") {
+		if err := srv.silenceSvc.WithAccessControlMetadata(c.Req.Context(), c.SignedInUser, silencesWithMetadata...); err != nil {
+			srv.log.Error("failed to get silence access control metadata", "error", err)
+		}
+	}
+	if c.QueryBool("ruleMetadata") {
+		if err := srv.silenceSvc.WithRuleMetadata(c.Req.Context(), c.SignedInUser, silencesWithMetadata...); err != nil {
+			srv.log.Error("failed to get silence rule metadata", "error", err)
+		}
+	}
+	return response.JSON(http.StatusOK, SilencesToGettableGrafanaSilences(silencesWithMetadata))
 }
 
 // RouteCreateSilence is the silence POST (create + update) endpoint for Grafana AM.
@@ -68,4 +97,14 @@ func (srv AlertmanagerSrv) RouteDeleteSilence(c *contextmodel.ReqContext, silenc
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to delete silence", err)
 	}
 	return response.JSON(http.StatusOK, util.DynMap{"message": "silence deleted"})
+}
+
+func withNoMetadata(silences ...*models.Silence) []*models.SilenceWithMetadata {
+	silencesWithMetadata := make([]*models.SilenceWithMetadata, 0, len(silences))
+	for _, silence := range silences {
+		silencesWithMetadata = append(silencesWithMetadata, &models.SilenceWithMetadata{
+			Silence: silence,
+		})
+	}
+	return silencesWithMetadata
 }
