@@ -333,6 +333,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 				SubTitle: "Interactive, publically available, point-in-time representations of dashboards",
 				Id:       "dashboards/snapshots",
 				Url:      s.cfg.AppSubURL + "/dashboard/snapshots",
+				Icon:     "camera",
 			})
 		}
 
@@ -341,6 +342,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 			SubTitle: "Reusable panels that can be added to multiple dashboards",
 			Id:       "dashboards/library-panels",
 			Url:      s.cfg.AppSubURL + "/library-panels",
+			Icon:     "library-panel",
 		})
 
 		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPublicDashboards) && s.cfg.PublicDashboardsEnabled {
@@ -348,11 +350,12 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 				Text: "Public dashboards",
 				Id:   "dashboards/public",
 				Url:  s.cfg.AppSubURL + "/dashboard/public",
+				Icon: "library-panel",
 			})
 		}
 
 		// TODO: this section should only be visible if user has the right permission (admin?)
-		// TODO: Check why there used to be icons for level of nav items
+		// TODO: Check why there are icons for this level of nav items. Still relevant?
 		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagDashboardRestore) {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text:     "Trash",
