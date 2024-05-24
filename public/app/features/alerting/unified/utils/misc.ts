@@ -61,7 +61,7 @@ export function createShareLink(ruleSource: RulesSource, rule: CombinedRule): st
       `/alerting/${encodeURIComponent(ruleSource.name)}/${encodeURIComponent(escapePathSeparators(rule.name))}/find`
     );
   } else if (isGrafanaRulerRule(rule.rulerRule)) {
-    return createUrl(`/alerting/grafana/${rule.rulerRule.grafana_alert.uid}/view`);
+    return createAbsoluteUrl(`/alerting/grafana/${rule.rulerRule.grafana_alert.uid}/view`);
   }
 
   return;
