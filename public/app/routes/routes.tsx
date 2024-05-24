@@ -436,8 +436,8 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     config.featureToggles.dashboardRestore && {
-      // TODO: add permission here
       path: '/dashboard/trash',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsDelete]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "TrashPage" */ 'app/features/trash-section/TrashPage')
       ),

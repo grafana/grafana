@@ -354,9 +354,8 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 			})
 		}
 
-		// TODO: this section should only be visible if user has the right permission (admin?)
 		// TODO: Check why there are icons for this level of nav items. Still relevant?
-		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagDashboardRestore) {
+		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagDashboardRestore) && hasAccess(ac.EvalPermission(dashboards.ActionDashboardsDelete)) {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text:     "Trash",
 				SubTitle: "Any items remaining in the Trash for more than 30 days will be automatically deleted",
