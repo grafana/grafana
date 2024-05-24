@@ -31,6 +31,10 @@ func NewRuleService(ac accesscontrol.AccessControl) *RuleService {
 	}
 }
 
+type Namespaced interface {
+	GetNamespaceUID() string
+}
+
 // getReadFolderAccessEvaluator constructs accesscontrol.Evaluator that checks all permissions required to read rules in  specific folder
 func getReadFolderAccessEvaluator(folderUID string) accesscontrol.Evaluator {
 	return accesscontrol.EvalAll(
@@ -121,23 +125,25 @@ func (r *RuleService) AuthorizeAccessToRuleGroup(ctx context.Context, user ident
 	})
 }
 
-// HasAccessToRule checks that the identity.Requester has permissions to the given rule, which means that it has permissions to:
-// - ("folders:read") read the folder which contains the rule
+// HasAccessInFolder checks that the identity.Requester has permissions to read alert rules in the given folder,
+// which requires the following permissions:
+// - ("folders:read") read the folder
 // - ("alert.rules:read") read alert rules in the folder
 // Returns false if the requester does not have enough permissions, and error if something went wrong during the permission evaluation.
-func (r *RuleService) HasAccessToRule(ctx context.Context, user identity.Requester, rule *models.AlertRule) (bool, error) {
-	eval := r.getRulesReadEvaluator(rule)
+func (r *RuleService) HasAccessInFolder(ctx context.Context, user identity.Requester, rule Namespaced) (bool, error) {
+	eval := accesscontrol.EvalAll(getReadFolderAccessEvaluator(rule.GetNamespaceUID()))
 	return r.HasAccess(ctx, user, eval)
 }
 
-// AuthorizeAccessToRule checks that the identity.Requester has permissions to the given rule, which means that it has permissions to:
-// - ("folders:read") read the folder which contains the rule
+// AuthorizeAccessInFolder checks that the identity.Requester has permissions to read alert rules in the given folder,
+// which requires the following permissions:
+// - ("folders:read") read the folder
 // - ("alert.rules:read") read alert rules in the folder
 // Returns error if at least one permission is missing or if something went wrong during the permission evaluation
-func (r *RuleService) AuthorizeAccessToRule(ctx context.Context, user identity.Requester, rule *models.AlertRule) error {
-	eval := r.getRulesReadEvaluator(rule)
+func (r *RuleService) AuthorizeAccessInFolder(ctx context.Context, user identity.Requester, rule Namespaced) error {
+	eval := accesscontrol.EvalAll(getReadFolderAccessEvaluator(rule.GetNamespaceUID()))
 	return r.HasAccessOrError(ctx, user, eval, func() string {
-		return fmt.Sprintf("access rule '%s' in folder '%s'", rule.Title, rule.NamespaceUID)
+		return fmt.Sprintf("access rules in folder '%s'", rule.GetNamespaceUID())
 	})
 }
 

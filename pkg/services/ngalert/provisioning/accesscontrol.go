@@ -5,6 +5,7 @@ import (
 
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
@@ -12,7 +13,7 @@ import (
 type RuleAccessControlService interface {
 	HasAccess(ctx context.Context, user identity.Requester, evaluator ac.Evaluator) (bool, error)
 	AuthorizeAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) error
-	AuthorizeAccessToRule(ctx context.Context, user identity.Requester, rule *models.AlertRule) error
+	AuthorizeAccessInFolder(ctx context.Context, user identity.Requester, namespaced accesscontrol.Namespaced) error
 	AuthorizeRuleChanges(ctx context.Context, user identity.Requester, change *store.GroupDelta) error
 }
 
@@ -38,7 +39,7 @@ func (p *provisioningRuleAccessControl) AuthorizeRuleRead(ctx context.Context, u
 		return err
 	}
 	if !can {
-		return p.RuleAccessControlService.AuthorizeAccessToRule(ctx, user, rule)
+		return p.RuleAccessControlService.AuthorizeAccessInFolder(ctx, user, rule)
 	}
 	return nil
 }

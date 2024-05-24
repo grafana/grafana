@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
+	accesscontrol2 "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -199,7 +200,7 @@ func TestAuthorizeAccessToRule(t *testing.T) {
 		rs.HasAccessFunc = func(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
 			return false, nil
 		}
-		rs.AuthorizeAccessToRuleFunc = func(ctx context.Context, requester identity.Requester, rule *models.AlertRule) error {
+		rs.AuthorizeAccessInFolderFunc = func(ctx context.Context, requester identity.Requester, namespaced accesscontrol2.Namespaced) error {
 			return nil
 		}
 
@@ -208,7 +209,7 @@ func TestAuthorizeAccessToRule(t *testing.T) {
 
 		require.Len(t, rs.Calls, 2)
 		require.Equal(t, "HasAccess", rs.Calls[0].MethodName)
-		require.Equal(t, "AuthorizeAccessToRule", rs.Calls[1].MethodName)
+		require.Equal(t, "AuthorizeAccessInFolder", rs.Calls[1].MethodName)
 		require.Equal(t, &rule, rs.Calls[1].Arguments[2])
 	})
 
@@ -230,7 +231,7 @@ func TestAuthorizeAccessToRule(t *testing.T) {
 			return false, nil
 		}
 		expected = errors.New("test2")
-		rs.AuthorizeAccessToRuleFunc = func(ctx context.Context, requester identity.Requester, rule *models.AlertRule) error {
+		rs.AuthorizeAccessInFolderFunc = func(ctx context.Context, requester identity.Requester, rule accesscontrol2.Namespaced) error {
 			return expected
 		}
 

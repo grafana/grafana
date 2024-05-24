@@ -1012,9 +1012,9 @@ func TestGetAlertRule(t *testing.T) {
 		service, _, _, ac := initServiceWithData(t)
 
 		expected := errors.New("test")
-		ac.AuthorizeAccessToRuleFunc = func(ctx context.Context, user identity.Requester, r *models.AlertRule) error {
+		ac.AuthorizeAccessInFolderFunc = func(ctx context.Context, user identity.Requester, namespaced accesscontrol.Namespaced) error {
 			assert.Equal(t, u, user)
-			assert.EqualValues(t, rule, r)
+			assert.EqualValues(t, rule, namespaced)
 			return expected
 		}
 
@@ -1026,7 +1026,7 @@ func TestGetAlertRule(t *testing.T) {
 		assert.Equal(t, "AuthorizeRuleRead", ac.Calls[0].Method)
 
 		ac.Calls = nil
-		ac.AuthorizeAccessToRuleFunc = func(ctx context.Context, user identity.Requester, r *models.AlertRule) error {
+		ac.AuthorizeAccessInFolderFunc = func(ctx context.Context, user identity.Requester, namespaced accesscontrol.Namespaced) error {
 			return nil
 		}
 

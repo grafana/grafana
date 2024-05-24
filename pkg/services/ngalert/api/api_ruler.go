@@ -651,7 +651,7 @@ func (srv RulerSrv) getAuthorizedRuleByUid(ctx context.Context, c *contextmodel.
 	if err != nil {
 		return ngmodels.AlertRule{}, err
 	}
-	if err := srv.authz.AuthorizeAccessToRule(ctx, c.SignedInUser, rule); err != nil {
+	if err := srv.authz.AuthorizeAccessInFolder(ctx, c.SignedInUser, rule); err != nil {
 		return ngmodels.AlertRule{}, err
 	}
 	return *rule, nil
