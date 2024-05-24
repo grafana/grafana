@@ -383,17 +383,15 @@ func (esa *ExtSvcAccountsService) getExtSvcAccountToken(ctx context.Context, org
 func genTokenWithRetries(ctxLogger log.Logger, extSvcSlug string) (satokengen.KeyGenResult, error) {
 	var newKeyInfo satokengen.KeyGenResult
 	var err error
-	var ok bool
 	retry := 0
-	for !ok && retry < maxTokenGenRetries {
+	for retry < maxTokenGenRetries {
 		newKeyInfo, err = satokengen.New(extSvcSlug)
 		if err != nil {
 			return satokengen.KeyGenResult{}, err
 		}
 
 		if !strings.Contains(newKeyInfo.ClientSecret, "\x00") {
-			ok = true
-			continue
+			return newKeyInfo, nil
 		}
 
 		retry++
@@ -408,10 +406,7 @@ func genTokenWithRetries(ctxLogger log.Logger, extSvcSlug string) (satokengen.Ke
 		}
 	}
 
-	if !ok {
-		return satokengen.KeyGenResult{}, ErrCredentialsGenFailed.Errorf("Failed to generate a token for %s", extSvcSlug)
-	}
-	return newKeyInfo, nil
+	return satokengen.KeyGenResult{}, ErrCredentialsGenFailed.Errorf("Failed to generate a token for %s", extSvcSlug)
 }
 
 // logTokenNULParts logs a warning if the external service token contains a nil byte
@@ -423,7 +418,8 @@ func logTokenNULParts(ctxLogger log.Logger, extSvcSlug string, token string) {
 		if strings.Contains(parts[i], "\x00") {
 			ctxLogger.Warn("Token contains NUL",
 				"service", extSvcSlug,
-				"part", i+1,
+				"part", i,
+				"part_len", len(parts[i]),
 				"parts_count", len(parts),
 			)
 		}
