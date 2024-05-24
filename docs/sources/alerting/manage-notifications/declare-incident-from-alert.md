@@ -53,4 +53,4 @@ To declare an incident from a firing alert, complete the following steps.
 
 View and track the incident in the Grafana Incident application.
 
-For more information, refer to [Grafana Incident documentation.](/docs/grafana-cloud/incident/configure-settings/)
+For more information, refer to [Grafana Incident documentation](/docs/grafana-cloud/incident/configure-settings/).
