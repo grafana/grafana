@@ -436,6 +436,12 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/dashboard/trash',
+      component: config.featureToggles.dashboardRestore // TODO: add permission here
+        ? SafeDynamicImport(() => import(/* webpackChunkName: "TrashPage" */ 'app/features/trash-section/TrashPage'))
+        : () => <Redirect to="/dashboard" />,
+    },
+    {
       path: '/playlists',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "PlaylistPage"*/ 'app/features/playlist/PlaylistPage')
