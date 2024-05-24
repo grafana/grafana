@@ -202,9 +202,9 @@ export function FolderAndGroup({
       <Stack alignItems="center">
         <div style={{ width: 420 }}>
           <Field
-            label="Evaluation group"
+            label="Evaluation group and interval"
             data-testid="group-picker"
-            description="Rules within the same group are evaluated concurrently over the same time interval."
+            description="Define how often the alert rule is evaluated."
             className={styles.formInput}
             error={errors.group?.message}
             invalid={!!errors.group?.message}
