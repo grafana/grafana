@@ -118,4 +118,28 @@ Check if strings are marked for translation.
 
 Right now, we only check if a string is wrapped up by the `Trans` tag. We currently do not apply this rule to props, attributes or similars.
 
+```tsx
+// No untranslated strings ❌
+<InlineToast placement="top" referenceElement={buttonRef.current}>
+  Copied
+</InlineToast>
+
+// Wrap strings with `<Trans />` ✅
+<InlineToast placement="top" referenceElement={buttonRef.current}>
+  <Trans i18nKey="clipboard-button.inline-toast.success">Copied</Trans>
+</InlineToast>
+
+// Mark for translation when using variables ✅
+const SearchTitle = ({ term }) => (
+  <Trans i18nKey="search-page.results-title">
+    Results for <em>{{ term }}</em>
+  </Trans>
+);
+
+//Or
+const serviceName = service.name;
+<Trans i18nKey="login.services.sing-in-with-prefix">Sign in with {{ serviceName }}</Trans>
+
+```
+
 Check more info about how translations work in Grafana in [Internationalization.md](https://github.com/grafana/grafana/blob/main/contribute/internationalization.md)
