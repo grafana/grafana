@@ -1,6 +1,8 @@
 package alerting
 
 import (
+	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -198,6 +200,54 @@ func TestRules(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, ruleMapped.NotificationSettings, 1)
 		require.Equal(t, models.NotificationSettings{Receiver: "test-receiver"}, ruleMapped.NotificationSettings[0])
+	})
+	t.Run("a rule with annotations should be correctly expanded with respect to env variable provider", func(t *testing.T) {
+		t.Setenv("ENV_ANNOTATION", "envAnnotationValue")
+		var annotations values.StringMapValue
+		// Test Annotations
+		annotationsMap := `{
+			"annotationName1": "annotationValue1",
+			"annotationName2": "${ENV_ANNOTATION}",
+			"annotationName3": "$__env{ENV_ANNOTATION}",
+			"annotationName4": "http://localhost:3000/$__env{ENV_ANNOTATION}/foobar",
+			"annotationName5": "$$__env{ENV_ANNOTATION}",
+		}`
+		err := yaml.Unmarshal([]byte(annotationsMap), &annotations)
+		require.NoError(t, err)
+		rule := validRuleV1(t)
+		rule.Annotations = annotations
+		alertRule, err := rule.mapToModel(1)
+		require.NoError(t, err)
+		require.Equal(t, "annotationValue1", alertRule.Annotations["annotationName1"])
+		require.Equal(t, "envAnnotationValue", alertRule.Annotations["annotationName2"])
+		require.Equal(t, "envAnnotationValue", alertRule.Annotations["annotationName3"])
+		require.Equal(t, "http://localhost:3000/envAnnotationValue/foobar", alertRule.Annotations["annotationName4"])
+		require.Equal(t, "$__env{ENV_ANNOTATION}", alertRule.Annotations["annotationName5"])
+	})
+
+	t.Run("a rule with annotations should be correctly expanded with respect to file provider", func(t *testing.T) {
+		f, err := os.CreateTemp(os.TempDir(), "file expansion *")
+		require.NoError(t, err)
+		file := f.Name()
+		defer func() {
+			require.NoError(t, os.Remove(file))
+		}()
+
+		const expected = "foobar"
+		_, err = f.WriteString(expected)
+		require.NoError(t, err)
+		require.NoError(t, f.Close())
+
+		var annotations values.StringMapValue
+		// annotation with file provider
+		annotationsMap := fmt.Sprintf(`{"annotationName" : "$__file{%s}"}`, file)
+		err = yaml.Unmarshal([]byte(annotationsMap), &annotations)
+		require.NoError(t, err)
+		rule := validRuleV1(t)
+		rule.Annotations = annotations
+		alertRule, err := rule.mapToModel(1)
+		require.NoError(t, err)
+		require.Equal(t, "foobar", alertRule.Annotations["annotationName"])
 	})
 }
 
