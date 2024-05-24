@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import {
   SceneObjectState,
   SceneObject,
@@ -60,7 +61,10 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   const showDebugger = location.search.includes('scene-debugger');
 
   return (
-    <div className={cx(styles.controls, meta.isEmbedded && styles.embedded)}>
+    <div
+      data-testid={selectors.pages.Dashboard.Controls}
+      className={cx(styles.controls, meta.isEmbedded && styles.embedded)}
+    >
       <Stack grow={1} wrap={'wrap'}>
         {variableControls.map((c) => (
           <c.Component model={c} key={c.state.key} />
