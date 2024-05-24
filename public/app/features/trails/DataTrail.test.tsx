@@ -7,7 +7,7 @@ import { activateFullSceneTree } from '../dashboard-scene/utils/test-utils';
 
 import { DataTrail } from './DataTrail';
 import { MetricScene } from './MetricScene';
-import { MetricSelectScene } from './MetricSelectScene';
+import { MetricSelectScene } from './MetricSelect/MetricSelectScene';
 import { MetricSelectedEvent, VAR_FILTERS } from './shared';
 
 describe('DataTrail', () => {

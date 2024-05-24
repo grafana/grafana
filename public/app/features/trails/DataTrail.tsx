@@ -29,7 +29,7 @@ import { useStyles2 } from '@grafana/ui';
 import { DataTrailSettings } from './DataTrailSettings';
 import { DataTrailHistory } from './DataTrailsHistory';
 import { MetricScene } from './MetricScene';
-import { MetricSelectScene } from './MetricSelectScene';
+import { MetricSelectScene } from './MetricSelect/MetricSelectScene';
 import { MetricsHeader } from './MetricsHeader';
 import { getTrailStore } from './TrailStore/TrailStore';
 import { MetricDatasourceHelper } from './helpers/MetricDatasourceHelper';

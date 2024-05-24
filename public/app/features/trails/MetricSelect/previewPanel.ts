@@ -1,12 +1,12 @@
 import { PromQuery } from '@grafana/prometheus';
 import { SceneCSSGridItem, SceneQueryRunner, SceneVariableSet } from '@grafana/scenes';
 
-import { SelectMetricAction } from '../SelectMetricAction';
-import { hideEmptyPreviews } from '../hideEmptyPreviews';
+import { getAutoQueriesForMetric } from '../AutomaticMetricQueries/AutoQueryEngine';
 import { getVariablesWithMetricConstant, trailDS } from '../shared';
 import { getColorByIndex } from '../utils';
 
-import { getAutoQueriesForMetric } from './AutoQueryEngine';
+import { SelectMetricAction } from './SelectMetricAction';
+import { hideEmptyPreviews } from './hideEmptyPreviews';
 
 export function getPreviewPanelFor(metric: string, index: number, currentFilterCount: number, description?: string) {
   const autoQuery = getAutoQueriesForMetric(metric);
