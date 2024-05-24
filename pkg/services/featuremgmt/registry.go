@@ -1268,6 +1268,13 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:         "alertingListViewV2",
+			Description:  "Enables the new alert list view design",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			FrontendOnly: true,
+		},
+		{
 			Name:         "notificationBanner",
 			Description:  "Enables the notification banner UI and API",
 			Stage:        FeatureStageExperimental,
