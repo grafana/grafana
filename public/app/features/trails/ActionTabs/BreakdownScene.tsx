@@ -467,7 +467,7 @@ function fixLegendForUnspecifiedLabelValueBehavior(vizPanel: VizPanel) {
       // Assume {{label}}
       const label = legendFormat.slice(2, -2);
 
-      newState.data?.series.forEach((series, index) => {
+      newState.data?.series.forEach((series) => {
         if (!series.fields[1].labels?.[label]) {
           const labels = series.fields[1].labels;
           if (labels) {
