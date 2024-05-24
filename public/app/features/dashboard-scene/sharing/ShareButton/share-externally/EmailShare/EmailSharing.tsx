@@ -1,7 +1,6 @@
 import React from 'react';
 
 import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
-import { publicDashboardPersisted } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { ConfigEmailSharing } from './ConfigEmailSharing/ConfigEmailSharing';
@@ -14,7 +13,7 @@ export const EmailSharing = ({ dashboard, onCancel }: { dashboard: DashboardScen
 
   return (
     <>
-      {!publicDashboardPersisted(publicDashboard) ? (
+      {!publicDashboard ? (
         <CreateEmailSharing dashboard={dashboard} onCancel={onCancel} hasError={isError} />
       ) : (
         <ConfigEmailSharing dashboard={dashboard} />
