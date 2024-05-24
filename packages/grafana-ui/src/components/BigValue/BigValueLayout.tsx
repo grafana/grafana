@@ -103,7 +103,6 @@ export abstract class BigValueLayout {
     return styles;
   }
 
-  // TODO update this to incorporate percent change color mode
   getPercentChangeStyles(
     percentChange: number,
     percentChangeColorMode: PercentChangeColorMode | undefined,
