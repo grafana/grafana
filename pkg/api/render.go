@@ -18,7 +18,7 @@ import (
 func (hs *HTTPServer) RenderHandler(c *contextmodel.ReqContext) {
 	queryReader, err := util.NewURLQueryReader(c.Req.URL)
 	if err != nil {
-		c.Handle(hs.Cfg, http.StatusBadRequest, "Render parameters error testing", err)
+		c.Handle(hs.Cfg, http.StatusBadRequest, "Render parameters error", err)
 		return
 	}
 
