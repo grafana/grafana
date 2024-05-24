@@ -81,9 +81,11 @@ Once `yarn start` has built the assets, it will continue to do so whenever any o
 
 > Troubleshooting: if your first build works, but after pulling updates you see unexpected errors in the "Type-checking in progress..." stage, these can be caused by the [tsbuildinfo cache supporting incremental builds](https://www.typescriptlang.org/tsconfig#incremental). You can `rm tsconfig.tsbuildinfo` and re-try.
 
+#### External plugins
+
 If you are looking to contribute to any of the external plugins found within the `public/app/plugins` directory they require running additional commands to watch and rebuild them.
 
-To build and watch all external plugins you can run the following command. Please be aware this can be quite resource intensive as it will spin up separate build processes for each external plugin.
+To build and watch all external plugins you can run the following command. Note this can be quite resource intensive as it will start separate build processes for each external plugin.
 
 ```
 yarn plugin:build:dev
