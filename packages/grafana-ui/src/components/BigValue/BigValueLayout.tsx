@@ -1,7 +1,7 @@
 import React, { CSSProperties } from 'react';
 import tinycolor from 'tinycolor2';
 
-import { formattedValueToString, DisplayValue, FieldConfig, FieldType } from '@grafana/data';
+import { formattedValueToString, DisplayValue, FieldConfig, FieldType, ThemeVisualizationColors } from '@grafana/data';
 import { GraphDrawStyle, GraphFieldConfig, PercentChangeColorMode } from '@grafana/schema';
 
 import { getTextColorForAlphaBackground } from '../../utils';
@@ -112,13 +112,8 @@ export abstract class BigValueLayout {
     const valueContainerStyles = this.getValueAndTitleContainerStyles();
     const percentFontSize = Math.max(this.valueFontSize / VALUE_TO_PERCENT_CHANGE_RATIO, 12);
     let iconSize = Math.max(this.valueFontSize / 3, 10);
-
-    const color =
-      percentChangeColorMode === PercentChangeColorMode.SameAsValue
-        ? valueStyles.color
-        : percentChange * (percentChangeColorMode === PercentChangeColorMode.Inverted ? -1 : 1) > 0
-          ? this.props.theme.visualization.getColorByName('green')
-          : this.props.theme.visualization.getColorByName('red');
+    const themeVisualizationColors = this.props.theme.visualization;
+    const color = getPercentChangeColor(percentChange, percentChangeColorMode, valueStyles, themeVisualizationColors);
 
     const containerStyles: CSSProperties = {
       fontSize: percentFontSize,
@@ -602,4 +597,19 @@ function getTextValues(props: Props): BigValueTextValues {
 export interface PercentChangeStyles {
   containerStyles: CSSProperties;
   iconSize: number;
+}
+
+export function getPercentChangeColor(
+  percentChange: number,
+  percentChangeColorMode: PercentChangeColorMode | undefined,
+  valueStyles: CSSProperties,
+  themeVisualizationColors: ThemeVisualizationColors
+): string | undefined {
+  if (percentChangeColorMode === PercentChangeColorMode.SameAsValue) {
+    return valueStyles.color;
+  } else {
+    return percentChange * (percentChangeColorMode === PercentChangeColorMode.Inverted ? -1 : 1) > 0
+      ? themeVisualizationColors.getColorByName('green')
+      : themeVisualizationColors.getColorByName('red');
+  }
 }
