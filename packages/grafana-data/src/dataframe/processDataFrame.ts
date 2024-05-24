@@ -149,8 +149,7 @@ function convertGraphSeriesToDataFrame(graphSeries: GraphSeriesXY): DataFrame {
 }
 
 function convertJSONDocumentDataToDataFrame(timeSeries: TimeSeries): DataFrame {
-  const values: TimeSeriesValue[][] = [];
-  const fields = [
+  const fields: Field[] = [
     {
       name: timeSeries.target,
       type: FieldType.other,
@@ -159,7 +158,7 @@ function convertJSONDocumentDataToDataFrame(timeSeries: TimeSeries): DataFrame {
         unit: timeSeries.unit,
         filterable: (timeSeries as any).filterable,
       },
-      values,
+      values: [],
     },
   ];
 
