@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { AnchorHTMLAttributes, forwardRef } from 'react';
 
 import { GrafanaTheme2, locationUtil, textUtil, ThemeTypographyVariantTypes } from '@grafana/data';
@@ -45,7 +45,18 @@ const svgSizes: {
 
 export const TextLink = forwardRef<HTMLAnchorElement, TextLinkProps>(
   (
-    { href, color = 'link', external = false, inline = true, variant = 'body', weight, icon, children, ...rest },
+    {
+      href,
+      color = 'link',
+      external = false,
+      inline = true,
+      variant = 'body',
+      weight,
+      icon,
+      children,
+      className,
+      ...rest
+    },
     ref
   ) => {
     const validUrl = textUtil.sanitizeUrl(href ?? '');
@@ -56,7 +67,7 @@ export const TextLink = forwardRef<HTMLAnchorElement, TextLinkProps>(
 
     if (external) {
       return (
-        <a href={validUrl} ref={ref} {...rest} target="_blank" rel="noreferrer" className={styles}>
+        <a href={validUrl} ref={ref} {...rest} target="_blank" rel="noreferrer" className={cx(styles, className)}>
           {children}
           <Icon size={svgSizes[variant] || 'md'} name={externalIcon} />
         </a>
@@ -66,7 +77,7 @@ export const TextLink = forwardRef<HTMLAnchorElement, TextLinkProps>(
     const strippedUrl = locationUtil.stripBaseFromUrl(validUrl);
 
     return (
-      <Link ref={ref} href={strippedUrl} {...rest} className={styles}>
+      <Link ref={ref} href={strippedUrl} {...rest} className={cx(styles, className)}>
         {children}
         {icon && <Icon name={icon} size={svgSizes[variant] || 'md'} />}
       </Link>
