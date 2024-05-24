@@ -88,7 +88,6 @@ func (db *EntityDB) init() error {
 				db.log.Error("error connecting to postgres", "msg", err.Error())
 				// FIXME: return nil, err
 			}
-
 		} else if dbType == "mysql" {
 			engine, err = getEngineMySQL(getter, db.tracer)
 			if err != nil {
@@ -98,7 +97,6 @@ func (db *EntityDB) init() error {
 			if err = engine.Ping(); err != nil {
 				return err
 			}
-
 		} else {
 			// TODO: sqlite support
 			return fmt.Errorf("invalid db type specified: %s", dbType)
