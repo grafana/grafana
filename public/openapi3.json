@@ -4421,9 +4421,6 @@
           "publicDashboardEnabled": {
             "type": "boolean"
           },
-          "publicDashboardUid": {
-            "type": "string"
-          },
           "slug": {
             "type": "string"
           },
