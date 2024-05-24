@@ -21,7 +21,7 @@ import {
   VariableDependencyConfig,
   VizPanel,
 } from '@grafana/scenes';
-import { DataQuery } from '@grafana/schema/dist/esm/index';
+import { DataQuery } from '@grafana/schema';
 import { Button, Field, useStyles2 } from '@grafana/ui';
 import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
