@@ -14,10 +14,13 @@ export const alertSilencesApi = alertingApi.injectEndpoints({
       Silence[],
       {
         datasourceUid: string;
+        withMetadata?: boolean;
+        accessControl?: boolean;
       }
     >({
-      query: ({ datasourceUid }) => ({
+      query: ({ datasourceUid, withMetadata, accessControl }) => ({
         url: `/api/alertmanager/${datasourceUid}/api/v2/silences`,
+        params: { withMetadata, accessControl },
       }),
       providesTags: (result) =>
         result ? result.map(({ id }) => ({ type: 'AlertmanagerSilences', id })) : ['AlertmanagerSilences'],
@@ -28,11 +31,14 @@ export const alertSilencesApi = alertingApi.injectEndpoints({
       {
         datasourceUid: string;
         id: string;
+        withMetadata?: boolean;
+        accessControl?: boolean;
       }
     >({
-      query: ({ datasourceUid, id }) => ({
+      query: ({ datasourceUid, id, withMetadata, accessControl }) => ({
         url: `/api/alertmanager/${datasourceUid}/api/v2/silence/${id}`,
         showErrorAlert: false,
+        params: { withMetadata, accessControl },
       }),
       providesTags: (result, error, { id }) =>
         result ? [{ type: 'AlertmanagerSilences', id }] : ['AlertmanagerSilences'],
