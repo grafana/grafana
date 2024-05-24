@@ -54,6 +54,7 @@ import {
   somePromRules,
   someRulerRules,
 } from './mocks';
+import { setupPluginsExtensionsHook } from './testSetup/plugins';
 import * as config from './utils/config';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
@@ -82,6 +83,8 @@ jest.spyOn(analytics, 'logInfo');
 jest.spyOn(config, 'getAllDataSources');
 jest.spyOn(actions, 'rulesInSameGroupHaveInvalidFor').mockReturnValue([]);
 jest.spyOn(apiRuler, 'rulerUrlBuilder');
+
+setupPluginsExtensionsHook();
 
 const mocks = {
   getAllDataSourcesMock: jest.mocked(config.getAllDataSources),
@@ -459,7 +462,7 @@ describe('RuleList', () => {
 
     expect(ruleDetails).toHaveTextContent('Expressiontopk ( 5 , foo ) [ 5m ]');
     expect(ruleDetails).toHaveTextContent('messagegreat alert');
-    expect(ruleDetails).toHaveTextContent('Matching instances');
+    expect(ruleDetails).toHaveTextContent('Instances');
 
     // finally, check instances table
     const instancesTable = byTestId('dynamic-table').get(ruleDetails);

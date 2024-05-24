@@ -337,6 +337,12 @@ func (alertRule *AlertRule) GetLabels(opts ...LabelOption) map[string]string {
 }
 
 func (alertRule *AlertRule) GetEvalCondition() Condition {
+	if alertRule.IsRecordingRule() {
+		return Condition{
+			Condition: alertRule.Record.From,
+			Data:      alertRule.Data,
+		}
+	}
 	return Condition{
 		Condition: alertRule.Condition,
 		Data:      alertRule.Data,
@@ -498,12 +504,14 @@ func (alertRule *AlertRule) ValidateAlertRule(cfg setting.UnifiedAlertingSetting
 		return fmt.Errorf("%w: cannot have Panel ID without a Dashboard UID", ErrAlertRuleFailedValidation)
 	}
 
-	if _, err := ErrStateFromString(string(alertRule.ExecErrState)); err != nil {
-		return err
-	}
+	if !alertRule.IsRecordingRule() {
+		if _, err := ErrStateFromString(string(alertRule.ExecErrState)); err != nil {
+			return err
+		}
 
-	if _, err := NoDataStateFromString(string(alertRule.NoDataState)); err != nil {
-		return err
+		if _, err := NoDataStateFromString(string(alertRule.NoDataState)); err != nil {
+			return err
+		}
 	}
 
 	if alertRule.For < 0 {
