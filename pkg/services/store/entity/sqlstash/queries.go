@@ -72,7 +72,7 @@ var (
 	}
 )
 
-// SQLError is an error returned by the database, which includes additionaly
+// SQLError is an error returned by the database, which includes additionally
 // debugging information about what was sent to the database.
 type SQLError struct {
 	Err       error
@@ -206,13 +206,13 @@ type sqlEntityDeleteRequest struct {
 
 type sqlEntityHistoryRequest struct {
 	*sqltemplate.SQLTemplate
-	historyToken struct{} // TODO: coming in another PR
+	//historyToken // TODO: coming in another PR
 	returnsEntitySet
 }
 
 type sqlEntityHistoryListRequest struct {
 	*sqltemplate.SQLTemplate
-	hitoryListToken struct{} // TODO: coming in another PR
+	h //itoryListToken // TODO: coming in another PR
 	returnsEntitySet
 }
 
@@ -422,7 +422,6 @@ func kindVersionAtomicInc(ctx context.Context, x db.ContextExecer, d sqltemplate
 	// if there wasn't a row associated with the given kind, we create one with
 	// version 1
 	if errors.Is(err, sql.ErrNoRows) {
-
 		// NOTE: there is a marginal chance that we race with another writer
 		// trying to create the same row. This is only possible when onboarding
 		// a new (Group, Resource) to the cell, which should be very unlikely,

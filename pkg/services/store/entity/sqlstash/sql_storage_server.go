@@ -1373,33 +1373,3 @@ func (s *sqlEntityServer) query(ctx context.Context, query string, args ...any) 
 	}
 	return rows, nil
 }
-
-func (s *sqlEntityServer) exec(ctx context.Context, tx *session.SessionTx, statement string, args ...any) error {
-	ctx, span := s.tracer.Start(ctx, "storage_server.exec", trace.WithAttributes(attribute.String("statement", statement)))
-	defer span.End()
-
-	_, err := tx.Exec(ctx, statement, args...)
-	return err
-}
-
-func (s *sqlEntityServer) insert(ctx context.Context, tx *session.SessionTx, table string, values map[string]any) error {
-	ctx, span := s.tracer.Start(ctx, "storage_server.insert", trace.WithAttributes(attribute.String("table", table)))
-	defer span.End()
-
-	err := s.dialect.Insert(ctx, tx, table, values)
-	return err
-}
-
-func (s *sqlEntityServer) update(ctx context.Context, tx *session.SessionTx, table string, row map[string]any, where map[string]any) error {
-	ctx, span := s.tracer.Start(ctx, "storage_server.db_update", trace.WithAttributes(attribute.String("table", table)))
-	defer span.End()
-
-	err := s.dialect.Update(
-		ctx,
-		tx,
-		table,
-		row,
-		where,
-	)
-	return err
-}
