@@ -661,6 +661,7 @@ github.com/grafana/grafana-plugin-sdk-go v0.227.1-0.20240430073540-ce4d126ae8b8/
 github.com/grafana/grafana-plugin-sdk-go v0.228.0/go.mod h1:u4K9vVN6eU86loO68977eTXGypC4brUCnk4sfDzutZU=
 github.com/grafana/grafana-plugin-sdk-go v0.229.0/go.mod h1:6V6ikT4ryva8MrAp7Bdz5fTJx3/ztzKvpMJFfpzr4CI=
 github.com/grafana/grafana-plugin-sdk-go v0.230.0/go.mod h1:6V6ikT4ryva8MrAp7Bdz5fTJx3/ztzKvpMJFfpzr4CI=
+github.com/grafana/grafana-plugin-sdk-go v0.231.1-0.20240523124942-62dae9836284/go.mod h1:bNgmNmub1I7Mc8dzIncgNqHC5jTgSZPPHlZ3aG8HKJQ=
 github.com/grafana/grafana/pkg/promlib v0.0.3/go.mod h1:3El4NlsfALz8QQCbEGHGFvJUG+538QLMuALRhZ3pcoo=
 github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7 h1:pdN6V1QBWetyv/0+wjACpqVH+eVULgEjkurDLq3goeM=
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.18.1/go.mod h1:YvJ2f6MplWDhfxiUC3KpyTy76kYUZA4W3pTv/wdKQ9Y=
