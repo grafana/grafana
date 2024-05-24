@@ -6,7 +6,7 @@ const TrashPage = () => {
   return (
     <Page navId="dashboards/trash">
       <Page.Contents>
-        <p>Hallo?</p>
+        <p>page content</p>
       </Page.Contents>
     </Page>
   );
