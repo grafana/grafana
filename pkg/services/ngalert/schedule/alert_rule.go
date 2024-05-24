@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -51,6 +52,7 @@ func newRuleFactory(
 	evalFactory eval.EvaluatorFactory,
 	ruleProvider ruleProvider,
 	clock clock.Clock,
+	featureToggles featuremgmt.FeatureToggles,
 	met *metrics.Scheduler,
 	logger log.Logger,
 	tracer tracing.Tracer,
@@ -64,6 +66,7 @@ func newRuleFactory(
 				maxAttempts,
 				clock,
 				evalFactory,
+				featureToggles,
 				logger,
 				met,
 				tracer,

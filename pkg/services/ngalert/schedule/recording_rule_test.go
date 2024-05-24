@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/prometheus/client_golang/prometheus"
@@ -144,7 +145,8 @@ func TestRecordingRule(t *testing.T) {
 }
 
 func blankRecordingRuleForTests(ctx context.Context) *recordingRule {
-	return newRecordingRule(context.Background(), 0, nil, nil, log.NewNopLogger(), nil, nil)
+	ft := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaManagedRecordingRules)
+	return newRecordingRule(context.Background(), 0, nil, nil, ft, log.NewNopLogger(), nil, nil)
 }
 
 func TestRecordingRule_Integration(t *testing.T) {

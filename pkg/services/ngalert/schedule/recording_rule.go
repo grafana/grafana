@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -25,8 +26,9 @@ type recordingRule struct {
 
 	maxAttempts int64
 
-	clock       clock.Clock
-	evalFactory eval.EvaluatorFactory
+	clock          clock.Clock
+	evalFactory    eval.EvaluatorFactory
+	featureToggles featuremgmt.FeatureToggles
 
 	// Event hooks that are only used in tests.
 	evalAppliedHook evalAppliedFunc
@@ -36,18 +38,19 @@ type recordingRule struct {
 	tracer  tracing.Tracer
 }
 
-func newRecordingRule(parent context.Context, maxAttempts int64, clock clock.Clock, evalFactory eval.EvaluatorFactory, logger log.Logger, metrics *metrics.Scheduler, tracer tracing.Tracer) *recordingRule {
+func newRecordingRule(parent context.Context, maxAttempts int64, clock clock.Clock, evalFactory eval.EvaluatorFactory, ft featuremgmt.FeatureToggles, logger log.Logger, metrics *metrics.Scheduler, tracer tracing.Tracer) *recordingRule {
 	ctx, stop := util.WithCancelCause(parent)
 	return &recordingRule{
-		ctx:         ctx,
-		evalCh:      make(chan *Evaluation),
-		stopFn:      stop,
-		clock:       clock,
-		evalFactory: evalFactory,
-		maxAttempts: maxAttempts,
-		logger:      logger,
-		metrics:     metrics,
-		tracer:      tracer,
+		ctx:            ctx,
+		evalCh:         make(chan *Evaluation),
+		stopFn:         stop,
+		clock:          clock,
+		evalFactory:    evalFactory,
+		featureToggles: ft,
+		maxAttempts:    maxAttempts,
+		logger:         logger,
+		metrics:        metrics,
+		tracer:         tracer,
 	}
 }
 
@@ -89,9 +92,12 @@ func (r *recordingRule) Run(key ngmodels.AlertRuleKey) error {
 				logger.Debug("Evaluation channel has been closed. Exiting")
 				return nil
 			}
-			// TODO: No-op if feature toggle is not on!
-
-			// TODO: evalRunning shed inprogress?
+			if !r.featureToggles.IsEnabled(ctx, featuremgmt.FlagGrafanaManagedRecordingRules) {
+				logger.Warn("Recording rule scheduled but toggle is not enabled. Skipping")
+				return nil
+			}
+			// TODO: Skipping the "evalRunning" guard that the alert rule routine does, because it seems to be dead code and impossible to hit.
+			// TODO: Either implement me or remove from alert rules once investigated.
 
 			r.doEvaluate(ctx, eval)
 		case <-ctx.Done():
@@ -106,7 +112,6 @@ func (r *recordingRule) doEvaluate(ctx context.Context, ev *Evaluation) {
 	orgID := fmt.Sprint(ev.rule.OrgID)
 	evalDuration := r.metrics.EvalDuration.WithLabelValues(orgID)
 	evalTotal := r.metrics.EvalTotal.WithLabelValues(orgID)
-	// TODO: evalRunning
 	evalStart := r.clock.Now()
 
 	defer func() {

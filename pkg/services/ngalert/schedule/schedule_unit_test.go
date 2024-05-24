@@ -466,6 +466,7 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 		AppURL:           appUrl,
 		EvaluatorFactory: evaluator,
 		RuleStore:        rs,
+		FeatureToggles:   featuremgmt.WithFeatures(featuremgmt.FlagGrafanaManagedRecordingRules),
 		Metrics:          m.GetSchedulerMetrics(),
 		AlertSender:      senderMock,
 		Tracer:           testTracer,
