@@ -10,6 +10,7 @@ const noUntranslatedLiterals = createRule({
     return {
       JSXText(node) {
         const ancestors = context.getAncestors();
+        const isEmpty =  !node.value.trim();
         const hasTransAncestor = ancestors.some((ancestor) => {
           return (
             ancestor.type === AST_NODE_TYPES.JSXElement &&
@@ -18,7 +19,7 @@ const noUntranslatedLiterals = createRule({
             ancestor.openingElement.name.name === 'Trans'
           );
         });
-        if (!isEmpty(node.value) && !hasTransAncestor) {
+        if (!isEmpty && !hasTransAncestor) {
           context.report({
             node,
             messageId: 'noUntranslatedStrings',
@@ -41,9 +42,5 @@ const noUntranslatedLiterals = createRule({
   defaultOptions: [],
 });
 
-// @ts-expect-error
-const isEmpty = (val) => {
-  return !Boolean(val.trim());
-};
 
 module.exports = noUntranslatedLiterals;
