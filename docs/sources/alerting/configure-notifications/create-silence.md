@@ -21,6 +21,22 @@ labels:
     - oss
 title: Configure silences
 weight: 440
+refs:
+  alert-labels:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/
+  notification-policies:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/notification-policies/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/notification-policies/
+  silences:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-silence/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-silence/
 ---
 
 # Configure silences
@@ -44,6 +60,9 @@ To add a silence, complete the following steps.
 1. In **Silence start and end**, select the start and end date to indicate when the silence should go into effect and expire.
 1. Optionally, in **Duration**, specify how long the silence is enforced. This automatically updates the end time in the **Silence start and end** field.
 1. In the **Label** and **Value** fields, enter one or more _Matching Labels_. Matchers determine which rules the silence will apply to. Any matching alerts (in firing state) will show in the **Silenced alert instances** field
+
+   {{< docs/shared lookup="alerts/how_label_matching_works.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 1. In **Comment**, add details about the silence.
 1. Click **Submit**.
 
