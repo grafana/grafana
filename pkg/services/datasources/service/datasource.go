@@ -443,12 +443,13 @@ func (s *Service) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteD
 	})
 }
 
-func (s *Service) getPluginContext(ctx context.Context, orgID int64, pluginID string, ds *datasources.DataSource) backend.PluginContext {
+func (s *Service) getPluginContext(ctx context.Context, orgID int64, pluginID string, ds *datasources.DataSource) (backend.PluginContext, error) {
+	var err error
 	if ds == nil {
 		return backend.PluginContext{
 			OrgID:    orgID,
 			PluginID: pluginID,
-		}
+		}, err
 	}
 	pctx := backend.PluginContext{
 		OrgID:    orgID,
@@ -466,11 +467,11 @@ func (s *Service) getPluginContext(ctx context.Context, orgID int64, pluginID st
 			User:             ds.User,
 		},
 	}
-	pctx.DataSourceInstanceSettings.JSONData, _ = ds.JsonData.ToDB()
-	if len(ds.SecureJsonData) > 0 {
-		pctx.DataSourceInstanceSettings.DecryptedSecureJSONData, _ = s.DecryptedValues(ctx, ds)
+	pctx.DataSourceInstanceSettings.JSONData, err = ds.JsonData.ToDB()
+	if err == nil && len(ds.SecureJsonData) > 0 {
+		pctx.DataSourceInstanceSettings.DecryptedSecureJSONData, err = s.DecryptedValues(ctx, ds)
 	}
-	return pctx
+	return pctx, err
 }
 
 func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error) {
@@ -493,8 +494,12 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 		if err != nil {
 			return fmt.Errorf("invalid jsonData")
 		}
+		pctx, err := s.getPluginContext(ctx, cmd.OrgID, cmd.Type, dataSource)
+		if err != nil {
+			return err
+		}
 
-		settings, err := s.prepareInstanceSettings(ctx, s.getPluginContext(ctx, cmd.OrgID, cmd.Type, dataSource),
+		settings, err := s.prepareInstanceSettings(ctx, pctx,
 			&backend.DataSourceInstanceSettings{
 				UID:                     cmd.UID,
 				Name:                    cmd.Name,
