@@ -59,15 +59,15 @@ export const getTraceName = memoize(_getTraceNameImpl, (spans: TraceSpan[]) => {
 export function findHeaderTags(spans: TraceSpan[]) {
   for (let i = 0; i < spans.length; i++) {
     const method = spans[i].tags.filter((tag) => {
-      return tag.key === 'http.method';
+      return tag.key === 'http.method' || tag.key === 'http.request.method';
     });
 
     const status = spans[i].tags.filter((tag) => {
-      return tag.key === 'http.status_code';
+      return tag.key === 'http.status_code' || tag.key === 'http.response.status_code';
     });
 
     const url = spans[i].tags.filter((tag) => {
-      return tag.key === 'http.url' || tag.key === 'http.target' || tag.key === 'http.path';
+      return tag.key === 'http.url' || tag.key === 'http.target' || tag.key === 'http.path' || tag.key === 'http.route';
     });
 
     if (method.length > 0 || status.length > 0 || url.length > 0) {
