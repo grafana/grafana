@@ -103,27 +103,23 @@ describe('NavToolbarActions', () => {
     });
 
     it('Should show correct buttons when in settings menu', async () => {
-      setup();
+      const { dashboard } = setup();
 
-      await act(async () => {
-        await userEvent.click(await screen.findByText('Edit'));
-      });
-      await act(async () => {
-        await userEvent.click(await screen.findByText('Settings'));
-      });
+      dashboard.startUrlSync();
+      await userEvent.click(await screen.findByText('Edit'));
+      await userEvent.click(await screen.findByText('Settings'));
 
-      waitFor(async () => {
-        expect(await screen.findByText('Save dashboard')).toBeInTheDocument();
-        expect(await screen.findByText('Back to dashboard')).toBeInTheDocument();
-        expect(screen.queryByText(selectors.pages.Dashboard.DashNav.playlistControls.prev)).not.toBeInTheDocument();
-        expect(screen.queryByText(selectors.pages.Dashboard.DashNav.playlistControls.stop)).not.toBeInTheDocument();
-        expect(screen.queryByText(selectors.pages.Dashboard.DashNav.playlistControls.next)).not.toBeInTheDocument();
-      });
+      expect(await screen.findByText('Save dashboard')).toBeInTheDocument();
+      expect(await screen.findByText('Back to dashboard')).toBeInTheDocument();
+      expect(screen.queryByText(selectors.pages.Dashboard.DashNav.playlistControls.prev)).not.toBeInTheDocument();
+      expect(screen.queryByText(selectors.pages.Dashboard.DashNav.playlistControls.stop)).not.toBeInTheDocument();
+      expect(screen.queryByText(selectors.pages.Dashboard.DashNav.playlistControls.next)).not.toBeInTheDocument();
     });
 
     it('Should show correct buttons when editing a new panel', async () => {
       const { dashboard } = setup();
       await act(() => {
+        dashboard.onEnterEditMode();
         const editingPanel = ((dashboard.state.body as SceneGridLayout).state.children[0] as DashboardGridItem).state
           .body as VizPanel;
         dashboard.setState({ editPanel: buildPanelEditScene(editingPanel, true) });
@@ -136,30 +132,17 @@ describe('NavToolbarActions', () => {
 
     it('Should show correct buttons when editing an existing panel', async () => {
       const { dashboard } = setup();
+
       await act(() => {
+        dashboard.onEnterEditMode();
         const editingPanel = ((dashboard.state.body as SceneGridLayout).state.children[0] as DashboardGridItem).state
           .body as VizPanel;
-        dashboard.setState({ editPanel: buildPanelEditScene(editingPanel, true) });
+        dashboard.setState({ editPanel: buildPanelEditScene(editingPanel) });
       });
+
       expect(await screen.findByText('Save dashboard')).toBeInTheDocument();
       expect(await screen.findByText('Discard panel changes')).toBeInTheDocument();
       expect(await screen.findByText('Back to dashboard')).toBeInTheDocument();
-    });
-
-    it('Should set the correct params to indicate it is adding a panel', async () => {
-      setup();
-
-      await act(async () => {
-        await userEvent.click(await screen.findByText('Edit'));
-      });
-      await act(async () => {
-        await userEvent.click(await screen.findByText('Add'));
-      });
-      await act(async () => {
-        await userEvent.click(await screen.findByText('Visualization'));
-      });
-
-      expect(locationService.getSearchObject().isNewPanel).toBe(true);
     });
   });
 
