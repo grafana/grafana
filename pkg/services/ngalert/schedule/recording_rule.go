@@ -8,10 +8,14 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type recordingRule struct {
@@ -26,9 +30,10 @@ type recordingRule struct {
 
 	logger  log.Logger
 	metrics *metrics.Scheduler
+	tracer  tracing.Tracer
 }
 
-func newRecordingRule(parent context.Context, maxAttempts int64, clock clock.Clock, evalFactory eval.EvaluatorFactory, logger log.Logger, metrics *metrics.Scheduler) *recordingRule {
+func newRecordingRule(parent context.Context, maxAttempts int64, clock clock.Clock, evalFactory eval.EvaluatorFactory, logger log.Logger, metrics *metrics.Scheduler, tracer tracing.Tracer) *recordingRule {
 	ctx, stop := util.WithCancelCause(parent)
 	return &recordingRule{
 		ctx:         ctx,
@@ -39,6 +44,7 @@ func newRecordingRule(parent context.Context, maxAttempts int64, clock clock.Clo
 		maxAttempts: maxAttempts,
 		logger:      logger,
 		metrics:     metrics,
+		tracer:      tracer,
 	}
 }
 
@@ -109,11 +115,19 @@ func (r *recordingRule) doEvaluate(ctx context.Context, ev *Evaluation) {
 		logger.Debug("Skip recording rule evaluation because it is paused")
 	}
 
-	// TODO: tracing
+	ctx, span := r.tracer.Start(ctx, "recording rule execution", trace.WithAttributes(
+		attribute.String("rule_uid", ev.rule.UID),
+		attribute.Int64("org_id", ev.rule.OrgID),
+		attribute.Int64("rule_version", ev.rule.Version),
+		attribute.String("rule_fingerprint", ev.Fingerprint().String()),
+		attribute.String("tick", ev.scheduledAt.UTC().Format(time.RFC3339Nano)),
+	))
+	defer span.End()
 
 	for attempt := int64(1); attempt <= r.maxAttempts; attempt++ {
 		logger := logger.New("attempt", attempt)
 		if ctx.Err() != nil {
+			span.SetStatus(codes.Error, "rule evaluation cancelled")
 			logger.Error("Skipping recording rule evaluation because context has been cancelled")
 			return
 		}
@@ -146,6 +160,7 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 	dur := r.clock.Now().Sub(start)
 
 	evalAttemptTotal.Inc()
+	span := trace.SpanFromContext(ctx)
 
 	// TODO: In some cases, err can be nil but the dataframe itself contains embedded error frames. Parse these out like we do when evaluating alert rules.
 	// TODO: (Maybe, refactor something in eval package so we can use shared code for this)
@@ -154,10 +169,15 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 		// TODO: Only errors embedded in the frame can be considered retryable.
 		// TODO: Since we are not handling these yet per the above TODO, we can blindly consider all errors to be non-retryable for now, and just exit.
 		evalTotalFailures.Inc()
+		span.SetStatus(codes.Error, "rule evaluation failed")
+		span.RecordError(err)
 		return fmt.Errorf("server side expressions pipeline returned an error: %w", err)
 	}
 
 	logger.Debug("Alert rule evaluated", "results", result, "duration", dur)
+	span.AddEvent("rule evaluated", trace.WithAttributes(
+		attribute.Int64("results", int64(len(result.Responses))),
+	))
 	return nil
 }
 

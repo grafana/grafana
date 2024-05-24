@@ -66,6 +66,7 @@ func newRuleFactory(
 				evalFactory,
 				logger,
 				met,
+				tracer,
 			)
 		}
 		return newAlertRule(
