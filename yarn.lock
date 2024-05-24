@@ -16729,6 +16729,7 @@ __metadata:
     "@floating-ui/react": "npm:0.26.14"
     "@glideapps/glide-data-grid": "npm:^6.0.0"
     "@grafana/aws-sdk": "npm:0.3.3"
+    "@grafana/azure-sdk": "npm:0.0.3"
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/eslint-config": "npm:7.0.0"
