@@ -33,11 +33,13 @@ export function DataTrailCard(props: Props) {
       return null;
     }
 
+    const createdAt = bookmark?.createdAt || trail.state.createdAt;
+
     return {
       dsValue: getDataSource(trail),
       filters: filtersVariable.state.filters,
       metric: trail.state.metric,
-      createdAt: trail.state.createdAt,
+      createdAt,
     };
   }, [props.trail, bookmark]);
 

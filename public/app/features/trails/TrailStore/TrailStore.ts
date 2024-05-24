@@ -26,6 +26,7 @@ export interface SerializedTrail {
 
 export interface SerializedBookmarkState {
   urlValues: SceneObjectUrlValues;
+  createdAt: number;
 }
 
 export class TrailStore {
@@ -194,6 +195,7 @@ export class TrailStore {
 
     const bookmarkState: SerializedBookmarkState = {
       urlValues: urlState,
+      createdAt: Date.now(),
     };
 
     this._bookmarkedStates.unshift(bookmarkState);
