@@ -40,9 +40,9 @@ func mustTemplate(filename string) *template.Template {
 
 // Templates.
 var (
-	sqlEntityDelete             = mustTemplate("entity_delete.sql")
-	sqlEntityHistory            = mustTemplate("entity_history.sql")
-	sqlEntityHistoryList        = mustTemplate("entity_history_list.sql")
+	sqlEntityDelete  = mustTemplate("entity_delete.sql")
+	sqlEntityHistory = mustTemplate("entity_history.sql")
+	//sqlEntityHistoryList        = mustTemplate("entity_history_list.sql") // TODO: in upcoming PRs
 	sqlEntityInsert             = mustTemplate("entity_insert.sql")
 	sqlEntityListFolderElements = mustTemplate("entity_list_folder_elements.sql")
 	sqlEntityUpdate             = mustTemplate("entity_update.sql")
