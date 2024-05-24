@@ -130,7 +130,7 @@ describe('contact points', () => {
         expect(button).not.toBeDisabled();
       });
 
-      const moreActionsButtons = screen.getAllByRole('button', { name: 'more-actions' });
+      const moreActionsButtons = screen.getAllByRole('button', { name: /More/ });
       expect(moreActionsButtons).toHaveLength(5);
       moreActionsButtons.forEach((button) => {
         expect(button).not.toBeDisabled();
@@ -158,7 +158,7 @@ describe('contact points', () => {
       expect(viewButtons).toHaveLength(5);
 
       // delete should be disabled in the "more" actions
-      const moreButtons = screen.queryAllByRole('button', { name: 'more-actions' });
+      const moreButtons = screen.queryAllByRole('button', { name: /More/ });
       expect(moreButtons).toHaveLength(5);
 
       // check if all of the delete buttons are disabled
@@ -183,7 +183,7 @@ describe('contact points', () => {
         wrapper,
       });
 
-      const moreActions = screen.getByRole('button', { name: 'more-actions' });
+      const moreActions = screen.getByRole('button', { name: /More/ });
       await userEvent.click(moreActions);
 
       const deleteButton = screen.getByRole('menuitem', { name: /delete/i });
@@ -197,7 +197,7 @@ describe('contact points', () => {
         wrapper,
       });
 
-      const moreActions = screen.getByRole('button', { name: 'more-actions' });
+      const moreActions = screen.getByRole('button', { name: /More/ });
       expect(moreActions).not.toBeDisabled();
 
       const editAction = screen.getByTestId('edit-action');
@@ -217,7 +217,7 @@ describe('contact points', () => {
       const viewAction = screen.getByRole('link', { name: /view/i });
       expect(viewAction).toBeInTheDocument();
 
-      const moreActions = screen.getByRole('button', { name: 'more-actions' });
+      const moreActions = screen.getByRole('button', { name: /More/ });
       expect(moreActions).not.toBeDisabled();
       await userEvent.click(moreActions);
 
@@ -241,7 +241,7 @@ describe('contact points', () => {
 
       expect(screen.getByRole('link', { name: 'is used by 1 notification policy' })).toBeInTheDocument();
 
-      const moreActions = screen.getByRole('button', { name: 'more-actions' });
+      const moreActions = screen.getByRole('button', { name: /More/ });
       await userEvent.click(moreActions);
 
       const deleteButton = screen.getByRole('menuitem', { name: /delete/i });
@@ -262,7 +262,7 @@ describe('contact points', () => {
         wrapper,
       });
 
-      const moreActions = screen.getByRole('button', { name: 'more-actions' });
+      const moreActions = screen.getByRole('button', { name: /More/ });
       await userEvent.click(moreActions);
 
       const deleteButton = screen.getByRole('menuitem', { name: /delete/i });
@@ -334,7 +334,7 @@ describe('contact points', () => {
         expect(button).not.toBeDisabled();
       });
 
-      const moreActionsButtons = screen.getAllByRole('button', { name: 'more-actions' });
+      const moreActionsButtons = screen.getAllByRole('button', { name: /More/ });
       expect(moreActionsButtons).toHaveLength(2);
       moreActionsButtons.forEach((button) => {
         expect(button).not.toBeDisabled();

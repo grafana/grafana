@@ -169,6 +169,7 @@ queryLibrary,experimental,@grafana/explore-squad,false,false,false
 autofixDSUID,experimental,@grafana/plugins-platform-backend,false,false,false
 logsExploreTableDefaultVisualization,experimental,@grafana/observability-logs,false,false,true
 newDashboardSharingComponent,experimental,@grafana/sharing-squad,false,false,true
+alertingListViewV2,experimental,@grafana/alerting-squad,false,false,true
 notificationBanner,experimental,@grafana/grafana-frontend-platform,false,false,false
 dashboardRestore,experimental,@grafana/grafana-frontend-platform,false,false,false
 datasourceProxyDisableRBAC,GA,@grafana/identity-access-team,false,false,false

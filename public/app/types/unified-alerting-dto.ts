@@ -65,6 +65,8 @@ export enum PromApplication {
   Thanos = 'Thanos',
 }
 
+export type RulesSourceApplication = PromApplication | 'loki' | 'grafana';
+
 export interface PromBuildInfoResponse {
   data: {
     application?: string;

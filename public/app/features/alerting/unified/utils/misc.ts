@@ -21,13 +21,13 @@ import { getMatcherQueryParams } from './matchers';
 import * as ruleId from './rule-id';
 import { createAbsoluteUrl, createUrl } from './url';
 
-export function createViewLink(ruleSource: RulesSource, rule: CombinedRule, returnTo: string): string {
+export function createViewLink(ruleSource: RulesSource, rule: CombinedRule, returnTo?: string): string {
   const sourceName = getRulesSourceName(ruleSource);
   const identifier = ruleId.fromCombinedRule(sourceName, rule);
   const paramId = encodeURIComponent(ruleId.stringifyIdentifier(identifier));
   const paramSource = encodeURIComponent(sourceName);
 
-  return createUrl(`/alerting/${paramSource}/${paramId}/view`, { returnTo });
+  return createUrl(`/alerting/${paramSource}/${paramId}/view`, returnTo ? { returnTo } : {});
 }
 
 export function createExploreLink(datasource: DataSourceRef, query: string) {

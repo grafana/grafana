@@ -221,7 +221,7 @@ export function hashRulerRule(rule: RulerRuleDTO): string {
   }
 }
 
-function hashRule(rule: Rule): string {
+export function hashRule(rule: Rule): string {
   if (isRecordingRule(rule)) {
     return hash(JSON.stringify([rule.type, rule.query, hashLabelsOrAnnotations(rule.labels)])).toString();
   }

@@ -17019,6 +17019,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.2"
     tween-functions: "npm:^1.2.0"
+    type-fest: "npm:^4.18.2"
     typescript: "npm:5.4.5"
     uplot: "npm:1.6.30"
     uuid: "npm:9.0.1"
@@ -28899,6 +28900,13 @@ __metadata:
   version: 3.13.1
   resolution: "type-fest@npm:3.13.1"
   checksum: 10/9a8a2359ada34c9b3affcaf3a8f73ee14c52779e89950db337ce66fb74c3399776c697c99f2532e9b16e10e61cfdba3b1c19daffb93b338b742f0acd0117ce12
+  languageName: node
+  linkType: hard
+
+"type-fest@npm:^4.18.2":
+  version: 4.18.2
+  resolution: "type-fest@npm:4.18.2"
+  checksum: 10/2c176de28384a247fac1503165774e874c15ac39434a775f32ecda3aef5a0cefcfa2f5fb670c3da1f81cf773c355999154078c8d9657db19b65de78334b27933
   languageName: node
   linkType: hard
 

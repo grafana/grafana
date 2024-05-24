@@ -185,6 +185,7 @@ export const availableIconsIndex = {
   paragraph: true,
   'pathfinder-unite': true,
   pause: true,
+  'pause-circle': true,
   pen: true,
   percentage: true,
   play: true,

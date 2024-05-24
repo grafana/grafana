@@ -30,7 +30,7 @@ const ui = {
   actionButtons: {
     edit: byRole('link', { name: 'Edit' }),
     view: byRole('link', { name: 'View' }),
-    more: byRole('button', { name: /more-actions/i }),
+    more: byRole('button', { name: /More/ }),
   },
   moreActionItems: {
     delete: byRole('menuitem', { name: 'Delete' }),

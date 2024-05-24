@@ -24,7 +24,7 @@ jest.mock('app/core/services/context_srv');
 const mockContextSrv = jest.mocked(contextSrv);
 
 const ui = {
-  moreButton: byLabelText('more-actions'),
+  moreButton: byLabelText(/More/),
 };
 
 const grantAllPermissions = () => {
