@@ -48,3 +48,18 @@ func setUpTestServer(t *testing.T) entity.EntityStoreServer {
 	require.NoError(t, err)
 	return s
 }
+
+// TODO: remove all the following once the Proposal 1 for Consistent Resource
+// Version is finished.
+var (
+	_ = parseAllSortBy
+	_ = countTrue
+	_ = query
+	_ = sqlEntityHistory
+	_ = sqlEntityRefFind
+	_ = sqlKindVersionGet
+	_ = sqlEntityRefFindRequest{}
+	_ = sqlKindVersionGetRequest{}
+	_ = sqlEntityHistoryRequest{}
+	_ = sqlEntityHistoryListRequest{}
+)
