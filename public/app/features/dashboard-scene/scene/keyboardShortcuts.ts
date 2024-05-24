@@ -147,7 +147,7 @@ function withFocusedPanel(scene: DashboardScene, fn: (vizPanel: VizPanel) => voi
   const panelAttentionService = getPanelAttentionSrv();
 
   return () => {
-    const vizPanelKey = panelAttentionService.getPanelWithAttention();
+    const vizPanelKey = panelAttentionService?.getPanelWithAttention();
     const vizPanel = sceneGraph.findObject(scene, (o) => o.state.key === vizPanelKey);
     if (vizPanel && vizPanel instanceof VizPanel) {
       fn(vizPanel);

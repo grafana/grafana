@@ -1,4 +1,5 @@
 import classNames from 'classnames';
+import { debounce } from 'lodash';
 import React, { PureComponent, CSSProperties, useMemo } from 'react';
 import ReactGridLayout, { ItemCallback } from 'react-grid-layout';
 import { Subscription } from 'rxjs';
@@ -371,6 +372,7 @@ interface GrafanaGridItemProps extends React.HTMLAttributes<HTMLDivElement> {
 const GrafanaGridItem = React.forwardRef<HTMLDivElement, GrafanaGridItemProps>((props, ref) => {
   const panelId = props['data-panelid'];
   const panelAttentionService = useMemo(() => getPanelAttentionSrv(), []);
+  const debouncedOnMouseMove = debounce(() => panelAttentionService?.setPanelWithAttention(panelId), 100);
 
   const theme = config.theme2;
   let width = 100;
@@ -410,7 +412,7 @@ const GrafanaGridItem = React.forwardRef<HTMLDivElement, GrafanaGridItemProps>((
       {...divProps}
       style={{ ...divProps.style }}
       onFocus={() => panelAttentionService?.setPanelWithAttention(panelId)}
-      onMouseMove={() => panelAttentionService?.setPanelWithAttention(panelId)}
+      onMouseMove={debouncedOnMouseMove}
       ref={ref}
     >
       {/* Pass width and height to children as render props */}
