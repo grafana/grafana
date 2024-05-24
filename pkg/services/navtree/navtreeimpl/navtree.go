@@ -354,7 +354,6 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 			})
 		}
 
-		// TODO: Check why there are icons for this level of nav items. Still relevant?
 		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagDashboardRestore) && hasAccess(ac.EvalPermission(dashboards.ActionDashboardsDelete)) {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text:     "Trash",
