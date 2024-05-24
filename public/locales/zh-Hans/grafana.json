@@ -474,6 +474,7 @@
     "rich-history-card": {
       "add-comment-form": "添加备注表单",
       "add-comment-tooltip": "添加备注",
+      "add-to-library": "",
       "cancel": "取消",
       "confirm-delete": "删除",
       "copy-query-tooltip": "将查询复制到剪贴板",
@@ -488,6 +489,7 @@
       "edit-comment-tooltip": "编辑备注",
       "optional-description": "查询所完成操作的可选描述。",
       "query-comment-label": "查询备注",
+      "query-template-added": "",
       "query-text-label": "查询文本",
       "save-comment": "保存备注",
       "star-query-tooltip": "星标查询",

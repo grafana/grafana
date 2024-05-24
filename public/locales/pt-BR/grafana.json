@@ -479,6 +479,7 @@
     "rich-history-card": {
       "add-comment-form": "Adicionar formulário de comentários",
       "add-comment-tooltip": "Adicionar comentário",
+      "add-to-library": "",
       "cancel": "Cancelar",
       "confirm-delete": "Excluir",
       "copy-query-tooltip": "Copiar consulta para a área de transferência",
@@ -493,6 +494,7 @@
       "edit-comment-tooltip": "Editar comentário",
       "optional-description": "Uma descrição opcional do que a consulta faz.",
       "query-comment-label": "Comentário de consulta",
+      "query-template-added": "",
       "query-text-label": "Texto da consulta",
       "save-comment": "Salvar comentário",
       "star-query-tooltip": "Favoritar consulta",
