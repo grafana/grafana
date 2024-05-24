@@ -99,8 +99,9 @@ export function getTemplateOptions(templateFiles: Record<string, string>, defaul
   // return the sum of default and custom templates
   return Array.from(templateMap.values());
 }
-function getContentFromData(name: string, templateFiles: Record<string, string>) {
-  return templateFiles[name];
+function getContentFromOptions(name: string, options: Array<SelectableValue<Template>>) {
+  const template = options.find((option) => option.label === name);
+  return template?.value?.content ?? '';
 }
 
 export interface Template {
@@ -166,7 +167,7 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
       const name = getTemplateName(valueInForm);
       setTemplate({
         name,
-        content: getContentFromData(name, data?.template_files ?? {}),
+        content: getContentFromOptions(name, options),
       });
     } else {
       if (Boolean(valueInForm)) {
@@ -174,7 +175,7 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
         setTemplateOption('Custom');
       }
     }
-  }, [valueInForm, setTemplate, setTemplateOption, data]);
+  }, [valueInForm, setTemplate, setTemplateOption, options]);
 
   if (error) {
     return <div>Error loading templates</div>;

@@ -60,7 +60,7 @@ export function TemplateContentAndPreview({
         <div className={styles.container}>
           <EditorColumnHeader label="Preview with the default payload" />
           <Box flex={1}>
-            <div className={styles.viewerContainer({ height: 300 })}>{previewToRender}</div>
+            <div className={styles.viewerContainer({ height: 'minHeight' })}>{previewToRender}</div>
           </Box>
         </div>
       )}
@@ -81,7 +81,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderRadius: theme.shape.radius.default,
     border: `1px solid ${theme.colors.border.medium}`,
   }),
-  viewerContainer: ({ height }: { height: number }) =>
+  viewerContainer: ({ height }: { height: number | string }) =>
     css({
       height,
       overflow: 'auto',
