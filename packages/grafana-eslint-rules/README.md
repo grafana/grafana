@@ -135,7 +135,6 @@ const SearchTitle = ({ term }) => (
     Results for <em>{{ term }}</em>
   </Trans>
 );
-
 //Or
 const serviceName = service.name;
 <Trans i18nKey="login.services.sing-in-with-prefix">Sign in with {{ serviceName }}</Trans>
