@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/prometheus/alertmanager/config"
 
@@ -116,6 +117,15 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 		return definitions.MuteTimeInterval{}, MakeErrTimeIntervalInvalid(err)
 	}
 
+	// check that provenance is not changed in an invalid way
+	storedProvenance, err := svc.provenanceStore.GetProvenance(ctx, &mt, orgID)
+	if err != nil {
+		return definitions.MuteTimeInterval{}, err
+	}
+	if storedProvenance != models.Provenance(mt.Provenance) && storedProvenance != models.ProvenanceNone {
+		return definitions.MuteTimeInterval{}, fmt.Errorf("cannot change provenance from '%s' to '%s'", storedProvenance, mt.Provenance)
+	}
+
 	revision, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
 		return definitions.MuteTimeInterval{}, err
@@ -129,10 +139,10 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 	if err != nil {
 		return definitions.MuteTimeInterval{}, err
 	}
+
 	revision.cfg.AlertmanagerConfig.MuteTimeIntervals[idx] = mt.MuteTimeInterval
 
 	// TODO add diff and noop detection
-	// TODO add fail if different provenance
 	err = svc.xact.InTransaction(ctx, func(ctx context.Context) error {
 		if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
@@ -146,7 +156,17 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 }
 
 // DeleteMuteTiming deletes the mute timing with the given name in the given org. If the mute timing does not exist, no error is returned.
-func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, name string, orgID int64) error {
+func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, name string, orgID int64, provenance definitions.Provenance) error {
+	target := definitions.MuteTimeInterval{MuteTimeInterval: config.MuteTimeInterval{Name: name}, Provenance: provenance}
+	// check that provenance is not changed in an invalid way
+	storedProvenance, err := svc.provenanceStore.GetProvenance(ctx, &target, orgID)
+	if err != nil {
+		return err
+	}
+	if storedProvenance != models.Provenance(provenance) && storedProvenance != models.ProvenanceNone {
+		return fmt.Errorf("cannot delete with provided provenance '%s', needs '%s'", provenance, storedProvenance)
+	}
+
 	revision, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
 		return err
@@ -169,7 +189,6 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, name string,
 		if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
-		target := definitions.MuteTimeInterval{MuteTimeInterval: config.MuteTimeInterval{Name: name}}
 		return svc.provenanceStore.DeleteProvenance(ctx, &target, orgID)
 	})
 }
