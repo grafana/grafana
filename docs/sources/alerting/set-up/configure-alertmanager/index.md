@@ -44,3 +44,11 @@ To add an external Alertmanager, complete the following steps.
    **Note:** Prometheus, Grafana Mimir, and Cortex implementations of Alertmanager are supported. For Prometheus, contact points and notification policies are read-only in the Grafana Alerting UI.
 
 1. Click **Save & test**.
+
+{{< admonition type="note" >}}
+On the Settings page, you can manage your Alertmanager configurations and configure where Grafana-managed alert instances are forwarded.
+
+- Manage which Alertmanagers receive alert instances from Grafana-managed rules without navigating and editing data sources.
+- Manage version snapshots for the built-in Alertmanager, which allows administrators to roll back unintentional changes or mistakes in the Alertmanager configuration.
+- Compare the historical snapshot with the latest configuration to see which changes were made.
+  {{< /admonition >}}
