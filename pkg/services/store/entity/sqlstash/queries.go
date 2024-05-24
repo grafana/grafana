@@ -248,36 +248,6 @@ func cloneEntity(src *entity.Entity) *entity.Entity {
 // returnsEntitySet can be embedded in a request struct to provide automatic set
 // returning of []*entity.Entity from the database, deserializing as needed. It
 // should be embedded as a value type.
-// Example struct:
-//
-//	type sqlMyRequest struct {
-//		*sqltemplate.SQLTemplate
-//		returnsEntitySet          // embedded value type, not pointer type
-//		GUID               string // example argument
-//		MaxResourceVersion int    // example argument
-//	}
-//
-// Example struct usage::
-//
-//	req := sqlMyRequest{
-//		SQLTemplate:        sqltemplate.New(myDialect),
-//		returnsEntitySet:   newReturnsEntitySet(),
-//		GUID:               "abc",
-//		MaxResourceVersion: 1,
-//	}
-//	entities, err := query(myTx, myTmpl, req)
-//
-// Example usage in SQL template:
-//
-//	SELECT
-//			{{ .Ident "guid"             | .Into .Entity.Guid }},
-//			{{ .Ident "resource_version" | .Into .Entity.ResourceVersion }},
-//			{{ .Ident "body"             | .Into .Entity.Body }}
-//		FROM {{ .Ident "entity_history" }}
-//		WHERE 1 = 1
-//			AND {{ .Ident "guid" }}              = {{ .Arg .GUID }}
-//			AND {{ .Ident "resource_version" }} <= {{ .Arg .MaxResourceVersion }}
-//	;
 type returnsEntitySet struct {
 	Entity *returnsEntity
 }
@@ -305,39 +275,6 @@ func (e returnsEntitySet) Results() (*entity.Entity, error) {
 // embeds a *entity.Entity to provide transparent access to all its fields, but
 // overrides the ones that need database (de)serialization. It should be a named
 // field in your request struct, with pointer type.
-// Example struct:
-//
-//	type sqlMyRequest struct {
-//		*sqltemplate.SQLTemplate
-//		Entity          *returnsEntity // named field with pointer type
-//		GUID            string         // example argument
-//		ResourceVersion int            // example argument
-//	}
-//
-// Example struct usage:
-//
-//	req := sqlMyRequest{
-//		SQLTemplate:     sqltemplate.New(myDialect),
-//		Entity:          newReturnsEntity(),
-//		GUID:            "abc",
-//		ResourceVersion: 1,
-//	}
-//	err := queryRow(myTx, myTmpl, req)
-//	// check err here
-//	err = req.Entity.unmarshal()
-//	// check err, and you can now use req.Entity.Entity
-//
-// Example usage in SQL template:
-//
-//	SELECT
-//			{{ .Ident "guid"             | .Into .Entity.Guid }},
-//			{{ .Ident "resource_version" | .Into .Entity.ResourceVersion }},
-//			{{ .Ident "body"             | .Into .Entity.Body }}
-//		FROM {{ .Ident "entity" }}
-//		WHERE 1 =1
-//			AND {{ .Ident "guid" }}             = {{ .Arg .GUID }}
-//			AND {{ .Ident "resource_version" }} = {{ .Arg .ResourceVersion }}
-//	;
 type returnsEntity struct {
 	*entity.Entity
 	Labels []byte
@@ -418,21 +355,6 @@ func (e *returnsEntity) unmarshal() error {
 	return nil
 }
 
-// readEntity returns the entity defined by the given key as it existed at
-// version `asOfVersion`, if that value is greater than zero. The returned
-// entity will have at most that version. If `asOfVersion` is zero, then the
-// current version of that entity will be returned. If `optimisticLocking` is
-// true, then the latest version of the entity will be retrieved and return an
-// error if its version is not exactly `asOfVersion`. The option
-// `selectForUpdate` will cause to acquire a row-level exclusive lock upon
-// selecting it. If this option is used and ErrOptimisticLockingFailed returned,
-// the transaction will additionally be aborted. `optimisticLocking` is ignored
-// if `asOfVersion` is not positive.
-// Common errors to check:
-//  1. ErrOptimisticLockingFailed: the latest version of the entity does not
-//     match the value of `asOfVersion`.
-//  2. ErrNotFound: the entity does not currently exist, did not exist at the
-//     version of `asOfVersion` or was deleted.
 func readEntity(
 	ctx context.Context,
 	x db.ContextExecer,
