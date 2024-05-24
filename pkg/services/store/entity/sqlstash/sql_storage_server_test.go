@@ -54,7 +54,7 @@ func setUpTestServer(t *testing.T) entity.EntityStoreServer {
 var (
 	_ = parseAllSortBy
 	_ = countTrue
-	_ = query
+	_ = query[any]
 	_ = sqlEntityHistory
 	_ = sqlEntityRefFind
 	_ = sqlKindVersionGet
