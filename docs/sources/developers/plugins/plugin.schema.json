@@ -556,33 +556,27 @@
         }
       }
     },
-    "generated": {
-      "type": "object",
-      "description": "Auto-generated metadata for the plugin (usually automatically extracted from the source code during build time).",
-      "properties": {
-        "extensions": {
-          "type": "array",
-          "description": "List of the extensions that the plugin registers.",
-          "items": {
-            "type": "object",
-            "properties": {
-              "extensionPointId": {
-                "type": "string"
-              },
-              "title": {
-                "type": "string"
-              },
-              "description": {
-                "type": "string"
-              },
-              "type": {
-                "type": "string",
-                "enum": ["link", "component"]
-              }
-            },
-            "required": ["extensionPointId", "title", "description", "type"]
+    "extensions": {
+      "type": "array",
+      "description": "List of the extensions that the plugin registers.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "extensionPointId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["link", "component"]
           }
-        }
+        },
+        "required": ["extensionPointId", "title", "type"]
       }
     },
     "apiVersion": {
