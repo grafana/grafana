@@ -7,7 +7,7 @@ describe('findHeaderTags()', () => {
     expect(findHeaderTags(spans)).toEqual({});
   });
 
-  it('return the header tags when spans follow the OTEL semantic convention', () => {
+  it('return header tags when spans follow the OTEL semantic convention', () => {
     const spans: TraceSpan[] = [
       // @ts-ignore
       {
@@ -25,7 +25,7 @@ describe('findHeaderTags()', () => {
     });
   });
 
-  it('return the header tags when spans follow the alternative convention', () => {
+  it('return header tags when spans follow the alternative convention', () => {
     const spans: TraceSpan[] = [
       // @ts-ignore
       {
@@ -51,7 +51,7 @@ describe('findHeaderTags()', () => {
     });
   });
 
-  it('return the header tags, prioritizing the spans that follow the OTEL semantinc convention', () => {
+  it('return header tags, prioritizing the spans that follow the OTEL semantinc convention', () => {
     const spans: TraceSpan[] = [
       // @ts-ignore
       {
