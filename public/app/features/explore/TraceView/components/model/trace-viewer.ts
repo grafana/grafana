@@ -56,6 +56,8 @@ export const getTraceName = memoize(_getTraceNameImpl, (spans: TraceSpan[]) => {
   return spans[0].traceID;
 });
 
+// Find header tags according to either old standard (e..g, `http.method`) or the
+// standard semantic convention, as per https://opentelemetry.io/docs/specs/semconv/http/http-spans (e.g., `http.request.method`).
 export function findHeaderTags(spans: TraceSpan[]) {
   for (let i = 0; i < spans.length; i++) {
     const method = spans[i].tags.filter((tag) => {
