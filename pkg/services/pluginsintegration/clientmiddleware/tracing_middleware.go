@@ -139,7 +139,7 @@ func (m *TracingMiddleware) RunStream(ctx context.Context, req *backend.RunStrea
 // ValidateAdmission implements backend.AdmissionHandler.
 func (m *TracingMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
 	var err error
-	ctx, end := m.traceWrap(ctx, req.PluginContext, "ValidateAdmission")
+	ctx, end := m.traceWrap(ctx, req.PluginContext, endpointValidateAdmission)
 	defer func() { end(err) }()
 	resp, err := m.next.ValidateAdmission(ctx, req)
 	return resp, err
