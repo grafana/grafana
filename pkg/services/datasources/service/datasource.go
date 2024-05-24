@@ -319,7 +319,7 @@ func (s *Service) prepareInstanceSettings(ctx context.Context, pluginContext bac
 			errutil.WithPublicMessage(fmt.Sprintf("plugin '%s' not found", settings.Type)))
 	}
 
-	// When the APIVersion is set, the client must also implement ProcessInstanceSettings
+	// When the APIVersion is set, the client must also implement AdmissionHandler
 	if p.APIVersion == "" {
 		if settings.APIVersion != "" {
 			return nil, fmt.Errorf("invalid request apiVersion (datasource does not have one configured)")
@@ -348,8 +348,7 @@ func (s *Service) prepareInstanceSettings(ctx context.Context, pluginContext bac
 		}
 	}
 
-	if true {
-		// As an example, this will first call validate (then mutate)
+	{ // As an example, this will first call validate (then mutate)
 		// Implementations may vary, but typically validation is
 		// more strict because it does not have the option to fix anything
 		// that has reasonable fixes.
