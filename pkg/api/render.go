@@ -45,6 +45,20 @@ func (hs *HTTPServer) RenderHandler(c *contextmodel.ReqContext) {
 		scale = hs.Cfg.RendererDefaultImageScale
 	}
 
+	theme := c.QueryStrings("theme")
+	var themeModel models.Theme
+	if len(theme) > 0 {
+		themeStr := theme[0]
+		_, err := models.ParseTheme(themeStr)
+		if err != nil {
+			c.Handle(hs.Cfg, http.StatusBadRequest, "Render parameters error: theme can only be light or dark", err)
+			return
+		}
+		themeModel = models.Theme(themeStr)
+	} else {
+		themeModel = models.ThemeDark
+	}
+
 	headers := http.Header{}
 	acceptLanguageHeader := c.Req.Header.Values("Accept-Language")
 	if len(acceptLanguageHeader) > 0 {
@@ -81,7 +95,7 @@ func (hs *HTTPServer) RenderHandler(c *contextmodel.ReqContext) {
 		Width:             width,
 		Height:            height,
 		DeviceScaleFactor: scale,
-		Theme:             models.ThemeDark,
+		Theme:             themeModel,
 	}, nil)
 	if err != nil {
 		if errors.Is(err, rendering.ErrTimeout) {
