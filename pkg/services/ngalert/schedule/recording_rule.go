@@ -28,6 +28,9 @@ type recordingRule struct {
 	clock       clock.Clock
 	evalFactory eval.EvaluatorFactory
 
+	// Event hooks that are only used in tests.
+	evalAppliedHook evalAppliedFunc
+
 	logger  log.Logger
 	metrics *metrics.Scheduler
 	tracer  tracing.Tracer
@@ -109,6 +112,7 @@ func (r *recordingRule) doEvaluate(ctx context.Context, ev *Evaluation) {
 	defer func() {
 		evalTotal.Inc()
 		evalDuration.Observe(r.clock.Now().Sub(evalStart).Seconds())
+		r.evaluationDoneTestHook(ev)
 	}()
 
 	if ev.rule.IsPaused {
@@ -193,4 +197,12 @@ func (r *recordingRule) buildAndExecutePipeline(ctx context.Context, evalCtx eva
 		logger.Error("Failed to evaluate rule", "error", err, "duration", r.clock.Now().Sub(start))
 	}
 	return results, err
+}
+
+func (r *recordingRule) evaluationDoneTestHook(ev *Evaluation) {
+	if r.evalAppliedHook == nil {
+		return
+	}
+
+	r.evalAppliedHook(ev.rule.GetKey(), ev.scheduledAt)
 }

@@ -1,7 +1,9 @@
 package schedule
 
 import (
+	"bytes"
 	context "context"
+	"fmt"
 	"math/rand"
 	"sync"
 	"testing"
@@ -10,6 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 )
 
@@ -140,5 +144,72 @@ func TestRecordingRule(t *testing.T) {
 }
 
 func blankRecordingRuleForTests(ctx context.Context) *recordingRule {
-	return newRecordingRule(context.Background(), 0, nil, nil, log.NewNopLogger(), nil)
+	return newRecordingRule(context.Background(), 0, nil, nil, log.NewNopLogger(), nil, nil)
+}
+
+func TestRecordingRule_Integration(t *testing.T) {
+	gen := models.RuleGen.With(models.RuleGen.WithAllRecordingRules())
+	ruleStore := newFakeRulesStore()
+	reg := prometheus.NewPedanticRegistry()
+	sch := setupScheduler(t, ruleStore, nil, reg, nil, nil)
+	rule := gen.GenerateRef()
+	ruleStore.PutRule(context.Background(), rule)
+	folderTitle := ruleStore.getNamespaceTitle(rule.NamespaceUID)
+	ruleFactory := ruleFactoryFromScheduler(sch)
+
+	process := ruleFactory.new(context.Background(), rule)
+	evalDoneChan := make(chan time.Time)
+	process.(*recordingRule).evalAppliedHook = func(_ models.AlertRuleKey, t time.Time) {
+		evalDoneChan <- t
+	}
+	now := time.Now()
+
+	go func() {
+		_ = process.Run(rule.GetKey())
+	}()
+	process.Eval(&Evaluation{
+		scheduledAt: now,
+		rule:        rule,
+		folderTitle: folderTitle,
+	})
+	_ = waitForTimeChannel(t, evalDoneChan)
+
+	t.Run("reports basic evaluation metrics", func(t *testing.T) {
+		expectedMetric := fmt.Sprintf(
+			`
+			# HELP grafana_alerting_rule_evaluation_duration_seconds The time to evaluate a rule.
+        	# TYPE grafana_alerting_rule_evaluation_duration_seconds histogram
+        	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.01"} 1
+        	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.1"} 1
+        	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.5"} 1
+			grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="1"} 1
+			grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="5"} 1
+			grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="10"} 1
+			grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="15"} 1
+			grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="30"} 1
+			grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="60"} 1
+			grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="120"} 1
+			grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="180"} 1
+			grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="240"} 1
+			grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="300"} 1
+			grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="+Inf"} 1
+			grafana_alerting_rule_evaluation_duration_seconds_sum{org="%[1]d"} 0
+			grafana_alerting_rule_evaluation_duration_seconds_count{org="%[1]d"} 1
+			# HELP grafana_alerting_rule_evaluations_total The total number of rule evaluations.
+        	# TYPE grafana_alerting_rule_evaluations_total counter
+        	grafana_alerting_rule_evaluations_total{org="%[1]d"} 1
+			# HELP grafana_alerting_rule_evaluation_attempts_total The total number of rule evaluation attempts.
+            # TYPE grafana_alerting_rule_evaluation_attempts_total counter
+            grafana_alerting_rule_evaluation_attempts_total{org="%[1]d"} 1
+			`,
+			rule.OrgID,
+		)
+
+		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric),
+			"grafana_alerting_rule_evaluation_duration_seconds",
+			"grafana_alerting_rule_evaluations_total",
+			"grafana_alerting_rule_evaluation_attempts_total",
+		)
+		require.NoError(t, err)
+	})
 }
