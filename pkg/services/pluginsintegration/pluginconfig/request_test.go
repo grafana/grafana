@@ -335,6 +335,38 @@ func TestRequestConfigProvider_PluginRequestConfig_azure(t *testing.T) {
 		})
 	})
 
+	t.Run("azure settings include custom clouds when set", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.Azure = azSettings
+
+		customCloudJson := `[{"name":"CustomCloud1","displayName":"Custom Cloud 1","aadAuthority":"https://login.contoso.com/","properties":null}]`
+		err := azSettings.SetCustomClouds(customCloudJson)
+		require.NoError(t, err)
+
+		// Sanity check to make sure SetCustomClouds call above also desirializes the JSON
+		require.Equal(t, len(azSettings.CustomCloudList), 1)
+
+		pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+		require.NoError(t, err)
+
+		p := NewRequestConfigProvider(pCfg)
+		require.Subset(t, p.PluginRequestConfig(context.Background(), "grafana-azure-monitor-datasource", nil), map[string]string{
+			"GFAZPL_AZURE_CLOUD": "AzureCloud", "GFAZPL_MANAGED_IDENTITY_ENABLED": "true",
+			"GFAZPL_MANAGED_IDENTITY_CLIENT_ID":                         "mock_managed_identity_client_id",
+			"GFAZPL_AZURE_CLOUDS_CONFIG":                                customCloudJson,
+			"GFAZPL_WORKLOAD_IDENTITY_ENABLED":                          "true",
+			"GFAZPL_WORKLOAD_IDENTITY_TENANT_ID":                        "mock_workload_identity_tenant_id",
+			"GFAZPL_WORKLOAD_IDENTITY_CLIENT_ID":                        "mock_workload_identity_client_id",
+			"GFAZPL_WORKLOAD_IDENTITY_TOKEN_FILE":                       "mock_workload_identity_token_file",
+			"GFAZPL_USER_IDENTITY_ENABLED":                              "true",
+			"GFAZPL_USER_IDENTITY_FALLBACK_SERVICE_CREDENTIALS_ENABLED": "true",
+			"GFAZPL_USER_IDENTITY_TOKEN_URL":                            "mock_user_identity_token_url",
+			"GFAZPL_USER_IDENTITY_CLIENT_ID":                            "mock_user_identity_client_id",
+			"GFAZPL_USER_IDENTITY_CLIENT_SECRET":                        "mock_user_identity_client_secret",
+			"GFAZPL_USER_IDENTITY_ASSERTION":                            "username",
+		})
+	})
+
 	t.Run("does not use the azure settings for a non-Azure plugin", func(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.Azure = azSettings
