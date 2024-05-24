@@ -20,6 +20,7 @@ type FakeUserService struct {
 	GetSignedInUserFn   func(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error)
 	CreateFn            func(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error)
 	BatchDisableUsersFn func(ctx context.Context, cmd *user.BatchDisableUsersCommand) error
+	GetByEmailFn        func(ctx context.Context, query *user.GetUserByEmailQuery) (*user.User, error)
 
 	counter int
 }
@@ -57,6 +58,9 @@ func (f *FakeUserService) GetByLogin(ctx context.Context, query *user.GetUserByL
 }
 
 func (f *FakeUserService) GetByEmail(ctx context.Context, query *user.GetUserByEmailQuery) (*user.User, error) {
+	if f.GetByEmailFn != nil {
+		return f.GetByEmailFn(ctx, query)
+	}
 	return f.ExpectedUser, f.ExpectedError
 }
 
@@ -69,10 +73,6 @@ func (f *FakeUserService) Update(ctx context.Context, cmd *user.UpdateUserComman
 
 func (f *FakeUserService) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLastSeenAtCommand) error {
 	return f.ExpectedError
-}
-
-func (f *FakeUserService) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
-	return f.GetSignedInUser(ctx, query)
 }
 
 func (f *FakeUserService) GetSignedInUser(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {

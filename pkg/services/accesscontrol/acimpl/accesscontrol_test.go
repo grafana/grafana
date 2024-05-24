@@ -1,4 +1,4 @@
-package acimpl
+package acimpl_test
 
 import (
 	"context"
@@ -7,8 +7,9 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestAccessControl_Evaluate(t *testing.T) {
@@ -19,7 +20,7 @@ func TestAccessControl_Evaluate(t *testing.T) {
 		resolverPrefix string
 		expected       bool
 		expectedErr    error
-		resolver       accesscontrol.ScopeAttributeResolver
+		scopeResolver  accesscontrol.ScopeAttributeResolver
 	}
 
 	tests := []testCase{
@@ -55,7 +56,7 @@ func TestAccessControl_Evaluate(t *testing.T) {
 			},
 			evaluator:      accesscontrol.EvalPermission(accesscontrol.ActionTeamsWrite, "teams:id:1"),
 			resolverPrefix: "teams:id:",
-			resolver: accesscontrol.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, scope string) ([]string, error) {
+			scopeResolver: accesscontrol.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, scope string) ([]string, error) {
 				return []string{"another:scope"}, nil
 			}),
 			expected: true,
@@ -64,10 +65,10 @@ func TestAccessControl_Evaluate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			ac := ProvideAccessControl(setting.NewCfg())
+			ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(featuremgmt.FlagAccessActionSets))
 
-			if tt.resolver != nil {
-				ac.RegisterScopeAttributeResolver(tt.resolverPrefix, tt.resolver)
+			if tt.scopeResolver != nil {
+				ac.RegisterScopeAttributeResolver(tt.resolverPrefix, tt.scopeResolver)
 			}
 
 			hasAccess, err := ac.Evaluate(context.Background(), &tt.user, tt.evaluator)
