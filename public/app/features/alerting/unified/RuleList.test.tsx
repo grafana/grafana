@@ -1,8 +1,8 @@
 import { SerializedError } from '@reduxjs/toolkit';
+import { prettyDOM, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
-import { prettyDOM, render, screen, waitFor, within } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { PluginExtensionTypes } from '@grafana/data';
