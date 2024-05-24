@@ -130,12 +130,12 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
     {
       label: 'Selecting existing template',
       value: 'Existing',
-      description: `Select a single template and preview it, or copy it to paste it in the custom tab. ${templateOption === 'Existing' ? 'If you click save from here , you are saving this single selected template.' : ''}`,
+      description: `Select a single template and preview it, or copy it to paste it in the custom tab. ${templateOption === 'Existing' ? 'Clicking Save will save your changes to the selected template.' : ''}`,
     },
     {
-      label: `Enter custom ${option.label}`,
+      label: `Enter custom ${option.label.toLowerCase()}`,
       value: 'Custom',
-      description: `Enter custom ${option.label}. ${templateOption === 'Custom' ? 'If you click save from here, you are saving this custom value.' : ''}`,
+      description: `Enter custom ${option.label.toLowerCase()}. ${templateOption === 'Custom' ? 'Clicking Save will save the custom value only.' : ''}`,
     },
   ];
 
