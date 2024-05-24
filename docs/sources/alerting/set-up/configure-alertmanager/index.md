@@ -48,8 +48,7 @@ To add an external Alertmanager, complete the following steps.
 {{< admonition type="note" >}}
 On the Settings page, you can manage your Alertmanager configurations and configure where Grafana-managed alert instances are forwarded.
 
- -  Manage which Alertmanagers receive alert instances from Grafana-managed rules without navigating and    editing data sources.
- - Manage version snapshots for the built-in Alertmanager, which allows administrators to roll back unintentional changes or mistakes in the Alertmanager configuration.
- - Compare the historical snapshot with the latest configuration to see which changes were made.
-{{< /admonition >}}
-
+- Manage which Alertmanagers receive alert instances from Grafana-managed rules without navigating and editing data sources.
+- Manage version snapshots for the built-in Alertmanager, which allows administrators to roll back unintentional changes or mistakes in the Alertmanager configuration.
+- Compare the historical snapshot with the latest configuration to see which changes were made.
+  {{< /admonition >}}
