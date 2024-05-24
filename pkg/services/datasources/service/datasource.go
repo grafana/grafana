@@ -216,7 +216,7 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 		return nil, fmt.Errorf("invalid jsonData")
 	}
 
-	settings, err := s.mutate(ctx, backend.PluginContext{
+	settings, err := s.prepareInstanceSettings(ctx, backend.PluginContext{
 		OrgID:    cmd.OrgID,
 		PluginID: cmd.Type,
 	}, &backend.DataSourceInstanceSettings{
@@ -295,10 +295,11 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 	})
 }
 
-// This will valid validate the instance settings and mutate the cmd with the processed values
-func (s *Service) mutate(ctx context.Context, pluginContext backend.PluginContext, settings *backend.DataSourceInstanceSettings) (*backend.DataSourceInstanceSettings, error) {
+// This will valid validate the instance settings return a version that is safe to be saved
+func (s *Service) prepareInstanceSettings(ctx context.Context, pluginContext backend.PluginContext, settings *backend.DataSourceInstanceSettings) (*backend.DataSourceInstanceSettings, error) {
 	operation := backend.AdmissionRequestCreate
 
+	// First apply global validation rules -- these are required regardless which plugin we are talking to
 	if len(settings.Name) > maxDatasourceNameLen {
 		return nil, datasources.ErrDataSourceNameInvalid.Errorf("max length is %d", maxDatasourceNameLen)
 	}
@@ -347,6 +348,31 @@ func (s *Service) mutate(ctx context.Context, pluginContext backend.PluginContex
 		}
 	}
 
+	if true {
+		// As an example, this will first call validate (then mutate)
+		// Implementations may vary, but typically validation is
+		// more strict because it does not have the option to fix anything
+		// that has reasonable fixes.
+		rsp, err := s.pluginClient.ValidateAdmission(ctx, req)
+		if err != nil {
+			if errors.Is(err, plugins.ErrMethodNotImplemented) {
+				return nil, errutil.Internal("plugin.unimplemented").
+					Errorf("plugin (%s) with apiVersion=%s must implement ValidateAdmission", p.ID, p.APIVersion)
+			}
+			return nil, err
+		}
+		if rsp == nil {
+			return nil, fmt.Errorf("expected response (%v)", operation)
+		}
+		if !rsp.Allowed {
+			if rsp.Result != nil {
+				return nil, toError(rsp.Result)
+			}
+			return nil, fmt.Errorf("not allowed")
+		}
+	}
+
+	// Next calling mutation -- this will try to get the input into an acceptable form
 	rsp, err := s.pluginClient.MutateAdmission(ctx, req)
 	if err != nil {
 		if errors.Is(err, plugins.ErrMethodNotImplemented) {
@@ -468,7 +494,7 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 			return fmt.Errorf("invalid jsonData")
 		}
 
-		settings, err := s.mutate(ctx, s.getPluginContext(ctx, cmd.OrgID, cmd.Type, dataSource),
+		settings, err := s.prepareInstanceSettings(ctx, s.getPluginContext(ctx, cmd.OrgID, cmd.Type, dataSource),
 			&backend.DataSourceInstanceSettings{
 				UID:                     cmd.UID,
 				Name:                    cmd.Name,

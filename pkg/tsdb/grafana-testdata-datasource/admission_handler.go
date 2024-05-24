@@ -13,10 +13,14 @@ import (
 // ValidateAdmission implements backend.AdmissionHandler.
 func (s *Service) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
 	rsp, err := s.MutateAdmission(ctx, req)
-	if err != nil {
-		return nil, err
+	if rsp != nil {
+		return &backend.ValidationResponse{
+			Allowed:  rsp.Allowed,
+			Result:   rsp.Result,
+			Warnings: rsp.Warnings,
+		}, err
 	}
-	return &backend.ValidationResponse{Allowed: rsp.Allowed}, nil
+	return nil, err
 }
 
 // MutateAdmission implements backend.AdmissionHandler.
