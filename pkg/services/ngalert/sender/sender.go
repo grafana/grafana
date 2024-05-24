@@ -80,7 +80,7 @@ func (cfg *ExternalAMcfg) headerString() string {
 	return result.String()
 }
 
-func NewExternalAlertmanagerSender(l log.Logger, reg prometheus.Registerer, ...Option) *ExternalAlertmanager {
+func NewExternalAlertmanagerSender(l log.Logger, reg prometheus.Registerer, opts ...Option) *ExternalAlertmanager {
 	sdCtx, sdCancel := context.WithCancel(context.Background())
 	s := &ExternalAlertmanager{
 		logger:   l,
