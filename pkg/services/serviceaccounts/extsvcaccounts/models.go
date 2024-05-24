@@ -15,6 +15,8 @@ const (
 	kvStoreType = "extsvc-token"
 	// #nosec G101 - this is not a hardcoded secret
 	tokenNamePrefix = "extsvc-token"
+
+	maxTokenGenRetries = 10
 )
 
 var (
@@ -33,8 +35,6 @@ var (
 			extsvcauth.TmpOrgID: {serviceaccounts.ActionRead: {"serviceaccounts:id:*"}},
 		},
 	}
-
-	maxTokenGenRetries = 10
 )
 
 // Credentials represents the credentials associated to an external service
