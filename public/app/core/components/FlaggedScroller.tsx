@@ -15,7 +15,7 @@ export default function FlaggedScrollbar(props: FlaggedScrollerProps) {
 }
 
 // Shim to provide API-compatibility for Page's scroll-related props
-function NativeScrollbar({ children, scrollRefCallback, scrollTop }: FlaggedScrollerProps) {
+function NativeScrollbar({ children, scrollRefCallback, scrollTop, divId }: FlaggedScrollerProps) {
   const styles = useStyles2(getStyles);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -33,7 +33,7 @@ function NativeScrollbar({ children, scrollRefCallback, scrollTop }: FlaggedScro
 
   return (
     // Set the .scrollbar-view class to help e2e tests find this, like in CustomScrollbar
-    <div ref={ref} className={cx(styles.nativeScrollbars, 'scrollbar-view')}>
+    <div ref={ref} className={cx(styles.nativeScrollbars, 'scrollbar-view')} id={divId}>
       {children}
     </div>
   );
