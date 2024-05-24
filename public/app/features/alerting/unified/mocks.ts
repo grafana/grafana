@@ -561,7 +561,10 @@ export const somePromRules = (dataSourceName = 'Prometheus'): RuleNamespace[] =>
 
 export const someRulerRules: RulerRulesConfigDTO = {
   namespace1: [
-    mockRulerRuleGroup({ name: 'group1', rules: [mockRulerAlertingRule({ alert: 'alert1' })] }),
+    mockRulerRuleGroup({
+      name: 'group1',
+      rules: [mockRulerAlertingRule({ alert: 'alert1' }), mockRulerAlertingRule({ alert: 'alert1a' })],
+    }),
     mockRulerRuleGroup({ name: 'group2', rules: [mockRulerAlertingRule({ alert: 'alert2' })] }),
   ],
   namespace2: [mockRulerRuleGroup({ name: 'group3', rules: [mockRulerAlertingRule({ alert: 'alert3' })] })],
