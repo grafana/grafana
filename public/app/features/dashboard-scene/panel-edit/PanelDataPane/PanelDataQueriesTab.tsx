@@ -189,7 +189,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
   const showAddButton = !isSharedDashboardQuery(dsSettings.name);
 
   return (
-    <>
+    <div data-testid={selectors.components.QueryTab.content}>
       <QueryGroupTopSection
         data={data}
         dsSettings={dsSettings}
@@ -232,7 +232,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
         )}
         {model.renderExtraActions()}
       </Stack>
-    </>
+    </div>
   );
 }
 

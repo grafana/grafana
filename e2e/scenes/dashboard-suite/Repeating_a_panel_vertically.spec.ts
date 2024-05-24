@@ -44,8 +44,8 @@ describe('Repeating a panel vertically', () => {
         cy.get('input').click();
       });
 
-    e2e.components.Select.option().contains('1').click();
-    e2e.components.Select.option().contains('3').click();
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('1').click();
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('3').click();
 
     // blur the dropdown
     cy.get('body').click();
