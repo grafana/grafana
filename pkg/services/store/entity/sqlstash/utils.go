@@ -36,7 +36,7 @@ func getCurrentUser(ctx context.Context) (string, error) {
 
 // ptrOr returns the first non-nil pointer in the least or a new non-nil
 // pointer.
-func ptsOr[P ~*E, E any](ps ...P) P {
+func ptrOr[P ~*E, E any](ps ...P) P {
 	for _, p := range ps {
 		if p != nil {
 			return p
