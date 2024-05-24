@@ -32,7 +32,6 @@ export const AlertManagerPicker = ({ disabled = false }: Props) => {
   const label = isDisabled ? 'Alertmanager' : 'Choose Alertmanager';
 
   // User may have selected an alertmanager elsewhere in the application that has then ended up being filtered out
-  // due to "actions" requirements
   // In this case, we default back to Grafana AM
   const selectedValue = options.some((am) => am.value === selectedAlertmanager)
     ? selectedAlertmanager
