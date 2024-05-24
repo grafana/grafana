@@ -206,13 +206,13 @@ type sqlEntityDeleteRequest struct {
 
 type sqlEntityHistoryRequest struct {
 	*sqltemplate.SQLTemplate
-	historyToken
+	historyToken struct{} // TODO: coming in another PR
 	returnsEntitySet
 }
 
 type sqlEntityHistoryListRequest struct {
 	*sqltemplate.SQLTemplate
-	hitoryListToken
+	hitoryListToken struct{} // TODO: coming in another PR
 	returnsEntitySet
 }
 
