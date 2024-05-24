@@ -59,6 +59,8 @@ export interface MenuItemProps<T = unknown> {
   shortcut?: string;
   /** Test id for e2e tests and fullstory*/
   testId?: string;
+  /* Optional component that will be shown together with other options. Does not get passed any props. */
+  component?: React.ComponentType;
 }
 
 /** @internal */
@@ -202,6 +204,7 @@ export const MenuItem = React.memo(
             {description}
           </div>
         )}
+        {props.component ? <props.component /> : null}
       </ItemElement>
     );
   })
