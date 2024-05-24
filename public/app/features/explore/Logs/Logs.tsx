@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { capitalize, groupBy } from 'lodash';
 import memoizeOne from 'memoize-one';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import { usePrevious } from 'react-use';
 
 import {
@@ -43,6 +43,7 @@ import {
   InlineSwitch,
   PanelChrome,
   RadioButtonGroup,
+  SeriesVisibilityChangeMode,
   Themeable2,
   withTheme2,
 } from '@grafana/ui';
@@ -198,10 +199,10 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const { outlineItems, register, unregisterAllChildren } = useContentOutlineContext() ?? {};
   let flipOrderTimer: number | undefined = undefined;
   let cancelFlippingTimer: number | undefined = undefined;
-  // @ts-ignore
-  const toggleLegendRef: React.MutableRefObject<(name: string, mode: SeriesVisibilityChangeMode) => void> =
-    React.createRef();
-  const topLogsRef = React.createRef<HTMLDivElement>();
+  const toggleLegendRef = useRef<(name: string, mode: SeriesVisibilityChangeMode) => void>(
+    (name: string, mode: SeriesVisibilityChangeMode) => {}
+  );
+  const topLogsRef = useRef<HTMLDivElement>(null);
 
   const tableHeight = getLogsTableHeight();
   const styles = getStyles(theme, wrapLogMessage, tableHeight);
