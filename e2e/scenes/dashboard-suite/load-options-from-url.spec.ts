@@ -18,72 +18,46 @@ describe('Variables - Load options from Url', () => {
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A')
       .should('be.visible')
-      .children()
-      .children()
-      .first()
-      .click();
+      .within(() => {
+        cy.get('input').click();
+      });
 
     e2e.components.Select.option().parent().should('have.length', 9);
 
-    e2e.components.Select.option()
-      .first()
-      .should('have.text', 'All')
-      .parent()
-      .next()
-      .should('have.text', 'A')
-      .next()
-      .should('have.text', 'B')
-      .next()
-      .should('have.text', 'C')
-      .next()
-      .should('have.text', 'D');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('A').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('B').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('C').should('be.visible');
 
     cy.get('body').click(0, 0);
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('AA')
       .should('be.visible')
-      .children()
-      .children()
-      .first()
-      .click();
+      .within(() => {
+        cy.get('input').click();
+      });
 
     e2e.components.Select.option().parent().should('have.length', 9);
-    e2e.components.Select.option()
-      .first()
-      .should('have.text', 'All')
-      .parent()
-      .next()
-      .should('have.text', 'AA')
-      .next()
-      .should('have.text', 'AB')
-      .next()
-      .should('have.text', 'AC')
-      .next()
-      .should('have.text', 'AD');
+
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('AA').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('AB').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('AC').should('be.visible');
 
     cy.get('body').click(0, 0);
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('$__all')
       .should('be.visible')
-      .children()
-      .children()
-      .first()
-      .click();
+      .within(() => {
+        cy.get('input').click();
+      });
 
     e2e.components.Select.option().parent().should('have.length', 9);
 
-    e2e.components.Select.option()
-      .first()
-      .should('have.text', 'All')
-      .parent()
-      .next()
-      .should('have.text', 'AAA')
-      .next()
-      .should('have.text', 'AAB')
-      .next()
-      .should('have.text', 'AAC')
-      .next()
-      .should('have.text', 'AAD');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('AAA').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('AAB').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('AAC').should('be.visible');
   });
 
   it('options set in url should load correct options', () => {
@@ -97,73 +71,46 @@ describe('Variables - Load options from Url', () => {
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('B')
       .should('be.visible')
-      .children()
-      .children()
-      .first()
-      .click();
+      .within(() => {
+        cy.get('input').click();
+      });
 
     e2e.components.Select.option().parent().should('have.length', 9);
 
-    e2e.components.Select.option()
-      .first()
-      .should('have.text', 'All')
-      .parent()
-      .next()
-      .should('have.text', 'A')
-      .next()
-      .should('have.text', 'B')
-      .next()
-      .should('have.text', 'C')
-      .next()
-      .should('have.text', 'D');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('A').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('B').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('C').should('be.visible');
 
     cy.get('body').click(0, 0);
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('BB')
       .should('be.visible')
-      .children()
-      .children()
-      .first()
-      .click();
+      .within(() => {
+        cy.get('input').click();
+      });
 
     e2e.components.Select.option().parent().should('have.length', 9);
 
-    e2e.components.Select.option()
-      .first()
-      .should('have.text', 'All')
-      .parent()
-      .next()
-      .should('have.text', 'BA')
-      .next()
-      .should('have.text', 'BB')
-      .next()
-      .should('have.text', 'BC')
-      .next()
-      .should('have.text', 'BD');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BA').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BB').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BC').should('be.visible');
 
     cy.get('body').click(0, 0);
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('BBB')
       .should('be.visible')
-      .children()
-      .children()
-      .first()
-      .click();
+      .within(() => {
+        cy.get('input').click();
+      });
 
     e2e.components.Select.option().parent().should('have.length', 9);
 
-    e2e.components.Select.option()
-      .first()
-      .should('have.text', 'All')
-      .parent()
-      .next()
-      .should('have.text', 'BBA')
-      .next()
-      .should('have.text', 'BBB')
-      .next()
-      .should('have.text', 'BBC')
-      .next()
-      .should('have.text', 'BBD');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BBA').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BBB').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BBC').should('be.visible');
   });
 
   it('options set in url that do not exist should load correct options', () => {
@@ -188,23 +135,16 @@ describe('Variables - Load options from Url', () => {
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('X')
       .should('be.visible')
-      .children()
-      .children()
-      .first()
-      .click();
+      .within(() => {
+        cy.get('input').click();
+      });
 
     e2e.components.Select.option().parent().should('have.length', 9);
 
-    e2e.components.Select.option()
-      .first()
-      .should('have.text', 'All')
-      .parent()
-      .next()
-      .should('have.text', 'A')
-      .next()
-      .should('have.text', 'B')
-      .next()
-      .should('have.text', 'C');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('A').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('B').should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('C').should('be.visible');
 
     cy.get('body').click();
 

@@ -7,9 +7,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
@@ -728,64 +727,49 @@ func managedPermission(action, resource string, resourceID, resourceAttribute st
 	}
 }
 
-/*
-ACTION SETS
-Stores actionsets IN MEMORY
-*/
-// ActionSet is a struct that represents a set of actions that can be performed on a resource.
-// An example of an action set is "folders:edit" which represents the set of RBAC actions that are granted by edit access to a folder.
-
-type ActionSetService interface {
-	accesscontrol.ActionResolver
-
-	GetActionSet(actionName string) []string
-	//GetActionSetName(resource, permission string) string
-	StoreActionSet(resource, permission string, actions []string)
-}
-
-type ActionSet struct {
-	Action  string   `json:"action"`
-	Actions []string `json:"actions"`
-}
-
-// InMemoryActionSets is an in-memory implementation of the ActionSetService.
-type InMemoryActionSets struct {
-	log                log.Logger
-	actionSetToActions map[string][]string
-	actionToActionSets map[string][]string
-}
-
-// NewActionSetService returns a new instance of InMemoryActionSetService.
-func NewActionSetService(a *acimpl.AccessControl) ActionSetService {
-	actionSets := &InMemoryActionSets{
-		log:                log.New("resourcepermissions.actionsets"),
-		actionSetToActions: make(map[string][]string),
-		actionToActionSets: make(map[string][]string),
-	}
-	a.RegisterActionResolver(actionSets)
-	return actionSets
-}
-
-func (s *InMemoryActionSets) Resolve(action string) []string {
+func (s *InMemoryActionSets) ResolveAction(action string) []string {
 	actionSets := s.actionToActionSets[action]
 	sets := make([]string, 0, len(actionSets))
 
 	for _, actionSet := range actionSets {
-		setParts := strings.Split(actionSet, ":")
-		if len(setParts) != 2 {
-			s.log.Debug("skipping resolution for action set with invalid name", "action set", actionSet)
-			continue
-		}
-		prefix := setParts[0]
 		// Only use action sets for folders and dashboards for now
-		// We need to verify that action sets for other resources do not share names with actions (eg, `datasources:query`)
-		if prefix != "folders" && prefix != "dashboards" {
+		// We need to verify that action sets for other resources do not share names with actions (eg, `datasources:read`)
+		if !isFolderOrDashboardAction(actionSet) {
 			continue
 		}
 		sets = append(sets, actionSet)
 	}
 
 	return sets
+}
+
+func (s *InMemoryActionSets) ResolveActionSet(actionSet string) []string {
+	// Only use action sets for folders and dashboards for now
+	// We need to verify that action sets for other resources do not share names with actions (eg, `datasources:read`)
+	if !isFolderOrDashboardAction(actionSet) {
+		return nil
+	}
+	return s.actionSetToActions[actionSet]
+}
+
+func isFolderOrDashboardAction(action string) bool {
+	return strings.HasPrefix(action, dashboards.ScopeDashboardsRoot) || strings.HasPrefix(action, dashboards.ScopeFoldersRoot)
+}
+
+func (s *InMemoryActionSets) ExpandActionSets(permissions []accesscontrol.Permission) []accesscontrol.Permission {
+	var expandedPermissions []accesscontrol.Permission
+	for _, permission := range permissions {
+		resolvedActions := s.ResolveActionSet(permission.Action)
+		if len(resolvedActions) == 0 {
+			expandedPermissions = append(expandedPermissions, permission)
+			continue
+		}
+		for _, action := range resolvedActions {
+			permission.Action = action
+			expandedPermissions = append(expandedPermissions, permission)
+		}
+	}
+	return expandedPermissions
 }
 
 // GetActionSet returns the action set for the given action.

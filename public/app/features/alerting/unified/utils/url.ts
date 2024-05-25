@@ -15,9 +15,7 @@ export function createAbsoluteUrl(
   const searchParamsString = searchParams.toString();
 
   try {
-    const baseUrl = new URL(config.appSubUrl, config.appUrl);
-    baseUrl.pathname = path;
-
+    const baseUrl = new URL(config.appSubUrl + path, config.appUrl);
     return `${baseUrl.href}${searchParamsString ? `?${searchParamsString}` : ''}`;
   } catch (err) {
     return createUrl(path, queryParams);

@@ -11,7 +11,7 @@ import {
   SceneObjectUrlValues,
 } from '@grafana/scenes';
 import { Checkbox, Icon, Input, Toggletip, useStyles2 } from '@grafana/ui';
-import { ScopedResourceServer } from 'app/features/apiserver/server';
+import { ScopedResourceClient } from 'app/features/apiserver/client';
 
 export interface Node {
   item: ScopeTreeItemSpec;
@@ -34,7 +34,7 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
   private serverVersion = 'v0alpha1';
   private serverNamespace = 'default';
 
-  private server = new ScopedResourceServer<ScopeSpec, 'Scope'>({
+  private server = new ScopedResourceClient<ScopeSpec, 'Scope'>({
     group: this.serverGroup,
     version: this.serverVersion,
     resource: 'scopes',

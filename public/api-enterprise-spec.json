@@ -3753,9 +3753,6 @@
         "publicDashboardEnabled": {
           "type": "boolean"
         },
-        "publicDashboardUid": {
-          "type": "string"
-        },
         "slug": {
           "type": "string"
         },
@@ -6868,6 +6865,23 @@
           "items": {
             "type": "integer",
             "format": "int64"
+          }
+        }
+      }
+    },
+    "SetTeamMembershipsCommand": {
+      "type": "object",
+      "properties": {
+        "admins": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "type": "string"
           }
         }
       }

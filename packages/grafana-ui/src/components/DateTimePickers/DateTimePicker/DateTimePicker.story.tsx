@@ -27,6 +27,7 @@ const meta: Meta<typeof DateTimePicker> = {
     minDate: { control: 'date' },
     maxDate: { control: 'date' },
     showSeconds: { control: 'boolean' },
+    clearable: { control: 'boolean' },
   },
   args: {
     minDate: minimumDate,
@@ -63,7 +64,7 @@ export const OnlyWorkingHoursEnabled: StoryFn<typeof DateTimePicker> = ({ label,
   );
 };
 
-export const Basic: StoryFn<typeof DateTimePicker> = ({ label, minDate, maxDate, showSeconds }) => {
+export const Basic: StoryFn<typeof DateTimePicker> = ({ label, minDate, maxDate, showSeconds, clearable }) => {
   const [date, setDate] = useState<DateTime>(dateTime(today));
   // the minDate arg can change from Date object to number, we need to handle this
   // scenario to avoid a crash in the component's story.
@@ -77,6 +78,7 @@ export const Basic: StoryFn<typeof DateTimePicker> = ({ label, minDate, maxDate,
       maxDate={maxDateVal}
       date={date}
       showSeconds={showSeconds}
+      clearable={clearable}
       onChange={(newValue) => {
         action('on change')(newValue);
         setDate(newValue);
@@ -87,6 +89,26 @@ export const Basic: StoryFn<typeof DateTimePicker> = ({ label, minDate, maxDate,
 
 Basic.args = {
   label: 'Date',
+};
+
+export const Clearable: StoryFn<typeof DateTimePicker> = ({ label, showSeconds, clearable }) => {
+  const [date, setDate] = useState<DateTime>(dateTime(today));
+  return (
+    <DateTimePicker
+      label={label}
+      date={date}
+      showSeconds={showSeconds}
+      clearable={clearable}
+      onChange={(newValue) => {
+        action('on change')(newValue);
+        setDate(newValue);
+      }}
+    />
+  );
+};
+
+Clearable.args = {
+  clearable: true,
 };
 
 export default meta;
