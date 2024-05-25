@@ -112,24 +112,23 @@ func TraceIDFromContext(ctx context.Context, requireSampled bool) string {
 	return spanCtx.TraceID().String()
 }
 
-// RecordStatusError helper function to set the status of the current span to error and
-// record the error as an exception in the span.
-func RecordStatusError(ctx context.Context, err error, statusMessage ...string) error {
-	msg := "failure"
-	if len(statusMessage) > 0 {
-		msg = statusMessage[0]
-	}
-
+// Error sets the status to error and record the error as an exception in the provided span.
+func Error(span trace.Span, err error) error {
 	attr := []attribute.KeyValue{}
 	grafanaErr := errutil.Error{}
 	if errors.As(err, &grafanaErr) {
 		attr = append(attr, attribute.String("message_id", grafanaErr.MessageID))
 	}
 
-	span := trace.SpanFromContext(ctx)
-	span.SetStatus(codes.Error, msg)
+	span.SetStatus(codes.Error, err.Error())
 	span.RecordError(err, trace.WithAttributes(attr...))
 	return err
+}
+
+// Errorf wraps fmt.Errorf and also sets the status to error and record the error as an exception in the provided span.
+func Errorf(span trace.Span, format string, args ...any) error {
+	err := fmt.Errorf(format, args...)
+	return Error(span, err)
 }
 
 type noopTracerProvider struct {
