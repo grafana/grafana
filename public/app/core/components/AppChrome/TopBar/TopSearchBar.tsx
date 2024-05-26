@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { cloneDeep } from 'lodash';
+// import { cloneDeep } from 'lodash'; // LOGZ.IO GRAFANA CHANGE :: hide help menu
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -10,7 +10,7 @@ import { contextSrv } from 'app/core/core';
 import { useSelector } from 'app/types';
 
 import { Branding } from '../../Branding/Branding';
-import { enrichHelpItem } from '../MegaMenu/utils';
+// import { enrichHelpItem } from '../MegaMenu/utils'; // LOGZ.IO GRAFANA CHANGE :: hide help menu
 import { NewsContainer } from '../News/NewsContainer';
 import { OrganizationSwitcher } from '../OrganizationSwitcher/OrganizationSwitcher';
 import { QuickAdd } from '../QuickAdd/QuickAdd';
@@ -26,8 +26,8 @@ export const TopSearchBar = React.memo(function TopSearchBar() {
   const navIndex = useSelector((state) => state.navIndex);
   const location = useLocation();
 
-  const helpNode = cloneDeep(navIndex['help']);
-  const enrichedHelpNode = helpNode ? enrichHelpItem(helpNode) : undefined;
+  // const helpNode = cloneDeep(navIndex['help']); // LOGZ.IO GRAFANA CHANGE :: hide help menu
+  const enrichedHelpNode = null; // helpNode ? enrichHelpItem(helpNode) : undefined; // LOGZ.IO GRAFANA CHANGE :: hide help menu
   const profileNode = navIndex['profile'];
 
   let homeUrl = config.appSubUrl || '/';
@@ -50,7 +50,7 @@ export const TopSearchBar = React.memo(function TopSearchBar() {
 
       <TopSearchBarSection align="right">
         <QuickAdd />
-        {enrichedHelpNode && (
+        {enrichedHelpNode && ( 
           <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
             <ToolbarButton iconOnly icon="question-circle" aria-label="Help" />
           </Dropdown>

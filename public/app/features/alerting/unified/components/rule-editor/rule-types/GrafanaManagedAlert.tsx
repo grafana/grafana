@@ -15,7 +15,7 @@ const GrafanaManagedRuleType = ({ selected = false, disabled, onClick }: SharedP
           Transform data with expressions.
         </span>
       }
-      image="public/img/grafana_icon.svg"
+      image="" // "public/img/grafana_icon.svg" LOGZ.IO GRAFANA CHANGE :: remove original logo
       selected={selected}
       disabled={disabled}
       value={RuleFormType.grafana}

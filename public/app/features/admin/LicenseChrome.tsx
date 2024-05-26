@@ -41,28 +41,31 @@ export function LicenseChrome({ header, editionNotice, subheader, children }: Pr
 
   return (
     <>
-      <div className={styles.header}>
-        <h2 style={title}>{header}</h2>
-        {subheader && <h3>{subheader}</h3>}
+    { false && ( // LOGZ.IO GRAFANA CHANGE :: remove original logo
+        <div className={styles.header}>
+          <h2 style={title}>{header}</h2>
+          {subheader && <h3>{subheader}</h3>}
 
-        <Circle
-          size="128px"
-          style={{
-            boxShadow: '0px 0px 24px rgba(24, 58, 110, 0.45)',
-            background: '#0A1C36',
-            position: 'absolute',
-            top: '19px',
-            left: '71%',
-          }}
-        >
-          <img
-            src="public/img/grafana_icon.svg"
-            alt="Grafana"
-            width="80px"
-            style={{ position: 'absolute', left: '23px', top: '20px' }}
-          />
-        </Circle>
-      </div>
+          <Circle
+            size="128px"
+            style={{
+              boxShadow: '0px 0px 24px rgba(24, 58, 110, 0.45)',
+              background: '#0A1C36',
+              position: 'absolute',
+              top: '19px',
+              left: '71%',
+            }}
+          >
+            <img
+              src="public/img/grafana_icon.svg"
+              alt="Grafana"
+              width="80px"
+              style={{ position: 'absolute', left: '23px', top: '20px' }}
+            />
+          </Circle>
+        </div>
+      )}
+
 
       <div className={styles.container}>{children}</div>
 

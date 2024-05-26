@@ -199,6 +199,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
           </Field>
 
           <Field
+            hidden // LOGZ.IO GRAFANA CHANGE :: hide language in profile
             label={
               <Label htmlFor="locale-select">
                 <span className={styles.labelText}>

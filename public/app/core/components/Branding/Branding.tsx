@@ -10,6 +10,7 @@ export interface BrandComponentProps {
 }
 
 export const LoginLogo: FC<BrandComponentProps & { logo?: string }> = ({ className, logo }) => {
+  return null; // LOGZ.IO GRAFANA CHANGE :: remove original logo
   return <img className={className} src={`${logo ? logo : 'public/img/grafana_icon.svg'}`} alt="Grafana" />;
 };
 
@@ -43,6 +44,7 @@ const LoginBackground: FC<BrandComponentProps> = ({ className, children }) => {
 };
 
 const MenuLogo: FC<BrandComponentProps> = ({ className }) => {
+  return null; // LOGZ.IO GRAFANA CHANGE :: remove original logo
   return <img className={className} src="public/img/grafana_icon.svg" alt="Grafana" />;
 };
 

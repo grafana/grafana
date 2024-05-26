@@ -7,6 +7,7 @@ import { useStyles2 } from '@grafana/ui';
 import { t } from '../../internationalization';
 
 export function BouncingLoader() {
+  return null; // LOGZ.IO GRAFANA CHANGE :: remove original logo
   const styles = useStyles2(getStyles);
 
   return (
