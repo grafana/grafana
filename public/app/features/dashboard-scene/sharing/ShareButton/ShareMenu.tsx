@@ -5,8 +5,8 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { VizPanel } from '@grafana/scenes';
 import { Menu } from '@grafana/ui';
 
-import { SceneDrawerAsScene } from '../../../trails/Integrations/SceneDrawer';
 import { DashboardScene } from '../../scene/DashboardScene';
+import { ShareDrawer } from '../ShareDrawer';
 
 import { ShareExternally } from './share-externally/ShareExternally';
 import { buildShareUrl } from './utils';
@@ -19,12 +19,9 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
   }, [dashboard]);
 
   const onShareExternallyClick = () => {
-    const drawer = new SceneDrawerAsScene({
+    const drawer = new ShareDrawer({
       title: 'Share externally',
-      size: 'md',
-      closeOnMaskClick: false,
-      scene: new ShareExternally({ dashboardRef: dashboard.getRef() }),
-      onClose: () => dashboard.closeModal(),
+      body: new ShareExternally({ dashboardRef: dashboard.getRef() }),
     });
 
     dashboard.showModal(drawer);

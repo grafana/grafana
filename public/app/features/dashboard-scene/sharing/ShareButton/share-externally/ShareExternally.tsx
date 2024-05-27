@@ -42,10 +42,6 @@ if (hasEmailSharingEnabled) {
 const selectors = e2eSelectors.pages.ShareDashboardDrawer.ShareExternally;
 export class ShareExternally extends SceneObjectBase<ShareExternallyDrawerState> {
   static Component = ShareExternallyDrawerRenderer;
-
-  constructor(state: ShareExternallyDrawerState) {
-    super(state);
-  }
 }
 
 function ShareExternallyDrawerRenderer({ model }: SceneComponentProps<ShareExternally>) {
