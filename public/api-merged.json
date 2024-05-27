@@ -4315,6 +4315,40 @@
         }
       }
     },
+    "/datasources/uid/{uid}/lbac/teams": {
+      "get": {
+        "summary": "Retrieves LBAC rules for a team.",
+        "operationId": "getTeamLBACRulesApiResponse",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/datasources/uid/{uid}/resources/{datasource_proxy_route}": {
       "get": {
         "tags": [
