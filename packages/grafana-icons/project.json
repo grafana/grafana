@@ -3,7 +3,9 @@
   "projectType": "library",
   "tags": ["scope:package", "type:ui"],
   "targets": {
-    "generate": {},
+    "generate": {
+      "outputs": ["{projectRoot}/src/icons-gen"]
+    },
     "build": {}
   }
 }

@@ -3,7 +3,6 @@
   "projectType": "library",
   "tags": ["scope:package", "type:ui"],
   "targets": {
-    "build": {},
-    "dev": {}
+    "build": {}
   }
 }
