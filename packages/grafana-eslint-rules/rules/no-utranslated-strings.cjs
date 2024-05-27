@@ -5,7 +5,7 @@ const createRule = ESLintUtils.RuleCreator(
   (name) => `https://github.com/grafana/grafana/blob/main/packages/grafana-eslint-rules/README.md#${name}`
 );
 
-const noUntranslatedLiterals = createRule({
+const noUntranslatedStrings = createRule({
   create(context) {
     return {
       JSXText(node) {
@@ -28,7 +28,7 @@ const noUntranslatedLiterals = createRule({
       },
     };
   },
-  name: 'no-utranslated-strings',
+  name: 'no-untranslated-strings',
   meta: {
     type: 'suggestion',
     docs: {
@@ -43,4 +43,4 @@ const noUntranslatedLiterals = createRule({
 });
 
 
-module.exports = noUntranslatedLiterals;
+module.exports = noUntranslatedStrings;

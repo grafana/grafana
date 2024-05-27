@@ -112,7 +112,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
 Used to find all instances of `theme` tokens being used in the codebase and emit the counts as metrics. Should **not** be used as an actual lint rule!
 
-### `no-untranslated-literals`
+### `no-untranslated-strings`
 
 Check if strings are marked for translation.
 
