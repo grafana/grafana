@@ -164,7 +164,7 @@ func (ng *AlertNG) init() error {
 	// If enabled, configure the remote Alertmanager.
 	// - If several toggles are enabled, the order of precedence is RemoteOnly, RemotePrimary, RemoteSecondary
 	// - If no toggles are enabled, we default to using only the internal Alertmanager
-	// We currently support only remote secondary mode, so in case other toggles are enabled we fall back to remote secondary.
+	// We currently do not support remote primary mode, so we fall back to remote secondary.
 	var overrides []notifier.Option
 	moaLogger := log.New("ngalert.multiorg.alertmanager")
 	remoteOnly := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteOnly)
@@ -172,7 +172,35 @@ func (ng *AlertNG) init() error {
 	remoteSecondary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteSecondary)
 	if ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Enable {
 		switch {
-		case remoteOnly, remotePrimary:
+		case remoteOnly:
+			ng.Log.Debug("Starting Grafana with remote only mode enabled")
+			m := ng.Metrics.GetRemoteAlertmanagerMetrics()
+			m.Info.WithLabelValues(metrics.ModeRemoteOnly).Set(1)
+
+			// This function will be used by the MOA to create new Alertmanagers.
+			override := notifier.WithAlertmanagerOverride(func(_ notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
+				return func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
+					// Create remote Alertmanager.
+					cfg := remote.AlertmanagerConfig{
+						BasicAuthPassword: ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Password,
+						DefaultConfig:     ng.Cfg.UnifiedAlerting.DefaultConfiguration,
+						OrgID:             orgID,
+						TenantID:          ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
+						URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
+						PromoteConfig:     true,
+					}
+					remoteAM, err := createRemoteAlertmanager(cfg, ng.KVStore, ng.SecretsService.Decrypt, m)
+					if err != nil {
+						moaLogger.Error("Failed to create remote Alertmanager", "err", err)
+						return nil, err
+					}
+					return remoteAM, nil
+				}
+			})
+
+			overrides = append(overrides, override)
+
+		case remotePrimary:
 			ng.Log.Warn("Only remote secondary mode is supported at the moment, falling back to remote secondary")
 			fallthrough
 
