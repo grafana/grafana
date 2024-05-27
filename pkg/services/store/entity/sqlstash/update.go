@@ -3,7 +3,6 @@ package sqlstash
 import (
 	"cmp"
 	"context"
-	"errors"
 	"fmt"
 	"maps"
 	"time"
@@ -33,10 +32,6 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 	err = s.sqlDB.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
 		// Pre-locking: get the latest version of the entity
 		oldEntity, err := readEntity(ctx, tx, s.sqlDialect, key, r.PreviousVersion, true, true)
-		if errors.Is(err, ErrNotFound) {
-			ret.Status = entity.UpdateEntityResponse_NOTFOUND
-			return nil
-		}
 		if err != nil {
 			return err
 		}
