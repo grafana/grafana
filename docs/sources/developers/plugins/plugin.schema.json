@@ -556,6 +556,36 @@
         }
       }
     },
+    "generated": {
+      "type": "object",
+      "description": "Deprecated! Please update your plugin by running `npx @grafana/create-plugin@latest update` to update the format of your generated plugin.json file.",
+      "deprecated": true,
+      "properties": {
+        "extensions": {
+          "type": "array",
+          "description": "List of the extensions that the plugin registers.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "extensionPointId": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "enum": ["link", "component"]
+              }
+            },
+            "required": ["extensionPointId", "title", "description", "type"]
+          }
+        }
+      }
+    },
     "extensions": {
       "type": "array",
       "description": "The list of extensions that the plugin registers under other extension points.",
