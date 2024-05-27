@@ -21,15 +21,6 @@ var createFn = func(context.Context, runtime.Object) error { return nil }
 
 var exampleOption = &metainternalversion.ListOptions{}
 
-type UpdatedObjInfoObj struct{}
-
-func (u UpdatedObjInfoObj) UpdatedObject(ctx context.Context, oldObj runtime.Object) (newObj runtime.Object, err error) { // nolint:staticcheck
-	// nolint:staticcheck
-	oldObj = exampleObj
-	return oldObj, nil
-}
-func (u UpdatedObjInfoObj) Preconditions() *metav1.Preconditions { return &metav1.Preconditions{} }
-
 func TestMode2_Create(t *testing.T) {
 	type testCase struct {
 		input          runtime.Object
@@ -480,7 +471,7 @@ func TestMode2_Update(t *testing.T) {
 
 			dw := NewDualWriter(Mode2, ls, us)
 
-			obj, _, err := dw.Update(context.Background(), tt.input, UpdatedObjInfoObj{}, func(ctx context.Context, obj runtime.Object) error { return nil }, func(ctx context.Context, obj, old runtime.Object) error { return nil }, false, &metav1.UpdateOptions{})
+			obj, _, err := dw.Update(context.Background(), tt.input, updatedObjInfoObj{}, func(ctx context.Context, obj runtime.Object) error { return nil }, func(ctx context.Context, obj, old runtime.Object) error { return nil }, false, &metav1.UpdateOptions{})
 
 			if tt.wantErr {
 				assert.Error(t, err)
