@@ -779,7 +779,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     return getPanelIdForVizPanel(row);
   }
 
-  public onCreateNewPanel(): number {
+  public onCreateNewPanel(): VizPanel {
     if (!this.state.isEditing) {
       this.onEnterEditMode();
     }
@@ -788,7 +788,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     this.addPanel(vizPanel);
 
-    return getPanelIdForVizPanel(vizPanel);
+    return vizPanel;
   }
 
   /**
