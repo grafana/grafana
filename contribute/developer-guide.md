@@ -83,15 +83,15 @@ Once `yarn start` has built the assets, it will continue to do so whenever any o
 
 #### External plugins
 
-If you are looking to contribute to any of the external plugins found within the `public/app/plugins` directory they require running additional commands to watch and rebuild them.
+If you are looking to contribute to any of the plugins found within the `public/app/plugins` directory they require running additional commands to watch and rebuild them.
 
-To build and watch all external plugins you can run the following command. Note this can be quite resource intensive as it will start separate build processes for each external plugin.
+To build and watch all plugins you can run the following command. Note this can be quite resource intensive as it will start separate build processes for each external plugin.
 
 ```
 yarn plugin:build:dev
 ```
 
-If, instead, you would like to build and watch a specific external plugin you can run the following command. Make sure to substitute `<name_of_plugin>` with the plugins name field found in its package.json. e.g. `@grafana-plugins/tempo`.
+If, instead, you would like to build and watch a specific plugin you can run the following command. Make sure to substitute `<name_of_plugin>` with the plugins name field found in its package.json. e.g. `@grafana-plugins/tempo`.
 
 ```
 yarn workspace <name_of_plugin> dev
