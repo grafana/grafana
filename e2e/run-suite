@@ -44,8 +44,6 @@ declare -A cypressConfig=(
   [baseUrl]=${BASE_URL:-"http://$HOST:$PORT"}
 )
 
-echo $1
-
 case "$1" in
     "debug")
         echo -e "Debug mode"
@@ -108,6 +106,10 @@ case "$1" in
                 ;;
         esac
       ;;
+   "enterprise-smtp")
+      env[SMTP_PLUGIN_ENABLED]=true
+      cypressConfig[specPattern]=rootForEnterpriseSuite/enterprise/smtp-suite/$testFilesForSingleSuite
+      cypressConfig[video]=${args[1]}
 
     *)
         cypressConfig[specPattern]=./e2e/"${args[0]}"/$testFilesForSingleSuite
