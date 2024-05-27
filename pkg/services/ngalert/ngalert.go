@@ -175,10 +175,10 @@ func (ng *AlertNG) init() error {
 		case remoteOnly:
 			ng.Log.Debug("Starting Grafana with remote only mode enabled")
 			m := ng.Metrics.GetRemoteAlertmanagerMetrics()
-			m.Info.WithLabelValues(metrics.ModeRemoteSecondary).Set(1)
+			m.Info.WithLabelValues(metrics.ModeRemoteOnly).Set(1)
 
 			// This function will be used by the MOA to create new Alertmanagers.
-			override := notifier.WithAlertmanagerOverride(func(factoryFn notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
+			override := notifier.WithAlertmanagerOverride(func(_ notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
 				return func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
 					// Create remote Alertmanager.
 					cfg := remote.AlertmanagerConfig{
@@ -187,6 +187,7 @@ func (ng *AlertNG) init() error {
 						OrgID:             orgID,
 						TenantID:          ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
 						URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
+						PromoteConfig: true,
 					}
 					remoteAM, err := createRemoteAlertmanager(cfg, ng.KVStore, ng.SecretsService.Decrypt, m)
 					if err != nil {
