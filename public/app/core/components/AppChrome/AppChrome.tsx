@@ -2,9 +2,10 @@ import { css, cx } from '@emotion/css';
 import classNames from 'classnames';
 import React, { PropsWithChildren, useEffect } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, SetPanelAttentionEvent } from '@grafana/data';
 import { locationSearchToObject, locationService } from '@grafana/runtime';
 import { useStyles2, LinkButton, useTheme2 } from '@grafana/ui';
+import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
@@ -23,7 +24,10 @@ import { TOP_BAR_LEVEL_HEIGHT } from './types';
 export interface Props extends PropsWithChildren<{}> {}
 
 export function AppChrome({ children }: Props) {
-  const { chrome } = useGrafana();
+  const { chrome, keybindings } = useGrafana();
+  const panelAttentionSubscription = appEvents.getStream(SetPanelAttentionEvent).subscribe((event) => {
+    keybindings.setPanelAttention(event.payload.panelId);
+  });
   const state = chrome.useState();
   const searchBarHidden = state.searchBarHidden || state.kioskMode === KioskMode.TV;
   const theme = useTheme2();
@@ -72,6 +76,12 @@ export function AppChrome({ children }: Props) {
     const queryParams = locationSearchToObject(search);
     chrome.setKioskModeFromUrl(queryParams.kiosk);
   }, [chrome, search]);
+
+  useEffect(() => {
+    return () => {
+      panelAttentionSubscription.unsubscribe();
+    };
+  });
 
   // Chromeless routes are without topNav, mega menu, search & command palette
   // We check chromeless twice here instead of having a separate path so {children}

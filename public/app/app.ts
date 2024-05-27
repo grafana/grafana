@@ -37,7 +37,6 @@ import {
   setAppEvents,
   setReturnToPreviousHook,
   setPluginExtensionsHook,
-  setPanelAttentionSrv,
 } from '@grafana/runtime';
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
@@ -71,7 +70,6 @@ import { GAEchoBackend } from './core/services/echo/backends/analytics/GABackend
 import { RudderstackBackend } from './core/services/echo/backends/analytics/RudderstackBackend';
 import { GrafanaJavascriptAgentBackend } from './core/services/echo/backends/grafana-javascript-agent/GrafanaJavascriptAgentBackend';
 import { KeybindingSrv } from './core/services/keybindingSrv';
-import { panelAttentionService } from './core/services/panelAttentionSrv';
 import { startMeasure, stopMeasure } from './core/utils/metrics';
 import { initDevFeatures } from './dev';
 import { initAlerting } from './features/alerting/unified/initAlerting';
@@ -155,9 +153,6 @@ export class GrafanaApp {
       // Expose the app-wide eventbus
       setAppEvents(appEvents);
 
-      // Service for attention - a combination between mouse and keyboard focus
-      setPanelAttentionSrv(panelAttentionService);
-
       // We must wait for translations to load because some preloaded store state requires translating
       await initI18nPromise;
 
@@ -236,7 +231,7 @@ export class GrafanaApp {
       // initialize chrome service
       const queryParams = locationService.getSearchObject();
       const chromeService = new AppChromeService();
-      const keybindingsService = new KeybindingSrv(locationService, chromeService, panelAttentionService);
+      const keybindingsService = new KeybindingSrv(locationService, chromeService);
       const newAssetsChecker = new NewFrontendAssetsChecker();
       newAssetsChecker.start();
 

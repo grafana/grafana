@@ -16,6 +16,7 @@ import {
   PanelData,
   PanelPlugin,
   PanelPluginMeta,
+  SetPanelAttentionEvent,
   TimeRange,
   toDataFrameDTO,
   toUtc,
@@ -30,6 +31,7 @@ import {
   SeriesVisibilityChangeMode,
   AdHocFilterItem,
 } from '@grafana/ui';
+import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 import { profiler } from 'app/core/profiler';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
@@ -544,6 +546,10 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     );
   }
 
+  setPanelAttention() {
+    appEvents.publish(new SetPanelAttentionEvent({ panelId: this.props.panel.id }));
+  }
+
   render() {
     const { dashboard, panel, width, height, plugin } = this.props;
     const { errorMessage, data } = this.state;
@@ -579,6 +585,8 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         displayMode={transparent ? 'transparent' : 'default'}
         onCancelQuery={panelChromeProps.onCancelQuery}
         onOpenMenu={panelChromeProps.onOpenMenu}
+        onFocus={() => this.setPanelAttention()}
+        onMouseMove={() => this.setPanelAttention()}
       >
         {(innerWidth, innerHeight) => (
           <>

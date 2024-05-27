@@ -1,10 +1,9 @@
 import classNames from 'classnames';
-import { debounce } from 'lodash';
-import React, { PureComponent, CSSProperties, useMemo } from 'react';
+import React, { PureComponent, CSSProperties } from 'react';
 import ReactGridLayout, { ItemCallback } from 'react-grid-layout';
 import { Subscription } from 'rxjs';
 
-import { config, getPanelAttentionSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -362,7 +361,6 @@ interface GrafanaGridItemProps extends React.HTMLAttributes<HTMLDivElement> {
   isViewing: boolean;
   windowHeight: number;
   windowWidth: number;
-  'data-panelid': number;
   children: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
@@ -370,10 +368,6 @@ interface GrafanaGridItemProps extends React.HTMLAttributes<HTMLDivElement> {
  * A hacky way to intercept the react-layout-grid item dimensions and pass them to DashboardPanel
  */
 const GrafanaGridItem = React.forwardRef<HTMLDivElement, GrafanaGridItemProps>((props, ref) => {
-  const panelId = props['data-panelid'];
-  const panelAttentionService = useMemo(() => getPanelAttentionSrv(), []);
-  const debouncedOnMouseMove = debounce(() => panelAttentionService?.setPanelWithAttention(panelId), 100);
-
   const theme = config.theme2;
   let width = 100;
   let height = 100;
@@ -408,13 +402,7 @@ const GrafanaGridItem = React.forwardRef<HTMLDivElement, GrafanaGridItemProps>((
 
   // props.children[0] is our main children. RGL adds the drag handle at props.children[1]
   return (
-    <div
-      {...divProps}
-      style={{ ...divProps.style }}
-      onFocus={() => panelAttentionService?.setPanelWithAttention(panelId)}
-      onMouseMove={debouncedOnMouseMove}
-      ref={ref}
-    >
+    <div {...divProps} style={{ ...divProps.style }} ref={ref}>
       {/* Pass width and height to children as render props */}
       {[props.children[0](width, height), props.children.slice(1)]}
     </div>
