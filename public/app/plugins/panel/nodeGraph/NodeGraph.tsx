@@ -13,7 +13,7 @@ import { Marker } from './Marker';
 import { Node } from './Node';
 import { ViewControls } from './ViewControls';
 import { Config, defaultConfig, useLayout } from './layout';
-import { EdgeDatum, NodeDatum, NodesMarker } from './types';
+import { EdgeDatumLayout, NodeDatum, NodesMarker } from './types';
 import { useCategorizeFrames } from './useCategorizeFrames';
 import { useContextMenu } from './useContextMenu';
 import { useFocusPositionOnLayout } from './useFocusPositionOnLayout';
@@ -165,7 +165,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId }: Props) {
     nodeCountLimit,
     width,
     focusedNodeId,
-    processed.hasFixed
+    processed.hasFixedPositions
   );
 
   // If we move from grid to graph layout, and we have focused node lets get its position to center there. We want to
@@ -339,11 +339,11 @@ const Markers = memo(function Nodes(props: MarkersProps) {
 });
 
 interface EdgesProps {
-  edges: EdgeDatum[];
+  edges: EdgeDatumLayout[];
   nodeHoveringId?: string;
   edgeHoveringId?: string;
   svgIdNamespace: string;
-  onClick: (event: MouseEvent<SVGElement>, link: EdgeDatum) => void;
+  onClick: (event: MouseEvent<SVGElement>, link: EdgeDatumLayout) => void;
   onMouseEnter: (id: string) => void;
   onMouseLeave: (id: string) => void;
 }
@@ -370,7 +370,7 @@ const Edges = memo(function Edges(props: EdgesProps) {
 });
 
 interface EdgeLabelsProps {
-  edges: EdgeDatum[];
+  edges: EdgeDatumLayout[];
   nodeHoveringId?: string;
   edgeHoveringId?: string;
 }

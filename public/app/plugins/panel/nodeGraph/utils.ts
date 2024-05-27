@@ -45,8 +45,8 @@ export function shortenLine(line: Line, sourceNodeRadius: number, targetNodeRadi
 }
 
 export type NodeFields = {
-  fixed_x?: Field;
-  fixed_y?: Field;
+  fixedX?: Field;
+  fixedY?: Field;
   id?: Field;
   title?: Field;
   subTitle?: Field;
@@ -78,8 +78,8 @@ export function getNodeFields(nodes: DataFrame): NodeFields {
     icon: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.icon),
     nodeRadius: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.nodeRadius.toLowerCase()),
     highlighted: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.highlighted.toLowerCase()),
-    fixed_x: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.fixedX.toLowerCase()),
-    fixed_y: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.fixedY.toLowerCase()),
+    fixedX: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.fixedX.toLowerCase()),
+    fixedY: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.fixedY.toLowerCase()),
   };
 }
 
@@ -133,7 +133,7 @@ export function processNodes(
 ): {
   nodes: NodeDatum[];
   edges: EdgeDatum[];
-  hasFixed?: boolean;
+  hasFixedPositions?: boolean;
   legend?: Array<{
     color: string;
     name: string;
@@ -143,33 +143,27 @@ export function processNodes(
     return { nodes: [], edges: [] };
   }
 
-  let hasFixed: boolean | undefined = undefined;
-
   if (nodes) {
     const nodeFields = getNodeFields(nodes);
     if (!nodeFields.id) {
       throw new Error('id field is required for nodes data frame.');
     }
 
-    if (!!nodeFields.fixed_x !== !!nodeFields.fixed_y) {
-      throw new Error('fixed_x and fixed_y must both be present, or both be absent in nodes data frame.');
-    } else if (nodeFields.fixed_x && nodeFields.fixed_y) {
-      if (nodeFields.fixed_x.values.every((v) => v === undefined || isNaN(v) || v === null)) {
-        if (nodeFields.fixed_y.values.every((v) => v === undefined || isNaN(v) || v === null)) {
-          hasFixed = false;
-        } else {
-          throw new Error(
-            'fixed_x and fixed_y must both be all undefined or null, or all defined values in nodes data frame.'
-          );
-        }
-      } else if (nodeFields.fixed_x.values.every((v) => v !== undefined && !isNaN(v) && v !== null)) {
-        if (nodeFields.fixed_y.values.every((v) => v !== undefined && !isNaN(v) && v !== null)) {
-          hasFixed = true;
-        } else {
-          throw new Error(
-            'fixed_x and fixed_y must both be all undefined or null, or all defined values in nodes data frame.'
-          );
-        }
+    const hasFixedPositions =
+      nodeFields.fixedX &&
+      nodeFields.fixedX.values.every((v) => Number.isFinite(v)) &&
+      nodeFields.fixedY &&
+      nodeFields.fixedY.values.every((v) => Number.isFinite(v));
+
+    // Throw an error if somebody is using fixedX and fixedY fields incorrectly. Other option is to ignore this but we
+    // are not able to easily combine fixed and non-fixed position in layout so that behaviour would be undefined
+    // and silent.
+    if (!hasFixedPositions) {
+      const somePosFilled =
+        (nodeFields.fixedX && nodeFields.fixedX.values.some((v) => Number.isFinite(v))) ||
+        (nodeFields.fixedY && nodeFields.fixedY.values.some((v) => Number.isFinite(v)));
+      if (somePosFilled) {
+        throw new Error('If fixedX and fixedY fields are present, the values have to be all filled and valid');
       }
     }
 
@@ -191,7 +185,7 @@ export function processNodes(
     return {
       nodes: Object.values(nodesMap),
       edges: edgeDatums,
-      hasFixed,
+      hasFixedPositions,
       legend: nodeFields.arc.map((f) => {
         return {
           color: f.config.color?.fixedColor ?? '',
@@ -208,9 +202,6 @@ export function processNodes(
     const nodesMap: { [id: string]: NodeDatumFromEdge } = {};
 
     const edgeFields = getEdgeFields(edges);
-
-    // Edge-only datasets never have fixedX/fixedY
-    hasFixed = false;
 
     // Turn edges into reasonable filled in nodes
     for (let i = 0; i < edges.length; i++) {
@@ -243,7 +234,8 @@ export function processNodes(
     return {
       nodes,
       edges: edgeDatums,
-      hasFixed,
+      // Edge-only datasets never have fixedX/fixedY
+      hasFixedPositions: false,
     };
   }
 }
@@ -370,8 +362,8 @@ function makeNodeDatum(id: string, nodeFields: NodeFields, index: number): NodeD
     icon: nodeFields.icon?.values[index] || '',
     nodeRadius: nodeFields.nodeRadius,
     highlighted: nodeFields.highlighted?.values[index] || false,
-    x: nodeFields.fixed_x?.values[index] ?? undefined,
-    y: nodeFields.fixed_y?.values[index] ?? undefined,
+    x: nodeFields.fixedX?.values[index] ?? undefined,
+    y: nodeFields.fixedY?.values[index] ?? undefined,
   };
 }
 

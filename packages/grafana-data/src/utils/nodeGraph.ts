@@ -40,8 +40,8 @@ export enum NodeGraphDataFrameFieldNames {
   strokeDasharray = 'strokedasharray',
 
   // Supplies a fixed X position for the node to have in the finished graph.
-  fixedX = 'fixedX',
+  fixedX = 'fixedx',
 
   // Supplies a fixed Y position for the node to have in the finished graph.
-  fixedY = 'fixedY',
+  fixedY = 'fixedy',
 }

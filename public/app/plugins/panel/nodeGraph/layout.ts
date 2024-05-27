@@ -50,7 +50,7 @@ export function useLayout(
   nodeCountLimit: number,
   width: number,
   rootNodeId?: string,
-  hasFixed?: boolean
+  hasFixedPositions?: boolean
 ) {
   const [nodesGraph, setNodesGraph] = useState<NodeDatum[]>([]);
   const [edgesGraph, setEdgesGraph] = useState<EdgeDatumLayout[]>([]);
@@ -90,18 +90,17 @@ export function useLayout(
     const layoutType =
       grafanaConfig.featureToggles.nodeGraphDotLayout && rawNodes.length <= 500 ? 'layered' : 'default';
 
-    if (hasFixed) {
+    if (hasFixedPositions) {
       setNodesGraph(rawNodes);
       // The layout function turns source and target fields from string to NodeDatum, so we do that here as well.
       const nodesMap = fromPairs(rawNodes.map((node) => [node.id, node]));
       setEdgesGraph(
         rawEdges.map(
-          (e) =>
-            ({
-              ...e,
-              source: nodesMap[e.source],
-              target: nodesMap[e.target],
-            }) as EdgeDatumLayout
+          (e): EdgeDatumLayout => ({
+            ...e,
+            source: nodesMap[e.source],
+            target: nodesMap[e.target],
+          })
         )
       );
       setLoading(false);
@@ -114,13 +113,13 @@ export function useLayout(
     const cancel = layout(rawNodes, rawEdges, layoutType, ({ nodes, edges }) => {
       if (isMounted()) {
         setNodesGraph(nodes);
-        setEdgesGraph(edges as EdgeDatumLayout[]);
+        setEdgesGraph(edges);
         setLoading(false);
       }
     });
     layoutWorkerCancelRef.current = cancel;
     return cancel;
-  }, [hasFixed, rawNodes, rawEdges, isMounted]);
+  }, [hasFixedPositions, rawNodes, rawEdges, isMounted]);
 
   // Compute grid separately as it is sync and do not need to be inside effect. Also it is dependant on width while
   // default layout does not care and we don't want to recalculate that on panel resize.
@@ -174,7 +173,7 @@ function layout(
   nodes: NodeDatum[],
   edges: EdgeDatum[],
   engine: 'default' | 'layered',
-  done: (data: { nodes: NodeDatum[]; edges: EdgeDatum[] }) => void
+  done: (data: { nodes: NodeDatum[]; edges: EdgeDatumLayout[] }) => void
 ) {
   const worker = engine === 'default' ? createWorker() : createMsaglWorker();
 
