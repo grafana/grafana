@@ -3,8 +3,6 @@ buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.31.0-2023080216373
 buf.build/gen/go/grpc-ecosystem/grpc-gateway/bufbuild/connect-go v1.4.1-20221127060915-a1ecdc58eccd.1 h1:vp9EaPFSb75qe/793x58yE5fY1IJ/gdxb/kcDUzavtI=
 buf.build/gen/go/grpc-ecosystem/grpc-gateway/bufbuild/connect-go v1.4.1-20221127060915-a1ecdc58eccd.1/go.mod h1:YDq2B5X5BChU0lxAG5MxHpDb8mx1fv9OGtF2mwOe7hY=
 buf.build/gen/go/grpc-ecosystem/grpc-gateway/protocolbuffers/go v1.28.1-20221127060915-a1ecdc58eccd.4 h1:z3Xc9n8yZ5k/Xr4ZTuff76TAYP20dWy7ZBV4cGIpbkM=
-cloud.google.com/go v0.112.1 h1:uJSeirPke5UNZHIb4SxfZklVSiWWVqW4oXlETwZziwM=
-cloud.google.com/go v0.112.1/go.mod h1:+Vbu+Y1UU+I1rjmzeMOb/8RfkKJK2Gyxi1X6jJCZLo4=
 cloud.google.com/go/accessapproval v1.7.4 h1:ZvLvJ952zK8pFHINjpMBY5k7LTAp/6pBf50RDMRgBUI=
 cloud.google.com/go/accessapproval v1.7.5 h1:uzmAMSgYcnlHa9X9YSQZ4Q1wlfl4NNkZyQgho1Z6p04=
 cloud.google.com/go/accessapproval v1.7.5/go.mod h1:g88i1ok5dvQ9XJsxpUInWWvUBrIZhyPDPbk4T01OoJ0=
@@ -320,8 +318,6 @@ cloud.google.com/go/spanner v1.57.0/go.mod h1:aXQ5QDdhPRIqVhYmnkAdwPYvj/DRN0Fguc
 cloud.google.com/go/speech v1.21.0 h1:qkxNao58oF8ghAHE1Eghen7XepawYEN5zuZXYWaUTA4=
 cloud.google.com/go/speech v1.21.1 h1:nuFc+Kj5B8de75nN4FdPyUbI2SiBoHZG6BLurXL56Q0=
 cloud.google.com/go/speech v1.21.1/go.mod h1:E5GHZXYQlkqWQwY5xRSLHw2ci5NMQNG52FfMU1aZrIA=
-cloud.google.com/go/storage v1.38.0 h1:Az68ZRGlnNTpIBbLjSMIV2BDcwwXYlRlQzis0llkpJg=
-cloud.google.com/go/storage v1.38.0/go.mod h1:tlUADB0mAb9BgYls9lq+8MGkfzOXuLrnHXlpHmvFJoY=
 cloud.google.com/go/storagetransfer v1.10.3 h1:YM1dnj5gLjfL6aDldO2s4GeU8JoAvH1xyIwXre63KmI=
 cloud.google.com/go/storagetransfer v1.10.4 h1:dy4fL3wO0VABvzM05ycMUPFHxTPbJz9Em8ikAJVqSbI=
 cloud.google.com/go/storagetransfer v1.10.4/go.mod h1:vef30rZKu5HSEf/x1tK3WfWrL0XVoUQN/EPDRGPzjZs=
@@ -674,8 +670,6 @@ github.com/grafana/grafana-plugin-sdk-go v0.230.0 h1:Y4IL+eT1jXqTCctlNzdCvxAozpB
 github.com/grafana/grafana-plugin-sdk-go v0.230.0/go.mod h1:6V6ikT4ryva8MrAp7Bdz5fTJx3/ztzKvpMJFfpzr4CI=
 github.com/grafana/grafana-plugin-sdk-go v0.231.1-0.20240523124942-62dae9836284/go.mod h1:bNgmNmub1I7Mc8dzIncgNqHC5jTgSZPPHlZ3aG8HKJQ=
 github.com/grafana/grafana/pkg/promlib v0.0.3/go.mod h1:3El4NlsfALz8QQCbEGHGFvJUG+538QLMuALRhZ3pcoo=
-github.com/grafana/saml v0.4.15-0.20240523142256-cc370b98af7c h1:SWmG1QLZ36Ay0htq4Wt3dzlNIhWvQ3GUf7mk19dR8nI=
-github.com/grafana/saml v0.4.15-0.20240523142256-cc370b98af7c/go.mod h1:S4+611dxnKt8z/ulbvaJzcgSHsuhjVc1QHNTcr1R7Fw=
 github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7 h1:pdN6V1QBWetyv/0+wjACpqVH+eVULgEjkurDLq3goeM=
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.18.1/go.mod h1:YvJ2f6MplWDhfxiUC3KpyTy76kYUZA4W3pTv/wdKQ9Y=
 github.com/grpc-ecosystem/grpc-opentracing v0.0.0-20180507213350-8e809c8a8645 h1:MJG/KsmcqMwFAkh8mTnAwhyKoB+sTAnY4CACC110tbU=
@@ -1093,6 +1087,8 @@ golang.org/x/exp v0.0.0-20231006140011-7918f672742d/go.mod h1:ldy0pHrwJyGW56pPQz
 golang.org/x/image v0.0.0-20220302094943-723b81ca9867 h1:TcHcE0vrmgzNH1v3ppjcMGbhG5+9fMuvOmUYwNEF4q4=
 golang.org/x/mobile v0.0.0-20190719004257-d2bd2a29d028 h1:4+4C/Iv2U4fMZBiMCc98MG1In4gJY5YRhtpDNeDeHWs=
 golang.org/x/mod v0.13.0/go.mod h1:hTbmBsO62+eylJbnUtE2MGJUyE7QWk4xUqPFrRgJ+7c=
+golang.org/x/mod v0.15.0/go.mod h1:hTbmBsO62+eylJbnUtE2MGJUyE7QWk4xUqPFrRgJ+7c=
+golang.org/x/mod v0.17.0/go.mod h1:hTbmBsO62+eylJbnUtE2MGJUyE7QWk4xUqPFrRgJ+7c=
 golang.org/x/net v0.21.0/go.mod h1:bIjVDfnllIU7BJ2DNgfnXvpSvtn8VRwhlsaeUTyUS44=
 golang.org/x/net v0.22.0/go.mod h1:JKghWKKOSdJwpW2GEx0Ja7fmaKnMsbu+MWVZTokSYmg=
 golang.org/x/net v0.24.0/go.mod h1:2Q7sJY5mzlzWjKtYUEXSlBWCdyaioyXzRB2RtU8KVE8=
@@ -1103,10 +1099,13 @@ golang.org/x/sys v0.18.0/go.mod h1:/VUhepiaJMQUp4+oa/7Zr1D23ma6VTLIYjOOTFZPUcA=
 golang.org/x/sys v0.19.0/go.mod h1:/VUhepiaJMQUp4+oa/7Zr1D23ma6VTLIYjOOTFZPUcA=
 golang.org/x/telemetry v0.0.0-20240208230135-b75ee8823808 h1:+Kc94D8UVEVxJnLXp/+FMfqQARZtWHfVrcRtcG8aT3g=
 golang.org/x/telemetry v0.0.0-20240208230135-b75ee8823808/go.mod h1:KG1lNk5ZFNssSZLrpVb4sMXKMpGwGXOxSG3rnu2gZQQ=
+golang.org/x/telemetry v0.0.0-20240228155512-f48c80bd79b2 h1:IRJeR9r1pYWsHKTRe/IInb7lYvbBVIqOgsX/u0mbOWY=
+golang.org/x/telemetry v0.0.0-20240228155512-f48c80bd79b2/go.mod h1:TeRTkGYfJXctD9OcfyVLyj2J3IxLnKwHJR8f4D8a3YE=
 golang.org/x/term v0.19.0/go.mod h1:2CuTdWZ7KHSQwUzKva0cbMg6q2DMI3Mmxp+gKJbskEk=
 golang.org/x/tools v0.12.0/go.mod h1:Sc0INKfu04TlqNoRA1hgpFZbhYXHPr4V5DzpSBTPqQM=
 golang.org/x/tools v0.14.0/go.mod h1:uYBEerGOWcJyEORxN+Ek8+TT266gXkNlHdJBwexUsBg=
 golang.org/x/tools v0.16.1/go.mod h1:kYVVN6I1mBNoB1OX+noeBjbRk4IUEPa7JJ+TJMEooJ0=
+golang.org/x/tools v0.20.0/go.mod h1:WvitBU7JJf6A4jOdg4S1tviW9bhUxkgeCui/0JHctQg=
 gonum.org/v1/netlib v0.0.0-20190313105609-8cb42192e0e0 h1:OE9mWmgKkjJyEmDAAtGMPjXu+YNeGvK9VTSHY6+Qihc=
 gonum.org/v1/plot v0.10.1 h1:dnifSs43YJuNMDzB7v8wV64O4ABBHReuAVAoBxqBqS4=
 google.golang.org/api v0.162.0/go.mod h1:6SulDkfoBIg4NFmCuZ39XeeAgSHCPecfSUuDyYlAHs0=
@@ -1157,6 +1156,7 @@ gopkg.in/src-d/go-billy.v4 v4.3.2/go.mod h1:nDjArDMp+XMs1aFAESLRjfGSgfvoYN0hDfzE
 gopkg.in/telebot.v3 v3.2.1 h1:3I4LohaAyJBiivGmkfB+CiVu7QFOWkuZ4+KHgO/G3rs=
 gopkg.in/warnings.v0 v0.1.2 h1:wFXVbFY8DY5/xOe1ECiWdKCzZlxgshcYVNkBHstARME=
 honnef.co/go/tools v0.1.3 h1:qTakTkI6ni6LFD5sBwwsdSO+AQqbSIxOauHTTQKZ/7o=
+k8s.io/apimachinery v0.29.3/go.mod h1:hx/S4V2PNW4OMg3WizRrHutyB5la0iCUbZym+W0EQIU=
 k8s.io/component-base v0.0.0-20240417101527-62c04b35eff6 h1:WN8Lymy+dCTDHgn4vhUSNIB6U+0sDiv/c9Zdr0UeAnI=
 k8s.io/component-base v0.0.0-20240417101527-62c04b35eff6/go.mod h1:l0ukbPS0lwFxOzSq5ZqjutzF+5IL2TLp495PswRPSZk=
 k8s.io/gengo v0.0.0-20230829151522-9cce18d56c01 h1:pWEwq4Asjm4vjW7vcsmijwBhOr1/shsbSYiWXmNGlks=

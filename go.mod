@@ -176,13 +176,13 @@ require (
 	gocloud.dev v0.25.0 // @grafana/grafana-app-platform-squad
 	golang.org/x/crypto v0.23.0 // @grafana/grafana-backend-group
 	golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb // @grafana/alerting-squad-backend
-	golang.org/x/mod v0.15.0 // @grafana/grafana-backend-group
+	golang.org/x/mod v0.17.0 // @grafana/grafana-backend-group
 	golang.org/x/net v0.25.0 // @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/oauth2 v0.20.0 // @grafana/identity-access-team
 	golang.org/x/sync v0.7.0 // @grafana/alerting-squad-backend
 	golang.org/x/text v0.15.0 // @grafana/grafana-backend-group
 	golang.org/x/time v0.5.0 // @grafana/grafana-backend-group
-	golang.org/x/tools v0.18.0 // @grafana/grafana-as-code
+	golang.org/x/tools v0.20.0 // @grafana/grafana-as-code
 	gonum.org/v1/gonum v0.12.0 // @grafana/observability-metrics
 	google.golang.org/api v0.176.0 // @grafana/grafana-backend-group
 	google.golang.org/grpc v1.64.0 // @grafana/plugins-platform-backend
@@ -191,7 +191,7 @@ require (
 	gopkg.in/mail.v2 v2.3.1 // @grafana/grafana-backend-group
 	gopkg.in/yaml.v3 v3.0.1 // @grafana/alerting-squad-backend
 	k8s.io/api v0.29.2 // @grafana/grafana-app-platform-squad
-	k8s.io/apimachinery v0.29.2 // @grafana/grafana-app-platform-squad
+	k8s.io/apimachinery v0.29.3 // @grafana/grafana-app-platform-squad
 	k8s.io/apiserver v0.29.2 // @grafana/grafana-app-platform-squad
 	k8s.io/client-go v0.29.2 // @grafana/grafana-app-platform-squad
 	k8s.io/code-generator v0.29.1 // @grafana/grafana-app-platform-squad
