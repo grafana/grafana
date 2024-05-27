@@ -7,7 +7,6 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2, useTheme2 } from '../../../themes';
 import { getFocusStyles } from '../../../themes/mixins';
 import { t, Trans } from '../../../utils/i18n';
-import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
 import { FilterInput } from '../../FilterInput/FilterInput';
 import { Icon } from '../../Icon/Icon';
 

@@ -98,6 +98,6 @@ const getOptionsStyles = () => ({
     alignItems: 'flex-start',
   }),
   list: css({
-    overflowY: 'scroll',
+    overflowY: 'auto',
   }),
 });
