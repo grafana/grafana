@@ -558,7 +558,7 @@
     },
     "extensions": {
       "type": "array",
-      "description": "List of the extensions that the plugin registers.",
+      "description": "The list of extensions that the plugin registers under other extension points.",
       "items": {
         "type": "object",
         "properties": {
