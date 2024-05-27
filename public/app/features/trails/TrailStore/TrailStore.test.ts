@@ -4,7 +4,7 @@ import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 
 import { MockDataSourceSrv, mockDataSource } from '../../alerting/unified/mocks';
 import { DataTrail } from '../DataTrail';
-import { BOOKMARKED_STATES_KEY, RECENT_TRAILS_KEY, VAR_FILTERS } from '../shared';
+import { TRAIL_BOOKMARKS_KEY, RECENT_TRAILS_KEY, VAR_FILTERS } from '../shared';
 
 import { SerializedTrail, getTrailStore } from './TrailStore';
 
@@ -484,7 +484,7 @@ describe('TrailStore', () => {
     beforeEach(() => {
       localStorage.clear();
       localStorage.setItem(
-        BOOKMARKED_STATES_KEY,
+        TRAIL_BOOKMARKS_KEY,
         JSON.stringify([
           {
             urlValues: {
@@ -560,7 +560,119 @@ describe('TrailStore', () => {
 
       jest.advanceTimersByTime(2000);
 
-      expect(localStorage.getItem(BOOKMARKED_STATES_KEY)).toBe('[]');
+      expect(localStorage.getItem(TRAIL_BOOKMARKS_KEY)).toBe('[]');
+    });
+  });
+
+  describe('Initialize store with one legacy bookmark trail', () => {
+    beforeEach(() => {
+      localStorage.clear();
+      localStorage.setItem(
+        TRAIL_BOOKMARKS_KEY,
+        JSON.stringify([
+          {
+            history: [
+              {
+                urlValues: {
+                  from: 'now-1h',
+                  to: 'now',
+                  'var-ds': 'cb3a3391-700f-4cc6-81be-a122488e93e6',
+                  'var-filters': [],
+                  refresh: '',
+                },
+                type: 'start',
+                description: 'Test',
+              },
+              {
+                urlValues: {
+                  metric: 'access_permissions_duration_count',
+                  from: 'now-1h',
+                  to: 'now',
+                  'var-ds': 'cb3a3391-700f-4cc6-81be-a122488e93e6',
+                  'var-filters': [],
+                  refresh: '',
+                },
+                type: 'time',
+                description: 'Test',
+              },
+            ],
+          },
+        ])
+      );
+      getTrailStore().load();
+    });
+
+    const store = getTrailStore();
+
+    it('should have no recent trails', () => {
+      expect(store.recent.length).toBe(0);
+    });
+
+    it('should accurately load legacy bookmark', () => {
+      expect(store.bookmarks.length).toBe(1);
+      const trail = store.getTrailForBookmarkIndex(0);
+      expect(trail.state.metric).toBe('access_permissions_duration_count');
+    });
+  });
+
+  describe('Initialize store with one legacy bookmark trail not bookmarked on final step', () => {
+    beforeEach(() => {
+      localStorage.clear();
+      localStorage.setItem(
+        TRAIL_BOOKMARKS_KEY,
+        JSON.stringify([
+          {
+            history: [
+              {
+                urlValues: {
+                  from: 'now-1h',
+                  to: 'now',
+                  'var-ds': 'prom-mock',
+                  'var-filters': [],
+                  refresh: '',
+                },
+                type: 'start',
+              },
+              {
+                urlValues: {
+                  metric: 'bookmarked_metric',
+                  from: 'now-1h',
+                  to: 'now',
+                  'var-ds': 'prom-mock',
+                  'var-filters': [],
+                  refresh: '',
+                },
+                type: 'time',
+              },
+              {
+                urlValues: {
+                  metric: 'some_other_metric',
+                  from: 'now-1h',
+                  to: 'now',
+                  'var-ds': 'prom-mock',
+                  'var-filters': [],
+                  refresh: '',
+                },
+                type: 'metric',
+              },
+            ],
+            currentStep: 1,
+          },
+        ])
+      );
+      getTrailStore().load();
+    });
+
+    const store = getTrailStore();
+
+    it('should have no recent trails', () => {
+      expect(store.recent.length).toBe(0);
+    });
+
+    it('should accurately load legacy bookmark', () => {
+      expect(store.bookmarks.length).toBe(1);
+      const trail = store.getTrailForBookmarkIndex(0);
+      expect(trail.state.metric).toBe('bookmarked_metric');
     });
   });
 
@@ -610,7 +722,7 @@ describe('TrailStore', () => {
         ])
       );
       localStorage.setItem(
-        BOOKMARKED_STATES_KEY,
+        TRAIL_BOOKMARKS_KEY,
         JSON.stringify([
           {
             urlValues: {
@@ -684,7 +796,7 @@ describe('TrailStore', () => {
       store.removeBookmark(0);
       expect(store.bookmarks.length).toBe(0);
       jest.advanceTimersByTime(2000);
-      expect(localStorage.getItem(BOOKMARKED_STATES_KEY)).toBe('[]');
+      expect(localStorage.getItem(TRAIL_BOOKMARKS_KEY)).toBe('[]');
     });
   });
 });

@@ -6,7 +6,7 @@ import { dispatch } from 'app/store/store';
 import { notifyApp } from '../../../core/reducers/appNotification';
 import { DataTrail } from '../DataTrail';
 import { TrailStepType } from '../DataTrailsHistory';
-import { BOOKMARKED_STATES_KEY, RECENT_TRAILS_KEY } from '../shared';
+import { TRAIL_BOOKMARKS_KEY, RECENT_TRAILS_KEY } from '../shared';
 import { newMetricsTrail } from '../utils';
 
 import { createBookmarkSavedNotification } from './utils';
@@ -20,18 +20,18 @@ export interface SerializedTrail {
     description: string;
     parentIndex: number;
   }>;
-  currentStep: number;
+  currentStep?: number; // Assume last step in history if not specified
   createdAt?: number;
 }
 
-export interface SerializedBookmarkState {
+export interface DataTrailBookmark {
   urlValues: SceneObjectUrlValues;
   createdAt: number;
 }
 
 export class TrailStore {
   private _recent: Array<SceneObjectRef<DataTrail>> = [];
-  private _bookmarkedStates: SerializedBookmarkState[] = [];
+  private _bookmarks: DataTrailBookmark[] = [];
   private _save: () => void;
 
   constructor() {
@@ -43,7 +43,7 @@ export class TrailStore {
         .map((trail) => this._serializeTrail(trail.resolve()));
       localStorage.setItem(RECENT_TRAILS_KEY, JSON.stringify(serializedRecent));
 
-      localStorage.setItem(BOOKMARKED_STATES_KEY, JSON.stringify(this._bookmarkedStates));
+      localStorage.setItem(TRAIL_BOOKMARKS_KEY, JSON.stringify(this._bookmarks));
     };
 
     this._save = debounce(doSave, 1000);
@@ -69,11 +69,23 @@ export class TrailStore {
     return list;
   }
 
-  private _loadBookmarkedStatesFromStorage() {
-    const storageItem = localStorage.getItem(BOOKMARKED_STATES_KEY);
+  private _loadBookmarksFromStorage() {
+    const storageItem = localStorage.getItem(TRAIL_BOOKMARKS_KEY);
 
-    const list: SerializedBookmarkState[] = storageItem ? JSON.parse(storageItem) : [];
-    return list;
+    const list: Array<DataTrailBookmark | SerializedTrail> = storageItem ? JSON.parse(storageItem) : [];
+
+    return list.map((item) => {
+      if (isSerializedTrail(item)) {
+        // Take the legacy SerializedTrail implementation of bookmark storage, and extract a DataTrailBookmark
+        const step = item.currentStep != null ? item.currentStep : item.history.length - 1;
+        const bookmark: DataTrailBookmark = {
+          urlValues: item.history[step].urlValues,
+          createdAt: item.createdAt || Date.now(),
+        };
+        return bookmark;
+      }
+      return item;
+    });
   }
 
   private _deserializeTrail(t: SerializedTrail): DataTrail {
@@ -114,15 +126,15 @@ export class TrailStore {
   }
 
   public getTrailForBookmarkIndex(index: number) {
-    const bookmark = this._bookmarkedStates[index];
+    const bookmark = this._bookmarks[index];
     if (!bookmark) {
       // Create a blank trail
       return newMetricsTrail();
     }
-    return this.getTrailForBookmarkState(bookmark);
+    return this.getTrailForBookmark(bookmark);
   }
 
-  public getTrailForBookmarkState(bookmark: SerializedBookmarkState) {
+  public getTrailForBookmark(bookmark: DataTrailBookmark) {
     const key = getBookmarkKey(bookmark);
     // Match for recent trails that have the exact same state as the current step
     for (const recent of this._recent) {
@@ -150,7 +162,7 @@ export class TrailStore {
 
   load() {
     this._recent = this._loadRecentTrailsFromStorage();
-    this._bookmarkedStates = this._loadBookmarkedStatesFromStorage();
+    this._bookmarks = this._loadBookmarksFromStorage();
     this._refreshBookmarkIndexMap();
   }
 
@@ -187,26 +199,26 @@ export class TrailStore {
 
   // Bookmarked Trails
   get bookmarks() {
-    return this._bookmarkedStates;
+    return this._bookmarks;
   }
 
   addBookmark(trail: DataTrail) {
     const urlState = getUrlSyncManager().getUrlState(trail);
 
-    const bookmarkState: SerializedBookmarkState = {
+    const bookmarkState: DataTrailBookmark = {
       urlValues: urlState,
       createdAt: Date.now(),
     };
 
-    this._bookmarkedStates.unshift(bookmarkState);
+    this._bookmarks.unshift(bookmarkState);
     this._refreshBookmarkIndexMap();
     this._save();
     dispatch(notifyApp(createBookmarkSavedNotification()));
   }
 
   removeBookmark(index: number) {
-    if (index < this._bookmarkedStates.length) {
-      this._bookmarkedStates.splice(index, 1);
+    if (index < this._bookmarks.length) {
+      this._bookmarks.splice(index, 1);
       this._refreshBookmarkIndexMap();
       this._save();
     }
@@ -222,7 +234,7 @@ export class TrailStore {
 
   private _refreshBookmarkIndexMap() {
     this._bookmarkIndexMap.clear();
-    this._bookmarkedStates.forEach((bookmarked, index) => {
+    this._bookmarks.forEach((bookmarked, index) => {
       const key = getBookmarkKey(bookmarked);
       // If there are duplicate bookmarks, the latest index will be kept
       this._bookmarkIndexMap.set(key, index);
@@ -256,7 +268,7 @@ function correctUrlStateForComparison(urlState: SceneObjectUrlValues) {
   return urlState;
 }
 
-export function getBookmarkKey(trail: DataTrail | SerializedBookmarkState) {
+export function getBookmarkKey(trail: DataTrail | DataTrailBookmark) {
   if (trail instanceof DataTrail) {
     return JSON.stringify(getUrlStateForComparison(trail));
   }
@@ -270,4 +282,8 @@ export function getTrailStore(): TrailStore {
   }
 
   return store;
+}
+
+function isSerializedTrail(serialized: unknown): serialized is SerializedTrail {
+  return serialized != null && typeof serialized === 'object' && 'history' in serialized;
 }

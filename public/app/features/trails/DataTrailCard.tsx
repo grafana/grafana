@@ -6,13 +6,13 @@ import { AdHocFiltersVariable, sceneGraph } from '@grafana/scenes';
 import { Card, IconButton, Stack, Tag, useStyles2 } from '@grafana/ui';
 
 import { DataTrail } from './DataTrail';
-import { getTrailStore, SerializedBookmarkState } from './TrailStore/TrailStore';
+import { getTrailStore, DataTrailBookmark } from './TrailStore/TrailStore';
 import { VAR_FILTERS } from './shared';
 import { getDataSource, getDataSourceName, getMetricName } from './utils';
 
 export type Props = {
   trail?: DataTrail;
-  bookmark?: SerializedBookmarkState;
+  bookmark?: DataTrailBookmark;
   onSelect: () => void;
   onDelete?: () => void;
 };
@@ -22,7 +22,7 @@ export function DataTrailCard(props: Props) {
   const styles = useStyles2(getStyles);
 
   const values = useMemo(() => {
-    let trail = props.trail || (bookmark && getTrailStore().getTrailForBookmarkState(bookmark));
+    let trail = props.trail || (bookmark && getTrailStore().getTrailForBookmark(bookmark));
 
     if (!trail) {
       return null;
