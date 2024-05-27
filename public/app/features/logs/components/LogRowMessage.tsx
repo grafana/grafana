@@ -70,7 +70,7 @@ const restructureLog = (
       return JSON.stringify(JSON.parse(line), undefined, 2);
     } catch (error) {}
   }
-  // With wrapping disabled, we also want to turn it into a single-line log entry
+  // With wrapping disabled, we want to turn it into a single-line log entry unless the line is expanded
   if (!wrapLogMessage && !expanded) {
     line = line.replace(/(\r\n|\n|\r)/g, '');
   }
