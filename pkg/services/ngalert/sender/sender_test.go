@@ -52,7 +52,8 @@ func TestSanitizeLabelName(t *testing.T) {
 
 	for _, tc := range cases {
 		logger := log.New("ngalert.sender.external-alertmanager")
-		am, _ := NewExternalAlertmanagerSender(logger, prometheus.NewRegistry())
+		am, err := NewExternalAlertmanagerSender(logger, prometheus.NewRegistry())
+		require.NoError(t, err)
 		t.Run(tc.desc, func(t *testing.T) {
 			res, err := am.sanitizeLabelName(tc.labelName)
 
