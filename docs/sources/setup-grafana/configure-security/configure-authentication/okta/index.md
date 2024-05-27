@@ -24,6 +24,85 @@ If Users use the same email address in Okta that they use with other authenticat
 
 To follow this guide, ensure you have permissions in your Okta workspace to create an OIDC app.
 
+## Create an Okta app
+
+1. From the Okta Admin Console, select **Create App Integration** from the **Applications** menu.
+1. For **Sign-in method**, select **OIDC - OpenID Connect**.
+1. For **Application type**, select **Web Application** and click **Next**.
+1. Configure **New Web App Integration Operations**:
+
+   - **App integration name**: Choose a name for the app.
+   - **Logo (optional)**: Add a logo.
+   - **Grant type**: Select **Authorization Code** and **Refresh Token**.
+   - **Sign-in redirect URIs**: Replace the default setting with the Grafana Cloud Okta path, replacing <YOUR_ORG> with the name of your Grafana organization: https://<YOUR_ORG>.grafana.net/login/okta. For on-premises installation, use the Grafana server URL: http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/okta.
+   - **Sign-out redirect URIs (optional)**: Replace the default setting with the Grafana Cloud Okta path, replacing <YOUR_ORG> with the name of your Grafana organization: https://<YOUR_ORG>.grafana.net/login/okta. For on-premises installation, use the Grafana server URL: http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/okta.
+   - **Base URIs (optional)**: Add any base URIs
+   - **Controlled access**: Select whether to assign the app integration to everyone in your organization, or only selected groups. You can assign this option after you create the app.
+
+1. Make a note of the following:
+   - **ClientID**
+   - **Client Secret**
+   - **Auth URL**
+     For example: https://<TENANT_ID>.okta.com/oauth2/v1/authorize
+   - **Token URL**
+     For example: https://<TENANT_ID>.okta.com/oauth2/v1/token
+   - **API URL**
+     For example: https://<TENANT_ID>.okta.com/oauth2/v1/userinfo
+
+### Configure Okta to Grafana Cloud role mapping
+
+1. In the **Okta Admin Console**, select **Directory > Profile Editor**.
+1. Select the Okta Application Profile you created previously (the default name for this is `<App name> User`).
+1. Select **Add Attribute** and fill in the following fields:
+
+   - **Data Type**: string
+   - **Display Name**: Meaningful name. For example, `Grafana Role`.
+   - **Variable Name**: Meaningful name. For example, `grafana_role`.
+   - **Description (optional)**: A description of the role.
+   - **Enum**: Select **Define enumerated list of values** and add the following:
+     - Display Name: Admin Value: Admin
+     - Display Name: Editor Value: Editor
+     - Display Name: Viewer Value: Viewer
+
+   The remaining attributes are optional and can be set as needed.
+
+1. Click **Save**.
+1. (Optional) You can add the role attribute to the default User profile. To do this, please follow the steps in the [Optional: Add the role attribute to the User (default) Okta profile]({{< relref "#optional-add-the-role-attribute-to-the-user-default-okta-profile" >}}) section.
+1. In the **Okta Admin Console**, select **Security > API**.
+1. From the **Authorization Servers** tab, select server you want to configure. By default, this is `default`.
+1. On the **Claims** tab, click **Add Claim**.
+1. Configure the claim as follows:
+
+   - **Name**: `grafana_role`
+   - **Include in token type**: Select **ID Token** and **Always**
+   - **Value type**: `Expression`
+   - **Value**: `userapp.grafana_role`
+   - **Included in**: `Any scope`
+
+1. Click **Create**.
+
+### Configure Groups claim
+
+1. In the **Okta Admin Console**, select **Application > Applications**.
+1. Select the OpenID Connect application you created.
+1. Go to the **Sign On** tab and click **Edit** in the **OpenID Connect ID Token** section.
+1. In the **Group claim type** section, select **Filter**.
+1. In the **Group claim filter** section, leave the default name `groups` (or add it if the box is empty), then select **Matches regex** and add the following regex: `.*`.
+1. Click **Save**.
+1. Click the **Back to applications** link at the top of the page.
+1. From the **More** button dropdown menu, click **Refresh Application Data**.
+
+#### Optional: Add the role attribute to the User (default) Okta profile
+
+1. Return to the **Directory** section and select **Profile Editor**.
+1. Select the User (default) Okta profile, and click **Add Attribute**.
+1. Set all of the attributes in the same way you did in **Step 3**.
+1. Select **Add Mapping** to add your new attributes.
+   For example, **user.grafana_role -> grafana_role**.
+1. To add a role to a user, select the user from the **Directory**, and click **Profile -> Edit**.
+1. Select an option from your new attribute and click **Save**.
+1. Update the Okta integration by setting the `Role attribute path` (`role_attribute_path` in Terraform and config file) to `<YOUR_ROLE_VARIABLE>`. For example: `role_attribute_path = grafana_role` (using the configuration).
+
 ## Configure Okta authentication client using the Grafana UI
 
 {{% admonition type="note" %}}
@@ -78,20 +157,7 @@ Ensure that you have access to the [Grafana configuration file]({{< relref "../.
 
 To integrate your Okta OIDC provider with Grafana using our Okta OIDC integration, follow these steps:
 
-1. Follow the [OIDC app integration guide](https://help.okta.com/en-us/content/topics/apps/apps_app_integration_wizard_oidc.htm)
-   to reach the OIDC new application configuration wizard.
-
-1. Select `OIDC - OpenID Connect` as the sign-in method and `Single-Page Application`.
-
-1. Select `Authorization Code` and `Refresh Token` as the grant types.
-
-1. Set the `Sign-in redirect URI` to `http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/okta`.
-
-   Ensure that the sign-in redirect URI is the complete HTTP address that you use to access Grafana via your browser, but with the appended path of `/login/okta`.
-
-   For the sign-in redirect URI to be correct, it might be necessary to set the root_url option to [server], for example, if you are serving Grafana behind a proxy.
-
-1. Set the `Sign-out redirect URI` to `http://<my_grafana_server_name_or_ip>:<grafana_server_port>/logout`.
+1. Follow the [Create an Okta app]({{< relref "#create-an-okta-app" >}}) steps to create an OIDC app in Okta.
 
 1. Refer to the following table to update field values located in the `[auth.okta]` section of the Grafana configuration file:
 
@@ -107,11 +173,9 @@ To integrate your Okta OIDC provider with Grafana using our Okta OIDC integratio
 
 1. Optional: [Configure a refresh token]({{< relref "#configure-a-refresh-token" >}}):
 
-   a. Enable the `accessTokenExpirationCheck` feature toggle.
+   a. Extend the `scopes` field of `[auth.okta]` section in Grafana configuration file with the refresh token scope used by your OIDC provider.
 
-   b. Extend the `scopes` field of `[auth.okta]` section in Grafana configuration file with the refresh token scope used by your OIDC provider.
-
-   c. Enable the [refresh token]({{< relref "#configure-a-refresh-token" >}}) at the Okta application settings.
+   b. Enable the [refresh token]({{< relref "#configure-a-refresh-token" >}}) at the Okta application settings.
 
 1. [Configure role mapping]({{< relref "#configure-role-mapping" >}}).
 1. Optional: [Configure team synchronization]({{< relref "#configure-team-synchronization-enterprise-only" >}}).
@@ -133,7 +197,8 @@ scopes = openid profile email offline_access
 auth_url = https://<okta tenant id>.okta.com/oauth2/v1/authorize
 token_url = https://<okta tenant id>.okta.com/oauth2/v1/token
 api_url = https://<okta tenant id>.okta.com/oauth2/v1/userinfo
-role_attribute_path = contains(groups[*], 'Example::DevOps') && 'Admin' || 'None'
+role_attribute_path = grafana_role
+;role_attribute_path = contains(groups[*], 'Example::DevOps') && 'Admin' || 'None'
 role_attribute_strict = true
 allowed_groups = "Example::DevOps" "Example::Dev" "Example::QA"
 ```
