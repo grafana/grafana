@@ -98,7 +98,6 @@ var (
 			Owner:          grafanaExploreSquad,
 			Expression:     "true", // enabled by default
 			AllowSelfServe: true,
-			Expression:     "false",
 		},
 		{
 			Name:           "exploreContentOutline",
