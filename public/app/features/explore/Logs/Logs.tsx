@@ -265,17 +265,18 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     }
   }, [logsVolumeData?.data, unregisterAllChildren, logsVolumeEnabled, hiddenLogLevels, register, toggleLegendRef]);
 
+  useEffect(() => {
+    if (flipOrderTimer) {
+      window.clearTimeout(flipOrderTimer);
+    }
+    if (cancelFlippingTimer) {
+      window.clearTimeout(cancelFlippingTimer);
+    }
+  });
+
   // clear timers and reset state on unmount
   useEffect(() => {
     return () => {
-      if (flipOrderTimer) {
-        window.clearTimeout(flipOrderTimer);
-      }
-
-      if (cancelFlippingTimer) {
-        window.clearTimeout(cancelFlippingTimer);
-      }
-
       // If we're unmounting logs (e.g. switching to another datasource), we need to remove the table specific panel state, otherwise it will persist in the explore url
       if (panelState?.logs?.columns || panelState?.logs?.refId || panelState?.logs?.labelFieldName) {
         dispatch(
