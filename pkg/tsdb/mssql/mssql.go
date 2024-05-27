@@ -35,6 +35,9 @@ type Service struct {
 	logger log.Logger
 }
 
+var reODBC = regexp.MustCompile(`^[^\\:]+(?:\\[^:]+)?(?::\d+)?(?:;.+)?$`)
+
+
 const (
 	azureAuthentication         = "Azure AD Authentication"
 	windowsAuthentication       = "Windows Authentication"
@@ -214,7 +217,6 @@ func ParseURL(u string, logger DebugOnlyLogger) (*url.URL, error) {
 	logger.Debug("Parsing MSSQL URL", "url", u)
 
 	// Recognize ODBC connection strings like host\instance:1234
-	reODBC := regexp.MustCompile(`^[^\\:]+(?:\\[^:]+)?(?::\d+)?(?:;.+)?$`)
 	var host string
 	switch {
 	case reODBC.MatchString(u):

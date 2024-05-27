@@ -22,6 +22,8 @@ const (
 	defaultSize = 500
 )
 
+var metricIdRegex = regexp.MustCompile(`^(\d+)`)
+
 type elasticsearchDataQuery struct {
 	client               es.Client
 	dataQueries          []backend.DataQuery
@@ -247,7 +249,6 @@ func addTermsAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, metrics []*Metr
 			   The format for extended stats and percentiles is {metricId}[bucket_path]
 			   for everything else it's just {metricId}, _count, _term, or _key
 			*/
-			metricIdRegex := regexp.MustCompile(`^(\d+)`)
 			metricId := metricIdRegex.FindString(orderBy)
 
 			if len(metricId) > 0 {

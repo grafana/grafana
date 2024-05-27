@@ -26,6 +26,8 @@ import (
 var (
 	// ErrorNilBucket is returned when a function is called where a bucket argument is expected and the bucket is nil.
 	ErrorNilBucket = errors.New("a bucket must be provided")
+
+	captureVersion = regexp.MustCompile(`(\d+\.\d+\.\d+-\d+)`)
 )
 
 const (
@@ -418,7 +420,6 @@ func GetLatestMainBuild(ctx context.Context, bucket *storage.BucketHandle, path 
 
 	var latestVersion string
 	for i := 0; i < len(files); i++ {
-		captureVersion := regexp.MustCompile(`(\d+\.\d+\.\d+-\d+)`)
 		if captureVersion.MatchString(files[i]) {
 			latestVersion = captureVersion.FindString(files[i])
 			break

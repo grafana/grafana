@@ -141,6 +141,8 @@ var (
 		"WITH":              true,
 		"WITHOUT":           true,
 	}
+
+	commaReg = regexp.MustCompile(`,\s`)
 )
 
 type sqlite3 struct {
@@ -357,8 +359,7 @@ func (db *sqlite3) GetColumns(tableName string) ([]string, map[string]*core.Colu
 	colSeq := make([]string, 0)
 
 	for _, colStr := range colCreates {
-		reg = regexp.MustCompile(`,\s`)
-		colStr = reg.ReplaceAllString(colStr, ",")
+		colStr = commaReg.ReplaceAllString(colStr, ",")
 		if strings.HasPrefix(strings.TrimSpace(colStr), "PRIMARY KEY") {
 			parts := strings.Split(strings.TrimSpace(colStr), "(")
 			if len(parts) == 2 {

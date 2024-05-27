@@ -32,6 +32,9 @@ var ExtraGithubSettingKeys = map[string]ExtraKeyInfo{
 var _ social.SocialConnector = (*SocialGithub)(nil)
 var _ ssosettings.Reloadable = (*SocialGithub)(nil)
 
+var githubPatternReg = regexp.MustCompile(`<([^>]+)>; rel="next"`)
+
+
 type SocialGithub struct {
 	*SocialBase
 	allowedOrganizations []string
@@ -239,8 +242,7 @@ func (s *SocialGithub) hasMoreRecords(headers http.Header) (string, bool) {
 		return "", false
 	}
 
-	pattern := regexp.MustCompile(`<([^>]+)>; rel="next"`)
-	matches := pattern.FindStringSubmatch(value[0])
+	matches := githubPatternReg.FindStringSubmatch(value[0])
 
 	if matches == nil {
 		return "", false

@@ -158,6 +158,12 @@ var (
 		"YEAR_MONTH":   true,
 		"ZEROFILL":     true,
 	}
+
+	dsnPattern = regexp.MustCompile(
+		`^(?:(?P<user>.*?)(?::(?P<passwd>.*))?@)?` + // [user[:password]@]
+			`(?:(?P<net>[^\(]*)(?:\((?P<addr>[^\)]*)\))?)?` + // [net[(addr)]]
+			`\/(?P<dbname>.*?)` + // /dbname
+			`(?:\?(?P<params>[^\?]*))?$`) // [?param1=value1&paramN=valueN]
 )
 
 type mysql struct {
@@ -605,11 +611,6 @@ type mysqlDriver struct {
 }
 
 func (p *mysqlDriver) Parse(driverName, dataSourceName string) (*core.Uri, error) {
-	dsnPattern := regexp.MustCompile(
-		`^(?:(?P<user>.*?)(?::(?P<passwd>.*))?@)?` + // [user[:password]@]
-			`(?:(?P<net>[^\(]*)(?:\((?P<addr>[^\)]*)\))?)?` + // [net[(addr)]]
-			`\/(?P<dbname>.*?)` + // /dbname
-			`(?:\?(?P<params>[^\?]*))?$`) // [?param1=value1&paramN=valueN]
 	matches := dsnPattern.FindStringSubmatch(dataSourceName)
 	names := dsnPattern.SubexpNames()
 
