@@ -434,10 +434,6 @@ type AlertRuleGroupKey struct {
 	RuleGroup    string
 }
 
-func (k AlertRuleGroupKey) LogContext() []any {
-	return []any{"org_id", k.OrgID, "namespace_uid", k.NamespaceUID, "rule_group", k.RuleGroup}
-}
-
 func (k AlertRuleGroupKey) String() string {
 	return fmt.Sprintf("{orgID: %d, namespaceUID: %s, groupName: %s}", k.OrgID, k.NamespaceUID, k.RuleGroup)
 }
