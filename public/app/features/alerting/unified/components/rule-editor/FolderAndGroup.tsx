@@ -391,7 +391,11 @@ function EvaluationGroupCreationModal({
       <FormProvider {...formAPI}>
         <form onSubmit={handleSubmit(() => onSubmit())}>
           <Field
-            label={<Label htmlFor={'group'}>Evaluation group name</Label>}
+            label={
+              <Label htmlFor={'group'} description="A group evaluates all its rules over the same evaluation interval.">
+                Evaluation group
+              </Label>
+            }
             error={formState.errors.group?.message}
             invalid={Boolean(formState.errors.group)}
           >
