@@ -181,7 +181,7 @@ func execute(ctx context.Context, tracer trace.Tracer, dsInfo *models.Datasource
 	_, endSpan := startTrace(ctx, tracer, "datasource.influxdb.influxql.parseResponse")
 
 	var reader io.ReadCloser
-	if encoding := res.Header.Get("Accept-Encoding"); encoding == "gzip" {
+	if encoding := res.Header.Get("Content-Encoding"); encoding == "gzip" {
 		reader, err = gzip.NewReader(res.Body)
 		defer func(reader io.ReadCloser) {
 			err := reader.Close()
