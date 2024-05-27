@@ -211,7 +211,7 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 		return obj, created, err
 	}
 
-	obj, err = enrichLegacyObject(original, obj, false)
+	obj, err = enrichLegacyObject(updated, obj, false)
 	if err != nil {
 		return obj, false, err
 	}
@@ -308,10 +308,10 @@ func enrichLegacyObject(originalObj, returnedObj runtime.Object, created bool) (
 	if created {
 		accessorReturned.SetResourceVersion("")
 		accessorReturned.SetUID("")
-		// otherwise, we propagate the original RV and UID
-	} else {
-		accessorReturned.SetResourceVersion(accessorOriginal.GetResourceVersion())
-		accessorReturned.SetUID(accessorOriginal.GetUID())
+		return returnedObj, nil
 	}
+	// otherwise, we propagate the original RV and UID
+	accessorReturned.SetResourceVersion(accessorOriginal.GetResourceVersion())
+	accessorReturned.SetUID(accessorOriginal.GetUID())
 	return returnedObj, nil
 }

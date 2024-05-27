@@ -21,6 +21,14 @@ var createFn = func(context.Context, runtime.Object) error { return nil }
 
 var exampleOption = &metainternalversion.ListOptions{}
 
+type UpdatedObjInfoObj struct{}
+
+func (u UpdatedObjInfoObj) UpdatedObject(ctx context.Context, oldObj runtime.Object) (newObj runtime.Object, err error) {
+	oldObj = exampleObj
+	return oldObj, nil
+}
+func (u UpdatedObjInfoObj) Preconditions() *metav1.Preconditions { return &metav1.Preconditions{} }
+
 func TestMode2_Create(t *testing.T) {
 	type testCase struct {
 		input          runtime.Object
