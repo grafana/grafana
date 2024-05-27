@@ -8,7 +8,7 @@ message Entity {
   // Globally unique ID set by the system.  This can not be set explicitly
   string guid = 1;
 
-  // The resource version
+  // The resource version, this is a snowflake id controlled by storage
   int64 resource_version = 2;
 
   // group
