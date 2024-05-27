@@ -108,7 +108,7 @@ case "$1" in
       ;;
    "enterprise-smtp")
       env[SMTP_PLUGIN_ENABLED]=true
-      cypressConfig[specPattern]=$rootForEnterpriseSuite/enterprise/smtp-suite/$testFilesForSingleSuite
+      cypressConfig[specPattern]=./e2e/extensions/enterprise/smtp-suite/$testFilesForSingleSuite
       cypressConfig[video]=${args[1]}
       ;;
 
