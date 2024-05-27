@@ -2259,6 +2259,30 @@
         "hideFromAdminPage": true,
         "hideFromDocs": true
       }
+    },
+    {
+      "metadata": {
+        "name": "disableSSEDataplane",
+        "resourceVersion": "1716816471156",
+        "creationTimestamp": "2024-05-27T13:27:51Z"
+      },
+      "spec": {
+        "description": "Disables dataplane specific processing in server side expressions.",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-metrics"
+      }
+    },
+    {
+      "metadata": {
+        "name": "influxdbRunQueriesInParallel",
+        "resourceVersion": "1716816471156",
+        "creationTimestamp": "2024-05-27T13:27:51Z"
+      },
+      "spec": {
+        "description": "Enables running InfluxDB Influxql queries in parallel",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/observability-metrics"
+      }
     }
   ]
 }
