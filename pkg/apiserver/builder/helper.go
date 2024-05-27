@@ -25,7 +25,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apiserver/endpoints/filters"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
-	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
 )
 
 // TODO: this is a temporary hack to make rest.Connecter work with resource level routes
@@ -133,7 +132,7 @@ func InstallAPIs(
 	// dual writing is only enabled when the storage type is not legacy.
 	// this is needed to support setting a default RESTOptionsGetter for new APIs that don't
 	// support the legacy storage type.
-	dualWriteEnabled := storageOpts.StorageType != grafanaapiserveroptions.StorageTypeLegacy
+	dualWriteEnabled := storageOpts.StorageType != options.StorageTypeLegacy
 
 	for _, b := range builders {
 		mode := b.GetDesiredDualWriterMode(dualWriteEnabled, storageOpts.DualWriterDesiredModes)
