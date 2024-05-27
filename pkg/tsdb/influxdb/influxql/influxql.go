@@ -1,6 +1,7 @@
 package influxql
 
 import (
+	"compress/gzip"
 	"context"
 	"errors"
 	"fmt"
@@ -164,6 +165,7 @@ func createRequest(ctx context.Context, logger log.Logger, dsInfo *models.Dataso
 	}
 
 	req.URL.RawQuery = params.Encode()
+	req.Header.Add("Accept-Encoding", "gzip")
 
 	logger.Debug("Influxdb request", "url", req.URL.String())
 	return req, nil
@@ -174,22 +176,37 @@ func execute(ctx context.Context, tracer trace.Tracer, dsInfo *models.Datasource
 	if err != nil {
 		return backend.DataResponse{}, err
 	}
-	defer func() {
+
+	_, endSpan := startTrace(ctx, tracer, "datasource.influxdb.influxql.parseResponse")
+
+	reader, err := gzip.NewReader(res.Body)
+	if err != nil {
+		errMsg := "failed to gzip response body"
+		logger.Error(fmt.Sprintf("%s: %v", errMsg, err))
+		return backend.DataResponse{Error: errors.New(errMsg)}, err
+	}
+
+	defer func(reader *gzip.Reader) {
 		if err := res.Body.Close(); err != nil {
 			logger.Warn("Failed to close response body", "err", err)
 		}
-	}()
 
-	_, endSpan := startTrace(ctx, tracer, "datasource.influxdb.influxql.parseResponse")
-	defer endSpan()
+		endSpan()
+
+		err := reader.Close()
+		if err != nil {
+			logger.Warn("Failed to close gzip reader", "err", err)
+		}
+	}(reader)
 
 	var resp *backend.DataResponse
 	if isStreamingParserEnabled {
 		logger.Info("InfluxDB InfluxQL streaming parser enabled: ", "info")
-		resp = querydata.ResponseParse(res.Body, res.StatusCode, query)
+		resp = querydata.ResponseParse(reader, res.StatusCode, query)
 	} else {
-		resp = buffered.ResponseParse(res.Body, res.StatusCode, query)
+		resp = buffered.ResponseParse(reader, res.StatusCode, query)
 	}
+
 	return *resp, nil
 }
 
