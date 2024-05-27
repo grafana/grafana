@@ -174,3 +174,4 @@ notificationBanner,experimental,@grafana/grafana-frontend-platform,false,false,f
 dashboardRestore,experimental,@grafana/grafana-frontend-platform,false,false,false
 datasourceProxyDisableRBAC,GA,@grafana/identity-access-team,false,false,false
 alertingDisableSendAlertsExternal,experimental,@grafana/alerting-squad,false,false,false
+preserveDashboardStateWhenNavigating,experimental,@grafana/dashboards-squad,false,false,false

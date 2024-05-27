@@ -2248,26 +2248,16 @@
     },
     {
       "metadata": {
-        "name": "influxdbRunQueriesInParallel",
-        "resourceVersion": "1716564259132",
-        "creationTimestamp": "2024-05-24T15:24:19Z"
+        "name": "preserveDashboardStateWhenNavigating",
+        "resourceVersion": "1716555778767",
+        "creationTimestamp": "2024-05-24T13:02:58Z"
       },
       "spec": {
-        "description": "Enables running InfluxDB Influxql queries in parallel",
-        "stage": "privatePreview",
-        "codeowner": "@grafana/observability-metrics"
-      }
-    },
-    {
-      "metadata": {
-        "name": "disableSSEDataplane",
-        "resourceVersion": "1716564259132",
-        "creationTimestamp": "2024-05-24T15:24:19Z"
-      },
-      "spec": {
-        "description": "Disables dataplane specific processing in server side expressions.",
+        "description": "Enables possibility to preserve dashboard variables and time range when navigating between dashboards",
         "stage": "experimental",
-        "codeowner": "@grafana/observability-metrics"
+        "codeowner": "@grafana/dashboards-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
       }
     }
   ]

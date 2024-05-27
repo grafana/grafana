@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
@@ -40,10 +41,11 @@ func setupTestService(tb testing.TB, store secrets.Store, features featuremgmt.F
 	encProvider := encryptionprovider.Provider{}
 	usageStats := &usagestats.UsageStatsMock{}
 
-	encryption, err := encryptionservice.ProvideEncryptionService(encProvider, usageStats, cfg)
+	encryption, err := encryptionservice.ProvideEncryptionService(tracing.InitializeTracerForTest(), encProvider, usageStats, cfg)
 	require.NoError(tb, err)
 
 	secretsService, err := ProvideSecretsService(
+		tracing.InitializeTracerForTest(),
 		store,
 		osskmsproviders.ProvideService(encryption, cfg, features),
 		encryption,
