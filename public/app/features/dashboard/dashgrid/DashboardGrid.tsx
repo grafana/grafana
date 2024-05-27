@@ -1,22 +1,23 @@
 import classNames from 'classnames';
-import React, { PureComponent, CSSProperties } from 'react';
-import ReactGridLayout, { ItemCallback } from 'react-grid-layout';
-import { Subscription } from 'rxjs';
+import React, {CSSProperties, PureComponent} from 'react';
+import ReactGridLayout, {ItemCallback} from 'react-grid-layout';
+import {Subscription} from 'rxjs';
 
-import { config } from '@grafana/runtime';
+import {config} from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
-import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
-import { contextSrv } from 'app/core/services/context_srv';
-import { VariablesChanged } from 'app/features/variables/types';
-import { DashboardPanelsChangedEvent } from 'app/types/events';
+import {GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT} from 'app/core/constants';
+import {contextSrv} from 'app/core/services/context_srv';
+import {VariablesChanged} from 'app/features/variables/types';
+import {DashboardPanelsChangedEvent} from 'app/types/events';
 
-import { AddLibraryPanelWidget } from '../components/AddLibraryPanelWidget';
-import { DashboardRow } from '../components/DashboardRow';
-import { DashboardModel, PanelModel } from '../state';
-import { GridPos } from '../state/PanelModel';
+import {AddLibraryPanelWidget} from '../components/AddLibraryPanelWidget';
+import {DashboardRow} from '../components/DashboardRow';
+import {DashboardModel, PanelModel} from '../state';
+import {GridPos} from '../state/PanelModel';
 
 import DashboardEmpty from './DashboardEmpty';
-import { DashboardPanel } from './DashboardPanel';
+import {DashboardPanel} from './DashboardPanel';
+import {MergeRowsMenu} from "./MergeRowsMenu";
 
 export const PANEL_FILTER_VARIABLE = 'systemPanelFilterVar';
 
@@ -31,6 +32,11 @@ export interface Props {
 interface State {
   panelFilter?: RegExp;
   width: number;
+  draggingItem: any;
+  mergingItem: any;
+  preventCollision: boolean;
+  isMenuOpen: boolean;
+  canDragOnTop: boolean;
 }
 
 export class DashboardGrid extends PureComponent<Props, State> {
@@ -48,6 +54,11 @@ export class DashboardGrid extends PureComponent<Props, State> {
     this.state = {
       panelFilter: undefined,
       width: document.body.clientWidth, // initial very rough estimate
+      draggingItem: null,
+      mergingItem: null,
+      preventCollision: false,
+      isMenuOpen: false,
+      canDragOnTop: false,
     };
   }
 
@@ -182,8 +193,156 @@ export class DashboardGrid extends PureComponent<Props, State> {
     this.updateGridPos(newItem, layout);
   };
 
-  onDragStop: ItemCallback = (layout, oldItem, newItem) => {
-    this.updateGridPos(newItem, layout);
+  onDragStart: ItemCallback = (layout, oldItem, newItem, placeholder, e) => {
+    const panelValues = Object.values(this.panelMap);
+
+    // The merge mechanism should only work if there are only row type panels in the grid
+    const isThereInvalidPanels = panelValues.some((panel) => panel.type !== 'row' );
+    this.setState({ draggingItem: newItem, mergingItem: null, preventCollision: !isThereInvalidPanels, canDragOnTop: !isThereInvalidPanels,});
+  };
+
+  onDrag: ItemCallback = (layout, oldItem, newItem, placeholder, e) => {
+    const {canDragOnTop } = this.state;
+    if (canDragOnTop) {
+      const gridContainer = document.querySelector(".react-grid-layout");
+
+      // Get mouse coordinates from the event object and adjust them relative to the grid container
+      let mouseX: number;
+      let mouseY: number;
+      if (gridContainer !== null) {
+        const gridRect = gridContainer.getBoundingClientRect();
+        mouseX = e.clientX - gridRect.left;
+        mouseY = e.clientY - gridRect.top;
+      }
+      else { // else made to avoid warnings
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+      }
+
+      // Grid contains the coordinates of the dragged item in movement (scaled to the grid cell size)
+      const grid: { x: number, y: number, w: number, h: number } = {
+        x: mouseX / (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN),
+        y: mouseY / (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN),
+        w: newItem.w,
+        h: newItem.h,
+      };
+      this.setState({mergingItem: null});
+
+      const gapScaledToOne = GRID_CELL_VMARGIN / (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN);
+      const cellHeightScaledToOne = GRID_CELL_HEIGHT / (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN);
+
+      if (grid.y < newItem.y + cellHeightScaledToOne + gapScaledToOne &&
+        grid.y > newItem.y - gapScaledToOne ) {
+        this.setState({ preventCollision: true });
+      } else {
+        const belowItem: ReactGridLayout.Layout | null = this.findItemDirectlyBelow(layout, newItem);
+        const aboveItem: ReactGridLayout.Layout | null = this.findItemDirectlyAbove(layout, newItem);
+        let belowItemScreenCord: { x: number, y: number, w: number, h: number } | null = null;
+        let aboveItemScreenCord: { x: number, y: number, w: number, h: number } | null = null;
+        if (belowItem !== null) {
+          belowItemScreenCord = {
+            x: belowItem.x,
+            y: belowItem.y - 0.25, // 0.25 = Small adjust
+            w: belowItem.w,
+            h: belowItem.h,
+          };
+        }
+        if (aboveItem !== null) {
+          aboveItemScreenCord = {
+            x: aboveItem.x,
+            y: aboveItem.y + 0.25, // 0.25 = Small adjust
+            w: aboveItem.w,
+            h: aboveItem.h,
+          };
+        }
+
+        let overlapping = false;
+        if (belowItem !== null && this.isOverlapping(grid, belowItemScreenCord)) {
+          placeholder.x = belowItem.x;
+          placeholder.y = belowItem.y;
+          overlapping = true;
+          this.setState({mergingItem: belowItem});
+        } else if (aboveItem !== null && this.isOverlapping(grid, aboveItemScreenCord)) {
+          placeholder.x = aboveItem.x;
+          placeholder.y = aboveItem.y;
+          overlapping = true;
+          this.setState({mergingItem: aboveItem});
+        } else {
+          placeholder.x = newItem.x;
+          placeholder.y = newItem.y;
+        }
+        this.setState({
+          draggingItem: newItem,
+          preventCollision: overlapping,
+        });
+      }
+    } else {
+      this.setState({draggingItem: newItem});
+    }
+  };
+
+  onDragStop: ItemCallback = (layout, newItem) => {
+    const {mergingItem, } = this.state;
+    if (mergingItem) {
+      this.setState({isMenuOpen: true});
+    } else {
+      this.setState({draggingItem: null, preventCollision: false});
+    }
+  };
+
+  findItemDirectlyAbove = (layout: ReactGridLayout.Layout[], newItem: ReactGridLayout.Layout) => {
+    const itemsAbove = layout.filter((item) => {
+      return item.i !== newItem.i && newItem.y >= item.y;
+    });
+
+    let itemDirectlyAbove: ReactGridLayout.Layout | null = null;
+    let maxY = -Infinity;
+
+    for (let i = 0; i < itemsAbove.length; i++) {
+      let item = itemsAbove[i];
+      if (item.y > maxY) {
+        maxY = item.y;
+        itemDirectlyAbove = item;
+      }
+    }
+
+    return itemDirectlyAbove;
+  };
+
+  findItemDirectlyBelow = (layout: ReactGridLayout.Layout[], newItem: ReactGridLayout.Layout) => {
+    const itemsBelow = layout.filter((item) => {
+      return item.i !== newItem.i && newItem.y <= item.y;
+    });
+
+    let itemDirectlyBelow: ReactGridLayout.Layout | null = null;
+    let minY = Infinity;
+
+    for (let i = 0; i < itemsBelow.length; i++) {
+      let item = itemsBelow[i];
+      if (item.y < minY) {
+        minY = item.y;
+        itemDirectlyBelow = item;
+      }
+    }
+
+    return itemDirectlyBelow;
+  };
+
+  isOverlapping = (item1: { x: number, y: number, w: number, h: number } | null,
+                   item2: { x: number, y: number, w: number, h: number } | null) => {
+    if (!item1 || !item2) {
+      return false;
+    }
+    const rect1 = {
+      y1: item1.y,
+    };
+    const rect2 = {
+      y1: item2.y,
+      y2: item2.y + item2.h * GRID_CELL_HEIGHT / (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN)
+    };
+    return (
+      rect1.y1 >= rect2.y1 && rect1.y1 <= rect2.y2
+    );
   };
 
   getPanelScreenPos(panel: PanelModel, gridWidth: number): { top: number; bottom: number } {
@@ -329,7 +488,17 @@ export class DashboardGrid extends PureComponent<Props, State> {
           display: this.props.editPanel ? 'none' : undefined,
         }}
       >
-        <div style={{ width: width, height: '100%' }} ref={this.onGetWrapperDivRef}>
+        <div style={{width: width, height: '100%'}} ref={this.onGetWrapperDivRef}>
+          {this.state.isMenuOpen && (
+            <MergeRowsMenu
+              onClose={() => this.setState({isMenuOpen: false})}
+              panelMap={this.panelMap}
+              draggedItem={this.state.draggingItem}
+              otherItem={this.state.mergingItem}
+              isMenuOpen={this.state.isMenuOpen}
+              dashboard={this.props.dashboard}
+            />
+          )}
           <ReactGridLayout
             width={width}
             isDraggable={draggable}
@@ -342,10 +511,13 @@ export class DashboardGrid extends PureComponent<Props, State> {
             draggableHandle=".grid-drag-handle"
             draggableCancel=".grid-drag-cancel"
             layout={this.buildLayout()}
+            onDragStart={this.onDragStart}
+            onDrag={this.onDrag}
             onDragStop={this.onDragStop}
             onResize={this.onResize}
             onResizeStop={this.onResizeStop}
             onLayoutChange={this.onLayoutChange}
+            preventCollision={this.state.preventCollision}
           >
             {this.renderPanels(width, draggable)}
           </ReactGridLayout>
