@@ -28,9 +28,9 @@ module.exports = defineConfig({
         benchmarkPlugin.initialize(on, config);
       }
 
-      if (config.env['SMTP_PLUGIN_ENABLED'] === true) {
-        smtpTester.initialize(on, config);
-      }
+      // if (config.env['SMTP_PLUGIN_ENABLED'] === true) {
+      smtpTester.initialize(on, config);
+      // }
 
       on('task', {
         readProvisions: (filePaths) => readProvisions({ CWD: process.cwd(), filePaths }),

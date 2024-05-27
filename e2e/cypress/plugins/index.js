@@ -12,9 +12,9 @@ module.exports = (on, config) => {
     benchmarkPlugin.initialize(on, config);
   }
 
-  if (config.env['SMTP_PLUGIN_ENABLED'] === true) {
-    smtpTester.initialize(on, config);
-  }
+  // if (config.env['SMTP_PLUGIN_ENABLED'] === true) {
+  smtpTester.initialize(on, config);
+  // }
 
   on('file:preprocessor', typescriptPreprocessor);
   on('task', {
