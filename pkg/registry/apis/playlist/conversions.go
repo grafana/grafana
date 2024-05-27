@@ -91,7 +91,7 @@ func convertToK8sResource(v *playlistsvc.PlaylistDTO, namespacer request.Namespa
 	if err == nil {
 		meta.SetUpdatedTimestampMillis(v.UpdatedAt)
 		if v.Id > 0 {
-			createdAt := time.UnixMilli(v.CreatedAt)
+			createdAt := time.UnixMilli(v.CreatedAt).UTC()
 			meta.SetOriginInfo(&utils.ResourceOriginInfo{
 				Name:      "SQL",
 				Key:       fmt.Sprintf("%d", v.Id),
