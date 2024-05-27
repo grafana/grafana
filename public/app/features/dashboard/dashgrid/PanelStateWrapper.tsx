@@ -1,3 +1,4 @@
+import { debounce } from 'lodash';
 import React, { PureComponent } from 'react';
 import { Subscription } from 'rxjs';
 
@@ -92,6 +93,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
 
     // Can this eventBus be on PanelModel?  when we have more complex event filtering, that may be a better option
     const eventBus = props.dashboard.events.newScopedBus(`panel:${props.panel.id}`, this.eventFilter);
+    this.setPanelAttention = debounce(this.setPanelAttention.bind(this), 100);
 
     this.state = {
       isFirstLoad: true,
@@ -554,7 +556,6 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     const { dashboard, panel, width, height, plugin } = this.props;
     const { errorMessage, data } = this.state;
     const { transparent } = panel;
-
     const panelChromeProps = getPanelChromeProps({ ...this.props, data });
 
     // Shift the hover menu down if it's on the top row so it doesn't get clipped by topnav

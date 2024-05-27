@@ -1,5 +1,7 @@
-import { locationService, getPanelAttentionSrv } from '@grafana/runtime';
+import { SetPanelAttentionEvent } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { sceneGraph, VizPanel } from '@grafana/scenes';
+import appEvents from 'app/core/app_events';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
 
 import { ShareModal } from '../sharing/ShareModal';
@@ -12,6 +14,23 @@ import { onRemovePanel, toggleVizPanelLegend } from './PanelMenuBehavior';
 
 export function setupKeyboardShortcuts(scene: DashboardScene) {
   const keybindings = new KeybindingSet();
+  let vizPanelKey: string | null = null;
+
+  const panelAttentionSubscription = appEvents.getStream(SetPanelAttentionEvent).subscribe((event) => {
+    if (typeof event.payload.panelId === 'string') {
+      vizPanelKey = event.payload.panelId;
+    }
+  });
+
+  function withFocusedPanel(scene: DashboardScene, fn: (vizPanel: VizPanel) => void) {
+    return () => {
+      const vizPanel = sceneGraph.findObject(scene, (o) => o.state.key === vizPanelKey);
+      if (vizPanel && vizPanel instanceof VizPanel) {
+        fn(vizPanel);
+        return;
+      }
+    };
+  }
 
   // View panel
   keybindings.addBinding({
@@ -140,19 +159,9 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   // collapse all rows (TODO)
   // expand all rows (TODO)
 
-  return () => keybindings.removeAll;
-}
-
-function withFocusedPanel(scene: DashboardScene, fn: (vizPanel: VizPanel) => void) {
-  const panelAttentionService = getPanelAttentionSrv();
-
   return () => {
-    const vizPanelKey = panelAttentionService?.getPanelWithAttention();
-    const vizPanel = sceneGraph.findObject(scene, (o) => o.state.key === vizPanelKey);
-    if (vizPanel && vizPanel instanceof VizPanel) {
-      fn(vizPanel);
-      return;
-    }
+    keybindings.removeAll();
+    panelAttentionSubscription.unsubscribe();
   };
 }
 
