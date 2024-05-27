@@ -190,6 +190,7 @@ Experimental features might be changed or removed without prior notice.
 | `newDashboardSharingComponent`              | Enables the new sharing drawer design                                                                                                                                                                                                                                             |
 | `alertingListViewV2`                        | Enables the new alert list view design                                                                                                                                                                                                                                            |
 | `notificationBanner`                        | Enables the notification banner UI and API                                                                                                                                                                                                                                        |
+| `alertingCentralAlertHistory`               | Enables the new central alert history.                                                                                                                                                                                                                                            |
 
 ## Development feature toggles
 
