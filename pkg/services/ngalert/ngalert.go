@@ -187,7 +187,7 @@ func (ng *AlertNG) init() error {
 						OrgID:             orgID,
 						TenantID:          ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
 						URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
-						PromoteConfig: true,
+						PromoteConfig:     true,
 					}
 					remoteAM, err := createRemoteAlertmanager(cfg, ng.KVStore, ng.SecretsService.Decrypt, m)
 					if err != nil {
