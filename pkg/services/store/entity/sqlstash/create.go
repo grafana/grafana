@@ -63,8 +63,11 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 		}
 
 		// 3. Insert into entity history
-		insEntity.TableEntity = false
-		if _, err = exec(ctx, tx, sqlEntityInsert, insEntity); err != nil {
+		insEntityHistory := sqlEntityInsertRequest{
+			SQLTemplate: sqltemplate.New(s.sqlDialect),
+			Entity:      newEntity,
+		}
+		if _, err = exec(ctx, tx, sqlEntityInsert, insEntityHistory); err != nil {
 			return fmt.Errorf("insert into entity_history: %w", err)
 		}
 
