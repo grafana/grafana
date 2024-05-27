@@ -3,9 +3,6 @@ import { e2e } from '../utils';
 describe('ReturnToPrevious button', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
-    cy.window().then((win) => {
-      win.localStorage.setItem('grafana.featureToggles', 'returnToPrevious=1');
-    });
 
     cy.visit('/alerting/list');
     e2e.components.AlertRules.groupToggle().first().click();
