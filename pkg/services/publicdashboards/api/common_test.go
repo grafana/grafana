@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext/baseplugincontext"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
@@ -139,7 +140,8 @@ func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakeP
 	}
 
 	ds := &fakeDatasources.FakeDataSourceService{}
-	pCtxProvider := plugincontext.ProvideService(setting.NewCfg(),
+	cfg := setting.NewCfg()
+	pCtxProvider := plugincontext.ProvideService(cfg,
 		localcache.ProvideService(), &pluginstore.FakePluginStore{
 			PluginList: []pluginstore.Plugin{
 				{
@@ -149,7 +151,8 @@ func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakeP
 				},
 			},
 		}, &fakeDatasources.FakeCacheService{}, ds,
-		pluginSettings.ProvideService(store, fakeSecrets.NewFakeSecretsService()), pluginconfig.NewFakePluginRequestConfigProvider())
+		pluginSettings.ProvideService(store, fakeSecrets.NewFakeSecretsService()),
+		baseplugincontext.ProvideService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()))
 
 	return query.ProvideService(
 		setting.NewCfg(),
