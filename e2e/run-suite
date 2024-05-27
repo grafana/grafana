@@ -44,6 +44,8 @@ declare -A cypressConfig=(
   [baseUrl]=${BASE_URL:-"http://$HOST:$PORT"}
 )
 
+echo $1
+
 case "$1" in
     "debug")
         echo -e "Debug mode"
