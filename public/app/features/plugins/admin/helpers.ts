@@ -126,8 +126,8 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     id,
     info: {
       logos: {
-        small: `https://grafana.com/api/plugins/${id}/versions/${version}/logos/small`,
-        large: `https://grafana.com/api/plugins/${id}/versions/${version}/logos/large`,
+        small: `${config.appSubUrl}/api/gnet/plugins/${id}/versions/${version}/logos/small`,
+        large: `${config.appSubUrl}/api/gnet/plugins/${id}/versions/${version}/logos/large`,
       },
       keywords,
     },
@@ -214,8 +214,8 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
 
   if (remote) {
     logos = {
-      small: `https://grafana.com/api/plugins/${id}/versions/${remote.version}/logos/small`,
-      large: `https://grafana.com/api/plugins/${id}/versions/${remote.version}/logos/large`,
+      small: `${config.appSubUrl}/api/gnet/plugins/${id}/versions/${remote.version}/logos/small`,
+      large: `${config.appSubUrl}/api/gnet/plugins/${id}/versions/${remote.version}/logos/large`,
     };
   } else if (local && local.info.logos) {
     logos = local.info.logos;
