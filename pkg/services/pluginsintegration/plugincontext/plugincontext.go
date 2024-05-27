@@ -5,11 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"runtime"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/useragent"
 
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/localcache"
@@ -18,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
+	baseplugincontext "github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext/base"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -31,28 +29,28 @@ const (
 
 func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, pluginStore pluginstore.Store,
 	dataSourceCache datasources.CacheService, dataSourceService datasources.DataSourceService,
-	pluginSettingsService pluginsettings.Service, pluginRequestConfigProvider pluginconfig.PluginRequestConfigProvider) *Provider {
+	pluginSettingsService pluginsettings.Service, basePluginContextProvider baseplugincontext.BasePluginContextProvider) *Provider {
 	return &Provider{
-		cfg:                         cfg,
-		cacheService:                cacheService,
-		pluginStore:                 pluginStore,
-		dataSourceCache:             dataSourceCache,
-		dataSourceService:           dataSourceService,
-		pluginSettingsService:       pluginSettingsService,
-		pluginRequestConfigProvider: pluginRequestConfigProvider,
-		logger:                      log.New("plugin.context"),
+		cfg:                       cfg,
+		cacheService:              cacheService,
+		pluginStore:               pluginStore,
+		dataSourceCache:           dataSourceCache,
+		dataSourceService:         dataSourceService,
+		pluginSettingsService:     pluginSettingsService,
+		basePluginContextProvider: basePluginContextProvider,
+		logger:                    log.New("plugin.context"),
 	}
 }
 
 type Provider struct {
-	cfg                         *setting.Cfg
-	pluginRequestConfigProvider pluginconfig.PluginRequestConfigProvider
-	cacheService                *localcache.CacheService
-	pluginStore                 pluginstore.Store
-	dataSourceCache             datasources.CacheService
-	dataSourceService           datasources.DataSourceService
-	pluginSettingsService       pluginsettings.Service
-	logger                      log.Logger
+	cfg                       *setting.Cfg
+	cacheService              *localcache.CacheService
+	pluginStore               pluginstore.Store
+	dataSourceCache           datasources.CacheService
+	dataSourceService         datasources.DataSourceService
+	pluginSettingsService     pluginsettings.Service
+	basePluginContextProvider baseplugincontext.BasePluginContextProvider
+	logger                    log.Logger
 }
 
 // Get will retrieve plugin context by the provided pluginID and orgID.
@@ -65,16 +63,7 @@ func (p *Provider) Get(ctx context.Context, pluginID string, user identity.Reque
 		return backend.PluginContext{}, plugins.ErrPluginNotRegistered
 	}
 
-	pCtx := backend.PluginContext{
-		PluginID:      plugin.ID,
-		PluginVersion: plugin.Info.Version,
-		APIVersion:    plugin.APIVersion,
-	}
-	if user != nil && !user.IsNil() {
-		pCtx.OrgID = user.GetOrgID()
-		pCtx.User = adapters.BackendUserFromSignedInUser(user)
-	}
-
+	pCtx := p.basePluginContextProvider.GetBasePluginContext(ctx, plugin, user)
 	if plugin.IsApp() {
 		appSettings, err := p.appInstanceSettings(ctx, pluginID, orgID)
 		if err != nil {
@@ -82,15 +71,6 @@ func (p *Provider) Get(ctx context.Context, pluginID string, user identity.Reque
 		}
 		pCtx.AppInstanceSettings = appSettings
 	}
-
-	settings := p.pluginRequestConfigProvider.PluginRequestConfig(ctx, pluginID, plugin.ExternalService)
-	pCtx.GrafanaConfig = backend.NewGrafanaCfg(settings)
-
-	ua, err := useragent.New(p.cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
-	if err != nil {
-		p.logger.Warn("Could not create user agent", "error", err)
-	}
-	pCtx.UserAgent = ua
 
 	return pCtx, nil
 }
@@ -105,30 +85,13 @@ func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user 
 		return backend.PluginContext{}, plugins.ErrPluginNotRegistered
 	}
 
-	pCtx := backend.PluginContext{
-		PluginID:      plugin.ID,
-		PluginVersion: plugin.Info.Version,
-		APIVersion:    plugin.APIVersion,
-	}
-	if user != nil && !user.IsNil() {
-		pCtx.OrgID = user.GetOrgID()
-		pCtx.User = adapters.BackendUserFromSignedInUser(user)
-	}
+	pCtx := p.basePluginContextProvider.GetBasePluginContext(ctx, plugin, user)
 
 	datasourceSettings, err := adapters.ModelToInstanceSettings(ds, p.decryptSecureJsonDataFn(ctx))
 	if err != nil {
 		return pCtx, err
 	}
 	pCtx.DataSourceInstanceSettings = datasourceSettings
-
-	settings := p.pluginRequestConfigProvider.PluginRequestConfig(ctx, pluginID, plugin.ExternalService)
-	pCtx.GrafanaConfig = backend.NewGrafanaCfg(settings)
-
-	ua, err := useragent.New(p.cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
-	if err != nil {
-		p.logger.Warn("Could not create user agent", "error", err)
-	}
-	pCtx.UserAgent = ua
 
 	return pCtx, nil
 }
@@ -158,26 +121,8 @@ func (p *Provider) PluginContextForDataSource(ctx context.Context, datasourceSet
 	if err != nil {
 		return backend.PluginContext{}, err
 	}
-	pCtx := backend.PluginContext{
-		PluginID:      plugin.ID,
-		PluginVersion: plugin.Info.Version,
-		APIVersion:    plugin.APIVersion,
-	}
-	if user != nil && !user.IsNil() {
-		pCtx.OrgID = user.GetOrgID()
-		pCtx.User = adapters.BackendUserFromSignedInUser(user)
-	}
-
+	pCtx := p.basePluginContextProvider.GetBasePluginContext(ctx, plugin, user)
 	pCtx.DataSourceInstanceSettings = datasourceSettings
-
-	settings := p.pluginRequestConfigProvider.PluginRequestConfig(ctx, pluginID, plugin.ExternalService)
-	pCtx.GrafanaConfig = backend.NewGrafanaCfg(settings)
-
-	ua, err := useragent.New(p.cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
-	if err != nil {
-		p.logger.Warn("Could not create user agent", "error", err)
-	}
-	pCtx.UserAgent = ua
 
 	return pCtx, nil
 }

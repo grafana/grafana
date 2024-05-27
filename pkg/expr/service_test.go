@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
+	baseplugincontext "github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext/base"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -37,11 +38,13 @@ func TestService(t *testing.T) {
 		},
 	}
 
-	pCtxProvider := plugincontext.ProvideService(setting.NewCfg(), nil, &pluginstore.FakePluginStore{
+	cfg := setting.NewCfg()
+	basePCtxP := baseplugincontext.ProvideService(cfg, pluginconfig.NewFakePluginRequestConfigProvider())
+	pCtxProvider := plugincontext.ProvideService(cfg, nil, &pluginstore.FakePluginStore{
 		PluginList: []pluginstore.Plugin{
 			{JSONData: plugins.JSONData{ID: "test"}},
 		},
-	}, &datafakes.FakeCacheService{}, &datafakes.FakeDataSourceService{}, nil, pluginconfig.NewFakePluginRequestConfigProvider())
+	}, &datafakes.FakeCacheService{}, &datafakes.FakeDataSourceService{}, nil, basePCtxP)
 
 	features := featuremgmt.WithFeatures()
 	s := Service{
@@ -128,11 +131,13 @@ func TestDSQueryError(t *testing.T) {
 		},
 	}
 
-	pCtxProvider := plugincontext.ProvideService(setting.NewCfg(), nil, &pluginstore.FakePluginStore{
+	cfg := setting.NewCfg()
+	basePCtxP := baseplugincontext.ProvideService(cfg, pluginconfig.NewFakePluginRequestConfigProvider())
+	pCtxProvider := plugincontext.ProvideService(cfg, nil, &pluginstore.FakePluginStore{
 		PluginList: []pluginstore.Plugin{
 			{JSONData: plugins.JSONData{ID: "test"}},
 		},
-	}, &datafakes.FakeCacheService{}, &datafakes.FakeDataSourceService{}, nil, pluginconfig.NewFakePluginRequestConfigProvider())
+	}, &datafakes.FakeCacheService{}, &datafakes.FakeDataSourceService{}, nil, basePCtxP)
 
 	s := Service{
 		cfg:          setting.NewCfg(),
