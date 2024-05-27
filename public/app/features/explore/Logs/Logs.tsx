@@ -196,7 +196,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const previousLoading = usePrevious(loading);
 
   const logsVolumeEventBus = eventBus.newScopedBus('logsvolume', { onlyLocal: false });
-  const { outlineItems, register, unregisterAllChildren } = useContentOutlineContext() ?? {};
+  const { register, unregisterAllChildren } = useContentOutlineContext() ?? {};
   let flipOrderTimer: number | undefined = undefined;
   let cancelFlippingTimer: number | undefined = undefined;
   const toggleLegendRef = useRef<(name: string, mode: SeriesVisibilityChangeMode) => void>(
@@ -220,9 +220,11 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     const numberOfLogVolumes = Object.keys(grouped).length;
 
     // clean up all current log levels
-    const logsParent = outlineItems?.find((item) => item.panelId === 'Logs' && item.level === 'root');
-    if (logsParent && unregisterAllChildren) {
-      unregisterAllChildren(logsParent.id, 'filter');
+    if (unregisterAllChildren) {
+      unregisterAllChildren((items) => {
+        const logsParent = items?.find((item) => item.panelId === 'Logs' && item.level === 'root');
+        return logsParent?.id;
+      }, 'filter');
     }
 
     // check if we have dataFrames that return the same level
@@ -261,15 +263,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
         }
       });
     }
-  }, [
-    logsVolumeData?.data,
-    outlineItems,
-    unregisterAllChildren,
-    logsVolumeEnabled,
-    hiddenLogLevels,
-    register,
-    toggleLegendRef,
-  ]);
+  }, [logsVolumeData?.data, unregisterAllChildren, logsVolumeEnabled, hiddenLogLevels, register, toggleLegendRef]);
 
   // clear timers and reset state on unmount
   useEffect(() => {
