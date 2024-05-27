@@ -60,7 +60,7 @@ func (c *Client) init() error {
 	}
 
 	opts := append(c.opts, c.grpcTLSOption(), c.grpcRetryOption())
-	conn, err := grpc.Dial(c.cfg.URL, opts...)
+	conn, err := grpc.NewClient(c.cfg.URL, opts...)
 	if err != nil {
 		return err
 	}

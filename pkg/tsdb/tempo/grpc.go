@@ -48,7 +48,7 @@ func newGrpcClient(ctx context.Context, settings backend.DataSourceInstanceSetti
 	if err != nil {
 		return nil, fmt.Errorf("error getting dial options: %w", err)
 	}
-	clientConn, err := grpc.Dial(onlyHost, dialOpts...)
+	clientConn, err := grpc.NewClient(onlyHost, dialOpts...)
 	if err != nil {
 		logger.Error("Error dialing gRPC client", "error", err, "URL", settings.URL, "function", logEntrypoint())
 		return nil, err
