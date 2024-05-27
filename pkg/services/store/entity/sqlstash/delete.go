@@ -2,7 +2,6 @@ package sqlstash
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"time"
@@ -29,12 +28,9 @@ func (s *sqlEntityServer) Delete(ctx context.Context, r *entity.DeleteEntityRequ
 
 	ret := new(entity.DeleteEntityResponse)
 
-	txOpts := &sql.TxOptions{
-		Isolation: sql.LevelReadCommitted,
-	}
-	err = s.sqlDB.WithTx(ctx, txOpts, func(ctx context.Context, tx db.Tx) error {
+	err = s.sqlDB.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
 		// Pre-locking: get the latest version of the entity
-		entityDelete, err := readEntity(ctx, tx, s.sqlDialect, key, r.PreviousVersion, true, true)
+		previous, err := readEntity(ctx, tx, s.sqlDialect, key, r.PreviousVersion, true, true)
 		if errors.Is(err, ErrNotFound) {
 			ret.Status = entity.DeleteEntityResponse_NOTFOUND
 			return nil
@@ -46,12 +42,14 @@ func (s *sqlEntityServer) Delete(ctx context.Context, r *entity.DeleteEntityRequ
 		// Pre-locking: remove this entity's labels
 		delLabelsReq := sqlEntityLabelsDeleteRequest{
 			SQLTemplate: sqltemplate.New(s.sqlDialect),
-			GUID:        entityDelete.Guid,
+			GUID:        previous.Guid,
 		}
 		if _, err = exec(ctx, tx, sqlEntityLabelsDelete, delLabelsReq); err != nil {
 			return fmt.Errorf("delete all labels of entity with guid %q: %w",
-				entityDelete.Guid, err)
+				previous.Guid, err)
 		}
+
+		// TODO: Pre-locking: remove this entity's refs from `entity_ref`
 
 		// Pre-locking: delete from "entity"
 		delEntityReq := sqlEntityDeleteRequest{
@@ -64,7 +62,7 @@ func (s *sqlEntityServer) Delete(ctx context.Context, r *entity.DeleteEntityRequ
 
 		// Pre-locking: rebuild the whole folder tree structure if we're
 		// deleting a folder
-		if entityDelete.Group == folder.GROUP && entityDelete.Resource == folder.RESOURCE {
+		if previous.Group == folder.GROUP && previous.Resource == folder.RESOURCE {
 			if err = s.updateFolderTree(ctx, tx, key.Namespace); err != nil {
 				return fmt.Errorf("rebuild folder tree structure: %w", err)
 			}
@@ -81,17 +79,19 @@ func (s *sqlEntityServer) Delete(ctx context.Context, r *entity.DeleteEntityRequ
 
 		// k8s expects us to return the entity as it was before the deletion,
 		// but with the updated RV
-		entityDelete.ResourceVersion = newVersion
-		entityDelete.Action = entity.Entity_DELETED
-		oldUpdatedAt := entityDelete.UpdatedAt
-		oldUpdatedBy := entityDelete.UpdatedBy
-		entityDelete.UpdatedAt = time.Now().UnixMilli()
-		entityDelete.UpdatedBy = updatedBy
+		previous.ResourceVersion = newVersion
+
+		// build the new row to be inserted
+		deletedVersion := *previous                          // copy marshaled data since it won't change
+		deletedVersion.Entity = cloneEntity(previous.Entity) // clone entity
+		deletedVersion.Action = entity.Entity_DELETED
+		deletedVersion.UpdatedAt = time.Now().UnixMilli()
+		deletedVersion.UpdatedBy = updatedBy
 
 		// 2. Insert into entity history
 		insEntity := sqlEntityInsertRequest{
 			SQLTemplate: sqltemplate.New(s.sqlDialect),
-			Entity:      entityDelete,
+			Entity:      &deletedVersion,
 		}
 		if _, err = exec(ctx, tx, sqlEntityInsert, insEntity); err != nil {
 			return fmt.Errorf("insert into entity_history: %w", err)
@@ -99,9 +99,7 @@ func (s *sqlEntityServer) Delete(ctx context.Context, r *entity.DeleteEntityRequ
 
 		// success
 		ret.Status = entity.DeleteEntityResponse_DELETED
-		ret.Entity = entityDelete.Entity
-		entityDelete.UpdatedAt = oldUpdatedAt
-		entityDelete.UpdatedBy = oldUpdatedBy
+		ret.Entity = previous.Entity
 
 		return nil
 	})

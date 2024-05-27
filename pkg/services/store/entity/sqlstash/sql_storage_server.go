@@ -8,13 +8,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math/rand"
 	"slices"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/bwmarrin/snowflake"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -78,7 +76,6 @@ type sqlEntityServer struct {
 	db          db.EntityDBInterface // needed to keep xorm engine in scope
 	sess        *session.SessionDB
 	dialect     migrator.Dialect
-	snowflake   *snowflake.Node
 	broadcaster Broadcaster[*entity.EntityWatchResponse]
 	ctx         context.Context // TODO: remove
 	cancel      context.CancelFunc
@@ -140,12 +137,6 @@ func (s *sqlEntityServer) init() error {
 
 	s.sess = sess
 	s.dialect = migrator.NewDialect(engine.DriverName())
-
-	// initialize snowflake generator
-	s.snowflake, err = snowflake.NewNode(rand.Int63n(1024))
-	if err != nil {
-		return err
-	}
 
 	// set up the broadcaster
 	s.broadcaster, err = NewBroadcaster(s.ctx, func(stream chan *entity.EntityWatchResponse) error {
@@ -455,8 +446,7 @@ func (s *sqlEntityServer) history(ctx context.Context, r *entity.EntityHistoryRe
 	defer func() { _ = rows.Close() }()
 
 	rsp := &entity.EntityHistoryResponse{
-		Key:             r.Key,
-		ResourceVersion: s.snowflake.Generate().Int64(),
+		Key: r.Key,
 	}
 	for rows.Next() {
 		v, err := oldReadEntity(rows, r)
@@ -464,11 +454,20 @@ func (s *sqlEntityServer) history(ctx context.Context, r *entity.EntityHistoryRe
 			return nil, err
 		}
 
+		if rsp.ResourceVersion == 0 {
+			rsp.ResourceVersion, err = s.getLatestVersion(ctx, v.Group, v.Resource)
+			if err != nil {
+				return nil, fmt.Errorf("get latest version for group %q and"+
+					" resource %q: %w", v.Group, v.Resource, err)
+			}
+		}
+
 		// found more than requested
 		if int64(len(rsp.Versions)) >= limit {
 			continueToken := &ContinueToken{
-				Sort:        r.Sort,
-				StartOffset: entityQuery.offset + entityQuery.limit,
+				Sort:            r.Sort,
+				StartOffset:     entityQuery.offset + entityQuery.limit,
+				ResourceVersion: rsp.ResourceVersion,
 			}
 			rsp.NextPageToken = continueToken.String()
 			break
@@ -476,6 +475,7 @@ func (s *sqlEntityServer) history(ctx context.Context, r *entity.EntityHistoryRe
 
 		rsp.Versions = append(rsp.Versions, v)
 	}
+
 	return rsp, err
 }
 
@@ -717,17 +717,10 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 			ResourceVersion: rvMaxRow.Rv,
 			RecordCnt:       rvMaxRow.Cnt,
 		}
-
-		if continueToken.ResourceVersion == 0 {
-			// we use a snowflake as a fallback resource version
-			continueToken.ResourceVersion = s.snowflake.Generate().Int64()
-		}
 	}
 
 	// initialize the result
-	rsp := &entity.EntityListResponse{
-		ResourceVersion: continueToken.ResourceVersion,
-	}
+	rsp := new(entity.EntityListResponse)
 
 	// Folder guid
 	if r.Folder != "" {
@@ -785,6 +778,15 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 			return rsp, err
 		}
 
+		if continueToken.ResourceVersion == 0 {
+			continueToken.ResourceVersion, err = s.getLatestVersion(ctx, result.Group, result.Resource)
+			if err != nil {
+				return nil, fmt.Errorf("get latest version for group %q and"+
+					" resource %q: %w", result.Group, result.Resource, err)
+			}
+			rsp.ResourceVersion = continueToken.ResourceVersion
+		}
+
 		// found more than requested
 		if entityQuery.limit > 0 && int64(len(rsp.Results)) >= entityQuery.limit {
 			continueToken.StartOffset = entityQuery.offset + entityQuery.limit
@@ -830,8 +832,6 @@ func (s *sqlEntityServer) Watch(w entity.EntityStore_WatchServer) error {
 			ctxLogger.Error("watch init error", "err", err)
 			return err
 		}
-	} else if r.Since == 0 {
-		r.Since = s.snowflake.Generate().Int64()
 	}
 
 	// subscribe to new events
@@ -1003,8 +1003,8 @@ func (s *sqlEntityServer) watchInit(ctx context.Context, r *entity.EntityWatchRe
 
 func (s *sqlEntityServer) poller(stream chan *entity.EntityWatchResponse) {
 	var err error
-	since := s.snowflake.Generate().Int64()
 
+	since := int64(0)
 	interval := 1 * time.Second
 
 	t := time.NewTicker(interval)
@@ -1055,8 +1055,6 @@ func (s *sqlEntityServer) poll(since int64, out chan *entity.EntityWatchResponse
 
 			rows, err := s.query(ctx, query, args...)
 			if err != nil {
-				fmt.Println(query)
-				fmt.Println(args)
 				return err
 			}
 			defer func() { _ = rows.Close() }()
@@ -1255,19 +1253,10 @@ func (s *sqlEntityServer) watch(r *entity.EntityWatchRequest, w entity.EntitySto
 }
 
 func (s *sqlEntityServer) watchEvent(r *entity.EntityWatchRequest, result *entity.EntityWatchResponse) (*entity.EntityWatchResponse, error) {
-	// if this is an update or a delete, check the current or previous version matches
-	if result.Previous != nil {
-		// if neither the previous nor the current result match our watch params, skip it
-		if !watchMatches(r, result.Entity) && !watchMatches(r, result.Previous) {
-			s.log.Debug("watch result not matched", "guid", result.Entity.Guid, "action", result.Entity.Action, "rv", result.Entity.ResourceVersion)
-			return nil, nil
-		}
-	} else {
-		// if result doesn't match our watch params, skip it
-		if !watchMatches(r, result.Entity) {
-			s.log.Debug("watch result not matched", "guid", result.Entity.Guid, "action", result.Entity.Action, "rv", result.Entity.ResourceVersion)
-			return nil, nil
-		}
+	// if neither the previous nor the current result match our watch params, skip it
+	if !watchMatches(r, result.Entity) && !watchMatches(r, result.Previous) {
+		s.log.Debug("watch result not matched", "guid", result.Entity.Guid, "action", result.Entity.Action, "rv", result.Entity.ResourceVersion)
+		return nil, nil
 	}
 
 	// remove the body and status if not requested
@@ -1372,4 +1361,35 @@ func (s *sqlEntityServer) query(ctx context.Context, query string, args ...any) 
 		return nil, err
 	}
 	return rows, nil
+}
+
+// getLatestVersion returns the latest committed resource version for a given
+// kind.
+//
+// NOTE: This is a temporary workaround to allow old read operations to use the
+// new resource versioning scheme, which uses `kind_version` table. Note that
+// this is executed in a different transaction. This will be changed in future
+// PRs.
+func (s *sqlEntityServer) getLatestVersion(ctx context.Context, group, resource string) (int64, error) {
+	var ret int64
+
+	err := s.sqlDB.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
+		req := sqlKindVersionGetRequest{
+			SQLTemplate:        sqltemplate.New(s.sqlDialect),
+			Group:              group,
+			Resource:           resource,
+			returnsKindVersion: new(returnsKindVersion),
+		}
+		res, err := queryRow(ctx, tx, sqlKindVersionGet, req)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return err
+		}
+		if res != nil {
+			ret = res.ResourceVersion
+		}
+
+		return nil
+	})
+
+	return ret, err
 }

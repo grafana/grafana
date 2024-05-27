@@ -30,7 +30,7 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 
 	ret := new(entity.UpdateEntityResponse)
 
-	err = s.sqlDB.WithTx(ctx, nil, func(ctx context.Context, tx db.Tx) error {
+	err = s.sqlDB.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
 		// Pre-locking: get the latest version of the entity
 		oldEntity, err := readEntity(ctx, tx, s.sqlDialect, key, r.PreviousVersion, true, true)
 		if errors.Is(err, ErrNotFound) {
@@ -145,15 +145,16 @@ func entityForUpdate(updatedBy string, oldEntity, newEntity *entity.Entity) (*re
 
 	ret := &returnsEntity{
 		Entity: &entity.Entity{
-			Guid: oldEntity.Guid,
+			Guid: oldEntity.Guid, // read-only
+			// ResourceVersion is later set after reading `kind_version` table
 
-			Key: oldEntity.Key,
+			Key: oldEntity.Key, // read-only
 
-			Group:        oldEntity.Group,
+			Group:        oldEntity.Group, // read-only
 			GroupVersion: cmp.Or(newEntity.GroupVersion, oldEntity.GroupVersion),
-			Resource:     oldEntity.Resource,
-			Namespace:    oldEntity.Namespace,
-			Name:         oldEntity.Name,
+			Resource:     oldEntity.Resource,  // read-only
+			Namespace:    oldEntity.Namespace, // read-only
+			Name:         oldEntity.Name,      // read-only
 
 			Folder: cmp.Or(newEntity.Folder, oldEntity.Folder),
 
@@ -164,8 +165,8 @@ func entityForUpdate(updatedBy string, oldEntity, newEntity *entity.Entity) (*re
 			Size: int64(cmp.Or(len(newEntity.Body), len(oldEntity.Body))),
 			ETag: cmp.Or(newEntity.ETag, oldEntity.ETag),
 
-			CreatedAt: oldEntity.CreatedAt,
-			CreatedBy: oldEntity.CreatedBy,
+			CreatedAt: oldEntity.CreatedAt, // read-only
+			CreatedBy: oldEntity.CreatedBy, // read-only
 			UpdatedAt: time.Now().UnixMilli(),
 			UpdatedBy: updatedBy,
 

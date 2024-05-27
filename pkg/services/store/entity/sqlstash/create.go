@@ -29,7 +29,7 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 		return nil, fmt.Errorf("entity from create entity request: %w", err)
 	}
 
-	err = s.sqlDB.WithTx(ctx, nil, func(ctx context.Context, tx db.Tx) error {
+	err = s.sqlDB.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
 		if len(newEntity.Entity.Labels) > 0 {
 			// Pre-locking: register this entity's labels
 			insLabels := sqlEntityLabelsInsertRequest{

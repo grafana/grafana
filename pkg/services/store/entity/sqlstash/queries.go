@@ -383,7 +383,7 @@ func readEntity(
 		SQLTemplate:      sqltemplate.New(d),
 		Key:              k,
 		ResourceVersion:  v,
-		SelectForUpdate:  true,
+		SelectForUpdate:  selectForUpdate,
 		returnsEntitySet: newReturnsEntitySet(),
 	}
 	ent, err := queryRow(ctx, x, sqlEntityRead, readReq)
@@ -398,7 +398,7 @@ func readEntity(
 		return nil, ErrNotFound
 	}
 
-	if optimisticLocking && ent.ResourceVersion != asOfVersion {
+	if optimisticLocking && asOfVersion != 0 && ent.ResourceVersion != asOfVersion {
 		return nil, ErrOptimisticLockingFailed
 	}
 

@@ -335,7 +335,7 @@ type Entity struct {
 
 	// Globally unique ID set by the system.  This can not be set explicitly
 	Guid string `protobuf:"bytes,1,opt,name=guid,proto3" json:"guid,omitempty"`
-	// The resource version, this is a snowflake id controlled by storage
+	// The resource version
 	ResourceVersion int64 `protobuf:"varint,2,opt,name=resource_version,json=resourceVersion,proto3" json:"resource_version,omitempty"`
 	// group
 	Group string `protobuf:"bytes,24,opt,name=group,proto3" json:"group,omitempty"`
