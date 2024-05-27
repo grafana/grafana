@@ -66,6 +66,7 @@ case "$1" in
         ;;
     "enterprise")
         echo "Enterprise"
+        env[SMTP_PLUGIN_ENABLED]=true
         CLEANUP="rm -rf ./e2e/extensions-suite"
         SETUP="cp -Lr ./e2e/extensions ./e2e/extensions-suite"
         enterpriseSuite=$(basename "${args[1]}")
