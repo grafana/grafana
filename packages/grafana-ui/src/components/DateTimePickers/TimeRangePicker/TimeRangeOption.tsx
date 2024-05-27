@@ -60,6 +60,8 @@ export const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false,
         checked={selected}
         name={name}
         type="checkbox"
+        data-role="item"
+        tabIndex={-1}
         id={id}
         onChange={() => onSelect(value)}
       />
