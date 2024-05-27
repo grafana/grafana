@@ -30,6 +30,7 @@ import {
 
 import { backendSrv } from '../../../../core/services/backend_srv';
 import {
+  logError,
   logInfo,
   LogMessages,
   trackSwitchToPoliciesRouting,
@@ -850,6 +851,16 @@ export const updateRulesOrder = createAsyncThunk(
           const existingGroup = rulesResult[namespaceName].find((group) => group.name === groupName);
           if (!existingGroup) {
             throw new Error(`Group "${groupName}" not found.`);
+          }
+
+          // We're unlikely to have this happen, as any user of this action should have already ensured
+          // that the entire group was fetched before sending a new order.
+          // But as a final safeguard we should fail if we somehow ended up here with a mismatched rules count
+          // This would indicate an accidental deletion of rules following a frontend bug
+          if (existingGroup.rules.length !== newRules.length) {
+            const err = new Error('Rules count mismatch. Please refresh the page and try again.');
+            logError(err, { namespaceName, groupName });
+            throw err;
           }
 
           const payload: PostableRulerRuleGroupDTO = {

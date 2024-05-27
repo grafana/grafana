@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	pluginfakes "github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/guardian"
@@ -48,7 +49,8 @@ func TestHandleRequest(t *testing.T) {
 		datasourcePermissions := acmock.NewMockedPermissionsService()
 		quotaService := quotatest.New(false, nil)
 		dsCache := datasourceservice.ProvideCacheService(localcache.ProvideService(), sqlStore, guardian.ProvideGuardian())
-		dsService, err := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), datasourcePermissions, quotaService, &pluginstore.FakePluginStore{})
+		dsService, err := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(),
+			acmock.New(), datasourcePermissions, quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{})
 		require.NoError(t, err)
 
 		pCtxProvider := plugincontext.ProvideService(cfg, localcache.ProvideService(), &pluginstore.FakePluginStore{

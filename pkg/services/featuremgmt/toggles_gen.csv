@@ -103,6 +103,7 @@ formatString,preview,@grafana/dataviz-squad,false,false,true
 transformationsVariableSupport,preview,@grafana/dataviz-squad,false,false,true
 kubernetesPlaylists,GA,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesSnapshots,experimental,@grafana/grafana-app-platform-squad,false,true,false
+datasourceQueryTypes,experimental,@grafana/grafana-app-platform-squad,false,true,false
 queryService,experimental,@grafana/grafana-app-platform-squad,false,true,false
 queryServiceRewrite,experimental,@grafana/grafana-app-platform-squad,false,true,false
 queryServiceFromUI,experimental,@grafana/grafana-app-platform-squad,false,false,true
@@ -168,7 +169,9 @@ queryLibrary,experimental,@grafana/explore-squad,false,false,false
 autofixDSUID,experimental,@grafana/plugins-platform-backend,false,false,false
 logsExploreTableDefaultVisualization,experimental,@grafana/observability-logs,false,false,true
 newDashboardSharingComponent,experimental,@grafana/sharing-squad,false,false,true
+alertingListViewV2,experimental,@grafana/alerting-squad,false,false,true
 notificationBanner,experimental,@grafana/grafana-frontend-platform,false,false,false
 dashboardRestore,experimental,@grafana/grafana-frontend-platform,false,false,false
 datasourceProxyDisableRBAC,GA,@grafana/identity-access-team,false,false,false
 alertingDisableSendAlertsExternal,experimental,@grafana/alerting-squad,false,false,false
+preserveDashboardStateWhenNavigating,experimental,@grafana/dashboards-squad,false,false,false

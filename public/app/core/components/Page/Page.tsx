@@ -53,7 +53,13 @@ export const Page: PageType = ({
   return (
     <div className={cx(styles.wrapper, className)} {...otherProps}>
       {layout === PageLayoutType.Standard && (
-        <FlaggedScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
+        <FlaggedScrollbar
+          // This id is used by the image renderer to scroll through the dashboard
+          divId="page-scrollbar"
+          autoHeightMin={'100%'}
+          scrollTop={scrollTop}
+          scrollRefCallback={scrollRef}
+        >
           <div className={styles.pageInner}>
             {pageHeaderNav && (
               <PageHeader
@@ -72,7 +78,13 @@ export const Page: PageType = ({
       )}
 
       {layout === PageLayoutType.Canvas && (
-        <FlaggedScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
+        <FlaggedScrollbar
+          // This id is used by the image renderer to scroll through the dashboard
+          divId="page-scrollbar"
+          autoHeightMin={'100%'}
+          scrollTop={scrollTop}
+          scrollRefCallback={scrollRef}
+        >
           <div className={styles.canvasContent}>{children}</div>
         </FlaggedScrollbar>
       )}

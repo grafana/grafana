@@ -22,13 +22,10 @@ import {
 import { VariableHide } from '@grafana/schema';
 import { Input, InlineSwitch, Field, Alert, Icon, useStyles2 } from '@grafana/ui';
 
-import { getPreviewPanelFor } from './AutomaticMetricQueries/previewPanel';
-import { MetricScene } from './MetricScene';
-import { SelectMetricAction } from './SelectMetricAction';
-import { StatusWrapper } from './StatusWrapper';
-import { getMetricDescription } from './helpers/MetricDatasourceHelper';
-import { reportExploreMetrics } from './interactions';
-import { sortRelatedMetrics } from './relatedMetrics';
+import { MetricScene } from '../MetricScene';
+import { StatusWrapper } from '../StatusWrapper';
+import { getMetricDescription } from '../helpers/MetricDatasourceHelper';
+import { reportExploreMetrics } from '../interactions';
 import {
   getVariablesWithMetricConstant,
   MetricSelectedEvent,
@@ -36,8 +33,12 @@ import {
   VAR_DATASOURCE,
   VAR_FILTERS_EXPR,
   VAR_METRIC_NAMES,
-} from './shared';
-import { getFilters, getTrailFor } from './utils';
+} from '../shared';
+import { getFilters, getTrailFor } from '../utils';
+
+import { SelectMetricAction } from './SelectMetricAction';
+import { getPreviewPanelFor } from './previewPanel';
+import { sortRelatedMetrics } from './relatedMetrics';
 
 interface MetricPanel {
   name: string;

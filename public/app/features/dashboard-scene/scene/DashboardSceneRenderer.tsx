@@ -64,6 +64,8 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
             </div>
           )}
           <CustomScrollbar
+            // This id is used by the image renderer to scroll through the dashboard
+            divId="page-scrollbar"
             autoHeightMin={'100%'}
             className={styles.scrollbarContainer}
             testId={selectors.pages.Dashboard.DashNav.scrollContainer}
