@@ -18,10 +18,14 @@ import { DashboardScene, DashboardSceneState } from 'app/features/dashboard-scen
 import ShareAlerts from './ShareAlerts';
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
+
+beforeEach(() => {
+  jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+});
+
 describe('ShareAlerts', () => {
   describe('UnsupportedTemplateVariablesAlert', () => {
     it('should render alert when hasPermission and the dashboard has template vars', async () => {
-      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
       setup(undefined, {
         $variables: new SceneVariableSet({
           variables: [
@@ -38,7 +42,6 @@ describe('ShareAlerts', () => {
       expect(await screen.findByTestId(selectors.TemplateVariablesWarningAlert)).toBeInTheDocument();
     });
     it('should not render alert when hasPermission but the dashboard has no template vars', async () => {
-      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
       setup();
 
       expect(screen.queryByTestId(selectors.TemplateVariablesWarningAlert)).not.toBeInTheDocument();
@@ -52,7 +55,6 @@ describe('ShareAlerts', () => {
           queries: [{ refId: 'A' }],
         }),
       });
-      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 
       expect(await screen.findByTestId(selectors.UnsupportedDataSourcesWarningAlert)).toBeInTheDocument();
     });
@@ -63,7 +65,7 @@ describe('ShareAlerts', () => {
           queries: [{ refId: 'A' }],
         }),
       });
-      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+
       expect(screen.queryByTestId(selectors.UnsupportedDataSourcesWarningAlert)).not.toBeInTheDocument();
     });
   });

@@ -28,33 +28,47 @@ import ShareAlerts from './ShareAlerts';
 import ShareTypeSelect from './ShareTypeSelect';
 
 export interface ShareExternallyDrawerState extends SceneObjectState {
+  shareType: SelectableValue<PublicDashboardShareType>;
+  options: Array<SelectableValue<PublicDashboardShareType>>;
   dashboardRef: SceneObjectRef<DashboardScene>;
 }
 
 const hasEmailSharingEnabled =
   !!config.featureToggles.publicDashboardsEmailSharing && featureEnabled('publicDashboardsEmailSharing');
 
-const options = [{ label: 'Anyone with the link', value: PublicDashboardShareType.PUBLIC, icon: 'globe' }];
-if (hasEmailSharingEnabled) {
-  options.unshift({ label: 'Only specific people', value: PublicDashboardShareType.EMAIL, icon: 'users-alt' });
-}
-
 const selectors = e2eSelectors.pages.ShareDashboardDrawer.ShareExternally;
 export class ShareExternally extends SceneObjectBase<ShareExternallyDrawerState> {
   static Component = ShareExternallyDrawerRenderer;
+
+  constructor(state: Omit<ShareExternallyDrawerState, 'shareType' | 'options'>) {
+    const options = [{ label: 'Anyone with the link', value: PublicDashboardShareType.PUBLIC, icon: 'globe' }];
+    if (hasEmailSharingEnabled) {
+      options.unshift({ label: 'Only specific people', value: PublicDashboardShareType.EMAIL, icon: 'users-alt' });
+    }
+
+    super({
+      ...state,
+      options,
+      shareType: options[0],
+    });
+  }
+
+  onChangeShareType = (type: SelectableValue<PublicDashboardShareType>) => {
+    this.setState({ shareType: type });
+  };
 }
 
 function ShareExternallyDrawerRenderer({ model }: SceneComponentProps<ShareExternally>) {
-  const [shareType, setShareType] = React.useState<SelectableValue<PublicDashboardShareType>>(options[0]);
-  const dashboard = model.state.dashboardRef.resolve();
+  const { dashboardRef, shareType, options } = model.useState();
+  const dashboard = dashboardRef.resolve();
   const { data: publicDashboard, isLoading } = useGetPublicDashboardQuery(dashboard.state.uid!);
 
   useEffect(() => {
     if (publicDashboard) {
       const opt = options.find((opt) => opt.value === publicDashboard?.share)!;
-      setShareType(opt);
+      model.onChangeShareType(opt);
     }
-  }, [publicDashboard]);
+  }, [publicDashboard, options, model]);
 
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
 
@@ -79,7 +93,12 @@ function ShareExternallyDrawerRenderer({ model }: SceneComponentProps<ShareExter
   return (
     <Stack direction="column" gap={2} data-testid={selectors.container}>
       <ShareAlerts dashboard={dashboard} />
-      <ShareTypeSelect dashboard={dashboard} setShareType={setShareType} value={shareType} options={options} />
+      <ShareTypeSelect
+        dashboard={dashboard}
+        setShareType={model.onChangeShareType}
+        value={shareType}
+        options={options}
+      />
       {!hasWritePermissions && <NoUpsertPermissionsAlert mode={publicDashboard ? 'edit' : 'create'} />}
       {Config}
       {publicDashboard && (

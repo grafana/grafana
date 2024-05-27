@@ -21,7 +21,7 @@ export default function ShareTypeSelect({
   dashboard: DashboardScene;
   setShareType: (v: SelectableValue<PublicDashboardShareType>) => void;
   value: SelectableValue<PublicDashboardShareType>;
-  options: Array<{ label: string; value: PublicDashboardShareType }>;
+  options: Array<SelectableValue<PublicDashboardShareType>>;
 }) {
   const styles = useStyles2(getStyles);
   const { data: publicDashboard } = publicDashboardApi.endpoints?.getPublicDashboard.useQueryState(
