@@ -60,7 +60,8 @@
       "metadata": {
         "name": "returnToPrevious",
         "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "creationTimestamp": "2024-05-23T07:17:45Z",
+        "deletionTimestamp": "2024-05-27T09:59:33Z"
       },
       "spec": {
         "description": "Enables the return to previous context functionality",
