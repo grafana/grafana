@@ -88,12 +88,10 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
                 placeholder={t('time-picker.content.filter-placeholder', 'Search quick ranges')}
               />
             </div>
-            <CustomScrollbar>
-              {!isFullscreen && <NarrowScreenForm {...props} historyOptions={historyOptions} />}
-              {!hideQuickRanges && (
-                <TimeRangeList options={filteredQuickOptions} onChange={onChangeTimeOption} value={timeOption} />
-              )}
-            </CustomScrollbar>
+            {!isFullscreen && <NarrowScreenForm {...props} historyOptions={historyOptions} />}
+            {!hideQuickRanges && (
+              <TimeRangeList options={filteredQuickOptions} onChange={onChangeTimeOption} value={timeOption} />
+            )}
           </div>
         )}
         {isFullscreen && (
