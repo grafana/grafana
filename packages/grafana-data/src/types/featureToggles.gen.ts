@@ -44,7 +44,6 @@ export interface FeatureToggles {
   disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
   topnav?: boolean;
-  returnToPrevious?: boolean;
   grpcServer?: boolean;
   unifiedStorage?: boolean;
   dualWritePlaylistsMode2?: boolean;
