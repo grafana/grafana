@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { capitalize, groupBy } from 'lodash';
 import memoizeOne from 'memoize-one';
 import React, { useCallback, useEffect, useState, useRef } from 'react';
-import { usePrevious } from 'react-use';
+import { usePrevious, useUnmount } from 'react-use';
 
 import {
   SplitOpen,
@@ -266,34 +266,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   }, [logsVolumeData?.data, unregisterAllChildren, logsVolumeEnabled, hiddenLogLevels, register, toggleLegendRef]);
 
   useEffect(() => {
-    if (flipOrderTimer) {
-      window.clearTimeout(flipOrderTimer);
-    }
-    if (cancelFlippingTimer) {
-      window.clearTimeout(cancelFlippingTimer);
-    }
-  });
-
-  // clear timers and reset state on unmount
-  useEffect(() => {
-    return () => {
-      // If we're unmounting logs (e.g. switching to another datasource), we need to remove the table specific panel state, otherwise it will persist in the explore url
-      if (panelState?.logs?.columns || panelState?.logs?.refId || panelState?.logs?.labelFieldName) {
-        dispatch(
-          changePanelState(exploreId, 'logs', {
-            ...panelState?.logs,
-            columns: undefined,
-            visualisationType: visualisationType,
-            labelFieldName: undefined,
-            refId: undefined,
-          })
-        );
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
     if (loading && !previousLoading && panelState?.logs?.id) {
       // loading stopped, so we need to remove any permalinked log lines
       delete panelState.logs.id;
@@ -316,6 +288,30 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   useEffect(() => {
     registerLogLevelsWithContentOutline();
   }, [logsVolumeData?.data, hiddenLogLevels, registerLogLevelsWithContentOutline]);
+
+  useUnmount(() => {
+    if (flipOrderTimer) {
+      window.clearTimeout(flipOrderTimer);
+    }
+    if (cancelFlippingTimer) {
+      window.clearTimeout(cancelFlippingTimer);
+    }
+  });
+
+  useUnmount(() => {
+    // If we're unmounting logs (e.g. switching to another datasource), we need to remove the table specific panel state, otherwise it will persist in the explore url
+    if (panelState?.logs?.columns || panelState?.logs?.refId || panelState?.logs?.labelFieldName) {
+      dispatch(
+        changePanelState(exploreId, 'logs', {
+          ...panelState?.logs,
+          columns: undefined,
+          visualisationType: visualisationType,
+          labelFieldName: undefined,
+          refId: undefined,
+        })
+      );
+    }
+  });
 
   const updatePanelState = useCallback(
     (logsPanelState: Partial<ExploreLogsPanelState>) => {
