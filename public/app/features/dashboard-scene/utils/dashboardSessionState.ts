@@ -1,5 +1,6 @@
 import { UrlQueryMap, urlUtil } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
+import { UrlSyncManager } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
 
@@ -57,25 +58,12 @@ export function preserveDashboardSceneStateInLocalStorage(scene: DashboardScene)
     if (!scene.state.uid) {
       return;
     }
-    const variables = scene.state.$variables?.state.variables;
-    const timeRange = scene.state.$timeRange;
 
-    let urlStates: UrlQueryMap = variables
-      ? variables.reduce((acc, v) => {
-          const urlState = v.urlSync?.getUrlState();
-          return {
-            ...acc,
-            ...urlState,
-          };
-        }, {})
-      : {};
-
-    if (timeRange) {
-      urlStates = {
-        ...urlStates,
-        ...timeRange.urlSync?.getUrlState(),
-      };
-    }
+    const urlStates: UrlQueryMap = Object.fromEntries(
+      Object.entries(new UrlSyncManager().getUrlState(scene)).filter(
+        ([key]) => key.startsWith('var-') || key === 'from' || key === 'to' || key === 'timezone'
+      )
+    );
 
     const nonEmptyUrlStates = Object.fromEntries(
       Object.entries(urlStates).filter(([key, value]) => !(Array.isArray(value) && value.length === 0))
