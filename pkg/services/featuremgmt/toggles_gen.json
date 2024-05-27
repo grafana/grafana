@@ -2240,6 +2240,19 @@
     },
     {
       "metadata": {
+        "name": "alertingListViewV2",
+        "resourceVersion": "1716558084235",
+        "creationTimestamp": "2024-05-24T13:41:24Z"
+      },
+      "spec": {
+        "description": "Enables the new alert list view design",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "preserveDashboardStateWhenNavigating",
         "resourceVersion": "1716555778767",
         "creationTimestamp": "2024-05-24T13:02:58Z"

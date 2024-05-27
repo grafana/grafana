@@ -94,6 +94,7 @@ var (
 			Description:    "Correlations page",
 			Stage:          FeatureStageGeneralAvailability,
 			Owner:          grafanaExploreSquad,
+			Expression:     "true", // enabled by default
 			AllowSelfServe: true,
 		},
 		{
@@ -1265,6 +1266,13 @@ var (
 			Description:  "Enables the new sharing drawer design",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaSharingSquad,
+			FrontendOnly: true,
+		},
+		{
+			Name:         "alertingListViewV2",
+			Description:  "Enables the new alert list view design",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
 			FrontendOnly: true,
 		},
 		{
