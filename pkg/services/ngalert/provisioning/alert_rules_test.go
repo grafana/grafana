@@ -551,7 +551,8 @@ func TestCreateAlertRule(t *testing.T) {
 	u := &user.SignedInUser{OrgID: orgID}
 	groupKey := models.GenerateGroupKey(orgID)
 	groupIntervalSeconds := int64(30)
-	rules := models.GenerateAlertRules(3, models.AlertRuleGen(models.WithGroupKey(groupKey), models.WithInterval(time.Duration(groupIntervalSeconds)*time.Second)))
+	gen := models.RuleGen
+	rules := gen.With(gen.WithGroupKey(groupKey), gen.WithIntervalSeconds(groupIntervalSeconds)).GenerateManyRef(3)
 	groupProvenance := models.ProvenanceAPI
 
 	initServiceWithData := func(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.FakeProvisioningStore, *fakeRuleAccessControlService) {
@@ -567,14 +568,14 @@ func TestCreateAlertRule(t *testing.T) {
 
 	t.Run("when user can write all rules", func(t *testing.T) {
 		t.Run("and a new rule creates a new group", func(t *testing.T) {
-			rule := models.AlertRuleGen(models.WithOrgID(orgID))()
+			rule := gen.With(gen.WithOrgID(orgID)).Generate()
 			service, ruleStore, provenanceStore, ac := initServiceWithData(t)
 
 			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
 				return true, nil
 			}
 
-			actualRule, err := service.CreateAlertRule(context.Background(), u, *rule, models.ProvenanceFile)
+			actualRule, err := service.CreateAlertRule(context.Background(), u, rule, models.ProvenanceFile)
 			require.NoError(t, err)
 
 			require.Len(t, ac.Calls, 1)
@@ -601,14 +602,14 @@ func TestCreateAlertRule(t *testing.T) {
 			})
 		})
 		t.Run("and it adds a rule to a group", func(t *testing.T) {
-			rule := models.AlertRuleGen(models.WithGroupKey(groupKey))()
+			rule := gen.With(gen.WithGroupKey(groupKey)).Generate()
 			service, ruleStore, provenanceStore, ac := initServiceWithData(t)
 
 			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
 				return true, nil
 			}
 
-			actualRule, err := service.CreateAlertRule(context.Background(), u, *rule, models.ProvenanceNone)
+			actualRule, err := service.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
 			require.NoError(t, err)
 
 			require.Len(t, ac.Calls, 1)
@@ -637,7 +638,7 @@ func TestCreateAlertRule(t *testing.T) {
 	})
 	t.Run("when user cannot write all rules", func(t *testing.T) {
 		t.Run("and it creates a new group", func(t *testing.T) {
-			rule := models.AlertRuleGen(models.WithOrgID(orgID))()
+			rule := gen.With(gen.WithOrgID(orgID)).Generate()
 			t.Run("it should authorize the change", func(t *testing.T) {
 				service, ruleStore, provenanceStore, ac := initServiceWithData(t)
 
@@ -654,7 +655,7 @@ func TestCreateAlertRule(t *testing.T) {
 					return nil
 				}
 
-				actualRule, err := service.CreateAlertRule(context.Background(), u, *rule, models.ProvenanceFile)
+				actualRule, err := service.CreateAlertRule(context.Background(), u, rule, models.ProvenanceFile)
 				require.NoError(t, err)
 
 				require.Len(t, ac.Calls, 2)
@@ -683,7 +684,7 @@ func TestCreateAlertRule(t *testing.T) {
 			})
 		})
 		t.Run("and it adds a rule to a group", func(t *testing.T) {
-			rule := models.AlertRuleGen(models.WithGroupKey(groupKey))()
+			rule := gen.With(gen.WithGroupKey(groupKey)).Generate()
 			t.Run("it should authorize the change to whole group", func(t *testing.T) {
 				service, ruleStore, provenanceStore, ac := initServiceWithData(t)
 
@@ -701,7 +702,7 @@ func TestCreateAlertRule(t *testing.T) {
 					return nil
 				}
 
-				actualRule, err := service.CreateAlertRule(context.Background(), u, *rule, models.ProvenanceNone)
+				actualRule, err := service.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
 				require.NoError(t, err)
 
 				require.Len(t, ac.Calls, 2)
@@ -730,7 +731,7 @@ func TestCreateAlertRule(t *testing.T) {
 			})
 		})
 		t.Run("it should not insert if not authorized", func(t *testing.T) {
-			rule := models.AlertRuleGen(models.WithGroupKey(groupKey))()
+			rule := gen.With(gen.WithGroupKey(groupKey)).Generate()
 			service, ruleStore, _, ac := initServiceWithData(t)
 
 			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
@@ -741,7 +742,7 @@ func TestCreateAlertRule(t *testing.T) {
 				return expectedErr
 			}
 
-			_, err := service.CreateAlertRule(context.Background(), u, *rule, models.ProvenanceFile)
+			_, err := service.CreateAlertRule(context.Background(), u, rule, models.ProvenanceFile)
 			require.ErrorIs(t, expectedErr, err)
 
 			require.Len(t, ac.Calls, 2)
@@ -797,7 +798,8 @@ func TestUpdateAlertRule(t *testing.T) {
 	u := &user.SignedInUser{OrgID: orgID}
 	groupKey := models.GenerateGroupKey(orgID)
 	groupIntervalSeconds := int64(30)
-	rules := models.GenerateAlertRules(3, models.AlertRuleGen(models.WithGroupKey(groupKey), models.WithInterval(time.Duration(groupIntervalSeconds)*time.Second)))
+	gen := models.RuleGen
+	rules := gen.With(gen.WithGroupKey(groupKey), gen.WithIntervalSeconds(groupIntervalSeconds)).GenerateManyRef(3)
 	groupProvenance := models.ProvenanceAPI
 
 	initServiceWithData := func(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.FakeProvisioningStore, *fakeRuleAccessControlService) {
@@ -899,7 +901,8 @@ func TestDeleteAlertRule(t *testing.T) {
 	u := &user.SignedInUser{OrgID: orgID}
 	groupKey := models.GenerateGroupKey(orgID)
 	groupIntervalSeconds := int64(30)
-	rules := models.GenerateAlertRules(3, models.AlertRuleGen(models.WithGroupKey(groupKey), models.WithInterval(time.Duration(groupIntervalSeconds)*time.Second)))
+	gen := models.RuleGen
+	rules := gen.With(gen.WithGroupKey(groupKey), gen.WithIntervalSeconds(groupIntervalSeconds)).GenerateManyRef(3)
 	groupProvenance := models.ProvenanceAPI
 
 	initServiceWithData := func(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.FakeProvisioningStore, *fakeRuleAccessControlService) {
@@ -990,7 +993,8 @@ func TestGetAlertRule(t *testing.T) {
 	orgID := rand.Int63()
 	u := &user.SignedInUser{OrgID: orgID}
 	groupKey := models.GenerateGroupKey(orgID)
-	rules := models.GenerateAlertRules(3, models.AlertRuleGen(models.WithGroupKey(groupKey)))
+	gen := models.RuleGen
+	rules := gen.With(gen.WithGroupKey(groupKey)).GenerateManyRef(3)
 	rule := rules[0]
 	expectedProvenance := models.ProvenanceAPI
 
@@ -1118,7 +1122,8 @@ func TestGetRuleGroup(t *testing.T) {
 	u := &user.SignedInUser{OrgID: orgID}
 	groupKey := models.GenerateGroupKey(orgID)
 	intervalSeconds := int64(30)
-	rules := models.GenerateAlertRules(3, models.AlertRuleGen(models.WithGroupKey(groupKey), models.WithInterval(time.Duration(intervalSeconds)*time.Second)))
+	gen := models.RuleGen
+	rules := gen.With(gen.WithGroupKey(groupKey), gen.WithIntervalSeconds(intervalSeconds)).GenerateManyRef(3)
 	derefRules := make([]models.AlertRule, 0, len(rules))
 	for _, rule := range rules {
 		derefRules = append(derefRules, *rule)
@@ -1226,9 +1231,10 @@ func TestGetAlertRules(t *testing.T) {
 	u := &user.SignedInUser{OrgID: orgID}
 	groupKey1 := models.GenerateGroupKey(orgID)
 	groupKey2 := models.GenerateGroupKey(orgID)
-	rules1 := models.GenerateAlertRules(3, models.AlertRuleGen(models.WithGroupKey(groupKey1)))
+	gen := models.RuleGen
+	rules1 := gen.With(gen.WithGroupKey(groupKey1), gen.WithUniqueGroupIndex()).GenerateManyRef(3)
 	models.RulesGroup(rules1).SortByGroupIndex()
-	rules2 := models.GenerateAlertRules(4, models.AlertRuleGen(models.WithGroupKey(groupKey2)))
+	rules2 := gen.With(gen.WithGroupKey(groupKey2), gen.WithUniqueGroupIndex()).GenerateManyRef(4)
 	models.RulesGroup(rules2).SortByGroupIndex()
 	allRules := append(rules1, rules2...)
 	expectedProvenance := models.ProvenanceAPI
@@ -1325,7 +1331,8 @@ func TestReplaceGroup(t *testing.T) {
 	u := &user.SignedInUser{OrgID: orgID}
 	groupKey := models.GenerateGroupKey(orgID)
 	groupIntervalSeconds := int64(30)
-	rules := models.GenerateAlertRules(3, models.AlertRuleGen(models.WithGroupKey(groupKey), models.WithInterval(time.Duration(groupIntervalSeconds)*time.Second)))
+	gen := models.RuleGen
+	rules := gen.With(gen.WithGroupKey(groupKey), gen.WithIntervalSeconds(groupIntervalSeconds)).GenerateManyRef(3)
 	groupProvenance := models.ProvenanceAPI
 
 	initServiceWithData := func(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.FakeProvisioningStore, *fakeRuleAccessControlService) {
@@ -1438,7 +1445,8 @@ func TestDeleteRuleGroup(t *testing.T) {
 	u := &user.SignedInUser{OrgID: orgID}
 	groupKey := models.GenerateGroupKey(orgID)
 	groupIntervalSeconds := int64(30)
-	rules := models.GenerateAlertRules(3, models.AlertRuleGen(models.WithGroupKey(groupKey), models.WithInterval(time.Duration(groupIntervalSeconds)*time.Second)))
+	gen := models.RuleGen
+	rules := gen.With(gen.WithGroupKey(groupKey), gen.WithIntervalSeconds(groupIntervalSeconds)).GenerateManyRef(3)
 	groupProvenance := models.ProvenanceAPI
 
 	initServiceWithData := func(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.FakeProvisioningStore, *fakeRuleAccessControlService) {

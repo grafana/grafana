@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func setupTestEnv(b *testing.B, resourceCount, permissionPerResource int) (map[string][]string, map[string]bool) {
+func setupTestEnv(resourceCount, permissionPerResource int) (map[string][]string, map[string]bool) {
 	res := map[string][]string{}
 	ids := make(map[string]bool, resourceCount)
 
@@ -25,7 +25,7 @@ func setupTestEnv(b *testing.B, resourceCount, permissionPerResource int) (map[s
 }
 
 func benchGetMetadata(b *testing.B, resourceCount, permissionPerResource int) {
-	permissions, ids := setupTestEnv(b, resourceCount, permissionPerResource)
+	permissions, ids := setupTestEnv(resourceCount, permissionPerResource)
 	b.ResetTimer()
 
 	var metadata map[string]Metadata

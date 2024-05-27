@@ -9,14 +9,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-openapi/strfmt"
 	alertingNotify "github.com/grafana/alerting/notify"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	authz "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -30,10 +28,11 @@ const (
 )
 
 type AlertmanagerSrv struct {
-	log    log.Logger
-	ac     accesscontrol.AccessControl
-	mam    *notifier.MultiOrgAlertmanager
-	crypto notifier.Crypto
+	log        log.Logger
+	ac         accesscontrol.AccessControl
+	mam        *notifier.MultiOrgAlertmanager
+	crypto     notifier.Crypto
+	silenceSvc SilenceService
 }
 
 type UnknownReceiverError struct {
@@ -50,56 +49,17 @@ func (srv AlertmanagerSrv) RouteGetAMStatus(c *contextmodel.ReqContext) response
 		return errResp
 	}
 
-	status := am.GetStatus()
+	status, err := am.GetStatus(c.Req.Context())
+	if err != nil {
+		srv.log.Error("Unable to get status for the alertmanager", "error", err)
+		return ErrResp(http.StatusInternalServerError, err, "failed to get status for the Alertmanager")
+	}
+
 	if !c.SignedInUser.HasRole(org.RoleAdmin) {
 		notifier.RemoveAutogenConfigIfExists(status.Config.Route)
 	}
 
 	return response.JSON(http.StatusOK, status)
-}
-
-func (srv AlertmanagerSrv) RouteCreateSilence(c *contextmodel.ReqContext, postableSilence apimodels.PostableSilence) response.Response {
-	err := postableSilence.Validate(strfmt.Default)
-	if err != nil {
-		srv.log.Error("Silence failed validation", "error", err)
-		return ErrResp(http.StatusBadRequest, err, "silence failed validation")
-	}
-
-	action := accesscontrol.ActionAlertingInstanceUpdate
-	if postableSilence.ID == "" {
-		action = accesscontrol.ActionAlertingInstanceCreate
-	}
-	evaluator := accesscontrol.EvalPermission(action)
-	if !accesscontrol.HasAccess(srv.ac, c)(evaluator) {
-		errAction := "update"
-		if postableSilence.ID == "" {
-			errAction = "create"
-		}
-		return response.Err(authz.NewAuthorizationErrorWithPermissions(fmt.Sprintf("%s silences", errAction), evaluator))
-	}
-
-	silenceID, err := srv.mam.CreateSilence(c.Req.Context(), c.SignedInUser.GetOrgID(), &postableSilence)
-	if err != nil {
-		if errors.Is(err, notifier.ErrNoAlertmanagerForOrg) {
-			return ErrResp(http.StatusNotFound, err, "")
-		}
-		if errors.Is(err, notifier.ErrAlertmanagerNotReady) {
-			return ErrResp(http.StatusConflict, err, "")
-		}
-
-		if errors.Is(err, alertingNotify.ErrSilenceNotFound) {
-			return ErrResp(http.StatusNotFound, err, "")
-		}
-
-		if errors.Is(err, alertingNotify.ErrCreateSilenceBadPayload) {
-			return ErrResp(http.StatusBadRequest, err, "")
-		}
-
-		return ErrResp(http.StatusInternalServerError, err, "failed to create silence")
-	}
-	return response.JSON(http.StatusAccepted, apimodels.PostSilencesOKBody{
-		SilenceID: silenceID,
-	})
 }
 
 func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *contextmodel.ReqContext) response.Response {
@@ -114,22 +74,6 @@ func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *contextmodel.ReqContext)
 	}
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "configuration deleted; the default is applied"})
-}
-
-func (srv AlertmanagerSrv) RouteDeleteSilence(c *contextmodel.ReqContext, silenceID string) response.Response {
-	if err := srv.mam.DeleteSilence(c.Req.Context(), c.SignedInUser.GetOrgID(), silenceID); err != nil {
-		if errors.Is(err, notifier.ErrNoAlertmanagerForOrg) {
-			return ErrResp(http.StatusNotFound, err, "")
-		}
-		if errors.Is(err, notifier.ErrAlertmanagerNotReady) {
-			return ErrResp(http.StatusConflict, err, "")
-		}
-		if errors.Is(err, alertingNotify.ErrSilenceNotFound) {
-			return ErrResp(http.StatusNotFound, err, "")
-		}
-		return ErrResp(http.StatusInternalServerError, err, "")
-	}
-	return response.JSON(http.StatusOK, util.DynMap{"message": "silence deleted"})
 }
 
 func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *contextmodel.ReqContext) response.Response {
@@ -207,40 +151,6 @@ func (srv AlertmanagerSrv) RouteGetAMAlerts(c *contextmodel.ReqContext) response
 	return response.JSON(http.StatusOK, alerts)
 }
 
-func (srv AlertmanagerSrv) RouteGetSilence(c *contextmodel.ReqContext, silenceID string) response.Response {
-	am, errResp := srv.AlertmanagerFor(c.SignedInUser.GetOrgID())
-	if errResp != nil {
-		return errResp
-	}
-
-	gettableSilence, err := am.GetSilence(c.Req.Context(), silenceID)
-	if err != nil {
-		if errors.Is(err, alertingNotify.ErrSilenceNotFound) {
-			return ErrResp(http.StatusNotFound, err, "")
-		}
-		// any other error here should be an unexpected failure and thus an internal error
-		return ErrResp(http.StatusInternalServerError, err, "")
-	}
-	return response.JSON(http.StatusOK, gettableSilence)
-}
-
-func (srv AlertmanagerSrv) RouteGetSilences(c *contextmodel.ReqContext) response.Response {
-	am, errResp := srv.AlertmanagerFor(c.SignedInUser.GetOrgID())
-	if errResp != nil {
-		return errResp
-	}
-
-	gettableSilences, err := am.ListSilences(c.Req.Context(), c.QueryStrings("filter"))
-	if err != nil {
-		if errors.Is(err, alertingNotify.ErrListSilencesBadPayload) {
-			return ErrResp(http.StatusBadRequest, err, "")
-		}
-		// any other error here should be an unexpected failure and thus an internal error
-		return ErrResp(http.StatusInternalServerError, err, "")
-	}
-	return response.JSON(http.StatusOK, gettableSilences)
-}
-
 func (srv AlertmanagerSrv) RoutePostGrafanaAlertingConfigHistoryActivate(c *contextmodel.ReqContext, id string) response.Response {
 	confId, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
@@ -304,7 +214,7 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *contextmodel.ReqContext, b
 		return response.Error(http.StatusConflict, err.Error(), err)
 	}
 
-	return ErrResp(http.StatusInternalServerError, err, "")
+	return response.ErrOrFallback(http.StatusInternalServerError, err.Error(), err)
 }
 
 func (srv AlertmanagerSrv) RouteGetReceivers(c *contextmodel.ReqContext) response.Response {

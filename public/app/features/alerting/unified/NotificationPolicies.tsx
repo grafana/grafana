@@ -380,9 +380,9 @@ function findMapIntersection(...matchingRoutes: FilterResult[]): FilterResult {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  tabContent: css`
-    margin-top: ${theme.spacing(2)};
-  `,
+  tabContent: css({
+    marginTop: theme.spacing(2),
+  }),
 });
 
 interface QueryParamValues {

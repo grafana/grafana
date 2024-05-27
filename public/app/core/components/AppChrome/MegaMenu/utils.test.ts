@@ -1,7 +1,7 @@
-import { GrafanaConfig, locationUtil, NavModelItem } from '@grafana/data';
+import { NavModelItem } from '@grafana/data';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 
-import { enrichHelpItem, getActiveItem, isMatchOrChildMatch } from './utils';
+import { enrichHelpItem, getActiveItem } from './utils';
 
 jest.mock('../../../app_events', () => ({
   publish: jest.fn(),
@@ -44,143 +44,83 @@ describe('enrichConfigItems', () => {
   });
 });
 
-describe('isMatchOrChildMatch', () => {
-  const mockChild: NavModelItem = {
-    text: 'Child',
-    url: '/dashboards/child',
-  };
-  const mockItemToCheck: NavModelItem = {
-    text: 'Dashboards',
-    url: '/dashboards',
-    children: [mockChild],
-  };
-
-  it('returns true if the itemToCheck is an exact match with the searchItem', () => {
-    const searchItem = mockItemToCheck;
-    expect(isMatchOrChildMatch(mockItemToCheck, searchItem)).toBe(true);
-  });
-
-  it('returns true if the itemToCheck has a child that matches the searchItem', () => {
-    const searchItem = mockChild;
-    expect(isMatchOrChildMatch(mockItemToCheck, searchItem)).toBe(true);
-  });
-
-  it('returns false otherwise', () => {
-    const searchItem: NavModelItem = {
-      text: 'No match',
-      url: '/noMatch',
-    };
-    expect(isMatchOrChildMatch(mockItemToCheck, searchItem)).toBe(false);
-  });
-});
-
 describe('getActiveItem', () => {
+  const starredDashboardUid = 'foo';
   const mockNavTree: NavModelItem[] = [
     {
       text: 'Item',
       url: '/item',
-    },
-    {
-      text: 'Item with query param',
-      url: '/itemWithQueryParam?foo=bar',
-    },
-    {
-      text: 'Item after subpath',
-      url: '/subUrl/itemAfterSubpath',
+      id: 'item',
     },
     {
       text: 'Item with children',
       url: '/itemWithChildren',
+      id: 'item-with-children',
       children: [
         {
           text: 'Child',
           url: '/child',
+          id: 'child',
         },
       ],
     },
     {
-      text: 'Alerting item',
-      url: '/alerting/list',
-    },
-    {
       text: 'Base',
       url: '/',
+      id: 'home',
     },
     {
       text: 'Starred',
       url: '/dashboards?starred',
       id: 'starred',
+      children: [
+        {
+          id: `starred/${starredDashboardUid}`,
+          text: 'Lazy Loading',
+          url: `/d/${starredDashboardUid}/some-name`,
+        },
+      ],
     },
     {
       text: 'Dashboards',
       url: '/dashboards',
-    },
-    {
-      text: 'More specific dashboard',
-      url: '/d/moreSpecificDashboard',
+      id: 'dashboards',
     },
   ];
-  beforeEach(() => {
-    locationUtil.initialize({
-      config: { appSubUrl: '/subUrl' } as GrafanaConfig,
-      getVariablesUrlParams: () => ({}),
-      getTimeRangeForUrl: () => ({ from: 'now-7d', to: 'now' }),
-    });
-  });
 
   it('returns an exact match at the top level', () => {
-    const mockPathName = '/item';
-    expect(getActiveItem(mockNavTree, mockPathName)).toEqual({
-      text: 'Item',
-      url: '/item',
-    });
+    const mockPage: NavModelItem = {
+      text: 'Some current page',
+      id: 'item',
+    };
+    expect(getActiveItem(mockNavTree, mockPage)?.id).toEqual('item');
   });
 
-  it('returns an exact match ignoring root subpath', () => {
-    const mockPathName = '/itemAfterSubpath';
-    expect(getActiveItem(mockNavTree, mockPathName)).toEqual({
-      text: 'Item after subpath',
-      url: '/subUrl/itemAfterSubpath',
-    });
-  });
-
-  it('returns an exact match ignoring query params', () => {
-    const mockPathName = '/itemWithQueryParam?bar=baz';
-    expect(getActiveItem(mockNavTree, mockPathName)).toEqual({
-      text: 'Item with query param',
-      url: '/itemWithQueryParam?foo=bar',
-    });
+  it('returns parent item if no other matches in nav tree', () => {
+    const mockPage: NavModelItem = {
+      text: 'Some child page',
+      id: 'something-that-doesnt-exist',
+      parentItem: {
+        text: 'Some home page',
+        id: 'home',
+      },
+    };
+    expect(getActiveItem(mockNavTree, mockPage)?.id).toEqual('home');
   });
 
   it('returns an exact child match', () => {
-    const mockPathName = '/child';
-    expect(getActiveItem(mockNavTree, mockPathName)).toEqual({
-      text: 'Child',
-      url: '/child',
-    });
+    const mockPage: NavModelItem = {
+      text: 'Some child page',
+      id: 'child',
+    };
+    expect(getActiveItem(mockNavTree, mockPage)?.id).toEqual('child');
   });
 
-  it('returns the alerting link if the pathname is an alert notification', () => {
-    const mockPathName = '/alerting/notification/foo';
-    expect(getActiveItem(mockNavTree, mockPathName)).toEqual({
-      text: 'Alerting item',
-      url: '/alerting/list',
-    });
-  });
-
-  it('returns the dashboards route link if the pathname starts with /d/', () => {
-    const mockPathName = '/d/foo';
-    expect(getActiveItem(mockNavTree, mockPathName)).toEqual({
-      text: 'Dashboards',
-      url: '/dashboards',
-    });
-  });
-
-  it('returns a more specific link if one exists', () => {
-    const mockPathName = '/d/moreSpecificDashboard';
-    expect(getActiveItem(mockNavTree, mockPathName)).toEqual({
-      text: 'More specific dashboard',
-      url: '/d/moreSpecificDashboard',
-    });
+  it('handles home page', () => {
+    const mockPage: NavModelItem = {
+      text: 'Something else',
+      id: 'not-home',
+    };
+    expect(getActiveItem(mockNavTree, mockPage, '/')?.id).toEqual('home');
   });
 });

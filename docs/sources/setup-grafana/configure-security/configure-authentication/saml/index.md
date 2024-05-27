@@ -27,11 +27,21 @@ Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-e
 
 SAML authentication integration allows your Grafana users to log in by using an external SAML 2.0 Identity Provider (IdP). To enable this, Grafana becomes a Service Provider (SP) in the authentication flow, interacting with the IdP to exchange user information.
 
-You can configure SAML authentication in Grafana through the user interface (UI) or the Grafana configuration file. For instructions on how to set up SAML through Grafana's UI, refer to [Configure SAML authentication using the Grafana user interface]({{< relref "../saml-ui" >}}).
-Both methods offer the same configuration options, but you might prefer using the Grafana configuration file if you want to keep all of Grafana's authentication settings in one place. Grafana Cloud users do not have access to Grafana configuration file, so they should configure SAML through Grafana's UI.
+You can configure SAML authentication in Grafana through one of the following methods:
+
+- the Grafana configuration file
+- the API (refer to [SSO Settings API]({{< relref "../../../../developers/http_api/sso-settings" >}}))
+- the user interface (refer to [Configure SAML authentication using the Grafana user interface]({{< relref "../saml-ui" >}}))
+- the Terraform provider (refer to [Terraform docs](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/sso_settings))
 
 {{% admonition type="note" %}}
-Configuration in the UI takes precedence over the configuration in the Grafana configuration file. SAML settings from the UI will override any SAML configuration set in the Grafana configuration file.
+The API and Terraform support are available in Public Preview in Grafana v11.1 behind the `ssoSettingsSAML` feature toggle. You must also enable the `ssoSettingsApi` flag.
+{{% /admonition %}}
+
+All methods offer the same configuration options, but you might prefer using the Grafana configuration file or the Terraform provider if you want to keep all of Grafana's authentication settings in one place. Grafana Cloud users do not have access to Grafana configuration file, so they should configure SAML through the other methods.
+
+{{% admonition type="note" %}}
+Configuration in the API takes precedence over the configuration in the Grafana configuration file. SAML settings from the API will override any SAML configuration set in the Grafana configuration file.
 {{% /admonition %}}
 
 ## Supported SAML
@@ -57,6 +67,15 @@ In terms of initiation, Grafana supports:
 - IdP-initiated requests
 
 By default, SP-initiated requests are enabled. For instructions on how to enable IdP-initiated logins, see [IdP-initiated Single Sign-On (SSO)]({{< relref "#idp-initiated-single-sign-on-sso" >}}).
+
+{{% admonition type="warning" %}}
+It is possible to setup Grafana with SAML authentication using Azure AD. However, Azure AD limits the number of groups that can be sent in the SAML assertion to 150. If you have more than 150 groups, Azure AD provides a link to retrieve the groups that only works for OIDC/OAuth workflows. At the moment it is not possible to use this link with SAML authentication in Grafana.
+
+It is preferable to take this into consideration when setting up SAML authentication with Azure AD. We encourage the use of [Azure AD OAuth integration]({{< relref "../azuread" >}}) instead of SAML if you have more than 150 groups.
+
+- [Azure AD SAML limitations](https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#groups-overage-claim)
+
+{{% /admonition %}}
 
 ### Edit SAML options in the Grafana config file
 
@@ -94,6 +113,16 @@ assertion_attribute_groups = Group
 To use the SAML integration, in the `auth.saml` section of in the Grafana custom configuration file, set `enabled` to `true`.
 
 Refer to [Configuration]({{< relref "../../../configure-grafana" >}}) for more information about configuring Grafana.
+
+## Additional configuration for HTTP-Post binding
+
+If multiple bindings are supported for SAML Single Sign-On (SSO) by the Identity Provider (IdP), Grafana will use the `HTTP-Redirect` binding by default. If the IdP only supports the `HTTP-Post binding` then updating the `content_security_policy_template` (in case `content_security_policy = true`) and `content_security_policy_report_only_template` (in case `content_security_policy_report_only = true`) might be required to allow Grafana to initiate a POST request to the IdP. These settings are used to define the [Content Security Policy (CSP)](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy) headers that are sent by Grafana.
+
+To allow Grafana to initiate a POST request to the IdP, update the `content_security_policy_template` and `content_security_policy_report_only_template` settings in the Grafana configuration file and add the IdP's domain to the `form-action` directive. By default, the `form-action` directive is set to `self` which only allows POST requests to the same domain as Grafana. To allow POST requests to the IdP's domain, update the `form-action` directive to include the IdP's domain, for example: `form-action 'self' https://idp.example.com`.
+
+{{% admonition type="note" %}}
+For Grafana Cloud instances, please contact Grafana Support to update the `content_security_policy_template` and `content_security_policy_report_only_template` settings of your Grafana instance. Please provide the metadata URL/file of your IdP.
+{{% /admonition %}}
 
 ## Certificate and private key
 
@@ -475,6 +504,40 @@ role_values_grafana_admin = superadmin
 org_mapping = Engineering:2:Editor, Engineering:3:Viewer, Sales:3:Editor, *:1:Editor
 allowed_organizations = Engineering, Sales
 ```
+
+### Example SAML configuration in Terraform
+
+{{% admonition type="note" %}}
+Available in Public Preview in Grafana v11.1 behind the `ssoSettingsSAML` feature toggle. Supported in the Terraform provider since v2.17.0.
+{{% /admonition %}}
+
+```terraform
+resource "grafana_sso_settings" "saml_sso_settings" {
+  provider_name = "saml"
+  saml_settings {
+    name                       = "SAML"
+    auto_login                 = false
+    certificate_path           = "/path/to/certificate.cert"
+    private_key_path           = "/path/to/private_key.pem"
+    idp_metadata_path          = "/my/metadata.xml"
+    max_issue_delay            = "90s"
+    metadata_valid_duration    = "48h"
+    assertion_attribute_name   = "displayName"
+    assertion_attribute_login  = "mail"
+    assertion_attribute_email  = "mail"
+    assertion_attribute_groups = "Group"
+    assertion_attribute_role   = "Role"
+    assertion_attribute_org    = "Org"
+    role_values_editor         = "editor, developer"
+    role_values_admin          = "admin, operator"
+    role_values_grafana_admin  = "superadmin"
+    org_mapping                = "Engineering:2:Editor, Engineering:3:Viewer, Sales:3:Editor, *:1:Editor"
+    allowed_organizations      = "Engineering, Sales"
+  }
+}
+```
+
+Go to [Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/sso_settings) for a complete reference on using the `grafana_sso_settings` resource.
 
 ## Troubleshoot SAML authentication in Grafana
 

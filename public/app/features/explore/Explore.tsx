@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
 import { get, groupBy } from 'lodash';
-import memoizeOne from 'memoize-one';
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer, { HorizontalSize } from 'react-virtualized-auto-sizer';
@@ -31,7 +30,6 @@ import {
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/src/components/Table/types';
 import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { getNodeGraphDataFrames } from 'app/plugins/panel/nodeGraph/utils';
 import { StoreState } from 'app/types';
 
 import { getTimeZone } from '../profile/state/selectors';
@@ -56,7 +54,7 @@ import { SecondaryActions } from './SecondaryActions';
 import TableContainer from './Table/TableContainer';
 import { TraceViewContainer } from './TraceView/TraceViewContainer';
 import { changeSize } from './state/explorePane';
-import { changeShowQueryHistory, splitOpen } from './state/main';
+import { splitOpen } from './state/main';
 import {
   addQueryRow,
   modifyQueries,
@@ -145,7 +143,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   scrollElement: HTMLDivElement | undefined;
   graphEventBus: EventBus;
   logsEventBus: EventBus;
-  memoizedGetNodeGraphDataFrames = memoizeOne(getNodeGraphDataFrames);
 
   constructor(props: Props) {
     super(props);
@@ -302,10 +299,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   onUpdateTimeRange = (absoluteRange: AbsoluteTimeRange) => {
     const { exploreId, updateTimeRange } = this.props;
     updateTimeRange({ exploreId, absoluteRange });
-  };
-
-  toggleShowQueryHistory = () => {
-    this.props.changeShowQueryHistory(!this.props.showQueryHistory);
   };
 
   onSplitOpen = (panelType: string) => {
@@ -478,7 +471,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     return (
       <ContentOutlineItem panelId="Node Graph" title="Node Graph" icon="code-branch">
         <NodeGraphContainer
-          dataFrames={this.memoizedGetNodeGraphDataFrames(queryResponse.series)}
+          dataFrames={queryResponse.nodeGraphFrames}
           exploreId={exploreId}
           withTraceView={showTrace}
           datasourceType={datasourceType}
@@ -535,7 +528,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       showLogsSample,
       correlationEditorDetails,
       correlationEditorHelperData,
-      showQueryHistory,
       showQueryInspector,
       setShowQueryInspector,
     } = this.props;
@@ -603,10 +595,8 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                           //TODO:unification
                           addQueryRowButtonHidden={false}
                           richHistoryRowButtonHidden={richHistoryRowButtonHidden}
-                          richHistoryButtonActive={showQueryHistory}
                           queryInspectorButtonActive={showQueryInspector}
                           onClickAddQueryRowButton={this.onClickAddQueryRowButton}
-                          onClickRichHistoryButton={this.toggleShowQueryHistory}
                           onClickQueryInspectorButton={() => setShowQueryInspector(!showQueryInspector)}
                         />
                         <ResponseErrorContainer exploreId={exploreId} />
@@ -721,7 +711,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showLogsSample,
     correlationEditorHelperData,
     correlationEditorDetails: explore.correlationEditorDetails,
-    showQueryHistory: explore.showQueryHistory,
   };
 }
 
@@ -735,7 +724,6 @@ const mapDispatchToProps = {
   addQueryRow,
   splitOpen,
   setSupplementaryQueryEnabled,
-  changeShowQueryHistory,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);

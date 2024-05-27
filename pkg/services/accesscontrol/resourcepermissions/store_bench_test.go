@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datasourcesService "github.com/grafana/grafana/pkg/services/datasources/service"
@@ -138,15 +139,17 @@ func GenerateDatasourcePermissions(b *testing.B, db db.DB, cfg *setting.Cfg, ac 
 	return dataSources
 }
 
-func generateTeamsAndUsers(b *testing.B, db db.DB, cfg *setting.Cfg, users int) ([]int64, []int64) {
-	teamSvc, err := teamimpl.ProvideService(db, cfg)
+func generateTeamsAndUsers(b *testing.B, store db.DB, cfg *setting.Cfg, users int) ([]int64, []int64) {
+	teamSvc, err := teamimpl.ProvideService(store, cfg, tracing.InitializeTracerForTest())
 	require.NoError(b, err)
 	numberOfTeams := int(math.Ceil(float64(users) / UsersPerTeam))
 	globalUserId := 0
 	qs := quotatest.New(false, nil)
-	orgSvc, err := orgimpl.ProvideService(db, cfg, qs)
+	orgSvc, err := orgimpl.ProvideService(store, cfg, qs)
 	require.NoError(b, err)
-	usrSvc, err := userimpl.ProvideService(db, orgSvc, cfg, nil, nil, qs, supportbundlestest.NewFakeBundleService())
+	usrSvc, err := userimpl.ProvideService(
+		store, orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		qs, supportbundlestest.NewFakeBundleService())
 	require.NoError(b, err)
 	userIds := make([]int64, 0)
 	teamIds := make([]int64, 0)
@@ -154,7 +157,7 @@ func generateTeamsAndUsers(b *testing.B, db db.DB, cfg *setting.Cfg, users int) 
 		// Create team
 		teamName := fmt.Sprintf("%s%v", "team", i)
 		teamEmail := fmt.Sprintf("%s@example.org", teamName)
-		team, err := teamSvc.CreateTeam(teamName, teamEmail, 1)
+		team, err := teamSvc.CreateTeam(context.Background(), teamName, teamEmail, 1)
 		require.NoError(b, err)
 		teamId := team.ID
 		teamIds = append(teamIds, teamId)
@@ -171,7 +174,9 @@ func generateTeamsAndUsers(b *testing.B, db db.DB, cfg *setting.Cfg, users int) 
 			globalUserId++
 			userIds = append(userIds, userId)
 
-			err = teamSvc.AddTeamMember(context.Background(), userId, 1, teamId, false, 1)
+			err = store.WithDbSession(context.Background(), func(sess *db.Session) error {
+				return teamimpl.AddOrUpdateTeamMemberHook(sess, userId, 1, teamId, false, 1)
+			})
 			require.NoError(b, err)
 		}
 	}

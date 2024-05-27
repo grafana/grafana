@@ -1,13 +1,11 @@
 import createVirtualEnvironment from '@locker/near-membrane-dom';
 import { ProxyTarget } from '@locker/near-membrane-shared';
 
-import { BootData, PluginMeta } from '@grafana/data';
+import { BootData } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { defaultTrustedTypesPolicy } from 'app/core/trustedTypePolicies';
 
-import { getPluginSettings } from '../pluginSettings';
-
-import { getPluginCode, patchSandboxEnvironmentPrototype } from './code_loader';
+import { getPluginCode, getPluginLoadData, patchSandboxEnvironmentPrototype } from './code_loader';
 import { getGeneralSandboxDistortionMap, distortLiveApis } from './distortion_map';
 import {
   getSafeSandboxDomElement,
@@ -19,7 +17,7 @@ import {
 } from './document_sandbox';
 import { sandboxPluginDependencies } from './plugin_dependencies';
 import { sandboxPluginComponents } from './sandbox_components';
-import { CompartmentDependencyModule, PluginFactoryFunction, SandboxEnvironment } from './types';
+import { CompartmentDependencyModule, PluginFactoryFunction, SandboxEnvironment, SandboxPluginMeta } from './types';
 import { logError, logInfo } from './utils';
 
 // Loads near membrane custom formatter for near membrane proxy objects.
@@ -33,7 +31,7 @@ const pluginLogCache: Record<string, boolean> = {};
 export async function importPluginModuleInSandbox({ pluginId }: { pluginId: string }): Promise<System.Module> {
   patchWebAPIs();
   try {
-    const pluginMeta = await getPluginSettings(pluginId);
+    const pluginMeta = getPluginLoadData(pluginId);
     if (!pluginImportCache.has(pluginId)) {
       pluginImportCache.set(pluginId, doImportPluginModuleInSandbox(pluginMeta));
     }
@@ -48,7 +46,7 @@ export async function importPluginModuleInSandbox({ pluginId }: { pluginId: stri
   }
 }
 
-async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<System.Module> {
+async function doImportPluginModuleInSandbox(meta: SandboxPluginMeta): Promise<System.Module> {
   logInfo('Loading with sandbox', {
     pluginId: meta.id,
   });

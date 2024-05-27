@@ -20,7 +20,7 @@ import { LokiQuery } from './types';
 
 const defaultLanguageProviderMock = {
   start: jest.fn(),
-  fetchSeriesLabels: jest.fn(() => ({ bar: ['baz'], xyz: ['abc'] })),
+  fetchLabels: jest.fn(() => ['bar', 'xyz']),
   getLabelKeys: jest.fn(() => ['bar', 'xyz']),
 } as unknown as LokiLanguageProvider;
 
@@ -29,6 +29,27 @@ defaultDatasourceMock.query = jest.fn(() => of({ data: [] } as DataQueryResponse
 defaultDatasourceMock.languageProvider = defaultLanguageProviderMock;
 
 const defaultLogRow = {
+  rowIndex: 0,
+  dataFrame: createDataFrame({
+    fields: [
+      {
+        name: 'ts',
+        type: FieldType.time,
+        values: [0],
+      },
+      {
+        name: 'labelTypes',
+        type: FieldType.other,
+        values: [{ bar: 'I', foo: 'S', xyz: 'I' }],
+      },
+    ],
+  }),
+  labels: { bar: 'baz', foo: 'uniqueParsedLabel', xyz: 'abc' },
+  uid: '1',
+  timeEpochMs: new Date().getTime(),
+} as unknown as LogRowModel;
+
+const frameWithoutTypes = {
   rowIndex: 0,
   dataFrame: createDataFrame({
     fields: [
@@ -75,7 +96,7 @@ describe('LogContextProvider', () => {
       );
       expect(logContextProvider.getInitContextFilters).toBeCalled();
       expect(logContextProvider.getInitContextFilters).toHaveBeenCalledWith(
-        { bar: 'baz', foo: 'uniqueParsedLabel', xyz: 'abc' },
+        expect.objectContaining({ labels: { bar: 'baz', foo: 'uniqueParsedLabel', xyz: 'abc' } }),
         { expr: '{bar="baz"}', refId: 'A' },
         {
           from: dateTime(defaultLogRow.timeEpochMs),
@@ -399,7 +420,7 @@ describe('LogContextProvider', () => {
       };
 
       it('should correctly create contextFilters', async () => {
-        const result = await logContextProvider.getInitContextFilters(defaultLogRow.labels, queryWithoutParser);
+        const result = await logContextProvider.getInitContextFilters(defaultLogRow, queryWithoutParser);
         expect(result.contextFilters).toEqual([
           { enabled: true, nonIndexed: false, label: 'bar', value: 'baz' },
           { enabled: false, nonIndexed: true, label: 'foo', value: 'uniqueParsedLabel' },
@@ -409,28 +430,29 @@ describe('LogContextProvider', () => {
       });
 
       it('should return empty contextFilters if no query', async () => {
-        const filters = (await logContextProvider.getInitContextFilters(defaultLogRow.labels, undefined))
-          .contextFilters;
+        const filters = (await logContextProvider.getInitContextFilters(defaultLogRow, undefined)).contextFilters;
         expect(filters).toEqual([]);
       });
 
       it('should return empty contextFilters if no labels', async () => {
-        const filters = (await logContextProvider.getInitContextFilters({}, queryWithoutParser)).contextFilters;
+        const filters = (
+          await logContextProvider.getInitContextFilters({ labels: [] } as unknown as LogRowModel, queryWithoutParser)
+        ).contextFilters;
         expect(filters).toEqual([]);
       });
 
-      it('should call fetchSeriesLabels if parser', async () => {
-        await logContextProvider.getInitContextFilters(defaultLogRow.labels, queryWithParser);
-        expect(defaultLanguageProviderMock.fetchSeriesLabels).toBeCalled();
+      it('should call fetchLabels with stream selector if parser', async () => {
+        await logContextProvider.getInitContextFilters(defaultLogRow, queryWithParser);
+        expect(defaultLanguageProviderMock.fetchLabels).toBeCalledWith({ streamSelector: `{bar="baz"}` });
       });
 
-      it('should call fetchSeriesLabels with given time range', async () => {
-        await logContextProvider.getInitContextFilters(defaultLogRow.labels, queryWithParser, timeRange);
-        expect(defaultLanguageProviderMock.fetchSeriesLabels).toBeCalledWith(`{bar="baz"}`, { timeRange });
+      it('should call fetchLabels with given time range', async () => {
+        await logContextProvider.getInitContextFilters(defaultLogRow, queryWithParser, timeRange);
+        expect(defaultLanguageProviderMock.fetchLabels).toBeCalledWith({ streamSelector: `{bar="baz"}`, timeRange });
       });
 
       it('should call `languageProvider.start` if no parser with given time range', async () => {
-        await logContextProvider.getInitContextFilters(defaultLogRow.labels, queryWithoutParser, timeRange);
+        await logContextProvider.getInitContextFilters(defaultLogRow, queryWithoutParser, timeRange);
         expect(defaultLanguageProviderMock.start).toBeCalledWith(timeRange);
       });
     });
@@ -442,7 +464,7 @@ describe('LogContextProvider', () => {
       };
 
       it('should correctly create contextFilters', async () => {
-        const result = await logContextProvider.getInitContextFilters(defaultLogRow.labels, queryWithParser);
+        const result = await logContextProvider.getInitContextFilters(defaultLogRow, queryWithParser);
         expect(result.contextFilters).toEqual([
           { enabled: true, nonIndexed: false, label: 'bar', value: 'baz' },
           { enabled: false, nonIndexed: true, label: 'foo', value: 'uniqueParsedLabel' },
@@ -452,13 +474,14 @@ describe('LogContextProvider', () => {
       });
 
       it('should return empty contextFilters if no query', async () => {
-        const filters = (await logContextProvider.getInitContextFilters(defaultLogRow.labels, undefined))
-          .contextFilters;
+        const filters = (await logContextProvider.getInitContextFilters(defaultLogRow, undefined)).contextFilters;
         expect(filters).toEqual([]);
       });
 
       it('should return empty contextFilters if no labels', async () => {
-        const filters = (await logContextProvider.getInitContextFilters({}, queryWithParser)).contextFilters;
+        const filters = (
+          await logContextProvider.getInitContextFilters({ labels: [] } as unknown as LogRowModel, queryWithParser)
+        ).contextFilters;
         expect(filters).toEqual([]);
       });
     });
@@ -477,10 +500,27 @@ describe('LogContextProvider', () => {
             selectedExtractedLabels: ['foo'],
           })
         );
-        const result = await logContextProvider.getInitContextFilters(defaultLogRow.labels, queryWithParser);
+        const result = await logContextProvider.getInitContextFilters(defaultLogRow, queryWithParser);
         expect(result.contextFilters).toEqual([
           { enabled: false, nonIndexed: false, label: 'bar', value: 'baz' }, // disabled real label
           { enabled: true, nonIndexed: true, label: 'foo', value: 'uniqueParsedLabel' }, // enabled parsed label
+          { enabled: true, nonIndexed: false, label: 'xyz', value: 'abc' },
+        ]);
+        expect(result.preservedFiltersApplied).toBe(true);
+      });
+
+      it('should correctly apply preserved labels with no types', async () => {
+        window.localStorage.setItem(
+          LOKI_LOG_CONTEXT_PRESERVED_LABELS,
+          JSON.stringify({
+            removedLabels: ['bar'],
+            selectedExtractedLabels: ['foo'],
+          })
+        );
+        const result = await logContextProvider.getInitContextFilters(frameWithoutTypes, queryWithParser);
+        expect(result.contextFilters).toEqual([
+          { enabled: false, nonIndexed: false, label: 'bar', value: 'baz' }, // disabled real label
+          { enabled: true, nonIndexed: false, label: 'foo', value: 'uniqueParsedLabel' }, // enabled parsed label
           { enabled: true, nonIndexed: false, label: 'xyz', value: 'abc' },
         ]);
         expect(result.preservedFiltersApplied).toBe(true);
@@ -494,13 +534,30 @@ describe('LogContextProvider', () => {
             selectedExtractedLabels: ['foo'],
           })
         );
-        const result = await logContextProvider.getInitContextFilters(defaultLogRow.labels, queryWithParser);
+        const result = await logContextProvider.getInitContextFilters(defaultLogRow, queryWithParser);
         expect(result.contextFilters).toEqual([
           { enabled: true, nonIndexed: false, label: 'bar', value: 'baz' }, // enabled real label
           { enabled: false, nonIndexed: true, label: 'foo', value: 'uniqueParsedLabel' },
           { enabled: true, nonIndexed: false, label: 'xyz', value: 'abc' }, // enabled real label
         ]);
         expect(result.preservedFiltersApplied).toBe(false);
+      });
+
+      it('should use contextFilters from row labels if all real labels are disabled with no types', async () => {
+        window.localStorage.setItem(
+          LOKI_LOG_CONTEXT_PRESERVED_LABELS,
+          JSON.stringify({
+            removedLabels: ['bar', 'xyz'],
+            selectedExtractedLabels: ['foo'],
+          })
+        );
+        const result = await logContextProvider.getInitContextFilters(frameWithoutTypes, queryWithParser);
+        expect(result.contextFilters).toEqual([
+          { enabled: false, nonIndexed: false, label: 'bar', value: 'baz' }, // enabled real label
+          { enabled: true, nonIndexed: false, label: 'foo', value: 'uniqueParsedLabel' },
+          { enabled: false, nonIndexed: false, label: 'xyz', value: 'abc' }, // enabled real label
+        ]);
+        expect(result.preservedFiltersApplied).toBe(true);
       });
 
       it('should not introduce new labels as context filters', async () => {
@@ -511,10 +568,27 @@ describe('LogContextProvider', () => {
             selectedExtractedLabels: ['foo', 'new'],
           })
         );
-        const result = await logContextProvider.getInitContextFilters(defaultLogRow.labels, queryWithParser);
+        const result = await logContextProvider.getInitContextFilters(defaultLogRow, queryWithParser);
         expect(result.contextFilters).toEqual([
           { enabled: false, nonIndexed: false, label: 'bar', value: 'baz' },
           { enabled: true, nonIndexed: true, label: 'foo', value: 'uniqueParsedLabel' },
+          { enabled: true, nonIndexed: false, label: 'xyz', value: 'abc' },
+        ]);
+        expect(result.preservedFiltersApplied).toBe(true);
+      });
+
+      it('should not introduce new labels as context filters with no label types', async () => {
+        window.localStorage.setItem(
+          LOKI_LOG_CONTEXT_PRESERVED_LABELS,
+          JSON.stringify({
+            removedLabels: ['bar'],
+            selectedExtractedLabels: ['foo', 'new'],
+          })
+        );
+        const result = await logContextProvider.getInitContextFilters(frameWithoutTypes, queryWithParser);
+        expect(result.contextFilters).toEqual([
+          { enabled: false, nonIndexed: false, label: 'bar', value: 'baz' },
+          { enabled: true, nonIndexed: false, label: 'foo', value: 'uniqueParsedLabel' },
           { enabled: true, nonIndexed: false, label: 'xyz', value: 'abc' },
         ]);
         expect(result.preservedFiltersApplied).toBe(true);
