@@ -79,11 +79,7 @@ export default function ShareConfiguration({ dashboard }: { dashboard: Dashboard
                   control={control}
                   name="isTimeSelectionEnabled"
                 />
-                <Label description="Allow people to change time range">
-                  <Trans i18nKey="public-dashboard.settings-configuration.time-range-picker-label">
-                    Enable time range
-                  </Trans>
-                </Label>
+                <Label description="Allow people to change time range">Enable time range</Label>
               </Stack>
               <Stack gap={1}>
                 <Controller
@@ -104,9 +100,7 @@ export default function ShareConfiguration({ dashboard }: { dashboard: Dashboard
                   name="isAnnotationsEnabled"
                 />
                 <Label style={{ flex: 1 }} description="Present annotations on this Dashboard">
-                  <Trans i18nKey="public-dashboard.settings-configuration.time-range-picker-label">
-                    Display annotations
-                  </Trans>
+                  Display annotations
                 </Label>
               </Stack>
               <Stack gap={1} alignItems="center">
