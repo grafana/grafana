@@ -193,4 +193,5 @@ export interface FeatureToggles {
   dashboardRestore?: boolean;
   datasourceProxyDisableRBAC?: boolean;
   alertingDisableSendAlertsExternal?: boolean;
+  preserveDashboardStateWhenNavigating?: boolean;
 }
