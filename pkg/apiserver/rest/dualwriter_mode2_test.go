@@ -23,7 +23,8 @@ var exampleOption = &metainternalversion.ListOptions{}
 
 type UpdatedObjInfoObj struct{}
 
-func (u UpdatedObjInfoObj) UpdatedObject(ctx context.Context, oldObj runtime.Object) (newObj runtime.Object, err error) {
+func (u UpdatedObjInfoObj) UpdatedObject(ctx context.Context, oldObj runtime.Object) (newObj runtime.Object, err error) { // nolint:staticcheck
+	// nolint:staticcheck
 	oldObj = exampleObj
 	return oldObj, nil
 }
