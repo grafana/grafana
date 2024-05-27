@@ -8,7 +8,6 @@ export * from './legacyAngularInjector';
 export * from './live';
 export * from './LocationService';
 export * from './appEvents';
-export * from './panelAttentionSrv';
 
 export {
   setPluginExtensionGetter,
