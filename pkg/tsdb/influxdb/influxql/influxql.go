@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -179,25 +180,35 @@ func execute(ctx context.Context, tracer trace.Tracer, dsInfo *models.Datasource
 
 	_, endSpan := startTrace(ctx, tracer, "datasource.influxdb.influxql.parseResponse")
 
-	reader, err := gzip.NewReader(res.Body)
-	if err != nil {
-		errMsg := "failed to gzip response body"
-		logger.Error(fmt.Sprintf("%s: %v", errMsg, err))
-		return backend.DataResponse{Error: errors.New(errMsg)}, err
+	var reader io.ReadCloser
+	if encoding := res.Header.Get("Accept-Encoding"); encoding == "gzip" {
+		reader, err = gzip.NewReader(res.Body)
+		defer func(reader io.ReadCloser) {
+			err := reader.Close()
+			if err != nil {
+				logger.Error(fmt.Sprintf("Failed to close gzip reader: %v", err))
+			}
+		}(reader)
+		if err != nil {
+			errMsg := "failed to create gzip response body"
+			logger.Error(fmt.Sprintf("%s: %v", errMsg, err))
+			return backend.DataResponse{Error: errors.New(errMsg)}, err
+		}
+	} else {
+		reader = res.Body
 	}
 
-	defer func(reader *gzip.Reader) {
+	defer func() {
 		if err := res.Body.Close(); err != nil {
 			logger.Warn("Failed to close response body", "err", err)
 		}
 
 		endSpan()
+	}()
 
-		err := reader.Close()
-		if err != nil {
-			logger.Warn("Failed to close gzip reader", "err", err)
-		}
-	}(reader)
+	if res.StatusCode/100 != 2 {
+		return backend.DataResponse{Error: fmt.Errorf("InfluxDB returned error: %v", res.Body)}, nil
+	}
 
 	var resp *backend.DataResponse
 	if isStreamingParserEnabled {
