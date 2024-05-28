@@ -19,14 +19,14 @@ func SilenceToGettableGrafanaSilence(s *models.SilenceWithMetadata) definitions.
 
 	gettable.Metadata = &definitions.SilenceMetadata{}
 	if s.Metadata.Permissions != nil {
-		gettable.Metadata.Permissions = make(map[definitions.SilencePermission]bool, len(*s.Metadata.Permissions))
+		gettable.Permissions = make(map[definitions.SilencePermission]bool, len(*s.Metadata.Permissions))
 		for _, permission := range models.SilencePermissions() {
 			p, err := SilencePermissionToAPI(permission)
 			if err != nil {
 				// Skip unknown permissions in response.
 				continue
 			}
-			gettable.Metadata.Permissions[p] = s.Metadata.Permissions.Has(permission)
+			gettable.Permissions[p] = s.Metadata.Permissions.Has(permission)
 		}
 	}
 

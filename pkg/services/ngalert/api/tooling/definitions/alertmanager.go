@@ -492,14 +492,14 @@ type GettableSilence = amv2.GettableSilence
 type GettableGrafanaSilence struct {
 	*GettableSilence `json:",inline"`
 	Metadata         *SilenceMetadata `json:"metadata,omitempty"`
+	// example: {"read": true, "write": false, "create": false}
+	Permissions map[SilencePermission]bool `json:"accessControl,omitempty"`
 }
 
 type SilenceMetadata struct {
 	RuleUID   string `json:"rule_uid,omitempty"`
 	RuleTitle string `json:"rule_title,omitempty"`
 	FolderUID string `json:"folder_uid,omitempty"`
-	// example: {"read": true, "write": false, "create": false}
-	Permissions map[SilencePermission]bool `json:"accessControl,omitempty"`
 }
 
 type SilencePermission string
@@ -525,6 +525,10 @@ func (s GettableGrafanaSilence) MarshalJSON() ([]byte, error) {
 
 	if s.Metadata != nil {
 		data["metadata"] = s.Metadata
+	}
+
+	if s.Permissions != nil {
+		data["accessControl"] = s.Permissions
 	}
 
 	return json.Marshal(data)
