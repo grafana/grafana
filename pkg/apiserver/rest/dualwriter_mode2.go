@@ -164,8 +164,10 @@ func (d *DualWriterMode2) DeleteCollection(ctx context.Context, deleteValidation
 	deleted, err := d.Legacy.DeleteCollection(ctx, deleteValidation, options, listOptions)
 	if err != nil {
 		log.WithValues("deleted", deleted).Error(err, "failed to delete collection successfully from legacy storage")
+		d.recordLegacyDuration(true, mode2Str, options.Kind, method, startLegacy)
+		return deleted, err
 	}
-	d.recordLegacyDuration(err != nil, mode2Str, options.Kind, method, startLegacy)
+	d.recordLegacyDuration(false, mode2Str, options.Kind, method, startLegacy)
 
 	legacyList, err := meta.ExtractList(deleted)
 	if err != nil {
