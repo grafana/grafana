@@ -87,7 +87,7 @@ func newTimeField(rows []models.Row) *data.Field {
 	var timeArray []time.Time
 	for _, row := range rows {
 		for _, valuePair := range row.Values {
-			timestamp, timestampErr := util.ParseTimestamp2(valuePair[0])
+			timestamp, timestampErr := util.ParseTimestamp(valuePair[0])
 			// we only add this row if the timestamp is valid
 			if timestampErr != nil {
 				continue
@@ -277,7 +277,7 @@ func newFrameWithTimeField(row models.Row, column string, colIndex int, query mo
 	valType := util.Typeof(row.Values, colIndex)
 
 	for _, valuePair := range row.Values {
-		timestamp, timestampErr := util.ParseTimestamp2(valuePair[0])
+		timestamp, timestampErr := util.ParseTimestamp(valuePair[0])
 		// we only add this row if the timestamp is valid
 		if timestampErr != nil {
 			continue
