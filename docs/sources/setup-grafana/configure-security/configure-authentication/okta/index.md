@@ -35,7 +35,7 @@ To follow this guide, ensure you have permissions in your Okta workspace to crea
    - **Logo (optional)**: Add a logo.
    - **Grant type**: Select **Authorization Code** and **Refresh Token**.
    - **Sign-in redirect URIs**: Replace the default setting with the Grafana Cloud Okta path, replacing <YOUR_ORG> with the name of your Grafana organization: https://<YOUR_ORG>.grafana.net/login/okta. For on-premises installation, use the Grafana server URL: http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/okta.
-   - **Sign-out redirect URIs (optional)**: Replace the default setting with the Grafana Cloud Okta path, replacing <YOUR_ORG> with the name of your Grafana organization: https://<YOUR_ORG>.grafana.net/login/okta. For on-premises installation, use the Grafana server URL: http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/okta.
+   - **Sign-out redirect URIs (optional)**: Replace the default setting with the Grafana Cloud Okta path, replacing <YOUR_ORG> with the name of your Grafana organization: https://<YOUR_ORG>.grafana.net/logout. For on-premises installation, use the Grafana server URL: http://<my_grafana_server_name_or_ip>:<grafana_server_port>/logout.
    - **Base URIs (optional)**: Add any base URIs
    - **Controlled access**: Select whether to assign the app integration to everyone in your organization, or only selected groups. You can assign this option after you create the app.
 
@@ -68,18 +68,6 @@ To follow this guide, ensure you have permissions in your Okta workspace to crea
 
 1. Click **Save**.
 1. (Optional) You can add the role attribute to the default User profile. To do this, please follow the steps in the [Optional: Add the role attribute to the User (default) Okta profile]({{< relref "#optional-add-the-role-attribute-to-the-user-default-okta-profile" >}}) section.
-1. In the **Okta Admin Console**, select **Security > API**.
-1. From the **Authorization Servers** tab, select server you want to configure. By default, this is `default`.
-1. On the **Claims** tab, click **Add Claim**.
-1. Configure the claim as follows:
-
-   - **Name**: `grafana_role`
-   - **Include in token type**: Select **ID Token** and **Always**
-   - **Value type**: `Expression`
-   - **Value**: `userapp.grafana_role`
-   - **Included in**: `Any scope`
-
-1. Click **Create**.
 
 ### Configure Groups claim
 
@@ -93,6 +81,8 @@ To follow this guide, ensure you have permissions in your Okta workspace to crea
 1. From the **More** button dropdown menu, click **Refresh Application Data**.
 
 #### Optional: Add the role attribute to the User (default) Okta profile
+
+If you want to configure the role for all users in the Okta directory, you can add the role attribute to the User (default) Okta profile.
 
 1. Return to the **Directory** section and select **Profile Editor**.
 1. Select the User (default) Okta profile, and click **Add Attribute**.
@@ -226,7 +216,7 @@ The `accessTokenExpirationCheck` feature toggle has been removed in Grafana v10.
 
 > **Note:** Unless `skip_org_role_sync` option is enabled, the user's role will be set to the role retrieved from the auth provider upon user login.
 
-The user's role is retrieved using a [JMESPath](http://jmespath.org/examples.html) expression from the `role_attribute_path` configuration option against the `api_url` endpoint payload.
+The user's role is retrieved using a [JMESPath](http://jmespath.org/examples.html) expression from the `role_attribute_path` configuration option against the `api_url` (`/userinfo` OIDC endpoint) endpoint payload.
 To map the server administrator role, use the `allow_assign_grafana_admin` configuration option.
 Refer to [configuration options]({{< relref "../generic-oauth/index.md#configuration-options" >}}) for more information.
 
