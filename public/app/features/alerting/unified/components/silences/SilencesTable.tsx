@@ -58,7 +58,7 @@ const SilencesTable = ({ alertManagerSourceName }: Props) => {
     isLoading,
     error,
   } = alertSilencesApi.endpoints.getSilences.useQuery(
-    { datasourceUid: getDatasourceAPIUid(alertManagerSourceName), withMetadata: true, accessControl: true },
+    { datasourceUid: getDatasourceAPIUid(alertManagerSourceName), ruleMetadata: true, accessControl: true },
     API_QUERY_OPTIONS
   );
 

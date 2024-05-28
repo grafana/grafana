@@ -9,13 +9,19 @@ const silencesListHandler = (silences = mockSilences) =>
       return HttpResponse.json({ traceId: '' }, { status: 502 });
     }
 
-    // Server only responds with ACL if query param is sent
+    // Server only responds with ACL/rule metadata if query param is sent
     const accessControlQueryParam = new URL(request.url).searchParams.get('accessControl');
-    if (!accessControlQueryParam) {
-      const withoutAccessControl = silences.map(({ accessControl, ...silence }) => silence);
-      return HttpResponse.json(withoutAccessControl);
-    }
-    return HttpResponse.json(silences);
+    const ruleMetadataQueryParam = new URL(request.url).searchParams.get('ruleMetadata');
+
+    const mappedSilences = silences.map(({ accessControl, metadata, ...silence }) => {
+      return {
+        ...silence,
+        ...(accessControlQueryParam && { accessControl }),
+        ...(ruleMetadataQueryParam && { metadata }),
+      };
+    });
+
+    return HttpResponse.json(mappedSilences);
   });
 
 const silenceGetHandler = () =>
@@ -26,14 +32,17 @@ const silenceGetHandler = () =>
       return HttpResponse.json({ message: 'silence not found' }, { status: 404 });
     }
 
-    // Server only responds with ACL if query param is sent
+    // Server only responds with ACL/rule metadata if query param is sent
     const accessControlQueryParam = new URL(request.url).searchParams.get('accessControl');
-    if (!accessControlQueryParam) {
-      const { accessControl, ...silence } = matchingMockSilence;
-      return HttpResponse.json(silence);
-    }
+    const ruleMetadataQueryParam = new URL(request.url).searchParams.get('ruleMetadata');
 
-    return HttpResponse.json(matchingMockSilence);
+    const { accessControl, metadata, ...silence } = matchingMockSilence;
+
+    return HttpResponse.json({
+      ...silence,
+      ...(accessControlQueryParam && { accessControl }),
+      ...(ruleMetadataQueryParam && { metadata }),
+    });
   });
 
 export const silenceCreateHandler = () =>

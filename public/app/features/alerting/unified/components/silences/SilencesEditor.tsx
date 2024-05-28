@@ -58,7 +58,7 @@ const ExistingSilenceEditor = ({ silenceId, alertManagerSourceName }: Props) => 
   } = alertSilencesApi.endpoints.getSilence.useQuery({
     id: silenceId,
     datasourceUid: getDatasourceAPIUid(alertManagerSourceName),
-    withMetadata: true,
+    ruleMetadata: true,
     accessControl: true,
   });
 
