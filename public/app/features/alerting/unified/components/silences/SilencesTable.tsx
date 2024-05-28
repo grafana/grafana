@@ -279,7 +279,7 @@ function useColumns(alertManagerSourceName: string) {
               {metadata.rule_title}
             </Link>
           ) : (
-            '-'
+            'None'
           );
         },
         size: 8,
