@@ -1,5 +1,10 @@
 import { INT_32 } from '../../core';
 
-import { lessThan, greaterThan } from '.';
+export const int32 = (value: string) => {
+  const num = parseFloat(value);
+  if (Number.isFinite(num) && Number.isInteger(num) && num > INT_32.min - 1 && num < INT_32.max + 1) {
+    return undefined;
+  }
 
-export const int32 = [greaterThan(INT_32.min - 1), lessThan(INT_32.max + 1)];
+  return `Must be an Integer number`;
+};

@@ -103,6 +103,7 @@ export interface PostgreSQLPayload extends RemoteCommonPayload, TLSCommon {
   agent_password: string;
   max_query_length: number;
   auto_discovery_limit: number;
+  max_exporter_connections: number;
 }
 
 export interface MySQLPayload extends RemoteCommonPayload, TLSCommon {
@@ -196,6 +197,7 @@ export interface RDSPayload extends CommonRDSAzurePayload {
   metrics_mode: string;
   qan_postgresql_pgstatements: boolean;
   agent_password: string;
+  max_postgresql_exporter_connections: number;
 }
 
 export interface MSAzurePayload extends CommonRDSAzurePayload {

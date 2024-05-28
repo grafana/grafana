@@ -10,5 +10,9 @@ export const Messages = {
       disabled: 'Disabled',
       custom: 'Custom',
     },
+    maxConnectionLimitOptions: {
+      enabled: 'Enabled',
+      disabled: 'Disabled',
+    },
   },
 };

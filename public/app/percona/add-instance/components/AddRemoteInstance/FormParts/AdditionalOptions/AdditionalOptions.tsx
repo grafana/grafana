@@ -7,6 +7,7 @@ import { CheckboxField } from 'app/percona/shared/components/Elements/Checkbox';
 import { NumberInputField } from 'app/percona/shared/components/Form/NumberInput';
 import { RadioButtonGroupField } from 'app/percona/shared/components/Form/RadioButtonGroup';
 import { Databases } from 'app/percona/shared/core';
+import Validators from 'app/percona/shared/helpers/validators';
 import { validators as platformCoreValidators } from 'app/percona/shared/helpers/validatorsForm';
 
 import { rdsTrackingOptions, trackingOptions } from '../FormParts.constants';
@@ -14,8 +15,12 @@ import { Messages } from '../FormParts.messages';
 import { getStyles } from '../FormParts.styles';
 import { AdditionalOptionsFormPartProps, PostgreSQLAdditionalOptionsProps } from '../FormParts.types';
 
-import { autoDiscoveryOptions, tablestatOptions } from './AdditionalOptions.constants';
-import { AutoDiscoveryOptionsInterface, TablestatOptionsInterface } from './AdditionalOptions.types';
+import { autoDiscoveryOptions, tablestatOptions, maxConnectionLimitOptions } from './AdditionalOptions.constants';
+import {
+  AutoDiscoveryOptionsInterface,
+  MaxConnectionLimitOptionsInterface,
+  TablestatOptionsInterface,
+} from './AdditionalOptions.types';
 import { MongodbTLSCertificate } from './MongodbTLSCertificate';
 import { MysqlTLSCertificate } from './MysqlTLSCertificate';
 import { PostgreTLSCertificate } from './PostgreTLSCertificate';
@@ -43,18 +48,35 @@ export const AdditionalOptionsFormPart: FC<AdditionalOptionsFormPartProps> = ({
 
 export const PostgreSQLAdditionalOptions: FC<PostgreSQLAdditionalOptionsProps> = ({ form, isRDS, isAzure }) => {
   const selectedOption = form.getState()?.values?.autoDiscoveryOptions;
+  const maxConnSelectedOption = form.getState()?.values?.maxConnectionLimitOptions;
   const [selectedValue, setSelectedValue] = useState<string>(selectedOption || AutoDiscoveryOptionsInterface.enabled);
+  const [maxConnSelectedValue, setMaxConnSelectedValue] = useState<string>(
+    maxConnSelectedOption || MaxConnectionLimitOptionsInterface.disabled
+  );
   const styles = useStyles2(getStyles);
-  const validators = [platformCoreValidators.containsNumber, ...platformCoreValidators.int32];
+  const validators = [platformCoreValidators.containsNumber, platformCoreValidators.int32];
+  const maxConnValidators = [Validators.min(0), platformCoreValidators.int32];
 
   const getAutoDiscoveryLimitValue = (type: AutoDiscoveryOptionsInterface) =>
     type === AutoDiscoveryOptionsInterface.disabled ? -1 : 10;
+
+  const getMaxConnectionLimitValue = (type: MaxConnectionLimitOptionsInterface) =>
+    type === MaxConnectionLimitOptionsInterface.disabled ? null : 5;
 
   useEffect(() => {
     setSelectedValue(selectedOption);
     form.change('autoDiscoveryLimit', getAutoDiscoveryLimitValue(selectedOption));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedOption]);
+
+  useEffect(() => {
+    setMaxConnSelectedValue(maxConnSelectedOption);
+    form.change(
+      isRDS ? 'maxPostgresqlExporterConnections' : 'maxExporterConnections',
+      getMaxConnectionLimitValue(maxConnSelectedOption)
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [maxConnSelectedOption]);
 
   return (
     <>
@@ -87,6 +109,34 @@ export const PostgreSQLAdditionalOptions: FC<PostgreSQLAdditionalOptionsProps> =
           tooltipText={Messages.form.tooltips.postgresqlDetails.autoDiscoveryLimit}
         />
       </div>
+      {!isAzure && (
+        <div>
+          <h4>{Messages.form.labels.postgresqlDetails.maxConnection}</h4>
+          <div className={styles.group}>
+            <RadioButtonGroupField
+              name="maxConnectionLimitOptions"
+              data-testid="max-connection-limit-radio-button-group"
+              defaultValue={maxConnSelectedValue}
+              options={maxConnectionLimitOptions}
+              className={styles.radioField}
+              label={Messages.form.labels.postgresqlDetails.maxConnectionLimitOptions}
+              fullWidth
+            />
+            <NumberInputField
+              key={isRDS ? 'maxPostgresqlExporterConnections' : 'maxExporterConnections'}
+              name={isRDS ? 'maxPostgresqlExporterConnections' : 'maxExporterConnections'}
+              defaultValue={5}
+              placeholder={'5'}
+              validators={
+                maxConnSelectedValue === MaxConnectionLimitOptionsInterface.enabled ? maxConnValidators : undefined
+              }
+              disabled={maxConnSelectedValue !== MaxConnectionLimitOptionsInterface.enabled}
+              label={Messages.form.labels.postgresqlDetails.maxConnectionLimit}
+              tooltipText={Messages.form.tooltips.postgresqlDetails.maxConnectionLimit}
+            />
+          </div>
+        </div>
+      )}
     </>
   );
 };

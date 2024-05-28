@@ -1,5 +1,9 @@
 import { Messages } from './AdditionalOptions.messages';
-import { AutoDiscoveryOptionsInterface, TablestatOptionsInterface } from './AdditionalOptions.types';
+import {
+  AutoDiscoveryOptionsInterface,
+  TablestatOptionsInterface,
+  MaxConnectionLimitOptionsInterface,
+} from './AdditionalOptions.types';
 
 export const tablestatOptions = [
   {
@@ -28,5 +32,16 @@ export const autoDiscoveryOptions = [
   {
     value: AutoDiscoveryOptionsInterface.custom,
     label: Messages.form.autoDiscoveryOptions.custom,
+  },
+];
+
+export const maxConnectionLimitOptions = [
+  {
+    value: MaxConnectionLimitOptionsInterface.enabled,
+    label: Messages.form.maxConnectionLimitOptions.enabled,
+  },
+  {
+    value: MaxConnectionLimitOptionsInterface.disabled,
+    label: Messages.form.maxConnectionLimitOptions.disabled,
   },
 ];

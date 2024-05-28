@@ -9,3 +9,8 @@ export enum AutoDiscoveryOptionsInterface {
   disabled = 'disabled',
   custom = 'custom',
 }
+
+export enum MaxConnectionLimitOptionsInterface {
+  enabled = 'enabled',
+  disabled = 'disabled',
+}

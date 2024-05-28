@@ -181,7 +181,7 @@ describe('getAdditionalOptions ::', () => {
     const fields = container.querySelectorAll('input');
     const trakingFields = screen.getAllByTestId('tracking-radio-button');
     expect(trakingFields.length).toBe(trackingOptions.length);
-    expect(fields.length).toBe(12);
+    expect(fields.length).toBe(16);
   });
   it('should render correct for RDS PostgreSQL', async () => {
     const type = Databases.postgresql;
@@ -198,6 +198,6 @@ describe('getAdditionalOptions ::', () => {
     const fields = container.querySelectorAll('input');
     const trakingFields = screen.getAllByTestId('tracking-radio-button');
     expect(trakingFields.length).toBe(rdsTrackingOptions.length);
-    expect(fields.length).toBe(13);
+    expect(fields.length).toBe(17);
   });
 });
