@@ -103,7 +103,7 @@ We have created a dummy webhook endpoint and created a new Alerting Contact Poin
 
 ## Create an alert
 
-Next, we'll establish an [Alert rule](https://grafana.com/docs/grafana/next/alerting/fundamentals/alert-rule-evaluation/) within Grafana Alerting to notify us whenever our sample app experiences a specific volume of requests.
+Next, we'll establish an [alert rule](http://grafana.com/docs/grafana/next/alerting/fundamentals/alert-rule-evaluation/) within Grafana Alerting to notify us whenever our sample app experiences a specific volume of requests.
 
 In Grafana, **navigate to Alerting** > **Alert rules**. Click on **New alert rule**.
 
@@ -161,7 +161,7 @@ Choose the contact point where you want to receive your alert notifications.
 
 ## Trigger and resolve an alert
 
-Now that the alert rule has been configured, you should receive alert [notifications](https://grafana.com/docs/grafana/next/alerting/fundamentals/alert-rule-evaluation/state-and-health/#notifications) in the contact point whenever alerts trigger and get resolved.
+Now that the alert rule has been configured, you should receive alert [notifications](http://grafana.com/docs/grafana/next/alerting/fundamentals/alert-rule-evaluation/state-and-health/#notifications) in the contact point whenever alerts trigger and get resolved.
 
 ### Trigger an alert
 
@@ -169,7 +169,7 @@ Since the alert rule that you have created has been configured to always fire, o
 
 {{< figure src="/media/docs/alerting/alerting-webhook-firing-alert.png" max-width="1200px" caption="Firing alert notification details" >}}
 
-The alert notification details show that the alert rule state is Firing , and it includes the value that made the rule trigger by exceeding the threshold of the alert rule condition. The notification also includes links to see the alert rule details, and another link to add a [Silence](https://grafana.com/docs/grafana/next/alerting/configure-notifications/create-silence/) to it. 
+The alert notification details show that the alert rule state is Firing , and it includes the value that made the rule trigger by exceeding the threshold of the alert rule condition. The notification also includes links to see the alert rule details, and another link to add a [Silence](http://grafana.com/docs/grafana/next/alerting/configure-notifications/create-silence/) to it. 
 
 ### Resolve an alert
 
