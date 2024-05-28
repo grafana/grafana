@@ -355,7 +355,7 @@ func (esa *ExtSvcAccountsService) getExtSvcAccountToken(ctx context.Context, org
 
 	// Generate token
 	ctxLogger.Info("Generate new service account token", "service", extSvcSlug, "orgID", orgID)
-	newKeyInfo, err := satokengen.New(extSvcSlug)
+	newKeyInfo, err := genTokenWithRetries(ctxLogger, extSvcSlug)
 	if err != nil {
 		return "", err
 	}
@@ -380,6 +380,52 @@ func (esa *ExtSvcAccountsService) getExtSvcAccountToken(ctx context.Context, org
 	return newKeyInfo.ClientSecret, nil
 }
 
+func genTokenWithRetries(ctxLogger log.Logger, extSvcSlug string) (satokengen.KeyGenResult, error) {
+	var newKeyInfo satokengen.KeyGenResult
+	var err error
+	retry := 0
+	for retry < maxTokenGenRetries {
+		newKeyInfo, err = satokengen.New(extSvcSlug)
+		if err != nil {
+			return satokengen.KeyGenResult{}, err
+		}
+
+		if !strings.Contains(newKeyInfo.ClientSecret, "\x00") {
+			return newKeyInfo, nil
+		}
+
+		retry++
+
+		ctxLogger.Warn("Generated a token containing NUL, retrying",
+			"service", extSvcSlug,
+			"retry", retry,
+		)
+		// On first retry, log the token parts that contain a nil byte
+		if retry == 1 {
+			logTokenNULParts(ctxLogger, extSvcSlug, newKeyInfo.ClientSecret)
+		}
+	}
+
+	return satokengen.KeyGenResult{}, ErrCredentialsGenFailed.Errorf("Failed to generate a token for %s", extSvcSlug)
+}
+
+// logTokenNULParts logs a warning if the external service token contains a nil byte
+// Tokens normally have 3 parts "gl+serviceID_secret_checksum"
+// Log the part of the generated token that contains a nil byte
+func logTokenNULParts(ctxLogger log.Logger, extSvcSlug string, token string) {
+	parts := strings.Split(token, "_")
+	for i := range parts {
+		if strings.Contains(parts[i], "\x00") {
+			ctxLogger.Warn("Token contains NUL",
+				"service", extSvcSlug,
+				"part", i,
+				"part_len", len(parts[i]),
+				"parts_count", len(parts),
+			)
+		}
+	}
+}
+
 // GetExtSvcCredentials get the credentials of an External Service from an encrypted storage
 func (esa *ExtSvcAccountsService) GetExtSvcCredentials(ctx context.Context, orgID int64, extSvcSlug string) (*Credentials, error) {
 	ctxLogger := esa.logger.FromContext(ctx)
@@ -390,6 +436,10 @@ func (esa *ExtSvcAccountsService) GetExtSvcCredentials(ctx context.Context, orgI
 	}
 	if !ok {
 		return nil, ErrCredentialsNotFound.Errorf("No credential found for in store %v", extSvcSlug)
+	}
+	if strings.Contains(token, "\x00") {
+		ctxLogger.Warn("Loaded token from store containing NUL", "service", extSvcSlug)
+		logTokenNULParts(ctxLogger, extSvcSlug, token)
 	}
 	return &Credentials{Secret: token}, nil
 }
