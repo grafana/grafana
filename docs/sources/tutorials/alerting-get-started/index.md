@@ -76,9 +76,9 @@ In this step, we'll set up a new [contact point](https://grafana.com/docs/grafan
 
 1. In your browser,  **sign in** to your Grafana Cloud account.
 
-   {{<admonition type="note">}}
+   {{< admonition type="note" >}}
    **OSS users**: To log in, navigate to localhost:3000, where Grafana is running locally.
-   {{ </admonition >}}
+   {{< /admonition >}}
 
 1. In another tab, visit [Webhook.site](https://webhook.site/).
 1. **Copy Your unique URL**.
