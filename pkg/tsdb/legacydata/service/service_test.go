@@ -50,7 +50,8 @@ func TestHandleRequest(t *testing.T) {
 		quotaService := quotatest.New(false, nil)
 		dsCache := datasourceservice.ProvideCacheService(localcache.ProvideService(), sqlStore, guardian.ProvideGuardian())
 		dsService, err := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(),
-			acmock.New(), datasourcePermissions, quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{})
+			acmock.New(), datasourcePermissions, quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{},
+			plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()))
 		require.NoError(t, err)
 
 		pCtxProvider := plugincontext.ProvideService(cfg, localcache.ProvideService(), &pluginstore.FakePluginStore{
