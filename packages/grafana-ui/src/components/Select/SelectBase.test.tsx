@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { select } from 'react-select-event';
 
 import { SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { SelectBase } from './SelectBase';
 
@@ -224,7 +225,7 @@ describe('SelectBase', () => {
     it('renders menu with provided options', async () => {
       render(<SelectBase options={options} onChange={onChangeHandler} />);
       await userEvent.click(screen.getByText(/choose/i));
-      const menuOptions = screen.getAllByLabelText('Select option');
+      const menuOptions = screen.getAllByTestId(selectors.components.Select.option);
       expect(menuOptions).toHaveLength(2);
     });
 
@@ -250,7 +251,7 @@ describe('SelectBase', () => {
 
       await selectOptionInTest(selectEl, 'Option 2');
       await userEvent.click(screen.getByText(/option 2/i));
-      const menuOptions = screen.getAllByLabelText('Select option');
+      const menuOptions = screen.getAllByTestId(selectors.components.Select.option);
       expect(menuOptions).toHaveLength(2);
     });
   });

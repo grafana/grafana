@@ -420,7 +420,7 @@ export const Components = {
     current: () => '[class*="-currentVisualizationItem"]',
   },
   Select: {
-    option: 'Select option',
+    option: 'data-testid Select option',
     input: () => 'input[id*="time-options-input"]',
     singleValue: () => 'div[class*="-singleValue"]',
   },
