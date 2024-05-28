@@ -44,6 +44,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   providerApiVersion = '2021-04-01';
   locationsApiVersion = '2020-01-01';
   defaultSubscriptionId?: string;
+  basicLogsEnabled?: boolean;
   resourcePath: string;
   azurePortalUrl: string;
   declare resourceGroup: string;
@@ -56,6 +57,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     super(instanceSettings);
 
     this.defaultSubscriptionId = instanceSettings.jsonData.subscriptionId;
+    this.basicLogsEnabled = instanceSettings.jsonData.basicLogsEnabled;
 
     const cloud = getAzureCloud(instanceSettings);
     this.resourcePath = routeNames.azureMonitor;
