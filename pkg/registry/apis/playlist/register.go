@@ -1,6 +1,7 @@
 package playlist
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -17,8 +18,10 @@ import (
 	playlist "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/builder"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -30,16 +33,22 @@ type PlaylistAPIBuilder struct {
 	service    playlistsvc.Service
 	namespacer request.NamespaceMapper
 	gv         schema.GroupVersion
+	features   featuremgmt.FeatureToggles
+	kvStore    *kvstore.NamespacedKVStore
 }
 
 func RegisterAPIService(p playlistsvc.Service,
 	apiregistration builder.APIRegistrar,
 	cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
+	kvStore kvstore.KVStore,
 ) *PlaylistAPIBuilder {
 	builder := &PlaylistAPIBuilder{
 		service:    p,
 		namespacer: request.GetNamespaceMapper(cfg),
 		gv:         playlist.PlaylistResourceInfo.GroupVersion(),
+		features:   features,
+		kvStore:    kvstore.WithNamespace(kvStore, 0, "storage.dualwriting"),
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -118,7 +127,12 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 		if err != nil {
 			return nil, err
 		}
-		storage[resource.StoragePath()] = grafanarest.NewDualWriterMode2(legacyStore, store)
+
+		dualWriter, err := grafanarest.SetDualWritingMode(context.Background(), b.kvStore, b.features, "playlist", legacyStore, store)
+		if err != nil {
+			return nil, err
+		}
+		storage[resource.StoragePath()] = dualWriter
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[playlist.VERSION] = storage

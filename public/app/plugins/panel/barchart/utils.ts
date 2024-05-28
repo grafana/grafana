@@ -308,18 +308,18 @@ export const prepConfig = ({ series, color, orientation, options, timeZone, them
   });
 
   const xFieldAxisPlacement =
-    frame.fields[0].config.custom?.axisPlacement !== AxisPlacement.Hidden
+    frame.fields[0]?.config.custom?.axisPlacement !== AxisPlacement.Hidden
       ? vizOrientation.xOri === ScaleOrientation.Horizontal
         ? AxisPlacement.Bottom
         : AxisPlacement.Left
       : AxisPlacement.Hidden;
-  const xFieldAxisShow = frame.fields[0].config.custom?.axisPlacement !== AxisPlacement.Hidden;
+  const xFieldAxisShow = frame.fields[0]?.config.custom?.axisPlacement !== AxisPlacement.Hidden;
 
   builder.addAxis({
     scaleKey: 'x',
     isTime: false,
     placement: xFieldAxisPlacement,
-    label: frame.fields[0].config.custom?.axisLabel,
+    label: frame.fields[0]?.config.custom?.axisLabel,
     splits: config.xSplits,
     filter: vizOrientation.xOri === 0 ? config.hFilter : undefined,
     values: config.xValues,

@@ -194,6 +194,10 @@ describe('Loki Query Editor', () => {
     // And a value of "targetLabelValue"
     exploreCells.should('contain', 'targetLabelValue');
 
+    const addToButton = cy.get('[aria-label="Add"]');
+    addToButton.should('be.visible');
+    addToButton.click();
+
     const addToDashboardButton = cy.get('[aria-label="Add to dashboard"]');
 
     // Now let's add this to a dashboard
