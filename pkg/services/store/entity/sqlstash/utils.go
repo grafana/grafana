@@ -85,19 +85,21 @@ func countTrue(bools ...bool) uint64 {
 // query uses `req` as input and output for a zero or more row-returning query
 // generated with `tmpl`, and executed in `x`.
 func query[T any](ctx context.Context, x db.ContextExecer, tmpl *template.Template, req sqltemplate.WithResults[T]) ([]T, error) {
-	query, err := sqltemplate.Execute(tmpl, req)
+	rawQuery, err := sqltemplate.Execute(tmpl, req)
 	if err != nil {
 		return nil, fmt.Errorf("execute template: %w", err)
 	}
+	query := sqltemplate.FormatSQL(rawQuery)
 
-	args := req.GetArgs()
-	rows, err := x.QueryContext(ctx, query, args...)
+	rows, err := x.QueryContext(ctx, query, req.GetArgs()...)
 	if err != nil {
 		return nil, SQLError{
 			Err:       err,
 			CallType:  "Query",
-			Arguments: args,
+			Arguments: req.GetArgs(),
+			ScanDest:  req.GetScanDest(),
 			Query:     query,
+			RawQuery:  rawQuery,
 		}
 	}
 	defer rows.Close() //nolint:errcheck
@@ -123,19 +125,21 @@ func query[T any](ctx context.Context, x db.ContextExecer, tmpl *template.Templa
 func queryRow[T any](ctx context.Context, x db.ContextExecer, tmpl *template.Template, req sqltemplate.WithResults[T]) (T, error) {
 	var zero T
 
-	query, err := sqltemplate.Execute(tmpl, req)
+	rawQuery, err := sqltemplate.Execute(tmpl, req)
 	if err != nil {
 		return zero, fmt.Errorf("execute template: %w", err)
 	}
+	query := sqltemplate.FormatSQL(rawQuery)
 
-	args := req.GetArgs()
-	row := x.QueryRowContext(ctx, query, args...)
+	row := x.QueryRowContext(ctx, query, req.GetArgs()...)
 	if err := row.Err(); err != nil {
 		return zero, SQLError{
 			Err:       err,
-			CallType:  "Exec",
-			Arguments: args,
+			CallType:  "QueryRow",
+			Arguments: req.GetArgs(),
+			ScanDest:  req.GetScanDest(),
 			Query:     query,
+			RawQuery:  rawQuery,
 		}
 	}
 
@@ -164,19 +168,20 @@ func scanRow[T any](sc scanner, req sqltemplate.WithResults[T]) (zero T, err err
 // exec uses `req` as input for a non-data returning query generated with
 // `tmpl`, and executed in `x`.
 func exec(ctx context.Context, x db.ContextExecer, tmpl *template.Template, req sqltemplate.SQLTemplateIface) (sql.Result, error) {
-	query, err := sqltemplate.Execute(tmpl, req)
+	rawQuery, err := sqltemplate.Execute(tmpl, req)
 	if err != nil {
 		return nil, fmt.Errorf("execute template: %w", err)
 	}
+	query := sqltemplate.FormatSQL(rawQuery)
 
-	args := req.GetArgs()
-	res, err := x.ExecContext(ctx, query, args...)
+	res, err := x.ExecContext(ctx, query, req.GetArgs()...)
 	if err != nil {
 		return nil, SQLError{
 			Err:       err,
 			CallType:  "Exec",
-			Arguments: args,
+			Arguments: req.GetArgs(),
 			Query:     query,
+			RawQuery:  rawQuery,
 		}
 	}
 

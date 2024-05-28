@@ -17,6 +17,9 @@ type SQLTemplate struct {
 // New returns a nee *SQLTemplate that will use the given dialect.
 func New(d Dialect) *SQLTemplate {
 	return &SQLTemplate{
+		Args: Args{
+			d: d,
+		},
 		Dialect: d,
 	}
 }

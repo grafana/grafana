@@ -15,13 +15,23 @@ var (
 // the right order. Add it to your data types passed to SQLTemplate, either by
 // embedding or with a named struct field if its Arg method would clash with
 // another struct field.
-type Args []any
+type Args struct {
+	d      Dialect
+	values []any
+}
+
+func NewArgs(d Dialect) *Args {
+	return &Args{
+		d: d,
+	}
+}
 
 // Arg can be called from within templates to pass arguments to the SQL driver
 // to use in the execution of the query.
 func (a *Args) Arg(x any) string {
-	*a = append(*a, x)
-	return "?"
+	a.values = append(a.values, x)
+
+	return a.d.ArgPlaceholder(len(a.values))
 }
 
 // ArgList returns a comma separated list of `?` placeholders for each element
@@ -59,12 +69,12 @@ func (a *Args) ArgList(slice reflect.Value) (string, error) {
 	return b.String(), nil
 }
 
-func (a *Args) GetArgs() Args {
-	return *a
+func (a *Args) GetArgs() []any {
+	return a.values
 }
 
 type ArgsIface interface {
 	Arg(x any) string
 	ArgList(slice reflect.Value) (string, error)
-	GetArgs() Args
+	GetArgs() []any
 }

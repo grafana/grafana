@@ -77,8 +77,10 @@ var (
 type SQLError struct {
 	Err       error
 	CallType  string // either Query, QueryRow or Exec
-	Arguments sqltemplate.Args
+	Arguments []any
+	ScanDest  []any
 	Query     string
+	RawQuery  string
 }
 
 func (e SQLError) Unwrap() error {
@@ -90,8 +92,16 @@ func (e SQLError) Error() string {
 }
 
 func (e SQLError) Debug() string {
-	return fmt.Sprintf("call %s in database: %v\n\tArguments: %#v\n\tQuery: %s",
-		e.CallType, e.Err, e.Arguments, e.Query)
+	scanDestStr := "(none)"
+	if len(e.ScanDest) > 0 {
+		format := "[%T" + strings.Repeat(", %T", len(e.ScanDest)-1) + "]"
+		scanDestStr = fmt.Sprintf(format, e.ScanDest...)
+	}
+
+	return fmt.Sprintf("call %s in database: %v\n\tArguments (%d): %#v\n\t"+
+		"Return Value Types (%d): %s\n\tExecuted Query: %s\n\tRaw SQL "+
+		"Template Output: %s", e.CallType, e.Err, len(e.Arguments), e.Arguments,
+		len(e.ScanDest), scanDestStr, e.Query, e.RawQuery)
 }
 
 // entity_folder table requests.
