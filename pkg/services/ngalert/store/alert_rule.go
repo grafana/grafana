@@ -363,12 +363,12 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 		}
 
 		if len(query.NamespaceUIDs) > 0 {
-			args, in := getQueryArgs(query.NamespaceUIDs)
+			args, in := getINSubQueryArgs(query.NamespaceUIDs)
 			q = q.Where(fmt.Sprintf("namespace_uid IN (%s)", strings.Join(in, ",")), args...)
 		}
 
 		if len(query.RuleGroups) > 0 {
-			args, in := getQueryArgs(query.NamespaceUIDs)
+			args, in := getINSubQueryArgs(query.NamespaceUIDs)
 			q = q.Where(fmt.Sprintf("rule_group IN (%s)", strings.Join(in, ",")), args...)
 		}
 
@@ -786,7 +786,7 @@ func (st DBstore) GetNamespacesByRuleUID(ctx context.Context, orgID int64, uids 
 	return result, err
 }
 
-func getQueryArgs[T any](inputSlice []T) ([]any, []string) {
+func getINSubQueryArgs[T any](inputSlice []T) ([]any, []string) {
 	args := make([]any, 0, len(inputSlice))
 	in := make([]string, 0, len(inputSlice))
 	for _, t := range inputSlice {
