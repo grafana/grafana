@@ -50,6 +50,7 @@ export interface Props extends Themeable2 {
   onClickHideField?: (key: string) => void;
   onPinLine?: (row: LogRowModel) => void;
   onUnpinLine?: (row: LogRowModel) => void;
+  pinLineButtonTooltipTitle?: string;
   onLogRowHover?: (row?: LogRowModel) => void;
   onOpenContext?: (row: LogRowModel, onClose: () => void) => void;
   getRowContextQuery?: (
@@ -63,10 +64,6 @@ export interface Props extends Themeable2 {
   isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   pinnedRowId?: string;
   containerRendered?: boolean;
-  /**
-   * Used to pin a row to the content outline in Explore
-   */
-  onPinToContentOutlineClick?: (row: LogRowModel, onOpenContext: (row: LogRowModel) => void) => void;
   /**
    * If false or undefined, the `contain:strict` css property will be added to the wrapping `<table>` for performance reasons.
    * Any overflowing content will be clipped at the table boundary.
@@ -242,10 +239,10 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   permalinkedRowId={this.props.permalinkedRowId}
                   onPinLine={this.props.onPinLine}
                   onUnpinLine={this.props.onUnpinLine}
+                  pinLineButtonTooltipTitle={this.props.pinLineButtonTooltipTitle}
                   pinned={this.props.pinnedRowId === row.uid}
                   isFilterLabelActive={this.props.isFilterLabelActive}
                   handleTextSelection={this.popoverMenuSupported() ? this.handleSelection : undefined}
-                  onPinToContentOutlineClick={this.props.onPinToContentOutlineClick}
                   {...rest}
                 />
               ))}
@@ -265,10 +262,10 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   permalinkedRowId={this.props.permalinkedRowId}
                   onPinLine={this.props.onPinLine}
                   onUnpinLine={this.props.onUnpinLine}
+                  pinLineButtonTooltipTitle={this.props.pinLineButtonTooltipTitle}
                   pinned={this.props.pinnedRowId === row.uid}
                   isFilterLabelActive={this.props.isFilterLabelActive}
                   handleTextSelection={this.popoverMenuSupported() ? this.handleSelection : undefined}
-                  onPinToContentOutlineClick={this.props.onPinToContentOutlineClick}
                   {...rest}
                 />
               ))}

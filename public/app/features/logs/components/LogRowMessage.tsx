@@ -25,14 +25,11 @@ interface Props {
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;
   onUnpinLine?: (row: LogRowModel) => void;
+  pinLineButtonTooltipTitle?: string;
   pinned?: boolean;
   styles: LogRowStyles;
   mouseIsOver: boolean;
   onBlur: () => void;
-  /**
-   * Used to pin a row to the content outline in Explore
-   */
-  onPinToContentOutlineClick?: (row: LogRowModel, onOpenContext: (row: LogRowModel) => void) => void;
 }
 
 interface LogMessageProps {
@@ -84,11 +81,11 @@ export const LogRowMessage = React.memo((props: Props) => {
     onPermalinkClick,
     onUnpinLine,
     onPinLine,
+    pinLineButtonTooltipTitle,
     pinned,
     mouseIsOver,
     onBlur,
     getRowContextQuery,
-    onPinToContentOutlineClick,
   } = props;
   const { hasAnsi, raw } = row;
   const restructuredEntry = useMemo(() => restructureLog(raw, prettifyLogMessage), [raw, prettifyLogMessage]);
@@ -117,11 +114,11 @@ export const LogRowMessage = React.memo((props: Props) => {
             onPermalinkClick={onPermalinkClick}
             onPinLine={onPinLine}
             onUnpinLine={onUnpinLine}
+            pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
             pinned={pinned}
             styles={styles}
             mouseIsOver={mouseIsOver}
             onBlur={onBlur}
-            onPinToContentOutlineClick={onPinToContentOutlineClick}
           />
         )}
       </td>

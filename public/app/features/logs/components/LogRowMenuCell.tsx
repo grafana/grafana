@@ -20,13 +20,11 @@ interface Props {
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;
   onUnpinLine?: (row: LogRowModel) => void;
+  pinLineButtonTooltipTitle?: string;
   pinned?: boolean;
   styles: LogRowStyles;
   mouseIsOver: boolean;
   onBlur: () => void;
-  /**
-   * Used to pin a row to the content outline in Explore
-   */
   onPinToContentOutlineClick?: (row: LogRowModel, onOpenContext: (row: LogRowModel) => void) => void;
 }
 
@@ -37,6 +35,7 @@ export const LogRowMenuCell = React.memo(
     onPermalinkClick,
     onPinLine,
     onUnpinLine,
+    pinLineButtonTooltipTitle,
     pinned,
     row,
     showContextToggle,
@@ -44,7 +43,6 @@ export const LogRowMenuCell = React.memo(
     mouseIsOver,
     onBlur,
     getRowContextQuery,
-    onPinToContentOutlineClick,
   }: Props) => {
     const shouldShowContextToggle = showContextToggle ? showContextToggle(row) : false;
     const onLogRowClick = useCallback((e: SyntheticEvent) => {
@@ -150,7 +148,7 @@ export const LogRowMenuCell = React.memo(
                 size="md"
                 name="gf-pin"
                 onClick={() => onPinLine && onPinLine(row)}
-                tooltip="Pin line"
+                tooltip={pinLineButtonTooltipTitle ?? 'Pin line'}
                 tooltipPlacement="top"
                 aria-label="Pin line"
                 tabIndex={0}
@@ -164,17 +162,6 @@ export const LogRowMenuCell = React.memo(
                 size="md"
                 name="share-alt"
                 onClick={() => onPermalinkClick(row)}
-                tabIndex={0}
-              />
-            )}
-            {onPinToContentOutlineClick && row.rowId !== undefined && row.uid && (
-              <IconButton
-                tooltip="Pin to content outline"
-                aria-label="Pin to content outline"
-                tooltipPlacement="top"
-                size="md"
-                name="gf-pin"
-                onClick={() => onPinToContentOutlineClick(row, onOpenContext)}
                 tabIndex={0}
               />
             )}

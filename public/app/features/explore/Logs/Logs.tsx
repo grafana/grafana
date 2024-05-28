@@ -652,7 +652,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     this.topLogsRef.current?.scrollIntoView();
   };
 
-  onPinToContentOutlineClick = (row: LogRowModel, onOpenContext: (row: LogRowModel) => void) => {
+  onPinToContentOutlineClick = (row: LogRowModel) => {
     this.context?.register({
       icon: 'gf-logs',
       title: 'Pinned log',
@@ -661,7 +661,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
       ref: null,
       color: LogLevelColor[row.logLevel],
       childOnTop: true,
-      onClick: () => onOpenContext(row),
+      onClick: () => this.onOpenContext(row, () => {}),
       onRemove: (id: string) => {
         this.context?.unregister(id);
       },
@@ -961,7 +961,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
                     containerRendered={!!this.state.logsContainer}
                     onClickFilterValue={this.props.onClickFilterValue}
                     onClickFilterOutValue={this.props.onClickFilterOutValue}
-                    onPinToContentOutlineClick={this.onPinToContentOutlineClick}
+                    onPinLine={this.onPinToContentOutlineClick}
+                    pinLineButtonTooltipTitle="Pin to content outline"
                   />
                 </InfiniteScroll>
               </div>
