@@ -5,7 +5,7 @@ go 1.21.10
 require (
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/gorilla/mux v1.8.1
-	github.com/grafana/grafana-plugin-sdk-go v0.231.0
+	github.com/grafana/grafana-plugin-sdk-go v0.232.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240409140820-518d3341d58f
 	github.com/prometheus/client_golang v1.19.0
 	github.com/stretchr/testify v1.9.0
@@ -137,10 +137,11 @@ require (
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.18.0 // indirect
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
+	google.golang.org/genproto v0.0.0-20240227224415-6ceb2ff114de // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240415180920-8c6c420018be // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240415180920-8c6c420018be // indirect
-	google.golang.org/grpc v1.63.2 // indirect
-	google.golang.org/protobuf v1.33.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240520151616-dc85e6b867a5 // indirect
+	google.golang.org/grpc v1.64.0 // indirect
+	google.golang.org/protobuf v1.34.1 // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

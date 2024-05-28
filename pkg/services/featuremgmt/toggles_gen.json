@@ -60,7 +60,8 @@
       "metadata": {
         "name": "returnToPrevious",
         "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "creationTimestamp": "2024-05-23T07:17:45Z",
+        "deletionTimestamp": "2024-05-27T09:59:33Z"
       },
       "spec": {
         "description": "Enables the return to previous context functionality",
@@ -587,15 +588,17 @@
     {
       "metadata": {
         "name": "dashboardRestore",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1716564259132",
+        "creationTimestamp": "2024-05-23T07:17:45Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-05-24 15:24:19.132272 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables deleted dashboard restore feature",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
-        "hideFromAdminPage": true,
-        "hideFromDocs": true
+        "hideFromAdminPage": true
       }
     },
     {
@@ -2203,26 +2206,19 @@
     },
     {
       "metadata": {
-        "name": "influxdbRunQueriesInParallel",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
-      },
-      "spec": {
-        "description": "Enables running InfluxDB Influxql queries in parallel",
-        "stage": "privatePreview",
-        "codeowner": "@grafana/observability-metrics"
-      }
-    },
-    {
-      "metadata": {
-        "name": "disableSSEDataplane",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "name": "dashboardRestore",
+        "resourceVersion": "1716563559003",
+        "creationTimestamp": "2024-02-20T18:50:41Z",
+        "deletionTimestamp": "2024-05-24T15:24:19Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-05-24 15:12:39.003245 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Disables dataplane specific processing in server side expressions.",
         "stage": "experimental",
-        "codeowner": "@grafana/observability-metrics"
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "hideFromAdminPage": true
       }
     },
     {
@@ -2236,6 +2232,57 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingListViewV2",
+        "resourceVersion": "1716558084235",
+        "creationTimestamp": "2024-05-24T13:41:24Z"
+      },
+      "spec": {
+        "description": "Enables the new alert list view design",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "preserveDashboardStateWhenNavigating",
+        "resourceVersion": "1716555778767",
+        "creationTimestamp": "2024-05-24T13:02:58Z"
+      },
+      "spec": {
+        "description": "Enables possibility to preserve dashboard variables and time range when navigating between dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "disableSSEDataplane",
+        "resourceVersion": "1716816471156",
+        "creationTimestamp": "2024-05-27T13:27:51Z"
+      },
+      "spec": {
+        "description": "Disables dataplane specific processing in server side expressions.",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-metrics"
+      }
+    },
+    {
+      "metadata": {
+        "name": "influxdbRunQueriesInParallel",
+        "resourceVersion": "1716816471156",
+        "creationTimestamp": "2024-05-27T13:27:51Z"
+      },
+      "spec": {
+        "description": "Enables running InfluxDB Influxql queries in parallel",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/observability-metrics"
       }
     }
   ]
