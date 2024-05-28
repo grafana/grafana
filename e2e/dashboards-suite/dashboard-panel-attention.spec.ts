@@ -15,6 +15,7 @@ describe('Dashboard Panel Attention', () => {
 
   it('Should give panel attention on hover', () => {
     e2e.components.Panels.Panel.title('State timeline').trigger('mousemove');
+    cy.wait(100); // Wait because of debounce
     cy.get('body').type('v');
     cy.url().should('include', 'viewPanel=41');
   });
@@ -22,6 +23,7 @@ describe('Dashboard Panel Attention', () => {
   it('Should change panel attention between focus and mousemove', () => {
     e2e.components.Panels.Panel.title('Size, color mapped to different fields + share view').focus();
     e2e.components.Panels.Panel.title('State timeline').trigger('mousemove');
+    cy.wait(100); // Wait because of debounce
     cy.get('body').type('v');
     cy.url().should('include', 'viewPanel=41');
   });

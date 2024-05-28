@@ -93,7 +93,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
 
     // Can this eventBus be on PanelModel?  when we have more complex event filtering, that may be a better option
     const eventBus = props.dashboard.events.newScopedBus(`panel:${props.panel.id}`, this.eventFilter);
-    this.setPanelAttention = debounce(this.setPanelAttention.bind(this), 100);
+    this.debouncedSetPanelAttention = debounce(this.setPanelAttention.bind(this), 100);
 
     this.state = {
       isFirstLoad: true,
@@ -552,6 +552,8 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     appEvents.publish(new SetPanelAttentionEvent({ panelId: this.props.panel.id }));
   }
 
+  debouncedSetPanelAttention() {}
+
   render() {
     const { dashboard, panel, width, height, plugin } = this.props;
     const { errorMessage, data } = this.state;
@@ -587,7 +589,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         onCancelQuery={panelChromeProps.onCancelQuery}
         onOpenMenu={panelChromeProps.onOpenMenu}
         onFocus={() => this.setPanelAttention()}
-        onMouseMove={() => this.setPanelAttention()}
+        onMouseMove={() => this.debouncedSetPanelAttention()}
       >
         {(innerWidth, innerHeight) => (
           <>
