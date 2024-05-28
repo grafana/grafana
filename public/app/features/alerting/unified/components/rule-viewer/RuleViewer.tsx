@@ -227,7 +227,7 @@ export const Title = ({ name, paused = false, state, health, ruleType, ruleOrigi
   const styles = useStyles2(getStyles);
   const [queryParams] = useQueryParams();
   const isRecordingRule = ruleType === PromRuleType.Recording;
-  const returnTo = !queryParams.returnTo ? '/alerting/list' : String(queryParams.returnTo);
+  const returnTo = queryParams.returnTo ? String(queryParams.returnTo) : '/alerting/list';
 
   return (
     <div className={styles.title}>
