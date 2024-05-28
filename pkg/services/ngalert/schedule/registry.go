@@ -87,6 +87,10 @@ type Evaluation struct {
 	folderTitle string
 }
 
+func (e *Evaluation) Fingerprint() fingerprint {
+	return ruleWithFolder{e.rule, e.folderTitle}.Fingerprint()
+}
+
 type alertRulesRegistry struct {
 	rules        map[models.AlertRuleKey]*models.AlertRule
 	folderTitles map[models.FolderKey]string
