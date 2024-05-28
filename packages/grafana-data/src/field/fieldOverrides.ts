@@ -468,9 +468,23 @@ export const getLinksSupplier =
 
       let linkModel: LinkModel<Field>;
 
+      let href =
+        link.onClick || !link.onBuildUrl
+          ? link.url
+          : link.onBuildUrl({
+              origin: field,
+              replaceVariables: boundReplaceVariables,
+            });
+
+      if (href) {
+        href = locationUtil.assureBaseUrl(href.replace(/\n/g, ''));
+        href = replaceVariables(href, dataLinkScopedVars, VariableFormatID.UriEncode);
+        href = locationUtil.processUrl(href);
+      }
+
       if (link.onClick) {
         linkModel = {
-          href: link.url,
+          href,
           title: replaceVariables(link.title || '', dataLinkScopedVars),
           target: link.targetBlank ? '_blank' : undefined,
           onClick: (evt: MouseEvent, origin: Field) => {
@@ -483,19 +497,6 @@ export const getLinksSupplier =
           origin: field,
         };
       } else {
-        let href = link.onBuildUrl
-          ? link.onBuildUrl({
-              origin: field,
-              replaceVariables: boundReplaceVariables,
-            })
-          : link.url;
-
-        if (href) {
-          href = locationUtil.assureBaseUrl(href.replace(/\n/g, ''));
-          href = replaceVariables(href, dataLinkScopedVars, VariableFormatID.UriEncode);
-          href = locationUtil.processUrl(href);
-        }
-
         linkModel = {
           href,
           title: replaceVariables(link.title || '', dataLinkScopedVars),
