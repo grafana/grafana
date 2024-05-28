@@ -31,12 +31,6 @@ export const AlertManagerPicker = ({ disabled = false }: Props) => {
   const isDisabled = disabled || options.length === 1;
   const label = isDisabled ? 'Alertmanager' : 'Choose Alertmanager';
 
-  // User may have selected an alertmanager elsewhere in the application that has then ended up being filtered out
-  // In this case, we default back to Grafana AM
-  const selectedValue = options.some((am) => am.value === selectedAlertmanager)
-    ? selectedAlertmanager
-    : GRAFANA_RULES_SOURCE_NAME;
-
   return (
     <InlineField className={styles.field} label={label} disabled={isDisabled} data-testid="alertmanager-picker">
       <Select
@@ -52,7 +46,7 @@ export const AlertManagerPicker = ({ disabled = false }: Props) => {
         options={options}
         maxMenuHeight={500}
         noOptionsMessage="No datasources found"
-        value={selectedValue}
+        value={selectedAlertmanager}
         getOptionLabel={(o) => o.label}
       />
     </InlineField>
