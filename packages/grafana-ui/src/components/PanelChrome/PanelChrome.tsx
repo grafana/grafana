@@ -251,8 +251,8 @@ export function PanelChrome({
       style={containerStyles}
       data-testid={testid}
       tabIndex={0} // eslint-disable-line jsx-a11y/no-noninteractive-tabindex
-      onFocus={() => onFocus?.()}
-      onMouseMove={() => onMouseMove?.()}
+      onFocus={onFocus}
+      onMouseMove={onMouseMove}
       ref={ref}
     >
       <div className={styles.loadingBarContainer}>
