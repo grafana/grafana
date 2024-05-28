@@ -1179,6 +1179,10 @@
       "subtitle": "Optimisez les performances grâce aux analyses de la surveillance synthétique et k6",
       "title": "Tests et synthèses"
     },
+    "trash": {
+      "subtitle": "",
+      "title": ""
+    },
     "upgrading": {
       "title": "Statistiques et licence"
     },
