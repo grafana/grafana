@@ -12,7 +12,7 @@ require (
 	github.com/stretchr/testify v1.9.0
 	go.opentelemetry.io/otel v1.26.0
 	go.opentelemetry.io/otel/trace v1.26.0
-	golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb
+	golang.org/x/exp v0.0.0-20240119083558-1b970713d09a
 )
 
 require (
@@ -20,7 +20,7 @@ require (
 	github.com/alecthomas/units v0.0.0-20231202071711-9a357b53e9c9 // indirect
 	github.com/apache/arrow/go/v15 v15.0.2 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
-	github.com/aws/aws-sdk-go v1.50.29 // indirect
+	github.com/aws/aws-sdk-go v1.51.25 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
@@ -62,7 +62,7 @@ require (
 	github.com/invopop/jsonschema v0.12.0 // indirect
 	github.com/invopop/yaml v0.2.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
-	github.com/klauspost/compress v1.17.4 // indirect
+	github.com/klauspost/compress v1.17.8 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.5 // indirect
 	github.com/magefile/mage v1.15.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
@@ -103,11 +103,12 @@ require (
 	go.opentelemetry.io/proto/otlp v1.2.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/goleak v1.3.0 // indirect
-	golang.org/x/mod v0.15.0 // indirect
+	golang.org/x/mod v0.17.0 // indirect
 	golang.org/x/net v0.25.0 // indirect
+	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/sys v0.20.0 // indirect
 	golang.org/x/text v0.15.0 // indirect
-	golang.org/x/tools v0.18.0 // indirect
+	golang.org/x/tools v0.20.0 // indirect
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240415180920-8c6c420018be // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240520151616-dc85e6b867a5 // indirect

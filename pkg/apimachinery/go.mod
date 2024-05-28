@@ -3,7 +3,7 @@ module github.com/grafana/grafana/pkg/apimachinery
 go 1.21.10
 
 require (
-	k8s.io/apimachinery v0.29.2
+	k8s.io/apimachinery v0.29.3
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340
 )
 
