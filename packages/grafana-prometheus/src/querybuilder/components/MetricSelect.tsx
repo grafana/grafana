@@ -190,7 +190,7 @@ export function MetricSelect({
           {...props.innerProps}
           ref={props.innerRef}
           className={`${styles.customOptionWidth} metric-encyclopedia-open`}
-          aria-label="Select option"
+          data-testid={selectors.components.Select.option}
           onKeyDown={(e) => {
             // if there is no metric and the m.e. is enabled, open the modal
             if (e.code === 'Enter') {

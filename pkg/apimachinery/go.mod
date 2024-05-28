@@ -3,7 +3,7 @@ module github.com/grafana/grafana/pkg/apimachinery
 go 1.21.10
 
 require (
-	k8s.io/apimachinery v0.29.2
+	k8s.io/apimachinery v0.29.3
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340
 )
 
@@ -28,7 +28,7 @@ require (
 	github.com/stretchr/testify v1.9.0 // indirect
 	golang.org/x/net v0.25.0 // indirect
 	golang.org/x/text v0.15.0 // indirect
-	google.golang.org/protobuf v1.33.0 // indirect
+	google.golang.org/protobuf v1.34.1 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
