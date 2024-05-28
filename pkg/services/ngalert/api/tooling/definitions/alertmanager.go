@@ -829,7 +829,7 @@ func (c *GettableApiAlertingConfig) UnmarshalYAML(value *yaml.Node) error {
 	// Otherwise, the yaml decoder will detect this and only use the embedded type.
 	// Additionally, we'll use pointers to slices in order to reference the intended target.
 	type overrides struct {
-		Receivers *[]*GettableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
+		Receivers *[]*GettableApiReceiver `yaml:"receivers,omitempty"`
 	}
 
 	if err := value.Decode(&overrides{Receivers: &c.Receivers}); err != nil {

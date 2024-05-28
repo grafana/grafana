@@ -348,7 +348,8 @@ func TestAlertmanagerAutogenConfig(t *testing.T) {
 		cOpt := []cmp.Option{
 			cmpopts.IgnoreUnexported(apimodels.PostableUserConfig{}, apimodels.Route{}, labels.Matcher{}),
 			cmpopts.IgnoreFields(amconfig.GlobalConfig{}, "HTTPConfig"),
-			cmpopts.IgnoreFields(apimodels.PostableGrafanaReceiver{}, "UID", "Settings")}
+			cmpopts.IgnoreFields(apimodels.PostableGrafanaReceiver{}, "UID", "Settings"),
+		}
 		if !cmp.Equal(test, exp, cOpt...) {
 			t.Errorf("Unexpected AM Config: %v", cmp.Diff(test, exp, cOpt...))
 		}
