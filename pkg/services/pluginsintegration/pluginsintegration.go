@@ -121,7 +121,7 @@ var WireSet = wire.NewSet(
 	renderer.ProvideService,
 	wire.Bind(new(rendering.PluginManager), new(*renderer.Manager)),
 	pluginexternal.ProvideService,
-	plugincontext.BaseProvideService,
+	plugincontext.ProvideBaseService,
 	wire.Bind(new(plugincontext.BasePluginContextProvider), new(*plugincontext.BaseProvider)),
 )
 

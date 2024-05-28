@@ -20,16 +20,16 @@ type BasePluginContextProvider interface {
 	GetBasePluginContext(ctx context.Context, plugin pluginstore.Plugin, user identity.Requester) backend.PluginContext
 }
 
-func BaseProvideService(cfg *setting.Cfg, pluginRequestConfigProvider pluginconfig.PluginRequestConfigProvider) *BaseProvider {
+func ProvideBaseService(cfg *setting.Cfg, pluginRequestConfigProvider pluginconfig.PluginRequestConfigProvider) *BaseProvider {
+	return newBaseProvider(cfg, pluginRequestConfigProvider)
+}
+
+func newBaseProvider(cfg *setting.Cfg, pluginRequestConfigProvider pluginconfig.PluginRequestConfigProvider) *BaseProvider {
 	return &BaseProvider{
 		cfg:                         cfg,
 		pluginRequestConfigProvider: pluginRequestConfigProvider,
 		logger:                      log.New("base.plugin.context"),
 	}
-}
-
-func newBaseProvider(cfg *setting.Cfg, pluginRequestConfigProvider pluginconfig.PluginRequestConfigProvider) *BaseProvider {
-	return BaseProvideService(cfg, pluginRequestConfigProvider)
 }
 
 type BaseProvider struct {

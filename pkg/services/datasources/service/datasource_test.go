@@ -84,7 +84,7 @@ func TestService_AddDataSource(t *testing.T) {
 			ValidateAdmissionFunc: dsplugin.ValidateAdmission,
 			MutateAdmissionFunc:   dsplugin.MutateAdmission,
 			ConvertObjectFunc:     dsplugin.ConvertObject,
-		}, plugincontext.BaseProvideService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()))
+		}, plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()))
 		require.NoError(t, err)
 
 		cmd := &datasources.AddDataSourceCommand{
@@ -237,7 +237,7 @@ func TestService_UpdateDataSource(t *testing.T) {
 					},
 				},
 			}, &pluginfakes.FakePluginClient{},
-			plugincontext.BaseProvideService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()))
+			plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()))
 		require.NoError(t, err)
 
 		// First add the datasource
