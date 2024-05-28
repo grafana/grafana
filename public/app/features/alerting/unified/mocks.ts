@@ -309,9 +309,9 @@ export const mockSilence = (partial: Partial<Silence> = {}): Silence => {
       state: SilenceState.Active,
     },
     accessControl: {
-      [AccessControlAction.AlertingSilenceCreate]: true,
-      [AccessControlAction.AlertingSilenceRead]: true,
-      [AccessControlAction.AlertingSilenceUpdate]: true,
+      create: true,
+      read: true,
+      write: true,
     },
     ...partial,
   };
