@@ -182,20 +182,17 @@ name = Okta
 icon = okta
 enabled = true
 allow_sign_up = true
-client_id = 0oads6ziaaiiz4zz45d7
+client_id = <client id>
 scopes = openid profile email offline_access
 auth_url = https://<okta tenant id>.okta.com/oauth2/v1/authorize
 token_url = https://<okta tenant id>.okta.com/oauth2/v1/token
 api_url = https://<okta tenant id>.okta.com/oauth2/v1/userinfo
 role_attribute_path = grafana_role
-;role_attribute_path = contains(groups[*], 'Example::DevOps') && 'Admin' || 'None'
 role_attribute_strict = true
 allowed_groups = "Example::DevOps" "Example::Dev" "Example::QA"
 ```
 
 ### Configure a refresh token
-
-> Available in Grafana v9.3 and later versions.
 
 When a user logs in using an OAuth provider, Grafana verifies that the access token has not expired. When an access token expires, Grafana uses the provided refresh token (if any exists) to obtain a new access token without requiring the user to log in again.
 
@@ -206,25 +203,25 @@ To enable the `Refresh Token` head over the Okta application settings and:
 1. Under `General` tab, find the `General Settings` section.
 1. Within the `Grant Type` options, enable the `Refresh Token` checkbox.
 
-At the configuration file, extend the `scopes` in `[auth.okta]` section with `offline_access`.
-
-{{% admonition type="note" %}}
-The `accessTokenExpirationCheck` feature toggle has been removed in Grafana v10.3.0 and the `use_refresh_token` configuration value will be used instead for configuring refresh token fetching and access token expiration check.
-{{% /admonition %}}
+At the configuration file, extend the `scopes` in `[auth.okta]` section with `offline_access` and set `use_refresh_token` to `true`.
 
 ### Configure role mapping
 
 > **Note:** Unless `skip_org_role_sync` option is enabled, the user's role will be set to the role retrieved from the auth provider upon user login.
 
 The user's role is retrieved using a [JMESPath](http://jmespath.org/examples.html) expression from the `role_attribute_path` configuration option against the `api_url` (`/userinfo` OIDC endpoint) endpoint payload.
-To map the server administrator role, use the `allow_assign_grafana_admin` configuration option.
-Refer to [configuration options]({{< relref "../generic-oauth/index.md#configuration-options" >}}) for more information.
 
 If no valid role is found, the user is assigned the role specified by [the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
-You can disable this default role assignment by setting `role_attribute_strict = true`.
-This setting denies user access if no role or an invalid role is returned.
+You can disable this default role assignment by setting `role_attribute_strict = true`. This setting denies user access if no role or an invalid role is returned.
 
-To learn about adding custom claims to the user info in Okta, refer to [add custom claims](https://developer.okta.com/docs/guides/customize-tokens-returned-from-okta/main/#add-a-custom-claim-to-a-token). Refer to the generic OAuth page for [JMESPath examples]({{< relref "../generic-oauth/index.md#role-mapping-examples" >}}).
+To allow mapping Grafana server administrator role, use the `allow_assign_grafana_admin` configuration option.
+Refer to [configuration options]({{< relref "../generic-oauth/index.md#configuration-options" >}}) for more information.
+
+In [Create an Okta app]({{< relref "#create-an-okta-app" >}}), you created a custom attribute in Okta to store the role. You can use this attribute to map the role to a Grafana role by setting the `role_attribute_path` configuration option to the custom attribute name: `role_attribute_path = grafana_role`.
+
+If you want to map the role based on the user's group, you can use the `groups` attribute from the user info endpoint. An example of this is `role_attribute_path = contains(groups[*], 'Example::DevOps') && 'Admin' || 'None'`. You can find more examples of JMESPath expressions on the Generic OAuth page for [JMESPath examples]({{< relref "../generic-oauth/index.md#role-mapping-examples" >}}).
+
+To learn about adding custom claims to the user info in Okta, refer to [add custom claims](https://developer.okta.com/docs/guides/customize-tokens-returned-from-okta/main/#add-a-custom-claim-to-a-token).
 
 ### Configure team synchronization (Enterprise only)
 
