@@ -88,12 +88,7 @@ func (s *SilenceService) ListSilences(ctx context.Context, user identity.Request
 		return nil, err
 	}
 
-	filtered, err := s.authz.FilterByAccess(ctx, user, silences...)
-	if err != nil {
-		return nil, err
-	}
-
-	return filtered, nil
+	return s.authz.FilterByAccess(ctx, user, silences...)
 }
 
 // CreateSilence creates a new silence.
