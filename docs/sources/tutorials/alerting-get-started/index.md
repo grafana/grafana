@@ -24,7 +24,7 @@ In this guide, we'll walk you through the process of setting up your first alert
 In this tutorial you will:
 
 - Create a contact point.
-- Set up an alert rule. 
+- Set up an alert rule.
 - Receive firing and resolved alert notifications in a public webhook.
 
 ## Before you begin
