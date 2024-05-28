@@ -115,6 +115,8 @@ composableKinds: DataQuery: {
 					dashboardTime?: bool
 					// If dashboardTime is set to true this value dictates which column the time filter will be applied to. Defaults to the first tables timeSpan column, the first datetime column found, or TimeGenerated
 					timeColumn?: string
+					// If set to true the query will be run as a basic logs query
+					basicLogsQuery?: bool
 					// Workspace ID. This was removed in Grafana 8, but remains for backwards compat.
 					workspace?: string
 
