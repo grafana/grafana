@@ -45,7 +45,7 @@ func (d *DualWriterMode2) Create(ctx context.Context, original runtime.Object, c
 	var method = "create"
 
 	startLegacy := time.Now()
-	created, err := d.Legacy.Create(ctx, obj, createValidation, options)
+	created, err := d.Legacy.Create(ctx, original, createValidation, options)
 	if err != nil {
 		log.Error(err, "unable to create object in legacy storage")
 		d.recordLegacyDuration(true, mode2Str, options.Kind, method, startLegacy)
