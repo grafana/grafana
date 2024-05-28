@@ -503,10 +503,17 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     setDisplayedFields([]);
   }, []);
 
+  const [onCloseCallback, setOnCloseCallback] = useState<() => void>(() => {});
+
   let onCloseContext = useCallback(() => {
     setContextOpen(false);
     setContextRow(undefined);
-  }, []);
+    reportInteraction('grafana_explore_logs_log_context_closed', {
+      datasourceType: contextRow?.datasourceType,
+      logRowUid: contextRow?.uid,
+    });
+    onCloseCallback?.();
+  }, [contextRow?.datasourceType, contextRow?.uid, onCloseCallback]);
 
   const onOpenContext = (row: LogRowModel, onClose: () => void) => {
     // we are setting the `contextOpen` open state and passing it down to the `LogRow` in order to highlight the row when a LogContext is open
@@ -516,15 +523,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       datasourceType: row.datasourceType,
       logRowUid: row.uid,
     });
-    onCloseContext = () => {
-      setContextOpen(false);
-      setContextRow(undefined);
-      reportInteraction('grafana_explore_logs_log_context_closed', {
-        datasourceType: row.datasourceType,
-        logRowUid: row.uid,
-      });
-      onClose();
-    };
+    setOnCloseCallback(onClose);
   };
 
   const getPreviousLog = useCallback((row: LogRowModel, allLogs: LogRowModel[]) => {
