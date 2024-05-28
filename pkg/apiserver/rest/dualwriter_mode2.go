@@ -56,7 +56,7 @@ func (d *DualWriterMode2) Create(ctx context.Context, original runtime.Object, c
 		log.WithValues("name").Error(err, "unable to create object in storage")
 		return rsp, err
 	}
-	return created, nil
+	return rsp, nil
 }
 
 // It retrieves an object from Storage if possible, and if not it falls back to LegacyStorage.
