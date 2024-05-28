@@ -86,14 +86,7 @@ export function ContentOutlineItemButton({
         )}
       </button>
       {onRemove && (
-        <Button
-          variant="destructive"
-          className={styles.deleteButton}
-          icon="times"
-          onClick={() => {
-            onRemove();
-          }}
-        />
+        <Button variant="destructive" className={styles.deleteButton} icon="times" onClick={() => onRemove()} />
       )}
     </div>
   );
