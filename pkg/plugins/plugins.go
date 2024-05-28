@@ -69,6 +69,15 @@ type Plugin struct {
 	mu sync.Mutex
 }
 
+var (
+	_ = backend.CollectMetricsHandler(&Plugin{})
+	_ = backend.CheckHealthHandler(&Plugin{})
+	_ = backend.QueryDataHandler(&Plugin{})
+	_ = backend.CallResourceHandler(&Plugin{})
+	_ = backend.StreamHandler(&Plugin{})
+	_ = backend.AdmissionHandler(&Plugin{})
+)
+
 type AngularMeta struct {
 	Detected        bool `json:"detected"`
 	HideDeprecation bool `json:"hideDeprecation"`
@@ -360,6 +369,33 @@ func (p *Plugin) RunStream(ctx context.Context, req *backend.RunStreamRequest, s
 	return pluginClient.RunStream(ctx, req, sender)
 }
 
+// ValidateAdmission implements backend.AdmissionHandler.
+func (p *Plugin) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
+	pluginClient, ok := p.Client()
+	if !ok {
+		return nil, ErrPluginUnavailable
+	}
+	return pluginClient.ValidateAdmission(ctx, req)
+}
+
+// MutateAdmission implements backend.AdmissionHandler.
+func (p *Plugin) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
+	pluginClient, ok := p.Client()
+	if !ok {
+		return nil, ErrPluginUnavailable
+	}
+	return pluginClient.MutateAdmission(ctx, req)
+}
+
+// ConvertObject implements backend.AdmissionHandler.
+func (p *Plugin) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+	pluginClient, ok := p.Client()
+	if !ok {
+		return nil, ErrPluginUnavailable
+	}
+	return pluginClient.ConvertObject(ctx, req)
+}
+
 func (p *Plugin) File(name string) (fs.File, error) {
 	cleanPath, err := util.CleanRelativePath(name)
 	if err != nil {
@@ -418,6 +454,7 @@ type PluginClient interface {
 	backend.CollectMetricsHandler
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
+	backend.AdmissionHandler
 	backend.StreamHandler
 }
 

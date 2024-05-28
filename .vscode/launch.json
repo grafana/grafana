@@ -39,12 +39,12 @@
       ]
     },
     {
-      "name": "Run Server against GRPC Storage Server",
+      "name": "Run Server (query GRPC Storage Server)",
       "type": "go",
       "request": "launch",
       "mode": "auto",
       "program": "${workspaceFolder}/pkg/cmd/grafana/",
-      "env": {"GF_SERVER_HTTP_PORT": "3001", "GF_GRAFANA_APISERVER_STORAGE_TYPE": "unified-grpc"},
+      "env": {"GF_GRAFANA_APISERVER_STORAGE_TYPE": "unified-grpc"},
       "cwd": "${workspaceFolder}",
       "args": ["server", "--homepath", "${workspaceFolder}", "--packaging", "dev"]
     },
@@ -54,9 +54,7 @@
       "request": "launch",
       "mode": "auto",
       "program": "${workspaceFolder}/pkg/cmd/grafana/",
-      "env": {
-        "GF_DEFAULT_TARGET": "storage-server"
-      },
+      "env": {"GF_DEFAULT_TARGET": "storage-server","GF_SERVER_HTTP_PORT": "3001"},
       "cwd": "${workspaceFolder}",
       "args": ["server", "target", "--homepath", "${workspaceFolder}", "--packaging", "dev"]
     },
