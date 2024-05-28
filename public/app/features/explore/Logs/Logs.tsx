@@ -398,7 +398,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     [props.datasourceType]
   );
 
-  const onChangeLabels = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const onChangeLabels = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const { target } = event;
     if (target) {
       const showLabels = target.checked;
@@ -406,9 +406,9 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       setShowLabels(showLabels);
       store.set(SETTINGS_KEYS.showLabels, showLabels);
     }
-  };
+  }, []);
 
-  const onChangeShowTime = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const onChangeShowTime = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const { target } = event;
     if (target) {
       const showTime = target.checked;
@@ -416,9 +416,9 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       setShowTime(showTime);
       store.set(SETTINGS_KEYS.showTime, showTime);
     }
-  };
+  }, []);
 
-  const onChangeWrapLogMessage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const onChangeWrapLogMessage = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const { target } = event;
     if (target) {
       const wrapLogMessage = target.checked;
@@ -426,9 +426,9 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       setWrapLogMessage(wrapLogMessage);
       store.set(SETTINGS_KEYS.wrapLogMessage, wrapLogMessage);
     }
-  };
+  }, []);
 
-  const onChangePrettifyLogMessage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const onChangePrettifyLogMessage = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const { target } = event;
     if (target) {
       const prettifyLogMessage = target.checked;
@@ -436,7 +436,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       setPrettifyLogMessage(prettifyLogMessage);
       store.set(SETTINGS_KEYS.prettifyLogMessage, prettifyLogMessage);
     }
-  };
+  }, []);
 
   const onToggleLogLevel = useCallback((hiddenRawLevels: string[]) => {
     const hiddenLogLevels = hiddenRawLevels.map((level) => getLogLevelFromKey(level));
@@ -600,27 +600,30 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     });
   };
 
-  const scrollIntoView = (element: HTMLElement) => {
-    if (config.featureToggles.logsInfiniteScrolling) {
-      if (logsContainer) {
-        topLogsRef.current?.scrollIntoView();
-        logsContainer.scroll({
+  const scrollIntoView = useCallback(
+    (element: HTMLElement) => {
+      if (config.featureToggles.logsInfiniteScrolling) {
+        if (logsContainer) {
+          topLogsRef.current?.scrollIntoView();
+          logsContainer.scroll({
+            behavior: 'smooth',
+            top: logsContainer.scrollTop + element.getBoundingClientRect().top - window.innerHeight / 2,
+          });
+        }
+
+        return;
+      }
+      const { scrollElement } = props;
+
+      if (scrollElement) {
+        scrollElement.scroll({
           behavior: 'smooth',
-          top: logsContainer.scrollTop + element.getBoundingClientRect().top - window.innerHeight / 2,
+          top: scrollElement.scrollTop + element.getBoundingClientRect().top - window.innerHeight / 2,
         });
       }
-
-      return;
-    }
-    const { scrollElement } = props;
-
-    if (scrollElement) {
-      scrollElement.scroll({
-        behavior: 'smooth',
-        top: scrollElement.scrollTop + element.getBoundingClientRect().top - window.innerHeight / 2,
-      });
-    }
-  };
+    },
+    [logsContainer, props]
+  );
 
   const scrollToTopLogs = useCallback(() => {
     if (config.featureToggles.logsInfiniteScrolling) {
