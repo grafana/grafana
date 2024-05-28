@@ -160,4 +160,41 @@ describe('LogRowMessage', () => {
       });
     });
   });
+
+  describe('For multi-line logs', () => {
+    const entry = `Line1
+line2
+line3`;
+    const singleLineEntry = entry.replace(/(\r\n|\n|\r)/g, '');
+    it('Displays the original log line when wrapping is enabled', () => {
+      setup({
+        row: createLogRow({ entry, logLevel: LogLevel.error, timeEpochMs: 1546297200000 }),
+        wrapLogMessage: true,
+      });
+      expect(screen.getByText(/Line1/)).toBeInTheDocument();
+      expect(screen.getByText(/line2/)).toBeInTheDocument();
+      expect(screen.getByText(/line3/)).toBeInTheDocument();
+      expect(screen.queryByText(singleLineEntry)).not.toBeInTheDocument();
+    });
+
+    it('Removes new lines from the original log line when wrapping is disabled', () => {
+      setup({
+        row: createLogRow({ entry, logLevel: LogLevel.error, timeEpochMs: 1546297200000 }),
+        wrapLogMessage: false,
+      });
+      expect(screen.getByText(singleLineEntry)).toBeInTheDocument();
+    });
+
+    it('Displays the original log line when the line is expanded', () => {
+      setup({
+        row: createLogRow({ entry, logLevel: LogLevel.error, timeEpochMs: 1546297200000 }),
+        wrapLogMessage: true,
+        expanded: true,
+      });
+      expect(screen.getByText(/Line1/)).toBeInTheDocument();
+      expect(screen.getByText(/line2/)).toBeInTheDocument();
+      expect(screen.getByText(/line3/)).toBeInTheDocument();
+      expect(screen.queryByText(singleLineEntry)).not.toBeInTheDocument();
+    });
+  });
 });

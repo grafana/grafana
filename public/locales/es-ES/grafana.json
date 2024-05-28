@@ -1179,6 +1179,10 @@
       "subtitle": "Optimiza el rendimiento con información de seguimiento k6 y sintética",
       "title": "Pruebas y síntesis"
     },
+    "trash": {
+      "subtitle": "",
+      "title": ""
+    },
     "upgrading": {
       "title": "Estadísticas y licencia"
     },
