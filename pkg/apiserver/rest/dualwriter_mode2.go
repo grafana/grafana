@@ -62,8 +62,9 @@ func (d *DualWriterMode2) Create(ctx context.Context, original runtime.Object, c
 	rsp, err := d.Storage.Create(ctx, created, createValidation, options)
 	if err != nil {
 		log.WithValues("name").Error(err, "unable to create object in storage")
+		d.recordStorageDuration(true, mode2Str, options.Kind, method, startStorage)
 	}
-	d.recordStorageDuration(err != nil, mode2Str, options.Kind, method, startStorage)
+	d.recordStorageDuration(false, mode2Str, options.Kind, method, startStorage)
 	return rsp, err
 }
 
@@ -73,19 +74,25 @@ func (d *DualWriterMode2) Get(ctx context.Context, name string, options *metav1.
 	ctx = klog.NewContext(ctx, log)
 	var method = "get"
 
-	startLegacy := time.Now()
-	res, err := d.Legacy.Get(ctx, name, options)
+	startStorage := time.Now()
+	res, err := d.Storage.Get(ctx, name, options)
 	if err != nil {
-		log.Error(err, "unable to get object in legacy storage")
+		if !apierrors.IsNotFound(err) {
+			d.recordStorageDuration(true, mode2Str, options.Kind, method, startStorage)
+			log.Error(err, "unable to fetch object from storage")
+			return res, err
+		}
+	}
+	d.recordStorageDuration(false, mode2Str, options.Kind, method, startStorage)
+
+	log.Info("object not found in storage, fetching from legacy")
+	startLegacy := time.Now()
+	res, err = d.Legacy.Get(ctx, name, options)
+	if err != nil {
+		log.Error(err, "unable to fetch object from legacy")
 		d.recordLegacyDuration(true, mode2Str, options.Kind, method, startLegacy)
-		return res, err
 	}
 	d.recordLegacyDuration(false, mode2Str, options.Kind, method, startLegacy)
-
-	startStorage := time.Now()
-	res, err = d.Storage.Get(ctx, name, options)
-	d.recordStorageDuration(err != nil, mode2Str, options.Kind, method, startStorage)
-
 	return res, err
 }
 
@@ -188,8 +195,9 @@ func (d *DualWriterMode2) DeleteCollection(ctx context.Context, deleteValidation
 	res, err := d.Storage.DeleteCollection(ctx, deleteValidation, options, &optionsStorage)
 	if err != nil {
 		log.WithValues("deleted", res).Error(err, "failed to delete collection successfully from Storage")
+		d.recordStorageDuration(true, mode2Str, options.Kind, method, startStorage)
 	}
-	d.recordStorageDuration(err != nil, mode2Str, options.Kind, method, startStorage)
+	d.recordStorageDuration(false, mode2Str, options.Kind, method, startStorage)
 
 	return res, err
 }
@@ -215,10 +223,10 @@ func (d *DualWriterMode2) Delete(ctx context.Context, name string, deleteValidat
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
 			log.WithValues("objectList", deletedS).Error(err, "could not delete from duplicate storage")
+			d.recordStorageDuration(true, mode2Str, options.Kind, method, startStorage)
 		}
 	}
-	d.recordStorageDuration(err != nil, mode2Str, options.Kind, method, startStorage)
-
+	d.recordStorageDuration(false, mode2Str, options.Kind, method, startStorage)
 	return deletedLS, async, err
 }
 
@@ -262,7 +270,7 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 
 		objInfo = &updateWrapper{
 			upstream: objInfo,
-			updated:  updated,
+			updated:  obj,
 		}
 	}
 
