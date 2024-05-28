@@ -85,7 +85,7 @@ In this step, we'll set up a new [contact point](https://grafana.com/docs/grafan
 
 Your webhook endpoint is now waiting for the first request.
 
-Next, let's configure a Contact Point in Grafana's Alerting UI to send notifications to our webhook endpoint.
+Next, let's configure a contact point in Grafana's Alerting UI to send notifications to our webhook endpoint.
 
 1. Return to Grafana. In Grafana's sidebar, hover over the **Alerting** (bell) icon and then click **Contact points**.
 1. Click **+ Add contact point**.
