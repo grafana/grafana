@@ -77,22 +77,24 @@ func (d *DualWriterMode2) Get(ctx context.Context, name string, options *metav1.
 	startStorage := time.Now()
 	res, err := d.Storage.Get(ctx, name, options)
 	if err != nil {
-		if !apierrors.IsNotFound(err) {
-			d.recordStorageDuration(true, mode2Str, options.Kind, method, startStorage)
-			log.Error(err, "unable to fetch object from storage")
+		// if it errors because it's not found, we try to fetch it from the legacy storage
+		if apierrors.IsNotFound(err) {
+			d.recordStorageDuration(false, mode2Str, options.Kind, method, startStorage)
+
+			log.Info("object not found in storage, fetching from legacy")
+			startLegacy := time.Now()
+			res, err = d.Legacy.Get(ctx, name, options)
+			if err != nil {
+				log.Error(err, "unable to fetch object from legacy")
+				d.recordLegacyDuration(true, mode2Str, options.Kind, method, startLegacy)
+			}
+			d.recordLegacyDuration(false, mode2Str, options.Kind, method, startLegacy)
 			return res, err
 		}
+		d.recordStorageDuration(true, mode2Str, options.Kind, method, startStorage)
+		log.Error(err, "unable to fetch object from storage")
+		return res, err
 	}
-	d.recordStorageDuration(false, mode2Str, options.Kind, method, startStorage)
-
-	log.Info("object not found in storage, fetching from legacy")
-	startLegacy := time.Now()
-	res, err = d.Legacy.Get(ctx, name, options)
-	if err != nil {
-		log.Error(err, "unable to fetch object from legacy")
-		d.recordLegacyDuration(true, mode2Str, options.Kind, method, startLegacy)
-	}
-	d.recordLegacyDuration(false, mode2Str, options.Kind, method, startLegacy)
 	return res, err
 }
 
