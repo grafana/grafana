@@ -12,8 +12,10 @@ GO = go
 GO_VERSION = 1.22.3
 GO_FILES ?= ./pkg/... ./pkg/apiserver/... ./pkg/apimachinery/... ./pkg/promlib/...
 SH_FILES ?= $(shell find ./scripts -name *.sh)
+GO_RACE  ?= $(if $(GO_BUILD_DEV),1)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
+GO_BUILD_FLAGS += $(if $(GO_RACE),-race)
 
 targets := $(shell echo '$(sources)' | tr "," " ")
 
@@ -208,6 +210,11 @@ build: build-go build-js ## Build backend and frontend.
 .PHONY: run
 run: $(BRA) ## Build and run web server on filesystem changes.
 	$(BRA) run
+
+.PHONY: run-go
+run-go: ## Build and run web server immediately.
+	$(GO) run -race $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS)) \
+		./pkg/cmd/grafana -- server -packaging=dev cfg:app_mode=development
 
 .PHONY: run-frontend
 run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
