@@ -140,7 +140,7 @@ func (f *RuleStore) GetAlertRuleByUID(_ context.Context, q *models.GetAlertRuleB
 			return rule, nil
 		}
 	}
-	return nil, nil
+	return nil, models.ErrAlertRuleNotFound
 }
 
 func (f *RuleStore) GetAlertRulesGroupByRuleUID(_ context.Context, q *models.GetAlertRulesGroupByRuleUIDQuery) ([]*models.AlertRule, error) {
