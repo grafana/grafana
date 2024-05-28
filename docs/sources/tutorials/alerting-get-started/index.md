@@ -80,7 +80,7 @@ In this step, we'll set up a new [contact point](https://grafana.com/docs/grafan
    **OSS users**: To log in, navigate to localhost:3000, where Grafana is running locally.
    {{< /admonition >}}
 
-1. In another tab, visit [Webhook.site](https://webhook.site/).
+1. In another tab, go to [Webhook.site](https://webhook.site/).
 1. **Copy Your unique URL**.
 
 Your webhook endpoint is now waiting for the first request.
