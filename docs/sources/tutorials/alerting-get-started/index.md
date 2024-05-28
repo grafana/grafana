@@ -74,7 +74,7 @@ Besides being an open-source observability tool, Grafana has its own built-in al
 
 In this step, we'll set up a new [contact point](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier/). This contact point will use the _webhooks_ integration. In order to make this work, we also need an endpoint for our webhook integration to receive the alert. We will use [Webhook.site](https://webhook.site/) to quickly set up that test endpoint. This way we can make sure that our alert is actually sending a notification somewhere.
 
-1. In your browser,  **sign in** to your Grafana Cloud account.
+1. In your browser, **sign in** to your Grafana Cloud account.
 
    {{< admonition type="note" >}}
    **OSS users**: To log in, navigate to localhost:3000, where Grafana is running locally.
@@ -109,7 +109,7 @@ In Grafana, **navigate to Alerting** > **Alert rules**. Click on **New alert rul
 
 ### Enter alert rule name
 
-   Make it short and descriptive as this will appear in your alert notification. For instance, **database-metrics**
+Make it short and descriptive as this will appear in your alert notification. For instance, **database-metrics**
 
 ### Define query and alert condition
 
@@ -123,17 +123,18 @@ In this section, we define queries, expressions (used to manipulate the data), a
    vector(1)
    ```
 
-   In Prometheus, `vector(1)` is a special type of PromQL query that generates a constant vector. This is useful in testing and query manipulation, where you might need a constant value for calculations or comparisons. This query will allow you to create an alert rule that will be always firing. 
+   In Prometheus, `vector(1)` is a special type of PromQL query that generates a constant vector. This is useful in testing and query manipulation, where you might need a constant value for calculations or comparisons. This query will allow you to create an alert rule that will be always firing.
 
 1. Remove the ‘B’ **Reduce expression** (click the bin icon). The Reduce expression comes by default, and in this case, it is not needed since the queried data is already reduced. Note that the Threshold expression is now your **Alert condition**.
 
 1. In the ‘C’ **Threshold expression**:
+
    - Change the **Input** to **'A'** to select the data source.
    - Enter `0` as the threshold value. This is the value above which the alert rule should trigger.
 
 1. Click **Preview** to run the queries.
 
-   It should return a single sample with the value 1 at the current timestamp. And, since  `1` is above `0`, the alert condition has been met, and as result the alert rule state is `Firing`.
+   It should return a single sample with the value 1 at the current timestamp. And, since `1` is above `0`, the alert condition has been met, and as result the alert rule state is `Firing`.
 
    {{< figure src="/media/docs/alerting/alerting-always-firing-alert.png" max-width="1200px" caption="A preview of a firing alert" >}}
 
@@ -141,10 +142,10 @@ In this section, we define queries, expressions (used to manipulate the data), a
 
 An [evaluation group](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/rule-evaluation/) defines when an alert rule fires, and it’s based on two settings:
 
- - **Evaluation group**: how frequently the alert rule is evaluated.
- - **Evaluation interval**: how long the condition must be met to start firing. This allows your data time to stabilize before triggering an alert, helping to reduce the frequency of unnecessary notifications.
+- **Evaluation group**: how frequently the alert rule is evaluated.
+- **Evaluation interval**: how long the condition must be met to start firing. This allows your data time to stabilize before triggering an alert, helping to reduce the frequency of unnecessary notifications.
 
- To set up the evaluation:
+To set up the evaluation:
 
 1. In **Folder**, click **+ New folder** and enter a name. For example: _metric-alerts_. This folder will contain our alerts.
 1. In the **Evaluation group**, repeat the above step to create a new evaluation group. We will name it _1m-evaluation_.
@@ -165,34 +166,32 @@ Now that the alert rule has been configured, you should receive alert [notificat
 
 ### Trigger an alert
 
-Since the alert rule that you have created has been configured to always fire, once the evaluation interval has concluded, you should receive an alert notification in the webhook endpoint. 
+Since the alert rule that you have created has been configured to always fire, once the evaluation interval has concluded, you should receive an alert notification in the webhook endpoint.
 
 {{< figure src="/media/docs/alerting/alerting-webhook-firing-alert.png" max-width="1200px" caption="Firing alert notification details" >}}
 
-The alert notification details show that the alert rule state is Firing , and it includes the value that made the rule trigger by exceeding the threshold of the alert rule condition. The notification also includes links to see the alert rule details, and another link to add a [Silence](http://grafana.com/docs/grafana/next/alerting/configure-notifications/create-silence/) to it. 
+The alert notification details show that the alert rule state is Firing , and it includes the value that made the rule trigger by exceeding the threshold of the alert rule condition. The notification also includes links to see the alert rule details, and another link to add a [Silence](http://grafana.com/docs/grafana/next/alerting/configure-notifications/create-silence/) to it.
 
 ### Resolve an alert
 
-To see how a resolved alert notification looks like, you can modify the current alert rule threshold. 
+To see how a resolved alert notification looks like, you can modify the current alert rule threshold.
 
 To edit the Alert rule:
 
-1. **Navigate to Alerting** > **Alert rules**. 
+1. **Navigate to Alerting** > **Alert rules**.
 1. Click on the metric-alerts folder to display the alert that you created earlier
 1. Click the **edit** button on the right hand side of the screen
 1. Increment the Threshold expression to 1.
 1. Click **Save rule and exit**.
 
-By incrementing the threshold, the condition is no longer met, and after the evaluation interval has concluded (1 minute approx.), you should receive an alert notification with status **“Resolved”**. 
-
+By incrementing the threshold, the condition is no longer met, and after the evaluation interval has concluded (1 minute approx.), you should receive an alert notification with status **“Resolved”**.
 
 ## Summary
 
-In this tutorial, you have learned how to set up a Contact point, create an alert, and send alert notifications to a public webhook.  By following these steps, you’ve gained a foundational understanding of how to leverage Grafana’s alerting capabilities to monitor and respond to events of interest in your data.
+In this tutorial, you have learned how to set up a Contact point, create an alert, and send alert notifications to a public webhook. By following these steps, you’ve gained a foundational understanding of how to leverage Grafana’s alerting capabilities to monitor and respond to events of interest in your data.
 
 Feel free to experiment with different [contact points](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/) to customize your alert notifications and discover the configuration that best suits your needs.
 
 If you run into any problems, you are welcome to post questions in our [Grafana Community forum](https://community.grafana.com/).
 
 Happy monitoring!
-
