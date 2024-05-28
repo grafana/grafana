@@ -39,7 +39,8 @@ export function ScopesFiltersAdvancedSelectorSceneRenderer({
 }: SceneComponentProps<ScopesFiltersAdvancedSelectorScene>) {
   const styles = useStyles2(getStyles);
   const state = model.useState();
-  const { nodes, expandedNodes, scopes, isOpened } = state;
+  const { nodes, expandedNodes, scopes, isOpened, isLoadingNodes, isLoadingScopes } = state;
+  const isLoading = isLoadingNodes || isLoadingScopes;
 
   if (!isOpened) {
     return null;
@@ -48,6 +49,8 @@ export function ScopesFiltersAdvancedSelectorSceneRenderer({
   return (
     <Drawer title="Select scopes" size="sm" onClose={model.close}>
       <ScopesTreeLevel
+        isLoadingNodes={isLoadingNodes}
+        isLoadingScopes={isLoadingScopes}
         showQuery
         nodes={nodes}
         expandedNodes={expandedNodes}
@@ -57,7 +60,7 @@ export function ScopesFiltersAdvancedSelectorSceneRenderer({
         onNodeSelectToggle={model.toggleNodeSelect}
       />
       <div className={styles.buttonGroup}>
-        <Button variant="primary" onClick={model.save}>
+        <Button variant="primary" disabled={isLoading} onClick={model.save}>
           Apply
         </Button>
         <Button variant="secondary" onClick={model.close}>

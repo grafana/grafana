@@ -24,24 +24,24 @@ export class ScopesFiltersScene extends SceneObjectBase<ScopesFiltersSceneState>
     this.addActivationHandler(() => {
       this.state.basicSelector.fetchBaseNodes();
 
-      const openAdvancedSubscription = this.subscribeToEvent(ScopesFiltersOpenAdvanced, ({ payload }) => {
+      this.subscribeToEvent(ScopesFiltersOpenAdvanced, ({ payload }) => {
         this.state.advancedSelector.setState(payload);
         this.state.advancedSelector.open();
       });
 
-      const saveAdvancedSubscription = this.subscribeToEvent(ScopesFiltersSaveAdvanced, ({ payload }) => {
+      this.subscribeToEvent(ScopesFiltersSaveAdvanced, ({ payload }) => {
         this.state.basicSelector.setState(payload);
       });
-
-      return () => {
-        openAdvancedSubscription.unsubscribe();
-        saveAdvancedSubscription.unsubscribe();
-      };
     });
   }
 
   public getSelectedScopes(): Scope[] {
     return this.state.basicSelector.state.scopes;
+  }
+
+  public enterViewMode() {
+    this.state.basicSelector.close();
+    this.state.advancedSelector.close();
   }
 }
 

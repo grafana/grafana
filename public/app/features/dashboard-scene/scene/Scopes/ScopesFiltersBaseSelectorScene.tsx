@@ -1,8 +1,9 @@
 import { AppEvents, Scope, ScopeSpec, ScopeTreeItemSpec } from '@grafana/data';
-import { getAppEvents, getBackendSrv } from '@grafana/runtime';
-import { SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import { config, getAppEvents, getBackendSrv } from '@grafana/runtime';
+import { sceneGraph, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { ScopedResourceServer } from 'app/features/apiserver/server';
 
+import { ScopesScene } from './ScopesScene';
 import { ScopesUpdate } from './events';
 
 export interface Node {
@@ -22,6 +23,8 @@ export interface ScopesFiltersBaseSelectorSceneState extends SceneObjectState {
   expandedNodes: ExpandedNode[];
   scopes: Scope[];
   isOpened: boolean;
+  isLoadingScopes: boolean;
+  isLoadingNodes: boolean;
 }
 
 const baseExpandedNode: ExpandedNode = {
@@ -32,7 +35,7 @@ const baseExpandedNode: ExpandedNode = {
 export abstract class ScopesFiltersBaseSelectorScene extends SceneObjectBase<ScopesFiltersBaseSelectorSceneState> {
   private readonly serverGroup = 'scope.grafana.app';
   private readonly serverVersion = 'v0alpha1';
-  private readonly serverNamespace = 'default';
+  private readonly serverNamespace = config.namespace ?? 'default';
 
   protected readonly server = new ScopedResourceServer<ScopeSpec, 'Scope'>({
     group: this.serverGroup,
@@ -46,6 +49,8 @@ export abstract class ScopesFiltersBaseSelectorScene extends SceneObjectBase<Sco
       expandedNodes: [baseExpandedNode],
       scopes: [],
       isOpened: false,
+      isLoadingScopes: false,
+      isLoadingNodes: false,
       ...state,
     });
 
@@ -57,7 +62,13 @@ export abstract class ScopesFiltersBaseSelectorScene extends SceneObjectBase<Sco
   }
 
   public open() {
-    this.setState({ isOpened: true });
+    if (
+      !sceneGraph.getAncestor(this, ScopesScene)?.state.isViewing &&
+      !this.state.isLoadingScopes &&
+      !this.state.isLoadingNodes
+    ) {
+      this.setState({ isOpened: true });
+    }
   }
 
   public close() {
@@ -65,20 +76,30 @@ export abstract class ScopesFiltersBaseSelectorScene extends SceneObjectBase<Sco
   }
 
   public async fetchBaseNodes() {
+    this.setState({ isLoadingNodes: true });
+
+    const nodes = await this.fetchNodes('', '');
+
     this.setState({
-      nodes: await this.fetchNodes('', ''),
+      nodes,
       expandedNodes: [baseExpandedNode],
+      isLoadingNodes: false,
     });
   }
 
   public async queryNode(nodeId: string, query: string) {
+    this.setState({ isLoadingNodes: true });
+
     const expandedNodes = [...this.state.expandedNodes];
     const expandedNodeIdx = expandedNodes.findIndex((expandedNode) => expandedNode.nodeId === nodeId);
     expandedNodes[expandedNodeIdx] = { nodeId, query };
 
+    const nodes = await this.getNodesMap(expandedNodes);
+
     this.setState({
-      nodes: await this.getNodesMap(expandedNodes),
+      nodes,
       expandedNodes,
+      isLoadingNodes: false,
     });
   }
 
@@ -98,18 +119,22 @@ export abstract class ScopesFiltersBaseSelectorScene extends SceneObjectBase<Sco
       query: '',
     });
 
+    this.setState({ expandedNodes, isLoadingNodes: true });
+
+    const nodes = await this.getNodesMap(expandedNodes);
+
     this.setState({
-      nodes: await this.getNodesMap(expandedNodes),
-      expandedNodes,
+      nodes,
+      isLoadingNodes: false,
     });
   }
 
   public async toggleNodeSelect(linkId: string, path: string[]) {
-    let scopes = [...this.state.scopes];
-    const selectedIdx = scopes.findIndex((scope) => scope.metadata.name === linkId);
+    const initialScopes = [...this.state.scopes];
+    const selectedIdx = initialScopes.findIndex((scope) => scope.metadata.name === linkId);
 
     if (selectedIdx === -1) {
-      const scope = await this.fetchScope(linkId);
+      let scope = this.getBasicScope(linkId);
 
       let siblings = this.state.nodes;
 
@@ -118,24 +143,26 @@ export abstract class ScopesFiltersBaseSelectorScene extends SceneObjectBase<Sco
       }
 
       const selectedFromSameNode =
-        scopes.length === 0 || Object.values(siblings).some((node) => node.item.linkId === scopes[0].metadata.name);
+        initialScopes.length === 0 ||
+        Object.values(siblings).some((node) => node.item.linkId === initialScopes[0].metadata.name);
 
-      if (!selectedFromSameNode) {
-        scopes = [scope];
-      } else {
-        scopes.push(scope);
-      }
+      let scopes = !selectedFromSameNode ? [scope] : [...initialScopes, scope];
 
-      scopes.push();
+      this.setState({ scopes, isLoadingScopes: true });
+
+      scope = await this.fetchScope(linkId);
+      scopes = !selectedFromSameNode ? [scope] : [...initialScopes, scope];
+
+      this.setState({ scopes, isLoadingScopes: false });
     } else {
-      scopes.splice(selectedIdx, 1);
-    }
+      initialScopes.splice(selectedIdx, 1);
 
-    this.setState({ scopes });
+      this.setState({ scopes: initialScopes });
+    }
   }
 
-  public async fetchScope(name: string): Promise<Scope> {
-    const basicScope: Scope = {
+  public getBasicScope(name: string): Scope {
+    return {
       metadata: { name },
       spec: {
         filters: [],
@@ -145,6 +172,10 @@ export abstract class ScopesFiltersBaseSelectorScene extends SceneObjectBase<Sco
         description: '',
       },
     };
+  }
+
+  public async fetchScope(name: string): Promise<Scope> {
+    const basicScope: Scope = this.getBasicScope(name);
 
     try {
       const scope = await this.server.get(name);

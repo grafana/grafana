@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import {
@@ -31,11 +31,25 @@ export class ScopesFiltersBasicSelectorScene extends ScopesFiltersBaseSelectorSc
     return { scopes: this.state.scopes.map((scope) => scope.metadata.name) };
   }
 
-  updateFromUrl(values: SceneObjectUrlValues) {
+  async updateFromUrl(values: SceneObjectUrlValues) {
     let scopesNames = values.scopes ?? [];
     scopesNames = Array.isArray(scopesNames) ? scopesNames : [scopesNames];
 
-    Promise.all(scopesNames.map((scopeName) => this.fetchScope(scopeName))).then((scopes) => this.setState({ scopes }));
+    if (scopesNames.length > 0) {
+      let scopes = scopesNames.map(this.getBasicScope);
+
+      // First set the basic scopes for display purposes
+      // We don't emit the scopes update yet as we wait for the scopes to load properly
+      // This avoids unnecessary re-renders
+      this.setState({ scopes, isLoadingScopes: true });
+
+      scopes = await Promise.all(scopesNames.map((scopeName) => this.fetchScope(scopeName)));
+
+      // Then load the actual scopes
+      this.setState({ scopes, isLoadingScopes: false });
+
+      this.emitScopesUpdated();
+    }
   }
 
   public async toggleNodeSelect(linkId: string, path: string[]) {
@@ -62,9 +76,10 @@ export function ScopesFiltersBasicSelectorSceneRenderer({
   model,
 }: SceneComponentProps<ScopesFiltersBasicSelectorScene>) {
   const styles = useStyles2(getStyles);
-  const { nodes, expandedNodes, scopes, isOpened } = model.useState();
-  const parentState = model.parent?.useState() ?? {};
-  const isViewing = 'isViewing' in parentState ? !!parentState.isViewing : false;
+  const { nodes, expandedNodes, scopes, isOpened, isLoadingScopes, isLoadingNodes } = model.useState();
+  const scopesTitles = useMemo(() => scopes.map(({ spec: { title } }) => title).join(', '), [scopes]);
+  const isLoading = isLoadingNodes || isLoadingScopes;
+  const isLoadingNotOpened = isLoading && !isOpened;
 
   return (
     <div className={styles.container}>
@@ -75,6 +90,8 @@ export function ScopesFiltersBasicSelectorSceneRenderer({
         content={
           <div className={styles.innerContainer}>
             <ScopesTreeLevel
+              isLoadingNodes={isLoadingNodes}
+              isLoadingScopes={isLoadingScopes}
               nodes={nodes}
               expandedNodes={expandedNodes}
               scopes={scopes}
@@ -85,17 +102,17 @@ export function ScopesFiltersBasicSelectorSceneRenderer({
           </div>
         }
         footer={
-          <button className={styles.openAdvancedButton} onClick={model.openAdvancedSelector}>
+          <button className={styles.openAdvancedButton} disabled={isLoading} onClick={model.openAdvancedSelector}>
             Open advanced scope selector <Icon name="arrow-right" />
           </button>
         }
         closeButton={false}
       >
         <Input
-          disabled={isViewing}
           readOnly
-          placeholder="Select scopes..."
-          value={scopes.map((scope) => scope.spec.title)}
+          placeholder={isLoadingNotOpened ? 'Loading scopes...' : 'Select scopes...'}
+          loading={isLoadingNotOpened}
+          value={scopesTitles}
         />
       </Toggletip>
     </div>
@@ -105,6 +122,8 @@ export function ScopesFiltersBasicSelectorSceneRenderer({
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css({
+      width: '100%',
+
       '& > div': css({
         padding: 0,
 

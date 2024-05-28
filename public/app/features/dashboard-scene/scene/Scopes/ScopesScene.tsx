@@ -62,6 +62,8 @@ export class ScopesScene extends SceneObjectBase<ScopesSceneState> {
 
   private enterViewMode() {
     this.setState({ isExpanded: false, isViewing: true });
+
+    this.state.filters.enterViewMode();
   }
 
   private exitViewMode() {

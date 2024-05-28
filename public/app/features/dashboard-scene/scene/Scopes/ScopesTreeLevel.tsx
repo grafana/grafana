@@ -8,6 +8,8 @@ import { Checkbox, Icon, Input, useStyles2 } from '@grafana/ui';
 import { ExpandedNode, Node } from './ScopesFiltersBaseSelectorScene';
 
 export interface ScopesTreeLevelProps {
+  isLoadingNodes: boolean;
+  isLoadingScopes: boolean;
   nodes: Record<string, Node>;
   expandedNodes: ExpandedNode[];
   scopes: Scope[];
@@ -21,6 +23,8 @@ export interface ScopesTreeLevelProps {
 }
 
 export function ScopesTreeLevel({
+  isLoadingNodes,
+  isLoadingScopes,
   nodes,
   expandedNodes,
   scopes,
@@ -38,6 +42,8 @@ export function ScopesTreeLevel({
     return null;
   }
 
+  const isLoading = isLoadingScopes || isLoadingNodes;
+
   const upperNodeId = upperNodePath[upperNodePath.length - 1] ?? '';
 
   const anyChildExpanded = Object.values(nodes).some((node) =>
@@ -54,6 +60,7 @@ export function ScopesTreeLevel({
         <Input
           prefix={<Icon name="filter" />}
           className={styles.searchInput}
+          disabled={isLoading}
           placeholder="Filter"
           defaultValue={expandedNodes.find((expandedNode) => expandedNode.nodeId === upperNodeId)?.query ?? ''}
           onChange={handleInputChange}
@@ -69,8 +76,13 @@ export function ScopesTreeLevel({
             children,
           } = node;
 
-          const isExpanded = expandedNodes.some((expandedNode) => expandedNode.nodeId === nodeId);
-          const isSelected = isSelectable && !!scopes.find((scope) => scope.metadata.name === linkId);
+          const isExpandedIdx = expandedNodes.findIndex((expandedNode) => expandedNode.nodeId === nodeId);
+          const isExpanded = isExpandedIdx !== -1;
+          const isLastExpanded = isExpanded && isExpandedIdx === expandedNodes.length - 1;
+
+          const isSelectedIdx = scopes.findIndex((scope) => scope.metadata.name === linkId);
+          const isSelected = isSelectedIdx !== -1;
+          const isLastSelected = isSelected && isSelectedIdx === scopes.length - 1;
 
           if (anyChildExpanded && !isExpanded && !isSelected) {
             return null;
@@ -80,6 +92,10 @@ export function ScopesTreeLevel({
 
           const handleTitleClick = (evt: MouseEvent<HTMLSpanElement | SVGElement>) => {
             evt.stopPropagation();
+
+            if (isLoading) {
+              return;
+            }
 
             if (hasChildren) {
               onNodeExpandToggle(nodeId);
@@ -91,26 +107,25 @@ export function ScopesTreeLevel({
           const handleTitleKeyDown = (evt: KeyboardEvent<HTMLDivElement>) => {
             evt.stopPropagation();
 
-            switch (evt.key) {
-              case 'Space':
-                if (linkId) {
-                  onNodeSelectToggle(linkId, nodePath);
-                }
-                break;
+            if (isLoading) {
+              return;
+            }
 
-              case 'Enter':
-                if (hasChildren) {
-                  onNodeExpandToggle(nodeId);
-                }
-                break;
+            if (linkId && evt.key === 'Space') {
+              return onNodeSelectToggle(linkId, nodePath);
+            }
 
-              default:
-                return;
+            if (hasChildren && evt.key === 'Enter') {
+              return onNodeExpandToggle(nodeId);
             }
           };
 
           const handleCheckboxClick = (evt: MouseEvent<HTMLInputElement>) => {
             evt.stopPropagation();
+
+            if (isLoading) {
+              return;
+            }
 
             if (linkId) {
               onNodeSelectToggle(linkId, nodePath);
@@ -120,12 +135,18 @@ export function ScopesTreeLevel({
           return (
             <div key={nodeId} role="treeitem" aria-selected={isExpanded}>
               <div role="button" tabIndex={0} className={styles.itemTitle}>
-                {isSelectable && <Checkbox checked={isSelected} onChange={handleCheckboxClick} />}
+                {isSelectable ? (
+                  isLastSelected && isLoadingScopes ? (
+                    <Icon name="spinner" />
+                  ) : (
+                    <Checkbox checked={isSelected} disabled={isLoading} onChange={handleCheckboxClick} />
+                  )
+                ) : null}
 
                 {hasChildren && (
                   <Icon
                     className={styles.itemIcon}
-                    name={isExpanded ? 'folder-open' : 'folder'}
+                    name={!isExpanded ? 'folder' : isLastExpanded && isLoadingNodes ? 'spinner' : 'folder-open'}
                     onClick={handleTitleClick}
                   />
                 )}
@@ -143,6 +164,8 @@ export function ScopesTreeLevel({
 
               <div className={styles.itemChildren}>
                 <ScopesTreeLevel
+                  isLoadingNodes={isLoadingNodes}
+                  isLoadingScopes={isLoadingScopes}
                   showQuery={showQuery}
                   isExpanded={isExpanded}
                   upperNodePath={nodePath}
