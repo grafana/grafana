@@ -1,9 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
+import { act } from 'react-dom/test-utils';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import {
   CustomVariable,
+  SceneDataTransformer,
   SceneGridLayout,
   SceneQueryRunner,
   SceneTimeRange,
@@ -26,7 +28,7 @@ beforeEach(() => {
 describe('ShareAlerts', () => {
   describe('UnsupportedTemplateVariablesAlert', () => {
     it('should render alert when hasPermission and the dashboard has template vars', async () => {
-      setup(undefined, {
+      await setup(undefined, {
         $variables: new SceneVariableSet({
           variables: [
             new CustomVariable({
@@ -42,27 +44,33 @@ describe('ShareAlerts', () => {
       expect(await screen.findByTestId(selectors.TemplateVariablesWarningAlert)).toBeInTheDocument();
     });
     it('should not render alert when hasPermission but the dashboard has no template vars', async () => {
-      setup();
+      await setup();
 
       expect(screen.queryByTestId(selectors.TemplateVariablesWarningAlert)).not.toBeInTheDocument();
     });
   });
   describe('UnsupportedDataSourcesAlert', () => {
     it('should render alert when hasPermission and the dashboard has unsupported ds', async () => {
-      setup({
-        $data: new SceneQueryRunner({
-          datasource: { uid: 'abcdef' },
-          queries: [{ refId: 'A' }],
+      await setup({
+        $data: new SceneDataTransformer({
+          transformations: [],
+          $data: new SceneQueryRunner({
+            datasource: { uid: 'abcdef' },
+            queries: [{ refId: 'A', datasource: { type: 'abcdef' } }],
+          }),
         }),
       });
 
       expect(await screen.findByTestId(selectors.UnsupportedDataSourcesWarningAlert)).toBeInTheDocument();
     });
     it('should not render alert when hasPermission but the dashboard has no unsupported ds', async () => {
-      setup({
-        $data: new SceneQueryRunner({
-          datasource: { uid: 'prometheus' },
-          queries: [{ refId: 'A' }],
+      await setup({
+        $data: new SceneDataTransformer({
+          transformations: [],
+          $data: new SceneQueryRunner({
+            datasource: { uid: 'prometheus' },
+            queries: [{ refId: 'A', datasource: { type: 'prometheus' } }],
+          }),
         }),
       });
 
@@ -71,7 +79,7 @@ describe('ShareAlerts', () => {
   });
 });
 
-function setup(panelState?: Partial<VizPanelState>, dashboardState?: Partial<DashboardSceneState>) {
+async function setup(panelState?: Partial<VizPanelState>, dashboardState?: Partial<DashboardSceneState>) {
   const panel = new VizPanel({
     title: 'Panel A',
     pluginId: 'table',
@@ -98,5 +106,5 @@ function setup(panelState?: Partial<VizPanelState>, dashboardState?: Partial<Das
     ...dashboardState,
   });
 
-  render(<ShareAlerts dashboard={dashboard} />);
+  await act(async () => render(<ShareAlerts dashboard={dashboard} />));
 }
