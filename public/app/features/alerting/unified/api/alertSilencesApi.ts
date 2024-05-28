@@ -20,7 +20,11 @@ export const alertSilencesApi = alertingApi.injectEndpoints({
     >({
       query: ({ datasourceUid, ruleMetadata, accessControl }) => ({
         url: `/api/alertmanager/${datasourceUid}/api/v2/silences`,
-        params: { ruleMetadata, accessControl },
+        params: {
+          ruleMetadata,
+          // query param is lowercased on backend for consistency with folder endpoint
+          accesscontrol: accessControl,
+        },
       }),
       providesTags: (result) =>
         result ? result.map(({ id }) => ({ type: 'AlertmanagerSilences', id })) : ['AlertmanagerSilences'],
@@ -38,7 +42,11 @@ export const alertSilencesApi = alertingApi.injectEndpoints({
       query: ({ datasourceUid, id, ruleMetadata, accessControl }) => ({
         url: `/api/alertmanager/${datasourceUid}/api/v2/silence/${id}`,
         showErrorAlert: false,
-        params: { ruleMetadata, accessControl },
+        params: {
+          ruleMetadata,
+          // query param is lowercased on backend for consistency with folder endpoint
+          accesscontrol: accessControl,
+        },
       }),
       providesTags: (result, error, { id }) =>
         result ? [{ type: 'AlertmanagerSilences', id }] : ['AlertmanagerSilences'],

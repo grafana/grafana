@@ -20,7 +20,6 @@ import { featureDiscoveryApi } from 'app/features/alerting/unified/api/featureDi
 import { MATCHER_ALERT_RULE_UID, SILENCES_POLL_INTERVAL_MS } from 'app/features/alerting/unified/utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid } from 'app/features/alerting/unified/utils/datasource';
 import { AlertmanagerAlert, Silence, SilenceState } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types';
 
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { parseMatchers } from '../../utils/alertmanager';
@@ -321,8 +320,8 @@ function useColumns(alertManagerSourceName: string) {
         renderCell: function renderActions({ data: silence }) {
           const isExpired = silence.status.state === SilenceState.Expired;
 
-          const canCreate = silence?.accessControl?.[AccessControlAction.AlertingSilenceCreate];
-          const canWrite = silence?.accessControl?.[AccessControlAction.AlertingSilenceUpdate];
+          const canCreate = silence?.accessControl?.create;
+          const canWrite = silence?.accessControl?.write;
 
           const canRecreate = isExpired && (isGrafanaFlavoredAlertmanager ? canCreate : updateAllowed);
           const canEdit = !isExpired && (isGrafanaFlavoredAlertmanager ? canWrite : updateAllowed);

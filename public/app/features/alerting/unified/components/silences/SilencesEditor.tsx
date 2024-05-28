@@ -29,7 +29,6 @@ import { alertSilencesApi, SilenceCreatedResponse } from 'app/features/alerting/
 import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
 import { getDatasourceAPIUid } from 'app/features/alerting/unified/utils/datasource';
 import { MatcherOperator, SilenceCreatePayload } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types';
 
 import { SilenceFormFields } from '../../types/silence-form';
 import { matcherFieldToMatcher } from '../../utils/alertmanager';
@@ -83,7 +82,7 @@ const ExistingSilenceEditor = ({ silenceId, alertManagerSourceName }: Props) => 
     return <Alert title={`Existing silence "${silenceId}" not found`} severity="warning" />;
   }
 
-  const canEditSilence = silence?.accessControl?.[AccessControlAction.AlertingSilenceUpdate];
+  const canEditSilence = silence?.accessControl?.write;
 
   if (!canEditSilence) {
     return <Alert title={`You do not have permission to edit/recreate this silence`} severity="error" />;

@@ -10,7 +10,7 @@ const silencesListHandler = (silences = mockSilences) =>
     }
 
     // Server only responds with ACL/rule metadata if query param is sent
-    const accessControlQueryParam = new URL(request.url).searchParams.get('accessControl');
+    const accessControlQueryParam = new URL(request.url).searchParams.get('accesscontrol');
     const ruleMetadataQueryParam = new URL(request.url).searchParams.get('ruleMetadata');
 
     const mappedSilences = silences.map(({ accessControl, metadata, ...silence }) => {
@@ -33,7 +33,7 @@ const silenceGetHandler = () =>
     }
 
     // Server only responds with ACL/rule metadata if query param is sent
-    const accessControlQueryParam = new URL(request.url).searchParams.get('accessControl');
+    const accessControlQueryParam = new URL(request.url).searchParams.get('accesscontrol');
     const ruleMetadataQueryParam = new URL(request.url).searchParams.get('ruleMetadata');
 
     const { accessControl, metadata, ...silence } = matchingMockSilence;
