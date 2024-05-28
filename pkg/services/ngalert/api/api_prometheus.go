@@ -235,7 +235,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 	return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
 }
 
-func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager, store RuleStore, opts RuleGroupStatusesOptions) apimodels.RuleResponse {
+func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager, store ListAlertRulesStore, opts RuleGroupStatusesOptions) apimodels.RuleResponse {
 	ruleResponse := apimodels.RuleResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
 			Status: "success",
