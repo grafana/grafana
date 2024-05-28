@@ -56,8 +56,7 @@ func TestCallResource(t *testing.T) {
 	testCtx := pluginsintegration.CreateIntegrationTestCtx(t, cfg, coreRegistry)
 
 	pcp := plugincontext.ProvideService(cfg, localcache.ProvideService(), testCtx.PluginStore, &datasources.FakeCacheService{},
-		&datasources.FakeDataSourceService{}, pluginSettings.ProvideService(db.InitTestDB(t), fakeSecrets.NewFakeSecretsService()),
-		pluginconfig.NewFakePluginRequestConfigProvider())
+		&datasources.FakeDataSourceService{}, pluginSettings.ProvideService(db.InitTestDB(t), fakeSecrets.NewFakeSecretsService()), pluginconfig.NewFakePluginRequestConfigProvider())
 
 	srv := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = cfg

@@ -139,8 +139,7 @@ func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakeP
 	}
 
 	ds := &fakeDatasources.FakeDataSourceService{}
-	cfg := setting.NewCfg()
-	pCtxProvider := plugincontext.ProvideService(cfg,
+	pCtxProvider := plugincontext.ProvideService(setting.NewCfg(),
 		localcache.ProvideService(), &pluginstore.FakePluginStore{
 			PluginList: []pluginstore.Plugin{
 				{
@@ -150,8 +149,7 @@ func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakeP
 				},
 			},
 		}, &fakeDatasources.FakeCacheService{}, ds,
-		pluginSettings.ProvideService(store, fakeSecrets.NewFakeSecretsService()),
-		pluginconfig.NewFakePluginRequestConfigProvider())
+		pluginSettings.ProvideService(store, fakeSecrets.NewFakeSecretsService()), pluginconfig.NewFakePluginRequestConfigProvider())
 
 	return query.ProvideService(
 		setting.NewCfg(),
