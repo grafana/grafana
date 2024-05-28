@@ -1,3 +1,5 @@
+// some plugins depend on these classes
+// TODO we should aim to remove this for Grafana 12
 import { css } from '@emotion/react';
 
 import { GrafanaTheme2 } from '@grafana/data';
