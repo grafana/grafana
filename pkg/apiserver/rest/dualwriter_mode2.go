@@ -188,18 +188,18 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 	log := d.Log.WithValues("name", name, "kind", options.Kind)
 	ctx = klog.NewContext(ctx, log)
 
-	// get original and (updated) object so they can be stored in legacy store
-	original, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
+	// get foundObj and (updated) object so they can be stored in legacy store
+	foundObj, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
-			log.WithValues("object", original).Error(err, "could not get object to update")
+			log.WithValues("object", foundObj).Error(err, "could not get object to update")
 			return nil, false, err
 		}
 		log.Info("object not found for update, creating one")
 	}
 
 	// obj can be populated in case it's found or empty in case it's not found
-	updated, err := objInfo.UpdatedObject(ctx, original)
+	updated, err := objInfo.UpdatedObject(ctx, foundObj)
 	if err != nil {
 		log.WithValues("object", updated).Error(err, "could not update or create object")
 		return nil, false, err
@@ -211,14 +211,16 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 		return obj, created, err
 	}
 
-	obj, err = enrichLegacyObject(updated, obj, false)
-	if err != nil {
-		return obj, false, err
-	}
+	if foundObj != nil {
+		obj, err = enrichLegacyObject(foundObj, obj, false)
+		if err != nil {
+			return obj, false, err
+		}
 
-	objInfo = &updateWrapper{
-		upstream: objInfo,
-		updated:  obj,
+		objInfo = &updateWrapper{
+			upstream: objInfo,
+			updated:  obj,
+		}
 	}
 
 	return d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
