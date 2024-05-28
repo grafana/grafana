@@ -198,8 +198,8 @@ func TestRecordingRule_Integration(t *testing.T) {
 			grafana_alerting_rule_evaluation_duration_seconds_sum{org="%[1]d"} 0
 			grafana_alerting_rule_evaluation_duration_seconds_count{org="%[1]d"} 1
 			# HELP grafana_alerting_rule_evaluations_total The total number of rule evaluations.
-        	# TYPE grafana_alerting_rule_evaluations_total counter
-        	grafana_alerting_rule_evaluations_total{org="%[1]d"} 1
+			# TYPE grafana_alerting_rule_evaluations_total counter
+			grafana_alerting_rule_evaluations_total{org="%[1]d"} 1
 			# HELP grafana_alerting_rule_evaluation_attempts_total The total number of rule evaluation attempts.
             # TYPE grafana_alerting_rule_evaluation_attempts_total counter
             grafana_alerting_rule_evaluation_attempts_total{org="%[1]d"} 1
