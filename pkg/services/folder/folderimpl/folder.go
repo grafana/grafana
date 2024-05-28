@@ -44,7 +44,7 @@ type Service struct {
 	dashboardFolderStore folder.FolderStore
 	features             featuremgmt.FeatureToggles
 	accessControl        accesscontrol.AccessControl
-	// bus is currently used to publish event in case of title change
+	// bus is currently used to publish event in case of title change or when a folder is moved
 	bus bus.Bus
 
 	mutex    sync.RWMutex
@@ -685,14 +685,13 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 			namespace, id := cmd.SignedInUser.GetTypedID()
 
 			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
-			if err := s.bus.Publish(ctx, &events.FolderTitleUpdated{
+			if err := s.bus.Publish(ctx, &events.FolderFullPathUpdated{
 				Timestamp: foldr.Updated,
-				Title:     foldr.Title,
 				ID:        dashFolder.ID, // nolint:staticcheck
 				UID:       dashFolder.UID,
 				OrgID:     cmd.OrgID,
 			}); err != nil {
-				s.log.ErrorContext(ctx, "failed to publish FolderTitleUpdated event", "folder", foldr.Title, "user", id, "namespace", namespace, "error", err)
+				s.log.ErrorContext(ctx, "failed to publish FolderTitleUpdated event", "uid", foldr.UID, "user", id, "namespace", namespace, "error", err)
 				return err
 			}
 		}
@@ -927,7 +926,7 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 		}
 	}
 
-	var f *folder.Folder
+	var dashFolder, f *folder.Folder
 	if err := s.db.InTransaction(ctx, func(ctx context.Context) error {
 		if f, err = s.store.Update(ctx, folder.UpdateFolderCommand{
 			UID:          cmd.UID,
@@ -941,7 +940,7 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 			return folder.ErrInternal.Errorf("failed to move folder: %w", err)
 		}
 
-		if _, err := s.legacyUpdate(ctx, &folder.UpdateFolderCommand{
+		if dashFolder, err = s.legacyUpdate(ctx, &folder.UpdateFolderCommand{
 			UID:          cmd.UID,
 			OrgID:        cmd.OrgID,
 			NewParentUID: &cmd.NewParentUID,
@@ -953,6 +952,16 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 				return folder.ErrConflict.Errorf("%w", dashboards.ErrFolderSameNameExists)
 			}
 			return folder.ErrInternal.Errorf("failed to move legacy folder: %w", err)
+		}
+
+		if err := s.bus.Publish(ctx, &events.FolderFullPathUpdated{
+			Timestamp: f.Updated,
+			ID:        dashFolder.ID, // nolint:staticcheck
+			UID:       dashFolder.UID,
+			OrgID:     cmd.OrgID,
+		}); err != nil {
+			s.log.ErrorContext(ctx, "failed to publish FolderFullPathUpdated event", "uid", dashFolder.UID, "error", err)
+			return err
 		}
 
 		return nil
