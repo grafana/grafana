@@ -1179,6 +1179,10 @@
       "subtitle": "Optimieren Sie die Leistung mit Erkenntnissen aus k6 und Synthetic Monitoring",
       "title": "Testen & Synthetics"
     },
+    "trash": {
+      "subtitle": "",
+      "title": ""
+    },
     "upgrading": {
       "title": "Statistiken und Lizenz"
     },
