@@ -145,6 +145,7 @@ func configureAppChildPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
 	child.IncludedInAppID = parent.ID
 
 	// If the child plugin does not have a version, it will inherit the version from the parent.
+	// This is to ensure that the frontend can appropriately cache the plugin assets.
 	if child.Info.Version == "" {
 		child.Info.Version = parent.Info.Version
 	}
