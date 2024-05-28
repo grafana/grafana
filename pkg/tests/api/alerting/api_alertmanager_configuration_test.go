@@ -323,10 +323,10 @@ func TestIntegrationAlertmanagerConfigurationIsTransactional(t *testing.T) {
 {
 	"template_files": {},
 	"alertmanager_config": {
+		"global":{"resolve_timeout":"5m","http_config":{"tls_config":{"insecure_skip_verify":false},"follow_redirects":true,"enable_http2":true,"proxy_url":null},"smtp_hello":"localhost","smtp_smarthost":"","smtp_require_tls":true,"pagerduty_url":"https://events.pagerduty.com/v2/enqueue","opsgenie_api_url":"https://api.opsgenie.com/","wechat_api_url":"https://qyapi.weixin.qq.com/cgi-bin/","victorops_api_url":"https://alert.victorops.com/integrations/generic/20131114/alert/","telegram_api_url":"https://api.telegram.org","webex_api_url":"https://webexapis.com/v1/messages"},
 		"route": {
 			"receiver": "slack.receiver"
 		},
-		"templates": null,
 		"receivers": [{
 			"name": "slack.receiver",
 			"grafana_managed_receiver_configs": [{
@@ -417,10 +417,10 @@ func TestIntegrationAlertmanagerConfigurationPersistSecrets(t *testing.T) {
 {
 	"template_files": {},
 	"alertmanager_config": {
+		"global":{"resolve_timeout":"5m","http_config":{"tls_config":{"insecure_skip_verify":false},"follow_redirects":true,"enable_http2":true,"proxy_url":null},"smtp_hello":"localhost","smtp_smarthost":"","smtp_require_tls":true,"pagerduty_url":"https://events.pagerduty.com/v2/enqueue","opsgenie_api_url":"https://api.opsgenie.com/","wechat_api_url":"https://qyapi.weixin.qq.com/cgi-bin/","victorops_api_url":"https://alert.victorops.com/integrations/generic/20131114/alert/","telegram_api_url":"https://api.telegram.org","webex_api_url":"https://webexapis.com/v1/messages"},
 		"route": {
 			"receiver": "slack.receiver"
 		},
-		"templates": null,
 		"receivers": [{
 			"name": "slack.receiver",
 			"grafana_managed_receiver_configs": [{
@@ -449,10 +449,10 @@ func TestIntegrationAlertmanagerConfigurationPersistSecrets(t *testing.T) {
 	{
 		"template_files": {},
 		"alertmanager_config": {
+			"global":{"resolve_timeout":"5m","http_config":{"tls_config":{"insecure_skip_verify":false},"follow_redirects":true,"enable_http2":true,"proxy_url":null},"smtp_hello":"localhost","smtp_smarthost":"","smtp_require_tls":true,"pagerduty_url":"https://events.pagerduty.com/v2/enqueue","opsgenie_api_url":"https://api.opsgenie.com/","wechat_api_url":"https://qyapi.weixin.qq.com/cgi-bin/","victorops_api_url":"https://alert.victorops.com/integrations/generic/20131114/alert/","telegram_api_url":"https://api.telegram.org","webex_api_url":"https://webexapis.com/v1/messages"},
 			"route": {
 				"receiver": "slack.receiver"
 			},
-			"templates": null,
 			"receivers": [{
 				"name": "slack.receiver",
 				"grafana_managed_receiver_configs": [{
@@ -497,10 +497,10 @@ func TestIntegrationAlertmanagerConfigurationPersistSecrets(t *testing.T) {
 {
 	"template_files": {},
 	"alertmanager_config": {
+		"global":{"resolve_timeout":"5m","http_config":{"tls_config":{"insecure_skip_verify":false},"follow_redirects":true,"enable_http2":true,"proxy_url":null},"smtp_hello":"localhost","smtp_smarthost":"","smtp_require_tls":true,"pagerduty_url":"https://events.pagerduty.com/v2/enqueue","opsgenie_api_url":"https://api.opsgenie.com/","wechat_api_url":"https://qyapi.weixin.qq.com/cgi-bin/","victorops_api_url":"https://alert.victorops.com/integrations/generic/20131114/alert/","telegram_api_url":"https://api.telegram.org","webex_api_url":"https://webexapis.com/v1/messages"},
 		"route": {
 			"receiver": "slack.receiver"
 		},
-		"templates": null,
 		"receivers": [{
 			"name": "slack.receiver",
 			"grafana_managed_receiver_configs": [{
@@ -531,10 +531,10 @@ func TestIntegrationAlertmanagerConfigurationPersistSecrets(t *testing.T) {
 {
 	"template_files": {},
 	"alertmanager_config": {
+		"global":{"resolve_timeout":"5m","http_config":{"tls_config":{"insecure_skip_verify":false},"follow_redirects":true,"enable_http2":true,"proxy_url":null},"smtp_hello":"localhost","smtp_smarthost":"","smtp_require_tls":true,"pagerduty_url":"https://events.pagerduty.com/v2/enqueue","opsgenie_api_url":"https://api.opsgenie.com/","wechat_api_url":"https://qyapi.weixin.qq.com/cgi-bin/","victorops_api_url":"https://alert.victorops.com/integrations/generic/20131114/alert/","telegram_api_url":"https://api.telegram.org","webex_api_url":"https://webexapis.com/v1/messages"},
 		"route": {
 			"receiver": "slack.receiver"
 		},
-		"templates": null,
 		"receivers": [{
 			"name": "slack.receiver",
 			"grafana_managed_receiver_configs": [{
