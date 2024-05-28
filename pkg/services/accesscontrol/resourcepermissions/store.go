@@ -14,15 +14,17 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func NewStore(sql db.DB, features featuremgmt.FeatureToggles) *store {
-	store := &store{sql: sql, features: features}
+func NewStore(cfg *setting.Cfg, sql db.DB, features featuremgmt.FeatureToggles) *store {
+	store := &store{cfg: cfg, sql: sql, features: features}
 	return store
 }
 
 type store struct {
+	cfg      *setting.Cfg
 	sql      db.DB
 	features featuremgmt.FeatureToggles
 }
@@ -268,7 +270,7 @@ func (s *store) setResourcePermission(
 		return nil, err
 	}
 
-	if err := s.createPermissions(sess, role.ID, cmd.Resource, cmd.ResourceID, cmd.ResourceAttribute, missing, cmd.Permission); err != nil {
+	if err := s.createPermissions(sess, role.ID, cmd, missing); err != nil {
 		return nil, err
 	}
 
@@ -659,12 +661,17 @@ func (s *store) getPermissions(sess *db.Session, resource, resourceID, resourceA
 	return result, nil
 }
 
-func (s *store) createPermissions(sess *db.Session, roleID int64, resource, resourceID, resourceAttribute string, missingActions map[string]struct{}, permission string) error {
+func (s *store) createPermissions(sess *db.Session, roleID int64, cmd SetResourcePermissionCommand, missingActions map[string]struct{}) error {
 	permissions := make([]accesscontrol.Permission, 0, len(missingActions))
+
+	resource := cmd.Resource
+	resourceID := cmd.ResourceID
+	resourceAttribute := cmd.ResourceAttribute
+	permission := cmd.Permission
 	/*
 		Add ACTION SET of managed permissions to in-memory store
 	*/
-	if s.features.IsEnabled(context.TODO(), featuremgmt.FlagAccessActionSets) && permission != "" {
+	if s.shouldStoreActionSet(permission) {
 		actionSetName := GetActionSetName(resource, permission)
 		p := managedPermission(actionSetName, resource, resourceID, resourceAttribute)
 		p.RoleID = roleID
@@ -674,30 +681,33 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, resource, reso
 		permissions = append(permissions, p)
 	}
 
-	// If there are no missing actions for the resource (in case of access level downgrade or resource removal), we don't need to insert any prior actions
-	// we still want to add the action set in case of access level downgrade, but not in case of resource removal (when permission == "")
-	if len(missingActions) == 0 {
-		if s.features.IsEnabled(context.TODO(), featuremgmt.FlagAccessActionSets) && permission != "" {
-			if _, err := sess.InsertMulti(&permissions); err != nil {
-				return err
-			}
-		}
+	// If there are no missing actions for the resource (in case of access level downgrade or resource removal), we don't need to insert any actions
+	// we still want to add the action set (when permission != "")
+	if len(missingActions) == 0 && !s.shouldStoreActionSet(permission) {
 		return nil
 	}
 
-	for action := range missingActions {
-		p := managedPermission(action, resource, resourceID, resourceAttribute)
-		p.RoleID = roleID
-		p.Created = time.Now()
-		p.Updated = time.Now()
-		p.Kind, p.Attribute, p.Identifier = p.SplitScope()
-		permissions = append(permissions, p)
+	// if we have actionset feature enabled and are only working with action sets
+	// skip adding the missing actions to the permissions table
+	if !(s.shouldStoreActionSet(permission) && s.cfg.OnlyStoreAccessActionSets) {
+		for action := range missingActions {
+			p := managedPermission(action, resource, resourceID, resourceAttribute)
+			p.RoleID = roleID
+			p.Created = time.Now()
+			p.Updated = time.Now()
+			p.Kind, p.Attribute, p.Identifier = p.SplitScope()
+			permissions = append(permissions, p)
+		}
 	}
 
 	if _, err := sess.InsertMulti(&permissions); err != nil {
 		return err
 	}
 	return nil
+}
+
+func (s *store) shouldStoreActionSet(permission string) bool {
+	return (s.features.IsEnabled(context.TODO(), featuremgmt.FlagAccessActionSets) && permission != "")
 }
 
 func deletePermissions(sess *db.Session, ids []int64) error {
