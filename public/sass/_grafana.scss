@@ -50,9 +50,6 @@
 @import 'components/add_data_source';
 @import 'components/panel_header';
 
-// LOAD @grafana/ui components
-@import '@grafana/ui/src/index';
-
 // PAGES
 @import 'pages/dashboard';
 @import 'pages/alerting';

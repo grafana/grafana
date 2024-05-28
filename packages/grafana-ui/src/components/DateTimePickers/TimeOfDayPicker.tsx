@@ -10,6 +10,8 @@ import { inputSizes } from '../Forms/commonStyles';
 import { FormInputSize } from '../Forms/types';
 import { Icon } from '../Icon/Icon';
 
+import 'rc-time-picker/assets/index.css';
+
 export interface Props {
   onChange: (value: DateTime) => void;
   value?: DateTime;
