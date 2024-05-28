@@ -35,7 +35,7 @@ export interface Props {
   /** Input date for the component */
   date?: DateTime;
   /** Callback for returning the selected date */
-  onChange: (date: DateTime) => void;
+  onChange: (date?: DateTime) => void;
   /** label for the input field */
   label?: ReactNode;
   /** Set the latest selectable date */
@@ -200,15 +200,10 @@ interface DateTimeCalendarProps {
   disabledSeconds?: () => number[];
 }
 
-interface InputProps {
-  label?: ReactNode;
-  date?: DateTime;
+type InputProps = Pick<Props, 'onChange' | 'label' | 'date' | 'showSeconds' | 'clearable'> & {
   isFullscreen: boolean;
-  onChange: (date: DateTime) => void;
   onOpen: (event: FormEvent<HTMLElement>) => void;
-  showSeconds?: boolean;
-  clearable?: boolean;
-}
+};
 
 type InputState = {
   value: string;
@@ -249,7 +244,8 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
 
     const clearInternalDate = useCallback(() => {
       setInternalDate({ value: '', invalid: false });
-    }, []);
+      onChange();
+    }, [onChange]);
 
     const icon = <Button aria-label="Time picker" icon="calendar-alt" variant="secondary" onClick={onOpen} />;
     return (
