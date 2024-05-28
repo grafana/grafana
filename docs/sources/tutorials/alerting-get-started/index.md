@@ -31,7 +31,7 @@ In this tutorial you will:
 
 ### Grafana Cloud users
 
-As a Grafana Cloud user, it’s not required that you install anything. Continue to [Create a contact point](#create-a-contact-point).
+As a Grafana Cloud user, you don't have to install anything. Continue to [Create a contact point](#create-a-contact-point).
 
 ### Grafana OSS users
 
