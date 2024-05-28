@@ -92,14 +92,14 @@ Next, let's configure a contact point in Grafana's Alerting UI to send notificat
 1. In **Name**, write **Webhook**.
 1. In **Integration**, choose **Webhook**.
 1. In **URL**, paste the endpoint to your webhook endpoint.
-1. Click **Test**, and then click **Send test notification** to send a test alert to your webhook endpoint
+1. Click **Test**, and then click **Send test notification** to send a test alert to your webhook endpoint.
 1. Navigate back to [Webhook.site](https://webhook.site/). On the left side, there's now a `POST /` entry. Click it to see what information Grafana sent.
 
    {{< figure src="/media/docs/alerting/alerting-webhook-detail.png" max-width="1200px" caption="A POST entry in Webhook.site" >}}
 
 1. Return to Grafana and click **Save contact point**.
 
-We have created a dummy webhook endpoint and created a new Alerting Contact Point in Grafana. Now, we can create an alert rule and link it to this new integration.
+We have created a dummy Webhook endpoint and created a new Alerting contactpPoint in Grafana. Now, we can create an alert rule and link it to this new integration.
 
 ## Create an alert
 
@@ -134,7 +134,7 @@ In this section, we define queries, expressions (used to manipulate the data), a
 
 1. Click **Preview** to run the queries.
 
-   It should return a single sample with the value 1 at the current timestamp. And, since `1` is above `0`, the alert condition has been met, and as result the alert rule state is `Firing`.
+   It should return a single sample with the value 1 at the current timestamp. And, since `1` is above `0`, the alert condition has been met, and the alert rule state is `Firing`.
 
    {{< figure src="/media/docs/alerting/alerting-always-firing-alert.png" max-width="1200px" caption="A preview of a firing alert" >}}
 
@@ -166,7 +166,7 @@ Now that the alert rule has been configured, you should receive alert [notificat
 
 ### Trigger an alert
 
-Since the alert rule that you have created has been configured to always fire, once the evaluation interval has concluded, you should receive an alert notification in the webhook endpoint.
+Since the alert rule that you have created has been configured to always fire, once the evaluation interval has concluded, you should receive an alert notification in the Webhook endpoint.
 
 {{< figure src="/media/docs/alerting/alerting-webhook-firing-alert.png" max-width="1200px" caption="Firing alert notification details" >}}
 
@@ -188,7 +188,7 @@ By incrementing the threshold, the condition is no longer met, and after the eva
 
 ## Summary
 
-In this tutorial, you have learned how to set up a Contact point, create an alert, and send alert notifications to a public webhook. By following these steps, you’ve gained a foundational understanding of how to leverage Grafana’s alerting capabilities to monitor and respond to events of interest in your data.
+In this tutorial, you have learned how to set up a contact point, create an alert, and send alert notifications to a public Webhook. By following these steps, you’ve gained a foundational understanding of how to leverage Grafana Alerting capabilities to monitor and respond to events of interest in your data.
 
 Feel free to experiment with different [contact points](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/) to customize your alert notifications and discover the configuration that best suits your needs.
 
