@@ -9,10 +9,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
-	"github.com/goccy/go-json"
-
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/influxql/util"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
+
+	jsoniter "github.com/json-iterator/go"
 )
 
 func ResponseParse(buf io.ReadCloser, statusCode int, query *models.Query) *backend.DataResponse {
@@ -46,6 +46,8 @@ func parse(buf io.Reader, statusCode int, query *models.Query) *backend.DataResp
 
 func parseJSON(buf io.Reader) (models.Response, error) {
 	var response models.Response
+
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
 
 	dec := json.NewDecoder(buf)
 
@@ -151,8 +153,11 @@ func newValueFields(rows []models.Row, labels data.Labels, colIdxStart, colIdxEn
 					value := util.ParseNumber(valuePair[colIdx])
 					floatArray = append(floatArray, value)
 				case "float64":
-					value := valuePair[colIdx].(float64)
-					floatArray = append(floatArray, &value)
+					if value, ok := valuePair[colIdx].(float64); ok {
+						floatArray = append(floatArray, &value)
+					} else {
+						floatArray = append(floatArray, nil)
+					}
 				case "bool":
 					value, ok := valuePair[colIdx].(bool)
 					if ok {
@@ -291,8 +296,11 @@ func newFrameWithTimeField(row models.Row, column string, colIndex int, query mo
 			value := util.ParseNumber(valuePair[colIndex])
 			floatArray = append(floatArray, value)
 		case "float64":
-			value := valuePair[colIndex].(float64)
-			floatArray = append(floatArray, &value)
+			if value, ok := valuePair[colIndex].(float64); ok {
+				floatArray = append(floatArray, &value)
+			} else {
+				floatArray = append(floatArray, nil)
+			}
 		case "bool":
 			value, ok := valuePair[colIndex].(bool)
 			if ok {
