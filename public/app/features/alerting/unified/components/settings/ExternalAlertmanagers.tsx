@@ -56,6 +56,8 @@ export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
         const detailHref = createUrl(DATASOURCES_ROUTES.Edit.replace(/:uid/gi, uid));
 
         const handleEditConfiguration = () => onEditConfiguration(name);
+        const handleEnable = forwardingDisabled ? undefined : () => enableAlertmanager(uid);
+        const handleDisable = forwardingDisabled ? undefined : () => disableAlertmanager(uid);
 
         return (
           <AlertmanagerCard
@@ -65,13 +67,13 @@ export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
             url={url}
             provisioned={isProvisioned}
             readOnly={isReadOnly}
-            forwardingDisabled={forwardingDisabled}
+            showStatus={!forwardingDisabled}
             implementation={jsonData.implementation ?? 'Prometheus'}
             receiving={isReceiving}
             status={status}
             onEditConfiguration={handleEditConfiguration}
-            onDisable={() => disableAlertmanager(uid)}
-            onEnable={() => enableAlertmanager(uid)}
+            onDisable={handleDisable}
+            onEnable={handleEnable}
           />
         );
       })}

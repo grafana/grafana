@@ -7,8 +7,6 @@ import { ConnectionStatus } from '../../hooks/useExternalAmSelector';
 import { ProvisioningBadge } from '../Provisioning';
 import { WithReturnButton } from '../WithReturnButton';
 
-import { BUILTIN_ALERTMANAGER_NAME } from './InternalAlertmanager';
-
 interface Props {
   name: string;
   href?: string;
@@ -16,14 +14,14 @@ interface Props {
   logo?: string;
   provisioned?: boolean;
   readOnly?: boolean;
-  forwardingDisabled?: boolean;
+  showStatus?: boolean;
   implementation?: string;
   receiving?: boolean;
   status?: ConnectionStatus;
   // functions
   onEditConfiguration: () => void;
-  onDisable: () => void;
-  onEnable: () => void;
+  onDisable?: () => void;
+  onEnable?: () => void;
 }
 
 export function AlertmanagerCard({
@@ -33,7 +31,7 @@ export function AlertmanagerCard({
   logo = 'public/app/plugins/datasource/alertmanager/img/logo.svg',
   provisioned = false,
   readOnly = provisioned,
-  forwardingDisabled = false,
+  showStatus = true,
   implementation,
   receiving = false,
   status = 'unknown',
@@ -41,9 +39,7 @@ export function AlertmanagerCard({
   onEnable,
   onDisable,
 }: Props) {
-  const showEnableDisable = !provisioned && !forwardingDisabled;
-  // @TODO this isn't really the best way to do it – but needs some backend changes to determine the "canonical" Alertmanager.
-  const isCanonicalAlertmanager = name === BUILTIN_ALERTMANAGER_NAME;
+  const showActions = !provisioned && Boolean(onEnable) && Boolean(onDisable);
 
   return (
     <Card data-testid={`alertmanager-card-${name}`}>
@@ -69,10 +65,7 @@ export function AlertmanagerCard({
             {url && url}
           </Card.Meta>
           {/* if forwarding is diabled, still show status for the "canonical" Alertmanager */}
-          {forwardingDisabled && isCanonicalAlertmanager && (
-            <Badge text="Receiving Grafana-managed alerts" color="green" />
-          )}
-          {forwardingDisabled ? null : (
+          {showStatus ? (
             <>
               {!receiving ? (
                 <Text variant="bodySmall">Not receiving Grafana managed alerts</Text>
@@ -85,7 +78,7 @@ export function AlertmanagerCard({
                 </>
               )}
             </>
-          )}
+          ) : null}
         </Stack>
       </Card.Meta>
 
@@ -96,7 +89,7 @@ export function AlertmanagerCard({
           <Button onClick={onEditConfiguration} icon={readOnly ? 'eye' : 'edit'} variant="secondary" fill="outline">
             {readOnly ? 'View configuration' : 'Edit configuration'}
           </Button>
-          {showEnableDisable ? (
+          {showActions ? (
             <>
               {receiving ? (
                 <Button icon="times" variant="destructive" fill="outline" onClick={onDisable}>
