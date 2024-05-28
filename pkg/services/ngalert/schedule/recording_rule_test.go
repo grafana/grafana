@@ -201,8 +201,8 @@ func TestRecordingRule_Integration(t *testing.T) {
 			# TYPE grafana_alerting_rule_evaluations_total counter
 			grafana_alerting_rule_evaluations_total{org="%[1]d"} 1
 			# HELP grafana_alerting_rule_evaluation_attempts_total The total number of rule evaluation attempts.
-            # TYPE grafana_alerting_rule_evaluation_attempts_total counter
-            grafana_alerting_rule_evaluation_attempts_total{org="%[1]d"} 1
+			 # TYPE grafana_alerting_rule_evaluation_attempts_total counter
+			grafana_alerting_rule_evaluation_attempts_total{org="%[1]d"} 1
 			`,
 			rule.OrgID,
 		)
