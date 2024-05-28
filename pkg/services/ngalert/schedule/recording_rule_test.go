@@ -180,10 +180,10 @@ func TestRecordingRule_Integration(t *testing.T) {
 		expectedMetric := fmt.Sprintf(
 			`
 			# HELP grafana_alerting_rule_evaluation_duration_seconds The time to evaluate a rule.
-        	# TYPE grafana_alerting_rule_evaluation_duration_seconds histogram
-        	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.01"} 1
-        	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.1"} 1
-        	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.5"} 1
+			# TYPE grafana_alerting_rule_evaluation_duration_seconds histogram
+			grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.01"} 1
+			grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.1"} 1
+			grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.5"} 1
 			grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="1"} 1
 			grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="5"} 1
 			grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="10"} 1
