@@ -55,6 +55,7 @@ const Options = ({ options, value, onChange, title }: Props) => {
         onKeyDown={handleKeys}
         ref={localRef}
         aria-roledescription={t('time-picker.time-range.aria-role', 'Time range selection')}
+        className={styles.list}
       >
         {options.map((option, index) => (
           <TimeRangeOption
@@ -95,5 +96,9 @@ const getOptionsStyles = () => ({
   grow: css({
     flexGrow: 1,
     alignItems: 'flex-start',
+  }),
+  list: css({
+    overflowY: 'auto',
+    scrollbarWidth: 'thin',
   }),
 });

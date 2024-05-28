@@ -48,7 +48,8 @@ export function useLayout(
   config: Config = defaultConfig,
   nodeCountLimit: number,
   width: number,
-  rootNodeId?: string
+  rootNodeId?: string,
+  hasFixedPositions?: boolean
 ) {
   const [nodesGraph, setNodesGraph] = useState<NodeDatum[]>([]);
   const [edgesGraph, setEdgesGraph] = useState<EdgeDatumLayout[]>([]);
@@ -84,19 +85,36 @@ export function useLayout(
       return;
     }
 
+    if (hasFixedPositions) {
+      setNodesGraph(rawNodes);
+      // The layout function turns source and target fields from string to NodeDatum, so we do that here as well.
+      const nodesMap = fromPairs(rawNodes.map((node) => [node.id, node]));
+      setEdgesGraph(
+        rawEdges.map(
+          (e): EdgeDatumLayout => ({
+            ...e,
+            source: nodesMap[e.source],
+            target: nodesMap[e.target],
+          })
+        )
+      );
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     // This is async but as I wanted to still run the sync grid layout, and you cannot return promise from effect so
     // having callback seems ok here.
     const cancel = layout(rawNodes, rawEdges, ({ nodes, edges }) => {
       if (isMounted()) {
         setNodesGraph(nodes);
-        setEdgesGraph(edges as EdgeDatumLayout[]);
+        setEdgesGraph(edges);
         setLoading(false);
       }
     });
     layoutWorkerCancelRef.current = cancel;
     return cancel;
-  }, [rawNodes, rawEdges, isMounted]);
+  }, [hasFixedPositions, rawNodes, rawEdges, isMounted]);
 
   // Compute grid separately as it is sync and do not need to be inside effect. Also it is dependant on width while
   // default layout does not care and we don't want to recalculate that on panel resize.
@@ -149,7 +167,7 @@ export function useLayout(
 function layout(
   nodes: NodeDatum[],
   edges: EdgeDatum[],
-  done: (data: { nodes: NodeDatum[]; edges: EdgeDatum[] }) => void
+  done: (data: { nodes: NodeDatum[]; edges: EdgeDatumLayout[] }) => void
 ) {
   // const worker = engine === 'default' ? createWorker() : createMsaglWorker();
   // TODO: temp fix because of problem with msagl library https://github.com/grafana/grafana/issues/83318
