@@ -31,7 +31,7 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 
 	err = s.sqlDB.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
 		// Pre-locking: get the latest version of the entity
-		oldEntity, err := readEntity(ctx, tx, s.sqlDialect, key, r.PreviousVersion, true, true)
+		oldEntity, err := readEntity(ctx, tx, s.sqlDialect, key, r.PreviousVersion, true, false)
 		if err != nil {
 			return err
 		}

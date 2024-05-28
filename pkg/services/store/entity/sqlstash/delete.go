@@ -30,7 +30,7 @@ func (s *sqlEntityServer) Delete(ctx context.Context, r *entity.DeleteEntityRequ
 
 	err = s.sqlDB.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
 		// Pre-locking: get the latest version of the entity
-		previous, err := readEntity(ctx, tx, s.sqlDialect, key, r.PreviousVersion, true, true)
+		previous, err := readEntity(ctx, tx, s.sqlDialect, key, r.PreviousVersion, true, false)
 		if errors.Is(err, ErrNotFound) {
 			ret.Status = entity.DeleteEntityResponse_NOTFOUND
 			return nil
