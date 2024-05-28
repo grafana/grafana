@@ -19,14 +19,14 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 
 	key, err := entity.ParseKey(r.Entity.Key)
 	if err != nil {
-		return nil, fmt.Errorf("parse entity key: %w", err)
+		return nil, fmt.Errorf("create entity: parse entity key: %w", err)
 	}
 
 	// validate and process the request to get the information we need to run
 	// the query
 	newEntity, err := entityForCreate(ctx, r, key)
 	if err != nil {
-		return nil, fmt.Errorf("entity from create entity request: %w", err)
+		return nil, fmt.Errorf("create entity: entity from create entity request: %w", err)
 	}
 
 	err = s.sqlDB.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
@@ -83,7 +83,7 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 	if err != nil {
 		// TODO: should we define the "Error" field here and how? (i.e. how
 		// to determine what information can be disclosed to the user?)
-		return nil, err
+		return nil, fmt.Errorf("create entity: %w", err)
 	}
 
 	return &entity.CreateEntityResponse{

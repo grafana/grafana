@@ -19,12 +19,12 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 
 	key, err := entity.ParseKey(r.Entity.Key)
 	if err != nil {
-		return nil, fmt.Errorf("parse entity key: %w", err)
+		return nil, fmt.Errorf("update entity: parse entity key: %w", err)
 	}
 
 	updatedBy, err := getCurrentUser(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("get user from context: %w", err)
+		return nil, fmt.Errorf("update entity: get user from context: %w", err)
 	}
 
 	ret := new(entity.UpdateEntityResponse)
@@ -113,7 +113,7 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 	if err != nil {
 		// TODO: should we define the "Error" field here and how? (i.e. how
 		// to determine what information can be disclosed to the user?)
-		return nil, err
+		return nil, fmt.Errorf("update entity: %w", err)
 	}
 
 	return ret, nil

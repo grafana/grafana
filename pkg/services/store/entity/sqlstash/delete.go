@@ -18,12 +18,12 @@ func (s *sqlEntityServer) Delete(ctx context.Context, r *entity.DeleteEntityRequ
 
 	key, err := entity.ParseKey(r.Key)
 	if err != nil {
-		return nil, fmt.Errorf("parse entity key: %w", err)
+		return nil, fmt.Errorf("delete entity: parse entity key: %w", err)
 	}
 
 	updatedBy, err := getCurrentUser(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("delete entity: %w", err)
 	}
 
 	ret := new(entity.DeleteEntityResponse)
@@ -106,7 +106,7 @@ func (s *sqlEntityServer) Delete(ctx context.Context, r *entity.DeleteEntityRequ
 	if err != nil {
 		// TODO: should we populate the Error field and how? (i.e. how to
 		// determine what information can be disclosed to the user?)
-		return nil, err
+		return nil, fmt.Errorf("delete entity: %w", err)
 	}
 
 	return ret, nil
