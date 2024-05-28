@@ -581,6 +581,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/manage-dashboards/components/PublicDashboardListTable/ @grafana/sharing-squad
 /public/app/features/dashboard/containers/PublicDashboardPage.tsx @grafana/sharing-squad
 /public/app/features/manage-dashboards/components/SnapshotListTable.tsx @grafana/sharing-squad
+/pkg/api/render.go @grafana/sharing-squad
 /pkg/services/dashboardsnapshots/ @grafana/sharing-squad
 /pkg/services/publicdashboards/ @grafana/sharing-squad
 /pkg/services/rendering/ @grafana/sharing-squad
