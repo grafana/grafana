@@ -588,15 +588,17 @@
     {
       "metadata": {
         "name": "dashboardRestore",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "resourceVersion": "1716564259132",
+        "creationTimestamp": "2024-05-23T07:17:45Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-05-24 15:24:19.132272 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables deleted dashboard restore feature",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
-        "hideFromAdminPage": true,
-        "hideFromDocs": true
+        "hideFromAdminPage": true
       }
     },
     {
@@ -2204,26 +2206,19 @@
     },
     {
       "metadata": {
-        "name": "influxdbRunQueriesInParallel",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
-      },
-      "spec": {
-        "description": "Enables running InfluxDB Influxql queries in parallel",
-        "stage": "privatePreview",
-        "codeowner": "@grafana/observability-metrics"
-      }
-    },
-    {
-      "metadata": {
-        "name": "disableSSEDataplane",
-        "resourceVersion": "1716448665531",
-        "creationTimestamp": "2024-05-23T07:17:45Z"
+        "name": "dashboardRestore",
+        "resourceVersion": "1716563559003",
+        "creationTimestamp": "2024-02-20T18:50:41Z",
+        "deletionTimestamp": "2024-05-24T15:24:19Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-05-24 15:12:39.003245 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Disables dataplane specific processing in server side expressions.",
         "stage": "experimental",
-        "codeowner": "@grafana/observability-metrics"
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "hideFromAdminPage": true
       }
     },
     {
@@ -2264,6 +2259,30 @@
         "codeowner": "@grafana/dashboards-squad",
         "hideFromAdminPage": true,
         "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "disableSSEDataplane",
+        "resourceVersion": "1716816471156",
+        "creationTimestamp": "2024-05-27T13:27:51Z"
+      },
+      "spec": {
+        "description": "Disables dataplane specific processing in server side expressions.",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-metrics"
+      }
+    },
+    {
+      "metadata": {
+        "name": "influxdbRunQueriesInParallel",
+        "resourceVersion": "1716816471156",
+        "creationTimestamp": "2024-05-27T13:27:51Z"
+      },
+      "spec": {
+        "description": "Enables running InfluxDB Influxql queries in parallel",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/observability-metrics"
       }
     }
   ]
