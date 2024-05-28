@@ -622,34 +622,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     }
   };
 
-  const checkUnescapedContent = memoizeOne((logRows: LogRowModel[]) => {
-    return !!logRows.some((r) => r.hasUnescapedContent);
-  });
-
-  const dedupRows = memoizeOne((logRows: LogRowModel[], dedupStrategy: LogsDedupStrategy) => {
-    const dedupedRows = dedupLogRows(logRows, dedupStrategy);
-    const dedupCount = dedupedRows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0);
-    return { dedupedRows, dedupCount };
-  });
-
-  const filterRows = memoizeOne((logRows: LogRowModel[], hiddenLogLevels: LogLevel[]) => {
-    return filterLogLevels(logRows, new Set(hiddenLogLevels));
-  });
-
-  const createNavigationRange = memoizeOne((logRows: LogRowModel[]): { from: number; to: number } | undefined => {
-    if (!logRows || logRows.length === 0) {
-      return undefined;
-    }
-    const firstTimeStamp = logRows[0].timeEpochMs;
-    const lastTimeStamp = logRows[logRows.length - 1].timeEpochMs;
-
-    if (lastTimeStamp < firstTimeStamp) {
-      return { from: lastTimeStamp, to: firstTimeStamp };
-    }
-
-    return { from: firstTimeStamp, to: lastTimeStamp };
-  });
-
   const scrollToTopLogs = useCallback(() => {
     if (config.featureToggles.logsInfiniteScrolling) {
       if (logsContainer) {
@@ -1010,3 +982,31 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
     }),
   };
 };
+
+const checkUnescapedContent = memoizeOne((logRows: LogRowModel[]) => {
+  return !!logRows.some((r) => r.hasUnescapedContent);
+});
+
+const dedupRows = memoizeOne((logRows: LogRowModel[], dedupStrategy: LogsDedupStrategy) => {
+  const dedupedRows = dedupLogRows(logRows, dedupStrategy);
+  const dedupCount = dedupedRows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0);
+  return { dedupedRows, dedupCount };
+});
+
+const filterRows = memoizeOne((logRows: LogRowModel[], hiddenLogLevels: LogLevel[]) => {
+  return filterLogLevels(logRows, new Set(hiddenLogLevels));
+});
+
+const createNavigationRange = memoizeOne((logRows: LogRowModel[]): { from: number; to: number } | undefined => {
+  if (!logRows || logRows.length === 0) {
+    return undefined;
+  }
+  const firstTimeStamp = logRows[0].timeEpochMs;
+  const lastTimeStamp = logRows[logRows.length - 1].timeEpochMs;
+
+  if (lastTimeStamp < firstTimeStamp) {
+    return { from: lastTimeStamp, to: firstTimeStamp };
+  }
+
+  return { from: firstTimeStamp, to: lastTimeStamp };
+});
