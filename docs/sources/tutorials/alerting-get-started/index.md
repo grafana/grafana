@@ -42,7 +42,7 @@ In order to run a Grafana stack locally, ensure you have the following applicati
 
 #### Set up the Grafana Stack (OSS users)
 
-To demonstrate the observation of data using the Grafana stack download the files to your local machine.
+To demonstrate the observation of data using the Grafana stack, download the files to your local machine.
 
 1. Clone the [tutorial environment repository](https://www.github.com/grafana/tutorial-environment).
 
