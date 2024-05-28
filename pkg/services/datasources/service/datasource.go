@@ -315,8 +315,8 @@ func (s *Service) prepareInstanceSettings(ctx context.Context, pluginContext bac
 	// Make sure it is a known plugin type
 	p, found := s.pluginStore.Plugin(ctx, settings.Type)
 	if !found {
-		return nil, errutil.BadRequest("datasource.unknownPlugin",
-			errutil.WithPublicMessage(fmt.Sprintf("plugin '%s' not found", settings.Type)))
+		// Ignore non-existing plugins for the time being
+		return settings, nil
 	}
 
 	// When the APIVersion is set, the client must also implement AdmissionHandler
