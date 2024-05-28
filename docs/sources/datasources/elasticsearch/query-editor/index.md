@@ -19,6 +19,12 @@ labels:
 menuTitle: Query editor
 title: Elasticsearch query editor
 weight: 300
+refs:
+  query-and-transform-data:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/
 ---
 
 # Elasticsearch query editor
@@ -28,7 +34,7 @@ See [Lucene query syntax](https://www.elastic.co/guide/en/kibana/current/lucene-
 
 {{< figure src="/static/img/docs/elasticsearch/elastic-query-editor-10.1.png" max-width="800px" class="docs-image--no-shadow" caption="Elasticsearch query editor" >}}
 
-For general documentation on querying data sources in Grafana, including options and functions common to all query editors, see [Query and transform data][].
+For general documentation on querying data sources in Grafana, including options and functions common to all query editors, see [Query and transform data](ref:query-and-transform-data).
 
 ## Aggregation types
 
@@ -137,8 +143,3 @@ You can also augment queries by using [template variables]({{< relref "./templat
 
 Queries of `terms` have a 500-result limit by default.
 To set a custom limit, set the `size` property in your query.
-
-{{% docs/reference %}}
-[Query and transform data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
-[Query and transform data]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data"
-{{% /docs/reference %}}

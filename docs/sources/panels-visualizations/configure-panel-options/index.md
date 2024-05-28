@@ -21,6 +21,32 @@ menuTitle: Configure panel options
 title: Configure panel options
 description: Add titles, descriptions, repeating rows and panel links
 weight: 50
+refs:
+  global-variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#global-variables
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#global-variables
+  grafana-llm-plugin:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana-cloud/alerting-and-irm/machine-learning/configure/llm-plugin/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/machine-learning/configure/llm-plugin/
+  variables-you-have-defined:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
+  set-up-generative-ai-features-for-dashboards-documentation:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards
+  configure-repeating-rows:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/#configure-repeating-rows
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/#configure-repeating-rows
 ---
 
 # Configure panel options
@@ -54,7 +80,7 @@ After you add a panel to a dashboard, you can open it at any time to change or u
 
 ## Add a title and description to a panel
 
-You can use generative AI to create panel titles and descriptions with the [Grafana LLM plugin][], which is currently in public preview. To enable this, refer to the [Set up generative AI features for dashboards documentation][]. Alternatively, you can take the following steps to create them yourself.
+You can use generative AI to create panel titles and descriptions with the [Grafana LLM plugin](ref:grafana-llm-plugin), which is currently in public preview. To enable this, refer to the [Set up generative AI features for dashboards documentation](ref:set-up-generative-ai-features-for-dashboards-documentation). Alternatively, you can take the following steps to create them yourself.
 
 Add a title and description to a panel to share with users any important information about the visualization. For example, use the description to document the purpose of the visualization.
 
@@ -70,7 +96,7 @@ Add a title and description to a panel to share with users any important informa
 
    Text entered in this field appears in a tooltip in the upper-left corner of the panel.
 
-   You can use [variables you have defined][] in the **Title** and **Description** field, but not [global variables][].
+   You can use [variables you have defined](ref:variables-you-have-defined) in the **Title** and **Description** field, but not [global variables](ref:global-variables).
 
    ![Panel editor pane with Panel options section expanded](/static/img/docs/panels/panel-options-8-0.png)
 
@@ -92,7 +118,7 @@ Explore and export panel, panel data, and data frame JSON models.
 
 ## Configure repeating panels
 
-You can configure Grafana to dynamically add panels or rows to a dashboard. A dynamic panel is a panel that the system creates based on the value of a variable. Variables dynamically change your queries across all panels in a dashboard. For more information about repeating rows, refer to [Configure repeating rows][].
+You can configure Grafana to dynamically add panels or rows to a dashboard. A dynamic panel is a panel that the system creates based on the value of a variable. Variables dynamically change your queries across all panels in a dashboard. For more information about repeating rows, refer to [Configure repeating rows](ref:configure-repeating-rows).
 
 {{% admonition type="note" %}}
 Repeating panels require variables to have one or more items selected; you can't repeat a panel zero times to hide it.
@@ -116,20 +142,3 @@ To see an example of repeating panels, refer to [this dashboard with repeating p
    - Choose `vertical` to arrange panels in a column. The width of repeated panels is the same as the original, repeated panel.
 
 1. To propagate changes to all panels, reload the dashboard.
-
-{{% docs/reference %}}
-[variables you have defined]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
-[variables you have defined]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
-
-[global variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#global-variables"
-[global variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#global-variables"
-
-[Configure repeating rows]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/create-dashboard#configure-repeating-rows"
-[Configure repeating rows]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/create-dashboard#configure-repeating-rows"
-
-[Grafana LLM plugin]: "/docs/grafana/ -> /docs/grafana-cloud/alerting-and-irm/machine-learning/configure/llm-plugin"
-[Grafana LLM plugin]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/machine-learning/configure/llm-plugin"
-
-[Set up generative AI features for dashboards documentation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/manage-dashboards#set-up-generative-ai-features-for-dashboards"
-[Set up generative AI features for dashboards documentation]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/manage-dashboards#set-up-generative-ai-features-for-dashboards"
-{{% /docs/reference %}}

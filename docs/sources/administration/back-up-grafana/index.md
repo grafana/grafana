@@ -12,4 +12,4 @@ weight: 80
 menuTitle: Back up Grafana
 ---
 
-{{< docs/shared lookup="back-up/back-up-grafana.md" source="grafana" version="<GRAFANA VERSION>" >}}
+{{< docs/shared lookup="back-up/back-up-grafana.md" source="grafana" version="<GRAFANA_VERSION>" >}}
