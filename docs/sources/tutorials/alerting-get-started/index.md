@@ -24,7 +24,7 @@ In this guide, we'll walk you through the process of setting up your first alert
 In this tutorial you will:
 
 - Create a contact point.
-- Set up an alert. 
+- Set up an alert rule. 
 - Receive firing and resolved alert notifications in a public webhook.
 
 ## Before you begin
@@ -99,7 +99,7 @@ Next, let's configure a contact point in Grafana's Alerting UI to send notificat
 
 1. Return to Grafana and click **Save contact point**.
 
-We have created a dummy Webhook endpoint and created a new Alerting contactpPoint in Grafana. Now, we can create an alert rule and link it to this new integration.
+We have created a dummy Webhook endpoint and created a new Alerting contact point in Grafana. Now, we can create an alert rule and link it to this new integration.
 
 ## Create an alert
 
