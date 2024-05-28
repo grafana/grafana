@@ -204,10 +204,10 @@ func (f *RuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQu
 		if !hasDashboard(r, q.DashboardUID, q.PanelID) {
 			continue
 		}
-		if !slices.Contains(q.NamespaceUIDs, r.NamespaceUID) {
+		if len(q.NamespaceUIDs) > 0 && !slices.Contains(q.NamespaceUIDs, r.NamespaceUID) {
 			continue
 		}
-		if !slices.Contains(q.RuleGroups, r.RuleGroup) {
+		if len(q.RuleGroups) > 0 && !slices.Contains(q.RuleGroups, r.RuleGroup) {
 			continue
 		}
 
