@@ -5,6 +5,7 @@ import { MenuListProps } from 'react-select';
 import { FixedSizeList as List } from 'react-window';
 
 import { SelectableValue, toIconName } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
@@ -155,7 +156,7 @@ export const SelectMenuOptions = ({
         data.isDisabled && styles.optionDisabled
       )}
       {...rest}
-      aria-label="Select option"
+      data-testid={selectors.components.Select.option}
       title={data.title}
     >
       {icon && <Icon name={icon} className={styles.optionIcon} />}
