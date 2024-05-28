@@ -56,7 +56,7 @@ func (srv AlertmanagerSrv) RouteGetSilences(c *contextmodel.ReqContext) response
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to list silence", err)
 	}
 
-	silencesWithMetadata := withNoMetadata(silences...)
+	silencesWithMetadata := withEmptyMetadata(silences...)
 	if c.QueryBool("accesscontrol") {
 		if err := srv.silenceSvc.WithAccessControlMetadata(c.Req.Context(), c.SignedInUser, silencesWithMetadata...); err != nil {
 			srv.log.Error("failed to get silence access control metadata", "error", err)
@@ -99,7 +99,9 @@ func (srv AlertmanagerSrv) RouteDeleteSilence(c *contextmodel.ReqContext, silenc
 	return response.JSON(http.StatusOK, util.DynMap{"message": "silence deleted"})
 }
 
-func withNoMetadata(silences ...*models.Silence) []*models.SilenceWithMetadata {
+// withEmptyMetadata creates a slice of SilenceWithMetadata from a slice of Silence where the metadata for each silence
+// is empty.
+func withEmptyMetadata(silences ...*models.Silence) []*models.SilenceWithMetadata {
 	silencesWithMetadata := make([]*models.SilenceWithMetadata, 0, len(silences))
 	for _, silence := range silences {
 		silencesWithMetadata = append(silencesWithMetadata, &models.SilenceWithMetadata{

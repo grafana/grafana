@@ -139,5 +139,4 @@ func TestSilencePermissionSet(t *testing.T) {
 			})
 		}
 	})
-
 }

@@ -284,6 +284,8 @@ func (s SilenceService) authorizeUpdateSilence(ctx context.Context, user identit
 	})
 }
 
+// SilenceAccess returns the permission sets for a slice of silences. The permission set includes read, write, and
+// create which corresponds the given user being able to read, write, and create each given silence, respectively.
 func (s SilenceService) SilenceAccess(ctx context.Context, user identity.Requester, silences []*models.Silence) (map[*models.Silence]models.SilencePermissionSet, error) {
 	basePerms := make(models.SilencePermissionSet, 3)
 	canReadAll, err := s.authorizeReadSilencePreConditions(ctx, user)
