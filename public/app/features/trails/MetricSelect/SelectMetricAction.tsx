@@ -3,7 +3,7 @@ import React from 'react';
 import { SceneObjectState, SceneObjectBase, SceneComponentProps } from '@grafana/scenes';
 import { Button } from '@grafana/ui';
 
-import { MetricSelectedEvent } from './shared';
+import { MetricSelectedEvent } from '../shared';
 
 export interface SelectMetricActionState extends SceneObjectState {
   title: string;
