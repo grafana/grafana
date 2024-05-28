@@ -292,6 +292,7 @@ const getStyles = (
     borderRight: `${isReversed ? 'none' : `1px solid ${theme.colors.border.weak}`}`,
     width: `${!hideQuickRanges ? '60%' : '100%'}`,
     overflow: 'auto',
+    scrollbarWidth: 'thin',
     order: isReversed ? 1 : 0,
   }),
   rightSide: css({

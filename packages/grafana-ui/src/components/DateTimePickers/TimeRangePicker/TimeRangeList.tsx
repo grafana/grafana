@@ -99,5 +99,6 @@ const getOptionsStyles = () => ({
   }),
   list: css({
     overflowY: 'auto',
+    scrollbarWidth: 'thin',
   }),
 });
