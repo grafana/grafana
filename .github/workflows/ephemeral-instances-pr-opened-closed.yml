@@ -49,11 +49,18 @@ jobs:
           ref: main
           path: ephemeral
 
+      - name: Get latest grafana version number
+        run: |
+          # if package.json contains e.g. 11.0.0-pre, this writes 11.0.0 to version.txt
+          curl https://raw.githubusercontent.com/grafana/grafana/main/package.json | jq -r .version | grep -o  '^[0-9\.]*' > version.txt
+
       - name: Run action
         env:
           GITHUB_EVENT: ${{ toJson(github.event)}}
         run: |
-          GRAFANA_VERSION=10.1.0
+          # Create a prerelease version number using the latest version from the package.json in the grafana repo.
+          export GRAFANA_VERSION="$(cat version.txt)"
+          echo "${GRAFANA_VERSION}"
 
           cd $GITHUB_WORKSPACE/ephemeral/src
           go run . \
