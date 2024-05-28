@@ -1,7 +1,6 @@
 package buffered
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
@@ -9,6 +8,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
+	"github.com/goccy/go-json"
 
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/influxql/util"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
@@ -47,7 +48,6 @@ func parseJSON(buf io.Reader) (models.Response, error) {
 	var response models.Response
 
 	dec := json.NewDecoder(buf)
-	dec.UseNumber()
 
 	err := dec.Decode(&response)
 
@@ -85,7 +85,7 @@ func newTimeField(rows []models.Row) *data.Field {
 	var timeArray []time.Time
 	for _, row := range rows {
 		for _, valuePair := range row.Values {
-			timestamp, timestampErr := util.ParseTimestamp(valuePair[0])
+			timestamp, timestampErr := util.ParseTimestamp2(valuePair[0])
 			// we only add this row if the timestamp is valid
 			if timestampErr != nil {
 				continue
@@ -150,6 +150,9 @@ func newValueFields(rows []models.Row, labels data.Labels, colIdxStart, colIdxEn
 				case "json.Number":
 					value := util.ParseNumber(valuePair[colIdx])
 					floatArray = append(floatArray, value)
+				case "float64":
+					value := valuePair[colIdx].(float64)
+					floatArray = append(floatArray, &value)
 				case "bool":
 					value, ok := valuePair[colIdx].(bool)
 					if ok {
@@ -191,6 +194,8 @@ func newValueFields(rows []models.Row, labels data.Labels, colIdxStart, colIdxEn
 			case "string":
 				valueField = data.NewField(row.Columns[colIdx], labels, stringArray)
 			case "json.Number":
+				valueField = data.NewField(row.Columns[colIdx], labels, floatArray)
+			case "float64":
 				valueField = data.NewField(row.Columns[colIdx], labels, floatArray)
 			case "bool":
 				valueField = data.NewField(row.Columns[colIdx], labels, boolArray)
@@ -267,7 +272,7 @@ func newFrameWithTimeField(row models.Row, column string, colIndex int, query mo
 	valType := util.Typeof(row.Values, colIndex)
 
 	for _, valuePair := range row.Values {
-		timestamp, timestampErr := util.ParseTimestamp(valuePair[0])
+		timestamp, timestampErr := util.ParseTimestamp2(valuePair[0])
 		// we only add this row if the timestamp is valid
 		if timestampErr != nil {
 			continue
@@ -285,6 +290,9 @@ func newFrameWithTimeField(row models.Row, column string, colIndex int, query mo
 		case "json.Number":
 			value := util.ParseNumber(valuePair[colIndex])
 			floatArray = append(floatArray, value)
+		case "float64":
+			value := valuePair[colIndex].(float64)
+			floatArray = append(floatArray, &value)
 		case "bool":
 			value, ok := valuePair[colIndex].(bool)
 			if ok {
@@ -305,6 +313,8 @@ func newFrameWithTimeField(row models.Row, column string, colIndex int, query mo
 	case "string":
 		valueField = data.NewField("Value", row.Tags, stringArray)
 	case "json.Number":
+		valueField = data.NewField("Value", row.Tags, floatArray)
+	case "float64":
 		valueField = data.NewField("Value", row.Tags, floatArray)
 	case "bool":
 		valueField = data.NewField("Value", row.Tags, boolArray)

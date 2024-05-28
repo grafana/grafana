@@ -114,6 +114,19 @@ func ParseTimestamp(value any) (time.Time, error) {
 	return t, nil
 }
 
+func ParseTimestamp2(value any) (time.Time, error) {
+	timestampNumber, ok := value.(float64)
+	if !ok {
+		return time.Time{}, fmt.Errorf("timestamp-value has invalid type: %#v", value)
+	}
+
+	// currently in the code the influxdb-timestamps are requested with
+	// milliseconds-precision, meaning these values are milliseconds
+	t := time.UnixMilli(int64(timestampNumber)).UTC()
+
+	return t, nil
+}
+
 func Typeof(values [][]any, colIndex int) string {
 	for _, value := range values {
 		if value != nil && value[colIndex] != nil {
