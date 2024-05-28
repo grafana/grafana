@@ -38,4 +38,10 @@ export enum NodeGraphDataFrameFieldNames {
 
   // Defines the stroke dash array for the edge [edges]. See SVG strokeDasharray definition for syntax.
   strokeDasharray = 'strokedasharray',
+
+  // Supplies a fixed X position for the node to have in the finished graph.
+  fixedX = 'fixedx',
+
+  // Supplies a fixed Y position for the node to have in the finished graph.
+  fixedY = 'fixedy',
 }
