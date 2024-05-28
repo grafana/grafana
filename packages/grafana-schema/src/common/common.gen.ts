@@ -553,6 +553,15 @@ export enum BigValueTextMode {
 }
 
 /**
+ * TODO docs
+ */
+export enum PercentChangeColorMode {
+  Inverted = 'inverted',
+  SameAsValue = 'same_as_value',
+  Standard = 'standard',
+}
+
+/**
  * TODO -- should not be table specific!
  * TODO docs
  */
