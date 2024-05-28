@@ -94,6 +94,41 @@ it('handles a default datasource in a template variable', async () => {
   expect(exported.templating.list[0].datasource.uid).toBe('${DS_GFDB}');
 });
 
+it('do not expose datasource name and id in a in a template variable of type datasource', async () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const dashboard: any = {
+    templating: {
+      list: [
+        {
+          current: {
+            selected: false,
+            text: 'my-prometheus-datasource',
+            value: 'my-prometheus-datasource-uid',
+          },
+          hide: 0,
+          includeAll: false,
+          multi: false,
+          name: 'query1',
+          options: [],
+          query: 'prometheus',
+          queryValue: '',
+          refresh: 1,
+          regex: '',
+          skipUrlSync: false,
+          type: 'datasource',
+        },
+      ],
+    },
+  };
+  const dashboardModel = new DashboardModel(dashboard, undefined, {
+    getVariablesFromState: () => dashboard.templating.list,
+  });
+  const exporter = new DashboardExporter();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const exported: any = await exporter.makeExportable(dashboardModel);
+  expect(exported.templating.list[0].current).toEqual({});
+});
+
 it('replaces datasource ref in library panel', async () => {
   const dashboard: Dashboard = {
     editable: true,
