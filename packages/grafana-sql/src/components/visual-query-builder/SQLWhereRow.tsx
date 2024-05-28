@@ -1,7 +1,7 @@
 import React from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
-import { SelectableValue, VariableWithMultiSupport } from '@grafana/data';
+import { SelectableValue, TypedVariableModel } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { QueryWithDefaults } from '../../defaults';
@@ -32,7 +32,8 @@ export function SQLWhereRow({ query, fields, onQueryChange, db }: WhereRowProps)
       config={{ fields: state.value || {} }}
       sql={query.sql!}
       onSqlChange={(val: SQLExpression) => {
-        const templateVars = getTemplateSrv().getVariables() as VariableWithMultiSupport[];
+        const templateVars = getTemplateSrv().getVariables();
+
         removeQuotesForMultiVariables(val, templateVars);
 
         onSqlChange(val);
@@ -54,9 +55,11 @@ function mapFieldsToTypes(columns: SQLSelectableValue[]) {
   return fields;
 }
 
-export function removeQuotesForMultiVariables(val: SQLExpression, templateVars: VariableWithMultiSupport[]) {
-  const multiVariableInWhereString = (tv: VariableWithMultiSupport) =>
-    tv.multi && (val.whereString?.includes(`\${${tv.name}}`) || val.whereString?.includes(`$${tv.name}`));
+export function removeQuotesForMultiVariables(val: SQLExpression, templateVars: TypedVariableModel[]) {
+  const multiVariableInWhereString = (tv: TypedVariableModel) =>
+    'multi' in tv &&
+    tv.multi &&
+    (val.whereString?.includes(`\${${tv.name}}`) || val.whereString?.includes(`$${tv.name}`));
 
   if (templateVars.some((tv) => multiVariableInWhereString(tv))) {
     val.whereString = val.whereString?.replaceAll("')", ')');

@@ -57,8 +57,8 @@ export const dataLinksOverrideProcessor = (
   value: any,
   _context: FieldOverrideContext,
   _settings?: DataLinksFieldConfigSettings
-) => {
-  return value as DataLink[];
+): DataLink[] => {
+  return value;
 };
 
 export interface ValueMappingFieldConfigSettings {}
@@ -67,8 +67,8 @@ export const valueMappingsOverrideProcessor = (
   value: any,
   _context: FieldOverrideContext,
   _settings?: ValueMappingFieldConfigSettings
-) => {
-  return value as ValueMapping[]; // !!!! likely not !!!!
+): ValueMapping[] => {
+  return value; // !!!! likely not !!!!
 };
 
 export interface SelectFieldConfigSettings<T> {
@@ -121,8 +121,8 @@ export const thresholdsOverrideProcessor = (
   value: any,
   _context: FieldOverrideContext,
   _settings?: ThresholdsFieldConfigSettings
-) => {
-  return value as ThresholdsConfig; // !!!! likely not !!!!
+): ThresholdsConfig => {
+  return value; // !!!! likely not !!!!
 };
 
 export interface UnitFieldConfigSettings {

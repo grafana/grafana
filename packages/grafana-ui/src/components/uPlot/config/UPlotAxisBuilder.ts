@@ -231,7 +231,8 @@ export function formatTime(
   foundSpace: number,
   foundIncr: number
 ): string[] {
-  const timeZone = (self.axes[axisIdx] as any).timeZone;
+  const axis = self.axes[axisIdx];
+  const timeZone = 'timeZone' in axis && typeof axis.timeZone === 'string' ? axis.timeZone : undefined;
   const scale = self.scales.x;
   const range = (scale?.max ?? 0) - (scale?.min ?? 0);
   const yearRoundedToDay = Math.round(timeUnitSize.year / timeUnitSize.day) * timeUnitSize.day;
