@@ -1279,7 +1279,6 @@ var (
 			Description:       "Enables deleted dashboard restore feature",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaFrontendPlatformSquad,
-			HideFromDocs:      true,
 			HideFromAdminPage: true,
 		},
 		{

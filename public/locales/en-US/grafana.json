@@ -1179,6 +1179,10 @@
       "subtitle": "Optimize performance with k6 and Synthetic Monitoring insights",
       "title": "Testing & synthetics"
     },
+    "trash": {
+      "subtitle": "Any items remaining in the Trash for more than 30 days will be automatically deleted",
+      "title": "Trash"
+    },
     "upgrading": {
       "title": "Stats and license"
     },
