@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	amconfig "github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
@@ -346,8 +347,8 @@ func TestAlertmanagerAutogenConfig(t *testing.T) {
 
 		cOpt := []cmp.Option{
 			cmpopts.IgnoreUnexported(apimodels.PostableUserConfig{}, apimodels.Route{}, labels.Matcher{}),
-			cmpopts.IgnoreFields(apimodels.PostableGrafanaReceiver{}, "UID", "Settings"),
-		}
+			cmpopts.IgnoreFields(amconfig.GlobalConfig{}, "HTTPConfig"),
+			cmpopts.IgnoreFields(apimodels.PostableGrafanaReceiver{}, "UID", "Settings")}
 		if !cmp.Equal(test, exp, cOpt...) {
 			t.Errorf("Unexpected AM Config: %v", cmp.Diff(test, exp, cOpt...))
 		}

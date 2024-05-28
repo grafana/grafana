@@ -799,24 +799,28 @@ func (c *GettableApiAlertingConfig) GetRoute() *Route {
 	return c.Route
 }
 
-func (c *GettableApiAlertingConfig) UnmarshalJSON(b []byte) error {
+func (c *GettableApiAlertingConfig) UnmarshalYAML(value *yaml.Node) error {
 	type plain GettableApiAlertingConfig
-	if err := json.Unmarshal(b, (*plain)(c)); err != nil {
+	if err := value.Decode((*plain)(c)); err != nil {
 		return err
 	}
 
-	// Since Config implements json.Unmarshaler, we must handle _all_ other fields independently.
-	// Otherwise, the json decoder will detect this and only use the embedded type.
+	// Since Config implements yaml.Unmarshaler, we must handle _all_ other fields independently.
+	// Otherwise, the yaml decoder will detect this and only use the embedded type.
 	// Additionally, we'll use pointers to slices in order to reference the intended target.
 	type overrides struct {
 		Receivers *[]*GettableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
 	}
 
-	if err := json.Unmarshal(b, &overrides{Receivers: &c.Receivers}); err != nil {
+	if err := value.Decode(&overrides{Receivers: &c.Receivers}); err != nil {
 		return err
 	}
 
 	return c.validate()
+}
+
+func (c *GettableApiAlertingConfig) UnmarshalJSON(b []byte) error {
+	return yaml.Unmarshal(b, c)
 }
 
 // validate ensures that the two routing trees use the correct receiver types.
