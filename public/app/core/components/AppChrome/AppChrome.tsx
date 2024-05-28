@@ -2,10 +2,9 @@ import { css, cx } from '@emotion/css';
 import classNames from 'classnames';
 import React, { PropsWithChildren, useEffect } from 'react';
 
-import { GrafanaTheme2, SetPanelAttentionEvent } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { locationSearchToObject, locationService } from '@grafana/runtime';
 import { useStyles2, LinkButton, useTheme2 } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import store from 'app/core/store';
