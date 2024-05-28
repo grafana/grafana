@@ -33,7 +33,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext/baseplugincontext"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -483,7 +482,7 @@ func setup(t *testing.T) *testContext {
 			},
 		}, &fakeDatasources.FakeCacheService{}, fakeDatasourceService,
 		pluginSettings.ProvideService(sqlStore, secretsService),
-		baseplugincontext.ProvideService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()),
+		pluginconfig.NewFakePluginRequestConfigProvider(),
 	)
 	exprService := expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, pc, pCtxProvider,
 		featuremgmt.WithFeatures(), nil, tracing.InitializeTracerForTest())

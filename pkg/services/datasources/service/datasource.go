@@ -24,7 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext/baseplugincontext"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -50,7 +50,7 @@ type Service struct {
 	db                        db.DB
 	pluginStore               pluginstore.Store
 	pluginClient              plugins.Client
-	basePluginContextProvider baseplugincontext.BasePluginContextProvider
+	basePluginContextProvider plugincontext.BasePluginContextProvider
 
 	ptc proxyTransportCache
 }
@@ -69,7 +69,7 @@ func ProvideService(
 	db db.DB, secretsService secrets.Service, secretsStore kvstore.SecretsKVStore, cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, datasourcePermissionsService accesscontrol.DatasourcePermissionsService,
 	quotaService quota.Service, pluginStore pluginstore.Store, pluginClient plugins.Client,
-	basePluginContextProvider baseplugincontext.BasePluginContextProvider,
+	basePluginContextProvider plugincontext.BasePluginContextProvider,
 ) (*Service, error) {
 	dslogger := log.New("datasources")
 	store := &SqlStore{db: db, logger: dslogger, features: features}

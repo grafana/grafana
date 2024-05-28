@@ -27,7 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext/baseplugincontext"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
@@ -152,7 +151,7 @@ func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakeP
 			},
 		}, &fakeDatasources.FakeCacheService{}, ds,
 		pluginSettings.ProvideService(store, fakeSecrets.NewFakeSecretsService()),
-		baseplugincontext.ProvideService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()))
+		pluginconfig.NewFakePluginRequestConfigProvider())
 
 	return query.ProvideService(
 		setting.NewCfg(),

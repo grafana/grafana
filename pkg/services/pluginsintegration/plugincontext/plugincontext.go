@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext/baseplugincontext"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -29,28 +29,26 @@ const (
 
 func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, pluginStore pluginstore.Store,
 	dataSourceCache datasources.CacheService, dataSourceService datasources.DataSourceService,
-	pluginSettingsService pluginsettings.Service, basePluginContextProvider baseplugincontext.BasePluginContextProvider) *Provider {
+	pluginSettingsService pluginsettings.Service, pluginRequestConfigProvider pluginconfig.PluginRequestConfigProvider) *Provider {
 	return &Provider{
-		cfg:                       cfg,
-		cacheService:              cacheService,
-		pluginStore:               pluginStore,
-		dataSourceCache:           dataSourceCache,
-		dataSourceService:         dataSourceService,
-		pluginSettingsService:     pluginSettingsService,
-		basePluginContextProvider: basePluginContextProvider,
-		logger:                    log.New("plugin.context"),
+		BaseProvider:          newBaseProvider(cfg, pluginRequestConfigProvider),
+		cacheService:          cacheService,
+		pluginStore:           pluginStore,
+		dataSourceCache:       dataSourceCache,
+		dataSourceService:     dataSourceService,
+		pluginSettingsService: pluginSettingsService,
+		logger:                log.New("plugin.context"),
 	}
 }
 
 type Provider struct {
-	cfg                       *setting.Cfg
-	cacheService              *localcache.CacheService
-	pluginStore               pluginstore.Store
-	dataSourceCache           datasources.CacheService
-	dataSourceService         datasources.DataSourceService
-	pluginSettingsService     pluginsettings.Service
-	basePluginContextProvider baseplugincontext.BasePluginContextProvider
-	logger                    log.Logger
+	*BaseProvider
+	cacheService          *localcache.CacheService
+	pluginStore           pluginstore.Store
+	dataSourceCache       datasources.CacheService
+	dataSourceService     datasources.DataSourceService
+	pluginSettingsService pluginsettings.Service
+	logger                log.Logger
 }
 
 // Get will retrieve plugin context by the provided pluginID and orgID.
@@ -63,7 +61,7 @@ func (p *Provider) Get(ctx context.Context, pluginID string, user identity.Reque
 		return backend.PluginContext{}, plugins.ErrPluginNotRegistered
 	}
 
-	pCtx := p.basePluginContextProvider.GetBasePluginContext(ctx, plugin, user)
+	pCtx := p.GetBasePluginContext(ctx, plugin, user)
 	if plugin.IsApp() {
 		appSettings, err := p.appInstanceSettings(ctx, pluginID, orgID)
 		if err != nil {
@@ -85,7 +83,7 @@ func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user 
 		return backend.PluginContext{}, plugins.ErrPluginNotRegistered
 	}
 
-	pCtx := p.basePluginContextProvider.GetBasePluginContext(ctx, plugin, user)
+	pCtx := p.GetBasePluginContext(ctx, plugin, user)
 
 	datasourceSettings, err := adapters.ModelToInstanceSettings(ds, p.decryptSecureJsonDataFn(ctx))
 	if err != nil {
@@ -121,7 +119,7 @@ func (p *Provider) PluginContextForDataSource(ctx context.Context, datasourceSet
 	if err != nil {
 		return backend.PluginContext{}, err
 	}
-	pCtx := p.basePluginContextProvider.GetBasePluginContext(ctx, plugin, user)
+	pCtx := p.GetBasePluginContext(ctx, plugin, user)
 	pCtx.DataSourceInstanceSettings = datasourceSettings
 
 	return pCtx, nil

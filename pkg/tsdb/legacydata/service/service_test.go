@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext/baseplugincontext"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -52,13 +51,12 @@ func TestHandleRequest(t *testing.T) {
 		dsCache := datasourceservice.ProvideCacheService(localcache.ProvideService(), sqlStore, guardian.ProvideGuardian())
 		dsService, err := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(),
 			acmock.New(), datasourcePermissions, quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{},
-			baseplugincontext.ProvideService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()))
+			plugincontext.BaseProvideService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()))
 		require.NoError(t, err)
 
 		pCtxProvider := plugincontext.ProvideService(cfg, localcache.ProvideService(), &pluginstore.FakePluginStore{
 			PluginList: []pluginstore.Plugin{{JSONData: plugins.JSONData{ID: "test"}}},
-		}, dsCache, dsService, pluginSettings.ProvideService(sqlStore, secretsService),
-			baseplugincontext.ProvideService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()))
+		}, dsCache, dsService, pluginSettings.ProvideService(sqlStore, secretsService), pluginconfig.NewFakePluginRequestConfigProvider())
 		s := ProvideService(client, nil, dsService, pCtxProvider)
 
 		ds := &datasources.DataSource{ID: 12, Type: "test", JsonData: simplejson.New()}

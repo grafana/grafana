@@ -1,4 +1,4 @@
-package baseplugincontext
+package plugincontext
 
 import (
 	"context"
@@ -20,21 +20,25 @@ type BasePluginContextProvider interface {
 	GetBasePluginContext(ctx context.Context, plugin pluginstore.Plugin, user identity.Requester) backend.PluginContext
 }
 
-func ProvideService(cfg *setting.Cfg, pluginRequestConfigProvider pluginconfig.PluginRequestConfigProvider) *Provider {
-	return &Provider{
+func BaseProvideService(cfg *setting.Cfg, pluginRequestConfigProvider pluginconfig.PluginRequestConfigProvider) *BaseProvider {
+	return &BaseProvider{
 		cfg:                         cfg,
 		pluginRequestConfigProvider: pluginRequestConfigProvider,
 		logger:                      log.New("base.plugin.context"),
 	}
 }
 
-type Provider struct {
+func newBaseProvider(cfg *setting.Cfg, pluginRequestConfigProvider pluginconfig.PluginRequestConfigProvider) *BaseProvider {
+	return BaseProvideService(cfg, pluginRequestConfigProvider)
+}
+
+type BaseProvider struct {
 	cfg                         *setting.Cfg
 	pluginRequestConfigProvider pluginconfig.PluginRequestConfigProvider
 	logger                      log.Logger
 }
 
-func (p *Provider) GetBasePluginContext(ctx context.Context, plugin pluginstore.Plugin, user identity.Requester) backend.PluginContext {
+func (p *BaseProvider) GetBasePluginContext(ctx context.Context, plugin pluginstore.Plugin, user identity.Requester) backend.PluginContext {
 	pCtx := backend.PluginContext{
 		PluginID:      plugin.ID,
 		PluginVersion: plugin.Info.Version,

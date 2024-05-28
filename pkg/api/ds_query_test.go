@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext/baseplugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -79,7 +78,7 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 			},
 		}, &fakeDatasources.FakeCacheService{}, &fakeDatasources.FakeDataSourceService{},
 			pluginSettings.ProvideService(dbtest.NewFakeDB(), secretstest.NewFakeSecretsService()),
-			baseplugincontext.ProvideService(cfg, pluginconfig.NewFakePluginRequestConfigProvider())),
+			pluginconfig.NewFakePluginRequestConfigProvider()),
 	)
 	serverFeatureEnabled := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.queryDataService = qds
@@ -127,7 +126,7 @@ func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
 		},
 		&fakeDatasources.FakeCacheService{},
 		ds, pluginSettings.ProvideService(db, secretstest.NewFakeSecretsService()),
-		baseplugincontext.ProvideService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()),
+		pluginconfig.NewFakePluginRequestConfigProvider(),
 	)
 	qds := query.ProvideService(
 		cfg,
@@ -305,7 +304,7 @@ func TestDataSourceQueryError(t *testing.T) {
 					},
 						&fakeDatasources.FakeCacheService{}, ds,
 						pluginSettings.ProvideService(dbtest.NewFakeDB(),
-							secretstest.NewFakeSecretsService()), baseplugincontext.ProvideService(cfg, pluginconfig.NewFakePluginRequestConfigProvider())),
+							secretstest.NewFakeSecretsService()), pluginconfig.NewFakePluginRequestConfigProvider()),
 				)
 				hs.QuotaService = quotatest.New(false, nil)
 			})

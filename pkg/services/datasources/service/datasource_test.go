@@ -28,7 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext/baseplugincontext"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -84,7 +84,7 @@ func TestService_AddDataSource(t *testing.T) {
 			ValidateAdmissionFunc: dsplugin.ValidateAdmission,
 			MutateAdmissionFunc:   dsplugin.MutateAdmission,
 			ConvertObjectFunc:     dsplugin.ConvertObject,
-		}, baseplugincontext.ProvideService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()))
+		}, plugincontext.BaseProvideService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()))
 		require.NoError(t, err)
 
 		cmd := &datasources.AddDataSourceCommand{
@@ -237,7 +237,7 @@ func TestService_UpdateDataSource(t *testing.T) {
 					},
 				},
 			}, &pluginfakes.FakePluginClient{},
-			baseplugincontext.ProvideService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()))
+			plugincontext.BaseProvideService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()))
 		require.NoError(t, err)
 
 		// First add the datasource
