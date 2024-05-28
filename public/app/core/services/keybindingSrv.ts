@@ -2,7 +2,7 @@ import Mousetrap from 'mousetrap';
 
 import 'mousetrap-global-bind';
 import 'mousetrap/plugins/global-bind/mousetrap-global-bind';
-import { LegacyGraphHoverClearEvent, locationUtil } from '@grafana/data';
+import { LegacyGraphHoverClearEvent, SetPanelAttentionEvent, locationUtil } from '@grafana/data';
 import { LocationService } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
@@ -32,13 +32,14 @@ export class KeybindingSrv {
   constructor(
     private locationService: LocationService,
     private chromeService: AppChromeService
-  ) {}
+  ) {
+    // No cleanup needed, since KeybindingSrv is a singleton
+    appEvents.subscribe(SetPanelAttentionEvent, (event) => {
+      this.panelId = event.payload.panelId;
+    });
+  }
   /** string for VizPanel key and number for panelId */
   private panelId: string | number | null = null;
-
-  public setPanelAttention(panelId: number | string) {
-    this.panelId = panelId;
-  }
 
   clearAndInitGlobalBindings(route: RouteDescriptor) {
     Mousetrap.reset();

@@ -23,10 +23,7 @@ import { TOP_BAR_LEVEL_HEIGHT } from './types';
 export interface Props extends PropsWithChildren<{}> {}
 
 export function AppChrome({ children }: Props) {
-  const { chrome, keybindings } = useGrafana();
-  const panelAttentionSubscription = appEvents.getStream(SetPanelAttentionEvent).subscribe((event) => {
-    keybindings.setPanelAttention(event.payload.panelId);
-  });
+  const { chrome } = useGrafana();
   const state = chrome.useState();
   const searchBarHidden = state.searchBarHidden || state.kioskMode === KioskMode.TV;
   const theme = useTheme2();
@@ -74,12 +71,6 @@ export function AppChrome({ children }: Props) {
     const queryParams = locationSearchToObject(search);
     chrome.setKioskModeFromUrl(queryParams.kiosk);
   }, [chrome, search]);
-
-  useEffect(() => {
-    return () => {
-      panelAttentionSubscription.unsubscribe();
-    };
-  });
 
   // Chromeless routes are without topNav, mega menu, search & command palette
   // We check chromeless twice here instead of having a separate path so {children}
