@@ -6,6 +6,7 @@ import { render } from 'test/test-utils';
 import { ConnectionStatus } from '../../hooks/useExternalAmSelector';
 
 import { AlertmanagerCard } from './AlertmanagerCard';
+import { BUILTIN_ALERTMANAGER_NAME } from './InternalAlertmanager';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -146,6 +147,43 @@ describe('Alertmanager card', () => {
 
     render(cardWithStatus('inconclusive'));
     expect(screen.getByText(/Inconclusive/)).toBeInTheDocument();
+  });
+
+  it('should not render the enable / disable buttons when "alertingDisableSendAlertsExternal" feature toggle is enabled', () => {
+    render(
+      <AlertmanagerCard
+        name="Foo"
+        receiving={false}
+        forwardingDisabled={true}
+        onEditConfiguration={jest.fn()}
+        onDisable={jest.fn()}
+        onEnable={jest.fn()}
+      />
+    );
+
+    const enableButton = screen.queryByRole('button', { name: 'Enable' });
+    expect(enableButton).not.toBeInTheDocument();
+
+    // should also not show the status for external alertmanagers
+    expect(screen.queryByText(/Receiving/)).not.toBeInTheDocument();
+  });
+
+  it('should still show the receiving status for the "canonical" Alertmanager', () => {
+    render(
+      <AlertmanagerCard
+        name={BUILTIN_ALERTMANAGER_NAME}
+        receiving={false}
+        forwardingDisabled={true}
+        onEditConfiguration={jest.fn()}
+        onDisable={jest.fn()}
+        onEnable={jest.fn()}
+      />
+    );
+
+    const enableButton = screen.queryByRole('button', { name: 'Enable' });
+    expect(enableButton).not.toBeInTheDocument();
+
+    expect(screen.getByText(/Receiving/)).toBeInTheDocument();
   });
 });
 

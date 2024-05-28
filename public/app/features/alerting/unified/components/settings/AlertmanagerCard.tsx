@@ -1,11 +1,13 @@
 import { capitalize } from 'lodash';
 import React from 'react';
 
-import { Card, Badge, Button, Stack, Text, TextLink } from '@grafana/ui';
+import { Badge, Button, Card, Stack, Text, TextLink } from '@grafana/ui';
 
 import { ConnectionStatus } from '../../hooks/useExternalAmSelector';
 import { ProvisioningBadge } from '../Provisioning';
 import { WithReturnButton } from '../WithReturnButton';
+
+import { BUILTIN_ALERTMANAGER_NAME } from './InternalAlertmanager';
 
 interface Props {
   name: string;
@@ -14,6 +16,7 @@ interface Props {
   logo?: string;
   provisioned?: boolean;
   readOnly?: boolean;
+  forwardingDisabled?: boolean;
   implementation?: string;
   receiving?: boolean;
   status?: ConnectionStatus;
@@ -30,6 +33,7 @@ export function AlertmanagerCard({
   logo = 'public/app/plugins/datasource/alertmanager/img/logo.svg',
   provisioned = false,
   readOnly = provisioned,
+  forwardingDisabled = false,
   implementation,
   receiving = false,
   status = 'unknown',
@@ -37,6 +41,10 @@ export function AlertmanagerCard({
   onEnable,
   onDisable,
 }: Props) {
+  const showEnableDisable = !provisioned && !forwardingDisabled;
+  // @TODO this isn't really the best way to do it – but needs some backend changes to determine the "canonical" Alertmanager.
+  const isCanonicalAlertmanager = name === BUILTIN_ALERTMANAGER_NAME;
+
   return (
     <Card data-testid={`alertmanager-card-${name}`}>
       <Card.Heading>
@@ -60,14 +68,22 @@ export function AlertmanagerCard({
             {implementation && capitalize(implementation)}
             {url && url}
           </Card.Meta>
-          {!receiving ? (
-            <Text variant="bodySmall">Not receiving Grafana managed alerts</Text>
-          ) : (
+          {/* if forwarding is diabled, still show status for the "canonical" Alertmanager */}
+          {forwardingDisabled && isCanonicalAlertmanager && (
+            <Badge text="Receiving Grafana-managed alerts" color="green" />
+          )}
+          {forwardingDisabled ? null : (
             <>
-              {status === 'pending' && <Badge text="Activation in progress" color="orange" />}
-              {status === 'active' && <Badge text="Receiving Grafana-managed alerts" color="green" />}
-              {status === 'dropped' && <Badge text="Failed to adopt Alertmanager" color="red" />}
-              {status === 'inconclusive' && <Badge text="Inconclusive" color="orange" />}
+              {!receiving ? (
+                <Text variant="bodySmall">Not receiving Grafana managed alerts</Text>
+              ) : (
+                <>
+                  {status === 'pending' && <Badge text="Activation in progress" color="orange" />}
+                  {status === 'active' && <Badge text="Receiving Grafana-managed alerts" color="green" />}
+                  {status === 'dropped' && <Badge text="Failed to adopt Alertmanager" color="red" />}
+                  {status === 'inconclusive' && <Badge text="Inconclusive" color="orange" />}
+                </>
+              )}
             </>
           )}
         </Stack>
@@ -80,7 +96,7 @@ export function AlertmanagerCard({
           <Button onClick={onEditConfiguration} icon={readOnly ? 'eye' : 'edit'} variant="secondary" fill="outline">
             {readOnly ? 'View configuration' : 'Edit configuration'}
           </Button>
-          {provisioned ? null : (
+          {showEnableDisable ? (
             <>
               {receiving ? (
                 <Button icon="times" variant="destructive" fill="outline" onClick={onDisable}>
@@ -92,7 +108,7 @@ export function AlertmanagerCard({
                 </Button>
               )}
             </>
-          )}
+          ) : null}
         </Stack>
       </Card.Tags>
     </Card>

@@ -11,8 +11,10 @@ interface Props {
   onEditConfiguration: (dataSourceName: string) => void;
 }
 
+export const BUILTIN_ALERTMANAGER_NAME = 'Grafana built-in';
+
 export default function InternalAlertmanager({ onEditConfiguration }: Props) {
-  const { configuration, enableAlertmanager, disableAlertmanager } = useSettings();
+  const { configuration, enableAlertmanager, disableAlertmanager, forwardingDisabled } = useSettings();
 
   const isReceiving = isInternalAlertmanagerInterestedInAlerts(configuration);
   const status: ConnectionStatus = isReceiving ? 'active' : 'uninterested';
@@ -20,10 +22,11 @@ export default function InternalAlertmanager({ onEditConfiguration }: Props) {
 
   return (
     <AlertmanagerCard
-      name="Grafana built-in"
+      name={BUILTIN_ALERTMANAGER_NAME}
       logo="public/img/grafana_icon.svg"
       status={status}
       receiving={isReceiving}
+      forwardingDisabled={forwardingDisabled}
       onEditConfiguration={handleEditConfiguration}
       onEnable={() => enableAlertmanager(GRAFANA_RULES_SOURCE_NAME)}
       onDisable={() => disableAlertmanager(GRAFANA_RULES_SOURCE_NAME)}
