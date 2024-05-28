@@ -19,7 +19,7 @@ weight: 700
 
 # Configure generic OAuth2 authentication
 
-{{< docs/shared lookup="auth/intro.md" source="grafana" version="<GRAFANA VERSION>" >}}
+{{< docs/shared lookup="auth/intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 Grafana provides OAuth2 integrations for the following auth providers:
 

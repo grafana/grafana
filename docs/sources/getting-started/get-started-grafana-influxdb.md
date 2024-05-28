@@ -12,7 +12,7 @@ weight: 400
 
 # Get started with Grafana and InfluxDB
 
-{{< docs/shared lookup="influxdb/intro.md" source="grafana" version="<GRAFANA VERSION>" >}}
+{{< docs/shared lookup="influxdb/intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 #### Get InfluxDB
 

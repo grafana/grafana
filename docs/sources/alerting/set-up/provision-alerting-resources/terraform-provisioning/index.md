@@ -17,6 +17,32 @@ labels:
 menuTitle: Use Terraform to provision
 title: Use Terraform to provision alerting resources
 weight: 200
+refs:
+  alerting_http_provisioning:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning/
+  testdata:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/testdata/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/testdata/
+  alerting_export:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources/
+  service-accounts:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/
+  alerting-rules:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/
 ---
 
 # Use Terraform to provision alerting resources
@@ -29,7 +55,7 @@ Complete the following tasks to create and manage your alerting resources using 
 
 1. Create an API key for provisioning.
 1. Configure the Terraform provider.
-1. Define your alerting resources in Terraform. [Export alerting resources][alerting_export] in Terraform format, or implement the [Terraform Alerting schemas](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+1. Define your alerting resources in Terraform. [Export alerting resources](ref:alerting_export) in Terraform format, or implement the [Terraform Alerting schemas](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
 
 1. Run `terraform apply` to provision your alerting resources.
 
@@ -43,14 +69,14 @@ Complete the following tasks to create and manage your alerting resources using 
 
 ## Create an API key for provisioning
 
-You can create a [service account token][service-accounts] to authenticate Terraform with Grafana. Most existing tooling using API keys should automatically work with the new Grafana Alerting support.
+You can create a [service account token](ref:service-accounts) to authenticate Terraform with Grafana. Most existing tooling using API keys should automatically work with the new Grafana Alerting support.
 
 There are also dedicated RBAC roles for alerting provisioning. This lets you easily authenticate as a service account with the minimum permissions needed to provision your Alerting infrastructure.
 
 To create an API key for provisioning, complete the following steps.
 
 1. Create a new service account.
-1. Assign the role or permission to access the [Alerting provisioning API][alerting_http_provisioning].
+1. Assign the role or permission to access the [Alerting provisioning API](ref:alerting_http_provisioning).
 1. Create a new service account token.
 1. Name and save the token for use in Terraform.
 
@@ -251,13 +277,13 @@ To provision mute timings, refer to the [grafana_mute_timing schema](https://reg
 
 ## Import alert rules
 
-[Alert rules][alerting-rules] enable you to alert against any Grafana data source. This can be a data source that you already have configured, or you can [define your data sources in Terraform](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/data_source) alongside your alert rules.
+[Alert rules](ref:alerting-rules) enable you to alert against any Grafana data source. This can be a data source that you already have configured, or you can [define your data sources in Terraform](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/data_source) alongside your alert rules.
 
 To provision alert rules, refer to the [grafana_rule_group schema](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/rule_group), and complete the following steps.
 
 1. Create a data source to query and a folder to store your rules in.
 
-   In this example, the [TestData][testdata] data source is used.
+   In this example, the [TestData](ref:testdata) data source is used.
 
    Alerts can be defined against any backend datasource in Grafana.
 
@@ -372,20 +398,3 @@ resource "grafana_mute_timing" "mute_all" {
 **Useful Links:**
 
 [Grafana Terraform Provider documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs)
-
-{{% docs/reference %}}
-[alerting-rules]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules"
-[alerting-rules]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules"
-
-[alerting_export]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources"
-[alerting_export]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources"
-
-[alerting_http_provisioning]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning"
-[alerting_http_provisioning]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning"
-
-[service-accounts]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/administration/service-accounts"
-[service-accounts]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/administration/service-accounts"
-
-[testdata]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/datasources/testdata"
-[testdata]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/datasources/testdata"
-{{% /docs/reference %}}

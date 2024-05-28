@@ -14,7 +14,7 @@ weight: 1400
 
 # Configure Okta OIDC authentication
 
-{{< docs/shared lookup="auth/intro.md" source="grafana" version="<GRAFANA VERSION>" >}}
+{{< docs/shared lookup="auth/intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Before you begin
 

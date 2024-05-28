@@ -20,4 +20,4 @@ weight: 300
 [//]: # 'Shared content for the TraceQL query editor'
 [//]: # 'This content is located in /docs/sources/shared/datasources/tempo-editor-traceql.md'
 
-{{< docs/shared source="grafana" lookup="datasources/tempo-editor-traceql.md" version="<GRAFANA VERSION>" >}}
+{{< docs/shared source="grafana" lookup="datasources/tempo-editor-traceql.md" version="<GRAFANA_VERSION>" >}}

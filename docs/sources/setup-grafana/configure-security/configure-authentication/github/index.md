@@ -19,7 +19,7 @@ weight: 900
 
 # Configure GitHub OAuth2 authentication
 
-{{< docs/shared lookup="auth/intro.md" source="grafana" version="<GRAFANA VERSION>" >}}
+{{< docs/shared lookup="auth/intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 This topic describes how to configure GitHub OAuth2 authentication.
 

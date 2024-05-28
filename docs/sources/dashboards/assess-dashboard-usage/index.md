@@ -18,13 +18,33 @@ labels:
     - enterprise
 title: Assess dashboard usage
 weight: 200
+refs:
+  grafana-enterprise:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
+  configuration:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/
+  export-logs-of-usage-insights:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/export-logs/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/export-logs/
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/export-logs/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/export-logs/
 ---
 
 # Assess dashboard usage
 
 Usage insights enables you to have a better understanding of how your Grafana instance is used.
 
-> **Note:** Available in [Grafana Enterprise][] and [Grafana Cloud](/docs/grafana-cloud/).
+> **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
 > Grafana Cloud insights logs include additional fields with their own dashboards.
 > Read more in the [Grafana Cloud documentation](/docs/grafana-cloud/usage-insights/).
 
@@ -41,7 +61,7 @@ The aggregated data provides you access to several features:
 - [Sort dashboards by using insights data](#sort-dashboards-by-using-insights-data)
 - [Visualize usage insight data in a dashboard](#visualize-usage-insights-data)
 
-This feature also generates detailed logs that can be exported to Loki. Refer to [Export logs of usage insights][].
+This feature also generates detailed logs that can be exported to Loki. Refer to [Export logs of usage insights](ref:export-logs-of-usage-insights).
 
 ## Dashboard and data source insights
 
@@ -91,7 +111,7 @@ When there are more active users on a dashboard than can fit within the presence
 
 {{< figure src="/static/img/docs/enterprise/presence_indicators.png" max-width="400px" class="docs-image--no-shadow" alt="Presence indicator icons" >}}
 
-To change _recent_ to something other than the past 10 minutes, edit the [configuration][] file:
+To change _recent_ to something other than the past 10 minutes, edit the [configuration](ref:configuration) file:
 
 ```ini
 [analytics.views]
@@ -100,7 +120,7 @@ To change _recent_ to something other than the past 10 minutes, edit the [config
 recent_users_age = 10m
 ```
 
-To disable the presence indicator, edit the [configuration][] file as follows:
+To disable the presence indicator, edit the [configuration](ref:configuration) file as follows:
 
 ```ini
 [analytics.views]
@@ -127,23 +147,9 @@ You can sort the dashboards by:
 
 ## Visualize usage insights data
 
-If you set up your installation to [export logs of usage insights][], we've created two dashboards to help you take advantage of this data.
+If you set up your installation to [export logs of usage insights](ref:export-logs-of-usage-insights), we've created two dashboards to help you take advantage of this data.
 
 1. [Usage Insights overview](/grafana/dashboards/13785) provides a top-level perspective of user activity.
 1. [Data source details](/grafana/dashboards/13786) dashboard provides a view of data source activity and health.
 
 You can click the previous links to download the respective dashboard JSON, then import into your Grafana installation.
-
-{{% docs/reference %}}
-[export logs of usage insights]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-security/export-logs"
-[export logs of usage insights]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-security/export-logs"
-
-[Export logs of usage insights]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-security/export-logs"
-[Export logs of usage insights]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-security/export-logs"
-
-[configuration]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana"
-[configuration]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana"
-
-[Grafana Enterprise]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/introduction/grafana-enterprise"
-[Grafana Enterprise]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/introduction/grafana-enterprise"
-{{% /docs/reference %}}

@@ -13,6 +13,12 @@ labels:
 description: Configure options for Grafana's pie chart visualization
 title: Pie chart
 weight: 100
+refs:
+  calculation-types:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/calculation-types/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types/
 ---
 
 # Pie chart
@@ -36,7 +42,7 @@ Choose how much information to show.
 
 ### Calculation
 
-Select a calculation to reduce each series when Calculate has been selected. For information about available calculations, refer to [Calculation types][].
+Select a calculation to reduce each series when Calculate has been selected. For information about available calculations, refer to [Calculation types](ref:calculation-types).
 
 ### Limit
 
@@ -80,7 +86,7 @@ The following example shows a pie chart with **Name** and **Percent** labels dis
 
 ![Pie chart labels](/static/img/docs/pie-chart-panel/pie-chart-labels-7-5.png)
 
-{{< docs/shared lookup="visualizations/tooltip-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
+{{< docs/shared lookup="visualizations/tooltip-mode.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Legend options
 
@@ -122,8 +128,3 @@ Select values to display in the legend. You can select more than one.
 ## Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-{{% docs/reference %}}
-[Calculation types]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/calculation-types"
-[Calculation types]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types"
-{{% /docs/reference %}}

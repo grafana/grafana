@@ -19,7 +19,7 @@ weight: 1000
 
 # Configure GitLab OAuth2 authentication
 
-{{< docs/shared lookup="auth/intro.md" source="grafana" version="<GRAFANA VERSION>" >}}
+{{< docs/shared lookup="auth/intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 This topic describes how to configure GitLab OAuth2 authentication.
 
