@@ -1,7 +1,7 @@
 import { find } from 'lodash';
 
-import { DataSourceInstanceSettings, DataSourceRef, PanelPluginMeta } from '@grafana/data';
-import { Dashboard, ThresholdsMode } from '@grafana/schema';
+import { DataSourceInstanceSettings, DataSourceRef, PanelPluginMeta, TypedVariableModel } from '@grafana/data';
+import { Dashboard, DashboardCursorSync, ThresholdsMode } from '@grafana/schema';
 import config from 'app/core/config';
 
 import { LibraryElementKind } from '../../../library-panels/types';
@@ -11,7 +11,7 @@ import { createDataSourceVariableAdapter } from '../../../variables/datasource/a
 import { createQueryVariableAdapter } from '../../../variables/query/adapter';
 import { DashboardModel } from '../../state/DashboardModel';
 
-import { DashboardExporter, LibraryElementExport } from './DashboardExporter';
+import { DashboardExporter, ExternalDashboard, LibraryElementExport } from './DashboardExporter';
 
 jest.mock('app/core/store', () => {
   return {
@@ -95,8 +95,22 @@ it('handles a default datasource in a template variable', async () => {
 });
 
 it('do not expose datasource name and id in a in a template variable of type datasource', async () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const dashboard: any = {
+  const dashboard: Dashboard = {
+    title: 'My dashboard',
+    revision: 1,
+    editable: false,
+    graphTooltip: DashboardCursorSync.Off,
+    schemaVersion: 1,
+    timepicker: { hidden: true },
+    timezone: '',
+    panels: [
+      {
+        id: 1,
+        type: 'timeseries',
+        title: 'My panel title',
+        gridPos: { x: 0, y: 0, w: 1, h: 1 },
+      },
+    ],
     templating: {
       list: [
         {
@@ -111,7 +125,6 @@ it('do not expose datasource name and id in a in a template variable of type dat
           name: 'query1',
           options: [],
           query: 'prometheus',
-          queryValue: '',
           refresh: 1,
           regex: '',
           skipUrlSync: false,
@@ -121,12 +134,14 @@ it('do not expose datasource name and id in a in a template variable of type dat
     },
   };
   const dashboardModel = new DashboardModel(dashboard, undefined, {
-    getVariablesFromState: () => dashboard.templating.list,
+    getVariablesFromState: () => dashboard.templating!.list! as TypedVariableModel[],
   });
   const exporter = new DashboardExporter();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const exported: any = await exporter.makeExportable(dashboardModel);
-  expect(exported.templating.list[0].current).toEqual({});
+  const exported: ExternalDashboard | { error: unknown } = (await exporter.makeExportable(
+    dashboardModel
+  )) as ExternalDashboard;
+  const value = exported?.templating?.list ? exported?.templating?.list[0].current : '';
+  expect(value).toEqual({});
 });
 
 it('replaces datasource ref in library panel', async () => {

@@ -1,6 +1,6 @@
 import { defaults, each, sortBy } from 'lodash';
 
-import { DataSourceRef, PanelPluginMeta, VariableOption, VariableRefresh } from '@grafana/data';
+import { DataSourceRef, PanelPluginMeta, VariableOption, VariableRefresh, VariableWithOptions } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 import { PanelModel } from 'app/features/dashboard/state';
@@ -44,6 +44,9 @@ export interface ExternalDashboard {
   __elements?: Record<string, LibraryElementExport>;
   __requires?: Array<Requires[string]>;
   panels: Array<PanelModel | PanelWithExportableLibraryPanel>;
+  templating?: {
+    list?: VariableWithOptions[];
+  };
 }
 
 interface PanelWithExportableLibraryPanel {
