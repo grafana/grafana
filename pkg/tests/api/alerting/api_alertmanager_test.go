@@ -2066,7 +2066,7 @@ func TestIntegrationAlertmanagerStatus(t *testing.T) {
 				"disableResolveMessage": false,
 				"settings": {
 					"addresses": "\u003cexample@email.com\u003e"
-				},
+				}
 			}]
 		}]
 	},
