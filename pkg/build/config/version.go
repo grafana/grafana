@@ -11,10 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/build/git"
 )
 
-var (
-	reRlsBranch = regexp.MustCompile(`^v\d+\.\d+\.x$`)
-)
-
 type Metadata struct {
 	GrafanaVersion string      `json:"version,omitempty"`
 	ReleaseMode    ReleaseMode `json:"releaseMode,omitempty"`
@@ -112,7 +108,7 @@ func GetPackageJSONVersion(grafanaDir string) (string, error) {
 
 func CheckDroneTargetBranch() (VersionMode, error) {
 	rePRCheckBranch := git.PRCheckRegexp()
-
+	reRlsBranch := regexp.MustCompile(`^v\d+\.\d+\.x$`)
 	target := os.Getenv("DRONE_TARGET_BRANCH")
 	if target == "" {
 		return "", fmt.Errorf("failed to get DRONE_TARGET_BRANCH environmental variable")
