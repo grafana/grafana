@@ -77,7 +77,7 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 	t.Run("updating record field should increase version", func(t *testing.T) {
 		rule := createRule(t, store, recordingRuleGen)
 		newRule := models.CopyRule(rule)
-		newRule.Record.Metric = "new-metric"
+		newRule.Record.Metric = "new_metric"
 
 		err := store.UpdateAlertRules(context.Background(), []models.UpdateRule{{
 			Existing: rule,
@@ -732,7 +732,7 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		})
 
 		t.Run("invalid metric name", func(t *testing.T) {
-			invalidMetric := ""
+			invalidMetric := "with-dashes"
 			invalidRule := recordingRulesGen.Generate()
 			invalidRule.Record.Metric = invalidMetric
 			_, err := store.InsertAlertRules(context.Background(), []models.AlertRule{invalidRule})
