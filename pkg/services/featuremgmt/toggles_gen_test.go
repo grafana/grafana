@@ -56,7 +56,7 @@ func TestFeatureToggleFiles(t *testing.T) {
 				t.Errorf("feature %s does not have an owner. please fill the FeatureFlag.Owner property", flag.Name)
 			}
 			if flag.Stage == FeatureStageGeneralAvailability && flag.Expression == "" {
-				t.Errorf("feature %s should be explicitly enabled or disabled if it's in GA. please add Expression property", flag.Name)
+				t.Errorf("GA features must be explicitly enabled or disabled, please add the `Expression` property for %s", flag.Name)
 			}
 			// Check camel case names
 			if flag.Name != strcase.ToLowerCamel(flag.Name) && !legacyNames[flag.Name] {
