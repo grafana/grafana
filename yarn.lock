@@ -8691,13 +8691,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^16.18.39":
-  version: 16.18.50
-  resolution: "@types/node@npm:16.18.50"
-  checksum: 10/86269db1724621f1a9af9ed37cbb6bc91bfe7a525e99d6aac168fc63371b634d49da15f94db26f593ada226d01fd64aa32a4dd0ee3732c36043056293c586416
-  languageName: node
-  linkType: hard
-
 "@types/node@npm:^18.0.0":
   version: 18.19.33
   resolution: "@types/node@npm:18.19.33"
@@ -11350,7 +11343,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"buffer@npm:^5.5.0, buffer@npm:^5.6.0":
+"buffer@npm:^5.5.0, buffer@npm:^5.7.1":
   version: 5.7.1
   resolution: "buffer@npm:5.7.1"
   dependencies:
@@ -13104,19 +13097,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cypress@npm:13.1.0":
-  version: 13.1.0
-  resolution: "cypress@npm:13.1.0"
+"cypress@npm:13.10.0":
+  version: 13.10.0
+  resolution: "cypress@npm:13.10.0"
   dependencies:
     "@cypress/request": "npm:^3.0.0"
     "@cypress/xvfb": "npm:^1.2.4"
-    "@types/node": "npm:^16.18.39"
     "@types/sinonjs__fake-timers": "npm:8.1.1"
     "@types/sizzle": "npm:^2.3.2"
     arch: "npm:^2.2.0"
     blob-util: "npm:^2.0.2"
     bluebird: "npm:^3.7.2"
-    buffer: "npm:^5.6.0"
+    buffer: "npm:^5.7.1"
     cachedir: "npm:^2.3.0"
     chalk: "npm:^4.1.0"
     check-more-types: "npm:^2.24.0"
@@ -13134,7 +13126,7 @@ __metadata:
     figures: "npm:^3.2.0"
     fs-extra: "npm:^9.1.0"
     getos: "npm:^3.2.1"
-    is-ci: "npm:^3.0.0"
+    is-ci: "npm:^3.0.1"
     is-installed-globally: "npm:~0.4.0"
     lazy-ass: "npm:^1.6.0"
     listr2: "npm:^3.8.3"
@@ -13153,7 +13145,7 @@ __metadata:
     yauzl: "npm:^2.10.0"
   bin:
     cypress: bin/cypress
-  checksum: 10/8e96041503497ca1c1bbcfbd7fa679683ca338fa1b76557fe8f3e4926fc61efd15ccdd0d269146515b6743a1845886aaf1d6cfb72e143a5c57bff6853a18cb92
+  checksum: 10/d3dbce9a00a108d76d0f91ba419106be24a6ad2dfa3c4a3cbb70db7c053b84e9cff2465b31c77ed3a40574bdba6f908b9aa247bdc7e8115f23b622f9ef05d51d
   languageName: node
   linkType: hard
 
@@ -16911,7 +16903,7 @@ __metadata:
     core-js: "npm:3.37.0"
     css-loader: "npm:7.1.1"
     css-minimizer-webpack-plugin: "npm:6.0.0"
-    cypress: "npm:13.1.0"
+    cypress: "npm:13.10.0"
     cypress-file-upload: "npm:5.0.8"
     d3: "npm:7.9.0"
     d3-force: "npm:3.0.0"
@@ -18214,7 +18206,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"is-ci@npm:3.0.1, is-ci@npm:^3.0.0":
+"is-ci@npm:3.0.1, is-ci@npm:^3.0.1":
   version: 3.0.1
   resolution: "is-ci@npm:3.0.1"
   dependencies:
