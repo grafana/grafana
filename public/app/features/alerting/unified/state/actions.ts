@@ -17,8 +17,8 @@ import {
   PromBasedDataSource,
   RuleIdentifier,
   RuleNamespace,
-  RulerDataSourceConfig,
   RuleWithLocation,
+  RulerDataSourceConfig,
   StateHistoryItem,
 } from 'app/types/unified-alerting';
 import {
@@ -30,8 +30,8 @@ import {
 
 import { backendSrv } from '../../../../core/services/backend_srv';
 import {
-  logInfo,
   LogMessages,
+  logInfo,
   trackSwitchToPoliciesRouting,
   trackSwitchToSimplifiedRouting,
   withPerformanceLogging,
@@ -51,26 +51,26 @@ import { discoverFeatures } from '../api/buildInfo';
 import { fetchNotifiers } from '../api/grafana';
 import { FetchPromRulesFilter, fetchRules } from '../api/prometheus';
 import {
+  FetchRulerRulesFilter,
   deleteNamespace,
   deleteRulerRulesGroup,
   fetchRulerRules,
-  FetchRulerRulesFilter,
   setRulerRuleGroup,
 } from '../api/ruler';
 import { encodeGrafanaNamespace } from '../components/expressions/util';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 import { addDefaultsToAlertmanagerConfig, removeMuteTimingFromRoute } from '../utils/alertmanager';
 import {
+  GRAFANA_RULES_SOURCE_NAME,
   getAllRulesSourceNames,
   getRulesDataSource,
   getRulesSourceName,
-  GRAFANA_RULES_SOURCE_NAME,
 } from '../utils/datasource';
 import { makeAMLink } from '../utils/misc';
 import { AsyncRequestMapSlice, withAppEvents, withSerializedError } from '../utils/redux';
 import * as ruleId from '../utils/rule-id';
 import { getRulerClient } from '../utils/rulerClient';
-import { getAlertInfo, isGrafanaRuleIdentifier, isGrafanaRulerRule, isRulerNotSupportedResponse } from '../utils/rules';
+import { getAlertInfo, isGrafanaRulerRule, isRulerNotSupportedResponse } from '../utils/rules';
 import { safeParsePrometheusDuration } from '../utils/time';
 
 function getDataSourceConfig(getState: () => unknown, rulesSourceName: string) {
@@ -403,6 +403,7 @@ export const saveRuleFormAction = createAsyncThunk(
           // For the dataSourceName specified
           // in case of system (cortex/loki)
           let identifier: RuleIdentifier;
+
           if (type === RuleFormType.cloudAlerting || type === RuleFormType.cloudRecording) {
             if (!values.dataSourceName) {
               throw new Error('The Data source has not been defined.');
@@ -412,20 +413,16 @@ export const saveRuleFormAction = createAsyncThunk(
             const rulerClient = getRulerClient(rulerConfig);
             identifier = await rulerClient.saveLotexRule(values, evaluateEvery, existing);
             await thunkAPI.dispatch(fetchRulerRulesAction({ rulesSourceName: values.dataSourceName }));
-
             // in case of grafana managed
           } else if (type === RuleFormType.grafana) {
             const rulerConfig = getDataSourceRulerConfig(thunkAPI.getState, GRAFANA_RULES_SOURCE_NAME);
             const rulerClient = getRulerClient(rulerConfig);
             identifier = await rulerClient.saveGrafanaRule(values, evaluateEvery, existing);
             reportSwitchingRoutingType(values, existing);
-            await thunkAPI.dispatch(fetchRulerRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME }));
+            // when using a Granfa-managed alert rule we can invalidate a single rule
+            thunkAPI.dispatch(alertRuleApi.util.invalidateTags([{ type: 'GrafanaRulerRule', id: identifier.uid }]));
           } else {
             throw new Error('Unexpected rule form type');
-          }
-
-          if (isGrafanaRuleIdentifier(identifier)) {
-            thunkAPI.dispatch(alertRuleApi.util.invalidateTags([{ type: 'GrafanaRulerRule', id: identifier.uid }]));
           }
 
           logInfo(LogMessages.successSavingAlertRule, { type, isNew: (!existing).toString() });
@@ -443,9 +440,6 @@ export const saveRuleFormAction = createAsyncThunk(
             const newLocation = `/alerting/${encodeURIComponent(stringifiedIdentifier)}/edit`;
             if (locationService.getLocation().pathname !== newLocation) {
               locationService.replace(newLocation);
-            } else {
-              // refresh the details of the current editable rule after saving
-              thunkAPI.dispatch(fetchEditableRuleAction(identifier));
             }
           }
         })()
