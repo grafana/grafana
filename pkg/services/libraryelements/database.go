@@ -240,9 +240,12 @@ func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedIn
 			return err
 		}
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
-		// nolint:staticcheck
-		if err := l.requireEditPermissionsOnFolder(c, signedInUser, element.FolderID); err != nil {
-			return err
+
+		if !l.features.IsEnabled(c, featuremgmt.FlagLibraryPanelRBAC) {
+			// nolint:staticcheck
+			if err := l.requireEditPermissionsOnFolder(c, signedInUser, element.FolderID); err != nil {
+				return err
+			}
 		}
 
 		// Delete any hanging/invalid connections
