@@ -253,6 +253,11 @@ func TestExportRules(t *testing.T) {
 
 	srv := createService(ruleStore)
 
+	allRules := make([]*ngmodels.AlertRule, 0, len(hasAccess1)+len(hasAccess2)+len(noAccess1))
+	allRules = append(allRules, hasAccess1...)
+	allRules = append(allRules, hasAccess2...)
+	allRules = append(allRules, noAccess1...)
+
 	testCases := []struct {
 		title           string
 		params          url.Values
@@ -267,7 +272,7 @@ func TestExportRules(t *testing.T) {
 			expectedHeaders: http.Header{
 				"Content-Type": []string{"text/yaml"},
 			},
-			expectedRules: append(hasAccess1, hasAccess2...),
+			expectedRules: allRules,
 		},
 		{
 			title: "return all rules in folder",
@@ -278,7 +283,7 @@ func TestExportRules(t *testing.T) {
 			expectedHeaders: http.Header{
 				"Content-Type": []string{"text/yaml"},
 			},
-			expectedRules: hasAccess1,
+			expectedRules: append(hasAccess1, noAccess1...),
 		},
 		{
 			title: "return all rules in many folders",
@@ -289,7 +294,7 @@ func TestExportRules(t *testing.T) {
 			expectedHeaders: http.Header{
 				"Content-Type": []string{"text/yaml"},
 			},
-			expectedRules: append(hasAccess1, hasAccess2...),
+			expectedRules: allRules,
 		},
 		{
 			title: "return rules in single group",
@@ -348,27 +353,12 @@ func TestExportRules(t *testing.T) {
 			expectedRules:  nil,
 		},
 		{
-			title: "forbidden if group is not accessible",
-			params: url.Values{
-				"folderUid": []string{noAccessKey1.NamespaceUID},
-				"group":     []string{noAccessKey1.RuleGroup},
-			},
-			expectedStatus: http.StatusForbidden,
-		},
-		{
-			title: "forbidden if rule's group is not accessible",
-			params: url.Values{
-				"ruleUid": []string{noAccessRule.UID},
-			},
-			expectedStatus: http.StatusForbidden,
-		},
-		{
 			title: "return in JSON if header is specified",
 			headers: http.Header{
 				"Accept": []string{"application/json"},
 			},
 			expectedStatus: 200,
-			expectedRules:  append(hasAccess1, hasAccess2...),
+			expectedRules:  allRules,
 			expectedHeaders: http.Header{
 				"Content-Type": []string{"application/json"},
 			},
@@ -379,7 +369,7 @@ func TestExportRules(t *testing.T) {
 				"format": []string{"json"},
 			},
 			expectedStatus: 200,
-			expectedRules:  append(hasAccess1, hasAccess2...),
+			expectedRules:  allRules,
 			expectedHeaders: http.Header{
 				"Content-Type": []string{"application/json"},
 			},
@@ -390,7 +380,7 @@ func TestExportRules(t *testing.T) {
 				"format": []string{"hcl"},
 			},
 			expectedStatus: 200,
-			expectedRules:  append(hasAccess1, hasAccess2...),
+			expectedRules:  allRules,
 			expectedHeaders: http.Header{
 				"Content-Type": []string{"text/hcl"},
 			},

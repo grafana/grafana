@@ -29,32 +29,39 @@ import (
 
 type SocialBase struct {
 	*oauth2.Config
-	info        *social.OAuthInfo
-	cfg         *setting.Cfg
-	reloadMutex sync.RWMutex
-	log         log.Logger
-	features    featuremgmt.FeatureToggles
+	info          *social.OAuthInfo
+	cfg           *setting.Cfg
+	reloadMutex   sync.RWMutex
+	log           log.Logger
+	features      featuremgmt.FeatureToggles
+	orgRoleMapper *OrgRoleMapper
+	orgMappingCfg *MappingConfiguration
 }
 
 func newSocialBase(name string,
+	orgRoleMapper *OrgRoleMapper,
 	info *social.OAuthInfo,
 	features featuremgmt.FeatureToggles,
 	cfg *setting.Cfg,
+
 ) *SocialBase {
 	logger := log.New("oauth." + name)
 
 	return &SocialBase{
-		Config:   createOAuthConfig(info, cfg, name),
-		info:     info,
-		log:      logger,
-		features: features,
-		cfg:      cfg,
+		Config:        createOAuthConfig(info, cfg, name),
+		info:          info,
+		log:           logger,
+		features:      features,
+		cfg:           cfg,
+		orgRoleMapper: orgRoleMapper,
+		orgMappingCfg: orgRoleMapper.ParseOrgMappingSettings(context.Background(), info.OrgMapping, info.RoleAttributeStrict),
 	}
 }
 
-func (s *SocialBase) updateInfo(name string, info *social.OAuthInfo) {
+func (s *SocialBase) updateInfo(ctx context.Context, name string, info *social.OAuthInfo) {
 	s.Config = createOAuthConfig(info, s.cfg, name)
 	s.info = info
+	s.orgMappingCfg = s.orgRoleMapper.ParseOrgMappingSettings(ctx, info.OrgMapping, info.RoleAttributeStrict)
 }
 
 type groupStruct struct {
@@ -169,6 +176,14 @@ func (s *SocialBase) searchRole(rawJSON []byte, groups []string) (org.RoleType, 
 	}
 
 	return "", false
+}
+
+func (s *SocialBase) extractOrgs(rawJSON []byte) ([]string, error) {
+	if s.info.OrgAttributePath == "" {
+		return []string{}, nil
+	}
+
+	return util.SearchJSONForStringSliceAttr(s.info.OrgAttributePath, rawJSON)
 }
 
 // defaultRole returns the default role for the user based on the autoAssignOrgRole setting

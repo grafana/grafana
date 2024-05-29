@@ -126,11 +126,7 @@ func (s *Service) GetForProviderWithRedactedSecrets(ctx context.Context, provide
 		return nil, err
 	}
 
-	for k, v := range storeSettings.Settings {
-		if strVal, ok := v.(string); ok {
-			storeSettings.Settings[k] = setting.RedactedValue(k, strVal)
-		}
-	}
+	storeSettings.Settings = removeSecrets(storeSettings.Settings)
 
 	return storeSettings, nil
 }
@@ -177,11 +173,7 @@ func (s *Service) ListWithRedactedSecrets(ctx context.Context) ([]*models.SSOSet
 	}
 
 	for _, storeSetting := range configurableSettings {
-		for k, v := range storeSetting.Settings {
-			if strVal, ok := v.(string); ok {
-				storeSetting.Settings[k] = setting.RedactedValue(k, strVal)
-			}
-		}
+		storeSetting.Settings = removeSecrets(storeSetting.Settings)
 	}
 
 	return configurableSettings, nil
@@ -449,7 +441,8 @@ func (s *Service) isProviderConfigurable(provider string) bool {
 func removeSecrets(settings map[string]any) map[string]any {
 	result := make(map[string]any)
 	for k, v := range settings {
-		if IsSecretField(k) {
+		val, ok := v.(string)
+		if ok && val != "" && IsSecretField(k) {
 			result[k] = setting.RedactedPassword
 			continue
 		}

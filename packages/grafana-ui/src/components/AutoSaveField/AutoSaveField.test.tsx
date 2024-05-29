@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { createTheme, SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { Checkbox } from '../Forms/Checkbox';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
@@ -487,14 +488,14 @@ describe('Select, as AutoSaveField child, ', () => {
     setupSelect();
     expect(screen.getByRole('combobox')).toBeInTheDocument();
     await user.click(screen.getByText('Choose'));
-    const selectOptions = screen.getAllByLabelText('Select option');
+    const selectOptions = screen.getAllByTestId(selectors.components.Select.option);
     expect(selectOptions).toHaveLength(3);
   });
   it('triggers the function on change by selecting an option and shows the InlineToast', async () => {
     setupSelect();
     expect(screen.getByRole('combobox')).toBeInTheDocument();
     await user.click(screen.getByText('Choose'));
-    const selectOptions = screen.getAllByLabelText('Select option');
+    const selectOptions = screen.getAllByTestId(selectors.components.Select.option);
     await user.click(selectOptions[1]);
     act(() => {
       jest.runAllTimers();
@@ -507,7 +508,7 @@ describe('Select, as AutoSaveField child, ', () => {
     setupSelect({ saveErrorMessage: 'There was an error', onFinishChange: mockOnFinishChangeError });
     expect(screen.getByRole('combobox')).toBeInTheDocument();
     await user.click(screen.getByText('Choose'));
-    const selectOptions = screen.getAllByLabelText('Select option');
+    const selectOptions = screen.getAllByTestId(selectors.components.Select.option);
     await user.click(selectOptions[1]);
     act(() => {
       jest.runAllTimers();

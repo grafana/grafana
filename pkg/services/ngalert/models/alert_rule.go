@@ -14,9 +14,10 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	prommodels "github.com/prometheus/common/model"
+
+	alertingModels "github.com/grafana/alerting/models"
 
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
@@ -297,6 +298,10 @@ type AlertRulesSorter struct {
 func (s AlertRulesSorter) Len() int           { return len(s.rules) }
 func (s AlertRulesSorter) Swap(i, j int)      { s.rules[i], s.rules[j] = s.rules[j], s.rules[i] }
 func (s AlertRulesSorter) Less(i, j int) bool { return s.by(s.rules[i], s.rules[j]) }
+
+func (alertRule *AlertRule) GetNamespaceUID() string {
+	return alertRule.NamespaceUID
+}
 
 // GetDashboardUID returns the DashboardUID or "".
 func (alertRule *AlertRule) GetDashboardUID() string {
@@ -630,7 +635,7 @@ type ListAlertRulesQuery struct {
 	OrgID         int64
 	NamespaceUIDs []string
 	ExcludeOrgs   []int64
-	RuleGroup     string
+	RuleGroups    []string
 
 	// DashboardUID and PanelID are optional and allow filtering rules
 	// to return just those for a dashboard and panel.
