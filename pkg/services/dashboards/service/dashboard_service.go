@@ -536,6 +536,10 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 }
 
 func (dr *DashboardServiceImpl) setDefaultFolderPermissions(ctx context.Context, cmd *folder.CreateFolderCommand, f *folder.Folder, provisioned bool) {
+	if !dr.cfg.RBAC.PermissionsOnCreation("folder") {
+		return
+	}
+
 	inFolder := f.ParentUID != ""
 	var permissions []accesscontrol.SetResourcePermissionCommand
 

@@ -188,6 +188,9 @@ func (hs *HTTPServer) CreateFolder(c *contextmodel.ReqContext) response.Response
 }
 
 func (hs *HTTPServer) setDefaultFolderPermissions(ctx context.Context, orgID int64, user identity.Requester, folder *folder.Folder) error {
+	if !hs.Cfg.RBAC.PermissionsOnCreation("folder") {
+		return nil
+	}
 	var permissions []accesscontrol.SetResourcePermissionCommand
 	var userID int64
 
