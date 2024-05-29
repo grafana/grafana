@@ -196,8 +196,7 @@ func ProvideDashboardPermissions(
 				scopes = append(scopes, nestedScopes...)
 				return scopes, nil
 			}
-			scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID))
-			return scopes, nil
+			return append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)), nil
 		},
 		Assignments: resourcepermissions.Assignments{
 			Users:           true,
