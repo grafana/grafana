@@ -27,7 +27,7 @@ composableKinds: PanelCfg: lineage: {
 			// Controls the color scale of the heatmap
 			HeatmapColorScale: "linear" | "exponential" @cuetsy(kind="enum")
 			// Controls which axis to allow selection on
-			HeatmapSelectionMode: "x" | "y" | "xy" @cuetsy(kind="enum")
+			HeatmapSelectionAxis: "x" | "y" | "xy" @cuetsy(kind="enum")
 			// Controls various color options
 			HeatmapColorOptions: {
 				// Sets the color mode
@@ -158,9 +158,8 @@ composableKinds: PanelCfg: lineage: {
 					color: "rgba(255,0,255,0.7)"
 				}
 				// Controls which axis to allow selection on
-				selectMode?: HeatmapSelectionMode
-				// Controls whether to keep or clear the selected area after the user finished dragging
-				keepSelectedArea?: bool
+				selectionAxis?: HeatmapSelectionAxis
+				selectionMode?: ui.SelectionMode
 			} @cuetsy(kind="interface")
 			FieldConfig: {
 				ui.HideableFieldConfig

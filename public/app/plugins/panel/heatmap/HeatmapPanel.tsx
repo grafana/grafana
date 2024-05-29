@@ -113,8 +113,7 @@ export const HeatmapPanel = ({
       exemplarColor: options.exemplars?.color ?? 'rgba(255,0,255,0.7)',
       yAxisConfig: options.yAxis,
       ySizeDivisor: scaleConfig?.type === ScaleDistribution.Log ? +(options.calculation?.yBuckets?.value || 1) : 1,
-      // selectMode: HeatmapSelectionMode.Xy,
-      selectMode: options.selectMode,
+      selectionAxis: options.selectionAxis,
     });
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -181,7 +180,6 @@ export const HeatmapPanel = ({
                   options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
                 }
                 queryZoom={onChangeTimeRange}
-                keepSelectedArea={options.keepSelectedArea}
                 onSelect={onSelect}
                 syncMode={cursorSync}
                 syncScope={eventsScope}
@@ -224,7 +222,7 @@ export const HeatmapPanel = ({
               timeZone={timeZone}
               newRange={newAnnotationRange}
               setNewRange={setNewAnnotationRange}
-              canvasRegionRendering={false}
+              canvasRegionRendering={true}
             />
             <OutsideRangePlugin config={builder} onChangeTimeRange={onChangeTimeRange} />
           </UPlotChart>

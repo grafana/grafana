@@ -31,7 +31,7 @@ export enum HeatmapColorScale {
 /**
  * Controls which axis to allow selection on
  */
-export enum HeatmapSelectionMode {
+export enum HeatmapSelectionAxis {
   X = 'x',
   Xy = 'xy',
   Y = 'y',
@@ -221,10 +221,6 @@ export interface Options {
    */
   filterValues?: FilterValueRange;
   /**
-   * Controls whether to keep or clear the selected area after the user finished dragging
-   */
-  keepSelectedArea?: boolean;
-  /**
    * | *{
    * 	axisPlacement: ui.AxisPlacement & "left" // TODO: fix after remove when https://github.com/grafana/cuetsy/issues/74 is fixed
    * }
@@ -238,7 +234,8 @@ export interface Options {
   /**
    * Controls which axis to allow selection on
    */
-  selectMode?: HeatmapSelectionMode;
+  selectionAxis?: HeatmapSelectionAxis;
+  selectionMode?: ui.SelectionMode;
   /**
    * | *{
    * 	layout: ui.HeatmapCellLayout & "auto" // TODO: fix after remove when https://github.com/grafana/cuetsy/issues/74 is fixed

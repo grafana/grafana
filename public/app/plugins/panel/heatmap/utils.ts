@@ -18,7 +18,7 @@ import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/tra
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 
 import { HeatmapData } from './fields';
-import { FieldConfig, HeatmapSelectionMode, YAxisConfig } from './types';
+import { FieldConfig, HeatmapSelectionAxis, YAxisConfig } from './types';
 
 interface PathbuilderOpts {
   each: (u: uPlot, seriesIdx: number, dataIdx: number, lft: number, top: number, wid: number, hgt: number) => void;
@@ -51,7 +51,7 @@ interface PrepConfigOpts {
   hideGE?: number;
   yAxisConfig: YAxisConfig;
   ySizeDivisor?: number;
-  selectMode?: HeatmapSelectionMode;
+  selectionAxis?: HeatmapSelectionAxis;
 }
 
 export function prepConfig(opts: PrepConfigOpts) {
@@ -65,7 +65,7 @@ export function prepConfig(opts: PrepConfigOpts) {
     hideGE,
     yAxisConfig,
     ySizeDivisor,
-    selectMode = 'x',
+    selectionAxis = 'x',
   } = opts;
 
   const xScaleKey = 'x';
@@ -461,8 +461,8 @@ export function prepConfig(opts: PrepConfigOpts) {
     scaleKey: '', // facets' scales used (above)
   });
 
-  const dragX = selectMode === 'x' || selectMode === 'xy';
-  const dragY = selectMode === 'y' || selectMode === 'xy';
+  const dragX = selectionAxis === 'x' || selectionAxis === 'xy';
+  const dragY = selectionAxis === 'y' || selectionAxis === 'xy';
 
   const cursor: Cursor = {
     drag: {

@@ -113,7 +113,6 @@ export const TooltipPlugin2 = ({
   clientZoom = false,
   queryZoom,
   onSelect,
-  keepSelectedArea,
   maxWidth,
   syncMode = DashboardCursorSync.Off,
   syncScope = 'global', // eventsScope
@@ -393,10 +392,8 @@ export const TooltipPlugin2 = ({
         }
       }
 
-      if (!keepSelectedArea) {
-        // manually hide selected region (since cursor.drag.setScale = false)
-        u.setSelect({ left: 0, width: 0, top: 0, height: 0 }, false);
-      }
+      // manually hide selected region (since cursor.drag.setScale = false)
+      u.setSelect({ left: 0, width: 0, top: 0, height: 0 }, false);
     });
 
     if (clientZoom || queryZoom != null) {

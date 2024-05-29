@@ -34,6 +34,17 @@ const renderLine = (ctx: CanvasRenderingContext2D, y0: number, y1: number, x: nu
   ctx.stroke();
 };
 
+const renderRegion = (ctx: CanvasRenderingContext2D, y0: number, y1: number, x0: number, x1: number, color: string) => {
+  ctx.beginPath();
+  ctx.moveTo(x0, y0);
+  ctx.lineTo(x0, y1);
+  ctx.lineTo(x1, y1);
+  ctx.lineTo(x1, y0);
+  ctx.lineTo(x0, y0);
+  ctx.strokeStyle = color;
+  ctx.stroke();
+};
+
 // const renderUpTriangle = (ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, color: string) => {
 //   ctx.beginPath();
 //   ctx.moveTo(x - w/2, y + h/2);
@@ -125,9 +136,6 @@ export const AnnotationsPlugin2 = ({
 
       const ctx = u.ctx;
 
-      let y0 = u.bbox.top;
-      let y1 = y0 + u.bbox.height;
-
       ctx.save();
 
       ctx.beginPath();
@@ -139,24 +147,35 @@ export const AnnotationsPlugin2 = ({
 
       annos.forEach((frame) => {
         let vals = getVals(frame);
+        let y0 = u.bbox.top;
+        let y1 = y0 + u.bbox.height;
 
         for (let i = 0; i < vals.time.length; i++) {
           let color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR_HEX8);
 
           let x0 = u.valToPos(vals.time[i], 'x', true);
+          const yScaleKey = Object.values(u.scales!).find((s) => s.key?.startsWith('y') && s.max)?.key;
+          const shouldRenderRegion = yScaleKey && vals.fromY[i];
+          if (shouldRenderRegion) {
+            y0 = u.valToPos(vals.fromY[i] || 0, yScaleKey, true);
+            y1 = u.valToPos(vals.toY[i] || 0, yScaleKey, true);
+          }
 
           if (!vals.isRegion?.[i]) {
             renderLine(ctx, y0, y1, x0, color);
             // renderUpTriangle(ctx, x0, y1, 8 * uPlot.pxRatio, 5 * uPlot.pxRatio, color);
           } else if (canvasRegionRendering) {
-            renderLine(ctx, y0, y1, x0, color);
-
             let x1 = u.valToPos(vals.timeEnd[i], 'x', true);
 
-            renderLine(ctx, y0, y1, x1, color);
+            if (shouldRenderRegion) {
+              renderRegion(ctx, y0, y1, x0, x1, color);
+            } else {
+              renderLine(ctx, y0, y1, x0, color);
+              renderLine(ctx, y0, y1, x1, color);
+            }
 
             ctx.fillStyle = colorManipulator.alpha(color, 0.1);
-            ctx.fillRect(x0, y0, x1 - x0, u.bbox.height);
+            ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
           }
         }
       });
