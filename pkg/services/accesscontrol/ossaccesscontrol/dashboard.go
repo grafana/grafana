@@ -47,6 +47,50 @@ func getDashboardAdminActions(features featuremgmt.FeatureToggles) []string {
 	return DashboardAdminActions
 }
 
+func registerDashboardRoles(cfg *setting.Cfg, features featuremgmt.FeatureToggles, service accesscontrol.Service) error {
+	if !cfg.RBAC.PermissionsWildcardSeed("dashboard") {
+		return nil
+	}
+
+	viewer := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        "fixed:dashboards:viewer",
+			DisplayName: "Viewer",
+			Description: "View all dashboards",
+			Group:       "Dashboards",
+			Permissions: permissionsForActions(getDashboardViewActions(features), dashboards.ScopeDashboardsAll),
+			Hidden:      true,
+		},
+		Grants: []string{"Viewer"},
+	}
+
+	editor := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        "fixed:dashboards:editor",
+			DisplayName: "Editor",
+			Description: "Edit all dashboards.",
+			Group:       "Dashboards",
+			Permissions: permissionsForActions(getDashboardEditActions(features), dashboards.ScopeDashboardsAll),
+			Hidden:      true,
+		},
+		Grants: []string{"Editor"},
+	}
+
+	admin := accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        "fixed:dashboards:admin",
+			DisplayName: "Admin",
+			Description: "Administer all dashboards.",
+			Group:       "Dashboards",
+			Permissions: permissionsForActions(getDashboardAdminActions(features), dashboards.ScopeDashboardsAll),
+			Hidden:      true,
+		},
+		Grants: []string{"Admin"},
+	}
+
+	return service.DeclareFixedRoles(viewer, editor, admin)
+}
+
 func ProvideDashboardPermissions(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
 	license licensing.Licensing, dashboardStore dashboards.Store, folderService folder.Service, service accesscontrol.Service,
@@ -59,6 +103,10 @@ func ProvideDashboardPermissions(
 			return nil, err
 		}
 		return queryResult, nil
+	}
+
+	if err := registerDashboardRoles(cfg, features, service); err != nil {
+		return nil, err
 	}
 
 	options := resourcepermissions.Options{
