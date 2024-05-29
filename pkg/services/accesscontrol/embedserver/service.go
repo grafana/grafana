@@ -2,6 +2,7 @@ package embedserver
 
 import (
 	"context"
+	"time"
 
 	"github.com/openfga/openfga/pkg/logger"
 	"go.uber.org/zap/zapcore"
@@ -56,19 +57,18 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*Ser
 		return nil, err
 	}
 
-	err = dbConfig.buildConnectionString(cfg, features)
-	if err != nil {
-		return nil, err
-	}
-
 	dbConfig.ConnectionString += "&parseTime=true"
 
-	zapLogger.Info("Database configuration", zapcore.Field{Key: "config", Type: zapcore.StringType, Interface: dbConfig.ConnectionString})
+	zapLogger.Info("Database configuration", zapcore.Field{Key: "config", Type: zapcore.StringType, Interface: dbConfig.ConnectionString, String: dbConfig.ConnectionString})
 
 	// Create the Zanzana service
 	srv, err := zanzanaService.NewService(ctx, zapLogger, nil, &zanzanaService.Config{
-		DBURI:  dbConfig.ConnectionString,
-		DBType: dbConfig.Type,
+		DBURI:           dbConfig.ConnectionString,
+		DBType:          dbConfig.Type,
+		MaxOpenConns:    dbConfig.MaxOpenConn,
+		MaxIdleConns:    dbConfig.MaxIdleConn,
+		ConnMaxLifetime: time.Duration(dbConfig.ConnMaxLifetime * int(time.Second)),
+		ConnMaxIdleTime: time.Duration(dbConfig.ConnMaxIdleTime * int(time.Second)),
 	})
 	if err != nil {
 		return nil, err

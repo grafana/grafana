@@ -37,6 +37,7 @@ type DatabaseConfig struct {
 	MaxOpenConn                 int
 	MaxIdleConn                 int
 	ConnMaxLifetime             int
+	ConnMaxIdleTime             int
 	CacheMode                   string
 	WALEnabled                  bool
 	UrlQueryParams              map[string][]string
@@ -103,6 +104,7 @@ func (dbCfg *DatabaseConfig) readConfig(cfg *setting.Cfg) error {
 	dbCfg.MaxOpenConn = sec.Key("max_open_conn").MustInt(0)
 	dbCfg.MaxIdleConn = sec.Key("max_idle_conn").MustInt(2)
 	dbCfg.ConnMaxLifetime = sec.Key("conn_max_lifetime").MustInt(14400)
+	dbCfg.ConnMaxIdleTime = sec.Key("conn_max_idle_time").MustInt(60)
 
 	dbCfg.SslMode = sec.Key("ssl_mode").String()
 	dbCfg.SSLSNI = sec.Key("ssl_sni").String()
